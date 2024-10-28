@@ -160,7 +160,6 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
  */
 export interface ILocalDetachedFluidDataStoreContextProps
 	extends ILocalFluidDataStoreContextProps {
-	readonly pkg: Readonly<string[]>;
 	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 }
 
@@ -1383,19 +1382,13 @@ export class LocalDetachedFluidDataStoreContext
 			})
 			.catch((error) => {
 				this.mc.logger.sendErrorEvent({ eventName: "AttachRuntimeError" }, error);
-				dataStoreChannel.dispose(error);
 				// The following two lines result in same exception thrown.
 				// But we need to ensure that this.channelDeferred.promise is "observed", as otherwise
 				// out UT reports unhandled exception
 				throw error;
 			});
 
-		this.channelP = Promise.resolve(dataStoreChannel);
-		this.channel = dataStoreChannel;
-		this.processPendingOps(dataStoreChannel);
-		this.completeBindingRuntime(dataStoreChannel);
-
-		return this.channelToDataStoreFn(dataStoreChannel);
+		return this.channelToDataStoreFn(await this.channelP);
 	}
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
