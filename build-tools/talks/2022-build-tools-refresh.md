@@ -36,15 +36,11 @@ and **effect**.
 
 # Setting the stage
 
-My first task when taking over the Fluid build tools was to get us to a point where we could release 1.0 of the Azure
-Fluid Relay-related packages.
+My first task when taking over the Fluid build tools was to get us to a point where we could release 1.0 of the Azure Fluid Relay-related packages.
 
-I figured the best starting point was to massage the existing tools so that they worked well enough that we could
-release 1.0 – which we did. But I **really** struggled with the code. In many cases I could tell what it was doing but
-not why, so I felt like I couldn't remove anything.
+I figured the best starting point was to massage the existing tools so that they worked well enough that we could release 1.0 – which we did. But I **really** struggled with the code. In many cases I could tell what it was doing but not why, so I felt like I couldn't remove anything.
 
-We were also trying to develop a new sustainable release process and version policy while I was struggling to understand
-the code that encoded the _old_ release process.
+We were also trying to develop a new sustainable release process and version policy while I was struggling to understand the code that encoded the _old_ release process.
 
 ---
 
@@ -52,20 +48,15 @@ the code that encoded the _old_ release process.
 
 **Whoa that's a lot of argument parsing code!**
 
-Argument parsing falls into the category of "junk code." Junk code is code that isn't really important to the purpose of
-the program. It may be necessary, but it's not interesting.
+Argument parsing falls into the category of "junk code." Junk code is code that isn't really important to the purpose of the program. It may be necessary, but it's not interesting.
 
-Inevitably, as requirements change and the code needs updating, the code quickly gets complex. Moreover, many tools have
-almost as much argument parsing code as "real code," which makes it all the more difficult to discern what matters in
-the code.
+Inevitably, as requirements change and the code needs updating, the code quickly gets complex. Moreover, many tools have almost as much argument parsing code as "real code," which makes it all the more difficult to discern what matters in the code.
 
-Rarely do people step back and redesign the basics as the code grows. Instead, people add what they need, and only that.
-Nothing's removed, only added, out of fear or lack of time.
+Rarely do people step back and redesign the basics as the code grows. Instead, people add what they need, and only that. Nothing's removed, only added, out of fear or lack of time.
 
 ---
 
-> Use a command-line argument parsing library where you can. Either your language's built-in one, or a good third-party
-> one. They will normally handle arguments, flag parsing, help text, and even spelling suggestions in a sensible way.
+> Use a command-line argument parsing library where you can. Either your language's built-in one, or a good third-party one. They will normally handle arguments, flag parsing, help text, and even spelling suggestions in a sensible way.
 
 [CLIG, The Basics](https://clig.dev/#the-basics)
 
