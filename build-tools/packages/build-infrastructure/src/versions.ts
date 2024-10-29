@@ -5,7 +5,7 @@
 
 import * as semver from "semver";
 
-import { updatePackageJsonFile } from "./packageJsonUtils.js";
+import { updatePackageJsonFileAsync } from "./packageJsonUtils.js";
 import type { IPackage, PackageJson } from "./types.js";
 
 /**
@@ -22,9 +22,13 @@ export async function setVersion<J extends PackageJson>(
 	version: semver.SemVer,
 ): Promise<void> {
 	const translatedVersion = version;
+	const setPackagePromises: Promise<void>[] = [];
 	for (const pkg of packages) {
-		updatePackageJsonFile<J>(pkg.directory, (json) => {
-			json.version = translatedVersion.version;
-		});
+		setPackagePromises.push(
+			updatePackageJsonFileAsync<J>(pkg.directory, async (json) => {
+				json.version = translatedVersion.version;
+			}),
+		);
 	}
+	await Promise.all(setPackagePromises);
 }
