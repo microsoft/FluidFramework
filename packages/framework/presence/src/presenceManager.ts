@@ -84,6 +84,11 @@ class PresenceManager
 		);
 
 		runtime.on("connected", this.onConnect.bind(this));
+		runtime.on("disconnected", () => {
+			if (runtime.clientId !== undefined) {
+				this.removeClientConnectionId(runtime.clientId);
+			}
+		});
 
 		// Check if already connected at the time of construction.
 		// If constructed during data store load, the runtime may already be connected

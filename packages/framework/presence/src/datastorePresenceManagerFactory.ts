@@ -46,6 +46,11 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 			this.runtime.getAudience().on("removeMember", (clientId: string) => {
 				manager.removeClientConnectionId(clientId);
 			});
+			this.runtime.on("disconnected", () => {
+				if (this.runtime.clientId !== undefined) {
+					manager.removeClientConnectionId(this.runtime.clientId);
+				}
+			});
 			this._presenceManager = manager;
 		}
 		return this._presenceManager;
