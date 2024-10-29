@@ -731,6 +731,11 @@ export class PerformanceEvent {
 	private readonly startTime = performance.now();
 	private startMark?: string;
 
+	private readonly perfMark =
+		typeof window === "object" &&
+		window?.performance?.mark !== undefined &&
+		window?.performance?.mark !== null;
+
 	protected constructor(
 		private readonly logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
@@ -742,11 +747,7 @@ export class PerformanceEvent {
 			this.reportEvent("start");
 		}
 
-		if (
-			typeof window === "object" &&
-			window?.performance?.mark !== undefined &&
-			window?.performance?.mark !== null
-		) {
+		if (this.perfMark) {
 			this.startMark = `${event.eventName}-start`;
 			window.performance.mark(this.startMark);
 		}
