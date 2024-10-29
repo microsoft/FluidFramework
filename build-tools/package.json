@@ -22,7 +22,7 @@
 		"ci:eslint": "fluid-build --task eslint",
 		"ci:test": "npm run test:mocha",
 		"ci:test:coverage": "npm run test:coverage",
-		"clean": "pnpm run -r --no-sort --stream clean && npm run clean:docs && npm run clean:nyc",
+		"clean": "fluid-build --task clean",
 		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\"",
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"commit": "git-cz",
