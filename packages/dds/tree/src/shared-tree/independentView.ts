@@ -53,7 +53,7 @@ import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
  * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
  * @alpha
  */
-export function independentView<TSchema extends ImplicitFieldSchema>(
+export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & { idCompressor?: IIdCompressor | undefined },
 ): TreeView<TSchema> {
@@ -86,7 +86,7 @@ export function independentView<TSchema extends ImplicitFieldSchema>(
  * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
  * @alpha
  */
-export function independentInitializedView<TSchema extends ImplicitFieldSchema>(
+export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & ICodecOptions,
 	content: ViewContent,

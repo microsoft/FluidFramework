@@ -46,7 +46,7 @@ import { getUnhydratedContext } from "../createContext.js";
  * For that case, use {@link TreeBeta.clone}.
  */
 export function createFromInsertable<
-	TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+	const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
 >(
 	schema: UnsafeUnknownSchema extends TSchema
 		? ImplicitFieldSchema
@@ -113,7 +113,7 @@ export function cursorFromInsertable<
 /**
  * Creates an unhydrated simple-tree field from a cursor in nodes mode.
  */
-export function createFromCursor<TSchema extends ImplicitFieldSchema>(
+export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	cursor: ITreeCursorSynchronous | undefined,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {

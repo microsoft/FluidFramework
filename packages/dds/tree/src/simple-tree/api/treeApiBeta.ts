@@ -120,7 +120,7 @@ export const TreeBeta: {
 	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 */
-	clone<TSchema extends ImplicitFieldSchema>(
+	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
 	): TreeFieldFromImplicitField<TSchema>;
 
@@ -132,7 +132,7 @@ export const TreeBeta: {
 	//  * Local state, such as properties added to customized schema classes, will not be cloned:
 	//  * they will be initialized however they end up after running the constructor, just like if a remote client had inserted the same nodes.
 	//  */
-	// clone<TSchema extends ImplicitFieldSchema>(
+	// clone<const TSchema extends ImplicitFieldSchema>(
 	// 	original: TreeFieldFromImplicitField<TSchema>,
 	// 	options?: {
 	// 		/**
@@ -150,7 +150,7 @@ export const TreeBeta: {
 	): () => void {
 		return treeNodeApi.on(node, eventName, listener);
 	},
-	clone<TSchema extends ImplicitFieldSchema>(
+	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		/** The only non-TreeNode cases are {@link TreeLeafValue} and `undefined` (for an empty optional field) which can be returned as is. */

@@ -21,7 +21,6 @@ import {
 	normalizeFieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
-	type InsertableTreeFieldFromImplicitField,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type UnsafeUnknownSchema,
@@ -72,7 +71,7 @@ export const TreeAlpha: {
 	 * @privateRemarks
 	 * There should be a way to provide an source for defaulted identifiers, wither via this API or some way to add them to its output later.
 	 */
-	create<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
 			? ImplicitFieldSchema
 			: TSchema & ImplicitFieldSchema,
@@ -98,11 +97,11 @@ export const TreeAlpha: {
 	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
 	 * but for now most invalid inputs will throw a recoverable error.
 	 */
-	importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
 			? ImplicitFieldSchema
 			: TSchema & ImplicitFieldSchema,
-		data: InsertableTreeFieldFromImplicitField | ConciseTree,
+		data: ConciseTree | undefined,
 	): Unhydrated<
 		TSchema extends ImplicitFieldSchema
 			? TreeFieldFromImplicitField<TSchema>
@@ -114,7 +113,7 @@ export const TreeAlpha: {
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
 	 * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
 	 */
-	importVerbose<TSchema extends ImplicitFieldSchema>(
+	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
 		options?: Partial<ParseOptions<IFluidHandle>>,
@@ -127,7 +126,7 @@ export const TreeAlpha: {
 	 * @privateRemarks
 	 * This could be exposed as a public `Tree.createFromVerbose` function.
 	 */
-	importVerbose<TSchema extends ImplicitFieldSchema, THandle>(
+	importVerbose<const TSchema extends ImplicitFieldSchema, THandle>(
 		schema: TSchema,
 		data: VerboseTree<THandle> | undefined,
 		options: ParseOptions<THandle>,
@@ -203,7 +202,7 @@ export const TreeAlpha: {
 	 * 2. A "try" version of this could return an error if the data isn't in a supported format (as determined by version and/or JasonValidator).
 	 * 3. Requiring the caller provide a JsonValidator isn't the most friendly API. It might be practical to provide a default.
 	 */
-	importCompressed<TSchema extends ImplicitFieldSchema>(
+	importCompressed<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		compressedData: JsonCompatible<IFluidHandle>,
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
@@ -215,7 +214,7 @@ export const TreeAlpha: {
 		schema: UnsafeUnknownSchema extends TSchema
 			? ImplicitFieldSchema
 			: TSchema & ImplicitFieldSchema,
-		data: InsertableTreeFieldFromImplicitField | ConciseTree,
+		data: ConciseTree | undefined,
 	): Unhydrated<
 		TSchema extends ImplicitFieldSchema
 			? TreeFieldFromImplicitField<TSchema>
@@ -231,7 +230,7 @@ export const TreeAlpha: {
 		>;
 	},
 
-	importVerbose<TSchema extends ImplicitFieldSchema, THandle>(
+	importVerbose<const TSchema extends ImplicitFieldSchema, THandle>(
 		schema: TSchema,
 		data: VerboseTree<THandle> | undefined,
 		options?: Partial<ParseOptions<THandle>>,
@@ -286,7 +285,10 @@ export const TreeAlpha: {
 
 	exportCompressed(
 		node: TreeNode | TreeLeafValue,
-		options: { oldestCompatibleClient: FluidClientVersion; idCompressor?: IIdCompressor },
+		options: {
+			oldestCompatibleClient: FluidClientVersion;
+			idCompressor?: IIdCompressor;
+		},
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail("invalid input");
 		const format = versionToFormat[options.oldestCompatibleClient];
@@ -305,10 +307,12 @@ export const TreeAlpha: {
 		return result;
 	},
 
-	importCompressed<TSchema extends ImplicitFieldSchema>(
+	importCompressed<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		compressedData: JsonCompatible<IFluidHandle>,
-		options: { idCompressor?: IIdCompressor } & ICodecOptions,
+		options: {
+			idCompressor?: IIdCompressor;
+		} & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const content: ViewContent = {
 			schema: extractPersistedSchema(schema),
@@ -325,7 +329,10 @@ function borrowCursorFromTreeNodeOrValue(
 	node: TreeNode | TreeLeafValue,
 ): ITreeCursorSynchronous {
 	if (isTreeValue(node)) {
-		return cursorFromInsertable(tryGetSchema(node) ?? fail("missing schema"), node);
+		return cursorFromInsertable<UnsafeUnknownSchema>(
+			tryGetSchema(node) ?? fail("missing schema"),
+			node,
+		);
 	}
 	const kernel = getKernel(node);
 	const cursor = kernel.getOrCreateInnerNode().borrowCursor();

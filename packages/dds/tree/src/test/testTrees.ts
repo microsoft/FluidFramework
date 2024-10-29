@@ -66,7 +66,7 @@ interface TestTree {
 	readonly treeFactory: (idCompressor?: IIdCompressor) => JsonableTree[];
 }
 
-function testSimpleTree<TSchema extends ImplicitFieldSchema>(
+function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
 	name: string,
 	schema: TSchema,
 	root: LazyItem<InsertableTreeFieldFromImplicitField<TSchema>>,
