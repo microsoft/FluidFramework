@@ -13,5 +13,5 @@ To convert the presentations, you can use the [Marp CLI](https://www.npmjs.com/p
 example, to create the default HTML output, you can run:
 
 ```shell
-pnpx @marp-team/marp-cli@latest fluid-build.md -o fluid-build.html
+pnpx @marp-team/marp-cli@latest 2024-fluid-build.md -o fluid-build.html
 ```
