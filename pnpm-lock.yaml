@@ -288,8 +288,8 @@ importers:
         specifier: ^10.2.0
         version: 10.7.3
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.8
@@ -6005,8 +6005,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -6111,8 +6111,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -6352,8 +6352,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -7291,8 +7291,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.25.7)(jest@29.7.0)(typescript@5.4.5)
@@ -7481,8 +7481,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -9843,8 +9843,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -10177,8 +10177,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -10826,8 +10826,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       tslib:
         specifier: ^1.10.0
         version: 1.14.1
@@ -10917,8 +10917,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.8
@@ -11475,8 +11475,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -11872,8 +11872,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -11975,8 +11975,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -12172,8 +12172,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -12673,8 +12673,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       ts-node:
         specifier: ^10.9.1
         version: 10.9.2(@types/node@18.19.54)(typescript@5.4.5)
@@ -12999,8 +12999,8 @@ importers:
         specifier: ^2.21.0
         version: 2.30.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.8
@@ -13120,8 +13120,8 @@ importers:
         specifier: ^2.21.0
         version: 2.30.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       uuid:
         specifier: ^9.0.0
         version: 9.0.1
@@ -14254,8 +14254,8 @@ importers:
         specifier: ^7.5.3
         version: 7.6.3
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.8
@@ -15183,8 +15183,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       sinon-chrome:
         specifier: ^3.0.1
         version: 3.0.1
@@ -16229,8 +16229,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -23395,6 +23395,11 @@ packages:
       '@sinonjs/commons': 3.0.1
     dev: true
 
+  /@sinonjs/fake-timers@11.2.2:
+    resolution: {integrity: sha512-G2piCSxQ7oWOxwGSAyFHfPIsyeJGXYtc6mFbnFA+kRXkiEnTl8c/8jul2S329iFBnDI9HGoeWWAZvuvOkZccgw==}
+    dependencies:
+      '@sinonjs/commons': 3.0.1
+
   /@sinonjs/fake-timers@13.0.5:
     resolution: {integrity: sha512-36/hTbH2uaWuGVERyC6da9YwGWnzUZXuPro/F2LfsdOsLnCojz/iSH8MxUt/FD2S5XBSVPhmArFUXcpCQ2Hkiw==}
     dependencies:
@@ -27526,10 +27531,6 @@ packages:
 
   /diff@5.2.0:
     resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
-    engines: {node: '>=0.3.1'}
-
-  /diff@7.0.0:
-    resolution: {integrity: sha512-PJWHUb1RFevKCwaFA9RlG5tCd+FO5iRh9A8HEtkmBH2Li03iJriB6m6JIN4rGz3K3JLawI7/veA1xzRKP6ISBw==}
     engines: {node: '>=0.3.1'}
 
   /dir-glob@3.0.1:
@@ -36572,13 +36573,13 @@ packages:
       urijs: 1.19.11
     dev: true
 
-  /sinon@19.0.2:
-    resolution: {integrity: sha512-euuToqM+PjO4UgXeLETsfQiuoyPXlqFezr6YZDFwHR3t4qaX0fZUe1MfPMznTL5f8BWrVS89KduLdMUsxFCO6g==}
+  /sinon@18.0.1:
+    resolution: {integrity: sha512-a2N2TDY1uGviajJ6r4D1CyRAkzE9NNVlYOV1wX5xQDuAk0ONgzgRl0EjCQuRCPxOwp13ghsMwt9Gdldujs39qw==}
     dependencies:
       '@sinonjs/commons': 3.0.1
-      '@sinonjs/fake-timers': 13.0.5
+      '@sinonjs/fake-timers': 11.2.2
       '@sinonjs/samsam': 8.0.2
-      diff: 7.0.0
+      diff: 5.2.0
       nise: 6.1.1
       supports-color: 7.2.0
 

@@ -86,7 +86,7 @@
 		"cross-env": "^7.0.3",
 		"js-yaml": "^4.1.0",
 		"mocha": "^10.2.0",
-		"sinon": "^19.0.2",
+		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^5.0.0",
 		"uuid": "^9.0.0"
