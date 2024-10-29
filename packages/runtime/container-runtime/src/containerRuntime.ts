@@ -4628,7 +4628,7 @@ export class ContainerRuntime
 		// If the snapshot that was fetched is older than the target snapshot, return. The summarizer will not be closed
 		// because the snapshot is likely deleted from storage and it so, closing the summarizer will result in the
 		// document being stuck in this state.
-		if (fetchedSnapshotRefSeq <= targetRefSeq) {
+		if (fetchedSnapshotRefSeq < targetRefSeq) {
 			return;
 		}
 

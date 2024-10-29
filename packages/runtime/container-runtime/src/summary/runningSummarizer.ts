@@ -116,8 +116,6 @@ export class RunningSummarizer
 			latestAck !== undefined &&
 			latestAck.summaryOp.referenceSequenceNumber >= nextReferenceSequenceNumber
 		) {
-			// console.log(JSON.stringify(latestAck));
-			// console.log(JSON.stringify(nextReferenceSequenceNumber));
 			await summarizer.handleSummaryAck(latestAck);
 			nextReferenceSequenceNumber = latestAck.summaryOp.referenceSequenceNumber + 1;
 		}
