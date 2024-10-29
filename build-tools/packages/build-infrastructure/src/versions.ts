@@ -13,7 +13,6 @@ import type { IPackage, PackageJson } from "./types.js";
  *
  * Note that any loaded objects such as an IFluidRepo instance may need to be reloaded after calling this function.
  *
- * @param fluidRepo - The {@link IFluidRepo}.
  * @param packages - An array of objects whose version should be updated.
  * @param version - The version to set.
  */
