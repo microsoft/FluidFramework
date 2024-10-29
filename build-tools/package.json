@@ -100,6 +100,25 @@
 	"dependenciesComments": {
 		"@fluidframework/build-tools": "Provides fluid-build which is used by the `build:fast` script. To allow this to work when the workspace version of build-tools has not been built yet, a prepackaged version is depended on. If this self-dependency becomes problematic, the `build` script can be used which does not require it."
 	},
+	"fluidBuild": {
+		"tasks": {
+			"build": {
+				"dependsOn": [
+					"^build",
+					"generate:packageList"
+				],
+				"script": false
+			},
+			"clean": {
+				"dependsOn": [
+					"^clean",
+					"clean:docs",
+					"clean:nyc"
+				],
+				"script": false
+			}
+		}
+	},
 	"pnpm": {
 		"peerDependencyComments": [
 			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime.",
@@ -138,25 +157,6 @@
 		],
 		"patchedDependencies": {
 			"jssm-viz@5.101.0": "patches/jssm-viz@5.101.0.patch"
-		}
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build": {
-				"dependsOn": [
-					"^build",
-					"generate:packageList"
-				],
-				"script": false
-			},
-			"clean": {
-				"dependsOn": [
-					"^clean",
-					"clean:docs",
-					"clean:nyc"
-				],
-				"script": false
-			}
 		}
 	}
 }

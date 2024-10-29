@@ -28,7 +28,7 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist \"*.tsbuildinfo\" _api-extractor-temp",
+		"clean": "rimraf --glob dist \"*.tsbuildinfo\" _api-extractor-temp \"*.build.log\"",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix",
