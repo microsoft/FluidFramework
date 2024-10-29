@@ -42,7 +42,7 @@ export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
 const buildRequestUrl = (requestConfig: AxiosRequestConfig) =>
 	requestConfig.baseURL !== undefined
 		? `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`
-		: requestConfig.url ?? "";
+		: (requestConfig.url ?? "");
 
 const axiosBuildRequestInitConfig = (requestConfig: AxiosRequestConfig): RequestInit => {
 	const requestInit: RequestInit = {

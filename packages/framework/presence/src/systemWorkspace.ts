@@ -7,11 +7,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type {
-	ClientSessionId,
-	IPresence,
-	ISessionClient,
-	PresenceEvents,
+import {
+	SessionClientStatus,
+	type ClientSessionId,
+	type IPresence,
+	type ISessionClient,
+	type PresenceEvents,
 } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import type { PresenceStates, PresenceStatesSchema } from "./types.js";
@@ -32,7 +33,7 @@ export interface SystemWorkspaceDatastore {
 /**
  * There is no implementation class for this interface.
  * It is a simple structure. Most complicated aspect is that
- * `currentConnectionId()` member is replaced with a new
+ * `connectionId()` member is replaced with a new
  * function when a more recent connection is added.
  *
  * See {@link SystemWorkspaceImpl.ensureAttendee}.
@@ -58,6 +59,13 @@ export interface SystemWorkspace
 	 * @param clientConnectionId - The new client connection id.
 	 */
 	onConnectionAdded(clientConnectionId: ClientConnectionId): void;
+
+	/**
+	 * Removes the client connection id from the system workspace.
+	 *
+	 * @param clientConnectionId - The client connection id to remove.
+	 */
+	removeClientConnectionId(clientConnectionId: ClientConnectionId): void;
 }
 
 class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
@@ -74,14 +82,17 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	public constructor(
 		clientSessionId: ClientSessionId,
 		private readonly datastore: SystemWorkspaceDatastore,
-		public readonly events: IEmitter<Pick<PresenceEvents, "attendeeJoined">>,
+		public readonly events: IEmitter<
+			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
+		>,
 	) {
 		this.selfAttendee = {
 			sessionId: clientSessionId,
 			order: 0,
-			currentConnectionId: () => {
+			connectionId: () => {
 				throw new Error("Client has never been connected");
 			},
+			getStatus: () => SessionClientStatus.Disconnected,
 		};
 		this.attendees.set(clientSessionId, this.selfAttendee);
 	}
@@ -123,7 +134,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			if (knownSessionId === undefined) {
 				this.datastore.clientToSessionId[clientConnectionId] = value;
 			} else {
-				assert(knownSessionId.value === value.value, "Mismatched SessionId");
+				assert(knownSessionId.value === value.value, 0xa5a /* Mismatched SessionId */);
 			}
 		}
 		// TODO: reorganize processUpdate and caller to process actions after all updates are processed.
@@ -139,8 +150,24 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			value: this.selfAttendee.sessionId,
 		};
 
-		this.selfAttendee.currentConnectionId = () => clientConnectionId;
+		this.selfAttendee.connectionId = () => clientConnectionId;
+		this.selfAttendee.getStatus = () => SessionClientStatus.Connected;
 		this.attendees.set(clientConnectionId, this.selfAttendee);
+	}
+
+	public removeClientConnectionId(clientConnectionId: ClientConnectionId): void {
+		const attendee = this.attendees.get(clientConnectionId);
+		if (!attendee) {
+			return;
+		}
+
+		// If the last known connectionID is different from the connection id being removed, the attendee has reconnected,
+		// therefore we should not change the attendee connection status or emit a disconnect event.
+		const attendeeReconnected = attendee.connectionId() !== clientConnectionId;
+		if (!attendeeReconnected) {
+			attendee.getStatus = () => SessionClientStatus.Disconnected;
+			this.events.emit("attendeeDisconnected", attendee);
+		}
 	}
 
 	public getAttendees(): ReadonlySet<ISessionClient> {
@@ -174,7 +201,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		clientConnectionId: ClientConnectionId,
 		order: number,
 	): { attendee: SessionClient; isNew: boolean } {
-		const currentConnectionId = (): ClientConnectionId => clientConnectionId;
+		const connectionId = (): ClientConnectionId => clientConnectionId;
 		let attendee = this.attendees.get(clientSessionId);
 		let isNew = false;
 		if (attendee === undefined) {
@@ -183,7 +210,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			attendee = {
 				sessionId: clientSessionId,
 				order,
-				currentConnectionId,
+				connectionId,
+				getStatus: () => SessionClientStatus.Connected,
 			};
 			this.attendees.set(clientSessionId, attendee);
 			isNew = true;
@@ -191,7 +219,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			// The given association is newer than the one we have.
 			// Update the order and current connection id.
 			attendee.order = order;
-			attendee.currentConnectionId = currentConnectionId;
+			attendee.connectionId = connectionId;
 		}
 		// Always update entry for the connection id. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);

@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { DriverErrorTelemetryProps } from "@fluidframework/driver-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import type { io as SocketIOClientStatic, Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
 import {
 	IR11sSocketError,
@@ -21,6 +21,7 @@ import {
 	socketIoPath,
 } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { SocketIOClientStatic } from "./socketModule.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 

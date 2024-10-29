@@ -16,6 +16,7 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
+	IFluidAccessTokenGenerator,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -41,11 +42,13 @@ export function create(
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
+	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	readinessCheck?: IReadinessCheck,
+	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 ) {
 	return {
 		api: api.create(
@@ -60,11 +63,13 @@ export function create(
 			appTenants,
 			documentRepository,
 			documentDeleteService,
+			startupCheck,
 			tokenRevocationManager,
 			revokedTokenChecker,
 			collaborationSessionEventEmitter,
 			clusterDrainingChecker,
 			readinessCheck,
+			fluidAccessTokenGenerator,
 		),
 	};
 }

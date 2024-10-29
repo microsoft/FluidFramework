@@ -15,6 +15,7 @@ import {
 	type GitHubProps,
 	createOrUpdateCommentOnPr,
 	getChangedFilePaths,
+	getCommentBody,
 } from "../../library/githubRest.js";
 import { BaseCommand } from "../../library/index.js";
 
@@ -53,29 +54,15 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			env: "ADO_CI_BUILD_DEFINITION_ID_PR",
 			required: true,
 		}),
-		codeCoverageAnalysisArtifactNameBaseline: Flags.string({
-			description: "Code coverage artifact name for the baseline build.",
-			env: "CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_BASELINE",
-			required: true,
-		}),
-		codeCoverageAnalysisArtifactNamePR: Flags.string({
-			description: "Code coverage artifact name for the PR build.",
-			env: "CODE_COVERAGE_ANALYSIS_ARTIFACT_NAME_PR",
-			required: true,
-		}),
 		githubPRNumber: Flags.integer({
 			description: "Github PR number.",
 			env: "GITHUB_PR_NUMBER",
 			required: true,
 		}),
 		githubRepositoryName: Flags.string({
-			description: "Github repository name.",
+			description:
+				"Github repository name. It should be in this format: <org_or_owner>/<name>. For example: microsoft/FluidFramework",
 			env: "GITHUB_REPOSITORY_NAME",
-			required: true,
-		}),
-		githubRepositoryOwner: Flags.string({
-			description: "Github repository owner.",
-			env: "GITHUB_REPOSITORY_OWNER",
 			required: true,
 		}),
 		targetBranchName: Flags.string({
@@ -89,11 +76,12 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 	public async run(): Promise<void> {
 		const { flags } = this;
 
+		const artifactNamePrefix = "Code Coverage Report";
 		const codeCoverageConstantsForBaseline: IAzureDevopsBuildCoverageConstants = {
 			orgUrl: "https://dev.azure.com/fluidframework",
 			projectName: "public",
 			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdBaseline,
-			artifactName: flags.codeCoverageAnalysisArtifactNameBaseline,
+			artifactName: artifactNamePrefix,
 			branch: flags.targetBranchName,
 			buildsToSearch: 50,
 		};
@@ -102,64 +90,114 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 			orgUrl: "https://dev.azure.com/fluidframework",
 			projectName: "public",
 			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdPR,
-			artifactName: flags.codeCoverageAnalysisArtifactNamePR,
+			artifactName: artifactNamePrefix,
 			buildsToSearch: 20,
 			buildId: flags.adoBuildId,
 		};
 
+		const repoInfo = flags.githubRepositoryName.split("/");
+		if (repoInfo.length !== 2) {
+			this.errorLog("Invalid github repository name");
+			return;
+		}
 		const githubProps: GitHubProps = {
-			owner: flags.githubRepositoryOwner,
-			repo: flags.githubRepositoryName,
+			owner: repoInfo[0],
+			repo: repoInfo[1],
 			token: flags.githubApiToken,
 		};
 
-		// Get the paths of the files that have changed in the PR relative to root of the repo.
-		// This is used to determine which packages have been affect so that we can do code coverage
-		// analysis on those packages only.
-		const changedFiles = await getChangedFilePaths(githubProps, flags.githubPRNumber);
-
-		let commentMessage: string = "";
-		const report = await getCodeCoverageReport(
-			flags.adoApiToken,
-			codeCoverageConstantsForBaseline,
-			codeCoverageConstantsForPR,
-			changedFiles,
-			this.logger,
-		).catch((error: Error) => {
-			commentMessage = "## Code Coverage Summary\n\nError getting code coverage report";
-			this.logger.errorLog(`Error getting code coverage report: ${error}`);
-			return undefined;
-		});
-
+		let shouldFailBuildOnRegression = true;
 		// Don't fail if we can not compare the code coverage due to an error.
 		let success: boolean = true;
-		if (report !== undefined) {
-			const packagesListWithCodeCoverageChanges = getPackagesWithCodeCoverageChanges(
-				report.comparisonData,
+		// If any error occurs while getting the code coverage metrics, we will log the error and return.
+		// We don't want this check to throw and potentially cause build failures as that would be error in this
+		// command and not in the PR. If we see no comments getting posted on the PR because of this, then we can
+		// investigate the command and fix it.
+		try {
+			const commentBody = await getCommentBody(
+				githubProps,
+				flags.githubPRNumber,
+				commentIdentifier,
+			);
+			if (commentBody !== undefined) {
+				// Use a regular expression to find the checkbox in the comment body
+				const checkboxRegex = /- \[([ Xx])]/;
+				const match = checkboxRegex.exec(commentBody);
+
+				if (match !== null) {
+					// If the checkbox is checked, the match will be 'x' or 'X'
+					shouldFailBuildOnRegression = !(match[1].toLowerCase() === "x");
+				}
+			}
+
+			// Get the paths of the files that have changed in the PR relative to root of the repo.
+			// This is used to determine which packages have been affect so that we can do code coverage
+			// analysis on those packages only.
+			const changedFiles = await getChangedFilePaths(githubProps, flags.githubPRNumber);
+
+			let commentMessage: string = "";
+			const report = await getCodeCoverageReport(
+				flags.adoApiToken,
+				codeCoverageConstantsForBaseline,
+				codeCoverageConstantsForPR,
+				changedFiles,
 				this.logger,
-			);
+			).catch((error: Error) => {
+				commentMessage = "## Code Coverage Summary\n\nError getting code coverage report";
+				this.logger.errorLog(`Error getting code coverage report: ${error}`);
+			});
 
-			success = isCodeCoverageCriteriaPassed(packagesListWithCodeCoverageChanges, this.logger);
+			if (report !== undefined) {
+				const packagesListWithCodeCoverageChanges = getPackagesWithCodeCoverageChanges(
+					report.comparisonData,
+					this.logger,
+				);
 
-			commentMessage = getCommentForCodeCoverageDiff(
-				packagesListWithCodeCoverageChanges,
-				report.baselineBuildMetrics,
-				success,
+				success = isCodeCoverageCriteriaPassed(
+					packagesListWithCodeCoverageChanges,
+					this.logger,
+				);
+
+				commentMessage = getCommentForCodeCoverageDiff(
+					packagesListWithCodeCoverageChanges,
+					report.baselineBuildMetrics,
+					success,
+				);
+			}
+
+			let messageContentWithIdentifier = `${commentIdentifier}\n\n${commentMessage}`;
+
+			if (!success) {
+				messageContentWithIdentifier = shouldFailBuildOnRegression
+					? `${messageContentWithIdentifier}\n\n- [ ] Skip This Check!!`
+					: `${messageContentWithIdentifier}\n\n- [x] Skip This Check!!`;
+
+				messageContentWithIdentifier = `${messageContentWithIdentifier}\n${summaryFooterOnFailure}`;
+			}
+
+			await createOrUpdateCommentOnPr(
+				githubProps,
+				flags.githubPRNumber,
+				messageContentWithIdentifier,
+				commentIdentifier,
 			);
+		} catch (error) {
+			this.errorLog(`Error in code coverage check: ${error}`);
+			return;
 		}
-
-		const messageContentWithIdentifier = `${commentIdentifier}\n\n${commentMessage}`;
-
-		await createOrUpdateCommentOnPr(
-			githubProps,
-			flags.githubPRNumber,
-			messageContentWithIdentifier,
-			commentIdentifier,
-		);
-
 		// Fail the build if the code coverage analysis shows that a regression has been found.
-		if (!success) {
+		if (!success && shouldFailBuildOnRegression) {
 			this.error("Code coverage failed", { exit: 255 });
 		}
 	}
 }
+
+const summaryFooterOnFailure =
+	"### What to do if the code coverage check fails:\n" +
+	"- Ideally, add more tests to increase the code coverage for the package(s) whose code-coverage regressed.\n" +
+	"- If a regression is causing the build to fail and is due to removal of tests, removal of code with lots of tests or any other valid reason, there is a checkbox further up in this comment that determines if the code coverage check should fail the build or not. You can check the box and trigger the build again. The test coverage analysis will still be done, but it will not fail the build if a regression is detected.\n" +
+	"- Unchecking the checkbox and triggering another build should go back to failing the build if a test-coverage regression is detected.\n\n" +
+	"- You can check which lines are covered or not covered by your tests with these steps:\n" +
+	"  - Go to the PR ADO build.\n" +
+	"  - Click on the link to see its published artifacts. You will see an artifact named `codeCoverageAnalysis`, which you can expand to reach to a particular source file's coverage html which will show which lines are covered/not covered by your tests.\n" +
+	"  - You can also run different kind of tests locally with `:coverage` tests commands to find out the coverage.\n";
