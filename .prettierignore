@@ -89,6 +89,9 @@ docs/.doc-models
 docs/.docusaurus
 docs/build
 
+# Formatting gets clobbered by swa
+docs/swa-cli.config.json
+
 # This is a test file
 tools/markdown-magic/test/include.md
 
