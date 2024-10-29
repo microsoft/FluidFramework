@@ -182,7 +182,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:build'
+            customCommand: 'run build'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
@@ -294,14 +294,14 @@ stages:
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:build'
+            customCommand: 'run build'
 
         - task: Npm@1
-          displayName: npm run ci:linkcheck
+          displayName: npm run linkcheck
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:linkcheck'
+            customCommand: 'run linkcheck'
 
 - stage: check_branch_version
   displayName: 'Check Version Deployment Condition'

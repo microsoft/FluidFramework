@@ -36,7 +36,7 @@ jobs:
       - name: Build site artifact
         run: |
           pnpm i --frozen-lockfile
-          npm run ci:build
+          npm run build
       - name: Upload site artifact
         uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # ratchet:actions/upload-artifact@v3
         with:
@@ -91,7 +91,7 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          pnpm run ci:linkcheck | tee ./results/linkcheck-output.txt
+          pnpm run linkcheck | tee ./results/linkcheck-output.txt
 
       - name: Save PR number
         run: echo ${{ github.event.number }} > ./results/pr
