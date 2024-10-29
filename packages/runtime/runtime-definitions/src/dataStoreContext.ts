@@ -610,6 +610,13 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * and its children with the GC details from the previous summary.
 	 */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
+
+	tryCreateDataStoreSync?(pkgPath: string[]):
+		| {
+				runtime: IFluidDataStoreChannel;
+				entrypoint: FluidObject;
+		  }
+		| undefined;
 }
 
 /**
@@ -624,4 +631,18 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 		factory: IProvideFluidDataStoreFactory,
 		dataStoreRuntime: IFluidDataStoreChannel,
 	): Promise<IDataStore>;
+}
+
+/**
+ * @legacy
+ * @alpha
+ * @deprecated - We reserve the right to change this interface in the future
+ * @experimental
+ */
+export interface IFluidDataStoreContextDetachedExperimental
+	extends IFluidDataStoreContextDetached {
+	/**
+	 * Binds a runtime to the context.
+	 */
+	unsafe_AttachRuntimeSync?(dataStoreRuntime: IFluidDataStoreChannel): IDataStore;
 }

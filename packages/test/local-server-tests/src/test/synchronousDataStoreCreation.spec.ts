@@ -16,6 +16,7 @@ import {
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type {
 	FluidDataStoreRegistryEntry,
+	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
@@ -58,25 +59,12 @@ class DataStoreWithSyncCreate {
 	createAnother() {
 		// creates a detached context with a factory who's package path is the same
 		// as the current datastore, but with another copy of its own type.
-		const context = this.context.containerRuntime.createDetachedDataStore([
+		const created = this.context.tryCreateDataStoreSync?.([
 			...this.context.packagePath,
 			DataStoreWithSyncCreate.type,
 		]);
 
-		const runtime = new FluidDataStoreRuntime(
-			context,
-			sharedObjectRegistry,
-			false,
-			async () => dataStore,
-		);
-		const dataStore = DataStoreWithSyncCreate.create(context, runtime);
-
-		const attachRuntimeP = context.attachRuntime(
-			DataStoreWithSyncCreateFactory.instance,
-			runtime,
-		);
-
-		return { dataStore, attachRuntimeP };
+		return created?.entrypoint as DataStoreWithSyncCreate;
 	}
 }
 
@@ -92,7 +80,7 @@ class DataStoreWithSyncCreateFactory
 	get IFluidDataStoreRegistry() {
 		return this;
 	}
-	async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
+	get(name: string): FluidDataStoreRegistryEntry | undefined {
 		// this factory is also a registry, which only supports creating itself
 		if (name === this.type) {
 			return this;
@@ -114,6 +102,20 @@ class DataStoreWithSyncCreateFactory
 			: DataStoreWithSyncCreate.create(context, runtime);
 
 		return runtime;
+	}
+
+	createDataStore(context: IFluidDataStoreContext): {
+		runtime: IFluidDataStoreChannel;
+		entrypoint: FluidObject;
+	} {
+		const runtime = new FluidDataStoreRuntime(
+			context,
+			sharedObjectRegistry,
+			false,
+			async () => entrypoint,
+		);
+		const entrypoint = DataStoreWithSyncCreate.create(context, runtime);
+		return { runtime, entrypoint };
 	}
 }
 
@@ -169,12 +171,9 @@ describe("Scenario Test", () => {
 				"container entrypoint must be DataStoreWithSyncCreate",
 			);
 
-			const { attachRuntimeP, dataStore } = entrypoint.DataStoreWithSyncCreate.createAnother();
+			const dataStore = entrypoint.DataStoreWithSyncCreate.createAnother();
 
 			dataStore.sharedMap.set("childValue", "childValue");
-
-			// can we make this synchronous
-			await attachRuntimeP;
 
 			entrypoint.DataStoreWithSyncCreate.sharedMap.set("childInstance", dataStore.handle);
 			if (container.isDirty) {

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidObject } from "@fluidframework/core-interfaces";
+
 import type { IFluidDataStoreChannel, IFluidDataStoreContext } from "./dataStoreContext.js";
 
 /**
@@ -41,4 +43,9 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel>;
+
+	createDataStore?(context: IFluidDataStoreContext): {
+		runtime: IFluidDataStoreChannel;
+		entrypoint: FluidObject;
+	};
 }

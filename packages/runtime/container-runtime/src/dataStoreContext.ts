@@ -15,7 +15,12 @@ import {
 	type IEvent,
 } from "@fluidframework/core-interfaces";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	isPromiseLike,
+	LazyPromise,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -55,6 +60,9 @@ import {
 	IInboundSignalMessage,
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
+	// eslint-disable-next-line import/no-deprecated
+	type IFluidDataStoreContextDetachedExperimental,
+	type IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -65,6 +73,7 @@ import {
 	LoggingError,
 	MonitoringContext,
 	ThresholdCounter,
+	UsageError,
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	generateStack,
@@ -487,7 +496,15 @@ export abstract class FluidDataStoreContext
 		return this.channelP;
 	}
 
+	private factory: IFluidDataStoreFactory | undefined;
+	public get IFluidDataStoreFactory() {
+		return this.factory;
+	}
+
 	protected async factoryFromPackagePath() {
+		if (this.factory !== undefined) {
+			return this.factory;
+		}
 		const packages = this.pkg;
 		if (packages === undefined) {
 			this.rejectDeferredRealize("packages is undefined");
@@ -512,15 +529,49 @@ export abstract class FluidDataStoreContext
 			}
 			registry = entry.IFluidDataStoreRegistry;
 		}
-		const factory = entry?.IFluidDataStoreFactory;
-		if (factory === undefined) {
+		this.factory = entry?.IFluidDataStoreFactory;
+		if (this.factory === undefined) {
 			this.rejectDeferredRealize("Can't find factory for package", lastPkg, packages);
 		}
 
 		assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
 		this.registry = registry;
 
-		return factory;
+		return this.factory;
+	}
+
+	public tryCreateDataStoreSync(pkgPath: string[]) {
+		const sharedPaths: string[] = [];
+		const localPaths = [...this.packagePath];
+		const newPaths: string[] = [...pkgPath];
+		while (newPaths[0] === localPaths[0] && newPaths[0] !== undefined) {
+			sharedPaths.push(newPaths[0]);
+			newPaths.shift();
+			localPaths.shift();
+		}
+		if (localPaths.length === 0) {
+			let factory: IFluidDataStoreFactory | undefined;
+			let registry = this.registry;
+			for (const pkg of newPaths) {
+				const maybe = registry?.get(pkg);
+				if (maybe === undefined || isPromiseLike(maybe)) {
+					throw new UsageError("must be sync");
+				}
+				factory = maybe?.IFluidDataStoreFactory;
+				registry = maybe?.IFluidDataStoreRegistry;
+			}
+			if (factory?.createDataStore === undefined) {
+				throw new UsageError("must exist");
+			}
+
+			// eslint-disable-next-line import/no-deprecated
+			const context: IFluidDataStoreContextDetachedExperimental =
+				this._containerRuntime.createDetachedDataStore([...sharedPaths, ...newPaths]);
+
+			const created = factory.createDataStore?.(context);
+			context.unsafe_AttachRuntimeSync?.(created?.runtime);
+			return created;
+		}
 	}
 
 	private async realizeCore(existing: boolean) {
@@ -1383,7 +1434,8 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
  */
 export class LocalDetachedFluidDataStoreContext
 	extends LocalFluidDataStoreContextBase
-	implements IFluidDataStoreContextDetached
+	// eslint-disable-next-line import/no-deprecated
+	implements IFluidDataStoreContextDetached, IFluidDataStoreContextDetachedExperimental
 {
 	constructor(props: ILocalDetachedFluidDataStoreContextProps) {
 		super(props);
@@ -1405,7 +1457,7 @@ export class LocalDetachedFluidDataStoreContext
 			.then(async () => {
 				const factory = registry.IFluidDataStoreFactory;
 
-				const factory2 = await this.factoryFromPackagePath();
+				const factory2 = this.IFluidDataStoreFactory ?? (await this.factoryFromPackagePath());
 				assert(factory2 === factory, 0x156 /* "Unexpected factory for package path" */);
 
 				await super.bindRuntime(dataStoreChannel, false /* existing */);
@@ -1426,6 +1478,13 @@ export class LocalDetachedFluidDataStoreContext
 			});
 
 		return this.channelToDataStoreFn(await this.channelP);
+	}
+
+	public unsafe_AttachRuntimeSync(channel: IFluidDataStoreChannel) {
+		this.channelP = Promise.resolve(channel);
+		this.processPendingOps(channel);
+		this.completeBindingRuntime(channel);
+		return this.channelToDataStoreFn(channel);
 	}
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {

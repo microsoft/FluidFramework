@@ -50,5 +50,10 @@ export interface IProvideFluidDataStoreRegistry {
  * @alpha
  */
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
-	get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
+	get(
+		name: string,
+	):
+		| Promise<FluidDataStoreRegistryEntry | undefined>
+		| FluidDataStoreRegistryEntry
+		| undefined;
 }
