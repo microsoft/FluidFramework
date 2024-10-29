@@ -102,11 +102,6 @@ export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
 	 * Returns the {@link IReleaseGroup} associated with a package.
 	 */
 	getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
-
-	/**
-	 * Returns the {@link IWorkspace} associated with a package.
-	 */
-	getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace>;
 }
 
 /**
@@ -114,16 +109,17 @@ export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
  */
 export interface Installable {
 	/**
-	 * Returns `true` if the item is installed. If this returns `false`, then the `install` function can be called to
-	 * install.
+	 * Returns `true` if the item is installed. If the item is not installed, an array of error strings will be returned.
 	 */
-	checkInstall(): Promise<boolean>;
+	checkInstall(): Promise<true | string[]>;
 
 	/**
 	 * Installs the item.
 	 *
 	 * @param updateLockfile - If true, the lockfile will be updated. Otherwise, the lockfile will not be updated. This
-	 * may cause the installation to fail.
+	 * may cause the installation to fail and this function to throw an error.
+	 *
+	 * @throws An error if `updateLockfile` is false and the lockfile is outdated.
 	 */
 	install(updateLockfile: boolean): Promise<boolean>;
 }
@@ -132,6 +128,9 @@ export interface Installable {
  * An interface for things that can be reloaded,
  */
 export interface Reloadable {
+	/**
+	 * Synchronously reload.
+	 */
 	reload(): void;
 }
 
@@ -182,6 +181,11 @@ export interface IWorkspace extends Installable, Reloadable {
 	 * A map of all the release groups in the workspace.
 	 */
 	releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
+
+	/**
+	 * The Fluid repo that the workspace belongs to.
+	 */
+	fluidRepo: IFluidRepo;
 
 	/**
 	 * An array of all the packages in the workspace. This includes the workspace root and any release group roots and
@@ -336,7 +340,7 @@ export interface IPackage<J extends PackageJson = PackageJson>
 	extends Installable,
 		Reloadable {
 	/**
-	 * The name of the package
+	 * The name of the package including the scope.
 	 */
 	readonly name: PackageName;
 

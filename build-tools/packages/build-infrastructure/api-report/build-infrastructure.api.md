@@ -13,6 +13,9 @@ import { SimpleGit } from 'simple-git';
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 // @public
+export function createPackageManager(name: PackageManagerName): IPackageManager;
+
+// @public
 export interface FluidPackageJsonFields {
     pnpm?: {
         overrides?: Record<string, string>;
@@ -21,6 +24,30 @@ export interface FluidPackageJsonFields {
 
 // @public
 export const FLUIDREPO_CONFIG_VERSION = 1;
+
+// @public
+export class FluidRepoBase<P extends IPackage> implements IFluidRepo<P> {
+    constructor(searchPath: string,
+    upstreamRemotePartialUrl?: string | undefined);
+    protected readonly configFilePath: string;
+    readonly configuration: IFluidRepoLayout;
+    getGitRepository(): Promise<Readonly<SimpleGit>>;
+    getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
+    get packages(): Map<PackageName, P>;
+    relativeToRepo(p: string): string;
+    get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup>;
+    reload(): void;
+    readonly root: string;
+    readonly upstreamRemotePartialUrl?: string | undefined;
+    get workspaces(): Map<WorkspaceName, IWorkspace>;
+}
+
+// @public
+export function getAllDependenciesInRepo(repo: IFluidRepo, packages: IPackage[]): {
+    packages: IPackage[];
+    releaseGroups: IReleaseGroup[];
+    workspaces: IWorkspace[];
+};
 
 // @public
 export function getFluidRepoLayout(searchPath: string, noCache?: boolean): {
@@ -49,7 +76,6 @@ export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
     configuration: IFluidRepoLayout;
     getGitRepository(): Promise<Readonly<SimpleGit>>;
     getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
-    getPackageWorkspace(pkg: Readonly<P>): Readonly<IWorkspace>;
     packages: Map<PackageName, P>;
     relativeToRepo(p: string): string;
     releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
@@ -72,7 +98,7 @@ export interface IFluidRepoLayout {
 
 // @public
 export interface Installable {
-    checkInstall(): Promise<boolean>;
+    checkInstall(): Promise<true | string[]>;
     install(updateLockfile: boolean): Promise<boolean>;
 }
 
@@ -126,6 +152,7 @@ export function isIReleaseGroup(toCheck: Exclude<any, string | number | ReleaseG
 // @public
 export interface IWorkspace extends Installable, Reloadable {
     directory: string;
+    fluidRepo: IFluidRepo;
     name: WorkspaceName;
     packages: IPackage[];
     releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
@@ -135,10 +162,44 @@ export interface IWorkspace extends Installable, Reloadable {
 }
 
 // @public
+export function loadFluidRepo<P extends IPackage>(searchPath: string, upstreamRemotePartialUrl?: string): IFluidRepo<P>;
+
+// @public
 export class NotInGitRepository extends Error {
-    constructor(path: string);
-    // (undocumented)
+    constructor(
+    path: string);
     readonly path: string;
+}
+
+// @public
+export abstract class PackageBase<J extends PackageJson = PackageJson, TAddProps extends AdditionalPackageProps = undefined> implements IPackage<J> {
+    constructor(
+    packageJsonFilePath: string,
+    packageManager: IPackageManager,
+    workspace: IWorkspace,
+    isWorkspaceRoot: boolean,
+    releaseGroup: ReleaseGroupName,
+    isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
+    checkInstall(): Promise<true | string[]>;
+    get combinedDependencies(): Generator<PackageDependency, void>;
+    get directory(): string;
+    getScript(name: string): string | undefined;
+    install(updateLockfile: boolean): Promise<boolean>;
+    isReleaseGroupRoot: boolean;
+    readonly isWorkspaceRoot: boolean;
+    get name(): PackageName;
+    get nameColored(): string;
+    get packageJson(): J;
+    readonly packageJsonFilePath: string;
+    readonly packageManager: IPackageManager;
+    get private(): boolean;
+    readonly releaseGroup: ReleaseGroupName;
+    reload(): void;
+    savePackageJson(): Promise<void>;
+    // (undocumented)
+    toString(): string;
+    get version(): string;
+    readonly workspace: IWorkspace;
 }
 
 // @public
@@ -170,7 +231,6 @@ export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
 
 // @public
 export interface Reloadable {
-    // (undocumented)
     reload(): void;
 }
 
