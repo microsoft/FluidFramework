@@ -26,5 +26,9 @@ node_modules/@fluidframework/tree/lib/util/utils.d.ts:5:29 - error TS7016: Could
                               ~~~~~~~~~~~~~~~~~~~~~~~~~
 ```
 
-While neither of these compile errors are in the `@public` API surface, they could impact customers using the public API due to how `libCheck` works and how Fluid Framework handles it's API exports.
-This change fixes these errors which should allow `libCheck` to be reenabled.
+The first error impacts projects using TypeScript 5.5 or greater and either of the `fluid-framework` or `@fluidframework/merge-tree` packages.
+The second error impacts projects using the `noImplicitAny` tsconfig setting and the `fluid-framework` or `@fluidframework/tree` packages.
+
+Both have been fixed.
+
+This should allow `libCheck` to be reenabled in any impacted projects.
