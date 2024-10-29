@@ -5,8 +5,12 @@
       "appLocation": ".",
       "outputLocation": "build",
       "appBuildCommand": "npm run build",
-      "run": "npm start",
-      "appDevserverUrl": "http://localhost:3000"
+      "run": "npm run serve",
+      "appDevserverUrl": "http://localhost:3000",
+      "swaConfigLocation": ".",
+      "apiLocation": "api",
+      "appName": "ff-doc-site",
+      "resourceGroup": "website"
     }
   }
 }
