@@ -66,7 +66,7 @@ function testObjectLike(testCases: TestCaseErased[]) {
 		describe("satisfies 'deepEqual'", () => {
 			unsafeMapErased(
 				testCases,
-				<TSchema extends ImplicitFieldSchema>(item: TestCase<TSchema>) => {
+				<const TSchema extends ImplicitFieldSchema>(item: TestCase<TSchema>) => {
 					it(item.name ?? pretty(item.initialTree).toString(), () => {
 						const proxy = hydrate(item.schema, item.initialTree);
 						assert.deepEqual(proxy, item.initialTree, "Proxy must satisfy 'deepEqual'.");
@@ -86,7 +86,10 @@ function testObjectLike(testCases: TestCaseErased[]) {
 
 			unsafeMapErased(
 				testCases,
-				<TSchema extends ImplicitFieldSchema>({ initialTree, schema }: TestCase<TSchema>) => {
+				<const TSchema extends ImplicitFieldSchema>({
+					initialTree,
+					schema,
+				}: TestCase<TSchema>) => {
 					describe("instanceof Object", () => {
 						it(`${pretty(initialTree)} -> true`, () => {
 							const root = hydrate(schema, initialTree);
@@ -150,7 +153,7 @@ function testObjectLike(testCases: TestCaseErased[]) {
 		function test1(fn: (subject: object) => unknown) {
 			unsafeMapErased(
 				testCases,
-				<TSchema extends ImplicitFieldSchema>({
+				<const TSchema extends ImplicitFieldSchema>({
 					initialTree,
 					schema,
 					name,

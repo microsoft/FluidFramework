@@ -104,10 +104,11 @@ export function createR11sNetworkError(
 	errorMessage: string,
 	statusCode: number,
 	retryAfterMs?: number,
+	additionalProps?: DriverErrorTelemetryProps,
 	internalErrorCode?: string | number,
 ): IFluidErrorBase & R11sError {
 	let error: IFluidErrorBase & R11sError;
-	const props = { statusCode, driverVersion };
+	const props = { ...additionalProps, statusCode, driverVersion };
 	switch (statusCode) {
 		case 401:
 		// The first 401 is manually retried in RouterliciousRestWrapper with a refreshed token,
@@ -148,10 +149,9 @@ export function throwR11sNetworkError(
 	errorMessage: string,
 	statusCode: number,
 	retryAfterMs?: number,
+	additionalProps?: DriverErrorTelemetryProps,
 ): never {
-	const networkError = createR11sNetworkError(errorMessage, statusCode, retryAfterMs);
-
-	throw networkError;
+	throw createR11sNetworkError(errorMessage, statusCode, retryAfterMs, additionalProps);
 }
 
 /**
@@ -160,6 +160,7 @@ export function throwR11sNetworkError(
 export function errorObjectFromSocketError(
 	socketError: IR11sSocketError,
 	handler: string,
+	additionalProps?: DriverErrorTelemetryProps,
 ): R11sError {
 	// pre-0.58 error message prefix: R11sSocketError
 	const message = `R11s socket error (${handler}): ${socketError.message}`;
@@ -167,6 +168,7 @@ export function errorObjectFromSocketError(
 		message,
 		socketError.code,
 		socketError.retryAfterMs,
+		additionalProps,
 		socketError.internalErrorCode,
 	);
 	error.addTelemetryProperties({
@@ -175,4 +177,33 @@ export function errorObjectFromSocketError(
 		internalErrorCode: socketError.internalErrorCode,
 	});
 	return error;
+}
+
+/** Simulate the pathname for socket connection */
+export const socketIoPath = "socket.io";
+
+/**
+ * Get a stripped version of a URL safe for r11s telemetry
+ * @returns undefined if no appropriate hostName is provided
+ */
+export function getUrlForTelemetry(hostName: string, path?: string): string | undefined {
+	// Strip off "http://" or "https://"
+	const hostNameMatch = hostName.match(/^(?:https?:\/\/)?([^/]+)/);
+	if (!hostNameMatch) {
+		return undefined;
+	}
+	const strippedHostName = hostNameMatch[1];
+
+	let extractedPath: string | undefined;
+	if (path !== undefined) {
+		// Extract the first portion of the path and explicitly match it to known path names
+		const pathMatch = path.match(/^\/?([^/]+)/);
+		if (pathMatch && [socketIoPath, "repos", "deltas", "documents"].includes(pathMatch[1])) {
+			extractedPath = pathMatch[1];
+		}
+	}
+
+	return extractedPath !== undefined
+		? `${strippedHostName}/${extractedPath}`
+		: strippedHostName;
 }
