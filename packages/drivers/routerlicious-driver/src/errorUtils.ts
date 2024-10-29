@@ -13,9 +13,11 @@ import {
 	GenericNetworkError,
 	NonRetryableError,
 	createGenericNetworkError,
+	type DriverErrorTelemetryProps,
 } from "@fluidframework/driver-utils/internal";
-import { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
+import { R11sServiceClusterDrainingErrorCode } from "./contracts.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
@@ -31,6 +33,12 @@ export const RouterliciousErrorTypes = {
 	 * SSL Certificate Error.
 	 */
 	sslCertError: "sslCertError",
+
+	/**
+	 * Error for when the service drains a cluster to which the socket connection is connected to and it disconnects
+	 * all the clients in that cluster.
+	 */
+	clusterDrainingError: "clusterDrainingError",
 } as const;
 /**
  * @internal
@@ -66,6 +74,24 @@ export interface IR11sSocketError {
 	 * The client should wait this many milliseconds before retrying its request.
 	 */
 	retryAfterMs?: number;
+
+	/**
+	 * Optional internalErrorCode to specify the specific error code for the error within the main code above.
+	 */
+	internalErrorCode?: string | number;
+}
+
+export class ClusterDrainingError extends LoggingError implements IFluidErrorBase {
+	readonly errorType = RouterliciousErrorTypes.clusterDrainingError;
+	readonly canRetry = true;
+
+	constructor(
+		message: string,
+		readonly retryAfterSeconds: number,
+		props: DriverErrorTelemetryProps,
+	) {
+		super(message, props);
+	}
 }
 
 export interface IR11sError extends Omit<IDriverErrorBase, "errorType"> {
@@ -78,6 +104,7 @@ export function createR11sNetworkError(
 	errorMessage: string,
 	statusCode: number,
 	retryAfterMs?: number,
+	internalErrorCode?: string | number,
 ): IFluidErrorBase & R11sError {
 	let error: IFluidErrorBase & R11sError;
 	const props = { statusCode, driverVersion };
@@ -99,6 +126,15 @@ export function createR11sNetworkError(
 		case 502:
 			error = new GenericNetworkError(errorMessage, true, props);
 			break;
+		case 503:
+			if (internalErrorCode === R11sServiceClusterDrainingErrorCode) {
+				error = new ClusterDrainingError(
+					errorMessage,
+					retryAfterMs !== undefined ? retryAfterMs / 1000 : 660,
+					props,
+				);
+				break;
+			}
 		default:
 			const retryInfo = { canRetry: retryAfterMs !== undefined, retryAfterMs };
 			error = createGenericNetworkError(errorMessage, retryInfo, props);
@@ -127,5 +163,16 @@ export function errorObjectFromSocketError(
 ): R11sError {
 	// pre-0.58 error message prefix: R11sSocketError
 	const message = `R11s socket error (${handler}): ${socketError.message}`;
-	return createR11sNetworkError(message, socketError.code, socketError.retryAfterMs);
+	const error = createR11sNetworkError(
+		message,
+		socketError.code,
+		socketError.retryAfterMs,
+		socketError.internalErrorCode,
+	);
+	error.addTelemetryProperties({
+		relayServiceError: true,
+		scenarioName: handler,
+		internalErrorCode: socketError.internalErrorCode,
+	});
+	return error;
 }
