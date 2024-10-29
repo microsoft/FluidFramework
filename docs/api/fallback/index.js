@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import routes from "./routes.js";
+import { routes } from "./routes.js";
 
 /**
  * Handles incoming HTTP requests and redirects them to the appropriate URL based on the current and LTS versions.

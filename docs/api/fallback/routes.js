@@ -8,7 +8,7 @@
 /**
  * Map of incoming URL paths to redirect URLs.
  */
-const routes = [
+export const routes = [
 	// We previously served the API docs out of `docs/apis`.
 	// Forward to current version of the API docs (`docs/api`).
 	{ from: "/docs/apis", to: "/docs/api" },
