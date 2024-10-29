@@ -79,6 +79,9 @@
 			},
 			"ClassDeclaration_MongoManager": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITenantManager": {
+				"forwardCompat": false
 			}
 		}
 	}

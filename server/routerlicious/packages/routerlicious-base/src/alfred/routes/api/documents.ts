@@ -14,6 +14,7 @@ import {
 	IRevokeTokenOptions,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
+	type ITenantConfig,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -51,12 +52,10 @@ import { v4 as uuid } from "uuid";
 import { Constants, getSession, StageTrace } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
 import type { RequestHandler } from "express-serve-static-core";
-import { ITenantRepository, ITenantDocument } from "../../../riddler";
 
 export function create(
 	storage: IDocumentStorage,
 	appTenants: IAlfredTenant[],
-	tenantRepository: ITenantRepository,
 	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
@@ -302,9 +301,8 @@ export function create(
 		documentHistorianUrl: string;
 		documentDeltaStreamUrl: string;
 	}> {
-		const tenantInfo: ITenantDocument = await tenantRepository.findOne({ _id: tenantId });
+		const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
 		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
-		// const privateLinkEnable = true;
 		if (privateLinkEnable) {
 			return {
 				documentOrdererUrl: externalOrdererUrl.replace("https://", `https://${tenantId}.`),

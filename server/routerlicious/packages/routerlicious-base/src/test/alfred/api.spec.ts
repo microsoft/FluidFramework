@@ -18,7 +18,6 @@ import {
 	TestProducer,
 	TestKafka,
 	TestNotImplementedDocumentRepository,
-	TestNotImplementedTenantRepository,
 } from "@fluidframework/server-test-utils";
 import {
 	IDocument,
@@ -126,7 +125,6 @@ describe("Routerlicious", () => {
 				undefined,
 			);
 			const defaultDeltaService = new DeltaService(deltasCollection, defaultTenantManager);
-			const defaultTenantRepository = new TestNotImplementedTenantRepository();
 			const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
 			const defaultDocumentDeleteService = new DocumentDeleteService();
 			const defaultCollaborationSessionEventEmitter =
@@ -183,7 +181,6 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						defaultTenantRepository,
 						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
@@ -400,7 +397,6 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						defaultTenantRepository,
 						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
@@ -610,7 +606,6 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						defaultTenantRepository,
 						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
@@ -747,7 +742,6 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						defaultTenantRepository,
 						restTenantThrottlers,
 						restClusterThrottlers,
 						new TestCache(),
@@ -840,7 +834,6 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						defaultTenantRepository,
 						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
@@ -968,7 +961,6 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						defaultTenantRepository,
 						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,

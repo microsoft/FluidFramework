@@ -38,12 +38,10 @@ import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from 
 import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { ITenantRepository } from "../riddler";
 
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantRepository: ITenantRepository,
 	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
@@ -163,7 +161,6 @@ export function create(
 	const routes = alfredRoutes.create(
 		config,
 		tenantManager,
-		tenantRepository,
 		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,

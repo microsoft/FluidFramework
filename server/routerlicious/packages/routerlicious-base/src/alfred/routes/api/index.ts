@@ -28,12 +28,10 @@ import * as deltas from "./deltas";
 import * as documents from "./documents";
 import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { ITenantRepository } from "../../../riddler";
 
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantRepository: ITenantRepository,
 	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
@@ -65,7 +63,6 @@ export function create(
 	const documentsRoute = documents.create(
 		storage,
 		appTenants,
-		tenantRepository,
 		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,

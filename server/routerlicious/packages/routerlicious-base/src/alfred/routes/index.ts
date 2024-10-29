@@ -24,7 +24,6 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { IDocumentDeleteService } from "../services";
 import * as api from "./api";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { ITenantRepository } from "../../riddler";
 
 export interface IRoutes {
 	agent: Router;
@@ -34,7 +33,6 @@ export interface IRoutes {
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantRepository: ITenantRepository,
 	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
@@ -56,7 +54,6 @@ export function create(
 		api: api.create(
 			config,
 			tenantManager,
-			tenantRepository,
 			tenantThrottlers,
 			clusterThrottlers,
 			singleUseTokenCache,
