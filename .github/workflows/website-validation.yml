@@ -41,7 +41,7 @@ jobs:
         uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # ratchet:actions/upload-artifact@v3
         with:
           name: fluidframework-site
-          path: docs/public
+          path: docs/build
           retention-days: 3
 
   lint:
@@ -83,7 +83,7 @@ jobs:
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # ratchet:actions/download-artifact@v3
         with:
           name: fluidframework-site
-          path: docs/public
+          path: docs/build
       - name: Install dependencies
         run: "pnpm i --frozen-lockfile"
       - name: Check for broken links
