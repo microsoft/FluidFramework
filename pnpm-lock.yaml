@@ -97,8 +97,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(prettier@3.0.3)
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -636,14 +636,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -651,8 +651,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -766,14 +766,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -781,8 +781,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -944,14 +944,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -959,8 +959,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1074,20 +1074,20 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1201,14 +1201,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1216,8 +1216,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1419,14 +1419,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -1434,8 +1434,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1531,20 +1531,20 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1713,20 +1713,20 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1828,20 +1828,20 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -1934,20 +1934,20 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -2388,14 +2388,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       less:
         specifier: ~3.12.0
         version: 3.12.2
@@ -2406,8 +2406,8 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -2506,20 +2506,20 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -2712,20 +2712,20 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -2818,20 +2818,20 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3143,20 +3143,20 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -3830,20 +3830,20 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -4189,14 +4189,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -4204,8 +4204,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -4343,14 +4343,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -4358,8 +4358,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -4555,8 +4555,8 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5063,14 +5063,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5078,8 +5078,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5232,14 +5232,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5247,8 +5247,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5410,14 +5410,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5425,8 +5425,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5570,14 +5570,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5585,8 +5585,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5703,20 +5703,20 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5809,14 +5809,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5824,8 +5824,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -5933,14 +5933,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -5948,8 +5948,8 @@ importers:
         specifier: ^0.11.10
         version: 0.11.10
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7319,14 +7319,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       mocha:
         specifier: ^10.2.0
         version: 10.7.3
@@ -7340,8 +7340,8 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rewire:
         specifier: ^5.0.0
         version: 5.0.0
@@ -9242,6 +9242,9 @@ importers:
       '@tylerbu/sorted-btree-es6':
         specifier: ^1.8.0
         version: 1.8.0
+      '@types/ungap__structured-clone':
+        specifier: ^1.2.0
+        version: 1.2.0
       '@ungap/structured-clone':
         specifier: ^1.2.0
         version: 1.2.0
@@ -9312,9 +9315,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.54
-      '@types/ungap__structured-clone':
-        specifier: ^1.2.0
-        version: 1.2.0
       '@types/uuid':
         specifier: ^9.0.2
         version: 9.0.8
@@ -14917,8 +14917,8 @@ importers:
         specifier: ^0.49.0
         version: 0.49.0
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -15211,14 +15211,14 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.15.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       jsdom:
         specifier: ^16.7.0
         version: 16.7.0
@@ -15235,8 +15235,8 @@ importers:
         specifier: ^2.1.3
         version: 2.1.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -15546,8 +15546,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0
       jest-environment-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(typescript@5.4.5)
       jest-junit:
         specifier: ^10.0.0
         version: 10.0.0
@@ -15555,8 +15555,8 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.15.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -23210,8 +23210,8 @@ packages:
       fs-extra: 11.2.0
     dev: true
 
-  /@puppeteer/browsers@2.3.0:
-    resolution: {integrity: sha512-ioXoq9gPxkss4MYhD+SFaU9p1IHFUX0ILAWFPyjGaBdjLsYAlZw6j1iLA0N/m12uVHLFDfSYNF7EQccjinIMDA==}
+  /@puppeteer/browsers@2.4.0:
+    resolution: {integrity: sha512-x8J1csfIygOwf6D6qUAZ0ASk3z63zPb7wkNeHRerCMh82qWKUrOgkuP005AJC8lDL6/evtXETGEJVcwykKT4/g==}
     engines: {node: '>=18'}
     hasBin: true
     dependencies:
@@ -24329,7 +24329,6 @@ packages:
 
   /@types/ungap__structured-clone@1.2.0:
     resolution: {integrity: sha512-ZoaihZNLeZSxESbk9PUAPZOlSpcKx81I1+4emtULDVmBLkYutTcMlCj2K9VNlf9EWODxdO6gkAqEaLorXwZQVA==}
-    dev: true
 
   /@types/unist@2.0.11:
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}
@@ -26337,12 +26336,12 @@ packages:
     resolution: {integrity: sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==}
     engines: {node: '>=6.0'}
 
-  /chromium-bidi@0.6.3(devtools-protocol@0.0.1312386):
-    resolution: {integrity: sha512-qXlsCmpCZJAnoTYI83Iu6EdYQpMYdVkCfq08KDh2pmlVqK5t5IA9mGs4/LwCwp4fqisSOMXZxP3HIh8w8aRn0A==}
+  /chromium-bidi@0.8.0(devtools-protocol@0.0.1354347):
+    resolution: {integrity: sha512-uJydbGdTw0DEUjhoogGveneJVWX/9YuqkWePzMmkBYwtdAqo5d3J/ovNKFr+/2hWXYmYCr6it8mSSTIj6SS6Ug==}
     peerDependencies:
       devtools-protocol: '*'
     dependencies:
-      devtools-protocol: 0.0.1312386
+      devtools-protocol: 0.0.1354347
       mitt: 3.0.1
       urlpattern-polyfill: 10.0.0
       zod: 3.23.8
@@ -27557,8 +27556,8 @@ packages:
       dequal: 2.0.3
     dev: true
 
-  /devtools-protocol@0.0.1312386:
-    resolution: {integrity: sha512-DPnhUXvmvKT2dFA/j7B+riVLUt9Q6RKJlcppojL5CoRywJJKLDYnRlw0gTFKfgDPHP5E04UoB71SxoJlVZy8FA==}
+  /devtools-protocol@0.0.1354347:
+    resolution: {integrity: sha512-BlmkSqV0V84E2WnEnoPnwyix57rQxAM5SKJjf4TbYOCGLAWtz8CDH8RIaGOjPgPCXo2Mce3kxSY497OySidY3Q==}
     dev: true
 
   /didyoumean@1.2.2:
@@ -28676,6 +28675,11 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       homedir-polyfill: 1.0.3
+    dev: true
+
+  /expect-puppeteer@10.1.3:
+    resolution: {integrity: sha512-2t1D2t0AfBDMp8rMHEws6mRx1iXeER6sOrIm/8sxM3KxkY7O8AD6j5XfTtVJI6Updc/c4IiuFSz3o/82soHUdA==}
+    engines: {node: '>=16'}
     dev: true
 
   /expect-puppeteer@9.0.2:
@@ -31038,15 +31042,15 @@ packages:
       - supports-color
     dev: true
 
-  /jest-dev-server@9.0.2:
-    resolution: {integrity: sha512-Zc/JB0IlNNrpXkhBw+h86cGrde/Mey52KvF+FER2eyrtYJTHObOwW7Iarxm3rPyTKby5+3Y2QZtl8pRz/5GCxg==}
+  /jest-dev-server@10.1.1:
+    resolution: {integrity: sha512-Yk9gmW/io2udONlhdrsC69ZGYM2CISvGItyYk9zD5QK3tGq8ZAJP27NDHma4hI6ey/zcaiqbrDkIf7dmpHq86w==}
     engines: {node: '>=16'}
     dependencies:
       chalk: 4.1.2
       cwd: 0.10.0
       find-process: 1.4.7
       prompts: 2.4.2
-      spawnd: 9.0.2
+      spawnd: 10.1.1
       tree-kill: 1.2.2
       wait-on: 7.2.0
     transitivePeerDependencies:
@@ -31117,14 +31121,14 @@ packages:
       jest-util: 29.7.0
     dev: true
 
-  /jest-environment-puppeteer@9.0.2(typescript@5.4.5):
-    resolution: {integrity: sha512-t7+W4LUiPoOz+xpKREgnu6IElMuRthOWTkrThDZqVKPmLhwbK3yx7OCiX8xT1Pw/Cv5WnSoNhwtN7czdCC3fQg==}
+  /jest-environment-puppeteer@10.1.3(typescript@5.4.5):
+    resolution: {integrity: sha512-dHBP44r0f1RUis6kWTxYmPyoB2QWXeotzzRWVjIgbiLIVIaRsKkvj3pIscRXQbJIfwaTAT+W50h0URV47IMc1Q==}
     engines: {node: '>=16'}
     dependencies:
       chalk: 4.1.2
       cosmiconfig: 8.3.6(typescript@5.4.5)
       deepmerge: 4.3.1
-      jest-dev-server: 9.0.2
+      jest-dev-server: 10.1.1
       jest-environment-node: 29.7.0
     transitivePeerDependencies:
       - debug
@@ -31226,15 +31230,15 @@ packages:
       jest-resolve: 29.7.0
     dev: true
 
-  /jest-puppeteer@9.0.2(puppeteer@22.15.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-ZB0K/tH+0e7foRRn+VpKIufvkW1by8l7ifh62VOdOh5ijEf7yt8W2/PcBNNwP0RLm46AytiBkrIEenvWhxcBRQ==}
+  /jest-puppeteer@10.1.3(puppeteer@23.6.0)(typescript@5.4.5):
+    resolution: {integrity: sha512-YQYrv7Wq3IWySyCsX6pmaSXq8VexELlxW073YvwKx6J4mchhTSHilIa5O0Wv2j95/pZtfAi/PzVmsOuCCcFlig==}
     engines: {node: '>=16'}
     peerDependencies:
       puppeteer: '>=19'
     dependencies:
-      expect-puppeteer: 9.0.2
-      jest-environment-puppeteer: 9.0.2(typescript@5.4.5)
-      puppeteer: 22.15.0(typescript@5.4.5)
+      expect-puppeteer: 10.1.3
+      jest-environment-puppeteer: 10.1.3(typescript@5.4.5)
+      puppeteer: 23.6.0(typescript@5.4.5)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -35287,14 +35291,15 @@ packages:
       escape-goat: 4.0.0
     dev: true
 
-  /puppeteer-core@22.15.0:
-    resolution: {integrity: sha512-cHArnywCiAAVXa3t4GGL2vttNxh7GqXtIYGym99egkNJ3oG//wL9LkvO4WE8W1TJe95t1F1ocu9X4xWaGsOKOA==}
+  /puppeteer-core@23.6.0:
+    resolution: {integrity: sha512-se1bhgUpR9C529SgHGr/eyT92mYyQPAhA2S9pGtGrVG2xob9qE6Pbp7TlqiSPlnnY1lINqhn6/67EwkdzOmKqQ==}
     engines: {node: '>=18'}
     dependencies:
-      '@puppeteer/browsers': 2.3.0
-      chromium-bidi: 0.6.3(devtools-protocol@0.0.1312386)
+      '@puppeteer/browsers': 2.4.0
+      chromium-bidi: 0.8.0(devtools-protocol@0.0.1354347)
       debug: 4.3.7(supports-color@8.1.1)
-      devtools-protocol: 0.0.1312386
+      devtools-protocol: 0.0.1354347
+      typed-query-selector: 2.12.0
       ws: 8.18.0
     transitivePeerDependencies:
       - bufferutil
@@ -35302,16 +35307,18 @@ packages:
       - utf-8-validate
     dev: true
 
-  /puppeteer@22.15.0(typescript@5.4.5):
-    resolution: {integrity: sha512-XjCY1SiSEi1T7iSYuxS82ft85kwDJUS7wj1Z0eGVXKdtr5g4xnVcbjwxhq5xBnpK/E7x1VZZoJDxpjAOasHT4Q==}
+  /puppeteer@23.6.0(typescript@5.4.5):
+    resolution: {integrity: sha512-l+Fgo8SVFSd51STtq2crz8t1Y3VXowsuR4zfR64qDOn6oggz7YIZauWiNR4IJjczQ6nvFs3S4cgng55/nesxTQ==}
     engines: {node: '>=18'}
     hasBin: true
     requiresBuild: true
     dependencies:
-      '@puppeteer/browsers': 2.3.0
+      '@puppeteer/browsers': 2.4.0
+      chromium-bidi: 0.8.0(devtools-protocol@0.0.1354347)
       cosmiconfig: 9.0.0(typescript@5.4.5)
-      devtools-protocol: 0.0.1312386
-      puppeteer-core: 22.15.0
+      devtools-protocol: 0.0.1354347
+      puppeteer-core: 23.6.0
+      typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -36909,8 +36916,8 @@ packages:
       cross-spawn: 7.0.3
     dev: true
 
-  /spawnd@9.0.2:
-    resolution: {integrity: sha512-nl8DVHEDQ57IcKakzpjanspVChkMpGLuVwMR/eOn9cXE55Qr6luD2Kn06sA0ootRMdgrU4tInN6lA6ohTNvysw==}
+  /spawnd@10.1.1:
+    resolution: {integrity: sha512-kTim9sz8KuKX7ZcO8imlvEvbaJmFtFhT5tKS0WP5FRlmWLH5Pd9qj9u29nbMrvDcJPj8ltwOG+QAiZq928GKCw==}
     engines: {node: '>=16'}
     dependencies:
       signal-exit: 4.1.0
@@ -38202,6 +38209,10 @@ packages:
       has-proto: 1.0.3
       is-typed-array: 1.1.13
       possible-typed-array-names: 1.0.0
+
+  /typed-query-selector@2.12.0:
+    resolution: {integrity: sha512-SbklCd1F0EiZOyPiW192rrHZzZ5sBijB6xM+cpmrwDqObvdtunOHHIk9fCGsoK5JVIYXoyEp4iEdE3upFH3PAg==}
+    dev: true
 
   /typed-rest-client@1.8.11:
     resolution: {integrity: sha512-5UvfMpd1oelmUPRbbaVnq+rHP7ng2cE4qoQkQeAqxRL6PklkxsM0g32/HL0yfvruK6ojQ5x8EE+HF4YV6DtuCA==}
