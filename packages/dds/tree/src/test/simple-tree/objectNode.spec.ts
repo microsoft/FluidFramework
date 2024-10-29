@@ -13,13 +13,48 @@ import {
 	typeSchemaSymbol,
 	type NodeBuilderData,
 } from "../../simple-tree/index.js";
-
+import type {
+	InsertableObjectFromSchemaRecord,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/objectNode.js";
 import { describeHydration, hydrate, pretty } from "./utils.js";
-import type { requireAssignableTo } from "../../util/index.js";
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+} from "../../util/index.js";
 import { validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
+import type {
+	InsertableTreeFieldFromImplicitField,
+	InsertableTreeNodeFromAllowedTypes,
+	InsertableTypedNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/schemaTypes.js";
 
 const schemaFactory = new SchemaFactory("Test");
+
+// InsertableObjectFromSchemaRecord
+{
+	class Note extends schemaFactory.object("Note", {}) {}
+
+	// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+	type Info = {
+		readonly stuff: readonly [typeof Note];
+	};
+
+	type Desired = InsertableTypedNode<typeof Note>;
+
+	{
+		type result = InsertableObjectFromSchemaRecord<Info>["stuff"];
+		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
+	}
+
+	{
+		type result = InsertableTreeFieldFromImplicitField<Info["stuff"]>;
+		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
+	}
+}
 
 describeHydration(
 	"ObjectNode",
@@ -360,6 +395,24 @@ describeHydration(
 		});
 	},
 	() => {
+		it("Construction regression test", () => {
+			class Note extends schemaFactory.object("Note", {}) {}
+
+			class Canvas extends schemaFactory.object("Canvas", { stuff: [Note] }) {}
+
+			const y = new Note({});
+
+			const x = new Canvas({
+				stuff: {},
+			});
+
+			const allowed = [Note] as const;
+			{
+				type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
+				const test: X = [{}];
+			}
+		});
+
 		describe("shadowing", () => {
 			it("optional shadowing builtin", () => {
 				class Schema extends schemaFactory.object("x", {
