@@ -7,6 +7,7 @@ The ai-collab client library makes adding complex, human-like collaboration with
 ## Usage
 
 ### Your SharedTree types file
+This file is where we define the types of our task management application's SharedTree data
 ```ts
 //  --------- File name: "types.ts" ---------
 import { SchemaFactory } from "@fluidframework/tree";
@@ -124,7 +125,7 @@ const appState: PlannerAppState = initializeAppState({
 const userAsk = "Update the task group description to be a about creating a new Todo list application. Create a set of tasks to accomplish this and assign them to the available engineers. Keep in mind the max capacity of each engineer as you assign tasks."
 
 // Collaborate with AI one function call.
-const response = await aiCollab<typeof SharedTreeAppState>({
+const response = await aiCollab<typeof PlannerAppState>({
 		openAI: {
 			client: new OpenAI({
 				apiKey: OPENAI_API_KEY,
