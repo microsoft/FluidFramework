@@ -621,6 +621,11 @@ export interface IPerformanceEventMarkers {
 	cancel?: "generic" | "error"; // tells wether to issue "generic" or "error" category cancel event
 }
 
+const perfMark =
+	typeof window === "object" &&
+	window?.performance?.mark !== undefined &&
+	window?.performance?.mark !== null;
+
 /**
  * Helper class to log performance events.
  *
@@ -731,11 +736,6 @@ export class PerformanceEvent {
 	private readonly startTime = performance.now();
 	private startMark?: string;
 
-	private readonly perfMark =
-		typeof window === "object" &&
-		window?.performance?.mark !== undefined &&
-		window?.performance?.mark !== null;
-
 	protected constructor(
 		private readonly logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
@@ -747,7 +747,7 @@ export class PerformanceEvent {
 			this.reportEvent("start");
 		}
 
-		if (this.perfMark) {
+		if (perfMark) {
 			this.startMark = `${event.eventName}-start`;
 			window.performance.mark(this.startMark);
 		}
