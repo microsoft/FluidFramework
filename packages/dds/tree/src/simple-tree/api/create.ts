@@ -19,6 +19,7 @@ import type {
 import {
 	getOrCreateNodeFromInnerNode,
 	UnhydratedFlexTreeNode,
+	type TreeNode,
 	type Unhydrated,
 } from "../core/index.js";
 import {
@@ -50,18 +51,28 @@ import { getUnhydratedContext } from "../createContext.js";
  * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
  *
  * Like with {@link TreeNodeSchemaClass}'s constructor, its an error to provide an existing node to this API.
- * TODO: For that case, use we should provide `Tree.clone`.
- * @privateRemarks
- * This could be exposed as a public `Tree.create` function.
+ * For that case, use {@link TreeBeta.clone}.
  */
-export function createFromInsertable<TSchema extends ImplicitFieldSchema>(
-	schema: TSchema,
+export function createFromInsertable<
+	const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+>(
+	schema: UnsafeUnknownSchema extends TSchema
+		? ImplicitFieldSchema
+		: TSchema & ImplicitFieldSchema,
 	data: InsertableField<TSchema>,
 	context?: NodeKeyManager | undefined,
-): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+): Unhydrated<
+	TSchema extends ImplicitFieldSchema
+		? TreeFieldFromImplicitField<TSchema>
+		: TreeNode | TreeLeafValue | undefined
+> {
 	const cursor = cursorFromInsertable(schema, data, context);
 	const result = cursor === undefined ? undefined : createFromCursor(schema, cursor);
-	return result as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+	return result as Unhydrated<
+		TSchema extends ImplicitFieldSchema
+			? TreeFieldFromImplicitField<TSchema>
+			: TreeNode | TreeLeafValue | undefined
+	>;
 }
 
 /**
@@ -150,7 +161,7 @@ export function createFromVerbose<TSchema extends ImplicitFieldSchema, THandle>(
 /**
  * Creates an unhydrated simple-tree field from a cursor in nodes mode.
  */
-export function createFromCursor<TSchema extends ImplicitFieldSchema>(
+export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	cursor: ITreeCursorSynchronous | undefined,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
