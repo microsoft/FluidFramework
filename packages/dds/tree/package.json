@@ -166,6 +166,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@sinclair/typebox": "^0.32.29",
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
+		"@types/ungap__structured-clone": "^1.2.0",
 		"@ungap/structured-clone": "^1.2.0",
 		"uuid": "^9.0.0"
 	},
@@ -191,7 +192,6 @@
 		"@types/easy-table": "^0.0.32",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"@types/ungap__structured-clone": "^1.2.0",
 		"@types/uuid": "^9.0.2",
 		"ajv": "^8.12.0",
 		"ajv-formats": "^3.0.1",
