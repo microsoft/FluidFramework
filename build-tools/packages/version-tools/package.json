@@ -106,7 +106,6 @@
 		"eslint-config-prettier": "~9.1.0",
 		"mocha": "^10.7.3",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.30.1",
 		"oclif": "^4.15.16",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.2",
