@@ -13,6 +13,11 @@ const routes = [
 	// Forward to current version of the API docs (`docs/api`).
 	{ from: "/docs/apis", to: "/docs/api" },
 
+	// We previously only versioned our API documentation, where now we version everything.
+	// Forward versioned API paths to the new hierarchy.
+	{ from: "/docs/api/v1", to: "/docs/v1/api" },
+	{ from: "/docs/api/v2", to: "/docs/api" },
+
 	// We previously supported a special path alias for accessing the "current" API docs.
 	// Docusaurus handles this automatically for us, but we still need to support the old pattern.
 	// Forward to current version of the API docs (`docs/api`).
@@ -26,5 +31,5 @@ const routes = [
 	// If the user explicitly navigates to "v2", we should support that.
 	{ from: "/docs/v2", to: "/docs" },
 
-	// TODO
+	// TODO: anything else?
 ];
