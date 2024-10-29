@@ -14,8 +14,19 @@ module.exports = async (context, { headers }) => {
 	const { pathname, search } = new URL(headers["x-ms-original-url"]);
 	const route = routes.find(({ from }) => pathname.startsWith(from));
 
-	context.res = {
-		status: route ? 302 : 404,
-		headers: { location: route ? `${pathname.replace(route.from, route.to)}${search}` : "/404" },
-	};
+	console.log(`Incoming request: ${pathname}`);
+
+	if (route === undefined) {
+		context.res = {
+			status: 404,
+			headers: {location: "/404"}
+		};
+	} else {
+		const redirectLocation = `${pathname.replace(route.from, route.to)}${search}`;
+		console.log(`Redirecting from ${pathname} to ${redirectLocation}!`);
+		context.res = {
+			status: 302,
+			headers: {location: redirectLocation}
+		}
+	}
 };

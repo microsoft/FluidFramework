@@ -12,10 +12,9 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"api-markdown-documenter": "node ./infra/generate-api-documentation.mjs",
-		"build": "npm run build:api-documentation && npm run build:docusaurus && npm run build:copy-azure-assets",
+		"build": "npm run build:api-documentation && npm run build:docusaurus",
 		"build:api-documentation": "npm run download-doc-models && npm run api-markdown-documenter",
 		"build:api-documentation:dev": "cross-env NODE_ENV=development npm run build:api-documentation",
-		"build:copy-azure-assets": "copyfiles -u 2 \"./infra/azure/**/*\" \"./build/api\"",
 		"build:dev": "cross-env NODE_ENV=development npm run build",
 		"build:docusaurus": "npm run gen-docusaurus && docusaurus build",
 		"check-links": "echo TODO: Implement linkcheck script",
