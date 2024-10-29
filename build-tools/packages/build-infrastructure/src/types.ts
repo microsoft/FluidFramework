@@ -299,7 +299,8 @@ export interface IPackageManager {
 	 *
 	 * @example
 	 *
-	 * For the pnpm package manager, calling `installCommand(true)` would return `["install", "--no-frozen-lockfile"]`.
+	 * For the pnpm package manager, calling `getInstallCommandWithArgs(true)` would return
+	 * `["install", "--no-frozen-lockfile"]`.
 	 */
 	getInstallCommandWithArgs(updateLockfile: boolean): string[];
 }
