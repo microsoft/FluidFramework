@@ -35,22 +35,21 @@ export class PackageManager implements IPackageManager {
 		}
 	}
 
-	public installCommand(updateLockfile: boolean): string {
+	public installCommandArgs(updateLockfile: boolean): string[] {
+		const args: string[] = [];
 		switch (this.name) {
 			case "npm": {
-				const command = "install";
-				const update = updateLockfile ? "--package-lock=true" : "--package-lock=false";
-				return `${command} ${update}`;
+				args.push("install", updateLockfile ? "--package-lock=true" : "--package-lock=false");
+				return args;
 			}
 
 			case "pnpm": {
-				const command = "install";
-				const update = updateLockfile ? "--no-frozen-lockfile" : "--frozen-lockfile";
-				return `${command} ${update}`;
+				args.push("install", updateLockfile ? "--no-frozen-lockfile" : "--frozen-lockfile");
+				return args;
 			}
 
 			case "yarn": {
-				return "install";
+				return args;
 			}
 
 			default: {
