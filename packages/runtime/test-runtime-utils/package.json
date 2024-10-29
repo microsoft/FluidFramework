@@ -158,6 +158,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Class_MockDeltaConnection": {
+				"forwardCompat": false
+			},
 			"Class_MockFluidDataStoreRuntime": {
 				"forwardCompat": false
 			}
