@@ -17,6 +17,7 @@
 		"build:api-documentation:dev": "cross-env NODE_ENV=development npm run build:api-documentation",
 		"build:dev": "cross-env NODE_ENV=development npm run build",
 		"build:docusaurus": "npm run gen-docusaurus && docusaurus build",
+		"ci:build": "npm run build",
 		"clean": "concurrently \"npm:clean:*\"",
 		"clean:api-documentation": "rimraf --glob \"docs/api/**/*.md\" \"versioned_docs/*/api/**/*.md\"",
 		"clean:doc-models": "rimraf --glob .doc-models",
