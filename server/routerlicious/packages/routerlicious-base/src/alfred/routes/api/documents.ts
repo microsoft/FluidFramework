@@ -49,7 +49,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
-import { Constants, getSession, StageTrace } from "../../../utils";
+import { Constants, getSession, StageTrace, getNetworkInformationFromIP } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
 import type { RequestHandler } from "express-serve-static-core";
 
@@ -182,9 +182,39 @@ export function create(
 		}),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
+			const clientIPAddress = request.ip ? request.ip : "";
+			const result = getNetworkInformationFromIP(clientIPAddress);
+			if (result.isPrivateLink) {
+				// Validate access from private network
+				// TODO: Add the method to fetch the linkid from the tenant.
+				const accountLinkID = "822107888";
+				if (accountLinkID === result.privateLinkId) {
+					Lumberjack.info(
+						`Come to private link Endpoint: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
+					);
+				} else {
+					response
+						.status(403)
+						.send(
+							`This req private network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
+						);
+				}
+			} else {
+				// Validate access from public network
+				// TODO: Add the method to fetch the linkid from the tenant.
+				// const accountLinkID = "822107888";
+				// if (accountLinkID) {
+				// 	response
+				// 		.status(403)
+				// 		.send(
+				// 			"This request is coming from public network with private linkid, it won't work.",
+				// 		);
+				// } else {
+				// }
+			}
 			// Tenant and document
 			const tenantId = getParam(request.params, "tenantId");
-			const documentUrls = await getDocumentUrlsfromTenant(tenantId);
+			const documentUrls = await getDocumentUrlsfromTenant(tenantId, result.isPrivateLink);
 			// If enforcing server generated document id, ignore id parameter
 			const id = enforceServerGeneratedDocumentId
 				? uuid()
@@ -296,14 +326,17 @@ export function create(
 		};
 	}
 
-	async function getDocumentUrlsfromTenant(tenantId: string): Promise<{
+	async function getDocumentUrlsfromTenant(
+		tenantId: string,
+		isPrivateLink?: boolean | false,
+	): Promise<{
 		documentOrdererUrl: string;
 		documentHistorianUrl: string;
 		documentDeltaStreamUrl: string;
 	}> {
 		const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
 		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
-		if (privateLinkEnable) {
+		if (privateLinkEnable && isPrivateLink) {
 			return {
 				documentOrdererUrl: externalOrdererUrl.replace("https://", `https://${tenantId}.`),
 				documentHistorianUrl: externalHistorianUrl.replace(
@@ -343,7 +376,7 @@ export function create(
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
-			const documentUrls = await getDocumentUrlsfromTenant(tenantId);
+			const documentUrls = await getDocumentUrlsfromTenant(tenantId, true);
 
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			const getSessionMetric: Lumber<LumberEventName.GetSession> = Lumberjack.newLumberMetric(
