@@ -167,10 +167,11 @@ export function matchesReleaseGroupDefinition(
 }
 
 /**
- * Finds the name of the release group that a package belongs to.
+ * Finds the name of the release group that a package belongs to based on the release group configuration within a
+ * workspace.
  *
- * @param pkg - The package for which to fina a release group.
- * @param definition - The "releaseGroups" config from the RepoLayout config/
+ * @param pkg - The package for which to find a release group.
+ * @param definition - The "releaseGroups" config from the RepoLayout configuration.
  * @returns The name of the package's release group.
  */
 export function findReleaseGroupForPackage(
