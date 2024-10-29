@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
+import { confirm, rawlist } from "@inquirer/prompts";
 import execa from "execa";
-import inquirer from "inquirer";
 import { Machine } from "jssm";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
@@ -154,12 +154,11 @@ export const checkDoesReleaseFromReleaseBranch: StateHandlerFunction = async (
 
 	const { releaseGroup } = data;
 
-	let releaseSource = getReleaseSourceForReleaseGroup(releaseGroup);
+	let releaseSource: ReleaseSource = getReleaseSourceForReleaseGroup(releaseGroup);
 
 	if (releaseSource === "interactive") {
-		const branchToReleaseFrom: inquirer.ListQuestion = {
-			type: "list",
-			name: "releaseType",
+		releaseSource = await rawlist({
+			message: `The ${releaseGroup} release group can be released directly from main, or you can create a release branch. Would you like to release from main or a release branch? If in doubt, select 'release branch'.`,
 			choices: [
 				{
 					name: "main/lts",
@@ -167,11 +166,7 @@ export const checkDoesReleaseFromReleaseBranch: StateHandlerFunction = async (
 				},
 				{ name: "release branch", value: "releaseBranches" as ReleaseSource },
 			],
-			message: `The ${releaseGroup} release group can be released directly from main, or you can create a release branch. Would you like to release from main or a release branch? If in doubt, select 'release branch'.`,
-		};
-
-		const answers = await inquirer.prompt(branchToReleaseFrom);
-		releaseSource = answers.releaseType as ReleaseSource;
+		});
 	}
 
 	if (releaseSource === "direct") {
@@ -700,14 +695,10 @@ export const checkTypeTestGenerate: StateHandlerFunction = async (
 
 	const { context } = data;
 
-	const genQuestion: inquirer.ConfirmQuestion = {
-		type: "confirm",
-		name: "typetestsGen",
+	const typetestsGen = await confirm({
 		message: `Have you run typetests:gen on the ${context.originalBranchName} branch?`,
-	};
-
-	const answer = await inquirer.prompt(genQuestion);
-	if (answer.typetestsGen === false) {
+	});
+	if (typetestsGen === false) {
 		BaseStateHandler.signalFailure(machine, state);
 	} else {
 		BaseStateHandler.signalSuccess(machine, state);
@@ -737,14 +728,10 @@ export const checkTypeTestPrepare: StateHandlerFunction = async (
 
 	const { context } = data;
 
-	const prepQuestion: inquirer.ConfirmQuestion = {
-		type: "confirm",
-		name: "typetestsPrep",
+	const typetestsPrep = await confirm({
 		message: `Have you run typetests:prepare on the ${context.originalBranchName} branch?`,
-	};
-
-	const answer = await inquirer.prompt(prepQuestion);
-	if (answer.typetestsPrep === false) {
+	});
+	if (typetestsPrep === false) {
 		BaseStateHandler.signalFailure(machine, state);
 	} else {
 		BaseStateHandler.signalSuccess(machine, state);
