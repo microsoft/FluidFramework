@@ -109,12 +109,19 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.setConnectionState(connected);
 	}
 
+	/**
+	 * @deprecated - This has been replaced by processMessages
+	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
 		this.handler?.process(message, local, localOpMetadata);
+	}
+
+	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		this.handler?.processMessages?.(messageCollection);
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
