@@ -125,7 +125,7 @@ export interface IPackage<J extends PackageJson = PackageJson> extends Installab
 
 // @public
 export interface IPackageManager {
-    installCommand(updateLockfile: boolean): string;
+    getInstallCommandWithArgs(updateLockfile: boolean): string[];
     readonly lockfileName: string;
     readonly name: PackageManagerName;
 }
