@@ -289,14 +289,20 @@ export interface IPackageManager {
 	readonly lockfileName: string;
 
 	/**
-	 * Returns an install command that can be used to install dependencies using this package manager.
+	 * Returns an array of arguments, including the name of the command, e.g. "install", that can be used to install
+	 * dependencies using this package manager.
 	 *
 	 * @param updateLockfile - If `true`, then the returned command will include flags or arguments necessary to update
 	 * the lockfile during install. If `false`, such flags or arguments should be omitted. Note that the command will
-	 * _not_ include the package manager name istself. For example, the `npm` package manager will return the string
-	 * `"install"`, not `"npm install"`.
+	 * _not_ include the package manager name istself. For example, the `npm` package manager will return `["install"]`,
+	 * not `["npm", "install"]`.
+	 *
+	 * @example
+	 *
+	 * For the pnpm package manager, calling `getInstallCommandWithArgs(true)` would return
+	 * `["install", "--no-frozen-lockfile"]`.
 	 */
-	installCommand(updateLockfile: boolean): string;
+	getInstallCommandWithArgs(updateLockfile: boolean): string[];
 }
 
 /**
