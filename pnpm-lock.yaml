@@ -9184,6 +9184,9 @@ importers:
       '@tylerbu/sorted-btree-es6':
         specifier: ^1.8.0
         version: 1.8.0
+      '@types/ungap__structured-clone':
+        specifier: ^1.2.0
+        version: 1.2.0
       '@ungap/structured-clone':
         specifier: ^1.2.0
         version: 1.2.0
@@ -9254,9 +9257,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.54
-      '@types/ungap__structured-clone':
-        specifier: ^1.2.0
-        version: 1.2.0
       '@types/uuid':
         specifier: ^9.0.2
         version: 9.0.8
@@ -24271,7 +24271,6 @@ packages:
 
   /@types/ungap__structured-clone@1.2.0:
     resolution: {integrity: sha512-ZoaihZNLeZSxESbk9PUAPZOlSpcKx81I1+4emtULDVmBLkYutTcMlCj2K9VNlf9EWODxdO6gkAqEaLorXwZQVA==}
-    dev: true
 
   /@types/unist@2.0.11:
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}

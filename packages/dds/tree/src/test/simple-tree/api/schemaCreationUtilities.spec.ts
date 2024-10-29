@@ -13,22 +13,23 @@ import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeView,
+	type InsertableTreeFieldFromImplicitField,
 } from "../../../simple-tree/index.js";
 import {
 	adaptEnum,
 	enumFromStrings,
-	typedObjectValues,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaCreationUtilities.js";
 import { TreeFactory } from "../../../treeFactory.js";
 import { testIdCompressor } from "../../utils.js";
+import { unsafeArrayToTuple } from "../../../util/index.js";
 
 const schema = new SchemaFactory("test");
 
 describe("schemaCreationUtilities", () => {
 	it("enum type switch", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
-		class Parent extends schema.object("Parent", { mode: Object.values(Mode) }) {}
+		class Parent extends schema.object("Parent", { mode: Mode.schema }) {}
 		const config = new TreeViewConfiguration({ schema: Parent });
 
 		const factory = new TreeFactory({});
@@ -60,18 +61,16 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enumFromStrings example", () => {
-		const schemaFactory = new SchemaFactory("x");
+		const schemaFactory = new SchemaFactory("com.myApp");
 		const Mode = enumFromStrings(schemaFactory, ["Fun", "Cool"]);
-		type Mode = NodeFromSchema<(typeof Mode)[keyof typeof Mode]>;
+		type Mode = NodeFromSchema<(typeof Mode.schema)[number]>;
 		const nodeFromString: Mode = Mode("Fun");
 		const nodeFromSchema: Mode = new Mode.Fun();
-		// eslint-disable-next-line no-constant-condition
-		if (false) {
-			// Check this compiles, but don't run it since node is unhydrated
-			const nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
-		}
 
-		class Parent extends schemaFactory.object("Parent", { mode: typedObjectValues(Mode) }) {}
+		// Schema nodes have a strongly typed `.value` property.
+		const nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
+
+		class Parent extends schemaFactory.object("Parent", { mode: Mode.schema }) {}
 	});
 
 	it("adaptEnum example from docs", () => {
@@ -84,12 +83,11 @@ describe("schemaCreationUtilities", () => {
 		// Define the schema for each member of the enum using a nested scope to group them together.
 		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
 		// Defined the types of the nodes which correspond to this the schema.
-		type ModeNodes = NodeFromSchema<(typeof ModeNodes)[keyof typeof ModeNodes]>;
+		type ModeNodes = NodeFromSchema<(typeof ModeNodes.schema)[number]>;
 		// An example schema which has an enum as a child.
 		class Parent extends schemaFactory.object("Parent", {
-			// typedObjectValues extracts a list of all the fields of ModeNodes, which are the schema for each enum member.
-			// This means any member of the enum is allowed in this field.
-			mode: typedObjectValues(ModeNodes),
+			// adaptEnum's return value has a ".schema" property can be use as an `AllowedTypes` array allowing any of the members of the enum.
+			mode: ModeNodes.schema,
 		}) {}
 
 		// Example usage of enum based nodes, showing what type to use and that `.value` can be used to read out the enum value.
@@ -112,16 +110,14 @@ describe("schemaCreationUtilities", () => {
 			b = "B",
 		}
 		const ModeNodes = adaptEnum(schema, Mode);
-		type ModeNodes = NodeFromSchema<(typeof ModeNodes)[keyof typeof ModeNodes]>;
+		type ModeNodes = NodeFromSchema<(typeof ModeNodes.schema)[number]>;
 		const nodeFromString: ModeNodes = ModeNodes(Mode.a);
 		const nodeFromSchema: ModeNodes = new ModeNodes.a();
-		// eslint-disable-next-line no-constant-condition
-		if (false) {
-			// Check this compiles, but don't run it since node is unhydrated
-			const nameFromNode: Mode = nodeFromSchema.value;
-		}
+
+		const nameFromNode: Mode = nodeFromSchema.value;
+
 		class Parent extends schemaFactory.object("Parent", {
-			mode: typedObjectValues(ModeNodes),
+			mode: ModeNodes.schema,
 		}) {}
 
 		const _test1: InstanceType<typeof ModeNodes.a> = new ModeNodes.a();
@@ -131,7 +127,7 @@ describe("schemaCreationUtilities", () => {
 
 	it("enum value switch", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
-		class Parent extends schema.object("Parent", { mode: typedObjectValues(Mode) }) {}
+		class Parent extends schema.object("Parent", { mode: Mode.schema }) {}
 		const config = new TreeViewConfiguration({ schema: Parent });
 
 		const factory = new TreeFactory({});
@@ -170,7 +166,7 @@ describe("schemaCreationUtilities", () => {
 			Tomorrow = "Tomorrow",
 		}
 
-		const DayNodes = enumFromStrings(schema, typedObjectValues(Day));
+		const DayNodes = enumFromStrings(schema, unsafeArrayToTuple(Object.values(Day)));
 
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
@@ -179,9 +175,7 @@ describe("schemaCreationUtilities", () => {
 
 		const day = Day.Today;
 
-		const view = tree.viewWith(
-			new TreeViewConfiguration({ schema: typedObjectValues(DayNodes) }),
-		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(day));
 
 		switch (view.root.value) {
@@ -216,10 +210,9 @@ describe("schemaCreationUtilities", () => {
 		const x = DayNodes(Day.Today);
 		// Can construct unhydrated node from enum's key:
 		const y = new DayNodes.Today();
+		const z: Day.Today = y.value;
 
-		const view = tree.viewWith(
-			new TreeViewConfiguration({ schema: typedObjectValues(DayNodes) }),
-		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(Day.Today));
 
 		switch (view.root.value) {
@@ -231,6 +224,15 @@ describe("schemaCreationUtilities", () => {
 			}
 			default:
 				unreachableCase(view.root);
+		}
+
+		//  InsertableTreeFieldFromImplicitField<TRootSchema>
+		{
+			// Regression test for adapted schema working with InsertableTreeFieldFromImplicitField
+			type InsertableImplicit = InsertableTreeFieldFromImplicitField<typeof DayNodes.schema>;
+
+			const _a: InsertableImplicit = new DayNodes.Today();
+			const _b: InsertableImplicit = new DayNodes.Tomorrow();
 		}
 	});
 });
