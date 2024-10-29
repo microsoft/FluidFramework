@@ -363,10 +363,10 @@ export class FluidDataStoreRuntime
 			// This allows the entrypoint handle to be resolved without the need
 			// for the entrypoint object to know anything about requests or handles.
 			//
-			// This works because the entrypoint handle is a fluid object handle,
+			// This works because the entrypoint handle is an object handle,
 			// which always has a real reference to the object itself.
 			// Those get serialized and then deserialized into a plain handle, which really just has a path,
-			// resolution walks to the runtime, which calls this, and get the true object off the internal fluid object handle
+			// resolution walks to the runtime, which calls this, and get the true object off the internal object handle
 			if (parser.pathParts.length === 0 && request.headers?.viaHandle === true) {
 				return { mimeType: "fluid/object", status: 200, value: await this.entryPoint.get() };
 			}
