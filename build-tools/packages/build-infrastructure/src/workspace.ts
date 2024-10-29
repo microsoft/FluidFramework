@@ -185,7 +185,7 @@ export class Workspace implements IWorkspace {
 	 * {@inheritDoc Installable.install}
 	 */
 	public async install(updateLockfile: boolean): Promise<boolean> {
-		const commandArgs = this.packageManager.installCommandArgs(updateLockfile);
+		const commandArgs = this.packageManager.getInstallCommandWithArgs(updateLockfile);
 
 		const output = await execa(this.packageManager.name, commandArgs, {
 			cwd: this.directory,
