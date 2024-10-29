@@ -117,5 +117,3 @@ extends:
     poolBuild: NewLarge-linux-1ES
     checkoutSubmodules: true
     taskBundleAnalysis: false
-    checks:
-    - checks
