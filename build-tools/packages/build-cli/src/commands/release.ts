@@ -4,14 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
-import {
-	VersionBumpType,
-	bumpVersionScheme,
-	detectVersionScheme,
-} from "@fluid-tools/version-tools";
+import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
 import { Config } from "@oclif/core";
 import chalk from "chalk";
-import inquirer from "inquirer";
 
 import { findPackageOrReleaseGroup } from "../args.js";
 import {
@@ -28,7 +23,7 @@ import {
 } from "../handlers/index.js";
 import { PromptWriter } from "../instructionalPromptWriter.js";
 // eslint-disable-next-line import/no-deprecated
-import { MonoRepoKind, getDefaultBumpTypeForBranch } from "../library/index.js";
+import { MonoRepoKind } from "../library/index.js";
 import { FluidReleaseMachine } from "../machines/index.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
 import { StateMachineCommand } from "../stateMachineCommand.js";
@@ -95,13 +90,10 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		const releaseGroup = packageOrReleaseGroup.name;
 		const releaseVersion = packageOrReleaseGroup.version;
 
-		const currentBranch = await context.gitRepo.getCurrentBranchName();
-		const bumpType = await getBumpType(flags.bumpType, currentBranch, releaseVersion);
-
 		// eslint-disable-next-line no-warning-comments
 		// TODO: can be removed once server team owns server releases
 		// eslint-disable-next-line import/no-deprecated
-		if (flags.releaseGroup === MonoRepoKind.Server && bumpType === "minor") {
+		if (flags.releaseGroup === MonoRepoKind.Server && flags.bumpType === "minor") {
 			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
 		}
 
@@ -125,7 +117,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			releaseVersion,
 			context,
 			promptWriter: new PromptWriter(logger),
-			bumpType,
+			bumpType: flags.bumpType as VersionBumpType,
 			versionScheme: detectVersionScheme(releaseVersion),
 			shouldSkipChecks: flags.skipChecks,
 			shouldCheckPolicy:
@@ -139,45 +131,4 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			command: this,
 		};
 	}
-}
-
-/**
- * Gets the bump type to use. If a bumpType was passed in, use it. Otherwise set it as the default for the branch. If
- * there's no default for the branch, ask the user.
- */
-async function getBumpType(
-	inputBumpType: VersionBumpType | undefined,
-	branch: string,
-	version: string,
-): Promise<VersionBumpType> {
-	const bumpedMajor = bumpVersionScheme(version, "major");
-	const bumpedMinor = bumpVersionScheme(version, "minor");
-	const bumpedPatch = bumpVersionScheme(version, "patch");
-	const questions: inquirer.Question[] = [];
-
-	let bumpType = inputBumpType ?? getDefaultBumpTypeForBranch(branch);
-	if (bumpType === undefined) {
-		const choices = [
-			{ value: "major", name: `major (${version} => ${bumpedMajor.version})` },
-			{ value: "minor", name: `minor (${version} => ${bumpedMinor.version})` },
-			{ value: "patch", name: `patch  (${version} => ${bumpedPatch.version})` },
-		];
-		const askBumpType: inquirer.ListQuestion = {
-			type: "list",
-			name: "bumpType",
-			choices,
-			default: bumpType,
-			message: `The current branch is '${branch}'. There is no default bump type for this branch. What type of release are you doing?`,
-		};
-		questions.push(askBumpType);
-		const answers = await inquirer.prompt(questions);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		bumpType = answers.bumpType;
-	}
-
-	if (bumpType === undefined) {
-		throw new Error(`bumpType is undefined.`);
-	}
-
-	return bumpType;
 }
