@@ -1153,7 +1153,7 @@ export function treeTestFactory(
  *
  * Typically, users will want to initialize the returned view with some content (thereby setting its schema) using `TreeView.initialize`.
  */
-export function getView<TSchema extends ImplicitFieldSchema>(
+export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 	logger?: ITelemetryLoggerExt,
@@ -1178,7 +1178,7 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 /**
  * Views the supplied checkout with the given schema.
  */
-export function viewCheckout<TSchema extends ImplicitFieldSchema>(
+export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
 	checkout: TreeCheckout,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
