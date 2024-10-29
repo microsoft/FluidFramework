@@ -15,7 +15,7 @@ const schemaFactory = new SchemaFactory("com.myApp");
 class A extends schemaFactory.object("A", {}) {}
 class B extends schemaFactory.array("B", schemaFactory.number) {}
 
-// Gives imprecise type (typeof A | typeof B)[]
+// Gives imprecise type (typeof A | typeof B)[]. The desired precise type here is [typeof A, typeof B].
 const schema = [A, B];
 
 const config = new TreeViewConfiguration({ schema });
@@ -25,7 +25,7 @@ const view = sharedTree.viewWith(config);
 view.root = [];
 ```
 
-The assignment of `view.root` is disallowed since the same schema type could be either of:
+The assignment of `view.root` is disallowed since a schema with type `(typeof A | typeof B)[]` could be any of:
 
 ```typescript
 const schema: (typeof A | typeof B)[] = [A];
@@ -35,7 +35,13 @@ const schema: (typeof A | typeof B)[] = [A];
 const schema: (typeof A | typeof B)[] = [B];
 ```
 
-To avoid this ambiguity, use one of the following patterns:
+```typescript
+const schema: (typeof A | typeof B)[] = [A, B];
+```
+
+The attempted assignment is not compatible with all of these (specifically it is incompatible with the first one) so performing this assignment could make the tree out of schema and is thus disallowed.
+
+To avoid this ambiguity and capture the precise type of `[typeof A, typeof B]`, use one of the following patterns:
 
 ```typescript
 const schema = [A, B] as const;
@@ -47,7 +53,8 @@ const config = new TreeViewConfiguration({ schema: [A, B] });
 ```
 
 To help update existing code which accidentally depended on this bug, an `@alpha` API `unsafeArrayToTuple` has been added.
-Many usages of this API will produce incorrectly typed outputs. However, when given `AllowedTypes` arrays which should not contain any unions, but that were accidentally flattened to a single union, it can fix them:
+Many usages of this API will produce incorrectly typed outputs.
+However, when given `AllowedTypes` arrays which should not contain any unions, but that were accidentally flattened to a single union, it can fix them:
 
 ```typescript
 // Gives imprecise type (typeof A | typeof B)[]
