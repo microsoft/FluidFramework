@@ -33,22 +33,26 @@ if (process.env.NODE_ENV === "development") {
 
 try {
 	// Generate API documentation for each version
-	await Promise.all(Object.entries(versionConfigs).map(async ([version, config]) => {
-		await renderApiDocumentation(
-			config.inputPath,
-			config.outputPath,
-			config.uriRoot,
-			version,
-		);
+	await Promise.all(
+		Object.entries(versionConfigs).map(async ([version, config]) => {
+			await renderApiDocumentation(
+				config.inputPath,
+				config.outputPath,
+				config.uriRoot,
+				version,
+			);
 
-		console.log(chalk.green(`Version "${version}" API docs written to "${config.outputPath}"!`));
-	}));
+			console.log(
+				chalk.green(`Version "${version}" API docs written to "${config.outputPath}"!`),
+			);
+		}),
+	);
 
 	// Write build manifest file
 	const versions = Object.keys(versionConfigs);
 	const manifest = {
 		apiDocsVersions: versions,
-	}
+	};
 	const manifestFilePath = path.join(dirname, "..", "api-docs-build-manifest.json");
 	await fs.writeFile(manifestFilePath, JSON.stringify(manifest));
 

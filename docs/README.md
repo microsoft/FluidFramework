@@ -52,8 +52,8 @@ $ npm run build
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
 This includes the generation of API documentation contents.
 
-To *just* build the API documentation, run `build:api-documentation`.
-To *just* build the static site (without rebuilding the API documentation), run `build:docusaurus`.
+To _just_ build the API documentation, run `build:api-documentation`.
+To _just_ build the static site (without rebuilding the API documentation), run `build:docusaurus`.
 
 Then, run:
 
@@ -186,7 +186,9 @@ import { ApiLink } from "@site/src/components/shortLinks"; // Best practice: put
 
 ...
 
-<ApiLink packageName="azure-client" apiName="AzureClient" apiType="class">Azure Client</ApiLink>
+<ApiLink packageName="azure-client" apiName="AzureClient" apiType="class">
+	Azure Client
+</ApiLink>
 ```
 
 Note: the `apiref` shortcode provided support for specifying an API version.
@@ -267,7 +269,6 @@ The replacement syntax to use in `.mdx` files would be:
 -   Figure out solution to markdown-magic in mdx (html comment syntax not supported)
 
 ### Before merging into main
-
 
 ## Site changes relative to current website
 

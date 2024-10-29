@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,7 +25,7 @@ const config = {
 			inputPath: path.resolve(downloadedDocModelsDirectoryPath, "v2"),
 			outputPath: path.resolve(currentDocsPath, "api"),
 			uriRoot: "/docs/api",
-		}
+		},
 	},
 
 	// Versions of the docs to include in the website build
@@ -53,8 +52,8 @@ const config = {
 			inputPath: path.resolve(dirname, "..", "..", "_api-extractor-temp", "doc-models"),
 			outputPath: path.resolve(versionedDocsPath, "version-local", "api"),
 			uriRoot: "/docs/local/api",
-		}
-	}
-}
+		},
+	},
+};
 
 export default config;

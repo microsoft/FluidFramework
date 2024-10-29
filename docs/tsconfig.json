@@ -10,5 +10,5 @@
 	"imports": {
 		"@site/src/*": "./src/*",
 		"@site/static/*": "./static/*",
-	}
+	},
 }

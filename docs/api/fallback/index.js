@@ -19,14 +19,14 @@ module.exports = async (context, { headers }) => {
 	if (route === undefined) {
 		context.res = {
 			status: 404,
-			headers: {location: "/404"}
+			headers: { location: "/404" },
 		};
 	} else {
 		const redirectLocation = `${pathname.replace(route.from, route.to)}${search}`;
 		console.log(`Redirecting from ${pathname} to ${redirectLocation}!`);
 		context.res = {
 			status: 302,
-			headers: {location: redirectLocation}
-		}
+			headers: { location: redirectLocation },
+		};
 	}
 };

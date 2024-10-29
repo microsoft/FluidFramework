@@ -51,7 +51,7 @@
 				{
 					"type": "category",
 					"label": "fluid-framework",
-					"link": { "type": "doc", "id": "api/fluid-framework"},
+					"link": { "type": "doc", "id": "api/fluid-framework" },
 					"items": [
 						{
 							"type": "category",

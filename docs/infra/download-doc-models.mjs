@@ -22,29 +22,31 @@ const versions = ["1", "2"];
 // TODO: automate the generation of these URLs and output directories
 const artifactUrlBase = "https://storage.fluidframework.com/api-extractor-json/latest";
 const artifacts = {
-	"1": `${artifactUrlBase}-v1.tar.gz`,
-	"2": `${artifactUrlBase}.tar.gz`
+	1: `${artifactUrlBase}-v1.tar.gz`,
+	2: `${artifactUrlBase}.tar.gz`,
 };
 
 const docModelsDirectory = path.resolve(dirname, "..", ".doc-models");
 
 const outputDirectories = {
-	"1": path.resolve(docModelsDirectory, "v1"),
-	"2": path.resolve(docModelsDirectory, "v2"),
-}
+	1: path.resolve(docModelsDirectory, "v1"),
+	2: path.resolve(docModelsDirectory, "v2"),
+};
 
 try {
-	await Promise.all(versions.map(async (version) => {
-		const url = artifacts[version];
-		const destination = outputDirectories[version];
+	await Promise.all(
+		versions.map(async (version) => {
+			const url = artifacts[version];
+			const destination = outputDirectories[version];
 
-		// Delete any existing contents in the directory before downloading artifact
-		await fs.ensureDir(destination);
-		await fs.emptyDir(destination);
+			// Delete any existing contents in the directory before downloading artifact
+			await fs.ensureDir(destination);
+			await fs.emptyDir(destination);
 
-		// Download the artifacts
-		await download(url, { downloadDir: destination, extract: true });
-	}));
+			// Download the artifacts
+			await download(url, { downloadDir: destination, extract: true });
+		}),
+	);
 } catch (error) {
 	console.error(
 		chalk.red("Could not download API doc model artifacts due to one or more errors:"),

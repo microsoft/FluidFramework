@@ -152,7 +152,10 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 				// Skip `fluid-framework` package landing page for v1.
 				// Custom contents for this package's landing page are maintained via a checked-in file:
 				// `versioned_docs/version-1/fluid-framework.mdx`.
-				if (documentApiItem.kind === ApiItemKind.Package && documentApiItem.displayName === "fluid-framework") {
+				if (
+					documentApiItem.kind === ApiItemKind.Package &&
+					documentApiItem.displayName === "fluid-framework"
+				) {
 					logProgress("Skipping document generation for `fluid-framework` package.");
 					return;
 				}
@@ -170,7 +173,9 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 
 				const frontMatter = createFrontMatter(documentApiItem, config);
 
-				fileContents = [frontMatter, generatedContentNotice, documentBody].join("\n\n").trim();
+				fileContents = [frontMatter, generatedContentNotice, documentBody]
+					.join("\n\n")
+					.trim();
 			} catch (error) {
 				logErrorAndRethrow(
 					`Encountered error while rendering Markdown contents for "${documentApiItem.displayName}"`,
@@ -203,12 +208,7 @@ function createFrontMatter(documentApiItem, config) {
 		title = `${sidebarLabel} ${documentApiItem.kind}`;
 	}
 
-	const frontMatter = [
-		"---",
-		`title: "${title}"`,
-		`sidebar_label: "${sidebarLabel}"`,
-		"---",
-	];
+	const frontMatter = ["---", `title: "${title}"`, `sidebar_label: "${sidebarLabel}"`, "---"];
 
 	return frontMatter.join("\n");
 }
