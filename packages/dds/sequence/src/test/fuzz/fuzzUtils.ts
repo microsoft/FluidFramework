@@ -405,7 +405,6 @@ function setSharedStringRuntimeOptions(runtime: IFluidDataStoreRuntime) {
 	runtime.options.intervalStickinessEnabled = true;
 	runtime.options.mergeTreeEnableObliterate = true;
 	runtime.options.mergeTreeEnableAnnotateAdjust = true;
-	runtime.options.newMergeTreeSnapshotFormat = true;
 }
 export class SharedStringFuzzFactory extends SharedStringFactory {
 	public async load(
