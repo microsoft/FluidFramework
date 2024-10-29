@@ -691,18 +691,12 @@ export class FluidDataStoreRuntime
 			const channelContext = this.contexts.get(currentAddress);
 			assert(!!channelContext, "Channel context not found");
 
-			// For now, send the message to be processed one by one. This will be updated to send the bunch later.
-			for (const {
-				contents,
-				clientSequenceNumber,
-				localOpMetadata,
-			} of currentMessagesContent) {
-				channelContext.processOp(
-					{ ...messageCollection.envelope, contents, clientSequenceNumber },
-					local,
-					localOpMetadata,
-				);
-			}
+			channelContext.processMessages({
+				envelope: messageCollection.envelope,
+				messagesContent: currentMessagesContent,
+				local,
+			});
+
 			currentMessagesContent = [];
 		};
 
