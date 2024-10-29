@@ -30,7 +30,6 @@ export {
 	unscopedPackageNameString,
 	BaseCommand,
 	GenerateEntrypointsCommand,
-	GenerateSourceEntrypointsCommand,
 } from "./commands/index.js";
 export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context.js";
 export { Repository } from "./git.js";
@@ -61,3 +60,7 @@ export {
 } from "./release.js";
 export { LayerGraph } from "./layerGraph.js";
 export { type Handler, policyHandlers } from "./repoPolicyCheck/index.js";
+export {
+	ExportData,
+	mapExportPathsFromPackage,
+} from "./packageExports.js";

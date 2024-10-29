@@ -6,6 +6,7 @@
 import path from "node:path";
 
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
+import * as resolve from "resolve.exports";
 
 /**
  * Properties for an "exports" leaf entry block in package.json.
@@ -254,17 +255,16 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
  * @param logger - optional Logger
  * @returns object with mapKeyToOutput.
  */
-export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
+export function mapExportPathsFromPackage<TOutKey>(
 	packageJson: PackageJson,
 	mapSrcQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
 	emitDeclarationOnly: boolean,
 	logger?: Logger,
-): {
-	mapKeyToOutput: Map<TOutKey, ExportData>;
-} {
+): Map<TOutKey, ExportData> {
 	const mapKeyToOutput = new Map<TOutKey, ExportData>();
 
 	const { exports } = packageJson;
+
 	if (typeof exports !== "object" || exports === null) {
 		throw new Error('no valid "exports" within package properties');
 	}
@@ -289,89 +289,31 @@ export function queryDefaultResolutionPathsFromPackageExports<TOutKey>(
 			continue;
 		}
 
-		const findResults = findDefaultPathsMatching(
-			mapSrcQueryPathToOutKey,
-			exportValue,
-			emitDeclarationOnly,
-		);
-		for (const findResult of findResults) {
-			const { outKey, relPath, conditions, isTypeOnly } = findResult;
-
-			// Add mapping for using given key, if defined.
-			if (outKey !== undefined) {
-				if (mapKeyToOutput.has(outKey)) {
-					logger?.warning(`${relPath} found in exports multiple times.`);
-				} else {
-					mapKeyToOutput.set(outKey, { relPath, conditions, isTypeOnly });
-				}
-			}
+		const resolvedExport = resolve.exports(packageJson, exportPath, {
+			conditions: emitDeclarationOnly ? [typesExportCondition] : [defaultExportCondition],
+		});
+		if (resolvedExport === undefined || resolvedExport.length === 0) {
+			throw new Error(`exports for ${exportPath} is undefined`);
 		}
-	}
 
-	return { mapKeyToOutput };
-}
+		const relPath = resolvedExport[0]
+			.replace(/(lib|dist)/g, "src")
+			.replace(/\.(d\.ts|js)$/, ".ts");
 
-/**
- * This function recursively searches for 'default' paths that match the given export entries.
- * Performs a depth first search of exports conditions looking for "defaults" constrained
- * paths (relative file path) matching keys in query map.
- *
- * @param mapQueryPathToOutKey - map with match keys
- * @param exports - export conditions
- * @param emitDeclarationOnly -If true, "types" exports are considered.
- * @returns matching export data and matching query entry value as outKey property
- */
-function findDefaultPathsMatching<TOutKey>(
-	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
-	exports: Readonly<ExportsRecordValue>,
-	emitDeclarationOnly: boolean,
-): (ExportData & { outKey: TOutKey | undefined })[] {
-	const results: (ExportData & { outKey: TOutKey | undefined })[] = [];
+		const queryResult = valueOfFirstKeyMatching(relPath, mapSrcQueryPathToOutKey);
 
-	const entries = Object.entries(exports);
-	for (const [entry, value] of entries) {
-		// First check if this entry is a leaf; where value is only expected to be a string (a relative file path).
-		let relPath: string;
-		let isTypeOnly: boolean = false;
-		if (typeof value === "string") {
-			if (emitDeclarationOnly && entry === typesExportCondition) {
-				relPath = value.replace(/(lib|dist)/g, "src").replace(/\.d.ts$/, ".ts");
-				isTypeOnly = true;
-			} else if (!emitDeclarationOnly && entry === defaultExportCondition) {
-				relPath = value.replace(/(lib|dist)/g, "src").replace(/\.js$/, ".ts");
+		if (queryResult?.value !== undefined) {
+			if (mapKeyToOutput.has(queryResult.value)) {
+				logger?.warning(`${relPath} found in exports multiple times.`);
 			} else {
-				continue;
-			}
-
-			const queryResult = valueOfFirstKeyMatching(relPath, mapQueryPathToOutKey);
-			if (queryResult !== undefined) {
-				results.push({
-					outKey: queryResult.value,
+				mapKeyToOutput.set(queryResult.value, {
 					relPath,
 					conditions: [],
-					isTypeOnly,
+					isTypeOnly: emitDeclarationOnly,
 				});
 			}
-		} else if (typeof value !== "string" && value !== null) {
-			// Type constrain away array set that is not supported (and not expected
-			// but non-fatal to known use cases).
-			if (Array.isArray(value)) {
-				continue;
-			}
-			const deepFind = findDefaultPathsMatching(
-				mapQueryPathToOutKey,
-				value,
-				emitDeclarationOnly,
-			);
-			if (deepFind !== undefined) {
-				results.push(...deepFind);
-			}
-		}
-
-		if (results.length > 0) {
-			return results;
 		}
 	}
 
-	return results;
+	return mapKeyToOutput;
 }
