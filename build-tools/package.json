@@ -144,9 +144,16 @@
 		"tasks": {
 			"build": {
 				"dependsOn": [
-					"@fluidframework/build-tools#compile",
 					"^build",
 					"generate:packageList"
+				],
+				"script": false
+			},
+			"clean": {
+				"dependsOn": [
+					"^clean",
+					"clean:docs",
+					"clean:nyc"
 				],
 				"script": false
 			}
