@@ -21,8 +21,8 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:compile": "concurrently npm:tsc npm:build:copy",
+		"build": "fluid-build --task build",
+		"build:compile": "fluid-build --task compile",
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
 		"build:docs": "api-extractor run --local",
 		"check:biome": "biome check .",
