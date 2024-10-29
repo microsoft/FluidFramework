@@ -142,7 +142,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 }
 
 /**
- * Gets the bump type to use. If a bumpType was passed in, use it. Otherwise set it as the default for the branch. If
+ * Gets the bump type to use. If a bumpType was passed in, use it. Otherwise use the default for the branch. If
  * there's no default for the branch, ask the user.
  */
 async function getBumpType(
