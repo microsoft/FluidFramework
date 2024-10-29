@@ -290,18 +290,18 @@ stages:
               pnpm i --frozen-lockfile
 
         - task: Npm@1
-          displayName: npm run build
+          displayName: Build
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run build'
 
         - task: Npm@1
-          displayName: npm run linkcheck
+          displayName: Validate links
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run linkcheck'
+            customCommand: 'run check-links'
 
 - stage: check_branch_version
   displayName: 'Check Version Deployment Condition'

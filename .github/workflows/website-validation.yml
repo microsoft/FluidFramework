@@ -91,7 +91,7 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          pnpm run linkcheck | tee ./results/linkcheck-output.txt
+          pnpm run check-links | tee ./results/linkcheck-output.txt
 
       - name: Save PR number
         run: echo ${{ github.event.number }} > ./results/pr
