@@ -75,6 +75,7 @@
 		"sass": "^1.77.8"
 	},
 	"devDependencies": {
+		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluid-tools/api-markdown-documenter": "^0.17.1",
 		"chalk": "^5.3.0",
