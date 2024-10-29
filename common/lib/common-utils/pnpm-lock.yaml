@@ -129,8 +129,8 @@ importers:
         specifier: ^4.4.1
         version: 4.4.1
       sinon:
-        specifier: ^19.0.2
-        version: 19.0.2
+        specifier: ^18.0.1
+        version: 18.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.1.1(@babel/core@7.25.2)(jest@29.6.2)(typescript@5.4.5)
@@ -2618,6 +2618,12 @@ packages:
 
   /@sinonjs/fake-timers@10.3.0:
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
+    dependencies:
+      '@sinonjs/commons': 3.0.1
+    dev: true
+
+  /@sinonjs/fake-timers@11.2.2:
+    resolution: {integrity: sha512-G2piCSxQ7oWOxwGSAyFHfPIsyeJGXYtc6mFbnFA+kRXkiEnTl8c/8jul2S329iFBnDI9HGoeWWAZvuvOkZccgw==}
     dependencies:
       '@sinonjs/commons': 3.0.1
     dev: true
@@ -5480,8 +5486,8 @@ packages:
     engines: {node: '>=0.3.1'}
     dev: true
 
-  /diff@7.0.0:
-    resolution: {integrity: sha512-PJWHUb1RFevKCwaFA9RlG5tCd+FO5iRh9A8HEtkmBH2Li03iJriB6m6JIN4rGz3K3JLawI7/veA1xzRKP6ISBw==}
+  /diff@5.2.0:
+    resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
     engines: {node: '>=0.3.1'}
     dev: true
 
@@ -11292,13 +11298,13 @@ packages:
       - supports-color
     dev: true
 
-  /sinon@19.0.2:
-    resolution: {integrity: sha512-euuToqM+PjO4UgXeLETsfQiuoyPXlqFezr6YZDFwHR3t4qaX0fZUe1MfPMznTL5f8BWrVS89KduLdMUsxFCO6g==}
+  /sinon@18.0.1:
+    resolution: {integrity: sha512-a2N2TDY1uGviajJ6r4D1CyRAkzE9NNVlYOV1wX5xQDuAk0ONgzgRl0EjCQuRCPxOwp13ghsMwt9Gdldujs39qw==}
     dependencies:
       '@sinonjs/commons': 3.0.1
-      '@sinonjs/fake-timers': 13.0.5
+      '@sinonjs/fake-timers': 11.2.2
       '@sinonjs/samsam': 8.0.2
-      diff: 7.0.0
+      diff: 5.2.0
       nise: 6.1.1
       supports-color: 7.2.0
     dev: true
