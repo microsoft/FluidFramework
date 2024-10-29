@@ -34,7 +34,8 @@ import { generateGenericEditTypes } from "./typeGeneration.js";
 import { fail } from "./utils.js";
 
 /**
- *
+ * A log of edits that have been made to a tree.
+ * @remarks This is primarily used to help an LLM keep track of the active changes it has made.
  */
 export type EditLog = {
 	edit: TreeEdit;
@@ -72,7 +73,7 @@ export function toDecoratedJson(
 }
 
 /**
- * TBD
+ * Generates a prompt designed to make an LLM produce a plan to edit the SharedTree to accomplish a user-specified goal.
  */
 export function getPlanningSystemPrompt<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
@@ -107,7 +108,9 @@ export function getPlanningSystemPrompt<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * TBD
+ * Generates the main prompt of this explicit strategy.
+ * This prompt is designed to give an LLM instructions on how it can modify a SharedTree using specific types of {@link TreeEdit}'s
+ * and provides with both a serialized version of the current state of the provided tree node as well as  the interfaces that compromise said tree nodes data.
  */
 export function getEditingSystemPrompt<TSchema extends ImplicitFieldSchema>(
 	userPrompt: string,
@@ -172,7 +175,8 @@ export function getEditingSystemPrompt<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * TBD
+ * Generates a prompt designed to make an LLM review the edits it created and applied to a SharedTree based
+ * on a user-specified goal. This prompt is designed to give the LLM's ability to correct for mistakes and improve the accuracy/fidelity of its final set of tree edits
  */
 export function getReviewSystemPrompt<TSchema extends ImplicitFieldSchema>(
 	userPrompt: string,

@@ -111,7 +111,7 @@ function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeEditOb
 }
 
 /**
- * TBD
+ * Manages applying the various types of {@link TreeEdit}'s to a a given {@link TreeNode}.
  */
 export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	treeView: TreeView<TSchema>,

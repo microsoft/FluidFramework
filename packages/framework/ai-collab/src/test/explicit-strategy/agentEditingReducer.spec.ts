@@ -14,8 +14,6 @@ import {
 	normalizeFieldSchema,
 	SchemaFactory,
 	TreeViewConfiguration,
-	// type TreeNode,
-	// jsonableTreeFromForest,
 	SharedTree,
 	type TreeNode,
 	// eslint-disable-next-line import/no-internal-modules
@@ -37,7 +35,6 @@ import type {
 import { IdGenerator } from "../../explicit-strategy/idGenerator.js";
 
 import { validateUsageError } from "./utils.js";
-// import { validateUsageError } from "./utils.js";
 
 const sf = new SchemaFactory("agentSchema");
 
