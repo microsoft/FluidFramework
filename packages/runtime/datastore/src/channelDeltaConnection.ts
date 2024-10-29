@@ -50,7 +50,9 @@ function processWithStashedOpMetadataHandling(
 	}
 }
 
-function getContentsWithStashedOpHandling(messagesContent: IRuntimeMessagesContent[]) {
+function getContentsWithStashedOpHandling(
+	messagesContent: readonly IRuntimeMessagesContent[],
+) {
 	const newMessageContents: IRuntimeMessagesContent[] = [];
 	for (const messageContent of messagesContent) {
 		if (isStashedOpMetadata(messageContent.localOpMetadata)) {
