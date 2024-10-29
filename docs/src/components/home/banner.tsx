@@ -14,12 +14,10 @@ const videoSourceUrl = "https://www.youtube.com/embed/uL2nMYk6WTQ";
  */
 export function Banner(): React.ReactElement {
 	return (
-		<div className={"ffcom-title-section-container"}>
-			<div className="ffcom-root-container">
-				<div className="ffcom-content-container">
-					<TitleBox />
-					<Video />
-				</div>
+		<div className="ffcom-banner">
+			<div className="ffcom-banner-inner">
+				<TitleBox />
+				<Video />
 			</div>
 		</div>
 	);
