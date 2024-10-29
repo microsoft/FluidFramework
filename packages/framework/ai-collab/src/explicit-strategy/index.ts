@@ -234,7 +234,7 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 		DEBUG_LOG?.push(systemPrompt);
 
 		const schema = types[rootTypeName] ?? fail("Root type not found.");
-		const wrapper = await getFromLlm<EditWrapper>(
+		const wrapper = await getStructuredOutputFromLlm<EditWrapper>(
 			systemPrompt,
 			options.openAI,
 			schema,
@@ -288,7 +288,7 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 				.enum(["yes", "no"])
 				.describe('Whether the user\'s goal was met in the "after" tree.'),
 		});
-		return getFromLlm<ReviewResult>(systemPrompt, options.openAI, schema);
+		return getStructuredOutputFromLlm<ReviewResult>(systemPrompt, options.openAI, schema);
 	}
 
 	let edit = await getNextEdit();
@@ -305,9 +305,9 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * Calls an LLM to generate a response based on the provided prompt.
+ * Calls an LLM to generate a structured output response based on the provided prompt.
  */
-async function getFromLlm<T>(
+async function getStructuredOutputFromLlm<T>(
 	prompt: string,
 	openAi: OpenAiClientOptions,
 	structuredOutputSchema: Zod.ZodTypeAny,
@@ -336,6 +336,9 @@ async function getFromLlm<T>(
 	return result.choices[0]?.message.parsed as T | undefined;
 }
 
+/**
+ * Calls an LLM to generate a response based on the provided prompt.
+ */
 async function getStringFromLlm(
 	prompt: string,
 	openAi: OpenAiClientOptions,

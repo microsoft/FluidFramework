@@ -15,6 +15,10 @@ import { z } from "zod";
 import { objectIdKey, typeField } from "./agentEditTypes.js";
 import { fail, getOrCreate, mapIterable } from "./utils.js";
 
+/**
+ * Zod Object type used to represent & validate the ObjectTarget type within a {@link TreeEdit}.
+ * @remarks this is used as a component with {@link generateGenericEditTypes} to produce the final zod validation objects.
+ */
 const objectTarget = z.object({
 	target: z
 		.string()
@@ -22,6 +26,10 @@ const objectTarget = z.object({
 			`The id of the object (as specified by the object's ${objectIdKey} property) that is being referenced`,
 		),
 });
+/**
+ * Zod Object type used to represent & validate the ObjectPlace type within a {@link TreeEdit}.
+ * @remarks this is used as a component with {@link generateGenericEditTypes} to produce the final zod validation objects.
+ */
 const objectPlace = z
 	.object({
 		type: z.enum(["objectPlace"]),
@@ -39,6 +47,10 @@ const objectPlace = z
 	.describe(
 		"A pointer to a location either just before or just after an object that is in an array",
 	);
+/**
+ * Zod Object type used to represent & validate the ArrayPlace type within a {@link TreeEdit}.
+ * @remarks this is used as a component with {@link generateGenericEditTypes} to produce the final zod validation objects.
+ */
 const arrayPlace = z
 	.object({
 		type: z.enum(["arrayPlace"]),
@@ -55,6 +67,10 @@ const arrayPlace = z
 	.describe(
 		`either the "start" or "end" of an array, as specified by a "parent" ObjectTarget and a "field" name under which the array is stored (useful for prepending or appending)`,
 	);
+/**
+ * Zod Object type used to represent & validate the Range type within a {@link TreeEdit}.
+ * @remarks this is used as a component with {@link generateGenericEditTypes} to produce the final zod validation objects.
+ */
 const range = z
 	.object({
 		from: objectPlace,
@@ -63,10 +79,18 @@ const range = z
 	.describe(
 		'A range of objects in the same array specified by a "from" and "to" Place. The "to" and "from" objects MUST be in the same array.',
 	);
+/**
+ * Cache used to prevent repeatedly generating the same Zod validation objects for the same {@link SimpleTreeSchema} as generate propts for repeated calls to an LLM
+ */
 const cache = new WeakMap<SimpleTreeSchema, ReturnType<typeof generateGenericEditTypes>>();
 
 /**
- * TBD
+ * Generates a set of ZOD validation objects for the various types of data that can be put into the provided {@link SimpleTreeSchema}
+ * and then uses those sets to generate an all-encompassing ZOD object for each type of {@link TreeEdit} that can validate any of the types of data that can be put into the tree.
+ *
+ * @returns a Record of schema names to Zod validation objects, and the name of the root schema used to encompass all of the other schemas.
+ *
+ * @remarks - The return type of this function is designed to work with Typechat's createZodJsonValidator as well as be used as the JSON schema for OpenAi's structured output response format.
  */
 export function generateGenericEditTypes(
 	schema: SimpleTreeSchema,
