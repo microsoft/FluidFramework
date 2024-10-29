@@ -16,6 +16,7 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
+	IFluidAccessTokenGenerator,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -49,6 +50,7 @@ export function create(
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	readinessCheck?: IReadinessCheck,
+	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 ) {
 	return {
 		api: api.create(
@@ -70,6 +72,7 @@ export function create(
 			collaborationSessionEventEmitter,
 			clusterDrainingChecker,
 			readinessCheck,
+			fluidAccessTokenGenerator,
 		),
 	};
 }

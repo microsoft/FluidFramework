@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { type UpPath, rootFieldKey } from "../../core/index.js";
+import { type Revertible, type UpPath, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
-import type { ITreeCheckout } from "../../shared-tree/index.js";
+import { SharedTreeFactory, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import { createTestUndoRedoStacks, expectJsonTree, moveWithin } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import assert from "assert";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 
 const rootPath: UpPath = {
 	parent: undefined,
@@ -414,5 +418,26 @@ describe("Undo and redo", () => {
 		expectJsonTree(tree, ["A", "B"]);
 
 		unsubscribe();
+	});
+
+	// TODO:#20949: Enable when undo/redo is supported for detached trees (currently failing with error: "refresher data not found")
+	it.skip("can undo while detached", () => {
+		const sf = new SchemaFactory(undefined);
+		class Schema extends sf.object("Object", { foo: sf.number }) {}
+		const sharedTreeFactory = new SharedTreeFactory();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const tree = sharedTreeFactory.create(runtime, "tree");
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: Schema }));
+		view.initialize({ foo: 1 });
+		assert.equal(tree.isAttached(), false);
+		let revertible: Revertible | undefined;
+		view.events.on("commitApplied", (_, getRevertible) => {
+			revertible = getRevertible?.();
+		});
+		view.root.foo = 2;
+		assert.equal(view.root.foo, 2);
+		assert(revertible !== undefined);
+		revertible.revert();
+		assert.equal(view.root.foo, 1);
 	});
 });

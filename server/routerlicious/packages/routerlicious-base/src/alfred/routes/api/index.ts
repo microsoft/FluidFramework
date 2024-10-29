@@ -15,6 +15,7 @@ import {
 	IThrottler,
 	ITokenRevocationManager,
 	IClusterDrainingChecker,
+	IFluidAccessTokenGenerator,
 } from "@fluidframework/server-services-core";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import cors from "cors";
@@ -48,6 +49,7 @@ export function create(
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	readinessCheck?: IReadinessCheck,
+	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -84,6 +86,7 @@ export function create(
 		singleUseTokenCache,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
+		fluidAccessTokenGenerator,
 	);
 
 	const healthCheckEndpoints = createHealthCheckEndpoints(
