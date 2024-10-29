@@ -9,8 +9,9 @@ import { CommandLogger } from "../logging.js";
 import { MachineState } from "../machines/index.js";
 
 /**
- * An async function that is called to handle a particular state from a jssm state machine. Typically this type is used
- * via the {@link BaseStateHandler} class and its subclasses.
+ * An async function that is called to handle a particular state from a
+ * {@link https://stonecypher.github.io/jssm/docs/pages/WhatAreStateMachines.html | jssm state machine}. Typically this
+ * type is used via the {@link BaseStateHandler} class and its subclasses.
  *
  * The function receives a current state, the state machine itself, a testMode boolean, and a `data` object of any type
  * that can contain contextual information for all the handlers of a particular state machine.
@@ -53,8 +54,9 @@ export type StateHandlerFunction = (
 ) => Promise<boolean>;
 
 /**
- * A StateHandler is an object that can handle states from a jssm state machine. Typically this type is used via the
- * {@link BaseStateHandler} class and its subclasses.
+ * A StateHandler is an object that can handle states from a
+ * {@link https://stonecypher.github.io/jssm/docs/pages/WhatAreStateMachines.html | jssm state machine}. Typically this
+ * type is used via the {@link BaseStateHandler} class and its subclasses.
  */
 export interface StateHandler {
 	handleState: StateHandlerFunction;
