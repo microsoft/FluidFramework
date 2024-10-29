@@ -632,6 +632,12 @@ export class MockContainerRuntimeFactory {
 		while (this.messages.length > 0) {
 			this.processFirstMessage();
 		}
+		this.runtimes.forEach((r) => {
+			r.deltaManager.minimumSequenceNumber = r.deltaManager.lastSequenceNumber;
+			if (this.minSeq.has(r.clientId)) {
+				this.minSeq.set(r.clientId, r.deltaManager.minimumSequenceNumber);
+			}
+		});
 	}
 }
 
