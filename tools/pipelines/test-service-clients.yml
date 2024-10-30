@@ -51,7 +51,7 @@ stages:
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-        FLUID_LOGGER_PROPS: '{ "displayName": ${{variables.pipelineIdentifierForTelemetry}}}'
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
         azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
         azure__fluid__relay__service__endpoint: $(azure-fluid-relay-service-endpoint)
         azure__fluid__relay__service__key: $(azure-fluid-relay-service-key)
