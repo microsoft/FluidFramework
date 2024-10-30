@@ -76,7 +76,7 @@
 		"sass": "^1.77.8"
 	},
 	"devDependencies": {
-		"@azure/static-web-apps-cli": "^1.0.4",
+		"@azure/static-web-apps-cli": "^2.0.1",
 		"@fluid-tools/api-markdown-documenter": "^0.17.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
