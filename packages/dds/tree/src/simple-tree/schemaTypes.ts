@@ -36,8 +36,17 @@ export function isTreeNodeSchemaClass<
 	ImplicitlyConstructable extends boolean,
 	Info,
 >(
-	schema: TreeNodeSchema<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>,
-): schema is TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info> {
+	schema:
+		| TreeNodeSchema<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
+		| TreeNodeSchemaClass<Name, Kind, TNode & TreeNode, TBuild, ImplicitlyConstructable, Info>,
+): schema is TreeNodeSchemaClass<
+	Name,
+	Kind,
+	TNode & TreeNode,
+	TBuild,
+	ImplicitlyConstructable,
+	Info
+> {
 	return schema.constructor !== undefined;
 }
 
