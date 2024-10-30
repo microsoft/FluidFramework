@@ -26,6 +26,14 @@ class TestContext implements IContext {
 		throw new Error("Method not implemented.");
 	}
 
+	public pause(reason?: any) {
+		throw new Error("Method not implemented.");
+	}
+
+	public resume() {
+		throw new Error("Method not implemented.");
+	}
+
 	public readonly log: ILogger = DebugLogger.create("fluid-server:TestContextManager");
 }
 

@@ -131,7 +131,6 @@ import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
 	SchemaFactory,
-	type InsertableTreeFieldFromImplicitField,
 	toStoredSchema,
 	type TreeViewEvents,
 	type TreeView,
@@ -146,7 +145,6 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-import { cursorFromInsertable } from "../simple-tree/index.js";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
@@ -890,6 +888,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
+					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 					describe(
 						includeStringification ? "with stringification" : "without stringification",
 						() => {
@@ -1154,7 +1153,7 @@ export function treeTestFactory(
  *
  * Typically, users will want to initialize the returned view with some content (thereby setting its schema) using `TreeView.initialize`.
  */
-export function getView<TSchema extends ImplicitFieldSchema>(
+export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 	logger?: ITelemetryLoggerExt,
@@ -1179,7 +1178,7 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 /**
  * Views the supplied checkout with the given schema.
  */
-export function viewCheckout<TSchema extends ImplicitFieldSchema>(
+export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
 	checkout: TreeCheckout,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
@@ -1260,22 +1259,6 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
 		}
 		return true;
 	};
-}
-
-/**
- * Returns a cursor (in nodes mode) for the root node.
- *
- * @privateRemarks
- * Ideally this would work on any node, not just the root,
- * and the schema would come from the unhydrated node.
- * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
- */
-export function cursorFromInsertableTreeField(
-	schema: ImplicitFieldSchema,
-	tree: InsertableTreeFieldFromImplicitField,
-	nodeKeyManager: NodeKeyManager,
-): ITreeCursorSynchronous | undefined {
-	return cursorFromInsertable(schema, tree, nodeKeyManager);
 }
 
 function normalizeNewFieldContent(

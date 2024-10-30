@@ -351,7 +351,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				newRevision,
 				this.detachedRevision,
 			);
-			this.editManager.advanceMinimumSequenceNumber(newRevision);
+			// Schedule the advancement of the min sequence number to happen very soon, but not immediately.
+			// Advancing the minimum sequence number can cause the EditManager to evict old commits from its trunk.
+			// This function (submitCommit) is called in response to a change to the local branch, and we do not want
+			// to evict any commits until all other listeners of the branch have had a chance to process the change.
+			void Promise.resolve().then(() =>
+				this.editManager.advanceMinimumSequenceNumber(newRevision),
+			);
 			return undefined;
 		}
 		const message = this.messageCodec.encode(

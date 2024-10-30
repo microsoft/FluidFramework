@@ -652,7 +652,6 @@ declare type old_as_current_for_Interface_IMergeTreeDeltaOpArgs = requireAssigna
  * typeValidation.broken:
  * "Interface_IMergeTreeDeltaOpArgs": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMergeTreeDeltaOpArgs = requireAssignableTo<TypeOnly<current.IMergeTreeDeltaOpArgs>, TypeOnly<old.IMergeTreeDeltaOpArgs>>
 
 /*
@@ -671,7 +670,6 @@ declare type old_as_current_for_Interface_IMergeTreeGroupMsg = requireAssignable
  * typeValidation.broken:
  * "Interface_IMergeTreeGroupMsg": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMergeTreeGroupMsg = requireAssignableTo<TypeOnly<current.IMergeTreeGroupMsg>, TypeOnly<old.IMergeTreeGroupMsg>>
 
 /*
@@ -727,6 +725,24 @@ declare type old_as_current_for_Interface_IMergeTreeObliterateMsg = requireAssig
  * "Interface_IMergeTreeObliterateMsg": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IMergeTreeObliterateMsg = requireAssignableTo<TypeOnly<current.IMergeTreeObliterateMsg>, TypeOnly<old.IMergeTreeObliterateMsg>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IMergeTreeObliterateSidedMsg": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IMergeTreeObliterateSidedMsg = requireAssignableTo<TypeOnly<old.IMergeTreeObliterateSidedMsg>, TypeOnly<current.IMergeTreeObliterateSidedMsg>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IMergeTreeObliterateSidedMsg": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IMergeTreeObliterateSidedMsg = requireAssignableTo<TypeOnly<current.IMergeTreeObliterateSidedMsg>, TypeOnly<old.IMergeTreeObliterateSidedMsg>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1077,7 +1093,6 @@ declare type old_as_current_for_TypeAlias_IMergeTreeDeltaOp = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_IMergeTreeDeltaOp": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IMergeTreeDeltaOp = requireAssignableTo<TypeOnly<current.IMergeTreeDeltaOp>, TypeOnly<old.IMergeTreeDeltaOp>>
 
 /*
@@ -1096,7 +1111,6 @@ declare type old_as_current_for_TypeAlias_IMergeTreeOp = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_IMergeTreeOp": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IMergeTreeOp = requireAssignableTo<TypeOnly<current.IMergeTreeOp>, TypeOnly<old.IMergeTreeOp>>
 
 /*

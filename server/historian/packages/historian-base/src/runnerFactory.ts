@@ -13,6 +13,7 @@ import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
 import { IHistorianResourcesCustomizations } from "./customizations";
+import { StartupCheck } from "@fluidframework/server-services-shared";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -25,6 +26,7 @@ export class HistorianResources implements core.IResources {
 		public readonly restTenantThrottlers: Map<string, core.IThrottler>,
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly documentManager: core.IDocumentManager,
+		public readonly startupCheck: core.IReadinessCheck,
 		public readonly cache?: historianServices.RedisCache,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public readonly denyList?: historianServices.IDenyList,
@@ -208,6 +210,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const denyList: historianServices.IDenyList = new historianServices.DenyList(
 			denyListConfig,
 		);
+		const startupCheck = new StartupCheck();
 
 		return new HistorianResources(
 			config,
@@ -217,6 +220,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			restTenantThrottlers,
 			restClusterThrottlers,
 			documentManager,
+			startupCheck,
 			gitCache,
 			revokedTokenChecker,
 			denyList,
@@ -237,6 +241,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.restTenantThrottlers,
 			resources.restClusterThrottlers,
 			resources.documentManager,
+			resources.startupCheck,
 			resources.cache,
 			resources.revokedTokenChecker,
 			resources.denyList,

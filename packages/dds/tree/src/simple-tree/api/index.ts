@@ -12,6 +12,7 @@ export {
 	type ITreeViewConfiguration,
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
+	type TreeViewAlpha,
 } from "./tree.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export type {
@@ -22,7 +23,6 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
-	typedObjectValues,
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable } from "./create.js";
@@ -62,6 +62,11 @@ export type {
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
 	ReadonlyMapInlined,
+	TreeNodeSchemaClassUnsafe,
+	TreeNodeSchemaUnsafe,
+	AllowedTypesUnsafe,
+	TreeNodeSchemaNonClassUnsafe,
+	InsertableTreeNodeFromAllowedTypesUnsafe,
 } from "./typesUnsafe.js";
 
 export type {

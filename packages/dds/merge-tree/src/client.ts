@@ -272,7 +272,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		} else {
 			assert(
 				typeof start === "number" && typeof end === "number",
-				"Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled.",
+				0xa42 /* Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled. */,
 			);
 			obliterateOp = createObliterateRangeOp(start, end);
 		}
@@ -322,7 +322,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		accum: TClientData,
 		splitRange?: boolean,
 	): void;
-	public walkSegments<undefined>(
+	public walkSegments(
 		handler: ISegmentAction<undefined>,
 		start?: number,
 		end?: number,
@@ -506,7 +506,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		} else {
 			assert(
 				op.type === MergeTreeDeltaType.OBLITERATE,
-				"Unexpected sided obliterate while mergeTreeEnableSidedObliterate is disabled",
+				0xa43 /* Unexpected sided obliterate while mergeTreeEnableSidedObliterate is disabled */,
 			);
 			const range = this.getValidOpRange(op, clientArgs);
 			this._mergeTree.obliterateRange(
@@ -666,7 +666,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 		}
 
-		assert(start !== undefined && end !== undefined, "Missing start or end of range");
+		assert(
+			start !== undefined && end !== undefined,
+			0xa44 /* Missing start or end of range */,
+		);
 		return { start, end };
 	}
 

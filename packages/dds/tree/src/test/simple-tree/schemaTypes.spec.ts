@@ -8,9 +8,24 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-import { SchemaFactory, type TreeNodeSchema } from "../../simple-tree/index.js";
 import {
+	SchemaFactory,
+	type booleanSchema,
+	type InsertableObjectFromSchemaRecord,
+	type numberSchema,
+	type stringSchema,
+	type TreeNode,
+	type TreeNodeSchema,
+} from "../../simple-tree/index.js";
+import {
+	type AllowedTypes,
+	type FieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type InsertableTypedNode,
 	type NodeBuilderData,
 	type NodeFromSchema,
@@ -20,7 +35,6 @@ import {
 	normalizeAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
-import { TreeFactory } from "../../treeFactory.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
@@ -29,9 +43,178 @@ import type {
 
 const schema = new SchemaFactory("com.example");
 
-const factory = new TreeFactory({});
-
 describe("schemaTypes", () => {
+	{
+		class A extends schema.object("A", { x: [schema.number, schema.string] }) {}
+		class B extends schema.object("B", { x: [schema.number, schema.null] }) {}
+		// Unconstrained
+		{
+			// Input
+			type I1 = InsertableTreeFieldFromImplicitField<ImplicitFieldSchema>;
+			type I2 = InsertableTypedNode<TreeNodeSchema>;
+			type I3 = NodeBuilderData<TreeNodeSchema>;
+
+			type _check1 = requireTrue<areSafelyAssignable<I1, never>>;
+			type _check2 = requireTrue<areSafelyAssignable<I2, never>>;
+			type _check3 = requireTrue<areSafelyAssignable<I3, never>>;
+
+			// Output
+			type N1 = NodeFromSchema<TreeNodeSchema>;
+			type N2 = TreeNodeFromImplicitAllowedTypes;
+			type N3 = TreeFieldFromImplicitField;
+
+			type _check4 = requireTrue<areSafelyAssignable<N1, TreeNode | TreeLeafValue>>;
+			type _check5 = requireTrue<areSafelyAssignable<N2, TreeNode | TreeLeafValue>>;
+			type _check6 = requireTrue<
+				areSafelyAssignable<N3, TreeNode | TreeLeafValue | undefined>
+			>;
+		}
+
+		// InsertableTreeFieldFromImplicitField
+		{
+			// Input
+			type I2 = InsertableTreeFieldFromImplicitField<ImplicitFieldSchema>;
+			type I3 = InsertableTreeFieldFromImplicitField<ImplicitAllowedTypes>;
+			type I4 = InsertableTreeFieldFromImplicitField<AllowedTypes>;
+			type I5 = InsertableTreeFieldFromImplicitField<
+				typeof numberSchema | typeof stringSchema
+			>;
+			type I8 = InsertableTreeFieldFromImplicitField<TreeNodeSchema>;
+
+			type I6 = InsertableTreeFieldFromImplicitField<
+				typeof numberSchema & typeof stringSchema
+			>;
+			type I7 = InsertableTreeFieldFromImplicitField<AllowedTypes & TreeNodeSchema>;
+
+			type I9 = InsertableTreeFieldFromImplicitField<typeof A | typeof B>;
+			type I10 = InsertableTreeFieldFromImplicitField<FieldSchema>;
+
+			// These types should behave contravariantly
+			type _check2 = requireTrue<areSafelyAssignable<I2, never>>;
+			type _check3 = requireTrue<areSafelyAssignable<I3, never>>;
+			type _check4 = requireTrue<areSafelyAssignable<I4, never>>;
+			type _check5 = requireTrue<areSafelyAssignable<I5, never>>;
+			type _check6 = requireTrue<areSafelyAssignable<I8, never>>;
+			type _check7 = requireTrue<areSafelyAssignable<I9, never>>;
+			type _check8 = requireTrue<areSafelyAssignable<I10, never>>;
+		}
+
+		// InsertableTreeNodeFromImplicitAllowedTypes
+		{
+			// Input
+			type I3 = InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>;
+			type I4 = InsertableTreeNodeFromImplicitAllowedTypes<AllowedTypes>;
+			type I5 = InsertableTreeNodeFromImplicitAllowedTypes<
+				typeof numberSchema | typeof stringSchema
+			>;
+			type I8 = InsertableTreeNodeFromImplicitAllowedTypes<TreeNodeSchema>;
+
+			type I6 = InsertableTreeNodeFromImplicitAllowedTypes<
+				typeof numberSchema & typeof stringSchema
+			>;
+			type I7 = InsertableTreeNodeFromImplicitAllowedTypes<AllowedTypes & TreeNodeSchema>;
+
+			type I9 = InsertableTreeNodeFromImplicitAllowedTypes<typeof A | typeof B>;
+
+			// These types should behave contravariantly
+			type _check3 = requireTrue<areSafelyAssignable<I3, never>>;
+			type _check4 = requireTrue<areSafelyAssignable<I4, never>>;
+			type _check5 = requireTrue<areSafelyAssignable<I5, never>>;
+			type _check6 = requireTrue<areSafelyAssignable<I8, never>>;
+
+			// Actual schema unions
+			type I12 = InsertableTreeNodeFromImplicitAllowedTypes<typeof numberSchema>;
+			type _check12 = requireTrue<areSafelyAssignable<I12, number>>;
+			type I10 = InsertableTreeNodeFromImplicitAllowedTypes<[typeof numberSchema]>;
+			type _check10 = requireTrue<areSafelyAssignable<I10, number>>;
+
+			type I11 = InsertableTreeNodeFromImplicitAllowedTypes<
+				[typeof numberSchema, typeof stringSchema]
+			>;
+			type _check11 = requireTrue<areSafelyAssignable<I11, number | string>>;
+
+			// boolean
+			// boolean is sometimes a union of true and false, so it can break in its owns special ways
+			type I13 = InsertableTreeNodeFromImplicitAllowedTypes<typeof booleanSchema>;
+			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
+		}
+
+		// InsertableTreeNodeFromAllowedTypes
+		{
+			{
+				type T = InsertableTreeNodeFromAllowedTypes<AllowedTypes>;
+				type _check = requireAssignableTo<T, never>;
+			}
+
+			{
+				type T = InsertableTreeNodeFromAllowedTypes<
+					[typeof numberSchema, typeof stringSchema]
+				>;
+				type _check = requireTrue<areSafelyAssignable<T, number | string>>;
+			}
+
+			{
+				type T = InsertableTreeNodeFromAllowedTypes<[typeof A, typeof B]>;
+				type _check = requireAssignableTo<A | B, T>;
+			}
+		}
+
+		// InsertableTypedNode
+		{
+			// Input
+			type I5 = InsertableTypedNode<typeof numberSchema | typeof stringSchema>;
+			type I8 = InsertableTypedNode<TreeNodeSchema>;
+
+			type I6 = InsertableTypedNode<typeof numberSchema & typeof stringSchema>;
+			type I7 = InsertableTypedNode<AllowedTypes & TreeNodeSchema>;
+
+			type I9 = InsertableTypedNode<typeof A | typeof B>;
+
+			// These types should behave contravariantly
+			type _check5 = requireTrue<areSafelyAssignable<I5, never>>;
+			type _check6 = requireTrue<areSafelyAssignable<I8, never>>;
+
+			type t = never extends TreeNodeSchema ? true : false;
+
+			// Actual normal use
+			type I12 = InsertableTypedNode<typeof numberSchema>;
+			type _check12 = requireTrue<areSafelyAssignable<I12, number>>;
+
+			// boolean
+			// boolean is sometimes a union of true and false, so it can break in its owns special ways
+			type I13 = InsertableTypedNode<typeof booleanSchema>;
+			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
+		}
+
+		// InsertableField
+		{
+			{
+				type unconstrained = InsertableField<ImplicitFieldSchema>;
+				type _check = requireTrue<areSafelyAssignable<unconstrained, never>>;
+			}
+			type I8 = InsertableField<TreeNodeSchema>;
+
+			type I6 = InsertableField<typeof numberSchema & typeof stringSchema>;
+			type I7 = InsertableField<AllowedTypes & TreeNodeSchema>;
+
+			type I9 = InsertableField<typeof A | typeof B>;
+
+			// These types should behave contravariantly
+			type _check6 = requireTrue<areSafelyAssignable<I8, never>>;
+
+			type t = never extends TreeNodeSchema ? true : false;
+
+			// Actual normal use
+			type I12 = InsertableField<typeof numberSchema>;
+			type _check12 = requireTrue<areSafelyAssignable<I12, number>>;
+
+			// boolean
+			// boolean is sometimes a union of true and false, so it can break in its owns special ways
+			type I13 = InsertableField<typeof booleanSchema>;
+			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
+		}
+	}
+
 	describe("insertable", () => {
 		it("Lists", () => {
 			const List = schema.array(schema.number);
@@ -95,7 +278,7 @@ describe("schemaTypes", () => {
 			// Regression test for InsertableTypedNode not distributing over unions correctly.
 			{
 				type X = InsertableTypedNode<typeof List | typeof schema.number>;
-				const x: X = [];
+				type _check = requireTrue<areSafelyAssignable<X, never>>;
 			}
 		});
 
@@ -148,6 +331,58 @@ describe("schemaTypes", () => {
 			const x = new Canvas({
 				stuff: [{}],
 			});
+
+			const allowed = [NodeMap, NodeList] as const;
+			type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
+			const test: X = [{}];
+
+			const allowed2 = [NodeMap] as const;
+			type X2 = InsertableTreeNodeFromAllowedTypes<typeof allowed2>;
+
+			const allowed3 = [NodeList] as const;
+			type X3 = InsertableTreeNodeFromAllowedTypes<typeof allowed3>;
+			type _check1 = requireTrue<areSafelyAssignable<X3, X4>>;
+
+			const allowed4 = NodeList;
+			type X4 = InsertableTypedNode<typeof allowed4>;
+
+			type X5 = InsertableTreeFieldFromImplicitField<typeof allowed>;
+			const test2: X5 = [{}];
+
+			type X6 = InsertableObjectFromSchemaRecord<typeof Canvas.info>;
+			type X7 = InsertableTreeFieldFromImplicitField<typeof Canvas.info.stuff>;
+		});
+
+		it("Mixed Regression test", () => {
+			class Note extends schema.object("Note", {}) {
+				public isSelected: boolean = false;
+			}
+
+			class Canvas extends schema.object("Canvas", { stuff: [Note] }) {}
+
+			const y = new Note({});
+
+			// There was a bug where unions with maps lost implicit contractibility, causing this to not compile:
+			const x = new Canvas({
+				stuff: {},
+			});
+
+			const allowed = [Note] as const;
+			type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
+			const test: X = [{}];
+
+			const allowed3 = [Note] as const;
+			type X3 = InsertableTreeNodeFromAllowedTypes<typeof allowed3>;
+			type _check1 = requireTrue<areSafelyAssignable<X3, X4>>;
+
+			const allowed4 = Note;
+			type X4 = InsertableTypedNode<typeof allowed4>;
+
+			type X5 = InsertableTreeFieldFromImplicitField<typeof allowed>;
+			const test2: X5 = [{}];
+
+			type X6 = InsertableObjectFromSchemaRecord<typeof Canvas.info>;
+			type X7 = InsertableTreeFieldFromImplicitField<typeof Canvas.info.stuff>;
 		});
 	});
 
