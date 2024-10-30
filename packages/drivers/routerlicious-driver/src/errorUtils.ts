@@ -186,7 +186,7 @@ export const socketIoPath = "socket.io";
  * Get a stripped version of a URL safe for r11s telemetry
  * @returns undefined if no appropriate hostName is provided
  */
-export function getUrlForTelemetry(hostName: string, path?: string): string | undefined {
+export function getUrlForTelemetry(hostName: string, path: string = ""): string | undefined {
 	// Strip off "http://" or "https://"
 	const hostNameMatch = hostName.match(/^(?:https?:\/\/)?([^/]+)/);
 	if (!hostNameMatch) {
@@ -195,31 +195,28 @@ export function getUrlForTelemetry(hostName: string, path?: string): string | un
 	const strippedHostName = hostNameMatch[1];
 
 	let extractedPath = "";
-	if (path !== undefined) {
-		// Extract portions of the path and explicitly match them to known path names
-		const portionArray: string[] = [];
-		for (const portion of path.split("/")) {
-			if (portion !== "") {
-				if (
-					[
-						socketIoPath,
-						"repos",
-						"deltas",
-						"documents",
-						"session",
-						"git",
-						"summaries",
-						"latest",
-					].includes(portion)
-				) {
-					portionArray.push(portion);
-				} else {
-					portionArray.push("REDACTED");
-				}
+	// Extract portions of the path and explicitly match them to known path names
+	for (const portion of path.split("/")) {
+		if (portion !== "") {
+			// eslint-disable-next-line unicorn/prefer-ternary
+			if (
+				[
+					socketIoPath,
+					"repos",
+					"deltas",
+					"documents",
+					"session",
+					"git",
+					"summaries",
+					"latest",
+				].includes(portion)
+			) {
+				extractedPath += `/${portion}`;
+			} else {
+				extractedPath += "/REDACTED";
 			}
 		}
-		extractedPath = portionArray.join("/");
 	}
 
-	return extractedPath !== "" ? `${strippedHostName}/${extractedPath}` : strippedHostName;
+	return `${strippedHostName}${extractedPath}`;
 }
