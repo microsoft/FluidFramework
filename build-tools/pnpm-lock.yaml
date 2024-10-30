@@ -12,11 +12,6 @@ overrides:
   oclif>@aws-sdk/client-cloudfront: npm:empty-npm-package@1.0.0
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
 
-patchedDependencies:
-  jssm-viz@5.101.0:
-    hash: jq5upu46ffypomxpz6yk2iwhaa
-    path: patches/jssm-viz@5.101.0.patch
-
 importers:
 
   .:
@@ -365,7 +360,7 @@ importers:
         specifier: ~9.1.0
         version: 9.1.0(eslint@8.57.0)
       jssm-viz-cli:
-        specifier: 5.101.0
+        specifier: ^5.101.0
         version: 5.101.0
       mocha:
         specifier: ^10.7.3
@@ -8433,13 +8428,13 @@ packages:
       better_git_changelog: 1.6.2
       commander: 4.1.1
       glob: 7.2.3
-      jssm-viz: 5.101.0(patch_hash=jq5upu46ffypomxpz6yk2iwhaa)
+      jssm-viz: 5.101.0
       sharp: 0.33.2
     transitivePeerDependencies:
       - supports-color
     dev: true
 
-  /jssm-viz@5.101.0(patch_hash=jq5upu46ffypomxpz6yk2iwhaa):
+  /jssm-viz@5.101.0:
     resolution: {integrity: sha512-dOmdBRnrVHECOmVuDFgPnmbwNXU9MO3U19+5KuyxYr8bJNizeV424Ez609+G23pmGY8NwCs3w4qRYcSyOPdcpA==}
     dependencies:
       better_git_changelog: 1.6.2
@@ -8450,7 +8445,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
-    patched: true
 
   /jssm@5.104.1:
     resolution: {integrity: sha512-YpW2Y5Wlln8GqULzGE40B05oiiZKeIhzZLR2eymRg8cVoGan+jMQ/cRuVa1AxP3J72olx6/4RwRsEchDw0HPbw==}
