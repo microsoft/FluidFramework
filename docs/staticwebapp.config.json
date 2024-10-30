@@ -8,5 +8,11 @@
 	},
 	"platform": {
 		"apiRuntime": "node:18"
-	}
+	},
+	"routes": [
+		{
+			"route": "/404",
+			"statusCode": 404
+		}
+	]
 }
