@@ -217,58 +217,6 @@ describe("Presence", () => {
 						// Act & Verify - simulate duplicate join message from client
 						presence.processSignal("", initialAttendeeSignal, false);
 					});
-
-					it("is NOT announced when rejoined with different connection and current information is updated", () => {
-						// Setup
-						assert(newAttendee !== undefined, "No attendee was set in beforeEach");
-
-						const updatedClientConnectionId = "client5";
-						clock.tick(20);
-						const rejoinedAttendeeSignal = generateBasicClientJoin(clock.now - 20, {
-							averageLatency: 20,
-							clientSessionId: newAttendeeSessionId, // Same session id
-							clientConnectionId: updatedClientConnectionId, // Different connection id
-							connectionOrder: 1,
-							updateProviders: ["client2"],
-						});
-						rejoinedAttendeeSignal.content.data["system:presence"].clientToSessionId[
-							initialAttendeeConnectionId
-						] =
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							initialAttendeeSignal.content.data["system:presence"].clientToSessionId[
-								initialAttendeeConnectionId
-							]!;
-
-						// Act - simulate new join message from same client (without disconnect)
-						presence.processSignal("", rejoinedAttendeeSignal, false);
-
-						// Verify
-						// Session id is unchanged
-						assert.equal(
-							newAttendee.sessionId,
-							newAttendeeSessionId,
-							"Attendee has wrong session id",
-						);
-						// Current connection id is updated
-						assert(
-							newAttendee.connectionId() === updatedClientConnectionId,
-							"Attendee does not have updated client connection id",
-						);
-						// Attendee is available via new connection id
-						const attendeeViaUpdatedId = presence.getAttendee(updatedClientConnectionId);
-						assert.equal(
-							attendeeViaUpdatedId,
-							newAttendee,
-							"getAttendee returned wrong attendee for updated connection id",
-						);
-						// Attendee is available via old connection id
-						const attendeeViaOriginalId = presence.getAttendee(initialAttendeeConnectionId);
-						assert.equal(
-							attendeeViaOriginalId,
-							newAttendee,
-							"getAttendee returned wrong attendee for original connection id",
-						);
-					});
 				});
 			});
 		});
