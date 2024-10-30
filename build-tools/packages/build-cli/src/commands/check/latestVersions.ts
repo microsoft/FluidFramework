@@ -63,7 +63,9 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 						`Version ${versionInput.version} is the latest version for major version ${majorVersion}`,
 					);
 					this.log(`##vso[task.setvariable variable=shouldDeploy;isOutput=true]true`);
-					this.log(`##vso[task.setvariable variable=majorVersion;isOutput=true]${majorVersion}`);
+					this.log(
+						`##vso[task.setvariable variable=majorVersion;isOutput=true]${majorVersion}`,
+					);
 					return;
 				}
 
@@ -82,6 +84,8 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
 		);
 		this.log(`##vso[task.setvariable variable=shouldDeploy;isOutput=true]false`);
-		this.log(`##vso[task.setvariable variable=majorVersion;isOutput=true]${inputMajorVersion}`);
+		this.log(
+			`##vso[task.setvariable variable=majorVersion;isOutput=true]${inputMajorVersion}`,
+		);
 	}
 }
