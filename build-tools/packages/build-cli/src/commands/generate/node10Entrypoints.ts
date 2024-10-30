@@ -77,6 +77,11 @@ export function mapExportPathsFromPackage(
 			continue;
 		}
 
+		// Exclude root "." path as "types" should handle that.
+		if (exportPath === ".") {
+			continue;
+		}
+
 		const resolvedExport = resolve.exports(packageJson, exportPath, {
 			conditions: ["types"],
 		});
@@ -84,7 +89,9 @@ export function mapExportPathsFromPackage(
 			throw new Error(`exports for ${exportPath} is undefined`);
 		}
 
-		const node10ExportPath = resolvedExport[0].replace(/^.*\//, "");
+		const node10ExportPath = resolvedExport[0]
+			.replace(/\/index(\.d\.[cm]?ts)?$/, "/internal$1")
+			.replace(/^.*\//, "");
 
 		mapKeyToOutput.set(node10ExportPath, {
 			relPath: resolvedExport[0],
