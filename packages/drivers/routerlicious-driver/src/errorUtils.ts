@@ -209,6 +209,12 @@ export function getUrlForTelemetry(hostName: string, path: string = ""): string 
 					"git",
 					"summaries",
 					"latest",
+					"document",
+					"commits",
+					"blobs",
+					"refs",
+					"revokeToken",
+					"accesstoken",
 				].includes(portion)
 			) {
 				extractedPath += `/${portion}`;
