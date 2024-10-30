@@ -1880,13 +1880,6 @@ export const handlers: Handler[] = [
 				const devDependencies = Object.keys(packageJson.devDependencies ?? {});
 				for (const requiredDevDependency of requirements.requiredDevDependencies) {
 					if (!devDependencies.includes(requiredDevDependency)) {
-						if (
-							(requirements.devDependencyExclusions?.includes(requiredDevDependency) ??
-								false) &&
-							packageJson.exports === undefined
-						) {
-							continue;
-						}
 						errors.push(`Missing dev dependency: "${requiredDevDependency}"`);
 					}
 				}
@@ -1897,9 +1890,6 @@ export const handlers: Handler[] = [
 				const scriptNames = Object.keys(packageJson.scripts ?? {});
 				for (const requiredScript of requirements.requiredScripts) {
 					if (!scriptNames.includes(requiredScript.name)) {
-						if ((requiredScript.exclusion ?? false) && packageJson.exports === undefined) {
-							continue;
-						}
 						// Enforce the script is present
 						errors.push(`Missing script: "${requiredScript.name}"`);
 					} else if (

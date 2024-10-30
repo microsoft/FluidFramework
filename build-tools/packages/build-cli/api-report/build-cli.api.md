@@ -55,7 +55,6 @@ export interface PackageNamePolicyConfig {
 
 // @public
 export interface PackageRequirements {
-    devDependencyExclusions?: string[];
     requiredDevDependencies?: string[];
     requiredScripts?: ScriptRequirement[];
 }
@@ -121,7 +120,6 @@ export { run }
 export interface ScriptRequirement {
     body: string;
     bodyMustMatch?: boolean;
-    exclusion?: boolean;
     name: string;
 }
 

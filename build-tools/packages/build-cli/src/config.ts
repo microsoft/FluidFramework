@@ -293,13 +293,6 @@ export interface PackageRequirements {
 	 * @remarks Note: there is no enforcement of version requirements, only that a dependency on the specified name must exist.
 	 */
 	requiredDevDependencies?: string[];
-
-	/**
-	 * (optional) exclusions for specific dependencies.
-	 * This field allows you to specify dependencies that should be skipped from validation
-	 * under certain conditions.
-	 */
-	devDependencyExclusions?: string[];
 }
 
 /**
@@ -323,13 +316,6 @@ export interface ScriptRequirement {
 	 * @defaultValue `false`
 	 */
 	bodyMustMatch?: boolean;
-
-	/**
-	 * Indicates if the script can be excluded from validation under specific conditions.
-	 *
-	 * For example: If the script is `"build:docs"` and `packageJson.exports` is `undefined`, it can be excluded.
-	 */
-	exclusion?: boolean;
 }
 
 const configName = "flub";
