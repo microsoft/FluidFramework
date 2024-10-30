@@ -20,6 +20,7 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	TreeNode,
+	TreeNodeSchemaCore,
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./toMapTree.js";
@@ -663,20 +664,15 @@ export type InsertableTypedNode<
 /**
  * Given a node's schema, return the corresponding object from which the node could be built.
  * @privateRemarks
- * Currently this assumes factory functions take exactly one argument.
- * This could be changed if needed.
- *
- * These factory functions can also take a FlexTreeNode, but this is not exposed in the public facing types.
+ * This uses TreeNodeSchemaCore, and thus depends on TreeNodeSchemaCore.createFromInsertable for the typing.
+ * This works almost the same as using TreeNodeSchema,
+ * except that the more complex typing in TreeNodeSchema case breaks for non-class schema and leaks in `undefined` from optional crete parameters.
  * @system @public
  */
-export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
-	string,
-	NodeKind,
-	TreeNode | TreeLeafValue,
-	infer TBuild
->
-	? TBuild
-	: never;
+export type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> =
+	T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild>
+		? TBuild
+		: never;
 
 /**
  * Value that may be stored as a leaf node.

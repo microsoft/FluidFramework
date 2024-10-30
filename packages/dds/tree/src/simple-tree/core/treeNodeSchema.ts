@@ -41,16 +41,30 @@ export type TreeNodeSchema<
  * Non-class based schema can have issues with recursive types due to https://github.com/microsoft/TypeScript/issues/55832.
  * @system @sealed @public
  */
-export interface TreeNodeSchemaNonClass<
-	out Name extends string = string,
-	out Kind extends NodeKind = NodeKind,
-	out TNode extends TreeNode | TreeLeafValue = TreeNode | TreeLeafValue,
-	in TInsertable = never,
-	out ImplicitlyConstructable extends boolean = boolean,
-	out Info = unknown,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info, TInsertable> {
-	create(data: TInsertable): TNode;
-}
+export type TreeNodeSchemaNonClass<
+	Name extends string = string,
+	Kind extends NodeKind = NodeKind,
+	TNode extends TreeNode | TreeLeafValue = TreeNode | TreeLeafValue,
+	TInsertable = never,
+	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
+	TConstructorExtra = never,
+> = TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info, TInsertable> &
+	(undefined extends TConstructorExtra
+		? {
+				/**
+				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @sealed
+				 */
+				create(data?: TInsertable | TConstructorExtra): TNode;
+			}
+		: {
+				/**
+				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @sealed
+				 */
+				create(data: TInsertable | TConstructorExtra): TNode;
+			});
 
 /**
  * Tree node schema which is implemented using a class.
@@ -152,7 +166,15 @@ export type TreeNodeSchemaBoth<
 	Info,
 	TConstructorExtra
 > &
-	TreeNodeSchemaNonClass<Name, Kind, TNode, TInsertable, ImplicitlyConstructable, Info>;
+	TreeNodeSchemaNonClass<
+		Name,
+		Kind,
+		TNode,
+		TInsertable,
+		ImplicitlyConstructable,
+		Info,
+		TConstructorExtra
+	>;
 
 /**
  * Data common to all tree node schema.
@@ -227,7 +249,7 @@ export interface TreeNodeSchemaCore<
 	 * @remarks
 	 * Due to TypeScript limitations, the return type of this method can not be very specific.
 	 * For {@link TreeNodeSchemaClass} prefer using the constructor directly for better typing.
-	 * For {@link TreeNodeSchemaNonClass} use {@link TreeNodeSchemaNonClass.create}.
+	 * For {@link TreeNodeSchemaNonClass} use `create`.
 	 *
 	 * @privateRemarks
 	 * This method signature provides a way to infer `TInsertable` without relying on the constructor, and to construct nodes from schema of unknown kind.

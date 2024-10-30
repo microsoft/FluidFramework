@@ -857,9 +857,8 @@ describe("ArrayNode", () => {
 			const Schema = schemaFactory.array(schemaFactory.number);
 			type Schema = NodeFromSchema<typeof Schema>;
 			const _fromIterable: Schema = Schema.create([]);
-			// TODO: AB#8043: support omitting parameter
-			// const _fromUndefined: Schema = Schema.create(undefined);
-			// const _fromNothing: Schema = Schema.create();
+			const _fromUndefined: Schema = Schema.create(undefined);
+			const _fromNothing: Schema = Schema.create();
 		});
 
 		describe("implicit construction", () => {

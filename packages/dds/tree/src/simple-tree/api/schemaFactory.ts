@@ -341,7 +341,8 @@ export class SchemaFactory<
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
-		T
+		T,
+		undefined
 	>;
 
 	/**
@@ -486,7 +487,8 @@ export class SchemaFactory<
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
-		T
+		T,
+		undefined
 	>;
 
 	/**

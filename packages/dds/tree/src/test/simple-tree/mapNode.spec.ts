@@ -99,9 +99,8 @@ describeHydration(
 			const _fromMap: Schema = Schema.create(new Map());
 			const _fromIterable: Schema = Schema.create([]);
 			const _fromObject: Schema = Schema.create({});
-			// TODO: AB#8043: support omitting parameter
-			// const _fromUndefined: Schema = Schema.create(undefined);
-			// const _fromNothing: Schema = Schema.create();
+			const _fromUndefined: Schema = Schema.create(undefined);
+			const _fromNothing: Schema = Schema.create();
 		});
 
 		it("entries", () => {
