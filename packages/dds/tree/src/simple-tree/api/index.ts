@@ -23,7 +23,6 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
-	typedObjectValues,
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable } from "./create.js";
@@ -67,6 +66,7 @@ export type {
 	TreeNodeSchemaUnsafe,
 	AllowedTypesUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
+	InsertableTreeNodeFromAllowedTypesUnsafe,
 } from "./typesUnsafe.js";
 
 export type {
