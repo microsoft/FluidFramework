@@ -37,19 +37,38 @@ const routes = [
  * If a matching route is found, it constructs and returns the redirect URL. Otherwise, it returns a 404 response.
  */
 module.exports = async (context, { headers }) => {
-	const { pathname, search } = new URL(headers["x-ms-original-url"]);
+	// This URL has been proxied as there was no static file matching it.
+	const originalUrl = headers["x-ms-original-url"];
+	context.log(`x-ms-original-url: ${originalUrl}`);
+
+	if (originalUrl === undefined) {
+		context.log("No original URL found. Redirecting to /404.");
+		context.res = {
+			status: 302,
+			headers: { location: "/404" },
+		};
+		return;
+	}
+
+	const { pathname, search } = new URL(originalUrl);
+
 	const route = routes.find(({ from }) => pathname.startsWith(from));
 
 	if (route === undefined) {
-		context.res = {
-			status: 404,
-			headers: { location: "/404" },
-		};
-	} else {
-		const redirectLocation = `${pathname.replace(route.from, route.to)}${search}`;
+		context.log(
+			`No explicit redirect for ${originalUrl}. Redirecting to /404.`,
+		);
 		context.res = {
 			status: 302,
-			headers: { location: redirectLocation },
+			headers: { location: `/404?originalUrl=${encodeURIComponent(originalUrl)}` },
 		};
+		return;
 	}
+
+	const redirectLocation = `${pathname.replace(route.from, route.to)}${search}`;
+	context.log(`Redirecting ${originalUrl} to ${redirectLocation}.`);
+	context.res = {
+		status: 302,
+		headers: { location: redirectLocation },
+	};
 };
