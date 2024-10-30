@@ -152,6 +152,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		): void => {
 			// Check for connectivity before sending updates.
 			if (!this.runtime.connected) {
+				console.debug(`this.runtime is not connected`);
 				return;
 			}
 

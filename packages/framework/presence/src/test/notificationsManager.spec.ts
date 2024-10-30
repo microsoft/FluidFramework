@@ -13,7 +13,7 @@ import type { IPresence } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import { assertFinalExpectations } from "./testUtils.js";
+import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
 
 describe("Presence", () => {
 	describe("NotificationsManager", () => {
@@ -21,6 +21,9 @@ describe("Presence", () => {
 		let logger: EventAndErrorTrackingLogger;
 		const initialTime = 1000;
 		let clock: SinonFakeTimers;
+		let presence: ReturnType<typeof createPresenceManager>;
+
+		beforeEach(() => {});
 
 		before(async () => {
 			clock = useFakeTimers();
@@ -29,6 +32,11 @@ describe("Presence", () => {
 		beforeEach(() => {
 			logger = new EventAndErrorTrackingLogger();
 			runtime = new MockEphemeralRuntime(logger);
+
+			// TODO: runtime.connected has been hacked in past to lie about true connection.
+			// This will need to be updated to an alternate status provider.
+			// runtime.connected = true;
+
 			clock.setSystemTime(initialTime);
 		});
 
@@ -46,13 +54,94 @@ describe("Presence", () => {
 			clock.restore();
 		});
 
+		// it("does not signal when disconnected during initialization", () => {
+		// 	// Act & Verify
+		// 	createPresenceManager(runtime);
+		// });
+
+		// it("sends join when connected during initialization", () => {
+		// 	// Setup, Act (call to createPresenceManager), & Verify (post createPresenceManager call)
+		// 	prepareConnectedPresence(runtime, "seassionId-2", "client2", clock, logger);
+		// });
+
 		/**
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
 
 		it("Sends event", async () => {
-			const presence = createPresenceManager(runtime);
+			// presence = createPresenceManager(runtime);
+			// runtime.connected = true;
+
+			presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+
+			// Pass a little time (to mimic reality)
+			clock.tick(10);
+
+			// Setup
+			// logger.registerExpectedEvent({
+			// 	eventName: "Presence:JoinResponse",
+			// 	details: JSON.stringify({
+			// 		type: "broadcastAll",
+			// 		requestor: "client4",
+			// 		role: "primary",
+			// 	}),
+			// });
+			runtime.signalsExpected.push([
+				"Pres:DatastoreUpdate",
+				{
+					"avgLatency": 10,
+					"data": {
+						"system:presence": {
+							"clientToSessionId": {
+								"client2": {
+									"rev": 0,
+									"timestamp": initialTime,
+									"value": "sessionId-2",
+								},
+							},
+						},
+					},
+					"isComplete": true,
+					"sendTimestamp": clock.now,
+				},
+			], [
+				"Pres:DatastoreUpdate",
+				{
+					"avgLatency": 10,
+					"data": {
+						"n:name:testNotificationWorkspace": {
+							"my_events": {
+								"sessionId-2": {
+									"rev": 0,
+									"timestamp": 0,
+									"ignoreUnmonitored": true,
+									"value": {
+										"args": [42],
+										"name": "newId",
+									},
+								},
+							},
+						},
+					},
+				},
+			]);
+
+			presence.processSignal(
+				"",
+				{
+					type: "Pres:ClientJoin",
+					content: {
+						sendTimestamp: clock.now - 50,
+						avgLatency: 50,
+						data: {},
+						updateProviders: ["client2"],
+					},
+					clientId: "client4",
+				},
+				false,
+			);
+
 			const notificationsWorkspace = presence.getNotifications(
 				"name:testNotificationWorkspace",
 				{
@@ -84,37 +173,51 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { chat, my_events } = notifications;
-			my_events.notifications.on("newId", (client: ISessionClient, id: number) => {
-				console.debug(`${client.sessionId} assigned a new ID: ${id}`);
-			});
+			const { my_events } = notifications;
 
+			console.debug("setting up newId listener");
+			const disconnect = my_events.notifications.on(
+				"newId",
+				(client: ISessionClient, id: number) => {
+					console.debug(`${client.sessionId} assigned a new ID: ${id}`);
+				},
+			);
+
+			console.debug("emitting newId event");
 			// "newId" should be allowed as a named event.
 			my_events.emit.broadcast("newId", 42);
+			my_events.emit.broadcast("newId", 65);
 
-			chat.emit.broadcast("msg", "howdy");
+			disconnect();
+			// // Track clients that have started chatting
+			// const chatClients = new Set<ISessionClient>();
+			// const chatMsgOff = chat.notifications.on("msg", (client, _message) => {
+			// 	if (!chatClients.has(client)) {
+			// 		console.log(`client ${client.sessionId} has started chatting`);
+			// 		chatClients.add(client);
+			// 	}
+			// });
 
-			// Track clients that have started chatting
-			const chatClients = new Set<ISessionClient>();
-			const chatMsgOff = chat.notifications.on("msg", (client, _message) => {
-				if (!chatClients.has(client)) {
-					console.log(`client ${client.sessionId} has started chatting`);
-					chatClients.add(client);
-				}
-			});
-			chatMsgOff();
+			// chat.emit.broadcast("msg", "howdy");
 
-			function logUnattended(name: string, client: ISessionClient, ...content: unknown[]): void {
-				console.log(
-					`${client.sessionId} sent unattended notification '${name}' with content`,
-					...content,
-				);
-			}
+			// chatMsgOff();
 
-			const unattendedOff = chat.events.on("unattendedNotification", logUnattended);
-			unattendedOff();
+			// function logUnattended(
+			// 	name: string,
+			// 	client: ISessionClient,
+			// 	...content: unknown[]
+			// ): void {
+			// 	console.log(
+			// 		`${client.sessionId} sent unattended notification '${name}' with content`,
+			// 		...content,
+			// 	);
+			// }
+
+			// const unattendedOff = chat.events.on("unattendedNotification", logUnattended);
+			// unattendedOff();
 
 			assert(2 === 2);
+			assertFinalExpectations(runtime, logger);
 		});
 	});
 });

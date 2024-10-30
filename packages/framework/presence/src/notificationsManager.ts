@@ -139,6 +139,8 @@ class NotificationsManagerImpl<
 
 	public readonly emit: NotificationEmitter<T> = {
 		broadcast: (name, ...args) => {
+			console.debug(`broadcasting ${this.key}.${name} event`);
+			console.debug("args", args);
 			this.datastore.localUpdate(
 				this.key,
 				// @ts-expect-error TODO
@@ -155,11 +157,14 @@ class NotificationsManagerImpl<
 			);
 		},
 	};
-	// @ts-expect-error TODO
 
-	public readonly notifications: NotificationSubscribable<T> =
+	// Workaround for types
+	private readonly notificationsInternal =
 		// @ts-expect-error TODO
 		createEmitter<NotificationSubscriptions<T>>();
+
+	// @ts-expect-error TODO
+	public readonly notifications: NotificationSubscribable<T> = this.notificationsInternal;
 
 	public constructor(
 		private readonly key: Key,
@@ -175,8 +180,20 @@ class NotificationsManagerImpl<
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): void {
-		console.debug(`NotificationsManager.update called:`)
-		this.events.emit("unattendedNotification", value.value.name, client, ...value.value.args);
+		const eventName = value.value.name;
+		console.debug(`NotificationsManager.update called: ${eventName}`);
+
+		if (this.notificationsInternal.hasListeners()) {
+			// this.notificationsInternal.emit("UNKNOWN" as unknown, eventName, client, ...value.value.args);
+			console.debug(`found listeners but not yet implemented`);
+		} else {
+			this.events.emit(
+				"unattendedNotification",
+				value.value.name,
+				client,
+				...value.value.args,
+			);
+		}
 	}
 }
 
