@@ -184,10 +184,22 @@ export function create(
 		async (request, response, next) => {
 			const clientIPAddress = request.ip ? request.ip : "";
 			const result = getNetworkInformationFromIP(clientIPAddress);
+			// Tenant and document
+			const tenantId = getParam(request.params, "tenantId");
+			const id = enforceServerGeneratedDocumentId
+				? uuid()
+				: (request.body.id as string) || uuid();
+			const lumberjackProperties = getLumberBaseProperties(id, tenantId);
+			Lumberjack.info(
+				`This is the clientIPAddress: ${clientIPAddress}.`,
+				lumberjackProperties,
+			);
+			Lumberjack.info(`Here is the result ${JSON.stringify(result)}.`, lumberjackProperties);
 			if (result.isPrivateLink) {
 				// Validate access from private network
 				// TODO: Add the method to fetch the linkid from the tenant.
-				const accountLinkID = "822107888";
+				const accountLinkID = "822100996";
+				Lumberjack.info(`Come to step 1`, lumberjackProperties);
 				if (accountLinkID === result.privateLinkId) {
 					Lumberjack.info(
 						`Come to private link Endpoint: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
@@ -200,9 +212,10 @@ export function create(
 						);
 				}
 			} else {
+				Lumberjack.info(`Come to step 2`, lumberjackProperties);
 				// Validate access from public network
 				// TODO: Add the method to fetch the linkid from the tenant.
-				// const accountLinkID = "822107888";
+				// const accountLinkID = "822100996";
 				// if (accountLinkID) {
 				// 	response
 				// 		.status(403)
@@ -212,13 +225,7 @@ export function create(
 				// } else {
 				// }
 			}
-			// Tenant and document
-			const tenantId = getParam(request.params, "tenantId");
 			const documentUrls = await getDocumentUrlsfromTenant(tenantId, result.isPrivateLink);
-			// If enforcing server generated document id, ignore id parameter
-			const id = enforceServerGeneratedDocumentId
-				? uuid()
-				: (request.body.id as string) || uuid();
 
 			// Summary information
 			const summary = request.body.enableAnyBinaryBlobOnFirstSummary
@@ -336,6 +343,7 @@ export function create(
 	}> {
 		const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
 		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
+		Lumberjack.info(`Come to step 3 ${JSON.stringify(tenantInfo)}`);
 		if (privateLinkEnable && isPrivateLink) {
 			return {
 				documentOrdererUrl: externalOrdererUrl.replace("https://", `https://${tenantId}.`),
