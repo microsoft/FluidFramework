@@ -245,8 +245,6 @@ export async function setDependencyRange(
 	for (const pkg of packagesToUpdate) {
 		for (const dep of pkg.combinedDependencies) {
 			if (dependencies.some(d => d.name === dep.name)) {
-				console.log(`Match found: ${dep.name}`);
-
 				// Update the version in packageJson
 				const depName = dep.name;
 				if ((pkg.packageJson.dependencies?.[depName]) !== undefined) {
