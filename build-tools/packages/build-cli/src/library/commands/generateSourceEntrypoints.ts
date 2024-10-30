@@ -4,6 +4,7 @@
  */
 
 import fs from "node:fs/promises";
+import JSON5 from "json5";
 
 import type { PackageJson } from "@fluidframework/build-tools";
 import type { ExportSpecifierStructure, Node } from "ts-morph";
@@ -36,14 +37,7 @@ export async function readPackageJson(): Promise<PackageJson> {
 // Reads and parses the `tsconfig.json` file in the current directory.
 export async function readTsConfig(): Promise<TsConfigJson> {
 	const tsConfigContent = await fs.readFile("./tsconfig.json", { encoding: "utf8" });
-	// Trim content to avoid unexpected whitespace issues
-	const trimmedContent = tsConfigContent.trim();
-
-	// Remove trailing commas before parsing
-	const sanitizedContent = trimmedContent.replace(/,\s*([\]}])/g, "$1");
-
-	// Parse and validate JSON content
-	return JSON.parse(sanitizedContent) as TsConfigJson;
+	return JSON5.parse(tsConfigContent);
 }
 
 function sourceContext(node: Node): string {
