@@ -37,9 +37,9 @@
 		"/oclif.manifest.json"
 	],
 	"scripts": {
-		"build": "fluid-build . --task build",
+		"build": "fluid-build --task build",
 		"build:commonjs": "npm run tsc && npm run build:test",
-		"build:compile": "npm run build:commonjs",
+		"build:compile": "fluid-build --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:manifest": "oclif manifest",
