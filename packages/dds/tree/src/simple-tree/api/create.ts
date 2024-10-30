@@ -30,7 +30,7 @@ import {
 	type NodeKeyManager,
 } from "../../feature-libraries/index.js";
 import { isFieldInSchema } from "../../feature-libraries/index.js";
-import { toStoredSchema } from "../toFlexSchema.js";
+import { toStoredSchema } from "../toStoredSchema.js";
 import { inSchemaOrThrow, mapTreeFromNodeData } from "../toMapTree.js";
 import {
 	applySchemaToParserOptions,
