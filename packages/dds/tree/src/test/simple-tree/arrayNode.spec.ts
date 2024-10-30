@@ -849,9 +849,8 @@ describe("ArrayNode", () => {
 				public foo(): void {}
 			}
 			const _fromIterable: Schema = new Schema([]);
-			// TODO: AB#8043: support omitting parameter
-			// const _fromUndefined: Schema = new Schema(undefined);
-			// const _fromNothing: Schema = new Schema();
+			const _fromUndefined: Schema = new Schema(undefined);
+			const _fromNothing: Schema = new Schema();
 		});
 
 		it("create - NonClass", () => {

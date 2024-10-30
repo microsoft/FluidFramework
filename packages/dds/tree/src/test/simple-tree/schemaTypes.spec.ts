@@ -286,12 +286,14 @@ describe("schemaTypes", () => {
 			const A = schema.object("A", {});
 			const B = schema.object("B", { a: A });
 
+			type A = NodeFromSchema<typeof A>;
+
 			const a = new A({});
 			const b = new B({ a });
 			const b2 = new B({ a: {} });
 
 			// @ts-expect-error empty nodes should not allow non objects.
-			const a2: NodeFromSchema<typeof A> = 0;
+			const a2: A = 0;
 			// @ts-expect-error empty nodes should not allow non objects.
 			const a3: InsertableTypedNode<typeof A> = 0;
 
