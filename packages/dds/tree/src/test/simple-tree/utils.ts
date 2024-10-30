@@ -21,12 +21,14 @@ import {
 	SimpleContextSlot,
 	type ImplicitFieldSchema,
 	type InsertableContent,
+	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type NodeKind,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
+	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 import {
 	getTreeNodeForField,
@@ -114,7 +116,7 @@ export function describeHydration(
  *
  * TODO: determine and document if this produces "cooked" or "marinated" nodes.
  */
-export function hydrate<TSchema extends ImplicitFieldSchema>(
+export function hydrate<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
@@ -146,6 +148,18 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
+ * {@link hydrate} but unsafe initialTree.
+ * This may be required when the schema is not entirely statically typed, for example when looping over multiple test cases and thus using a imprecise schema type.
+ * In such cases the "safe" version of hydrate may require `never` for the initial tree.
+ */
+export function hydrateUnsafe<const TSchema extends ImplicitFieldSchema>(
+	schema: TSchema,
+	initialTree: InsertableField<UnsafeUnknownSchema>,
+): TreeFieldFromImplicitField<TSchema> {
+	return hydrate(schema, initialTree as InsertableTreeFieldFromImplicitField<TSchema>);
+}
+
+/**
  * Similar to JSON stringify, but allows `undefined` at the root and returns numbers as-is at the root.
  */
 export function pretty(arg: unknown): number | string {
@@ -168,7 +182,7 @@ export function pretty(arg: unknown): number | string {
  * @returns A new tree view for a branch of the input tree view, and an {@link TreeCheckoutFork} object that can be
  * used to merge the branch back into the original view.
  */
-export function getViewForForkedBranch<TSchema extends ImplicitFieldSchema>(
+export function getViewForForkedBranch<const TSchema extends ImplicitFieldSchema>(
 	originalView: SchematizingSimpleTreeView<TSchema>,
 ): { forkView: SchematizingSimpleTreeView<TSchema>; forkCheckout: TreeCheckout } {
 	const forkCheckout = originalView.checkout.branch();

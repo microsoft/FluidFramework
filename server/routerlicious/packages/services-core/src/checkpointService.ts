@@ -9,6 +9,7 @@
 
 import {
 	BaseTelemetryProperties,
+	CommonProperties,
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
@@ -284,8 +285,8 @@ export class CheckpointService implements ICheckpointService {
 				}
 			}
 			restoreFromCheckpointMetric.setProperties({
-				[BaseTelemetryProperties.tenantId]: tenantId,
-				[BaseTelemetryProperties.documentId]: documentId,
+				...getLumberBaseProperties(documentId, tenantId),
+				[CommonProperties.isEphemeralContainer]: document.isEphemeralContainer,
 				service,
 				checkpointSource,
 				retrievedFromLocalDatabase: isLocalCheckpoint,

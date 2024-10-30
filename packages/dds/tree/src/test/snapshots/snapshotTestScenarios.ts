@@ -382,8 +382,8 @@ export function generateTestTrees(options: SharedTreeOptions) {
 		{
 			name: "attachment-tree",
 			runScenario: async (takeSnapshot) => {
-				// This test makes changes only while detached to test EditManager's optimization of omitting
-				// changes outside the collab window (which is all changes when detached).
+				// This test makes changes only while detached to test EditManager's optimization of evicting/trimming
+				// trunk commits outside of the collab window (which is all changes when detached).
 				const tree = treeTestFactory({
 					runtime: new MockFluidDataStoreRuntime({
 						clientId: "test-client",
@@ -403,6 +403,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				view.initialize([]);
 				view.root.insertAtStart("a");
 				view.root.insertAtEnd("b");
+				// SharedTree does not trigger the EditManager's trunk commit eviction synchronously when detached - it schedules eviction in the JS microtask queue.
+				// Wait for the eviction to complete (by enqueuing ourselves at the end of the microtask queue) before taking the snapshot.
+				await Promise.resolve();
 				await takeSnapshot(tree, "final");
 			},
 		},
