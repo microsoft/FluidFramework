@@ -195,12 +195,13 @@ export class PropertiesManager {
 	): MapLike<unknown> {
 		const properties: MapLike<unknown> = { ...oldProps };
 		for (const [key, changes] of this.changes) {
-			const computedValued = computeValue(
+			properties[key] = computeValue(
 				changes.msnConsensus,
 				iterateListValues(changes.remote.first, (c) => c.data.seq <= sequenceNumber),
 			);
-			if (computedValued !== null) {
-				properties[key] = computedValued;
+			if (properties[key] === null) {
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+				delete properties[key];
 			}
 		}
 		return properties;

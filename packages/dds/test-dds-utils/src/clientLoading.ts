@@ -72,7 +72,7 @@ export function createLoadData(
 ): ClientLoadData {
 	const compressor = client.dataStoreRuntime.idCompressor;
 	return {
-		minimumSequenceNumber: client.dataStoreRuntime.deltaManagerInternal.minimumSequenceNumber,
+		minimumSequenceNumber: client.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber,
 		summaries: {
 			summary: client.channel.getAttachSummary().summary,
 			idCompressorSummary:
