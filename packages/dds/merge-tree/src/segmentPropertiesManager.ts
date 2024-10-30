@@ -83,7 +83,15 @@ export class PropertiesManager {
 					if (local) {
 						pending.local.push(value);
 					} else {
-						pending.remote.push(value);
+						// we only track remotes if there are adjusts, as only adjusts make application anti-commutative
+						// this will limit the impact of this change to only those using adjusts. Additionally, we only
+						// need to track remotes at all to support emitting the legacy snapshot format, which only sharedstring
+						// uses. when we remove the ability to emit that format, we can remove all remote op tracking
+						if (value.raw !== undefined && pending.remote.empty) {
+							pending.msnConsensus = computeValue(pending.msnConsensus, [value]);
+						} else {
+							pending.remote.push(value);
+						}
 					}
 					properties[key] = computeValue(
 						pending.msnConsensus,
@@ -127,7 +135,15 @@ export class PropertiesManager {
 			const change = this.changes.get(key);
 			const acked = change?.local?.shift();
 			assert(change !== undefined && acked !== undefined, "must have local change to ack");
-			change.remote.push(value);
+			// we only track remotes if there are adjusts, as only adjusts make application anti-commutative
+			// this will limit the impact of this change to only those using adjusts. Additionally, we only
+			// need to track remotes at all to support emitting the legacy snapshot format, which only sharedstring
+			// uses. when we remove the ability to emit that format, we can remove all remote op tracking
+			if (value.raw !== undefined && change.remote.empty) {
+				change.msnConsensus = computeValue(change.msnConsensus, [value]);
+			} else {
+				change.remote.push(value);
+			}
 		}
 		this.updateMsn(msn);
 	}
@@ -168,6 +184,11 @@ export class PropertiesManager {
 		}
 	}
 
+	/**
+	 * This is only needed to support emitting snapshots in the legacy format
+	 * If we remove the ability to emit the legacy format, we can remove this
+	 * method, along with the need to track remote changes at all.
+	 */
 	public getAtSeq(
 		oldProps: MapLike<unknown> | undefined,
 		sequenceNumber: number,
