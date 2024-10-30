@@ -189,17 +189,15 @@ export function create(
 			const id = enforceServerGeneratedDocumentId
 				? uuid()
 				: (request.body.id as string) || uuid();
-			const lumberjackProperties = getLumberBaseProperties(id, tenantId);
 			Lumberjack.info(
 				`This is the clientIPAddress: ${clientIPAddress}.`,
-				lumberjackProperties,
 			);
-			Lumberjack.info(`Here is the result ${JSON.stringify(result)}.`, lumberjackProperties);
+			Lumberjack.info(`Here is the result ${JSON.stringify(result)}.`,);
 			if (result.isPrivateLink) {
 				// Validate access from private network
 				// TODO: Add the method to fetch the linkid from the tenant.
 				const accountLinkID = "822100996";
-				Lumberjack.info(`Come to step 1`, lumberjackProperties);
+				Lumberjack.info(`Come to step 1`,);
 				if (accountLinkID === result.privateLinkId) {
 					Lumberjack.info(
 						`Come to private link Endpoint: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
@@ -212,7 +210,7 @@ export function create(
 						);
 				}
 			} else {
-				Lumberjack.info(`Come to step 2`, lumberjackProperties);
+				Lumberjack.info(`Come to step 2`,);
 				// Validate access from public network
 				// TODO: Add the method to fetch the linkid from the tenant.
 				// const accountLinkID = "822100996";
@@ -232,6 +230,9 @@ export function create(
 				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
 				: request.body.summary;
 
+			Lumberjack.info(
+				`Put a debug message here: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
+			);
 			Lumberjack.info(
 				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
 			);
@@ -343,7 +344,7 @@ export function create(
 	}> {
 		const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
 		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
-		Lumberjack.info(`Come to step 3 ${JSON.stringify(tenantInfo)}`);
+		Lumberjack.info(`Come to step 3 ${JSON.stringify(tenantInfo)}`, );
 		if (privateLinkEnable && isPrivateLink) {
 			return {
 				documentOrdererUrl: externalOrdererUrl.replace("https://", `https://${tenantId}.`),
