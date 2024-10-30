@@ -185,7 +185,7 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"compile": {
+			"build": {
 				"dependsOn": [
 					"...",
 					"build:diagrams"
