@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import fs from "node:fs/promises";
-import JSON5 from "json5";
-
 import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import type { TsConfigJson } from "type-fest";
@@ -13,6 +10,7 @@ import {
 	generateSourceEntrypoints,
 	optionDefaults,
 	readPackageJson,
+	readTsConfig,
 } from "../../library/commands/generateSourceEntrypoints.js";
 import { ApiTag, BaseCommand } from "../../library/index.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
@@ -79,12 +77,6 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 		// are all independent and can be done in parallel.
 		await Promise.all(promises);
 	}
-}
-
-// Reads and parses the `tsconfig.json` file in the current directory.
-async function readTsConfig(): Promise<TsConfigJson> {
-	const tsConfigContent = await fs.readFile("./tsconfig.json", { encoding: "utf8" });
-	return JSON5.parse(tsConfigContent);
 }
 
 /**
