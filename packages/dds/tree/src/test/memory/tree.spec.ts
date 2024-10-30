@@ -81,9 +81,8 @@ describe("SharedTree memory usage", () => {
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
 			public readonly title = "Create empty SharedTree";
-
 			// Assign to this field so that JS GC does not collect the SharedTree instance.
-			private _sharedTree: TreeView<typeof RootNodeSchema> | undefined;
+			private _sharedTree?: TreeView<typeof RootNodeSchema>;
 
 			public async run(): Promise<void> {
 				this._sharedTree = createLocalSharedTree("testSharedTree");
@@ -105,7 +104,7 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Set an integer property ${x} times in a local SharedTree`;
-				private sharedTree: TreeView<typeof RootNodeSchema> | undefined;
+				private sharedTree?: TreeView<typeof RootNodeSchema>;
 
 				public async run(): Promise<void> {
 					assert(this.sharedTree?.root.child !== undefined);
@@ -124,7 +123,7 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Set a string property ${x} times in a local SharedTree`;
-				private sharedTree: TreeView<typeof RootNodeSchema> | undefined;
+				private sharedTree?: TreeView<typeof RootNodeSchema>;
 				public async run(): Promise<void> {
 					assert(this.sharedTree?.root.child !== undefined);
 
@@ -143,7 +142,7 @@ describe("SharedTree memory usage", () => {
 			new (class implements IMemoryTestObject {
 				public readonly title =
 					`Set an optional integer property ${x} times in a local SharedTree, then clear it`;
-				private sharedTree: TreeView<typeof RootNodeSchema> | undefined;
+				private sharedTree?: TreeView<typeof RootNodeSchema>;
 
 				public async run(): Promise<void> {
 					assert(this.sharedTree?.root.child !== undefined);
