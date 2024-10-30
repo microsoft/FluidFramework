@@ -189,15 +189,13 @@ export function create(
 			const id = enforceServerGeneratedDocumentId
 				? uuid()
 				: (request.body.id as string) || uuid();
-			Lumberjack.info(
-				`This is the clientIPAddress: ${clientIPAddress}.`,
-			);
-			Lumberjack.info(`Here is the result ${JSON.stringify(result)}.`,);
+			Lumberjack.info(`This is the clientIPAddress: ${clientIPAddress}.`);
+			Lumberjack.info(`Here is the result ${JSON.stringify(result)}.`);
 			if (result.isPrivateLink) {
 				// Validate access from private network
 				// TODO: Add the method to fetch the linkid from the tenant.
 				const accountLinkID = "822100996";
-				Lumberjack.info(`Come to step 1`,);
+				Lumberjack.info(`Come to step 1`);
 				if (accountLinkID === result.privateLinkId) {
 					Lumberjack.info(
 						`Come to private link Endpoint: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
@@ -210,7 +208,7 @@ export function create(
 						);
 				}
 			} else {
-				Lumberjack.info(`Come to step 2`,);
+				Lumberjack.info(`Come to step 2`);
 				// Validate access from public network
 				// TODO: Add the method to fetch the linkid from the tenant.
 				// const accountLinkID = "822100996";
@@ -344,7 +342,7 @@ export function create(
 	}> {
 		const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
 		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
-		Lumberjack.info(`Come to step 3 ${JSON.stringify(tenantInfo)}`, );
+		Lumberjack.info(`Come to step 3 ${JSON.stringify(tenantInfo)}`);
 		if (privateLinkEnable && isPrivateLink) {
 			return {
 				documentOrdererUrl: externalOrdererUrl.replace("https://", `https://${tenantId}.`),
