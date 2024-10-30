@@ -38,6 +38,10 @@ and **effect**.
 
 My first task when taking over the Fluid build tools was to get us to a point where we could release 1.0 of the Azure Fluid Relay-related packages.
 
+---
+
+# Setting the stage
+
 I figured the best starting point was to massage the existing tools so that they worked well enough that we could release 1.0 – which we did. But I **really** struggled with the code. In many cases I could tell what it was doing but not why, so I felt like I couldn't remove anything.
 
 We were also trying to develop a new sustainable release process and version policy while I was struggling to understand the code that encoded the _old_ release process.
@@ -50,26 +54,35 @@ We were also trying to develop a new sustainable release process and version pol
 
 Argument parsing falls into the category of "junk code." Junk code is code that isn't really important to the purpose of the program. It may be necessary, but it's not interesting.
 
-Inevitably, as requirements change and the code needs updating, the code quickly gets complex. Moreover, many tools have almost as much argument parsing code as "real code," which makes it all the more difficult to discern what matters in the code.
+---
+
+# First impressions
+
+Inevitably, as requirements change and the code needs updating, the code quickly gets complex.
+
+Moreover, many tools have almost as much argument parsing code as "real code," which makes it all the more difficult to discern what matters in the code.
 
 Rarely do people step back and redesign the basics as the code grows. Instead, people add what they need, and only that. Nothing's removed, only added, out of fear or lack of time.
 
 ---
 
-> Use a command-line argument parsing library where you can. Either your language's built-in one, or a good third-party one. They will normally handle arguments, flag parsing, help text, and even spelling suggestions in a sensible way.
-
-[CLIG, The Basics](https://clig.dev/#the-basics)
+> **Use a command-line argument parsing library where you can.** Either your language's built-in one, or a good third-party one. They will normally handle arguments, flag parsing, help text, and even spelling suggestions in a sensible way.
+>
+> <cite>[CLIG, The Basics](https://clig.dev/#the-basics)</cite>
 
 ---
 
-# First impressions
+# Other first impressions
 
 Wait… is the only code that's tested the only code that's unused?
 
 Why does every tool have a different set of flags and arguments?
 
-I wanted to make sure that when the _Next Tyler_ arrived in build-tools, they wouldn't look around in horror the same way
-I did.
+---
+
+<!-- _class: lead -->
+
+I wanted to make sure that when the _Next Tyler_ arrived in build-tools, they wouldn't look around in horror the same way I did.
 
 ---
 
@@ -85,25 +98,25 @@ So why change?
 
 # Consistency is a feature
 
-With so many different styles and design philosophies on display, newcomers were rightfully asking, "what's the ‘right
-way' to write this tool?"
+With so many different styles and design philosophies on display, newcomers were rightfully asking, "what's the ‘right way' to write this tool?"
 
-Some tools prioritized being self-contained and re-implemented stuff freely. Others made heavy use of libraries. All of
-them had copious amounts of argument parsing code.
+Some tools prioritized being self-contained and re-implemented stuff freely. Others made heavy use of libraries. All of them had copious amounts of argument parsing code.
 
-I didn't feel comfortable telling anyone, especially less experienced folks, to use any of the existing code as a good
-model.
+I didn't feel comfortable telling anyone, especially less experienced folks, to use any of the existing code as a good model.
 
 ---
 
 # Also… features are features!
 
-The [Command Line Interface Guidelines (CLIG)](https://clig.dev/) has a list of features that good CLIs should provide,
-including built-in help and consistent flag and argument parsing.
+The [Command Line Interface Guidelines (CLIG)](https://clig.dev/) has a list of features that good CLIs should provide, including built-in help and consistent flag and argument parsing.
 
 These all dramatically improve the user experience using the tools, but adding these capabilities to each one individually was not code I could justify writing.
 
-Instead, I sought to unify the disparate tools under a common infrastructure, so that each _could_ benefit from common features. Importantly, _not_ a single package, though in practice most stuff is in one package.
+Instead, I sought to unify the disparate tools under a common infrastructure, so that each _could_ benefit from common features.
+
+---
+
+# oclif
 
 We adopted oclif because it handled many of the CLIG's recommendations out of the box.
 
@@ -125,15 +138,16 @@ You get a bunch of user experience enhancements and automatic documentation by w
 
 # Problems with current tools
 
-Maintenance costs – adding new commands and functionality differs between the tools
+- **Maintenance costs** – adding new commands and functionality differs between the tools
+- **Unclear/inconsistent CLI** (quick: what is the difference between `bump --release` and `bump --releaseBump`?)
+- **Unclear scope** – some tools work on the whole repo, some on individual release groups, some are for applying policy, some are used only in the release process, etc.
 
-Unclear/inconsistent CLI (quick: what is the difference between `bump --release` and `bump --releaseBump`?)
+---
 
-Unclear scope – some tools work on the whole repo, some on individual release groups, some are for applying policy, some are used only in the release process, etc.
+# Problems with current tools
 
-Poor code hygiene – very little linting, testing, and few doc strings and comments
-
-Cruft – some tools and flags are no longer needed, especially with the 2.0+ release process
+- **Poor code hygiene** – very little linting, testing, and few doc strings and comments
+- **Cruft** – some tools and flags are no longer needed, especially with the 2.0+ release process
 
 ---
 
@@ -195,14 +209,23 @@ Guides you through the release process
 
 # Terms
 
-* The release _driver_ is a human who's responsible for a release.
-* The release _process_ is the process that we define to deliver the release.
- * It is driven by business goals.
- * Non-developers care about it.
- * It can change.
-* The release _tools_ are intended to help the driver perform a release.
- * In other words, they exist to automate the release process.
- * Only release drivers (read: developers) care about them.
+The release _driver_ is a human who's responsible for a release.
+
+The release _process_ is the process that we define to deliver the release.
+
+* It is driven by business goals.
+* Non-developers care about it.
+* It can change.
+
+---
+
+# Terms
+
+The release _tools_ are intended to help the driver perform a release.
+
+In other words, they exist to automate the release process.
+
+Only release drivers (read: developers) care about them.
 
 ---
 
@@ -241,30 +264,39 @@ Each state is handled by a handler function (just a case statement body).
 
 Each handler signals _success_ or _failure_ , which triggers a state change in the machine, and the loop begins again.
 
-Each handler has access to a context object containing metadata
+Each handler has access to a context object containing metadata.
 
 ---
 
 # Machine design decisions
 
-* How many actions? (How many arrows exit a state?)
- * _2 for most states_
-* How should duplicate or similar states be handled?
- * _Option 1: Loop back to earlier states_
-  * Requires more actions in most cases, because the path matters
- * _Option 2: Create duplicate states that use the same handler_
-  * Lots of duplicate states can be confusing
-  * Naming convention helps: all states that should be handled the same are numbered
-  * Switch statement handles all the states the same way
+## How many actions? (How many arrows exit a state?)
+_2 for most states_
+
+---
+
+## How should duplicate or similar states be handled?
+
+### _Option 1: Loop back to earlier states_
+
+Requires more actions in most cases, because the path matters
+
+### _Option 2: Create duplicate states that use the same handler_
+
+Lots of duplicate states can be confusing
+Naming convention helps: all states that should be handled the same are numbered
 
 ---
 
 # Design lesson
 
-* It is tempting to add actions to encode logic branches…
- * If a, then actionA, else if b, then actionA, else actionFail
-* …but it's better to add more states
-* Because:
+It is tempting to add actions to encode logic branches…
+
+  If a, then actionA, else if b, then actionB, else actionFail
+
+…but it's better to add more states
+
+Because:
  * State handlers don't need to know about what's next or what came before, so adding new states or rearranging states
    is easy.
 
@@ -272,39 +304,49 @@ Each handler has access to a context object containing metadata
 
 # 8 months later… was the state machine worth it?
 
-**In hindsight, the state machine was not necessary. ** The code could be rewritten as a bunch of functions that are
-called in the right order from an orchestrator function. Need to re-order the steps or add new ones? Edit the
-orchestrator.
+**In hindsight, the state machine was not necessary.**
 
-However, it is easier to update the state machine definition in my opinion than editing and reordering code. It's also
-less susceptible to regressions.
+The code could be rewritten as a bunch of functions that are called in the right order from an orchestrator function.
 
-It also forced me to structure the code into functions that are all independent. A more experienced developer would
-likely do that instinctively, but the constraints helped me.
+Need to re-order the steps or add new ones? Edit the orchestrator.
 
-Finally, the diagram of the process helped me simplify the process overall by revealing that there's really a single
-release process, and a separate forking/convergence process. But that lesson hasn't made it back into the release tools.
+---
 
-But… I don't like that I need to explain/justify the design. That's a sign that it might not be the right choice.
+However, it is easier to update the state machine definition in my opinion than editing and reordering code. It's also less susceptible to regressions.
+
+It also forced me to structure the code into functions that are all independent. A more experienced developer would likely do that instinctively, but the constraints helped me.
+
+Finally, the diagram of the process helped me simplify the process overall by revealing that there's really a single release process, and a separate forking/convergence process. But that lesson hasn't made it back into the release tools.
+
+---
+
+<!-- _class: lead -->
+
+# But…
+
+I don't like that I need to explain/justify the design. That's a sign that it might not be the right choice.
 
 ---
 
 # Testing challenges
 
-* The release process has a lot of inputs:
- * The state of the repo (tags in particular).
- * The current branch you're on.
- * The type of release (major/minor).
- * The merge state of branches.
- * …
-* This is a lot to mock.
+The release process has a lot of inputs:
+
+* The state of the repo (tags in particular).
+* The current branch you're on.
+* The type of release (major/minor).
+* The merge state of branches.
+* …
+
+This is a lot to mock.
 
 ---
 
 # Handling process changes
 
-* How to ensure new or changed states are handled in the tools?
- * Unit test checks that there's a handler for every state – but it's hacky.
+How to ensure new or changed states are handled in the tools?
+
+Unit test checks that there's a handler for every state – but it's hacky.
 
 ---
 
