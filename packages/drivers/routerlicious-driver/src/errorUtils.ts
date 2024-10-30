@@ -194,16 +194,32 @@ export function getUrlForTelemetry(hostName: string, path?: string): string | un
 	}
 	const strippedHostName = hostNameMatch[1];
 
-	let extractedPath: string | undefined;
+	let extractedPath = "";
 	if (path !== undefined) {
-		// Extract the first portion of the path and explicitly match it to known path names
-		const pathMatch = path.match(/^\/?([^/]+)/);
-		if (pathMatch && [socketIoPath, "repos", "deltas", "documents"].includes(pathMatch[1])) {
-			extractedPath = pathMatch[1];
+		// Extract portions of the path and explicitly match them to known path names
+		const portionArray: string[] = [];
+		for (const portion of path.split("/")) {
+			if (portion !== "") {
+				if (
+					[
+						socketIoPath,
+						"repos",
+						"deltas",
+						"documents",
+						"session",
+						"git",
+						"summaries",
+						"latest",
+					].includes(portion)
+				) {
+					portionArray.push(portion);
+				} else {
+					portionArray.push("REDACTED");
+				}
+			}
 		}
+		extractedPath = portionArray.join("/");
 	}
 
-	return extractedPath !== undefined
-		? `${strippedHostName}/${extractedPath}`
-		: strippedHostName;
+	return extractedPath !== "" ? `${strippedHostName}/${extractedPath}` : strippedHostName;
 }
