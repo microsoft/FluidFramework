@@ -18,9 +18,9 @@
 		"fluid-tsc": "bin/fluid-tsc"
 	},
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
+		"build": "fluid-build --task build",
 		"build:commonjs": "npm run tsc && npm run build:test",
-		"build:compile": "npm run build:commonjs",
+		"build:compile": "fluid-build --task compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",

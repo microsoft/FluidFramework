@@ -32,8 +32,8 @@
 		"/oclif.manifest.json"
 	],
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && concurrently npm:build:docs npm:build:diagrams",
-		"build:compile": "npm run tsc && npm run build:test && npm run build:copy && npm run build:readme",
+		"build": "fluid-build --task build",
+		"build:compile": "fluid-build --task compile",
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" lib",
 		"build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:docs": "api-extractor run --local",
@@ -185,7 +185,7 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"compile": {
+			"build": {
 				"dependsOn": [
 					"...",
 					"build:diagrams"
