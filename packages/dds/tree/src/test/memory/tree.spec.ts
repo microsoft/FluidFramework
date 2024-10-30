@@ -82,10 +82,8 @@ describe("SharedTree memory usage", () => {
 		new (class implements IMemoryTestObject {
 			public readonly title = "Create empty SharedTree";
 
-			private sharedTree: TreeView<typeof RootNodeSchema> | undefined;
-
 			public async run(): Promise<void> {
-				this.sharedTree = createLocalSharedTree("testSharedTree");
+				createLocalSharedTree("testSharedTree");
 			}
 		})(),
 	);
@@ -99,11 +97,10 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Set an integer property ${x} times in a local SharedTree`;
-				private sharedTree: TreeView<typeof RootNodeSchema> =
-					createLocalSharedTree("testSharedTree");
+				private sharedTree: TreeView<typeof RootNodeSchema> | undefined;
 
 				public async run(): Promise<void> {
-					assert(this.sharedTree.root.child !== undefined);
+					assert(this.sharedTree?.root.child !== undefined);
 
 					for (let i = 0; i < x; i++) {
 						this.sharedTree.root.child.propertyOne = x;
@@ -119,11 +116,9 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Set a string property ${x} times in a local SharedTree`;
-				private sharedTree: TreeView<typeof RootNodeSchema> =
-					createLocalSharedTree("testSharedTree");
-
+				private sharedTree: TreeView<typeof RootNodeSchema> | undefined;
 				public async run(): Promise<void> {
-					assert(this.sharedTree.root.child !== undefined);
+					assert(this.sharedTree?.root.child !== undefined);
 
 					for (let i = 0; i < x; i++) {
 						this.sharedTree.root.child.propertyTwo.itemOne = i.toString().padStart(6, "0");
@@ -140,11 +135,10 @@ describe("SharedTree memory usage", () => {
 			new (class implements IMemoryTestObject {
 				public readonly title =
 					`Set an optional integer property ${x} times in a local SharedTree, then clear it`;
-				private sharedTree: TreeView<typeof RootNodeSchema> =
-					createLocalSharedTree("testSharedTree");
+				private sharedTree: TreeView<typeof RootNodeSchema> | undefined;
 
 				public async run(): Promise<void> {
-					assert(this.sharedTree.root.child !== undefined);
+					assert(this.sharedTree?.root.child !== undefined);
 
 					for (let i = 0; i < x; i++) {
 						this.sharedTree.root.child.propertyOne = x;
