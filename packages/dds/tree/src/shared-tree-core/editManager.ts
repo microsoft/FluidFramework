@@ -401,24 +401,31 @@ export class EditManager<
 			this.trunkBase = newTrunkBase;
 
 			// Update any state that is derived from trunk commits
-			this.sequenceMap.editRange(
-				minimumPossibleSequenceId,
-				sequenceId,
-				true,
-				(s, { revision }) => {
-					// Cleanup look-aside data for each evicted commit
-					this.trunkMetadata.delete(revision);
-					// Delete all evicted commits from `sequenceMap` except for the latest one, which is the new `trunkBase`
-					if (equalSequenceIds(s, sequenceId)) {
-						assert(
-							revision === newTrunkBase.revision,
-							0x729 /* Expected last evicted commit to be new trunk base */,
-						);
-					} else {
-						return { delete: true };
-					}
-				},
-			);
+			this.sequenceMap.editRange(minimumPossibleSequenceId, sequenceId, true, (s, commit) => {
+				// Cleanup look-aside data for each evicted commit
+				this.trunkMetadata.delete(commit.revision);
+				// Delete all evicted commits from `sequenceMap` except for the latest one, which is the new `trunkBase`
+				if (equalSequenceIds(s, sequenceId)) {
+					assert(
+						commit === newTrunkBase,
+						0x729 /* Expected last evicted commit to be new trunk base */,
+					);
+				} else {
+					Reflect.defineProperty(commit, "change", {
+						get: () =>
+							assert(false, "Should not access 'change' property of an evicted commit"),
+					});
+					Reflect.defineProperty(commit, "revision", {
+						get: () =>
+							assert(false, "Should not access 'revision' property of an evicted commit"),
+					});
+					Reflect.defineProperty(commit, "parent", {
+						get: () =>
+							assert(false, "Should not access 'parent' property of an evicted commit"),
+					});
+					return { delete: true };
+				}
+			});
 
 			const trunkSize = getPathFromBase(this.trunk.getHead(), this.trunkBase).length;
 			assert(
