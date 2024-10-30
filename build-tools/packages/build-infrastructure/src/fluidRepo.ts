@@ -5,6 +5,7 @@
 
 import path from "node:path";
 
+import type { InterdependencyRange } from "@fluid-tools/version-tools";
 import { type SimpleGit, simpleGit } from "simple-git";
 
 import { type IFluidRepoLayout, getFluidRepoLayout } from "./config.js";
@@ -234,4 +235,29 @@ export function getAllDependenciesInRepo(
 		releaseGroups: [...releaseGroups],
 		workspaces: [...workspaces],
 	};
+}
+
+export async function setDependencyRange(
+	packagesToUpdate: IPackage[],
+	dependencies: IPackage[],
+	dependencyRange: InterdependencyRange
+): Promise<void> {
+	for (const pkg of packagesToUpdate) {
+		for (const dep of pkg.combinedDependencies) {
+			if (dependencies.some(d => d.name === dep.name)) {
+				console.log(`Match found: ${dep.name}`);
+
+				// Update the version in packageJson
+				const depName = dep.name;
+				if ((pkg.packageJson.dependencies?.[depName]) !== undefined) {
+					pkg.packageJson.dependencies[depName] = dependencyRange as string;
+				} else if ((pkg.packageJson.devDependencies?.[depName]) !== undefined) {
+					pkg.packageJson.devDependencies[depName] = dependencyRange as string;
+				} else if ((pkg.packageJson.peerDependencies?.[depName]) !== undefined) {
+					pkg.packageJson.peerDependencies[depName] = dependencyRange as string;
+				}
+			}
+		}
+		await pkg.savePackageJson();
+	}
 }
