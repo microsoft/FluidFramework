@@ -9,9 +9,9 @@ import {
 	NodeKind,
 	SchemaFactory,
 	type JsonTreeSchema,
-} from "../../simple-tree/index.js";
+} from "../../../simple-tree/index.js";
 
-import { hydrate } from "./utils.js";
+import { hydrate } from "../utils.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 
 describe("getJsonSchema", () => {
