@@ -9,8 +9,3 @@ export {
 	GenerateEntrypointsCommand,
 	getGenerateEntrypointsOutput,
 } from "./generateEntrypoints.js";
-export {
-	generateSourceEntrypoints,
-	readPackageJson,
-	readTsConfig,
-} from "./generateSourceEntrypoints.js";

@@ -4,32 +4,21 @@
  */
 
 import fs from "node:fs/promises";
+import JSON5 from "json5";
 
 import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import type { TsConfigJson } from "type-fest";
 import {
 	generateSourceEntrypoints,
+	optionDefaults,
 	readPackageJson,
 } from "../../library/commands/generateSourceEntrypoints.js";
-import {
-	ApiLevel,
-	ApiTag,
-	BaseCommand,
-	ExportData,
-	mapExportPathsFromPackage,
-} from "../../library/index.js";
+import { ApiTag, BaseCommand } from "../../library/index.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
+import { type ExportData, mapExportPathsFromPackage } from "../../library/packageExports.js";
 import type { CommandLogger } from "../../logging.js";
-
-const optionDefaults = {
-	mainEntrypoint: "./src/index.ts",
-	outFileAlpha: ApiLevel.alpha,
-	outFileBeta: ApiLevel.beta,
-	outFileLegacy: ApiLevel.legacy,
-	outFilePublic: ApiLevel.public,
-	outFileSuffix: ".ts",
-	outDir: "src/entrypoints/",
-} as const;
 
 /**
  * Generates source entrypoints for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
@@ -38,7 +27,7 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 	typeof GenerateSourceEntrypointsCommand
 > {
 	static readonly description =
-		`Generates source entrypoints for Fluid Framework API levels (/alpha, /beta, /public, /legacy) as found in package.json "exports"`;
+		`Generates TypeScript source files that roll up APIs into different entrypoint files. The entrypoints are determined based on the "exports" field in package.json."`;
 
 	static readonly flags = {
 		mainEntrypoint: Flags.file({
@@ -95,14 +84,7 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 // Reads and parses the `tsconfig.json` file in the current directory.
 async function readTsConfig(): Promise<TsConfigJson> {
 	const tsConfigContent = await fs.readFile("./tsconfig.json", { encoding: "utf8" });
-	// Trim content to avoid unexpected whitespace issues
-	const trimmedContent = tsConfigContent.trim();
-
-	// Remove trailing commas before parsing
-	const sanitizedContent = trimmedContent.replace(/,\s*([\]}])/g, "$1");
-
-	// Parse and validate JSON content
-	return JSON.parse(sanitizedContent) as TsConfigJson;
+	return JSON5.parse(tsConfigContent);
 }
 
 /**

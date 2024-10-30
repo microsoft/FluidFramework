@@ -9,6 +9,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
+* [`flub generate node10Entrypoints`](#flub-generate-node10entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate releaseNotes`](#flub-generate-releasenotes)
 * [`flub generate sourceEntrypoints`](#flub-generate-sourceentrypoints)
@@ -259,6 +260,25 @@ DESCRIPTION
 
 _See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
 
+## `flub generate node10Entrypoints`
+
+Generates node10 type declaration entrypoints for Fluid Framework API levels (/alpha, /beta, /internal etc.) as found in package.json "exports"
+
+```
+USAGE
+  $ flub generate node10Entrypoints [-v | --quiet]
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Generates node10 type declaration entrypoints for Fluid Framework API levels (/alpha, /beta, /internal etc.) as found
+  in package.json "exports"
+```
+
+_See code: [src/commands/generate/node10Entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/node10Entrypoints.ts)_
+
 ## `flub generate packlist`
 
 Outputs a list of files that will be included in a package based on its 'files' property in package.json and any .npmignore files.
@@ -358,7 +378,7 @@ _See code: [src/commands/generate/releaseNotes.ts](https://github.com/microsoft/
 
 ## `flub generate sourceEntrypoints`
 
-Generates source entrypoints for Fluid Framework API levels (/alpha, /beta, /public, /legacy) as found in package.json "exports"
+Generates TypeScript source files that roll up APIs into different entrypoint files. The entrypoints are determined based on the "exports" field in package.json."
 
 ```
 USAGE
@@ -372,8 +392,8 @@ LOGGING FLAGS
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Generates source entrypoints for Fluid Framework API levels (/alpha, /beta, /public, /legacy) as found in package.json
-  "exports"
+  Generates TypeScript source files that roll up APIs into different entrypoint files. The entrypoints are determined
+  based on the "exports" field in package.json."
 ```
 
 _See code: [src/commands/generate/sourceEntrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/sourceEntrypoints.ts)_

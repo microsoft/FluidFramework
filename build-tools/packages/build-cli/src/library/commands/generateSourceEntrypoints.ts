@@ -17,7 +17,7 @@ import { ApiTag } from "../apiTag.js";
 import type { ExportData } from "../packageExports.js";
 import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
 
-const optionDefaults = {
+export const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
 	outFileAlpha: ApiLevel.alpha,
 	outFileBeta: ApiLevel.beta,
