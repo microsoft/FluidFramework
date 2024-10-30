@@ -273,3 +273,26 @@ export function walkList<T>(
 	}
 	return true;
 }
+
+export function iterateListValues<T>(
+	start: ListNode<T> | undefined,
+	includePredicate: (n: ListNode<T>) => boolean,
+): Iterable<T> {
+	let node: ListNode<T> | undefined = start;
+	const iterator: IterableIterator<T> = {
+		next: (): IteratorResult<T> => {
+			if (node !== undefined) {
+				const current = node;
+				if (includePredicate(node) === true) {
+					node = current.next;
+					return { value: current.data, done: false };
+				}
+			}
+			return { done: true, value: undefined };
+		},
+		[Symbol.iterator]() {
+			return this;
+		},
+	};
+	return iterator;
+}

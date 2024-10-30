@@ -157,14 +157,18 @@ function ackSegment(
 ): boolean {
 	const currentSegmentGroup = segment.segmentGroups?.dequeue();
 	assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
-	const op = opArgs.op;
+	assert(opArgs.sequencedMessage !== undefined, "must have sequencedMessage");
+	const {
+		op,
+		sequencedMessage: { sequenceNumber, minimumSequenceNumber },
+	} = opArgs;
 	switch (op.type) {
 		case MergeTreeDeltaType.ANNOTATE: {
 			assert(
 				!!segment.propertyManager,
 				0x044 /* "On annotate ack, missing segment property manager!" */,
 			);
-			segment.propertyManager.ack(op);
+			segment.propertyManager.ack(sequenceNumber, minimumSequenceNumber, op);
 			return true;
 		}
 
@@ -173,7 +177,7 @@ function ackSegment(
 				segment.seq === UnassignedSequenceNumber,
 				0x045 /* "On insert, seq number already assigned!" */,
 			);
-			segment.seq = opArgs.sequencedMessage!.sequenceNumber;
+			segment.seq = sequenceNumber;
 			segment.localSeq = undefined;
 			return true;
 		}
@@ -183,7 +187,7 @@ function ackSegment(
 			assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
 			segment.localRemovedSeq = undefined;
 			if (removalInfo.removedSeq === UnassignedSequenceNumber) {
-				removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
+				removalInfo.removedSeq = sequenceNumber;
 				return true;
 			}
 			return false;
@@ -198,11 +202,10 @@ function ackSegment(
 			segment.localMovedSeq = obliterateInfo.localSeq = undefined;
 			const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
 			assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
-			moveInfo.movedSeqs[seqIdx] = obliterateInfo.seq =
-				opArgs.sequencedMessage!.sequenceNumber;
+			moveInfo.movedSeqs[seqIdx] = obliterateInfo.seq = sequenceNumber;
 
 			if (moveInfo.movedSeq === UnassignedSequenceNumber) {
-				moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
+				moveInfo.movedSeq = sequenceNumber;
 				return true;
 			}
 
@@ -210,7 +213,7 @@ function ackSegment(
 		}
 
 		default: {
-			throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
+			throw new Error(`${op.type} is in unrecognized operation type`);
 		}
 	}
 }
@@ -1994,6 +1997,7 @@ export class MergeTree {
 				{ props, adjust },
 				segment,
 				sequenceNumber,
+				this.collabWindow.minSeq,
 				this.collabWindow.collaborating,
 				rollback,
 			);

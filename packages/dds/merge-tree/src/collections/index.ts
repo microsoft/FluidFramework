@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { DoublyLinkedList, ListNode, ListNodeRange, walkList } from "./list.js";
+export {
+	DoublyLinkedList,
+	ListNode,
+	ListNodeRange,
+	walkList,
+	iterateListValues,
+} from "./list.js";
 export {
 	ConflictAction,
 	Dictionary,

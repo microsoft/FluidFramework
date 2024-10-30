@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { computeValue, type AdjustParams, type PendingChanges } from "./adjust.js";
-import { DoublyLinkedList } from "./collections/index.js";
+import {
+	computeValue,
+	type AdjustParams,
+	type Change,
+	type PendingChanges,
+} from "./adjust.js";
+import { DoublyLinkedList, iterateListValues } from "./collections/index.js";
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MapLike, PropertySet, clone, createMap } from "./properties.js";
 
@@ -33,7 +36,8 @@ export class PropertiesManager {
 	public handleProperties(
 		op: { props?: MapLike<unknown>; adjust?: MapLike<AdjustParams> },
 		seg: { properties?: MapLike<unknown> },
-		seq?: number,
+		seq: number,
+		msn: number,
 		collaborating: boolean = false,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): MapLike<unknown> {
@@ -42,25 +46,25 @@ export class PropertiesManager {
 
 		for (const [key, value] of [
 			...Object.entries(op.props ?? {})
-				.map<[string, { raw: unknown }]>(([k, raw]) => [k, { raw }])
+				.map<[string, Change]>(([k, raw]) => [k, { raw, seq }])
 				.filter(([_, v]) => v.raw !== undefined),
-			...Object.entries<AdjustParams & { raw?: never }>(op.adjust ?? {}),
+			...Object.entries(op.adjust ?? {}).map<[string, Change]>(([k, adjust]) => [
+				k,
+				{ adjust, seq },
+			]),
 		]) {
 			// eslint-disable-next-line unicorn/no-null
 			const previousValue = properties[key] ?? null;
 
 			if (rollback === PropertiesRollback.Rollback) {
-				const pending = this.pending.get(key);
-
+				const pending = this.changes.get(key);
 				if (collaborating) {
 					assert(pending !== undefined, "pending must exist for rollback");
-					pending.changes.pop();
-					if (pending.changes.empty) {
-						this.pending.delete(key);
-					}
+					pending.local.pop();
 					properties[key] = computeValue(
-						pending.consensus,
-						pending.changes.map((n) => n.data),
+						pending.msnConsensus,
+						pending.remote.map((n) => n.data),
+						pending.local.map((n) => n.data),
 					);
 				} else {
 					assert(pending === undefined, "must not have pending when not collaborating");
@@ -68,42 +72,30 @@ export class PropertiesManager {
 				}
 				deltas[key] = previousValue;
 			} else {
-				let pending: PendingChanges | undefined = this.pending.get(key);
-				if (seq === UnassignedSequenceNumber && collaborating) {
-					if (pending === undefined) {
-						pending = {
-							consensus: previousValue,
-							changes: new DoublyLinkedList(),
-						};
-						this.pending.set(key, pending);
-					}
-					pending.changes.push(value);
-					properties[key] = computeValue(
-						pending.consensus,
-						pending.changes.map((n) => n.data),
-					);
-					deltas[key] = previousValue;
-				} else {
-					if (pending === undefined) {
-						// no pending changes, so no need to update the adjustments
-						properties[key] = computeValue(previousValue, [value]);
-						deltas[key] = previousValue;
+				if (collaborating) {
+					const pending: PendingChanges | undefined = this.changes.get(key) ?? {
+						msnConsensus: previousValue,
+						remote: new DoublyLinkedList(),
+						local: new DoublyLinkedList(),
+					};
+					this.changes.set(key, pending);
+					const local = seq === UnassignedSequenceNumber;
+					if (local) {
+						pending.local.push(value);
 					} else {
-						// there are pending changes, so update the baseline remote value
-						// and then compute the current value
-						pending.consensus = computeValue(pending.consensus, [value]);
-						if (pending.changes.empty) {
-							deltas[key] = previousValue;
-						} else {
-							properties[key] = computeValue(
-								pending.consensus,
-								pending.changes.map((n) => n.data),
-							);
-							if (properties[key] !== previousValue) {
-								deltas[key] = previousValue;
-							}
-						}
+						pending.remote.push(value);
 					}
+					properties[key] = computeValue(
+						pending.msnConsensus,
+						pending.remote.map((n) => n.data),
+						pending.local.map((n) => n.data),
+					);
+					if (local || pending.local.empty || properties[key] !== previousValue) {
+						deltas[key] = previousValue;
+					}
+				} else {
+					properties[key] = computeValue(previousValue, [value]);
+					deltas[key] = previousValue;
 				}
 			}
 
@@ -112,25 +104,49 @@ export class PropertiesManager {
 				delete properties[key];
 			}
 		}
+		this.updateMsn(msn);
 		return deltas;
 	}
 
-	private readonly pending = new Map<string, PendingChanges>();
+	private readonly changes = new Map<string, PendingChanges>();
 
-	public ack(op: { props?: MapLike<unknown>; adjust?: MapLike<AdjustParams> }): void {
+	public ack(
+		seq: number,
+		msn: number,
+		op: { props?: MapLike<unknown>; adjust?: MapLike<AdjustParams> },
+	): void {
 		for (const [key, value] of [
 			...Object.entries(op.props ?? {})
-				.map<[string, { raw: unknown }]>(([k, raw]) => [k, { raw }])
+				.map<[string, Change]>(([k, raw]) => [k, { raw, seq }])
 				.filter(([_, v]) => v.raw !== undefined),
-			...Object.entries(op.adjust ?? {}),
+			...Object.entries(op.adjust ?? {}).map<[string, Change]>(([k, adjust]) => [
+				k,
+				{ adjust, seq },
+			]),
 		]) {
-			const pending = this.pending.get(key);
-			assert(this.pending !== undefined && pending !== undefined, "must have pending to ack");
-			pending.changes.shift();
-			if (pending.changes.empty) {
-				this.pending.delete(key);
+			const change = this.changes.get(key);
+			const acked = change?.local?.shift();
+			assert(change !== undefined && acked !== undefined, "must have local change to ack");
+			change.remote.push(value);
+		}
+		this.updateMsn(msn);
+	}
+
+	public updateMsn(msn: number): void {
+		for (const [key, pending] of this.changes) {
+			pending.msnConsensus = computeValue(
+				pending.msnConsensus,
+				iterateListValues(pending.remote.first, (n) => {
+					if (n.data.seq <= msn) {
+						n.list?.remove(n);
+						return true;
+					}
+					return false;
+				}),
+			);
+			if (pending.local.empty && pending.remote.empty) {
+				this.changes.delete(key);
 			}
-			pending.consensus = computeValue(pending.consensus, [value]);
 		}
 	}
 
@@ -143,17 +159,35 @@ export class PropertiesManager {
 	): void {
 		const newManager = (dest.propertyManager ??= new PropertiesManager());
 		dest.properties = clone(oldProps);
-		for (const [key, { consensus, changes }] of this.pending.entries()) {
-			newManager.pending.set(key, {
-				consensus,
-				changes: new DoublyLinkedList(changes.map((c) => c.data)),
+		for (const [key, { local, remote, msnConsensus }] of this.changes.entries()) {
+			newManager.changes.set(key, {
+				msnConsensus,
+				remote: new DoublyLinkedList(remote.empty ? undefined : remote.map((c) => c.data)),
+				local: new DoublyLinkedList(local.empty ? undefined : local.map((c) => c.data)),
 			});
 		}
 	}
 
+	public getAtSeq(
+		oldProps: MapLike<unknown> | undefined,
+		sequenceNumber: number,
+	): MapLike<unknown> {
+		const properties: MapLike<unknown> = { ...oldProps };
+		for (const [key, changes] of this.changes) {
+			const computedValued = computeValue(
+				changes.msnConsensus,
+				iterateListValues(changes.remote.first, (c) => c.data.seq <= sequenceNumber),
+			);
+			if (computedValued !== null) {
+				properties[key] = computedValued;
+			}
+		}
+		return properties;
+	}
+
 	public hasPendingProperties(props: PropertySet): boolean {
 		for (const [key, value] of Object.entries(props)) {
-			if (value !== undefined && !this.pending.has(key)) {
+			if (value !== undefined && !this.changes.has(key)) {
 				return false;
 			}
 		}

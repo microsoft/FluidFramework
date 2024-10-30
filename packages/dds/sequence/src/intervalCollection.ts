@@ -1334,6 +1334,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					{ props },
 					interval,
 					this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
+					UniversalSequenceNumber,
 					true,
 				);
 			}
@@ -1493,7 +1494,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (local) {
 			interval.propertyManager ??= new PropertiesManager();
 			// Let the propertyManager prune its pending change-properties set.
-			interval.propertyManager.ack({
+			interval.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
 				props: newProps,
 			});
 
@@ -1528,6 +1529,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				{ props: newProps },
 				newInterval,
 				op.sequenceNumber,
+				op.minimumSequenceNumber,
 				true,
 			);
 			if (this.onDeserialize) {
