@@ -220,6 +220,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			// Update the order and current connection id.
 			attendee.order = order;
 			attendee.connectionId = connectionId;
+			attendee.getStatus = () => SessionClientStatus.Connected;
+			isNew = true;
 		}
 		// Always update entry for the connection id. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);

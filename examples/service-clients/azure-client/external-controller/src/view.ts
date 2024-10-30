@@ -174,9 +174,13 @@ function makePresenceView(
 		});
 
 		presenceConfig.presence.events.on("attendeeDisconnected", (attendee) => {
-			const name = audience.getMembers().get(attendee.connectionId())?.name;
-			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} with id ${attendee.sessionId} left`;
-			addLogEntry(logContentDiv, update);
+			// Filter for remote attendees
+			const self = audience.getMyself();
+			if (self && attendee !== presenceConfig.presence.getAttendee(self.currentConnection)) {
+				const name = audience.getMembers().get(attendee.connectionId())?.name;
+				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} with id ${attendee.sessionId} left`;
+				addLogEntry(logContentDiv, update);
+			}
 		});
 	}
 	logDiv.append(logHeaderDiv, logContentDiv);
@@ -200,35 +204,35 @@ function makeAttendeeView(container: IFluidContainer, presence?: IPresence): HTM
 	}
 
 	attendeeDiv.style.display = "flex";
-	attendeeDiv.style.justifyContent = "right";
+	attendeeDiv.style.justifyContent = "center";
+	attendeeDiv.style.margin = "70px";
 
-	createButton(container, attendeeDiv);
-
-	presence.events.on("attendeeJoined", (attendee) => {
+	presence.events.on("attendeeJoined", () => {
 		updateAttendees(presence, attendeeDiv);
-		createButton(container, attendeeDiv);
+		updateButton(container, attendeeDiv);
 	});
-	presence.events.on("attendeeDisconnected", (attendee) => {
+	presence.events.on("attendeeDisconnected", () => {
 		updateAttendees(presence, attendeeDiv);
-		createButton(container, attendeeDiv);
+		updateButton(container, attendeeDiv);
 	});
 	container.on("connected", () => {
 		updateAttendees(presence, attendeeDiv);
-		createButton(container, attendeeDiv);
+		updateButton(container, attendeeDiv);
 	});
 	container.on("disconnected", () => {
 		updateAttendees(presence, attendeeDiv);
-		createButton(container, attendeeDiv);
+		updateButton(container, attendeeDiv);
 	});
 
 	return attendeeDiv;
 }
 
-function createButton(container: IFluidContainer, attendeeDiv: HTMLDivElement): void {
+function updateButton(container: IFluidContainer, attendeeDiv: HTMLDivElement): void {
 	const toggleButton = document.createElement("button");
-	const connected = container.connectionState === 2;
-	toggleButton.innerHTML = `${connected ? "Disconnect" : "Connect"}`;
+
 	toggleButton.style.marginLeft = "10px";
+
+	const connected = container.connectionState === 2;
 
 	toggleButton.addEventListener("click", () => {
 		if (connected) {
@@ -237,6 +241,7 @@ function createButton(container: IFluidContainer, attendeeDiv: HTMLDivElement): 
 			container.connect();
 		}
 	});
+	toggleButton.innerHTML = `${connected ? "Disconnect" : "Connect"}`;
 	attendeeDiv.append(toggleButton);
 }
 
@@ -268,11 +273,11 @@ export function makeAppView(
 
 	const audienceView = makeAudienceView(audience);
 
-	const attendeeView = makeAttendeeView(container, presenceConfig?.presence);
-
 	const presenceView = makePresenceView(presenceConfig, audience);
 
+	const attendeeView = makeAttendeeView(container, presenceConfig?.presence);
+
 	const wrapperDiv = document.createElement("div");
-	wrapperDiv.append(diceView, audienceView, attendeeView, presenceView);
+	wrapperDiv.append(diceView, audienceView, presenceView, attendeeView);
 	return wrapperDiv;
 }
