@@ -34,6 +34,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"serve": "docusaurus serve",
+		"serve-with-azure-emulation": "swa start build --api-location api",
 		"start": "npm run gen-docusaurus && docusaurus start",
 		"swizzle": "docusaurus swizzle",
 		"tsc": "tsc",
@@ -75,6 +76,7 @@
 		"sass": "^1.77.8"
 	},
 	"devDependencies": {
+		"@azure/static-web-apps-cli": "^1.0.4",
 		"@fluid-tools/api-markdown-documenter": "^0.17.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
