@@ -11,6 +11,14 @@ parameters:
   type: boolean
   default: false
 
+- name: uploadAsLatestRelease
+  type: boolean
+  default: false
+
+- name: majorVersion
+  type: string
+  default: ''
+
 steps:
 - checkout: none
   clean: true
@@ -102,3 +110,14 @@ steps:
       scriptLocation: inlineScript
       inlineScript: |
         az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --overwrite --verbose
+
+- ${{ if eq(parameters.uploadAsLatestRelease, true) }}:
+  - task: AzureCLI@2
+    displayName: 'Upload JSON as latest-v*.tar.gz'
+    continueOnError: true
+    inputs:
+      azureSubscription: 'fluid-docs'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v${{ parameters.majorVersion }}.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --overwrite --verbose
