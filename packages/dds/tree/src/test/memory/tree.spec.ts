@@ -82,11 +82,19 @@ describe("SharedTree memory usage", () => {
 		new (class implements IMemoryTestObject {
 			public readonly title = "Create empty SharedTree";
 
+			// Assign to this field so that JS GC does not collect the SharedTree instance.
+			private _sharedTree: TreeView<typeof RootNodeSchema> | undefined;
+
 			public async run(): Promise<void> {
-				createLocalSharedTree("testSharedTree");
+				this._sharedTree = createLocalSharedTree("testSharedTree");
 			}
 		})(),
 	);
+
+	benchmarkMemory({
+		title: "Create empty SharedTree",
+		run: async () => createLocalSharedTree("testSharedTree"),
+	});
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
 		? [1000, 10_000, 100_000]
