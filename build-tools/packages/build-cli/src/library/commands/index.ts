@@ -8,4 +8,5 @@ export { unscopedPackageNameString } from "./constants.js";
 export {
 	GenerateEntrypointsCommand,
 	getGenerateEntrypointsOutput,
+	generateNode10TypeEntrypoints,
 } from "./generateEntrypoints.js";

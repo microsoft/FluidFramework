@@ -60,3 +60,4 @@ export {
 } from "./release.js";
 export { LayerGraph } from "./layerGraph.js";
 export { type Handler, policyHandlers } from "./repoPolicyCheck/index.js";
+export { Node10CompatExportData } from "./packageExports.js";

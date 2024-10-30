@@ -461,7 +461,7 @@ async function generateEntrypoints(
 	await Promise.all(fileSavePromises);
 }
 
-async function generateNode10TypeEntrypoints(
+export async function generateNode10TypeEntrypoints(
 	mapExportPathToData: Map<string, Node10CompatExportData>,
 	log: CommandLogger,
 ): Promise<void> {
