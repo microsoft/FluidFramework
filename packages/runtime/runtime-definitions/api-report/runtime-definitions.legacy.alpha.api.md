@@ -138,7 +138,9 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
+    // @deprecated
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    processMessages?(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
@@ -270,6 +272,23 @@ export interface IProvideFluidDataStoreRegistry {
     // (undocumented)
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 }
+
+// @alpha
+export interface IRuntimeMessageCollection {
+    envelope: ISequencedMessageEnvelope;
+    local: boolean;
+    messagesContent: IRuntimeMessagesContent[];
+}
+
+// @alpha
+export interface IRuntimeMessagesContent {
+    clientSequenceNumber: number;
+    contents: unknown;
+    localOpMetadata: unknown;
+}
+
+// @alpha
+export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
 
 // @alpha
 export interface ISummarizeInternalResult extends ISummarizeResult {
