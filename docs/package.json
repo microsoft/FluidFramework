@@ -12,11 +12,12 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"api-markdown-documenter": "node ./infra/generate-api-documentation.mjs",
-		"build": "npm run build:api-documentation && npm run build:docusaurus",
+		"build": "npm run build:markdown-magic && npm run build:api-documentation && npm run build:docusaurus",
 		"build:api-documentation": "npm run download-doc-models && npm run api-markdown-documenter",
 		"build:api-documentation:dev": "cross-env NODE_ENV=development npm run build:api-documentation",
 		"build:dev": "cross-env NODE_ENV=development npm run build",
 		"build:docusaurus": "npm run gen-docusaurus && docusaurus build",
+		"build:markdown-magic": "markdown-magic",
 		"check-links": "echo TODO: Implement linkcheck script",
 		"clean": "concurrently \"npm:clean:*\"",
 		"clean:api-documentation": "rimraf --glob \"docs/api/**/*.md\" \"versioned_docs/*/api/**/*.md\"",
