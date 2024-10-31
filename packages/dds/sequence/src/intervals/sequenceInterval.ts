@@ -162,6 +162,24 @@ export interface SequenceInterval extends ISerializableInterval {
 	 * intermediate values between the two intervals.
 	 */
 	union(b: SequenceInterval): SequenceInterval;
+
+	/**
+	 * Subscribes to position change events on this interval if there are no current listeners.
+	 */
+	addPositionChangeListeners(
+		beforePositionChange: () => void,
+		afterPositionChange: () => void,
+	): void;
+
+	/**
+	 * Removes the currently subscribed position change listeners.
+	 */
+	removePositionChangeListeners(): void;
+
+	/**
+	 * @returns whether this interval overlaps two numerical positions.
+	 */
+	overlapsPos(bstart: number, bend: number): boolean;
 }
 
 export class SequenceIntervalClass implements SequenceInterval {
