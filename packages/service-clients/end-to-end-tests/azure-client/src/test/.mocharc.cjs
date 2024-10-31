@@ -25,7 +25,7 @@ function getFluidTestMocha(packageDir, additionalRequiredModules = []) {
 	const testVariant = getFluidTestVariant();
 	process.env.FLUID_TEST_VARIANT = testVariant;
 
-	return config(packageDir, additionalRequiredModules, testVariant);
+	return getFluidTestMochaConfig(packageDir, additionalRequiredModules, testVariant);
 }
 
 module.exports = getFluidTestMocha;
