@@ -139,8 +139,6 @@ class NotificationsManagerImpl<
 
 	public readonly emit: NotificationEmitter<T> = {
 		broadcast: (name, ...args) => {
-			console.debug(`broadcasting ${this.key}.${name} event`);
-			console.debug("args", args);
 			this.datastore.localUpdate(
 				this.key,
 				// @ts-expect-error TODO
@@ -180,17 +178,13 @@ class NotificationsManagerImpl<
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): void {
-		const eventName = value.value.name;
-		const eventArgs = value.value.args;
-		console.debug(`NotificationsManager.update called: ${eventName}`);
-		console.debug(eventArgs);
-		if (this.notificationsInternal.hasListeners()) {
-			// this.notificationsInternal.emit("UNKNOWN" as unknown, eventName, client, ...value.value.args);
+		// work around typing errors with explicit casts and any
+		const eventName: any = value.value.name;
+		const eventArgs = value.value.args as Parameters<NotificationSubscriptions<T>[any]>;
 
-			// ts-expect-error TODO
-			// this.notificationsInternal.emit(eventName as any, ...value.value.args)
-			// console.debug(`found listeners but not yet implemented`);
-			throw new Error("Not implemented");
+		if (this.notificationsInternal.hasListeners()) {
+			console.debug(eventName, eventArgs);
+			this.notificationsInternal.emit(eventName, ...eventArgs);
 		} else {
 			this.events.emit(
 				"unattendedNotification",

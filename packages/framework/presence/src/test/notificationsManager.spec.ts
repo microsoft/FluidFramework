@@ -6,17 +6,101 @@
 import { strict as assert } from "node:assert";
 
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import { useFakeTimers, type SinonFakeTimers } from "sinon";
+import { useFakeTimers, type SinonFakeTimers, spy } from "sinon";
 
 import { Notifications, type ISessionClient } from "../index.js";
+import type { IEphemeralRuntime } from "../internalTypes.js";
 import type { IPresence } from "../presence.js";
-import { createPresenceManager } from "../presenceManager.js";
+import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
 
+const knownSignals = new Map<string, Parameters<IEphemeralRuntime["submitSignal"]>>([
+	[
+		"PresenceJoin",
+		[
+			"Pres:DatastoreUpdate",
+			{
+				"sendTimestamp": 1010,
+				"avgLatency": 10,
+				"isComplete": true,
+				"data": {
+					"system:presence": {
+						"clientToSessionId": {
+							"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+						},
+					},
+				},
+			},
+		],
+	],
+
+	[
+		"testEvents42",
+		[
+			"Pres:DatastoreUpdate",
+			{
+				"sendTimestamp": 1020,
+				"avgLatency": 10,
+				"data": {
+					"system:presence": {
+						"clientToSessionId": {
+							"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+						},
+					},
+					"n:name:testNotificationWorkspace": {
+						"testEvents": {
+							"sessionId-2": {
+								"rev": 0,
+								"timestamp": 0,
+								"value": { "name": "newId", "args": [42] },
+								"ignoreUnmonitored": true,
+							},
+						},
+					},
+				},
+			},
+		],
+	],
+
+	[
+		"testEvents65",
+		[
+			"Pres:DatastoreUpdate",
+			{
+				"sendTimestamp": 1030,
+				"avgLatency": 10,
+				"data": {
+					"system:presence": {
+						"clientToSessionId": {
+							"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+						},
+					},
+					"n:name:testNotificationWorkspace": {
+						"testEvents": {
+							"sessionId-2": {
+								"rev": 0,
+								"timestamp": 0,
+								"value": { "name": "newId", "args": [65] },
+								"ignoreUnmonitored": true,
+							},
+						},
+					},
+				},
+			},
+		],
+	],
+]);
+
+// // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+// function setupNotifications(presence: IPresence) {
+// 	return notifications;
+// }
+
 describe("Presence", () => {
 	describe("NotificationsManager", () => {
+		// Note: this test setup mimics the setup in src/test/presenceManager.spec.ts
 		let runtime: MockEphemeralRuntime;
 		let logger: EventAndErrorTrackingLogger;
 		const initialTime = 1000;
@@ -38,6 +122,31 @@ describe("Presence", () => {
 			// runtime.connected = true;
 
 			clock.setSystemTime(initialTime);
+
+			// Set up the presence connection, which will create an expected signal, so add that signal to the expected list
+			// as well
+			presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+			runtime.signalsExpected.push(
+				// The first signal is from the prepareConnectedPresence call
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				knownSignals.get("PresenceJoin")!,
+			);
+
+			// Process the client join signal
+			presence.processSignal(
+				"",
+				{
+					type: "Pres:ClientJoin",
+					content: {
+						sendTimestamp: clock.now - 50,
+						avgLatency: 50,
+						data: {},
+						updateProviders: ["client2"],
+					},
+					clientId: "client4",
+				},
+				false,
+			);
 		});
 
 		afterEach(function (done: Mocha.Done) {
@@ -54,112 +163,18 @@ describe("Presence", () => {
 			clock.restore();
 		});
 
-		// it("does not signal when disconnected during initialization", () => {
-		// 	// Act & Verify
-		// 	createPresenceManager(runtime);
-		// });
-
-		// it("sends join when connected during initialization", () => {
-		// 	// Setup, Act (call to createPresenceManager), & Verify (post createPresenceManager call)
-		// 	prepareConnectedPresence(runtime, "seassionId-2", "client2", clock, logger);
-		// });
-
-		/**
-		 * See {@link checkCompiles} below
-		 */
-		it("API use compiles", () => {});
-
-		it("Sends event", async () => {
-			// presence = createPresenceManager(runtime);
-			// runtime.connected = true;
-
-			presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
-
+		it("Sends signal when custom notifications event is emitted", async () => {
 			// Setup
 			runtime.signalsExpected.push(
-				// The first signal is from the prepareConnectedPresence call
-				[
-					"Pres:DatastoreUpdate",
-					{
-						"sendTimestamp": 1010,
-						"avgLatency": 10,
-						"isComplete": true,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
-								},
-							},
-						},
-					},
-				],
+				// The first signal is from the prepareConnectedPresence call and is already added to the expected list in the
+				// beforeEach function
 
-				// The second signal is generated by the my_events.emit
-				[
-					"Pres:DatastoreUpdate",
-					{
-						"sendTimestamp": 1020,
-						"avgLatency": 10,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
-								},
-							},
-							"n:name:testNotificationWorkspace": {
-								"my_events": {
-									"sessionId-2": {
-										"rev": 0,
-										"timestamp": 0,
-										"value": { "name": "newId", "args": [42] },
-										"ignoreUnmonitored": true,
-									},
-								},
-							},
-						},
-					},
-				],
-				[
-					"Pres:DatastoreUpdate",
-					{
-						"sendTimestamp": 1030,
-						"avgLatency": 10,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
-								},
-							},
-							"n:name:testNotificationWorkspace": {
-								"my_events": {
-									"sessionId-2": {
-										"rev": 0,
-										"timestamp": 0,
-										"value": { "name": "newId", "args": [65] },
-										"ignoreUnmonitored": true,
-									},
-								},
-							},
-						},
-					},
-				],
+				// The second signal is generated by the `testEvents.emit.broadcast("newId", 42)` call
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				knownSignals.get("testEvents42")!,
 			);
 
-			presence.processSignal(
-				"",
-				{
-					type: "Pres:ClientJoin",
-					content: {
-						sendTimestamp: clock.now - 50,
-						avgLatency: 50,
-						data: {},
-						updateProviders: ["client2"],
-					},
-					clientId: "client4",
-				},
-				false,
-			);
-
+			// Configure a notifications workspace
 			const notificationsWorkspace = presence.getNotifications(
 				"name:testNotificationWorkspace",
 				{
@@ -177,36 +192,84 @@ describe("Presence", () => {
 			const notifications: typeof notificationsWorkspace = notificationsWorkspace;
 
 			notifications.add(
-				"my_events",
+				"testEvents",
 				Notifications<
 					// Below explicit generic specifiction should not be required.
 					{
 						newId: (id: number) => void;
 					},
-					"my_events"
+					"testEvents"
 				>({
 					newId: (client: ISessionClient, id: number) => {
-						console.log(`${client.sessionId} has a new id: ${id}`);
+						console.log(`Default testEvents listener: ${client.sessionId}: ${id}`);
 					},
 				}),
 			);
 
-			const { my_events } = notifications;
-
-			console.debug("setting up newId listener");
-			const disconnect = my_events.notifications.on(
-				"newId",
-				(client: ISessionClient, id: number) => {
-					console.debug(`${client.sessionId} assigned a new ID: ${id}`);
-				},
-			);
-
-			console.debug("emitting newId events");
+			const { testEvents } = notifications;
 
 			clock.tick(10);
 			// This will trigger the second signal
-			my_events.emit.broadcast("newId", 42);
+			testEvents.emit.broadcast("newId", 42);
 
+			assertFinalExpectations(runtime, logger);
+		});
+
+		it("Fires event when signal is received", async () => {
+			// Configure a notifications workspace
+			const notificationsWorkspace = presence.getNotifications(
+				"name:testNotificationWorkspace",
+				{
+					chat: Notifications<{
+						msg: (message: string) => void;
+					}>({
+						msg: (client: ISessionClient, message: string) => {
+							console.log(`${client.sessionId} says, "${message}"`);
+						},
+					}),
+				},
+			);
+
+			// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
+			const notifications: typeof notificationsWorkspace = notificationsWorkspace;
+
+			notifications.add(
+				"testEvents",
+				Notifications<
+					// Below explicit generic specifiction should not be required.
+					{
+						newId: (id: number) => void;
+					},
+					"testEvents"
+				>({
+					newId: (client: ISessionClient, id: number) => {
+						console.debug(
+							`Default testEvents listener: ${client.sessionId} has a new id: ${id}`,
+						);
+					},
+				}),
+			);
+
+			const { testEvents } = notifications;
+
+			const eventHandlerFunction = (client: ISessionClient, id: number): void => {
+				console.debug(
+					`Secondary testEvents listener: ${client.sessionId} has a new id: ${id}`,
+				);
+			};
+			const eventHandler = spy(eventHandlerFunction);
+
+			const eventHandlerFunction2 = (client: ISessionClient, id: number): void => {
+				console.debug(`Tertiary testEvents listener: ${client.sessionId} has a new id: ${id}`);
+			};
+			const eventHandler2 = spy(eventHandlerFunction2);
+
+			const disconnectFunctions = [
+				testEvents.notifications.on("newId", eventHandler),
+				testEvents.notifications.on("newId", eventHandler2),
+			];
+
+			// Processing this signal should trigger the testEvents.newId event listeners
 			presence.processSignal(
 				"",
 				{
@@ -221,7 +284,7 @@ describe("Presence", () => {
 								},
 							},
 							"n:name:testNotificationWorkspace": {
-								"my_events": {
+								"testEvents": {
 									"sessionId-2": {
 										"rev": 0,
 										"timestamp": 0,
@@ -232,16 +295,16 @@ describe("Presence", () => {
 							},
 						},
 					},
-					clientId: "client2",
+					clientId: "client3",
 				},
 				false,
 			);
 
-			clock.tick(10);
-			// This will trigger the third signal
-			my_events.emit.broadcast("newId", 65);
+			// clock.tick(10);
+			// // This will trigger the third signal
+			// testEvents.emit.broadcast("newId", 65);
 
-			disconnect();
+			// disconnect();
 			// // Track clients that have started chatting
 			// const chatClients = new Set<ISessionClient>();
 			// const chatMsgOff = chat.notifications.on("msg", (client, _message) => {
@@ -269,8 +332,12 @@ describe("Presence", () => {
 			// const unattendedOff = chat.events.on("unattendedNotification", logUnattended);
 			// unattendedOff();
 
-			assert(2 === 2);
-			assertFinalExpectations(runtime, logger);
+			for (const disconnect of disconnectFunctions) {
+				disconnect();
+			}
+			assert(eventHandler.callCount === 1);
+			assert(eventHandler2.callCount === 1);
+			// assertFinalExpectations(runtime, logger);
 		});
 	});
 });
@@ -305,13 +372,13 @@ export function checkCompiles(): void {
 	// });
 
 	notifications.add(
-		"my_events", // NF);
+		"testEvents", // NF);
 		// Below explicit generic specifaction should not be required.
 		Notifications<
 			{
 				newId: (id: number) => void;
 			},
-			"my_events"
+			"testEvents"
 		>({
 			newId: (client: ISessionClient, id: number) => {
 				console.log(`${client.sessionId} has a new id: ${id}`);
@@ -320,7 +387,7 @@ export function checkCompiles(): void {
 	);
 
 	// "newId" should be allowed as a named event.
-	notifications.my_events.emit.broadcast("newId", 42);
+	notifications.testEvents.emit.broadcast("newId", 42);
 
 	const { chat } = notifications;
 
