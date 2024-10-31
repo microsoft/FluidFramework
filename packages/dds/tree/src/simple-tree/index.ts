@@ -124,6 +124,8 @@ export {
 	type ApplyKindInput,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
+	type ReadableField,
+	type ReadSchema,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,

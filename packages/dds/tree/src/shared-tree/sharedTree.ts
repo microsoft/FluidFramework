@@ -53,8 +53,11 @@ import {
 import type {
 	ITree,
 	ImplicitFieldSchema,
+	ReadSchema,
 	TreeView,
+	TreeViewAlpha,
 	TreeViewConfiguration,
+	UnsafeUnknownSchema,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -324,10 +327,28 @@ export class SharedTree
 		}
 	}
 
+	// For the new TreeViewAlpha API
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
+
+	// For the old TreeView API
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<TRoot>;
+
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
+		return this.checkout.viewWith(config) as SchematizingSimpleTreeView<TRoot> &
+			TreeView<ReadSchema<TRoot>>;
+	}
+
+	public viewWithInternal<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> {
-		return this.checkout.viewWith(config);
+		return this.checkout.viewWith(config) as SchematizingSimpleTreeView<TRoot> &
+			TreeView<ReadSchema<TRoot>>;
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
@@ -353,9 +374,11 @@ export function getBranch(tree: ITree): TreeBranch;
  * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
  */
-export function getBranch<T extends ImplicitFieldSchema>(view: TreeView<T>): TreeBranch;
-export function getBranch<T extends ImplicitFieldSchema>(
-	treeOrView: ITree | TreeView<T>,
+export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	view: TreeViewAlpha<T>,
+): TreeBranch;
+export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	treeOrView: ITree | TreeViewAlpha<T>,
 ): TreeBranch {
 	assert(
 		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,

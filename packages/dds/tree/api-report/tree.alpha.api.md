@@ -152,7 +152,7 @@ export enum ForestType {
 export function getBranch(tree: ITree): TreeBranch;
 
 // @alpha
-export function getBranch<T extends ImplicitFieldSchema>(view: TreeView<T>): TreeBranch;
+export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(view: TreeViewAlpha<T>): TreeBranch;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
@@ -447,6 +447,9 @@ export type Off = () => void;
 // @alpha
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
 
+// @alpha
+export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeLeafValue | TreeNode;
+
 // @public @sealed
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends ReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {
 }
@@ -466,6 +469,11 @@ interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
     readonly size: number;
     values(): IterableIterator<TreeNodeFromImplicitAllowedTypesUnsafe<T>>;
 }
+
+// @alpha
+export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
+TSchema
+] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
 
 // @public @deprecated
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -793,11 +801,11 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 // @alpha
-export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<TSchema extends ImplicitFieldSchema ? TSchema : ImplicitFieldSchema>, "root" | "initialize"> {
+export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize"> {
     // (undocumented)
     initialize(content: InsertableField<TSchema>): void;
     // (undocumented)
-    get root(): TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeLeafValue | TreeNode;
+    get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
 }
 

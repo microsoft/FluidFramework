@@ -493,6 +493,35 @@ export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownS
 		: never;
 
 /**
+ * Content which could be read from a field within a tree.
+ *
+ * @remarks
+ * Extended version of {@link TreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
+ * Since reading from fields with non-exact schema is still safe, this is only useful (compared to {@link TreeFieldFromImplicitField}) when the schema is also used as input and thus allows {@link (UnsafeUnknownSchema:type)}
+ * for use
+ * @system @alpha
+ */
+export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> =
+	TSchema extends ImplicitFieldSchema
+		? TreeFieldFromImplicitField<TSchema>
+		: TreeLeafValue | TreeNode;
+
+/**
+ * Content which could be read from a field within a tree.
+ *
+ * @remarks
+ * Extended version of {@link TreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
+ * Since reading from fields with non-exact schema is still safe, this is only useful (compared to {@link TreeFieldFromImplicitField}) when the schema is also used as input and thus allows {@link (UnsafeUnknownSchema:type)}
+ * for use
+ * @system @alpha
+ */
+export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
+	TSchema,
+] extends [ImplicitFieldSchema]
+	? TSchema
+	: ImplicitFieldSchema;
+
+/**
  * Suitable for output.
  * For input must error on side of excluding undefined instead.
  * @system @public
