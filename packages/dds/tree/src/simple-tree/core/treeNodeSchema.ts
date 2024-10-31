@@ -28,7 +28,9 @@ export type TreeNodeSchema<
 	ImplicitlyConstructable extends boolean = boolean,
 	Info = unknown,
 > =
-	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
+	| (TNode extends TreeNode
+			? TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
+			: never)
 	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
 
 /**
@@ -98,8 +100,7 @@ export interface TreeNodeSchemaNonClass<
 export interface TreeNodeSchemaClass<
 	out Name extends string = string,
 	out Kind extends NodeKind = NodeKind,
-	// TODO: maybe this can be more specific (exclude leaves)
-	out TNode extends TreeNode | TreeLeafValue = TreeNode | TreeLeafValue,
+	out TNode extends TreeNode = TreeNode,
 	in TInsertable = never,
 	out ImplicitlyConstructable extends boolean = boolean,
 	out Info = unknown,

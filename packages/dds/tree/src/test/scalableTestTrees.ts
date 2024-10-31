@@ -23,7 +23,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../simple-tree/toStoredSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 

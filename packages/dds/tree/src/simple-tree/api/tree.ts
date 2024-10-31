@@ -19,7 +19,7 @@ import {
 	FieldKind,
 } from "../schemaTypes.js";
 import { NodeKind, type TreeNode, type TreeNodeSchema } from "../core/index.js";
-import { toStoredSchema } from "../toFlexSchema.js";
+import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";

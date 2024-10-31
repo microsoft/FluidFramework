@@ -295,8 +295,6 @@ export function revertSharedStringRevertibles(sharedString: ISharedString, rever
 // @alpha
 export interface SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
     // (undocumented)
-    readonly isLocal: boolean;
-    // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs;
 }
 
@@ -308,31 +306,39 @@ export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes =
     // (undocumented)
     readonly deltaOperation: TOperation;
     readonly first: Readonly<ISequenceDeltaRange<TOperation>>;
+    readonly isLocal: boolean;
     readonly last: Readonly<ISequenceDeltaRange<TOperation>>;
     readonly ranges: readonly Readonly<ISequenceDeltaRange<TOperation>>[];
 }
 
 // @alpha
 export interface SequenceInterval extends ISerializableInterval {
+    // (undocumented)
+    clone(): SequenceInterval;
+    compare(b: SequenceInterval): number;
+    compareEnd(b: SequenceInterval): number;
+    compareStart(b: SequenceInterval): number;
     readonly end: LocalReferencePosition;
     // (undocumented)
     readonly endSide: Side;
     // (undocumented)
     readonly intervalType: IntervalType;
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval | undefined;
+    // (undocumented)
+    overlaps(b: SequenceInterval): boolean;
     // (undocumented)
     readonly start: LocalReferencePosition;
     // (undocumented)
     readonly startSide: Side;
     // (undocumented)
     readonly stickiness: IntervalStickiness;
+    union(b: SequenceInterval): SequenceInterval;
 }
 
 // @alpha
 export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
     // (undocumented)
-    readonly isLocal: boolean;
-    // (undocumented)
-    readonly opArgs: IMergeTreeDeltaOpArgs;
+    readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
 export { SequencePlace }

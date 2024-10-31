@@ -115,6 +115,53 @@ export interface SequenceInterval extends ISerializableInterval {
 	readonly startSide: Side;
 	readonly endSide: Side;
 	readonly stickiness: IntervalStickiness;
+
+	/**
+	 * @returns a new interval object with identical semantics.
+	 */
+	clone(): SequenceInterval;
+	/**
+	 * Compares this interval to `b` with standard comparator semantics:
+	 * - returns -1 if this is less than `b`
+	 * - returns 1 if this is greater than `b`
+	 * - returns 0 if this is equivalent to `b`
+	 * @param b - Interval to compare against
+	 */
+	compare(b: SequenceInterval): number;
+	/**
+	 * Compares the start endpoint of this interval to `b`'s start endpoint.
+	 * Standard comparator semantics apply.
+	 * @param b - Interval to compare against
+	 */
+	compareStart(b: SequenceInterval): number;
+	/**
+	 * Compares the end endpoint of this interval to `b`'s end endpoint.
+	 * Standard comparator semantics apply.
+	 * @param b - Interval to compare against
+	 */
+	compareEnd(b: SequenceInterval): number;
+	/**
+	 * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
+	 */
+	modify(
+		label: string,
+		start: SequencePlace | undefined,
+		end: SequencePlace | undefined,
+		op?: ISequencedDocumentMessage,
+		localSeq?: number,
+		useNewSlidingBehavior?: boolean,
+	): SequenceInterval | undefined;
+	/**
+	 * @returns whether this interval overlaps with `b`.
+	 * Intervals are considered to overlap if their intersection is non-empty.
+	 */
+	overlaps(b: SequenceInterval): boolean;
+	/**
+	 * Unions this interval with `b`, returning a new interval.
+	 * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
+	 * intermediate values between the two intervals.
+	 */
+	union(b: SequenceInterval): SequenceInterval;
 }
 
 export class SequenceIntervalClass implements SequenceInterval {
@@ -225,7 +272,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 	/**
 	 * {@inheritDoc IInterval.clone}
 	 */
-	public clone() {
+	public clone(): SequenceInterval {
 		return new SequenceIntervalClass(
 			this.client,
 			this.start,
@@ -508,7 +555,7 @@ function createPositionReference(
 				referenceSequenceNumber: op.referenceSequenceNumber,
 				clientId: op.clientId,
 			});
-			segoff = getSlideToSegoff(segoff, undefined, useNewSlidingBehavior);
+			segoff = getSlideToSegoff(segoff, slidingPreference, useNewSlidingBehavior);
 		}
 	} else {
 		assert(
