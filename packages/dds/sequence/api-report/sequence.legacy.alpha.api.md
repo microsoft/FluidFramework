@@ -317,17 +317,26 @@ export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes =
 
 // @alpha
 export interface SequenceInterval extends ISerializableInterval {
+    // (undocumented)
+    clone(): SequenceInterval;
+    compare(b: SequenceInterval): number;
+    compareEnd(b: SequenceInterval): number;
+    compareStart(b: SequenceInterval): number;
     readonly end: LocalReferencePosition;
     // (undocumented)
     readonly endSide: Side;
     // (undocumented)
     readonly intervalType: IntervalType;
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval | undefined;
+    // (undocumented)
+    overlaps(b: SequenceInterval): boolean;
     // (undocumented)
     readonly start: LocalReferencePosition;
     // (undocumented)
     readonly startSide: Side;
     // (undocumented)
     readonly stickiness: IntervalStickiness;
+    union(b: SequenceInterval): SequenceInterval;
 }
 
 // @alpha
