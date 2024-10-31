@@ -212,6 +212,7 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 		);
 		DEBUG_LOG?.push(planningPromt);
 		plan = await getStringFromLlm(planningPromt, options.openAI);
+		DEBUG_LOG?.push(`AI Generated the following plan: ${planningPromt}`);
 	}
 
 	const originalDecoratedJson =

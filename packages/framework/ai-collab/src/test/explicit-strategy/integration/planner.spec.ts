@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable jsdoc/require-jsdoc */
-
 import { strict as assert } from "node:assert";
 
 // eslint-disable-next-line import/no-internal-modules
@@ -23,7 +21,7 @@ import { aiCollab } from "../../../index.js";
 
 const sf = new SchemaFactory("ai-collab-sample-application");
 
-export class SharedTreeTask extends sf.object("Task", {
+class SharedTreeTask extends sf.object("Task", {
 	title: sf.string,
 	id: sf.identifier,
 	description: sf.string,
@@ -33,18 +31,18 @@ export class SharedTreeTask extends sf.object("Task", {
 	assignee: sf.string,
 }) {}
 
-export class SharedTreeTaskList extends sf.array("TaskList", SharedTreeTask) {}
+class SharedTreeTaskList extends sf.array("TaskList", SharedTreeTask) {}
 
-export class SharedTreeEngineer extends sf.object("Engineer", {
+class SharedTreeEngineer extends sf.object("Engineer", {
 	name: sf.string,
 	id: sf.identifier,
 	skills: sf.string,
 	maxCapacity: sf.number,
 }) {}
 
-export class SharedTreeEngineerList extends sf.array("EngineerList", SharedTreeEngineer) {}
+class SharedTreeEngineerList extends sf.array("EngineerList", SharedTreeEngineer) {}
 
-export class SharedTreeTaskGroup extends sf.object("TaskGroup", {
+class SharedTreeTaskGroup extends sf.object("TaskGroup", {
 	description: sf.string,
 	id: sf.identifier,
 	title: sf.string,
@@ -52,13 +50,13 @@ export class SharedTreeTaskGroup extends sf.object("TaskGroup", {
 	engineers: SharedTreeEngineerList,
 }) {}
 
-export class SharedTreeTaskGroupList extends sf.array("TaskGroupList", SharedTreeTaskGroup) {}
+class SharedTreeTaskGroupList extends sf.array("TaskGroupList", SharedTreeTaskGroup) {}
 
-export class SharedTreeAppState extends sf.object("AppState", {
+class SharedTreeAppState extends sf.object("AppState", {
 	taskGroups: SharedTreeTaskGroupList,
 }) {}
 
-export const INITIAL_APP_STATE = {
+const INITIAL_APP_STATE = {
 	taskGroups: [
 		{
 			title: "My First Task Group",

@@ -22,13 +22,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { createZodJsonValidator } from "typechat/zod";
 
-import {
-	objectIdKey,
-	type ObjectTarget,
-	type TreeEdit,
-	type TreeEditValue,
-	type Range,
-} from "./agentEditTypes.js";
+import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
 import { generateGenericEditTypes } from "./typeGeneration.js";
 import { fail } from "./utils.js";
@@ -248,81 +242,6 @@ export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string 
 	return stringifiedSchema;
 }
 
-function printContent(content: TreeEditValue, idGenerator: IdGenerator): string {
-	switch (typeof content) {
-		case "boolean":
-			return content ? "true" : "false";
-		case "number":
-			return content.toString();
-		case "string":
-			return `"${truncateString(content, 32)}"`;
-		case "object": {
-			if (Array.isArray(content)) {
-				// TODO: Describe the types of the array contents
-				return "a new array";
-			}
-			if (content === null) {
-				return "null";
-			}
-			const id = content[objectIdKey];
-			assert(typeof id === "string", "Object content has no id.");
-			const node = idGenerator.getNode(id) ?? fail("Node not found.");
-			const schema = Tree.schema(node);
-			return `a new ${getFriendlySchemaName(schema.identifier)}`;
-		}
-		default:
-			fail("Unexpected content type.");
-	}
-}
-
-/**
- * TBD
- */
-export function describeEdit(edit: TreeEdit, idGenerator: IdGenerator): string {
-	switch (edit.type) {
-		case "setRoot":
-			return `Set the root of the tree to ${printContent(edit.content, idGenerator)}.`;
-		case "insert": {
-			if (edit.destination.type === "arrayPlace") {
-				return `Insert ${printContent(edit.content, idGenerator)} at the ${edit.destination.location} of the array that is under the "${edit.destination.field}" property of ${edit.destination.parentId}.`;
-			} else {
-				const target =
-					idGenerator.getNode(edit.destination.target) ?? fail("Target node not found.");
-				const array = Tree.parent(target) ?? fail("Target node has no parent.");
-				const container = Tree.parent(array);
-				if (container === undefined) {
-					return `Insert ${printContent(edit.content, idGenerator)} into the array at the root of the tree. Insert it ${edit.destination.place} ${edit.destination.target}.`;
-				}
-				return `Insert ${printContent(edit.content, idGenerator)} into the array that is under the "${Tree.key(array)}" property of ${idGenerator.getId(container)}. Insert it ${edit.destination.place} ${edit.destination.target}.`;
-			}
-		}
-		case "modify":
-			return `Set the "${edit.field}" field of ${edit.target.target} to ${printContent(edit.modification, idGenerator)}.`;
-		case "remove":
-			return isObjectTarget(edit.source)
-				? `Remove "${edit.source.target}" from the containing array.`
-				: `Remove all elements from ${edit.source.from.place} ${edit.source.from.target} to ${edit.source.to.place} ${edit.source.to.target} in their containing array.`;
-		case "move":
-			if (edit.destination.type === "arrayPlace") {
-				const suffix = `to the ${edit.destination.location} of the array that is under the "${edit.destination.field}" property of ${edit.destination.parentId}`;
-				return isObjectTarget(edit.source)
-					? `Move ${edit.source.target} ${suffix}.`
-					: `Move all elements from ${edit.source.from.place} ${edit.source.from.target} to ${edit.source.to.place} ${edit.source.to.target} ${suffix}.`;
-			} else {
-				const suffix = `to ${edit.destination.place} ${edit.destination.target}`;
-				return isObjectTarget(edit.source)
-					? `Move ${edit.source.target} ${suffix}.`
-					: `Move all elements from ${edit.source.from.place} ${edit.source.from.target} to ${edit.source.to.place} ${edit.source.to.target} ${suffix}.`;
-			}
-		default:
-			return "Unknown edit type.";
-	}
-}
-
-function isObjectTarget(value: ObjectTarget | Range): value is ObjectTarget {
-	return (value as Partial<ObjectTarget>).target !== undefined;
-}
-
 function getTypeString(
 	defs: Record<string, JsonNodeSchema>,
 	[name, currentDef]: [string, JsonNodeSchema],
@@ -379,12 +298,4 @@ export function getFriendlySchemaName(schemaName: string): string {
 		return schemaName;
 	}
 	return matches[0];
-}
-
-function truncateString(str: string, maxLength: number): string {
-	if (str.length > maxLength) {
-		// eslint-disable-next-line unicorn/prefer-string-slice
-		return `${str.substring(0, maxLength - 3)}...`;
-	}
-	return str;
 }

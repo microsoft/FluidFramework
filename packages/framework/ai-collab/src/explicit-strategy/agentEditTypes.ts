@@ -54,58 +54,66 @@ export const typeField = "__fluid_type";
 export const objectIdKey = "__fluid_objectId";
 
 /**
- * TBD
+ * Describes an edit to a field within a node.
+ * @remarks what is the [key: string] for?
  */
 export interface TreeEditObject {
 	[key: string]: TreeEditValue;
 	[typeField]: string;
 }
 /**
- * TBD
+ * An array of {@link TreeEditValue}'s, allowing a single TreeEdit to contain edits to multiple fields.
  */
 export type TreeEditArray = TreeEditValue[];
+
 /**
- * TBD
+ * The potential values for a given TreeEdit. These values are typically a field within a node or an entire node,
+ * represented in JSON because they are expected to be returned by an LLM.
  */
 export type TreeEditValue = JsonPrimitive | TreeEditObject | TreeEditArray;
 
 /**
- * TBD
+ * This is the the final object we expected from an LLM response.
+ * @remarks Because TreeEdit can be multiple different types (polymorphic),
+ * we need to wrap to avoid anyOf at the root level when generating the necessary JSON Schema.
  */
-// For polymorphic edits, we need to wrap the edit in an object to avoid anyOf at the root level.
 export interface EditWrapper {
 	// eslint-disable-next-line @rushstack/no-new-null
 	edit: TreeEdit | null;
 }
 
 /**
- * TBD
+ * Union type representing all possible types of edits that can be made to a tree.
  */
 export type TreeEdit = SetRoot | Insert | Modify | Remove | Move;
 
 /**
- * TBD
+ * The base interface for all types of {@link TreeEdit}.
  */
 export interface Edit {
 	explanation: string;
 	type: "setRoot" | "insert" | "modify" | "remove" | "move";
 }
+
 /**
- * TBD
+ * This object provides a way to 'select' either a given node or a range of nodes in an array.
  */
 export type Selection = ObjectTarget | Range;
 
 /**
- * TBD
+ * A Target object for an {@link TreeEdit}, identified by the target object's Id
  */
 export interface ObjectTarget {
 	target: string;
 }
 
 /**
- * TBD
+ * Desribes where an object can be inserted into an array.
+ * For example, if an you have an array with 5 objects, and you insert an object at index 3, this differentiates whether you want
+ * the existing item at index 3 should be shifted forward (if the 'place' is 'before') or shifted backwards (if the 'place' is 'after')
+ *
+ * @remarks TODO: Allow support for nested arrays
  */
-// TODO: Allow support for nested arrays
 export interface ArrayPlace {
 	type: "arrayPlace";
 	parentId: string;
@@ -114,7 +122,11 @@ export interface ArrayPlace {
 }
 
 /**
- * TBD
+ * Desribes where an object can be inserted into an array.
+ * For example, if an you have an array with 5 objects, and you insert an object at index 3, this differentiates whether you want
+ * the existing item at index 3 should be shifted forward (if the 'place' is 'before') or shifted backwards (if the 'place' is 'after')
+ *
+ * @remarks Why does this and {@link ArrayPlace} exist together?
  */
 export interface ObjectPlace extends ObjectTarget {
 	type: "objectPlace";
@@ -123,7 +135,8 @@ export interface ObjectPlace extends ObjectTarget {
 }
 
 /**
- * TBD
+ * A range of objects within an array. This allows the LLM to select multiple nodes at once,
+ * for example during an {@link Remove} operation to remove a range of nodes.
  */
 export interface Range {
 	from: ObjectPlace;
@@ -131,7 +144,7 @@ export interface Range {
 }
 
 /**
- * TBD
+ * Describes an operation to set the root of the tree. This is the only edit that can change the root object.
  */
 export interface SetRoot extends Edit {
 	type: "setRoot";
@@ -139,7 +152,7 @@ export interface SetRoot extends Edit {
 }
 
 /**
- * TBD
+ * Describes an operation to insert a new node into the tree.
  */
 export interface Insert extends Edit {
 	type: "insert";
@@ -148,7 +161,7 @@ export interface Insert extends Edit {
 }
 
 /**
- * TBD
+ * Describes an operation to modify an existing node in the tree.
  */
 export interface Modify extends Edit {
 	type: "modify";
@@ -158,7 +171,7 @@ export interface Modify extends Edit {
 }
 
 /**
- * TBD
+ * Describes an operation to remove either a specific node or a range of nodes in an array.
  */
 export interface Remove extends Edit {
 	type: "remove";
@@ -166,7 +179,7 @@ export interface Remove extends Edit {
 }
 
 /**
- * TBD
+ * Describes an operation to move a node within an array
  */
 export interface Move extends Edit {
 	type: "move";
