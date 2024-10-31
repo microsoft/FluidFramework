@@ -8,9 +8,5 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"type": "commonjs",
-	"scripts": {
-		"build:docs": "api-extractor run --local",
-		"ci:build:docs": "api-extractor run"
-	}
+	"type": "commonjs"
 }
