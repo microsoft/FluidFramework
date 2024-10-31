@@ -344,13 +344,6 @@ export class SharedTree
 			TreeView<ReadSchema<TRoot>>;
 	}
 
-	public viewWithInternal<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-		config: TreeViewConfiguration<ReadSchema<TRoot>>,
-	): SchematizingSimpleTreeView<TRoot> {
-		return this.checkout.viewWith(config) as SchematizingSimpleTreeView<TRoot> &
-			TreeView<ReadSchema<TRoot>>;
-	}
-
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
 		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
