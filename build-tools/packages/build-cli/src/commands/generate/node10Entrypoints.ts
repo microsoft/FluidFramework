@@ -5,15 +5,18 @@
 
 import fs from "node:fs/promises";
 
-import * as resolve from "resolve.exports";
-import type { PackageJson } from "type-fest";
-import { BaseCommand } from "../../library/index.js";
+import type { PackageJson } from "@fluidframework/build-tools";
+import { ApiLevel, BaseCommand, knownApiLevels } from "../../library/index.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
 import { readPackageJson, readTsConfig } from "../../library/package.js";
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import/no-internal-modules
-import type { Node10CompatExportData } from "../../library/packageExports.js";
+
+import {
+	type Node10CompatExportData,
+	getTypesPathFromPackage,
+	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../library/packageExports.js";
 import type { CommandLogger } from "../../logging.js";
 
 export default class GenerateNode10EntrypointsCommand extends BaseCommand<
@@ -35,6 +38,7 @@ export default class GenerateNode10EntrypointsCommand extends BaseCommand<
 		const mapNode10CompatExportPathToData = mapExportPathsFromPackage(
 			packageJson,
 			emitDeclarationOnly,
+			this.logger,
 		);
 
 		if (mapNode10CompatExportPathToData.size === 0) {
@@ -50,40 +54,29 @@ export default class GenerateNode10EntrypointsCommand extends BaseCommand<
 export function mapExportPathsFromPackage(
 	packageJson: PackageJson,
 	emitDeclarationOnly: boolean,
+	log: CommandLogger,
 ): Map<string, Node10CompatExportData> {
 	const mapKeyToOutput = new Map<string, Node10CompatExportData>();
 
-	const { exports } = packageJson;
-
-	if (typeof exports !== "object" || exports === null) {
-		throw new Error('no valid "exports" within package properties');
-	}
-
-	if (Array.isArray(exports)) {
-		// eslint-disable-next-line unicorn/prefer-type-error
-		throw new Error(`required entrypoints cannot be generated for "exports" array`);
-	}
-
 	// Iterate through exports looking for properties with values matching keys in map.
-	for (const [exportPath] of Object.entries(exports)) {
+	for (const levels of knownApiLevels) {
 		// Exclude root "." path as "types" should handle that.
-		if (exportPath === ".") {
+		if (levels === ApiLevel.public) {
 			continue;
 		}
 
-		const resolvedExport = resolve.exports(packageJson, exportPath, {
-			conditions: ["types"],
-		});
-		if (resolvedExport === undefined || resolvedExport.length === 0) {
-			throw new Error(`exports for ${exportPath} is undefined`);
+		const typesPath = getTypesPathFromPackage(packageJson, levels, log);
+
+		if (typesPath === undefined) {
+			continue;
 		}
 
-		const node10ExportPath = resolvedExport[0]
+		const node10ExportPath = typesPath
 			.replace(/\/index(\.d\.[cm]?ts)?$/, "/internal$1")
 			.replace(/^.*\//, "");
 
 		mapKeyToOutput.set(node10ExportPath, {
-			relPath: resolvedExport[0],
+			relPath: typesPath,
 			isTypeOnly: emitDeclarationOnly,
 		});
 	}
