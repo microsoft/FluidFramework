@@ -283,4 +283,39 @@ We should come back to this after v1 of our new website.
 The following npm scripts are supported in this directory:
 
 <!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS:includeHeading=FALSE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+| Script | Description |
+|--------|-------------|
+| `build` | Build the site, including API documentation. |
+| `build:api-documentation` | Download API model artifacts and generate API documentation. |
+| `build:api-documentation:dev` | Download API model artifacts and generate API documentation (including the repo-local API model). |
+| `build:dev` | Build the site, including API documentation (and including API documentation for the repo-local API model). |
+| `build:docusaurus` | Build the site content with Docusaurus. |
+| `build:markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
+| `check-links` | Run link validation on the website. |
+| `clean` | Clean up generated artifacts (build output, etc.). |
+| `clean:api-documentation` | Clean up generate API documentation content. |
+| `clean:doc-models` | Clean up downloaded API model artifacts. |
+| `clean:docusaurus` | Run Docusaurus's "clean". |
+| `clean:versions-json` | Clean up generated `versions.json` file. |
+| `download-doc-models` | Download API model artifacts published from our release branches. |
+| `eslint` | Run `eslint`. |
+| `eslint:fix` | Run `eslint` with auto-fix enabled. |
+| `format` | Fix formatting issues with `prettier`. |
+| `gen-docusaurus` | Pre-Docusaurus build step. TODO |
+| `generate-api-documentation` | Generate API documentation from downloaded API model artifacts. |
+| `lint` | Check for linter violations. |
+| `lint:fix` | Auto-fix linter violations. |
+| `prettier` | Check for formatting issues with `prettier`. |
+| `prettier:fix` | Fix formatting issues with `prettier`. |
+| `rebuild` | Clean up existing generated artifacts and re-run the build. |
+| `serve` | Serves the built website using Docusaurus. |
+| `serve-with-azure-emulation` | Serves the built website using Docusaurus, including Azure service emulation for our Azure functions. |
+| `start` | Runs the website in watch mode with Docusaurus. |
+
+<!-- prettier-ignore-end -->
+
 <!-- AUTO-GENERATED-CONTENT:END -->
