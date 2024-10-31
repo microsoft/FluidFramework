@@ -149,7 +149,7 @@ export {
 	type FactoryContent,
 	type FactoryContentObject,
 } from "./toMapTree.js";
-export { toStoredSchema, getStoredSchema } from "./toFlexSchema.js";
+export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,

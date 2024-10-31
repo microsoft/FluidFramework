@@ -26,9 +26,7 @@ import {
 	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 
-import { IntervalOpType, SequenceInterval } from "./intervals/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SequenceIntervalClass } from "./intervals/sequenceInterval.js";
+import { IntervalOpType, SequenceInterval, SequenceIntervalClass } from "./intervals/index.js";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
 import { ISharedString, SharedStringSegment } from "./sharedString.js";
 

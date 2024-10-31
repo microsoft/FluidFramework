@@ -186,7 +186,7 @@ export const socketIoPath = "socket.io";
  * Get a stripped version of a URL safe for r11s telemetry
  * @returns undefined if no appropriate hostName is provided
  */
-export function getUrlForTelemetry(hostName: string, path?: string): string | undefined {
+export function getUrlForTelemetry(hostName: string, path: string = ""): string | undefined {
 	// Strip off "http://" or "https://"
 	const hostNameMatch = hostName.match(/^(?:https?:\/\/)?([^/]+)/);
 	if (!hostNameMatch) {
@@ -194,16 +194,35 @@ export function getUrlForTelemetry(hostName: string, path?: string): string | un
 	}
 	const strippedHostName = hostNameMatch[1];
 
-	let extractedPath: string | undefined;
-	if (path !== undefined) {
-		// Extract the first portion of the path and explicitly match it to known path names
-		const pathMatch = path.match(/^\/?([^/]+)/);
-		if (pathMatch && [socketIoPath, "repos", "deltas", "documents"].includes(pathMatch[1])) {
-			extractedPath = pathMatch[1];
+	let extractedPath = "";
+	// Extract portions of the path and explicitly match them to known path names
+	for (const portion of path.split("/")) {
+		if (portion !== "") {
+			// eslint-disable-next-line unicorn/prefer-ternary
+			if (
+				[
+					socketIoPath,
+					"repos",
+					"deltas",
+					"documents",
+					"session",
+					"git",
+					"summaries",
+					"latest",
+					"document",
+					"commits",
+					"blobs",
+					"refs",
+					"revokeToken",
+					"accesstoken",
+				].includes(portion)
+			) {
+				extractedPath += `/${portion}`;
+			} else {
+				extractedPath += "/REDACTED";
+			}
 		}
 	}
 
-	return extractedPath !== undefined
-		? `${strippedHostName}/${extractedPath}`
-		: strippedHostName;
+	return `${strippedHostName}${extractedPath}`;
 }
