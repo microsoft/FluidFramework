@@ -32,11 +32,6 @@ export interface SequenceEvent<
 > {
 	readonly deltaOperation: TOperation;
 
-	/**
-	 * Whether the event was caused by a locally-made change.
-	 */
-	readonly isLocal: boolean;
-
 	readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
 	/**
 	 * The in-order ranges affected by this delta.
@@ -162,6 +157,11 @@ export abstract class SequenceEventClass<
  */
 export interface SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
 	readonly opArgs: IMergeTreeDeltaOpArgs;
+
+	/**
+	 * Whether the event was caused by a locally-made change.
+	 */
+	readonly isLocal: boolean;
 }
 export class SequenceDeltaEventClass
 	extends SequenceEventClass<MergeTreeDeltaOperationType>
