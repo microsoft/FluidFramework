@@ -132,6 +132,7 @@ export interface SimpleFieldSchema {
  * which are represented inline with identifiers.
  *
  * @internal
+ * @sealed
  */
 export interface SimpleTreeSchema extends SimpleFieldSchema {
 	/**

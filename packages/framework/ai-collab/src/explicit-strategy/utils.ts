@@ -6,7 +6,7 @@
 /**
  * Subset of Map interface.
  *
- * @remarks - originally from tree/src/utils.ts
+ * @remarks originally from tree/src/util/utils.ts
  */
 export interface MapGetSet<K, V> {
 	get(key: K): V | undefined;
@@ -26,7 +26,7 @@ export function fail(message: string): never {
  * @param map - the transformation function to run on each element of the iterable
  * @returns a new iterable of elements which have been transformed by the `map` function
  *
- * @remarks - originally from tree/src/utils.ts
+ * @remarks originally from tree/src/util/utils.ts
  */
 export function* mapIterable<T, U>(
 	iterable: Iterable<T>,
@@ -44,7 +44,7 @@ export function* mapIterable<T, U>(
  * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  *
- * @remarks - originally from tree/src/utils.ts
+ * @remarks originally from tree/src/util/utils.ts
  */
 export function getOrCreate<K, V>(
 	map: MapGetSet<K, V>,
