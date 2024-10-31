@@ -90,7 +90,7 @@ const cache = new WeakMap<SimpleTreeSchema, ReturnType<typeof generateGenericEdi
  *
  * @returns a Record of schema names to Zod validation objects, and the name of the root schema used to encompass all of the other schemas.
  *
- * @remarks - The return type of this function is designed to work with Typechat's createZodJsonValidator as well as be used as the JSON schema for OpenAi's structured output response format.
+ * @remarks The return type of this function is designed to work with Typechat's createZodJsonValidator as well as be used as the JSON schema for OpenAi's structured output response format.
  */
 export function generateGenericEditTypes(
 	schema: SimpleTreeSchema,

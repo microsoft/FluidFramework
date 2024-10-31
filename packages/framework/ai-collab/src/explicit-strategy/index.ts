@@ -116,7 +116,7 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 					simpleSchema.definitions,
 					options.validator,
 				);
-				const explanation = result.explanation; // TODO: describeEdit(result, idGenerator);
+				const explanation = result.explanation;
 				editLog.push({ edit: { ...result, explanation } });
 				sequentialErrorCount = 0;
 			} catch (error: unknown) {
@@ -187,6 +187,8 @@ interface ReviewResult {
 
 /**
  * Generates a single {@link TreeEdit} from an LLM.
+ *
+ * @remarks
  * The design of this async generator function is such that which each iteration of this functions values,
  * an LLM will be prompted to generate the next value (a {@link TreeEdit}) based on the users ask.
  * Once the LLM believes it has completed the user's ask, it will no longer return an edit and as a result
@@ -306,7 +308,7 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * Calls an LLM to generate a structured output response based on the provided prompt.
+ * Calls the LLM to generate a structured output response based on the provided prompt.
  */
 async function getStructuredOutputFromLlm<T>(
 	prompt: string,
@@ -338,7 +340,7 @@ async function getStructuredOutputFromLlm<T>(
 }
 
 /**
- * Calls an LLM to generate a response based on the provided prompt.
+ * Calls the LLM to generate a response based on the provided prompt.
  */
 async function getStringFromLlm(
 	prompt: string,
