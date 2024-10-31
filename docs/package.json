@@ -24,8 +24,8 @@
 		"clean:docusaurus": "docusaurus clear",
 		"clean:versions-json": "rimraf --glob \"./versions.json\"",
 		"download-doc-models": "node ./infra/download-doc-models.mjs",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix",
+		"eslint": "eslint src test --format stylish",
+		"eslint:fix": "eslint src test --format stylish --fix",
 		"format": "npm run prettier:fix",
 		"generate-api-documentation": "dotenv -- node ./infra/generate-api-documentation.mjs",
 		"generate-versions": "dotenv -- node ./infra/generate-versions.mjs",
@@ -37,7 +37,9 @@
 		"serve": "docusaurus serve",
 		"serve-with-azure-emulation": "swa start build --api-location api",
 		"prestart": "npm run generate-versions",
-		"start": "docusaurus start"
+		"start": "docusaurus start",
+		"pretest": "playwright install --with-deps",
+		"test": "playwright test"
 	},
 	"browserslist": {
 		"production": [
@@ -75,6 +77,8 @@
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@playwright/test": "^1.48.0",
+		"@types/node": "^22.8.6",
 		"chalk": "^5.3.0",
 		"concurrently": "^9.0.1",
 		"cross-env": "^7.0.3",
@@ -83,6 +87,7 @@
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.1.0",
 		"fs-extra": "^11.2.0",
+		"playwright": "^1.48.0",
 		"prettier": "^3.2.5",
 		"rimraf": "^6.0.1",
 		"typescript": "~5.5.2"

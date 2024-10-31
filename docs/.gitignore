@@ -20,6 +20,9 @@ docs/api/*
 versioned_docs/*/api/*
 !versioned_docs/*/api/**/*.mdx
 
+# Test
+test-results
+
 # Misc
 .DS_Store
 .env.local
