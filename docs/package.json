@@ -21,6 +21,7 @@
 		"check-links": "echo TODO: Implement linkcheck script",
 		"clean": "concurrently \"npm:clean:*\"",
 		"clean:api-documentation": "rimraf --glob \"docs/api/**/*.md\" \"versioned_docs/*/api/**/*.md\"",
+		"clean:versions-json": "rimraf --glob \"./versions.json\"",
 		"clean:doc-models": "rimraf --glob .doc-models",
 		"clean:docusaurus": "docusaurus clear",
 		"deploy": "npm run gen-docusaurus && docusaurus deploy",
