@@ -60,6 +60,7 @@ import {
 	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
+	SequenceIntervalClass,
 	SerializedIntervalDelta,
 	createInterval,
 	createPositionReferenceFromSegoff,
@@ -67,8 +68,6 @@ import {
 	sequenceIntervalHelpers,
 	startReferenceSlidingPreference,
 } from "./intervals/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SequenceIntervalClass } from "./intervals/sequenceInterval.js";
 
 export const reservedIntervalIdKey = "intervalId";
 
