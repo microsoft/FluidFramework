@@ -73,7 +73,6 @@ variables:
       eq(parameters.guardianAssetRetentionOverride, 'force'),
       and(eq(variables.isMain, true), eq(parameters.guardianAssetRetentionOverride, 'default'))
       )}}
-    value: eq(variables.forceDeploy, true)
   - name: deploymentToken
     ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
       value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
