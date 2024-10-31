@@ -270,26 +270,51 @@ export class EditManager<
 	}
 
 	/**
-	 * Updates the `trunkBranches` map to reflect the fact that a new local commit was fast-forwarded to the trunk.
-	 * @param priorTrunkCommit - The trunk head prior to the fast-forward.
-	 * @param newId - The ID of the new trunk head.
+	 * Promote the oldest un-sequenced commit on the local branch to the head of the trunk.
+	 * @param sequenceId - The sequence id of the new trunk commit
+	 * @remarks This method is a performance optimization for the scenario where this client receives its own change back after sequencing.
+	 * The normal (not optimized) process in this case would be to apply the new sequenced commit to the trunk and then rebase the local branch over the trunk.
+	 * The first commit will be "the same" (as in, it will have the same revision) as the commit that was just sequenced, so the rebase will be a no-op.
+	 * Because the rebase is a no-op, we can skip it entirely and simply remove the commit from the local branch and append it to the trunk.
+	 * Avoiding the overhead of the rebase process, even when it's a no-op, has real measured performance benefits and is worth the added complexity here.
 	 */
-	private fastForwardBranches(
-		priorTrunkCommit: GraphCommit<TChangeset>,
-		newId: SequenceId,
-	): void {
-		const currentId = this.getCommitSequenceId(priorTrunkCommit);
-		const currentBranches = this.trunkBranches.get(currentId);
+	private fastForwardNextLocalCommit(sequenceId: SequenceId): void {
+		// First, push the local commit to the trunk.
+		// We are mutating our `localCommits` cache here, but there is no need to actually change the `localBranch` itself because it will simply catch up later if/when it next rebases.
+		const firstLocalCommit = this.localCommits.shift();
+		assert(
+			firstLocalCommit !== undefined,
+			0x6b5 /* Received a sequenced change from the local session despite having no local changes */,
+		);
+
+		const previousSequenceId = this.getCommitSequenceId(this.trunk.getHead());
+		this.pushGraphCommitToTrunk(sequenceId, firstLocalCommit, this.localSessionId);
+
+		// Next, we need to update the sequence IDs that our local branches (user's branches, not peer branches) are associated with.
+		// In particular, if a local branch is based on the previous trunk head (the branch's first ancestor in the trunk is the commit that was the head before we pushed the new commit)
+		// and also branches off of the local branch (it has an ancestor that is part of the local branch), it needs to have its sequence number advanced to be that of the new trunk head.
+		// Intuitively, this makes sense because:
+		// 1. The trunk's head just advanced forward by some (sequence) amount.
+		// 2. The local branch is always rebased to be branching off of the head of the trunk (not literally in this case, because of the optimization, but in effect).
+		// 3. Therefore, the entire local branch just advanced forward by some (sequence) amount, and any commits downstream of it which track the sequence numbers of their base commits on the trunk should also advance.
+		// This update is not necessarily required for all local branches, since some may have fallen behind the local branch and are based on older trunk commits (such branches do not need updating).
+		const currentBranches = this.trunkBranches.get(previousSequenceId);
 		if (currentBranches !== undefined) {
-			const newBranches = getOrCreate(this.trunkBranches, newId, () => new Set());
+			const newBranches = getOrCreate(this.trunkBranches, sequenceId, () => new Set());
 			for (const branch of currentBranches) {
-				if (branch.getHead() !== priorTrunkCommit) {
+				// Check every branch associated with the old sequence ID and advance it if it is based on the local branch (specifically, on the local branch as it was before we pushed its first commit to the trunk).
+				// We validate this by checking if the branch's head is a descendant of the local commit that we just pushed.
+				if (findAncestor(branch.getHead(), (c) => c === firstLocalCommit) !== undefined) {
 					newBranches.add(branch);
 					currentBranches.delete(branch);
 				}
 			}
+			// Clean up our trunk branches map by removing any empty sets.
 			if (currentBranches.size === 0) {
-				this.trunkBranches.delete(currentId);
+				this.trunkBranches.delete(previousSequenceId);
+			}
+			if (newBranches.size === 0) {
+				this.trunkBranches.delete(sequenceId);
 			}
 		}
 	}
@@ -376,24 +401,31 @@ export class EditManager<
 			this.trunkBase = newTrunkBase;
 
 			// Update any state that is derived from trunk commits
-			this.sequenceMap.editRange(
-				minimumPossibleSequenceId,
-				sequenceId,
-				true,
-				(s, { revision }) => {
-					// Cleanup look-aside data for each evicted commit
-					this.trunkMetadata.delete(revision);
-					// Delete all evicted commits from `sequenceMap` except for the latest one, which is the new `trunkBase`
-					if (equalSequenceIds(s, sequenceId)) {
-						assert(
-							revision === newTrunkBase.revision,
-							0x729 /* Expected last evicted commit to be new trunk base */,
-						);
-					} else {
-						return { delete: true };
-					}
-				},
-			);
+			this.sequenceMap.editRange(minimumPossibleSequenceId, sequenceId, true, (s, commit) => {
+				// Cleanup look-aside data for each evicted commit
+				this.trunkMetadata.delete(commit.revision);
+				// Delete all evicted commits from `sequenceMap` except for the latest one, which is the new `trunkBase`
+				if (equalSequenceIds(s, sequenceId)) {
+					assert(
+						commit === newTrunkBase,
+						0x729 /* Expected last evicted commit to be new trunk base */,
+					);
+				} else {
+					Reflect.defineProperty(commit, "change", {
+						get: () =>
+							assert(false, "Should not access 'change' property of an evicted commit"),
+					});
+					Reflect.defineProperty(commit, "revision", {
+						get: () =>
+							assert(false, "Should not access 'revision' property of an evicted commit"),
+					});
+					Reflect.defineProperty(commit, "parent", {
+						get: () =>
+							assert(false, "Should not access 'parent' property of an evicted commit"),
+					});
+					return { delete: true };
+				}
+			});
 
 			const trunkSize = getPathFromBase(this.trunk.getHead(), this.trunkBase).length;
 			assert(
@@ -607,17 +639,7 @@ export class EditManager<
 					};
 
 		if (newCommit.sessionId === this.localSessionId) {
-			const headTrunkCommit = this.trunk.getHead();
-			const firstLocalCommit = this.localCommits.shift();
-			assert(
-				firstLocalCommit !== undefined,
-				0x6b5 /* Received a sequenced change from the local session despite having no local changes */,
-			);
-
-			// The first local branch commit is already rebased over the trunk, so we can push it directly to the trunk.
-			this.pushGraphCommitToTrunk(sequenceId, firstLocalCommit, this.localSessionId);
-			this.fastForwardBranches(headTrunkCommit, sequenceId);
-			return;
+			return this.fastForwardNextLocalCommit(sequenceId);
 		}
 
 		// Get the revision that the remote change is based on
@@ -674,11 +696,7 @@ export class EditManager<
 		return [commit, commits];
 	}
 
-	private pushCommitToTrunk(
-		sequenceId: SequenceId,
-		commit: Commit<TChangeset>,
-		local = false,
-	): void {
+	private pushCommitToTrunk(sequenceId: SequenceId, commit: Commit<TChangeset>): void {
 		const mintedCommit = mintCommit(this.trunk.getHead(), commit);
 		this.pushGraphCommitToTrunk(sequenceId, mintedCommit, commit.sessionId);
 	}

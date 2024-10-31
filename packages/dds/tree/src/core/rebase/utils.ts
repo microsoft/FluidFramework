@@ -441,8 +441,9 @@ function rollbackFromCommit<TChange>(
 	mintRevisionTag: () => RevisionTag,
 	cache?: boolean,
 ): TaggedChange<TChange, RevisionTag> {
-	if (commit.rollback !== undefined) {
-		return commit.rollback;
+	const rollback = Rollback.get(commit);
+	if (rollback !== undefined) {
+		return rollback;
 	}
 	const tag = mintRevisionTag();
 	const untagged = changeRebaser.invert(commit, true, tag);
@@ -450,7 +451,7 @@ function rollbackFromCommit<TChange>(
 	const fullyTaggedRollback = tagRollbackInverse(deeplyTaggedRollback, tag, commit.revision);
 
 	if (cache === true) {
-		commit.rollback = fullyTaggedRollback;
+		Rollback.set(commit, fullyTaggedRollback);
 	}
 	return fullyTaggedRollback;
 }
@@ -619,4 +620,35 @@ export function findCommonAncestor<T extends { parent?: T }>(
 		pathB.length = 0;
 	}
 	return undefined;
+}
+
+export function replaceChange<TChange>(
+	commit: GraphCommit<TChange>,
+	change: TChange,
+): GraphCommit<TChange> {
+	const output = { ...commit, change };
+	Rollback.set(output, undefined);
+	return output;
+}
+
+/** Associates rollback data with commits */
+namespace Rollback {
+	const map = new WeakMap<GraphCommit<unknown>, TaggedChange<unknown, RevisionTag>>();
+
+	export function get<TChange>(
+		commit: GraphCommit<TChange>,
+	): TaggedChange<TChange, RevisionTag> | undefined {
+		return map.get(commit) as TaggedChange<TChange, RevisionTag> | undefined;
+	}
+
+	export function set<TChange>(
+		commit: GraphCommit<TChange>,
+		rollback: TaggedChange<TChange, RevisionTag> | undefined,
+	): void {
+		if (rollback === undefined) {
+			map.delete(commit);
+		} else {
+			map.set(commit, rollback);
+		}
+	}
 }

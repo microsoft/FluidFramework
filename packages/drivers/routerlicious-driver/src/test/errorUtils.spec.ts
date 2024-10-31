@@ -12,6 +12,8 @@ import {
 	RouterliciousErrorTypes,
 	createR11sNetworkError,
 	errorObjectFromSocketError,
+	getUrlForTelemetry,
+	socketIoPath,
 	throwR11sNetworkError,
 } from "../errorUtils.js";
 
@@ -289,6 +291,38 @@ describe("ErrorUtils", () => {
 			assert.strictEqual(error.canRetry, true);
 			assert.strictEqual((error as any).retryAfterSeconds, 300);
 			assert.strictEqual((error as any).statusCode, 400);
+		});
+	});
+
+	describe("getUrlForTelemetry", () => {
+		// 0:hostName 1:path 2:expectedOutput
+		const testCases = [
+			["", undefined, undefined],
+			["/", undefined, undefined],
+			["http://some.url.com", undefined, "some.url.com"],
+			["http://some.url.com/", undefined, "some.url.com"],
+			["https://some.url.com/", "", "some.url.com"],
+			["something://some.url.com/", "", "something:"],
+			["some.url.com/path", undefined, "some.url.com"],
+			["some.url.com/", "randomPath", "some.url.com/REDACTED"],
+			["some.url.com/", socketIoPath, `some.url.com/${socketIoPath}`],
+			["http://some.url.com/", "repos", "some.url.com/repos"],
+			["some.url.com/", "deltas", "some.url.com/deltas"],
+			["https://some.url.com", "documents", "some.url.com/documents"],
+			["https://some.url.com/", "/documents/", "some.url.com/documents"],
+			["https://some.url.com/", "documents/morePath", "some.url.com/documents/REDACTED"],
+			[
+				"https://some.url.com",
+				"documents/morePath/documents/latest/abc-123/",
+				"some.url.com/documents/REDACTED/documents/latest/REDACTED",
+			],
+		];
+
+		testCases.forEach((testCase) => {
+			it(`Parses URL as expected hostName:[${testCase[0]}] path:[${testCase[1]}]`, () => {
+				const actualOutput = getUrlForTelemetry(testCase[0]!, testCase[1]);
+				assert.strictEqual(actualOutput, testCase[2]);
+			});
 		});
 	});
 });
