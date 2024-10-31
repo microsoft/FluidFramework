@@ -30,20 +30,39 @@ export interface SystemWorkspaceDatastore {
 	};
 }
 
-/**
- * There is no implementation class for this interface.
- * It is a simple structure. Most complicated aspect is that
- * `getConnectionId()` member is replaced with a new
- * function when a more recent connection is added.
- *
- * See {@link SystemWorkspaceImpl.ensureAttendee}.
- */
-interface SessionClient extends ISessionClient {
-	/**
-	 * Order is used to track the most recent client connection
-	 * during a session.
-	 */
-	order: number;
+class SessionClient implements ISessionClient {
+	public readonly sessionId: ClientSessionId;
+	public order: number;
+	private _connectionId: ClientConnectionId | undefined;
+	private _connectionStatus: SessionClientStatus;
+
+	public constructor(sessionId: ClientSessionId, connectionId?: ClientConnectionId) {
+		this.sessionId = sessionId;
+		this.order = 0;
+		this._connectionId = connectionId;
+		this._connectionStatus = SessionClientStatus.Disconnected;
+	}
+
+	public getConnectionId(): ClientConnectionId {
+		if (this._connectionId === undefined) {
+			throw new Error("Client has never been connected");
+		}
+		return this._connectionId;
+	}
+
+	public getConnectionStatus(): SessionClientStatus {
+		return this._connectionStatus;
+	}
+
+	public setConnectionId(connectionId: ClientConnectionId): void {
+		this._connectionId = connectionId;
+	}
+
+	public setConnectionStatus(connected: boolean): void {
+		this._connectionStatus = connected
+			? SessionClientStatus.Connected
+			: SessionClientStatus.Disconnected;
+	}
 }
 
 /**
@@ -86,14 +105,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
 		>,
 	) {
-		this.selfAttendee = {
-			sessionId: clientSessionId,
-			order: 0,
-			getConnectionId: () => {
-				throw new Error("Client has never been connected");
-			},
-			getStatus: () => SessionClientStatus.Disconnected,
-		};
+		this.selfAttendee = new SessionClient(clientSessionId);
 		this.attendees.set(clientSessionId, this.selfAttendee);
 	}
 
@@ -150,8 +162,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			value: this.selfAttendee.sessionId,
 		};
 
-		this.selfAttendee.getConnectionId = () => clientConnectionId;
-		this.selfAttendee.getStatus = () => SessionClientStatus.Connected;
+		this.selfAttendee.setConnectionId(clientConnectionId);
+		this.selfAttendee.setConnectionStatus(true);
 		this.attendees.set(clientConnectionId, this.selfAttendee);
 	}
 
@@ -165,7 +177,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		// therefore we should not change the attendee connection status or emit a disconnect event.
 		const attendeeReconnected = attendee.getConnectionId() !== clientConnectionId;
 		if (!attendeeReconnected) {
-			attendee.getStatus = () => SessionClientStatus.Disconnected;
+			attendee.setConnectionStatus(false);
 			this.events.emit("attendeeDisconnected", attendee);
 		}
 	}
@@ -201,25 +213,19 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		clientConnectionId: ClientConnectionId,
 		order: number,
 	): { attendee: SessionClient; isNew: boolean } {
-		const connectionId = (): ClientConnectionId => clientConnectionId;
 		let attendee = this.attendees.get(clientSessionId);
 		let isNew = false;
 		if (attendee === undefined) {
 			// New attendee. Create SessionClient and add session id based
 			// entry to map.
-			attendee = {
-				sessionId: clientSessionId,
-				order,
-				getConnectionId: connectionId,
-				getStatus: () => SessionClientStatus.Connected,
-			};
+			attendee = new SessionClient(clientSessionId, clientConnectionId);
 			this.attendees.set(clientSessionId, attendee);
 			isNew = true;
 		} else if (order > attendee.order) {
 			// The given association is newer than the one we have.
 			// Update the order and current connection id.
 			attendee.order = order;
-			attendee.getConnectionId = connectionId;
+			attendee.setConnectionId(clientConnectionId);
 		}
 		// Always update entry for the connection id. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
