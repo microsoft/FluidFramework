@@ -6,9 +6,9 @@
 "section": tree
 ---
 
-Array and Map nodes can now be explicitly constructed with undefined or no argument.
+Array and Map nodes can now be explicitly constructed with undefined or no argument
 
-The constructor and create methods of Array and Map nodes now make the parameter optional, creating an empty map or array when it is not provided.
+The input parameter to the constructor and `create` methods of Array and Map nodes is now optional. When the optional parameter is omitted, an empty map or array will be created.
 
 ```typescript
 class Schema extends schemaFactory.array("x", schemaFactory.number) {}
@@ -48,8 +48,6 @@ const _fromNothing: Schema = Schema.create();
 ```typescript
 const Schema = schemaFactory.map(schemaFactory.number);
 type Schema = NodeFromSchema<typeof Schema>;
-
-
 // Existing support
 const _fromIterable: Schema = Schema.create([]);
 const _fromObject: Schema = Schema.create({});
