@@ -100,8 +100,23 @@ export interface AiCollabSuccessResponse {
  * @alpha
  */
 export interface AiCollabErrorResponse {
+	/**
+	 * The status of the Ai Collaboration.
+	 * - A 'partial-failure' status indicates that the AI collaboration was partially successful, but was aborted due to a limiter or other error
+	 * - A "failure" status indicates that the AI collaboration was not successful at creating any changes.
+	 */
 	status: "failure" | "partial-failure";
+	/**
+	 * The type of known error that occured
+	 * - 'tokenLimitExceeded' indicates that the LLM exceeded the token limits set by the user
+	 * - 'tooManyErrors' indicates that the LLM made too many errors in a row
+	 * - 'tooManyModelCalls' indicates that the LLM made too many model calls
+	 * - 'aborted' indicates that the AI collaboration was aborted by the user or a limiter
+	 */
 	errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted";
+	/**
+	 * The total token usage by the LLM.
+	 */
 	tokenUsage: TokenUsage;
 }
 

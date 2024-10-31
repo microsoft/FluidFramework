@@ -9,11 +9,8 @@ export function aiCollab<TSchema extends ImplicitFieldSchema>(options: AiCollabO
 
 // @alpha
 export interface AiCollabErrorResponse {
-    // (undocumented)
     errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted";
-    // (undocumented)
     status: "failure" | "partial-failure";
-    // (undocumented)
     tokenUsage: TokenUsage;
 }
 

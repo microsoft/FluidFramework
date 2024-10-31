@@ -129,9 +129,12 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 				}
 			}
 
+			const responseStatus =
+				editCount > 0 && sequentialErrorCount < editCount ? "partial-failure" : "failure";
+
 			if (options.limiters?.abortController?.signal.aborted === true) {
 				return {
-					status: "failure",
+					status: responseStatus,
 					errorMessage: "aborted",
 					tokenUsage,
 				};
@@ -142,7 +145,7 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 				(options.limiters?.maxSequentialErrors ?? Number.POSITIVE_INFINITY)
 			) {
 				return {
-					status: "failure",
+					status: responseStatus,
 					errorMessage: "tooManyErrors",
 					tokenUsage,
 				};
@@ -150,7 +153,7 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 
 			if (++editCount >= (options.limiters?.maxModelCalls ?? Number.POSITIVE_INFINITY)) {
 				return {
-					status: "failure",
+					status: responseStatus,
 					errorMessage: "tooManyModelCalls",
 					tokenUsage,
 				};
@@ -162,7 +165,8 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 		}
 		if (error instanceof TokenLimitExceededError) {
 			return {
-				status: "failure",
+				status:
+					editCount > 0 && sequentialErrorCount < editCount ? "partial-failure" : "failure",
 				errorMessage: "tokenLimitExceeded",
 				tokenUsage,
 			};
