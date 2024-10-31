@@ -4,12 +4,16 @@
  */
 
 import fs from "node:fs/promises";
-import JSON5 from "json5";
 
-import type { Logger } from "@fluidframework/build-tools";
 import * as resolve from "resolve.exports";
-import type { PackageJson, TsConfigJson } from "type-fest";
-import { BaseCommand, Node10CompatExportData } from "../../library/index.js";
+import type { PackageJson } from "type-fest";
+import { BaseCommand } from "../../library/index.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
+import { readPackageJson, readTsConfig } from "../../library/package.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
+import type { Node10CompatExportData } from "../../library/packageExports.js";
 import type { CommandLogger } from "../../logging.js";
 
 export default class GenerateNode10EntrypointsCommand extends BaseCommand<
@@ -31,7 +35,6 @@ export default class GenerateNode10EntrypointsCommand extends BaseCommand<
 		const mapNode10CompatExportPathToData = mapExportPathsFromPackage(
 			packageJson,
 			emitDeclarationOnly,
-			this.logger,
 		);
 
 		if (mapNode10CompatExportPathToData.size === 0) {
@@ -47,7 +50,6 @@ export default class GenerateNode10EntrypointsCommand extends BaseCommand<
 export function mapExportPathsFromPackage(
 	packageJson: PackageJson,
 	emitDeclarationOnly: boolean,
-	logger?: Logger,
 ): Map<string, Node10CompatExportData> {
 	const mapKeyToOutput = new Map<string, Node10CompatExportData>();
 
@@ -63,20 +65,7 @@ export function mapExportPathsFromPackage(
 	}
 
 	// Iterate through exports looking for properties with values matching keys in map.
-	for (const [exportPath, exportValue] of Object.entries(exports)) {
-		if (typeof exportValue !== "object") {
-			logger?.verbose(`ignoring non-object export path "${exportPath}": "${exportValue}"`);
-			continue;
-		}
-		if (exportValue === null) {
-			logger?.verbose(`ignoring null export path "${exportPath}"`);
-			continue;
-		}
-		if (Array.isArray(exportValue)) {
-			logger?.verbose(`ignoring array export path "${exportPath}"`);
-			continue;
-		}
-
+	for (const [exportPath] of Object.entries(exports)) {
 		// Exclude root "." path as "types" should handle that.
 		if (exportPath === ".") {
 			continue;
@@ -100,17 +89,6 @@ export function mapExportPathsFromPackage(
 	}
 
 	return mapKeyToOutput;
-}
-
-async function readPackageJson(): Promise<PackageJson> {
-	const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
-	return JSON.parse(packageJson) as PackageJson;
-}
-
-// Reads and parses the `tsconfig.json` file in the current directory.
-export async function readTsConfig(): Promise<TsConfigJson> {
-	const tsConfigContent = await fs.readFile("./tsconfig.json", { encoding: "utf8" });
-	return JSON5.parse(tsConfigContent);
 }
 
 const generatedHeader: string = `/*!
