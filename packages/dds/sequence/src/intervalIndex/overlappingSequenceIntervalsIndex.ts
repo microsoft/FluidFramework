@@ -13,9 +13,10 @@ import {
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
 
+import type { SequenceInterval } from "../intervals/index.js";
 import {
 	IntervalType,
-	SequenceInterval,
+	SequenceIntervalClass,
 	createPositionReferenceFromSegoff,
 	sequenceIntervalHelpers,
 } from "../intervals/index.js";
@@ -56,7 +57,7 @@ class OverlappingSequenceIntervalsIndex
 			return [];
 		}
 
-		const transientInterval = new SequenceInterval(
+		const transientInterval = new SequenceIntervalClass(
 			this.client,
 			startLref,
 			endLref,

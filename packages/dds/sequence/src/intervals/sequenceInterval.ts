@@ -38,13 +38,13 @@ import {
 } from "../intervalCollection.js";
 
 import {
-	IIntervalHelpers,
 	ISerializableInterval,
 	ISerializedInterval,
 	IntervalStickiness,
 	IntervalType,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
+	type IIntervalHelpers,
 } from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {
@@ -104,7 +104,78 @@ function maxSide(sideA: Side, sideB: Side): Side {
  * @legacy
  * @alpha
  */
-export class SequenceInterval implements ISerializableInterval {
+export interface SequenceInterval extends ISerializableInterval {
+	/**
+	 * {@inheritDoc IInterval.clone}
+	 */
+	clone(): SequenceInterval;
+	/**
+	 * {@inheritDoc IInterval.compare}
+	 */
+	compare(b: SequenceInterval): number;
+	/**
+	 * {@inheritDoc IInterval.compareStart}
+	 */
+	compareStart(b: SequenceInterval): number;
+	/**
+	 * {@inheritDoc IInterval.compareEnd}
+	 */
+	compareEnd(b: SequenceInterval): number;
+	/**
+	 * {@inheritDoc IInterval.modify}
+	 */
+	modify(
+		label: string,
+		start: SequencePlace | undefined,
+		end: SequencePlace | undefined,
+		op?: ISequencedDocumentMessage,
+		localSeq?: number,
+		useNewSlidingBehavior?: boolean,
+	): SequenceInterval;
+	/**
+	 * {@inheritDoc IInterval.overlaps}
+	 */
+	overlaps(b: SequenceInterval): boolean;
+	/**
+	 * {@inheritDoc IInterval.union}
+	 */
+	union(b: SequenceInterval): SequenceInterval;
+
+	/**
+	 * Start endpoint of this interval.
+	 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
+	 */
+	start: LocalReferencePosition;
+	/**
+	 * End endpoint of this interval.
+	 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
+	 */
+	end: LocalReferencePosition;
+	intervalType: IntervalType;
+	readonly startSide: Side;
+	readonly endSide: Side;
+	get stickiness(): IntervalStickiness;
+
+	/**
+	 * Subscribes to position change events on this interval if there are no current listeners.
+	 */
+	addPositionChangeListeners(
+		beforePositionChange: () => void,
+		afterPositionChange: () => void,
+	): void;
+
+	/**
+	 * Removes the currently subscribed position change listeners.
+	 */
+	removePositionChangeListeners(): void;
+
+	/**
+	 * @returns whether this interval overlaps two numerical positions.
+	 */
+	overlapsPos(bstart: number, bend: number): boolean;
+}
+
+export class SequenceIntervalClass implements SequenceInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
@@ -127,9 +198,6 @@ export class SequenceInterval implements ISerializableInterval {
 		);
 	}
 
-	/**
-	 * @deprecated  This functionality was not meant to be exported and will be removed in a future release
-	 */
 	constructor(
 		private readonly client: Client,
 		/**
@@ -215,8 +283,8 @@ export class SequenceInterval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc IInterval.clone}
 	 */
-	public clone() {
-		return new SequenceInterval(
+	public clone(): SequenceInterval {
+		return new SequenceIntervalClass(
 			this.client,
 			this.start,
 			this.end,
@@ -300,7 +368,7 @@ export class SequenceInterval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc IInterval.union}
 	 */
-	public union(b: SequenceInterval) {
+	public union(b: SequenceInterval): SequenceInterval {
 		const newStart = minReferencePosition(this.start, b.start);
 		const newEnd = maxReferencePosition(this.end, b.end);
 
@@ -320,7 +388,7 @@ export class SequenceInterval implements ISerializableInterval {
 			endSide = this.end === newEnd ? this.endSide : b.endSide;
 		}
 
-		return new SequenceInterval(
+		return new SequenceIntervalClass(
 			this.client,
 			newStart,
 			newEnd,
@@ -361,7 +429,7 @@ export class SequenceInterval implements ISerializableInterval {
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
 		useNewSlidingBehavior: boolean = false,
-	) {
+	): SequenceInterval {
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 		const stickiness = computeStickinessFromSide(
 			startPos ?? this.start.getSegment()?.endpointType,
@@ -414,7 +482,7 @@ export class SequenceInterval implements ISerializableInterval {
 			}
 		}
 
-		const newInterval = new SequenceInterval(
+		const newInterval = new SequenceIntervalClass(
 			this.client,
 			startRef,
 			endRef,
@@ -433,6 +501,31 @@ export class SequenceInterval implements ISerializableInterval {
 		return newInterval;
 	}
 }
+
+/**
+ * @legacy
+ * @alpha
+ */
+export const SequenceInterval: {
+	/**
+	 * @deprecated  This functionality was not meant to be exported and will be removed in a future release
+	 */
+	new (
+		client: Client,
+		start: LocalReferencePosition,
+		end: LocalReferencePosition,
+		intervalType: IntervalType,
+		props?: PropertySet,
+		startSide?: Side,
+		endSide?: Side,
+	): SequenceInterval;
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 * @privateRemarks This is not required for practical compatibility, but is included to keep
+	 * type test happy without a class static break entry.
+	 */
+	prototype: SequenceInterval;
+} = SequenceIntervalClass;
 
 export function createPositionReferenceFromSegoff(
 	client: Client,
@@ -604,7 +697,7 @@ export function createSequenceInterval(
 	startLref.addProperties(rangeProp);
 	endLref.addProperties(rangeProp);
 
-	const ival = new SequenceInterval(
+	const ival = new SequenceIntervalClass(
 		client,
 		startLref,
 		endLref,

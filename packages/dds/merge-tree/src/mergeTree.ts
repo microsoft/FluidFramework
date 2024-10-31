@@ -143,6 +143,71 @@ const LRUSegmentComparer: IComparer<LRUSegment> = {
 	compare: (a, b) => a.maxSeq - b.maxSeq,
 };
 
+export function ackSegment(
+	segment: ISegmentLeaf,
+	// eslint-disable-next-line import/no-deprecated
+	segmentGroup: SegmentGroup,
+	opArgs: IMergeTreeDeltaOpArgs,
+): boolean {
+	const currentSegmentGroup = segment.segmentGroups?.dequeue();
+	assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
+	switch (opArgs.op.type) {
+		case MergeTreeDeltaType.ANNOTATE: {
+			assert(
+				!!segment.propertyManager,
+				0x044 /* "On annotate ack, missing segment property manager!" */,
+			);
+			segment.propertyManager.ackPendingProperties(opArgs.op);
+			return true;
+		}
+
+		case MergeTreeDeltaType.INSERT: {
+			assert(
+				segment.seq === UnassignedSequenceNumber,
+				0x045 /* "On insert, seq number already assigned!" */,
+			);
+			segment.seq = opArgs.sequencedMessage!.sequenceNumber;
+			segment.localSeq = undefined;
+			return true;
+		}
+
+		case MergeTreeDeltaType.REMOVE: {
+			const removalInfo: IRemovalInfo | undefined = toRemovalInfo(segment);
+			assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
+			segment.localRemovedSeq = undefined;
+			if (removalInfo.removedSeq === UnassignedSequenceNumber) {
+				removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
+				return true;
+			}
+			return false;
+		}
+
+		case MergeTreeDeltaType.OBLITERATE:
+		case MergeTreeDeltaType.OBLITERATE_SIDED: {
+			const moveInfo: IMoveInfo | undefined = toMoveInfo(segment);
+			assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
+			const obliterateInfo = segmentGroup.obliterateInfo;
+			assert(obliterateInfo !== undefined, 0xa40 /* must have obliterate info */);
+			segment.localMovedSeq = obliterateInfo.localSeq = undefined;
+			const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
+			assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
+			moveInfo.movedSeqs[seqIdx] = obliterateInfo.seq =
+				opArgs.sequencedMessage!.sequenceNumber;
+
+			if (moveInfo.movedSeq === UnassignedSequenceNumber) {
+				moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
+				return true;
+			}
+
+			return false;
+		}
+
+		default: {
+			throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
+		}
+	}
+}
+
 /**
  * @legacy
  * @alpha
@@ -212,6 +277,17 @@ export interface IMergeTreeOptions {
 	 */
 	mergeTreeEnableSidedObliterate?: boolean;
 }
+
+/**
+ * @internal
+ */
+export interface IMergeTreeOptionsInternal extends IMergeTreeOptions {
+	/**
+	 * Options related to attribution
+	 */
+	attribution?: IMergeTreeAttributionOptions;
+}
+
 export function errorIfOptionNotTrue(
 	options: IMergeTreeOptions | undefined,
 	option: keyof IMergeTreeOptions,
@@ -527,7 +603,7 @@ export class MergeTree {
 
 	private readonly obliterates = new Obliterates(this);
 
-	public constructor(public options?: IMergeTreeOptions) {
+	public constructor(public options?: IMergeTreeOptionsInternal) {
 		this._root = this.makeBlock(0);
 		this._root.mergeTree = this;
 		this.attributionPolicy = options?.attribution?.policyFactory?.();
@@ -1234,7 +1310,7 @@ export class MergeTree {
 			const deltaSegments: IMergeTreeSegmentDelta[] = [];
 			const overlappingRemoves: boolean[] = [];
 			pendingSegmentGroup.segments.map((pendingSegment: ISegmentLeaf) => {
-				const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
+				const overlappingRemove = !ackSegment(pendingSegment, pendingSegmentGroup, opArgs);
 
 				overwrite = overlappingRemove || overwrite;
 

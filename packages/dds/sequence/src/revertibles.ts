@@ -13,7 +13,7 @@ import {
 	MergeTreeDeltaType,
 	PropertySet,
 	ReferenceType,
-	SlidingPreference, // eslint-disable-next-line import/no-deprecated
+	SlidingPreference,
 	SortedSet,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
@@ -26,7 +26,8 @@ import {
 	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 
-import { IntervalOpType, SequenceInterval } from "./intervals/index.js";
+import type { SequenceInterval } from "./intervals/index.js";
+import { IntervalOpType, SequenceIntervalClass } from "./intervals/index.js";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
 import { ISharedString, SharedStringSegment } from "./sharedString.js";
 
@@ -244,13 +245,13 @@ function addIfIntervalEndpoint(
 ) {
 	if (refTypeIncludesFlag(ref.refType, ReferenceType.RangeBegin)) {
 		const interval = ref.properties?.interval;
-		if (interval && interval instanceof SequenceInterval) {
+		if (interval && interval instanceof SequenceIntervalClass) {
 			startIntervals.push({ offset: segmentLengths + interval.start.getOffset(), interval });
 			return true;
 		}
 	} else if (refTypeIncludesFlag(ref.refType, ReferenceType.RangeEnd)) {
 		const interval = ref.properties?.interval;
-		if (interval && interval instanceof SequenceInterval) {
+		if (interval && interval instanceof SequenceIntervalClass) {
 			endIntervals.push({ offset: segmentLengths + interval.end.getOffset(), interval });
 			return true;
 		}
@@ -584,7 +585,6 @@ interface RangeInfo {
 	length: number;
 }
 
-// eslint-disable-next-line import/no-deprecated
 class SortedRangeSet extends SortedSet<RangeInfo, string> {
 	protected getKey(item: RangeInfo): string {
 		return item.ranges[0].segment.ordinal;

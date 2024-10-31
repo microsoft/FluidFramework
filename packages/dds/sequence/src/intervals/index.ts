@@ -7,6 +7,7 @@ export {
 	IInterval,
 	ISerializedInterval,
 	ISerializableInterval,
+	ISerializableIntervalPrivate,
 	IntervalOpType,
 	IntervalType,
 	IntervalDeltaOpType,
@@ -20,6 +21,7 @@ export {
 export { Interval, createInterval, intervalHelpers } from "./interval.js";
 export {
 	SequenceInterval,
+	SequenceIntervalClass,
 	createSequenceInterval,
 	createPositionReferenceFromSegoff,
 	sequenceIntervalHelpers,

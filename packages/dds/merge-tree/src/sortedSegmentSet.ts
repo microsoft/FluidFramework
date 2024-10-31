@@ -5,11 +5,9 @@
 
 import { LocalReferencePosition } from "./localReference.js";
 import { ISegment } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
 import { SortedSet } from "./sortedSet.js";
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @internal
  */
 export type SortedSegmentSetItem =
@@ -29,7 +27,7 @@ export type SortedSegmentSetItem =
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
+
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<
 	T,
 	string

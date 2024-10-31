@@ -38,9 +38,6 @@ export class Interval implements ISerializableInterval {
 	/***/
 	public auxProps: PropertySet[] | undefined;
 
-	/**
-	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 */
 	public readonly propertyManager: PropertiesManager = new PropertiesManager();
 
 	constructor(

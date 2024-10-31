@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
@@ -14,7 +14,7 @@ import {
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaOperationTypes,
 	MergeTreeMaintenanceType,
-	PropertySet, // eslint-disable-next-line import/no-deprecated
+	PropertySet,
 	SortedSegmentSet,
 } from "@fluidframework/merge-tree/internal";
 
@@ -31,7 +31,6 @@ export abstract class SequenceEvent<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
 > {
 	public readonly deltaOperation: TOperation;
-	// eslint-disable-next-line import/no-deprecated
 	private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
 	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
 	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
@@ -53,9 +52,7 @@ export abstract class SequenceEvent<
 		);
 		this.deltaOperation = deltaArgs.operation;
 
-		// eslint-disable-next-line import/no-deprecated
 		this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(() => {
-			// eslint-disable-next-line import/no-deprecated
 			const set = new SortedSegmentSet<ISequenceDeltaRange<TOperation>>();
 			this.deltaArgs.deltaSegments.forEach((delta) => {
 				const newRange: ISequenceDeltaRange<TOperation> = {
@@ -124,15 +121,19 @@ export abstract class SequenceEvent<
  * @legacy
  * @alpha
  */
-export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
+export interface SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
+	readonly isLocal: boolean;
+	readonly opArgs: IMergeTreeDeltaOpArgs;
+}
+export class SequenceDeltaEventClass
+	extends SequenceEvent<MergeTreeDeltaOperationType>
+	implements SequenceDeltaEvent
+{
 	/**
 	 * Whether the event was caused by a locally-made change.
 	 */
 	public readonly isLocal: boolean;
 
-	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
-	 */
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
@@ -143,6 +144,27 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 		this.isLocal = opArgs.sequencedMessage === undefined;
 	}
 }
+/**
+ * @legacy
+ * @alpha
+ */
+export const SequenceDeltaEvent: {
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 */
+	new (
+		opArgs: IMergeTreeDeltaOpArgs,
+		deltaArgs: IMergeTreeDeltaCallbackArgs,
+		// eslint-disable-next-line import/no-deprecated
+		mergeTreeClient: Client,
+	): SequenceDeltaEvent;
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 * @privateRemarks This is not required for practical compatibility, but is included to keep
+	 * type test happy without a class static break entry.
+	 */
+	prototype: SequenceDeltaEvent;
+} = SequenceDeltaEventClass;
 
 /**
  * The event object returned on maintenance events.
@@ -153,10 +175,13 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
  * @legacy
  * @alpha
  */
-export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
-	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
-	 */
+export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
+	readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
+}
+export class SequenceMaintenanceEventClass
+	extends SequenceEvent<MergeTreeMaintenanceType>
+	implements SequenceMaintenanceEvent
+{
 	constructor(
 		/**
 		 * Defined iff `deltaArgs.operation` is {@link @fluidframework/merge-tree#MergeTreeMaintenanceType.ACKNOWLEDGED|MergeTreeMaintenanceType.ACKNOWLEDGED}.
@@ -171,6 +196,27 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 		super(deltaArgs, mergeTreeClient);
 	}
 }
+/**
+ * @legacy
+ * @alpha
+ */
+export const SequenceMaintenanceEvent: {
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 */
+	new (
+		opArgs: IMergeTreeDeltaOpArgs | undefined,
+		deltaArgs: IMergeTreeMaintenanceCallbackArgs,
+		// eslint-disable-next-line import/no-deprecated
+		mergeTreeClient: Client,
+	): SequenceMaintenanceEvent;
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 * @privateRemarks This is not required for practical compatibility, but is included to keep
+	 * type test happy without a class static break entry.
+	 */
+	prototype: SequenceMaintenanceEvent;
+} = SequenceMaintenanceEventClass;
 
 /**
  * A range that has changed corresponding to a segment modification.
@@ -212,24 +258,4 @@ export interface ISequenceDeltaRange<
 	 * `{ foo: 3, baz: 5 }`, the corresponding event would have a `propertyDeltas` of `{ foo: "1", baz: null }`.
 	 */
 	propertyDeltas: PropertySet;
-}
-
-class Lazy<T> {
-	private pValue: T | undefined;
-	private pEvaluated: boolean;
-	constructor(private readonly valueGenerator: () => T) {
-		this.pEvaluated = false;
-	}
-
-	public get evaluated(): boolean {
-		return this.pEvaluated;
-	}
-
-	public get value(): T {
-		if (!this.pEvaluated) {
-			this.pEvaluated = true;
-			this.pValue = this.valueGenerator();
-		}
-		return this.pValue as T;
-	}
 }

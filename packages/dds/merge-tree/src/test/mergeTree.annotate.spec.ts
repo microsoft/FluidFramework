@@ -615,7 +615,7 @@ describe("MergeTree", () => {
 						currentSequenceNumber,
 						localClientId,
 					);
-					assert(segmentInfo.segment?.segmentGroups?.empty);
+					assert(segmentInfo.segment?.segmentGroups?.empty !== false);
 
 					mergeTree.annotateRange(
 						annotateStart,
@@ -627,7 +627,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					assert.equal(segmentInfo.segment?.segmentGroups.size, 1);
+					assert.equal(segmentInfo.segment?.segmentGroups?.size, 1);
 
 					mergeTree.ackPendingSegment({
 						op: {
@@ -641,7 +641,7 @@ describe("MergeTree", () => {
 						} as unknown as ISequencedDocumentMessage,
 					});
 
-					assert(segmentInfo.segment?.segmentGroups.empty);
+					assert(segmentInfo.segment?.segmentGroups?.empty);
 					assert.equal(segmentInfo.segment?.properties?.propertySource, "local");
 					assert.equal(segmentInfo.segment?.properties?.remoteProperty, 1);
 				});

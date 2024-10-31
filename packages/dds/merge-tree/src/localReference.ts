@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { DoublyLinkedList, ListNode, walkList } from "./collections/index.js";
-import { ISegmentInternal, type ISegment } from "./mergeTreeNodes.js";
+import type { ISegmentInternal, ISegment } from "./mergeTreeNodes.js";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { ReferenceType } from "./ops.js";
 import { PropertySet, addProperties } from "./properties.js";
@@ -79,10 +79,6 @@ export interface LocalReferencePosition extends ReferencePosition {
 	addProperties(newProps: PropertySet): void;
 }
 
-/**
- * @privateRemarks This should not be exported outside merge tree.
- * @internal
- */
 class LocalReference implements LocalReferencePosition {
 	public properties: PropertySet | undefined;
 

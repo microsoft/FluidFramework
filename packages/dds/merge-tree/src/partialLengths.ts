@@ -21,10 +21,8 @@ import {
 	toRemovalInfo,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
 import { SortedSet } from "./sortedSet.js";
 
-// eslint-disable-next-line import/no-deprecated
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
 	protected getKey(item: PartialSequenceLength): number {
 		return item.seq;

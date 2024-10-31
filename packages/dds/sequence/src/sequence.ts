@@ -80,8 +80,12 @@ import {
 	IValueChanged,
 	type SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
-import { SequenceInterval } from "./intervals/index.js";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
+import type { SequenceInterval } from "./intervals/index.js";
+import type { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
+import {
+	SequenceDeltaEventClass,
+	SequenceMaintenanceEventClass,
+} from "./sequenceDeltaEvent.js";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 
 const snapshotFileName = "header";
@@ -534,7 +538,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
-			const event = new SequenceDeltaEvent(opArgs, deltaArgs, this.client);
+			const event = new SequenceDeltaEventClass(opArgs, deltaArgs, this.client);
 			if (event.isLocal) {
 				this.submitSequenceMessage(opArgs.op);
 			}
@@ -542,7 +546,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		});
 
 		this.client.on("maintenance", (args, opArgs) => {
-			this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
+			this.emit(
+				"maintenance",
+				new SequenceMaintenanceEventClass(opArgs, args, this.client),
+				this,
+			);
 		});
 
 		this.intervalCollections = new IntervalCollectionMap(

@@ -15,9 +15,10 @@ import {
 	UniversalSequenceNumber,
 } from "./constants.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
+import { ackSegment } from "./mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
-import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
 import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
@@ -77,7 +78,6 @@ export type ISegmentLeaf = ISegmentInternal & {
 	segmentGroups?: SegmentGroupCollection;
 	// eslint-disable-next-line import/no-deprecated
 	propertyManager?: PropertiesManager;
-
 	/**
 	 * If a segment is inserted into an obliterated range,
 	 * but the newest obliteration of that range was by the inserting client,
@@ -265,7 +265,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
 	 * Once the segment is acked, this field is cleared.
 	 *
-	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localSeq?: number;
 	/**
@@ -274,7 +273,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * will be updated to the seq at which that client removed this segment.
 	 *
 	 * Like {@link ISegment.localSeq}, this field is cleared once the local removal of the segment is acked.
-	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localRemovedSeq?: number;
 	/**
@@ -386,7 +384,7 @@ export interface BlockAction<TClientData> {
 export interface NodeAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
-		node: MergeNode,
+		node: IMergeNode,
 		pos: number,
 		refSeq: number,
 		clientId: number,
@@ -658,66 +656,7 @@ export abstract class BaseSegment implements ISegment {
 	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
 	 */
 	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
-		const currentSegmentGroup = this.segmentGroups.dequeue();
-		assert(
-			currentSegmentGroup === segmentGroup,
-			0x043 /* "On ack, unexpected segmentGroup!" */,
-		);
-		switch (opArgs.op.type) {
-			case MergeTreeDeltaType.ANNOTATE: {
-				assert(
-					!!this.propertyManager,
-					0x044 /* "On annotate ack, missing segment property manager!" */,
-				);
-				this.propertyManager.ackPendingProperties(opArgs.op);
-				return true;
-			}
-
-			case MergeTreeDeltaType.INSERT: {
-				assert(
-					this.seq === UnassignedSequenceNumber,
-					0x045 /* "On insert, seq number already assigned!" */,
-				);
-				this.seq = opArgs.sequencedMessage!.sequenceNumber;
-				this.localSeq = undefined;
-				return true;
-			}
-
-			case MergeTreeDeltaType.REMOVE: {
-				const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
-				assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
-				this.localRemovedSeq = undefined;
-				if (removalInfo.removedSeq === UnassignedSequenceNumber) {
-					removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
-					return true;
-				}
-				return false;
-			}
-
-			case MergeTreeDeltaType.OBLITERATE:
-			case MergeTreeDeltaType.OBLITERATE_SIDED: {
-				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
-				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
-				const obliterateInfo = segmentGroup.obliterateInfo;
-				assert(obliterateInfo !== undefined, 0xa40 /* must have obliterate info */);
-				this.localMovedSeq = obliterateInfo.localSeq = undefined;
-				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
-				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
-				moveInfo.movedSeqs[seqIdx] = obliterateInfo.seq =
-					opArgs.sequencedMessage!.sequenceNumber;
-
-				if (moveInfo.movedSeq === UnassignedSequenceNumber) {
-					moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
-					return true;
-				}
-
-				return false;
-			}
-
-			default: {
-				throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
-			}
-		}
+		return ackSegment(this, segmentGroup, opArgs);
 	}
 
 	public splitAt(pos: number): ISegment | undefined {
