@@ -66,10 +66,10 @@ export const TreeAlpha: {
 	 * This function exists as a generalization that can be used in other cases as well,
 	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
 	 *
-	 * Like with {@link TreeNodeSchemaClass}'s constructor, its an error to provide an existing node to this API.
+	 * Like with {@link TreeNodeSchemaClass}'s constructor, it's an error to provide an existing node to this API.
 	 * For that case, use {@link TreeBeta.clone}.
 	 * @privateRemarks
-	 * There should be a way to provide an source for defaulted identifiers, wither via this API or some way to add them to its output later.
+	 * There should be a way to provide a source for defaulted identifiers, wither via this API or some way to add them to its output later.
 	 */
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -87,10 +87,10 @@ export const TreeAlpha: {
 	 * @remarks
 	 * Due to {@link ConciseTree} relying on type inference from the data, its use is somewhat limited.
 	 * This does not support {@link ConciseTree}'s with customized handle encodings or using persisted keys.
-	 * Use "compressed" or "verbose" formats to for more flexibility.
+	 * Use "compressed" or "verbose" formats for more flexibility.
 	 *
 	 * When using this function,
-	 * it is recommend to ensure you schema is unambiguous with {@link ITreeConfigurationOptions.preventAmbiguity}.
+	 * it is recommend to ensure your schema is unambiguous with {@link ITreeConfigurationOptions.preventAmbiguity}.
 	 * If the schema is ambiguous, consider using {@link TreeAlpha.create} and {@link Unhydrated} nodes where needed,
 	 * or using {@link TreeAlpha.(importVerbose:1)} and specify all types.
 	 *

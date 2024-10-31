@@ -17,13 +17,13 @@ import {
 
 import { List } from "../schema.js";
 
-// This file demonstrates how applications can write tests which ensure they maintain compatibility the schema from with previously released versions.
+// This file demonstrates how applications can write tests which ensure they maintain compatibility with the schema from previously released versions.
 
 describe("schema", () => {
 	it("current schema matches latest historical schema", () => {
 		const current = extractPersistedSchema(List);
 
-		// For compatibility with deep equality and simply objects, round trip via JSON to erase prototypes.
+		// For compatibility with deep equality and simple objects, round trip via JSON to erase prototypes.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const currentRoundTripped: JsonCompatible = JSON.parse(JSON.stringify(current));
 

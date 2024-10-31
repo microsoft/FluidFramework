@@ -9,7 +9,7 @@
 New Alpha APIs for tree data import and export
 
 A collection of new `@alpha` APIs for importing and exporting tree content and schema from SharedTrees has been added to `TreeAlpha`.
-These include import and export APIs for for `VerboseTree`, `ConciseTree` and compressed tree formats.
+These include import and export APIs for `VerboseTree`, `ConciseTree` and compressed tree formats.
 
 `TreeAlpha.create` is also added to allow constructing trees with a more general API instead of having to use the schema constructor directly (since that doesn't handle polymorphic roots, or non-schema aware code).
 

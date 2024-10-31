@@ -78,7 +78,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 	return out;
 }
 /**
- * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
+ * Create an initialized {@link TreeView} that is not tied to any {@link ITree} instance.
  *
  * @remarks
  * Such a view can never experience collaboration or be persisted to to a Fluid Container.
@@ -151,7 +151,7 @@ function copyNodeCursor(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous 
 }
 
 /**
- * The portion of SharedTree data typically persisted the container.
+ * The portion of SharedTree data typically persisted by the container.
  * Usable with {@link independentInitializedView} to create a {@link TreeView}
  * without loading a container.
  * @alpha
