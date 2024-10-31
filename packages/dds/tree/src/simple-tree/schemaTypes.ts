@@ -507,7 +507,7 @@ export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSch
 		: TreeLeafValue | TreeNode;
 
 /**
- * Content which could be read from a field within a tree.
+ * Adapter to remove {@link (UnsafeUnknownSchema:type)} from a schema type so it can be used with types for generating APIs for reading data.
  *
  * @remarks
  * Extended version of {@link TreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
