@@ -98,7 +98,7 @@ describe("Presence", () => {
 				[
 					"Pres:DatastoreUpdate",
 					{
-						"sendTimestamp": 1010,
+						"sendTimestamp": 1020,
 						"avgLatency": 10,
 						"data": {
 							"system:presence": {
@@ -122,7 +122,7 @@ describe("Presence", () => {
 				[
 					"Pres:DatastoreUpdate",
 					{
-						"sendTimestamp": 1010,
+						"sendTimestamp": 1030,
 						"avgLatency": 10,
 						"data": {
 							"system:presence": {
@@ -144,7 +144,6 @@ describe("Presence", () => {
 					},
 				],
 			);
-
 
 			presence.processSignal(
 				"",
@@ -204,9 +203,41 @@ describe("Presence", () => {
 
 			console.debug("emitting newId events");
 
+			clock.tick(10);
 			// This will trigger the second signal
 			my_events.emit.broadcast("newId", 42);
 
+			presence.processSignal(
+				"",
+				{
+					type: "Pres:DatastoreUpdate",
+					content: {
+						"sendTimestamp": 1030,
+						"avgLatency": 10,
+						"data": {
+							"system:presence": {
+								"clientToSessionId": {
+									"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+								},
+							},
+							"n:name:testNotificationWorkspace": {
+								"my_events": {
+									"sessionId-2": {
+										"rev": 0,
+										"timestamp": 0,
+										"value": { "name": "newId", "args": [42] },
+										"ignoreUnmonitored": true,
+									},
+								},
+							},
+						},
+					},
+					clientId: "client2",
+				},
+				false,
+			);
+
+			clock.tick(10);
 			// This will trigger the third signal
 			my_events.emit.broadcast("newId", 65);
 

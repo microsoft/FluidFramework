@@ -181,11 +181,16 @@ class NotificationsManagerImpl<
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): void {
 		const eventName = value.value.name;
+		const eventArgs = value.value.args;
 		console.debug(`NotificationsManager.update called: ${eventName}`);
-
+		console.debug(eventArgs);
 		if (this.notificationsInternal.hasListeners()) {
 			// this.notificationsInternal.emit("UNKNOWN" as unknown, eventName, client, ...value.value.args);
-			console.debug(`found listeners but not yet implemented`);
+
+			// ts-expect-error TODO
+			// this.notificationsInternal.emit(eventName as any, ...value.value.args)
+			// console.debug(`found listeners but not yet implemented`);
+			throw new Error("Not implemented");
 		} else {
 			this.events.emit(
 				"unattendedNotification",
