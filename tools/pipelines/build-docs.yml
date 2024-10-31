@@ -65,10 +65,7 @@ variables:
   - name: isMain
     value: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
   - name: forceDeployment
-    value: ${{ or(
-      eq(parameters.deployOverride, 'force'),
-      eq(parameters.deployOverride, 'default'))
-      )}}
+    value: ${{ eq(parameters.deployOverride, 'force') }}
   - name: shouldRetainGuardianAssets
     value: ${{ or(
       eq(parameters.guardianAssetRetentionOverride, 'force'),
