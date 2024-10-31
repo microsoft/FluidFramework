@@ -1631,6 +1631,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	private getSlideToSegment(
 		lref: LocalReferencePosition,
+		slidingPreference: SlidingPreference,
 	): { segment: ISegment | undefined; offset: number | undefined } | undefined {
 		if (!this.client) {
 			throw new LoggingError("client does not exist");
@@ -1641,7 +1642,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 		const newSegoff = getSlideToSegoff(
 			segoff,
-			undefined,
+			slidingPreference,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 		);
 		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
@@ -1664,8 +1665,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			return;
 		}
 
-		const newStart = this.getSlideToSegment(interval.start);
-		const newEnd = this.getSlideToSegment(interval.end);
+		const newStart = this.getSlideToSegment(
+			interval.start,
+			startReferenceSlidingPreference(interval.stickiness),
+		);
+		const newEnd = this.getSlideToSegment(
+			interval.end,
+			endReferenceSlidingPreference(interval.stickiness),
+		);
 
 		const id = interval.properties[reservedIntervalIdKey];
 		const hasPendingStartChange = this.hasPendingChangeStart(id);
