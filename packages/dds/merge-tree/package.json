@@ -249,6 +249,16 @@
 			},
 			"TypeAlias_Trackable": {
 				"backCompat": false
+			},
+			"Class_Client": {
+				"forwardCompat": false
+			},
+			"Class_PropertiesManager": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassStatics_PropertiesManager": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "legacy"

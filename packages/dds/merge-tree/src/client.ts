@@ -79,6 +79,7 @@ import {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 import { PropertySet, type MapLike } from "./properties.js";
@@ -249,7 +250,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		start: number,
 		end: number,
 		adjust: MapLike<AdjustParams>,
-	): IMergeTreeAnnotateMsg | undefined {
+	): IMergeTreeAnnotateAdjustMsg | undefined {
 		const annotateOp = createAdjustRangeOp(start, end, adjust);
 		this.applyAnnotateRangeOp({ op: annotateOp });
 		return annotateOp;
@@ -694,6 +695,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private getValidOpRange(
 		op:
 			| IMergeTreeAnnotateMsg
+			| IMergeTreeAnnotateAdjustMsg
 			| IMergeTreeInsertMsg
 			| IMergeTreeRemoveMsg
 			// eslint-disable-next-line import/no-deprecated

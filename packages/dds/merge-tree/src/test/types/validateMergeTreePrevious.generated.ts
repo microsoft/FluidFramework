@@ -41,6 +41,7 @@ declare type current_as_old_for_Class_BaseSegment = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_Client": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_Client = requireAssignableTo<TypeOnly<old.Client>, TypeOnly<current.Client>>
 
 /*
@@ -125,6 +126,7 @@ declare type current_as_old_for_Class_MergeNode = requireAssignableTo<TypeOnly<c
  * typeValidation.broken:
  * "Class_PropertiesManager": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_PropertiesManager = requireAssignableTo<TypeOnly<old.PropertiesManager>, TypeOnly<current.PropertiesManager>>
 
 /*
@@ -134,6 +136,7 @@ declare type old_as_current_for_Class_PropertiesManager = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Class_PropertiesManager": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_PropertiesManager = requireAssignableTo<TypeOnly<current.PropertiesManager>, TypeOnly<old.PropertiesManager>>
 
 /*
@@ -276,6 +279,7 @@ declare type current_as_old_for_ClassStatics_MergeNode = requireAssignableTo<Typ
  * typeValidation.broken:
  * "ClassStatics_PropertiesManager": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_PropertiesManager = requireAssignableTo<TypeOnly<typeof current.PropertiesManager>, TypeOnly<typeof old.PropertiesManager>>
 
 /*

@@ -189,22 +189,29 @@ export interface IMergeTreeObliterateSidedMsg extends IMergeTreeDelta {
  * @legacy
  * @alpha
  */
-export type IMergeTreeAnnotateMsg = {
+export interface IMergeTreeAnnotateMsg {
 	type: typeof MergeTreeDeltaType.ANNOTATE;
 	pos1?: number;
 	relativePos1?: IRelativePosition;
 	pos2?: number;
 	relativePos2?: IRelativePosition;
-} & (
-	| {
-			props: Record<string, unknown>;
-			adjust?: undefined;
-	  }
-	| {
-			props?: undefined;
-			adjust: Record<string, AdjustParams>;
-	  }
-);
+	props: Record<string, unknown>;
+	adjust?: undefined;
+}
+
+/**
+ * @legacy
+ * @alpha
+ */
+export interface IMergeTreeAnnotateAdjustMsg {
+	type: typeof MergeTreeDeltaType.ANNOTATE;
+	pos1?: number;
+	pos2?: number;
+	relativePos1?: undefined;
+	relativePos2?: undefined;
+	props?: undefined;
+	adjust: Record<string, AdjustParams>;
+}
 
 /**
  * @deprecated The ability to create group ops will be removed in an upcoming
@@ -236,6 +243,7 @@ export type IMergeTreeDeltaOp =
 	| IMergeTreeInsertMsg
 	| IMergeTreeRemoveMsg
 	| IMergeTreeAnnotateMsg
+	| IMergeTreeAnnotateAdjustMsg
 	| IMergeTreeObliterateMsg
 	| IMergeTreeObliterateSidedMsg;
 

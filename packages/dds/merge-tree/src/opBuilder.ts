@@ -15,6 +15,7 @@ import {
 	IMergeTreeObliterateMsg,
 	IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
+	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 import { PropertySet, type MapLike } from "./properties.js";
@@ -80,7 +81,7 @@ export function createAdjustRangeOp(
 	start: number,
 	end: number,
 	adjust: MapLike<AdjustParams>,
-): IMergeTreeAnnotateMsg {
+): IMergeTreeAnnotateAdjustMsg {
 	return {
 		pos1: start,
 		pos2: end,

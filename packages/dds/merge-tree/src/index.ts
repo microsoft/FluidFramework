@@ -98,6 +98,7 @@ export {
 	IMergeTreeInsertMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
+	IMergeTreeAnnotateAdjustMsg,
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,

@@ -170,19 +170,40 @@ export interface IMergeNodeCommon {
 }
 
 // @alpha (undocumented)
-export type IMergeTreeAnnotateMsg = {
-    type: typeof MergeTreeDeltaType.ANNOTATE;
-    pos1?: number;
-    relativePos1?: IRelativePosition;
-    pos2?: number;
-    relativePos2?: IRelativePosition;
-} & ({
-    props: Record<string, unknown>;
-    adjust?: undefined;
-} | {
-    props?: undefined;
+export interface IMergeTreeAnnotateAdjustMsg {
+    // (undocumented)
     adjust: Record<string, AdjustParams>;
-});
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    // (undocumented)
+    props?: undefined;
+    // (undocumented)
+    relativePos1?: undefined;
+    // (undocumented)
+    relativePos2?: undefined;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.ANNOTATE;
+}
+
+// @alpha (undocumented)
+export interface IMergeTreeAnnotateMsg {
+    // (undocumented)
+    adjust?: undefined;
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    // (undocumented)
+    props: Record<string, unknown>;
+    // (undocumented)
+    relativePos1?: IRelativePosition;
+    // (undocumented)
+    relativePos2?: IRelativePosition;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.ANNOTATE;
+}
 
 // @alpha (undocumented)
 export interface IMergeTreeDelta {
@@ -196,7 +217,7 @@ export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDel
 }
 
 // @alpha (undocumented)
-export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
+export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeAnnotateAdjustMsg | IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 
 // @alpha (undocumented)
 export interface IMergeTreeDeltaOpArgs {
