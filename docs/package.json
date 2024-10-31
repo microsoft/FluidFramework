@@ -11,12 +11,14 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "npm run build:markdown-magic && npm run build:api-documentation && npm run build:docusaurus",
+		"build": "npm run build:generate-content && npm run build:docusaurus",
 		"build:api-documentation": "npm run download-doc-models && npm run generate-api-documentation",
 		"build:api-documentation:dev": "cross-env NODE_ENV=development npm run build:api-documentation",
 		"build:dev": "cross-env NODE_ENV=development npm run build",
-		"build:docusaurus": "npm run gen-docusaurus && docusaurus build",
+		"build:generate-content": "concurrently npm:build:markdown-magic npm:build:api-documentation",
+		"build:generate-content:dev": "cross-env NODE_ENV=development npm run build:generate-content",
 		"build:markdown-magic": "markdown-magic",
+		"build:site": "npm run gen-docusaurus && docusaurus build",
 		"check-links": "echo TODO: Implement linkcheck script",
 		"clean": "concurrently \"npm:clean:*\"",
 		"clean:api-documentation": "rimraf --glob \"docs/api/**/*.md\" \"versioned_docs/*/api/**/*.md\"",
@@ -36,7 +38,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"serve": "docusaurus serve",
 		"serve-with-azure-emulation": "swa start build --api-location api",
-		"start": "npm run gen-docusaurus && docusaurus start",
+		"start": "npm run gen-docusaurus && docusaurus start"
 	},
 	"browserslist": {
 		"production": [

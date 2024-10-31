@@ -12,7 +12,7 @@ $ pnpm i
 
 There are two options for local testing.
 
-### `build:api-documentation` and `start`
+### `build:generate-content` and `start`
 
 The easiest way to get started testing the website is to leverage Docusaurus's `start` functionality.
 This command starts a local development server and opens up a browser window.
@@ -22,7 +22,7 @@ Before you can use this, you'll need to ensure our API documentation has been bu
 So start by running:
 
 ```shell
-npm run build:api-documentation
+npm run build:generate-content
 ```
 
 Then, run:
@@ -52,8 +52,8 @@ $ npm run build
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
 This includes the generation of API documentation contents.
 
-To _just_ build the API documentation, run `build:api-documentation`.
-To _just_ build the static site (without rebuilding the API documentation), run `build:docusaurus`.
+To _just_ run content generation steps, run `build:generate-content`.
+To _just_ build the static site (without rebuilding the API documentation), run `build:site`.
 
 Then, run:
 
@@ -68,7 +68,7 @@ You will still need to build the API documentation first.
 
 ### Local API docs build
 
-To include the repo-local API docs in the build, first build the code from the root of the repo, then run `build:dev` or `build:api-documentation:dev` from this directory.
+To include the repo-local API docs in the build, first build the code from the root of the repo, then run `build:dev` or `build:generate-content:dev` from this directory.
 This will generate a "local" docs version (in addition to the production versions), which strictly includes API documentation generated from the local build artifacts.
 So long as the API documentation was generated in this manner, those docs will be viewable regardless of how to run Docusaurus (`npm start` or `npm run serve`).
 
@@ -293,8 +293,10 @@ The following npm scripts are supported in this directory:
 | `build:api-documentation` | Download API model artifacts and generate API documentation. |
 | `build:api-documentation:dev` | Download API model artifacts and generate API documentation (including the repo-local API model). |
 | `build:dev` | Build the site, including API documentation (and including API documentation for the repo-local API model). |
-| `build:docusaurus` | Build the site content with Docusaurus. |
+| `build:generate-content` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
+| `build:generate-content:dev` | Generate site content (including the repo-local API model). |
 | `build:markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
+| `build:site` | Build the website with Docusaurus. |
 | `check-links` | Run link validation on the website. |
 | `clean` | Clean up generated artifacts (build output, etc.). |
 | `clean:api-documentation` | Clean up generate API documentation content. |
