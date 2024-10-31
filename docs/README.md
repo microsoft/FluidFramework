@@ -230,20 +230,6 @@ The replacement syntax to use in `.mdx` files would be:
 -   Restore link check scripts (restore related infra from main branch - it should be able to work the same as it did before)
     -   Docusaurus validates links between the pages it serves, but it won't validate links to external URLs, nor to static contents.
         So we still want this validation.
--   Preserve existing redirects that are still needed
-    -   `docs/apis` => `docs/api`
-    -   TODO: what else?
--   Add new redirects to accommodate changes:
-    -   `docs/api/v*` => `docs/v*/api`
-        -   TODO: verify this is okay for v2 which is "current"
-    -   `docs/data-structures/counter` => `docs/v1/data-structures/counter`
-    -   `docs/build` => `docs/build/overview`
-    -   `docs/concepts` => `docs/concepts/architecture`
-    -   `docs/data-structures` => `docs/data-structures/overview`
-    -   `docs/deployment` => `docs/deployment/service-options`
-    -   `docs/start` => `docs/start/quick-start`
-    -   `docs/testing` => `docs/testing/tinylicious`
-    -   TODO: what else?
 -   Review content changes with tech writer
     -   Structural changes (contents added/removed by version)
         -   \- Tree.md for v1
@@ -257,15 +243,13 @@ The replacement syntax to use in `.mdx` files would be:
 
 ### Nice to have before merging into main
 
--   Ensure code blocks include a copy button
 -   Add component-level unit testing (with accessibility tests)
 -   Add end-to-end testing
--   Add eslint for components
 
 ### After merging into main
 
--   Add prettier (wait until after merge to reduce diff noise)
--   Add markdown-lint (same as above)
+-   Add prettier coverage for /docs - currently ignored by repo-root `.prettierignore` to avoid content churn prior to merging into main.
+-   Add .md/.mdx linting (same as above)
 -   Figure out solution to markdown-magic in mdx (html comment syntax not supported)
 
 ### Before merging into main
