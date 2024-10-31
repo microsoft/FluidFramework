@@ -207,13 +207,13 @@ extends:
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
     - check:are-the-types-wrong
-    # - webpack
-    # - ci:test:mocha
-    # - ci:test:jest
-    # - ci:test:realsvc:local
-    # - ci:test:realsvc:tinylicious
-    # - ci:test:stress:tinylicious
-    # - test:copyresults
+    - webpack
+    - ci:test:mocha
+    - ci:test:jest
+    - ci:test:realsvc:local
+    - ci:test:realsvc:tinylicious
+    - ci:test:stress:tinylicious
+    - test:copyresults
     testResultDirs:
     - nyc/examples
     - nyc/experimental
