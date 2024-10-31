@@ -299,8 +299,6 @@ export function revertSharedStringRevertibles(sharedString: ISharedString, rever
 // @alpha
 export interface SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
     // (undocumented)
-    readonly isLocal: boolean;
-    // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs;
 }
 
@@ -312,6 +310,7 @@ export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes =
     // (undocumented)
     readonly deltaOperation: TOperation;
     readonly first: Readonly<ISequenceDeltaRange<TOperation>>;
+    readonly isLocal: boolean;
     readonly last: Readonly<ISequenceDeltaRange<TOperation>>;
     readonly ranges: readonly Readonly<ISequenceDeltaRange<TOperation>>[];
 }
@@ -334,9 +333,7 @@ export interface SequenceInterval extends ISerializableInterval {
 // @alpha
 export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
     // (undocumented)
-    readonly isLocal: boolean;
-    // (undocumented)
-    readonly opArgs: IMergeTreeDeltaOpArgs;
+    readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
 export { SequencePlace }
