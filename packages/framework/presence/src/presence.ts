@@ -84,9 +84,9 @@ export interface ISessionClient<
 	getConnectionId(): ClientConnectionId;
 
 	/**
-	 * Get status of session client.
+	 * Get connection status of session client.
 	 *
-	 * @returns Status of session client.
+	 * @returns Connection status of session client.
 	 *
 	 */
 	getConnectionStatus(): SessionClientStatus;
@@ -99,7 +99,7 @@ export interface ISessionClient<
 	setConnectionId(connectionId: ClientConnectionId): void;
 
 	/**
-	 * Set status of session client.
+	 * Set connection status of session client.
 	 *
 	 * @param connected - True if client is connected.
 	 */
