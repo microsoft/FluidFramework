@@ -861,6 +861,16 @@ describe("ArrayNode", () => {
 			const _fromNothing: Schema = Schema.create();
 		});
 
+		it("constructor - recursive empty", () => {
+			class Schema extends schemaFactory.arrayRecursive("x", [() => Schema]) {
+				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
+				public foo(): void {}
+			}
+			const _fromIterable: Schema = new Schema([]);
+			const _fromUndefined: Schema = new Schema(undefined);
+			const _fromNothing: Schema = new Schema();
+		});
+
 		describe("implicit construction", () => {
 			it("fromArray", () => {
 				class Schema extends schemaFactory.array("x", schemaFactory.number) {}

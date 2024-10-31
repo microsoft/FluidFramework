@@ -757,7 +757,8 @@ export class SchemaFactory<
 				[Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
 			},
 			false,
-			T
+			T,
+			undefined
 		>;
 	}
 
@@ -803,7 +804,8 @@ export class SchemaFactory<
 			// Ideally this would be included, but doing so breaks recursive types.
 			// | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
 			false,
-			T
+			T,
+			undefined
 		>;
 	}
 }

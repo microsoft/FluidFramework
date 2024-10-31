@@ -103,6 +103,19 @@ describeHydration(
 			const _fromNothing: Schema = Schema.create();
 		});
 
+		it("constructor - recursive", () => {
+			class Schema extends schemaFactory.mapRecursive("x", [() => Schema]) {
+				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
+				public foo(): void {}
+			}
+			const _fromMap: Schema = new Schema(new Map());
+			const _fromIterable: Schema = new Schema([]);
+			// Unsupported due to breaking recursive types.
+			// const _fromObject: Schema = new Schema({});
+			const _fromUndefined: Schema = new Schema(undefined);
+			const _fromNothing: Schema = new Schema();
+		});
+
 		it("entries", () => {
 			const root = init(schema, initialTree);
 			assert.deepEqual(Array.from(root.map.entries()), [
