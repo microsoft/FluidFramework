@@ -6,7 +6,7 @@
 "section": other
 ---
 
-Change when the `op` event on `IFluidDataStoreRuntimeEvents` and `IContainerRuntimeBaseEvents` is emitted.
+Change when the `op` event on `IFluidDataStoreRuntimeEvents` and `IContainerRuntimeBaseEvents` is emitted
 
 Previous behavior - It was emitted immediately after an op was processed and before the next op was processed.
 

@@ -19,6 +19,7 @@ import {
 	IChannelAttributes,
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
+	type IDeltaHandler,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IDocumentMessage,
@@ -31,6 +32,7 @@ import {
 	IGarbageCollectionData,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -496,6 +498,9 @@ export abstract class SharedObjectCore<
 					localOpMetadata,
 				);
 			},
+			processMessages: (messagesCollection: IRuntimeMessageCollection) => {
+				this.processMessages(messagesCollection);
+			},
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
 			},
@@ -508,7 +513,7 @@ export abstract class SharedObjectCore<
 			rollback: (content: any, localOpMetadata: unknown) => {
 				this.rollback(content, localOpMetadata);
 			},
-		});
+		} satisfies IDeltaHandler);
 	}
 
 	/**
@@ -570,6 +575,25 @@ export abstract class SharedObjectCore<
 		);
 
 		this.emitInternal("op", message, local, this);
+	}
+
+	/**
+	 * Process messages for this shared object. The messages here are contiguous messages for this object in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	private processMessages(messagesCollection: IRuntimeMessageCollection) {
+		const { envelope, messagesContent, local } = messagesCollection;
+		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
+			this.process(
+				{
+					...envelope,
+					clientSequenceNumber,
+					contents: parseHandles(contents, this.serializer),
+				},
+				local,
+				localOpMetadata,
+			);
+		}
 	}
 
 	/**

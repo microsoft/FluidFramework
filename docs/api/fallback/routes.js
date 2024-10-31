@@ -29,8 +29,6 @@ const routes = [
 	// Counter DDS document was removed in v2.
 	// Redirect legacy URL to v1 document.
 	{ from: "/docs/data-structures/counter", to: "/docs/v1/data-structures/counter" },
-
-	// TODO: anything else?
 ];
 
 module.exports = routes;

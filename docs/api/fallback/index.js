@@ -8,42 +8,32 @@ const routes = require("./routes.js");
 /**
  * Handles incoming HTTP requests and redirects them based on configured {@link routes}.
  * If no route is configured, will redirect to `/404`.
+ *
+ * @remarks Azure will only call this for URLs without matching static files.
  */
 async function fallback(context, request) {
-	// This URL has been proxied as there was no static file matching it.
 	const originalUrl = request.headers["x-ms-original-url"];
-	context.log(`x-ms-original-url: ${originalUrl}`);
-
-	if (!originalUrl) {
-		context.log("No original URL found. Redirecting to \"/404\".");
-		context.res = {
-			status: 302,
-			headers: { location: "/404" },
-		};
-		return;
-	}
-
 	const { pathname, search } = new URL(originalUrl);
 
+	// Find the redirect for the provided path, if any.
 	const route = routes.find(({ from }) => pathname.startsWith(from));
 
-	if (!route) {
-		context.log(
-			`No explicit redirect configured for "${originalUrl}". Redirecting to "/404".`,
-		);
-		context.res = {
+	if (route) {
+		// A redirect was configured for the path.
+		// Forward to the new location.
+		const redirectLocation = `${pathname.replace(route.from, route.to)}${search}`;
+		return {
 			status: 302,
-			headers: { location: `/404?originalUrl=${encodeURIComponent(originalUrl)}` },
+			headers: { location: redirectLocation },
 		};
-		return;
+	} else {
+		// No redirect was configured for the provided path.
+		// Return 404.
+		return {
+			status: 404,
+			headers: { location: "/404" },
+		};
 	}
-
-	const redirectLocation = `${pathname.replace(route.from, route.to)}${search}`;
-	context.log(`Redirecting ${originalUrl} to ${redirectLocation}.`);
-	context.res = {
-		status: 302,
-		headers: { location: redirectLocation },
-	};
 };
 
 module.exports = fallback;
