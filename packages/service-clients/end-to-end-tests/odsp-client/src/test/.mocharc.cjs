@@ -7,9 +7,6 @@
 
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
-const packageDir = __dirname;
-const config = getFluidTestMochaConfig(packageDir);
-
 const args = process.argv.slice(2);
 
 function getFluidTestVariant() {
@@ -22,11 +19,13 @@ function getFluidTestVariant() {
 	return `${testDriver}-${endpointName}`;
 }
 
-function getFluidTestMocha(packageDir, additionalRequiredModules = []) {
+function getFluidTestMochaConfig(packageDir, additionalRequiredModules = []) {
 	const testVariant = getFluidTestVariant();
 	process.env.FLUID_TEST_VARIANT = testVariant;
+
+	packageDir = __dirname;
 
 	return getFluidTestMochaConfig(packageDir, additionalRequiredModules, testVariant);
 }
 
-module.exports = getFluidTestMocha;
+module.exports = getFluidTestMochaConfig;

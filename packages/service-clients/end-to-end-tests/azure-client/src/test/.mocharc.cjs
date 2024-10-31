@@ -5,9 +5,7 @@
 
 "use strict";
 
-const packageDir = `${__dirname}/../..`;
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
-const config = getFluidTestMochaConfig(packageDir);
 
 const args = process.argv.slice(2);
 
@@ -24,6 +22,7 @@ function getFluidTestVariant() {
 function getFluidTestMocha(packageDir, additionalRequiredModules = []) {
 	const testVariant = getFluidTestVariant();
 	process.env.FLUID_TEST_VARIANT = testVariant;
+	packageDir = `${__dirname}/../..`;
 
 	return getFluidTestMochaConfig(packageDir, additionalRequiredModules, testVariant);
 }
