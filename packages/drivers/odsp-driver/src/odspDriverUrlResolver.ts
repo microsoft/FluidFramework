@@ -21,7 +21,7 @@ import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getHashedDocumentId } from "./odspPublicUtils.js";
 import { getApiRoot } from "./odspUrlHelper.js";
-import { getOdspResolvedUrl } from "./odspUtils.js";
+import { getContainerPackageName, getOdspResolvedUrl } from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
 
 function getUrlBase(
@@ -111,7 +111,11 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			const fileName: string = request.headers[DriverHeader.createNew].fileName;
 			const driveID = searchParams.get("driveId");
 			const filePath = searchParams.get("path");
-			const packageName = searchParams.get("containerPackageName");
+			const packageName =
+				searchParams.get("containerPackageName") ??
+				getContainerPackageName(
+					request.headers.containerPackageName as IContainerPackageInfo | undefined,
+				);
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- false positive
 			if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
 				throw new NonRetryableError(

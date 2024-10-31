@@ -1335,7 +1335,14 @@ export class Container
 						async (summary) => {
 							// Actually go and create the resolved document
 							if (this.service === undefined) {
-								const createNewResolvedUrl = await this.urlResolver.resolve(request);
+								const newRequest: IRequest = {
+									url: request.url,
+									headers: {
+										...request.headers,
+										"containerPackageName": getPackageName(this._loadedCodeDetails),
+									},
+								};
+								const createNewResolvedUrl = await this.urlResolver.resolve(newRequest);
 								assert(
 									this.client.details.type !== summarizerClientType &&
 										createNewResolvedUrl !== undefined,

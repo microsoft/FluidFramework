@@ -578,7 +578,7 @@ export function appendNavParam(
 	baseUrl: string,
 	resolvedUrl: IResolvedUrl,
 	dataStorePath: string,
-	packageInfoSource?: IContainerPackageInfo,
+	containerPackageName?: string,
 	context?: string,
 	appName?: string,
 ): string {
@@ -588,6 +588,28 @@ export function appendNavParam(
 	// If the user has passed an empty dataStorePath, then extract it from the resolved url.
 	const actualDataStorePath = dataStorePath || (odspResolvedUrl.dataStorePath ?? "");
 
+	storeLocatorInOdspUrl(url, {
+		siteUrl: odspResolvedUrl.siteUrl,
+		driveId: odspResolvedUrl.driveId,
+		itemId: odspResolvedUrl.itemId,
+		dataStorePath: actualDataStorePath,
+		appName,
+		containerPackageName,
+		fileVersion: odspResolvedUrl.fileVersion,
+		context,
+	});
+
+	return url.href;
+}
+
+/**
+ * Returns the package name of the container package information.
+ * @param packageInfoSource - Information of the package connected to the URL
+ * @returns The package name of the container package
+ */
+export function getContainerPackageName(
+	packageInfoSource: IContainerPackageInfo | undefined,
+): string | undefined {
 	let containerPackageName: string | undefined;
 	if (packageInfoSource && "name" in packageInfoSource) {
 		containerPackageName = packageInfoSource.name;
@@ -603,20 +625,5 @@ export function appendNavParam(
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		containerPackageName = (packageInfoSource as any)?.package;
 	}
-	// TODO: use a stronger type
-	containerPackageName =
-		containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
-
-	storeLocatorInOdspUrl(url, {
-		siteUrl: odspResolvedUrl.siteUrl,
-		driveId: odspResolvedUrl.driveId,
-		itemId: odspResolvedUrl.itemId,
-		dataStorePath: actualDataStorePath,
-		appName,
-		containerPackageName,
-		fileVersion: odspResolvedUrl.fileVersion,
-		context,
-	});
-
-	return url.href;
+	return containerPackageName;
 }

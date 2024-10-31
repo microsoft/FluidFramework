@@ -27,7 +27,12 @@ import {
 	locatorQueryParamName,
 	storeLocatorInOdspUrl,
 } from "./odspFluidFileLink.js";
-import { appendNavParam, createOdspLogger, getOdspResolvedUrl } from "./odspUtils.js";
+import {
+	appendNavParam,
+	createOdspLogger,
+	getOdspResolvedUrl,
+	getContainerPackageName,
+} from "./odspUtils.js";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.
@@ -243,11 +248,15 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 		const context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
 
+		const containerPackageName: string | undefined =
+			getContainerPackageName(packageInfoSource) ??
+			odspResolvedUrl.codeHint?.containerPackageName;
+
 		return appendNavParam(
 			baseUrl,
 			odspResolvedUrl,
 			actualDataStorePath,
-			packageInfoSource,
+			containerPackageName,
 			context,
 			this.appName,
 		);
