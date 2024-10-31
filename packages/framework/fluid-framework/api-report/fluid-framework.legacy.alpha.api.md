@@ -1049,6 +1049,7 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 
 // @alpha
 export interface SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
+    readonly isLocal: boolean;
     // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs;
 }
@@ -1061,13 +1062,13 @@ export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes =
     // (undocumented)
     readonly deltaOperation: TOperation;
     readonly first: Readonly<ISequenceDeltaRange<TOperation>>;
-    readonly isLocal: boolean;
     readonly last: Readonly<ISequenceDeltaRange<TOperation>>;
     readonly ranges: readonly Readonly<ISequenceDeltaRange<TOperation>>[];
 }
 
 // @alpha
 export interface SequenceInterval extends ISerializableInterval {
+    addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
     // (undocumented)
     clone(): SequenceInterval;
     compare(b: SequenceInterval): number;
@@ -1081,6 +1082,9 @@ export interface SequenceInterval extends ISerializableInterval {
     modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval | undefined;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
+    // (undocumented)
+    overlapsPos(bstart: number, bend: number): boolean;
+    removePositionChangeListeners(): void;
     // (undocumented)
     readonly start: LocalReferencePosition;
     // (undocumented)
