@@ -320,13 +320,23 @@ export class EditManager<
 	}
 
 	/**
+	 * Return the sequence number at which the given commit was sequenced on the trunk, or undefined if the commit is not part of the trunk.
+	 */
+	public getSequenceNumber(trunkCommit: GraphCommit<TChangeset>): SeqNumber | undefined {
+		return this.trunkMetadata.get(trunkCommit.revision)?.sequenceId.sequenceNumber;
+	}
+
+	/**
 	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window,
 	 * if they are not retained by revertibles or local branches.
 	 * @param minimumSequenceNumber - the sequence number of the newest commit that all peers (including this one) have received and applied to their trunks.
 	 *
 	 * @remarks If there are more than one commit with the same sequence number we assume this refers to the last commit in the batch.
 	 */
-	public advanceMinimumSequenceNumber(minimumSequenceNumber: SeqNumber): void {
+	public advanceMinimumSequenceNumber(
+		minimumSequenceNumber: SeqNumber,
+		trimTrunk = true,
+	): void {
 		if (minimumSequenceNumber === this.minimumSequenceNumber) {
 			return;
 		}
@@ -337,16 +347,17 @@ export class EditManager<
 		);
 
 		this.minimumSequenceNumber = minimumSequenceNumber;
-		this.trimTrunk();
+		if (trimTrunk) {
+			this.trimTrunk();
+		}
 	}
 
 	/**
 	 * Examines the latest known minimum sequence number and the trunk bases of any registered branches to determine
 	 * if any commits on the trunk are unreferenced and unneeded for future computation; those found are evicted from the trunk.
-	 * @returns the number of commits that were removed from the trunk
 	 */
 	private trimTrunk(): void {
-		/** The sequence id of the oldest commit on the trunk that will be retained */
+		/** The sequence id of the most recent commit on the trunk that will be trimmed */
 		let trunkTailSequenceId: SequenceId = {
 			sequenceNumber: this.minimumSequenceNumber,
 			indexInBatch: Number.POSITIVE_INFINITY,
@@ -464,6 +475,9 @@ export class EditManager<
 			0x428 /* Clients with local changes cannot be used to generate summaries */,
 		);
 
+		// Trimming the trunk before serializing ensures that the trunk data in the summary is as minimal as possible.
+		this.trimTrunk();
+
 		let oldestCommitInCollabWindow = this.getClosestTrunkCommit(this.minimumSequenceNumber)[1];
 		assert(
 			oldestCommitInCollabWindow.parent !== undefined ||
@@ -574,8 +588,16 @@ export class EditManager<
 		}
 	}
 
-	private getCommitSequenceId(commit: GraphCommit<TChangeset>): SequenceId {
-		return this.trunkMetadata.get(commit.revision)?.sequenceId ?? minimumPossibleSequenceId;
+	private getCommitSequenceId(trunkCommitOrTrunkBase: GraphCommit<TChangeset>): SequenceId {
+		const id = this.trunkMetadata.get(trunkCommitOrTrunkBase.revision)?.sequenceId;
+		if (id === undefined) {
+			assert(
+				trunkCommitOrTrunkBase === this.trunkBase,
+				"Commit must be either be on the trunk or be the trunk base",
+			);
+			return minimumPossibleSequenceId;
+		}
+		return id;
 	}
 
 	public getTrunkChanges(): readonly TChangeset[] {
@@ -625,6 +647,12 @@ export class EditManager<
 		assert(
 			sequenceNumber > this.minimumSequenceNumber,
 			0x713 /* Expected change sequence number to exceed the last known minimum sequence number */,
+		);
+
+		assert(
+			sequenceNumber >= // This is ">=", not ">" because changes in the same batch will have the same sequence number
+				(this.sequenceMap.maxKey()?.sequenceNumber ?? minimumPossibleSequenceNumber),
+			"Attempted to sequence change with an outdated sequence number",
 		);
 
 		const commitsSequenceNumber = this.getBatch(sequenceNumber);
