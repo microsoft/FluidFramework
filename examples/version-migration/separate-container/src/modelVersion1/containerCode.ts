@@ -24,6 +24,16 @@ import { InventoryListInstantiationFactory } from "./inventoryList.js";
 
 const inventoryListId = "default-inventory-list";
 
+const createModel = async (
+	runtime: IContainerRuntime,
+	container: IContainer,
+): Promise<IInventoryListAppModel & IMigratableModel> => {
+	return new InventoryListAppModel(
+		await getDataStoreEntryPoint<IInventoryList>(runtime, inventoryListId),
+		container,
+	);
+};
+
 /**
  * @internal
  */
@@ -58,7 +68,7 @@ export class InventoryListContainerRuntimeFactory implements IRuntimeFactory {
 			context,
 			existing,
 			this.registryEntries,
-			this.createModel,
+			createModel,
 			this.runtimeOptions,
 		);
 
@@ -76,15 +86,5 @@ export class InventoryListContainerRuntimeFactory implements IRuntimeFactory {
 			InventoryListInstantiationFactory.type,
 		);
 		await inventoryList.trySetAlias(inventoryListId);
-	};
-
-	private readonly createModel = async (
-		runtime: IContainerRuntime,
-		container: IContainer,
-	): Promise<IInventoryListAppModel & IMigratableModel> => {
-		return new InventoryListAppModel(
-			await getDataStoreEntryPoint<IInventoryList>(runtime, inventoryListId),
-			container,
-		);
 	};
 }
