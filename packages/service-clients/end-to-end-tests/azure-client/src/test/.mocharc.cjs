@@ -7,7 +7,6 @@
 
 const packageDir = `${__dirname}/../..`;
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
-const config = getFluidTestMochaConfig(packageDir);
 
 const args = process.argv.slice(2);
 
@@ -28,4 +27,4 @@ function getFluidTestMocha(packageDir, additionalRequiredModules = []) {
 	return getFluidTestMochaConfig(packageDir, additionalRequiredModules, testVariant);
 }
 
-module.exports = getFluidTestMocha;
+module.exports = getFluidTestMocha(packageDir);
