@@ -1,4 +1,16 @@
 {
 	"name": "fluidframework-docs-api",
-	"type": "commonjs"
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "docs/api"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"type": "commonjs",
+	"scripts": {
+		"build:docs": "api-extractor run --local",
+		"ci:build:docs": "api-extractor run"
+	}
 }
