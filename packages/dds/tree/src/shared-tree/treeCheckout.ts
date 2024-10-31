@@ -63,8 +63,10 @@ import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditB
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import type {
 	ImplicitFieldSchema,
+	ReadSchema,
 	TreeView,
 	TreeViewConfiguration,
+	UnsafeUnknownSchema,
 	ViewableTree,
 } from "../simple-tree/index.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -622,8 +624,18 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
+	// For the new TreeViewAlpha API
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot>;
+
+	// For the old TreeView API
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
+	): TreeView<TRoot>;
+
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
 			this,
