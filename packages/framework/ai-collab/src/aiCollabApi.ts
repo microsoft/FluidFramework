@@ -13,7 +13,13 @@ import type OpenAI from "openai";
  * @alpha
  */
 export interface OpenAiClientOptions {
+	/**
+	 * The {@link OpenAI} client to use for the AI collaboration.
+	 */
 	client: OpenAI;
+	/**
+	 * The name of the target OpenAI model to use for the AI collaboration.
+	 */
 	modelName?: string;
 }
 
@@ -90,7 +96,14 @@ export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
  * @alpha
  */
 export interface AiCollabSuccessResponse {
+	/**
+	 * The status of the Ai Collaboration.
+	 * A 'success' status indicates that the AI collaboration was successful at creating changes.
+	 */
 	status: "success";
+	/**
+	 * {@inheritDoc TokenUsage}
+	 */
 	tokenUsage: TokenUsage;
 }
 
@@ -115,7 +128,7 @@ export interface AiCollabErrorResponse {
 	 */
 	errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted";
 	/**
-	 * The total token usage by the LLM.
+	 * {@inheritDoc TokenUsage}
 	 */
 	tokenUsage: TokenUsage;
 }
