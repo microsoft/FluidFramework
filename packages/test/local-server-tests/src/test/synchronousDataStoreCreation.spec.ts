@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import {
+	AttachState,
+	type IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import { waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
@@ -63,11 +66,13 @@ class DataStoreWithSyncCreate {
 		);
 		// creates a detached context with a factory who's package path is the same
 		// as the current datastore, but with another copy of its own type.
-		const created = this.context.createChildDataStoreSync(
+		const { entrypoint } = this.context.createChildDataStoreSync(
 			DataStoreWithSyncCreateFactory.instance,
 		);
 
-		return created.entrypoint;
+		entrypoint.sharedMap.set("childValue", "childValue");
+
+		return entrypoint;
 	}
 }
 
@@ -153,7 +158,7 @@ const runtimeFactory: IRuntimeFactory = {
 };
 
 describe("Scenario Test", () => {
-	it("Synchronously create nested data store", async () => {
+	it("Synchronously create child data store", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
 		const { loader, codeDetails, urlResolver } = createLoader({
@@ -163,9 +168,6 @@ describe("Scenario Test", () => {
 
 		const container = await loader.createDetachedContainer(codeDetails);
 
-		await container.attach(urlResolver.createCreateNewRequest("test"));
-		const url = await container.getAbsoluteUrl("");
-		assert(url !== undefined, "container must have url");
 		{
 			const entrypoint: FluidObject<DataStoreWithSyncCreate> = await container.getEntryPoint();
 
@@ -174,16 +176,40 @@ describe("Scenario Test", () => {
 				"container entrypoint must be DataStoreWithSyncCreate",
 			);
 
-			const dataStore = entrypoint.DataStoreWithSyncCreate.createAnother();
+			// create a child while detached
+			entrypoint.DataStoreWithSyncCreate.sharedMap.set(
+				"detachedChildInstance",
+				entrypoint.DataStoreWithSyncCreate.createAnother().handle,
+			);
 
-			dataStore.sharedMap.set("childValue", "childValue");
+			const attachP = container.attach(urlResolver.createCreateNewRequest("test"));
 
-			entrypoint.DataStoreWithSyncCreate.sharedMap.set("childInstance", dataStore.handle);
+			if (container.attachState === AttachState.Attached) {
+				await new Promise<void>((resolve) => container.once("attaching", () => resolve()));
+			}
+
+			// create a child while attaching
+			entrypoint.DataStoreWithSyncCreate.sharedMap.set(
+				"attachingChildInstance",
+				entrypoint.DataStoreWithSyncCreate.createAnother().handle,
+			);
+
+			await attachP;
+
+			// create a child once attached
+			entrypoint.DataStoreWithSyncCreate.sharedMap.set(
+				"attachedChildInstance",
+				entrypoint.DataStoreWithSyncCreate.createAnother().handle,
+			);
+
 			if (container.isDirty) {
 				await new Promise<void>((resolve) => container.once("saved", () => resolve()));
 			}
-			container.dispose();
 		}
+
+		const url = await container.getAbsoluteUrl("");
+		assert(url !== undefined, "container must have url");
+		container.dispose();
 
 		{
 			const container2 = await loader.resolve({ url });
@@ -196,17 +222,23 @@ describe("Scenario Test", () => {
 				"container2 entrypoint must be DataStoreWithSyncCreate",
 			);
 
-			const childHandle = entrypoint.DataStoreWithSyncCreate.sharedMap.get("childInstance");
-			assert(isFluidHandle(childHandle), "childInstance should be a handle");
-			const child = (await childHandle.get()) as FluidObject<DataStoreWithSyncCreate>;
-			assert(
-				child.DataStoreWithSyncCreate !== undefined,
-				"child must be DataStoreWithSyncCreate",
-			);
-			assert(
-				child.DataStoreWithSyncCreate.sharedMap.get("childValue") === "childValue",
-				"unexpected childValue",
-			);
+			for (const childKey of [
+				"detachedChildInstance",
+				"attachingChildInstance",
+				"attachedChildInstance",
+			]) {
+				const childHandle = entrypoint.DataStoreWithSyncCreate.sharedMap.get(childKey);
+				assert(isFluidHandle(childHandle), `${childKey} should be a handle`);
+				const child = (await childHandle.get()) as FluidObject<DataStoreWithSyncCreate>;
+				assert(
+					child.DataStoreWithSyncCreate !== undefined,
+					`${childKey} must be DataStoreWithSyncCreate`,
+				);
+				assert(
+					child.DataStoreWithSyncCreate.sharedMap.get("childValue") === "childValue",
+					"unexpected childValue",
+				);
+			}
 			container2.dispose();
 		}
 	});
