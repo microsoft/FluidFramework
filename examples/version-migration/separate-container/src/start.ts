@@ -7,9 +7,7 @@ import type {
 	IMigratableModel,
 	IMigrationTool,
 	IVersionedModel,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluid-example/migration-tools/internal";
-// eslint-disable-next-line import/no-internal-modules
 import { MigratableModelLoader, Migrator } from "@fluid-example/migration-tools/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
@@ -18,6 +16,7 @@ import {
 	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/internal";
 import { createElement } from "react";
+// eslint-disable-next-line import/no-internal-modules
 import { createRoot, type Root } from "react-dom/client";
 
 import { inventoryListDataTransformationCallback } from "./dataTransform.js";
@@ -47,7 +46,6 @@ let debugRoot: Root | undefined;
 const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): void => {
 	const appDiv = document.querySelector("#app") as HTMLDivElement;
 	appRoot ??= createRoot(appDiv);
-	appRoot.unmount();
 	// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 	// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 	// view code loader to pull in the view dynamically based on the version we discover.
@@ -57,7 +55,6 @@ const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): voi
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
 		debugRoot ??= createRoot(debugDiv);
-		debugRoot.unmount();
 		debugRoot.render(
 			createElement(DebugView, {
 				model,
