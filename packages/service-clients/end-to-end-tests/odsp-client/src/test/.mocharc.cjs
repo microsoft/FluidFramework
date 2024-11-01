@@ -20,9 +20,11 @@ function getFluidTestVariant() {
 	return `${testDriver}-${endpointName}`;
 }
 
-function getFluidTestMocha(packageDir, additionalRequiredModules = []) {
+function getFluidTestMochaConfig(packageDir, additionalRequiredModules = []) {
 	const testVariant = getFluidTestVariant();
 	process.env.FLUID_TEST_VARIANT = testVariant;
+
+	packageDir = __dirname;
 
 	return getFluidTestMochaConfig(packageDir, additionalRequiredModules, testVariant);
 }
