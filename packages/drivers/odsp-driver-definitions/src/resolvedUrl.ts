@@ -143,4 +143,8 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	shareLinkInfo?: ShareLinkInfoType;
 
 	isClpCompliantApp?: boolean;
+
+	context?: string;
+
+	appName?: string;
 }
