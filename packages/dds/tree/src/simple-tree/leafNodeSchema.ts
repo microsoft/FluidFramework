@@ -40,6 +40,10 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 		return data;
 	}
 
+	public createFromInsertable(data: TreeValue<T>): TreeValue<T> {
+		return data;
+	}
+
 	public constructor(name: Name, t: T) {
 		this.identifier = name;
 		this.info = t;

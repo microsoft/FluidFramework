@@ -39,6 +39,7 @@ import type {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
+	UnionToIntersection,
 } from "../../util/index.js";
 
 const schema = new SchemaFactory("com.example");
@@ -246,6 +247,7 @@ describe("schemaTypes", () => {
 				type I1 = InsertableTreeFieldFromImplicitField<typeof List>;
 				type I2 = InsertableTypedNode<typeof List>;
 				type I3 = NodeBuilderData<typeof List>;
+				type I4 = NodeBuilderData<UnionToIntersection<typeof List>>;
 
 				type N1 = NodeFromSchema<typeof List>;
 				type N2 = TreeNodeFromImplicitAllowedTypes<typeof List>;
@@ -254,6 +256,7 @@ describe("schemaTypes", () => {
 				type _check1 = requireTrue<areSafelyAssignable<I1, I2>>;
 				type _check2 = requireTrue<areSafelyAssignable<I2, N1 | Iterable<number>>>;
 				type _check3 = requireTrue<areSafelyAssignable<I3, Iterable<number>>>;
+				type _check6 = requireTrue<areSafelyAssignable<I4, Iterable<number>>>;
 				type _check4 = requireTrue<areSafelyAssignable<N1, N2>>;
 				type _check5 = requireTrue<areSafelyAssignable<N2, N3>>;
 			}
@@ -286,12 +289,14 @@ describe("schemaTypes", () => {
 			const A = schema.object("A", {});
 			const B = schema.object("B", { a: A });
 
+			type A = NodeFromSchema<typeof A>;
+
 			const a = new A({});
 			const b = new B({ a });
 			const b2 = new B({ a: {} });
 
 			// @ts-expect-error empty nodes should not allow non objects.
-			const a2: NodeFromSchema<typeof A> = 0;
+			const a2: A = 0;
 			// @ts-expect-error empty nodes should not allow non objects.
 			const a3: InsertableTypedNode<typeof A> = 0;
 
