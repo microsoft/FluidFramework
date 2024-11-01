@@ -215,9 +215,9 @@ The `PackageBase` abstract class can be used as a base class to create custom `I
 
 ## Miscellaneous improvements
 
-### build projects can be rooted anywhere
+### Build projects can be rooted anywhere
 
-build projects are rooted where their config file is located, _not_ at the root of a Git repo. There can be multiple Fluid
+Build projects are rooted where their config file is located, _not_ at the root of a Git repo. There can be multiple Fluid
 repos within a Git repo, though this is usually only needed for testing. In typical use only a single build project per
 Git repo is needed. However, the build project does _not_ need to be rooted at the root of Git repo, and code should not
 assume that the root of the build project is the same as the root of a Git repo.
