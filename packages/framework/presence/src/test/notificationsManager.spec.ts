@@ -254,13 +254,20 @@ describe("Presence", () => {
 
 			const eventHandlerFunction = (client: ISessionClient, id: number): void => {
 				console.debug(
-					`Secondary testEvents listener: ${client.sessionId} has a new id: ${id}`,
+					`Secondary testEvents listener: client=${JSON.stringify(client, undefined, 2)}, id=${id}`,
 				);
+
+				// These asserts fail; in the handler functions, client=42 and id=undefined
+				// Since 42 is the argument to the event, it seems like the session ID is lost somewhere in the processing.
+				// assert(client.sessionId !== undefined);
+				// assert(id !== undefined);
 			};
 			const eventHandler = spy(eventHandlerFunction);
 
 			const eventHandlerFunction2 = (client: ISessionClient, id: number): void => {
-				console.debug(`Tertiary testEvents listener: ${client.sessionId} has a new id: ${id}`);
+				console.debug(
+					`Tertiary testEvents listener: client=${JSON.stringify(client, undefined, 2)}, id=${id}`,
+				);
 			};
 			const eventHandler2 = spy(eventHandlerFunction2);
 
@@ -275,7 +282,7 @@ describe("Presence", () => {
 				{
 					type: "Pres:DatastoreUpdate",
 					content: {
-						"sendTimestamp": 1030,
+						"sendTimestamp": 1020,
 						"avgLatency": 10,
 						"data": {
 							"system:presence": {
@@ -299,38 +306,6 @@ describe("Presence", () => {
 				},
 				false,
 			);
-
-			// clock.tick(10);
-			// // This will trigger the third signal
-			// testEvents.emit.broadcast("newId", 65);
-
-			// disconnect();
-			// // Track clients that have started chatting
-			// const chatClients = new Set<ISessionClient>();
-			// const chatMsgOff = chat.notifications.on("msg", (client, _message) => {
-			// 	if (!chatClients.has(client)) {
-			// 		console.log(`client ${client.sessionId} has started chatting`);
-			// 		chatClients.add(client);
-			// 	}
-			// });
-
-			// chat.emit.broadcast("msg", "howdy");
-
-			// chatMsgOff();
-
-			// function logUnattended(
-			// 	name: string,
-			// 	client: ISessionClient,
-			// 	...content: unknown[]
-			// ): void {
-			// 	console.log(
-			// 		`${client.sessionId} sent unattended notification '${name}' with content`,
-			// 		...content,
-			// 	);
-			// }
-
-			// const unattendedOff = chat.events.on("unattendedNotification", logUnattended);
-			// unattendedOff();
 
 			for (const disconnect of disconnectFunctions) {
 				disconnect();
