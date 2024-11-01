@@ -388,10 +388,13 @@ export interface LocalAttributionKey {
 }
 
 // @alpha
-export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
+export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
 
 // @alpha
-export type NamedFluidDataStoreRegistryEntry = [
+export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+
+// @alpha
+export type NamedFluidDataStoreRegistryEntry2 = [
 string,
 Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
 ];

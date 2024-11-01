@@ -111,11 +111,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"TypeAlias_NamedFluidDataStoreRegistryEntry": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

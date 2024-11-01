@@ -20,7 +20,15 @@ export type FluidDataStoreRegistryEntry = Readonly<
  * @legacy
  * @alpha
  */
-export type NamedFluidDataStoreRegistryEntry = [
+export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+
+/**
+ * An associated pair of an identifier and registry entry.  Registry entries
+ * may be dynamically loaded.
+ * @legacy
+ * @alpha
+ */
+export type NamedFluidDataStoreRegistryEntry2 = [
 	string,
 	Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry,
 ];
@@ -29,7 +37,7 @@ export type NamedFluidDataStoreRegistryEntry = [
  * @legacy
  * @alpha
  */
-export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
+export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
 
 /**
  * @legacy
