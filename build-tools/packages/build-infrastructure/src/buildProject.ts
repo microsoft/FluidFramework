@@ -7,7 +7,7 @@ import path from "node:path";
 
 import { type SimpleGit, simpleGit } from "simple-git";
 
-import { type BuildProjectLayout, getBuildProjectLayout } from "./config.js";
+import { type BuildProjectConfig, getBuildProjectConfig } from "./config.js";
 import { NotInGitRepository } from "./errors.js";
 import { findGitRootSync } from "./git.js";
 import {
@@ -34,7 +34,7 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 	/**
 	 * {@inheritDoc IBuildProject.configuration}
 	 */
-	public readonly configuration: BuildProjectLayout;
+	public readonly configuration: BuildProjectConfig;
 
 	/**
 	 * The absolute path to the config file.
@@ -42,7 +42,7 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 	protected readonly configFilePath: string;
 
 	/**
-	 * @param searchPath - The path that should be searched for a repo layout config file.
+	 * @param searchPath - The path that should be searched for a BuildProject config file.
 	 * @param gitRepository - A SimpleGit instance rooted in the root of the Git repository housing the BuildProject. This
 	 * should be set to false if the BuildProject is not within a Git repository.
 	 */
@@ -54,25 +54,25 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 		 */
 		public readonly upstreamRemotePartialUrl?: string,
 	) {
-		const { config, configFilePath } = getBuildProjectLayout(searchPath);
+		const { config, configFilePath } = getBuildProjectConfig(searchPath);
 		this.root = path.resolve(path.dirname(configFilePath));
 		this.configuration = config;
 		this.configFilePath = configFilePath;
 
-		// Check for the repoLayout config first
-		if (config.repoLayout === undefined) {
-			// If there's no `repoLayout` _and_ no `repoPackages`, then we need to error since there's no loadable config.
+		// Check for the buildProject config first
+		if (config.buildProject === undefined) {
+			// If there's no `buildProject` _and_ no `repoPackages`, then we need to error since there's no loadable config.
 			if (config.repoPackages === undefined) {
 				throw new Error(`Can't find configuration.`);
 			} else {
 				console.warn(
-					`The repoPackages setting is deprecated and will no longer be read in a future version. Use repoLayout instead.`,
+					`The repoPackages setting is deprecated and will no longer be read in a future version. Use buildProject instead.`,
 				);
 				this._workspaces = loadWorkspacesFromLegacyConfig(config.repoPackages, this);
 			}
 		} else {
 			this._workspaces = new Map<WorkspaceName, IWorkspace>(
-				Object.entries(config.repoLayout.workspaces).map((entry) => {
+				Object.entries(config.buildProject.workspaces).map((entry) => {
 					const name = entry[0] as WorkspaceName;
 					const definition = entry[1];
 					const ws = Workspace.load(name, definition, this.root, this);
@@ -183,7 +183,7 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 }
 
 /**
- * Searches for a BuildProject config file and loads the repo layout from the config if found.
+ * Searches for a BuildProject config file and loads the project from the config if found.
  *
  * @typeParam P - The type to use for Packages.
  * @param searchPath - The path to start searching for a BuildProject config.

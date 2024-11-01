@@ -12,7 +12,7 @@
  */
 const config = {
 	version: 1,
-	repoLayout: {
+	buildProject: {
 		workspaces: {
 			main: {
 				directory: ".",

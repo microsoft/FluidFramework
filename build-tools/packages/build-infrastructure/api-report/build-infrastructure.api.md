@@ -34,7 +34,7 @@ export const BUILDPROJECT_CONFIG_VERSION = 1;
 
 // @public
 export interface BuildProjectLayout {
-    repoLayout?: {
+    buildProject?: {
         workspaces: {
             [name: string]: WorkspaceDefinition;
         };
@@ -62,7 +62,7 @@ export function getAllDependencies(repo: IBuildProject, packages: IPackage[]): {
 };
 
 // @public
-export function getBuildProjectLayout(searchPath: string, noCache?: boolean): {
+export function getBuildProjectConfig(searchPath: string, noCache?: boolean): {
     config: BuildProjectLayout;
     configFilePath: string;
 };

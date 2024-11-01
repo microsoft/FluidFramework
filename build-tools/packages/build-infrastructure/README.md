@@ -93,22 +93,22 @@ filtering API. Packages can be selected based on criteria like workspace and rel
 filtered by scope or private/not private. Advanced filtering not covered by the built-in filters can be implemented
 using `Array.prototype.filter` on the results of package selection.
 
-### Built-in command-line tool to examine repo layout and config
+### Built-in command-line tool to examine project layout and config
 
 The included CLI tool makes it easy to examine the contents and layout of a build project. See [the CLI
 documentation](./docs/cli.md) for more information.
 
 ### Loading old config formats
 
-The `repoPackages` configuration currently used by fluid-build will be loaded if the newer `repoLayout` config can't be
-found. This is for back-compat only and will not be maintained indefinitely. Users should convert to `repoLayout` when
+The `repoPackages` configuration currently used by fluid-build will be loaded if the newer `buildProject` config can't be
+found. This is for back-compat only and will not be maintained indefinitely. Users should convert to `buildProject` when
 possible.
 
 ## Configuration
 
-Configuration for the repo layout is stored in a config file at the root of the repo. This can either be part of the
-`fluidBuild.config.cjs` file in the `repoLayout` property, or in an independent config file named
-`repoLayout.config.cjs` (or mjs).
+Configuration for the build project is stored in a config file at the root of the repo. This can either be part of the
+`fluidBuild.config.cjs` file in the `buildProject` property, or in an independent config file named
+`buildProject.config.cjs` (or mjs).
 
 ### Example
 
@@ -117,7 +117,7 @@ groups, a workspace with a single release group that contains multiple packages,
 group that contains a single package.
 
 ```js
-repoLayout: {
+buildProject: {
   workspaces: {
     // This is the name of the workspace which is how it's referenced in the API. All workspaces in a build project must
     // have a unique name.
@@ -161,7 +161,7 @@ repoLayout: {
           rootPackageName: "examples-release-group-root",
         },
         // If any packages in the workspace don't match a release group, loading the
-        // repo layout config will throw an error.
+        // build project config will throw an error.
       },
     },
     "build-tools": {
@@ -198,7 +198,7 @@ repoLayout: {
 To load a build project, you use the `loadBuildProject` function. You can pass in a path to a Git repository root, or if one
 is not provided, then the Git repository nearest to the working directory can be used.
 
-This function will look for a repo layout configuration in that folder and load the workspaces, release groups, and
+This function will look for a build project configuration in that folder and load the workspaces, release groups, and
 packages accordingly and return an `IBuildProject` object that includes Maps of workspaces, release groups, and packages as
 properties.
 

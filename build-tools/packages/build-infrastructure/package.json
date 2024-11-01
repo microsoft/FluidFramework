@@ -26,7 +26,7 @@
 	},
 	"main": "lib/index.js",
 	"bin": {
-		"repo-layout": "./bin/run.mjs"
+		"buildProject": "./bin/run.mjs"
 	},
 	"files": [
 		"/bin",

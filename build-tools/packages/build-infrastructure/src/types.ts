@@ -6,7 +6,7 @@
 import { SimpleGit } from "simple-git";
 import type { Opaque, SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
-import type { BuildProjectLayout } from "./config.js";
+import type { BuildProjectConfig } from "./config.js";
 
 /**
  * Extra package.json fields used by pnpm.
@@ -77,9 +77,9 @@ export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable
 	upstreamRemotePartialUrl?: string;
 
 	/**
-	 * The layout configuration for the repo.
+	 * The configuration for the build project.
 	 */
-	configuration: BuildProjectLayout;
+	configuration: BuildProjectConfig;
 
 	/**
 	 * Transforms an absolute path to a path relative to the IBuildProject root.

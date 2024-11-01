@@ -20,9 +20,9 @@ export {
 	type IFluidBuildDir,
 	type IFluidBuildDirs,
 	type IFluidBuildDirEntry,
-	type BuildProjectLayout,
+	type BuildProjectConfig as BuildProjectLayout,
 	BUILDPROJECT_CONFIG_VERSION,
-	getBuildProjectLayout,
+	getBuildProjectConfig,
 } from "./config.js";
 export { NotInGitRepository } from "./errors.js";
 export {
