@@ -18,7 +18,7 @@ import { Format } from "../../../feature-libraries/schema-index/format.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { jsonPrimitiveSchema, JsonUnion } from "../../json/index.js";
 
