@@ -56,15 +56,18 @@ class DataStoreWithSyncCreate {
 		return this.runtime.entryPoint;
 	}
 
-	createAnother() {
+	createAnother(): DataStoreWithSyncCreate {
+		assert(
+			this.context.tryCreateChildDataStoreSync !== undefined,
+			"this.context.tryCreateChildDataStoreSync",
+		);
 		// creates a detached context with a factory who's package path is the same
 		// as the current datastore, but with another copy of its own type.
-		const created = this.context.tryCreateDataStoreSync?.([
-			...this.context.packagePath,
-			DataStoreWithSyncCreate.type,
-		]);
+		const created = this.context.tryCreateChildDataStoreSync(
+			DataStoreWithSyncCreateFactory.instance,
+		);
 
-		return created?.entrypoint as DataStoreWithSyncCreate;
+		return created.entrypoint;
 	}
 }
 
@@ -106,7 +109,7 @@ class DataStoreWithSyncCreateFactory
 
 	createDataStore(context: IFluidDataStoreContext): {
 		runtime: IFluidDataStoreChannel;
-		entrypoint: FluidObject;
+		entrypoint: DataStoreWithSyncCreate;
 	} {
 		const runtime = new FluidDataStoreRuntime(
 			context,

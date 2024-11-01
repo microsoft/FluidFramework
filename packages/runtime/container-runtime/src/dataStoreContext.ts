@@ -60,8 +60,6 @@ import {
 	IInboundSignalMessage,
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
-	// eslint-disable-next-line import/no-deprecated
-	type IFluidDataStoreContextDetachedExperimental,
 	type IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -496,15 +494,7 @@ export abstract class FluidDataStoreContext
 		return this.channelP;
 	}
 
-	private factory: IFluidDataStoreFactory | undefined;
-	public get IFluidDataStoreFactory() {
-		return this.factory;
-	}
-
 	protected async factoryFromPackagePath() {
-		if (this.factory !== undefined) {
-			return this.factory;
-		}
 		const packages = this.pkg;
 		if (packages === undefined) {
 			this.rejectDeferredRealize("packages is undefined");
@@ -529,49 +519,50 @@ export abstract class FluidDataStoreContext
 			}
 			registry = entry.IFluidDataStoreRegistry;
 		}
-		this.factory = entry?.IFluidDataStoreFactory;
-		if (this.factory === undefined) {
+		const factory = entry?.IFluidDataStoreFactory;
+		if (factory === undefined) {
 			this.rejectDeferredRealize("Can't find factory for package", lastPkg, packages);
 		}
 
 		assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
 		this.registry = registry;
 
-		return this.factory;
+		return factory;
 	}
 
-	public tryCreateDataStoreSync(pkgPath: string[]) {
-		const sharedPaths: string[] = [];
-		const localPaths = [...this.packagePath];
-		const newPaths: string[] = [...pkgPath];
-		while (newPaths[0] === localPaths[0] && newPaths[0] !== undefined) {
-			sharedPaths.push(newPaths[0]);
-			newPaths.shift();
-			localPaths.shift();
-		}
-		if (localPaths.length === 0) {
-			let factory: IFluidDataStoreFactory | undefined;
-			let registry = this.registry;
-			for (const pkg of newPaths) {
-				const maybe = registry?.get(pkg);
-				if (maybe === undefined || isPromiseLike(maybe)) {
-					throw new UsageError("must be sync");
-				}
-				factory = maybe?.IFluidDataStoreFactory;
-				registry = maybe?.IFluidDataStoreRegistry;
-			}
-			if (factory?.createDataStore === undefined) {
-				throw new UsageError("must exist");
-			}
+	tryCreateChildDataStoreSync<T extends IFluidDataStoreFactory>(
+		childFactory: T,
+	): ReturnType<Exclude<T["createDataStore"], undefined>> {
+		const maybe = this.registry?.get(childFactory.type);
 
-			// eslint-disable-next-line import/no-deprecated
-			const context: IFluidDataStoreContextDetachedExperimental =
-				this._containerRuntime.createDetachedDataStore([...sharedPaths, ...newPaths]);
-
-			const created = factory.createDataStore?.(context);
-			context.unsafe_AttachRuntimeSync?.(created?.runtime);
-			return created;
+		if (
+			maybe === undefined ||
+			isPromiseLike(maybe) ||
+			maybe.IFluidDataStoreFactory !== childFactory
+		) {
+			throw new UsageError(
+				"The provided factory instance must be synchronously available as a child of this datastore",
+			);
 		}
+
+		if (childFactory?.createDataStore === undefined) {
+			throw new UsageError("createDataStore must exist on the provided factory");
+		}
+
+		const context = this._containerRuntime.createDetachedDataStore([
+			...this.packagePath,
+			maybe.IFluidDataStoreFactory.type,
+		]);
+		assert(
+			context instanceof LocalDetachedFluidDataStoreContext,
+			"must be a LocalDetachedFluidDataStoreContext",
+		);
+
+		const created = childFactory.createDataStore(context) as ReturnType<
+			Exclude<T["createDataStore"], undefined>
+		>;
+		context.unsafe_AttachRuntimeSync(created.runtime);
+		return created;
 	}
 
 	private async realizeCore(existing: boolean) {
@@ -1434,8 +1425,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
  */
 export class LocalDetachedFluidDataStoreContext
 	extends LocalFluidDataStoreContextBase
-	// eslint-disable-next-line import/no-deprecated
-	implements IFluidDataStoreContextDetached, IFluidDataStoreContextDetachedExperimental
+	implements IFluidDataStoreContextDetached
 {
 	constructor(props: ILocalDetachedFluidDataStoreContextProps) {
 		super(props);
@@ -1457,7 +1447,7 @@ export class LocalDetachedFluidDataStoreContext
 			.then(async () => {
 				const factory = registry.IFluidDataStoreFactory;
 
-				const factory2 = this.IFluidDataStoreFactory ?? (await this.factoryFromPackagePath());
+				const factory2 = await this.factoryFromPackagePath();
 				assert(factory2 === factory, 0x156 /* "Unexpected factory for package path" */);
 
 				await super.bindRuntime(dataStoreChannel, false /* existing */);

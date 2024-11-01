@@ -28,7 +28,10 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
+import type {
+	IFluidDataStoreFactory,
+	IProvideFluidDataStoreFactory,
+} from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import type {
 	IGarbageCollectionData,
@@ -611,12 +614,9 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
-	tryCreateDataStoreSync?(pkgPath: string[]):
-		| {
-				runtime: IFluidDataStoreChannel;
-				entrypoint: FluidObject;
-		  }
-		| undefined;
+	tryCreateChildDataStoreSync?<T extends IFluidDataStoreFactory>(
+		childFactory: T,
+	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }
 
 /**
@@ -631,18 +631,4 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 		factory: IProvideFluidDataStoreFactory,
 		dataStoreRuntime: IFluidDataStoreChannel,
 	): Promise<IDataStore>;
-}
-
-/**
- * @legacy
- * @alpha
- * @deprecated - We reserve the right to change this interface in the future
- * @experimental
- */
-export interface IFluidDataStoreContextDetachedExperimental
-	extends IFluidDataStoreContextDetached {
-	/**
-	 * Binds a runtime to the context.
-	 */
-	unsafe_AttachRuntimeSync?(dataStoreRuntime: IFluidDataStoreChannel): IDataStore;
 }

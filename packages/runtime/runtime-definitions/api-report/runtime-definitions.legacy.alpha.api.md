@@ -165,6 +165,8 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     readonly id: string;
     readonly isLocalDataStore: boolean;
     readonly packagePath: readonly string[];
+    // (undocumented)
+    tryCreateChildDataStoreSync?<T extends IFluidDataStoreFactory>(childFactory: T): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }
 
 // @alpha (undocumented)
@@ -177,6 +179,10 @@ export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
 // @alpha
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
+    // (undocumented)
+    createDataStore?(context: IFluidDataStoreContext): {
+        readonly runtime: IFluidDataStoreChannel;
+    };
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     type: string;
 }
@@ -187,7 +193,7 @@ export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry;
 // @alpha
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
     // (undocumented)
-    get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
+    get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> | FluidDataStoreRegistryEntry | undefined;
 }
 
 // @alpha
