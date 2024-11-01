@@ -192,12 +192,12 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @alpha
-export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeView<TSchema>;
+export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeViewAlpha<TSchema>;
 
 // @alpha
 export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & {
     idCompressor?: IIdCompressor_2 | undefined;
-}): TreeView<TSchema>;
+}): TreeViewAlpha<TSchema>;
 
 // @public
 type _InlineTrick = 0;
@@ -485,7 +485,7 @@ export interface ParseOptions<TCustom> {
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
 
 // @alpha
-export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeLeafValue | TreeNode;
+export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = TreeFieldFromImplicitField<ReadSchema<TSchema>>;
 
 // @public @sealed
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends ReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {
@@ -646,7 +646,7 @@ export const TreeAlpha: {
     importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     importVerbose<const TSchema extends ImplicitFieldSchema, THandle>(schema: TSchema, data: VerboseTree<THandle> | undefined, options: ParseOptions<THandle>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     exportConcise(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): ConciseTree;
-    exportConcise<THandle>(node: TreeNode | TreeLeafValue, options?: EncodeOptions<THandle>): ConciseTree<THandle>;
+    exportConcise<THandle>(node: TreeNode | TreeLeafValue, options: EncodeOptions<THandle>): ConciseTree<THandle>;
     exportVerbose(node: TreeNode | TreeLeafValue, options?: Partial<EncodeOptions<IFluidHandle>>): VerboseTree;
     exportVerbose<T>(node: TreeNode | TreeLeafValue, options: EncodeOptions<T>): VerboseTree<T>;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {

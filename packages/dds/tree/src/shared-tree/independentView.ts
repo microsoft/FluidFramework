@@ -32,8 +32,8 @@ import {
 import type { Format } from "../feature-libraries/schema-index/format.js";
 import type {
 	TreeViewConfiguration,
-	TreeView,
 	ImplicitFieldSchema,
+	TreeViewAlpha,
 } from "../simple-tree/index.js";
 import type { JsonCompatibleReadOnly, JsonCompatible } from "../util/index.js";
 import {
@@ -56,7 +56,7 @@ import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & { idCompressor?: IIdCompressor | undefined },
-): TreeView<TSchema> {
+): TreeViewAlpha<TSchema> {
 	const idCompressor: IIdCompressor = options.idCompressor ?? createIdCompressor();
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
@@ -70,7 +70,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 		forest,
 		schema,
 	});
-	const out: TreeView<TSchema> = new SchematizingSimpleTreeView<TSchema>(
+	const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
 		createNodeKeyManager(idCompressor),
@@ -90,7 +90,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & ICodecOptions,
 	content: ViewContent,
-): TreeView<TSchema> {
+): TreeViewAlpha<TSchema> {
 	const idCompressor: IIdCompressor = content.idCompressor;
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
@@ -124,7 +124,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 		forest,
 		schema,
 	});
-	const out: TreeView<TSchema> = new SchematizingSimpleTreeView<TSchema>(
+	const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
 		createNodeKeyManager(idCompressor),

@@ -111,7 +111,7 @@ export const TreeAlpha: {
 	/**
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
-	 * @param data - The data used to construct the field content. See {@link TreeAlpha.exportVerbose}.
+	 * @param data - The data used to construct the field content. See {@link TreeAlpha.(exportVerbose:1)}.
 	 * @remarks
 	 * This overload requires that any {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} are encoded as actual {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the input.
 	 */
@@ -124,7 +124,7 @@ export const TreeAlpha: {
 	/**
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
-	 * @param data - The data used to construct the field content. See {@link TreeAlpha.exportVerbose}.
+	 * @param data - The data used to construct the field content. See {@link TreeAlpha.(exportVerbose:2)}.
 	 *
 	 * @typeparam THandle - How {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the input `data` are encoded.
 	 * A converter from this encoding to {@link @fluidframework/core-interfaces#IFluidHandle} is required in `options`.
