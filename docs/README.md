@@ -362,16 +362,15 @@ The following npm scripts are supported in this directory:
 
 | Script | Description |
 |--------|-------------|
-| `build` | Build the site; outputs to `public/` by default. |
+| `build` | Build the site. Outputs to `public/` by default. |
 | `build:api` | `npm run build:api-documentation` |
 | `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
 | `build:local` | `concurrently npm:build:local:api npm:build:md-magic && npm run hugo` |
-| `build:local:api` | `npm run download:api && npm run build:local:rollup && npm run build:local:api-documentation && npm run build:redirects` |
+| `build:local:api` | Build the site, including repo-local API documentation. Outputs to `public/` by default. |
 | `build:local:api-documentation` | `node ./api-markdown-documenter/index.js true` |
 | `build:local:rollup` | `node ./local-api-rollup.js` |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `build:md-magic:code` | `node markdown-magic-code.js` |
-| `build:redirects` | Copies the versions file from Hugo's data directory, so the redirection azure function has access to it. |
 | `build:repo-docs` | `npm run build:md-magic:code` |
 | `ci:build` | `npm run download && npm run build` |
 | `ci:linkcheck` | `start-server-and-test ci:start http://localhost:1313 linkcheck:full` |
@@ -390,6 +389,7 @@ The following npm scripts are supported in this directory:
 | `prettier` | `prettier --check . --ignore-path ../.prettierignore` |
 | `prettier:fix` | `prettier --write . --ignore-path ../.prettierignore` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
+| `start-with-azure-emulation` | `swa start public --api-location api` |
 
 <!-- prettier-ignore-end -->
 
