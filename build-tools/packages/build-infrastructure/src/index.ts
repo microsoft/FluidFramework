@@ -35,7 +35,7 @@ export { createPackageManager } from "./packageManagers.js";
 export type {
 	AdditionalPackageProps,
 	Installable,
-	IFluidRepo,
+	IBuildProject as IFluidRepo,
 	IPackage,
 	IReleaseGroup,
 	IWorkspace,

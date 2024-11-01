@@ -49,7 +49,7 @@ export type AdditionalPackageProps = Record<string, string> | undefined;
  *
  * @typeParam P - The type of {@link IPackage} the repo uses. This can be any type that implements {@link IPackage}.
  */
-export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
+export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable {
 	/**
 	 * The absolute path to the root of the IFluidRepo. This is the path where the config file is located.
 	 */
@@ -185,7 +185,7 @@ export interface IWorkspace extends Installable, Reloadable {
 	/**
 	 * The Fluid repo that the workspace belongs to.
 	 */
-	fluidRepo: IFluidRepo;
+	fluidRepo: IBuildProject;
 
 	/**
 	 * An array of all the packages in the workspace. This includes the workspace root and any release group roots and

@@ -13,7 +13,7 @@ import { loadPackageFromWorkspaceDefinition } from "./package.js";
 import { createPackageManager } from "./packageManagers.js";
 import { ReleaseGroup } from "./releaseGroup.js";
 import type {
-	IFluidRepo,
+	IBuildProject,
 	IPackage,
 	IPackageManager,
 	IReleaseGroup,
@@ -68,7 +68,7 @@ export class Workspace implements IWorkspace {
 		/**
 		 * {@inheritDoc IWorkspace.fluidRepo}
 		 */
-		public readonly fluidRepo: IFluidRepo,
+		public readonly fluidRepo: IBuildProject,
 	) {
 		this.name = name as WorkspaceName;
 		this.directory = path.resolve(root, definition.directory);
@@ -223,7 +223,7 @@ export class Workspace implements IWorkspace {
 		name: string,
 		definition: WorkspaceDefinition,
 		root: string,
-		fluidRepo: IFluidRepo,
+		fluidRepo: IBuildProject,
 	): IWorkspace {
 		const workspace = new Workspace(name, definition, root, fluidRepo);
 		return workspace;

@@ -11,7 +11,7 @@ import { type IFluidRepoLayout, getFluidRepoLayout } from "./config.js";
 import { NotInGitRepository } from "./errors.js";
 import { findGitRootSync } from "./git.js";
 import {
-	type IFluidRepo,
+	type IBuildProject,
 	type IPackage,
 	type IReleaseGroup,
 	type IWorkspace,
@@ -25,7 +25,7 @@ import { loadWorkspacesFromLegacyConfig } from "./workspaceCompat.js";
 /**
  * {@inheritDoc IFluidRepo}
  */
-export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
+export class FluidRepo<P extends IPackage> implements IBuildProject<P> {
 	/**
 	 * The absolute path to the root of the FluidRepo. This is the path where the config file is located.
 	 */
@@ -194,8 +194,8 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 export function loadFluidRepo<P extends IPackage>(
 	searchPath: string,
 	upstreamRemotePartialUrl?: string,
-): IFluidRepo<P> {
-	const repo: IFluidRepo<P> = new FluidRepo<P>(searchPath, upstreamRemotePartialUrl);
+): IBuildProject<P> {
+	const repo: IBuildProject<P> = new FluidRepo<P>(searchPath, upstreamRemotePartialUrl);
 	return repo;
 }
 
@@ -204,7 +204,7 @@ export function loadFluidRepo<P extends IPackage>(
  * on. This function only considers packages in the Fluid repo.
  */
 export function getAllDependenciesInRepo(
-	repo: IFluidRepo,
+	repo: IBuildProject,
 	packages: IPackage[],
 ): { packages: IPackage[]; releaseGroups: IReleaseGroup[]; workspaces: IWorkspace[] } {
 	const dependencyPackages: Set<IPackage> = new Set();

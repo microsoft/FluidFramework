@@ -7,7 +7,7 @@ import { Command, Flags } from "@oclif/core";
 import colors from "picocolors";
 
 import { getAllDependenciesInRepo, loadFluidRepo } from "../fluidRepo.js";
-import type { IFluidRepo } from "../types.js";
+import type { IBuildProject } from "../types.js";
 
 /**
  * This command is intended for testing and debugging use only.
@@ -35,7 +35,7 @@ export class ListCommand extends Command {
 		const _ = full ? await this.logFullReport(repo) : await this.logCompactReport(repo);
 	}
 
-	private async logFullReport(repo: IFluidRepo): Promise<void> {
+	private async logFullReport(repo: IBuildProject): Promise<void> {
 		this.logIndent(colors.underline("Repository layout"));
 		for (const workspace of repo.workspaces.values()) {
 			this.log();
@@ -69,7 +69,7 @@ export class ListCommand extends Command {
 		}
 	}
 
-	private async logCompactReport(repo: IFluidRepo): Promise<void> {
+	private async logCompactReport(repo: IBuildProject): Promise<void> {
 		this.logIndent(colors.underline("Repository layout"));
 		for (const workspace of repo.workspaces.values()) {
 			this.log();

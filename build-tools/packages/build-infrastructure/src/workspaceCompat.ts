@@ -16,7 +16,7 @@ import type {
 	ReleaseGroupDefinition,
 	WorkspaceDefinition,
 } from "./config.js";
-import type { IFluidRepo, IWorkspace, WorkspaceName } from "./types.js";
+import type { IBuildProject, IWorkspace, WorkspaceName } from "./types.js";
 import { Workspace } from "./workspace.js";
 
 /**
@@ -30,7 +30,7 @@ import { Workspace } from "./workspace.js";
 export function loadWorkspacesFromLegacyConfig(
 	// eslint-disable-next-line import/no-deprecated -- back-compat code
 	config: IFluidBuildDirs,
-	fluidRepo: IFluidRepo,
+	fluidRepo: IBuildProject,
 ): Map<WorkspaceName, IWorkspace> {
 	const workspaces: Map<WorkspaceName, IWorkspace> = new Map();
 
@@ -71,7 +71,7 @@ export function loadWorkspacesFromLegacyConfig(
 function loadWorkspacesFromLegacyConfigEntry(
 	// eslint-disable-next-line import/no-deprecated -- back-compat code
 	entry: string | IFluidBuildDir,
-	fluidRepo: IFluidRepo,
+	fluidRepo: IBuildProject,
 	name?: string,
 ): IWorkspace[] {
 	const directory = typeof entry === "string" ? entry : entry.directory;
