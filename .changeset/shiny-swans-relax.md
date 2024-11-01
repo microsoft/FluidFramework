@@ -6,7 +6,7 @@
 "section": tree
 ---
 
-Improve typing when exact TypeScript type for a schema is not provided
+Typing has been improved when an exact TypeScript type for a schema is not provided
 
 The Tree APIs are designed to be used in a strongly typed way, with the full TypeScript type for the schema always being provided.
 Due to limitations of the TypeScript language, there was no practical way to prevent less descriptive types, like `TreeNodeSchema` or `ImplicitFieldSchema`, from being used where the type of a specific schema was intended.
