@@ -133,9 +133,19 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * @remarks
 	 * When used as TreeNodeSchemaNonClass and subclassed,
 	 * does not actually have the correct compile time type for the return value due to TypeScript limitations.
-	 * This is why this is not exposed as part of TreeNodeSchemaCLass where subclassing is allowed.
+	 * This is why this is not exposed as part of TreeNodeSchemaClass where subclassing is allowed.
 	 */
 	public static create<TInput, TOut, TThis extends new (args: TInput) => TOut>(
+		this: TThis,
+		input: TInput,
+	): TOut {
+		return new this(input);
+	}
+
+	/**
+	 * @see {@link TreeNodeSchemaCore.createFromInsertable}.
+	 */
+	public static createFromInsertable<TInput, TOut, TThis extends new (args: TInput) => TOut>(
 		this: TThis,
 		input: TInput,
 	): TOut {

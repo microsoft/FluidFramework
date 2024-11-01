@@ -33,6 +33,7 @@ import {
 	type Context,
 	UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
+	type InternalTreeNode,
 } from "./core/index.js";
 import {
 	mapTreeFromNodeData,
@@ -141,6 +142,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	MapNodeInsertableData<T>
 > {
 	public static readonly kind = NodeKind.Map;
+
+	public constructor(input?: InternalTreeNode | MapNodeInsertableData<T> | undefined) {
+		super(input ?? []);
+	}
 
 	public [Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		return this.entries();
@@ -293,7 +298,8 @@ export function mapSchema<
 		TreeMapNode<T> & WithType<TName, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
-		T
+		T,
+		undefined
 	> = Schema;
 	return schemaErased;
 }
