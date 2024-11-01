@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { IEphemeralRuntime } from "./internalTypes.js";
 import {
 	SessionClientStatus,
 	type ClientSessionId,
@@ -85,6 +86,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		public readonly events: IEmitter<
 			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
 		>,
+		private readonly runtime: IEphemeralRuntime,
 	) {
 		this.selfAttendee = {
 			sessionId: clientSessionId,
@@ -116,6 +118,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			};
 		},
 	): void {
+		const audienceMembers = this.runtime.getAudience().getMembers();
 		const postUpdateActions: (() => void)[] = [];
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
@@ -126,6 +129,12 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				clientConnectionId,
 				/* order */ value.rev,
 			);
+
+			// If the attendee's connection id is present in the audience, the attendee is connected.
+			attendee.getStatus = audienceMembers.has(clientConnectionId)
+				? () => SessionClientStatus.Connected
+				: () => SessionClientStatus.Disconnected;
+
 			if (isNew) {
 				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
 			}
@@ -207,11 +216,14 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		if (attendee === undefined) {
 			// New attendee. Create SessionClient and add session id based
 			// entry to map.
+
 			attendee = {
 				sessionId: clientSessionId,
 				order,
 				connectionId,
-				getStatus: () => SessionClientStatus.Connected,
+				getStatus: () => {
+					throw new Error("Connection status unkonown");
+				},
 			};
 			this.attendees.set(clientSessionId, attendee);
 			isNew = true;
@@ -220,9 +232,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			// Update the order and current connection id.
 			attendee.order = order;
 			attendee.connectionId = connectionId;
-			attendee.getStatus = () => SessionClientStatus.Connected;
-			isNew = true;
 		}
+
 		// Always update entry for the connection id. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
 		return { attendee, isNew };
@@ -238,6 +249,7 @@ export function createSystemWorkspace(
 	clientSessionId: ClientSessionId,
 	datastore: SystemWorkspaceDatastore,
 	events: IEmitter<Pick<PresenceEvents, "attendeeJoined">>,
+	runtime: IEphemeralRuntime,
 ): {
 	workspace: SystemWorkspace;
 	statesEntry: {
@@ -245,7 +257,7 @@ export function createSystemWorkspace(
 		public: PresenceStates<PresenceStatesSchema>;
 	};
 } {
-	const workspace = new SystemWorkspaceImpl(clientSessionId, datastore, events);
+	const workspace = new SystemWorkspaceImpl(clientSessionId, datastore, events, runtime);
 	return {
 		workspace,
 		statesEntry: {

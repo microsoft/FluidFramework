@@ -267,7 +267,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// Direct to the appropriate Presence Workspace, if present.
 			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {
-				workspace.internal.processUpdate(received, timeModifier, remoteDatastore);
+				workspace.internal.processUpdate(
+					received,
+					timeModifier,
+					remoteDatastore,
+				);
 			} else {
 				// All broadcast state is kept even if not currently registered, unless a value
 				// notes itself to be ignored.
