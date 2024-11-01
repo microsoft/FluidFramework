@@ -184,7 +184,9 @@ class NotificationsManagerImpl<
 
 		if (this.notificationsInternal.hasListeners()) {
 			console.debug(eventName, eventArgs);
-			this.notificationsInternal.emit(eventName, ...eventArgs);
+			// work around typing errors with explicit cast
+			const args = [client, ...eventArgs] as Parameters<NotificationSubscriptions<T>[any]>;
+			this.notificationsInternal.emit(eventName, ...args);
 		} else {
 			this.events.emit(
 				"unattendedNotification",

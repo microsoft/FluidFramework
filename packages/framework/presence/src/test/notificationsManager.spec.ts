@@ -257,10 +257,8 @@ describe("Presence", () => {
 					`Secondary testEvents listener: client=${JSON.stringify(client, undefined, 2)}, id=${id}`,
 				);
 
-				// These asserts fail; in the handler functions, client=42 and id=undefined
-				// Since 42 is the argument to the event, it seems like the session ID is lost somewhere in the processing.
-				// assert(client.sessionId !== undefined);
-				// assert(id !== undefined);
+				assert(client.sessionId !== undefined);
+				assert(id !== undefined);
 			};
 			const eventHandler = spy(eventHandlerFunction);
 
