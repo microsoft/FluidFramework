@@ -75,7 +75,7 @@ export function loadDocument(source: string | undefined): List {
 			return TreeAlpha.importCompressed(List, fileData, { jsonValidator: typeboxValidator });
 		}
 		case "snapshot": {
-			// TODO: validate
+			// TODO: This should probably do a validating parse of the data (probably using type box) rather than just casting it.
 			const combo: File = fileData as File;
 
 			const content: ViewContent = {
