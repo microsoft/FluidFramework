@@ -60,7 +60,7 @@
 		"picomatch": "^2.3.1",
 		"rimraf": "^4.4.1",
 		"semver": "^7.6.3",
-		"simple-git": "^3.19.1",
+		"simple-git": "^3.27.0",
 		"sort-package-json": "1.57.0",
 		"ts-deepmerge": "^7.0.1",
 		"ts-morph": "^22.0.0",

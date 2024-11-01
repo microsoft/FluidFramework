@@ -522,6 +522,9 @@ importers:
 
   packages/build-tools:
     dependencies:
+      '@fluid-tools/build-infrastructure':
+        specifier: workspace:~
+        version: link:../build-infrastructure
       '@fluid-tools/version-tools':
         specifier: workspace:~
         version: link:../version-tools
@@ -582,6 +585,9 @@ importers:
       semver:
         specifier: ^7.6.3
         version: 7.6.3
+      simple-git:
+        specifier: ^3.27.0
+        version: 3.27.0
       sort-package-json:
         specifier: 1.57.0
         version: 1.57.0
@@ -604,6 +610,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.3
+      '@changesets/types':
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -955,6 +964,10 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@changesets/types@6.0.0:
+    resolution: {integrity: sha512-b1UkfNulgKoWfqyHtzKS5fOZYSJO+77adgL7DLRDr+/7jhChN+QcHnbjiQVOz/U+Ts3PGNySq7diAItzDgugfQ==}
+    dev: true
 
   /@colors/colors@1.5.0:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
