@@ -42,6 +42,11 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel>;
 
+	/**
+	 * Synchronously creates a new runtime for a new data store from the data store context.
+	 *
+	 * @param context - Context for the data store.
+	 */
 	createDataStore?(context: IFluidDataStoreContext): {
 		readonly runtime: IFluidDataStoreChannel;
 	};
