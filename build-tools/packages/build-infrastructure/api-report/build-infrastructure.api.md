@@ -75,7 +75,7 @@ export function getChangedSinceRef<P extends IPackage>(fluidRepo: IFluidRepo<P>,
     dirs: string[];
     workspaces: IWorkspace[];
     releaseGroups: IReleaseGroup[];
-    packages: IPackage[];
+    packages: P[];
 }>;
 
 // @public
