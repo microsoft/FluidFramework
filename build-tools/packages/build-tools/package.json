@@ -39,6 +39,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
+		"@fluid-tools/build-infrastructure": "workspace:~",
 		"@fluid-tools/version-tools": "workspace:~",
 		"@manypkg/get-packages": "^2.2.2",
 		"async": "^3.2.6",
@@ -59,6 +60,7 @@
 		"picomatch": "^2.3.1",
 		"rimraf": "^4.4.1",
 		"semver": "^7.6.3",
+		"simple-git": "^3.19.1",
 		"sort-package-json": "1.57.0",
 		"ts-deepmerge": "^7.0.1",
 		"ts-morph": "^22.0.0",
@@ -68,6 +70,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
+		"@changesets/types": "^6.0.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.49.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",

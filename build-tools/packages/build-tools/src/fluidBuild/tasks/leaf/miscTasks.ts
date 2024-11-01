@@ -9,7 +9,7 @@ import * as path from "node:path";
 import picomatch from "picomatch";
 import { getTypeTestPreviousPackageDetails } from "../../../common/typeTests";
 import type { BuildContext } from "../../buildContext";
-import { BuildPackage } from "../../buildGraph";
+import { BuildGraphPackage } from "../../buildGraph";
 import { globFn, toPosixPath } from "../taskUtils";
 import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
@@ -75,7 +75,7 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private readonly copyDstArg: string = "";
 
 	constructor(
-		node: BuildPackage,
+		node: BuildGraphPackage,
 		command: string,
 		context: BuildContext,
 		taskName: string | undefined,

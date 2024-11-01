@@ -9,13 +9,14 @@ import path from "node:path";
 import ignore from "ignore";
 import * as JSON5 from "json5";
 import multimatch from "multimatch";
+import { simpleGit } from "simple-git";
 import { merge } from "ts-deepmerge";
 // Note: in more recent versions of type-fest, this type has been replaced with "Tagged"
 // We are using version 2.x because of this issue: https://github.com/sindresorhus/type-fest/issues/547
 import type { Opaque } from "type-fest";
 
+import { getFiles } from "@fluid-tools/build-infrastructure";
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
-import type { GitRepo } from "./gitRepo";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");
@@ -145,7 +146,7 @@ export async function getClosestBiomeConfigPath(
  */
 export async function getBiomeFormattedFilesFromDirectory(
 	directoryOrConfigFile: string,
-	gitRepo: GitRepo,
+	gitRoot: string,
 ): Promise<string[]> {
 	/**
 	 * The repo root-relative path to the directory being used as the Biome working directory.
@@ -154,13 +155,13 @@ export async function getBiomeFormattedFilesFromDirectory(
 	let configFile: string;
 	if ((await stat(directoryOrConfigFile)).isFile()) {
 		configFile = directoryOrConfigFile;
-		directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
+		directory = path.relative(gitRoot, path.dirname(directoryOrConfigFile));
 	} else {
 		configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
-		directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
+		directory = path.relative(gitRoot, directoryOrConfigFile);
 	}
 	const config = await loadBiomeConfig(configFile);
-	return getBiomeFormattedFiles(config, directory, gitRepo);
+	return getBiomeFormattedFiles(config, directory, gitRoot);
 }
 
 /**
@@ -174,7 +175,7 @@ export async function getBiomeFormattedFilesFromDirectory(
 export async function getBiomeFormattedFiles(
 	config: BiomeConfigResolved,
 	directory: string,
-	gitRepo: GitRepo,
+	gitRoot: string,
 ): Promise<string[]> {
 	const [includeEntries, ignoreEntries] = await Promise.all([
 		getSettingValuesFromBiomeConfig(config, "formatter", "include"),
@@ -188,12 +189,13 @@ export async function getBiomeFormattedFiles(
 	// test/src/file.js. This is something we plan to fix in Biome v2.0.0."
 	const prefixedIncludes = [...includeEntries].map((glob) => `**/${glob}`);
 	const prefixedIgnores = [...ignoreEntries].map((glob) => `**/${glob}`);
+	const gitRepo = simpleGit(gitRoot);
 
 	/**
 	 * All files that could possibly be formatted before Biome include and ignore entries are applied. Paths are relative
 	 * to the root of the repo.
 	 */
-	const gitLsFiles = new Set(await gitRepo.getFiles(directory));
+	const gitLsFiles = new Set(await getFiles(gitRepo, directory));
 
 	/**
 	 * An array of repo-relative paths to files included via the 'include' settings in the Biome config.
@@ -210,8 +212,7 @@ export async function getBiomeFormattedFiles(
 	const filtered = ignoreObject.filter(includedPaths);
 
 	// Convert repo root-relative paths to absolute paths
-	const repoRoot = gitRepo.resolvedRoot;
-	return filtered.map((filePath) => path.resolve(repoRoot, filePath));
+	return filtered.map((filePath) => path.resolve(gitRoot, filePath));
 }
 
 /**
@@ -242,12 +243,13 @@ export class BiomeConfigReader {
 	) {
 		this.directory = path.dirname(configFile);
 	}
+
 	/**
 	 * Create a BiomeConfig instance rooted in the provided directory.
 	 */
 	public static async create(
 		directoryOrConfigFile: string,
-		gitRepo: GitRepo,
+		gitRoot: string,
 	): Promise<BiomeConfigReader> {
 		/**
 		 * The repo root-relative path to the directory being used as the Biome working directory.
@@ -256,15 +258,15 @@ export class BiomeConfigReader {
 		let configFile: string;
 		if ((await stat(directoryOrConfigFile)).isFile()) {
 			configFile = directoryOrConfigFile;
-			directory = path.relative(gitRepo.resolvedRoot, path.dirname(directoryOrConfigFile));
+			directory = path.relative(gitRoot, path.dirname(directoryOrConfigFile));
 		} else {
 			configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
-			directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
+			directory = path.relative(gitRoot, directoryOrConfigFile);
 		}
 
 		const allConfigs = await getAllBiomeConfigPaths(configFile);
 		const mergedConfig = await loadBiomeConfigs(allConfigs);
-		const files = await getBiomeFormattedFiles(mergedConfig, directory, gitRepo);
+		const files = await getBiomeFormattedFiles(mergedConfig, directory, gitRoot);
 		return new BiomeConfigReader(configFile, allConfigs, mergedConfig, files);
 	}
 }
