@@ -18,6 +18,7 @@ import {
 	checkAssertTagging,
 	checkBranchName,
 	checkBranchUpToDate,
+	checkChangelogs,
 	checkDependenciesInstalled,
 	checkDoesReleaseFromReleaseBranch,
 	checkHasRemote,
@@ -28,6 +29,7 @@ import {
 	checkReleaseBranchExists,
 	checkReleaseGroupIsBumped,
 	checkReleaseIsDone,
+	checkReleaseNotes,
 	checkShouldCommit,
 	checkShouldCommitReleasedDepsBump,
 	checkShouldRunOptionalChecks,
@@ -40,6 +42,8 @@ import { InitFailedStateHandler } from "./initFailedStateHandler.js";
 import {
 	promptToCommitChanges,
 	promptToCreateReleaseBranch,
+	promptToGenerateChangelogs,
+	promptToGenerateReleaseNotes,
 	promptToIntegrateNext,
 	promptToPRBump,
 	promptToPRDeps,
@@ -174,6 +178,16 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 				break;
 			}
 
+			case "CheckReleaseNotes": {
+				await checkReleaseNotes(state, machine, testMode, log, data);
+				break;
+			}
+
+			case "CheckChangelogs": {
+				await checkChangelogs(state, machine, testMode, log, data);
+				break;
+			}
+
 			case "CheckHasRemote": {
 				await checkHasRemote(state, machine, testMode, log, data);
 				break;
@@ -293,6 +307,16 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 
 			case "PromptToCreateReleaseBranch": {
 				await promptToCreateReleaseBranch(state, machine, testMode, log, data);
+				break;
+			}
+
+			case "PromptToGenerateChangelogs": {
+				await promptToGenerateChangelogs(state, machine, testMode, log, data);
+				break;
+			}
+
+			case "PromptToGenerateReleaseNotes": {
+				await promptToGenerateReleaseNotes(state, machine, testMode, log, data);
 				break;
 			}
 

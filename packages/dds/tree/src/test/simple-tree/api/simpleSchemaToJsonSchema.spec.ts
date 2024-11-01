@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { FieldKind, NodeKind, type JsonTreeSchema } from "../../../simple-tree/index.js";
-import { getJsonValidator } from "../jsonSchemaUtilities.js";
+import { getJsonValidator } from "./jsonSchemaUtilities.js";
 import type {
 	SimpleNodeSchema,
 	SimpleTreeSchema,

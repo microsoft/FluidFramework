@@ -382,8 +382,8 @@ export function generateTestTrees(options: SharedTreeOptions) {
 		{
 			name: "attachment-tree",
 			runScenario: async (takeSnapshot) => {
-				// This test makes changes only while detached to test EditManager's optimization of omitting
-				// changes outside the collab window (which is all changes when detached).
+				// This test makes changes only while detached to test EditManager's optimization of evicting/trimming
+				// trunk commits outside of the collab window (which is all changes when detached).
 				const tree = treeTestFactory({
 					runtime: new MockFluidDataStoreRuntime({
 						clientId: "test-client",
