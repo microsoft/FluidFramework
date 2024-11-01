@@ -339,9 +339,9 @@ export function getTypesPathFromPackage(
  * @param mapSrcQueryPathToOutKey - keys of map represent paths to match.
  * @param emitDeclarationOnly - If true, "types" exports are considered.
  * @param logger - optional Logger
- * @returns object with mapKeyToOutput.
+ * @returns Map with API tags or levels with export path data
  */
-export function mapExportPathsFromPackage<TOutKey>(
+export function mapSourceExportsPath<TOutKey>(
 	packageJson: PackageJson,
 	mapSrcQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
 	emitDeclarationOnly: boolean,

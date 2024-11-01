@@ -13,7 +13,7 @@ import { ApiLevel, ApiTag, BaseCommand } from "../../library/index.js";
 import { readPackageJson, readTsConfig } from "../../library/package.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
-import { type ExportData, mapExportPathsFromPackage } from "../../library/packageExports.js";
+import { type ExportData, mapSourceExportsPath } from "../../library/packageExports.js";
 import type { CommandLogger } from "../../logging.js";
 
 /**
@@ -95,7 +95,7 @@ function getOutputConfiguration(
 		emitDeclarationOnly = tsconfig.compilerOptions.emitDeclarationOnly;
 	}
 
-	const mapSrcApiTagLevelToOutput = mapExportPathsFromPackage(
+	const mapSrcApiTagLevelToOutput = mapSourceExportsPath(
 		packageJson,
 		mapSrcQueryPathToApiTagLevel,
 		emitDeclarationOnly,
