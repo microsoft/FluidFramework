@@ -111,8 +111,8 @@
 		"unionfs": "^4.5.4"
 	},
 	"oclif": {
-		"bin": "repo-layout",
-		"dirname": "repo-layout",
+		"bin": "buildProject",
+		"dirname": "buildProject",
 		"commands": "./lib/commands",
 		"additionalHelpFlags": [
 			"-h"

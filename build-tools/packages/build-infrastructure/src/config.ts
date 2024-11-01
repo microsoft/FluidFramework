@@ -13,18 +13,18 @@ import {
 } from "./types.js";
 
 /**
- * The version of the fluidRepo configuration currently used.
+ * The version of the BuildProject configuration currently used.
  */
-export const FLUIDREPO_CONFIG_VERSION = 1;
+export const BUILDPROJECT_CONFIG_VERSION = 1;
 
 /**
- * Top-most configuration for repo layout settings.
+ * Top-most configuration for BuildProject layout settings.
  */
-export interface IFluidRepoLayout {
+export interface BuildProjectLayout {
 	/**
 	 * The version of the config.
 	 */
-	version: typeof FLUIDREPO_CONFIG_VERSION;
+	version: typeof BUILDPROJECT_CONFIG_VERSION;
 
 	/**
 	 * **BACK-COMPAT ONLY**
@@ -216,24 +216,24 @@ const configExplorer = cosmiconfigSync(configName, {
  *
  * @throws If a config is not found or if the config version is not supported.
  */
-export function getFluidRepoLayout(
+export function getBuildProjectLayout(
 	searchPath: string,
 	noCache = false,
-): { config: IFluidRepoLayout; configFilePath: string } {
+): { config: BuildProjectLayout; configFilePath: string } {
 	if (noCache === true) {
 		configExplorer.clearCaches();
 	}
 
 	const configResult = configExplorer.search(searchPath);
 	if (configResult === null || configResult === undefined) {
-		throw new Error("No fluidRepo configuration found.");
+		throw new Error("No BuildProject configuration found.");
 	}
-	const config = configResult.config as IFluidRepoLayout;
+	const config = configResult.config as BuildProjectLayout;
 
 	// Only version 1 of the config is supported. If any other value is provided, throw an error.
-	if (config.version !== FLUIDREPO_CONFIG_VERSION) {
+	if (config.version !== BUILDPROJECT_CONFIG_VERSION) {
 		throw new Error(
-			`Configuration version is not supported: ${config?.version}. Config version must be ${FLUIDREPO_CONFIG_VERSION}.`,
+			`Configuration version is not supported: ${config?.version}. Config version must be ${BUILDPROJECT_CONFIG_VERSION}.`,
 		);
 	}
 

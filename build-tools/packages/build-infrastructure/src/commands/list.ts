@@ -6,7 +6,7 @@
 import { Command, Flags } from "@oclif/core";
 import colors from "picocolors";
 
-import { getAllDependenciesInRepo, loadFluidRepo } from "../fluidRepo.js";
+import { getAllDependencies, loadBuildProject } from "../buildProject.js";
 import type { IBuildProject } from "../types.js";
 
 /**
@@ -14,11 +14,11 @@ import type { IBuildProject } from "../types.js";
  */
 export class ListCommand extends Command {
 	static override description =
-		"List objects in the Fluid repo, like release groups, workspaces, and packages. USED FOR TESTING ONLY.";
+		"List objects in the build project, like release groups, workspaces, and packages. USED FOR TESTING ONLY.";
 
 	static override flags = {
 		path: Flags.directory({
-			description: "Path to start searching for the Fluid repo.",
+			description: "Path to start searching for the Build project configuration.",
 			default: ".",
 		}),
 		full: Flags.boolean({
@@ -30,8 +30,8 @@ export class ListCommand extends Command {
 		const { flags } = await this.parse(ListCommand);
 		const { path: searchPath, full } = flags;
 
-		// load the Fluid repo
-		const repo = loadFluidRepo(searchPath);
+		// load the BuildProject
+		const repo = loadBuildProject(searchPath);
 		const _ = full ? await this.logFullReport(repo) : await this.logCompactReport(repo);
 	}
 
@@ -51,10 +51,7 @@ export class ListCommand extends Command {
 					this.logIndent(pkgMessage, 4);
 				}
 
-				const { releaseGroups, workspaces } = getAllDependenciesInRepo(
-					repo,
-					releaseGroup.packages,
-				);
+				const { releaseGroups, workspaces } = getAllDependencies(repo, releaseGroup.packages);
 				if (releaseGroups.length > 0 || workspaces.length > 0) {
 					this.log();
 					this.logIndent(colors.bold("Depends on:"), 3);

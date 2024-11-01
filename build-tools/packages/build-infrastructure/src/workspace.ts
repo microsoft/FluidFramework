@@ -66,9 +66,9 @@ export class Workspace implements IWorkspace {
 		root: string,
 
 		/**
-		 * {@inheritDoc IWorkspace.fluidRepo}
+		 * {@inheritDoc IWorkspace.buildProject}
 		 */
-		public readonly fluidRepo: IBuildProject,
+		public readonly buildProject: IBuildProject,
 	) {
 		this.name = name as WorkspaceName;
 		this.directory = path.resolve(root, definition.directory);
@@ -216,16 +216,16 @@ export class Workspace implements IWorkspace {
 	 * @param name - The name of the workspace.
 	 * @param definition - The definition for the workspace.
 	 * @param root - The path to the root of the workspace.
-	 * @param fluidRepo - The Fluid repo that the workspace belongs to.
+	 * @param buildProject - The build project that the workspace belongs to.
 	 * @returns A loaded {@link IWorkspace}.
 	 */
 	public static load(
 		name: string,
 		definition: WorkspaceDefinition,
 		root: string,
-		fluidRepo: IBuildProject,
+		buildProject: IBuildProject,
 	): IWorkspace {
-		const workspace = new Workspace(name, definition, root, fluidRepo);
+		const workspace = new Workspace(name, definition, root, buildProject);
 		return workspace;
 	}
 }
