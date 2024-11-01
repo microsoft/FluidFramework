@@ -494,7 +494,8 @@ export const promptToGenerateReleaseNotes: StateHandlerFunction = async (
 		releaseVersion,
 		bumpType: inputBumpType,
 	} = data;
-	const currentBranch = await context.gitRepo.getCurrentBranchName();
+	const gitRepo = await context.getGitRepository();
+	const currentBranch = await gitRepo.getCurrentBranchName();
 
 	// If an bumpType was set in the handler data, use it. Otherwise set it as the default for the branch.
 	const bumpType = inputBumpType ?? getDefaultBumpTypeForBranch(currentBranch);
