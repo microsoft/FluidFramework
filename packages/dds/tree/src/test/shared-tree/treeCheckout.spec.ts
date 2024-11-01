@@ -46,7 +46,11 @@ import {
 } from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { getOrCreateInnerNode, toStoredSchema } from "../../simple-tree/index.js";
+import {
+	getOrCreateInnerNode,
+	toStoredSchema,
+	type InsertableField,
+} from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 
@@ -1274,7 +1278,7 @@ function itView(
 	},
 ): void;
 function itView<
-	T extends InsertableTreeFieldFromImplicitField<TRootSchema>,
+	T extends InsertableField<TRootSchema>,
 	TRootSchema extends ImplicitFieldSchema = typeof rootArray,
 >(
 	title: string,

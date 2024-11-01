@@ -14,8 +14,8 @@ import {
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeView,
-} from "../../simple-tree/index.js";
-import { TreeFactory } from "../../treeFactory.js";
+} from "../../../simple-tree/index.js";
+import { TreeFactory } from "../../../treeFactory.js";
 
 // Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
 const schema = new SchemaFactory("com.example");

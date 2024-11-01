@@ -816,9 +816,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	>;
 
 	public constructor(
-		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+		input?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
 	) {
-		super(input);
+		super(input ?? []);
 	}
 
 	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
@@ -1077,7 +1077,8 @@ export function arraySchema<
 		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
-		T
+		T,
+		undefined
 	>;
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
