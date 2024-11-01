@@ -18,8 +18,7 @@ import {
 	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/internal";
 import { createElement } from "react";
-// eslint-disable-next-line import/no-deprecated -- TODO: AB#18875, migrate to React 18 APIs
-import { render, unmountComponentAtNode } from "react-dom";
+import { createRoot, type Root } from "react-dom/client";
 
 import { inventoryListDataTransformationCallback } from "./dataTransform.js";
 import { DemoCodeLoader } from "./demoCodeLoader.js";
@@ -42,29 +41,29 @@ const isIInventoryListAppModel = (
 
 const getUrlForContainerId = (containerId: string): string => `/#${containerId}`;
 
+let appRoot: Root | undefined;
+let debugRoot: Root | undefined;
+
 const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): void => {
 	const appDiv = document.querySelector("#app") as HTMLDivElement;
-	// eslint-disable-next-line import/no-deprecated -- TODO: AB#18875, migrate to React 18 APIs
-	unmountComponentAtNode(appDiv);
+	appRoot ??= createRoot(appDiv);
+	appRoot.unmount();
 	// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 	// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 	// view code loader to pull in the view dynamically based on the version we discover.
 	if (isIInventoryListAppModel(model)) {
-		// eslint-disable-next-line import/no-deprecated -- TODO: AB#18875, migrate to React 18 APIs
-		render(createElement(InventoryListAppView, { model, migrationTool }), appDiv);
+		appRoot.render(createElement(InventoryListAppView, { model, migrationTool }));
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
-		// eslint-disable-next-line import/no-deprecated -- TODO: AB#18875, migrate to React 18 APIs
-		unmountComponentAtNode(debugDiv);
-		// eslint-disable-next-line import/no-deprecated -- TODO: AB#18875, migrate to React 18 APIs
-		render(
+		debugRoot ??= createRoot(debugDiv);
+		debugRoot.unmount();
+		debugRoot.render(
 			createElement(DebugView, {
 				model,
 				migrationTool,
 				getUrlForContainerId,
 			}),
-			debugDiv,
 		);
 	} else {
 		throw new Error(`Don't know how to render version ${model.version}`);
