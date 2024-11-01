@@ -33,7 +33,7 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 		}),
 		outDir: Flags.directory({
 			description: "Directory to emit entrypoint files.",
-			default: "./src/entrypoints",
+			default: "./src/entrypoints/",
 			exists: true,
 		}),
 		...BaseCommand.flags,
@@ -47,12 +47,14 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 		const tsConfig = await readTsConfig();
 
 		const outFileSuffix = ".ts";
+		// Add a trailing slash if it is missing
+		const formattedOutDir = outDir.endsWith("/") ? outDir : `${outDir}/`;
 
 		const mapSrcQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined> = new Map([
-			[`${outDir}${ApiLevel.alpha}${outFileSuffix}`, ApiTag.alpha],
-			[`${outDir}${ApiLevel.beta}${outFileSuffix}`, ApiTag.beta],
-			[`${outDir}${ApiLevel.public}${outFileSuffix}`, ApiTag.public],
-			[`${outDir}${ApiLevel.legacy}${outFileSuffix}`, ApiTag.legacy],
+			[`${formattedOutDir}${ApiLevel.alpha}${outFileSuffix}`, ApiTag.alpha],
+			[`${formattedOutDir}${ApiLevel.beta}${outFileSuffix}`, ApiTag.beta],
+			[`${formattedOutDir}${ApiLevel.public}${outFileSuffix}`, ApiTag.public],
+			[`${formattedOutDir}${ApiLevel.legacy}${outFileSuffix}`, ApiTag.legacy],
 		]);
 
 		const mapSrcApiTagLevelToOutput = getOutputConfiguration(
