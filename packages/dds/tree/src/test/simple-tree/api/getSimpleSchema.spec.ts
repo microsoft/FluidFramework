@@ -10,8 +10,8 @@ import {
 	NodeKind,
 	SchemaFactory,
 	type SimpleTreeSchema,
-} from "../../simple-tree/index.js";
-import { ValueSchema } from "../../core/index.js";
+} from "../../../simple-tree/index.js";
+import { ValueSchema } from "../../../core/index.js";
 
 describe("getSimpleSchema", () => {
 	it("Field Schema", async () => {

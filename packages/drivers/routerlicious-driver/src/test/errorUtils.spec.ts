@@ -304,13 +304,18 @@ describe("ErrorUtils", () => {
 			["https://some.url.com/", "", "some.url.com"],
 			["something://some.url.com/", "", "something:"],
 			["some.url.com/path", undefined, "some.url.com"],
-			["some.url.com/", "randomPath", "some.url.com"],
+			["some.url.com/", "randomPath", "some.url.com/REDACTED"],
 			["some.url.com/", socketIoPath, `some.url.com/${socketIoPath}`],
 			["http://some.url.com/", "repos", "some.url.com/repos"],
 			["some.url.com/", "deltas", "some.url.com/deltas"],
 			["https://some.url.com", "documents", "some.url.com/documents"],
 			["https://some.url.com/", "/documents/", "some.url.com/documents"],
-			["https://some.url.com/", "documents/morePath", "some.url.com/documents"],
+			["https://some.url.com/", "documents/morePath", "some.url.com/documents/REDACTED"],
+			[
+				"https://some.url.com",
+				"documents/morePath/documents/latest/abc-123/",
+				"some.url.com/documents/REDACTED/documents/latest/REDACTED",
+			],
 		];
 
 		testCases.forEach((testCase) => {

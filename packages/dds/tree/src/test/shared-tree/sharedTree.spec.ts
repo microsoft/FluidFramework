@@ -47,6 +47,7 @@ import {
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
 	ForestType,
+	getBranch,
 	type ISharedTree,
 	type SharedTree,
 	SharedTreeFactory,
@@ -91,6 +92,7 @@ import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { JsonArray, singleJsonCursor } from "../json/index.js";
+import { AttachState } from "@fluidframework/container-definitions";
 
 const enableSchemaValidation = true;
 
@@ -531,6 +533,53 @@ describe("SharedTree", () => {
 		validateTreeContent(loadingTree.checkout, {
 			schema: StringArray,
 			initialTree: singleJsonCursor(["b", "c"]),
+		});
+	});
+
+	it("can load a summary while detached", async () => {
+		// This test exercises the case where a detached tree loads a summary from another detached tree.
+		// Both trees in this test are detached for the whole duration of the test (because of the `attachState` argument passed to the mock runtime below).
+		// Detached trees are not connected to the sequencing service, but they still "sequence" their edits as if they were totally ordered.
+		// The second tree must take care to avoid sequencing its edits with sequence numbers that the first tree already used.
+		// If it doesn't, the second tree will throw an error when trying to sequence a commit with sequence number that has "gone backwards" and this test will fail.
+		const sharedTreeFactory = new SharedTreeFactory();
+		const runtime = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
+			attachState: AttachState.Detached,
+		});
+		const tree = sharedTreeFactory.create(runtime, "tree");
+		const runtimeFactory = new MockContainerRuntimeFactory();
+		runtimeFactory.createContainerRuntime(runtime);
+
+		const view = tree.viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+		view.initialize(["a"]);
+		// Create a branch to prevent the EditManager from evicting all of its commits - otherwise, the summary won't have these edits in the trunk.
+		getBranch(tree).branch();
+		view.root.insertAtEnd("b");
+
+		const tree2 = sharedTreeFactory.create(runtime, "tree2");
+		await tree2.load({
+			deltaConnection: runtime.createDeltaConnection(),
+			objectStorage: MockStorage.createFromSummary((await tree.summarize()).summary),
+		});
+
+		const loadedView = tree2.viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+
+		loadedView.root.insertAtEnd("c");
+
+		validateTreeContent(tree2.checkout, {
+			schema: StringArray,
+			initialTree: singleJsonCursor(["a", "b", "c"]),
 		});
 	});
 

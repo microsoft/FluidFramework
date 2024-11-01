@@ -7,11 +7,15 @@ import type {
 	ImplicitFieldSchema,
 	TreeArrayNode,
 	TreeMapNode,
-	TreeView,
 	TreeViewConfiguration,
 } from "@fluidframework/tree";
-// eslint-disable-next-line import/no-internal-modules -- This package depends on the branching APIs in Tree which are currently alpha
-import { getBranch, type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
+import {
+	getBranch,
+	type TreeBranch,
+	type TreeBranchFork,
+	type TreeViewAlpha,
+	// eslint-disable-next-line import/no-internal-modules -- This package depends on the branching APIs in Tree which are currently alpha
+} from "@fluidframework/tree/alpha";
 import type { z } from "zod";
 
 import {
@@ -87,7 +91,7 @@ export class SharedTreeBranchManager {
 	 * produces a diff between two objects and merges the differences.
 	 */
 	public checkoutNewMergedBranch<T extends ImplicitFieldSchema>(
-		treeView: TreeView<T>,
+		treeView: TreeViewAlpha<T>,
 		treeViewConfiguration: TreeViewConfiguration<T>,
 		absolutePathToObjectNode: ObjectPath,
 		llmResponse: Record<string, unknown> | unknown[],
@@ -95,12 +99,12 @@ export class SharedTreeBranchManager {
 		differences: Difference[];
 		originalBranch: TreeBranch;
 		forkBranch: TreeBranchFork;
-		forkView: TreeView<T>;
+		forkView: TreeViewAlpha<T>;
 		newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
 	} {
 		const originalBranch = getBranch(treeView);
 		const forkBranch = originalBranch.branch();
-		const forkView = forkBranch.viewWith(treeViewConfiguration);
+		const forkView = forkBranch.viewWith(treeViewConfiguration) as TreeViewAlpha<T>;
 
 		console.log("traveling to absolute path from root:", absolutePathToObjectNode);
 		const newBranchTargetNode = sharedTreeTraverse(
@@ -127,19 +131,19 @@ export class SharedTreeBranchManager {
 	 * Creates a forked branch of a tree view.
 	 */
 	public checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(
-		treeView: TreeView<T>,
+		treeView: TreeViewAlpha<T>,
 		treeViewConfiguration: TreeViewConfiguration<T>,
 		absolutePathToObjectNode: ObjectPath,
 		// differences: Difference[],
 	): {
 		originalBranch: TreeBranch;
 		forkBranch: TreeBranchFork;
-		forkView: TreeView<T>;
+		forkView: TreeViewAlpha<T>;
 		newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
 	} {
 		const originalBranch = getBranch(treeView);
 		const forkBranch = originalBranch.branch();
-		const forkView = forkBranch.viewWith(treeViewConfiguration);
+		const forkView = forkBranch.viewWith(treeViewConfiguration) as TreeViewAlpha<T>;
 		const newBranchTargetNode = sharedTreeTraverse(
 			forkView.root as TreeMapNode | TreeArrayNode | Record<string, unknown>,
 			absolutePathToObjectNode,
