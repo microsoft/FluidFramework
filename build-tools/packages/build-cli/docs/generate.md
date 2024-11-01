@@ -386,7 +386,7 @@ USAGE
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --outDir=<value>          [default: ./src/entrypoints] Directory to emit entrypoint declaration files.
+  --outDir=<value>          [default: ./src/entrypoints] Directory to emit entrypoint files.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

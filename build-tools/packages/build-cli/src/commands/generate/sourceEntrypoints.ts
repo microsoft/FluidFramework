@@ -32,7 +32,7 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 			exists: true,
 		}),
 		outDir: Flags.directory({
-			description: "Directory to emit entrypoint declaration files.",
+			description: "Directory to emit entrypoint files.",
 			default: "./src/entrypoints",
 			exists: true,
 		}),
