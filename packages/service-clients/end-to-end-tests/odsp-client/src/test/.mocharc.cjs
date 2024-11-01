@@ -11,8 +11,8 @@ const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mochar
 const args = process.argv.slice(2);
 
 function getFluidTestVariant() {
-	const driverIndex = args.indexOf("--driver=");
-	const endpointIndex = args.indexOf("--odspEndpointName=");
+	const driverIndex = args.indexOf("--driver");
+	const endpointIndex = args.indexOf("--odspEndpointName");
 
 	const testDriver = driverIndex !== -1 ? args[driverIndex + 1] : "";
 	const endpointName = endpointIndex !== -1 ? args[endpointIndex + 1] : "";

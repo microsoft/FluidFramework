@@ -27,7 +27,7 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"test": "npm run test:realsvc:odsp:run -- --driver=odsp --odspEndpointName=odsp",
+		"test": "npm run test:realsvc:odsp:run -- --driver odsp --odspEndpointName odsp",
 		"test:coverage": "c8 npm test",
 		"test:realsvc:odsp": "cross-env npm run test:realsvc:odsp:run",
 		"test:realsvc:odsp:run": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit --timeout 20000 --config src/test/.mocharc.cjs",
