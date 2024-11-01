@@ -37,7 +37,7 @@
 	"devDependencies": {
 		"@fluid-internal/mocha-test-setup": "^2.3.1",
 		"@fluidframework/build-common": "^2.0.1",
-		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@types/mocha": "^10.0.9",
 		"@types/node": "^14.18.0",
 		"@types/sinon": "^17.0.3",

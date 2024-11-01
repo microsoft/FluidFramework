@@ -46,7 +46,7 @@
 	"devDependencies": {
 		"@fluid-internal/mocha-test-setup": "~2.0.0-rc.3.0.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/benchmark": "^2.1.0",
 		"@types/chai": "^4.3.4",
