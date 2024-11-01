@@ -4,9 +4,10 @@
 ---
 ---
 "section": tree
+highlight: true
 ---
 
-New Alpha APIs for tree data import and export
+✨ New! Alpha APIs for tree data import and export
 
 A collection of new `@alpha` APIs for importing and exporting tree content and schema from SharedTrees has been added to `TreeAlpha`.
 These include import and export APIs for `VerboseTree`, `ConciseTree` and compressed tree formats.

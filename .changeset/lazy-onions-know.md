@@ -10,7 +10,7 @@ Array and Map nodes can now be explicitly constructed with undefined or no argum
 
 The input parameter to the constructor and `create` methods of Array and Map nodes is now optional. When the optional parameter is omitted, an empty map or array will be created.
 
-### Examples
+#### Examples
 
 ```typescript
 class Schema extends schemaFactory.array("x", schemaFactory.number) {}
