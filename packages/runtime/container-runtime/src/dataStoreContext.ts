@@ -530,28 +530,30 @@ export abstract class FluidDataStoreContext
 		return factory;
 	}
 
-	tryCreateChildDataStoreSync<T extends IFluidDataStoreFactory>(
+	createChildDataStoreSync<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>> {
 		const maybe = this.registry?.get(childFactory.type);
 
-		if (
-			maybe === undefined ||
-			isPromiseLike(maybe) ||
-			maybe.IFluidDataStoreFactory !== childFactory
-		) {
+		const isUndefined = maybe === undefined;
+		const isPromise = isPromiseLike(maybe);
+		const diffInstance = isPromise || maybe?.IFluidDataStoreFactory !== childFactory;
+
+		if (isUndefined || isPromise || diffInstance) {
 			throw new UsageError(
 				"The provided factory instance must be synchronously available as a child of this datastore",
+				{ isUndefined, isPromise, diffInstance },
 			);
 		}
-
 		if (childFactory?.createDataStore === undefined) {
-			throw new UsageError("createDataStore must exist on the provided factory");
+			throw new UsageError("createDataStore must exist on the provided factory", {
+				noCreateDataStore: true,
+			});
 		}
 
 		const context = this._containerRuntime.createDetachedDataStore([
 			...this.packagePath,
-			childFactory.IFluidDataStoreFactory.type,
+			childFactory.type,
 		]);
 		assert(
 			context instanceof LocalDetachedFluidDataStoreContext,
