@@ -477,7 +477,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 	}
 
 	public static get registryEntry(): NamedFluidDataStoreRegistryEntry {
-		return [this.type, new AgentSchedulerFactory()];
+		return [this.type, Promise.resolve(new AgentSchedulerFactory())];
 	}
 
 	public static async createChildInstance(

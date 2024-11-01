@@ -185,7 +185,7 @@ export class PureDataObjectFactory<
 	 * @returns The NamedFluidDataStoreRegistryEntry
 	 */
 	public get registryEntry(): NamedFluidDataStoreRegistryEntry {
-		return [this.type, this];
+		return [this.type, Promise.resolve(this)];
 	}
 
 	/**
