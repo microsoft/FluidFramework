@@ -193,13 +193,9 @@ type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @alpha
 export enum FluidClientVersion {
-    // (undocumented)
     v2_0 = "v2_0",
-    // (undocumented)
     v2_1 = "v2_1",
-    // (undocumented)
     v2_2 = "v2_2",
-    // (undocumented)
     v2_3 = "v2_3"
 }
 
