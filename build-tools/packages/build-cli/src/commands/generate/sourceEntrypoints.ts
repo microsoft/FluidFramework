@@ -23,7 +23,7 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 	typeof GenerateSourceEntrypointsCommand
 > {
 	static readonly description =
-		`Generates TypeScript source files that roll up APIs into different entrypoint files, defined by the "exports" field in package.json and organized by API tags"`;
+		`Generates TypeScript source files that roll up APIs into different entrypoint files, defined by the "exports" field in package.json and organized by API tags`;
 
 	static readonly flags = {
 		mainEntrypoint: Flags.file({

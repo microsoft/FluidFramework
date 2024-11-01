@@ -378,7 +378,7 @@ _See code: [src/commands/generate/releaseNotes.ts](https://github.com/microsoft/
 
 ## `flub generate sourceEntrypoints`
 
-Generates TypeScript source files that roll up APIs into different entrypoint files, defined by the "exports" field in package.json and organized by API tags"
+Generates TypeScript source files that roll up APIs into different entrypoint files, defined by the "exports" field in package.json and organized by API tags
 
 ```
 USAGE
@@ -386,7 +386,7 @@ USAGE
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --outDir=<value>          [default: ./src/entrypoints] Directory to emit entrypoint files.
+  --outDir=<value>          [default: ./src/entrypoints/] Directory to emit entrypoint files.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -394,7 +394,7 @@ LOGGING FLAGS
 
 DESCRIPTION
   Generates TypeScript source files that roll up APIs into different entrypoint files, defined by the "exports" field in
-  package.json and organized by API tags"
+  package.json and organized by API tags
 ```
 
 _See code: [src/commands/generate/sourceEntrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/sourceEntrypoints.ts)_
