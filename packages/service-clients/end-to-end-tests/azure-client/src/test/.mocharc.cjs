@@ -6,25 +6,30 @@
 "use strict";
 
 const packageDir = `${__dirname}/../..`;
-const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
+const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common");
+const config = getFluidTestMochaConfig(packageDir);
 
-const args = process.argv.slice(2);
+// const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
-function getFluidTestVariant() {
-	const driverIndex = args.indexOf("--driver");
-	const endpointIndex = args.indexOf("--r11sEndpointName");
+// const args = process.argv.slice(2);
 
-	const testDriver = driverIndex !== -1 ? args[driverIndex + 1] : "";
-	const endpointName = endpointIndex !== -1 ? args[endpointIndex + 1] : "";
+// function getFluidTestVariant() {
+// 	const driverIndex = args.indexOf("--driver");
+// 	const endpointIndex = args.indexOf("--r11sEndpointName");
 
-	return `${testDriver}-${endpointName}`;
-}
+// 	const testDriver = driverIndex !== -1 ? args[driverIndex + 1] : "";
+// 	const endpointName = endpointIndex !== -1 ? args[endpointIndex + 1] : "";
 
-function getFluidTestMocha(packageDir, additionalRequiredModules = []) {
-	const testVariant = getFluidTestVariant();
-	process.env.FLUID_TEST_VARIANT = testVariant;
+// 	return `${testDriver}-${endpointName}`;
+// }
 
-	return getFluidTestMochaConfig(packageDir, additionalRequiredModules, testVariant);
-}
+// function getFluidTestMocha(packageDir, additionalRequiredModules = []) {
+// 	const testVariant = getFluidTestVariant();
+// 	process.env.FLUID_TEST_VARIANT = testVariant;
 
-module.exports = getFluidTestMocha(packageDir);
+// 	return getFluidTestMochaConfig(packageDir, additionalRequiredModules, testVariant);
+// }
+
+// module.exports = getFluidTestMocha(packageDir);
+
+module.exports = config;
