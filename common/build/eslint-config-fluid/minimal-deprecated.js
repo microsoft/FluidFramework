@@ -254,45 +254,32 @@ module.exports = {
 
 		// #region FORMATTING RULES
 
+		// We use formatting tools like Biome or prettier to format code, so most formatting-related rules are superfluous
+		// and are disabled. Running fewer rules also improves lint performance.
+
 		// Disabled because it conflicts with formatter rules
 		"@typescript-eslint/brace-style": "off",
-		"@typescript-eslint/comma-spacing": "error",
-		"@typescript-eslint/func-call-spacing": "error",
-		"@typescript-eslint/keyword-spacing": "error",
-		"@typescript-eslint/member-delimiter-style": [
-			"error",
-			{
-				multiline: {
-					delimiter: "semi",
-					requireLast: true,
-				},
-				singleline: {
-					delimiter: "semi",
-					requireLast: true,
-				},
-				multilineDetection: "brackets",
-			},
-		],
-		"@typescript-eslint/object-curly-spacing": ["error", "always"],
-		"@typescript-eslint/semi": ["error", "always"],
-		"@typescript-eslint/space-before-function-paren": [
-			"error",
-			{
-				anonymous: "never",
-				asyncArrow: "always",
-				named: "never",
-			},
-		],
-		"@typescript-eslint/space-infix-ops": "error",
-		"@typescript-eslint/type-annotation-spacing": "error",
-		"array-bracket-spacing": "error",
-		"arrow-spacing": "error",
-		"block-spacing": "error",
-		"dot-location": ["error", "property"],
-		"jsx-quotes": "error",
-		"key-spacing": "error",
-		"space-unary-ops": "error",
-		"switch-colon-spacing": "error",
+		"@typescript-eslint/comma-spacing": "off",
+		"@typescript-eslint/func-call-spacing": "off",
+		"@typescript-eslint/keyword-spacing": "off",
+		"@typescript-eslint/member-delimiter-style": "off",
+
+		// this rule is also deprecated.
+		"@typescript-eslint/object-curly-spacing": "off",
+		"@typescript-eslint/semi": "off",
+		"@typescript-eslint/space-before-function-paren": "off",
+		"@typescript-eslint/space-infix-ops": "off",
+		"@typescript-eslint/type-annotation-spacing": "off",
+
+		// The rules below are all deprecated
+		"array-bracket-spacing": "off",
+		"arrow-spacing": "off",
+		"block-spacing": "off",
+		"dot-location": "off",
+		"jsx-quotes": "off",
+		"key-spacing": "off",
+		"space-unary-ops": "off",
+		"switch-colon-spacing": "off",
 
 		// #endregion
 
