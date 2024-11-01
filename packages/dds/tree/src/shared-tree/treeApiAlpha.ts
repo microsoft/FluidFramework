@@ -86,7 +86,7 @@ export const TreeAlpha: {
 	 * Less type safe version of {@link TreeAlpha.create}, suitable for importing data.
 	 * @remarks
 	 * Due to {@link ConciseTree} relying on type inference from the data, its use is somewhat limited.
-	 * This does not support {@link ConciseTree}'s with customized handle encodings or using persisted keys.
+	 * This does not support {@link ConciseTree|ConciseTrees} with customized handle encodings or using persisted keys.
 	 * Use "compressed" or "verbose" formats for more flexibility.
 	 *
 	 * When using this function,
@@ -111,7 +111,9 @@ export const TreeAlpha: {
 	/**
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
-	 * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
+	 * @param data - The data used to construct the field content. See {@link TreeAlpha.exportVerbose}.
+	 * @remarks
+	 * This overload requires that any {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} are encoded as actual {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the input.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
@@ -122,9 +124,10 @@ export const TreeAlpha: {
 	/**
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
-	 * @param data - The data used to construct the field content. See `Tree.cloneToJSONVerbose`.
-	 * @privateRemarks
-	 * This could be exposed as a public `Tree.createFromVerbose` function.
+	 * @param data - The data used to construct the field content. See {@link TreeAlpha.exportVerbose}.
+	 *
+	 * @typeparam THandle - How {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the input `data` are encoded.
+	 * A converter from this encoding to {@link @fluidframework/core-interfaces#IFluidHandle} is required in `options`.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema, THandle>(
 		schema: TSchema,
@@ -133,7 +136,7 @@ export const TreeAlpha: {
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
-	 * Same as generic overload, except leaves handles as is.
+	 * Same as {@link TreeAlpha.(exportConcise:2)}, except leaves handles as is.
 	 */
 	exportConcise(
 		node: TreeNode | TreeLeafValue,
@@ -142,10 +145,13 @@ export const TreeAlpha: {
 
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
+	 *
+	 * @typeparam THandle - How {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the output should be encoded.
+	 * A converter from from {@link @fluidframework/core-interfaces#IFluidHandle} to this format is required in `options`.
 	 */
 	exportConcise<THandle>(
 		node: TreeNode | TreeLeafValue,
-		options?: EncodeOptions<THandle>,
+		options: EncodeOptions<THandle>,
 	): ConciseTree<THandle>;
 
 	/**
@@ -159,6 +165,9 @@ export const TreeAlpha: {
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object.
 	 * Verbose tree format, with explicit type on every node.
+	 *
+	 * @typeparam THandle - How {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles} in the output should be encoded.
+	 * A converter from from {@link @fluidframework/core-interfaces#IFluidHandle} to this format is required in `options`.
 	 *
 	 * @remarks
 	 * There are several cases this may be preferred to {@link TreeAlpha.(exportConcise:2)}:
@@ -196,7 +205,7 @@ export const TreeAlpha: {
 	/**
 	 * Import data encoded by {@link TreeAlpha.exportCompressed}.
 	 *
-	 * @param schema - Schema with witch the data must be compatible. This compatibility is not verified and must be ensured by the caller.
+	 * @param schema - Schema with which the data must be compatible. This compatibility is not verified and must be ensured by the caller.
 	 * @param compressedData - Data compressed by {@link TreeAlpha.exportCompressed}.
 	 * @param options - If {@link TreeAlpha.exportCompressed} was given an `idCompressor`, it must be provided here.
 	 *
@@ -249,6 +258,7 @@ export const TreeAlpha: {
 			},
 			...options,
 		};
+		// Create a config which is standalone, and thus can be used without having to refer back to the schema.
 		const schemalessConfig = applySchemaToParserOptions(schema, config);
 		if (data === undefined) {
 			const field = normalizeFieldSchema(schema);
@@ -308,7 +318,7 @@ export const TreeAlpha: {
 		const context: FieldBatchEncodingContext = {
 			encodeType: TreeCompressionStrategy.Compressed,
 			idCompressor,
-			originatorId: idCompressor.localSessionId, // Is this right? If so, why is is needed?
+			originatorId: idCompressor.localSessionId, // TODO: Is this right? If so, why is is needed?
 			schema: { schema: toStoredSchema(schema), policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
