@@ -222,7 +222,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				order,
 				connectionId,
 				getStatus: () => {
-					throw new Error("Connection status unkonown");
+					throw new Error("Connection status unknown");
 				},
 			};
 			this.attendees.set(clientSessionId, attendee);
