@@ -13,12 +13,13 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	type ReadableField,
+	type ReadSchema,
 	type TreeFieldFromImplicitField,
-	type TreeLeafValue,
 	type UnsafeUnknownSchema,
 	FieldKind,
 } from "../schemaTypes.js";
-import { NodeKind, type TreeNode, type TreeNodeSchema } from "../core/index.js";
+import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -442,13 +443,8 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  */
 export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> extends Omit<
-		TreeView<TSchema extends ImplicitFieldSchema ? TSchema : ImplicitFieldSchema>,
-		"root" | "initialize"
-	> {
-	get root(): TSchema extends ImplicitFieldSchema
-		? TreeFieldFromImplicitField<TSchema>
-		: TreeLeafValue | TreeNode;
+> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize"> {
+	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
 

@@ -137,6 +137,8 @@ export {
 	type InsertableContent,
 	type FactoryContent,
 	type FactoryContentObject,
+	type ReadableField,
+	type ReadSchema,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,

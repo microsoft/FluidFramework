@@ -561,6 +561,13 @@ export interface RuntimeHeaderData {
 	allowTombstone?: boolean;
 }
 
+/** Default values for Runtime Headers */
+export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
+	wait: true,
+	viaHandle: false,
+	allowTombstone: false,
+};
+
 /**
  * Available compression algorithms for op compression.
  * @legacy
