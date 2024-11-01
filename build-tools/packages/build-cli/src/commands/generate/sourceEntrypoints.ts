@@ -6,13 +6,11 @@
 import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import type { TsConfigJson } from "type-fest";
-import {
-	generateSourceEntrypoints,
-	optionDefaults,
-	readPackageJson,
-	readTsConfig,
-} from "../../library/commands/generateSourceEntrypoints.js";
-import { ApiTag, BaseCommand } from "../../library/index.js";
+import { generateSourceEntrypoints } from "../../library/commands/generateSourceEntrypoints.js";
+import { ApiLevel, ApiTag, BaseCommand } from "../../library/index.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
+import { readPackageJson, readTsConfig } from "../../library/package.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
 import { type ExportData, mapExportPathsFromPackage } from "../../library/packageExports.js";
@@ -25,32 +23,36 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 	typeof GenerateSourceEntrypointsCommand
 > {
 	static readonly description =
-		`Generates TypeScript source files that roll up APIs into different entrypoint files. The entrypoints are determined based on the "exports" field in package.json."`;
+		`Generates TypeScript source files that roll up APIs into different entrypoint files, defined by the "exports" field in package.json and organized by API tags"`;
 
 	static readonly flags = {
 		mainEntrypoint: Flags.file({
 			description: "Main entrypoint file containing all untrimmed exports.",
-			default: optionDefaults.mainEntrypoint,
+			default: "./src/index.ts",
+			exists: true,
+		}),
+		outDir: Flags.directory({
+			description: "Directory to emit entrypoint declaration files.",
+			default: "./src/entrypoints",
 			exists: true,
 		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
-		const { mainEntrypoint } = this.flags;
+		const { mainEntrypoint, outDir } = this.flags;
 
 		const packageJson = await readPackageJson();
 
 		const tsConfig = await readTsConfig();
 
-		const { outFileSuffix, outFileAlpha, outFileBeta, outFileLegacy, outFilePublic, outDir } =
-			optionDefaults;
+		const outFileSuffix = ".ts";
 
 		const mapSrcQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined> = new Map([
-			[`${outDir}${outFileAlpha}${outFileSuffix}`, ApiTag.alpha],
-			[`${outDir}${outFileBeta}${outFileSuffix}`, ApiTag.beta],
-			[`${outDir}${outFilePublic}${outFileSuffix}`, ApiTag.public],
-			[`${outDir}${outFileLegacy}${outFileSuffix}`, ApiTag.legacy],
+			[`${outDir}${ApiLevel.alpha}${outFileSuffix}`, ApiTag.alpha],
+			[`${outDir}${ApiLevel.beta}${outFileSuffix}`, ApiTag.beta],
+			[`${outDir}${ApiLevel.public}${outFileSuffix}`, ApiTag.public],
+			[`${outDir}${ApiLevel.legacy}${outFileSuffix}`, ApiTag.legacy],
 		]);
 
 		const mapSrcApiTagLevelToOutput = getOutputConfiguration(
@@ -68,14 +70,7 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 			);
 		}
 
-		const promises: Promise<void>[] = [];
-		promises.push(
-			generateSourceEntrypoints(mainEntrypoint, mapSrcApiTagLevelToOutput, this.logger),
-		);
-
-		// All of the output actions (deletes of stale files or writing of new/updated files)
-		// are all independent and can be done in parallel.
-		await Promise.all(promises);
+		return generateSourceEntrypoints(mainEntrypoint, mapSrcApiTagLevelToOutput, this.logger);
 	}
 }
 

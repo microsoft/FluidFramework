@@ -58,6 +58,7 @@ import {
 	IFluidDataStoreChannel,
 	VisibilityState,
 	type ITelemetryContext,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -108,12 +109,19 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.setConnectionState(connected);
 	}
 
+	/**
+	 * @deprecated - This has been replaced by processMessages
+	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
 		this.handler?.process(message, local, localOpMetadata);
+	}
+
+	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		this.handler?.processMessages?.(messageCollection);
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
@@ -990,6 +998,9 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
+	/**
+	 * @deprecated - This has been replaced by processMessages
+	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -998,6 +1009,20 @@ export class MockFluidDataStoreRuntime
 		this.deltaConnections.forEach((dc) => {
 			dc.process(message, local, localOpMetadata);
 		});
+	}
+
+	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		for (const {
+			contents,
+			localOpMetadata,
+			clientSequenceNumber,
+		} of messageCollection.messagesContent) {
+			this.process(
+				{ ...messageCollection.envelope, contents, clientSequenceNumber },
+				messageCollection.local,
+				localOpMetadata,
+			);
+		}
 	}
 
 	public processSignal(message: any, local: boolean) {

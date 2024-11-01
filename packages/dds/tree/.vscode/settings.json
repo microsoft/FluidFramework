@@ -16,10 +16,12 @@
 	// mocha test config isn't sufficient; it also needs to be enabled here.
 	"mochaExplorer.nodeArgv": ["--conditions", "allow-ff-test-exports"],
 	"cSpell.words": [
+		"contravariance",
 		"contravariantly",
 		"covariantly",
 		"deprioritized",
 		"endregion",
+		"fluidframework",
 		"insertable",
 		"reentrantly",
 		"typeparam",

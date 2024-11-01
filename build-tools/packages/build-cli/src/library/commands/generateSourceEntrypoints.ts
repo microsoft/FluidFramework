@@ -3,42 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import fs from "node:fs/promises";
-import JSON5 from "json5";
-
-import type { PackageJson } from "@fluidframework/build-tools";
 import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
-import type { TsConfigJson } from "type-fest";
 
 import type { CommandLogger } from "../../logging.js";
-
-import { ApiLevel } from "../apiLevel.js";
 import { ApiTag } from "../apiTag.js";
 import type { ExportData } from "../packageExports.js";
 import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
-
-export const optionDefaults = {
-	mainEntrypoint: "./src/index.ts",
-	outFileAlpha: ApiLevel.alpha,
-	outFileBeta: ApiLevel.beta,
-	outFileLegacy: ApiLevel.legacy,
-	outFilePublic: ApiLevel.public,
-	outFileSuffix: ".ts",
-	outDir: "src/entrypoints/",
-} as const;
-
-// Reads and parses the `package.json` file in the current directory.
-export async function readPackageJson(): Promise<PackageJson> {
-	const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
-	return JSON.parse(packageJson) as PackageJson;
-}
-
-// Reads and parses the `tsconfig.json` file in the current directory.
-export async function readTsConfig(): Promise<TsConfigJson> {
-	const tsConfigContent = await fs.readFile("./tsconfig.json", { encoding: "utf8" });
-	return JSON5.parse(tsConfigContent);
-}
 
 function sourceContext(node: Node): string {
 	return `${node.getSourceFile().getFilePath()}:${node.getStartLineNumber()}`;
