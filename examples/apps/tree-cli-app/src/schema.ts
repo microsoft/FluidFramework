@@ -6,7 +6,7 @@
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 
 /**
- *
+ * The SchemaFactory.
  */
 export const schemaBuilder = new SchemaFactory("com.fluidframework.example.cli");
 

@@ -37,11 +37,16 @@ import type { Item } from "./schema.js";
 import { config, List } from "./schema.js";
 
 /**
- * Load from file.
+ * Examples showing how to import data in a variety of formats.
+ *
+ * @param source - What data to load.
+ * If "default" or `undefined` data will come from a hard coded small default tree.
+ * Otherwise assumed to be a file path ending in a file matching `*.FORMAT.json` where format defines how to parse the file.
+ * See implementation for supported formats and how they are encoded.
  */
 export function loadDocument(source: string | undefined): List {
 	if (source === undefined || source === "default") {
-		return new List([]);
+		return new List([{ name: "default", position: { x: 0, y: 0 } }]);
 	}
 	const parts = source.split(".");
 	if (parts.length < 3 || parts.at(-1) !== "json") {
@@ -89,7 +94,11 @@ export function loadDocument(source: string | undefined): List {
 }
 
 /**
- * Save to file.
+ * Examples showing how to export data in a variety of formats.
+ *
+ * @param destination - Where to save the data, and in what format.
+ * If `undefined` data will logged to the console.
+ * Otherwise see {@link exportContent}.
  */
 export function saveDocument(destination: string | undefined, tree: List): void {
 	if (destination === undefined || destination === "default") {
@@ -109,7 +118,11 @@ export function saveDocument(destination: string | undefined, tree: List): void 
 }
 
 /**
- * Encode to format based on file name.
+ * Examples showing how to export data in a variety of formats.
+ *
+ * @param destination - File path used to select the format.
+ * Assumed to be a file path ending in a file matching `*.FORMAT.json` where format defines how to parse the file.
+ * See implementation for supported formats and how they are encoded.
  */
 export function exportContent(destination: string, tree: List): JsonCompatible {
 	const parts = destination.split(".");
@@ -138,7 +151,8 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 			}) as JsonCompatible;
 		}
 		case "snapshot": {
-			const idCompressor = createIdCompressor(); // TODO: get from tree?
+			// TODO: This should be made better. See privateRemarks on TreeAlpha.exportCompressed.
+			const idCompressor = createIdCompressor();
 			const file: File = {
 				tree: TreeAlpha.exportCompressed(tree, {
 					oldestCompatibleClient: FluidClientVersion.v2_3,

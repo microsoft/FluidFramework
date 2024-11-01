@@ -219,6 +219,10 @@ export function count(iterable: Iterable<unknown>): number {
 
 /**
  * Use for Json compatible data.
+ *
+ * @typeparam TExtra - Type permitted in addition to the normal JSON types.
+ * Commonly used for to allow {@link @fluidframework/core-interfaces#IFluidHandle} within the otherwise JSON compatible content.
+ *
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.

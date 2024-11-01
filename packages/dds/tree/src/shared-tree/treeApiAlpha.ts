@@ -179,6 +179,14 @@ export const TreeAlpha: {
 	 *
 	 * Always uses "stored" keys.
 	 * See {@link EncodeOptions.useStoredKeys} for details.
+	 * @privateRemarks
+	 * TODO: It is currently not clear how to work with the idCompressors correctly in the package API.
+	 * Better APIs should probably be provided as there is currently no way to associate an un-hydrated tree with an idCompressor,
+	 * Nor get the correct idCompressor from a subtree to use when exporting it.
+	 * Additionally using `createIdCompressor` to make an idCompressor is `@legacy` and thus not intended for use in this API surface.
+	 * It would probably make more sense if we provided a way to get an idCompressor from the context of a node,
+	 * which could be optional (and settable if missing) for un0hydrated nodes and required for hydrated ones.
+	 * Add in a stable public APi for creating idCompressors, and a way to get them from a tree (without view schema), and that should address the anticipated use-cases.
 	 */
 	exportCompressed(
 		tree: TreeNode | TreeLeafValue,

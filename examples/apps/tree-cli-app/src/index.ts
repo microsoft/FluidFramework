@@ -16,7 +16,7 @@ console.log(
 	`File formats are specified by extension, for example ".verbose.json" uses the "verbose" format.`,
 );
 console.log(
-	`See implementation for supported formats and edit syntax: this is just a demon, not a nice app!`,
+	`See implementation for supported formats and edit syntax: this is just a demo, not a nice app!`,
 );
 console.log(`Running with augments: ${args}`);
 
