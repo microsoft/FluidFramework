@@ -614,7 +614,18 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
-	tryCreateChildDataStoreSync?<T extends IFluidDataStoreFactory>(
+	/**
+	 * This function creates a detached child datastore synchronously.
+	 * In order for this function to succeed:
+	 * 1. This datastore's factory must also be a IFluidDataStoreRegistry,
+	 * 2. This datastore's registry must include the same instance as the provided child factory.
+	 * 3. The datastore's registry must synchronously provide the child factory.
+	 * These invariant's ensure that the child datastore can also be created by a remote client
+	 * running the same code as this client.
+	 *
+	 * @param childFactory - The factory of the datastore to be created.
+	 */
+	createChildDataStoreSync?<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }

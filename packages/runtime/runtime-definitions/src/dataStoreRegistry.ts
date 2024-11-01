@@ -20,7 +20,10 @@ export type FluidDataStoreRegistryEntry = Readonly<
  * @legacy
  * @alpha
  */
-export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+export type NamedFluidDataStoreRegistryEntry = [
+	string,
+	Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry,
+];
 /**
  * An iterable identifier/registry entry pair list
  * @legacy

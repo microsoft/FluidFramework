@@ -551,7 +551,7 @@ export abstract class FluidDataStoreContext
 
 		const context = this._containerRuntime.createDetachedDataStore([
 			...this.packagePath,
-			maybe.IFluidDataStoreFactory.type,
+			childFactory.IFluidDataStoreFactory.type,
 		]);
 		assert(
 			context instanceof LocalDetachedFluidDataStoreContext,
@@ -1470,6 +1470,17 @@ export class LocalDetachedFluidDataStoreContext
 		return this.channelToDataStoreFn(await this.channelP);
 	}
 
+	/**
+	 * This method provides a synchronous path for binding a runtime to the context.
+	 *
+	 * Due to its synchronous nature, it is unable to validate that the runtime
+	 * represents a datastore which is instantiable by remote clients. This could
+	 * happen if the runtime's package path does not return a factory when looked up
+	 * in the container runtime's registry, or if the runtime's entrypoint is not
+	 * properly initialized. As both of these validation's are asynchronous to preform.
+	 *
+	 * If used incorrectly, this function can result in permanent data corruption.
+	 */
 	public unsafe_AttachRuntimeSync(channel: IFluidDataStoreChannel) {
 		this.channelP = Promise.resolve(channel);
 		this.processPendingOps(channel);

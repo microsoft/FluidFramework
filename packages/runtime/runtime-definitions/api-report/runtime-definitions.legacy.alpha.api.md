@@ -157,6 +157,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
+    createChildDataStoreSync?<T extends IFluidDataStoreFactory>(childFactory: T): ReturnType<Exclude<T["createDataStore"], undefined>>;
     // @deprecated (undocumented)
     readonly createProps?: any;
     // @deprecated (undocumented)
@@ -165,8 +166,6 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     readonly id: string;
     readonly isLocalDataStore: boolean;
     readonly packagePath: readonly string[];
-    // (undocumented)
-    tryCreateChildDataStoreSync?<T extends IFluidDataStoreFactory>(childFactory: T): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }
 
 // @alpha (undocumented)
@@ -393,7 +392,10 @@ export interface LocalAttributionKey {
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
 
 // @alpha
-export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+export type NamedFluidDataStoreRegistryEntry = [
+string,
+Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
+];
 
 // @alpha
 export interface OpAttributionKey {
