@@ -331,11 +331,13 @@ stages:
   displayName: 'Deploy website'
   pool: Small
   dependsOn: ['build', 'guardian', 'check_branch_version']
+  variables:
+    deployOverrideVar: ${{ parameters.deployOverride }}
   condition: and(
-    not(eq(${{ parameters.deployOverride }}, 'skip')),
+    not(eq(variables['deployOverrideVar'], 'skip')),
     or(
       eq(dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'], 'true'),
-      eq(${{ parameters.deployOverride }}, 'force')
+      eq(variables['deployOverrideVar'], 'force')
     ))
   jobs:
     - job: deploy_site
