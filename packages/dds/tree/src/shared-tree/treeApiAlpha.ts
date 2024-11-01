@@ -313,12 +313,12 @@ export const TreeAlpha: {
 		const codec = makeFieldBatchCodec({ jsonValidator: noopValidator }, format);
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
-		// If none provided, create a compressor which will not compress anything (TODO: is this the right way to do that?).
+		// If none provided, create a compressor which will not compress anything.
 		const idCompressor = options.idCompressor ?? createIdCompressor();
 		const context: FieldBatchEncodingContext = {
 			encodeType: TreeCompressionStrategy.Compressed,
 			idCompressor,
-			originatorId: idCompressor.localSessionId, // TODO: Is this right? If so, why is is needed?
+			originatorId: idCompressor.localSessionId, // TODO: Why is this needed?
 			schema: { schema: toStoredSchema(schema), policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
