@@ -171,9 +171,18 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 }
 
 /**
- * Encode to format based on file name.
+ * Example of editing a tree.
+ * This allows for some basic editing of `list` sufficient to add and remove items to create trees of different sizes.
+ *
+ * This interprets `edits` as a comma separated list of edits to apply to `tree`.
+ *
+ * Each edit is in the format `kind:count`.
+ * Count is a number and indicates how many nodes to add when positive, and how many to remove when negative.
+ *
+ * Positive numbers have valid kinds of "string" and "item" to insert that many strings or items to `list`.
+ * Negative numbers have valid kinds of "start" or "end" to indicate if the items should be removed from the start or end of `list`.
  */
-export function applyEdit(edits: string, tree: List): void {
+export function applyEdit(edits: string, list: List): void {
 	for (const edit of edits.split(",")) {
 		console.log(`Applying edit ${edit}`);
 		const parts = edit.split(":");
@@ -201,15 +210,15 @@ export function applyEdit(edits: string, tree: List): void {
 				}
 			}
 			// eslint-disable-next-line unicorn/no-new-array
-			tree.insertAtEnd(TreeArrayNode.spread(new Array(count).fill(data)));
+			list.insertAtEnd(TreeArrayNode.spread(new Array(count).fill(data)));
 		} else {
 			switch (kind) {
 				case "start": {
-					tree.removeRange(0, -count);
+					list.removeRange(0, -count);
 					break;
 				}
 				case "end": {
-					tree.removeRange(tree.length + count, -count);
+					list.removeRange(list.length + count, -count);
 					break;
 				}
 				default: {
