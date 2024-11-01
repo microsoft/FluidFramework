@@ -138,7 +138,7 @@ export async function getChangedSinceRef<P extends IPackage>(
 	dirs: string[];
 	workspaces: IWorkspace[];
 	releaseGroups: IReleaseGroup[];
-	packages: IPackage[];
+	packages: P[];
 }> {
 	const gitRoot = findGitRootSync(fluidRepo.root);
 	const git = await fluidRepo.getGitRepository();
@@ -155,7 +155,6 @@ export async function getChangedSinceRef<P extends IPackage>(
 		})
 		.map((filePath) => fluidRepo.relativeToRepo(filePath));
 	const dirs = filePathsToDirectories(files);
-	// .map((dir) => fluidRepo.relativeToRepo(dir));
 
 	const changedPackageNames = dirs
 		.map((dir) => {
