@@ -170,19 +170,6 @@ export class Interval implements ISerializableInterval {
 	}
 
 	/**
-	 * {@inheritDoc ISerializableInterval.addProperties}
-	 */
-	public addProperties(
-		newProps: PropertySet,
-		collaborating: boolean = false,
-		seq?: number,
-	): PropertySet | undefined {
-		if (newProps) {
-			return this.propertyManager.addProperties(this.properties, newProps, seq, collaborating);
-		}
-	}
-
-	/**
 	 * {@inheritDoc IInterval.modify}
 	 */
 	public modify(

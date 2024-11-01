@@ -10,7 +10,6 @@ import { assert, Heap, IComparer } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { IAttributionCollectionSerializer } from "./attributionCollection.js";
-// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
 import { DoublyLinkedList, ListNode } from "./collections/index.js";
 import {
@@ -143,7 +142,7 @@ const LRUSegmentComparer: IComparer<LRUSegment> = {
 	compare: (a, b) => a.maxSeq - b.maxSeq,
 };
 
-export function ackSegment(
+function ackSegment(
 	segment: ISegmentLeaf,
 	// eslint-disable-next-line import/no-deprecated
 	segmentGroup: SegmentGroup,
@@ -243,11 +242,6 @@ export interface IMergeTreeOptions {
 	newMergeTreeSnapshotFormat?: boolean;
 
 	/**
-	 * Options related to attribution
-	 */
-	attribution?: IMergeTreeAttributionOptions;
-
-	/**
 	 * Enables support for the obliterate operation -- a stronger form of remove
 	 * which deletes concurrently inserted segments
 	 *
@@ -298,9 +292,7 @@ export function errorIfOptionNotTrue(
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated  This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface IMergeTreeAttributionOptions {
 	/**
@@ -326,9 +318,7 @@ export interface IMergeTreeAttributionOptions {
 /**
  * Implements policy dictating which kinds of operations should be attributed and how.
  * @sealed
- * @legacy
- * @alpha
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface AttributionPolicy {
 	/**
@@ -338,7 +328,6 @@ export interface AttributionPolicy {
 	 *
 	 * This must be done in an eventually consistent fashion.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	attach: (client: Client) => void;
 	/**
 	 * Disables tracking attribution information on segments.
@@ -553,7 +542,6 @@ class Obliterates {
 		const overlapping: ObliterateInfo[] = [];
 		for (const start of this.startOrdered.items) {
 			if (start.getSegment()!.ordinal <= seg.ordinal) {
-				// eslint-disable-next-line import/no-deprecated
 				const ob = start.properties?.obliterate as ObliterateInfo;
 				if (ob.end.getSegment()!.ordinal >= seg.ordinal) {
 					overlapping.push(ob);
@@ -1614,10 +1602,8 @@ export class MergeTree {
 					continue;
 				}
 
-				// eslint-disable-next-line import/no-deprecated
 				let oldest: ObliterateInfo | undefined;
 				let normalizedOldestSeq: number = 0;
-				// eslint-disable-next-line import/no-deprecated
 				let newest: ObliterateInfo | undefined;
 				let normalizedNewestSeq: number = 0;
 				const movedClientIds: number[] = [];
@@ -1691,9 +1677,8 @@ export class MergeTree {
 		const next: ISegmentLeaf = segment.splitAt(pos)!;
 
 		if (segment?.segmentGroups) {
-			// eslint-disable-next-line import/no-deprecated
 			next.segmentGroups ??= new SegmentGroupCollection(next);
-			segment.segmentGroups.copyTo(next);
+			segment.segmentGroups.copyTo(next.segmentGroups);
 		}
 
 		if (segment.prevObliterateByInserter) {
@@ -1704,7 +1689,6 @@ export class MergeTree {
 			if (segment.propertyManager === undefined) {
 				next.properties = clone(segment.properties);
 			} else {
-				// eslint-disable-next-line import/no-deprecated
 				next.propertyManager ??= new PropertiesManager();
 				next.properties = segment.propertyManager.copyTo(
 					segment.properties,
@@ -1952,7 +1936,6 @@ export class MergeTree {
 				0x5ad /* Cannot change the markerId of an existing marker */,
 			);
 
-			// eslint-disable-next-line import/no-deprecated
 			const propertyManager = (segment.propertyManager ??= new PropertiesManager());
 			const properties = (segment.properties ??= createMap());
 			const propertyDeltas = propertyManager.addProperties(
@@ -2439,7 +2422,6 @@ export class MergeTree {
 						UniversalSequenceNumber,
 						{ op: annotateOp },
 
-						// eslint-disable-next-line import/no-deprecated
 						PropertiesRollback.Rollback,
 					);
 					i++;

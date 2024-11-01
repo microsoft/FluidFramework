@@ -27,17 +27,45 @@ import {
  * @legacy
  * @alpha
  */
-export abstract class SequenceEvent<
+export interface SequenceEvent<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
 > {
+	readonly deltaOperation: TOperation;
+
+	readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
+	/**
+	 * The in-order ranges affected by this delta.
+	 * These are not necessarily contiguous.
+	 *
+	 * @remarks - If processing code doesn't care about the order of the ranges, it may instead consider using the
+	 * {@link @fluidframework/merge-tree#IMergeTreeDeltaCallbackArgs.deltaSegments|deltaSegments} field on {@link SequenceEvent.deltaArgs|deltaArgs}.
+	 */
+	readonly ranges: readonly Readonly<ISequenceDeltaRange<TOperation>>[];
+
+	/**
+	 * The client id of the client that made the change which caused the delta event
+	 */
+	readonly clientId: string | undefined;
+
+	/**
+	 * The first of the modified ranges.
+	 */
+	readonly first: Readonly<ISequenceDeltaRange<TOperation>>;
+
+	/**
+	 * The last of the modified ranges.
+	 */
+	readonly last: Readonly<ISequenceDeltaRange<TOperation>>;
+}
+abstract class SequenceEventClass<
+	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
+> implements SequenceEvent<TOperation>
+{
 	public readonly deltaOperation: TOperation;
 	private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
 	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
 	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
-	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
-	 */
 	constructor(
 		/**
 		 * Arguments reflecting the type of change that caused this event.
@@ -126,7 +154,7 @@ export interface SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperatio
 	readonly opArgs: IMergeTreeDeltaOpArgs;
 }
 export class SequenceDeltaEventClass
-	extends SequenceEvent<MergeTreeDeltaOperationType>
+	extends SequenceEventClass<MergeTreeDeltaOperationType>
 	implements SequenceDeltaEvent
 {
 	/**
@@ -144,27 +172,6 @@ export class SequenceDeltaEventClass
 		this.isLocal = opArgs.sequencedMessage === undefined;
 	}
 }
-/**
- * @legacy
- * @alpha
- */
-export const SequenceDeltaEvent: {
-	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
-	 */
-	new (
-		opArgs: IMergeTreeDeltaOpArgs,
-		deltaArgs: IMergeTreeDeltaCallbackArgs,
-		// eslint-disable-next-line import/no-deprecated
-		mergeTreeClient: Client,
-	): SequenceDeltaEvent;
-	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
-	 * @privateRemarks This is not required for practical compatibility, but is included to keep
-	 * type test happy without a class static break entry.
-	 */
-	prototype: SequenceDeltaEvent;
-} = SequenceDeltaEventClass;
 
 /**
  * The event object returned on maintenance events.
@@ -179,7 +186,7 @@ export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMainten
 	readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 export class SequenceMaintenanceEventClass
-	extends SequenceEvent<MergeTreeMaintenanceType>
+	extends SequenceEventClass<MergeTreeMaintenanceType>
 	implements SequenceMaintenanceEvent
 {
 	constructor(
@@ -196,27 +203,6 @@ export class SequenceMaintenanceEventClass
 		super(deltaArgs, mergeTreeClient);
 	}
 }
-/**
- * @legacy
- * @alpha
- */
-export const SequenceMaintenanceEvent: {
-	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
-	 */
-	new (
-		opArgs: IMergeTreeDeltaOpArgs | undefined,
-		deltaArgs: IMergeTreeMaintenanceCallbackArgs,
-		// eslint-disable-next-line import/no-deprecated
-		mergeTreeClient: Client,
-	): SequenceMaintenanceEvent;
-	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
-	 * @privateRemarks This is not required for practical compatibility, but is included to keep
-	 * type test happy without a class static break entry.
-	 */
-	prototype: SequenceMaintenanceEvent;
-} = SequenceMaintenanceEventClass;
 
 /**
  * A range that has changed corresponding to a segment modification.

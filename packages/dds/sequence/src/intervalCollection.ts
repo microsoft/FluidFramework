@@ -734,7 +734,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @param end - interval end position (exclusive)
 	 * @param props - properties of the interval
 	 * @returns - the created interval
-	 * @remarks See documentation on {@link (SequenceInterval:interface)} for comments on
+	 * @remarks See documentation on {@link SequenceInterval} for comments on
 	 * interval endpoint semantics: there are subtleties with how the current
 	 * half-open behavior is represented.
 	 *

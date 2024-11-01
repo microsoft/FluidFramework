@@ -177,7 +177,79 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_BaseSegment": {
+				"backCompat": false
+			},
+			"Class_Marker": {
+				"backCompat": false
+			},
+			"Class_MergeNode": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Class_TextSegment": {
+				"backCompat": false
+			},
+			"Class_TrackingGroup": {
+				"backCompat": false
+			},
+			"Class_SegmentGroupCollection": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassStatics_BaseSegment": {
+				"backCompat": false
+			},
+			"ClassStatics_Marker": {
+				"backCompat": false
+			},
+			"ClassStatics_MergeNode": {
+				"backCompat": false
+			},
+			"ClassStatics_TextSegment": {
+				"backCompat": false
+			},
+			"ClassStatics_TrackingGroup": {
+				"backCompat": false
+			},
+			"ClassStatics_SegmentGroupCollection": {
+				"backCompat": false
+			},
+			"Interface_IMergeTreeDeltaCallbackArgs": {
+				"backCompat": false
+			},
+			"Interface_IMergeTreeMaintenanceCallbackArgs": {
+				"backCompat": false
+			},
+			"Interface_IMergeTreeSegmentDelta": {
+				"backCompat": false
+			},
+			"Interface_IMoveInfo": {
+				"backCompat": false
+			},
+			"Interface_ISegment": {
+				"backCompat": false
+			},
+			"Interface_ITrackingGroup": {
+				"backCompat": false
+			},
+			"Interface_ObliterateInfo": {
+				"backCompat": false
+			},
+			"Interface_ReferencePosition": {
+				"backCompat": false
+			},
+			"Interface_SegmentGroup": {
+				"backCompat": false
+			},
+			"TypeAlias_MergeTreeDeltaRevertible": {
+				"backCompat": false
+			},
+			"TypeAlias_Trackable": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

@@ -400,17 +400,6 @@ export class SequenceIntervalClass implements SequenceInterval {
 	}
 
 	/**
-	 * {@inheritDoc ISerializableInterval.addProperties}
-	 */
-	public addProperties(
-		newProps: PropertySet,
-		collab: boolean = false,
-		seq?: number,
-	): PropertySet | undefined {
-		return this.propertyManager.addProperties(this.properties, newProps, seq, collab);
-	}
-
-	/**
 	 * @returns whether this interval overlaps two numerical positions.
 	 */
 	public overlapsPos(bstart: number, bend: number) {
@@ -501,31 +490,6 @@ export class SequenceIntervalClass implements SequenceInterval {
 		return newInterval;
 	}
 }
-
-/**
- * @legacy
- * @alpha
- */
-export const SequenceInterval: {
-	/**
-	 * @deprecated  This functionality was not meant to be exported and will be removed in a future release
-	 */
-	new (
-		client: Client,
-		start: LocalReferencePosition,
-		end: LocalReferencePosition,
-		intervalType: IntervalType,
-		props?: PropertySet,
-		startSide?: Side,
-		endSide?: Side,
-	): SequenceInterval;
-	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
-	 * @privateRemarks This is not required for practical compatibility, but is included to keep
-	 * type test happy without a class static break entry.
-	 */
-	prototype: SequenceInterval;
-} = SequenceIntervalClass;
 
 export function createPositionReferenceFromSegoff(
 	client: Client,

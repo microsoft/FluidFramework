@@ -15,8 +15,6 @@ import {
 	UniversalSequenceNumber,
 } from "./constants.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
-import { ackSegment } from "./mergeTree.js";
-import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
@@ -30,7 +28,7 @@ import {
 // eslint-disable-next-line import/no-deprecated
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 // eslint-disable-next-line import/no-deprecated
-import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+import { PropertiesManager } from "./segmentPropertiesManager.js";
 
 /**
  * Common properties for a node in a merge tree.
@@ -74,9 +72,7 @@ export type ISegmentInternal = ISegment & {
  */
 export type ISegmentLeaf = ISegmentInternal & {
 	parent?: MergeBlock;
-	// eslint-disable-next-line import/no-deprecated
 	segmentGroups?: SegmentGroupCollection;
-	// eslint-disable-next-line import/no-deprecated
 	propertyManager?: PropertiesManager;
 	/**
 	 * If a segment is inserted into an obliterated range,
@@ -215,11 +211,7 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
 	readonly type: string;
-	/**
-	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly segmentGroups: SegmentGroupCollection;
+
 	readonly trackingCollection: TrackingGroupCollection;
 	/**
 	 * Whether or not this segment is a special segment denoting the start or
@@ -254,13 +246,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	attribution?: IAttributionCollection<AttributionKey>;
 
 	/**
-	 * Manages pending local state for properties on this segment.
-	 *
-	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	propertyManager?: PropertiesManager;
-	/**
 	 * Local seq at which this segment was inserted.
 	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
 	 * Once the segment is acked, this field is cleared.
@@ -285,29 +270,10 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 */
 	clientId: number;
 	/**
-	 * Local references added to this segment.
-	 */
-	localRefs?: LocalReferenceCollection;
-	/**
 	 * Properties that have been added to this segment via annotation.
 	 */
 	properties?: PropertySet;
 
-	/**
-	 * Add properties to this segment via annotation.
-	 *
-	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
-	 *
-	 * @remarks This function should not be called directly. Properties should
-	 * be added through the `annotateRange` functions.
-	 */
-	addProperties(
-		newProps: PropertySet,
-		seq?: number,
-		collaborating?: boolean,
-		// eslint-disable-next-line import/no-deprecated
-		rollback?: PropertiesRollback,
-	): PropertySet;
 	clone(): ISegment;
 	canAppend(segment: ISegment): boolean;
 	append(segment: ISegment): void;
@@ -315,20 +281,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	// Changing this to something other than any would break consumers.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	toJSONObject(): any;
-	/**
-	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
-	 * Acks the current segment against the segment group, op, and merge tree.
-	 *
-	 * @param segmentGroup - Pending segment group associated with this op.
-	 * @param opArgs - Information about the op that was acked
-	 * @returns `true` if the op modifies the segment, otherwise `false`.
-	 * The only current false case is overlapping remove, where a segment is removed
-	 * by a previously sequenced operation before the current operation is acked.
-	 * @throws - error if the segment state doesn't match segment group or op.
-	 * E.g. if the segment group is not first in the pending queue, or
-	 * an inserted segment does not have unassigned sequence number.
-	 */
-	ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
 }
 
 /**
@@ -415,10 +367,7 @@ export interface SegmentActions<TClientData> {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @legacy
- * @alpha
- * @privateRemarks After deprecation period this interface should be made internal
+ * @internal
  */
 export interface ObliterateInfo {
 	start: LocalReferencePosition;
@@ -431,31 +380,14 @@ export interface ObliterateInfo {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @legacy
- * @alpha
+ * @internal
  */
 export interface SegmentGroup {
-	segments: ISegment[];
+	segments: ISegmentInternal[];
 	previousProps?: PropertySet[];
 	localSeq?: number;
 	refSeq: number;
 	obliterateInfo?: ObliterateInfo;
-}
-
-/**
- * @legacy
- * @alpha
- * @deprecated - unused and will be removed
- */
-export class MergeNode implements IMergeNodeCommon {
-	index: number = 0;
-	ordinal: string = "";
-	cachedLength: number = 0;
-
-	isLeaf(): this is ISegment {
-		return false;
-	}
 }
 
 /**
@@ -559,25 +491,13 @@ export abstract class BaseSegment implements ISegment {
 	public ordinal: string = "";
 	public cachedLength: number = 0;
 
-	/**
-	 * {@inheritdoc ISegment.segmentGroups}
-	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
 	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(
 		this,
 	);
 	/***/
 	public attribution?: IAttributionCollection<AttributionKey>;
-	/**
-	 * {@inheritdoc ISegment.propertyManager}
-	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public propertyManager?: PropertiesManager;
+
 	public properties?: PropertySet;
-	public localRefs?: LocalReferenceCollection;
 	public abstract readonly type: string;
 	public localSeq?: number;
 	public localRemovedSeq?: number;
@@ -587,31 +507,6 @@ export abstract class BaseSegment implements ISegment {
 		if (properties !== undefined) {
 			this.properties = clone(properties);
 		}
-	}
-
-	/**
-	 * {@inheritdoc ISegment.addProperties}
-	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
-	 */
-	public addProperties(
-		newProps: PropertySet,
-		seq?: number,
-		collaborating?: boolean,
-		// eslint-disable-next-line import/no-deprecated
-		rollback: PropertiesRollback = PropertiesRollback.None,
-	): PropertySet {
-		// eslint-disable-next-line import/no-deprecated
-		this.propertyManager ??= new PropertiesManager();
-		// A property set must be able to hold properties of any type, so the any is needed.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		this.properties ??= createMap<any>();
-		return this.propertyManager.addProperties(
-			this.properties,
-			newProps,
-			seq,
-			collaborating,
-			rollback,
-		);
 	}
 
 	public hasProperty(key: string): boolean {
@@ -650,14 +545,6 @@ export abstract class BaseSegment implements ISegment {
 	// TODO: If possible, change the return type to match what should be returned for each segment type.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public abstract toJSONObject(): any;
-
-	/**
-	 * {@inheritdoc ISegment.ack}
-	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
-	 */
-	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
-		return ackSegment(this, segmentGroup, opArgs);
-	}
 
 	public splitAt(pos: number): ISegment | undefined {
 		if (pos <= 0) {
@@ -835,9 +722,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @legacy
- * @alpha
+ * @internal
  */
 export class CollaborationWindow {
 	clientId = LocalClientId;

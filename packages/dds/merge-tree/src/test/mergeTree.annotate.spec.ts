@@ -555,7 +555,7 @@ describe("MergeTree", () => {
 						currentSequenceNumber,
 						localClientId,
 					);
-					assert(segmentInfo.segment?.segmentGroups?.empty);
+					assert(segmentInfo.segment?.segmentGroups?.size !== 0);
 				});
 				it("remote only", () => {
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(

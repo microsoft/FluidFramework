@@ -56,11 +56,9 @@ describe("segmentGroupCollection", () => {
 			segmentGroups.enqueue({ segments: [], localSeq: 1, refSeq: 0 });
 		}
 
-		// Note: type as ISegmentLeaf to make segmentGroups mutable
-		const segmentCopy: ISegmentLeaf = TextSegment.make("");
+		const segmentCopy = TextSegment.make("");
 		const segmentGroupCopy = new SegmentGroupCollection(segmentCopy);
-		segmentCopy.segmentGroups = segmentGroupCopy;
-		segmentGroups.copyTo(segmentCopy);
+		segmentGroups.copyTo(segmentGroupCopy);
 
 		assert.equal(segmentGroups.size, segmentGroupCount);
 		assert.equal(segmentGroupCopy.size, segmentGroupCount);

@@ -668,12 +668,8 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 
 // @alpha (undocumented)
 export interface ISerializableInterval extends IInterval {
-    // @deprecated (undocumented)
-    addProperties(props: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
     getIntervalId(): string;
     properties: PropertySet;
-    // @deprecated (undocumented)
-    propertyManager: PropertiesManager;
     // (undocumented)
     serialize(): ISerializedInterval;
 }
@@ -1058,24 +1054,16 @@ export interface SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperatio
     readonly opArgs: IMergeTreeDeltaOpArgs;
 }
 
-// @alpha (undocumented)
-export const SequenceDeltaEvent: {
-    new (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, mergeTreeClient: Client): SequenceDeltaEvent;
-    prototype: SequenceDeltaEvent;
-};
-
 // @alpha
-export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
-    // @deprecated
-    constructor(
-    deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>, mergeTreeClient: Client);
-    get clientId(): string | undefined;
+export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
+    readonly clientId: string | undefined;
+    // (undocumented)
     readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
     // (undocumented)
     readonly deltaOperation: TOperation;
-    get first(): Readonly<ISequenceDeltaRange<TOperation>>;
-    get last(): Readonly<ISequenceDeltaRange<TOperation>>;
-    get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[];
+    readonly first: Readonly<ISequenceDeltaRange<TOperation>>;
+    readonly last: Readonly<ISequenceDeltaRange<TOperation>>;
+    readonly ranges: readonly Readonly<ISequenceDeltaRange<TOperation>>[];
 }
 
 // @alpha
@@ -1105,23 +1093,11 @@ export interface SequenceInterval extends ISerializableInterval {
     union(b: SequenceInterval): SequenceInterval;
 }
 
-// @alpha (undocumented)
-export const SequenceInterval: {
-    new (client: Client, start: LocalReferencePosition, end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, startSide?: Side, endSide?: Side): SequenceInterval;
-    prototype: SequenceInterval;
-};
-
 // @alpha
 export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
     // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
-
-// @alpha (undocumented)
-export const SequenceMaintenanceEvent: {
-    new (opArgs: IMergeTreeDeltaOpArgs | undefined, deltaArgs: IMergeTreeMaintenanceCallbackArgs, mergeTreeClient: Client): SequenceMaintenanceEvent;
-    prototype: SequenceMaintenanceEvent;
-};
 
 export { SequencePlace }
 
