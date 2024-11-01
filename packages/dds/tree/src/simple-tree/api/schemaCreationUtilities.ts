@@ -62,11 +62,10 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 		NodeKind.Object,
 		SingletonNodeType,
 		Record<string, never>,
-		true
-	> &
-		(new (
-			data?: InternalTreeNode | Record<string, never>,
-		) => SingletonNodeType) = SingletonSchema;
+		true,
+		Record<string, never>,
+		undefined
+	> = SingletonSchema;
 
 	return toReturn;
 }

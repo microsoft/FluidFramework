@@ -14,15 +14,14 @@
 	"type": "module",
 	"scripts": {
 		"build": "concurrently npm:build:api npm:build:md-magic && npm run hugo",
-		"build:api": "npm run download:api && npm run build:api-documentation && npm run build:redirects",
+		"build:api": "npm run download:api && npm run build:api-documentation",
 		"build:api-documentation": "node ./api-markdown-documenter/index.js",
 		"build:local": "concurrently npm:build:local:api npm:build:md-magic && npm run hugo",
-		"build:local:api": "npm run download:api && npm run build:local:rollup && npm run build:local:api-documentation && npm run build:redirects",
+		"build:local:api": "npm run download:api && npm run build:local:rollup && npm run build:local:api-documentation",
 		"build:local:api-documentation": "node ./api-markdown-documenter/index.js true",
 		"build:local:rollup": "node ./local-api-rollup.js",
 		"build:md-magic": "markdown-magic",
 		"build:md-magic:code": "markdown-magic --files \"**/*.md\" !docs --workingDirectory ..",
-		"build:redirects": "node ./build-redirects.js",
 		"build:repo-docs": "npm run build:md-magic:code",
 		"ci:build": "npm run build",
 		"ci:linkcheck": "start-server-and-test ci:start 1313 linkcheck:full",
@@ -40,9 +39,11 @@
 		"markdownlint:fix": "markdownlint-cli2 --fix",
 		"prettier": "prettier --check . --cache --ignore-path ../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../.prettierignore",
-		"start": "hugo server"
+		"start": "hugo server",
+		"start-with-azure-emulation": "swa start public --api-location api"
 	},
 	"dependencies": {
+		"@azure/static-web-apps-cli": "^2.0.1",
 		"@fluid-tools/api-markdown-documenter": "^0.17.1",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
