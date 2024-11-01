@@ -44,12 +44,12 @@ let appRoot: Root | undefined;
 let debugRoot: Root | undefined;
 
 const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): void => {
-	const appDiv = document.querySelector("#app") as HTMLDivElement;
-	appRoot ??= createRoot(appDiv);
 	// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 	// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 	// view code loader to pull in the view dynamically based on the version we discover.
 	if (isIInventoryListAppModel(model)) {
+		const appDiv = document.querySelector("#app") as HTMLDivElement;
+		appRoot ??= createRoot(appDiv);
 		appRoot.render(createElement(InventoryListAppView, { model, migrationTool }));
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
