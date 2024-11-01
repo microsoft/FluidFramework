@@ -15,7 +15,7 @@ export {
 	ILoaderServices,
 	Loader,
 	rehydrateDetachedContainerFromSnapshot,
-	resolve,
+	resolveContainer,
 } from "./loader.js";
 export { loadContainerPaused } from "./loadPaused.js";
 export {

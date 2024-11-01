@@ -8,7 +8,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 
-import { resolve, type ILoaderProps } from "./loader.js";
+import { resolveContainer, type ILoaderProps } from "./loader.js";
 
 /* eslint-disable jsdoc/check-indentation */
 
@@ -45,7 +45,7 @@ export async function loadContainerPaused(
 	loadToSequenceNumber?: number,
 	signal?: AbortSignal,
 ): Promise<IContainer> {
-	const container = await resolve(
+	const container = await resolveContainer(
 		{
 			url: request.url,
 			headers: {

@@ -207,6 +207,7 @@ export interface ILoaderProps {
  * Services and properties used by and exposed by the loader
  * @legacy
  * @alpha
+ * @deprecated Deprecated as the Loader class is deprecated. Use the standalone apis instead to load or create detached containers.
  */
 export interface ILoaderServices {
 	/**
@@ -437,7 +438,7 @@ export class Loader implements IHostLoader {
  * @legacy
  * @alpha
  */
-export async function resolve(
+export async function resolveContainer(
 	request: IRequest,
 	loaderProps: ILoaderProps,
 	pendingLocalState?: string,

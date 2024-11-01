@@ -73,7 +73,7 @@ export interface ILoaderProps {
     readonly urlResolver: IUrlResolver;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface ILoaderServices {
     readonly codeLoader: ICodeDetailsLoader;
     // @deprecated
@@ -164,7 +164,7 @@ export function rehydrateDetachedContainerFromSnapshot(snapshot: string, loaderP
 }): Promise<IContainer>;
 
 // @alpha
-export function resolve(request: IRequest, loaderProps: ILoaderProps, pendingLocalState?: string): Promise<IContainer>;
+export function resolveContainer(request: IRequest, loaderProps: ILoaderProps, pendingLocalState?: string): Promise<IContainer>;
 
 // @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
