@@ -90,11 +90,6 @@ describe("SharedTree memory usage", () => {
 		})(),
 	);
 
-	benchmarkMemory({
-		title: "Create empty SharedTree",
-		run: async () => createLocalSharedTree("testSharedTree"),
-	});
-
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
 		? [1000, 10_000, 100_000]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
