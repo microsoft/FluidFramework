@@ -29,6 +29,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ~6.7.2
         version: 6.7.2(eslint@8.55.0)(typescript@5.1.6)
+      eslint-config-biome:
+        specifier: ~1.9.3
+        version: 1.9.3
       eslint-config-prettier:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
@@ -1374,6 +1377,10 @@ packages:
   /escape-string-regexp@4.0.0:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
+
+  /eslint-config-biome@1.9.3:
+    resolution: {integrity: sha512-Zrz6Z+Gtv1jqnfHsqvpwCSqclktvQF1OnyDAfDOvjzzck2c5Nw3crEHI2KLuH+LnNBttiPAb7Y7e8sF158sOgQ==}
+    dev: false
 
   /eslint-config-prettier@9.0.0(eslint@8.55.0):
     resolution: {integrity: sha512-IcJsTkJae2S35pRsRAwoCE+925rJJStOdkKnLVgtE+tEpqU0EVVM7OqrwxqgptKdX29NUwC82I5pXsGFIgSevw==}
