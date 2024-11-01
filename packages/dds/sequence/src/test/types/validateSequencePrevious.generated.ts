@@ -136,6 +136,7 @@ declare type current_as_old_for_Class_SequenceMaintenanceEvent = requireAssignab
  * typeValidation.broken:
  * "Class_SharedSegmentSequence": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_SharedSegmentSequence = requireAssignableTo<TypeOnly<old.SharedSegmentSequence<any>>, TypeOnly<current.SharedSegmentSequence<any>>>
 
 /*
@@ -154,6 +155,7 @@ declare type current_as_old_for_Class_SharedSegmentSequence = requireAssignableT
  * typeValidation.broken:
  * "Class_SharedStringClass": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_SharedStringClass = requireAssignableTo<TypeOnly<old.SharedStringClass>, TypeOnly<current.SharedStringClass>>
 
 /*
@@ -635,6 +637,7 @@ declare type current_as_old_for_Interface_ISharedIntervalCollection = requireAss
  * typeValidation.broken:
  * "Interface_ISharedSegmentSequence": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ISharedSegmentSequence = requireAssignableTo<TypeOnly<old.ISharedSegmentSequence<any>>, TypeOnly<current.ISharedSegmentSequence<any>>>
 
 /*
@@ -671,6 +674,7 @@ declare type current_as_old_for_Interface_ISharedSegmentSequenceEvents = require
  * typeValidation.broken:
  * "Interface_ISharedString": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ISharedString = requireAssignableTo<TypeOnly<old.ISharedString>, TypeOnly<current.ISharedString>>
 
 /*
@@ -862,6 +866,7 @@ declare type current_as_old_for_TypeAlias_SequencePlace = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_SharedString": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_SharedString = requireAssignableTo<TypeOnly<old.SharedString>, TypeOnly<current.SharedString>>
 
 /*

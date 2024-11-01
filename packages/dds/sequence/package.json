@@ -261,6 +261,21 @@
 			},
 			"TypeAlias_SharedStringSegment": {
 				"backCompat": false
+			},
+			"Class_SharedSegmentSequence": {
+				"forwardCompat": false
+			},
+			"Class_SharedStringClass": {
+				"forwardCompat": false
+			},
+			"Interface_ISharedSegmentSequence": {
+				"forwardCompat": false
+			},
+			"Interface_ISharedString": {
+				"forwardCompat": false
+			},
+			"TypeAlias_SharedString": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"
