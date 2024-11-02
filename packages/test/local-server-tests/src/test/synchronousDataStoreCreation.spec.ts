@@ -32,7 +32,6 @@ import { createLoader } from "../utils.js";
 const mapFactory = SharedMap.getFactory();
 const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
 
-// a data store object which can create another instance of it self as synchronously as possible
 class ChildDataStore {
 	public static create(runtime: IFluidDataStoreRuntime) {
 		const root = SharedMap.create(runtime, "root");
@@ -95,7 +94,6 @@ class ChildDataStoreFactory implements IFluidDataStoreFactory {
 	}
 }
 
-// a data store object which can create another instance of it self as synchronously as possible
 class ParentDataStore {
 	public static create(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
 		const root = SharedMap.create(runtime, "root");
@@ -117,6 +115,7 @@ class ParentDataStore {
 	get ParentDataStore() {
 		return this;
 	}
+
 	get handle() {
 		return this.runtime.entryPoint;
 	}
