@@ -857,7 +857,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private resetPendingDeltaToOps(
 		resetOp: IMergeTreeDeltaOp,
 		// eslint-disable-next-line import/no-deprecated
-		segmentGroup: SegmentGroup,
+		segmentGroup: SegmentGroup<ISegmentLeaf>,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
 		const NACKedSegmentGroup = this.pendingRebase?.shift()?.data;
@@ -888,7 +888,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		// so their recalculated positions will be correct.
 		for (const segment of segmentGroup.segments.sort((a, b) =>
 			a.ordinal < b.ordinal ? -1 : 1,
-		) as ISegmentLeaf[]) {
+		)) {
 			assert(
 				segment.segmentGroups?.remove?.(segmentGroup) === true,
 				0x035 /* "Segment group not in segment pending queue" */,
