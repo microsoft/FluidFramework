@@ -502,9 +502,7 @@ export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownS
  * @system @alpha
  */
 export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> =
-	TSchema extends ImplicitFieldSchema
-		? TreeFieldFromImplicitField<TSchema>
-		: TreeLeafValue | TreeNode;
+	TreeFieldFromImplicitField<ReadSchema<TSchema>>;
 
 /**
  * Adapter to remove {@link (UnsafeUnknownSchema:type)} from a schema type so it can be used with types for generating APIs for reading data.
