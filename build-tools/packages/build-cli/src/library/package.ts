@@ -574,6 +574,7 @@ export async function setVersion(
 		return;
 	}
 
+	// Update the release group root package.json
 	updatePackageJsonFile(path.join(releaseGroupOrPackage.repoPath, "package.json"), (json) => {
 		json.version = translatedVersion.version;
 	});
