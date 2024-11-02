@@ -574,17 +574,6 @@ export async function setVersion(
 		return;
 	}
 
-	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
-	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of truth".
-	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const lernaJson = await readJson(lernaPath);
-
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	lernaJson.version = translatedVersion.version;
-	const output = JSON.stringify(lernaJson);
-	await writeFile(lernaPath, output);
-
 	updatePackageJsonFile(path.join(releaseGroupOrPackage.repoPath, "package.json"), (json) => {
 		json.version = translatedVersion.version;
 	});
