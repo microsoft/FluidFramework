@@ -7,11 +7,11 @@ import path from "node:path";
 
 import { type SimpleGit, simpleGit } from "simple-git";
 
-import { type IFluidRepoLayout, getFluidRepoLayout } from "./config.js";
+import { type BuildProjectConfig, getBuildProjectConfig } from "./config.js";
 import { NotInGitRepository } from "./errors.js";
 import { findGitRootSync } from "./git.js";
 import {
-	type IFluidRepo,
+	type IBuildProject,
 	type IPackage,
 	type IReleaseGroup,
 	type IWorkspace,
@@ -23,18 +23,18 @@ import { Workspace } from "./workspace.js";
 import { loadWorkspacesFromLegacyConfig } from "./workspaceCompat.js";
 
 /**
- * {@inheritDoc IFluidRepo}
+ * {@inheritDoc IBuildProject}
  */
-export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
+export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 	/**
-	 * The absolute path to the root of the FluidRepo. This is the path where the config file is located.
+	 * The absolute path to the root of the build project. This is the path where the config file is located.
 	 */
 	public readonly root: string;
 
 	/**
-	 * {@inheritDoc IFluidRepo.configuration}
+	 * {@inheritDoc IBuildProject.configuration}
 	 */
-	public readonly configuration: IFluidRepoLayout;
+	public readonly configuration: BuildProjectConfig;
 
 	/**
 	 * The absolute path to the config file.
@@ -42,37 +42,37 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	protected readonly configFilePath: string;
 
 	/**
-	 * @param searchPath - The path that should be searched for a repo layout config file.
-	 * @param gitRepository - A SimpleGit instance rooted in the root of the Git repository housing the FluidRepo. This
-	 * should be set to false if the FluidRepo is not within a Git repository.
+	 * @param searchPath - The path that should be searched for a BuildProject config file.
+	 * @param gitRepository - A SimpleGit instance rooted in the root of the Git repository housing the BuildProject. This
+	 * should be set to false if the BuildProject is not within a Git repository.
 	 */
 	public constructor(
 		searchPath: string,
 
 		/**
-		 * {@inheritDoc IFluidRepo.upstreamRemotePartialUrl}
+		 * {@inheritDoc IBuildProject.upstreamRemotePartialUrl}
 		 */
 		public readonly upstreamRemotePartialUrl?: string,
 	) {
-		const { config, configFilePath } = getFluidRepoLayout(searchPath);
+		const { config, configFilePath } = getBuildProjectConfig(searchPath);
 		this.root = path.resolve(path.dirname(configFilePath));
 		this.configuration = config;
 		this.configFilePath = configFilePath;
 
-		// Check for the repoLayout config first
-		if (config.repoLayout === undefined) {
-			// If there's no `repoLayout` _and_ no `repoPackages`, then we need to error since there's no loadable config.
+		// Check for the buildProject config first
+		if (config.buildProject === undefined) {
+			// If there's no `buildProject` _and_ no `repoPackages`, then we need to error since there's no loadable config.
 			if (config.repoPackages === undefined) {
 				throw new Error(`Can't find configuration.`);
 			} else {
 				console.warn(
-					`The repoPackages setting is deprecated and will no longer be read in a future version. Use repoLayout instead.`,
+					`The repoPackages setting is deprecated and will no longer be read in a future version. Use buildProject instead.`,
 				);
 				this._workspaces = loadWorkspacesFromLegacyConfig(config.repoPackages, this);
 			}
 		} else {
 			this._workspaces = new Map<WorkspaceName, IWorkspace>(
-				Object.entries(config.repoLayout.workspaces).map((entry) => {
+				Object.entries(config.buildProject.workspaces).map((entry) => {
 					const name = entry[0] as WorkspaceName;
 					const definition = entry[1];
 					const ws = Workspace.load(name, definition, this.root, this);
@@ -96,7 +96,7 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	private readonly _workspaces: Map<WorkspaceName, IWorkspace>;
 
 	/**
-	 * {@inheritDoc IFluidRepo.workspaces}
+	 * {@inheritDoc IBuildProject.workspaces}
 	 */
 	public get workspaces(): Map<WorkspaceName, IWorkspace> {
 		return this._workspaces;
@@ -105,14 +105,14 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	private readonly _releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
 
 	/**
-	 * {@inheritDoc IFluidRepo.releaseGroups}
+	 * {@inheritDoc IBuildProject.releaseGroups}
 	 */
 	public get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup> {
 		return this._releaseGroups;
 	}
 
 	/**
-	 * {@inheritDoc IFluidRepo.packages}
+	 * {@inheritDoc IBuildProject.packages}
 	 */
 	public get packages(): Map<PackageName, P> {
 		const pkgs: Map<PackageName, P> = new Map();
@@ -130,7 +130,7 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	}
 
 	/**
-	 * {@inheritDoc IFluidRepo.relativeToRepo}
+	 * {@inheritDoc IBuildProject.relativeToRepo}
 	 */
 	public relativeToRepo(p: string): string {
 		// Replace \ in result with / in case OS is Windows.
@@ -138,7 +138,7 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	}
 
 	/**
-	 * Reload the Fluid repo by calling `reload` on each workspace in the repository.
+	 * Reload the BuildProject by calling `reload` on each workspace in the repository.
 	 */
 	public reload(): void {
 		for (const ws of this.workspaces.values()) {
@@ -150,7 +150,7 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	private _checkedForGitRepo = false;
 
 	/**
-	 * {@inheritDoc IFluidRepo.getGitRepository}
+	 * {@inheritDoc IBuildProject.getGitRepository}
 	 */
 	public async getGitRepository(): Promise<Readonly<SimpleGit>> {
 		if (this.gitRepository !== undefined) {
@@ -170,7 +170,7 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 	}
 
 	/**
-	 * {@inheritDoc IFluidRepo.getPackageReleaseGroup}
+	 * {@inheritDoc IBuildProject.getPackageReleaseGroup}
 	 */
 	public getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup> {
 		const found = this.releaseGroups.get(pkg.releaseGroup);
@@ -183,28 +183,28 @@ export class FluidRepo<P extends IPackage> implements IFluidRepo<P> {
 }
 
 /**
- * Searches for a Fluid repo config file and loads the repo layout from the config if found.
+ * Searches for a BuildProject config file and loads the project from the config if found.
  *
  * @typeParam P - The type to use for Packages.
- * @param searchPath - The path to start searching for a Fluid repo config.
+ * @param searchPath - The path to start searching for a BuildProject config.
  * @param upstreamRemotePartialUrl - A partial URL to the upstream repo. This is used to find the local git remote that
  * corresponds to the upstream repo.
- * @returns The loaded Fluid repo.
+ * @returns The loaded BuildProject.
  */
-export function loadFluidRepo<P extends IPackage>(
+export function loadBuildProject<P extends IPackage>(
 	searchPath: string,
 	upstreamRemotePartialUrl?: string,
-): IFluidRepo<P> {
-	const repo: IFluidRepo<P> = new FluidRepo<P>(searchPath, upstreamRemotePartialUrl);
+): IBuildProject<P> {
+	const repo = new BuildProject<P>(searchPath, upstreamRemotePartialUrl);
 	return repo;
 }
 
 /**
  * Returns an object containing all the packages, release groups, and workspaces that a given set of packages depends
- * on. This function only considers packages in the Fluid repo.
+ * on. This function only considers packages in the BuildProject repo.
  */
-export function getAllDependenciesInRepo(
-	repo: IFluidRepo,
+export function getAllDependencies(
+	repo: IBuildProject,
 	packages: IPackage[],
 ): { packages: IPackage[]; releaseGroups: IReleaseGroup[]; workspaces: IWorkspace[] } {
 	const dependencyPackages: Set<IPackage> = new Set();
