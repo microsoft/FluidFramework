@@ -14,9 +14,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
-import { generateTreeEdits } from "../../explicit-strategy/index.js";
-
-import { initializeOpenAIClient } from "./utils.js";
+import { generateTreeEdits } from "../../../explicit-strategy/index.js";
+import { initializeOpenAIClient } from "../utils.js";
 
 const sf = new SchemaFactory("Planner");
 
@@ -74,7 +73,6 @@ export class Conference extends sf.object("Conference", {
 		},
 	}),
 	days: Days,
-	sessionsPerDay: sf.number,
 }) {}
 
 const factory = SharedTree.getFactory();
@@ -162,7 +160,6 @@ describe.skip("Agent Editing Integration", () => {
 					],
 				},
 			],
-			sessionsPerDay: 2,
 		});
 		const openAIClient = initializeOpenAIClient("openai");
 		const abortController = new AbortController();
