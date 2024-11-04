@@ -6,6 +6,7 @@
 
 import type { Opaque } from 'type-fest';
 import type { PackageJson as PackageJson_2 } from 'type-fest';
+import { SemVer } from 'semver';
 import type { SetRequired } from 'type-fest';
 import { SimpleGit } from 'simple-git';
 
@@ -233,6 +234,9 @@ export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
 export interface Reloadable {
     reload(): void;
 }
+
+// @public
+export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;
 
 // @public
 export interface WorkspaceDefinition {
