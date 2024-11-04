@@ -130,6 +130,11 @@ export interface IClientEvents {
 }
 
 /**
+ * This class encapsulates a merge-tree, and provides a local client specific view over it and
+ * the capability to modify it as the local client. Additionally it provides
+ * binding for processing remote ops on the encapsulated merge tree, and projects local and remote events
+ * caused by all modification to the underlying merge-tree.
+ *
  * @internal
  */
 export class Client extends TypedEventEmitter<IClientEvents> {

@@ -158,8 +158,9 @@ export type {
 	SequenceEvent,
 	SequenceInterval,
 	SequenceMaintenanceEvent,
-	SharedString,
 } from "@fluidframework/sequence/internal";
+
+export { SharedString } from "@fluidframework/sequence/internal";
 
 export type {
 	ISharedObject,

@@ -47,6 +47,8 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     localMovedSeq?: number;
     // (undocumented)
+    localRefs?: LocalReferenceCollection;
+    // (undocumented)
     localRemovedSeq?: number;
     // (undocumented)
     localSeq?: number;
