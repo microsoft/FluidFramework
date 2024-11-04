@@ -4,7 +4,11 @@
  */
 
 import { type Difference, SharedTreeBranchManager } from "@fluid-experimental/ai-collab";
-import { type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
+import {
+	type TreeBranch,
+	type TreeBranchFork,
+	type TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -194,7 +198,8 @@ export function TaskGroup(props: {
 									);
 									const { originalBranch, forkBranch, forkView, newBranchTargetNode } =
 										branchManager.checkoutNewMergedBranchV2(
-											props.treeView,
+											// TODO: Remove cast when TreeViewAlpha becomes public
+											props.treeView as TreeViewAlpha<typeof SharedTreeAppState>,
 											TREE_CONFIGURATION,
 											["taskGroups", indexOfTaskGroup],
 										);
