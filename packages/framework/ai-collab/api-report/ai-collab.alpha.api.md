@@ -83,17 +83,17 @@ export class SharedTreeBranchManager {
         nodeIdAttributeName?: string;
     });
     applyDiff(diff: Difference, objectToUpdate: Record<string, unknown> | TreeArrayNode): boolean;
-    checkoutNewMergedBranch<T extends ImplicitFieldSchema>(treeView: TreeView<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath, llmResponse: Record<string, unknown> | unknown[]): {
+    checkoutNewMergedBranch<T extends ImplicitFieldSchema>(treeView: TreeViewAlpha<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath, llmResponse: Record<string, unknown> | unknown[]): {
         differences: Difference[];
         originalBranch: TreeBranch;
         forkBranch: TreeBranchFork;
-        forkView: TreeView<T>;
+        forkView: TreeViewAlpha<T>;
         newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
     };
-    checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(treeView: TreeView<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath): {
+    checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(treeView: TreeViewAlpha<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath): {
         originalBranch: TreeBranch;
         forkBranch: TreeBranchFork;
-        forkView: TreeView<T>;
+        forkView: TreeViewAlpha<T>;
         newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
     };
     compare(obj: Record<string, unknown> | TreeArrayNode, newObj: Record<string, unknown> | unknown[]): Difference[];
