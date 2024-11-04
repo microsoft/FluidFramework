@@ -8,14 +8,18 @@ import { strict as assert } from "node:assert";
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
+import * as semver from "semver";
+import { simpleGit } from "simple-git";
 
-import { loadFluidRepo } from "../fluidRepo.js";
+import { loadFluidRepo, setDependencyRange } from "../fluidRepo.js";
 import { findGitRootSync } from "../git.js";
 import type { ReleaseGroupName, WorkspaceName } from "../types.js";
 
 import { testRepoRoot } from "./init.js";
 
 chai.use(assertArrays);
+
+const git = simpleGit(testRepoRoot);
 
 describe("loadFluidRepo", () => {
 	describe("testRepo", () => {
@@ -26,7 +30,6 @@ describe("loadFluidRepo", () => {
 				2,
 				`Expected 2 workspaces, found ${repo.workspaces.size}`,
 			);
-
 			const main = repo.workspaces.get("main" as WorkspaceName);
 			expect(main).to.not.be.undefined;
 			expect(main?.packages.length).to.equal(
@@ -102,5 +105,26 @@ describe("loadFluidRepo", () => {
 			expect(actualDependencies).to.not.be.undefined;
 			expect(actualDependencies).to.not.be.empty;
 		});
+	});
+});
+
+describe("setDependencyRange", () => {
+	const repo = loadFluidRepo(testRepoRoot);
+	const main = repo.releaseGroups.get("main" as ReleaseGroupName);
+	assert(main !== undefined);
+
+	const group2 = repo.releaseGroups.get("group2" as ReleaseGroupName);
+	assert(group2 !== undefined);
+
+	afterEach(async () => {
+		await git.checkout(["HEAD", "--", testRepoRoot]);
+		repo.reload();
+	});
+
+	it("updates the dependency range", () => {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion , @typescript-eslint/no-unsafe-call
+		setDependencyRange(main.packages, group2.packages, semver.parse(group2.version)!);
+		const allCorrect = main.packages.every((pkg) => pkg.version === group2.version);
+		expect(allCorrect).to.be.true;
 	});
 });

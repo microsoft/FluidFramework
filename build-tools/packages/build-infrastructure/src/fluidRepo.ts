@@ -241,26 +241,33 @@ export function getAllDependenciesInRepo(
 export async function setDependencyRange(
 	packagesToUpdate: IPackage[],
 	dependencies: IPackage[],
-	dependencyRange: InterdependencyRange
+	dependencyRange: InterdependencyRange,
 ): Promise<void> {
-	for (const pkg of packagesToUpdate) {
-		for (const dep of pkg.combinedDependencies) {
-			if (dependencies.some(d => d.name === dep.name)) {
-				const depRange = typeof dependencyRange === "string"
-					? dependencyRange
-					: (dependencyRange instanceof semver.SemVer ? dependencyRange.version : undefined);
+	const dependencySet = new Set(dependencies.map((d) => d.name));
+	// collect the "save" promises to resolve in parallel
+	const savePromises: Promise<void>[] = [];
 
-				const depName = dep.name;
+	for (const pkg of packagesToUpdate) {
+		for (const { name: depName, depKind } of pkg.combinedDependencies) {
+			if (dependencySet.has(depName)) {
+				const depRange =
+					typeof dependencyRange === "string"
+						? dependencyRange
+						: dependencyRange instanceof semver.SemVer
+							? dependencyRange.version
+							: undefined;
+
 				// Update the version in packageJson
-				if ((pkg.packageJson.dependencies?.[depName]) !== undefined) {
+				if (depKind === "prod" && pkg.packageJson.dependencies) {
 					pkg.packageJson.dependencies[depName] = depRange;
-				} else if ((pkg.packageJson.devDependencies?.[depName]) !== undefined) {
+				} else if (depKind === "dev" && pkg.packageJson.devDependencies) {
 					pkg.packageJson.devDependencies[depName] = depRange;
-				} else if ((pkg.packageJson.peerDependencies?.[depName]) !== undefined) {
+				} else if (depKind === "peer" && pkg.packageJson.peerDependencies) {
 					pkg.packageJson.peerDependencies[depName] = depRange;
 				}
 			}
 		}
-		await pkg.savePackageJson();
+		savePromises.push(pkg.savePackageJson());
 	}
+	await Promise.all(savePromises);
 }
