@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import {
 	InterdependencyRange,
@@ -27,7 +27,7 @@ import {
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
-import { readJson, readJsonSync } from "fs-extra/esm";
+import { readJsonSync } from "fs-extra/esm";
 import JSON5 from "json5";
 import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
