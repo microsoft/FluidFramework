@@ -50,18 +50,18 @@ export class IdGenerator {
 		if (typeof node === "object" && node !== null) {
 			const schema = Tree.schema(node as unknown as TreeNode);
 			if (schema.kind === NodeKind.Array) {
-				(node as unknown as TreeArrayNode).forEach((element) => {
+				for (const element of node as unknown as TreeArrayNode) {
 					this.assignIds(element);
-				});
+				}
 			} else {
 				// TODO: SharedTree Team needs to either publish TreeNode as a class to use .instanceof() or a typeguard.
 				// Uncomment this assertion back once we have a typeguard ready.
 				// assert(isTreeNode(node), "Non-TreeNode value in tree.");
 				const objId = this.getOrCreateId(node as TreeNode);
-				Object.keys(node).forEach((key) => {
+				for (const key of Object.keys(node)) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
 					this.assignIds((node as unknown as any)[key]);
-				});
+				}
 				return objId;
 			}
 		}

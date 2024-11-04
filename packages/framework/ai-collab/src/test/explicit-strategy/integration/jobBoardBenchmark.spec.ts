@@ -175,23 +175,29 @@ const treeNodeValidatorFn = (treeNode: TreeNode): void => {
 	const schema = Tree.schema(treeNode);
 	try {
 		switch (schema.identifier) {
-			case HRData.identifier:
+			case HRData.identifier: {
 				zodHrAppSchema.parse(treeNode);
 				break;
-			case Job.identifier:
+			}
+			case Job.identifier: {
 				zodJobSchema.parse(treeNode);
 				break;
-			case Candidate.identifier:
+			}
+			case Candidate.identifier: {
 				zodCandidateSchema.parse(treeNode);
 				break;
-			case Interviewer.identifier:
+			}
+			case Interviewer.identifier: {
 				zodInteviewerSchema.parse(treeNode);
 				break;
-			case OnSiteSchedule.identifier:
+			}
+			case OnSiteSchedule.identifier: {
 				zodOnSiteScheduleSchema.parse(treeNode);
 				break;
-			default:
+			}
+			default: {
 				throw new Error(`Unknown schema identifier during validation: ${schema.identifier}`);
+			}
 		}
 	} catch (error) {
 		console.log(error);
@@ -700,15 +706,18 @@ describe.skip("AI Job Listings App Benchmark", () => {
 			interviewersAvailablilitySubTaskTitle,
 			() => {
 				const foundOnsiteInterview = subtask1Result.data;
-				foundOnsiteInterview?.interviewerIds.forEach((interviewerId) => {
-					const matchedInterviewer = view.root.interviewerPool.find(
-						(interviewer) => interviewer.interviewerId === interviewerId,
-					);
-					if (matchedInterviewer?.availability.includes("Thursday") === false) {
-						return { status: false };
+				if (foundOnsiteInterview) {
+					for (const interviewerId of foundOnsiteInterview.interviewerIds) {
+						const matchedInterviewer = view.root.interviewerPool.find(
+							(interviewer) => interviewer.interviewerId === interviewerId,
+						);
+						if (matchedInterviewer?.availability.includes("Thursday") === false) {
+							return { status: false };
+						}
 					}
-				});
-				return { status: true };
+					return { status: true };
+				}
+				return { status: false };
 			},
 		);
 	});

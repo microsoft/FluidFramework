@@ -203,14 +203,14 @@ export function getReviewSystemPrompt(
  */
 export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
 	let stringifiedSchema = "";
-	Object.entries(jsonSchema.$defs).forEach(([name, def]) => {
+	for (const [name, def] of Object.entries(jsonSchema.$defs)) {
 		if (def.type !== "object" || def._treeNodeSchemaKind === NodeKind.Map) {
-			return;
+			continue;
 		}
 
 		let stringifiedEntry = `interface ${getFriendlySchemaName(name)} {`;
 
-		Object.entries(def.properties).forEach(([fieldName, fieldSchema]) => {
+		for (const [fieldName, fieldSchema] of Object.entries(def.properties)) {
 			let typeString: string;
 			if (isJsonSchemaRef(fieldSchema)) {
 				const nextFieldName = fieldSchema.$ref;
@@ -223,12 +223,12 @@ export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string 
 				typeString = `${typeString} | undefined`;
 			}
 			stringifiedEntry += ` ${fieldName}: ${typeString};`;
-		});
+		}
 
 		stringifiedEntry += " }";
 
 		stringifiedSchema += (stringifiedSchema === "" ? "" : " ") + stringifiedEntry;
-	});
+	}
 	return stringifiedSchema;
 }
 
@@ -259,9 +259,9 @@ function getAnyOfTypeString(
 	topLevel = false,
 ): string {
 	const typeNames: string[] = [];
-	refList.forEach((ref) => {
+	for (const ref of refList) {
 		typeNames.push(getTypeString(defs, [ref.$ref, getDef(defs, ref.$ref)]));
-	});
+	}
 	const typeString = typeNames.join(" | ");
 	return topLevel ? typeString : `(${typeString})`;
 }

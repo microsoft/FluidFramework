@@ -1,6 +1,7 @@
 # @fluid-experimental/ai-collab
 
 ## Description
+
 The ai-collab client library makes adding complex, human-like collaboration with LLM's built directly in your application as simple as one function call. Simply pass your SharedTree and ask AI to collaborate. For example,
 - Task Management App: "Reorder this list of tasks in order from least to highest complexity."
 - Job Board App: "Create a new job listing and add it to this job board"
@@ -9,6 +10,7 @@ The ai-collab client library makes adding complex, human-like collaboration with
 ## Usage
 
 ### Your SharedTree types file
+
 This file is where we define the types of our task management application's SharedTree data
 ```ts
 //  --------- File name: "types.ts" ---------
@@ -81,6 +83,7 @@ export class PlannerAppState extends sf.object("PlannerAppState", {
 ```
 
 ### Example 1: Collaborate with AI
+
 ```ts
 import { aiCollab } from "@fluid-experimental/ai-collab";
 import { PlannerAppState } from "./types.ts"
@@ -134,7 +137,6 @@ const response = await aiCollab<typeof PlannerAppState>({
 			}),
 			modelName: "gpt-4o",
 		},
-		treeView: view,
 		treeNode: view.root.taskGroups[0],
 		prompt: {
 			systemRoleContext:
@@ -176,6 +178,7 @@ Once the `aiCollab` function call is initiated, an LLM will immediately begin at
 - `/implicit-strategy`: The original implicit strategy, currently not used under the exported aiCollab API surface.
 
 ## Known Issues & limitations
+
 1. Union types for a TreeNode are not present when generating App Schema. This will require extracting a field schema instead of TreeNodeSchema when passed a non root node.
 1. The Editing System prompt & structured out schema currently provide array related edits even when there are no arrays. This forces you to have an array in your schema to produce a valid json schema
 1. Optional roots are not allowed, This is because if you pass undefined as your treeNode to the API, we cannot disambiguate whether you passed the root or not.
@@ -184,10 +187,9 @@ Once the `aiCollab` function call is initiated, an LLM will immediately begin at
 1. The current scheme does not allow manipulation of arrays of primitive values because you cannot refer to them. We could accomplish this via a path (probably JSON Pointer or JSONPath) from a possibly-null objectId, or wrap arrays in an identified object.
 1. Only 100 object fields total are allowed by OpenAI right now, so larger schemas will fail faster if we have a bunch of schema types generated for type-specific edits.
 1. We don't support nested arrays yet.
-1. Handle 429 rate limit error in streamFromLlm.
+1. Handle 429 rate limit error from OpenAI API.
 1. Top level arrays are not supported with current DSL.
 1. Structured Output fails when multiple schema types have the same first field name (e.g. id: sf.identifier on multiple types).
-1. Pass descriptions from schema metadata to the generated TS types that we put in the prompt.
 
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->

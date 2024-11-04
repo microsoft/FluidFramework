@@ -113,13 +113,15 @@ export function generateGenericEditTypes(
 		}
 		function getType(allowedTypes: ReadonlySet<string>): Zod.ZodTypeAny {
 			switch (allowedTypes.size) {
-				case 0:
+				case 0: {
 					return z.never();
-				case 1:
+				}
+				case 1: {
 					return (
 						typeMap.get(tryGetSingleton(allowedTypes) ?? fail("Expected singleton")) ??
 						fail("Unknown type")
 					);
+				}
 				default: {
 					const types = Array.from(
 						allowedTypes,
@@ -260,21 +262,28 @@ function getOrCreateType(
 					),
 				);
 			}
-			case NodeKind.Leaf:
+			case NodeKind.Leaf: {
 				switch (nodeSchema.leafKind) {
-					case ValueSchema.Boolean:
+					case ValueSchema.Boolean: {
 						return z.boolean();
-					case ValueSchema.Number:
+					}
+					case ValueSchema.Number: {
 						return z.number();
-					case ValueSchema.String:
+					}
+					case ValueSchema.String: {
 						return z.string();
-					case ValueSchema.Null:
+					}
+					case ValueSchema.Null: {
 						return z.null();
-					default:
+					}
+					default: {
 						throw new Error(`Unsupported leaf kind ${NodeKind[nodeSchema.leafKind]}.`);
+					}
 				}
-			default:
+			}
+			default: {
 				throw new Error(`Unsupported node kind ${NodeKind[nodeSchema.kind]}.`);
+			}
 		}
 	});
 }
@@ -287,7 +296,7 @@ function getOrCreateTypeForField(
 	fieldSchema: SimpleFieldSchema,
 ): Zod.ZodTypeAny | undefined {
 	switch (fieldSchema.kind) {
-		case FieldKind.Required:
+		case FieldKind.Required: {
 			return getTypeForAllowedTypes(
 				definitionMap,
 				typeMap,
@@ -296,7 +305,8 @@ function getOrCreateTypeForField(
 				modifyTypeSet,
 				fieldSchema.allowedTypes,
 			);
-		case FieldKind.Optional:
+		}
+		case FieldKind.Optional: {
 			return z.union([
 				z.null(),
 				getTypeForAllowedTypes(
@@ -308,10 +318,13 @@ function getOrCreateTypeForField(
 					fieldSchema.allowedTypes,
 				),
 			]);
-		case FieldKind.Identifier:
+		}
+		case FieldKind.Identifier: {
 			return undefined;
-		default:
+		}
+		default: {
 			throw new Error(`Unsupported field kind ${NodeKind[fieldSchema.kind]}.`);
+		}
 	}
 }
 function getTypeForAllowedTypes(

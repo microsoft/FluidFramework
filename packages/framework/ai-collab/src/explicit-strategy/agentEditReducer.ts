@@ -66,12 +66,15 @@ function populateDefaults(
 
 function getSchemaIdentifier(content: TreeEditValue): string | undefined {
 	switch (typeof content) {
-		case "boolean":
+		case "boolean": {
 			return booleanSchema.identifier;
-		case "number":
+		}
+		case "number": {
 			return numberSchema.identifier;
-		case "string":
+		}
+		case "string": {
 			return stringSchema.identifier;
+		}
 		case "object": {
 			if (content === null) {
 				return nullSchema.identifier;
@@ -84,8 +87,9 @@ function getSchemaIdentifier(content: TreeEditValue): string | undefined {
 			}
 			return content[typeField];
 		}
-		default:
+		default: {
 			throw new UsageError("Unsupported content type");
+		}
 	}
 }
 
@@ -305,8 +309,9 @@ export function applyAgentEdit(
 			}
 			return treeEdit;
 		}
-		default:
+		default: {
 			fail("invalid tree edit");
+		}
 	}
 }
 
@@ -406,7 +411,7 @@ function getNodeFromTarget(target: ObjectTarget, idGenerator: IdGenerator): Tree
 
 function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 	switch (treeEdit.type) {
-		case "insert":
+		case "insert": {
 			if (treeEdit.destination.type === "objectPlace") {
 				if (idGenerator.getNode(treeEdit.destination.target) === undefined) {
 					throw new UsageError(`objectIdKey ${treeEdit.destination.target} does not exist`);
@@ -417,7 +422,8 @@ function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 				}
 			}
 			break;
-		case "remove":
+		}
+		case "remove": {
 			if (isRange(treeEdit.source)) {
 				const missingObjectIds = [
 					treeEdit.source.from.target,
@@ -434,11 +440,13 @@ function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 				throw new UsageError(`objectIdKey ${treeEdit.source.target} does not exist`);
 			}
 			break;
-		case "modify":
+		}
+		case "modify": {
 			if (idGenerator.getNode(treeEdit.target.target) === undefined) {
 				throw new UsageError(`objectIdKey ${treeEdit.target.target} does not exist`);
 			}
 			break;
+		}
 		case "move": {
 			const invalidObjectIds: string[] = [];
 			// check the source
@@ -473,8 +481,9 @@ function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 			}
 			break;
 		}
-		default:
+		default: {
 			break;
+		}
 	}
 }
 
