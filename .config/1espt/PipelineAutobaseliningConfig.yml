@@ -344,3 +344,17 @@ pipelines:
           lastModifiedDate: 2024-09-26
         roslyn:
           lastModifiedDate: 2024-09-26
+  48:
+    retail:
+      source:
+        credscan:
+          lastModifiedDate: 2024-11-04
+        eslint:
+          lastModifiedDate: 2024-11-04
+        armory:
+          lastModifiedDate: 2024-11-04
+      binary:
+        credscan:
+          lastModifiedDate: 2024-11-04
+        binskim:
+          lastModifiedDate: 2024-11-04
