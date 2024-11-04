@@ -277,7 +277,7 @@ export async function setDependencyRange(
 					pkg.packageJson.dependencies[depName] = depRange;
 				} else if (depKind === "dev" && pkg.packageJson.devDependencies !== undefined) {
 					pkg.packageJson.devDependencies[depName] = depRange;
-				} else if (depKind === "peer" && pkg.packageJson.peerDependencies) {
+				} else if (depKind === "peer" && pkg.packageJson.peerDependencies !== undefined) {
 					pkg.packageJson.peerDependencies[depName] = depRange;
 				}
 			}
