@@ -30,6 +30,14 @@ import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 /**
  * A tree from which a {@link TreeView} can be created.
+ *
+ * @privateRemarks
+ * TODO:
+ * Add stored key versions of {@link TreeAlpha.(exportVerbose:2)}, {@link TreeAlpha.(exportConcise:2)} and {@link TreeAlpha.exportCompressed} here so tree content can be accessed without a view schema.
+ * Add exportSimpleSchema and exportJsonSchema methods (which should exactly match the concise format, and match the free functions for exporting view schema).
+ * Maybe rename "exportJsonSchema" to align on "concise" terminology.
+ * Ensure schema exporting APIs here align and reference APIs for exporting view schema to the same formats (which should include stored vs property key choice).
+ * Make sure users of independentView can use these export APIs (maybe provide a reference back to the ViewableTree from the TreeView to accomplish that).
  * @system @sealed @public
  */
 export interface ViewableTree {
@@ -49,7 +57,7 @@ export interface ViewableTree {
 	 * Only one schematized view may exist for a given ITree at a time.
 	 * If creating a second, the first must be disposed before calling `viewWith` again.
 	 *
-	 * @privateRemarks
+	 *
 	 * TODO: Provide a way to make a generic view schema for any document.
 	 * TODO: Support adapters for handling out-of-schema data.
 	 *
@@ -243,7 +251,7 @@ export class TreeViewConfiguration<
 		if (ambiguityErrors.length !== 0) {
 			// Duplicate errors are common since when two types conflict, both orders error:
 			const deduplicated = new Set(ambiguityErrors);
-			throw new UsageError(`Ambigious schema found:\n${[...deduplicated].join("\n")}`);
+			throw new UsageError(`Ambiguous schema found:\n${[...deduplicated].join("\n")}`);
 		}
 
 		// Eagerly perform this conversion to surface errors sooner.
