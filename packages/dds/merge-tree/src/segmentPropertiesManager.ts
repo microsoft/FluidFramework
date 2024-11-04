@@ -27,6 +27,34 @@ export enum PropertiesRollback {
 }
 
 /**
+ * Minimally copies properties and the property manager from source to destination.
+ * @internal
+ */
+export function copyPropertiesAndManager(
+	source: {
+		properties?: PropertySet;
+		propertyManager?: PropertiesManager;
+	},
+	destination: {
+		properties?: PropertySet;
+		propertyManager?: PropertiesManager;
+	},
+): void {
+	if (source.properties) {
+		if (source.propertyManager === undefined) {
+			destination.properties = clone(source.properties);
+		} else {
+			destination.propertyManager ??= new PropertiesManager();
+			destination.properties = source.propertyManager.copyTo(
+				source.properties,
+				destination.properties,
+				destination.propertyManager,
+			);
+		}
+	}
+}
+
+/**
  * @internal
  */
 export class PropertiesManager {

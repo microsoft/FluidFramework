@@ -14,6 +14,7 @@ import {
 	reservedRangeLabelsKey,
 	SequencePlace,
 	addProperties,
+	copyPropertiesAndManager,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -38,7 +39,7 @@ export class Interval implements ISerializableInterval {
 	/***/
 	public auxProps: PropertySet[] | undefined;
 
-	public readonly propertyManager: PropertiesManager = new PropertiesManager();
+	public propertyManager?: PropertiesManager;
 
 	constructor(
 		public start: number,
@@ -192,13 +193,7 @@ export class Interval implements ISerializableInterval {
 			return;
 		}
 		const newInterval = new Interval(startPos, endPos);
-		if (this.properties) {
-			this.propertyManager.copyTo(
-				this.properties,
-				newInterval.properties,
-				newInterval.propertyManager,
-			);
-		}
+		copyPropertiesAndManager(this, newInterval);
 		return newInterval;
 	}
 }

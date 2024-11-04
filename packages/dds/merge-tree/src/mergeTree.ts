@@ -79,7 +79,7 @@ import {
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
-import { PropertySet, clone, createMap, extend, extendIfUndefined } from "./properties.js";
+import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
 	ReferencePosition,
@@ -90,7 +90,11 @@ import {
 // eslint-disable-next-line import/no-deprecated
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 // eslint-disable-next-line import/no-deprecated
-import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+import {
+	copyPropertiesAndManager,
+	PropertiesManager,
+	PropertiesRollback,
+} from "./segmentPropertiesManager.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 import { zamboniSegments } from "./zamboni.js";
@@ -1683,19 +1687,7 @@ export class MergeTree {
 		if (segment.prevObliterateByInserter) {
 			next.prevObliterateByInserter = segment.prevObliterateByInserter;
 		}
-
-		if (segment.properties) {
-			if (segment.propertyManager === undefined) {
-				next.properties = clone(segment.properties);
-			} else {
-				next.propertyManager ??= new PropertiesManager();
-				next.properties = segment.propertyManager.copyTo(
-					segment.properties,
-					next.properties,
-					next.propertyManager,
-				);
-			}
-		}
+		copyPropertiesAndManager(segment, next);
 		if (segment.localRefs) {
 			segment.localRefs.split(pos, next);
 		}

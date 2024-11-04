@@ -123,7 +123,11 @@ export {
 	reservedRangeLabelsKey,
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
-export { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+export {
+	copyPropertiesAndManager,
+	PropertiesManager,
+	PropertiesRollback,
+} from "./segmentPropertiesManager.js";
 export {
 	InteriorSequencePlace,
 	Side,
