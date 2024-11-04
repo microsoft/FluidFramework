@@ -229,7 +229,7 @@ for (const testOpts of testMatrix) {
 					const user = view.root;
 					// Capture the Revertible so that changes can be undone
 					let revertible: Revertible | undefined;
-					view.events.on("commitApplied", (_, getRevertible) => {
+					view.events.on("changed", (_, getRevertible) => {
 						assert(getRevertible !== undefined);
 						revertible = getRevertible();
 					});

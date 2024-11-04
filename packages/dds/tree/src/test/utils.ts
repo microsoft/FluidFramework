@@ -1079,9 +1079,9 @@ export function createTestUndoRedoStacks(
 		}
 	}
 
-	const unsubscribeFromCommitApplied = events.on("commitApplied", onNewCommit);
+	const unsubscribeFromChangedEvent = events.on("changed", onNewCommit);
 	const unsubscribe = (): void => {
-		unsubscribeFromCommitApplied();
+		unsubscribeFromChangedEvent();
 		for (const revertible of undoStack) {
 			revertible.dispose();
 		}

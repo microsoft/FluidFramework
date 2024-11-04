@@ -85,6 +85,16 @@ export interface CheckoutEvents {
 	afterBatch(): void;
 
 	/**
+	 * todo description that won't make new breaking changes
+	 *
+	 * @param data - information about the commit that was applied
+	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
+	 * this commit is not revertible.
+	 */
+	changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+
+	/**
+	 * todo remove completely
 	 * Fired when a revertible change has been made to this view.
 	 *
 	 * Applications which subscribe to this event are expected to revert or discard revertibles they acquire (failure to do so will leak memory).
@@ -118,7 +128,7 @@ export interface TreeBranch extends ViewableTree {
 	 * @param view - a branch which was created by a call to `branch()`.
 	 * It is automatically disposed after the merge completes.
 	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
-	 * A "commitApplied" event and a corresponding {@link Revertible} will be emitted on this branch for each new change merged from 'branch'.
+	 * A "changed" event and a corresponding {@link Revertible} will be emitted on this branch for each new change merged from 'branch'.
 	 */
 	merge(branch: TreeBranchFork): void;
 
@@ -529,12 +539,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							: (onRevertibleDisposed?: (revertible: Revertible) => void) => {
 									if (!withinEventContext) {
 										throw new UsageError(
-											"Cannot get a revertible outside of the context of a commitApplied event.",
+											"Cannot get a revertible outside of the context of a changed event.",
 										);
 									}
 									if (this.revertibleCommitBranches.get(revision) !== undefined) {
 										throw new UsageError(
-											"Cannot generate the same revertible more than once. Note that this can happen when multiple commitApplied event listeners are registered.",
+											"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
 										);
 									}
 									const revertibleCommits = this.revertibleCommitBranches;
@@ -579,7 +589,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 								};
 
 						let withinEventContext = true;
-						this.events.emit("commitApplied", { isLocal: true, kind }, getRevertible);
+						this.events.emit("changed", { isLocal: true, kind }, getRevertible);
 						withinEventContext = false;
 					}
 				}

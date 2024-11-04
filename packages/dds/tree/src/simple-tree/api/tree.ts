@@ -552,6 +552,15 @@ export interface TreeViewEvents {
 	schemaChanged(): void;
 
 	/**
+	 * todo description that won't make new breaking changes
+	 *
+	 * @param data - information about the commit that was applied
+	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
+	 * this commit is not revertible.
+	 */
+	changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+
+	/**
 	 * Fired when:
 	 * - a local commit is applied outside of a transaction
 	 * - a local transaction is committed
@@ -563,6 +572,9 @@ export interface TreeViewEvents {
 	 * @param data - information about the commit that was applied
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
+	 *
+	 * @deprecated use the "changed" event instead which behaves the same way but also gets fired for more scenarios, see its doc comment
+	 * for usage details
 	 */
 	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }
