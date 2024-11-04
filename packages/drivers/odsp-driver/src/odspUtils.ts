@@ -575,13 +575,14 @@ const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
  * @returns The provided base URL appended with odsp-specific locator information
  */
 export function appendNavParam(
+	baseUrl: string,
 	odspResolvedUrl: IOdspResolvedUrl,
 	dataStorePath: string,
 	containerPackageName?: string,
 	context?: string,
 	appName?: string,
 ): string {
-	const url = new URL(odspResolvedUrl.url);
+	const url = new URL(baseUrl);
 
 	// If the user has passed an empty dataStorePath, then extract it from the resolved url.
 	const actualDataStorePath = dataStorePath || (odspResolvedUrl.dataStorePath ?? "");

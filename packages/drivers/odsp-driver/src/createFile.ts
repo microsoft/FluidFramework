@@ -108,6 +108,7 @@ export async function createNewFluidFile(
 		let newWebUrl = shareLinkInfo.createLink.link.webUrl;
 		if (newWebUrl) {
 			newWebUrl = appendNavParam(
+				newWebUrl,
 				odspResolvedUrl,
 				odspResolvedUrl.dataStorePath ?? "/",
 				resolvedUrl?.codeHint?.containerPackageName,

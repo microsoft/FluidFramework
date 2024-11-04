@@ -260,6 +260,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			odspResolvedUrl.codeHint?.containerPackageName;
 
 		return appendNavParam(
+			baseUrl,
 			odspResolvedUrl,
 			actualDataStorePath,
 			containerPackageName,
