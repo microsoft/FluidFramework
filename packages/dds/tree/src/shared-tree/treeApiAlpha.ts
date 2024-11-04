@@ -37,7 +37,7 @@ import {
 	type EncodeOptions,
 	extractPersistedSchema,
 	TreeViewConfiguration,
-	type TreeContext,
+	type TreeBranch,
 } from "../simple-tree/index.js";
 import { fail, type JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
@@ -61,11 +61,14 @@ import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js"
  */
 export const TreeAlpha: {
 	/**
-	 * Retrieve the {@link TreeContext | context}, if any, for the given node.
-	 * @param node - The node for which to get a context.
-	 * @remarks Returns `undefined` for nodes not yet inserted into the tree - nodes are not attached to a context until they are inserted.
+	 * Retrieve the {@link TreeBranch | branch}, if any, for the given node.
+	 * @param node - The node to query
+	 * @remarks Returns `undefined` for nodes not yet inserted into the tree - nodes are not attached to a branch until they are inserted.
+	 *
+	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
+	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.
 	 */
-	context(node: TreeNode): TreeContext | undefined;
+	branch(node: TreeNode): TreeBranch | undefined;
 
 	/**
 	 * Construct tree content that is compatible with the field defined by the provided `schema`.
@@ -235,7 +238,7 @@ export const TreeAlpha: {
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 } = {
-	context(node: TreeNode): TreeContext | undefined {
+	branch(node: TreeNode): TreeBranch | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
 			return undefined;

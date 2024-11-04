@@ -413,10 +413,10 @@ describe("treeApi", () => {
 
 		// Hydrated
 		const array = view.root;
-		const context = TreeAlpha.context(array);
+		const context = TreeAlpha.branch(array);
 		assert(context !== undefined);
 
 		// Unhydrated
-		assert.equal(TreeAlpha.context(new Array([1, 2, 3])), undefined);
+		assert.equal(TreeAlpha.branch(new Array([1, 2, 3])), undefined);
 	});
 });

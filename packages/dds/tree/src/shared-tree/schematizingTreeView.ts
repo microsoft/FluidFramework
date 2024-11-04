@@ -46,7 +46,7 @@ import {
 	type ReadableField,
 	type ReadSchema,
 	type UnsafeUnknownSchema,
-	type TreeContext,
+	type TreeBranch,
 } from "../simple-tree/index.js";
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
@@ -70,7 +70,7 @@ export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 @breakingClass
 export class SchematizingSimpleTreeView<
 	in out TRootSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> implements TreeContext, TreeViewAlpha<TRootSchema>, WithBreakable
+> implements TreeBranch, TreeViewAlpha<TRootSchema>, WithBreakable
 {
 	/**
 	 * The view is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
@@ -387,15 +387,15 @@ export class SchematizingSimpleTreeView<
 
 	// #region Branching
 
-	public branch(): ReturnType<TreeContext["branch"]> & TreeViewAlpha<TRootSchema> {
+	public fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TRootSchema> {
 		return this.checkout.branch().viewWith(this.config);
 	}
 
-	public merge(context: TreeContext, disposeMerged = true): void {
+	public merge(context: TreeBranch, disposeMerged = true): void {
 		this.checkout.merge(getCheckout(context), disposeMerged);
 	}
 
-	public rebaseOnto(context: TreeContext): void {
+	public rebaseOnto(context: TreeBranch): void {
 		getCheckout(context).rebase(this.checkout);
 	}
 
@@ -403,11 +403,11 @@ export class SchematizingSimpleTreeView<
 }
 
 /**
- * Get the {@link TreeCheckout} associated with a given {@link TreeContext}.
+ * Get the {@link TreeCheckout} associated with a given {@link TreeBranch}.
  * @remarks Currently, all contexts are also {@link SchematizingSimpleTreeView}s.
  * Other checkout implementations (e.g. not associated with a view) may be supported in the future.
  */
-function getCheckout(context: TreeContext): TreeCheckout {
+function getCheckout(context: TreeBranch): TreeCheckout {
 	if (context instanceof SchematizingSimpleTreeView) {
 		return context.checkout;
 	}

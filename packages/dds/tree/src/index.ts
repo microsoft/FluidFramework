@@ -173,8 +173,8 @@ export {
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
-	type TreeContext,
-	type TreeContextEvents,
+	type TreeBranch,
+	type TreeBranchEvents,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

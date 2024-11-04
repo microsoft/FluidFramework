@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
-	type TreeContextEvents,
+	type TreeBranchEvents,
 	type TreeView,
 	type TreeViewAlpha,
 	type TreeViewEvents,
@@ -34,19 +34,19 @@ describe("TreeContext", () => {
 	{
 		// Test that branching from a TreeView returns a typed view (as opposed to an untyped context).
 		const view = init([]);
-		const branch = view.branch();
+		const branch = view.fork();
 		type _check = requireAssignableTo<typeof branch, typeof view>;
 	}
 
 	{
 		// Test that TreeViewEvents "extends" TreeContextEvents (it can't actually extend it because TreeViewEvents is public but TreeContextEvents is not yet).
-		type _check = requireAssignableTo<TreeViewEvents, TreeContextEvents>;
+		type _check = requireAssignableTo<TreeViewEvents, TreeBranchEvents>;
 	}
 
 	it("can downcast to a view", () => {
 		const view = init(["a", "b", "c"]);
 		const array = view.root;
-		const context = TreeAlpha.context(array);
+		const context = TreeAlpha.branch(array);
 		assert(context !== undefined);
 		assert.equal(context.hasRootSchema(Array), true);
 		assert.equal(context.hasRootSchema(schemaFactory.number), false);
@@ -55,9 +55,9 @@ describe("TreeContext", () => {
 
 	describe("branches", () => {
 		function newBranch(view: TreeView<typeof Array>) {
-			const context = TreeAlpha.context(view.root);
+			const context = TreeAlpha.branch(view.root);
 			assert(context !== undefined);
-			const branch = context.branch();
+			const branch = context.fork();
 			assert(branch.hasRootSchema(Array));
 			return branch;
 		}

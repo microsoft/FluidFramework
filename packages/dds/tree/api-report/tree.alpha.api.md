@@ -645,7 +645,7 @@ export const Tree: TreeApi;
 
 // @alpha @sealed
 export const TreeAlpha: {
-    context(node: TreeNode): TreeContext | undefined;
+    branch(node: TreeNode): TreeBranch | undefined;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
@@ -711,6 +711,22 @@ export const TreeBeta: {
 };
 
 // @alpha @sealed
+export interface TreeBranch extends IDisposable {
+    dispose(error?: Error): void;
+    readonly events: Listenable<TreeBranchEvents>;
+    fork(): TreeBranch;
+    hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
+    merge(branch: TreeBranch, disposeMerged?: boolean): void;
+    rebaseOnto(branch: TreeBranch): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchEvents {
+    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+    schemaChanged(): void;
+}
+
+// @alpha @sealed
 export interface TreeBranchFork extends BranchableTree, IDisposable {
     rebaseOnto(branch: BranchableTree): void;
 }
@@ -730,22 +746,6 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends
 export enum TreeCompressionStrategy {
     Compressed = 0,
     Uncompressed = 1
-}
-
-// @alpha @sealed
-export interface TreeContext extends IDisposable {
-    branch(): TreeContext;
-    dispose(error?: Error): void;
-    readonly events: Listenable<TreeContextEvents>;
-    hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
-    merge(branch: TreeContext, disposeMerged?: boolean): void;
-    rebaseOnto(context: TreeContext): void;
-}
-
-// @alpha @sealed
-export interface TreeContextEvents {
-    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
-    schemaChanged(): void;
 }
 
 // @public
@@ -870,9 +870,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 // @alpha @sealed
-export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">, Omit<TreeContext, "events"> {
+export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">, Omit<TreeBranch, "events"> {
     // (undocumented)
-    branch(): ReturnType<TreeContext["branch"]> & TreeViewAlpha<TSchema>;
+    fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
     // (undocumented)
     initialize(content: InsertableField<TSchema>): void;
     // (undocumented)

@@ -360,32 +360,32 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 }
 
 /**
- * A context associated with a (version-control style) branch of a shared tree.
- * @remarks A `TreeContext` allows for the {@link TreeContext.branch | creation of branches} and for those branches to later be {@link TreeContext.merge | merged}.
+ * A collection of functionality associated with a (version-control-style) branch of a SharedTree.
+ * @remarks A `TreeBranch` allows for the {@link TreeBranch.fork | creation of branches} and for those branches to later be {@link TreeBranch.merge | merged}.
  *
- * The `TreeContext` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.context`.
+ * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
  *
- * A context does not necessarily know the schema of its SharedTree - to convert a context to a {@link TreeViewAlpha | view with a schema}, use {@link TreeContext.hasRootSchema | hasRootSchema()}.
+ * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranch.hasRootSchema | hasRootSchema()}.
  *
- * The context produced directly from the {@link ITree | SharedTree} is the "main" context, and all other contexts are branches (directly or transitively) of that main context.
+ * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
  * @sealed @alpha
  */
-export interface TreeContext extends IDisposable {
+export interface TreeBranch extends IDisposable {
 	/**
-	 * Events for the context
+	 * Events for the branch
 	 */
-	readonly events: Listenable<TreeContextEvents>;
+	readonly events: Listenable<TreeBranchEvents>;
 
 	/**
-	 * Returns true if this context has the given schema as its root schema.
-	 * @remarks This is a type guard which allows this context to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
+	 * Returns true if this branch has the given schema as its root schema.
+	 * @remarks This is a type guard which allows this branch to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
 	 *
 	 * To succeed, the given schema must be invariant to the schema of the view - it must include exactly the same allowed types.
 	 * For example, a schema of `Foo | Bar` will not match a view schema of `Foo`, and likewise a schema of `Foo` will not match a view schema of `Foo | Bar`.
 	 * @example
 	 * ```typescript
-	 * if (context.hasRootSchema(MySchema)) {
-	 *   const { root } = context; // `context` is now a TreeViewAlpha<MySchema>
+	 * if (branch.hasRootSchema(MySchema)) {
+	 *   const { root } = branch; // `branch` is now a TreeViewAlpha<MySchema>
 	 *   // ...
 	 * }
 	 * ```
@@ -395,44 +395,44 @@ export interface TreeContext extends IDisposable {
 	): this is TreeViewAlpha<TSchema>;
 
 	/**
-	 * Create a new branch of this context which is based off of the current state of this context.
-	 * @remarks Any changes to the tree on the new branch will not apply to this context until the new branch is e.g. {@link TreeContext.merge | merged} back into this context.
-	 * The branch should be disposed when no longer needed, either {@link TreeContext.dispose | explicitly} or {@link TreeContext.merge | implicitly when merging} into another context.
+	 * Fork a new branch off of this branch which is based off of this branch's current state.
+	 * @remarks Any changes to the tree on the new branch will not apply to this branch until the new branch is e.g. {@link TreeBranch.merge | merged} back into this branch.
+	 * The branch should be disposed when no longer needed, either {@link TreeBranch.dispose | explicitly} or {@link TreeBranch.merge | implicitly when merging} into another branch.
 	 */
-	branch(): TreeContext;
+	fork(): TreeBranch;
 
 	/**
-	 * Apply all the new changes on the given branch to this context.
+	 * Apply all the new changes on the given branch to this branch.
 	 * @param branch - a branch which was created by a call to `branch()`.
 	 * @param disposeMerged - whether or not to dispose `branch` after the merge completes.
 	 * Defaults to true.
-	 * The {@link TreeContext | main context} cannot be disposed - attempting to do so will have no effect.
+	 * The {@link TreeBranch | main branch} cannot be disposed - attempting to do so will have no effect.
 	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
 	 */
-	merge(branch: TreeContext, disposeMerged?: boolean): void;
+	merge(branch: TreeBranch, disposeMerged?: boolean): void;
 
 	/**
-	 * Advance this context branch forward such that all new changes on the target context become part of this branch.
-	 * @param context - The context to rebase onto.
-	 * @remarks After rebasing, this branch will be "ahead" of the target context, that is, its unique changes will have been recreated as if they happened after all changes on the target context.
-	 * This method may only be called on contexts produced via {@link TreeContext.branch | branch} - attempting to rebase the main context will throw.
+	 * Advance this branch forward such that all new changes on the target branch become part of this branch.
+	 * @param branch - The branch to rebase onto.
+	 * @remarks After rebasing, this branch will be "ahead" of the target branch, that is, its unique changes will have been recreated as if they happened after all changes on the target branch.
+	 * This method may only be called on branches produced via {@link TreeBranch.fork | branch} - attempting to rebase the main branch will throw.
 	 *
 	 * Rebasing long-lived branches is important to avoid consuming memory unnecessarily.
 	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last rebased.
 	 *
-	 * The {@link TreeContext | main context} cannot be rebased onto another context - attempting to do so will throw an error.
+	 * The {@link TreeBranch | main branch} cannot be rebased onto another branch - attempting to do so will throw an error.
 	 */
-	rebaseOnto(context: TreeContext): void;
+	rebaseOnto(branch: TreeBranch): void;
 
 	/**
 	 * Dispose of this branch, cleaning up any resources associated with it.
 	 * @param error - Optional error indicating the reason for the disposal, if the object was disposed as the result of an error.
-	 * @remarks Branches can also be automatically disposed when {@link TreeContext.merge | they are merged} into another context.
+	 * @remarks Branches can also be automatically disposed when {@link TreeBranch.merge | they are merged} into another branch.
 	 *
 	 * Disposing branches is important to avoid consuming memory unnecessarily.
-	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeContext.rebaseOnto | rebased}.
+	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeBranch.rebaseOnto | rebased}.
 	 *
-	 * The {@link TreeContext | main context} cannot be disposed - attempting to do so will have no effect.
+	 * The {@link TreeBranch | main branch} cannot be disposed - attempting to do so will have no effect.
 	 */
 	dispose(error?: Error): void;
 }
@@ -522,15 +522,15 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
 > extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">,
-		Omit<TreeContext, "events"> {
+		Omit<TreeBranch, "events"> {
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
 
 	initialize(content: InsertableField<TSchema>): void;
 
-	// Override the base branch method to return a typed view rather than merely a context.
-	branch(): ReturnType<TreeContext["branch"]> & TreeViewAlpha<TSchema>;
+	// Override the base branch method to return a typed view rather than merely a branch.
+	fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
 }
 
 /**
@@ -600,7 +600,7 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * @remarks
 	 * It's not necessary to check this field before calling {@link TreeView.initialize} in most scenarios; application authors typically know from
-	 * context that they're in a flow which creates a new `SharedTree` and would like to initialize it.
+	 * branch that they're in a flow which creates a new `SharedTree` and would like to initialize it.
 	 */
 	readonly canInitialize: boolean;
 
@@ -610,10 +610,10 @@ export interface SchemaCompatibilityStatus {
 }
 
 /**
- * Events for {@link TreeContext}.
+ * Events for {@link TreeBranch}.
  * @sealed @alpha
  */
-export interface TreeContextEvents {
+export interface TreeBranchEvents {
 	/**
 	 * The stored schema for the document has changed.
 	 */
