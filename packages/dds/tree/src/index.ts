@@ -58,7 +58,7 @@ export {
 	rollback,
 	type ForestOptions,
 	getBranch,
-	type TreeBranch,
+	type BranchableTree,
 	type TreeBranchFork,
 	independentInitializedView,
 	type ViewContent,
@@ -173,6 +173,9 @@ export {
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
+	type TreeBranch,
+	type TreeBranchEvents,
+	asTreeViewAlpha,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
