@@ -101,6 +101,12 @@ export {
 	type TreeContext,
 	type TreeContextBranch,
 	type TreeContextEvents,
+	tryGetSchema,
+	applySchemaToParserOptions,
+	cursorFromVerbose,
+	verboseFromCursor,
+	conciseFromCursor,
+	createFromCursor,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

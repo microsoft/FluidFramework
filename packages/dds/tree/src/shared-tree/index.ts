@@ -48,3 +48,9 @@ export {
 } from "./treeApi.js";
 
 export { TreeAlpha } from "./treeApiAlpha.js";
+
+export {
+	independentInitializedView,
+	type ViewContent,
+	independentView,
+} from "./independentView.js";
