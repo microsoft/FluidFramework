@@ -16,7 +16,7 @@ import type { IPackage, PackageJson } from "./types.js";
  * @param version - The version to set.
  */
 export async function setVersion<J extends PackageJson>(
-	packages: IPackage[],
+	packages: IPackage<J>[],
 	version: SemVer,
 ): Promise<void> {
 	const translatedVersion = version;

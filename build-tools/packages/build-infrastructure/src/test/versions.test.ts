@@ -11,13 +11,13 @@ import { afterEach, describe, it } from "mocha";
 import * as semver from "semver";
 import { simpleGit } from "simple-git";
 
-import { loadFluidRepo } from "../fluidRepo.js";
+import { loadBuildProject } from "../buildProject.js";
 import type { ReleaseGroupName, WorkspaceName } from "../types.js";
 import { setVersion } from "../versions.js";
 
 import { testDataPath, testRepoRoot } from "./init.js";
 
-const repo = loadFluidRepo(path.join(testDataPath, "./testRepo"));
+const repo = loadBuildProject(path.join(testDataPath, "./testRepo"));
 const main = repo.releaseGroups.get("main" as ReleaseGroupName);
 assert(main !== undefined);
 

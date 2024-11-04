@@ -236,7 +236,7 @@ export interface Reloadable {
 }
 
 // @public
-export function setVersion<J extends PackageJson>(packages: IPackage[], version: SemVer): Promise<void>;
+export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;
 
 // @public
 export interface WorkspaceDefinition {
