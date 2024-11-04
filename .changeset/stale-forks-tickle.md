@@ -5,10 +5,10 @@
 "section": tree
 ---
 
-Added new and improved SharedTree branching API
+SharedTree branching API has been improved
 
-This refreshes the (currently alpha) SharedTree branching API to be more accessible and intuitive.
-The branching functionality (`branch`, `merge`, `rebaseOnto`, etc.) are now directly available on the view object rather than a separate object.
+The alpha SharedTree branching API has been updated to be more accessible and intuitive.
+The branching functions (`branch`, `merge`, `rebaseOnto`, etc.) are now directly available on the view object rather than a separate object.
 In particular, `TreeViewAlpha` is now a `TreeBranch`, which exposes the methods to coordinate branches.
 
 The existing `TreeBranch` type has been renamed to `BranchableTree` and is now **deprecated**.
