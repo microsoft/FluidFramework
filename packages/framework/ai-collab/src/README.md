@@ -135,7 +135,6 @@ const response = await aiCollab<typeof PlannerAppState>({
 			}),
 			modelName: "gpt-4o",
 		},
-		treeView: view,
 		treeNode: view.root.taskGroups[0],
 		prompt: {
 			systemRoleContext:

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { ImplicitFieldSchema } from "@fluidframework/tree";
-
 import type {
 	AiCollabErrorResponse,
 	AiCollabOptions,
@@ -18,11 +16,10 @@ import { generateTreeEdits } from "./explicit-strategy/index.js";
  *
  * @alpha
  */
-export async function aiCollab<TSchema extends ImplicitFieldSchema>(
-	options: AiCollabOptions<TSchema>,
+export async function aiCollab(
+	options: AiCollabOptions,
 ): Promise<AiCollabSuccessResponse | AiCollabErrorResponse> {
 	const response = await generateTreeEdits({
-		treeView: options.treeView,
 		treeNode: options.treeNode,
 		validator: options.validator,
 		openAI: options.openAI,

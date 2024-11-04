@@ -6,10 +6,8 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	NodeKind,
-	normalizeFieldSchema,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
-	type TreeView,
 	getJsonSchema,
 	type JsonFieldSchema,
 	type JsonNodeSchema,
@@ -69,18 +67,14 @@ export function toDecoratedJson(
 /**
  * Generates a prompt designed to make an LLM produce a plan to edit the SharedTree to accomplish a user-specified goal.
  */
-export function getPlanningSystemPrompt<TSchema extends ImplicitFieldSchema>(
-	view: TreeView<TSchema>,
+export function getPlanningSystemPrompt(
 	treeNode: TreeNode,
 	userPrompt: string,
 	systemRoleContext?: string,
 ): string {
-	const isRootNode = Tree.parent(treeNode) === undefined;
-	const schema = isRootNode
-		? normalizeFieldSchema(view.schema)
-		: normalizeFieldSchema(Tree.schema(treeNode));
+	const schema = Tree.schema(treeNode);
 
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
 	const role = `I'm an agent who makes plans for another agent to achieve a user-specified goal to update the state of an application.${
 		systemRoleContext === undefined
 			? ""
@@ -106,20 +100,16 @@ export function getPlanningSystemPrompt<TSchema extends ImplicitFieldSchema>(
  * This prompt is designed to give an LLM instructions on how it can modify a SharedTree using specific types of {@link TreeEdit}'s
  * and provides with both a serialized version of the current state of the provided tree node as well as  the interfaces that compromise said tree nodes data.
  */
-export function getEditingSystemPrompt<TSchema extends ImplicitFieldSchema>(
+export function getEditingSystemPrompt(
 	userPrompt: string,
 	idGenerator: IdGenerator,
-	view: TreeView<TSchema>,
 	treeNode: TreeNode,
 	log: EditLog,
 	appGuidance?: string,
 	plan?: string,
 ): string {
-	const isRootNode = Tree.parent(treeNode) === undefined;
-	const schema = isRootNode
-		? normalizeFieldSchema(view.schema)
-		: normalizeFieldSchema(Tree.schema(treeNode));
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
+	const schema = Tree.schema(treeNode);
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
 	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
 
 	function createEditList(edits: EditLog): string {
@@ -149,7 +139,7 @@ export function getEditingSystemPrompt<TSchema extends ImplicitFieldSchema>(
 	const systemPrompt = `
 	${role}
 	Edits are JSON objects that conform to the following schema.
-	The top level object you produce is an "EditWrapper" object which contains one of "SetRoot", "Insert", "Modify", "Remove", "Move", or null.
+	The top level object you produce is an "EditWrapper" object which contains one of "Insert", "Modify", "Remove", "Move", or null.
 	${treeSchemaString}
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
 	${plan === undefined ? "" : `You have made a plan to accomplish the user's goal. The plan is: "${plan}". You will perform one or more edits that correspond to that plan to accomplish the goal.`}
@@ -172,19 +162,15 @@ export function getEditingSystemPrompt<TSchema extends ImplicitFieldSchema>(
  * Generates a prompt designed to make an LLM review the edits it created and applied to a SharedTree based
  * on a user-specified goal. This prompt is designed to give the LLM's ability to correct for mistakes and improve the accuracy/fidelity of its final set of tree edits
  */
-export function getReviewSystemPrompt<TSchema extends ImplicitFieldSchema>(
+export function getReviewSystemPrompt(
 	userPrompt: string,
 	idGenerator: IdGenerator,
-	view: TreeView<TSchema>,
 	treeNode: TreeNode,
 	originalDecoratedJson: string,
 	appGuidance?: string,
 ): string {
-	const isRootNode = Tree.parent(treeNode) === undefined;
-	const schema = isRootNode
-		? normalizeFieldSchema(view.schema)
-		: normalizeFieldSchema(Tree.schema(treeNode));
-	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema.allowedTypes));
+	const schema = Tree.schema(treeNode);
+	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
 	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
 
 	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${

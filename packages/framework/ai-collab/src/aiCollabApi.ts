@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeNode, TreeView, ImplicitFieldSchema } from "@fluidframework/tree";
+import type { TreeNode } from "@fluidframework/tree";
 // eslint-disable-next-line import/no-named-as-default
 import type OpenAI from "openai";
 
@@ -28,14 +28,8 @@ export interface OpenAiClientOptions {
  *
  * @alpha
  */
-export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
+export interface AiCollabOptions {
 	openAI: OpenAiClientOptions;
-	/**
-	 * The view of your Shared Tree.
-	 * @remarks Its is recommended to pass a branch of your current tree view so the AI has a separate canvas to work on
-	 * and merge said branch back to the main tree when the AI is done and the user accepts
-	 */
-	treeView: TreeView<TSchema>;
 	/**
 	 * The specific tree node you want the AI to collaborate on. Pass the root node of your tree if you intend
 	 * for the AI to work on the entire tree.

@@ -167,8 +167,6 @@ export {
 	type SimpleMapNodeSchema,
 	type SimpleArrayNodeSchema,
 	type SimpleObjectNodeSchema,
-	normalizeFieldSchema,
-	isTreeNodeSchemaClass,
 	normalizeAllowedTypes,
 	getSimpleSchema,
 	numberSchema,

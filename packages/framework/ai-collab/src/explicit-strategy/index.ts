@@ -5,12 +5,9 @@
 
 import {
 	getSimpleSchema,
-	normalizeFieldSchema,
 	Tree,
-	type ImplicitFieldSchema,
 	type SimpleTreeSchema,
 	type TreeNode,
-	type TreeView,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { zodResponseFormat } from "openai/helpers/zod";
@@ -42,9 +39,8 @@ const DEBUG_LOG: string[] = [];
  *
  * @internal
  */
-export interface GenerateTreeEditsOptions<TSchema extends ImplicitFieldSchema> {
+export interface GenerateTreeEditsOptions {
 	openAI: OpenAiClientOptions;
-	treeView: TreeView<TSchema>;
 	treeNode: TreeNode;
 	prompt: {
 		systemRoleContext: string;
@@ -83,18 +79,15 @@ interface GenerateTreeEditsErrorResponse {
  *
  * @internal
  */
-export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
-	options: GenerateTreeEditsOptions<TSchema>,
+export async function generateTreeEdits(
+	options: GenerateTreeEditsOptions,
 ): Promise<GenerateTreeEditsSuccessResponse | GenerateTreeEditsErrorResponse> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];
 	let editCount = 0;
 	let sequentialErrorCount = 0;
 
-	const isRootNode = Tree.parent(options.treeNode) === undefined;
-	const simpleSchema = isRootNode
-		? getSimpleSchema(normalizeFieldSchema(options.treeView.schema).allowedTypes)
-		: getSimpleSchema(Tree.schema(options.treeNode));
+	const simpleSchema = getSimpleSchema(Tree.schema(options.treeNode));
 
 	const tokenUsage = { inputTokens: 0, outputTokens: 0 };
 
@@ -109,7 +102,6 @@ export async function generateTreeEdits<TSchema extends ImplicitFieldSchema>(
 		)) {
 			try {
 				const result = applyAgentEdit(
-					options.treeView,
 					options.treeNode,
 					edit,
 					idGenerator,
@@ -198,8 +190,8 @@ interface ReviewResult {
  * Once the LLM believes it has completed the user's ask, it will no longer return an edit and as a result
  * this generator will no longer yield a next value.
  */
-async function* generateEdits<TSchema extends ImplicitFieldSchema>(
-	options: GenerateTreeEditsOptions<TSchema>,
+async function* generateEdits(
+	options: GenerateTreeEditsOptions,
 	simpleSchema: SimpleTreeSchema,
 	idGenerator: IdGenerator,
 	editLog: EditLog,
@@ -211,7 +203,6 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 	let plan: string | undefined;
 	if (options.planningStep !== undefined) {
 		const planningPromt = getPlanningSystemPrompt(
-			options.treeView,
 			options.treeNode,
 			options.prompt.userAsk,
 			options.prompt.systemRoleContext,
@@ -231,7 +222,6 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 		const systemPrompt = getEditingSystemPrompt(
 			options.prompt.userAsk,
 			idGenerator,
-			options.treeView,
 			options.treeNode,
 			editLog,
 			options.prompt.systemRoleContext,
@@ -282,7 +272,6 @@ async function* generateEdits<TSchema extends ImplicitFieldSchema>(
 		const systemPrompt = getReviewSystemPrompt(
 			options.prompt.userAsk,
 			idGenerator,
-			options.treeView,
 			options.treeNode,
 			originalDecoratedJson ?? fail("Original decorated tree not provided."),
 			options.prompt.systemRoleContext,

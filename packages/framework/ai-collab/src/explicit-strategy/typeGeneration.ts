@@ -130,17 +130,6 @@ export function generateGenericEditTypes(
 				}
 			}
 		}
-		const setRoot = z
-			.object({
-				type: z.literal("setRoot"),
-				explanation: z.string().describe(editDescription),
-				content: generateDomainTypes
-					? getType(schema.allowedTypes)
-					: z.any().describe("Domain-specific content here"),
-			})
-			.describe(
-				"Replaces the tree with a specific value. This is useful for initializing the tree or replacing the state entirely if appropriate.",
-			);
 		const insert = z
 			.object({
 				type: z.literal("insert"),
@@ -177,7 +166,7 @@ export function generateGenericEditTypes(
 					: z.any().describe("Domain-specific content here"),
 			})
 			.describe("Sets a field on a specific ObjectTarget.");
-		const editTypes = [setRoot, insert, remove, move, modify, z.null()] as const;
+		const editTypes = [insert, remove, move, modify, z.null()] as const;
 		const editWrapper = z.object({
 			edit: z
 				.union(editTypes)
@@ -188,7 +177,6 @@ export function generateGenericEditTypes(
 			ObjectPlace: objectPlace,
 			ArrayPlace: arrayPlace,
 			Range: range,
-			SetRoot: setRoot,
 			Insert: insert,
 			Remove: remove,
 			Move: move,

@@ -17,8 +17,6 @@ import type { JsonPrimitive } from "./jsonTypes.js";
  *
  * TODO: We don't supported nested arrays yet.
  *
- * TODO: Could omit edit contents for setRoot edits as the tree state is the result (or the other way around).
- *
  * TODO: Add a prompt suggestion API!
  *
  * TODO: Could encourage the model to output more technical explanations of the edits (e.g. "insert a new Foo after "Foo2").
@@ -26,8 +24,6 @@ import type { JsonPrimitive } from "./jsonTypes.js";
  * TODO: Get explanation strings from o1.
  *
  * TODO: Tests of range edits.
- *
- * TODO: SetRoot might be obscure enough to make the LLM avoid it. Maybe a general replace edit would be better.
  *
  * TODO: Handle 429 rate limit error from OpenAI.
  *
@@ -85,14 +81,14 @@ export interface EditWrapper {
 /**
  * Union type representing all possible types of edits that can be made to a tree.
  */
-export type TreeEdit = SetRoot | Insert | Modify | Remove | Move;
+export type TreeEdit = Insert | Modify | Remove | Move;
 
 /**
  * The base interface for all types of {@link TreeEdit}.
  */
 export interface Edit {
 	explanation: string;
-	type: "setRoot" | "insert" | "modify" | "remove" | "move";
+	type: "insert" | "modify" | "remove" | "move";
 }
 
 /**
@@ -141,14 +137,6 @@ export interface ObjectPlace extends ObjectTarget {
 export interface Range {
 	from: ObjectPlace;
 	to: ObjectPlace;
-}
-
-/**
- * Describes an operation to set the root of the tree. This is the only edit that can change the root object.
- */
-export interface SetRoot extends Edit {
-	type: "setRoot";
-	content: TreeEditValue;
 }
 
 /**

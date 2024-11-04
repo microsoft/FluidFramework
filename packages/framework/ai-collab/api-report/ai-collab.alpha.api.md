@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha
-export function aiCollab<TSchema extends ImplicitFieldSchema>(options: AiCollabOptions<TSchema>): Promise<AiCollabSuccessResponse | AiCollabErrorResponse>;
+export function aiCollab(options: AiCollabOptions): Promise<AiCollabSuccessResponse | AiCollabErrorResponse>;
 
 // @alpha
 export interface AiCollabErrorResponse {
@@ -15,7 +15,7 @@ export interface AiCollabErrorResponse {
 }
 
 // @alpha
-export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
+export interface AiCollabOptions {
     dumpDebugLog?: boolean;
     finalReviewStep?: boolean;
     limiters?: {
@@ -33,7 +33,6 @@ export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
         userAsk: string;
     };
     treeNode: TreeNode;
-    treeView: TreeView<TSchema>;
     validator?: (newContent: TreeNode) => void;
 }
 

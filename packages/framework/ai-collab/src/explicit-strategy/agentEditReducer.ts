@@ -13,13 +13,10 @@ import {
 	type TreeArrayNode,
 	type TreeNode,
 	type TreeNodeSchema,
-	type TreeView,
 	type SimpleNodeSchema,
 	FieldKind,
 	FieldSchema,
-	isTreeNodeSchemaClass,
 	normalizeAllowedTypes,
-	normalizeFieldSchema,
 	type ImplicitFieldSchema,
 	booleanSchema,
 	handleSchema,
@@ -80,7 +77,6 @@ function getSchemaIdentifier(content: TreeEditValue): string | undefined {
 				return nullSchema.identifier;
 			}
 			if (Array.isArray(content)) {
-				// TODO: Support arrays for setRoot
 				throw new UsageError("Arrays are not currently supported in this context");
 			}
 			if (isFluidHandle(content)) {
@@ -93,19 +89,6 @@ function getSchemaIdentifier(content: TreeEditValue): string | undefined {
 	}
 }
 
-function isConstructable(schema: TreeNodeSchema): boolean {
-	switch (schema.identifier) {
-		case booleanSchema.identifier:
-		case numberSchema.identifier:
-		case stringSchema.identifier:
-		case nullSchema.identifier:
-		case handleSchema.identifier:
-			return false;
-		default:
-			return isTreeNodeSchemaClass(schema);
-	}
-}
-
 function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeEditObject {
 	return JSON.parse(toDecoratedJson(idGenerator, content)) as TreeEditObject;
 }
@@ -113,8 +96,7 @@ function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeEditOb
 /**
  * Manages applying the various types of {@link TreeEdit}'s to a a given {@link TreeNode}.
  */
-export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
-	treeView: TreeView<TSchema>,
+export function applyAgentEdit(
 	treeNode: TreeNode,
 	treeEdit: TreeEdit,
 	idGenerator: IdGenerator,
@@ -122,62 +104,7 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 	validator?: (edit: TreeNode) => void,
 ): TreeEdit {
 	objectIdsExist(treeEdit, idGenerator);
-	const isRootNode = Tree.parent(treeNode) === undefined;
 	switch (treeEdit.type) {
-		case "setRoot": {
-			populateDefaults(treeEdit.content, definitionMap);
-
-			// const treeSchema = normalizeFieldSchema(tree.schema);
-			const treeSchema = isRootNode
-				? normalizeFieldSchema(treeView.schema)
-				: normalizeFieldSchema(Tree.schema(treeNode));
-			const schemaIdentifier = getSchemaIdentifier(treeEdit.content);
-
-			let insertedObject: TreeNode | undefined;
-			if (treeSchema.kind === FieldKind.Optional && treeEdit.content === undefined) {
-				if (isRootNode) {
-					treeView.root = treeEdit.content;
-				} else {
-					// eslint-disable-next-line no-param-reassign, @typescript-eslint/no-explicit-any
-					(treeNode as any) = treeEdit.content;
-				}
-			} else {
-				for (const allowedType of treeSchema.allowedTypeSet.values()) {
-					if (schemaIdentifier === allowedType.identifier) {
-						if (isConstructable(allowedType)) {
-							const simpleNodeSchema = allowedType as unknown as new (
-								dummy: unknown,
-							) => TreeNode;
-							const rootNode = new simpleNodeSchema(treeEdit.content);
-							validator?.(rootNode);
-							if (isRootNode) {
-								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-								(treeView as any).root = rootNode;
-							} else {
-								// eslint-disable-next-line no-param-reassign
-								treeNode = rootNode;
-							}
-							insertedObject = rootNode;
-						} else {
-							if (isRootNode) {
-								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-								(treeView as any).root = treeEdit.content;
-							} else {
-								// eslint-disable-next-line no-param-reassign, @typescript-eslint/no-explicit-any
-								(treeNode as any) = treeEdit.content;
-							}
-						}
-					}
-				}
-			}
-
-			return insertedObject === undefined
-				? treeEdit
-				: {
-						...treeEdit,
-						content: contentWithIds(insertedObject, idGenerator),
-					};
-		}
 		case "insert": {
 			const { array, index } = getPlaceInfo(treeEdit.destination, idGenerator);
 
@@ -212,15 +139,10 @@ export function applyAgentEdit<TSchema extends ImplicitFieldSchema>(
 				const parentNode = Tree.parent(node);
 				// Case for deleting rootNode
 				if (parentNode === undefined) {
-					const treeSchema = isRootNode ? treeView.schema : Tree.schema(treeNode);
+					const treeSchema = Tree.schema(treeNode);
 					if (treeSchema instanceof FieldSchema && treeSchema.kind === FieldKind.Optional) {
-						if (isRootNode) {
-							// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-							(treeView as any).root = undefined;
-						} else {
-							// eslint-disable-next-line no-param-reassign, @typescript-eslint/no-explicit-any
-							(treeNode as any) = undefined;
-						}
+						// eslint-disable-next-line no-param-reassign, @typescript-eslint/no-explicit-any
+						(treeNode as any) = undefined;
 					} else {
 						throw new UsageError(
 							"The root is required, and cannot be removed. Please use modify edit instead.",
@@ -484,8 +406,6 @@ function getNodeFromTarget(target: ObjectTarget, idGenerator: IdGenerator): Tree
 
 function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 	switch (treeEdit.type) {
-		case "setRoot":
-			break;
 		case "insert":
 			if (treeEdit.destination.type === "objectPlace") {
 				if (idGenerator.getNode(treeEdit.destination.target) === undefined) {

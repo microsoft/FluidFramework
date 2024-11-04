@@ -48,6 +48,7 @@ describe("toDecoratedJson", () => {
 	beforeEach(() => {
 		idGenerator = new IdGenerator();
 	});
+
 	it("adds ID fields", () => {
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),

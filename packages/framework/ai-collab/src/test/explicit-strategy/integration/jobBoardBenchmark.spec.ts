@@ -267,7 +267,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					}),
 					modelName: "gpt-4o",
 				},
-				treeView: view,
 				treeNode: view.root,
 				prompt: {
 					systemRoleContext: SYSTEM_ROLE_CONTEXT,
@@ -386,7 +385,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					}),
 					modelName: "gpt-4o",
 				},
-				treeView: view,
 				treeNode: view.root,
 				prompt: {
 					systemRoleContext: SYSTEM_ROLE_CONTEXT,
@@ -526,7 +524,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					}),
 					modelName: "gpt-4o",
 				},
-				treeView: view,
 				treeNode: view.root,
 				prompt: {
 					systemRoleContext: SYSTEM_ROLE_CONTEXT,
@@ -637,7 +634,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					}),
 					modelName: "gpt-4o",
 				},
-				treeView: view,
 				treeNode: view.root,
 				prompt: {
 					systemRoleContext: SYSTEM_ROLE_CONTEXT,
@@ -769,7 +765,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					}),
 					modelName: "gpt-4o",
 				},
-				treeView: view,
 				treeNode: view.root,
 				prompt: {
 					systemRoleContext: SYSTEM_ROLE_CONTEXT,
@@ -869,7 +864,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 					}),
 					modelName: "gpt-4o",
 				},
-				treeView: view,
 				treeNode: view.root,
 				prompt: {
 					systemRoleContext: SYSTEM_ROLE_CONTEXT,

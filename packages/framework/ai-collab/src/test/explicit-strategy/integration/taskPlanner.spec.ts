@@ -178,14 +178,13 @@ describe.skip("Ai Planner App", () => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: SharedTreeAppState }));
 		view.initialize(INITIAL_APP_STATE);
 
-		await aiCollab<typeof SharedTreeAppState>({
+		await aiCollab({
 			openAI: {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
 				}),
 				modelName: "gpt-4o",
 			},
-			treeView: view,
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			treeNode: view.root.taskGroups[0]!,
 			prompt: {
@@ -214,14 +213,13 @@ describe.skip("Ai Planner App", () => {
 		view.initialize({ priority: "low" });
 
 		try {
-			await aiCollab<typeof TestAppSchema>({
+			await aiCollab({
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
 					}),
 					modelName: "gpt-4o",
 				},
-				treeView: view,
 				treeNode: view.root,
 				prompt: {
 					systemRoleContext: "You are a managing objects with a priority field.",
@@ -266,14 +264,13 @@ describe.skip("Ai Planner App", () => {
 		});
 
 		try {
-			await aiCollab<typeof TestAppSchema>({
+			await aiCollab({
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
 					}),
 					modelName: "gpt-4o",
 				},
-				treeView: view,
 				treeNode: view.root,
 				prompt: {
 					systemRoleContext: "You are a managing json objects",
@@ -319,7 +316,6 @@ describe.skip("Ai Planner App", () => {
 					}),
 					modelName: "gpt-4o",
 				},
-				treeView: view,
 				treeNode: view.root,
 				prompt: {
 					systemRoleContext: "You are a managing json objects",
@@ -354,14 +350,13 @@ describe.skip("Ai Planner App", () => {
 		);
 		view2.initialize({ nonOptionalProp: "Hello" });
 
-		await aiCollab<typeof TestAppSchemaWithoutOptionalProp>({
+		await aiCollab({
 			openAI: {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
 				}),
 				modelName: "gpt-4o",
 			},
-			treeView: view2,
 			treeNode: view.root,
 			prompt: {
 				systemRoleContext: "You are a managing json objects",
