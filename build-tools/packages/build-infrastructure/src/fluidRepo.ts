@@ -238,6 +238,16 @@ export function getAllDependenciesInRepo(
 	};
 }
 
+/**
+ * Sets the dependency range for a set of packages given a group dependencies to update.
+ * This function will update the package.json files.
+ *
+ * Note that any loaded objects such as an IFluidRepo instance may need to be reloaded after calling this function.
+ *
+ * @param packagesToUpdate - An array of objects whose version should be updated.
+ * @param dependencies - An array of objects that the packagesToUpdate depend on.
+ * @param dependencyRange - The new version range to set for the packageToUpdate dependencies.
+ */
 export async function setDependencyRange(
 	packagesToUpdate: IPackage[],
 	dependencies: IPackage[],
@@ -257,14 +267,19 @@ export async function setDependencyRange(
 							? dependencyRange.version
 							: undefined;
 
-				// Update the version in packageJson
-				if (depKind === "prod" && pkg.packageJson.dependencies) {
-					pkg.packageJson.dependencies[depName] = depRange;
-				} else if (depKind === "dev" && pkg.packageJson.devDependencies) {
-					pkg.packageJson.devDependencies[depName] = depRange;
-				} else if (depKind === "peer" && pkg.packageJson.peerDependencies) {
-					pkg.packageJson.peerDependencies[depName] = depRange;
-				}
+					// Check if depRange is defined
+					if (depRange === undefined) {
+						throw new Error(`Invalid dependency range: ${dependencyRange}`);
+					}
+
+					// Update the version in packageJson
+					if (depKind === "prod" && pkg.packageJson.dependencies !== undefined) {
+						pkg.packageJson.dependencies[depName] = depRange;
+					} else if (depKind === "dev" && pkg.packageJson.devDependencies !== undefined) {
+						pkg.packageJson.devDependencies[depName] = depRange;
+					} else if (depKind === "peer" && pkg.packageJson.peerDependencies) {
+						pkg.packageJson.peerDependencies[depName] = depRange;
+					}
 			}
 		}
 		savePromises.push(pkg.savePackageJson());

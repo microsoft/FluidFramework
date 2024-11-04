@@ -117,15 +117,35 @@ describe("setDependencyRange", () => {
 	const group2 = repo.releaseGroups.get("group2" as ReleaseGroupName);
 	assert(group2 !== undefined);
 
+	const secondWorkspace = repo.workspaces.get("second" as WorkspaceName);
+	assert(secondWorkspace !== undefined);
+
 	afterEach(async () => {
 		await git.checkout(["HEAD", "--", testRepoRoot]);
 		repo.reload();
 	});
 
-	it("updates the dependency range", async () => {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion , @typescript-eslint/no-unsafe-call
-		await setDependencyRange(main.packages, group2.packages, semver.parse(group2.version)!);
+	it("updates the dependency range given release group package dependencies", async () => {
+		const group2Version = semver.parse(group2.version);
+		assert(group2Version !== null);
+		await setDependencyRange(main.packages, group2.packages, group2Version);
 		const allCorrect = main.packages.every((pkg) => pkg.version === group2.version);
+		expect(allCorrect).to.be.true;
+	});
+
+	it("updates the dependency range given workspace package dependencies", async () => {
+		const workspace2Version = semver.parse(secondWorkspace.rootPackage.version);
+		assert(workspace2Version !== null);
+		await setDependencyRange(main.packages, secondWorkspace.packages, workspace2Version);
+		const allCorrect = main.packages.every((pkg) => pkg.version === group2.version);
+		expect(allCorrect).to.be.true;
+	});
+
+	it("updates the dependency range to explicit version", async () => {
+		const version = semver.parse("2.0.0");
+		assert(version !== null);
+		await setDependencyRange(main.packages, group2.packages, version);
+		const allCorrect = main.packages.every((pkg) => pkg.version === "2.0.0");
 		expect(allCorrect).to.be.true;
 	});
 });
