@@ -26,7 +26,7 @@ export {
 	type CheckoutEvents,
 	type ITransaction,
 	type ITreeCheckoutFork,
-	type TreeBranch,
+	type BranchableTree,
 	type TreeBranchFork,
 } from "./treeCheckout.js";
 
