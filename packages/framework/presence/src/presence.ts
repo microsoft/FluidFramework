@@ -56,8 +56,8 @@ export type SessionClientStatus =
  *
  * `ISessionClient` should be used as key to distinguish between different
  * clients as they join, rejoin, and disconnect from a session. While a
- * client's {@link ClientConnectionId} read from {@link ISessionClient.getConnectionStatus}
- * may change over time `ISessionClient` will be fixed.
+ * client's {@link ClientConnectionId} from {@link ISessionClient.getConnectionStatus}
+ * may change over time, `ISessionClient` will be fixed.
  *
  * @privateRemarks
  * As this is evolved, pay attention to how this relates to Audience, Service
