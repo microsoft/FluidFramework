@@ -96,21 +96,6 @@ variables:
 trigger: none
 pr: none
 
-resources:
-  pipelines:
-    - pipeline: build-tools
-      source: Build - build-tools
-      # branch: refs/heads/test/michaelzhen-1.0
-      trigger:
-        branches:
-          include:
-            - refs/heads/test/michaelzhen-1.0
-  repositories:
-    - repository: FluidFrameworkRepo
-      name: ff_internal
-      type: git
-      ref: refs/heads/test/michaelzhen
-
 stages:
 - stage: check_branch_version
   displayName: 'Check Version Deployment Condition'
@@ -119,7 +104,6 @@ stages:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
       steps:
-        - checkout: FluidFrameworkRepo
         - template: /tools/pipelines/templates/include-install-build-tools.yml
           parameters:
             buildDirectory: $(Build.SourcesDirectory)

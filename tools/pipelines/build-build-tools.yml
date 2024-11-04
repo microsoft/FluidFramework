@@ -102,3 +102,16 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)
             script: |
               echo test line
+
+        - task: TriggerBuild@4
+          inputs:
+            definitionIsInCurrentTeamProject: True
+            buildDefinition: 'build-docs'
+            useSameSourceVersion: False
+            useSameBranch: False
+            branchToUse: main
+            waitForQueuedBuildsToFinish: False
+            storeInEnvironmentVariable: True
+            authenticationMethod: 'OAuth Token'
+            password: '$(System.AccessToken)'
+          displayName: Run build-docs pipeline
