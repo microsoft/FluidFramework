@@ -99,7 +99,6 @@ export {
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	type TreeViewAlpha,
 	type TreeContext,
-	type TreeContextBranch,
 	type TreeContextEvents,
 	tryGetSchema,
 	applySchemaToParserOptions,

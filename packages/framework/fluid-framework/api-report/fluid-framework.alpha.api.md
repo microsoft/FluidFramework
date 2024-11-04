@@ -1108,17 +1108,12 @@ export enum TreeCompressionStrategy {
 }
 
 // @alpha @sealed
-export interface TreeContext {
-    branch(): TreeContextBranch;
+export interface TreeContext extends IDisposable {
+    branch(): TreeContext;
+    dispose(error?: Error): void;
     readonly events: Listenable<TreeContextEvents>;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
-    isBranch(): this is TreeContextBranch;
     merge(branch: TreeContext, disposeMerged?: boolean): void;
-}
-
-// @alpha @sealed
-export interface TreeContextBranch extends TreeContext {
-    dispose(): void;
     rebaseOnto(context: TreeContext): void;
 }
 

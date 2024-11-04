@@ -174,7 +174,6 @@ export {
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
 	type TreeContext,
-	type TreeContextBranch,
 	type TreeContextEvents,
 } from "./simple-tree/index.js";
 export {

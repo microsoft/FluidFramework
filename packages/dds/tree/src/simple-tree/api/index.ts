@@ -14,7 +14,6 @@ export {
 	type ITreeConfigurationOptions,
 	type TreeViewAlpha,
 	type TreeContext,
-	type TreeContextBranch,
 	type TreeContextEvents,
 } from "./tree.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";

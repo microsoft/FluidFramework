@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
-	type TreeContextBranch,
 	type TreeContextEvents,
 	type TreeView,
 	type TreeViewAlpha,
@@ -58,17 +57,9 @@ describe("TreeContext", () => {
 		function newBranch(view: TreeView<typeof Array>) {
 			const context = TreeAlpha.context(view.root);
 			assert(context !== undefined);
-			// Ensure that the result of the branch method is typed as a branch (as opposed to a non-branch context)
-			const branch = context.branch() satisfies TreeContextBranch;
+			const branch = context.branch();
 			assert(branch.hasRootSchema(Array));
-			assert(branch.isBranch());
-			// Ensure that downcasting works if the branch context is acquired via TreeAlpha.context(), which cannot know it is a branch
-			const untypedContext = TreeAlpha.context(branch.root);
-			assert(untypedContext !== undefined);
-			assert(untypedContext.hasRootSchema(Array));
-			assert(untypedContext.isBranch());
-			assert(untypedContext === branch);
-			return untypedContext satisfies typeof branch;
+			return branch;
 		}
 
 		it("can downcast to a view", () => {
@@ -131,10 +122,7 @@ describe("TreeContext", () => {
 			assert.deepEqual([...branch.root], ["y"]);
 			assert.deepEqual([...branchBranch.root], ["y"]);
 			assert.throws(
-				() => {
-					// @ts-expect-error - It should not be possible (via the public API) to rebase the main branch onto any other branch.
-					view.rebaseOnto(branch);
-				},
+				() => view.rebaseOnto(branch),
 				(e: Error) =>
 					validateAssertionError(e, /The main branch cannot be rebased onto another branch./),
 			);

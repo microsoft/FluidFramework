@@ -362,11 +362,15 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 /**
  * A context associated with a (version-control style) branch of a shared tree.
  * @remarks A `TreeContext` allows for the {@link TreeContext.branch | creation of branches} and for those branches to later be {@link TreeContext.merge | merged}.
+ *
  * The `TreeContext` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.context`.
+ *
  * A context does not necessarily know the schema of its SharedTree - to convert a context to a {@link TreeViewAlpha | view with a schema}, use {@link TreeContext.hasRootSchema | hasRootSchema()}.
+ *
+ * The context produced directly from the {@link ITree | SharedTree} is the "main" context, and all other contexts are branches (directly or transitively) of that main context.
  * @sealed @alpha
  */
-export interface TreeContext {
+export interface TreeContext extends IDisposable {
 	/**
 	 * Events for the context
 	 */
@@ -391,55 +395,46 @@ export interface TreeContext {
 	): this is TreeViewAlpha<TSchema>;
 
 	/**
-	 * Returns true if this context has branched off of the main context - directly or transitively - and is therefore not the main context itself.
-	 * @remarks The main context is the top-level context/view acquired from the {@link ITree | SharedTree} via {@link ViewableTree.viewWith}.
-	 */
-	isBranch(): this is TreeContextBranch;
-
-	/**
 	 * Create a new branch of this context which is based off of the current state of this context.
 	 * @remarks Any changes to the tree on the new branch will not apply to this context until the new branch is e.g. {@link TreeContext.merge | merged} back into this context.
-	 * The branch should be disposed when no longer needed, either {@link TreeContextBranch.dispose | explicitly} or {@link TreeContext.merge | implicitly when merging} into another context.
+	 * The branch should be disposed when no longer needed, either {@link TreeContext.dispose | explicitly} or {@link TreeContext.merge | implicitly when merging} into another context.
 	 */
-	branch(): TreeContextBranch;
+	branch(): TreeContext;
 
 	/**
 	 * Apply all the new changes on the given branch to this context.
 	 * @param branch - a branch which was created by a call to `branch()`.
 	 * @param disposeMerged - whether or not to dispose `branch` after the merge completes.
 	 * Defaults to true.
-	 * The {@link TreeContext.isBranch | main context} cannot be disposed - attempting to dispose it will have no effect.
+	 * The {@link TreeContext | main context} cannot be disposed - attempting to do so will have no effect.
 	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
 	 */
 	merge(branch: TreeContext, disposeMerged?: boolean): void;
-}
 
-/**
- * A {@link TreeContext} which has been branched off of the {@link TreeContext.isBranch | main context}.
- * @remarks Unlike the main context, a branched context can be {@link TreeContextBranch.rebaseOnto | rebase} onto other contexts.
- * @sealed @alpha
- */
-export interface TreeContextBranch extends TreeContext {
 	/**
-	 * Progress this branch forward such that all new changes on the target context become part of this branch.
+	 * Advance this context branch forward such that all new changes on the target context become part of this branch.
 	 * @param context - The context to rebase onto.
 	 * @remarks After rebasing, this branch will be "ahead" of the target context, that is, its unique changes will have been recreated as if they happened after all changes on the target context.
+	 * This method may only be called on contexts produced via {@link TreeContext.branch | branch} - attempting to rebase the main context will throw.
 	 *
 	 * Rebasing long-lived branches is important to avoid consuming memory unnecessarily.
 	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last rebased.
 	 *
-	 * The {@link TreeContext.isBranch | main context} cannot be rebased onto another context.
+	 * The {@link TreeContext | main context} cannot be rebased onto another context - attempting to do so will throw an error.
 	 */
 	rebaseOnto(context: TreeContext): void;
 
 	/**
 	 * Dispose of this branch, cleaning up any resources associated with it.
-	 * @remarks Branches can also be conveniently disposed when {@link TreeContext.merge | they are merged} into another context.
+	 * @param error - Optional error indicating the reason for the disposal, if the object was disposed as the result of an error.
+	 * @remarks Branches can also be automatically disposed when {@link TreeContext.merge | they are merged} into another context.
 	 *
 	 * Disposing branches is important to avoid consuming memory unnecessarily.
-	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeContextBranch.rebaseOnto | rebased}
+	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeContext.rebaseOnto | rebased}.
+	 *
+	 * The {@link TreeContext | main context} cannot be disposed - attempting to do so will have no effect.
 	 */
-	dispose(): void;
+	dispose(error?: Error): void;
 }
 
 /**

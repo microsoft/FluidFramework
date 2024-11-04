@@ -47,7 +47,6 @@ import {
 	type ReadSchema,
 	type UnsafeUnknownSchema,
 	type TreeContext,
-	type TreeContextBranch,
 } from "../simple-tree/index.js";
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
@@ -71,7 +70,7 @@ export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 @breakingClass
 export class SchematizingSimpleTreeView<
 	in out TRootSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> implements TreeContextBranch, TreeViewAlpha<TRootSchema>, WithBreakable
+> implements TreeContext, TreeViewAlpha<TRootSchema>, WithBreakable
 {
 	/**
 	 * The view is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
@@ -387,10 +386,6 @@ export class SchematizingSimpleTreeView<
 	}
 
 	// #region Branching
-
-	public isBranch(): this is TreeContextBranch {
-		return this.checkout.isBranch;
-	}
 
 	public branch(): ReturnType<TreeContext["branch"]> & TreeViewAlpha<TRootSchema> {
 		return this.checkout.branch().viewWith(this.config);
