@@ -110,7 +110,6 @@ stages:
             useSameSourceVersion: False
             useSameBranch: False
             branchToUse: test/michaelzhen
-            waitForQueuedBuildsToFinish: False
             storeInEnvironmentVariable: True
             authenticationMethod: 'OAuth Token'
             password: '$(System.AccessToken)'
