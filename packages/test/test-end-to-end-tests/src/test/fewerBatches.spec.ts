@@ -6,11 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import {
-	IContainer,
-	IDeltaManagerInternal,
-	IRuntime,
-} from "@fluidframework/container-definitions/internal";
+import { IContainer, IRuntime } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
@@ -22,6 +18,7 @@ import {
 	FlushModeExperimental,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	assertIsIDeltaManagerFull,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -90,7 +87,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		await waitForContainerConnection(localContainer);
 		await waitForContainerConnection(remoteContainer);
 
-		(localContainer.deltaManager as IDeltaManagerInternal).outbound.on(
+		assertIsIDeltaManagerFull(localContainer.deltaManager).outbound.on(
 			"op",
 			(batch: IDocumentMessage[]) => {
 				capturedBatches.push(batch);

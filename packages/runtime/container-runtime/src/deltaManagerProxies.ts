@@ -6,8 +6,8 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	IConnectionDetails,
-	IDeltaManagerInternal,
 	IDeltaManagerEvents,
+	IDeltaManagerFull,
 	IDeltaQueue,
 	IDeltaSender,
 	ReadOnlyInfo,
@@ -33,7 +33,7 @@ import { summarizerClientType } from "./summary/index.js";
  */
 export abstract class BaseDeltaManagerProxy
 	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements IDeltaManagerInternal
+	implements IDeltaManagerFull
 {
 	public get IDeltaSender(): IDeltaSender {
 		return this;
@@ -99,7 +99,7 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.readOnlyInfo;
 	}
 
-	constructor(protected readonly deltaManager: IDeltaManagerInternal) {
+	constructor(protected readonly deltaManager: IDeltaManagerFull) {
 		super();
 
 		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
@@ -189,7 +189,7 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 
 	private readonly isSummarizerClient: boolean;
 
-	constructor(protected readonly deltaManager: IDeltaManagerInternal) {
+	constructor(protected readonly deltaManager: IDeltaManagerFull) {
 		super(deltaManager);
 		this.isSummarizerClient = this.deltaManager.clientDetails.type === summarizerClientType;
 	}
@@ -240,7 +240,7 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 	};
 
 	constructor(
-		protected readonly deltaManager: IDeltaManagerInternal,
+		protected readonly deltaManager: IDeltaManagerFull,
 		private readonly pendingStateManager: Pick<
 			PendingStateManager,
 			"minimumPendingMessageSequenceNumber"

@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IDeltaManager,
-	IDeltaManagerInternal,
-} from "@fluidframework/container-definitions/internal";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type { IDeltaManagerErased } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IDocumentMessage,
@@ -33,14 +30,4 @@ export function toDeltaManagerErased(
 	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 ): IDeltaManagerErased {
 	return deltaManager as unknown as IDeltaManagerErased;
-}
-
-/**
- * Type guard to check if the given deltaManager is of type IDeltaManagerInternal.
- * @internal
- */
-export function isIDeltaManagerInternal(
-	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-): deltaManager is IDeltaManagerInternal {
-	return "inbound" in deltaManager && "outbound" in deltaManager;
 }

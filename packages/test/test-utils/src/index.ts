@@ -56,6 +56,7 @@ export {
 	type TimeoutWithValue,
 } from "./timeoutUtils.js";
 export {
+	assertIsIDeltaManagerFull,
 	waitForContainerConnection,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,

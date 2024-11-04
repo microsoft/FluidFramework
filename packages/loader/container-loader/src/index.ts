@@ -23,7 +23,6 @@ export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
 export {
 	tryParseCompatibleResolvedUrl,
 	IParsedUrl,
-	isIDeltaManagerInternal,
 } from "./utils.js";
 export {
 	IBaseProtocolHandler,

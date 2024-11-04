@@ -8,10 +8,7 @@ import { strict as assert } from "assert";
 import * as crypto from "crypto";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import {
-	IContainer,
-	IDeltaManagerInternal,
-} from "@fluidframework/container-definitions/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -26,6 +23,7 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import {
+	assertIsIDeltaManagerFull,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -450,7 +448,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 				totalPayloadSizeInBytes = 0;
 				totalOps = 0;
-				(localContainer.deltaManager as IDeltaManagerInternal).outbound.on(
+				assertIsIDeltaManagerFull(localContainer.deltaManager).outbound.on(
 					"push",
 					(messages) => {
 						totalPayloadSizeInBytes += JSON.stringify(messages).length;
@@ -629,13 +627,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							container.disconnect();
 							container.once("connected", () => {
 								resolve();
-								(container.deltaManager as IDeltaManagerInternal).outbound.off("op", handler);
+								assertIsIDeltaManagerFull(container.deltaManager).outbound.off("op", handler);
 							});
 							container.connect();
 						}
 					};
 
-					(container.deltaManager as IDeltaManagerInternal).outbound.on("op", handler);
+					assertIsIDeltaManagerFull(container.deltaManager).outbound.on("op", handler);
 				});
 			};
 

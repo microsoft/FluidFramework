@@ -6,7 +6,6 @@
 import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { isIDeltaManagerInternal } from "@fluidframework/container-loader/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
@@ -14,6 +13,7 @@ import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
+	assertIsIDeltaManagerFull,
 	createAndAttachContainer,
 } from "@fluidframework/test-utils/internal";
 
@@ -55,10 +55,10 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 		[...Array(60).keys()].map((i) => map2.set(`test op ${i}`, i));
 		await provider.ensureSynchronized();
 		await provider.opProcessingController.pauseProcessing(container2);
-		const deltaManagerInternal = toDeltaManagerInternal(dataStore2.runtime.deltaManager);
-		if (isIDeltaManagerInternal(deltaManagerInternal)) {
-			assert(deltaManagerInternal.outbound.paused);
-		}
+		const deltaManagerFull = assertIsIDeltaManagerFull(
+			toDeltaManagerInternal(dataStore2.runtime.deltaManager),
+		);
+		assert(deltaManagerFull.outbound.paused);
 
 		map2.set("a key", "a value");
 		await provider.ensureSynchronized();

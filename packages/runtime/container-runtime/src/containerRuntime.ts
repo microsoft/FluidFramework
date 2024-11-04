@@ -19,7 +19,8 @@ import {
 	IRuntime,
 	LoaderHeader,
 	IDeltaManager,
-	IDeltaManagerInternal,
+	IDeltaManagerFull,
+	isIDeltaManagerFull,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
@@ -93,7 +94,6 @@ import {
 	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	isIDeltaManagerInternal,
 	GCDataBuilder,
 	RequestParser,
 	TelemetryContext,
@@ -1258,14 +1258,14 @@ export class ContainerRuntime
 		return this._deltaManager;
 	}
 
-	private readonly _deltaManager: IDeltaManagerInternal;
+	private readonly _deltaManager: IDeltaManagerFull;
 
 	/**
 	 * The delta manager provided by the container context. By default, using the default delta manager (proxy)
 	 * should be sufficient. This should be used only if necessary. For example, for validating and propagating connected
 	 * events which requires access to the actual real only info, this is needed.
 	 */
-	private readonly innerDeltaManager: IDeltaManagerInternal;
+	private readonly innerDeltaManager: IDeltaManagerFull;
 
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
@@ -1525,7 +1525,7 @@ export class ContainerRuntime
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		};
 
-		assert(isIDeltaManagerInternal(deltaManager), "Invalid delta manager");
+		assert(isIDeltaManagerFull(deltaManager), "Invalid delta manager");
 		this.innerDeltaManager = deltaManager;
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
@@ -1642,7 +1642,7 @@ export class ContainerRuntime
 			this.logger,
 		);
 
-		let outerDeltaManager: IDeltaManagerInternal;
+		let outerDeltaManager: IDeltaManagerFull;
 		this.useDeltaManagerOpsProxy =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.

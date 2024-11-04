@@ -7,10 +7,7 @@ import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
-import {
-	IContainerExperimental,
-	isIDeltaManagerInternal,
-} from "@fluidframework/container-loader/internal";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
@@ -20,6 +17,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	assertIsIDeltaManagerFull,
 	createAndAttachContainer,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -66,10 +64,10 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 
 		await args.ensureSynchronized();
 		await args.opProcessingController.pauseProcessing(container);
-		const deltaManagerInternal = toDeltaManagerInternal(dataStore.runtime.deltaManager);
-		if (isIDeltaManagerInternal(deltaManagerInternal)) {
-			assert(deltaManagerInternal.outbound.paused);
-		}
+		const deltaManagerFull = assertIsIDeltaManagerFull(
+			toDeltaManagerInternal(dataStore.runtime.deltaManager),
+		);
+		assert(deltaManagerFull.outbound.paused);
 
 		await cb(container, dataStore, map);
 

@@ -231,7 +231,7 @@ export interface IDeltaManager<T, U>
  * DeltaManager which is used internally by the Fluid layers and not exposed to the end users.
  * @internal
  */
-export interface IDeltaManagerInternal<T = ISequencedDocumentMessage, U = IDocumentMessage>
+export interface IDeltaManagerFull<T = ISequencedDocumentMessage, U = IDocumentMessage>
 	extends IDeltaManager<T, U> {
 	/**
 	 * The queue of inbound delta messages
@@ -242,6 +242,16 @@ export interface IDeltaManagerInternal<T = ISequencedDocumentMessage, U = IDocum
 	 * The queue of outbound delta messages
 	 */
 	readonly outbound: IDeltaQueue<U[]>;
+}
+
+/**
+ * Type guard to check if the given deltaManager is of type {@link @fluidframework/container-definitions#IDeltaManagerFull}.
+ * @internal
+ */
+export function isIDeltaManagerFull(
+	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+): deltaManager is IDeltaManagerFull {
+	return "inbound" in deltaManager && "outbound" in deltaManager;
 }
 
 /**

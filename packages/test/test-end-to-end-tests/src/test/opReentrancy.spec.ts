@@ -6,10 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	IContainer,
-	IDeltaManagerInternal,
-} from "@fluidframework/container-definitions/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
@@ -21,6 +18,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	assertIsIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
@@ -277,8 +275,9 @@ describeCompat(
 				runtimeOptions: {},
 			});
 
-			await (container1.deltaManager as IDeltaManagerInternal).inbound.pause();
-			await (container1.deltaManager as IDeltaManagerInternal).outbound.pause();
+			const container1DeltaManager = assertIsIDeltaManagerFull(container1.deltaManager);
+			await container1DeltaManager.inbound.pause();
+			await container1DeltaManager.outbound.pause();
 
 			sharedMap1.on("valueChanged", (changed) => {
 				if (changed.key !== "key2") {
@@ -288,8 +287,8 @@ describeCompat(
 
 			sharedMap1.set("key1", "1");
 
-			(container1.deltaManager as IDeltaManagerInternal).inbound.resume();
-			(container1.deltaManager as IDeltaManagerInternal).outbound.resume();
+			container1DeltaManager.inbound.resume();
+			container1DeltaManager.outbound.resume();
 
 			await provider.ensureSynchronized();
 
@@ -359,8 +358,9 @@ describeCompat(
 
 					await setupContainers(testConfig.options, testConfig.featureGates);
 
-					await (container1.deltaManager as IDeltaManagerInternal).inbound.pause();
-					await (container1.deltaManager as IDeltaManagerInternal).outbound.pause();
+					const deltaManagerFull = assertIsIDeltaManagerFull(container1.deltaManager);
+					await deltaManagerFull.inbound.pause();
+					await deltaManagerFull.outbound.pause();
 
 					sharedMap1.on("valueChanged", (changed) => {
 						if (changed.key !== "key2") {
@@ -375,8 +375,8 @@ describeCompat(
 
 					sharedMap1.set("key1", "1");
 
-					(container1.deltaManager as IDeltaManagerInternal).inbound.resume();
-					(container1.deltaManager as IDeltaManagerInternal).outbound.resume();
+					deltaManagerFull.inbound.resume();
+					deltaManagerFull.outbound.resume();
 					await provider.ensureSynchronized();
 
 					// The offending container is not closed

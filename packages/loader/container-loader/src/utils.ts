@@ -8,17 +8,11 @@ import {
 	bufferToString,
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
-import type {
-	IDeltaManager,
-	IDeltaManagerInternal,
-} from "@fluidframework/container-definitions/internal";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
 	IDocumentAttributes,
-	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -429,14 +423,4 @@ export async function getDocumentAttributes(
 	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
 
 	return attributes;
-}
-
-/**
- * Type guard to check if the given deltaManager is of type {@link @fluidframework/container-definitions#IDeltaManagerInternal}.
- * @internal
- */
-export function isIDeltaManagerInternal(
-	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-): deltaManager is IDeltaManagerInternal {
-	return "inbound" in deltaManager && "outbound" in deltaManager;
 }

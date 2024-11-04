@@ -7,15 +7,13 @@ import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
-import {
-	IContainer,
-	type IDeltaManagerInternal,
-} from "@fluidframework/container-definitions/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
 import {
+	assertIsIDeltaManagerFull,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	timeoutPromise,
@@ -75,7 +73,7 @@ describeCompat(
 				sendOps("A");
 				const opsSent = await timeoutPromise<number>(
 					(resolve) => {
-						(containerRuntime.deltaManager as IDeltaManagerInternal).outbound.once(
+						assertIsIDeltaManagerFull(containerRuntime.deltaManager).outbound.once(
 							"idle",
 							resolve,
 						);
