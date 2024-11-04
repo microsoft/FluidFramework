@@ -23,6 +23,7 @@ export {
 	HydratedContext,
 	SimpleContextSlot,
 	getOrCreateInnerNode,
+	getKernel,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -97,6 +98,9 @@ export {
 	type TreeNodeSchemaNonClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	type TreeViewAlpha,
+	type TreeContext,
+	type TreeContextBranch,
+	type TreeContextEvents,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -116,6 +120,8 @@ export {
 	type DefaultProvider,
 	type FieldProps,
 	normalizeFieldSchema,
+	areFieldSchemaEqual,
+	areImplicitFieldSchemaEqual,
 	type ApplyKind,
 	type FieldSchemaMetadata,
 	type InsertableField,

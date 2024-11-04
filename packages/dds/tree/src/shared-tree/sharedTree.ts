@@ -357,6 +357,7 @@ export class SharedTree
  * @privateRemarks This function will be removed if/when the branching API becomes public,
  * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
+ * @deprecated This API is superseded by {@link TreeContext}, which should be used instead.
  */
 export function getBranch(tree: ITree): TreeBranch;
 /**
@@ -366,6 +367,7 @@ export function getBranch(tree: ITree): TreeBranch;
  * @privateRemarks This function will be removed if/when the branching API becomes public,
  * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
+ * @deprecated This API is superseded by {@link TreeContext}, which should be used instead.
  */
 export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	view: TreeViewAlpha<T>,

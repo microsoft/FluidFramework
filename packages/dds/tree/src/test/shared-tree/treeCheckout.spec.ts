@@ -809,7 +809,7 @@ describe("sharedTreeView", () => {
 			const treeBranch = tree.branch();
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.dispose();
-			treeBranch.dispose();
+			assert.equal(treeBranch.disposed, true);
 		});
 
 		itView("disposed forks cannot be edited or double-disposed", ({ view, tree }) => {

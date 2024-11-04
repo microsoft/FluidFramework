@@ -352,6 +352,85 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 }
 
 /**
+ * A context associated with a (version-control style) branch of a shared tree.
+ * @remarks A `TreeContext` allows for the {@link TreeContext.branch | creation of branches} and for those branches to later be {@link TreeContext.merge | merged}.
+ * The `TreeContext` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.context`.
+ * A context does not necessarily know the schema of its SharedTree - to convert a context to a {@link TreeViewAlpha | view with a schema}, use {@link TreeContext.hasRootSchema | hasRootSchema()}.
+ * @sealed @alpha
+ */
+export interface TreeContext {
+	/**
+	 * Events for the context
+	 */
+	readonly events: Listenable<TreeContextEvents>;
+
+	/**
+	 * Returns true if this context has the given schema as its root schema.
+	 * @remarks This is a type guard which allows this context to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
+	 *
+	 * To succeed, the given schema must be invariant to the schema of the view - it must include exactly the same allowed types.
+	 * For example, a schema of `Foo | Bar` will not match a view schema of `Foo`, and likewise a schema of `Foo` will not match a view schema of `Foo | Bar`.
+	 * @example
+	 * ```typescript
+	 * if (context.hasRootSchema(MySchema)) {
+	 *   const { root } = context; // `context` is now a TreeViewAlpha<MySchema>
+	 *   // ...
+	 * }
+	 * ```
+	 */
+	hasRootSchema<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+	): this is TreeViewAlpha<TSchema>;
+
+	/**
+	 * Returns true if this context has branched off of the main context - directly or transitively - and is therefore not the main context itself.
+	 * @remarks The main context is the top-level context/view acquired from the {@link ITree | SharedTree} via {@link ViewableTree.viewWith}.
+	 */
+	isBranch(): this is TreeContextBranch;
+
+	/**
+	 * Create a new branch of this context which is based off of the current state of this context.
+	 * @remarks Any changes to the tree on the new branch will not apply to this context until the new branch is e.g. {@link TreeContext.merge | merged} back into this context.
+	 * The branch should be disposed when no longer needed, either {@link TreeContextBranch.dispose | explicitly} or {@link TreeContext.merge | implicitly when merging} into another context.
+	 */
+	branch(): TreeContextBranch;
+
+	/**
+	 * Apply all the new changes on the given branch to this context.
+	 * @param branch - a branch which was created by a call to `branch()`.
+	 * @param disposeMerged - whether or not to dispose `branch` after the merge completes.
+	 * Defaults to true.
+	 * The {@link TreeContext.isBranch | main context} cannot be disposed - attempting to dispose it will have no effect.
+	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
+	 */
+	merge(branch: TreeContext, disposeMerged?: boolean): void;
+}
+
+/**
+ * A {@link TreeContext} which has been branched off of the {@link TreeContext.isBranch | main context}.
+ * @remarks Unlike the main context, a branched context can be {@link TreeContextBranch.rebaseOnto | rebase} onto other contexts.
+ * @sealed @alpha
+ */
+export interface TreeContextBranch extends TreeContext {
+	/**
+	 * Progress this branch forward such that all new changes on the target context become part of this branch.
+	 * @param context - The context to rebase onto.
+	 * @remarks After rebasing, this branch will be "ahead" of the target context, that is, its unique changes will have been recreated as if they happened after all changes on the target context.
+	 * Rebasing long-lived branches is important to avoid consuming memory unnecessarily.
+	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last rebased.
+	 */
+	rebaseOnto(context: TreeContext): void;
+
+	/**
+	 * Dispose of this branch, cleaning up any resources associated with it.
+	 * @remarks Branches can also be conveniently disposed when {@link TreeContext.merge | they are merged} into another context.
+	 * Disposing branches is important to avoid consuming memory unnecessarily.
+	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeContextBranch.rebaseOnto | rebased}
+	 */
+	dispose(): void;
+}
+
+/**
  * An editable view of a (version control style) branch of a shared tree based on some schema.
  *
  * This schema--known as the view schema--may or may not align the stored schema of the document.
@@ -431,16 +510,20 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 /**
  * {@link TreeView} with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
- * @alpha
+ * @sealed @alpha
  */
 export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize"> {
+> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">,
+		Omit<TreeContext, "events"> {
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
 
 	initialize(content: InsertableField<TSchema>): void;
+
+	// Override the base branch method to return a typed view rather than merely a context.
+	branch(): ReturnType<TreeContext["branch"]> & TreeViewAlpha<TSchema>;
 }
 
 /**
@@ -517,6 +600,32 @@ export interface SchemaCompatibilityStatus {
 	// TODO: Consider extending this status to include:
 	// - application-defined metadata about the stored schema
 	// - details about the differences between the stored and view schema sufficient for implementing "safe mismatch" policies
+}
+
+/**
+ * Events for {@link TreeContext}.
+ * @sealed @alpha
+ */
+export interface TreeContextEvents {
+	/**
+	 * The stored schema for the document has changed.
+	 */
+	schemaChanged(): void;
+
+	/**
+	 * Fired when:
+	 * - a local commit is applied outside of a transaction
+	 * - a local transaction is committed
+	 *
+	 * The event is not fired when:
+	 * - a local commit is applied within a transaction
+	 * - a remote commit is applied
+	 *
+	 * @param data - information about the commit that was applied
+	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
+	 * this commit is not revertible.
+	 */
+	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }
 
 /**

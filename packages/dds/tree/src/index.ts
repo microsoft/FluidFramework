@@ -51,6 +51,7 @@ export {
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
+	TreeAlpha,
 	Tree,
 	type TransactionConstraint,
 	type NodeInDocumentConstraint,
@@ -164,6 +165,9 @@ export {
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
+	type TreeContext,
+	type TreeContextBranch,
+	type TreeContextEvents,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

@@ -105,18 +105,26 @@ export function compareSets<T>({
 }): boolean {
 	for (const item of a.keys()) {
 		if (!b.has(item)) {
-			if (aExtra && !aExtra(item)) {
+			if (aExtra !== undefined) {
+				if (!aExtra(item)) {
+					return false;
+				}
+			} else {
 				return false;
 			}
 		} else {
-			if (same && !same(item)) {
+			if (same !== undefined && !same(item)) {
 				return false;
 			}
 		}
 	}
 	for (const item of b.keys()) {
 		if (!a.has(item)) {
-			if (bExtra && !bExtra(item)) {
+			if (bExtra !== undefined) {
+				if (!bExtra(item)) {
+					return false;
+				}
+			} else {
 				return false;
 			}
 		}

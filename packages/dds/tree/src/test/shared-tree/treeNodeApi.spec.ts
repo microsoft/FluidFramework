@@ -11,6 +11,7 @@ import {
 	CheckoutFlexTreeView,
 	type TransactionConstraint,
 	Tree,
+	TreeAlpha,
 	type rollback,
 } from "../../shared-tree/index.js";
 import {
@@ -400,5 +401,22 @@ describe("treeApi", () => {
 		assert.equal(Tree.contains(level3, level1), false);
 		assert.equal(Tree.contains(level3, level2), false);
 		assert.equal(Tree.contains(level2, level1), false);
+	});
+
+	it("context", () => {
+		const schemaFactory = new SchemaFactory(undefined);
+		class Array extends schemaFactory.array("array", schemaFactory.number) {}
+		const view = getView(
+			new TreeViewConfiguration({ schema: Array, enableSchemaValidation: true }),
+		);
+		view.initialize([1, 2, 3]);
+
+		// Hydrated
+		const array = view.root;
+		const context = TreeAlpha.context(array);
+		assert(context !== undefined);
+
+		// Unhydrated
+		assert.equal(TreeAlpha.context(new Array([1, 2, 3])), undefined);
 	});
 });

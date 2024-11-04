@@ -148,10 +148,10 @@ export enum ForestType {
     Reference = 0
 }
 
-// @alpha
+// @alpha @deprecated
 export function getBranch(tree: ITree): TreeBranch;
 
-// @alpha
+// @alpha @deprecated
 export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(view: TreeViewAlpha<T>): TreeBranch;
 
 // @alpha
@@ -602,6 +602,11 @@ export type TransactionConstraint = NodeInDocumentConstraint;
 // @public
 export const Tree: TreeApi;
 
+// @alpha @sealed
+export const TreeAlpha: {
+    context(node: TreeNode): TreeContext | undefined;
+};
+
 // @public @sealed
 interface TreeApi extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
@@ -677,6 +682,27 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends
 export enum TreeCompressionStrategy {
     Compressed = 0,
     Uncompressed = 1
+}
+
+// @alpha @sealed
+export interface TreeContext {
+    branch(): TreeContextBranch;
+    readonly events: Listenable<TreeContextEvents>;
+    hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
+    isBranch(): this is TreeContextBranch;
+    merge(branch: TreeContext, disposeMerged?: boolean): void;
+}
+
+// @alpha @sealed
+export interface TreeContextBranch extends TreeContext {
+    dispose(): void;
+    rebaseOnto(context: TreeContext): void;
+}
+
+// @alpha @sealed
+export interface TreeContextEvents {
+    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+    schemaChanged(): void;
 }
 
 // @public
@@ -800,8 +826,10 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
     upgradeSchema(): void;
 }
 
-// @alpha
-export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize"> {
+// @alpha @sealed
+export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">, Omit<TreeContext, "events"> {
+    // (undocumented)
+    branch(): ReturnType<TreeContext["branch"]> & TreeViewAlpha<TSchema>;
     // (undocumented)
     initialize(content: InsertableField<TSchema>): void;
     // (undocumented)

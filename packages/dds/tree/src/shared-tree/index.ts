@@ -46,3 +46,5 @@ export {
 	type RunTransaction,
 	rollback,
 } from "./treeApi.js";
+
+export { TreeAlpha } from "./treeApiAlpha.js";
