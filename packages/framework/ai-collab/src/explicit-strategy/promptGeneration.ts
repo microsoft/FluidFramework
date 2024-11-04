@@ -209,7 +209,11 @@ export function getReviewSystemPrompt<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * TBD
+ * Converts a fully-qualified SharedTree schema name to a single-word name for use in textual TypeScript-style types.
+ *
+ * @remarks
+ * - TODO: Determine what to do with user-provided names that include periods (e.g. "Foo.Bar").
+ * - TODO: Should probably ensure name starts with an uppercase character.
  */
 export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
 	let stringifiedSchema = "";

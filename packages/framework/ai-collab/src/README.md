@@ -81,6 +81,7 @@ export class PlannerAppState extends sf.object("PlannerAppState", {
 ```
 
 ### Example 1: Collaborate with AI
+
 ```ts
 import { aiCollab } from "@fluid-experimental/ai-collab";
 import { PlannerAppState } from "./types.ts"
