@@ -271,6 +271,12 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * Short clientId for the client that inserted this segment.
 	 */
 	clientId: number;
+
+	/**
+	 * Local references added to this segment.
+	 */
+	localRefs?: LocalReferenceCollection;
+
 	/**
 	 * Properties that have been added to this segment via annotation.
 	 */
@@ -384,8 +390,8 @@ export interface ObliterateInfo {
 /**
  * @internal
  */
-export interface SegmentGroup {
-	segments: ISegmentInternal[];
+export interface SegmentGroup<S extends ISegmentInternal = ISegmentInternal> {
+	segments: S[];
 	previousProps?: PropertySet[];
 	localSeq?: number;
 	refSeq: number;

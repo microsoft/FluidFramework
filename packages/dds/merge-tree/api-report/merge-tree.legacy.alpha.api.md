@@ -365,6 +365,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     // (undocumented)
     clone(): ISegment;
     readonly endpointType?: "start" | "end";
+    localRefs?: LocalReferenceCollection;
     localRemovedSeq?: number;
     localSeq?: number;
     properties?: PropertySet;
@@ -397,6 +398,29 @@ export interface ITrackingGroup {
     tracked: readonly Trackable[];
     // (undocumented)
     unlink(trackable: Trackable): boolean;
+}
+
+// @alpha @sealed
+export class LocalReferenceCollection {
+    [Symbol.iterator](): {
+        next(): IteratorResult<LocalReferencePosition>;
+        [Symbol.iterator](): IterableIterator<LocalReferencePosition>;
+    };
+    addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
+    addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
+    addLocalRef(lref: LocalReferencePosition, offset: number): void;
+    // (undocumented)
+    static append(seg1: ISegment, seg2: ISegment): void;
+    append(other: LocalReferenceCollection): void;
+    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
+    get empty(): boolean;
+    has(lref: ReferencePosition): boolean;
+    isAfterTombstone(lref: LocalReferencePosition): boolean;
+    removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+    // (undocumented)
+    static setOrGet(segment: ISegment): LocalReferenceCollection;
+    split(offset: number, splitSeg: ISegment): void;
+    walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
 }
 
 // @alpha @sealed (undocumented)
