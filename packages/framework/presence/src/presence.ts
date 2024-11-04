@@ -24,7 +24,7 @@ import type { ISubscribable } from "@fluid-experimental/presence/internal/events
  * duration of the session. If a client disconnects and reconnects, it will
  * retain its identifier. Prefer use of {@link ISessionClient} as a way to
  * identify clients in a session. {@link ISessionClient.sessionId} will provide
- * the session id.
+ * the session ID.
  *
  * @alpha
  */
@@ -69,17 +69,20 @@ export type SessionClientStatus =
 export interface ISessionClient<
 	SpecificSessionClientId extends ClientSessionId = ClientSessionId,
 > {
+	/**
+	 * The session ID of the client that is stable over all connections.
+	 */
 	readonly sessionId: SpecificSessionClientId;
 
 	/**
-	 * Get current client connection id.
+	 * Get current client connection ID.
 	 *
-	 * @returns Current client connection id.
+	 * @returns Current client connection ID.
 	 *
 	 * @remarks
-	 * Connection id will change on reconnect.
+	 * Connection ID will change on reconnect.
 	 *
-	 * If {@link ISessionClient.getConnectionStatus} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection id.
+	 * If {@link ISessionClient.getConnectionStatus} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection ID.
 	 */
 	getConnectionId(): ClientConnectionId;
 
@@ -94,7 +97,7 @@ export interface ISessionClient<
 
 /**
  * Utility type limiting to a specific session client. (A session client with
- * a specific session id - not just any session id.)
+ * a specific session ID - not just any session ID.)
  *
  * @internal
  */
@@ -162,7 +165,7 @@ export interface IPresence {
 	/**
 	 * Lookup a specific attendee in the session.
 	 *
-	 * @param clientId - Client connection or session id
+	 * @param clientId - Client connection or session ID
 	 */
 	getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
 

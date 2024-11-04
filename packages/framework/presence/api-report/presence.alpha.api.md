@@ -39,7 +39,6 @@ export interface IPresence {
 export interface ISessionClient<SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
     getConnectionId(): ClientConnectionId;
     getConnectionStatus(): SessionClientStatus;
-    // (undocumented)
     readonly sessionId: SpecificSessionClientId;
 }
 

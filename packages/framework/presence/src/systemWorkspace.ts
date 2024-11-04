@@ -85,14 +85,14 @@ export interface SystemWorkspace
 	/**
 	 * Must be called when the current client acquires a new connection.
 	 *
-	 * @param clientConnectionId - The new client connection id.
+	 * @param clientConnectionId - The new client connection ID.
 	 */
 	onConnectionAdded(clientConnectionId: ClientConnectionId): void;
 
 	/**
-	 * Removes the client connection id from the system workspace.
+	 * Removes the client connection ID from the system workspace.
 	 *
-	 * @param clientConnectionId - The client connection id to remove.
+	 * @param clientConnectionId - The client connection ID to remove.
 	 */
 	removeClientConnectionId(clientConnectionId: ClientConnectionId): void;
 }
@@ -104,7 +104,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	 * session. The map covers entries for both session ids and connection
 	 * ids, which are never expected to collide, but if they did for same
 	 * client that would be fine.
-	 * An entry is for session id if the value's `sessionId` matches the key.
+	 * An entry is for session ID if the value's `sessionId` matches the key.
 	 */
 	private readonly attendees = new Map<ClientConnectionId | ClientSessionId, SessionClient>();
 
@@ -182,7 +182,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			return;
 		}
 
-		// If the last known connectionID is different from the connection id being removed, the attendee has reconnected,
+		// If the last known connectionID is different from the connection ID being removed, the attendee has reconnected,
 		// therefore we should not change the attendee connection status or emit a disconnect event.
 		const attendeeReconnected = attendee.getConnectionId() !== clientConnectionId;
 		if (!attendeeReconnected) {
@@ -213,9 +213,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	}
 
 	/**
-	 * Make sure the given client session and connection id pair are represented
+	 * Make sure the given client session and connection ID pair are represented
 	 * in the attendee map. If not present, SessionClient is created and added
-	 * to map. If present, make sure the current connection id is updated.
+	 * to map. If present, make sure the current connection ID is updated.
 	 */
 	private ensureAttendee(
 		clientSessionId: ClientSessionId,
@@ -228,18 +228,18 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		// For now, always leave existing state as was last determined and
 		// assume new client is connected.
 		if (attendee === undefined) {
-			// New attendee. Create SessionClient and add session id based
+			// New attendee. Create SessionClient and add session ID based
 			// entry to map.
 			attendee = new SessionClient(clientSessionId, clientConnectionId);
 			this.attendees.set(clientSessionId, attendee);
 			isNew = true;
 		} else if (order > attendee.order) {
 			// The given association is newer than the one we have.
-			// Update the order and current connection id.
+			// Update the order and current connection ID.
 			attendee.order = order;
 			attendee.setConnectionId(clientConnectionId, /* updateStatus */ false);
 		}
-		// Always update entry for the connection id. (Okay if already set.)
+		// Always update entry for the connection ID. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
 		return { attendee, isNew };
 	}
