@@ -1263,7 +1263,7 @@ importers:
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
-        version: 1.9.3
+        version: 1.9.4
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
