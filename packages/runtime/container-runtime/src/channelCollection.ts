@@ -43,6 +43,7 @@ import {
 	channelsTreeName,
 	IInboundSignalMessage,
 	gcDataBlobKey,
+	type IRuntimeMessagesContent,
 	type InboundAttachMessage,
 	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
@@ -70,12 +71,15 @@ import {
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
-	type IConfigProvider,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { DeletedResponseHeaderKey, RuntimeHeaderData } from "./containerRuntime.js";
+import {
+	DeletedResponseHeaderKey,
+	RuntimeHeaderData,
+	defaultRuntimeHeaderData,
+} from "./containerRuntime.js";
 import {
 	IDataStoreAliasMessage,
 	channelToDataStore,
@@ -123,18 +127,6 @@ type PendingAliasResolve = (success: boolean) => void;
 interface FluidDataStoreMessage {
 	content: any;
 	type: string;
-}
-
-function computeRuntimeHeaderData(
-	config: IConfigProvider,
-	data: Partial<RuntimeHeaderData>,
-): Required<RuntimeHeaderData> {
-	return {
-		wait: config.getBoolean("Fluid.ContainerRuntime.WaitHeaderDefault") ?? true,
-		viaHandle: false,
-		allowTombstone: false,
-		...data,
-	};
 }
 
 /**
@@ -882,24 +874,41 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * @param messageCollection - The collection of messages to process.
 	 */
 	private processChannelMessages(messageCollection: IRuntimeMessageCollection): void {
-		const { envelope, messagesContent, local } = messageCollection;
-		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-			const contentEnvelope = contents as IEnvelope;
-			const address = contentEnvelope.address;
-			const innerContents = contentEnvelope.contents as FluidDataStoreMessage;
-			const transformedMessage: ISequencedDocumentMessage = {
-				...envelope,
-				type: innerContents.type,
-				contents: innerContents.content,
-				clientSequenceNumber,
-			};
+		const { messagesContent, local } = messageCollection;
+		let currentMessageState: { address: string; type: string } | undefined;
+		let currentMessagesContent: IRuntimeMessagesContent[] = [];
 
+		// Helper that sends the current bunch of messages to the data store. It validates that the data stores exists.
+		const sendBunchedMessages = () => {
+			// Current message state will be undefined for the first message in the list.
+			if (currentMessageState === undefined) {
+				return;
+			}
+			const currentContext = this.contexts.get(currentMessageState.address);
+			assert(!!currentContext, "Context not found");
+
+			currentContext.processMessages({
+				envelope: { ...messageCollection.envelope, type: currentMessageState.type },
+				messagesContent: currentMessagesContent,
+				local,
+			});
+			currentMessagesContent = [];
+		};
+
+		/**
+		 * Bunch contiguous messages for the same data store and send them together.
+		 * This is an optimization mainly for DDSes, where it can process a bunch of ops together. DDSes
+		 * like merge tree or shared tree can process ops more efficiently when they are bunched together.
+		 */
+		for (const { contents, ...restOfMessagesContent } of messagesContent) {
+			const contentsEnvelope = contents as IEnvelope;
+			const address = contentsEnvelope.address;
 			const context = this.contexts.get(address);
 
 			// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 			// corruption in case a deleted data store accidentally submitted an op.
 			if (this.checkAndLogIfDeleted(address, context, "Changed", "processFluidDataStoreOp")) {
-				return;
+				continue;
 			}
 
 			if (context === undefined) {
@@ -907,41 +916,54 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				throw DataProcessingError.create(
 					"No context for op",
 					"processFluidDataStoreOp",
-					transformedMessage,
+					messageCollection.envelope as ISequencedDocumentMessage,
 					{
 						local,
 						messageDetails: JSON.stringify({
-							type: transformedMessage.type,
-							contentType: typeof transformedMessage.contents,
+							type: messageCollection.envelope.type,
+							contentType: typeof contents,
 						}),
 						...tagCodeArtifacts({ address }),
 					},
 				);
 			}
 
-			context.process(transformedMessage, local, localOpMetadata);
+			const { type: contextType, content: contextContents } =
+				contentsEnvelope.contents as FluidDataStoreMessage;
+			// If the address or type of the message changes while processing the message, send the current bunch.
+			if (
+				currentMessageState?.address !== address ||
+				currentMessageState?.type !== contextType
+			) {
+				sendBunchedMessages();
+			}
+			currentMessagesContent.push({
+				contents: contextContents,
+				...restOfMessagesContent,
+			});
+			currentMessageState = { address, type: contextType };
 
 			// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 			// being used.
 			this.gcNodeUpdated({
 				node: { type: "DataStore", path: `/${address}` },
 				reason: "Changed",
-				timestampMs: transformedMessage.timestamp,
+				timestampMs: messageCollection.envelope.timestamp,
 				packagePath: context.isLoaded ? context.packagePath : undefined,
 			});
 
-			// Notify GC of any outbound references that were added by this op.
-			detectOutboundReferences(
-				address,
-				transformedMessage.contents,
-				(fromPath: string, toPath: string) =>
-					this.parentContext.addedGCOutboundRoute(
-						fromPath,
-						toPath,
-						transformedMessage.timestamp,
-					),
+			detectOutboundReferences(address, contextContents, (fromPath: string, toPath: string) =>
+				this.parentContext.addedGCOutboundRoute(
+					fromPath,
+					toPath,
+					messageCollection.envelope.timestamp,
+				),
 			);
 		}
+
+		// Process the last bunch of messages, if any. Note that there may not be any messages in case all of them are
+		// ignored because the data store is deleted.
+		sendBunchedMessages();
 	}
 
 	private async getDataStore(
@@ -949,7 +971,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		requestHeaderData: RuntimeHeaderData,
 		originalRequest: IRequest,
 	): Promise<IFluidDataStoreContextInternal> {
-		const headerData = computeRuntimeHeaderData(this.mc.config, requestHeaderData);
+		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
 		if (
 			this.checkAndLogIfDeleted(
 				id,
@@ -997,7 +1019,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		) {
 			return undefined;
 		}
-		const headerData = computeRuntimeHeaderData(this.mc.config, requestHeaderData);
+		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			return undefined;

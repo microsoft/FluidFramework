@@ -98,6 +98,8 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  *
  * 3. Union of 1 and 2.
  *
+ * @see {@link Input}
+ *
  * @privateRemarks TODO: consider separating these cases into different types.
  *
  * @system @public

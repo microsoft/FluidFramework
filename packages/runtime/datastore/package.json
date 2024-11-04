@@ -165,7 +165,8 @@
 				"backCompat": false
 			},
 			"ClassStatics_FluidDataStoreRuntime": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"
