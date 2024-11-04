@@ -109,7 +109,7 @@ stages:
             buildDefinition: 'build-docs'
             useSameSourceVersion: False
             useSameBranch: False
-            branchToUse: main
+            branchToUse: test/michaelzhen
             waitForQueuedBuildsToFinish: False
             storeInEnvironmentVariable: True
             authenticationMethod: 'OAuth Token'
