@@ -63,6 +63,7 @@
 		"@fluid-experimental/data-objects": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/azure-client-legacy": "npm:@fluidframework/azure-client@^1.2.0",

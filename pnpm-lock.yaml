@@ -12929,6 +12929,9 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
+      '@fluid-private/test-version-utils':
+        specifier: workspace:~
+        version: link:../../../test/test-version-utils
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../framework/aqueduct
@@ -13065,6 +13068,9 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
+      '@fluid-private/test-version-utils':
+        specifier: workspace:~
+        version: link:../../../test/test-version-utils
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../framework/aqueduct
