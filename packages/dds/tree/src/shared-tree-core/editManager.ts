@@ -424,15 +424,24 @@ export class EditManager<
 				} else {
 					Reflect.defineProperty(commit, "change", {
 						get: () =>
-							assert(false, "Should not access 'change' property of an evicted commit"),
+							assert(
+								false,
+								0xa5e /* Should not access 'change' property of an evicted commit */,
+							),
 					});
 					Reflect.defineProperty(commit, "revision", {
 						get: () =>
-							assert(false, "Should not access 'revision' property of an evicted commit"),
+							assert(
+								false,
+								0xa5f /* Should not access 'revision' property of an evicted commit */,
+							),
 					});
 					Reflect.defineProperty(commit, "parent", {
 						get: () =>
-							assert(false, "Should not access 'parent' property of an evicted commit"),
+							assert(
+								false,
+								0xa60 /* Should not access 'parent' property of an evicted commit */,
+							),
 					});
 					return { delete: true };
 				}
@@ -491,7 +500,10 @@ export class EditManager<
 
 		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map(
 			(c) => {
-				assert(c !== this.trunkBase, "Serialized trunk should not include the trunk base");
+				assert(
+					c !== this.trunkBase,
+					0xa61 /* Serialized trunk should not include the trunk base */,
+				);
 				const metadata =
 					this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
 				const commit: SequencedCommit<TChangeset> = {
@@ -522,7 +534,7 @@ export class EditManager<
 						commits: branchPath.map((c) => {
 							assert(
 								c !== this.trunkBase,
-								"Serialized branch should not include the trunk base",
+								0xa62 /* Serialized branch should not include the trunk base */,
 							);
 							const commit: Commit<TChangeset> = {
 								change: c.change,
@@ -593,7 +605,7 @@ export class EditManager<
 		if (id === undefined) {
 			assert(
 				trunkCommitOrTrunkBase === this.trunkBase,
-				"Commit must be either be on the trunk or be the trunk base",
+				0xa63 /* Commit must be either be on the trunk or be the trunk base */,
 			);
 			return minimumPossibleSequenceId;
 		}
@@ -652,7 +664,7 @@ export class EditManager<
 		assert(
 			sequenceNumber >= // This is ">=", not ">" because changes in the same batch will have the same sequence number
 				(this.sequenceMap.maxKey()?.sequenceNumber ?? minimumPossibleSequenceNumber),
-			"Attempted to sequence change with an outdated sequence number",
+			0xa64 /* Attempted to sequence change with an outdated sequence number */,
 		);
 
 		const commitsSequenceNumber = this.getBatch(sequenceNumber);
