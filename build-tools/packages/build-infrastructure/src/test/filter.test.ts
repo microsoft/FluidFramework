@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import path from "node:path";
-
 import chai, { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
 
+import { loadBuildProject } from "../buildProject.js";
 import {
 	AllPackagesSelectionCriteria,
 	EmptySelectionCriteria,
@@ -16,10 +15,9 @@ import {
 	filterPackages,
 	selectAndFilterPackages,
 } from "../filter.js";
-import { loadFluidRepo } from "../fluidRepo.js";
-import type { IFluidRepo, IPackage, WorkspaceName } from "../types.js";
+import type { IBuildProject, IPackage, WorkspaceName } from "../types.js";
 
-import { testDataPath } from "./init.js";
+import { testRepoRoot } from "./init.js";
 
 // const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -31,16 +29,13 @@ const EmptyFilter: PackageFilterOptions = {
 	skipScope: undefined,
 };
 
-async function getFluidRepo(): Promise<IFluidRepo> {
-	const fluidRepo = loadFluidRepo(
-		path.join(testDataPath, "./testRepo"),
-		"microsoft/FluidFramework",
-	);
+async function getBuildProject(): Promise<IBuildProject> {
+	const fluidRepo = loadBuildProject(testRepoRoot, "microsoft/FluidFramework");
 	return fluidRepo;
 }
 
 async function getMainWorkspacePackages(): Promise<IPackage[]> {
-	const fluidRepo = await getFluidRepo();
+	const fluidRepo = await getBuildProject();
 	const packages = fluidRepo.workspaces.get("main" as WorkspaceName)?.packages;
 	assert(packages !== undefined);
 	return packages;
@@ -135,7 +130,7 @@ describe("filterPackages", () => {
 });
 
 describe("selectAndFilterPackages", () => {
-	const fluidRepoPromise = getFluidRepo();
+	const fluidRepoPromise = getBuildProject();
 
 	it("all, no filters", async () => {
 		const fluidRepo = await fluidRepoPromise;

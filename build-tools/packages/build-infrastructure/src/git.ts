@@ -10,7 +10,13 @@ import readPkgUp from "read-pkg-up";
 import type { SimpleGit } from "simple-git";
 
 import { NotInGitRepository } from "./errors.js";
-import type { IFluidRepo, IPackage, IReleaseGroup, IWorkspace, PackageName } from "./types.js";
+import type {
+	IBuildProject,
+	IPackage,
+	IReleaseGroup,
+	IWorkspace,
+	PackageName,
+} from "./types.js";
 import { isPathUnder } from "./utils.js";
 
 /**
@@ -118,9 +124,9 @@ function filePathsToDirectories(files: string[]): string[] {
 /**
  * Gets the changed files, directories, release groups, and packages since the given ref.
  *
- * Returned paths are relative to the Fluid repo root.
+ * Returned paths are relative to the BuildProject root.
  *
- * @param fluidRepo - The Fluid repo.
+ * @param buildProject - The BuildProject.
  * @param ref - The ref to compare against.
  * @param remote - The remote to compare against.
  * @returns An object containing the changed files, directories, release groups, workspaces, and packages. Note that a
@@ -130,7 +136,7 @@ function filePathsToDirectories(files: string[]): string[] {
  * value will contain both release groups.
  */
 export async function getChangedSinceRef<P extends IPackage>(
-	fluidRepo: IFluidRepo<P>,
+	buildProject: IBuildProject<P>,
 	ref: string,
 	remote?: string,
 ): Promise<{
@@ -140,8 +146,8 @@ export async function getChangedSinceRef<P extends IPackage>(
 	releaseGroups: IReleaseGroup[];
 	packages: P[];
 }> {
-	const gitRoot = findGitRootSync(fluidRepo.root);
-	const git = await fluidRepo.getGitRepository();
+	const gitRoot = findGitRootSync(buildProject.root);
+	const git = await buildProject.getGitRepository();
 	const filesRaw = await getChangedFilesSinceRef(git, ref, remote);
 	const files = filesRaw
 		.map(
@@ -151,24 +157,24 @@ export async function getChangedSinceRef<P extends IPackage>(
 		.filter((filePath) => {
 			// filter out changed paths that are not under the Fluid repo
 			// since only paths under the repo should be included
-			return isPathUnder(fluidRepo.root, filePath);
+			return isPathUnder(buildProject.root, filePath);
 		})
-		.map((filePath) => fluidRepo.relativeToRepo(filePath));
+		.map((filePath) => buildProject.relativeToRepo(filePath));
 	const dirs = filePathsToDirectories(files);
 
 	const changedPackageNames = dirs
 		.map((dir) => {
-			const cwd = path.resolve(fluidRepo.root, dir);
+			const cwd = path.resolve(buildProject.root, dir);
 			return readPkgUp.sync({ cwd })?.packageJson.name;
 		})
 		.filter((name): name is string => name !== undefined);
 
 	const changedPackages = [...new Set(changedPackageNames)]
-		.map((name) => fluidRepo.packages.get(name as PackageName))
+		.map((name) => buildProject.packages.get(name as PackageName))
 		.filter((pkg): pkg is P => pkg !== undefined);
 
 	const changedReleaseGroups = [...new Set(changedPackages.map((pkg) => pkg.releaseGroup))]
-		.map((rg) => fluidRepo.releaseGroups.get(rg))
+		.map((rg) => buildProject.releaseGroups.get(rg))
 		.filter((rg): rg is IReleaseGroup => rg !== undefined);
 
 	const changedWorkspaces = [...new Set(changedReleaseGroups.map((ws) => ws.workspace))];
