@@ -5,14 +5,19 @@
 
 import { strict as assert } from "assert";
 
-import { bufferToString } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { AttachState } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { BlobManager, IBlobManagerRuntime, type IPendingBlobs } from "../blobManager/index.js";
+import {
+	ContainerFluidHandleContext,
+	IContainerHandleContextRuntime,
+} from "../containerHandleContext.js";
 
 export const failProxy = <T extends object>(handler: Partial<T> = {}) => {
 	const proxy: T = new Proxy<T>(handler as T, {
@@ -31,12 +36,22 @@ export const failProxy = <T extends object>(handler: Partial<T> = {}) => {
 };
 
 function createBlobManager(overrides?: Partial<ConstructorParameters<typeof BlobManager>[0]>) {
+	const runtime = failProxy<IBlobManagerRuntime & IContainerHandleContextRuntime>({
+		baseLogger: createChildLogger(),
+		attachState: AttachState.Attached,
+		resolveHandle: async () => {
+			throw new Error("not implemented");
+		},
+	});
+	const routeContext = new ContainerFluidHandleContext("/", runtime, undefined);
 	return new BlobManager(
 		failProxy({
 			// defaults, these can still be overridden below
-			runtime: failProxy<IBlobManagerRuntime>({ baseLogger: createChildLogger() }),
+			runtime,
+			routeContext,
 			snapshot: {},
 			stashedBlobs: undefined,
+			uuidOverride: undefined,
 
 			// overrides
 			...overrides,
@@ -71,6 +86,87 @@ describe("BlobManager.stashed", () => {
 	});
 
 	it("Stashed blob", async () => {
+		const createResponse = new Deferred<ICreateBlobResponse>();
+		const blobManager = createBlobManager({
+			sendBlobAttachOp(_localId, _storageId) {},
+			stashedBlobs: {},
+			getStorage: () =>
+				failProxy<IDocumentStorageService>({
+					createBlob: async () => {
+						return createResponse.promise;
+					},
+				}),
+		});
+		const blob: ArrayBufferLike = stringToBuffer("content", "utf8");
+		const sameBlobAsStashedP = blobManager.createBlob(blob);
+		const pendingBlobsP = blobManager.attachAndGetPendingBlobs();
+		const sameBlobAsStashed = await sameBlobAsStashedP;
+		sameBlobAsStashed.attachGraph();
+		const pendingBlobs = await pendingBlobsP;
+		const blobManager2 = createBlobManager({
+			stashedBlobs: pendingBlobs,
+		});
+		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
+	});
+
+	it("Stashed blob with stubbed localId", async () => {
+		const createResponse = new Deferred<ICreateBlobResponse>();
+		const blobManager = createBlobManager({
+			sendBlobAttachOp(_localId, _storageId) {},
+			stashedBlobs: {},
+			getStorage: () =>
+				failProxy<IDocumentStorageService>({
+					createBlob: async () => {
+						return createResponse.promise;
+					},
+				}),
+			uuidOverride: () => "stubbed-local-id",
+		});
+
+		const blob: ArrayBufferLike = stringToBuffer("content", "utf8");
+		const sameBlobAsStashedP = blobManager.createBlob(blob);
+		const pendingBlobsP = blobManager.attachAndGetPendingBlobs();
+		const sameBlobAsStashed = await sameBlobAsStashedP;
+		sameBlobAsStashed.attachGraph();
+		const pendingBlobs = await pendingBlobsP;
+
+		const createResponse2 = new Deferred<ICreateBlobResponse>();
+		const blobManager2 = createBlobManager({
+			stashedBlobs: pendingBlobs,
+			getStorage: () =>
+				failProxy<IDocumentStorageService>({
+					createBlob: async () => {
+						return createResponse2.promise;
+					},
+				}),
+		});
+		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
+
+		blobManager2.processBlobAttachMessage(
+			{
+				clientId: "client-id",
+				minimumSequenceNumber: 1,
+				referenceSequenceNumber: 1,
+				sequenceNumber: 1,
+				type: "blobAttach",
+				metadata: {
+					localId: "stubbed-local-id",
+					blobId: "stubbed-storage-id",
+				},
+				timestamp: Date.now(),
+			},
+			true,
+		);
+		await Promise.race([
+			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
+			blobManager2.trackPendingStashedUploads(),
+		]);
+		createResponse2.resolve({
+			id: "new-storage-id",
+		});
+	});
+
+	it("Already stashed blob", async () => {
 		const createResponse = new Deferred<ICreateBlobResponse>();
 		const blobManager = createBlobManager({
 			stashedBlobs: {
