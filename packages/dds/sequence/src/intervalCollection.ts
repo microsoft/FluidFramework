@@ -1328,8 +1328,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			let deltaProps: PropertySet | undefined;
 			let newInterval: TInterval | undefined;
 			if (props !== undefined) {
-				interval.properties ??= new PropertiesManager();
-				deltaProps = interval.propertyManager?.addProperties(
+				interval.propertyManager ??= new PropertiesManager();
+				deltaProps = interval.propertyManager.addProperties(
 					interval.properties,
 					props,
 					this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
