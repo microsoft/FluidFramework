@@ -44,7 +44,6 @@ describe("setVersion", () => {
 	it("release group", async () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		await setVersion(main.packages, semver.parse("1.2.1")!);
-		repo.reload();
 
 		const allCorrect = main.packages.every((pkg) => pkg.version === "1.2.1");
 		expect(main.version).to.equal("1.2.1");
@@ -54,7 +53,6 @@ describe("setVersion", () => {
 	it("workspace", async () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		await setVersion(secondWorkspace.packages, semver.parse("2.2.1")!);
-		repo.reload();
 
 		const allCorrect = secondWorkspace.packages.every((pkg) => pkg.version === "2.2.1");
 		expect(allCorrect).to.be.true;
@@ -64,7 +62,6 @@ describe("setVersion", () => {
 		const packages = [...repo.packages.values()];
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		await setVersion(packages, semver.parse("1.2.1")!);
-		repo.reload();
 
 		const allCorrect = packages.every((pkg) => pkg.version === "1.2.1");
 		expect(allCorrect).to.be.true;

@@ -6,7 +6,7 @@
 
 import type { Opaque } from 'type-fest';
 import type { PackageJson as PackageJson_2 } from 'type-fest';
-import * as semver from 'semver';
+import { SemVer } from 'semver';
 import type { SetRequired } from 'type-fest';
 import { SimpleGit } from 'simple-git';
 
@@ -236,7 +236,7 @@ export interface Reloadable {
 }
 
 // @public
-export function setVersion<J extends PackageJson>(packages: IPackage[], version: semver.SemVer): Promise<void>;
+export function setVersion<J extends PackageJson>(packages: IPackage[], version: SemVer): Promise<void>;
 
 // @public
 export interface WorkspaceDefinition {
