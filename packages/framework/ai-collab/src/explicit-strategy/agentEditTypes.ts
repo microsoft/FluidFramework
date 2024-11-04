@@ -29,7 +29,7 @@ import type { JsonPrimitive } from "./jsonTypes.js";
  *
  * TODO: SetRoot might be obscure enough to make the LLM avoid it. Maybe a general replace edit would be better.
  *
- * TODO: Handle 429 rate limit error in streamFromLlm.
+ * TODO: Handle 429 rate limit error from OpenAI.
  *
  * TODO: Add an app-specific guidance string.
  *
@@ -55,20 +55,20 @@ export const objectIdKey = "__fluid_objectId";
 
 /**
  * Describes an edit to a field within a node.
- * @remarks what is the [key: string] for?
+ * @remarks TODO: what is the [key: string] for?
  */
 export interface TreeEditObject {
 	[key: string]: TreeEditValue;
 	[typeField]: string;
 }
 /**
- * An array of {@link TreeEditValue}'s, allowing a single TreeEdit to contain edits to multiple fields.
+ * An array of {@link TreeEditValue}'s, allowing a single {@link TreeEdit} to contain edits to multiple fields.
  */
 export type TreeEditArray = TreeEditValue[];
 
 /**
- * The potential values for a given TreeEdit. These values are typically a field within a node or an entire node,
- * represented in JSON because they are expected to be returned by an LLM.
+ * The potential values for a given {@link TreeEdit}.
+ * @remarks These values are typically a field within a node or an entire node,
  */
 export type TreeEditValue = JsonPrimitive | TreeEditObject | TreeEditArray;
 

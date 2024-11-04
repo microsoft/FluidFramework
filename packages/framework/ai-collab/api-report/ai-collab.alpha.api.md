@@ -39,9 +39,7 @@ export interface AiCollabOptions<TSchema extends ImplicitFieldSchema> {
 
 // @alpha
 export interface AiCollabSuccessResponse {
-    // (undocumented)
     status: "success";
-    // (undocumented)
     tokenUsage: TokenUsage;
 }
 
@@ -109,9 +107,7 @@ export type ObjectPath = (string | number)[];
 
 // @alpha
 export interface OpenAiClientOptions {
-    // (undocumented)
     client: OpenAI;
-    // (undocumented)
     modelName?: string;
 }
 

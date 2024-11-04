@@ -14,7 +14,7 @@ import type OpenAI from "openai";
  */
 export interface OpenAiClientOptions {
 	/**
-	 * The {@link OpenAI} client to use for the AI collaboration.
+	 * The OpenAI client to use for the AI collaboration.
 	 */
 	client: OpenAI;
 	/**

@@ -13,8 +13,8 @@ import type {
 } from "@fluidframework/tree/internal";
 
 /**
- * Given a tree node, generates a set of LLM -friendly, unique IDs for each node in a given Shared Tree.
- * @remarks simple id's are important for the LLM and this library to create and distinguish between different types certain TreeEdits
+ * Given a tree, generates a set of LLM-friendly, unique IDs for each node in the tree.
+ * @remarks The ability to uniquely and stably in the tree is important for the LLM and this library to create and distinguish between different types certain {@link TreeEdit}s.
  */
 export class IdGenerator {
 	private readonly idCountMap = new Map<string, number>();
