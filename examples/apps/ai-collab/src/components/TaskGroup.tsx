@@ -5,7 +5,7 @@
 
 import { type Difference, SharedTreeBranchManager } from "@fluid-experimental/ai-collab";
 import {
-	type TreeBranch,
+	type BranchableTree,
 	type TreeBranchFork,
 	type TreeViewAlpha,
 } from "@fluidframework/tree/alpha";
@@ -52,7 +52,7 @@ export function TaskGroup(props: {
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 	const [llmBranchData, setLlmBranchData] = useState<{
 		differences: Difference[];
-		originalBranch: TreeBranch;
+		originalBranch: BranchableTree;
 		forkBranch: TreeBranchFork;
 		forkView: TreeView<typeof SharedTreeAppState>;
 		newBranchTargetNode: SharedTreeTaskGroup;

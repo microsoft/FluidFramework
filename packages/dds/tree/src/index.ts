@@ -58,7 +58,7 @@ export {
 	rollback,
 	type ForestOptions,
 	getBranch,
-	type TreeBranch,
+	type BranchableTree,
 	type TreeBranchFork,
 	independentInitializedView,
 	type ViewContent,

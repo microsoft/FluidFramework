@@ -40,6 +40,14 @@ export enum AttachState {
     Detached = "Detached"
 }
 
+// @alpha @sealed
+export interface BranchableTree extends ViewableTree {
+    branch(): TreeBranchFork;
+    merge(branch: TreeBranchFork): void;
+    merge(branch: TreeBranchFork, disposeMerged: boolean): void;
+    rebase(branch: TreeBranchFork): void;
+}
+
 // @public
 export enum CommitKind {
     Default = 0,
@@ -220,10 +228,10 @@ export enum ForestType {
 }
 
 // @alpha @deprecated
-export function getBranch(tree: ITree): TreeBranch;
+export function getBranch(tree: ITree): BranchableTree;
 
 // @alpha @deprecated
-export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(view: TreeViewAlpha<T>): TreeBranch;
+export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(view: TreeViewAlpha<T>): BranchableTree;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
@@ -1078,16 +1086,8 @@ export const TreeBeta: {
 };
 
 // @alpha @sealed
-export interface TreeBranch extends ViewableTree {
-    branch(): TreeBranchFork;
-    merge(branch: TreeBranchFork): void;
-    merge(branch: TreeBranchFork, disposeMerged: boolean): void;
-    rebase(branch: TreeBranchFork): void;
-}
-
-// @alpha @sealed
-export interface TreeBranchFork extends TreeBranch, IDisposable {
-    rebaseOnto(branch: TreeBranch): void;
+export interface TreeBranchFork extends BranchableTree, IDisposable {
+    rebaseOnto(branch: BranchableTree): void;
 }
 
 // @public @sealed

@@ -106,7 +106,7 @@ export interface CheckoutEvents {
  * Changes may be synchronized across branches via merge and rebase operations provided on the branch object.
  * @alpha @sealed
  */
-export interface TreeBranch extends ViewableTree {
+export interface BranchableTree extends ViewableTree {
 	/**
 	 * Spawn a new branch which is based off of the current state of this branch.
 	 * Any mutations of the new branch will not apply to this branch until the new branch is merged back into this branch via `merge()`.
@@ -138,16 +138,16 @@ export interface TreeBranch extends ViewableTree {
 }
 
 /**
- * A {@link TreeBranch | branch} of a SharedTree that has merged from another branch.
+ * A {@link BranchableTree | branch} of a SharedTree that has merged from another branch.
  * @remarks This branch should be disposed when it is no longer needed in order to free resources.
  * @alpha @sealed
  */
-export interface TreeBranchFork extends TreeBranch, IDisposable {
+export interface TreeBranchFork extends BranchableTree, IDisposable {
 	/**
 	 * Rebase the changes that have been applied to this branch over all the new changes in the given branch.
 	 * @param branch - Either the root branch or a branch that was created by a call to `branch()`. It is not modified by this operation.
 	 */
-	rebaseOnto(branch: TreeBranch): void;
+	rebaseOnto(branch: BranchableTree): void;
 }
 
 /**

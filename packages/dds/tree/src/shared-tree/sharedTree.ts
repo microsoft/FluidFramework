@@ -68,7 +68,7 @@ import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import {
 	type CheckoutEvents,
 	type TreeCheckout,
-	type TreeBranch,
+	type BranchableTree,
 	createTreeCheckout,
 } from "./treeCheckout.js";
 import { breakingClass, throwIfBroken } from "../util/index.js";
@@ -352,16 +352,16 @@ export class SharedTree
 }
 
 /**
- * Get a {@link TreeBranch} from a {@link ITree}.
+ * Get a {@link BranchableTree} from a {@link ITree}.
  * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
  * @privateRemarks This function will be removed if/when the branching API becomes public,
  * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
  * @deprecated This API is superseded by {@link TreeContext}, which should be used instead.
  */
-export function getBranch(tree: ITree): TreeBranch;
+export function getBranch(tree: ITree): BranchableTree;
 /**
- * Get a {@link TreeBranch} from a {@link TreeView}.
+ * Get a {@link BranchableTree} from a {@link TreeView}.
  * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
  * Branches are currently an unstable "alpha" API and are subject to change in the future.
  * @privateRemarks This function will be removed if/when the branching API becomes public,
@@ -371,17 +371,17 @@ export function getBranch(tree: ITree): TreeBranch;
  */
 export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	view: TreeViewAlpha<T>,
-): TreeBranch;
+): BranchableTree;
 export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	treeOrView: ITree | TreeViewAlpha<T>,
-): TreeBranch {
+): BranchableTree {
 	assert(
 		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
 		0xa48 /* Unsupported implementation */,
 	);
 	const checkout: TreeCheckout = treeOrView.checkout;
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
-	return checkout as unknown as TreeBranch;
+	return checkout as unknown as BranchableTree;
 }
 
 /**
