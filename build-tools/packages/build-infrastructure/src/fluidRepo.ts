@@ -267,19 +267,19 @@ export async function setDependencyRange(
 							? dependencyRange.version
 							: undefined;
 
-					// Check if depRange is defined
-					if (depRange === undefined) {
-						throw new Error(`Invalid dependency range: ${dependencyRange}`);
-					}
+				// Check if depRange is defined
+				if (depRange === undefined) {
+					throw new Error(`Invalid dependency range: ${dependencyRange}`);
+				}
 
-					// Update the version in packageJson
-					if (depKind === "prod" && pkg.packageJson.dependencies !== undefined) {
-						pkg.packageJson.dependencies[depName] = depRange;
-					} else if (depKind === "dev" && pkg.packageJson.devDependencies !== undefined) {
-						pkg.packageJson.devDependencies[depName] = depRange;
-					} else if (depKind === "peer" && pkg.packageJson.peerDependencies) {
-						pkg.packageJson.peerDependencies[depName] = depRange;
-					}
+				// Update the version in packageJson
+				if (depKind === "prod" && pkg.packageJson.dependencies !== undefined) {
+					pkg.packageJson.dependencies[depName] = depRange;
+				} else if (depKind === "dev" && pkg.packageJson.devDependencies !== undefined) {
+					pkg.packageJson.devDependencies[depName] = depRange;
+				} else if (depKind === "peer" && pkg.packageJson.peerDependencies) {
+					pkg.packageJson.peerDependencies[depName] = depRange;
+				}
 			}
 		}
 		savePromises.push(pkg.savePackageJson());

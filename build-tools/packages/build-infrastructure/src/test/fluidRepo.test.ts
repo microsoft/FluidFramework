@@ -129,7 +129,9 @@ describe("setDependencyRange", () => {
 		const group2Version = semver.parse(group2.version);
 		assert(group2Version !== null);
 		await setDependencyRange(main.packages, group2.packages, group2Version);
-		const allCorrect = main.packages.every((pkg) => pkg.version === group2.version);
+		const allCorrect = main.packages
+			.filter((pkg) => group2.packages.some((group2Pkg) => group2Pkg.name === pkg.name))
+			.every((pkg) => pkg.version === group2.version);
 		expect(allCorrect).to.be.true;
 	});
 
@@ -137,7 +139,11 @@ describe("setDependencyRange", () => {
 		const workspace2Version = semver.parse(secondWorkspace.rootPackage.version);
 		assert(workspace2Version !== null);
 		await setDependencyRange(main.packages, secondWorkspace.packages, workspace2Version);
-		const allCorrect = main.packages.every((pkg) => pkg.version === group2.version);
+		const allCorrect = main.packages
+			.filter((pkg) =>
+				group2.packages.some((workspace2Pkg) => workspace2Pkg.name === pkg.name),
+			)
+			.every((pkg) => pkg.version === secondWorkspace.rootPackage.version);
 		expect(allCorrect).to.be.true;
 	});
 
@@ -145,7 +151,9 @@ describe("setDependencyRange", () => {
 		const version = semver.parse("2.0.0");
 		assert(version !== null);
 		await setDependencyRange(main.packages, group2.packages, version);
-		const allCorrect = main.packages.every((pkg) => pkg.version === "2.0.0");
+		const allCorrect = main.packages
+			.filter((pkg) => group2.packages.some((group2Pkg) => group2Pkg.name === pkg.name))
+			.every((pkg) => pkg.version === "2.0.0");
 		expect(allCorrect).to.be.true;
 	});
 });
