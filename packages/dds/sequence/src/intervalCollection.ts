@@ -1329,8 +1329,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			if (props !== undefined) {
 				interval.propertyManager ??= new PropertiesManager();
 				deltaProps = interval.propertyManager.handleProperties(
-					interval.properties,
-					props,
+					{ props },
+					interval,
 					this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
 					UniversalSequenceNumber,
 					true,
