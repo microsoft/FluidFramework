@@ -30,6 +30,7 @@ describe("loadFluidRepo", () => {
 				2,
 				`Expected 2 workspaces, found ${repo.workspaces.size}`,
 			);
+
 			const main = repo.workspaces.get("main" as WorkspaceName);
 			expect(main).to.not.be.undefined;
 			expect(main?.packages.length).to.equal(
