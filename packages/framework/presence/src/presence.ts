@@ -56,8 +56,8 @@ export type SessionClientStatus =
  *
  * `ISessionClient` should be used as key to distinguish between different
  * clients as they join, rejoin, and disconnect from a session. While a
- * client's {@link ClientConnectionId} may change over time `ISessionClient`
- * will be fixed.
+ * client's {@link ClientConnectionId} read from {@link ISessionClient.getConnectionStatus}
+ * may change over time `ISessionClient` will be fixed.
  *
  * @privateRemarks
  * As this is evolved, pay attention to how this relates to Audience, Service
@@ -90,20 +90,6 @@ export interface ISessionClient<
 	 *
 	 */
 	getConnectionStatus(): SessionClientStatus;
-
-	/**
-	 * Set current client connection id.
-	 *
-	 * @param connectionId - New connection id.
-	 */
-	setConnectionId(connectionId: ClientConnectionId): void;
-
-	/**
-	 * Set connection status of session client.
-	 *
-	 * @param connected - True if client is connected.
-	 */
-	setConnectionStatus(connected: boolean): void;
 }
 
 /**

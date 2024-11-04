@@ -31,37 +31,47 @@ export interface SystemWorkspaceDatastore {
 }
 
 class SessionClient implements ISessionClient {
-	public readonly sessionId: ClientSessionId;
-	public order: number;
-	private _connectionId: ClientConnectionId | undefined;
-	private _connectionStatus: SessionClientStatus;
+	/**
+	 * Order is used to track the most recent client connection
+	 * during a session.
+	 */
+	public order: number = 0;
 
-	public constructor(sessionId: ClientSessionId, connectionId?: ClientConnectionId) {
-		this.sessionId = sessionId;
-		this.order = 0;
-		this._connectionId = connectionId;
-		this._connectionStatus = SessionClientStatus.Disconnected;
+	private connectionStatus: SessionClientStatus;
+
+	public constructor(
+		public readonly sessionId: ClientSessionId,
+		private connectionId: ClientConnectionId | undefined = undefined,
+	) {
+		this.connectionStatus =
+			connectionId === undefined
+				? SessionClientStatus.Disconnected
+				: SessionClientStatus.Connected;
 	}
 
 	public getConnectionId(): ClientConnectionId {
-		if (this._connectionId === undefined) {
+		if (this.connectionId === undefined) {
 			throw new Error("Client has never been connected");
 		}
-		return this._connectionId;
+		return this.connectionId;
 	}
 
 	public getConnectionStatus(): SessionClientStatus {
-		return this._connectionStatus;
+		return this.connectionStatus;
 	}
 
-	public setConnectionId(connectionId: ClientConnectionId): void {
-		this._connectionId = connectionId;
+	public setConnectionId(
+		connectionId: ClientConnectionId,
+		updateStatus: boolean = true,
+	): void {
+		this.connectionId = connectionId;
+		if (updateStatus) {
+			this.connectionStatus = SessionClientStatus.Connected;
+		}
 	}
 
-	public setConnectionStatus(connected: boolean): void {
-		this._connectionStatus = connected
-			? SessionClientStatus.Connected
-			: SessionClientStatus.Disconnected;
+	public setDisconnected(): void {
+		this.connectionStatus = SessionClientStatus.Disconnected;
 	}
 }
 
@@ -163,7 +173,6 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		};
 
 		this.selfAttendee.setConnectionId(clientConnectionId);
-		this.selfAttendee.setConnectionStatus(true);
 		this.attendees.set(clientConnectionId, this.selfAttendee);
 	}
 
@@ -177,7 +186,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		// therefore we should not change the attendee connection status or emit a disconnect event.
 		const attendeeReconnected = attendee.getConnectionId() !== clientConnectionId;
 		if (!attendeeReconnected) {
-			attendee.setConnectionStatus(false);
+			attendee.setDisconnected();
 			this.events.emit("attendeeDisconnected", attendee);
 		}
 	}
@@ -215,6 +224,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	): { attendee: SessionClient; isNew: boolean } {
 		let attendee = this.attendees.get(clientSessionId);
 		let isNew = false;
+		// TODO #22616: Check for a current connection to determine best status.
+		// For now, always leave existing state as was last determined and
+		// assume new client is connected.
 		if (attendee === undefined) {
 			// New attendee. Create SessionClient and add session id based
 			// entry to map.
@@ -225,7 +237,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			// The given association is newer than the one we have.
 			// Update the order and current connection id.
 			attendee.order = order;
-			attendee.setConnectionId(clientConnectionId);
+			attendee.setConnectionId(clientConnectionId, /* updateStatus */ false);
 		}
 		// Always update entry for the connection id. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
