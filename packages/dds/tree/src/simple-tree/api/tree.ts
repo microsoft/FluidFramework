@@ -13,13 +13,14 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	type ReadableField,
+	type ReadSchema,
 	type TreeFieldFromImplicitField,
-	type TreeLeafValue,
 	type UnsafeUnknownSchema,
 	FieldKind,
 } from "../schemaTypes.js";
-import { NodeKind, type TreeNode, type TreeNodeSchema } from "../core/index.js";
-import { toStoredSchema } from "../toFlexSchema.js";
+import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
@@ -29,6 +30,14 @@ import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 /**
  * A tree from which a {@link TreeView} can be created.
+ *
+ * @privateRemarks
+ * TODO:
+ * Add stored key versions of {@link TreeAlpha.(exportVerbose:2)}, {@link TreeAlpha.(exportConcise:2)} and {@link TreeAlpha.exportCompressed} here so tree content can be accessed without a view schema.
+ * Add exportSimpleSchema and exportJsonSchema methods (which should exactly match the concise format, and match the free functions for exporting view schema).
+ * Maybe rename "exportJsonSchema" to align on "concise" terminology.
+ * Ensure schema exporting APIs here align and reference APIs for exporting view schema to the same formats (which should include stored vs property key choice).
+ * Make sure users of independentView can use these export APIs (maybe provide a reference back to the ViewableTree from the TreeView to accomplish that).
  * @system @sealed @public
  */
 export interface ViewableTree {
@@ -48,7 +57,7 @@ export interface ViewableTree {
 	 * Only one schematized view may exist for a given ITree at a time.
 	 * If creating a second, the first must be disposed before calling `viewWith` again.
 	 *
-	 * @privateRemarks
+	 *
 	 * TODO: Provide a way to make a generic view schema for any document.
 	 * TODO: Support adapters for handling out-of-schema data.
 	 *
@@ -242,7 +251,7 @@ export class TreeViewConfiguration<
 		if (ambiguityErrors.length !== 0) {
 			// Duplicate errors are common since when two types conflict, both orders error:
 			const deduplicated = new Set(ambiguityErrors);
-			throw new UsageError(`Ambigious schema found:\n${[...deduplicated].join("\n")}`);
+			throw new UsageError(`Ambiguous schema found:\n${[...deduplicated].join("\n")}`);
 		}
 
 		// Eagerly perform this conversion to surface errors sooner.
@@ -434,13 +443,8 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  */
 export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> extends Omit<
-		TreeView<TSchema extends ImplicitFieldSchema ? TSchema : ImplicitFieldSchema>,
-		"root" | "initialize"
-	> {
-	get root(): TSchema extends ImplicitFieldSchema
-		? TreeFieldFromImplicitField<TSchema>
-		: TreeLeafValue | TreeNode;
+> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize"> {
+	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
 

@@ -104,10 +104,11 @@ export function createR11sNetworkError(
 	errorMessage: string,
 	statusCode: number,
 	retryAfterMs?: number,
+	additionalProps?: DriverErrorTelemetryProps,
 	internalErrorCode?: string | number,
 ): IFluidErrorBase & R11sError {
 	let error: IFluidErrorBase & R11sError;
-	const props = { statusCode, driverVersion };
+	const props = { ...additionalProps, statusCode, driverVersion };
 	switch (statusCode) {
 		case 401:
 		// The first 401 is manually retried in RouterliciousRestWrapper with a refreshed token,
@@ -148,10 +149,9 @@ export function throwR11sNetworkError(
 	errorMessage: string,
 	statusCode: number,
 	retryAfterMs?: number,
+	additionalProps?: DriverErrorTelemetryProps,
 ): never {
-	const networkError = createR11sNetworkError(errorMessage, statusCode, retryAfterMs);
-
-	throw networkError;
+	throw createR11sNetworkError(errorMessage, statusCode, retryAfterMs, additionalProps);
 }
 
 /**
@@ -160,6 +160,7 @@ export function throwR11sNetworkError(
 export function errorObjectFromSocketError(
 	socketError: IR11sSocketError,
 	handler: string,
+	additionalProps?: DriverErrorTelemetryProps,
 ): R11sError {
 	// pre-0.58 error message prefix: R11sSocketError
 	const message = `R11s socket error (${handler}): ${socketError.message}`;
@@ -167,6 +168,7 @@ export function errorObjectFromSocketError(
 		message,
 		socketError.code,
 		socketError.retryAfterMs,
+		additionalProps,
 		socketError.internalErrorCode,
 	);
 	error.addTelemetryProperties({
@@ -175,4 +177,52 @@ export function errorObjectFromSocketError(
 		internalErrorCode: socketError.internalErrorCode,
 	});
 	return error;
+}
+
+/** Simulate the pathname for socket connection */
+export const socketIoPath = "socket.io";
+
+/**
+ * Get a stripped version of a URL safe for r11s telemetry
+ * @returns undefined if no appropriate hostName is provided
+ */
+export function getUrlForTelemetry(hostName: string, path: string = ""): string | undefined {
+	// Strip off "http://" or "https://"
+	const hostNameMatch = hostName.match(/^(?:https?:\/\/)?([^/]+)/);
+	if (!hostNameMatch) {
+		return undefined;
+	}
+	const strippedHostName = hostNameMatch[1];
+
+	let extractedPath = "";
+	// Extract portions of the path and explicitly match them to known path names
+	for (const portion of path.split("/")) {
+		if (portion !== "") {
+			// eslint-disable-next-line unicorn/prefer-ternary
+			if (
+				[
+					socketIoPath,
+					"repos",
+					"deltas",
+					"documents",
+					"session",
+					"git",
+					"summaries",
+					"latest",
+					"document",
+					"commits",
+					"blobs",
+					"refs",
+					"revokeToken",
+					"accesstoken",
+				].includes(portion)
+			) {
+				extractedPath += `/${portion}`;
+			} else {
+				extractedPath += "/REDACTED";
+			}
+		}
+	}
+
+	return `${strippedHostName}${extractedPath}`;
 }
