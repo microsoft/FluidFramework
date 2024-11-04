@@ -106,6 +106,7 @@ export {
 	verboseFromCursor,
 	conciseFromCursor,
 	createFromCursor,
+	asTreeViewAlpha,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

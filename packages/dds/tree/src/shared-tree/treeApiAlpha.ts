@@ -63,7 +63,8 @@ export const TreeAlpha: {
 	/**
 	 * Retrieve the {@link TreeBranch | branch}, if any, for the given node.
 	 * @param node - The node to query
-	 * @remarks Returns `undefined` for nodes not yet inserted into the tree - nodes are not attached to a branch until they are inserted.
+	 * @remarks If the node has already been inserted into the tree, this will return the branch associated with that node's {@link TreeView | view}.
+	 * Otherwise, it will return `undefined` (because the node has not yet been inserted and is therefore not part of a branch or view).
 	 *
 	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
 	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.

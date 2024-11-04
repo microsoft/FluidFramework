@@ -674,3 +674,13 @@ export interface TreeViewEvents {
 	 */
 	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }
+
+/**
+ * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
+ * @alpha
+ */
+export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(
+	view: TreeView<TSchema>,
+): TreeViewAlpha<TSchema> {
+	return view as TreeViewAlpha<TSchema>;
+}

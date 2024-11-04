@@ -19,7 +19,7 @@ import { TreeAlpha } from "../../shared-tree/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-describe("TreeContext", () => {
+describe("TreeBranch", () => {
 	const schemaFactory = new SchemaFactory(undefined);
 	class Array extends schemaFactory.array("array", schemaFactory.string) {}
 

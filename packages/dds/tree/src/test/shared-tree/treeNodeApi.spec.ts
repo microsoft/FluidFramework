@@ -22,6 +22,8 @@ import {
 	type InsertableTypedNode,
 	type TreeNodeSchema,
 	type NodeFromSchema,
+	asTreeViewAlpha,
+	type TreeViewAlpha,
 } from "../../simple-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -418,5 +420,17 @@ describe("treeApi", () => {
 
 		// Unhydrated
 		assert.equal(TreeAlpha.branch(new Array([1, 2, 3])), undefined);
+	});
+
+	it("can cast to alpha", () => {
+		const schemaFactory = new SchemaFactory(undefined);
+		const view = getView(
+			new TreeViewConfiguration({ schema: schemaFactory.null, enableSchemaValidation: true }),
+		);
+		view.initialize(null);
+		assert.equal(
+			asTreeViewAlpha(view) satisfies TreeViewAlpha<typeof schemaFactory.null>,
+			view,
+		);
 	});
 });
