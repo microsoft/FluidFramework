@@ -432,7 +432,7 @@ export async function getDocumentAttributes(
 }
 
 /**
- * Type guard to check if the given deltaManager is of type IDeltaManagerInternal.
+ * Type guard to check if the given deltaManager is of type {@link @fluidframework/container-definitions#IDeltaManagerInternal}.
  * @internal
  */
 export function isIDeltaManagerInternal(
