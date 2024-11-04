@@ -81,6 +81,12 @@ variables:
     readonly: true
   - group: prague-key-vault
   - group: ado-feeds
+  - name: pipelineIdentifierForTelemetry
+    value: 'PerformanceBenchmark'
+    readonly: true
+  # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+  - name: DisableCodeQL
+    value: true
 
 lockBehavior: sequential
 stages:
@@ -125,6 +131,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
+              set -eu -o pipefail
               TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
               TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
               cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -176,6 +183,7 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/
             script: |
+              set -eu -o pipefail
               echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
               rm -rf ${{ testPackage }};
 
@@ -185,6 +193,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto"
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
@@ -195,6 +204,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eu -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
@@ -208,6 +218,12 @@ stages:
           targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
           artifactName: 'perf-test-outputs_execution-time'
         condition: succeededOrFailed()
+
+  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+    parameters:
+      stageId: perf_unit_tests_runtime
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      testWorkspace: ${{ variables.testWorkspace }}
 
   # Performance unit tests - memory
   - stage: perf_unit_tests_memory
@@ -250,6 +266,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
+              set -eu -o pipefail
               TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
               TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
               cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -301,6 +318,7 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/
             script: |
+              set -eu -o pipefail
               echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
               rm -rf ${{ testPackage }};
 
@@ -310,6 +328,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
@@ -320,6 +339,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eu -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
@@ -333,6 +353,12 @@ stages:
           targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
           artifactName: 'perf-test-outputs_memory-usage'
         condition: succeededOrFailed()
+
+  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+    parameters:
+      stageId: perf_unit_tests_memory
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      testWorkspace: ${{ variables.testWorkspace }}
 
   # Performance unit tests - customBenchmark
   - stage: perf_unit_tests_customBenchmark
@@ -375,6 +401,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
+              set -eu -o pipefail
               TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
               TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
               cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -426,6 +453,7 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/
             script: |
+              set -eu -o pipefail
               echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
               rm -rf ${{ testPackage }};
 
@@ -435,6 +463,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
@@ -445,6 +474,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eu -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsCustomBenchmarkHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
@@ -459,7 +489,11 @@ stages:
           artifactName: 'perf-test-outputs_custom-data'
         condition: succeededOrFailed()
 
-
+  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+    parameters:
+      stageId: perf_unit_tests_customBenchmark
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      testWorkspace: ${{ variables.testWorkspace }}
 
   - ${{ each endpointObject in parameters.endpoints }}:
 
@@ -528,6 +562,8 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
+              # Note: we explicitly do not use 'set -eu -o pipefail' here because we want to run both sets of tests
+              # no matter what. Probably should be refactored later to use separate steps for each set of tests.
 
               echo "FLUID_LOGGER_PROPS = $FLUID_LOGGER_PROPS"
 
@@ -565,7 +601,7 @@ stages:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             FLUID_BUILD_ID: $(Build.BuildId)
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
-            FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark" }'
+            FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark", "displayName": "${{variables.pipelineIdentifierForTelemetry}}" }'
             login__microsoft__clientId: $(login-microsoft-clientId)
             ${{ if eq( endpointObject.endpointName, 'odsp' ) }}:
               login__odsp__test__tenants: $(automation-perf-login-odsp-test-tenants)
@@ -579,6 +615,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
+              set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.executionTimeTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
@@ -592,6 +629,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
+              set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
               node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
@@ -605,6 +643,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
+              set -eu -o pipefail
               echo "Writing execution time performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.executionTimeTestOutputFolder }};
               node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
@@ -620,6 +659,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
+              set -eu -o pipefail
               echo "Writing memory usage performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.memoryUsageTestOutputFolder }};
               node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
@@ -649,6 +689,7 @@ stages:
             targetType: 'inline'
             workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
+              set -eu -o pipefail
               ls -laR ${{ variables.executionTimeTestOutputFolder }};
               echo "Cleanup  ${{ variables.executionTimeTestOutputFolder }}"
               rm -rf ${{ variables.executionTimeTestOutputFolder }};
@@ -656,45 +697,8 @@ stages:
               echo "Cleanup  ${{ variables.memoryUsageTestOutputFolder }}"
               rm -rf ${{ variables.memoryUsageTestOutputFolder }};
 
-  # Capture telemetry about pipeline stages
-  - stage: upload_run_telemetry
-    displayName: Upload pipeline run telemetry to Kusto
-    condition: succeededOrFailed()
-    dependsOn:
-      - perf_unit_tests_runtime
-      - perf_unit_tests_memory
-      - perf_unit_tests_customBenchmark
-      - perf_e2e_tests_local
-      - perf_e2e_tests_odsp
-      - perf_e2e_tests_frs
-    jobs:
-    - job: upload_run_telemetry
-      displayName: Upload pipeline run telemetry to Kusto
-      pool: Small
-      steps:
-      - template: templates/include-telemetry-setup.yml
-        parameters:
-          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
-          devFeedUrl: $(ado-feeds-dev)
-          officeFeedUrl: $(ado-feeds-office)
-          isCheckoutNeeded: true
-
-      - task: Bash@3
-        displayName: Retrieve and Upload pipeline run stats to Kusto
-        env:
-          BUILD_ID: $(Build.BuildId)
-          ADO_API_TOKEN: $(System.AccessToken)
-          PIPELINE: 'PerformanceBenchmark'
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
-          script: |
-            echo "creating output folder"
-            mkdir -p ${{ variables.testWorkspace }}/timingOutput
-            echo "Retrieving pipeline run timeline data ..."
-            echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
-            curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
-            pwd;
-            ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
-            cat ${{ variables.testWorkspace }}/timingOutput/output.json;
-            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+    - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+      parameters:
+        stageId: perf_e2e_tests_${{ endpointObject.endpointName }}
+        pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+        testWorkspace: ${{ variables.testWorkspace }}

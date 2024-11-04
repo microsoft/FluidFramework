@@ -7,7 +7,7 @@
 // @alpha
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @alpha @sealed
+// @alpha @sealed @deprecated
 export interface AttributionPolicy {
     attach: (client: Client) => void;
     detach: () => void;
@@ -144,7 +144,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     longClientId: string | undefined;
-    obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg;
+    obliterateRangeLocal(start: number | InteriorSequencePlace, end: number | InteriorSequencePlace): IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
     peekPendingSegmentGroups(): SegmentGroup | undefined;
     // (undocumented)
     peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
@@ -169,7 +169,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
     // (undocumented)
-    walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
+    walkSegments(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
 }
 
 // @alpha @deprecated (undocumented)
@@ -244,7 +244,7 @@ export interface IAttributionCollectionSpec<T> {
     }>;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IClientEvents {
     // (undocumented)
     (event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
@@ -302,7 +302,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.ANNOTATE;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IMergeTreeAttributionOptions {
     policyFactory?: () => AttributionPolicy;
     track?: boolean;
@@ -320,7 +320,7 @@ export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDel
 }
 
 // @alpha (undocumented)
-export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeObliterateMsg;
+export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 
 // @alpha (undocumented)
 export interface IMergeTreeDeltaOpArgs {
@@ -370,6 +370,24 @@ export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
 }
 
 // @alpha (undocumented)
+export interface IMergeTreeObliterateSidedMsg extends IMergeTreeDelta {
+    // (undocumented)
+    pos1: {
+        pos: number;
+        before: boolean;
+    };
+    // (undocumented)
+    pos2: {
+        pos: number;
+        before: boolean;
+    };
+    relativePos1?: never;
+    relativePos2?: never;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.OBLITERATE_SIDED;
+}
+
+// @alpha (undocumented)
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 
 // @alpha (undocumented)
@@ -379,6 +397,7 @@ export interface IMergeTreeOptions {
     catchUpBlobName?: string;
     mergeTreeEnableObliterate?: boolean;
     mergeTreeEnableObliterateReconnect?: boolean;
+    mergeTreeEnableSidedObliterate?: boolean;
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
@@ -459,7 +478,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     // (undocumented)
     clone(): ISegment;
     readonly endpointType?: "start" | "end";
-    endSide?: Side.Before | Side.After;
     localRefs?: LocalReferenceCollection;
     localRemovedSeq?: number;
     localSeq?: number;
@@ -471,7 +489,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
-    startSide?: Side.Before | Side.After;
     // (undocumented)
     toJSONObject(): any;
     // (undocumented)
@@ -615,6 +632,7 @@ export const MergeTreeDeltaType: {
     readonly ANNOTATE: 2;
     readonly GROUP: 3;
     readonly OBLITERATE: 4;
+    readonly OBLITERATE_SIDED: 5;
 };
 
 // @alpha (undocumented)
@@ -639,6 +657,24 @@ export interface MergeTreeRevertibleDriver {
     insertFromSpec(pos: number, spec: IJSONSegment): void;
     // (undocumented)
     removeRange(start: number, end: number): void;
+}
+
+// @alpha @deprecated (undocumented)
+export interface ObliterateInfo {
+    // (undocumented)
+    clientId: number;
+    // (undocumented)
+    end: LocalReferencePosition;
+    // (undocumented)
+    localSeq: number | undefined;
+    // (undocumented)
+    refSeq: number;
+    // (undocumented)
+    segmentGroup: SegmentGroup | undefined;
+    // (undocumented)
+    seq: number;
+    // (undocumented)
+    start: LocalReferencePosition;
 }
 
 // @alpha @deprecated (undocumented)
@@ -705,6 +741,8 @@ export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDrive
 export interface SegmentGroup {
     // (undocumented)
     localSeq?: number;
+    // (undocumented)
+    obliterateInfo?: ObliterateInfo;
     // (undocumented)
     previousProps?: PropertySet[];
     // (undocumented)

@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as fs from "fs";
-import path from "path";
+import * as assert from "node:assert";
+import { type BigIntStats, type Stats, existsSync, lstatSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import isEqual from "lodash.isequal";
 import * as tsTypes from "typescript";
 
-import { readFileSync } from "fs-extra";
-import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
-import { TscUtil, getTscUtils } from "../../../common/tscUtils";
-import { existsSync, readFileAsync } from "../../../common/utils";
+import { TscUtil, getTscUtils } from "../../tscUtils";
+import { getInstalledPackageVersion } from "../taskUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 interface ITsBuildInfo {
@@ -34,7 +33,7 @@ export class TscTask extends LeafTask {
 	private _tsConfig: tsTypes.ParsedCommandLine | undefined;
 	private _tsConfigFullPath: string | undefined;
 	private _projectReference: TscTask | undefined;
-	private _sourceStats: (fs.Stats | fs.BigIntStats)[] | undefined;
+	private _sourceStats: (Stats | BigIntStats)[] | undefined;
 	private _tscUtils: TscUtil | undefined;
 
 	private getTscUtils() {
@@ -80,7 +79,13 @@ export class TscTask extends LeafTask {
 				continue;
 			}
 			checkedProjects.add(dir);
-			const tempTscTask = new TscTask(this.node, `tsc -p ${dir}`, undefined, true);
+			const tempTscTask = new TscTask(
+				this.node,
+				`tsc -p ${dir}`,
+				this.context,
+				undefined,
+				true,
+			);
 			if (!(await tempTscTask.checkTscIsUpToDate(checkedProjects))) {
 				this.traceTrigger(`project reference ${dir} is not up to date`);
 				return false;
@@ -170,7 +175,7 @@ export class TscTask extends LeafTask {
 				if (this._projectReference) {
 					fullPath = this._projectReference.remapSrcDeclFile(fullPath, config);
 				}
-				const hash = await this.node.buildContext.fileHashCache.getFileHash(
+				const hash = await this.node.context.fileHashCache.getFileHash(
 					fullPath,
 					tscUtils.getSourceFileVersion,
 				);
@@ -216,10 +221,10 @@ export class TscTask extends LeafTask {
 
 	private remapSrcDeclFile(fullPath: string, config: tsTypes.ParsedCommandLine) {
 		if (!this._sourceStats) {
-			this._sourceStats = config ? config.fileNames.map((v) => fs.lstatSync(v)) : [];
+			this._sourceStats = config ? config.fileNames.map((v) => lstatSync(v)) : [];
 		}
 
-		const stat = fs.lstatSync(fullPath);
+		const stat = lstatSync(fullPath);
 		if (this._sourceStats.some((value) => isEqual(value, stat))) {
 			const parsed = path.parse(fullPath);
 			const directory = parsed.dir;
@@ -419,7 +424,7 @@ export class TscTask extends LeafTask {
 			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
 				try {
-					const tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
+					const tsBuildInfo = JSON.parse(await readFile(tsBuildInfoFileFullPath, "utf8"));
 					if (
 						tsBuildInfo.program &&
 						tsBuildInfo.program.fileNames &&
@@ -490,7 +495,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			for (const configFile of configFiles) {
 				if (existsSync(configFile)) {
 					// Include the config file if it exists so that we can detect changes
-					configs.push(await readFileAsync(configFile, "utf8"));
+					configs.push(await readFile(configFile, "utf8"));
 				}
 			}
 
@@ -506,124 +511,4 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	}
 	protected abstract get configFileFullPaths(): string[];
 	protected abstract getToolVersion(): Promise<string>;
-}
-
-interface TscMultiConfig {
-	targets: {
-		extName?: string;
-		packageOverrides?: Record<string, unknown>;
-	}[];
-	projects: string[];
-}
-
-// This function is mimiced from tsc-multi.
-function configKeyForPackageOverrides(overrides: Record<string, unknown> | undefined) {
-	if (overrides === undefined) return "";
-
-	const str = JSON.stringify(overrides);
-
-	// An implementation of DJB2 string hashing algorithm
-	let hash = 5381;
-	for (let i = 0; i < str.length; i++) {
-		hash = (hash << 5) + hash + str.charCodeAt(i); // hash * 33 + c
-		hash |= 0; // Convert to 32bit integer
-	}
-	return `.${hash}`;
-}
-
-/**
- * A fluid-build task definition for tsc-multi.
- *
- * This implementation is a hack. It primarily uses the contents of the tsbuildinfo files created by the tsc-multi
- * processes, and duplicates their content into the doneFile. It's duplicative but seems to be the simplest way to get
- * basic incremental support in fluid-build.
- *
- * Source files are also considered for incremental purposes. However, config files outside the package (e.g. shared
- * config files) are not considered. Thus, changes to those files will not trigger a rebuild of downstream packages.
- *
- * Jason-Ha observes that caching is only effective after the second build. But since tsc-multi is just orchestrating
- * tsc, this should be able to derive from {@link TscTask} and override to get to the right config and tsbuildinfo.
- */
-export class TscMultiTask extends LeafWithDoneFileTask {
-	protected async getToolVersion() {
-		return getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
-	}
-
-	protected async getDoneFileContent(): Promise<string | undefined> {
-		const command = this.command;
-
-		try {
-			const commandArgs = command.split(/\s+/);
-			const configArg = commandArgs.findIndex((arg) => arg === "--config");
-			if (configArg === -1) {
-				throw new Error(`no --config argument for tsc-multi command: ${command}`);
-			}
-			const tscMultiConfigFile = path.resolve(
-				this.package.directory,
-				commandArgs[configArg + 1],
-			);
-			commandArgs.splice(configArg, 2);
-			commandArgs.shift(); // Remove "tsc-multi" from the command
-			// Assume that the remaining arguments are project paths
-			const tscMultiProjects = commandArgs.filter((arg) => !arg.startsWith("-"));
-			const tscMultiConfig = JSON.parse(
-				await readFileAsync(tscMultiConfigFile, "utf-8"),
-			) as TscMultiConfig;
-
-			// Command line projects replace any in config projects
-			if (tscMultiProjects.length > 0) {
-				tscMultiConfig.projects = tscMultiProjects;
-			}
-
-			if (tscMultiConfig.projects.length !== 1) {
-				throw new Error(
-					`TscMultiTask does not support ${command} that does not have exactly one project.`,
-				);
-			}
-
-			if (tscMultiConfig.targets.length !== 1) {
-				throw new Error(
-					`TscMultiTask does not support ${tscMultiConfigFile} that does not have exactly one target.`,
-				);
-			}
-
-			const project = tscMultiConfig.projects[0];
-			const projectExt = path.extname(project);
-			const target = tscMultiConfig.targets[0];
-			const relTsBuildInfoPath = `${project.substring(0, project.length - projectExt.length)}${
-				target.extName ?? ""
-			}${configKeyForPackageOverrides(target.packageOverrides)}.tsbuildinfo`;
-			const tsbuildinfoPath = this.getPackageFileFullPath(relTsBuildInfoPath);
-			if (!existsSync(tsbuildinfoPath)) {
-				// No tsbuildinfo file, so we need to build
-				throw new Error(`no tsbuildinfo file found: ${tsbuildinfoPath}`);
-			}
-
-			const files = [tscMultiConfigFile, path.resolve(this.package.directory, project)];
-
-			// Add src files
-			files.push(...(await getRecursiveFiles(path.resolve(this.package.directory, "src"))));
-
-			// Calculate hashes of all the files; only the hashes will be stored in the donefile.
-			const hashesP = files.map(async (name) => {
-				const hash = await this.node.buildContext.fileHashCache.getFileHash(
-					this.getPackageFileFullPath(name),
-				);
-				return { name, hash };
-			});
-
-			const buildInfo = readFileSync(tsbuildinfoPath).toString();
-			const version = await getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
-			const hashes = await Promise.all(hashesP);
-			const result = JSON.stringify({
-				version,
-				buildInfo,
-				hashes,
-			});
-			return result;
-		} catch (e) {
-			this.traceError(`error generating done file content: ${e}`);
-		}
-		return undefined;
-	}
 }

@@ -220,30 +220,37 @@ export function count(iterable: Iterable<unknown>): number {
 /**
  * Use for Json compatible data.
  *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @typeparam TExtra - Type permitted in addition to the normal JSON types.
+ * Commonly used for to allow {@link @fluidframework/core-interfaces#IFluidHandle} within the otherwise JSON compatible content.
+ *
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @alpha
  */
-export type JsonCompatible =
+export type JsonCompatible<TExtra = never> =
 	| string
 	| number
 	| boolean
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
-	| JsonCompatible[]
-	| JsonCompatibleObject;
+	| JsonCompatible<TExtra>[]
+	| JsonCompatibleObject<TExtra>
+	| TExtra;
 
 /**
  * Use for Json object compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @alpha
  */
-export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
+export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompatible<TExtra> };
 
 /**
  * Use for readonly view of Json compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
  */
 export type JsonCompatibleReadOnly =
@@ -257,8 +264,8 @@ export type JsonCompatibleReadOnly =
 
 /**
  * Use for readonly view of Json compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
  */
 export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompatibleReadOnly };

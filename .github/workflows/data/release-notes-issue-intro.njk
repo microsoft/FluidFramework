@@ -1,0 +1,17 @@
+This issue is automatically updated with a preview of the release notes for the upcoming Fluid Framework release.
+
+**To generate release notes locally to commit to the `RELEASE_NOTES` folder in the repo,** run the following command:
+
+```shell
+pnpm flub generate releaseNotes -g client -t minor --outFile RELEASE_NOTES/{{ version }}.md
+```
+
+**To generate the release notes to paste into the GitHub Release,** run the following command:
+
+```shell
+pnpm flub generate releaseNotes -g client -t minor --headingLinks --excludeH1 --outFile temporary-file.md
+```
+
+This should happen automatically as part of the release process, but if you need to generate the release notes manually, you can use the above command.
+
+---

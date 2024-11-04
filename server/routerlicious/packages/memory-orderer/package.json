@@ -75,7 +75,7 @@
 		"lodash": "^4.17.21",
 		"sillyname": "^0.1.0",
 		"uuid": "^9.0.0",
-		"ws": "^7.4.6"
+		"ws": "^7.5.10"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.38.0",
@@ -92,7 +92,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6",
-		"webpack": "^5.82.0"
+		"webpack": "^5.94.0"
 	},
 	"typeValidation": {
 		"broken": {
@@ -100,6 +100,15 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_LocalOrderer": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IKafkaSubscriber": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalContext": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalLambdaController": {
 				"forwardCompat": false
 			}
 		}

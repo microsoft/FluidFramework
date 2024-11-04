@@ -18,8 +18,8 @@ import {
 	loadBiomeConfig,
 } from "../common/biomeConfig";
 import type { Configuration as BiomeConfigOnDisk } from "../common/biomeConfigTypes";
-import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { GitRepo } from "../common/gitRepo";
+import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
 import { testDataPath } from "./init";
 
 describe("Biome config loading", () => {

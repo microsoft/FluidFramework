@@ -65,7 +65,7 @@ export interface IAttachMessage {
     type: string;
 }
 
-// @alpha
+// @alpha @sealed
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
     readonly baseLogger: ITelemetryBaseLogger;
@@ -79,6 +79,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     readonly disposed: boolean;
     generateDocumentUniqueId(): number | string;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
     getSnapshotForLoadingGroupId(loadingGroupIds: string[], pathParts: string[]): Promise<{
@@ -91,14 +92,18 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @alpha (undocumented)
+// @alpha @sealed (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
-    (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): any;
+    (event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents"> & {
+        contents: unknown;
+    }) => void): any;
+    // (undocumented)
+    (event: "batchEnd", listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents"> & {
+        contents: unknown;
+    }) => void): any;
     // (undocumented)
     (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): any;
-    // (undocumented)
-    (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
@@ -119,9 +124,9 @@ export interface IEnvelope {
 
 // @alpha
 export interface IExperimentalIncrementalSummaryContext {
-    latestSummarySequenceNumber: number;
-    summaryPath: string;
-    summarySequenceNumber: number;
+    readonly latestSummarySequenceNumber: number;
+    readonly summaryPath: string;
+    readonly summarySequenceNumber: number;
 }
 
 // @alpha
@@ -133,7 +138,9 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
+    // @deprecated
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    processMessages?(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
@@ -266,6 +273,23 @@ export interface IProvideFluidDataStoreRegistry {
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 }
 
+// @alpha @sealed
+export interface IRuntimeMessageCollection {
+    readonly envelope: ISequencedMessageEnvelope;
+    readonly local: boolean;
+    readonly messagesContent: readonly IRuntimeMessagesContent[];
+}
+
+// @alpha @sealed
+export interface IRuntimeMessagesContent {
+    readonly clientSequenceNumber: number;
+    readonly contents: unknown;
+    readonly localOpMetadata: unknown;
+}
+
+// @alpha
+export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
+
 // @alpha
 export interface ISummarizeInternalResult extends ISummarizeResult {
     // (undocumented)
@@ -296,6 +320,7 @@ export interface ISummarizerNode {
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    // @deprecated
     updateBaseSummaryState(snapshot: ISnapshotTree): void;
 }
 

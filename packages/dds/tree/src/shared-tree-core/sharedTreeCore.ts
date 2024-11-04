@@ -27,11 +27,13 @@ import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
+	findAncestor,
 	type GraphCommit,
 	type RevisionTag,
 	RevisionTagCodec,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
+	type TaggedChange,
 	type TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
@@ -79,7 +81,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	public readonly breaker: Breakable = new Breakable("Shared Tree");
 
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
-	private readonly summarizables: readonly Summarizable[];
+	private readonly summarizables: readonly [EditManagerSummarizer<TChange>, ...Summarizable[]];
 	/**
 	 * The sequence number that this instance is at.
 	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
@@ -271,7 +273,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.resubmitMachine =
 			resubmitMachine ??
 			new DefaultResubmitMachine(
-				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				(change: TaggedChange<TChange>) =>
+					changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
 				changeEnricher,
 			);
 		this.commitEnricher = new BranchCommitEnricher(changeFamily.rebaser, changeEnricher);
@@ -306,14 +309,42 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
-		const loadSummaries = this.summarizables.map(async (summaryElement) =>
-			summaryElement.load(
-				scopeStorageService(services, summarizablesTreeKey, summaryElement.key),
-				(contents) => this.serializer.parse(contents),
-			),
+		const [editManagerSummarizer, ...summarizables] = this.summarizables;
+		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services);
+		const loadSummarizables = summarizables.map(async (s) =>
+			this.loadSummarizable(s, services),
 		);
 
-		await Promise.all(loadSummaries);
+		if (this.detachedRevision !== undefined) {
+			// If we are detached but loading from a summary, then we need to update our detached revision to ensure that it is ahead of all detached revisions in the summary.
+			// First, finish loading the edit manager so that we can inspect the sequence numbers of the commits on the trunk.
+			await loadEditManager;
+			// Find the most recent detached revision in the summary trunk...
+			let latestDetachedSequenceNumber: SeqNumber | undefined;
+			findAncestor(this.editManager.getTrunkHead(), (c) => {
+				const sequenceNumber = this.editManager.getSequenceNumber(c);
+				if (sequenceNumber !== undefined && sequenceNumber < 0) {
+					latestDetachedSequenceNumber = sequenceNumber;
+					return true;
+				}
+				return false;
+			});
+			// ...and set our detached revision to be as it would be if we had been already created that revision.
+			this.detachedRevision = latestDetachedSequenceNumber ?? this.detachedRevision;
+			await Promise.all(loadSummarizables);
+		} else {
+			await Promise.all([loadEditManager, ...loadSummarizables]);
+		}
+	}
+
+	private async loadSummarizable(
+		summarizable: Summarizable,
+		services: IChannelStorageService,
+	): Promise<void> {
+		return summarizable.load(
+			scopeStorageService(services, summarizablesTreeKey, summarizable.key),
+			(contents) => this.serializer.parse(contents),
+		);
 	}
 
 	/**
@@ -349,7 +380,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				newRevision,
 				this.detachedRevision,
 			);
-			this.editManager.advanceMinimumSequenceNumber(newRevision);
+			this.editManager.advanceMinimumSequenceNumber(newRevision, false);
 			return undefined;
 		}
 		const message = this.messageCodec.encode(
@@ -446,7 +477,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		const {
 			commit: { revision, change },
 		} = this.messageCodec.decode(content, { idCompressor: this.idCompressor });
-		this.editManager.localBranch.apply(change, revision);
+		this.editManager.localBranch.apply({ change, revision });
 	}
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {

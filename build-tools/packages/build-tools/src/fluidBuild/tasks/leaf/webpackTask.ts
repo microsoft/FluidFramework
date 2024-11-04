@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 
-import * as assert from "assert";
-import { globFn, loadModule, toPosixPath } from "../../../common/utils";
+import { globFn, loadModule, toPosixPath } from "../taskUtils";
 import { LeafWithDoneFileTask } from "./leafTask";
 
 interface DoneFileContent {
@@ -36,8 +36,7 @@ export class WebpackTask extends LeafWithDoneFileTask {
 			const srcGlob = toPosixPath(this.node.pkg.directory) + "/src/**/*.*";
 			const srcFiles = await globFn(srcGlob);
 			for (const srcFile of srcFiles) {
-				content.sources[srcFile] =
-					await this.node.buildContext.fileHashCache.getFileHash(srcFile);
+				content.sources[srcFile] = await this.node.context.fileHashCache.getFileHash(srcFile);
 			}
 
 			return JSON.stringify(content);

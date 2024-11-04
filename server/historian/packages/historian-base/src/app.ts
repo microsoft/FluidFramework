@@ -8,6 +8,7 @@ import {
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -21,7 +22,7 @@ import {
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
-import { RestLessServer } from "@fluidframework/server-services-shared";
+import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
 import { ICache, IDenyList, ITenantService } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
@@ -33,10 +34,12 @@ export function create(
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
+	startupCheck: IReadinessCheck,
 	cache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
+	readinessCheck?: IReadinessCheck,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -117,6 +120,14 @@ export function create(
 	app.use(apiRoutes.repository.contents);
 	app.use(apiRoutes.repository.headers);
 	app.use(apiRoutes.summaries);
+
+	const healthCheckEndpoints = createHealthCheckEndpoints(
+		"historian",
+		startupCheck,
+		readinessCheck,
+		false /* createLivenessEndpoint */,
+	);
+	app.use("/healthz", healthCheckEndpoints);
 
 	// catch 404 and forward to error handler
 	app.use((req, res, next) => {

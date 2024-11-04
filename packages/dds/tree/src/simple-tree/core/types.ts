@@ -20,17 +20,17 @@ import { isFlexTreeNode, type FlexTreeNode } from "../../feature-libraries/index
  *
  * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
  * This no-op wrapper is used instead.
+ * @remarks
+ * Nodes which are Unhydrated report {@link TreeStatus}.new from `Tree.status(node)`.
+ * @privateRemarks
+ * TODO: Linking tree status is failing in intellisense and linking directly to its .new item is failing in API extractor as well.
+ * WOuld be nice to have a working link here.
  * @public
  */
 export type Unhydrated<T> = T;
 
 /**
  * A collection of events that can be emitted by a {@link TreeNode}.
- *
- * @remarks
- * Currently, events can be subscribed to for {@link Unhydrated} nodes, however no events will be triggered for the nodes until after they are hydrated.
- * This is considered a known issue, and should be fixed in future versions.
- * Do not rely on the fact that editing unhydrated nodes does not trigger their events.
  *
  * @privateRemarks
  * TODO: add a way to subscribe to a specific field (for nodeChanged and treeChanged).
@@ -60,6 +60,11 @@ export interface TreeChangeEvents {
 	 *
 	 * - Map nodes define a change as when an entry is added, updated, or removed.
 	 *
+	 * @param unstable - Future versions of this API (such as the one in beta on TreeBeta) may use this argument to provide additional data to the event.
+	 * users of this event should ensure that they do not provide a listener callback which has an optional parameter in this position, since unexpected data might get provided to it.
+	 * This parameter exists to capture this fact in the type system.
+	 * Using an inline lambda expression as the listener callback is a good pattern to avoid cases like this were arguments are added from breaking due to optional arguments.
+	 *
 	 * @remarks
 	 * This event is not emitted when:
 	 *
@@ -83,7 +88,7 @@ export interface TreeChangeEvents {
 	 *
 	 * TODO: define and document event ordering (ex: bottom up, with nodeChanged before treeChange on each level).
 	 */
-	nodeChanged(): void;
+	nodeChanged(unstable?: unknown): void;
 
 	/**
 	 * Emitted by a node after a batch of changes has been applied to the tree, when something changed anywhere in the

@@ -32,14 +32,14 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.44.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/mocha": "^10.0.0",
 		"@types/node": "^18.19.0",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.1.0",
+
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",

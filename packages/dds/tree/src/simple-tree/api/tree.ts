@@ -6,34 +6,41 @@
 import type { IFluidLoadable, IDisposable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { CommitMetadata } from "../../core/index.js";
+import type { CommitMetadata, RevertibleFactory } from "../../core/index.js";
 import type { Listenable } from "../../events/index.js";
-import type { RevertibleFactory } from "../../shared-tree/index.js";
 
 import {
-	type ImplicitAllowedTypes,
-	normalizeFieldSchema,
 	type ImplicitFieldSchema,
+	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	type ReadableField,
+	type ReadSchema,
 	type TreeFieldFromImplicitField,
+	type UnsafeUnknownSchema,
 	FieldKind,
-	normalizeAllowedTypes,
 } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
-import { toFlexSchema } from "../toFlexSchema.js";
+import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
 import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
+import { walkFieldSchema } from "../walkFieldSchema.js";
 /**
- * Channel for a Fluid Tree DDS.
- * @remarks
- * Allows storing and collaboratively editing schema-aware hierarchial data.
- * @sealed @public
+ * A tree from which a {@link TreeView} can be created.
+ *
+ * @privateRemarks
+ * TODO:
+ * Add stored key versions of {@link TreeAlpha.(exportVerbose:2)}, {@link TreeAlpha.(exportConcise:2)} and {@link TreeAlpha.exportCompressed} here so tree content can be accessed without a view schema.
+ * Add exportSimpleSchema and exportJsonSchema methods (which should exactly match the concise format, and match the free functions for exporting view schema).
+ * Maybe rename "exportJsonSchema" to align on "concise" terminology.
+ * Ensure schema exporting APIs here align and reference APIs for exporting view schema to the same formats (which should include stored vs property key choice).
+ * Make sure users of independentView can use these export APIs (maybe provide a reference back to the ViewableTree from the TreeView to accomplish that).
+ * @system @sealed @public
  */
-export interface ITree extends IFluidLoadable {
+export interface ViewableTree {
 	/**
 	 * Returns a {@link TreeView} using the provided schema.
 	 * If the stored schema is compatible with the view schema specified by `config`,
@@ -50,7 +57,7 @@ export interface ITree extends IFluidLoadable {
 	 * Only one schematized view may exist for a given ITree at a time.
 	 * If creating a second, the first must be disposed before calling `viewWith` again.
 	 *
-	 * @privateRemarks
+	 *
 	 * TODO: Provide a way to make a generic view schema for any document.
 	 * TODO: Support adapters for handling out-of-schema data.
 	 *
@@ -70,6 +77,14 @@ export interface ITree extends IFluidLoadable {
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
 }
+
+/**
+ * Channel for a Fluid Tree DDS.
+ * @remarks
+ * Allows storing and collaboratively editing schema-aware hierarchial data.
+ * @sealed @public
+ */
+export interface ITree extends ViewableTree, IFluidLoadable {}
 
 /**
  * Options when constructing a tree view.
@@ -184,11 +199,12 @@ export interface ITreeViewConfiguration<
 }
 
 /**
- * Configuration for {@link ITree.viewWith}.
+ * Configuration for {@link ViewableTree.viewWith}.
  * @sealed @public
  */
-export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
-	implements Required<ITreeViewConfiguration<TSchema>>
+export class TreeViewConfiguration<
+	const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+> implements Required<ITreeViewConfiguration<TSchema>>
 {
 	protected _typeCheck!: MakeNominal;
 
@@ -235,11 +251,11 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 		if (ambiguityErrors.length !== 0) {
 			// Duplicate errors are common since when two types conflict, both orders error:
 			const deduplicated = new Set(ambiguityErrors);
-			throw new UsageError(`Ambigious schema found:\n${[...deduplicated].join("\n")}`);
+			throw new UsageError(`Ambiguous schema found:\n${[...deduplicated].join("\n")}`);
 		}
 
 		// Eagerly perform this conversion to surface errors sooner.
-		toFlexSchema(config.schema);
+		toStoredSchema(config.schema);
 	}
 }
 
@@ -343,72 +359,6 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 	}
 }
 
-export function walkNodeSchema(
-	schema: TreeNodeSchema,
-	visitor: SchemaVisitor,
-	visitedSet: Set<TreeNodeSchema>,
-): void {
-	if (visitedSet.has(schema)) {
-		return;
-	}
-	visitedSet.add(schema);
-	if (schema instanceof LeafNodeSchema) {
-		// nothing to do
-	} else if (isObjectNodeSchema(schema)) {
-		for (const field of schema.fields.values()) {
-			walkFieldSchema(field, visitor, visitedSet);
-		}
-	} else {
-		assert(
-			schema.kind === NodeKind.Array || schema.kind === NodeKind.Map,
-			0x9b3 /* invalid schema */,
-		);
-		const childTypes = schema.info as ImplicitAllowedTypes;
-		walkAllowedTypes(normalizeAllowedTypes(childTypes), visitor, visitedSet);
-	}
-	// This visit is done at the end so the traversal order is most inner types first.
-	// This was picked since when fixing errors,
-	// working from the inner types out to the types that use them will probably go better than the reverse.
-	// This does not however ensure all types referenced by a type are visited before it, since in recursive cases thats impossible.
-	visitor.node?.(schema);
-}
-
-export function walkFieldSchema(
-	schema: ImplicitFieldSchema,
-	visitor: SchemaVisitor,
-	visitedSet: Set<TreeNodeSchema> = new Set(),
-): void {
-	walkAllowedTypes(normalizeFieldSchema(schema).allowedTypeSet, visitor, visitedSet);
-}
-
-export function walkAllowedTypes(
-	allowedTypes: Iterable<TreeNodeSchema>,
-	visitor: SchemaVisitor,
-	visitedSet: Set<TreeNodeSchema>,
-): void {
-	for (const childType of allowedTypes) {
-		walkNodeSchema(childType, visitor, visitedSet);
-	}
-	visitor.allowedTypes?.(allowedTypes);
-}
-
-/**
- * Callbacks for use in {@link walkFieldSchema} / {@link walkAllowedTypes} / {@link walkNodeSchema}.
- */
-export interface SchemaVisitor {
-	/**
-	 * Called once for each node schema.
-	 */
-	node?: (schema: TreeNodeSchema) => void;
-	/**
-	 * Called once for each set of allowed types.
-	 * Includes implicit allowed types (when a single type was used instead of an array).
-	 *
-	 * This includes every field, but also the allowed types array for maps and arrays and the root if starting at {@link walkAllowedTypes}.
-	 */
-	allowedTypes?: (allowedTypes: Iterable<TreeNodeSchema>) => void;
-}
-
 /**
  * An editable view of a (version control style) branch of a shared tree based on some schema.
  *
@@ -426,7 +376,7 @@ export interface SchemaVisitor {
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
  * @sealed @public
  */
-export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
+export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {
 	/**
 	 * The current root of the tree.
 	 *
@@ -480,6 +430,25 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 	 * Events for the tree.
 	 */
 	readonly events: Listenable<TreeViewEvents>;
+
+	/**
+	 * The view schema used by this TreeView.
+	 */
+	readonly schema: TSchema;
+}
+
+/**
+ * {@link TreeView} with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
+ * @alpha
+ */
+export interface TreeViewAlpha<
+	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize"> {
+	get root(): ReadableField<TSchema>;
+
+	set root(newRoot: InsertableField<TSchema>);
+
+	initialize(content: InsertableField<TSchema>): void;
 }
 
 /**

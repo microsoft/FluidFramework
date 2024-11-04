@@ -10,9 +10,9 @@
 export type { _InlineTrick, FlattenKeys } from "./util/index.js";
 export type {
 	ApplyKind,
+	ApplyKindInput,
 	NodeBuilderData,
 	FieldHasDefault,
-	TreeNodeSchemaNonClass,
 	TreeArrayNodeBase,
 	ScopedSchemaName,
 	DefaultProvider,
@@ -34,7 +34,10 @@ export type {
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
 	ReadonlyMapInlined,
+	TreeNodeSchemaUnsafe,
+	AllowedTypesUnsafe,
+	TreeNodeSchemaNonClassUnsafe,
 } from "./simple-tree/index.js";
-export type { FlexList, FlexListToUnion, ExtractItemType } from "./feature-libraries/index.js";
+export type { FlexList, FlexListToUnion, ExtractItemType } from "./simple-tree/index.js";
 
 export type { TreeApi } from "./shared-tree/index.js";

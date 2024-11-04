@@ -395,7 +395,8 @@ export interface INormalizedWholeSummary {
 
 // @internal
 export enum InternalErrorCode {
-    ClusterDraining = "ClusterDraining"
+    ClusterDraining = "ClusterDraining",
+    TokenRevoked = "TokenRevoked"
 }
 
 // @internal

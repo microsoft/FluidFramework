@@ -94,16 +94,18 @@ export {
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
 export type {
-	AllowOptional,
-	RequiredFields,
-	OptionalFields,
 	_RecursiveTrick,
-	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
-	Assume,
+	RestrictiveStringRecord,
 	_InlineTrick,
 	FlattenKeys,
+	IsUnion,
+	UnionToIntersection,
+	UnionToTuple,
+	PopUnion,
 } from "./typeUtils.js";
+
+export { unsafeArrayToTuple } from "./typeUtils.js";
 
 export {
 	type BrandedKey,

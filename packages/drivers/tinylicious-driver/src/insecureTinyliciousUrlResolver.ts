@@ -37,8 +37,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const relativeUrl = request.url.replace(`${this.tinyliciousEndpoint}/`, "");
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- <string>.split() always returns an array with at least one item
-		const documentIdFromRequest = relativeUrl.split("/")[0]!;
+		const documentIdFromRequest = relativeUrl.split("/")[0];
 
 		let deltaStorageUrl: string;
 		let documentUrl: string;

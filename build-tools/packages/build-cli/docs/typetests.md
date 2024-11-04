@@ -23,7 +23,7 @@ USAGE
 
 FLAGS
   -n, --normalize
-      Removes any unrecognized data from "typeValidation" in the package.json
+      Removes any unrecognized data from "typeValidation" in the package.json and adds any missing default settings.
 
   -p, --previous
       Use the version immediately before the current version.
@@ -49,10 +49,10 @@ FLAGS
       [default: 25] The number of tasks to execute concurrently.
 
   --disable
-      Set the "typeValidation.disabled" setting to "true" in the package.json
+      Set the "typeValidation.disabled" setting to "true" in the package.json.
 
   --enable
-      Remove the "typeValidation.disabled" setting in the package.json
+      Remove the "typeValidation.disabled" setting in the package.json.
 
   --exact=<value>
       An exact string to use as the previous version constraint. The string will be used as-is.

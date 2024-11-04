@@ -34,7 +34,7 @@ import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
-import type { IInboundSignalMessage } from "./protocol.js";
+import type { IInboundSignalMessage, IRuntimeMessageCollection } from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
@@ -119,15 +119,33 @@ export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilitySt
 /**
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntimeBaseEvents extends IEvent {
-	(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
+	(
+		event: "batchBegin",
+		listener: (
+			op: Omit<ISequencedDocumentMessage, "contents"> & {
+				/** @deprecated Use the "op" event to get details about the message contents */
+				contents: unknown;
+			},
+		) => void,
+	);
+	(
+		event: "batchEnd",
+		listener: (
+			error: any,
+			op: Omit<ISequencedDocumentMessage, "contents"> & {
+				/** @deprecated Use the "op" event to get details about the message contents */
+				contents: unknown;
+			},
+		) => void,
+	);
 	/**
-	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. it's type and content
+	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. its type and content
 	 * represent internal container runtime type / content.
 	 */
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
-	(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "dispose", listener: () => void);
 }
@@ -176,6 +194,7 @@ export interface IDataStore {
  * TODO: this should be merged into IFluidDataStoreContext
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly baseLogger: ITelemetryBaseLogger;
@@ -235,6 +254,14 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached;
+
+	/**
+	 * Returns the aliased data store's entryPoint, given the alias.
+	 * @param alias - The alias for the data store.
+	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
+	 * Returns undefined if no data store has been assigned the given alias.
+	 */
+	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 
 	/**
 	 * Get an absolute url for a provided container-relative request.
@@ -309,7 +336,14 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
+	 * Process messages for this channel. The messages here are contiguous messages in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	processMessages?(messageCollection: IRuntimeMessageCollection): void;
+
+	/**
 	 * Processes the op.
+	 * @deprecated processMessages should be used instead to process messages for a channel.
 	 */
 	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
 
@@ -393,6 +427,15 @@ export type CreateChildSummarizerNodeFn = (
 	 */
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
+
+/**
+ * The state maintained for messages that are received when a channel isn't yet loaded.
+ * @internal
+ */
+export interface IPendingMessagesState {
+	messageCollections: IRuntimeMessageCollection[];
+	pendingCount: number;
+}
 
 /**
  * Represents the context for the data store like objects. It is used by the data store runtime to

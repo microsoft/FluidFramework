@@ -28,7 +28,7 @@ describe("Primitives", () => {
 	 * @param schema - Schema to use for the test (must include the type of 'value'.)
 	 * @param value - The value to be written/read/verified.
 	 */
-	function checkExact<TSchema extends ImplicitFieldSchema>(
+	function checkExact<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		value: InsertableTreeFieldFromImplicitField<TSchema>,
 	) {
@@ -45,9 +45,9 @@ describe("Primitives", () => {
 		});
 
 		// TODO: Consider improving coverage with more variations:
-		// - reading/writting an object field
-		// - reading/writting a list element
-		// - reading/writting a map entry
+		// - reading/writing an object field
+		// - reading/writing a list element
+		// - reading/writing a map entry
 		// - optional
 	}
 
@@ -75,7 +75,7 @@ describe("Primitives", () => {
 	 * @param schema - Schema to use for the test (must include the coerced type of 'value'.)
 	 * @param value - The value to be written/read/verified.
 	 */
-	function checkCoerced<TSchema extends ImplicitFieldSchema>(
+	function checkCoerced<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		value: InsertableTreeFieldFromImplicitField<TSchema>,
 	) {
@@ -93,9 +93,9 @@ describe("Primitives", () => {
 		});
 
 		// TODO: Consider improving coverage with more variations:
-		// - reading/writting an object field
-		// - reading/writting a list element
-		// - reading/writting a map entry
+		// - reading/writing an object field
+		// - reading/writing a list element
+		// - reading/writing a map entry
 		// - optional
 	}
 
@@ -106,7 +106,7 @@ describe("Primitives", () => {
 	 * @param schema - Schema to use for the test (must include the coerced type of 'value'.)
 	 * @param value - The value to be written/read/verified.
 	 */
-	function checkThrows<TSchema extends ImplicitFieldSchema>(
+	function checkThrows<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		value: InsertableTreeFieldFromImplicitField<TSchema>,
 	) {
@@ -170,7 +170,7 @@ describe("Primitives", () => {
 		describe("with schema [_.number, _.null]", () => {
 			// JSON coerces non-finite numbers to 'null'.  This succeeds when 'null' is
 			// permitted by schema.
-			const schema = [schemaFactory.number, schemaFactory.null];
+			const schema = [schemaFactory.number, schemaFactory.null] as const;
 			[-Infinity, NaN, Infinity].forEach((value) => checkCoerced(schema, value));
 		});
 	});
