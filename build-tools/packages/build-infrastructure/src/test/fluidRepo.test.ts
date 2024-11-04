@@ -121,9 +121,9 @@ describe("setDependencyRange", () => {
 		repo.reload();
 	});
 
-	it("updates the dependency range", () => {
+	it("updates the dependency range", async () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion , @typescript-eslint/no-unsafe-call
-		setDependencyRange(main.packages, group2.packages, semver.parse(group2.version)!);
+		await setDependencyRange(main.packages, group2.packages, semver.parse(group2.version)!);
 		const allCorrect = main.packages.every((pkg) => pkg.version === group2.version);
 		expect(allCorrect).to.be.true;
 	});
