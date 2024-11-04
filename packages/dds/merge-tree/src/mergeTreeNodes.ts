@@ -271,12 +271,10 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * Short clientId for the client that inserted this segment.
 	 */
 	clientId: number;
-
 	/**
 	 * Local references added to this segment.
 	 */
 	localRefs?: LocalReferenceCollection;
-
 	/**
 	 * Properties that have been added to this segment via annotation.
 	 */
@@ -506,6 +504,7 @@ export abstract class BaseSegment implements ISegment {
 	public attribution?: IAttributionCollection<AttributionKey>;
 
 	public properties?: PropertySet;
+	public localRefs?: LocalReferenceCollection;
 	public abstract readonly type: string;
 	public localSeq?: number;
 	public localRemovedSeq?: number;
