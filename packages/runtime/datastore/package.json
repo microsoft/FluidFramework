@@ -162,7 +162,8 @@
 	"typeValidation": {
 		"broken": {
 			"Class_FluidDataStoreRuntime": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"ClassStatics_FluidDataStoreRuntime": {
 				"backCompat": false,
