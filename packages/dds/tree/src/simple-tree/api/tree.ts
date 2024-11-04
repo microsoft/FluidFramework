@@ -424,14 +424,18 @@ export interface TreeContextBranch extends TreeContext {
 	 * Progress this branch forward such that all new changes on the target context become part of this branch.
 	 * @param context - The context to rebase onto.
 	 * @remarks After rebasing, this branch will be "ahead" of the target context, that is, its unique changes will have been recreated as if they happened after all changes on the target context.
+	 *
 	 * Rebasing long-lived branches is important to avoid consuming memory unnecessarily.
 	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last rebased.
+	 *
+	 * The {@link TreeContext.isBranch | main context} cannot be rebased onto another context.
 	 */
 	rebaseOnto(context: TreeContext): void;
 
 	/**
 	 * Dispose of this branch, cleaning up any resources associated with it.
 	 * @remarks Branches can also be conveniently disposed when {@link TreeContext.merge | they are merged} into another context.
+	 *
 	 * Disposing branches is important to avoid consuming memory unnecessarily.
 	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeContextBranch.rebaseOnto | rebased}
 	 */
