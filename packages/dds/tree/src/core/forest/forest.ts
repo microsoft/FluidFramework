@@ -131,9 +131,9 @@ export interface IForestSubscription extends Listenable<ForestEvents> {
 	readonly isEmpty: boolean;
 
 	/**
-	 * Registers an {@link AnnouncedVisitor} that responds to changes on the forest.
+	 * Obtains and registers an {@link AnnouncedVisitor} that responds to changes on the forest.
 	 */
-	registerAnnouncedVisitor(visitor: AnnouncedVisitor): void;
+	registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void;
 }
 
 /**

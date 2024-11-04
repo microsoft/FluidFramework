@@ -74,7 +74,7 @@ export class ObjectForest implements IEditableForest {
 
 	// All cursors that are in the "Current" state. Must be empty when editing.
 	public readonly currentCursors: Set<Cursor> = new Set();
-	private readonly deltaVisitors: AnnouncedVisitor[] = [];
+	private readonly deltaVisitors: (() => AnnouncedVisitor)[] = [];
 
 	private readonly events = createEmitter<ForestEvents>();
 
@@ -264,15 +264,16 @@ export class ObjectForest implements IEditableForest {
 		}
 
 		const forestVisitor = new Visitor(this);
+		const announcedVisitors = this.deltaVisitors.map((getVisitor) => getVisitor());
 		const combinedVisitor = combineVisitors(
-			[forestVisitor, ...this.deltaVisitors],
-			this.deltaVisitors,
+			[forestVisitor, ...announcedVisitors],
+			announcedVisitors,
 		);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;
 	}
 
-	public registerAnnouncedVisitor(visitor: AnnouncedVisitor): void {
+	public registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
 		this.deltaVisitors.push(visitor);
 	}
 

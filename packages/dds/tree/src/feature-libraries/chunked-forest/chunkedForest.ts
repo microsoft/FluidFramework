@@ -56,7 +56,7 @@ export class ChunkedForest implements IEditableForest {
 	private activeVisitor?: DeltaVisitor;
 
 	private readonly events = createEmitter<ForestEvents>();
-	private readonly deltaVisitors: AnnouncedVisitor[] = [];
+	private readonly deltaVisitors: (() => AnnouncedVisitor)[] = [];
 
 	/**
 	 * @param roots - dummy node above the root under which detached fields are stored. All content of the forest is reachable from this.
@@ -92,7 +92,7 @@ export class ChunkedForest implements IEditableForest {
 		this.anchors.forget(anchor);
 	}
 
-	public registerAnnouncedVisitor(visitor: AnnouncedVisitor): void {
+	public registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
 		this.deltaVisitors.push(visitor);
 	}
 
@@ -271,9 +271,10 @@ export class ChunkedForest implements IEditableForest {
 			},
 		};
 
+		const announcedVisitors = this.deltaVisitors.map((getVisitor) => getVisitor());
 		const combinedVisitor = combineVisitors(
-			[forestVisitor, ...this.deltaVisitors],
-			this.deltaVisitors,
+			[forestVisitor, ...announcedVisitors],
+			announcedVisitors,
 		);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;
