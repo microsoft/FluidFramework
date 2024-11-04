@@ -16,11 +16,10 @@ import {
 import {
 	IntervalType,
 	SequenceInterval,
+	SequenceIntervalClass,
 	createPositionReferenceFromSegoff,
 	sequenceIntervalHelpers,
 } from "../intervals/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SequenceIntervalClass } from "../intervals/sequenceInterval.js";
 import { ISharedString } from "../sharedString.js";
 
 import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";

@@ -18,9 +18,7 @@ import {
 	createOverlappingIntervalsIndex,
 	createOverlappingSequenceIntervalsIndex,
 } from "../intervalIndex/index.js";
-import { SequenceInterval } from "../intervals/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SequenceIntervalClass } from "../intervals/sequenceInterval.js";
+import { SequenceInterval, SequenceIntervalClass } from "../intervals/index.js";
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
