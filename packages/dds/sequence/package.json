@@ -192,7 +192,20 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"ClassStatics_SequenceDeltaEvent": {
+				"backCompat": false
+			},
+			"ClassStatics_SequenceEvent": {
+				"backCompat": false
+			},
+			"ClassStatics_SequenceInterval": {
+				"backCompat": false
+			},
+			"ClassStatics_SequenceMaintenanceEvent": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
