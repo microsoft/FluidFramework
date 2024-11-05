@@ -11,7 +11,7 @@ export function aiCollab(options: AiCollabOptions): Promise<AiCollabSuccessRespo
 export interface AiCollabErrorResponse {
     errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted";
     status: "failure" | "partial-failure";
-    tokenUsage: TokenUsage;
+    tokensUsed: TokenUsage;
 }
 
 // @alpha
@@ -22,7 +22,7 @@ export interface AiCollabOptions {
         abortController?: AbortController;
         maxSequentialErrors?: number;
         maxModelCalls?: number;
-        tokenLimits?: TokenUsage;
+        tokenLimits?: TokenLimits;
     };
     // (undocumented)
     openAI: OpenAiClientOptions;
@@ -39,7 +39,7 @@ export interface AiCollabOptions {
 // @alpha
 export interface AiCollabSuccessResponse {
     status: "success";
-    tokenUsage: TokenUsage;
+    tokensUsed: TokenUsage;
 }
 
 // @alpha
@@ -150,6 +150,14 @@ export function sharedTreeDiff(obj: Record<string, unknown> | unknown[], newObj:
 
 // @alpha
 export function sharedTreeTraverse<T = unknown>(jsonObject: TreeMapNode | TreeArrayNode | Record<string, unknown>, path: ObjectPath): T | undefined;
+
+// @alpha
+export interface TokenLimits {
+    // (undocumented)
+    inputTokens?: number;
+    // (undocumented)
+    outputTokens?: number;
+}
 
 // @alpha
 export interface TokenUsage {

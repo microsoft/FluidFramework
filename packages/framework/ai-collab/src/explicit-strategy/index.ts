@@ -17,7 +17,7 @@ import type {
 } from "openai/resources/index.mjs";
 import { z } from "zod";
 
-import type { OpenAiClientOptions, TokenUsage } from "../aiCollabApi.js";
+import type { OpenAiClientOptions, TokenLimits, TokenUsage } from "../aiCollabApi.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
@@ -50,7 +50,7 @@ export interface GenerateTreeEditsOptions {
 		abortController?: AbortController;
 		maxSequentialErrors?: number;
 		maxModelCalls?: number;
-		tokenLimits?: TokenUsage;
+		tokenLimits?: TokenLimits;
 	};
 	finalReviewStep?: boolean;
 	validator?: (newContent: TreeNode) => void;
@@ -60,13 +60,13 @@ export interface GenerateTreeEditsOptions {
 
 interface GenerateTreeEditsSuccessResponse {
 	status: "success";
-	tokenUsage: TokenUsage;
+	tokensUsed: TokenUsage;
 }
 
 interface GenerateTreeEditsErrorResponse {
 	status: "failure" | "partial-failure";
 	errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted";
-	tokenUsage: TokenUsage;
+	tokensUsed: TokenUsage;
 }
 
 /**
@@ -89,7 +89,7 @@ export async function generateTreeEdits(
 
 	const simpleSchema = getSimpleSchema(Tree.schema(options.treeNode));
 
-	const tokenUsage = { inputTokens: 0, outputTokens: 0 };
+	const tokensUsed = { inputTokens: 0, outputTokens: 0 };
 
 	try {
 		for await (const edit of generateEdits(
@@ -98,7 +98,7 @@ export async function generateTreeEdits(
 			idGenerator,
 			editLog,
 			options.limiters?.tokenLimits,
-			tokenUsage,
+			tokensUsed,
 		)) {
 			try {
 				const result = applyAgentEdit(
@@ -128,7 +128,7 @@ export async function generateTreeEdits(
 				return {
 					status: responseStatus,
 					errorMessage: "aborted",
-					tokenUsage,
+					tokensUsed,
 				};
 			}
 
@@ -139,7 +139,7 @@ export async function generateTreeEdits(
 				return {
 					status: responseStatus,
 					errorMessage: "tooManyErrors",
-					tokenUsage,
+					tokensUsed,
 				};
 			}
 
@@ -147,7 +147,7 @@ export async function generateTreeEdits(
 				return {
 					status: responseStatus,
 					errorMessage: "tooManyModelCalls",
-					tokenUsage,
+					tokensUsed,
 				};
 			}
 		}
@@ -160,7 +160,7 @@ export async function generateTreeEdits(
 				status:
 					editCount > 0 && sequentialErrorCount < editCount ? "partial-failure" : "failure",
 				errorMessage: "tokenLimitExceeded",
-				tokenUsage,
+				tokensUsed,
 			};
 		}
 		throw error;
@@ -173,7 +173,7 @@ export async function generateTreeEdits(
 
 	return {
 		status: "success",
-		tokenUsage,
+		tokensUsed,
 	};
 }
 
@@ -195,8 +195,8 @@ async function* generateEdits(
 	simpleSchema: SimpleTreeSchema,
 	idGenerator: IdGenerator,
 	editLog: EditLog,
-	tokenLimits: TokenUsage | undefined,
-	tokenUsage: TokenUsage,
+	tokenLimits: TokenLimits | undefined,
+	tokensUsed: TokenUsage,
 ): AsyncGenerator<TreeEdit> {
 	const [types, rootTypeName] = generateGenericEditTypes(simpleSchema, true);
 
@@ -208,7 +208,7 @@ async function* generateEdits(
 			options.prompt.systemRoleContext,
 		);
 		DEBUG_LOG?.push(planningPromt);
-		plan = await getStringFromLlm(planningPromt, options.openAI);
+		plan = await getStringFromLlm(planningPromt, options.openAI, tokensUsed);
 		DEBUG_LOG?.push(`AI Generated the following plan: ${planningPromt}`);
 	}
 
@@ -236,6 +236,7 @@ async function* generateEdits(
 			options.openAI,
 			schema,
 			"A JSON object that represents an edit to a JSON tree.",
+			tokensUsed,
 		);
 
 		// eslint-disable-next-line unicorn/no-null
@@ -290,10 +291,10 @@ async function* generateEdits(
 	let edit = await getNextEdit();
 	while (edit !== undefined) {
 		yield edit;
-		if (tokenUsage.inputTokens > (tokenLimits?.inputTokens ?? Number.POSITIVE_INFINITY)) {
+		if (tokensUsed.inputTokens > (tokenLimits?.inputTokens ?? Number.POSITIVE_INFINITY)) {
 			throw new TokenLimitExceededError("Input token limit exceeded.");
 		}
-		if (tokenUsage.outputTokens > (tokenLimits?.outputTokens ?? Number.POSITIVE_INFINITY)) {
+		if (tokensUsed.outputTokens > (tokenLimits?.outputTokens ?? Number.POSITIVE_INFINITY)) {
 			throw new TokenLimitExceededError("Output token limit exceeded.");
 		}
 		edit = await getNextEdit();
@@ -308,7 +309,7 @@ async function getStructuredOutputFromLlm<T>(
 	openAi: OpenAiClientOptions,
 	structuredOutputSchema: Zod.ZodTypeAny,
 	description?: string,
-	tokenUsage?: TokenUsage,
+	tokensUsed?: TokenUsage,
 ): Promise<T | undefined> {
 	const response_format = zodResponseFormat(structuredOutputSchema, "SharedTreeAI", {
 		description,
@@ -322,9 +323,9 @@ async function getStructuredOutputFromLlm<T>(
 
 	const result = await openAi.client.beta.chat.completions.parse(body);
 
-	if (result.usage !== undefined && tokenUsage !== undefined) {
-		tokenUsage.inputTokens += result.usage?.prompt_tokens;
-		tokenUsage.outputTokens += result.usage?.completion_tokens;
+	if (result.usage !== undefined && tokensUsed !== undefined) {
+		tokensUsed.inputTokens += result.usage?.prompt_tokens;
+		tokensUsed.outputTokens += result.usage?.completion_tokens;
 	}
 
 	// TODO: fix types so this isn't null and doesn't need a cast
@@ -338,7 +339,7 @@ async function getStructuredOutputFromLlm<T>(
 async function getStringFromLlm(
 	prompt: string,
 	openAi: OpenAiClientOptions,
-	tokenUsage?: TokenUsage,
+	tokensUsed?: TokenUsage,
 ): Promise<string | undefined> {
 	const body: ChatCompletionCreateParams = {
 		messages: [{ role: "system", content: prompt }],
@@ -347,9 +348,9 @@ async function getStringFromLlm(
 
 	const result = await openAi.client.chat.completions.create(body);
 
-	if (result.usage !== undefined && tokenUsage !== undefined) {
-		tokenUsage.inputTokens += result.usage?.prompt_tokens;
-		tokenUsage.outputTokens += result.usage?.completion_tokens;
+	if (result.usage !== undefined && tokensUsed !== undefined) {
+		tokensUsed.inputTokens += result.usage?.prompt_tokens;
+		tokensUsed.outputTokens += result.usage?.completion_tokens;
 	}
 
 	return result.choices[0]?.message.content ?? undefined;

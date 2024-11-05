@@ -64,7 +64,7 @@ export interface AiCollabOptions {
 		/**
 		 * The maximum token usage limits for the LLM.
 		 */
-		tokenLimits?: TokenUsage;
+		tokenLimits?: TokenLimits;
 	};
 	/**
 	 * When enabled, the LLM will be prompted to first produce a plan based on the user's ask before generating changes to your applications data
@@ -98,7 +98,7 @@ export interface AiCollabSuccessResponse {
 	/**
 	 * {@inheritDoc TokenUsage}
 	 */
-	tokenUsage: TokenUsage;
+	tokensUsed: TokenUsage;
 }
 
 /**
@@ -124,16 +124,25 @@ export interface AiCollabErrorResponse {
 	/**
 	 * {@inheritDoc TokenUsage}
 	 */
-	tokenUsage: TokenUsage;
+	tokensUsed: TokenUsage;
 }
 
 /**
- * Usage of tokens by an LLM.
- * @remarks This interface is used for both tracking token usage and for setting token limits.
+ * Total usage of tokens by an LLM.
  *
  * @alpha
  */
 export interface TokenUsage {
 	inputTokens: number;
 	outputTokens: number;
+}
+
+/**
+ * Limits for the total tokens that can be used by an llm
+ *
+ * @alpha
+ */
+export interface TokenLimits {
+	inputTokens?: number;
+	outputTokens?: number;
 }
