@@ -41,11 +41,12 @@ import type { JsonPrimitive } from "./jsonTypes.js";
  */
 
 /**
- * TBD
+ * This is the field we force the LLM to generate to avoid any type ambiguity (e.g. a vector and a point both have x/y and are ambiguous without the LLM telling us which it means).
  */
 export const typeField = "__fluid_type";
+
 /**
- * TBD
+ * A field that is  auto-generated and injected into nodes before passing data to the LLM to ensure the LLM can refer to nodes in a stable way.
  */
 export const objectIdKey = "__fluid_objectId";
 
