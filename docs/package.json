@@ -22,6 +22,7 @@
 		"clean:api-documentation": "rimraf --glob \"docs/api/**/*.md\" \"versioned_docs/*/api/**/*.md\"",
 		"clean:doc-models": "rimraf --glob .doc-models",
 		"clean:docusaurus": "docusaurus clear",
+		"clean:test": "rimraf --glob test-results",
 		"clean:versions-json": "rimraf --glob \"./versions.json\"",
 		"download-doc-models": "node ./infra/download-doc-models.mjs",
 		"eslint": "eslint src test --format stylish",
