@@ -14,7 +14,7 @@ The ai-collab client library makes adding complex, human-like collaboration with
 This file is where we define the types of our task management application's SharedTree data
 ```ts
 //  --------- File name: "types.ts" ---------
-import { SchemaFactory } from "@fluidframework/tree";
+import { SchemaFactory, type treeView } from "@fluidframework/tree";
 
 const sf = new SchemaFactory("ai-collab-sample-application");
 
@@ -130,7 +130,7 @@ const appState: PlannerAppState = initializeAppState({
 const userAsk = "Update the task group description to be a about creating a new Todo list application. Create a set of tasks to accomplish this and assign them to the available engineers. Keep in mind the max capacity of each engineer as you assign tasks."
 
 // Collaborate with AI one function call.
-const response = await aiCollab<typeof PlannerAppState>({
+const response = await aiCollab({
 		openAI: {
 			client: new OpenAI({
 				apiKey: OPENAI_API_KEY,
@@ -190,6 +190,7 @@ Once the `aiCollab` function call is initiated, an LLM will immediately begin at
 1. Handle 429 rate limit error from OpenAI API.
 1. Top level arrays are not supported with current DSL.
 1. Structured Output fails when multiple schema types have the same first field name (e.g. id: sf.identifier on multiple types).
+1. Your Application's SharedTree Schema must have no more than 4 levels of nesting due to OpenAI structured output limitations. (4 because we add an extra layer of nesting internally)
 
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
