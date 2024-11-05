@@ -157,7 +157,20 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_MockDeltaConnection": {
+				"forwardCompat": false
+			},
+			"Class_MockFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"Class_MockFluidDataStoreRuntime": {
+				"forwardCompat": false
+			},
+			"ClassStatics_MockFluidDataStoreContext": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
