@@ -7,9 +7,6 @@ export default defineConfig({
 	// Look for test files in the "test" directory, relative to this configuration file.
 	testDir: "test",
 
-	// Run all tests in parallel.
-	fullyParallel: true,
-
 	// Fail the build on CI if you accidentally left test.only in the source code.
 	forbidOnly: !!process.env.CI,
 
