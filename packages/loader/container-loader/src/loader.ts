@@ -204,6 +204,7 @@ export interface ILoaderProps {
 }
 
 /**
+ * Other props which are used to load a container on top of the basic loader props.
  * @alpha
  * @legacy
  */
@@ -220,6 +221,7 @@ export interface ILoaderResolveContainerProps extends ILoaderProps {
 }
 
 /**
+ * Other props which are used to create a detached container on top of the basic loader props.
  * @alpha
  * @legacy
  */
@@ -235,6 +237,7 @@ export interface ILoaderCreateDetachedContainerProps extends ILoaderProps {
 }
 
 /**
+ * Other props which are used to rehydrate a detached container on top of the basic loader props.
  * @alpha
  * @legacy
  */

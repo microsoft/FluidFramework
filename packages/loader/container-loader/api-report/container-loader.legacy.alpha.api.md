@@ -51,7 +51,7 @@ export interface IFluidModuleWithDetails {
     module: IFluidModule;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface ILoaderCreateDetachedContainerProps extends ILoaderProps {
     // (undocumented)
     canReconnect?: boolean;
@@ -79,7 +79,7 @@ export interface ILoaderProps {
     readonly urlResolver: IUrlResolver;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface ILoaderRehydrateDetachedContainerProps extends ILoaderProps {
     // (undocumented)
     canReconnect?: boolean;
@@ -88,7 +88,7 @@ export interface ILoaderRehydrateDetachedContainerProps extends ILoaderProps {
     snapshot: string;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface ILoaderResolveContainerProps extends ILoaderProps {
     pendingLocalState?: string;
     request: IRequest;
