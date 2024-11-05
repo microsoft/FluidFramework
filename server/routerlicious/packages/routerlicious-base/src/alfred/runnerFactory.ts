@@ -21,6 +21,7 @@ import {
 } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
  * @internal
@@ -44,12 +45,14 @@ export class AlfredResources implements core.IResources {
 		public documentsCollectionName: string,
 		public documentRepository: core.IDocumentRepository,
 		public documentDeleteService: IDocumentDeleteService,
+		public startupCheck: IReadinessCheck,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
 		public readinessCheck?: IReadinessCheck,
+		public fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -371,6 +374,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				Lumberjack.error("Failed to initialize token revocation manager", undefined, error);
 			});
 		}
+		const startupCheck = new StartupCheck();
 
 		return new AlfredResources(
 			config,
@@ -388,12 +392,14 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentsCollectionName,
 			documentRepository,
 			documentDeleteService,
+			startupCheck,
 			tokenRevocationManager,
 			revokedTokenChecker,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
 			enableClientIPLogging,
 			customizations?.readinessCheck,
+			customizations?.fluidAccessTokenGenerator,
 		);
 	}
 }
@@ -417,12 +423,14 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.producer,
 			resources.documentRepository,
 			resources.documentDeleteService,
+			resources.startupCheck,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
 			null,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
 			resources.readinessCheck,
+			resources.fluidAccessTokenGenerator,
 		);
 	}
 }

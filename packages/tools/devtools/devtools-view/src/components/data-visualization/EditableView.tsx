@@ -136,7 +136,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 		// This checks if the selected option was the current option, if so it the value stays the same. If not then it clears it.
 		let newValue: Serializable<unknown> | undefined;
 		if (activeEdit === undefined) {
-			newValue = data.optionText === typeof node.value ? node.value ?? undefined : "";
+			newValue = data.optionText === typeof node.value ? (node.value ?? undefined) : "";
 		} else {
 			newValue = data.optionText === activeEdit.type ? activeEdit.value : "";
 		}

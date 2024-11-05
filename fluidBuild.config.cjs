@@ -271,6 +271,9 @@ module.exports = {
 			// This file is a test file.
 			"tools/markdown-magic/test/package.json",
 
+			// Not a real package
+			"docs/api/",
+
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
@@ -310,8 +313,6 @@ module.exports = {
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
 				"build-tools/packages/build-cli/test/helpers/init.js",
-				"build-tools/packages/readme-command/bin/dev.js",
-				"build-tools/packages/readme-command/bin/run.js",
 				"build-tools/packages/version-tools/bin/dev.js",
 				"build-tools/packages/version-tools/bin/run.js",
 				"common/build/build-common/gen_version.js",
@@ -435,6 +436,14 @@ module.exports = {
 				"package.json",
 			],
 			"npm-package-json-script-dep": [],
+			"npm-package-license": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+			],
+			"npm-private-packages": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+			],
 			"npm-public-package-requirements": [
 				// Test packages published only for the purpose of running tests in CI.
 				"^azure/packages/test/",
@@ -463,6 +472,10 @@ module.exports = {
 				"^experimental/framework/data-objects/",
 				"^tools/telemetry-generator/",
 				"^packages/tools/webpack-fluid-loader/",
+			],
+			"pnpm-npm-package-json-preinstall": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 		},
 		packageNames: {
@@ -525,7 +538,6 @@ module.exports = {
 				["nyc", "nyc"],
 				["oclif", "oclif"],
 				["prettier", "prettier"],
-				["renamer", "renamer"],
 				["rimraf", "rimraf"],
 				["tinylicious", "tinylicious"],
 				["ts2esm", "ts2esm"],
@@ -623,6 +635,13 @@ module.exports = {
 			fix: { heading: "🐛 Bug Fixes" },
 			deprecation: { heading: "⚠️ Deprecations" },
 			other: { heading: "Other Changes" },
+		},
+	},
+
+	// This setting influence `flub release report` behavior. This defines the legacy compat range for release group or independent packages.
+	releaseReport: {
+		legacyCompatInterval: {
+			"client": 10,
 		},
 	},
 };

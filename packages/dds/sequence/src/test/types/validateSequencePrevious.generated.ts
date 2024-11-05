@@ -67,7 +67,6 @@ declare type old_as_current_for_Class_SequenceDeltaEvent = requireAssignableTo<T
  * typeValidation.broken:
  * "Class_SequenceDeltaEvent": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_SequenceDeltaEvent = requireAssignableTo<TypeOnly<current.SequenceDeltaEvent>, TypeOnly<old.SequenceDeltaEvent>>
 
 /*
@@ -122,7 +121,6 @@ declare type old_as_current_for_Class_SequenceMaintenanceEvent = requireAssignab
  * typeValidation.broken:
  * "Class_SequenceMaintenanceEvent": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_SequenceMaintenanceEvent = requireAssignableTo<TypeOnly<current.SequenceMaintenanceEvent>, TypeOnly<old.SequenceMaintenanceEvent>>
 
 /*
@@ -232,6 +230,7 @@ declare type current_as_old_for_ClassStatics_SequenceDeltaEvent = requireAssigna
  * typeValidation.broken:
  * "ClassStatics_SequenceEvent": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_SequenceEvent = requireAssignableTo<TypeOnly<typeof current.SequenceEvent>, TypeOnly<typeof old.SequenceEvent>>
 
 /*
@@ -241,6 +240,7 @@ declare type current_as_old_for_ClassStatics_SequenceEvent = requireAssignableTo
  * typeValidation.broken:
  * "ClassStatics_SequenceInterval": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_SequenceInterval = requireAssignableTo<TypeOnly<typeof current.SequenceInterval>, TypeOnly<typeof old.SequenceInterval>>
 
 /*

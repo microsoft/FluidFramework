@@ -10,7 +10,6 @@ import { assert, Heap, IComparer } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { IAttributionCollectionSerializer } from "./attributionCollection.js";
-// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
 import { DoublyLinkedList, ListNode } from "./collections/index.js";
 import {
@@ -178,11 +177,6 @@ export interface IMergeTreeOptions {
 	newMergeTreeSnapshotFormat?: boolean;
 
 	/**
-	 * Options related to attribution
-	 */
-	attribution?: IMergeTreeAttributionOptions;
-
-	/**
 	 * Enables support for the obliterate operation -- a stronger form of remove
 	 * which deletes concurrently inserted segments
 	 *
@@ -212,6 +206,17 @@ export interface IMergeTreeOptions {
 	 */
 	mergeTreeEnableSidedObliterate?: boolean;
 }
+
+/**
+ * @internal
+ */
+export interface IMergeTreeOptionsInternal extends IMergeTreeOptions {
+	/**
+	 * Options related to attribution
+	 */
+	attribution?: IMergeTreeAttributionOptions;
+}
+
 export function errorIfOptionNotTrue(
 	options: IMergeTreeOptions | undefined,
 	option: keyof IMergeTreeOptions,
@@ -222,9 +227,7 @@ export function errorIfOptionNotTrue(
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated  This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface IMergeTreeAttributionOptions {
 	/**
@@ -250,9 +253,7 @@ export interface IMergeTreeAttributionOptions {
 /**
  * Implements policy dictating which kinds of operations should be attributed and how.
  * @sealed
- * @legacy
- * @alpha
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface AttributionPolicy {
 	/**
@@ -262,7 +263,6 @@ export interface AttributionPolicy {
 	 *
 	 * This must be done in an eventually consistent fashion.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	attach: (client: Client) => void;
 	/**
 	 * Disables tracking attribution information on segments.
@@ -527,7 +527,7 @@ export class MergeTree {
 
 	private readonly obliterates = new Obliterates(this);
 
-	public constructor(public options?: IMergeTreeOptions) {
+	public constructor(public options?: IMergeTreeOptionsInternal) {
 		this._root = this.makeBlock(0);
 		this._root.mergeTree = this;
 		this.attributionPolicy = options?.attribution?.policyFactory?.();
@@ -981,7 +981,7 @@ export class MergeTree {
 	private blockLength(node: MergeBlock, refSeq: number, clientId: number): number {
 		return this.collabWindow.collaborating && clientId !== this.collabWindow.clientId
 			? node.partialLengths!.getPartialLength(refSeq, clientId)
-			: node.cachedLength ?? 0;
+			: (node.cachedLength ?? 0);
 	}
 
 	/**
@@ -1678,7 +1678,7 @@ export class MergeTree {
 			// possible seq, as the highest is reserved for the previous.
 			const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
 			const segSeq =
-				node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : node.seq ?? 0;
+				node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : (node.seq ?? 0);
 
 			return (
 				newSeq > segSeq ||
@@ -2142,13 +2142,13 @@ export class MergeTree {
 		if (this.options?.mergeTreeEnableSidedObliterate) {
 			assert(
 				typeof start === "object" && typeof end === "object",
-				"Start and end must be of type InteriorSequencePlace if mergeTreeEnableSidedObliterate is enabled.",
+				0xa45 /* Start and end must be of type InteriorSequencePlace if mergeTreeEnableSidedObliterate is enabled. */,
 			);
 			this.obliterateRangeSided(start, end, refSeq, clientId, seq, opArgs);
 		} else {
 			assert(
 				typeof start === "number" && typeof end === "number",
-				"Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled.",
+				0xa46 /* Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled. */,
 			);
 			this.obliterateRangeSided(
 				{ pos: start, side: Side.Before },
@@ -2296,16 +2296,6 @@ export class MergeTree {
 				segment.removedSeq = undefined;
 				segment.localRemovedSeq = undefined;
 
-				// Note: optional chaining short-circuits:
-				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
-				this.mergeTreeDeltaCallback?.(
-					{ op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
-					{
-						operation: MergeTreeDeltaType.INSERT,
-						deltaSegments: [{ segment }],
-					},
-				);
-
 				for (
 					let updateNode = segment.parent;
 					updateNode !== undefined;
@@ -2317,6 +2307,16 @@ export class MergeTree {
 						this.collabWindow.clientId,
 					);
 				}
+
+				// Note: optional chaining short-circuits:
+				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
+				this.mergeTreeDeltaCallback?.(
+					{ op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
+					{
+						operation: MergeTreeDeltaType.INSERT,
+						deltaSegments: [{ segment }],
+					},
+				);
 			});
 		} else if (
 			op.type === MergeTreeDeltaType.INSERT ||

@@ -19,6 +19,7 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
+	IFluidAccessTokenGenerator,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -53,12 +54,14 @@ export class AlfredRunner implements IRunner {
 		private readonly producer: IProducer,
 		private readonly documentRepository: IDocumentRepository,
 		private readonly documentDeleteService: IDocumentDeleteService,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly enableClientIPLogging?: boolean,
 		private readonly readinessCheck?: IReadinessCheck,
+		private readonly fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -83,12 +86,14 @@ export class AlfredRunner implements IRunner {
 				this.producer,
 				this.documentRepository,
 				this.documentDeleteService,
+				this.startupCheck,
 				this.tokenRevocationManager,
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
 				this.enableClientIPLogging,
 				this.readinessCheck,
+				this.fluidAccessTokenGenerator,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);
@@ -114,6 +119,9 @@ export class AlfredRunner implements IRunner {
 
 		this.stopped = false;
 
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 

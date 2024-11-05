@@ -37,8 +37,8 @@ export interface IPresence {
 
 // @alpha @sealed
 export interface ISessionClient<SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
-    currentConnectionId(): ClientConnectionId;
-    // (undocumented)
+    getConnectionId(): ClientConnectionId;
+    getConnectionStatus(): SessionClientStatus;
     readonly sessionId: SpecificSessionClientId;
 }
 
@@ -213,6 +213,15 @@ export interface PresenceStatesSchema {
 
 // @alpha
 export type PresenceWorkspaceAddress = `${string}:${string}`;
+
+// @alpha
+export const SessionClientStatus: {
+    readonly Connected: "Connected";
+    readonly Disconnected: "Disconnected";
+};
+
+// @alpha
+export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof SessionClientStatus];
 
 // @alpha @sealed
 export interface ValueMap<K extends string | number, V> {

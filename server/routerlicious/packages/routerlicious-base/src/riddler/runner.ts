@@ -41,6 +41,7 @@ export class RiddlerRunner implements IRunner {
 		private readonly fetchTenantKeyMetricInterval: number,
 		private readonly riddlerStorageRequestMetricInterval: number,
 		private readonly tenantKeyGenerator: ITenantKeyGenerator,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly cache?: ICache,
 		private readonly config?: Provider,
 		private readonly readinessCheck?: IReadinessCheck,
@@ -66,6 +67,7 @@ export class RiddlerRunner implements IRunner {
 				this.fetchTenantKeyMetricInterval,
 				this.riddlerStorageRequestMetricInterval,
 				this.tenantKeyGenerator,
+				this.startupCheck,
 				this.cache,
 				this.readinessCheck,
 			);
@@ -84,6 +86,9 @@ export class RiddlerRunner implements IRunner {
 
 		this.stopped = false;
 
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 

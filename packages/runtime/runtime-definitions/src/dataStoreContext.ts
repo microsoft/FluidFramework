@@ -34,7 +34,7 @@ import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
-import type { IInboundSignalMessage } from "./protocol.js";
+import type { IInboundSignalMessage, IRuntimeMessageCollection } from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
@@ -332,7 +332,14 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
+	 * Process messages for this channel. The messages here are contiguous messages in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	processMessages?(messageCollection: IRuntimeMessageCollection): void;
+
+	/**
 	 * Processes the op.
+	 * @deprecated processMessages should be used instead to process messages for a channel.
 	 */
 	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
 
@@ -416,6 +423,15 @@ export type CreateChildSummarizerNodeFn = (
 	 */
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
+
+/**
+ * The state maintained for messages that are received when a channel isn't yet loaded.
+ * @internal
+ */
+export interface IPendingMessagesState {
+	messageCollections: IRuntimeMessageCollection[];
+	pendingCount: number;
+}
 
 /**
  * Represents the context for the data store like objects. It is used by the data store runtime to

@@ -63,6 +63,23 @@ export interface FlubConfig {
 	 * Configuration for the `generate:releaseNotes` command.
 	 */
 	releaseNotes?: ReleaseNotesConfig;
+
+	/**
+	 * Configuration for `release report` command
+	 */
+	releaseReport?: ReleaseReportConfig;
+}
+
+/**
+ * Configuration for the `release report` command. If this configuration is not present in the config, the
+ * `release report` command will report an error.
+ */
+export interface ReleaseReportConfig {
+	/**
+	 * Each key in the `legacyCompatInterval` object represents a specific release group or package name as string,
+	 * and the associated value is a number that defines the legacy compatibility interval for that group.
+	 */
+	legacyCompatInterval: Record<ReleaseGroup | string, number>;
 }
 
 /**

@@ -28,6 +28,7 @@ import { isObjectNodeSchema } from "../objectNodeTypes.js";
 
 /**
  * Options for how to encode a tree.
+ * @alpha
  */
 export interface EncodeOptions<TCustom> {
 	/**
@@ -80,15 +81,15 @@ export function customFromCursorInner<TChild, THandle>(
 		case booleanSchema.identifier:
 		case nullSchema.identifier:
 		case stringSchema.identifier:
-			assert(reader.value !== undefined, "out of schema: missing value");
-			assert(!isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
+			assert(reader.value !== undefined, 0xa50 /* out of schema: missing value */);
+			assert(!isFluidHandle(reader.value), 0xa51 /* out of schema: unexpected FluidHandle */);
 			return reader.value;
 		case handleSchema.identifier:
-			assert(reader.value !== undefined, "out of schema: missing value");
-			assert(isFluidHandle(reader.value), "out of schema: expected FluidHandle");
+			assert(reader.value !== undefined, 0xa52 /* out of schema: missing value */);
+			assert(isFluidHandle(reader.value), 0xa53 /* out of schema: expected FluidHandle */);
 			return options.valueConverter(reader.value);
 		default: {
-			assert(reader.value === undefined, "out of schema: unexpected value");
+			assert(reader.value === undefined, 0xa54 /* out of schema: unexpected value */);
 			if (nodeSchema.kind === NodeKind.Array) {
 				const fields = inCursorField(reader, EmptyKey, () =>
 					mapCursorField(reader, () => childHandler(reader, options, schema)),
@@ -102,8 +103,8 @@ export function customFromCursorInner<TChild, THandle>(
 						const storedKey = reader.getFieldKey();
 						const key =
 							isObjectNodeSchema(nodeSchema) && !options.useStoredKeys
-								? nodeSchema.storedKeyToPropertyKey.get(storedKey) ??
-									fail("missing property key")
+								? (nodeSchema.storedKeyToPropertyKey.get(storedKey) ??
+									fail("missing property key"))
 								: storedKey;
 						// Length is checked above.
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

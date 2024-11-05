@@ -1,5 +1,20 @@
 # @fluidframework/test-runtime-utils
 
+## 2.5.0
+
+### Minor Changes
+
+-   The process function on IFluidDataStoreChannel, IDeltaHandler, MockFluidDataStoreRuntime and MockDeltaConnection is now deprecated ([#22840](https://github.com/microsoft/FluidFramework/pull/22840)) [2e5b969d3a](https://github.com/microsoft/FluidFramework/commit/2e5b969d3a28b05da1502d521b725cee66e36a15)
+
+    The process function on IFluidDataStoreChannel, IDeltaHandler, MockFluidDataStoreRuntime and MockDeltaConnection is now
+    deprecated. It has been replaced with a new function `processMessages`, which will be called to process multiple messages instead of a single one on the channel. This is part of a feature called "Op bunching", where contiguous ops of a given type and to a given data store / DDS are bunched and sent together for processing.
+
+    Implementations of `IFluidDataStoreChannel` and `IDeltaHandler` must now also implement `processMessages`. For reference implementations, see `FluidDataStoreRuntime::processMessages` and `SharedObjectCore::attachDeltaHandler`.
+
+## 2.4.0
+
+Dependency updates only.
+
 ## 2.3.0
 
 Dependency updates only.
