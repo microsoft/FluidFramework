@@ -10,5 +10,5 @@ The op event on IFluidDataStoreRuntimeEvents and IContainerRuntimeBaseEvents is 
 
 Previously, in versions 2.4 and below, the `op` event was emitted immediately after an op was processed and before the next op was processed.
 
-In versions 2.5.0 and beyond, the `op` event will be emitted after an op is processed but it may not be immediate. In addition, other ops in a
+In versions 2.5.0 and beyond, the `op` event will be emitted after an op is processed, but it may not be immediate. In addition, other ops in a
 batch may be processed before the op event is emitted for a particular op.

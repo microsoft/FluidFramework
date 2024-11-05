@@ -9,7 +9,7 @@
 
 Compilation no longer fails when building with TypeScript's libCheck option
 
-When compiling code using Fluid Framework when using TypeScript's `libCheck` (meaning without [skipLibCheck](https://www.typescriptlang.org/tsconfig/#skipLibCheck)), two compile errors can be encountered:
+When compiling code using Fluid Framework with TypeScript's `libCheck` (meaning without [skipLibCheck](https://www.typescriptlang.org/tsconfig/#skipLibCheck)), two compile errors can be encountered:
 
 ```
 > tsc
