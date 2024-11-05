@@ -248,8 +248,8 @@ The replacement syntax to use in `.mdx` files would be:
 
 ### Nice to have before merging into main
 
--   Add component-level unit testing (with accessibility tests)
--   Add end-to-end testing
+-   Add component-level unit testing
+-   Add accessibility tests
 
 ### After merging into main
 
