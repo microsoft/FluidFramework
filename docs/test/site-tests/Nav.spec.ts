@@ -11,13 +11,13 @@ test.describe("Nav", () => {
 	});
 
 	test("Nav contains the expected links", async ({ page }) => {
-		const docsLink = page.getByRole("link", {name: /Docs/});
+		const docsLink = page.getByRole("link", { name: /Docs/ });
 		await expect(docsLink).toHaveAttribute("href", "/docs/");
 
-		const communityLink = page.getByRole("link", {name: /Community/});
+		const communityLink = page.getByRole("link", { name: /Community/ });
 		await expect(communityLink).toHaveAttribute("href", "/community/");
 
-		const supportLink = page.getByRole("link", {name: /Support/});
+		const supportLink = page.getByRole("link", { name: /Support/ });
 		await expect(supportLink).toHaveAttribute("href", "/support/");
 	});
 });

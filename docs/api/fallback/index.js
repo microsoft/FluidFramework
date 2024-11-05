@@ -34,6 +34,6 @@ async function fallback(context, request) {
 			headers: { location: "/404" },
 		};
 	}
-};
+}
 
 module.exports = fallback;
