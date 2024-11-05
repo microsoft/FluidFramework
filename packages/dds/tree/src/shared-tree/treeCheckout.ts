@@ -583,7 +583,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					}
 				} else if (event.type === "replace") {
 					// TODO: figure out how to plumb through commit kind info for remote changes
-					this.events.emit("changed", { isLocal: false, kind: CommitKind.Unknown });
+					this.events.emit("changed", { isLocal: false, kind: CommitKind.Default });
 				}
 			}
 		});

@@ -167,10 +167,6 @@ export enum CommitKind {
 	Undo,
 	/** A commit that is the result of a redo. */
 	Redo,
-	/**
-	 * A commit for which the context in which it was created cannot be determined.
-	 */
-	Unknown,
 }
 
 /**

@@ -26,8 +26,7 @@ Kind
 export enum CommitKind {
     Default = 0,
     Redo = 2,
-    Undo = 1,
-    Unknown = 3
+    Undo = 1
 }
 
 // @public @sealed
