@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { type IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
-	type IContainer,
-	type IHostLoader,
-	LoaderHeader,
-} from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+	createDetachedContainer,
+	ILoaderProps,
+	resolveContainer,
+} from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
@@ -23,7 +23,7 @@ import type {
  * @alpha
  */
 export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {
-	private readonly loader: IHostLoader;
+	private readonly loaderProps: ILoaderProps;
 	private readonly generateCreateNewRequest: () => IRequest;
 
 	// TODO: See if there's a nicer way to parameterize the createNew request.
@@ -37,12 +37,12 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 			generateCreateNewRequest: () => IRequest;
 		},
 	) {
-		this.loader = new Loader({
+		this.loaderProps = {
 			urlResolver: props.urlResolver,
 			documentServiceFactory: props.documentServiceFactory,
 			codeLoader: props.codeLoader,
 			logger: props.logger,
-		});
+		};
 		this.generateCreateNewRequest = props.generateCreateNewRequest;
 	}
 
@@ -89,7 +89,10 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 	// TODO: Consider making the version param optional, and in that case having a mechanism to query the codeLoader
 	// for the latest/default version to use?
 	public async createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>> {
-		const container = await this.loader.createDetachedContainer({ package: version });
+		const container = await createDetachedContainer({
+			codeDetails: { package: version },
+			...this.loaderProps,
+		});
 		const { model, migrationTool } =
 			await this.getModelAndMigrationToolFromContainer(container);
 		// The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,
@@ -106,17 +109,20 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 	}
 
 	private async loadContainer(id: string): Promise<IContainer> {
-		return this.loader.resolve({
-			url: id,
-			headers: {
-				[LoaderHeader.loadMode]: {
-					// Here we use "all" to ensure we are caught up before returning.  This is particularly important
-					// for direct-link scenarios, where the user might have a direct link to a data object that was
-					// just attached (i.e. the "attach" op and the "set" of the handle into some map is in the
-					// trailing ops).  If we don't fully process those ops, the expected object won't be found.
-					opsBeforeReturn: "all",
+		return resolveContainer({
+			request: {
+				url: id,
+				headers: {
+					[LoaderHeader.loadMode]: {
+						// Here we use "all" to ensure we are caught up before returning.  This is particularly important
+						// for direct-link scenarios, where the user might have a direct link to a data object that was
+						// just attached (i.e. the "attach" op and the "set" of the handle into some map is in the
+						// trailing ops).  If we don't fully process those ops, the expected object won't be found.
+						opsBeforeReturn: "all",
+					},
 				},
 			},
+			...this.loaderProps,
 		});
 	}
 
