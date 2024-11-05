@@ -85,13 +85,13 @@ export class SharedTreeBranchManager {
     applyDiff(diff: Difference, objectToUpdate: Record<string, unknown> | TreeArrayNode): boolean;
     checkoutNewMergedBranch<T extends ImplicitFieldSchema>(treeView: TreeViewAlpha<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath, llmResponse: Record<string, unknown> | unknown[]): {
         differences: Difference[];
-        originalBranch: TreeBranch;
+        originalBranch: BranchableTree;
         forkBranch: TreeBranchFork;
         forkView: TreeViewAlpha<T>;
         newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
     };
     checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(treeView: TreeViewAlpha<T>, treeViewConfiguration: TreeViewConfiguration<T>, absolutePathToObjectNode: ObjectPath): {
-        originalBranch: TreeBranch;
+        originalBranch: BranchableTree;
         forkBranch: TreeBranchFork;
         forkView: TreeViewAlpha<T>;
         newBranchTargetNode: Record<string, unknown> | TreeArrayNode;

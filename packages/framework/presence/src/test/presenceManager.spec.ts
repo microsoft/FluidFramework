@@ -125,7 +125,7 @@ describe("Presence", () => {
 						"Attendee has wrong session id",
 					);
 					assert.equal(
-						newAttendee.connectionId(),
+						newAttendee.getConnectionId(),
 						initialAttendeeConnectionId,
 						"Attendee has wrong client connection id",
 					);
@@ -163,7 +163,7 @@ describe("Presence", () => {
 							"Disconnected attendee has wrong session id",
 						);
 						assert.equal(
-							disconnectedAttendee.connectionId(),
+							disconnectedAttendee.getConnectionId(),
 							initialAttendeeConnectionId,
 							"Disconnected attendee has wrong client connection id",
 						);
@@ -176,7 +176,7 @@ describe("Presence", () => {
 							"No attendee was disconnected in beforeEach",
 						);
 						assert.equal(
-							disconnectedAttendee.getStatus(),
+							disconnectedAttendee.getConnectionStatus(),
 							SessionClientStatus.Disconnected,
 							"Disconnected attendee has wrong status",
 						);
@@ -251,7 +251,7 @@ describe("Presence", () => {
 						);
 						// Current connection id is updated
 						assert(
-							newAttendee.connectionId() === updatedClientConnectionId,
+							newAttendee.getConnectionId() === updatedClientConnectionId,
 							"Attendee does not have updated client connection id",
 						);
 						// Attendee is available via new connection id
