@@ -125,7 +125,6 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 			provider.urlResolver,
 			provider.logger,
 		);
-		loaderContainerTracker.add(loader);
 		const container = await createAndAttachContainer(
 			codeDetails,
 			loader,
@@ -149,7 +148,6 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 			provider.urlResolver,
 			provider.logger,
 		);
-		loaderContainerTracker.add(loader);
 		return loader.resolve({
 			url: await provider.driver.createContainerUrl(documentId, containerUrl),
 		});

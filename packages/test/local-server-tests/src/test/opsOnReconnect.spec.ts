@@ -6,13 +6,12 @@
 import { strict as assert } from "assert";
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
-import {
-	IContainer,
-	IFluidCodeDetails,
-	IHostLoader,
-} from "@fluidframework/container-definitions/internal";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	resolveContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import {
 	ContainerMessageType,
 	IContainerRuntimeOptions,
@@ -36,7 +35,7 @@ import {
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createAndAttachContainer,
+	createAndAttachContainerUsingLoaderProps,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -64,9 +63,7 @@ describe("Ops on Reconnect", () => {
 	let container1Object1String: SharedString;
 	let receivedValues: any[] = [];
 
-	async function createLoader(
-		runtimeOptions?: IContainerRuntimeOptions,
-	): Promise<IHostLoader> {
+	function createLoaderProps(runtimeOptions?: IContainerRuntimeOptions): ILoaderProps {
 		const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
 			[map1Id, SharedMap.getFactory()],
 			[map2Id, SharedMap.getFactory()],
@@ -87,24 +84,24 @@ describe("Ops on Reconnect", () => {
 
 		const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-		const loader = new Loader({
+		return {
 			urlResolver,
 			documentServiceFactory,
 			codeLoader,
-		});
-		loaderContainerTracker.add(loader);
-		return loader;
+		};
 	}
 
 	async function createContainer(
 		runtimeOptions?: IContainerRuntimeOptions,
 	): Promise<IContainer> {
-		const loader = await createLoader(runtimeOptions);
-		return createAndAttachContainer(
+		const loaderProps = createLoaderProps(runtimeOptions);
+		const container: IContainer = await createAndAttachContainerUsingLoaderProps(
 			codeDetails,
-			loader,
+			loaderProps,
 			urlResolver.createCreateNewRequest(documentId),
 		);
+		loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	async function setupFirstContainer(
@@ -122,8 +119,12 @@ describe("Ops on Reconnect", () => {
 	}
 
 	async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {
-		const loader = await createLoader();
-		const container2 = await loader.resolve({ url: documentLoadUrl });
+		const loaderProps = createLoaderProps();
+		const container2 = await resolveContainer({
+			request: { url: documentLoadUrl },
+			...loaderProps,
+		});
+		loaderContainerTracker.addContainer(container2);
 		await waitForContainerConnection(container2);
 
 		// Get dataStore1 on the second container.

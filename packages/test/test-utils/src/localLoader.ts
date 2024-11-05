@@ -10,7 +10,12 @@ import {
 	IHostLoader,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	Loader,
+	type ILoaderCreateDetachedContainerProps,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
@@ -46,6 +51,32 @@ export function createLoader(
 }
 
 /**
+ * Creates a loader with the given package entries and driver.
+ * @param packageEntries - A list of code details to Fluid entry points.
+ * @param documentServiceFactory - the driver factory to use
+ * @param urlResolver - the url resolver to use
+ * @param options - loader options
+ * @internal
+ */
+export function createLoaderProps(
+	packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+	documentServiceFactory: IDocumentServiceFactory,
+	urlResolver: IUrlResolver,
+	logger?: ITelemetryBaseLogger,
+	options?: ILoaderOptions,
+): ILoaderProps {
+	const codeLoader: ICodeDetailsLoader = new LocalCodeLoader(packageEntries);
+
+	return {
+		urlResolver,
+		documentServiceFactory,
+		codeLoader,
+		logger,
+		options,
+	};
+}
+
+/**
  * Creates a detached Container and attaches it.
  * @param source - The code details used to create the Container.
  * @param loader - The loader to use to initialize the container.
@@ -60,6 +91,26 @@ export async function createAndAttachContainer(
 	attachRequest: IRequest,
 ): Promise<IContainer> {
 	const container = await loader.createDetachedContainer(source);
+	await container.attach(attachRequest);
+
+	return container;
+}
+
+/**
+ * Creates a detached Container and attaches it.
+ * @param source - The code details used to create the Container.
+ * @param loaderProps - The loaderProps to use to initialize the container.
+ * @param attachRequest - The request to create new from.
+ * @internal
+ */
+
+export async function createAndAttachContainerUsingLoaderProps(
+	source: IFluidCodeDetails,
+	loaderProps: ILoaderProps,
+	attachRequest: IRequest,
+): Promise<IContainer> {
+	const props: ILoaderCreateDetachedContainerProps = { codeDetails: source, ...loaderProps };
+	const container = await createDetachedContainer(props);
 	await container.attach(attachRequest);
 
 	return container;

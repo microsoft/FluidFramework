@@ -8,7 +8,7 @@ import {
 	createDetachedContainer,
 	ILoaderProps,
 	loadContainerPaused,
-	resolve,
+	resolveContainer,
 } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
@@ -62,7 +62,10 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	// TODO: Consider making the version param optional, and in that case having a mechanism to query the codeLoader
 	// for the latest/default version to use?
 	public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
-		const container = await createDetachedContainer({ package: version }, this.props);
+		const container = await createDetachedContainer({
+			codeDetails: { package: version },
+			...this.props,
+		});
 		const model = await this.getModelFromContainer(container);
 		// The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,
 		// without leaking out the loader, service, etc.  We also return the container ID here so we don't have
@@ -78,8 +81,8 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	}
 
 	public async loadExisting(id: string): Promise<ModelType> {
-		const container = await resolve(
-			{
+		const container = await resolveContainer({
+			request: {
 				url: id,
 				headers: {
 					[LoaderHeader.loadMode]: {
@@ -91,8 +94,8 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 					},
 				},
 			},
-			this.props,
-		);
+			...this.props,
+		});
 		const model = await this.getModelFromContainer(container);
 		return model;
 	}

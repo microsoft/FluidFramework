@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { type ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -24,7 +24,7 @@ import {
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createAndAttachContainer,
+	createAndAttachContainerUsingLoaderProps,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -79,19 +79,20 @@ describe("Logging Last Connection Mode ", () => {
 		const urlResolver = new LocalResolver();
 		const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-		const loader = new Loader({
+		const loaderProps: ILoaderProps = {
 			urlResolver,
 			documentServiceFactory,
 			codeLoader,
 			logger,
-		});
-		loaderContainerTracker.add(loader);
+		};
 
-		return createAndAttachContainer(
+		const container1 = await createAndAttachContainerUsingLoaderProps(
 			codeDetails,
-			loader,
+			loaderProps,
 			urlResolver.createCreateNewRequest(documentId),
 		);
+		loaderContainerTracker.addContainer(container1);
+		return container1;
 	}
 
 	beforeEach(async () => {

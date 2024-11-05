@@ -48,7 +48,6 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 	before(async () => {
 		provider = getTestObjectProvider();
 		loader = createLoader();
-		loaderContainerTracker.add(loader);
 		const container = await loader.createDetachedContainer(codeDetails);
 
 		fileName = uuid();

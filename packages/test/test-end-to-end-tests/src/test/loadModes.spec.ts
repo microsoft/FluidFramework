@@ -24,6 +24,7 @@ import {
 	createAndAttachContainer,
 	createDocumentId,
 	createLoader,
+	createLoaderProps,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
@@ -131,7 +132,6 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 			provider.urlResolver,
 			provider.logger,
 		);
-		loaderContainerTracker.add(loader);
 		const container = await createAndAttachContainer(
 			provider.defaultCodeDetails,
 			loader,
@@ -150,15 +150,15 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		});
-		const loader = createLoader(
+		const loaderProps = createLoaderProps(
 			[[provider.defaultCodeDetails, runtimeFactory]],
 			provider.documentServiceFactory,
 			provider.urlResolver,
 			provider.logger,
 		);
-		loaderContainerTracker.add(loader);
+
 		return loadContainerPaused(
-			loader,
+			loaderProps,
 			{
 				url: await provider.driver.createContainerUrl(documentId, containerUrl),
 				headers,

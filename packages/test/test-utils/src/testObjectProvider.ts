@@ -530,7 +530,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 			documentServiceFactory:
 				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
 		});
-		this._loaderContainerTracker.add(loader);
 		return loader;
 	}
 
@@ -556,6 +555,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
 		this.updateDocumentId(container.resolvedUrl);
+		this._loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -607,13 +607,15 @@ export class TestObjectProvider implements ITestObjectProvider {
 		headers?: IRequestHeader,
 		pendingLocalState?: string,
 	) {
-		return loader.resolve(
+		const container = await loader.resolve(
 			{
 				url: await this.driver.createContainerUrl(this.documentId),
 				headers,
 			},
 			pendingLocalState,
 		);
+		this._loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	/**
@@ -647,6 +649,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
 		this.updateDocumentId(container.resolvedUrl);
+		this._loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -861,8 +864,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 			documentServiceFactory:
 				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
 		});
-
-		this._loaderContainerTracker.add(loader);
 		return loader;
 	}
 
@@ -883,7 +884,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
 		});
 
-		this._loaderContainerTracker.add(loader);
 		return loader;
 	}
 
@@ -928,6 +928,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
 		this.updateDocumentId(container.resolvedUrl);
+		this._loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -944,7 +945,9 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 			);
 		}
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		return loader.createDetachedContainer(defaultCodeDetails);
+		const container = await loader.createDetachedContainer(defaultCodeDetails);
+		this._loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	/**
@@ -972,7 +975,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	): Promise<IContainer> {
 		const driver = this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		return this.resolveContainer(loader, requestHeader, driver, pendingState);
+		const container = await this.resolveContainer(loader, requestHeader, driver, pendingState);
+		return container;
 	}
 
 	private async resolveContainer(
@@ -981,7 +985,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		driver?: ITestDriver,
 		pendingLocalState?: string,
 	) {
-		return loader.resolve(
+		const container = await loader.resolve(
 			{
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				url: await driver!.createContainerUrl(this.documentId),
@@ -989,6 +993,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 			},
 			pendingLocalState,
 		);
+		this._loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	/**
@@ -1026,6 +1032,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
 		this.updateDocumentId(container.resolvedUrl);
+		this._loaderContainerTracker.addContainer(container);
 		return container;
 	}
 

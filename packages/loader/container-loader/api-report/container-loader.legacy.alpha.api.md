@@ -13,10 +13,7 @@ export enum ConnectionState {
 }
 
 // @alpha
-export function createDetachedContainer(codeDetails: IFluidCodeDetails, loaderProps: ILoaderProps, createDetachedProps?: {
-    canReconnect?: boolean;
-    clientDetailsOverride?: IClientDetails;
-}): Promise<IContainer>;
+export function createDetachedContainer(createDetachedContainerProps: ILoaderCreateDetachedContainerProps): Promise<IContainer>;
 
 // @alpha (undocumented)
 export interface IBaseProtocolHandler {
@@ -54,6 +51,15 @@ export interface IFluidModuleWithDetails {
     module: IFluidModule;
 }
 
+// @alpha (undocumented)
+export interface ILoaderCreateDetachedContainerProps extends ILoaderProps {
+    // (undocumented)
+    canReconnect?: boolean;
+    // (undocumented)
+    clientDetailsOverride?: IClientDetails;
+    codeDetails: IFluidCodeDetails;
+}
+
 // @alpha @deprecated (undocumented)
 export interface ILoaderOptions extends ILoaderOptions_2 {
     // @deprecated (undocumented)
@@ -71,6 +77,21 @@ export interface ILoaderProps {
     readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
     readonly scope?: FluidObject;
     readonly urlResolver: IUrlResolver;
+}
+
+// @alpha (undocumented)
+export interface ILoaderRehydrateDetachedContainerProps extends ILoaderProps {
+    // (undocumented)
+    canReconnect?: boolean;
+    // (undocumented)
+    clientDetailsOverride?: IClientDetails;
+    snapshot: string;
+}
+
+// @alpha (undocumented)
+export interface ILoaderResolveContainerProps extends ILoaderProps {
+    pendingLocalState?: string;
+    request: IRequest;
 }
 
 // @alpha @deprecated
@@ -158,13 +179,10 @@ export type QuorumProposalsSnapshot = {
 };
 
 // @alpha
-export function rehydrateDetachedContainerFromSnapshot(snapshot: string, loaderProps: ILoaderProps, createDetachedProps?: {
-    canReconnect?: boolean;
-    clientDetailsOverride?: IClientDetails;
-}): Promise<IContainer>;
+export function rehydrateDetachedContainerFromSnapshot(rehydrateDetachedContainerProps: ILoaderRehydrateDetachedContainerProps): Promise<IContainer>;
 
 // @alpha
-export function resolveContainer(request: IRequest, loaderProps: ILoaderProps, pendingLocalState?: string): Promise<IContainer>;
+export function resolveContainer(loaderResolveContainerProps: ILoaderResolveContainerProps): Promise<IContainer>;
 
 // @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;

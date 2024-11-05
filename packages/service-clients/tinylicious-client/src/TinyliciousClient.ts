@@ -10,7 +10,7 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	resolve,
+	resolveContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
@@ -93,13 +93,13 @@ export class TinyliciousClient {
 		// We're not actually using the code proposal (our code loader always loads the same module
 		// regardless of the proposal), but the Container will only give us a NullRuntime if there's
 		// no proposal.  So we'll use a fake proposal.
-		const container = await createDetachedContainer(
-			{
+		const container = await createDetachedContainer({
+			codeDetails: {
 				package: "no-dynamic-package",
 				config: {},
 			},
-			loaderProps,
-		);
+			...loaderProps,
+		});
 
 		const rootDataObject = await this.getContainerEntryPoint(container);
 
@@ -144,7 +144,7 @@ export class TinyliciousClient {
 		services: TinyliciousContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
-		const container = await resolve({ url: id }, loaderProps);
+		const container = await resolveContainer({ request: { url: id }, ...loaderProps });
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,

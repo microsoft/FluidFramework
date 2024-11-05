@@ -6,7 +6,7 @@
 import {
 	IDeltaQueue,
 	IContainer,
-	IHostLoader,
+	type IHostLoader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
@@ -60,6 +60,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	/**
 	 * Add a loader to start to track any container created from them
 	 * @param loader - loader to start tracking any container created.
+	 * @deprecated - Directly use addContainer to add container for tracking.
 	 */
 	public add<LoaderType extends IHostLoader>(loader: LoaderType) {
 		// TODO: Expose Loader API to able to intercept container creation (See issue #5114)
@@ -85,7 +86,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * @param container - container to add
 	 */
-	private addContainer(container: IContainer) {
+	public addContainer(container: IContainer) {
 		// don't add container that is already tracked
 		if (this.containers.has(container)) {
 			return;

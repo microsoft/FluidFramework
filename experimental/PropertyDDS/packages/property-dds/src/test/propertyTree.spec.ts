@@ -14,10 +14,13 @@ import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import {
 	IContainer,
 	IFluidCodeDetails,
-	IHostLoader,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
-import { Loader as ContainerLoader } from "@fluidframework/container-loader/internal";
+import {
+	Loader as ContainerLoader,
+	resolveContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
@@ -37,8 +40,8 @@ import {
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
-	createAndAttachContainer,
-	createLoader,
+	createAndAttachContainerUsingLoaderProps,
+	createLoaderProps,
 	createSummarizer,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
@@ -334,15 +337,15 @@ function executePerPropertyTreeType(
 	let sharedPropertyTree1;
 	let sharedPropertyTree2;
 
-	function createLocalLoader(
+	function createLocalLoaderProps(
 		packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
 		localDeltaConnectionServer: ILocalDeltaConnectionServer,
 		localUrlResolver: IUrlResolver,
 		options?: ILoaderOptions,
-	): IHostLoader {
+	): ILoaderProps {
 		const documentServiceFactory = new LocalDocumentServiceFactory(localDeltaConnectionServer);
 
-		return createLoader(
+		return createLoaderProps(
 			packageEntries,
 			documentServiceFactory,
 			localUrlResolver,
@@ -352,27 +355,34 @@ function executePerPropertyTreeType(
 	}
 
 	async function createContainer(): Promise<IContainer> {
-		const loader = createLocalLoader(
+		const loaderProps = createLocalLoaderProps(
 			[[codeDetails, factory]],
 			deltaConnectionServer,
 			urlResolver,
 		);
-		opProcessingController.add(loader);
-		return createAndAttachContainer(
+
+		const containerUsingProps = await createAndAttachContainerUsingLoaderProps(
 			codeDetails,
-			loader,
+			loaderProps,
 			urlResolver.createCreateNewRequest(documentId),
 		);
+		opProcessingController.addContainer(containerUsingProps);
+		return containerUsingProps;
 	}
 
 	async function loadContainer(): Promise<IContainer> {
-		const loader = createLocalLoader(
+		const loaderProps = createLocalLoaderProps(
 			[[codeDetails, factory]],
 			deltaConnectionServer,
 			urlResolver,
 		);
-		opProcessingController.add(loader);
-		return loader.resolve({ url: documentLoadUrl });
+
+		const containerUsingPops = await resolveContainer({
+			request: { url: documentLoadUrl },
+			...loaderProps,
+		});
+		opProcessingController.addContainer(containerUsingPops);
+		return containerUsingPops;
 	}
 
 	describe("Local state", () => {

@@ -45,8 +45,8 @@ export async function loadContainerPaused(
 	loadToSequenceNumber?: number,
 	signal?: AbortSignal,
 ): Promise<IContainer> {
-	const container = await resolveContainer(
-		{
+	const container = await resolveContainer({
+		request: {
 			url: request.url,
 			headers: {
 				...request.headers,
@@ -54,8 +54,8 @@ export async function loadContainerPaused(
 				[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
 			},
 		},
-		loaderProps,
-	);
+		...loaderProps,
+	});
 
 	// Force readonly mode - this will ensure we don't receive an error for the lack of join op
 	container.forceReadonly?.(true);

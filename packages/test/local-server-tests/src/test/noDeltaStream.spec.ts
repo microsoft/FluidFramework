@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { resolveContainer } from "@fluidframework/container-loader/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils/internal";
 import {
@@ -24,8 +25,9 @@ import {
 	LoaderContainerTracker,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
-	createAndAttachContainer,
+	createAndAttachContainerUsingLoaderProps,
 	createLoader,
+	createLoaderProps,
 } from "@fluidframework/test-utils/internal";
 
 describe("No Delta Stream", () => {
@@ -46,30 +48,38 @@ describe("No Delta Stream", () => {
 	let loaderContainerTracker: LoaderContainerTracker;
 
 	async function createContainer(): Promise<IContainer> {
-		const loader = createLoader(
+		const loaderProps = createLoaderProps(
 			[[codeDetails, factory]],
 			new LocalDocumentServiceFactory(deltaConnectionServer),
 			new LocalResolver(),
 		);
-		loaderContainerTracker.add(loader);
-		const container = await createAndAttachContainer(
+
+		const container = await createAndAttachContainerUsingLoaderProps(
 			codeDetails,
-			loader,
+			loaderProps,
 			createLocalResolverCreateNewRequest(documentId),
 		);
+		loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
 	async function loadContainer(storageOnly: boolean, track = true): Promise<IContainer> {
 		const service = new LocalDocumentServiceFactory(deltaConnectionServer, { storageOnly });
-		const loader = createLoader([[codeDetails, factory]], service, new LocalResolver());
-		if (!storageOnly) {
-			loaderContainerTracker.add(loader);
-		}
+		const loaderProps = createLoaderProps(
+			[[codeDetails, factory]],
+			service,
+			new LocalResolver(),
+		);
 
-		const container = await loader.resolve({
-			url: documentLoadUrl,
+		const container = await resolveContainer({
+			request: {
+				url: documentLoadUrl,
+			},
+			...loaderProps,
 		});
+		if (!storageOnly) {
+			loaderContainerTracker.addContainer(container);
+		}
 		await loaderContainerTracker.ensureSynchronized();
 		return container;
 	}

@@ -94,7 +94,6 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			documentServiceFactory: provider.documentServiceFactory,
 			codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
 		});
-		loaderContainerTracker.add(loader);
 		const container = await loader.createDetachedContainer(codeDetails);
 		await container.attach(provider.driver.createCreateNewRequest("containerTest"));
 	});
@@ -111,7 +110,6 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 				props?.codeLoader ??
 				new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
 		});
-		loaderContainerTracker.add(loader);
 
 		return loader.resolve({
 			url: testRequest.url,

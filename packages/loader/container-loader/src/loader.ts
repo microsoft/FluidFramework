@@ -204,6 +204,52 @@ export interface ILoaderProps {
 }
 
 /**
+ * @alpha
+ * @legacy
+ */
+export interface ILoaderResolveContainerProps extends ILoaderProps {
+	/**
+	 * The request to resolve the container.
+	 */
+	request: IRequest;
+
+	/**
+	 * Pending local state to be applied to the container.
+	 */
+	pendingLocalState?: string;
+}
+
+/**
+ * @alpha
+ * @legacy
+ */
+export interface ILoaderCreateDetachedContainerProps extends ILoaderProps {
+	/**
+	 * The code details for the container to be created.
+	 */
+	codeDetails: IFluidCodeDetails;
+
+	canReconnect?: boolean;
+
+	clientDetailsOverride?: IClientDetails;
+}
+
+/**
+ * @alpha
+ * @legacy
+ */
+export interface ILoaderRehydrateDetachedContainerProps extends ILoaderProps {
+	/**
+	 * The snapshot for the container to be loaded from. This snapshot should have been created from a detached container.
+	 */
+	snapshot: string;
+
+	canReconnect?: boolean;
+
+	clientDetailsOverride?: IClientDetails;
+}
+
+/**
  * Services and properties used by and exposed by the loader
  * @legacy
  * @alpha
@@ -439,52 +485,45 @@ export class Loader implements IHostLoader {
  * @alpha
  */
 export async function resolveContainer(
-	request: IRequest,
-	loaderProps: ILoaderProps,
-	pendingLocalState?: string,
+	loaderResolveContainerProps: ILoaderResolveContainerProps,
 ): Promise<IContainer> {
-	const loader = new Loader(loaderProps);
-	return loader.resolve(request, pendingLocalState);
+	const loader = new Loader(loaderResolveContainerProps);
+	return loader.resolve(
+		loaderResolveContainerProps.request,
+		loaderResolveContainerProps.pendingLocalState,
+	);
 }
 
 /**
  * Creates a new container using the specified code details but in an unattached state. While unattached, all
  * updates will only be local until the user explicitly attaches the container to a service provider.
- * @param codeDetails - The code details for the container to be created.
- * @param loaderProps - Services and properties necessary for creating a loader.
- * @param createDetachedProps - Optional properties for creating a detached container.
+ * @param createDetachedContainerProps - Services and properties necessary for creating detached container.
  * @legacy
  * @alpha
  */
 export async function createDetachedContainer(
-	codeDetails: IFluidCodeDetails,
-	loaderProps: ILoaderProps,
-	createDetachedProps?: {
-		canReconnect?: boolean;
-		clientDetailsOverride?: IClientDetails;
-	},
+	createDetachedContainerProps: ILoaderCreateDetachedContainerProps,
 ): Promise<IContainer> {
-	const loader = new Loader(loaderProps);
-	return loader.createDetachedContainer(codeDetails, createDetachedProps);
+	const loader = new Loader(createDetachedContainerProps);
+	return loader.createDetachedContainer(
+		createDetachedContainerProps.codeDetails,
+		createDetachedContainerProps,
+	);
 }
 
 /**
  * Creates a new container using the specified snapshot but in an unattached state. While unattached, all
  * updates will only be local until the user explicitly attaches the container to a service provider.
- * @param snapshot - The snapshot for the container to be loaded from. This snapshot should have been created from a detached container.
- * @param loaderProps - Services and properties necessary for creating a loader.
- * @param createDetachedProps - Optional properties for creating a detached container.
+ * @param rehydrateDetachedContainerProps - Services and properties necessary for rehydrating detached container from a snapshot.
  * @legacy
  * @alpha
  */
 export async function rehydrateDetachedContainerFromSnapshot(
-	snapshot: string,
-	loaderProps: ILoaderProps,
-	createDetachedProps?: {
-		canReconnect?: boolean;
-		clientDetailsOverride?: IClientDetails;
-	},
+	rehydrateDetachedContainerProps: ILoaderRehydrateDetachedContainerProps,
 ): Promise<IContainer> {
-	const loader = new Loader(loaderProps);
-	return loader.rehydrateDetachedContainerFromSnapshot(snapshot, createDetachedProps);
+	const loader = new Loader(rehydrateDetachedContainerProps);
+	return loader.rehydrateDetachedContainerFromSnapshot(
+		rehydrateDetachedContainerProps.snapshot,
+		rehydrateDetachedContainerProps,
+	);
 }
