@@ -704,7 +704,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			!checkout.transaction.inProgress(),
 			0x9af /* A view cannot be rebased while it has a pending transaction */,
 		);
-		assert(checkout.isBranch, "The main branch cannot be rebased onto another branch.");
+		assert(
+			checkout.isBranch,
+			0xa5d /* The main branch cannot be rebased onto another branch. */,
+		);
 		checkout._branch.rebaseOnto(this._branch);
 	}
 
