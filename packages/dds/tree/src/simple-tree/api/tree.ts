@@ -522,10 +522,12 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
 > extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">,
-		Omit<TreeBranch, "events"> {
+		TreeBranch {
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
+
+	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 
 	initialize(content: InsertableField<TSchema>): void;
 
@@ -620,6 +622,16 @@ export interface TreeBranchEvents {
 	schemaChanged(): void;
 
 	/**
+	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
+	 * can use to filter on changes they care about e.g. local vs remote changes.
+	 *
+	 * @param data - information about the change
+	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
+	 * this change is not revertible.
+	 */
+	changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+
+	/**
 	 * Fired when:
 	 * - a local commit is applied outside of a transaction
 	 * - a local transaction is committed
@@ -631,6 +643,9 @@ export interface TreeBranchEvents {
 	 * @param data - information about the commit that was applied
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
+	 *
+	 * @deprecated use the "changed" event instead which behaves the same way but also gets fired for more scenarios, see its doc comment
+	 * for usage details
 	 */
 	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }
@@ -660,15 +675,6 @@ export interface TreeViewEvents {
 	schemaChanged(): void;
 
 	/**
-	 * todo description that won't make new breaking changes
-	 *
-	 * @param data - information about the commit that was applied
-	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
-	 * this commit is not revertible.
-	 */
-	changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
-
-	/**
 	 * Fired when:
 	 * - a local commit is applied outside of a transaction
 	 * - a local transaction is committed
@@ -681,8 +687,8 @@ export interface TreeViewEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 *
-	 * @deprecated use the "changed" event instead which behaves the same way but also gets fired for more scenarios, see its doc comment
-	 * for usage details
+	 * @deprecated use the "changed" event on TreeBranchEvents (alpha) instead which behaves the same way but also gets fired for more
+	 * scenarios, see its doc comment for usage details
 	 */
 	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }

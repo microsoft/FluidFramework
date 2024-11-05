@@ -26,7 +26,8 @@ Kind
 export enum CommitKind {
     Default = 0,
     Redo = 2,
-    Undo = 1
+    Undo = 1,
+    Unknown = 3
 }
 
 // @public @sealed
@@ -580,7 +581,6 @@ export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = I
 
 // @public @sealed
 export interface TreeViewEvents {
-    changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     // @deprecated
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     rootChanged(): void;

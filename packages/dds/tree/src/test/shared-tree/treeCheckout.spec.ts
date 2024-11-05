@@ -47,6 +47,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
+	asTreeViewAlpha,
 	getOrCreateInnerNode,
 	toStoredSchema,
 	type InsertableField,
@@ -1155,7 +1156,7 @@ describe("sharedTreeView", () => {
 
 		itView("disposing of a view also disposes of its revertibles", ({ view, tree }) => {
 			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
+			const viewBranch = asTreeViewAlpha(treeBranch.viewWith(view.config));
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe = viewBranch.events.on("changed", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
@@ -1186,7 +1187,7 @@ describe("sharedTreeView", () => {
 
 		itView("can be reverted after rebasing", ({ view, tree }) => {
 			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
+			const viewBranch = asTreeViewAlpha(treeBranch.viewWith(view.config));
 			viewBranch.root.insertAtStart("A");
 
 			const stacks = createTestUndoRedoStacks(viewBranch.events);

@@ -85,28 +85,14 @@ export interface CheckoutEvents {
 	afterBatch(): void;
 
 	/**
-	 * todo description that won't make new breaking changes
+	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
+	 * can use to filter on changes they care about e.g. local vs remote changes.
 	 *
-	 * @param data - information about the commit that was applied
-	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
-	 * this commit is not revertible.
+	 * @param data - information about the change
+	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
+	 * this change is not revertible.
 	 */
 	changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
-
-	/**
-	 * todo remove completely
-	 * Fired when a revertible change has been made to this view.
-	 *
-	 * Applications which subscribe to this event are expected to revert or discard revertibles they acquire (failure to do so will leak memory).
-	 * The provided revertible is inherently bound to the view that raised the event, calling `revert` won't apply to forked views.
-	 *
-	 * @param revertible - The revertible that can be used to revert the change.
-	 */
-
-	/**
-	 * {@inheritdoc TreeViewEvents.commitApplied}
-	 */
-	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }
 
 /**
@@ -595,6 +581,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						this.events.emit("changed", { isLocal: true, kind }, getRevertible);
 						withinEventContext = false;
 					}
+				} else if (event.type === "replace") {
+					// TODO: figure out how to plumb through commit kind info for remote changes
+					this.events.emit("changed", { isLocal: false, kind: CommitKind.Unknown });
 				}
 			}
 		});

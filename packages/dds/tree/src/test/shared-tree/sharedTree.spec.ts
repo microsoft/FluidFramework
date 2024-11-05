@@ -64,7 +64,7 @@ import {
 	SchemaFactory,
 	toStoredSchema,
 	type TreeFieldFromImplicitField,
-	type TreeView,
+	type TreeViewAlpha,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { brand, fail } from "../../util/index.js";
@@ -1159,7 +1159,7 @@ describe("SharedTree", () => {
 
 			interface Peer extends ConnectionSetter {
 				readonly checkout: TreeCheckout;
-				readonly view: TreeView<typeof schema>;
+				readonly view: TreeViewAlpha<typeof schema>;
 				readonly outerList: TreeFieldFromImplicitField<typeof schema>;
 				readonly innerList: TreeFieldFromImplicitField<typeof innerListSchema>;
 				assertOuterListEquals(expected: readonly (readonly string[])[]): void;
@@ -1473,6 +1473,71 @@ describe("SharedTree", () => {
 
 			unsubscribe1();
 			unsubscribe2();
+		});
+
+		// TODO: move this event test to the tree view tests
+		it("emits a changed event for local edits", () => {
+			const value = "42";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0];
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view1.initialize([]);
+			provider.processMessages();
+
+			let localEdits = 0;
+
+			const unsubscribe = view1.events.on("changed", (metadata) => {
+				if (metadata.isLocal === true) {
+					localEdits++;
+				}
+			});
+
+			// Insert node
+			view1.root.insertAtStart(value);
+			provider.processMessages();
+
+			// Validate insertion
+			assert.deepEqual([...view1.root], [value]);
+
+			assert.equal(localEdits, 1);
+
+			unsubscribe();
+		});
+
+		it("emits a changed event for remote edits", () => {
+			const value = "42";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0];
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view1.initialize([]);
+			provider.processMessages();
+			const tree2 = provider.trees[1];
+			const view2 = tree2.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+
+			let remoteEdits = 0;
+
+			const unsubscribe = view1.events.on("changed", (metadata) => {
+				if (metadata.isLocal !== true) {
+					remoteEdits++;
+				}
+			});
+
+			// Insert node
+			view2.root.insertAtStart(value);
+			provider.processMessages();
+
+			// Validate insertion
+			assert.deepEqual([...view1.root], [value]);
+
+			assert.equal(remoteEdits, 1);
+
+			unsubscribe();
 		});
 	});
 
