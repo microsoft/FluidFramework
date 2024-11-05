@@ -155,7 +155,6 @@ if (response.status === 'sucess') {
 	window.alert(`Something went wrong! response status: ${response.status}, error message: ${response.errorMessage}`);
 }
 
-
 ```
 
 Once the `aiCollab` function call is initiated, an LLM will immediately begin attempting to make changes to your Shared Tree using the provided user prompt, the types of your SharedTree and the provided app guidance. The LLM produces multiple changes, in a loop asynchronously. Meaning, you will immediatley see changes if your UI's render loop is connected to your SharedTree App State.
