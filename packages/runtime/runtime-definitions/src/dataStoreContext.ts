@@ -619,7 +619,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 *
 	 * The `createChildDataStoreSync` method allows for the synchronous creation of a child data store. This is particularly
 	 * useful in scenarios where immediate availability of the child data store is required, such as during the initialization
-	 * of a parent data store.
+	 * of a parent data store, or when creation is in response to synchronous user input.
 	 *
 	 * In order for this function to succeed:
 	 * 1. The parent data store's factory must also be an `IFluidDataStoreRegistry`.
