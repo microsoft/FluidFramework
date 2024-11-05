@@ -113,12 +113,19 @@ describe("setDependencyRange", () => {
 	const repo = loadFluidRepo(testRepoRoot);
 	const main = repo.releaseGroups.get("main" as ReleaseGroupName);
 	assert(main !== undefined);
+	const mainPackages = new Set(main.packages);
 
 	const group2 = repo.releaseGroups.get("group2" as ReleaseGroupName);
 	assert(group2 !== undefined);
+	const group2Packages = new Set(group2.packages);
+
+	const mainWorkspace = repo.workspaces.get("main" as WorkspaceName);
+	assert(mainWorkspace !== undefined);
+	const mainWorkspacePackages = new Set(mainWorkspace.packages);
 
 	const secondWorkspace = repo.workspaces.get("second" as WorkspaceName);
 	assert(secondWorkspace !== undefined);
+	const secondWorkspacePackages = new Set(secondWorkspace.packages);
 
 	afterEach(async () => {
 		await git.checkout(["HEAD", "--", testRepoRoot]);
@@ -128,9 +135,9 @@ describe("setDependencyRange", () => {
 	it("updates the dependency range given release group package dependencies", async () => {
 		const group2Version = semver.parse(group2.version);
 		assert(group2Version !== null);
-		await setDependencyRange(main.packages, group2.packages, group2Version);
+		await setDependencyRange(mainPackages, group2Packages, group2Version);
 		const allCorrect = main.packages
-			.filter((pkg) => group2.packages.some((group2Pkg) => group2Pkg.name === pkg.name))
+			.filter((pkg) => group2Packages.has(pkg))
 			.every((pkg) => pkg.version === group2.version);
 		expect(allCorrect).to.be.true;
 	});
@@ -138,11 +145,10 @@ describe("setDependencyRange", () => {
 	it("updates the dependency range given workspace package dependencies", async () => {
 		const workspace2Version = semver.parse(secondWorkspace.rootPackage.version);
 		assert(workspace2Version !== null);
-		await setDependencyRange(main.packages, secondWorkspace.packages, workspace2Version);
+		await setDependencyRange(mainPackages, secondWorkspacePackages, workspace2Version);
+
 		const allCorrect = main.packages
-			.filter((pkg) =>
-				group2.packages.some((workspace2Pkg) => workspace2Pkg.name === pkg.name),
-			)
+			.filter((pkg) => secondWorkspacePackages.has(pkg))
 			.every((pkg) => pkg.version === secondWorkspace.rootPackage.version);
 		expect(allCorrect).to.be.true;
 	});
@@ -150,10 +156,20 @@ describe("setDependencyRange", () => {
 	it("updates the dependency range to explicit version", async () => {
 		const version = semver.parse("2.0.0");
 		assert(version !== null);
-		await setDependencyRange(main.packages, group2.packages, version);
+		await setDependencyRange(mainPackages, group2Packages, version);
 		const allCorrect = main.packages
-			.filter((pkg) => group2.packages.some((group2Pkg) => group2Pkg.name === pkg.name))
+			.filter((pkg) => group2Packages.has(pkg))
 			.every((pkg) => pkg.version === "2.0.0");
+		expect(allCorrect).to.be.true;
+	});
+
+	it("updates the dependency range given superset workspace package dependencies", async () => {
+		const workspaceVersion = semver.parse(mainWorkspace.rootPackage.version);
+		assert(workspaceVersion !== null);
+		await setDependencyRange(mainPackages, mainWorkspacePackages, workspaceVersion);
+		const allCorrect = main.packages
+			.filter((pkg) => mainWorkspacePackages.has(pkg))
+			.every((pkg) => pkg.version === mainWorkspace.rootPackage.version);
 		expect(allCorrect).to.be.true;
 	});
 });

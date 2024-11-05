@@ -249,11 +249,11 @@ export function getAllDependenciesInRepo(
  * @param dependencyRange - The new version range to set for the packageToUpdate dependencies.
  */
 export async function setDependencyRange(
-	packagesToUpdate: IPackage[],
-	dependencies: IPackage[],
+	packagesToUpdate: Iterable<IPackage>,
+	dependencies: Iterable<IPackage>,
 	dependencyRange: InterdependencyRange,
 ): Promise<void> {
-	const dependencySet = new Set(dependencies.map((d) => d.name));
+	const dependencySet = new Set(Array.from(dependencies, (d) => d.name));
 	// collect the "save" promises to resolve in parallel
 	const savePromises: Promise<void>[] = [];
 
