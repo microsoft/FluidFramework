@@ -60,6 +60,8 @@ export const SystemErrors: Record<string, ISystemError> = {
 	},
 };
 
+const KnownSystemErrorCodes = new Set(Object.keys(SystemErrors));
+
 export class FilesystemError extends Error {
 	public get code() {
 		return this.err.code;
@@ -74,38 +76,56 @@ export class FilesystemError extends Error {
 	}
 }
 
+/**
+ * Check if an error is a recognized FilesystemError (or RedisFsError).
+ *
+ * @param err - An unknown error object
+ * @returns Whether the error object is a FilesystemError (or RedisFsError)
+ */
 export function isFilesystemError(err: unknown): err is FilesystemError {
+	// This also works for RedisFsError which exposes a compatible code property.
 	return (
 		typeof err === "object" &&
 		err !== null &&
 		"code" in err &&
 		typeof err.code === "string" &&
-		"name" in err &&
-		err.name === "FilesystemError"
+		KnownSystemErrorCodes.has(err.code)
 	);
 }
 
-export function throwFileSystemErrorAsNetworkError(err: unknown): never {
-	if (isFilesystemError(err)) {
-		const systemError = SystemErrors[err.code] ?? SystemErrors.UNKNOWN;
-		const error = new NetworkError(
-			systemError.httpStatusCode,
-			// Only use SystemError.description, not the message, to protect against leaking sensitive information.
-			systemError.description,
-			systemError.httpStatusCode === 500,
-			undefined /* isFatal */,
-			undefined /* retryAfterMs */,
-			"Gitrest filesystem error",
-		);
-		throw error;
-	}
-	throw err;
+/**
+ * If the error is a FilesystemError, throw it as a NetworkError with the appropriate status code.
+ * Otherwise, rethrow the error as-is.
+ *
+ * @param err - An unknown error object
+ */
+export function throwFileSystemErrorAsNetworkError(err: FilesystemError): never {
+	const systemError = SystemErrors[err.code] ?? SystemErrors.UNKNOWN;
+	const error = new NetworkError(
+		systemError.httpStatusCode,
+		// Only use SystemError.description, not the message, to protect against leaking sensitive information.
+		systemError.description,
+		systemError.httpStatusCode === 500,
+		undefined /* isFatal */,
+		undefined /* retryAfterMs */,
+		"Gitrest filesystem error",
+	);
+	throw error;
 }
 
 function isFileHandle(filepath: PathLike | FileHandle): filepath is FileHandle {
 	return typeof filepath !== "string" && !Buffer.isBuffer(filepath) && "fd" in filepath;
 }
 
+/**
+ * Convert a PathLike or FileHandle to a string path.
+ * @remarks
+ * This is useful for logging and debugging.
+ * If the input is a FileHandle, the path is unknown and a generic message is returned, rather than using readLink.
+ *
+ * @param filepath - A PathLike or FileHandle
+ * @returns The string representation of the path
+ */
 export function filepathToString(filepath: PathLike | FileHandle): string {
 	if (isFileHandle(filepath)) {
 		return "Unknown file handle path";
