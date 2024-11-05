@@ -245,7 +245,10 @@ export const TreeAlpha: {
 			return undefined;
 		}
 		const view = kernel.anchorNode.anchorSet.slots.get(ViewSlot);
-		assert(view instanceof SchematizingSimpleTreeView, "Unexpected view implementation");
+		assert(
+			view instanceof SchematizingSimpleTreeView,
+			0xa5c /* Unexpected view implementation */,
+		);
 		return view;
 	},
 

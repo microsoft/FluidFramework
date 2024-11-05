@@ -49,9 +49,9 @@ export type PresenceExtensionInterface = Required<
  */
 export interface ClientConnectionManager {
 	/**
-	 * Remove the current client connection id from the corresponding disconnected attendee.
+	 * Remove the current client connection ID from the corresponding disconnected attendee.
 	 *
-	 * @param clientConnectionId - The current client connection id to be removed.
+	 * @param clientConnectionId - The current client connection ID to be removed.
 	 */
 	removeClientConnectionId(clientConnectionId: ClientConnectionId): void;
 }
