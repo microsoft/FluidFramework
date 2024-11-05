@@ -589,7 +589,12 @@ describeCompat(
 			assert(ddsTree.tree["3"].type === SummaryType.Blob, "Blob 3 should be a blob");
 		});
 
-		it("can create summary handles for trees in DDSes that do not change", async () => {
+		it("can create summary handles for trees in DDSes that do not change", async function () {
+			// Skip this test for standard r11s as its summarization timing is flaky.
+			// This test is covering client logic and the coverage from other drivers/endpoints is sufficient.
+			if (provider.driver.type === "r11s" && provider.driver.endpointName !== "frs") {
+				this.skip();
+			}
 			const container = await createContainer();
 			const datastore = (await container.getEntryPoint()) as ITestFluidObject;
 			const dds = await datastore.getSharedObject<TestIncrementalSummaryTreeDDS>(

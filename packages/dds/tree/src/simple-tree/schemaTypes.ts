@@ -13,6 +13,9 @@ import {
 	brand,
 	isReadonlyArray,
 	type UnionToIntersection,
+	compareSets,
+	type requireTrue,
+	type areOnlyKeys,
 } from "../util/index.js";
 import type {
 	Unhydrated,
@@ -378,6 +381,87 @@ export function normalizeAllowedTypes(
 	return normalized;
 }
 
+/**
+ * Returns true if the given {@link ImplicitFieldSchema} are equivalent, otherwise false.
+ * @remarks Two ImplicitFieldSchema are considered equivalent if all of the following are true:
+ * 1. They have the same {@link FieldKind | kinds}.
+ * 2. They have {@link areFieldPropsEqual | equivalent FieldProps}.
+ * 3. They have the same exact set of allowed types. The allowed types must be (respectively) reference equal.
+ *
+ * For example, comparing an ImplicitFieldSchema that is a {@link TreeNodeSchema} to an ImplicitFieldSchema that is a {@link FieldSchema}
+ * will return true if they are the same kind, the FieldSchema has exactly one allowed type (the TreeNodeSchema), and they have equivalent FieldProps.
+ */
+export function areImplicitFieldSchemaEqual(
+	a: ImplicitFieldSchema,
+	b: ImplicitFieldSchema,
+): boolean {
+	return areFieldSchemaEqual(normalizeFieldSchema(a), normalizeFieldSchema(b));
+}
+
+/**
+ * Returns true if the given {@link FieldSchema} are equivalent, otherwise false.
+ * @remarks Two FieldSchema are considered equivalent if all of the following are true:
+ * 1. They have the same {@link FieldKind | kinds}.
+ * 2. They have {@link areFieldPropsEqual | equivalent FieldProps}.
+ * 3. They have the same exact set of allowed types. The allowed types must be reference equal.
+ */
+export function areFieldSchemaEqual(a: FieldSchema, b: FieldSchema): boolean {
+	if (a === b) {
+		return true;
+	}
+
+	if (a.kind !== b.kind) {
+		return false;
+	}
+
+	if (!areFieldPropsEqual(a.props, b.props)) {
+		return false;
+	}
+
+	return compareSets({ a: a.allowedTypeSet, b: b.allowedTypeSet });
+}
+
+/**
+ * Returns true if the given {@link FieldProps} are equivalent, otherwise false.
+ * @remarks FieldProps are considered equivalent if their keys and default providers are reference equal, and their metadata are {@link areMetadataEqual | equivalent}.
+ */
+function areFieldPropsEqual(a: FieldProps | undefined, b: FieldProps | undefined): boolean {
+	// If any new fields are added to FieldProps, this check will stop compiling as a reminder that this function needs to be updated.
+	type _keys = requireTrue<areOnlyKeys<FieldProps, "key" | "defaultProvider" | "metadata">>;
+
+	if (a === b) {
+		return true;
+	}
+
+	if (a?.key !== b?.key || a?.defaultProvider !== b?.defaultProvider) {
+		return false;
+	}
+
+	if (!areMetadataEqual(a?.metadata, b?.metadata)) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Returns true if the given {@link FieldSchemaMetadata} are equivalent, otherwise false.
+ * @remarks FieldSchemaMetadata are considered equivalent if their custom data and descriptions are (respectively) reference equal.
+ */
+function areMetadataEqual(
+	a: FieldSchemaMetadata | undefined,
+	b: FieldSchemaMetadata | undefined,
+): boolean {
+	// If any new fields are added to FieldSchemaMetadata, this check will stop compiling as a reminder that this function needs to be updated.
+	type _keys = requireTrue<areOnlyKeys<FieldSchemaMetadata, "custom" | "description">>;
+
+	if (a === b) {
+		return true;
+	}
+
+	return a?.custom === b?.custom && a?.description === b?.description;
+}
+
 function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
 	const evaluatedSchema = isLazy(value) ? value() : value;
 	if (evaluatedSchema === undefined) {
@@ -491,6 +575,31 @@ export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownS
 	: [TSchema] extends [UnsafeUnknownSchema]
 		? InsertableContent | undefined
 		: never;
+
+/**
+ * Content which could be read from a field within a tree.
+ *
+ * @remarks
+ * Extended version of {@link TreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
+ * Since reading from fields with non-exact schema is still safe, this is only useful (compared to {@link TreeFieldFromImplicitField}) when the schema is also used as input and thus allows {@link (UnsafeUnknownSchema:type)}
+ * for use
+ * @system @alpha
+ */
+export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> =
+	TreeFieldFromImplicitField<ReadSchema<TSchema>>;
+
+/**
+ * Adapter to remove {@link (UnsafeUnknownSchema:type)} from a schema type so it can be used with types for generating APIs for reading data.
+ *
+ * @remarks
+ * Since reading with non-exact schema is still safe, this is mainly useful when the schema is also used as input and thus allows {@link (UnsafeUnknownSchema:type)}.
+ * @system @alpha
+ */
+export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
+	TSchema,
+] extends [ImplicitFieldSchema]
+	? TSchema
+	: ImplicitFieldSchema;
 
 /**
  * Suitable for output.

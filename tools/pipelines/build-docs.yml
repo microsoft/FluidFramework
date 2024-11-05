@@ -64,18 +64,11 @@ variables:
     value: true
   - name: isMain
     value: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
-  - name: shouldDeploy
-    value: ${{ or(
-      eq(parameters.deployOverride, 'force'),
-      and(eq(variables.isMain, true), eq(parameters.deployOverride, 'default'))
-      )}}
   - name: shouldRetainGuardianAssets
     value: ${{ or(
       eq(parameters.guardianAssetRetentionOverride, 'force'),
       and(eq(variables.isMain, true), eq(parameters.guardianAssetRetentionOverride, 'default'))
       )}}
-  - name: arrow.releasedtoproduction
-    value: eq(variables.shouldDeploy, true)
   - name: deploymentToken
     ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
       value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
@@ -121,7 +114,6 @@ stages:
             echo latestPipeline ${{ variables.latestPipeline }}
             echo n1Pipeline ${{ variables.n1Pipeline }}
             echo repoToTrigger ${{ variables.repoToTrigger }}
-            echo shouldDeploy ${{ variables.shouldDeploy }}
             echo shouldRetainGuardianAssets ${{ variables.shouldRetainGuardianAssets }}
             echo publishGuardianBaselines ${{ variables.publishGuardianBaselines }}
           displayName: Show Variables
@@ -339,7 +331,14 @@ stages:
   displayName: 'Deploy website'
   pool: Small
   dependsOn: ['build', 'guardian', 'check_branch_version']
-  condition: eq(dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'], 'true')
+  variables:
+    deployOverrideVar: ${{ parameters.deployOverride }}
+  condition: and(
+    not(eq(variables['deployOverrideVar'], 'skip')),
+    or(
+      eq(dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'], 'true'),
+      eq(variables['deployOverrideVar'], 'force')
+    ))
   jobs:
     - job: deploy_site
       displayName: 'Deploy website'
@@ -357,7 +356,6 @@ stages:
 
         - task: AzureStaticWebApp@0
           displayName: 'Deploy website to ASWA'
-          condition: eq(variables.shouldDeploy, true)
           inputs:
             skip_app_build: true # site was built in previous stage
             skip_api_build: true # api is written in js, no build needed
