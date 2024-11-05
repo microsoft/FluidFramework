@@ -13,6 +13,9 @@ export {
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	type TreeViewAlpha,
+	type TreeBranch,
+	type TreeBranchEvents,
+	asTreeViewAlpha,
 } from "./tree.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export type {

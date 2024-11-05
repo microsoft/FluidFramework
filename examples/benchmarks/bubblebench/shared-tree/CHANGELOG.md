@@ -1,5 +1,9 @@
 # @fluid-example/bubblebench-simple-tree
 
+## 2.5.0
+
+Dependency updates only.
+
 ## 2.4.0
 
 Dependency updates only.
