@@ -97,8 +97,7 @@ describe("separate-container migration", () => {
 			await page.waitForFunction(() => window["fluidStarted"]);
 		});
 
-		// TODO:AB#14341: Investigate flakiness and re-enable.
-		it.skip("migrates after summarizer has connected", async () => {
+		it("migrates after summarizer has connected", async () => {
 			// Validate the migration status shows "one" initially
 			await Promise.all([
 				page.waitForSelector("#sbs-left .migration-status"),
@@ -155,19 +154,24 @@ describe("separate-container migration", () => {
 			});
 			await expect(migratorsLength).toEqual(2);
 
+			await expect(page).toClick("button", { text: '"two"' });
+
 			// Get a promise that will resolve when both sides have finished migration
-			const migrationP = page.evaluate(() => {
+			await page.evaluate(() => {
 				const migrationPs = (window["migrators"] as IMigrator[]).map((migrator) => {
 					return new Promise<void>((resolve) => {
+						// Catch both cases:
+						// 1. Migration has already happened after clicking the button but before this
+						//    page.evaluate and so the version is "two"
+						// 2. Migration has not happened yet, so we need to wait for the "migrated" event
+						if (migrator.currentModel.version === "two") {
+							resolve();
+						}
 						migrator.events.once("migrated", resolve);
 					});
 				});
 				return Promise.all(migrationPs);
 			});
-
-			await expect(page).toClick("button", { text: '"two"' });
-
-			await migrationP;
 
 			// Validate the migration status shows "two" after the migration
 			const leftContainsTwo = await page.evaluate(() => {
