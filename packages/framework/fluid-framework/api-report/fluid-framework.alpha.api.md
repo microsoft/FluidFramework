@@ -1100,6 +1100,7 @@ export interface TreeBranch extends IDisposable {
 
 // @alpha @sealed
 export interface TreeBranchEvents {
+    changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     schemaChanged(): void;
 }
@@ -1248,7 +1249,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 // @alpha @sealed
-export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">, Omit<TreeBranch, "events"> {
+export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">, TreeBranch {
+    // (undocumented)
+    readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
     fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
     // (undocumented)
