@@ -131,7 +131,6 @@ export function filepathToString(filepath: PathLike | FileHandle): string {
 		return "Unknown file handle path";
 	}
 	return filepath.toString();
-
 }
 
 /**

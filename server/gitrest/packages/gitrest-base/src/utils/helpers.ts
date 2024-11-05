@@ -145,9 +145,7 @@ export async function persistLatestFullSummaryInStorage(
 			"Failed to persist latest full summary in storage",
 			error,
 		);
-		if (
-			isFilesystemError(error)
-		) {
+		if (isFilesystemError(error)) {
 			throwFileSystemErrorAsNetworkError(error);
 		}
 		throw error;

@@ -90,11 +90,9 @@ export abstract class FsPromisesBase implements IFileSystemPromises {
 		) {
 			throw new FilesystemError(
 				SystemErrors.EFBIG,
-				`Attempted write size (${sizeof(
-					data,
-				)} bytes) to ${filepathToString(filepath)} exceeds limit (${
-					this.maxFileSizeBytes
-				} bytes).`,
+				`Attempted write size (${sizeof(data)} bytes) to ${filepathToString(
+					filepath,
+				)} exceeds limit (${this.maxFileSizeBytes} bytes).`,
 			);
 		}
 		return this.writeFileCore(filepath, data, options);
