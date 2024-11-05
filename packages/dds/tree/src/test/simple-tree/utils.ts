@@ -36,7 +36,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import { mintRevisionTag, testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import type { TreeCheckout } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules

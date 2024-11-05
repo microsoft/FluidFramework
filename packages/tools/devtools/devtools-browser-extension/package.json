@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.5.0",
+	"version": "2.10.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -139,7 +139,7 @@
 		"proxyquire": "^2.1.3",
 		"puppeteer": "^23.6.0",
 		"rimraf": "^4.4.0",
-		"sinon": "^17.0.1",
+		"sinon": "^18.0.1",
 		"sinon-chrome": "^3.0.1",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.5.1",

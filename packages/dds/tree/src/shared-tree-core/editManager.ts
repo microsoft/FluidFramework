@@ -320,13 +320,23 @@ export class EditManager<
 	}
 
 	/**
+	 * Return the sequence number at which the given commit was sequenced on the trunk, or undefined if the commit is not part of the trunk.
+	 */
+	public getSequenceNumber(trunkCommit: GraphCommit<TChangeset>): SeqNumber | undefined {
+		return this.trunkMetadata.get(trunkCommit.revision)?.sequenceId.sequenceNumber;
+	}
+
+	/**
 	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window,
 	 * if they are not retained by revertibles or local branches.
 	 * @param minimumSequenceNumber - the sequence number of the newest commit that all peers (including this one) have received and applied to their trunks.
 	 *
 	 * @remarks If there are more than one commit with the same sequence number we assume this refers to the last commit in the batch.
 	 */
-	public advanceMinimumSequenceNumber(minimumSequenceNumber: SeqNumber): void {
+	public advanceMinimumSequenceNumber(
+		minimumSequenceNumber: SeqNumber,
+		trimTrunk = true,
+	): void {
 		if (minimumSequenceNumber === this.minimumSequenceNumber) {
 			return;
 		}
@@ -337,16 +347,17 @@ export class EditManager<
 		);
 
 		this.minimumSequenceNumber = minimumSequenceNumber;
-		this.trimTrunk();
+		if (trimTrunk) {
+			this.trimTrunk();
+		}
 	}
 
 	/**
 	 * Examines the latest known minimum sequence number and the trunk bases of any registered branches to determine
 	 * if any commits on the trunk are unreferenced and unneeded for future computation; those found are evicted from the trunk.
-	 * @returns the number of commits that were removed from the trunk
 	 */
 	private trimTrunk(): void {
-		/** The sequence id of the oldest commit on the trunk that will be retained */
+		/** The sequence id of the most recent commit on the trunk that will be trimmed */
 		let trunkTailSequenceId: SequenceId = {
 			sequenceNumber: this.minimumSequenceNumber,
 			indexInBatch: Number.POSITIVE_INFINITY,
@@ -401,24 +412,40 @@ export class EditManager<
 			this.trunkBase = newTrunkBase;
 
 			// Update any state that is derived from trunk commits
-			this.sequenceMap.editRange(
-				minimumPossibleSequenceId,
-				sequenceId,
-				true,
-				(s, { revision }) => {
-					// Cleanup look-aside data for each evicted commit
-					this.trunkMetadata.delete(revision);
-					// Delete all evicted commits from `sequenceMap` except for the latest one, which is the new `trunkBase`
-					if (equalSequenceIds(s, sequenceId)) {
-						assert(
-							revision === newTrunkBase.revision,
-							0x729 /* Expected last evicted commit to be new trunk base */,
-						);
-					} else {
-						return { delete: true };
-					}
-				},
-			);
+			this.sequenceMap.editRange(minimumPossibleSequenceId, sequenceId, true, (s, commit) => {
+				// Cleanup look-aside data for each evicted commit
+				this.trunkMetadata.delete(commit.revision);
+				// Delete all evicted commits from `sequenceMap` except for the latest one, which is the new `trunkBase`
+				if (equalSequenceIds(s, sequenceId)) {
+					assert(
+						commit === newTrunkBase,
+						0x729 /* Expected last evicted commit to be new trunk base */,
+					);
+				} else {
+					Reflect.defineProperty(commit, "change", {
+						get: () =>
+							assert(
+								false,
+								0xa5e /* Should not access 'change' property of an evicted commit */,
+							),
+					});
+					Reflect.defineProperty(commit, "revision", {
+						get: () =>
+							assert(
+								false,
+								0xa5f /* Should not access 'revision' property of an evicted commit */,
+							),
+					});
+					Reflect.defineProperty(commit, "parent", {
+						get: () =>
+							assert(
+								false,
+								0xa60 /* Should not access 'parent' property of an evicted commit */,
+							),
+					});
+					return { delete: true };
+				}
+			});
 
 			const trunkSize = getPathFromBase(this.trunk.getHead(), this.trunkBase).length;
 			assert(
@@ -457,6 +484,9 @@ export class EditManager<
 			0x428 /* Clients with local changes cannot be used to generate summaries */,
 		);
 
+		// Trimming the trunk before serializing ensures that the trunk data in the summary is as minimal as possible.
+		this.trimTrunk();
+
 		let oldestCommitInCollabWindow = this.getClosestTrunkCommit(this.minimumSequenceNumber)[1];
 		assert(
 			oldestCommitInCollabWindow.parent !== undefined ||
@@ -470,7 +500,10 @@ export class EditManager<
 
 		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map(
 			(c) => {
-				assert(c !== this.trunkBase, "Serialized trunk should not include the trunk base");
+				assert(
+					c !== this.trunkBase,
+					0xa61 /* Serialized trunk should not include the trunk base */,
+				);
 				const metadata =
 					this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
 				const commit: SequencedCommit<TChangeset> = {
@@ -501,7 +534,7 @@ export class EditManager<
 						commits: branchPath.map((c) => {
 							assert(
 								c !== this.trunkBase,
-								"Serialized branch should not include the trunk base",
+								0xa62 /* Serialized branch should not include the trunk base */,
 							);
 							const commit: Commit<TChangeset> = {
 								change: c.change,
@@ -567,8 +600,16 @@ export class EditManager<
 		}
 	}
 
-	private getCommitSequenceId(commit: GraphCommit<TChangeset>): SequenceId {
-		return this.trunkMetadata.get(commit.revision)?.sequenceId ?? minimumPossibleSequenceId;
+	private getCommitSequenceId(trunkCommitOrTrunkBase: GraphCommit<TChangeset>): SequenceId {
+		const id = this.trunkMetadata.get(trunkCommitOrTrunkBase.revision)?.sequenceId;
+		if (id === undefined) {
+			assert(
+				trunkCommitOrTrunkBase === this.trunkBase,
+				0xa63 /* Commit must be either be on the trunk or be the trunk base */,
+			);
+			return minimumPossibleSequenceId;
+		}
+		return id;
 	}
 
 	public getTrunkChanges(): readonly TChangeset[] {
@@ -618,6 +659,12 @@ export class EditManager<
 		assert(
 			sequenceNumber > this.minimumSequenceNumber,
 			0x713 /* Expected change sequence number to exceed the last known minimum sequence number */,
+		);
+
+		assert(
+			sequenceNumber >= // This is ">=", not ">" because changes in the same batch will have the same sequence number
+				(this.sequenceMap.maxKey()?.sequenceNumber ?? minimumPossibleSequenceNumber),
+			0xa64 /* Attempted to sequence change with an outdated sequence number */,
 		);
 
 		const commitsSequenceNumber = this.getBatch(sequenceNumber);

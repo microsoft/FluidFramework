@@ -18,7 +18,7 @@ module.exports = {
 	out: "docs",
 	readme: "./README.md",
 	mergeReadme: true,
-	projectDocuments: ["./src/docs/cli.md"],
+	// projectDocuments: ["./src/docs/cli.md"],
 	defaultCategory: "API",
 	categorizeByGroup: true,
 	navigation: {

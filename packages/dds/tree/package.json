@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.5.0",
+	"version": "2.10.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -260,6 +260,15 @@
 				"forwardCompat": false
 			},
 			"TypeAlias_InternalTypes_InsertableTreeFieldFromImplicitFieldUnsafe": {
+				"forwardCompat": false
+			},
+			"Interface_ITreeViewConfiguration": {
+				"forwardCompat": false
+			},
+			"TypeAlias_ImplicitAllowedTypes": {
+				"forwardCompat": false
+			},
+			"TypeAlias_ImplicitFieldSchema": {
 				"forwardCompat": false
 			}
 		},

@@ -70,7 +70,7 @@ import {
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
