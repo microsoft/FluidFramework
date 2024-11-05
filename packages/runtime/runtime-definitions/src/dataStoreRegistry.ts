@@ -61,6 +61,15 @@ export interface IProvideFluidDataStoreRegistry {
  * @alpha
  */
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
+	/**
+	 * Retrieves a data store registry entry by its identifier.
+	 *
+	 * The `get` function plays a crucial role in the lifecycle of a data store by providing access to the registry entry
+	 * associated with a given identifier. This registry entry can then be used to create or load a data store.
+	 *
+	 * @param name - The unique identifier of the data store registry entry to retrieve.
+	 * @returns A promise that resolves to the data store registry entry, or the entry itself, or undefined if not found.
+	 */
 	get(
 		name: string,
 	):

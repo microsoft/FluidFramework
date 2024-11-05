@@ -615,15 +615,22 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
 	/**
-	 * This function creates a detached child datastore synchronously.
-	 * In order for this function to succeed:
-	 * 1. This datastore's factory must also be a IFluidDataStoreRegistry,
-	 * 2. This datastore's registry must include the same instance as the provided child factory.
-	 * 3. The datastore's registry must synchronously provide the child factory.
-	 * These invariant's ensure that the child datastore can also be created by a remote client
-	 * running the same code as this client.
+	 * This function creates a detached child data store synchronously.
 	 *
-	 * @param childFactory - The factory of the datastore to be created.
+	 * The `createChildDataStoreSync` method allows for the synchronous creation of a child data store. This is particularly
+	 * useful in scenarios where immediate availability of the child data store is required, such as during the initialization
+	 * of a parent data store.
+	 *
+	 * In order for this function to succeed:
+	 * 1. The parent data store's factory must also be an `IFluidDataStoreRegistry`.
+	 * 2. The parent data store's registry must include the same instance as the provided child factory.
+	 * 3. The parent data store's registry must synchronously provide the child factory.
+	 * 4. The child factory must implement the `createDataStore` method.
+	 *
+	 * These invariants ensure that the child data store can also be created by a remote client running the same code as this client.
+	 *
+	 * @param childFactory - The factory of the data store to be created.
+	 * @returns The created data store channel.
 	 */
 	createChildDataStoreSync?<T extends IFluidDataStoreFactory>(
 		childFactory: T,

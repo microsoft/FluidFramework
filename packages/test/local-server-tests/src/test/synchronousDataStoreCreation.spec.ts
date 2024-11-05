@@ -98,7 +98,9 @@ class ParentDataStore {
 	public static create(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
 		const root = SharedMap.create(runtime, "root");
 		root.bindToContext();
-		return new ParentDataStore(context, runtime, root);
+		const parent = new ParentDataStore(context, runtime, root);
+		root.set("parentCreation", parent.createChild().handle);
+		return parent;
 	}
 
 	public static async load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
@@ -271,6 +273,7 @@ describe("Scenario Test", () => {
 			);
 
 			for (const childKey of [
+				"parentCreation",
 				"detachedChildInstance",
 				"attachingChildInstance",
 				"attachedChildInstance",
