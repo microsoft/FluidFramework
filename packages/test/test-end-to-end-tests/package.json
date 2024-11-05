@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.5.0",
+	"version": "2.10.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -125,7 +125,7 @@
 		"cross-env": "^7.0.3",
 		"mocha": "^10.2.0",
 		"semver": "^7.5.3",
-		"sinon": "^17.0.1",
+		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^5.0.0",
 		"uuid": "^9.0.0"

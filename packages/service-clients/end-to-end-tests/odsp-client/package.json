@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/odsp-end-to-end-tests",
-	"version": "2.5.0",
+	"version": "2.10.0",
 	"description": "Odsp client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -74,7 +74,7 @@
 		"mocha": "^10.2.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
-		"sinon": "^17.0.1",
+		"sinon": "^18.0.1",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
