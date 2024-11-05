@@ -1,5 +1,23 @@
 # @fluidframework/container-runtime
 
+## 2.5.0
+
+### Minor Changes
+
+-   Signal telemetry events details ([#22804](https://github.com/microsoft/FluidFramework/pull/22804)) [e6566f6358](https://github.com/microsoft/FluidFramework/commit/e6566f6358551b5e579637de6c111d42281f7716)
+
+    Properties of `eventName`s beginning "fluid:telemetry:ContainerRuntime:Signal" are updated to use `details` for all event specific information. Additional per-event changes:
+
+    -   SignalLatency: shorten names now that data is packed into details. Renames:
+        -   `signalsSent` -> `sent`
+        -   `signalsLost` -> `lost`
+        -   `outOfOrderSignals` -> `outOfOrder`
+    -   SignalLost/SignalOutOfOrder: rename `trackingSequenceNumber` to `expectedSequenceNumber`
+    -   SignalOutOfOrder: rename `type` to `contentsType` and only emit it some of the time
+
+    > [!IMPORTANT]
+    > Reminder: the naming and structure of telemetry events are not considered a part of the public API and may change at any time.
+
 ## 2.4.0
 
 ### Minor Changes

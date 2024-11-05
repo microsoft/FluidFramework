@@ -26,11 +26,11 @@ const fluidScopes = [
 /**
  * The settings in this file configure the repo layout used by build-tools, such as fluid-build and flub.
  *
- * @type {import("@fluid-tools/build-infrastructure").IFluidRepoLayout}
+ * @type {import("@fluid-tools/build-infrastructure").IBuildProjectConfig}
  */
 module.exports = {
 	version: 1,
-	repoLayout: {
+	buildProject: {
 		workspaces: {
 			"client": {
 				directory: ".",

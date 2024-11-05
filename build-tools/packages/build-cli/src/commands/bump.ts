@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import { confirm } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
-import inquirer from "inquirer";
 import * as semver from "semver";
 
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
@@ -230,14 +231,10 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		// If a bump type was provided, ask the user to confirm. This is skipped when --exact is used.
 		if (bumpType !== undefined) {
-			const confirmIntegratedQuestion: inquirer.ConfirmQuestion = {
-				type: "confirm",
-				name: "proceed",
+			const proceed = await confirm({
 				message: `Proceed with the bump?`,
-			};
-
-			const answers = await inquirer.prompt(confirmIntegratedQuestion);
-			if (answers.proceed !== true) {
+			});
+			if (proceed !== true) {
 				this.info(`Cancelled.`);
 				this.exit(0);
 			}

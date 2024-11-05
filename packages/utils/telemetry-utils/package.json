@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/telemetry-utils",
-	"version": "2.5.0",
+	"version": "2.10.0",
 	"description": "Collection of telemetry relates utilities for Fluid",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -149,7 +149,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^17.0.1",
+		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

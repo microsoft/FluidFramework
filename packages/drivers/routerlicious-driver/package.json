@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/routerlicious-driver",
-	"version": "2.5.0",
+	"version": "2.10.0",
 	"description": "Socket.IO + Git implementation of Fluid service API",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -86,7 +86,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
+		"test:mocha": "npm run test:mocha:cjs && echo \"ADO #7404 - ESM modules cannot be stubbed - npm run test:mocha:esm\"",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
@@ -157,7 +157,7 @@
 		"nock": "^13.3.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^17.0.1",
+		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
