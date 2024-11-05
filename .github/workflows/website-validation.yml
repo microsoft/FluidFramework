@@ -64,7 +64,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    name: 🔗 Broken Link Check
+    name: Tests
     needs: build_site
     steps:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
