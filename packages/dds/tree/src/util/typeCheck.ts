@@ -190,3 +190,16 @@ export type isAny<T> = boolean extends (T extends never ? true : false) ? true :
  * `type _check = requireAssignableTo<T, Expected>;`
  */
 export type requireAssignableTo<_A extends B, B> = true;
+
+/**
+ * Returns a type parameter that is true iff the `Keys` union includes all the keys of `T`.
+ * @example
+ * ```ts
+ * type _check = requireTrue<areOnlyKeys<{a: number, b: number}, 'a' | 'b'>> // true`
+ * type _check = requireTrue<areOnlyKeys<{a: number, b: number}, 'a'>> // false`
+ * ```
+ */
+export type areOnlyKeys<T, Keys extends keyof T> = isAssignableTo<
+	Record<string, never>,
+	Omit<T, Keys>
+>;

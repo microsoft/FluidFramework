@@ -52,6 +52,7 @@ export type {
 	requireFalse,
 	requireTrue,
 	requireAssignableTo,
+	areOnlyKeys,
 } from "./typeCheck.js";
 export { StackyIterator } from "./stackyIterator.js";
 export {
