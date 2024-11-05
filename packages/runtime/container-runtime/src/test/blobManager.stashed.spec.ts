@@ -105,6 +105,12 @@ describe("BlobManager.stashed", () => {
 		const pendingBlobs = await pendingBlobsP;
 		const blobManager2 = createBlobManager({
 			stashedBlobs: pendingBlobs,
+			getStorage: () =>
+				failProxy<IDocumentStorageService>({
+					createBlob: async () => {
+						return createResponse.promise;
+					},
+				}),
 		});
 		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
 	});
