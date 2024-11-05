@@ -3,21 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-import chalk from "chalk";
-import fs from "fs-extra";
-
-import DocsVersions from "../config/docs-versions.mjs";
-import { renderApiDocumentation } from "./api-markdown-documenter/index.mjs";
-
 /*
  * This index script Generates API documentation for all API versions specified in
  * `api-docs-versions.mjs`.
  */
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import chalk from "chalk";
+
+import DocsVersions from "../config/docs-versions.mjs";
+import { renderApiDocumentation } from "./api-markdown-documenter/index.mjs";
+
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const includeLocalApiDocs = process.env.LOCAL_API_DOCS === "true";
 
 // Get versions from config
 const versionConfigs = {};
@@ -26,8 +27,7 @@ for (const versionConfig of DocsVersions.otherVersions) {
 	versionConfigs[versionConfig.version] = versionConfig.apiDocs;
 }
 
-// Only include the local API docs version in dev mode
-if (process.env.NODE_ENV === "development") {
+if (includeLocalApiDocs) {
 	versionConfigs[DocsVersions.local.version] = DocsVersions.local.apiDocs;
 }
 
@@ -47,14 +47,6 @@ try {
 			);
 		}),
 	);
-
-	// Write build manifest file
-	const versions = Object.keys(versionConfigs);
-	const manifest = {
-		apiDocsVersions: versions,
-	};
-	const manifestFilePath = path.join(dirname, "..", "api-docs-build-manifest.json");
-	await fs.writeFile(manifestFilePath, JSON.stringify(manifest));
 
 	console.log(chalk.green("API docs generated successfully!"));
 	process.exit(0);

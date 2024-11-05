@@ -68,11 +68,16 @@ You will still need to build the API documentation first.
 
 ### Local API docs build
 
-To include the repo-local API docs in the build, first build the code from the root of the repo, then run `build:dev` or `build:generate-content:dev` from this directory.
-This will generate a "local" docs version (in addition to the production versions), which strictly includes API documentation generated from the local build artifacts.
-So long as the API documentation was generated in this manner, those docs will be viewable regardless of how to run Docusaurus (`npm start` or `npm run serve`).
+To include repo-local API documentation when building the site locally, you will first need to do the following:
 
-To remove the local docs view, simply run `npm run clean` and re-run the build without the `:dev` postfix.
+1. Build the code from the root of the repo.
+2. Create a `.env` file in this directory with the following contents:
+    ```
+    LOCAL_API_DOCS=true
+    ```
+
+So long as the `LOCAL_API_DOCS` environment variable is set to `true`, local API documentation will be included when building the site.
+To remove the local API docs, simply remove the above variable or set it to `false`, `npm run clean` and rebuild as needed.
 
 ## Docs Versioning
 
@@ -291,10 +296,8 @@ The following npm scripts are supported in this directory:
 |--------|-------------|
 | `build` | Build the site, including API documentation. |
 | `build:api-documentation` | Download API model artifacts and generate API documentation. |
-| `build:api-documentation:dev` | Download API model artifacts and generate API documentation (including the repo-local API model). |
-| `build:dev` | Build the site, including API documentation (and including API documentation for the repo-local API model). |
+| `build:docusaurus` | `docusaurus build` |
 | `build:generate-content` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
-| `build:generate-content:dev` | Generate site content (including the repo-local API model). |
 | `build:markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
 | `build:site` | Build the website with Docusaurus. |
 | `check-links` | Run link validation on the website. |
@@ -307,8 +310,8 @@ The following npm scripts are supported in this directory:
 | `eslint` | Run `eslint`. |
 | `eslint:fix` | Run `eslint` with auto-fix enabled. |
 | `format` | Fix formatting issues with `prettier`. |
-| `gen-docusaurus` | Pre-Docusaurus build step. TODO |
 | `generate-api-documentation` | Generate API documentation from downloaded API model artifacts. |
+| `generate-versions` | `dotenv -- node ./infra/generate-versions.mjs` |
 | `lint` | Check for linter violations. |
 | `lint:fix` | Auto-fix linter violations. |
 | `prettier` | Check for formatting issues with `prettier`. |

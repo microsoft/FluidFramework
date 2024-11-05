@@ -12,7 +12,6 @@
 .cache-loader
 .doc-models
 versions.json
-api-docs-build-manifest.json
 
 # Generated API docs.
 # Note: keep `mdx` files that are handwritten

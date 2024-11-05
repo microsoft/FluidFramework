@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-
 /**
  * Configuration for docs versions included in the website build.
  */
+
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const downloadedDocModelsDirectoryPath = path.resolve(dirname, "..", ".doc-models");
 const currentDocsPath = path.resolve(dirname, "..", "docs");
 const versionedDocsPath = path.resolve(dirname, "..", "versioned_docs");
 
 const config = {
+	// Current version of the site.
+	// Served under `/docs`.
 	currentVersion: {
 		version: "2",
 		label: "v2",
@@ -28,7 +31,8 @@ const config = {
 		},
 	},
 
-	// Versions of the docs to include in the website build
+	// Other site versions to include in the build.
+	// Served under `/docs/<path>`.
 	otherVersions: [
 		{
 			version: "1",
@@ -43,7 +47,8 @@ const config = {
 		},
 	],
 
-	// Special config for local API docs mode
+	// Special config for local API docs mode.
+	// Served under `/docs/local` (per "path" config below).
 	local: {
 		version: "local",
 		label: "Local API Documentation",
