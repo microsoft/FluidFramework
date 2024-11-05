@@ -726,7 +726,6 @@ export interface TreeBranch extends IDisposable {
 // @alpha @sealed
 export interface TreeBranchEvents {
     changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
-    // @deprecated
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     schemaChanged(): void;
 }
