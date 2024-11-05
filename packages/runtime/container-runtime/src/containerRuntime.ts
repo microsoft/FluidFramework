@@ -2928,7 +2928,7 @@ export class ContainerRuntime
 
 			// Helper that processes the previous bunch of messages.
 			const sendBunchedMessages = () => {
-				assert(previousMessage !== undefined, "previous message must exist");
+				assert(previousMessage !== undefined, 0xa67 /* previous message must exist */);
 				this.ensureNoDataModelChanges(() => {
 					this.validateAndProcessRuntimeMessages(
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
