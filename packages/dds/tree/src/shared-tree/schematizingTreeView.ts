@@ -46,13 +46,19 @@ import {
 	type ReadableField,
 	type ReadSchema,
 	type UnsafeUnknownSchema,
+	type TreeBranch,
+	type TreeBranchEvents,
 } from "../simple-tree/index.js";
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-import { HydratedContext, SimpleContextSlot } from "../simple-tree/index.js";
+import {
+	HydratedContext,
+	SimpleContextSlot,
+	areImplicitFieldSchemaEqual,
+} from "../simple-tree/index.js";
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
  * exists and error if creating a second.
@@ -65,7 +71,7 @@ export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 @breakingClass
 export class SchematizingSimpleTreeView<
 	in out TRootSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> implements TreeViewAlpha<TRootSchema>, WithBreakable
+> implements TreeBranch, TreeViewAlpha<TRootSchema>, WithBreakable
 {
 	/**
 	 * The view is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
@@ -79,9 +85,9 @@ export class SchematizingSimpleTreeView<
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
 	private readonly schemaPolicy: SchemaPolicy;
-	public readonly events: Listenable<TreeViewEvents> &
-		IEmitter<TreeViewEvents> &
-		HasListeners<TreeViewEvents> = createEmitter();
+	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
+		IEmitter<TreeViewEvents & TreeBranchEvents> &
+		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
 	private readonly viewSchema: ViewSchema;
 
@@ -128,10 +134,17 @@ export class SchematizingSimpleTreeView<
 		this.update();
 
 		this.unregisterCallbacks.add(
-			this.checkout.events.on("commitApplied", (data, getRevertible) =>
-				this.events.emit("commitApplied", data, getRevertible),
-			),
+			this.checkout.events.on("changed", (data, getRevertible) => {
+				this.events.emit("changed", data, getRevertible);
+				this.events.emit("commitApplied", data, getRevertible);
+			}),
 		);
+	}
+
+	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+	): this is TreeViewAlpha<TSchema> {
+		return areImplicitFieldSchemaEqual(this.rootFieldSchema, schema);
 	}
 
 	public get schema(): ReadSchema<TRootSchema> {
@@ -342,6 +355,10 @@ export class SchematizingSimpleTreeView<
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.onDispose?.();
+		if (this.checkout.isBranch && !this.checkout.disposed) {
+			// All (non-main) branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
+			this.checkout.dispose();
+		}
 	}
 
 	public get root(): ReadableField<TRootSchema> {
@@ -369,6 +386,34 @@ export class SchematizingSimpleTreeView<
 			newRoot as InsertableContent | undefined,
 		);
 	}
+
+	// #region Branching
+
+	public fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TRootSchema> {
+		return this.checkout.branch().viewWith(this.config);
+	}
+
+	public merge(context: TreeBranch, disposeMerged = true): void {
+		this.checkout.merge(getCheckout(context), disposeMerged);
+	}
+
+	public rebaseOnto(context: TreeBranch): void {
+		getCheckout(context).rebase(this.checkout);
+	}
+
+	// #endregion Branching
+}
+
+/**
+ * Get the {@link TreeCheckout} associated with a given {@link TreeBranch}.
+ * @remarks Currently, all contexts are also {@link SchematizingSimpleTreeView}s.
+ * Other checkout implementations (e.g. not associated with a view) may be supported in the future.
+ */
+function getCheckout(context: TreeBranch): TreeCheckout {
+	if (context instanceof SchematizingSimpleTreeView) {
+		return context.checkout;
+	}
+	throw new UsageError("Unsupported context implementation");
 }
 
 /**
