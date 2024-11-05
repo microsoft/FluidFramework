@@ -181,6 +181,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly runtime: IBlobManagerRuntime;
 	private readonly closeContainer: (error?: ICriticalContainerError) => void;
 	private readonly uuidOverride?: (() => string) | undefined;
+	private readonly pendingStashedBlobs: Map<string, Promise<ICreateBlobResponse | void>> =
+		new Map();
 
 	constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -260,11 +262,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					return;
 				}
 			}
-
+			this.pendingStashedBlobs.set(localId, this.uploadBlob(localId, blob));
 			this.pendingBlobs.set(localId, {
 				...pendingEntry,
 				...stashedPendingBlobOverrides,
-				uploadP: this.uploadBlob(localId, blob),
+				uploadP: this.pendingStashedBlobs.get(localId),
 			});
 		});
 
@@ -297,6 +299,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			pendingEntry.opsent = true;
 			return sendBlobAttachOp(localId, blobId);
 		};
+	}
+
+	public async waitForStashedBlobs(): Promise<void> {
+		return Promise.all(this.pendingStashedBlobs.values())
+			.then(() => {
+				console.log("All stashed blobs uploaded");
+			})
+			.catch((error) => {
+				console.error("Error uploading stashed blobs", error);
+				throw error;
+			});
 	}
 
 	public get allBlobsAttached(): boolean {

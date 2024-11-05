@@ -115,7 +115,7 @@ describe("BlobManager.stashed", () => {
 		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
 	});
 
-	it("Stashed blob with stubbed localId", async () => {
+	it("Process blob and complete stashed upload after error", async () => {
 		const createResponse = new Deferred<ICreateBlobResponse>();
 		const blobManager = createBlobManager({
 			sendBlobAttachOp(_localId, _storageId) {},
@@ -170,6 +170,12 @@ describe("BlobManager.stashed", () => {
 		createResponse2.resolve({
 			id: "new-storage-id",
 		});
+		try {
+			await blobManager2.waitForStashedBlobs();
+			assert.fail("Should have thrown");
+		} catch (error: any) {
+			assert.strictEqual(error.message, "0x6c8");
+		}
 	});
 
 	it("Already stashed blob", async () => {
