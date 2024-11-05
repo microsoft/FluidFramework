@@ -6,7 +6,10 @@
 import * as fs from "fs";
 
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	resolveContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
 import {
 	ITelemetryLoggerExt,
@@ -125,19 +128,22 @@ export async function createContainerAndExecute(
 			};
 		}
 
-		const loader = new Loader({
+		const loaderProps: ILoaderProps = {
 			urlResolver: new FakeUrlResolver(),
 			documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
 			codeLoader: await fluidFileConverter.getCodeLoader(logger),
 			scope: await fluidFileConverter.getScope?.(logger),
 			logger,
-		});
+		};
 
-		const container = await loader.resolve({
-			url: "/fakeUrl/",
-			headers: {
-				[LoaderHeader.loadMode]: { opsBeforeReturn: "cached" },
+		const container = await resolveContainer({
+			request: {
+				url: "/fakeUrl/",
+				headers: {
+					[LoaderHeader.loadMode]: { opsBeforeReturn: "cached" },
+				},
 			},
+			...loaderProps,
 		});
 
 		return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
