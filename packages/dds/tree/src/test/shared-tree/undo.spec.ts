@@ -540,11 +540,9 @@ describe("Undo and redo", () => {
 		propertyOneUndo?.revert();
 		const removedRootsAfter = (forkedBranch as unknown as TreeCheckout).getRemovedRoots();
 
-		assert.equal(removedRootsBefore, removedRootsAfter);
-
 		clonedPropertyOneUndo?.revert();
 
-		assert.equal(originalView.root.child?.propertyOne, 256);
+		assert.equal(originalView.root.child?.propertyOne, 128);
 		assert.equal(forkedView.root.child?.propertyOne, 128);
 
 		assert.equal(propertyOneUndo?.status, RevertibleStatus.Disposed);

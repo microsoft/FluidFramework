@@ -52,22 +52,20 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
  * This ensures that mutating `destination` after this call will not result in unexpected mutations to `source`.
  */
 export function populateNestedMap<Key1, Key2, Value>(
-	source: ReadonlyNestedMap<Key1, Key2, Value>,
+	source: NestedMap<Key1, Key2, Value>,
 	destination: NestedMap<Key1, Key2, Value>,
 	override: boolean,
 ): void {
-	for (const [key1, sourceInner] of source) {
-		let destinationInner = destination.get(key1);
-		if (destinationInner === undefined) {
-			destinationInner = new Map(sourceInner);
-			destination.set(key1, destinationInner);
-		} else {
-			for (const [key2, value] of sourceInner) {
-				if (override || !destinationInner.has(key2)) {
-					destinationInner.set(key2, value);
-				}
+	for (const [key1, innerMap] of source) {
+		const newInner = new Map(destination.get(key1));
+
+		for (const [key2, value] of innerMap) {
+			if (override || !newInner.has(key2)) {
+				newInner.set(key2, value);
 			}
 		}
+
+		destination.set(key1, newInner);
 	}
 }
 
