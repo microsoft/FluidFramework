@@ -623,10 +623,10 @@ export interface TreeBranchEvents {
 
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
-	 * can use to filter on changes they care about e.g. local vs remote changes.
+	 * can use to filter on changes they care about (e.g. local vs. remote changes).
 	 *
 	 * @param data - information about the change
-	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
+	 * @param getRevertible - a function that allows users to get a revertible for the change. If not provided,
 	 * this change is not revertible.
 	 */
 	changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
