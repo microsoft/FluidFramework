@@ -6,11 +6,18 @@
 import type {
 	ImplicitFieldSchema,
 	TreeArrayNode,
-	TreeView,
+	TreeMapNode,
 	TreeViewConfiguration,
 } from "@fluidframework/tree";
-// eslint-disable-next-line import/no-internal-modules -- This package depends on the branching APIs in Tree which are currently alpha
-import { getBranch, type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
+import {
+	// TODO: Migrate to newer branching API (`TreeContext`)
+	// eslint-disable-next-line import/no-deprecated
+	getBranch,
+	type BranchableTree,
+	type TreeBranchFork,
+	type TreeViewAlpha,
+	// eslint-disable-next-line import/no-internal-modules -- This package depends on the branching APIs in Tree which are currently alpha
+} from "@fluidframework/tree/alpha";
 import type { z } from "zod";
 
 import {
@@ -38,8 +45,8 @@ export class SharedTreeBranchManager {
 	}
 
 	/**
-	 * Compares the differences between either two objects or a TreeeNode and a plain object.
-	 * TODO: Should allow comparing two tree nodes? Should we allowe comparing two plain objects? Or just leave as tree node vs object?
+	 * Compares the differences between either two objects or a TreeNode and a plain object.
+	 * TODO: Should allow comparing two tree nodes? Should we allow comparing two plain objects? Or just leave as tree node vs object?
 	 */
 	public compare(
 		obj: Record<string, unknown> | TreeArrayNode,
@@ -86,24 +93,25 @@ export class SharedTreeBranchManager {
 	 * produces a diff between two objects and merges the differences.
 	 */
 	public checkoutNewMergedBranch<T extends ImplicitFieldSchema>(
-		treeView: TreeView<T>,
+		treeView: TreeViewAlpha<T>,
 		treeViewConfiguration: TreeViewConfiguration<T>,
 		absolutePathToObjectNode: ObjectPath,
 		llmResponse: Record<string, unknown> | unknown[],
 	): {
 		differences: Difference[];
-		originalBranch: TreeBranch;
+		originalBranch: BranchableTree;
 		forkBranch: TreeBranchFork;
-		forkView: TreeView<T>;
+		forkView: TreeViewAlpha<T>;
 		newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
 	} {
+		// eslint-disable-next-line import/no-deprecated
 		const originalBranch = getBranch(treeView);
 		const forkBranch = originalBranch.branch();
-		const forkView = forkBranch.viewWith(treeViewConfiguration);
+		const forkView = forkBranch.viewWith(treeViewConfiguration) as TreeViewAlpha<T>;
 
 		console.log("traveling to absolute path from root:", absolutePathToObjectNode);
 		const newBranchTargetNode = sharedTreeTraverse(
-			forkView.root as Record<string, unknown> | unknown[],
+			forkView.root as unknown as TreeMapNode | TreeArrayNode | Record<string, unknown>,
 			absolutePathToObjectNode,
 		) as Record<string, unknown> | TreeArrayNode;
 
@@ -126,21 +134,22 @@ export class SharedTreeBranchManager {
 	 * Creates a forked branch of a tree view.
 	 */
 	public checkoutNewMergedBranchV2<T extends ImplicitFieldSchema>(
-		treeView: TreeView<T>,
+		treeView: TreeViewAlpha<T>,
 		treeViewConfiguration: TreeViewConfiguration<T>,
 		absolutePathToObjectNode: ObjectPath,
 		// differences: Difference[],
 	): {
-		originalBranch: TreeBranch;
+		originalBranch: BranchableTree;
 		forkBranch: TreeBranchFork;
-		forkView: TreeView<T>;
+		forkView: TreeViewAlpha<T>;
 		newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
 	} {
+		// eslint-disable-next-line import/no-deprecated
 		const originalBranch = getBranch(treeView);
 		const forkBranch = originalBranch.branch();
-		const forkView = forkBranch.viewWith(treeViewConfiguration);
+		const forkView = forkBranch.viewWith(treeViewConfiguration) as TreeViewAlpha<T>;
 		const newBranchTargetNode = sharedTreeTraverse(
-			forkView.root as Record<string, unknown> | unknown[],
+			forkView.root as TreeMapNode | TreeArrayNode | Record<string, unknown>,
 			absolutePathToObjectNode,
 		) as Record<string, unknown> | TreeArrayNode;
 		// this.mergeDiffs(differences, newBranchTargetNode);
@@ -183,7 +192,10 @@ export class SharedTreeBranchManager {
 			switch (diff.type) {
 				case "CHANGE":
 				case "CREATE": {
-					targetObject.set(diff.path[diff.path.length - 1] as string, diff.value);
+					// This code is doing non-schema aware editing, which is not a supported feature of this API.
+					// Casting to any is a way to get this unsupported and rather unsafe operation to compile.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+					targetObject.set(diff.path[diff.path.length - 1] as string, diff.value as any);
 					return true;
 				}
 				case "REMOVE": {
@@ -201,10 +213,16 @@ export class SharedTreeBranchManager {
 				case "CHANGE":
 				case "CREATE": {
 					if (isTargetIndexValid) {
-						targetObject.insertAt(targetIndex, diff.value);
+						// This code is doing non-schema aware editing, which is not a supported feature of this API.
+						// Casting to any is a way to get this unsupported and rather unsafe operation to compile.
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+						targetObject.insertAt(targetIndex, diff.value as any);
 						return true;
 					} else {
-						targetObject.insertAtEnd(diff.value);
+						// This code is doing non-schema aware editing, which is not a supported feature of this API.
+						// Casting to any is a way to get this unsupported and rather unsafe operation to compile.
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+						targetObject.insertAtEnd(diff.value as any);
 						console.warn(
 							"CREATE diff specified an invalid index, defaulting to pushing to end of array",
 						);

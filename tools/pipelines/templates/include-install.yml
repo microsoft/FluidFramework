@@ -25,5 +25,5 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
-        set -eux -o pipefail
+        set -eu -o pipefail
         ${{ parameters.packageManagerInstallCommand }}

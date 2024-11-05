@@ -27,7 +27,7 @@ import {
 	TreeCheckout,
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
-	type TreeBranch,
+	type BranchableTree,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -46,7 +46,11 @@ import {
 } from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { getOrCreateInnerNode, toStoredSchema } from "../../simple-tree/index.js";
+import {
+	getOrCreateInnerNode,
+	toStoredSchema,
+	type InsertableField,
+} from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 
@@ -805,7 +809,7 @@ describe("sharedTreeView", () => {
 			const treeBranch = tree.branch();
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.dispose();
-			treeBranch.dispose();
+			assert.equal(treeBranch.disposed, true);
 		});
 
 		itView("disposed forks cannot be edited or double-disposed", ({ view, tree }) => {
@@ -1254,7 +1258,7 @@ function itView<
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: TreeBranch;
+		tree: BranchableTree;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1266,7 +1270,7 @@ function itView(
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<typeof rootArray>;
-		tree: TreeBranch;
+		tree: BranchableTree;
 		logger: IMockLoggerExt;
 	}) => void,
 	options?: {
@@ -1274,13 +1278,13 @@ function itView(
 	},
 ): void;
 function itView<
-	T extends InsertableTreeFieldFromImplicitField<TRootSchema>,
+	T extends InsertableField<TRootSchema>,
 	TRootSchema extends ImplicitFieldSchema = typeof rootArray,
 >(
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: TreeBranch;
+		tree: BranchableTree;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1294,7 +1298,7 @@ function itView<
 		thunk: typeof fn,
 		makeViewFromConfig: (config: TreeViewConfiguration<TRootSchema>) => {
 			view: SchematizingSimpleTreeView<TRootSchema>;
-			tree: TreeBranch;
+			tree: BranchableTree;
 			logger: IMockLoggerExt;
 		},
 	): void {
@@ -1312,7 +1316,7 @@ function itView<
 			const { view, tree, logger } = (
 				makeViewFromConfig as unknown as (config: TreeViewConfiguration<typeof rootArray>) => {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: TreeBranch;
+					tree: BranchableTree;
 					logger: IMockLoggerExt;
 				}
 			)(
@@ -1326,7 +1330,7 @@ function itView<
 			(
 				thunk as unknown as (args: {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: TreeBranch;
+					tree: BranchableTree;
 					logger: IMockLoggerExt;
 				}) => void
 			)({ view, tree, logger });
@@ -1338,7 +1342,7 @@ function itView<
 		fork: boolean,
 	): {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: TreeBranch;
+		tree: BranchableTree;
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();

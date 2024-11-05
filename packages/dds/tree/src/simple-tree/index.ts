@@ -23,6 +23,7 @@ export {
 	HydratedContext,
 	SimpleContextSlot,
 	getOrCreateInnerNode,
+	getKernel,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -40,7 +41,6 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
-	typedObjectValues,
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
@@ -96,6 +96,21 @@ export {
 	type NodeBuilderDataUnsafe,
 	type NodeFromSchemaUnsafe,
 	type ReadonlyMapInlined,
+	type TreeNodeSchemaClassUnsafe,
+	type TreeNodeSchemaUnsafe,
+	type AllowedTypesUnsafe,
+	type TreeNodeSchemaNonClassUnsafe,
+	type InsertableTreeNodeFromAllowedTypesUnsafe,
+	type TreeViewAlpha,
+	type TreeBranch,
+	type TreeBranchEvents,
+	tryGetSchema,
+	applySchemaToParserOptions,
+	cursorFromVerbose,
+	verboseFromCursor,
+	conciseFromCursor,
+	createFromCursor,
+	asTreeViewAlpha,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -115,8 +130,18 @@ export {
 	type DefaultProvider,
 	type FieldProps,
 	normalizeFieldSchema,
+	areFieldSchemaEqual,
+	areImplicitFieldSchemaEqual,
 	type ApplyKind,
 	type FieldSchemaMetadata,
+	type InsertableField,
+	type Insertable,
+	type UnsafeUnknownSchema,
+	type ApplyKindInput,
+	type InsertableTreeNodeFromAllowedTypes,
+	type Input,
+	type ReadableField,
+	type ReadSchema,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
@@ -126,6 +151,7 @@ export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
 	type TreeArrayNodeBase,
+	type ReadonlyArrayNode,
 } from "./arrayNode.js";
 export {
 	type FieldHasDefault,
@@ -135,8 +161,13 @@ export {
 	setField,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
-export { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-export { toStoredSchema, getStoredSchema } from "./toFlexSchema.js";
+export {
+	mapTreeFromNodeData,
+	type InsertableContent,
+	type FactoryContent,
+	type FactoryContentObject,
+} from "./toMapTree.js";
+export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,

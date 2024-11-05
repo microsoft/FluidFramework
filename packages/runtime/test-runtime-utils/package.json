@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-runtime-utils",
-	"version": "2.5.0",
+	"version": "2.10.0",
 	"description": "Fluid runtime test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -157,7 +157,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_MockDeltaConnection": {
+				"forwardCompat": false
+			},
+			"Class_MockFluidDataStoreRuntime": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

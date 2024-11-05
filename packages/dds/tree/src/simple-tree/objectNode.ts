@@ -98,6 +98,8 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  *
  * 3. Union of 1 and 2.
  *
+ * @see {@link Input}
+ *
  * @privateRemarks TODO: consider separating these cases into different types.
  *
  * @system @public
@@ -107,13 +109,13 @@ export type InsertableObjectFromSchemaRecord<
 > = FlattenKeys<
 	{
 		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
-			T[Property] & string
+			T[Property & string]
 		>;
 	} & {
 		// Field does not have a known default, make it required:
-		readonly [Property in keyof T as FieldHasDefault<T[Property] & string> extends false
+		readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
 			? Property
-			: never]: InsertableTreeFieldFromImplicitField<T[Property] & string>;
+			: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
 	}
 >;
 

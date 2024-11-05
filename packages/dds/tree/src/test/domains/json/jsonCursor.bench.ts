@@ -40,7 +40,7 @@ import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
