@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 import { Loader } from "@fluidframework/container-loader/internal";
 
 export function apisToBundle() {
