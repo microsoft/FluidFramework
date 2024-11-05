@@ -38,6 +38,7 @@ variables:
           startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
         ),
         eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+        startsWith(variables['Build.SourceBranch'], 'refs/heads/legacy-breaks/client/'),
         variables.testBuild
       )
     )}}
