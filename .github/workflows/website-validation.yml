@@ -62,6 +62,35 @@ jobs:
           pnpm i --frozen-lockfile
           pnpm lint
 
+  # TODO: only run on changes to `docs` folder
+  test:
+    runs-on: ubuntu-latest
+    name: 🔗 Broken Link Check
+    needs: build_site
+    steps:
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        with:
+          submodules: false
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
+      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "pnpm"
+          cache-dependency-path: docs/pnpm-lock.yaml
+
+      - name: Download site artifact
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # ratchet:actions/download-artifact@v3
+        with:
+          name: fluidframework-site
+          path: docs/build
+      - name: Install dependencies
+        run: "pnpm i --frozen-lockfile"
+      - name: Run tests
+        run: "pnpm test"
+        continue-on-error: true
+
+      # TODO: Upload test results to PR
+
   broken_link_check:
     runs-on: ubuntu-latest
     name: 🔗 Broken Link Check
