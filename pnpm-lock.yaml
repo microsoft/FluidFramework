@@ -177,7 +177,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/azure-service-utils-previous':
-        specifier: npm:@fluidframework/azure-service-utils@2.5.0
+        specifier: npm:@fluidframework/azure-service-utils@~2.5.0
         version: /@fluidframework/azure-service-utils@2.5.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -7386,7 +7386,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/container-definitions-previous':
-        specifier: npm:@fluidframework/container-definitions@2.5.0
+        specifier: npm:@fluidframework/container-definitions@~2.5.0
         version: /@fluidframework/container-definitions@2.5.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -7434,7 +7434,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/core-interfaces-previous':
-        specifier: npm:@fluidframework/core-interfaces@2.5.0
+        specifier: npm:@fluidframework/core-interfaces@~2.5.0
         version: /@fluidframework/core-interfaces@2.5.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -7488,7 +7488,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/core-utils-previous':
-        specifier: npm:@fluidframework/core-utils@2.5.0
+        specifier: npm:@fluidframework/core-utils@~2.5.0
         version: /@fluidframework/core-utils@2.5.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -7567,7 +7567,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/driver-definitions-previous':
-        specifier: npm:@fluidframework/driver-definitions@2.5.0
+        specifier: npm:@fluidframework/driver-definitions@~2.5.0
         version: /@fluidframework/driver-definitions@2.5.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -7640,7 +7640,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/cell-previous':
-        specifier: npm:@fluidframework/cell@2.5.0
+        specifier: npm:@fluidframework/cell@~2.5.0
         version: /@fluidframework/cell@2.5.0
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -9404,7 +9404,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/debugger-previous':
-        specifier: npm:@fluidframework/debugger@2.5.0
+        specifier: npm:@fluidframework/debugger@~2.5.0
         version: /@fluidframework/debugger@2.5.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -9474,7 +9474,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/driver-base-previous':
-        specifier: npm:@fluidframework/driver-base@2.5.0
+        specifier: npm:@fluidframework/driver-base@~2.5.0
         version: /@fluidframework/driver-base@2.5.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -9559,7 +9559,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/driver-web-cache-previous':
-        specifier: npm:@fluidframework/driver-web-cache@2.5.0
+        specifier: npm:@fluidframework/driver-web-cache@~2.5.0
         version: /@fluidframework/driver-web-cache@2.5.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -10460,7 +10460,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/agent-scheduler-previous':
-        specifier: npm:@fluidframework/agent-scheduler@2.5.0
+        specifier: npm:@fluidframework/agent-scheduler@~2.5.0
         version: /@fluidframework/agent-scheduler@2.5.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -10633,7 +10633,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/aqueduct-previous':
-        specifier: npm:@fluidframework/aqueduct@2.5.0
+        specifier: npm:@fluidframework/aqueduct@~2.5.0
         version: /@fluidframework/aqueduct@2.5.0(debug@4.3.7)
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -11870,7 +11870,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/container-loader-previous':
-        specifier: npm:@fluidframework/container-loader@2.5.0
+        specifier: npm:@fluidframework/container-loader@~2.5.0
         version: /@fluidframework/container-loader@2.5.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -11982,7 +11982,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/driver-utils-previous':
-        specifier: npm:@fluidframework/driver-utils@2.5.0
+        specifier: npm:@fluidframework/driver-utils@~2.5.0
         version: /@fluidframework/driver-utils@2.5.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -12173,7 +12173,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/container-runtime-previous':
-        specifier: npm:@fluidframework/container-runtime@2.5.0
+        specifier: npm:@fluidframework/container-runtime@~2.5.0
         version: /@fluidframework/container-runtime@2.5.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -12267,7 +12267,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/container-runtime-definitions-previous':
-        specifier: npm:@fluidframework/container-runtime-definitions@2.5.0
+        specifier: npm:@fluidframework/container-runtime-definitions@~2.5.0
         version: /@fluidframework/container-runtime-definitions@2.5.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -12352,7 +12352,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/datastore-previous':
-        specifier: npm:@fluidframework/datastore@2.5.0
+        specifier: npm:@fluidframework/datastore@~2.5.0
         version: /@fluidframework/datastore@2.5.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -12443,7 +12443,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/datastore-definitions-previous':
-        specifier: npm:@fluidframework/datastore-definitions@2.5.0
+        specifier: npm:@fluidframework/datastore-definitions@~2.5.0
         version: /@fluidframework/datastore-definitions@2.5.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -14994,7 +14994,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/devtools-previous':
-        specifier: npm:@fluidframework/devtools@2.5.0
+        specifier: npm:@fluidframework/devtools@~2.5.0
         version: /@fluidframework/devtools@2.5.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -15326,7 +15326,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)
       '@fluidframework/devtools-core-previous':
-        specifier: npm:@fluidframework/devtools-core@2.5.0
+        specifier: npm:@fluidframework/devtools-core@~2.5.0
         version: /@fluidframework/devtools-core@2.5.0
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
@@ -15842,7 +15842,7 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluid-tools/fetch-tool-previous':
-        specifier: npm:@fluid-tools/fetch-tool@2.5.0
+        specifier: npm:@fluid-tools/fetch-tool@~2.5.0
         version: /@fluid-tools/fetch-tool@2.5.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
