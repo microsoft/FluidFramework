@@ -248,7 +248,7 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 }
 
 /**
- * Finds the path to the types of a package using the package's export map or types/typings field.
+ * Finds the path to default/types of a package using the package's export map or types/typings field.
  * If the path is found, it is returned. Otherwise it returns undefined.
  *
  * This implementation uses resolve.exports to resolve the path to types for a level.
@@ -269,9 +269,10 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
  * packages because we always specify types explicitly in the types field, and types are always included in our packages
  * (as opposed to a separate \@types package).
  */
-export function getTypesPathFromPackage(
+export function getExportPathFromPackage(
 	packageJson: PackageJson,
 	level: ApiLevel,
+	conditions: string[],
 	log: Logger,
 ): string | undefined {
 	if (packageJson.exports === undefined) {
@@ -294,7 +295,7 @@ export function getTypesPathFromPackage(
 	try {
 		// First try to resolve with the "import" condition, assuming the package is either ESM-only or dual-format.
 		// conditions: ["default", "types", "import", "node"]
-		const exports = resolve.exports(packageJson, entrypoint, { conditions: ["types"] });
+		const exports = resolve.exports(packageJson, entrypoint, { conditions });
 
 		// resolve.exports returns a `Exports.Output | void` type, though the documentation isn't clear under what
 		// conditions `void` would be the return type vs. just throwing an exception. Since the types say exports could be
@@ -318,7 +319,7 @@ export function getTypesPathFromPackage(
 		// solution.
 		// conditions: ["default", "types", "require", "node"]
 		const exports = resolve.exports(packageJson, entrypoint, {
-			conditions: ["types"],
+			conditions,
 			require: true,
 		});
 		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];

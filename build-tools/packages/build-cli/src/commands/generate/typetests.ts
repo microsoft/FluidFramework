@@ -36,7 +36,7 @@ import {
 } from "../../library/index.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
-import { getTypesPathFromPackage } from "../../library/packageExports.js";
+import { getExportPathFromPackage } from "../../library/packageExports.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
 import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGeneration.js";
@@ -205,14 +205,19 @@ function getTypesPathWithFallback(
 ): { typesPath: string; entrypointUsed: ApiLevel } {
 	let chosenEntrypoint: ApiLevel = entrypoint;
 	// First try the requested paths, but fall back to public otherwise if configured.
-	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, entrypoint, log);
+	let typesPath: string | undefined = getExportPathFromPackage(
+		packageJson,
+		entrypoint,
+		["types"],
+		log,
+	);
 
 	if (typesPath === undefined) {
 		// Try the public types if configured to do so. If public types are found adjust the level accordingly.
 		typesPath =
 			fallbackEntrypoint === undefined
 				? undefined
-				: getTypesPathFromPackage(packageJson, fallbackEntrypoint, log);
+				: getExportPathFromPackage(packageJson, fallbackEntrypoint, ["types"], log);
 		chosenEntrypoint = fallbackEntrypoint ?? entrypoint;
 		if (typesPath === undefined) {
 			throw new Error(

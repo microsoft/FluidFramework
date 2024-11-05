@@ -6,26 +6,20 @@
 import fs from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import JSON5 from "json5";
-import * as resolve from "resolve.exports";
 import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
-import type { TsConfigJson } from "type-fest";
 
-import type { Logger, PackageJson } from "@fluidframework/build-tools";
+import type { PackageJson } from "@fluidframework/build-tools";
 
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import/no-internal-modules
-import { isKnownApiTag } from "../../library/apiTag.js";
-import { ApiLevel, ApiTag, BaseCommand } from "../../library/index.js";
+import { ApiLevel, ApiTag, BaseCommand, isKnownApiLevel } from "../../library/index.js";
 import {
 	readPackageJson,
-	readTsConfig,
 	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/package.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
-import type { ExportData } from "../../library/packageExports.js";
+import { type ExportData, getExportPathFromPackage } from "../../library/packageExports.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
 import { getApiExports, getPackageDocumentationText } from "../../library/typescriptApi.js";
@@ -59,20 +53,40 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 
 		const packageJson = await readPackageJson();
 
-		// Read tsconfig present at the root of the package
-		const tsConfig = await readTsConfig();
+		// Read `rootDir` for tsconfig under `./src/entrypoints` or `outDir`
+		const { rootDir, tsconfigOutDir, emitDeclarationOnly } =
+			await getTsConfigCompilerOptions(outDir);
 
+		/**
+		 * Example of `mapApiTagToExportPath` for a package where `emitDeclarationOnly` is false and it's an ESM package
+		 * [[beta, `{ relPath: "./lib/entrypoints/beta.js", conditions: [], isTypeOnly: false }`],
+		 * [public, `{ relPath: "./lib/entrypoints/public.js", conditions: [], isTypeOnly: false }`]]
+		 */
 		const mapApiTagToExportPath: Map<ApiTag, ExportData> = mapExportPathToApiTag(
 			packageJson,
-			tsConfig,
+			emitDeclarationOnly,
 			this.logger,
 		);
 
-		const mapApiTagToSourcePath: Map<string, ApiTag> = await mapSourcePathToApiTag(outDir);
+		/**
+		 * Example of `mapApiTagToSourcePath` for a package where rootDir is ./src/entrypoints/
+		 * [["./src/entrypoints/beta.ts", "beta"],
+		 * ["./src/entrypoints/alpha.ts", "alpha"],
+		 * ["./src/entrypoints/public.ts", "public"],
+		 * ["./src/entrypoints/legacy.ts", "legacy"]]
+		 */
+		const mapApiTagToSourcePath: Map<string, ApiTag> = await mapSourcePathToApiTag(rootDir);
 
+		/**
+		 * Example of `mapSourceToExportPath` for a package
+		 * [[beta, `{ relPath: "./src/entrypoints/beta.js", conditions: [], isTypeOnly: false }`],
+		 * [public, `{ relPath: "./src/entrypoints/public.js", conditions: [], isTypeOnly: false }`]]
+		 */
 		const mapSourceToExportPath: Map<ApiTag, ExportData> = getOutputConfiguration(
 			mapApiTagToSourcePath,
 			mapApiTagToExportPath,
+			rootDir,
+			tsconfigOutDir,
 			this.logger,
 		);
 
@@ -95,45 +109,60 @@ function formatPath(outDir: string): string {
 }
 
 /**
- * Read and parse tsconfig under `outDir`
- * @returns rootDir
+ * Retrieves `rootDir`, `outDir` and `emitDeclarationOnly` settings from a `tsconfig.json` file.
+ *
+ * @param tsconfigPath - Path to the TypeScript config file.
+ * @returns An object with `rootDir`, `outDir` and `emitDeclarationOnly` values.
+ * @throws If `rootDir` and `outDir` is not defined in the config file.
  */
-async function readOutDirTsConfig(outDir: string): Promise<string> {
-	const formatOutDir = formatPath(outDir);
+async function getTsConfigCompilerOptions(
+	tsconfigPath: string,
+): Promise<{ rootDir: string; tsconfigOutDir: string; emitDeclarationOnly: boolean }> {
+	const formatTsconfigPath = formatPath(tsconfigPath);
 
-	// Read tsconfig under `${outDir}`
-	const tsConfigContent = await fs.readFile(`${formatOutDir}tsconfig.json`, {
+	const tsConfigContent = await fs.readFile(`${formatTsconfigPath}tsconfig.json`, {
 		encoding: "utf8",
 	});
 
 	if (tsConfigContent === undefined) {
-		throw new Error(`tsconfig.json not found in ${formatOutDir}`);
+		throw new Error(`tsconfig.json not found in ${formatTsconfigPath}`);
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const tsconfig = JSON5.parse(tsConfigContent);
 
-	let rootDir = "";
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const { compilerOptions } = tsconfig;
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	if (tsconfig.compilerOptions?.rootDir !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-		rootDir = tsconfig.compilerOptions?.rootDir;
+	if (compilerOptions === undefined) {
+		throw new Error(`No compilerOptions defined in ${formatTsconfigPath}tsconfig.json`);
 	}
 
-	if (rootDir.length === 0 || rootDir === undefined) {
-		throw new Error(`No rootDir defined in ${formatOutDir}tsconfig.json`);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const { rootDir, outDir, emitDeclarationOnly } = compilerOptions;
+
+	if (rootDir === undefined) {
+		throw new Error(`No rootDir defined in ${formatTsconfigPath}tsconfig.json`);
 	}
 
-	return formatPath(rootDir);
+	if (outDir === undefined) {
+		throw new Error(`No outDir defined in ${formatTsconfigPath}tsconfig.json`);
+	}
+
+	return {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+		rootDir: formatPath(rootDir),
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+		tsconfigOutDir: formatPath(outDir),
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		emitDeclarationOnly: emitDeclarationOnly ?? false,
+	};
 }
 
 /**
  * Returns a map of source paths to `ApiTag` levels.
  */
-async function mapSourcePathToApiTag(outDir: string): Promise<Map<string, ApiTag>> {
-	const rootDir = await readOutDirTsConfig(outDir);
-
+async function mapSourcePathToApiTag(rootDir: string): Promise<Map<string, ApiTag>> {
 	const outFileSuffix = ".ts";
 
 	return new Map([
@@ -150,6 +179,8 @@ async function mapSourcePathToApiTag(outDir: string): Promise<Map<string, ApiTag
 function getOutputConfiguration(
 	mapApiTagToSourcePath: ReadonlyMap<string, ApiTag>,
 	mapApiTagToExportPath: Map<ApiTag, ExportData>,
+	rootDir: string,
+	tsconfigOutDir: string,
 	logger: CommandLogger,
 ): Map<ApiTag, ExportData> {
 	const result = new Map<ApiTag, ExportData>();
@@ -159,7 +190,7 @@ function getOutputConfiguration(
 		if (exportPath) {
 			// Modify the exportPath
 			const modifiedExportPath = exportPath.relPath
-				.replace(/(lib|dist)/g, "src")
+				.replace(tsconfigOutDir, rootDir)
 				.replace(/\.js$|\.d\.ts$/, ".ts");
 
 			if (result.has(apiTag)) {
@@ -183,15 +214,10 @@ function getOutputConfiguration(
  */
 function mapExportPathToApiTag(
 	packageJson: PackageJson,
-	tsconfig: TsConfigJson,
-	logger?: Logger,
+	emitDeclarationOnly: boolean,
+	logger: CommandLogger,
 ): Map<ApiTag, ExportData> {
 	const mapKeyToOutput = new Map<ApiTag, ExportData>();
-
-	let emitDeclarationOnly = false;
-	if (tsconfig.compilerOptions?.emitDeclarationOnly !== undefined) {
-		emitDeclarationOnly = tsconfig.compilerOptions.emitDeclarationOnly;
-	}
 
 	const { exports } = packageJson;
 
@@ -199,35 +225,33 @@ function mapExportPathToApiTag(
 		throw new Error('no valid "exports" within package properties');
 	}
 
-	// Iterate through exports looking for properties with values matching keys in map.
+	const condition = emitDeclarationOnly ? "types" : "default";
+
 	for (const [exportPath] of Object.entries(exports)) {
-		const resolvedExport = resolve.exports(packageJson, exportPath, {
-			conditions: emitDeclarationOnly ? ["types"] : ["default"],
-		});
-		if (resolvedExport === undefined || resolvedExport.length === 0) {
-			throw new Error(`exports for ${exportPath} is undefined`);
-		}
+		const level = exportPath === "." ? ApiLevel.public : exportPath.replace("./", "");
 
-		const level = exportPath === "." ? ApiTag.public : exportPath.replace("./", "");
-
-		if (!isKnownApiTag(level)) {
+		if (!isKnownApiLevel(level)) {
 			throw new Error(`${exportPath} is not a known API tag`);
 		}
 
-		if (level === ApiTag.internal) {
+		if (level === ApiLevel.internal) {
 			continue;
 		}
 
-		if (mapKeyToOutput.has(level)) {
-			logger?.warning(`${resolvedExport[0]} found in exports multiple times.`);
-		} else {
-			mapKeyToOutput.set(level, {
-				relPath: resolvedExport[0],
-				conditions: [],
-				isTypeOnly: emitDeclarationOnly,
-			});
+		const resolvedExport = getExportPathFromPackage(packageJson, level, [condition], logger);
+
+		if (resolvedExport === undefined) {
+			throw new Error("export path not found");
 		}
+
+		mapKeyToOutput.set(level, {
+			relPath: resolvedExport,
+			conditions: [],
+			isTypeOnly: emitDeclarationOnly,
+		});
 	}
+
+	console.log(mapKeyToOutput);
 
 	return mapKeyToOutput;
 }

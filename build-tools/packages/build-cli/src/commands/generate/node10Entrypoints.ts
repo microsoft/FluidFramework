@@ -13,7 +13,7 @@ import { readPackageJson, readTsConfig } from "../../library/package.js";
 
 import {
 	type Node10CompatExportData,
-	getTypesPathFromPackage,
+	getExportPathFromPackage,
 	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/packageExports.js";
@@ -65,7 +65,7 @@ export function mapExportPathsFromPackage(
 			continue;
 		}
 
-		const typesPath = getTypesPathFromPackage(packageJson, levels, log);
+		const typesPath = getExportPathFromPackage(packageJson, levels, ["types"], log);
 
 		if (typesPath === undefined) {
 			continue;
