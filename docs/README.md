@@ -320,6 +320,8 @@ The following npm scripts are supported in this directory:
 | `serve` | Serves the built website using Docusaurus. |
 | `serve-with-azure-emulation` | Serves the built website using Docusaurus, including Azure service emulation for our Azure functions. |
 | `start` | Runs the website in watch mode with Docusaurus. |
+| `pretest` | Install necessary `playwright` dependencies before running tests. |
+| `test` | Run tests using `playwright` |
 
 <!-- prettier-ignore-end -->
 
