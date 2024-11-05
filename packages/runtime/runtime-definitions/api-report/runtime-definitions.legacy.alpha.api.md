@@ -190,7 +190,6 @@ export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry;
 
 // @alpha
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
-    // (undocumented)
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> | FluidDataStoreRegistryEntry | undefined;
 }
 
