@@ -6,7 +6,7 @@
 "section": tree
 ---
 
-Improve strictness of input tree types when non-exact schema are provided
+The strictness of input tree types when inexact schemas are provided has been improved
 
 Consider the following code where the type of the schema is not exactly specified:
 
