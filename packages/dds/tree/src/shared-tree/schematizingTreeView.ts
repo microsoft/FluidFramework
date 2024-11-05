@@ -29,8 +29,6 @@ import {
 	type FieldSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
-	type InsertableTreeFieldFromImplicitField,
-	type TreeFieldFromImplicitField,
 	type TreeView,
 	type TreeViewEvents,
 	getTreeNodeForField,
@@ -43,13 +41,23 @@ import {
 	prepareContentForHydration,
 	comparePersistedSchemaInternal,
 	toStoredSchema,
+	type TreeViewAlpha,
+	type InsertableField,
+	type ReadableField,
+	type ReadSchema,
+	type UnsafeUnknownSchema,
+	type TreeBranch,
 } from "../simple-tree/index.js";
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-import { HydratedContext, SimpleContextSlot } from "../simple-tree/index.js";
+import {
+	HydratedContext,
+	SimpleContextSlot,
+	areImplicitFieldSchemaEqual,
+} from "../simple-tree/index.js";
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
  * exists and error if creating a second.
@@ -60,8 +68,9 @@ export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
  * Implementation of TreeView wrapping a FlexTreeView.
  */
 @breakingClass
-export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitFieldSchema>
-	implements TreeView<TRootSchema>, WithBreakable
+export class SchematizingSimpleTreeView<
+	in out TRootSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+> implements TreeBranch, TreeViewAlpha<TRootSchema>, WithBreakable
 {
 	/**
 	 * The view is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
@@ -96,7 +105,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
-		public readonly config: TreeViewConfiguration<TRootSchema>,
+		public readonly config: TreeViewConfiguration<ReadSchema<TRootSchema>>,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
 		private readonly onDispose?: () => void,
@@ -130,11 +139,17 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		);
 	}
 
-	public get schema(): TRootSchema {
+	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+	): this is TreeViewAlpha<TSchema> {
+		return areImplicitFieldSchemaEqual(this.rootFieldSchema, schema);
+	}
+
+	public get schema(): ReadSchema<TRootSchema> {
 		return this.config.schema;
 	}
 
-	public initialize(content: InsertableTreeFieldFromImplicitField<TRootSchema>): void {
+	public initialize(content: InsertableField<TRootSchema>): void {
 		this.ensureUndisposed();
 
 		const compatibility = this.compatibility;
@@ -338,9 +353,13 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.onDispose?.();
+		if (this.checkout.isBranch && !this.checkout.disposed) {
+			// All (non-main) branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
+			this.checkout.dispose();
+		}
 	}
 
-	public get root(): TreeFieldFromImplicitField<TRootSchema> {
+	public get root(): ReadableField<TRootSchema> {
 		this.breaker.use();
 		if (!this.compatibility.canView) {
 			throw new UsageError(
@@ -348,10 +367,10 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 		const view = this.getView();
-		return getTreeNodeForField(view.flexTree) as TreeFieldFromImplicitField<TRootSchema>;
+		return getTreeNodeForField(view.flexTree) as ReadableField<TRootSchema>;
 	}
 
-	public set root(newRoot: InsertableTreeFieldFromImplicitField<TRootSchema>) {
+	public set root(newRoot: InsertableField<TRootSchema>) {
 		this.breaker.use();
 		if (!this.compatibility.canView) {
 			throw new UsageError(
@@ -365,6 +384,34 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			newRoot as InsertableContent | undefined,
 		);
 	}
+
+	// #region Branching
+
+	public fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TRootSchema> {
+		return this.checkout.branch().viewWith(this.config);
+	}
+
+	public merge(context: TreeBranch, disposeMerged = true): void {
+		this.checkout.merge(getCheckout(context), disposeMerged);
+	}
+
+	public rebaseOnto(context: TreeBranch): void {
+		getCheckout(context).rebase(this.checkout);
+	}
+
+	// #endregion Branching
+}
+
+/**
+ * Get the {@link TreeCheckout} associated with a given {@link TreeBranch}.
+ * @remarks Currently, all contexts are also {@link SchematizingSimpleTreeView}s.
+ * Other checkout implementations (e.g. not associated with a view) may be supported in the future.
+ */
+function getCheckout(context: TreeBranch): TreeCheckout {
+	if (context instanceof SchematizingSimpleTreeView) {
+		return context.checkout;
+	}
+	throw new UsageError("Unsupported context implementation");
 }
 
 /**

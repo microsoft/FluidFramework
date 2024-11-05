@@ -26,7 +26,7 @@ export {
 	type CheckoutEvents,
 	type ITransaction,
 	type ITreeCheckoutFork,
-	type TreeBranch,
+	type BranchableTree,
 	type TreeBranchFork,
 } from "./treeCheckout.js";
 
@@ -46,3 +46,11 @@ export {
 	type RunTransaction,
 	rollback,
 } from "./treeApi.js";
+
+export { TreeAlpha } from "./treeApiAlpha.js";
+
+export {
+	independentInitializedView,
+	type ViewContent,
+	independentView,
+} from "./independentView.js";

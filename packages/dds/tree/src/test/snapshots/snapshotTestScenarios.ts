@@ -403,9 +403,6 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				view.initialize([]);
 				view.root.insertAtStart("a");
 				view.root.insertAtEnd("b");
-				// SharedTree does not trigger the EditManager's trunk commit eviction synchronously when detached - it schedules eviction in the JS microtask queue.
-				// Wait for the eviction to complete (by enqueuing ourselves at the end of the microtask queue) before taking the snapshot.
-				await Promise.resolve();
 				await takeSnapshot(tree, "final");
 			},
 		},
