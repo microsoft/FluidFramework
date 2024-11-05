@@ -105,7 +105,10 @@ export class RemoteChannelContext implements IChannelContext {
 				this.id,
 			);
 
-			assert(this.pendingMessagesState !== undefined, "pending messages state is undefined");
+			assert(
+				this.pendingMessagesState !== undefined,
+				0xa6c /* pending messages state is undefined */,
+			);
 			for (const messageCollection of this.pendingMessagesState.messageCollections) {
 				this.services.deltaConnection.processMessages(messageCollection);
 			}
@@ -180,7 +183,10 @@ export class RemoteChannelContext implements IChannelContext {
 			this.services.deltaConnection.processMessages(messageCollection);
 		} else {
 			assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
-			assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
+			assert(
+				this.pendingMessagesState !== undefined,
+				0xa6d /* pending messages queue is undefined */,
+			);
 			this.pendingMessagesState.messageCollections.push({
 				...messageCollection,
 				messagesContent: Array.from(messagesContent),
