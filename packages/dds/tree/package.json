@@ -227,7 +227,12 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_Input": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }

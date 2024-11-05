@@ -625,6 +625,7 @@ declare type current_as_old_for_TypeAlias_ImplicitFieldSchema = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_Input": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_Input = requireAssignableTo<TypeOnly<old.Input<any>>, TypeOnly<current.Input<any>>>
 
 /*
@@ -634,6 +635,7 @@ declare type old_as_current_for_TypeAlias_Input = requireAssignableTo<TypeOnly<o
  * typeValidation.broken:
  * "TypeAlias_Input": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_Input = requireAssignableTo<TypeOnly<current.Input<any>>, TypeOnly<old.Input<any>>>
 
 /*
