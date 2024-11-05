@@ -85,18 +85,14 @@ export interface CheckoutEvents {
 	afterBatch(): void;
 
 	/**
-	 * Fired when a revertible change has been made to this view.
+	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
+	 * can use to filter on changes they care about e.g. local vs remote changes.
 	 *
-	 * Applications which subscribe to this event are expected to revert or discard revertibles they acquire (failure to do so will leak memory).
-	 * The provided revertible is inherently bound to the view that raised the event, calling `revert` won't apply to forked views.
-	 *
-	 * @param revertible - The revertible that can be used to revert the change.
+	 * @param data - information about the change
+	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
+	 * this change is not revertible.
 	 */
-
-	/**
-	 * {@inheritdoc TreeViewEvents.commitApplied}
-	 */
-	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+	changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }
 
 /**
@@ -118,7 +114,7 @@ export interface BranchableTree extends ViewableTree {
 	 * @param view - a branch which was created by a call to `branch()`.
 	 * It is automatically disposed after the merge completes.
 	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
-	 * A "commitApplied" event and a corresponding {@link Revertible} will be emitted on this branch for each new change merged from 'branch'.
+	 * A "changed" event and a corresponding {@link Revertible} will be emitted on this branch for each new change merged from 'branch'.
 	 */
 	merge(branch: TreeBranchFork): void;
 
@@ -532,12 +528,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							: (onRevertibleDisposed?: (revertible: Revertible) => void) => {
 									if (!withinEventContext) {
 										throw new UsageError(
-											"Cannot get a revertible outside of the context of a commitApplied event.",
+											"Cannot get a revertible outside of the context of a changed event.",
 										);
 									}
 									if (this.revertibleCommitBranches.get(revision) !== undefined) {
 										throw new UsageError(
-											"Cannot generate the same revertible more than once. Note that this can happen when multiple commitApplied event listeners are registered.",
+											"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
 										);
 									}
 									const revertibleCommits = this.revertibleCommitBranches;
@@ -582,9 +578,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 								};
 
 						let withinEventContext = true;
-						this.events.emit("commitApplied", { isLocal: true, kind }, getRevertible);
+						this.events.emit("changed", { isLocal: true, kind }, getRevertible);
 						withinEventContext = false;
 					}
+				} else if (event.type === "replace") {
+					// TODO: figure out how to plumb through commit kind info for remote changes
+					this.events.emit("changed", { isLocal: false, kind: CommitKind.Default });
 				}
 			}
 		});
@@ -704,7 +703,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			!checkout.transaction.inProgress(),
 			0x9af /* A view cannot be rebased while it has a pending transaction */,
 		);
-		assert(checkout.isBranch, "The main branch cannot be rebased onto another branch.");
+		assert(
+			checkout.isBranch,
+			0xa5d /* The main branch cannot be rebased onto another branch. */,
+		);
 		checkout._branch.rebaseOnto(this._branch);
 	}
 
