@@ -102,11 +102,11 @@
 		"eslint": "~8.57.0",
 		"eslint-plugin-chai-friendly": "~1.0.1",
 		"memfs": "^4.14.0",
-		"mocha": "^10.7.3",
+		"mocha": "^10.8.2",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.2",
-		"typedoc": "^0.26.10",
-		"typedoc-plugin-markdown": "^4.2.9",
+		"typedoc": "^0.26.11",
+		"typedoc-plugin-markdown": "^4.2.10",
 		"unionfs": "^4.5.4"
 	},
 	"oclif": {

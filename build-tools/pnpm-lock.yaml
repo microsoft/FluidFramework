@@ -43,7 +43,7 @@ importers:
         specifier: ~0.44.0
         version: 0.44.0
       '@microsoft/api-documenter':
-        specifier: ^7.25.20
+        specifier: ^7.25.21
         version: 7.25.21
       '@microsoft/api-extractor':
         specifier: ^7.47.11
