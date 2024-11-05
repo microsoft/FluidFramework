@@ -832,6 +832,83 @@ describe("SharedTree", () => {
 	});
 
 	describe("Undo and redo", () => {
+		it("the insert of a node in a sequence field using the commitApplied event", () => {
+			const value = "42";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0];
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view1.initialize([]);
+
+			const undoStack: Revertible[] = [];
+			const redoStack: Revertible[] = [];
+
+			function onDispose(disposed: Revertible): void {
+				const redoIndex = redoStack.indexOf(disposed);
+				if (redoIndex !== -1) {
+					redoStack.splice(redoIndex, 1);
+				} else {
+					const undoIndex = undoStack.indexOf(disposed);
+					if (undoIndex !== -1) {
+						undoStack.splice(undoIndex, 1);
+					}
+				}
+			}
+
+			const unsubscribeFromCommitAppliedEvent = view1.events.on(
+				"commitApplied",
+				(commit, getRevertible) => {
+					if (getRevertible !== undefined) {
+						const revertible = getRevertible(onDispose);
+						if (commit.kind === CommitKind.Undo) {
+							redoStack.push(revertible);
+						} else {
+							undoStack.push(revertible);
+						}
+					}
+				},
+			);
+			const unsubscribe = (): void => {
+				unsubscribeFromCommitAppliedEvent();
+				for (const revertible of undoStack) {
+					revertible.dispose();
+				}
+				for (const revertible of redoStack) {
+					revertible.dispose();
+				}
+			};
+
+			provider.processMessages();
+			const tree2 = provider.trees[1];
+			const view2 = tree2.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			provider.processMessages();
+
+			// Insert node
+			view1.root.insertAtStart(value);
+			provider.processMessages();
+
+			// Validate insertion
+			assert.deepEqual([...view2.root], [value]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual([...view1.root], []);
+			assert.deepEqual([...view2.root], []);
+
+			// Redo node insertion
+			redoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual([...view1.root], [value]);
+			assert.deepEqual([...view2.root], [value]);
+			unsubscribe();
+		});
+
 		it("the insert of a node in a sequence field", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);

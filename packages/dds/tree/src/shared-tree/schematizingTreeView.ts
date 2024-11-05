@@ -134,9 +134,10 @@ export class SchematizingSimpleTreeView<
 		this.update();
 
 		this.unregisterCallbacks.add(
-			this.checkout.events.on("changed", (data, getRevertible) =>
-				this.events.emit("changed", data, getRevertible),
-			),
+			this.checkout.events.on("changed", (data, getRevertible) => {
+				this.events.emit("changed", data, getRevertible);
+				this.events.emit("commitApplied", data, getRevertible);
+			}),
 		);
 	}
 
