@@ -58,8 +58,12 @@ export {
 	rollback,
 	type ForestOptions,
 	getBranch,
-	type TreeBranch,
+	type BranchableTree,
 	type TreeBranchFork,
+	independentInitializedView,
+	type ViewContent,
+	TreeAlpha,
+	independentView,
 } from "./shared-tree/index.js";
 
 export {
@@ -142,8 +146,13 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type VerboseTreeNode,
+	type EncodeOptions,
+	type ParseOptions,
+	type VerboseTree,
 	extractPersistedSchema,
 	comparePersistedSchema,
+	type ConciseTree,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,
@@ -164,16 +173,20 @@ export {
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
+	type TreeBranch,
+	type TreeBranchEvents,
+	asTreeViewAlpha,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
 } from "./treeFactory.js";
 
-export type {
-	ICodecOptions,
-	JsonValidator,
-	SchemaValidationFunction,
+export {
+	type ICodecOptions,
+	type JsonValidator,
+	type SchemaValidationFunction,
+	FluidClientVersion,
 } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
