@@ -9,7 +9,7 @@
 
 MergeTree `Client` Legacy API Removed
 
-The `Client` class in the merge-tree package has been removed. Additionally, types that directly or indirectly expose the merge-tree `Client` class have also been removed.
+The `Client` class in the merge-tree package has been removed. Types that directly or indirectly expose the merge-tree `Client` class have also been removed.
 
 The removed types were not meant to be used directly, and direct usage was not supported:
 
