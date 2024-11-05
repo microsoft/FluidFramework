@@ -30,6 +30,7 @@ import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
 } from "./gitrestTelemetryDefinitions";
+import { isFilesystemError, throwFileSystemErrorAsNetworkError } from "./fileSystemHelper";
 
 /**
  * Validates that the input encoding is valid
@@ -139,11 +140,16 @@ export async function persistLatestFullSummaryInStorage(
 		persistLatestFullSummaryInStorageMetric.success(
 			"Successfully persisted latest full summary in storage",
 		);
-	} catch (error: any) {
+	} catch (error: unknown) {
 		persistLatestFullSummaryInStorageMetric.error(
 			"Failed to persist latest full summary in storage",
 			error,
 		);
+		if (
+			isFilesystemError(error)
+		) {
+			throwFileSystemErrorAsNetworkError(error);
+		}
 		throw error;
 	}
 }
@@ -260,6 +266,9 @@ export function logAndThrowApiError(
 
 	if (isNetworkError(error)) {
 		throw error;
+	}
+	if (isFilesystemError(error)) {
+		throwFileSystemErrorAsNetworkError(error);
 	}
 	// TODO: some APIs might expect 400 responses by default, like GetRef in GitManager. Since `handleResponse` uses
 	// 400 by default, using something different here would override the expected behavior and cause issues. Because

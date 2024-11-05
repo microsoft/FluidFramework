@@ -9,7 +9,7 @@ import type { Stream } from "node:stream";
 import type { Abortable } from "node:events";
 import sizeof from "object-sizeof";
 import { type IFileSystemPromises } from "./definitions";
-import { FilesystemError, SystemErrors } from "./fileSystemHelper";
+import { filepathToString, FilesystemError, SystemErrors } from "./fileSystemHelper";
 
 export abstract class FsPromisesBase implements IFileSystemPromises {
 	public readonly promises: IFileSystemPromises;
@@ -88,8 +88,14 @@ export abstract class FsPromisesBase implements IFileSystemPromises {
 			this.maxFileSizeBytes > 0 &&
 			sizeof(data) > this.maxFileSizeBytes
 		) {
-			// eslint-disable-next-line @typescript-eslint/no-base-to-string
-			throw new FilesystemError(SystemErrors.EFBIG, filepath.toString());
+			throw new FilesystemError(
+				SystemErrors.EFBIG,
+				`Attempted write size (${sizeof(
+					data,
+				)} bytes) to ${filepathToString(filepath)} exceeds limit (${
+					this.maxFileSizeBytes
+				} bytes).`,
+			);
 		}
 		return this.writeFileCore(filepath, data, options);
 	}
