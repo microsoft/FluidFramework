@@ -29,6 +29,9 @@ export interface OpenAiClientOptions {
  * @alpha
  */
 export interface AiCollabOptions {
+	/**
+	 * The OpenAI client options to use for the LLM based AI collaboration.
+	 */
 	readonly openAI: OpenAiClientOptions;
 	/**
 	 * The specific tree node you want the AI to collaborate on. Pass the root node of your tree if you intend
