@@ -1487,10 +1487,13 @@ describe("SharedTree", () => {
 			provider.processMessages();
 
 			let localEdits = 0;
+			let remoteEdits = 0;
 
 			const unsubscribe = view1.events.on("changed", (metadata) => {
 				if (metadata.isLocal === true) {
 					localEdits++;
+				} else {
+					remoteEdits++;
 				}
 			});
 
@@ -1502,6 +1505,8 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view1.root], [value]);
 
 			assert.equal(localEdits, 1);
+			// check that the edit is not counted twice
+			assert.equal(remoteEdits, 0);
 
 			unsubscribe();
 		});
