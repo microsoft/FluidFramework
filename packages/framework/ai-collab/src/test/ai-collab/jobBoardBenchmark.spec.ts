@@ -21,7 +21,7 @@ import { after } from "mocha";
 import { OpenAI } from "openai";
 import * as zod from "zod";
 
-import { aiCollab } from "../../../index.js";
+import { aiCollab } from "../../index.js";
 
 // Define a schema factory that is used to generate classes for the schema
 const sf = new SchemaFactory("ef0b8eff-2876-4801-9b6a-973f09aab904");

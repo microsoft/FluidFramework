@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/tree/internal";
 import { OpenAI } from "openai";
 
-import { aiCollab } from "../../../aiCollab.js";
+import { aiCollab } from "../../aiCollab.js";
 
 const sf = new SchemaFactory("TestApp");
 class TestAppSchema extends sf.object("TestAppSchema", {

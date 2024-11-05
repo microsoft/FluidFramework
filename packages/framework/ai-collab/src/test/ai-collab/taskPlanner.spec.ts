@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/tree/internal";
 import { APIError, OpenAI } from "openai";
 
-import { aiCollab } from "../../../index.js";
+import { aiCollab } from "../../index.js";
 
 const sf = new SchemaFactory("ai-collab-sample-application");
 
