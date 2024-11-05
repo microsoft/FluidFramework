@@ -4,7 +4,11 @@
  */
 
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import { waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	resolveContainer,
+	waitContainerToCatchUp,
+} from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -151,14 +155,14 @@ describe("Scenario Test", () => {
 	it("Synchronously create nested data store", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-		const { loader, codeDetails, urlResolver } = createLoader({
+		const loaderProps = createLoader({
 			deltaConnectionServer,
 			runtimeFactory,
 		});
 
-		const container = await loader.createDetachedContainer(codeDetails);
+		const container = await createDetachedContainer({ ...loaderProps });
 
-		await container.attach(urlResolver.createCreateNewRequest("test"));
+		await container.attach(loaderProps.urlResolver.createCreateNewRequest("test"));
 		const url = await container.getAbsoluteUrl("");
 		assert(url !== undefined, "container must have url");
 		{
@@ -184,7 +188,7 @@ describe("Scenario Test", () => {
 		}
 
 		{
-			const container2 = await loader.resolve({ url });
+			const container2 = await resolveContainer({ request: { url }, ...loaderProps });
 			await waitContainerToCatchUp(container2);
 			const entrypoint: FluidObject<DataStoreWithSyncCreate> =
 				await container2.getEntryPoint();
