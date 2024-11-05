@@ -62,7 +62,6 @@ jobs:
           pnpm i --frozen-lockfile
           pnpm lint
 
-  # TODO: only run on changes to `docs` folder
   test:
     runs-on: ubuntu-latest
     name: 🔗 Broken Link Check
@@ -87,9 +86,6 @@ jobs:
         run: "pnpm i --frozen-lockfile"
       - name: Run tests
         run: "pnpm test"
-        continue-on-error: true
-
-      # TODO: Upload test results to PR
 
   broken_link_check:
     runs-on: ubuntu-latest
