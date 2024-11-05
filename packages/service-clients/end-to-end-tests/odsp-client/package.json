@@ -27,10 +27,10 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"test": "npm run test:realsvc:odsp:run -- --driver=odsp --odspEndpointName=odsp",
+		"test": "npm run test:realsvc:odsp:run",
 		"test:coverage": "c8 npm test",
-		"test:realsvc:odsp": "cross-env npm run test:realsvc:odsp:run",
-		"test:realsvc:odsp:run": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit --timeout 20000 --config src/test/.mocharc.cjs",
+		"test:realsvc:odsp": "cross-env npm run test:realsvc:odsp:run -- --driver=odsp --odspEndpointName=odsp",
+		"test:realsvc:odsp:run": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit --timeout 20000",
 		"test:realsvc:run": "mocha --recursive \"lib/test/**/*.spec.*js\"",
 		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
 	},
@@ -56,7 +56,6 @@
 	},
 	"dependencies": {
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
