@@ -444,7 +444,7 @@ describe("Undo and redo", () => {
 		view.initialize({ foo: 1 });
 		assert.equal(tree.isAttached(), false);
 		let revertible: Revertible | undefined;
-		view.events.on("commitApplied", (_, getRevertible) => {
+		view.events.on("changed", (_, getRevertible) => {
 			revertible = getRevertible?.();
 		});
 		view.root.foo = 2;
