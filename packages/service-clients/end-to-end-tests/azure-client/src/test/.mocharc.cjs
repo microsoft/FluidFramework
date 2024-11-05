@@ -15,6 +15,6 @@ const driverIndex = args.indexOf("--driver");
 const endpointIndex = args.indexOf("--r11sEndpointName");
 
 // Data_driverEndpointName
-process.env.FLUID_ENDPOINTNAME = endpointIndex ?? "local"
+process.env.FLUID_ENDPOINTNAME = endpointIndex ?? "local";
 
 module.exports = config;
