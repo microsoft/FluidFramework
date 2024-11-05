@@ -683,9 +683,6 @@ export interface TreeViewEvents {
 	 * @param data - information about the commit that was applied
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
-	 *
-	 * @deprecated use the "changed" event on TreeBranchEvents (alpha) instead which behaves the same way but also gets fired for more
-	 * scenarios, see its doc comment for usage details
 	 */
 	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }
