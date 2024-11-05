@@ -10,8 +10,10 @@ import type {
 	TreeViewConfiguration,
 } from "@fluidframework/tree";
 import {
+	// TODO: Migrate to newer branching API (`TreeContext`)
+	// eslint-disable-next-line import/no-deprecated
 	getBranch,
-	type TreeBranch,
+	type BranchableTree,
 	type TreeBranchFork,
 	type TreeViewAlpha,
 	// eslint-disable-next-line import/no-internal-modules -- This package depends on the branching APIs in Tree which are currently alpha
@@ -97,11 +99,12 @@ export class SharedTreeBranchManager {
 		llmResponse: Record<string, unknown> | unknown[],
 	): {
 		differences: Difference[];
-		originalBranch: TreeBranch;
+		originalBranch: BranchableTree;
 		forkBranch: TreeBranchFork;
 		forkView: TreeViewAlpha<T>;
 		newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
 	} {
+		// eslint-disable-next-line import/no-deprecated
 		const originalBranch = getBranch(treeView);
 		const forkBranch = originalBranch.branch();
 		const forkView = forkBranch.viewWith(treeViewConfiguration) as TreeViewAlpha<T>;
@@ -136,11 +139,12 @@ export class SharedTreeBranchManager {
 		absolutePathToObjectNode: ObjectPath,
 		// differences: Difference[],
 	): {
-		originalBranch: TreeBranch;
+		originalBranch: BranchableTree;
 		forkBranch: TreeBranchFork;
 		forkView: TreeViewAlpha<T>;
 		newBranchTargetNode: Record<string, unknown> | TreeArrayNode;
 	} {
+		// eslint-disable-next-line import/no-deprecated
 		const originalBranch = getBranch(treeView);
 		const forkBranch = originalBranch.branch();
 		const forkView = forkBranch.viewWith(treeViewConfiguration) as TreeViewAlpha<T>;

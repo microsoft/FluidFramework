@@ -128,8 +128,8 @@ importers:
         specifier: ^21.0.2
         version: 21.0.2
       '@rushstack/node-core-library':
-        specifier: ^3.66.1
-        version: 3.66.1(@types/node@18.19.60)
+        specifier: ^5.9.0
+        version: 5.9.0(@types/node@18.19.60)
       async:
         specifier: ^3.2.6
         version: 3.2.6
@@ -387,7 +387,7 @@ importers:
   packages/build-infrastructure:
     dependencies:
       '@fluid-tools/version-tools':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../version-tools
       '@manypkg/get-packages':
         specifier: ^2.2.2
@@ -2807,6 +2807,7 @@ packages:
       resolve: 1.22.8
       semver: 7.5.4
       z-schema: 5.0.5
+    dev: true
 
   /@rushstack/node-core-library@5.3.0(@types/node@18.19.60):
     resolution: {integrity: sha512-t23gjdZV6aWkbwXSE3TkKr1UXJFbXICvAOJ0MRQEB/ZYGhfSJqqrQFaGd20I1a/nIIHJEkNO0xzycHixjcbCPw==}
@@ -4657,6 +4658,7 @@ packages:
   /colors@1.2.5:
     resolution: {integrity: sha512-erNRLao/Y3Fv54qUa0LBB+//Uf3YwMUmdJinN20yMXm9zdKKqH9wt7R9IIVZ+K7ShzfpLV/Zg8+VyrBJYB4lpg==}
     engines: {node: '>=0.1.90'}
+    dev: true
 
   /colors@1.4.0:
     resolution: {integrity: sha512-a+UqTh4kgZg/SlGvfbzDHpgRu7AAQOmmqRHJnxhRZICKFUT91brVhNNt58CMWU9PsBbv3PDCZUHbVxuDiH2mtA==}
@@ -8630,6 +8632,7 @@ packages:
 
   /lodash.get@4.4.2:
     resolution: {integrity: sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==}
+    dev: true
 
   /lodash.includes@4.3.0:
     resolution: {integrity: sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==}
@@ -12455,6 +12458,7 @@ packages:
   /validator@13.9.0:
     resolution: {integrity: sha512-B+dGG8U3fdtM0/aNK4/X8CXq/EcxU2WPrPEkJGslb47qyHsxmbggTWK0yEA4qnYVNF+nxNlN88o14hIcPmSIEA==}
     engines: {node: '>= 0.10'}
+    dev: true
 
   /vfile-location@5.0.3:
     resolution: {integrity: sha512-5yXvWDEgqeiYiBe1lbxYF7UMAIm/IcopxMHrMQDq3nvKcjPKIhZklUKL+AE7J7uApI4kwe2snsK+eI6UTj9EHg==}
@@ -12832,6 +12836,7 @@ packages:
       validator: 13.9.0
     optionalDependencies:
       commander: 9.5.0
+    dev: true
 
   /zod@3.21.4:
     resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
