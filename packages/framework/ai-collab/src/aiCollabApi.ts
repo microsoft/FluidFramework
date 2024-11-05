@@ -39,7 +39,7 @@ export interface AiCollabOptions {
 	 */
 	readonly treeNode: TreeNode;
 	/**
-	 * The prompt context to give your LLM in order to collaborate with your applications data.
+	 * The prompt context to give the LLM in order to collaborate with your applications data.
 	 */
 	readonly prompt: {
 		/**
@@ -57,7 +57,7 @@ export interface AiCollabOptions {
 	 */
 	readonly limiters?: {
 		/**
-		 * An optional {@link AbortController} that can be used to abort the AI collaboration while it is still in progress.
+		 * An optional AbortController that can be used to abort the AI collaboration while it is still in progress.
 		 */
 		readonly abortController?: AbortController;
 		/**

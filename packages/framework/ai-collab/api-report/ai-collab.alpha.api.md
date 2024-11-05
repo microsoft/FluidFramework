@@ -9,37 +9,36 @@ export function aiCollab(options: AiCollabOptions): Promise<AiCollabSuccessRespo
 
 // @alpha
 export interface AiCollabErrorResponse {
-    errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted";
-    status: "failure" | "partial-failure";
-    tokensUsed: TokenUsage;
+    readonly errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted";
+    readonly status: "failure" | "partial-failure";
+    readonly tokensUsed: TokenUsage;
 }
 
 // @alpha
 export interface AiCollabOptions {
-    dumpDebugLog?: boolean;
-    finalReviewStep?: boolean;
-    limiters?: {
-        abortController?: AbortController;
-        maxSequentialErrors?: number;
-        maxModelCalls?: number;
-        tokenLimits?: TokenLimits;
+    readonly dumpDebugLog?: boolean;
+    readonly finalReviewStep?: boolean;
+    readonly limiters?: {
+        readonly abortController?: AbortController;
+        readonly maxSequentialErrors?: number;
+        readonly maxModelCalls?: number;
+        readonly tokenLimits?: TokenLimits;
     };
     // (undocumented)
-    openAI: OpenAiClientOptions;
-    planningStep?: boolean;
-    // (undocumented)
-    prompt: {
-        systemRoleContext: string;
-        userAsk: string;
+    readonly openAI: OpenAiClientOptions;
+    readonly planningStep?: boolean;
+    readonly prompt: {
+        readonly systemRoleContext: string;
+        readonly userAsk: string;
     };
-    treeNode: TreeNode;
-    validator?: (newContent: TreeNode) => void;
+    readonly treeNode: TreeNode;
+    readonly validator?: (newContent: TreeNode) => void;
 }
 
 // @alpha
 export interface AiCollabSuccessResponse {
-    status: "success";
-    tokensUsed: TokenUsage;
+    readonly status: "success";
+    readonly tokensUsed: TokenUsage;
 }
 
 // @alpha
@@ -153,17 +152,13 @@ export function sharedTreeTraverse<T = unknown>(jsonObject: TreeMapNode | TreeAr
 
 // @alpha
 export interface TokenLimits {
-    // (undocumented)
-    inputTokens?: number;
-    // (undocumented)
-    outputTokens?: number;
+    readonly inputTokens?: number;
+    readonly outputTokens?: number;
 }
 
 // @alpha
 export interface TokenUsage {
-    // (undocumented)
     inputTokens: number;
-    // (undocumented)
     outputTokens: number;
 }
 
