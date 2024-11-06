@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { IAzureAudience } from "@fluidframework/azure-client";
+import type { ISessionClient } from "@fluid-experimental/presence";
 
 import type { IMousePosition } from "./MouseTracker.js";
-import { getFocusPresences, type AppPresence } from "./presence.js";
+import { type AppPresence } from "./presence.js";
 
 export function renderFocusPresence(
-	mousePresence: AppPresence,
-	audience: IAzureAudience,
+	mySessionClient: ISessionClient,
+	appPresence: AppPresence,
 	div: HTMLDivElement,
 ) {
-	const { focus } = mousePresence;
+	const { focus } = appPresence;
 
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "left";
@@ -40,25 +40,26 @@ export function renderFocusPresence(
 
 	const onFocusChanged = () => {
 		console.log("entered onFocusChanged");
-		const currentUserConnectionId = audience.getMyself()?.currentConnection;
-		console.log(`currentUserConnectionId: ${currentUserConnectionId}`);
+		// const currentUserConnectionId = mySessionClient.getConnectionId();
+		// console.log(`currentUserConnectionId: ${currentUserConnectionId}`);
 
-		const userSessionId = focus
-			.clients()
-			.map((c) => {
-				console.log(c);
-				return c;
-			})
-			.find((c) => c.getConnectionId() === currentUserConnectionId)?.sessionId;
-		const focusPresences = getFocusPresences(mousePresence);
+		const localSessionId = mySessionClient.sessionId;
+		console.log(`localSessionId: ${localSessionId}`);
+		// .clients()
+			// .map((c) => {
+			// 	console.log(c);
+			// 	return c;
+			// })
+			// .find((c) => c.getConnectionId() === currentUserConnectionId)?.sessionId;
+		// const focusPresences = getFocusPresences(appPresence);
 
 		focusDiv.innerHTML = `
-            Current user: ${userSessionId}</br>
-            ${getFocusPresencesString("</br>", mousePresence)}
+            Current user: ${localSessionId}</br>
+            ${getFocusPresencesString("</br>", appPresence)}
         `;
 
 		focusMessageDiv.style.display =
-			userSessionId !== undefined && focusPresences.get(userSessionId) === false ? "" : "none";
+			localSessionId !== undefined && !focus.clientValue(mySessionClient).value.focused ? "" : "none";
 	};
 
 	// onFocusChanged();
@@ -69,9 +70,9 @@ export function renderFocusPresence(
 
 function getFocusPresencesString(
 	newLineSeparator: string = "\n",
-	mousePresence: AppPresence,
+	appPresence: AppPresence,
 ): string {
-	const { focus } = mousePresence;
+	const { focus } = appPresence;
 	const focusString: string[] = [];
 
 	for (const s of focus.clientValues()) {
@@ -91,28 +92,28 @@ function getFocusPresencesString(
 export function renderMousePresence(
 	// mouseTracker: LatestValueManager<IMousePosition>,
 	// focusTracker: FocusTracker,
-	mousePresence: AppPresence,
+	mySessionClient: ISessionClient,
+	appPresence: AppPresence,
 	div: HTMLDivElement,
 ) {
-	const { mouse } = mousePresence;
+	const { mouse, focus } = appPresence;
 	const onPositionChanged = () => {
 		console.log("entered onPositionChanged");
 
 		div.innerHTML = "";
 		console.log(`mouse.clients()`);
-		console.assert(mouse.clients().length > 0, "mouse.clients().length > 0");
+		// console.assert(mouse.clients().length > 0, "mouse.clients().length > 0");
 		for (const client of mouse.clients()) {
-			console.log(client);
+			// console.log(client);
 			const connectionId = client.getConnectionId();
-			console.log(connectionId);
-
+			console.log(`connectionId: ${connectionId}`);
 			const position = mouse.clientValue(client).value;
 
 			// if (
 			// 	[...focus.clientValues()].some(({ client }) => client.sessionId === p.client.sessionId)
 			// ) {
 			const posDiv = document.createElement("div");
-			posDiv.textContent = client.sessionId;
+			posDiv.textContent = `session ID: ${client.sessionId}`;
 			posDiv.style.position = "absolute";
 			posDiv.style.left = `${position.x}px`;
 			posDiv.style.top = `${position.y}px`;
@@ -121,13 +122,11 @@ export function renderMousePresence(
 			// }
 		}
 	};
-
 	onPositionChanged();
 	mouse.events.on("updated", onPositionChanged);
-	addWindowListeners(mousePresence);
 }
 
-function addWindowListeners(mousePresence: AppPresence) {
+export function addWindowListeners(appPresence: AppPresence) {
 	// console.log("Adding mousemove window event listener");
 	window.addEventListener("mousemove", (e) => {
 		// console.log(`mousemove: ${e}`);
@@ -135,16 +134,17 @@ function addWindowListeners(mousePresence: AppPresence) {
 			x: e.clientX,
 			y: e.clientY,
 		};
-		mousePresence.mouse.local = position;
+		appPresence.mouse.local = position;
+		// onPositionChanged();
 	});
 
 	window.addEventListener("focus", () => {
 		console.log("focus true");
-		mousePresence.focus.local = { focused: true };
+		appPresence.focus.local = { focused: true };
 	});
 
 	window.addEventListener("blur", () => {
 		console.log("focus false");
-		mousePresence.focus.local = { focused: false };
+		appPresence.focus.local = { focused: false };
 	});
 }

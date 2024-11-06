@@ -19,7 +19,7 @@ import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
 import { initializePresenceWorkspace } from "./presence.js";
-import { renderFocusPresence, renderMousePresence } from "./view.js";
+import { addWindowListeners, renderFocusPresence, renderMousePresence } from "./view.js";
 
 // Define the server we will be using and initialize Fluid
 const useAzure = process.env.FLUID_CLIENT === "azure";
@@ -115,7 +115,8 @@ async function start() {
 	document.title = id;
 
 	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
-	const states = initializePresenceWorkspace(presence);
+	const mySessionClient = presence.getMyself();
+	const appPresence = initializePresenceWorkspace(presence);
 
 	// update the browser URL and the window title with the actual container ID
 	location.hash = id;
@@ -124,8 +125,9 @@ async function start() {
 	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 
-	renderFocusPresence(states, services.audience, contentDiv);
-	renderMousePresence(states, mouseContentDiv);
+	renderFocusPresence(mySessionClient, appPresence, contentDiv);
+	renderMousePresence(mySessionClient, appPresence, mouseContentDiv);
+	addWindowListeners(appPresence);
 }
 
 start().catch(console.error);
