@@ -112,7 +112,7 @@ describe("toDecoratedJson", () => {
 
 		assert.equal(
 			toDecoratedJson(idGenerator, view.root),
-			JSON.stringify({ __fluid_objectId: "Root1", arr: [1, 2, 3] }),
+			JSON.stringify({ [objectIdKey]: "Root1", arr: [1, 2, 3] }),
 		);
 	});
 });
