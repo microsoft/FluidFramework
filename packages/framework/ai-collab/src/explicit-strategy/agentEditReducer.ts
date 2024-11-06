@@ -107,7 +107,7 @@ export function applyAgentEdit(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	validator?: (edit: TreeNode) => void,
 ): TreeEdit {
-	objectIdsExist(treeEdit, idGenerator);
+	assertObjectIdsExist(treeEdit, idGenerator);
 	switch (treeEdit.type) {
 		case "insert": {
 			const { array, index } = getPlaceInfo(treeEdit.destination, idGenerator);
@@ -403,7 +403,12 @@ function getNodeFromTarget(target: ObjectTarget, idGenerator: IdGenerator): Tree
 	return node;
 }
 
-function objectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
+/**
+ * Checks that the objectIds of the Tree Nodes within the givin the {@link TreeEdit} exist within the given {@link IdGenerator}
+ *
+ * @throws An {@link UsageError} if the objectIdKey does not exist in the {@link IdGenerator}
+ */
+function assertObjectIdsExist(treeEdit: TreeEdit, idGenerator: IdGenerator): void {
 	switch (treeEdit.type) {
 		case "insert": {
 			if (treeEdit.destination.type === "objectPlace") {
