@@ -670,7 +670,7 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 export interface ISerializableInterval extends IInterval {
     // @deprecated (undocumented)
     addProperties(props: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
-    getIntervalId(): string | undefined;
+    getIntervalId(): string;
     properties: PropertySet;
     // @deprecated (undocumented)
     propertyManager: PropertiesManager;
@@ -1051,72 +1051,55 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @alpha
-export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
-    // @deprecated
-    constructor(opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, mergeTreeClient: Client);
+export interface SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
     readonly isLocal: boolean;
     // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs;
 }
 
 // @alpha
-export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
-    // @deprecated
-    constructor(
-    deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>, mergeTreeClient: Client);
-    get clientId(): string | undefined;
+export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
+    readonly clientId: string | undefined;
+    // (undocumented)
     readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
     // (undocumented)
     readonly deltaOperation: TOperation;
-    get first(): Readonly<ISequenceDeltaRange<TOperation>>;
-    get last(): Readonly<ISequenceDeltaRange<TOperation>>;
-    get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[];
+    readonly first: Readonly<ISequenceDeltaRange<TOperation>>;
+    readonly last: Readonly<ISequenceDeltaRange<TOperation>>;
+    readonly ranges: readonly Readonly<ISequenceDeltaRange<TOperation>>[];
 }
 
 // @alpha
-export class SequenceInterval implements ISerializableInterval {
-    // @deprecated
-    constructor(client: Client,
-    start: LocalReferencePosition,
-    end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, startSide?: Side, endSide?: Side);
+export interface SequenceInterval extends ISerializableInterval {
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
-    // (undocumented)
-    addProperties(newProps: PropertySet, collab?: boolean, seq?: number): PropertySet | undefined;
     // (undocumented)
     clone(): SequenceInterval;
     compare(b: SequenceInterval): number;
     compareEnd(b: SequenceInterval): number;
     compareStart(b: SequenceInterval): number;
-    end: LocalReferencePosition;
+    readonly end: LocalReferencePosition;
     // (undocumented)
     readonly endSide: Side;
-    getIntervalId(): string;
     // (undocumented)
-    intervalType: IntervalType;
-    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval;
+    readonly intervalType: IntervalType;
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval | undefined;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
     overlapsPos(bstart: number, bend: number): boolean;
-    properties: PropertySet;
-    // (undocumented)
-    propertyManager: PropertiesManager;
     removePositionChangeListeners(): void;
     // (undocumented)
-    serialize(): ISerializedInterval;
-    start: LocalReferencePosition;
+    readonly start: LocalReferencePosition;
     // (undocumented)
     readonly startSide: Side;
     // (undocumented)
-    get stickiness(): IntervalStickiness;
+    readonly stickiness: IntervalStickiness;
     union(b: SequenceInterval): SequenceInterval;
 }
 
 // @alpha
-export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
-    // @deprecated
-    constructor(
-    opArgs: IMergeTreeDeltaOpArgs | undefined, deltaArgs: IMergeTreeMaintenanceCallbackArgs, mergeTreeClient: Client);
+export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
+    // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
