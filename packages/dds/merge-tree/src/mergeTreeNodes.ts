@@ -703,8 +703,7 @@ export abstract class BaseSegment implements ISegment {
 				this.localMovedSeq = obliterateInfo.localSeq = undefined;
 				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
 				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
-				moveInfo.movedSeqs[seqIdx] = obliterateInfo.seq =
-					opArgs.sequencedMessage!.sequenceNumber;
+				moveInfo.movedSeqs[seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
 
 				if (moveInfo.movedSeq === UnassignedSequenceNumber) {
 					moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;

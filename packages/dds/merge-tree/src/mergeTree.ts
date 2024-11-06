@@ -1254,6 +1254,7 @@ export class MergeTree {
 				opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
 				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED
 			) {
+				pendingSegmentGroup.obliterateInfo!.seq = seq;
 				this.obliterates.addOrUpdate(pendingSegmentGroup.obliterateInfo!);
 			}
 
@@ -2107,7 +2108,7 @@ export class MergeTree {
 
 		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
 		// opArgs == undefined => test code
-		if (movedSegments.length > 0) {
+		if (start.pos !== end.pos || start.side !== end.side) {
 			this.mergeTreeDeltaCallback?.(opArgs, {
 				operation: MergeTreeDeltaType.OBLITERATE,
 				deltaSegments: movedSegments,
