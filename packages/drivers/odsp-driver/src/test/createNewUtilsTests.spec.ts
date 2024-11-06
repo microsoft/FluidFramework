@@ -223,7 +223,8 @@ describe("Create New Utils Tests", () => {
 			iconUrl: "https://mock.icon.url",
 			scope: "organization",
 			type: "view",
-			webUrl: "https://mock.url",
+			webUrl:
+				"https://mock.url/?nav=cz0lMkZzaXRlVXJsJmQ9ZHJpdmVJZCZmPW1vY2tJdGVtSWQmYz0lMkYmZmx1aWQ9MQ%3D%3D",
 			blocksDownload: false,
 			createOnly: false,
 			status: "Created",
