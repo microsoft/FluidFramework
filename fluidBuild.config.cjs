@@ -634,7 +634,7 @@ module.exports = {
 			tree: { heading: "🌳 SharedTree DDS Changes" },
 			fix: { heading: "🐛 Bug Fixes" },
 			deprecation: { heading: "⚠️ Deprecations" },
-			legacy: { heading: "☠️ Legacy API Changes" },
+			legacy: { heading: "Legacy API Changes" },
 			other: { heading: "Other Changes" },
 		},
 	},
