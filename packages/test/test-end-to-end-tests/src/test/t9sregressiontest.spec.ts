@@ -13,7 +13,7 @@ import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
-	assertIsIDeltaManagerFull,
+	toIDeltaManagerFull,
 	createAndAttachContainer,
 } from "@fluidframework/test-utils/internal";
 
@@ -55,7 +55,7 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 		[...Array(60).keys()].map((i) => map2.set(`test op ${i}`, i));
 		await provider.ensureSynchronized();
 		await provider.opProcessingController.pauseProcessing(container2);
-		const deltaManagerFull = assertIsIDeltaManagerFull(
+		const deltaManagerFull = toIDeltaManagerFull(
 			toDeltaManagerInternal(dataStore2.runtime.deltaManager),
 		);
 		assert(deltaManagerFull.outbound.paused);

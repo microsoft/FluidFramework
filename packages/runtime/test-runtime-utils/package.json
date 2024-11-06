@@ -163,12 +163,6 @@
 			},
 			"ClassStatics_MockFluidDataStoreContext": {
 				"backCompat": false
-			},
-			"Class_MockDeltaConnection": {
-				"forwardCompat": false
-			},
-			"Class_MockFluidDataStoreRuntime": {
-				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"

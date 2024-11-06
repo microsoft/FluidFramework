@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 
-import { assertIsIDeltaManagerFull, waitForContainerConnection } from "./containerUtils.js";
+import { toIDeltaManagerFull, waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
 import { IOpProcessingController } from "./testObjectProvider.js";
 import { timeoutAwait, timeoutPromise } from "./timeoutUtils.js";
@@ -145,7 +145,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * @param record - the record to update the trailing op information
 	 */
 	private trackTrailingNoOps(container: IContainer, record: ContainerRecord) {
-		const deltaManagerFull = assertIsIDeltaManagerFull(container.deltaManager);
+		const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
 		deltaManagerFull.outbound.on("op", (messages) => {
 			for (const msg of messages) {
 				if (canBeCoalescedByService(msg)) {
@@ -459,12 +459,12 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		return new Promise<void>((resolve) => {
 			const handler = () => {
 				containersToApply.map((c) => {
-					assertIsIDeltaManagerFull(c.deltaManager).inbound.off("push", handler);
+					toIDeltaManagerFull(c.deltaManager).inbound.off("push", handler);
 				});
 				resolve();
 			};
 			containersToApply.map((c) => {
-				assertIsIDeltaManagerFull(c.deltaManager).inbound.on("push", handler);
+				toIDeltaManagerFull(c.deltaManager).inbound.on("push", handler);
 			});
 		});
 	}
@@ -483,7 +483,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			);
 			if (record?.paused === true) {
 				debugWait(`${record.index}: container resumed`);
-				const deltaManagerFull = assertIsIDeltaManagerFull(container.deltaManager);
+				const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
 				deltaManagerFull.inbound.resume();
 				deltaManagerFull.outbound.resume();
 				resumed.push(container);
@@ -528,7 +528,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 */
 	private async pauseContainer(container: IContainer, record: ContainerRecord) {
 		debugWait(`${record.index}: pausing container`);
-		const deltaManagerFull = assertIsIDeltaManagerFull(container.deltaManager);
+		const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
 		assert(!deltaManagerFull.outbound.paused, "Container should not be paused yet");
 		assert(!deltaManagerFull.inbound.paused, "Container should not be paused yet");
 
@@ -593,7 +593,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	public async processIncoming(...containers: IContainer[]) {
 		return this.processQueue(
 			containers,
-			(container) => assertIsIDeltaManagerFull(container.deltaManager).inbound,
+			(container) => toIDeltaManagerFull(container.deltaManager).inbound,
 		);
 	}
 
@@ -607,7 +607,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	public async processOutgoing(...containers: IContainer[]) {
 		return this.processQueue(
 			containers,
-			(container) => assertIsIDeltaManagerFull(container.deltaManager).outbound,
+			(container) => toIDeltaManagerFull(container.deltaManager).outbound,
 		);
 	}
 
@@ -687,7 +687,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			}
 		};
 
-		const deltaManagerFull = assertIsIDeltaManagerFull(container.deltaManager);
+		const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
 		deltaManagerFull.outbound.on("op", outHandler);
 		deltaManagerFull.inbound.on("push", inHandler);
 
@@ -736,7 +736,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 				}
 			};
 			debugOp(`${index}: ADD: clientId: ${container.clientId}`);
-			const deltaManagerFull = assertIsIDeltaManagerFull(container.deltaManager);
+			const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
 			deltaManagerFull.outbound.on("op", (messages) => {
 				for (const msg of messages) {
 					debugOp(

@@ -26,7 +26,7 @@ import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definition
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestObjectProvider,
-	assertIsIDeltaManagerFull,
+	toIDeltaManagerFull,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
@@ -440,7 +440,7 @@ describeCompat(
 				await provider.ensureSynchronized();
 				// Pause the summarizer2 so we can generate a summary in the future
 				// Note: The summarizing containers don't get added to the loader container tracker, so we manually pause here
-				await assertIsIDeltaManagerFull(container2.deltaManager).inbound.pause();
+				await toIDeltaManagerFull(container2.deltaManager).inbound.pause();
 
 				// Send an op
 				dataObjectA._root.set("C", "C");

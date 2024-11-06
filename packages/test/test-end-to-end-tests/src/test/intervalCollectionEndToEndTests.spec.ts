@@ -22,7 +22,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	assertIsIDeltaManagerFull,
+	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -133,7 +133,7 @@ describeCompat(
 
 			await provider.ensureSynchronized();
 			await provider.opProcessingController.pauseProcessing(container);
-			const deltaManagerFull = assertIsIDeltaManagerFull(
+			const deltaManagerFull = toIDeltaManagerFull(
 				toDeltaManagerInternal(dataStore.runtime.deltaManager),
 			);
 			assert(deltaManagerFull.outbound.paused);

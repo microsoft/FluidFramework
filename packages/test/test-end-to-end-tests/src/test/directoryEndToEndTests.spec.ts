@@ -26,7 +26,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	assertIsIDeltaManagerFull,
+	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
@@ -1305,18 +1305,18 @@ describeCompat(
 		}
 
 		async function pauseAllContainers() {
-			await assertIsIDeltaManagerFull(container1.deltaManager).inbound.pause();
-			await assertIsIDeltaManagerFull(container2.deltaManager).inbound.pause();
-			await assertIsIDeltaManagerFull(container3.deltaManager).inbound.pause();
+			await toIDeltaManagerFull(container1.deltaManager).inbound.pause();
+			await toIDeltaManagerFull(container2.deltaManager).inbound.pause();
+			await toIDeltaManagerFull(container3.deltaManager).inbound.pause();
 
-			await assertIsIDeltaManagerFull(container1.deltaManager).outbound.pause();
-			await assertIsIDeltaManagerFull(container2.deltaManager).outbound.pause();
-			await assertIsIDeltaManagerFull(container3.deltaManager).outbound.pause();
+			await toIDeltaManagerFull(container1.deltaManager).outbound.pause();
+			await toIDeltaManagerFull(container2.deltaManager).outbound.pause();
+			await toIDeltaManagerFull(container3.deltaManager).outbound.pause();
 		}
 
 		function resumeContainer(c: IContainer) {
-			assertIsIDeltaManagerFull(c.deltaManager).inbound.resume();
-			assertIsIDeltaManagerFull(c.deltaManager).outbound.resume();
+			toIDeltaManagerFull(c.deltaManager).inbound.resume();
+			toIDeltaManagerFull(c.deltaManager).outbound.resume();
 		}
 
 		/**

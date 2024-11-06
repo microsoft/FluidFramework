@@ -18,7 +18,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	assertIsIDeltaManagerFull,
+	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
@@ -275,7 +275,7 @@ describeCompat(
 				runtimeOptions: {},
 			});
 
-			const container1DeltaManager = assertIsIDeltaManagerFull(container1.deltaManager);
+			const container1DeltaManager = toIDeltaManagerFull(container1.deltaManager);
 			await container1DeltaManager.inbound.pause();
 			await container1DeltaManager.outbound.pause();
 
@@ -358,7 +358,7 @@ describeCompat(
 
 					await setupContainers(testConfig.options, testConfig.featureGates);
 
-					const deltaManagerFull = assertIsIDeltaManagerFull(container1.deltaManager);
+					const deltaManagerFull = toIDeltaManagerFull(container1.deltaManager);
 					await deltaManagerFull.inbound.pause();
 					await deltaManagerFull.outbound.pause();
 

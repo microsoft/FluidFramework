@@ -63,7 +63,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 	timeoutAwait,
-	assertIsIDeltaManagerFull,
+	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
@@ -115,7 +115,7 @@ const getPendingOps = async (
 
 	await testObjectProvider.ensureSynchronized();
 	await testObjectProvider.opProcessingController.pauseProcessing(container);
-	const deltaManagerInternal = assertIsIDeltaManagerFull(
+	const deltaManagerInternal = toIDeltaManagerFull(
 		toDeltaManagerInternal(dataStore.runtime.deltaManager),
 	);
 	assert(deltaManagerInternal.outbound.paused);
@@ -1280,7 +1280,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.ok(serializedClientId);
 
 			await provider.opProcessingController.pauseProcessing(container);
-			const deltaManagerFull = assertIsIDeltaManagerFull(
+			const deltaManagerFull = toIDeltaManagerFull(
 				toDeltaManagerInternal(dataStore.runtime.deltaManager),
 			);
 			assert(deltaManagerFull.outbound.paused);
@@ -1486,7 +1486,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 
 			await provider.opProcessingController.pauseProcessing(container2);
-			const deltaManagerFull = assertIsIDeltaManagerFull(
+			const deltaManagerFull = toIDeltaManagerFull(
 				toDeltaManagerInternal(dataStore2.runtime.deltaManager),
 			);
 			assert(deltaManagerFull.outbound.paused);
@@ -1941,7 +1941,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		)) as IContainerExperimental;
 
 		// pause outgoing ops so we can detect dropped stashed changes
-		await assertIsIDeltaManagerFull(container.deltaManager).outbound.pause();
+		await toIDeltaManagerFull(container.deltaManager).outbound.pause();
 		let pendingState: string | undefined;
 		let pendingStateP;
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
@@ -2243,7 +2243,7 @@ describeCompat(
 						},
 						pendingLocalState,
 					);
-					await assertIsIDeltaManagerFull(container.deltaManager).outbound.pause();
+					await toIDeltaManagerFull(container.deltaManager).outbound.pause();
 					container.connect();
 
 					// Wait for the container to connect, and then pause the inbound queue
@@ -2252,7 +2252,7 @@ describeCompat(
 						reject: true,
 						errorMsg: `${loggingId} didn't connect in time`,
 					});
-					await assertIsIDeltaManagerFull(container.deltaManager).inbound.pause();
+					await toIDeltaManagerFull(container.deltaManager).inbound.pause();
 
 					// Now this container should submit the op when we resume the outbound queue
 					return container;
@@ -2268,8 +2268,8 @@ describeCompat(
 				const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 				const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-				const container2DeltaManager = assertIsIDeltaManagerFull(container2.deltaManager);
-				const container3DeltaManager = assertIsIDeltaManagerFull(container3.deltaManager);
+				const container2DeltaManager = toIDeltaManagerFull(container2.deltaManager);
+				const container3DeltaManager = toIDeltaManagerFull(container3.deltaManager);
 				// Here's the "in parallel" part - resume both outbound queues at the same time,
 				// and then resume both inbound queues once the outbound queues are idle (done sending).
 				const allSentP = Promise.all([

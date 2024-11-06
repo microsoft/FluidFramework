@@ -23,7 +23,7 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import {
-	assertIsIDeltaManagerFull,
+	toIDeltaManagerFull,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -448,13 +448,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 				totalPayloadSizeInBytes = 0;
 				totalOps = 0;
-				assertIsIDeltaManagerFull(localContainer.deltaManager).outbound.on(
-					"push",
-					(messages) => {
-						totalPayloadSizeInBytes += JSON.stringify(messages).length;
-						totalOps += messages.length;
-					},
-				);
+				toIDeltaManagerFull(localContainer.deltaManager).outbound.on("push", (messages) => {
+					totalPayloadSizeInBytes += JSON.stringify(messages).length;
+					totalOps += messages.length;
+				});
 			};
 
 			const compressionRatio = 0.1;
@@ -627,13 +624,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							container.disconnect();
 							container.once("connected", () => {
 								resolve();
-								assertIsIDeltaManagerFull(container.deltaManager).outbound.off("op", handler);
+								toIDeltaManagerFull(container.deltaManager).outbound.off("op", handler);
 							});
 							container.connect();
 						}
 					};
 
-					assertIsIDeltaManagerFull(container.deltaManager).outbound.on("op", handler);
+					toIDeltaManagerFull(container.deltaManager).outbound.on("op", handler);
 				});
 			};
 

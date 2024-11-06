@@ -17,7 +17,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	assertIsIDeltaManagerFull,
+	toIDeltaManagerFull,
 	createAndAttachContainer,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -64,7 +64,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 
 		await args.ensureSynchronized();
 		await args.opProcessingController.pauseProcessing(container);
-		const deltaManagerFull = assertIsIDeltaManagerFull(
+		const deltaManagerFull = toIDeltaManagerFull(
 			toDeltaManagerInternal(dataStore.runtime.deltaManager),
 		);
 		assert(deltaManagerFull.outbound.paused);

@@ -11,6 +11,7 @@ import {
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IDeltaManagerErased } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -101,12 +102,16 @@ export async function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore)
 /**
  * @internal
  */
-export function assertIsIDeltaManagerFull(
-	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+export function toIDeltaManagerFull(
+	deltaManager:
+		| IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>
+		| IDeltaManagerErased,
 ): IDeltaManagerFull {
 	assert(
 		"inbound" in deltaManager && "outbound" in deltaManager,
 		"Delta manager does not have inbound/outbound queues.",
 	);
-	return deltaManager as IDeltaManagerFull;
+	return deltaManager as unknown as
+		| IDeltaManagerErased
+		| IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> as IDeltaManagerFull;
 }
