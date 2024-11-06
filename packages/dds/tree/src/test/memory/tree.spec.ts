@@ -216,14 +216,14 @@ describe("SharedTree memory usage", () => {
 		).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 	}
 
-	const numberOfNodesForTests = isInPerformanceTestingMode ? [10] : [10];
+	const numberOfNodesForTests = isInPerformanceTestingMode ? [1000, 10_000, 50_000] : [10];
 	describe("Chunked Forest memory usage", () => {
 		for (const numberOfNodes of numberOfNodesForTests) {
 			for (const forestType of [ForestType.Reference, ForestType.Optimized]) {
 				benchmarkMemory(
 					new (class implements IMemoryTestObject {
 						public readonly title =
-							`initialize ${numberOfNodes} nodes into tree with schema that is inefficient for chunked forest using ${forestType}`;
+							`initialize ${numberOfNodes} nodes into tree with schema that is inefficient for chunked forest using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
 
 						private sharedTree: TreeView<typeof RootNodeSchemaBasicChunks> | undefined;
 
@@ -247,7 +247,7 @@ describe("SharedTree memory usage", () => {
 				benchmarkMemory(
 					new (class implements IMemoryTestObject {
 						public readonly title =
-							`initialize ${numberOfNodes} nodes into tree with schema that is efficient for chunked forest using ${forestType}`;
+							`initialize ${numberOfNodes} nodes into tree with schema that is efficient for chunked forest using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
 
 						private sharedTree: TreeView<typeof RootNodeSchemaUniform> | undefined;
 
@@ -271,7 +271,7 @@ describe("SharedTree memory usage", () => {
 				benchmarkMemory(
 					new (class implements IMemoryTestObject {
 						public readonly title =
-							`initialize ${numberOfNodes} nested nodes into tree with schema that is efficient for chunked forest using ${forestType}`;
+							`initialize ${numberOfNodes} nested nodes into tree with schema that is efficient for chunked forest using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
 
 						private sharedTree: TreeView<typeof RootNodeSchemaWithNestedNodes> | undefined;
 
