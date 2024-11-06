@@ -94,29 +94,6 @@ describe("toDecoratedJson", () => {
 
 		assert.equal(idGenerator.getNode("RootObject1"), view.root);
 		assert.equal(idGenerator.getNode("Vector1"), view.root.vectors.at(0));
-
-		// const hydratedObject = hydrate(
-		// 	RootObject,
-		// 	new RootObject({ str: "hello", vectors: [{ x: 1, y: 2, z: 3 }], bools: [true] }),
-		// );
-		// assert.equal(
-		// 	toDecoratedJson(idGenerator, hydratedObject),
-		// 	JSON.stringify({
-		// 		[objectIdKey]: "RootObject0",
-		// 		str: "hello",
-		// 		vectors: [
-		// 			{
-		// 				[objectIdKey]: "Vector0",
-		// 				x: 1,
-		// 				y: 2,
-		// 				z: 3,
-		// 			},
-		// 		],
-		// 		bools: [true],
-		// 	}),
-		// );
-		// assert.equal(idGenerator.getNode("RootObject0"), hydratedObject);
-		// assert.equal(idGenerator.getNode("Vector0"), hydratedObject.vectors.at(0));
 	});
 
 	it("handles non-POJO mode arrays", () => {
@@ -137,12 +114,6 @@ describe("toDecoratedJson", () => {
 			toDecoratedJson(idGenerator, view.root),
 			JSON.stringify({ __fluid_objectId: "Root1", arr: [1, 2, 3] }),
 		);
-
-		// const hydratedObject = hydrate(Root, new Root({ arr: [1, 2, 3] }));
-		// assert.equal(
-		// 	toDecoratedJson(idGenerator, hydratedObject),
-		// 	JSON.stringify({ __fluid_objectId: "Root0", arr: [1, 2, 3] }),
-		// );
 	});
 });
 
