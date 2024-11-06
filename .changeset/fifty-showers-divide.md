@@ -7,7 +7,7 @@
 "section": deprecation
 ---
 
-Unsupported Merge-Tree Types and Exposures Removed
+Unsupported merge-tree types and related exposed internals have been removed
 
 As part of ongoing improvements, several internal types and related APIs have been removed. These types are unnecessary for any supported scenarios and could lead to errors if used. Since directly using these types would likely result in errors, these changes are not likely to impact any Fluid Framework consumers.
 
