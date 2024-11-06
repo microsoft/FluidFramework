@@ -4,6 +4,9 @@
 
 ```ts
 
+// @public
+export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
+
 // @alpha
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
