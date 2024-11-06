@@ -8,11 +8,11 @@
 // @ts-check
 
 /**
- * @type {import("@fluid-tools/build-infrastructure").IFluidRepoLayout & import("@fluid-tools/build-cli").FlubConfig}
+ * @type {import("@fluid-tools/build-infrastructure").IBuildProjectLayout & import("@fluid-tools/build-cli").FlubConfig}
  */
 const config = {
 	version: 1,
-	repoLayout: {
+	buildProject: {
 		workspaces: {
 			main: {
 				directory: ".",
