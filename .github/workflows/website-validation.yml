@@ -85,7 +85,7 @@ jobs:
       - name: Install dependencies
         run: "pnpm i --frozen-lockfile"
       - name: Run tests
-        run: "pnpm test"
+        run: "npm run test"
 
   broken_link_check:
     runs-on: ubuntu-latest
