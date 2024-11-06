@@ -39,9 +39,9 @@ const statesSchema = {
 	focus: Latest(initialFocus),
 } satisfies PresenceStatesSchema;
 
-export type MousePresence = PresenceStates<typeof statesSchema>;
+export type AppPresence = PresenceStates<typeof statesSchema>;
 
-export function initializePresenceWorkspace(presence: IPresence): MousePresence {
+export function initializePresenceWorkspace(presence: IPresence): AppPresence {
 	const workspace = presence.getStates("name:presenceDataStates", statesSchema);
 	return workspace;
 
@@ -51,9 +51,9 @@ export function initializePresenceWorkspace(presence: IPresence): MousePresence 
 	// return presenceWorkspace;
 }
 
-export function getFocusPresences(mousePresence: MousePresence): Map<string, boolean> {
+export function getFocusPresences(appPresence: AppPresence): Map<string, boolean> {
 	const statuses: Map<string, boolean> = new Map<string, boolean>();
-	const { focus } = mousePresence;
+	const { focus } = appPresence;
 	for (const f of focus.clientValues()) {
 		const { focused } = f.value;
 		statuses.set(f.client.sessionId, focused);
