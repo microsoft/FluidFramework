@@ -59,5 +59,6 @@ export {
 	waitForContainerConnection,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
+	waitForSummaryOps,
 } from "./containerUtils.js";
 export { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";

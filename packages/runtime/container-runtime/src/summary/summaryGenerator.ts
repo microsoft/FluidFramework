@@ -243,7 +243,6 @@ export class SummaryGenerator {
 		resultsBuilder: SummarizeResultBuilder,
 	): Promise<void> {
 		const { summaryLogger, cancellationToken, ...summarizeOptions } = submitSummaryOptions;
-
 		// Note: timeSinceLastAttempt and timeSinceLastSummary for the
 		// first summary are basically the time since the summarizer was loaded.
 		const timeSinceLastAttempt = Date.now() - this.heuristicData.lastAttempt.summaryTime;

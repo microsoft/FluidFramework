@@ -89,3 +89,39 @@ export async function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore)
 	assert(response.status === 200, "empty request should return data object");
 	return response.value as T;
 }
+
+/**
+ * Utility function to wait for the specified Container to summarize.
+ * The Promise resolves when the Container emits its 'summarize' event, and the corresponding 'summaryAck' event.
+ * @param container - The container to wait for.
+ * @param stashedContainer - The stashed container to check for pending ops.
+ *
+ * @internal
+ */
+export async function waitForSummaryOps(container: IContainer, stashedContainer?: string) {
+	let summarized = false;
+	await timeoutPromise((resolve, reject) => {
+		container.on("op", (op: { type: string }) => {
+			if (op.type === "summarize") {
+				summarized = true;
+			} else if (summarized && op.type === "summaryAck") {
+				resolve();
+			} else if (op.type === "summaryNack") {
+				reject(new Error("summaryNack"));
+			} else if (op.type === "summaryAck") {
+				throw new Error("Unexpected summaryAck while waiting for summary");
+			}
+		});
+	}).catch((error) => {
+		if (stashedContainer !== undefined) {
+			const pending = JSON.parse(stashedContainer);
+			const savedOpsL = pending.savedOps.length;
+			const pendingParsedOpsL = pending.pendingRuntimeState.pending.pendingStates.length;
+			throw new Error(
+				`${error.message}. summarized: ${summarized} savedOps.length: ${savedOpsL}. pendingOps.length: ${pendingParsedOpsL}`,
+			);
+		} else {
+			throw new Error(`${error.message}. summarized: ${summarized}`);
+		}
+	});
+}
