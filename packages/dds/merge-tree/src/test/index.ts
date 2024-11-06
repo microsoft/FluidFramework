@@ -39,12 +39,7 @@ export {
 	runMergeTreeOperationRunner,
 	TestOperation,
 } from "./mergeTreeOperationRunner.js";
-export {
-	LRUSegment,
-	MergeTree,
-	IMergeTreeOptions,
-	IMergeTreeOptionsInternal,
-} from "../mergeTree.js";
+export { LRUSegment, MergeTree } from "../mergeTree.js";
 export { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 export { SnapshotLegacy } from "../snapshotlegacy.js";
 export {

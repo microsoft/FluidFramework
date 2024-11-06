@@ -16,7 +16,6 @@ import {
 import {
 	IntervalType,
 	SequenceInterval,
-	SequenceIntervalClass,
 	createPositionReferenceFromSegoff,
 	sequenceIntervalHelpers,
 } from "../intervals/index.js";
@@ -57,7 +56,7 @@ class OverlappingSequenceIntervalsIndex
 			return [];
 		}
 
-		const transientInterval = new SequenceIntervalClass(
+		const transientInterval = new SequenceInterval(
 			this.client,
 			startLref,
 			endLref,

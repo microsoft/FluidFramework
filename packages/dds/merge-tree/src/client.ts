@@ -29,11 +29,7 @@ import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
-import {
-	MergeTree,
-	errorIfOptionNotTrue,
-	type IMergeTreeOptionsInternal,
-} from "./mergeTree.js";
+import { IMergeTreeOptions, MergeTree, errorIfOptionNotTrue } from "./mergeTree.js";
 import type {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
@@ -104,7 +100,9 @@ export interface IIntegerRange {
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
  * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
  * they need for rebasing their ops on reconnection.
- * @internal
+ * @legacy
+ * @alpha
+ * @deprecated  This functionality was not meant to be exported and will be removed in a future release
  */
 export interface IClientEvents {
 	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
@@ -127,12 +125,9 @@ export interface IClientEvents {
 }
 
 /**
- * This class encapsulates a merge-tree, and provides a local client specific view over it and
- * the capability to modify it as the local client. Additionally it provides
- * binding for processing remote ops on the encapsulated merge tree, and projects local and remote events
- * caused by all modification to the underlying merge-tree.
- *
- * @internal
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
+ * @alpha
  */
 export class Client extends TypedEventEmitter<IClientEvents> {
 	public longClientId: string | undefined;
@@ -160,7 +155,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	constructor(
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
 		public readonly logger: ITelemetryLoggerExt,
-		options?: IMergeTreeOptionsInternal & PropertySet,
+		options?: IMergeTreeOptions & PropertySet,
 		private readonly getMinInFlightRefSeq: () => number | undefined = (): undefined =>
 			undefined,
 	) {

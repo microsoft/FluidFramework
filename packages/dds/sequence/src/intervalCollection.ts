@@ -60,7 +60,6 @@ import {
 	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
-	SequenceIntervalClass,
 	SerializedIntervalDelta,
 	createInterval,
 	createPositionReferenceFromSegoff,
@@ -314,7 +313,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 
 	private linkEndpointsToInterval(interval: TInterval): void {
-		if (interval instanceof SequenceIntervalClass) {
+		if (interval instanceof SequenceInterval) {
 			interval.start.addProperties({ interval });
 			interval.end.addProperties({ interval });
 		}
@@ -383,15 +382,15 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 				ref.canSlideToEndpoint,
 			);
 		};
-		if (interval instanceof SequenceIntervalClass) {
-			let previousInterval: (TInterval & SequenceIntervalClass) | undefined;
+		if (interval instanceof SequenceInterval) {
+			let previousInterval: (TInterval & SequenceInterval) | undefined;
 			let pendingChanges = 0;
 			interval.addPositionChangeListeners(
 				() => {
 					pendingChanges++;
 					// Note: both start and end can change and invoke beforeSlide on each endpoint before afterSlide.
 					if (!previousInterval) {
-						previousInterval = interval.clone() as TInterval & SequenceIntervalClass;
+						previousInterval = interval.clone() as TInterval & SequenceInterval;
 						previousInterval.start = cloneRef(previousInterval.start);
 						previousInterval.end = cloneRef(previousInterval.end);
 						this.removeIntervalFromIndexes(interval);
@@ -414,7 +413,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 
 	private removeIntervalListeners(interval: TInterval) {
-		if (interval instanceof SequenceIntervalClass) {
+		if (interval instanceof SequenceInterval) {
 			interval.removePositionChangeListeners();
 		}
 	}
@@ -1148,7 +1147,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		// is restored as single-endpoint changes re-use previous references.
 		let startRefType: ReferenceType;
 		let endRefType: ReferenceType;
-		if (previousInterval instanceof SequenceIntervalClass) {
+		if (previousInterval instanceof SequenceInterval) {
 			startRefType = previousInterval.start.refType;
 			endRefType = previousInterval.end.refType;
 			previousInterval.start.refType = ReferenceType.Transient;
@@ -1222,7 +1221,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		);
 
 		if (interval) {
-			if (!this.isCollaborating && interval instanceof SequenceIntervalClass) {
+			if (!this.isCollaborating && interval instanceof SequenceInterval) {
 				setSlideOnRemove(interval.start);
 				setSlideOnRemove(interval.end);
 			}
@@ -1333,7 +1332,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			}
 			if (start !== undefined && end !== undefined) {
 				newInterval = this.localCollection.changeInterval(interval, start, end);
-				if (!this.isCollaborating && newInterval instanceof SequenceIntervalClass) {
+				if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
 					setSlideOnRemove(newInterval.start);
 					setSlideOnRemove(newInterval.end);
 				}
@@ -1371,7 +1370,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			if (newInterval) {
 				this.addPendingChange(id, serializedInterval);
 				this.emitChange(newInterval, interval, true, false);
-				if (interval instanceof SequenceIntervalClass) {
+				if (interval instanceof SequenceInterval) {
 					this.client?.removeLocalReferencePosition(interval.start);
 					this.client?.removeLocalReferencePosition(interval.end);
 				}
@@ -1612,7 +1611,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (localInterval !== undefined) {
 			// we know we must be using `SequenceInterval` because `this.client` exists
 			assert(
-				localInterval instanceof SequenceIntervalClass,
+				localInterval instanceof SequenceInterval,
 				0x3a0 /* localInterval must be `SequenceInterval` when used with client */,
 			);
 			// The rebased op may place this interval's endpoints on different segments. Calling `changeInterval` here
@@ -1654,7 +1653,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	private ackInterval(interval: TInterval, op: ISequencedDocumentMessage): void {
 		// Only SequenceIntervals need potential sliding
-		if (!(interval instanceof SequenceIntervalClass)) {
+		if (!(interval instanceof SequenceInterval)) {
 			return;
 		}
 

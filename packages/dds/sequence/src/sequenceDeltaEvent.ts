@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
@@ -27,49 +27,19 @@ import {
  * @legacy
  * @alpha
  */
-export interface SequenceEvent<
+export abstract class SequenceEvent<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
 > {
-	readonly deltaOperation: TOperation;
-
-	readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
-	/**
-	 * The in-order ranges affected by this delta.
-	 * These are not necessarily contiguous.
-	 *
-	 * @remarks - If processing code doesn't care about the order of the ranges, it may instead consider using the
-	 * {@link @fluidframework/merge-tree#IMergeTreeDeltaCallbackArgs.deltaSegments|deltaSegments} field on {@link SequenceEvent.deltaArgs|deltaArgs}.
-	 */
-	readonly ranges: readonly Readonly<ISequenceDeltaRange<TOperation>>[];
-
-	/**
-	 * The client id of the client that made the change which caused the delta event
-	 */
-	readonly clientId: string | undefined;
-
-	/**
-	 * The first of the modified ranges.
-	 */
-	readonly first: Readonly<ISequenceDeltaRange<TOperation>>;
-
-	/**
-	 * The last of the modified ranges.
-	 */
-	readonly last: Readonly<ISequenceDeltaRange<TOperation>>;
-}
-export abstract class SequenceEventClass<
-	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
-> implements SequenceEvent<TOperation>
-{
-	public readonly isLocal: boolean;
 	public readonly deltaOperation: TOperation;
 	// eslint-disable-next-line import/no-deprecated
 	private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
 	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
 	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 */
 	constructor(
-		public readonly opArgs: IMergeTreeDeltaOpArgs | undefined,
 		/**
 		 * Arguments reflecting the type of change that caused this event.
 		 */
@@ -82,7 +52,6 @@ export abstract class SequenceEventClass<
 			0x2d8 /* "Empty change event should not be emitted." */,
 		);
 		this.deltaOperation = deltaArgs.operation;
-		this.isLocal = opArgs?.sequencedMessage === undefined;
 
 		// eslint-disable-next-line import/no-deprecated
 		this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(() => {
@@ -155,25 +124,23 @@ export abstract class SequenceEventClass<
  * @legacy
  * @alpha
  */
-export interface SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
-	readonly opArgs: IMergeTreeDeltaOpArgs;
-
+export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
 	/**
 	 * Whether the event was caused by a locally-made change.
 	 */
-	readonly isLocal: boolean;
-}
-export class SequenceDeltaEventClass
-	extends SequenceEventClass<MergeTreeDeltaOperationType>
-	implements SequenceDeltaEvent
-{
+	public readonly isLocal: boolean;
+
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 */
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
 		// eslint-disable-next-line import/no-deprecated
 		mergeTreeClient: Client,
 	) {
-		super(opArgs, deltaArgs, mergeTreeClient);
+		super(deltaArgs, mergeTreeClient);
+		this.isLocal = opArgs.sequencedMessage === undefined;
 	}
 }
 
@@ -186,13 +153,10 @@ export class SequenceDeltaEventClass
  * @legacy
  * @alpha
  */
-export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
-	readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
-}
-export class SequenceMaintenanceEventClass
-	extends SequenceEventClass<MergeTreeMaintenanceType>
-	implements SequenceMaintenanceEvent
-{
+export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
+	/**
+	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 */
 	constructor(
 		/**
 		 * Defined iff `deltaArgs.operation` is {@link @fluidframework/merge-tree#MergeTreeMaintenanceType.ACKNOWLEDGED|MergeTreeMaintenanceType.ACKNOWLEDGED}.
@@ -204,7 +168,7 @@ export class SequenceMaintenanceEventClass
 		// eslint-disable-next-line import/no-deprecated
 		mergeTreeClient: Client,
 	) {
-		super(opArgs, deltaArgs, mergeTreeClient);
+		super(deltaArgs, mergeTreeClient);
 	}
 }
 
@@ -248,4 +212,24 @@ export interface ISequenceDeltaRange<
 	 * `{ foo: 3, baz: 5 }`, the corresponding event would have a `propertyDeltas` of `{ foo: "1", baz: null }`.
 	 */
 	propertyDeltas: PropertySet;
+}
+
+class Lazy<T> {
+	private pValue: T | undefined;
+	private pEvaluated: boolean;
+	constructor(private readonly valueGenerator: () => T) {
+		this.pEvaluated = false;
+	}
+
+	public get evaluated(): boolean {
+		return this.pEvaluated;
+	}
+
+	public get value(): T {
+		if (!this.pEvaluated) {
+			this.pEvaluated = true;
+			this.pValue = this.valueGenerator();
+		}
+		return this.pValue as T;
+	}
 }
