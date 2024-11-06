@@ -1000,6 +1000,9 @@ importers:
       '@fluid-experimental/data-objects':
         specifier: workspace:~
         version: link:../../../experimental/framework/data-objects
+      '@fluid-experimental/presence':
+        specifier: workspace:~
+        version: link:../../../packages/framework/presence
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
@@ -1015,15 +1018,27 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
+      '@fluidframework/devtools':
+        specifier: workspace:~
+        version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/driver-definitions
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-static
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../../packages/utils/telemetry-utils
+      axios:
+        specifier: ^1.7.7
+        version: 1.7.7(debug@4.3.7)
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework

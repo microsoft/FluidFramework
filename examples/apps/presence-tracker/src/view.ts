@@ -3,10 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { FocusTracker } from "./FocusTracker.js";
-import { MouseTracker } from "./MouseTracker.js";
+import type { IAzureAudience } from "@fluidframework/azure-client";
 
-export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
+import { getFocusPresences, type MousePresence } from "./presence.js";
+
+export function renderFocusPresence(
+	mousePresence: MousePresence,
+	audience: IAzureAudience,
+	div: HTMLDivElement,
+) {
+	const { focus } = mousePresence;
+
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "left";
 	wrapperDiv.style.margin = "70px";
@@ -31,63 +38,74 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	wrapperDiv.appendChild(focusMessageDiv);
 
 	const onFocusChanged = () => {
-		const currentUser = focusTracker.audience.getMyself()?.name;
-		const focusPresences = focusTracker.getFocusPresences();
+		const currentUserConnectionId = audience.getMyself()?.currentConnection;
+		const userSessionId = focus
+			.clients()
+			.find((c) => c.connectionId() === currentUserConnectionId)?.sessionId;
+		const focusPresences = getFocusPresences(mousePresence);
 
 		focusDiv.innerHTML = `
-            Current user: ${currentUser}</br>
-            ${getFocusPresencesString("</br>", focusTracker)}
+            Current user: ${userSessionId}</br>
+            ${getFocusPresencesString("</br>", mousePresence)}
         `;
 
 		focusMessageDiv.style.display =
-			currentUser !== undefined && focusPresences.get(currentUser) === false ? "" : "none";
+			userSessionId !== undefined && focusPresences.get(userSessionId) === false ? "" : "none";
 	};
 
 	onFocusChanged();
-	focusTracker.on("focusChanged", onFocusChanged);
+	focus.events.on("updated", onFocusChanged);
 
 	wrapperDiv.appendChild(focusDiv);
 }
 
 function getFocusPresencesString(
 	newLineSeparator: string = "\n",
-	focusTracker: FocusTracker,
+	mousePresence: MousePresence,
 ): string {
+	const { focus } = mousePresence;
 	const focusString: string[] = [];
 
-	focusTracker.getFocusPresences().forEach((focus, userName) => {
-		const prefix = `User ${userName}:`;
-		if (focus === undefined) {
+	for (const s of focus.clientValues()) {
+		const prefix = `User ${s.client.sessionId}:`;
+		if (s.value.focused === undefined) {
 			focusString.push(`${prefix} unknown focus`);
-		} else if (focus === true) {
+		} else if (s.value.focused) {
 			focusString.push(`${prefix} has focus`);
 		} else {
 			focusString.push(`${prefix} missing focus`);
 		}
-	});
+	}
+
 	return focusString.join(newLineSeparator);
 }
 
 export function renderMousePresence(
-	mouseTracker: MouseTracker,
-	focusTracker: FocusTracker,
+	// mouseTracker: LatestValueManager<IMousePosition>,
+	// focusTracker: FocusTracker,
+	mousePresence: MousePresence,
 	div: HTMLDivElement,
 ) {
+	const { mouse } = mousePresence;
 	const onPositionChanged = () => {
 		div.innerHTML = "";
-		mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
-			if (focusTracker.getFocusPresences().get(userName) === true) {
-				const posDiv = document.createElement("div");
-				posDiv.textContent = userName;
-				posDiv.style.position = "absolute";
-				posDiv.style.left = `${mousePosition.x}px`;
-				posDiv.style.top = `${mousePosition.y}px`;
-				posDiv.style.fontWeight = "bold";
-				div.appendChild(posDiv);
-			}
-		});
+		for (const p of mouse.clientValues()) {
+			const position = p.value;
+
+			// if (
+			// 	[...focus.clientValues()].some(({ client }) => client.sessionId === p.client.sessionId)
+			// ) {
+			const posDiv = document.createElement("div");
+			posDiv.textContent = p.client.sessionId;
+			posDiv.style.position = "absolute";
+			posDiv.style.left = `${position.x}px`;
+			posDiv.style.top = `${position.y}px`;
+			posDiv.style.fontWeight = "bold";
+			div.appendChild(posDiv);
+			// }
+		}
 	};
 
 	onPositionChanged();
-	mouseTracker.on("mousePositionChanged", onPositionChanged);
+	mouse.events.on("updated", onPositionChanged);
 }
