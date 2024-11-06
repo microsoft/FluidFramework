@@ -631,7 +631,7 @@ module.exports = {
 	releaseNotes: {
 		sections: {
 			feature: { heading: "✨ New Features" },
-			tree: { heading: "🌳 SharedTree DDS changes" },
+			tree: { heading: "🌳 SharedTree DDS Changes" },
 			fix: { heading: "🐛 Bug Fixes" },
 			deprecation: { heading: "⚠️ Deprecations" },
 			legacy: { heading: "☠️ Legacy API Changes" },
