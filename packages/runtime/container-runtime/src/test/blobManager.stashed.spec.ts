@@ -51,7 +51,7 @@ function createBlobManager(overrides?: Partial<ConstructorParameters<typeof Blob
 			routeContext,
 			snapshot: {},
 			stashedBlobs: undefined,
-			uuidOverride: undefined,
+			localBlobIdGenerator: undefined,
 
 			// overrides
 			...overrides,
@@ -115,7 +115,7 @@ describe("BlobManager.stashed", () => {
 		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
 	});
 
-	it("Process blob and complete stashed upload after error", async () => {
+	it("Repro bug: Process blob and complete stashed upload after", async () => {
 		const createResponse = new Deferred<ICreateBlobResponse>();
 		const blobManager = createBlobManager({
 			sendBlobAttachOp(_localId, _storageId) {},
@@ -126,7 +126,7 @@ describe("BlobManager.stashed", () => {
 						return createResponse.promise;
 					},
 				}),
-			uuidOverride: () => "stubbed-local-id",
+			localBlobIdGenerator: () => "stubbed-local-id",
 		});
 
 		const blob: ArrayBufferLike = stringToBuffer("content", "utf8");

@@ -183,6 +183,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly localBlobIdGenerator: () => string;
 	private readonly pendingStashedBlobs: Map<string, Promise<ICreateBlobResponse | void>> =
 		new Map();
+	private stashedBlobsUploadP: Promise<(void | ICreateBlobResponse)[]> | undefined = undefined;
 
 	constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -208,7 +209,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		readonly runtime: IBlobManagerRuntime;
 		stashedBlobs: IPendingBlobs | undefined;
 		readonly closeContainer: (error?: ICriticalContainerError) => void;
-		readonly uuidOverride?: (() => string) | undefined;
+		readonly localBlobIdGenerator?: (() => string) | undefined;
 	}) {
 		super();
 		const {
@@ -221,7 +222,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			runtime,
 			stashedBlobs,
 			closeContainer,
-			uuidOverride,
+			localBlobIdGenerator,
 		} = props;
 		this.routeContext = routeContext;
 		this.getStorage = getStorage;
@@ -229,7 +230,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
 		this.closeContainer = closeContainer;
-		this.localBlobIdGenerator = uuidOverride ?? uuid;
+		this.localBlobIdGenerator = localBlobIdGenerator ?? uuid;
 
 		this.mc = createChildMonitoringContext({
 			logger: this.runtime.baseLogger,
@@ -305,15 +306,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		};
 	}
 
-	public async waitForStashedBlobs(): Promise<void> {
-		return Promise.all(this.pendingStashedBlobs.values())
-			.then(() => {
-				console.log("All stashed blobs uploaded");
-			})
-			.catch((error) => {
-				console.error("Error uploading stashed blobs", error);
-				throw error;
+	public async waitForStashedBlobs(): Promise<(void | ICreateBlobResponse)[]> {
+		if (!this.stashedBlobsUploadP) {
+			this.stashedBlobsUploadP = Promise.all(this.pendingStashedBlobs.values()).finally(() => {
+				this.stashedBlobsUploadP = undefined;
+				return;
 			});
+		}
+
+		return this.stashedBlobsUploadP;
 	}
 
 	public get allBlobsAttached(): boolean {
