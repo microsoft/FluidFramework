@@ -536,10 +536,13 @@ export function generateCompatibilityTestCases(
  * Returns the name of the type preprocessing type meta-function to use, or undefined if no type test should be generated.
  */
 function selectTypePreprocessor(typeData: TypeData): string | undefined {
-	if (typeData.tags.has("type-test-minimal")) {
+	if (typeData.tags.has("system")) {
+		return undefined;
+	}
+	if (typeData.tags.has("typeTestMinimal")) {
 		return "MinimalType";
 	}
-	if (typeData.tags.has("type-test-full")) {
+	if (typeData.tags.has("typeTestFull")) {
 		return "FullType";
 	}
 	return "TypeOnly";

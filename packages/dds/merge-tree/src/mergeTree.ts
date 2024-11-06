@@ -10,7 +10,6 @@ import { assert, Heap, IComparer } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { IAttributionCollectionSerializer } from "./attributionCollection.js";
-// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
 import { DoublyLinkedList, ListNode } from "./collections/index.js";
 import {
@@ -178,11 +177,6 @@ export interface IMergeTreeOptions {
 	newMergeTreeSnapshotFormat?: boolean;
 
 	/**
-	 * Options related to attribution
-	 */
-	attribution?: IMergeTreeAttributionOptions;
-
-	/**
 	 * Enables support for the obliterate operation -- a stronger form of remove
 	 * which deletes concurrently inserted segments
 	 *
@@ -212,6 +206,17 @@ export interface IMergeTreeOptions {
 	 */
 	mergeTreeEnableSidedObliterate?: boolean;
 }
+
+/**
+ * @internal
+ */
+export interface IMergeTreeOptionsInternal extends IMergeTreeOptions {
+	/**
+	 * Options related to attribution
+	 */
+	attribution?: IMergeTreeAttributionOptions;
+}
+
 export function errorIfOptionNotTrue(
 	options: IMergeTreeOptions | undefined,
 	option: keyof IMergeTreeOptions,
@@ -222,9 +227,7 @@ export function errorIfOptionNotTrue(
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated  This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface IMergeTreeAttributionOptions {
 	/**
@@ -250,9 +253,7 @@ export interface IMergeTreeAttributionOptions {
 /**
  * Implements policy dictating which kinds of operations should be attributed and how.
  * @sealed
- * @legacy
- * @alpha
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface AttributionPolicy {
 	/**
@@ -262,7 +263,6 @@ export interface AttributionPolicy {
 	 *
 	 * This must be done in an eventually consistent fashion.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	attach: (client: Client) => void;
 	/**
 	 * Disables tracking attribution information on segments.
@@ -527,7 +527,7 @@ export class MergeTree {
 
 	private readonly obliterates = new Obliterates(this);
 
-	public constructor(public options?: IMergeTreeOptions) {
+	public constructor(public options?: IMergeTreeOptionsInternal) {
 		this._root = this.makeBlock(0);
 		this._root.mergeTree = this;
 		this.attributionPolicy = options?.attribution?.policyFactory?.();

@@ -80,7 +80,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.49.0",
+		"@fluidframework/build-tools": "^0.50.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
