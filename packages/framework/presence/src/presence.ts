@@ -50,7 +50,7 @@ export const SessionClientStatus = {
 } as const;
 
 /**
-* Represents the connection status of an {@link ISessionClient}.
+ * Represents the connection status of an {@link ISessionClient}.
  *
  * This type can be either `'Connected'` or `'Disconnected'`, indicating whether
  * the session client is currently able to send and receive updates.
