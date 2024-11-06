@@ -1648,6 +1648,14 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("load offline with blob redirect table", async function () {
+		// TODO: AB#22741: Re-enable "load offline with blob redirect table"
+		if (
+			provider.driver.type === "odsp" ||
+			(provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs")
+		) {
+			this.skip();
+		}
+
 		const container = await loader.resolve({ url });
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
@@ -1866,6 +1874,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
 	it("works with summary while offline", async function () {
+		// TODO: AB#22740: Re-enable "works with summary while offline" on ODSP
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
+
 		map1.set("test op 1", "test op 1");
 		await waitForSummary(provider, container1, testContainerConfig);
 

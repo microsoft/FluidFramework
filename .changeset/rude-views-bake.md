@@ -4,7 +4,7 @@
 "@fluidframework/sequence": minor
 ---
 ---
-"section": deprecation
+"section": legacy
 ---
 
 MergeTree `Client` Legacy API Removed
