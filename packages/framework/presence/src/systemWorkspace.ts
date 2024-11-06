@@ -139,6 +139,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				};
 			};
 		},
+		senderConnectionId: ClientConnectionId,
 	): void {
 		const postUpdateActions: (() => void)[] = [];
 		for (const [clientConnectionId, value] of Object.entries(
@@ -149,6 +150,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				clientSessionId,
 				clientConnectionId,
 				/* order */ value.rev,
+				senderConnectionId,
 			);
 
 			if (isNew) {
@@ -224,6 +226,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		clientSessionId: ClientSessionId,
 		clientConnectionId: ClientConnectionId,
 		order: number,
+		senderConnectionId: ClientConnectionId,
 	): { attendee: SessionClient; isNew: boolean } {
 		let attendee = this.attendees.get(clientSessionId);
 		let isNew = false;
@@ -245,7 +248,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		this.attendees.set(clientConnectionId, attendee);
 
 		// If the attendee's connection id is not present in audience, the attendee is not currently connected.
-		if (!audienceMembers.has(clientConnectionId)) {
+		// If message is sent from joining client itself, we should assume client is connected.
+		if (
+			!audienceMembers.has(clientConnectionId) &&
+			senderConnectionId !== clientConnectionId
+		) {
 			attendee.setDisconnected();
 		}
 
