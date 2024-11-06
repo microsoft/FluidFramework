@@ -41,7 +41,7 @@ steps:
       # available at runtime. Also, using ! as separator instead of the usual / because forward slash is something we
       # need to replace.
       TEST_PACKAGE_NAME=$(echo "${{ parameters.testPackageName }}" | sed -r 's!@!!g' | sed -r 's!/!-!g')
-      echo "##vso[task.setvariable variable=itpbip_sanitizedPackageName]${TEST_PACKAGE_NAME}-*.*.*-*.tgz"
+      echo "##vso[task.setvariable variable=itpbip_sanitizedPackageName]${TEST_PACKAGE_NAME}-?.*.?-*.tgz"
       echo "##vso[task.setvariable variable=itpbip_downloadPath]$(Pipeline.Workspace)/downloadedPackages"
 
 # Download package that has performance tests
