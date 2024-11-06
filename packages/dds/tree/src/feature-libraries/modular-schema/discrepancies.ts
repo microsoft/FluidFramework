@@ -499,7 +499,7 @@ const FieldKindIdentifiers = {
  * without excessive casework.
  *
  * Hasse diagram for the partial order is shown below (lower fields can be relaxed to higher fields):
- *
+ * ```
  * sequence
  *    |
  * optional
@@ -507,8 +507,9 @@ const FieldKindIdentifiers = {
  * required forbidden
  *    |
  * identifier
+ * ```
  */
-const realizer: Realizer<FieldKindIdentifier> = [
+const fieldRealizer: Realizer<FieldKindIdentifier> = [
 	[
 		FieldKindIdentifiers.forbidden,
 		FieldKindIdentifiers.identifier,
@@ -572,7 +573,7 @@ function compareFieldKind(
 		return false;
 	}
 
-	return posetLte(aKind, bKind, realizer);
+	return posetLte(aKind, bKind, fieldRealizer);
 }
 
 function throwUnsupportedNodeType(type: string): never {
