@@ -11,6 +11,7 @@ import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	storedEmptyFieldSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
@@ -80,8 +81,8 @@ export interface AllowedTypeIncompatibility {
 export interface FieldKindIncompatibility {
 	identifier: string | undefined; // undefined indicates root field schema
 	mismatch: "fieldKind";
-	view: FieldKindIdentifier | undefined;
-	stored: FieldKindIdentifier | undefined;
+	view: FieldKindIdentifier;
+	stored: FieldKindIdentifier;
 }
 
 export interface ValueSchemaIncompatibility {
@@ -349,12 +350,15 @@ function trackObjectNodeDiscrepancies(
 
 	for (const [fieldKey, fieldStoredSchema] of view.objectNodeFields) {
 		viewFieldKeys.add(fieldKey);
-		if (!stored.objectNodeFields.has(fieldKey)) {
+		if (
+			!stored.objectNodeFields.has(fieldKey) &&
+			fieldStoredSchema.kind !== storedEmptyFieldSchema.kind
+		) {
 			differences.push({
 				identifier: fieldKey,
 				mismatch: "fieldKind",
 				view: fieldStoredSchema.kind,
-				stored: undefined,
+				stored: storedEmptyFieldSchema.kind,
 			} satisfies FieldKindIncompatibility);
 		} else {
 			differences.push(
@@ -371,12 +375,15 @@ function trackObjectNodeDiscrepancies(
 		if (viewFieldKeys.has(fieldKey)) {
 			continue;
 		}
-		differences.push({
-			identifier: fieldKey,
-			mismatch: "fieldKind",
-			view: undefined,
-			stored: fieldStoredSchema.kind,
-		} satisfies FieldKindIncompatibility);
+
+		if (fieldStoredSchema.kind !== storedEmptyFieldSchema.kind) {
+			differences.push({
+				identifier: fieldKey,
+				mismatch: "fieldKind",
+				view: storedEmptyFieldSchema.kind,
+				stored: fieldStoredSchema.kind,
+			} satisfies FieldKindIncompatibility);
+		}
 	}
 
 	return differences;
@@ -444,17 +451,7 @@ function validateFieldIncompatibility(incompatibility: FieldIncompatibility): bo
 			return incompatibility.stored.length === 0;
 		}
 		case "fieldKind": {
-			if (incompatibility.stored === undefined) {
-				// Add an optional field
-				if (incompatibility.view === "Optional") {
-					return true;
-				}
-			} else {
-				// Relax the field to make it more general
-				return compareFieldKind(incompatibility.stored, incompatibility.view);
-			}
-
-			break;
+			return posetLte(incompatibility.stored, incompatibility.view, fieldRealizer);
 		}
 		case "valueSchema": {
 			return false;
@@ -564,17 +561,6 @@ function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
 	return (
 		comparison === PosetComparisonResult.Less || comparison === PosetComparisonResult.Equal
 	);
-}
-
-function compareFieldKind(
-	aKind: FieldKindIdentifier | undefined,
-	bKind: FieldKindIdentifier | undefined,
-): boolean {
-	if (aKind === undefined || bKind === undefined) {
-		return aKind === bKind;
-	}
-
-	return posetLte(aKind, bKind, fieldRealizer);
 }
 
 function throwUnsupportedNodeType(type: string): never {
