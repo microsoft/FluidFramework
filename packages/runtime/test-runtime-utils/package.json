@@ -158,14 +158,8 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Class_MockDeltaConnection": {
-				"forwardCompat": false
-			},
 			"Class_MockFluidDataStoreContext": {
 				"backCompat": false
-			},
-			"Class_MockFluidDataStoreRuntime": {
-				"forwardCompat": false
 			},
 			"ClassStatics_MockFluidDataStoreContext": {
 				"backCompat": false
