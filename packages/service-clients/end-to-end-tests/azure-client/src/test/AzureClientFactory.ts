@@ -17,7 +17,11 @@ import {
 	ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	createChildLogger,
+	createMultiSinkLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { default as Axios, AxiosResponse, type AxiosRequestConfig } from "axios";
 import { v4 as uuid } from "uuid";
@@ -73,9 +77,22 @@ export function createAzureClient(
 		}
 		return logger ?? testLogger;
 	};
+
+	const createLogger = createChildLogger({
+		logger: getLogger(),
+		properties: {
+			all: {
+				// testType: this.type,
+				driverType: "r11s",
+				driverEndpointName: "frs",
+				// driverTenantName: this.driver.tenantName,
+				// driverUserIndex: this.driver.userIndex,
+			},
+		},
+	});
 	return new AzureClient({
 		connection: connectionProps,
-		logger: getLogger(),
+		logger: createLogger,
 		configProvider,
 	});
 }
