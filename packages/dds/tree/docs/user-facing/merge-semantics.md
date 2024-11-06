@@ -526,4 +526,8 @@ The merge semantics will be improved in the future to be less conservative.
 
 ## Merge Semantics by Node Kind
 
-TODO: add a separate document for each node kind and link to them from here.
+For specifics on the merge semantics of individual edits operations for each node type, 
+
+[Object Node](object-merge-semantics.md)
+[Map Node](map-merge-semantics.md)
+[Array Node](array-merge-semantics.md)
