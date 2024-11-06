@@ -13,9 +13,15 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { testIdCompressor } from "../utils.js";
 
 import {
+	configuredSharedTree,
+	ForestType,
 	SchemaFactory,
 	SharedTree,
+	TreeCompressionStrategy,
 	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type SharedTreeOptions,
 	type TreeView,
 } from "../../index.js";
 
@@ -33,28 +39,65 @@ class RootNodeSchema extends builder.object("root-item", {
 	child: builder.optional(ChildNodeSchema),
 }) {}
 
-function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
-	const sharedTree = SharedTree.create(
+const initialState = {
+	child: {
+		propertyOne: 128,
+		propertyTwo: {
+			itemOne: "",
+		},
+		propertyThree: new Map([["numberOne", 1]]),
+	},
+};
+
+// Array has 2 allowable types to make it less efficient for uniform chunks.
+class RootNodeSchemaBasicChunks extends builder.array("root-item-with-basic-chunks", [
+	builder.number,
+	builder.string,
+]) {}
+
+class RootNodeSchemaUniform extends builder.array(
+	"root-item-with-basic-chunks",
+	builder.number,
+) {}
+
+class NestedNodeSchema extends builder.object("wrapped-item", {
+	layer1: builder.object("nested-1", {
+		layer2: builder.object("nested-2", {
+			layer3: builder.object("nested-3", {
+				layer4: builder.object("nested-4", {
+					x: builder.number,
+					y: builder.number,
+				}),
+			}),
+		}),
+	}),
+}) {}
+
+// Array with nodes which are nested
+class RootNodeSchemaWithNestedNodes extends builder.array(
+	"root-item-with-nested-nodes",
+	NestedNodeSchema,
+) {}
+
+function createLocalSharedTree<TSchema extends ImplicitFieldSchema>(
+	id: string,
+	schema: TSchema,
+	content: InsertableTreeFieldFromImplicitField<TSchema>,
+	sharedTreeOptions?: SharedTreeOptions,
+): TreeView<TSchema> {
+	const sharedTree =
+		sharedTreeOptions !== undefined ? configuredSharedTree(sharedTreeOptions) : SharedTree;
+	const tree = sharedTree.create(
 		new MockFluidDataStoreRuntime({
-			registry: [SharedTree.getFactory()],
+			registry: [sharedTree.getFactory()],
 			idCompressor: testIdCompressor,
 		}),
 		id,
 	);
 
-	const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+	const view = tree.viewWith(new TreeViewConfiguration({ schema }));
 
-	view.initialize(
-		new RootNodeSchema({
-			child: {
-				propertyOne: 128,
-				propertyTwo: {
-					itemOne: "",
-				},
-				propertyThree: new Map([["numberOne", 1]]),
-			},
-		}),
-	);
+	view.initialize(content);
 
 	return view;
 }
@@ -85,7 +128,11 @@ describe("SharedTree memory usage", () => {
 			private _sharedTree?: TreeView<typeof RootNodeSchema>;
 
 			public async run(): Promise<void> {
-				this._sharedTree = createLocalSharedTree("testSharedTree");
+				this._sharedTree = createLocalSharedTree(
+					"testSharedTree",
+					RootNodeSchema,
+					new RootNodeSchema(initialState),
+				);
 			}
 		})(),
 	);
@@ -95,40 +142,27 @@ describe("SharedTree memory usage", () => {
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
 			[10];
 
-	for (const x of numbersOfEntriesForTests) {
+	for (const numberOfEntries of numbersOfEntriesForTests) {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
-				public readonly title = `Set an integer property ${x} times in a local SharedTree`;
+				public readonly title =
+					`Set an integer property ${numberOfEntries} times in a local SharedTree`;
 				private sharedTree?: TreeView<typeof RootNodeSchema>;
 
 				public async run(): Promise<void> {
 					assert(this.sharedTree?.root.child !== undefined);
 
-					for (let i = 0; i < x; i++) {
-						this.sharedTree.root.child.propertyOne = x;
+					for (let i = 0; i < numberOfEntries; i++) {
+						this.sharedTree.root.child.propertyOne = numberOfEntries;
 					}
 				}
 
 				public beforeIteration(): void {
-					this.sharedTree = createLocalSharedTree("testSharedTree");
-				}
-			})(),
-		).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
-
-		benchmarkMemory(
-			new (class implements IMemoryTestObject {
-				public readonly title = `Set a string property ${x} times in a local SharedTree`;
-				private sharedTree?: TreeView<typeof RootNodeSchema>;
-				public async run(): Promise<void> {
-					assert(this.sharedTree?.root.child !== undefined);
-
-					for (let i = 0; i < x; i++) {
-						this.sharedTree.root.child.propertyTwo.itemOne = i.toString().padStart(6, "0");
-					}
-				}
-
-				public beforeIteration(): void {
-					this.sharedTree = createLocalSharedTree("testSharedTree");
+					this.sharedTree = createLocalSharedTree(
+						"testSharedTree",
+						RootNodeSchema,
+						new RootNodeSchema(initialState),
+					);
 				}
 			})(),
 		).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
@@ -136,22 +170,134 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title =
-					`Set an optional integer property ${x} times in a local SharedTree, then clear it`;
+					`Set a string property ${numberOfEntries} times in a local SharedTree`;
+				private sharedTree?: TreeView<typeof RootNodeSchema>;
+				public async run(): Promise<void> {
+					assert(this.sharedTree?.root.child !== undefined);
+
+					for (let i = 0; i < numberOfEntries; i++) {
+						this.sharedTree.root.child.propertyTwo.itemOne = i.toString().padStart(6, "0");
+					}
+				}
+
+				public beforeIteration(): void {
+					this.sharedTree = createLocalSharedTree(
+						"testSharedTree",
+						RootNodeSchema,
+						new RootNodeSchema(initialState),
+					);
+				}
+			})(),
+		).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
+
+		benchmarkMemory(
+			new (class implements IMemoryTestObject {
+				public readonly title =
+					`Set an optional integer property ${numberOfEntries} times in a local SharedTree, then clear it`;
 				private sharedTree?: TreeView<typeof RootNodeSchema>;
 
 				public async run(): Promise<void> {
 					assert(this.sharedTree?.root.child !== undefined);
 
-					for (let i = 0; i < x; i++) {
-						this.sharedTree.root.child.propertyOne = x;
+					for (let i = 0; i < numberOfEntries; i++) {
+						this.sharedTree.root.child.propertyOne = numberOfEntries;
 					}
 					this.sharedTree.root.child.propertyOne = undefined; // This is possible since the property is optional.
 				}
 
 				public beforeIteration(): void {
-					this.sharedTree = createLocalSharedTree("testSharedTree");
+					this.sharedTree = createLocalSharedTree(
+						"testSharedTree",
+						RootNodeSchema,
+						new RootNodeSchema(initialState),
+					);
 				}
 			})(),
 		).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 	}
+
+	const numberOfNodesForTests = isInPerformanceTestingMode ? [10] : [10];
+	describe("Chunked Forest memory usage", () => {
+		for (const numberOfNodes of numberOfNodesForTests) {
+			for (const forestType of [ForestType.Reference, ForestType.Optimized]) {
+				benchmarkMemory(
+					new (class implements IMemoryTestObject {
+						public readonly title =
+							`initialize ${numberOfNodes} nodes into tree with schema that is inefficient for chunked forest using ${forestType}`;
+
+						private sharedTree: TreeView<typeof RootNodeSchemaBasicChunks> | undefined;
+
+						public async run(): Promise<void> {
+							this.sharedTree = createLocalSharedTree(
+								"testSharedTree",
+								RootNodeSchemaBasicChunks,
+								new RootNodeSchemaBasicChunks(
+									Array.from({ length: numberOfNodes }, (_, index) => index + 1),
+								),
+								{ forest: forestType },
+							);
+						}
+
+						public beforeIteration(): void {
+							this.sharedTree = undefined;
+						}
+					})(),
+				).timeout(40000);
+
+				benchmarkMemory(
+					new (class implements IMemoryTestObject {
+						public readonly title =
+							`initialize ${numberOfNodes} nodes into tree with schema that is efficient for chunked forest using ${forestType}`;
+
+						private sharedTree: TreeView<typeof RootNodeSchemaUniform> | undefined;
+
+						public async run(): Promise<void> {
+							this.sharedTree = createLocalSharedTree(
+								"testSharedTree",
+								RootNodeSchemaUniform,
+								new RootNodeSchemaUniform(
+									Array.from({ length: numberOfNodes }, (_, index) => index + 1),
+								),
+								{ forest: forestType, treeEncodeType: TreeCompressionStrategy.Compressed },
+							);
+						}
+
+						public beforeIteration(): void {
+							this.sharedTree = undefined;
+						}
+					})(),
+				).timeout(400000);
+
+				benchmarkMemory(
+					new (class implements IMemoryTestObject {
+						public readonly title =
+							`initialize ${numberOfNodes} nested nodes into tree with schema that is efficient for chunked forest using ${forestType}`;
+
+						private sharedTree: TreeView<typeof RootNodeSchemaWithNestedNodes> | undefined;
+
+						public async run(): Promise<void> {
+							this.sharedTree = createLocalSharedTree(
+								"testSharedTree",
+								RootNodeSchemaWithNestedNodes,
+								new RootNodeSchemaWithNestedNodes(
+									Array.from(
+										{ length: numberOfNodes },
+										(_, index) =>
+											new NestedNodeSchema({
+												layer1: { layer2: { layer3: { layer4: { x: index, y: index + 1 } } } },
+											}),
+									),
+								),
+								{ forest: forestType, treeEncodeType: TreeCompressionStrategy.Compressed },
+							);
+						}
+
+						public beforeIteration(): void {
+							this.sharedTree = undefined;
+						}
+					})(),
+				).timeout(400000);
+			}
+		}
+	});
 });
