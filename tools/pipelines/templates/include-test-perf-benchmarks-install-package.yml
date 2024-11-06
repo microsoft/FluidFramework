@@ -42,15 +42,26 @@ steps:
       # need to replace.
       TEST_PACKAGE_NAME=$(echo "${{ parameters.testPackageName }}" | sed -r 's!@!!g' | sed -r 's!/!-!g')
 
-      # There's some logic behind the value for the itpbip_sanitizedPackageName.
-      # We've had issues in the past where two packages with partially overlapping names (e.g. @fluid-experimental/tree
-      # and @fluid-experimental/tree-react-api) both match a simpler pattern and then cause issues later on when
-      # trying to unpack. Adding a dash and a number after the package name should be enough to avoid this issue.
-      # It also solves a problem with another pattern we had used (?.?.?-*.tgz), which would break for a two digit
-      # major/minor/patch version numbers.
-      # The fact that we want at least one number after the package name should be a good enough heuristic, since we
-      # don't have any packages with a number in the name.
-      echo "##vso[task.setvariable variable=itpbip_sanitizedPackageName]${TEST_PACKAGE_NAME}-[0-9]*.tgz"
+      # There's some thought behind the value for the itpbip_sanitizedPackageName to make sure that two packages with
+      # partially overlapping names (e.g. @fluid-experimental/tree and @fluid-experimental/tree-react-api) can be
+      # differentiated, so the pipeline knows which of the two tgz files it is supposed to unpack, while also avoiding
+      # these issues we've run into in the past:
+      # - A pattern like `${TEST_PACKAGE_NAME}-?.?.?-*.tgz` stops working for two-digit major/minor/patch version numbers.
+      #   It also doesn't work when the pipeline runs for a release/* branch because in that case the tgz filename looks
+      #   like `<package-name>-<major>.<minor>.<patch>.tgz` instead of `<package-name>-<major>.<minor>.<patch>-<build-id>.tgz`,
+      #   so the final dash in the pattern causes it to not match.
+      # - A pattern like `${TEST_PACKAGE_NAME}-*.*.*-*.tgz` won't differentiate packages in all cases because extra
+      #   parts of the package name are separated with dashes (e.g.fluidexperimental-tree and fluidexperimental-tree-react-api),
+      #   which are also used to separate the package name from the major version number.
+      # The logic behind the current pattern is that we want to find these components:
+      # - `${TEST_PACKAGE_NAME}` - Matching package name.
+      # - `-` A dash.
+      # - `+([0-9]).+([0-9]).+([0-9])` - The version (i.e. three sets of one or more digits separated by dots).
+      #   This component *must not* match another bit of package name. As long as we don't put numbers in package names,
+      #   the current pattern should keep working.
+      # - `*` - Potentially more characters (to handle the case where "-<build-id>" is appended to the version number).
+      # - `.tgz` - The extension.
+      echo "##vso[task.setvariable variable=itpbip_sanitizedPackageName]${TEST_PACKAGE_NAME}-+([0-9]).+([0-9]).+([0-9])*.tgz"
       echo "##vso[task.setvariable variable=itpbip_downloadPath]$(Pipeline.Workspace)/downloadedPackages"
 
 # Download package that has performance tests
