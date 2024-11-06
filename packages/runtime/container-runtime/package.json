@@ -232,9 +232,15 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Class_ContainerRuntime": {"backCompat": false},
-			"Class_DocumentsSchemaController": {"forwardCompat": false},
-			"ClassStatics_ContainerRuntime": {"backCompat": false}
+			"Class_ContainerRuntime": {
+				"backCompat": false
+			},
+			"Class_DocumentsSchemaController": {
+				"forwardCompat": false
+			},
+			"ClassStatics_ContainerRuntime": {
+				"backCompat": false
+			}
 		},
 		"entrypoint": "legacy"
 	}

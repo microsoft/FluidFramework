@@ -168,8 +168,12 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Interface_IProvideTestFluidObject": {"backCompat": false},
-			"Interface_ITestFluidObject": {"backCompat": false}
+			"Interface_IProvideTestFluidObject": {
+				"backCompat": false
+			},
+			"Interface_ITestFluidObject": {
+				"backCompat": false
+			}
 		},
 		"entrypoint": "legacy"
 	}
