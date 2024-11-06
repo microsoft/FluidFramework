@@ -5,6 +5,6 @@
 "section": feature
 ---
 
-Add `compareHandle`
+New compareFluidHandle function for comparing FluidHandles
 
-New `compareHandle` is added to allow comparing handles without having to inspect their internals.
+The new `compareFluidHandle` function has been added to allow comparing handles without having to inspect their internals.
