@@ -13,7 +13,6 @@ export type {
 	ApplyKindInput,
 	NodeBuilderData,
 	FieldHasDefault,
-	TreeArrayNodeBase,
 	ScopedSchemaName,
 	DefaultProvider,
 	typeNameSymbol,
