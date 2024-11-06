@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { IEphemeralRuntime } from "./internalTypes.js";
 import {
 	SessionClientStatus,
 	type ClientSessionId,
@@ -114,6 +115,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		public readonly events: IEmitter<
 			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
 		>,
+		private readonly runtime: IEphemeralRuntime,
 	) {
 		this.selfAttendee = new SessionClient(clientSessionId);
 		this.attendees.set(clientSessionId, this.selfAttendee);
@@ -148,6 +150,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				clientConnectionId,
 				/* order */ value.rev,
 			);
+
 			if (isNew) {
 				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
 			}
@@ -224,9 +227,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	): { attendee: SessionClient; isNew: boolean } {
 		let attendee = this.attendees.get(clientSessionId);
 		let isNew = false;
-		// TODO #22616: Check for a current connection to determine best status.
-		// For now, always leave existing state as was last determined and
-		// assume new client is connected.
+		const audienceMembers = this.runtime.getAudience().getMembers();
+
 		if (attendee === undefined) {
 			// New attendee. Create SessionClient and add session ID based
 			// entry to map.
@@ -241,6 +243,12 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		}
 		// Always update entry for the connection ID. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
+
+		// If the attendee's connection id is not present in audience, the attendee is not currently connected.
+		if (!audienceMembers.has(clientConnectionId)) {
+			attendee.setDisconnected();
+		}
+
 		return { attendee, isNew };
 	}
 }
@@ -254,6 +262,7 @@ export function createSystemWorkspace(
 	clientSessionId: ClientSessionId,
 	datastore: SystemWorkspaceDatastore,
 	events: IEmitter<Pick<PresenceEvents, "attendeeJoined">>,
+	runtime: IEphemeralRuntime,
 ): {
 	workspace: SystemWorkspace;
 	statesEntry: {
@@ -261,7 +270,7 @@ export function createSystemWorkspace(
 		public: PresenceStates<PresenceStatesSchema>;
 	};
 } {
-	const workspace = new SystemWorkspaceImpl(clientSessionId, datastore, events);
+	const workspace = new SystemWorkspaceImpl(clientSessionId, datastore, events, runtime);
 	return {
 		workspace,
 		statesEntry: {
