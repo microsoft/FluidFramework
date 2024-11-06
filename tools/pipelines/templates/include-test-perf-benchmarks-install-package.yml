@@ -41,7 +41,16 @@ steps:
       # available at runtime. Also, using ! as separator instead of the usual / because forward slash is something we
       # need to replace.
       TEST_PACKAGE_NAME=$(echo "${{ parameters.testPackageName }}" | sed -r 's!@!!g' | sed -r 's!/!-!g')
-      echo "##vso[task.setvariable variable=itpbip_sanitizedPackageName]${TEST_PACKAGE_NAME}-*.*.*-*.tgz"
+
+      # There's some logic behind the value for the itpbip_sanitizedPackageName.
+      # We've had issues in the past where two packages with partially overlapping names (e.g. @fluid-experimental/tree
+      # and @fluid-experimental/tree-react-api) both match a simpler pattern and then cause issues later on when
+      # trying to unpack. Adding a dash and a number after the package name should be enough to avoid this issue.
+      # It also solves a problem with another pattern we had used (?.?.?-*.tgz), which would break for a two digit
+      # major/minor/patch version numbers.
+      # The fact that we want at least one number after the package name should be a good enough heuristic, since we
+      # don't have any packages with a number in the name.
+      echo "##vso[task.setvariable variable=itpbip_sanitizedPackageName]${TEST_PACKAGE_NAME}-[0-9]*.tgz"
       echo "##vso[task.setvariable variable=itpbip_downloadPath]$(Pipeline.Workspace)/downloadedPackages"
 
 # Download package that has performance tests
