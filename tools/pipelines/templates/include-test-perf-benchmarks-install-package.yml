@@ -61,6 +61,8 @@ steps:
       #   the current pattern should keep working.
       # - `*` - Potentially more characters (to handle the case where "-<build-id>" is appended to the version number).
       # - `.tgz` - The extension.
+      # NOTE: this is not standard regex syntax, but ADO globbing.
+      # See https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/file-matching-patterns?view=azure-devops#pattern-syntax for details.
       echo "##vso[task.setvariable variable=itpbip_sanitizedPackageName]${TEST_PACKAGE_NAME}-+([0-9]).+([0-9]).+([0-9])*.tgz"
       echo "##vso[task.setvariable variable=itpbip_downloadPath]$(Pipeline.Workspace)/downloadedPackages"
 
