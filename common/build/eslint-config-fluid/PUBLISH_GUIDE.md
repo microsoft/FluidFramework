@@ -1,0 +1,89 @@
+# Publishing Guide for `@fluidframework/eslint-config-fluid` & `@fluid-internal/eslint-plugin-fluid`
+
+This guide outlines the steps required to add new ESLint rules, update dependencies, and publish new versions of `@fluidframework/eslint-config-fluid` and `@fluid-internal/eslint-plugin-fluid`.
+
+## Steps
+
+### 1. Add New Rule to `eslint-plugin-fluid` (PR 1)
+
+1. **Create the Rule**: Write the new rule following best practices for ESLint. If you need guidance, refer to [ESLint's rule documentation](https://eslint.org/docs/latest/developer-guide/working-with-rules).
+	- [List of Custom Rules](https://github.com/microsoft/FluidFramework/tree/main/common/build/eslint-plugin-fluid/src/rules)
+
+2. **Testing**: Ensure the rule is thoroughly tested. Tests help validate that the rule behaves as expected across various code scenarios.
+
+   Directory structure:
+
+   ```plaintext
+   eslint-plugin-fluid/
+   ├── src
+   │   └── rules/					<!-- Contains the ESLint rule implementations -->
+   │       ├── rule-one.js
+   │       └── rule-two.js
+   ├── test/
+   │   ├── example/ 				<!-- Example mock files to test each rule in isolation -->
+   │   │   ├── rule-one/
+   │   │   │   ├── mockFileOne.js
+   │   │   │   └── mockFileTwo.js
+   │   │   └── rule-two/
+   │   │       ├── mockFileOne.js
+   │   │       └── mockFileTwo.js
+   │   ├── rule-one/				<!-- Test suite for rule-one -->
+   │   │   └── rule-one.test.js
+   │   └── rule-two/				<!-- Test suite for rule-two -->
+   │       └── rule-two.test.js
+
+3. **Update Changelog**: Record the new rule in the `CHANGELOG.md` file of the `@fluid-internal/eslint-plugin-fluid` package. This provides visibility into what was added for future reference.
+
+4. **Version Bump**: Update the package version following [Fluid Semantic Versioning](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/dev/wiki/sync/breaking-vs-non-breaking-changes) guidelines. Typically:
+   - **Patch** version for fixes
+   - **Minor** version for new rules (backward-compatible)
+   - **Major** version for breaking changes
+
+### 2. Publish New Version of `eslint-plugin-fluid`
+
+Once Step 1 is complete, publish the new version of `@fluid-internal/eslint-plugin-fluid` by following the steps:
+
+1. **Publish**: Follow the [guide](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/on-call/release/release) to publish the new version of `@fluid-internal/eslint-plugin-fluid`.
+
+2. **Verify Release**: Confirm that the release was successful by checking the package version on the [NPM Registry](https://www.npmjs.com/package/@fluid-internal/eslint-plugin-fluid).
+
+### 3. Update `eslint-config-fluid`'s Dependency on `eslint-plugin-fluid` (PR 2)
+
+In `@fluidframework/eslint-config-fluid`, update the version of `@fluid-internal/eslint-plugin-fluid` to the newly published version:
+
+1. **Bump Dependency**: Update the dependency in `package.json` to reference the latest version of `@fluid-internal/eslint-plugin-fluid`.
+
+2. **Open PR**: Submit a pull request for this update.
+
+### 4. Add New Rule to the Appropriate Config
+
+Depending on the scope of the rule, add it to one of the following configurations:
+   - `minimal-DEPRECATED`
+   - `recommended`
+   - `strict`
+
+1. **Update Changelog**: Record the change in `eslint-config-fluid`'s `CHANGELOG.md`.
+
+2. **Version Bump**: Update the version of `eslint-config-fluid` following SemVer guidelines.
+
+3. **Fix Violations in the Repo**:
+   - Install the local version of `eslint-config-fluid` across relevant release groups.
+   - Run the linter to identify and fix any violations.
+   - To simplify integration, add the following to the `pnpmOverrides` section of `package.json`:
+     ```json
+     {
+       "pnpmOverrides": {
+         "@fluidframework/eslint-config-fluid": "file:<relative-path-to-config-directory>"
+       }
+     }
+     ```
+
+### 5. Publish New Version of `eslint-config-fluid`
+
+Once the PR is merged, publish the new version of `eslint-config-fluid`.
+
+1. **Run Tests**: Confirm all tests pass across the configurations.
+
+2. **Publish**: Ensure you have the proper permissions, then publish the package.
+
+### 6. Update Dependencies on `eslint-config-fluid` Across the Repo (PR 3)
