@@ -7,7 +7,7 @@
 "@fluidframework/test-runtime-utils": minor
 ---
 
-# Removed `_createDataStoreWithProps`
+# The createDataStoreWithProps APIs on ContainerRuntime and IContainerRuntimeBase have been removed
 
 Removed two main APIs, `ContainerRuntime.createDataStoreWithProps` and `IContainerRuntimeBase.createDataStoreWithProps`
 has been removed.
