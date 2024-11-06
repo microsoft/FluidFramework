@@ -1250,12 +1250,9 @@ export class MergeTree {
 				});
 			});
 
-			if (
-				opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
-				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED
-			) {
-				pendingSegmentGroup.obliterateInfo!.seq = seq;
-				this.obliterates.addOrUpdate(pendingSegmentGroup.obliterateInfo!);
+			if (pendingSegmentGroup.obliterateInfo !== undefined) {
+				pendingSegmentGroup.obliterateInfo.seq = seq;
+				this.obliterates.addOrUpdate(pendingSegmentGroup.obliterateInfo);
 			}
 
 			// Perform slides after all segments have been acked, so that
