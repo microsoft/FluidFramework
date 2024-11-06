@@ -20,7 +20,7 @@ Removed types:
 - SegmentGroup
 - SegmentGroupCollection
 
-In addition to removing the above types, their exposures have also been removed from interfaces and their implementations: `ISegment`, `ReferencePosition`, and `ISerializableInterval`.
+In addition to removing the above types, they are no longer exposed through the following interfaces and their implementations: `ISegment`, `ReferencePosition`, and `ISerializableInterval`.
 
 Removed functions:
 - addProperties
