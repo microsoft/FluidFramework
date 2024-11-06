@@ -211,6 +211,10 @@ describe("simpleSchemaToJsonSchema", () => {
 							$ref: "#/$defs/test.string",
 							description: "A string representing the concept of Bar.",
 						},
+						id: {
+							$ref: "#/$defs/test.string",
+							description: "Unique identifier for the test object.",
+						},
 					},
 					required: ["bar"],
 					additionalProperties: false,
