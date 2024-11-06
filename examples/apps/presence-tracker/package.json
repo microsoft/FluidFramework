@@ -52,6 +52,7 @@
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:~",
 		"fluid-framework": "workspace:~",
 		"axios": "^1.7.7",
 		"process": "^0.11.10"

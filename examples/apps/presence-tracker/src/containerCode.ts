@@ -3,60 +3,64 @@
  * Licensed under the MIT License.
  */
 
+// import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+// import { Signaler } from "@fluid-experimental/data-objects";
+import type { IPresence } from "@fluid-experimental/presence";
+import type { AzureMember } from "@fluidframework/azure-client";
+// import { IContainer } from "@fluidframework/container-definitions/internal";
+// import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
-	ModelContainerRuntimeFactory,
-	getDataStoreEntryPoint,
-} from "@fluid-example/example-utils";
-import { Signaler, ISignaler } from "@fluid-experimental/data-objects";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { createServiceAudience } from "@fluidframework/fluid-static/internal";
+	// createServiceAudience,
+	type IServiceAudience,
+} from "@fluidframework/fluid-static/internal";
 
-import { createMockServiceMember } from "./Audience.js";
-import { FocusTracker } from "./FocusTracker.js";
-import { MouseTracker } from "./MouseTracker.js";
+// import { createMockServiceMember } from "./Audience.js";
+// import { FocusTracker } from "./FocusTracker.js";
+// import { MouseTracker } from "./MouseTracker.js";
 
 export interface ITrackerAppModel {
-	readonly focusTracker: FocusTracker;
-	readonly mouseTracker: MouseTracker;
+	readonly presence: IPresence;
+	readonly audience: IServiceAudience<AzureMember>;
 }
 
-class TrackerAppModel implements ITrackerAppModel {
-	public constructor(
-		public readonly focusTracker: FocusTracker,
-		public readonly mouseTracker: MouseTracker,
-	) {}
-}
+// class TrackerAppModel implements ITrackerAppModel {
+// 	public constructor(
+// 		// public readonly focusTracker: FocusTracker,
+// 		// public readonly mouseTracker: MouseTracker,
+// 		public readonly presence: IPresence,
+// 		public readonly audience: IServiceAudience<AzureMember>,
+// 	) {}
+// }
 
-const signalerId = "signaler";
+// const signalerId = "signaler";
 
-export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory<ITrackerAppModel> {
-	constructor() {
-		super(
-			new Map([Signaler.factory.registryEntry]), // registryEntries
-		);
-	}
+// export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory<ITrackerAppModel> {
+// 	constructor() {
+// 		super(
+// 			new Map([Signaler.factory.registryEntry]), // registryEntries
+// 		);
+// 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const signaler = await runtime.createDataStore(Signaler.factory.type);
-		await signaler.trySetAlias(signalerId);
-	}
+// 	/**
+// 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
+// 	 */
+// 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+// 		const signaler = await runtime.createDataStore(Signaler.factory.type);
+// 		await signaler.trySetAlias(signalerId);
+// 	}
 
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const signaler = await getDataStoreEntryPoint<ISignaler>(runtime, signalerId);
+// 	protected async createModel(audience: IAzureAudience) {
+// 		// const signaler = await getDataStoreEntryPoint<ISignaler>(runtime, signalerId);
 
-		const audience = createServiceAudience({
-			container,
-			createServiceMember: createMockServiceMember,
-		});
+// 		// const audience = createServiceAudience({
+// 		// 	container,
+// 		// 	createServiceMember: createMockServiceMember,
+// 		// });
 
-		const focusTracker = new FocusTracker(container, audience, signaler);
+// 		// const focusTracker = new FocusTracker(container, audience, signaler);
 
-		const mouseTracker = new MouseTracker(audience, signaler);
+// 		// const mouseTracker = new MouseTracker(audience, signaler);
 
-		return new TrackerAppModel(focusTracker, mouseTracker);
-	}
-}
+// 		return new TrackerAppModel(, audience);
+// 	}
+// }

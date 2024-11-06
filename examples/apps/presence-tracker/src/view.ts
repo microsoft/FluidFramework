@@ -41,7 +41,7 @@ export function renderFocusPresence(
 		const currentUserConnectionId = audience.getMyself()?.currentConnection;
 		const userSessionId = focus
 			.clients()
-			.find((c) => c.connectionId() === currentUserConnectionId)?.sessionId;
+			.find((c) => c.getConnectionId() === currentUserConnectionId)?.sessionId;
 		const focusPresences = getFocusPresences(mousePresence);
 
 		focusDiv.innerHTML = `

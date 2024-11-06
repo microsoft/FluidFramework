@@ -1036,6 +1036,9 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../packages/utils/telemetry-utils
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/test-runtime-utils
       axios:
         specifier: ^1.7.7
         version: 1.7.7(debug@4.3.7)
