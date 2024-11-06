@@ -561,6 +561,13 @@ export interface RuntimeHeaderData {
 	allowTombstone?: boolean;
 }
 
+/** Default values for Runtime Headers */
+export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
+	wait: true,
+	viaHandle: false,
+	allowTombstone: false,
+};
+
 /**
  * Available compression algorithms for op compression.
  * @legacy
@@ -2921,7 +2928,7 @@ export class ContainerRuntime
 
 			// Helper that processes the previous bunch of messages.
 			const sendBunchedMessages = () => {
-				assert(previousMessage !== undefined, "previous message must exist");
+				assert(previousMessage !== undefined, 0xa67 /* previous message must exist */);
 				this.ensureNoDataModelChanges(() => {
 					this.validateAndProcessRuntimeMessages(
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -3869,7 +3876,22 @@ export class ContainerRuntime
 			},
 		});
 
-		assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
+		// legacy: assert 0x3d1
+		if (!this.outbox.isEmpty) {
+			throw DataProcessingError.create(
+				"Can't trigger summary in the middle of a batch",
+				"submitSummary",
+				undefined,
+				{
+					summaryNumber,
+					pendingMessages: this.pendingMessagesCount,
+					outboxLength: this.outbox.messageCount,
+					mainBatchLength: this.outbox.mainBatchMessageCount,
+					blobAttachBatchLength: this.outbox.blobAttachBatchMessageCount,
+					idAllocationBatchLength: this.outbox.idAllocationBatchMessageCount,
+				},
+			);
+		}
 
 		// If the container is dirty, i.e., there are pending unacked ops, the summary will not be eventual consistent
 		// and it may even be incorrect. So, wait for the container to be saved with a timeout. If the container is not

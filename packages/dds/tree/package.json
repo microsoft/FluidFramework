@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.5.0",
+	"version": "2.10.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -166,6 +166,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@sinclair/typebox": "^0.32.29",
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
+		"@types/ungap__structured-clone": "^1.2.0",
 		"@ungap/structured-clone": "^1.2.0",
 		"uuid": "^9.0.0"
 	},
@@ -177,21 +178,20 @@
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
-		"@fluid-tools/build-cli": "^0.49.0",
+		"@fluid-tools/build-cli": "^0.50.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.49.0",
+		"@fluidframework/build-tools": "^0.50.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@~2.4.0",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.5.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"@types/ungap__structured-clone": "^1.2.0",
 		"@types/uuid": "^9.0.2",
 		"ajv": "^8.12.0",
 		"ajv-formats": "^3.0.1",
@@ -228,23 +228,9 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"TypeAlias_InsertableTreeFieldFromImplicitField": {
-				"backCompat": false
-			},
-			"Interface_TreeArrayNode": {
-				"backCompat": false
-			},
-			"TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {
-				"backCompat": false
-			},
-			"TypeAlias_NodeFromSchema": {
-				"backCompat": false
-			},
-			"TypeAlias_TreeFieldFromImplicitField": {
-				"backCompat": false
-			},
-			"TypeAlias_TreeNodeFromImplicitAllowedTypes": {
-				"backCompat": false
+			"TypeAlias_Input": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"

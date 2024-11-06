@@ -35,7 +35,8 @@ import {
 	logAndThrowApiError,
 	persistLatestFullSummaryInStorage,
 	retrieveLatestFullSummaryFromStorage,
-	SystemErrors,
+	isFilesystemError,
+	throwFileSystemErrorAsNetworkError,
 } from "../utils";
 
 function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
@@ -79,14 +80,11 @@ async function getSummary(
 				error,
 			);
 			if (enforceStrictPersistedFullSummaryReads) {
-				if (isNetworkError(error) && error.code === 413) {
+				if (isNetworkError(error)) {
 					throw error;
 				}
-				if (
-					typeof (error as any).code === "string" &&
-					(error as any).code === SystemErrors.EFBIG.code
-				) {
-					throw new NetworkError(413, "Full summary too large.");
+				if (isFilesystemError(error)) {
+					throwFileSystemErrorAsNetworkError(error);
 				}
 			}
 		}

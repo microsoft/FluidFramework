@@ -5,6 +5,7 @@
 <!-- Enumerate unpublished changes here. They can be merged into release sections when the next release is published. -->
 
 - Update icon assets with new Fluid logo.
+- Update sample screenshots to reflect various UI updates.
 
 # 0.1.2
 

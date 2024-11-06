@@ -292,7 +292,7 @@ declare type current_as_old_for_Interface_InternalTypes_TreeApi = requireAssigna
  * typeValidation.broken:
  * "Interface_InternalTypes_TreeArrayNodeBase": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_InternalTypes_TreeArrayNodeBase = requireAssignableTo<TypeOnly<current.InternalTypes.TreeArrayNodeBase<any,any,any>>, TypeOnly<old.InternalTypes.TreeArrayNodeBase<any,any,any>>>
+declare type current_as_old_for_Interface_InternalTypes_TreeArrayNodeBase = requireAssignableTo<TypeOnly<current.InternalTypes.TreeArrayNodeBase<any,any>>, TypeOnly<old.InternalTypes.TreeArrayNodeBase<any,any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -311,6 +311,24 @@ declare type current_as_old_for_Interface_InternalTypes_TreeArrayNodeUnsafe = re
  * "Interface_InternalTypes_TreeMapNodeUnsafe": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_InternalTypes_TreeMapNodeUnsafe = requireAssignableTo<TypeOnly<current.InternalTypes.TreeMapNodeUnsafe<any>>, TypeOnly<old.InternalTypes.TreeMapNodeUnsafe<any>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_InternalTypes_TreeNodeSchemaNonClassUnsafe": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_InternalTypes_TreeNodeSchemaNonClassUnsafe = requireAssignableTo<TypeOnly<old.InternalTypes.TreeNodeSchemaNonClassUnsafe<any,any,any,any,any>>, TypeOnly<current.InternalTypes.TreeNodeSchemaNonClassUnsafe<any,any,any,any,any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_InternalTypes_TreeNodeSchemaNonClassUnsafe": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_InternalTypes_TreeNodeSchemaNonClassUnsafe = requireAssignableTo<TypeOnly<current.InternalTypes.TreeNodeSchemaNonClassUnsafe<any,any,any,any,any>>, TypeOnly<old.InternalTypes.TreeNodeSchemaNonClassUnsafe<any,any,any,any,any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -398,6 +416,15 @@ declare type current_as_old_for_Interface_NodeInDocumentConstraint = requireAssi
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_ReadonlyArrayNode": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ReadonlyArrayNode = requireAssignableTo<TypeOnly<current.ReadonlyArrayNode>, TypeOnly<old.ReadonlyArrayNode>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_Revertible": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_Revertible = requireAssignableTo<TypeOnly<current.Revertible>, TypeOnly<old.Revertible>>
@@ -427,7 +454,6 @@ declare type current_as_old_for_Interface_SchemaCompatibilityStatus = requireAss
  * typeValidation.broken:
  * "Interface_TreeArrayNode": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_TreeArrayNode = requireAssignableTo<TypeOnly<current.TreeArrayNode>, TypeOnly<old.TreeArrayNode>>
 
 /*
@@ -476,13 +502,22 @@ declare type current_as_old_for_Interface_TreeMapNodeUnsafe = requireAssignableT
 declare type current_as_old_for_Interface_TreeNodeApi = requireAssignableTo<TypeOnly<current.TreeNodeApi>, TypeOnly<old.TreeNodeApi>>
 
 /*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_TreeNodeSchemaClassUnsafe": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_TreeNodeSchemaClassUnsafe = requireAssignableTo<TypeOnly<old.TreeNodeSchemaClassUnsafe<any,any,any,any,any,any>>, TypeOnly<current.TreeNodeSchemaClassUnsafe<any,any,any,any,any,any>>>
+
+/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_TreeNodeSchemaClass": {"backCompat": false}
+ * "Interface_TreeNodeSchemaClassUnsafe": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_TreeNodeSchemaClass = requireAssignableTo<TypeOnly<current.TreeNodeSchemaClass>, TypeOnly<old.TreeNodeSchemaClass>>
+declare type current_as_old_for_Interface_TreeNodeSchemaClassUnsafe = requireAssignableTo<TypeOnly<current.TreeNodeSchemaClassUnsafe<any,any,any,any,any,any>>, TypeOnly<old.TreeNodeSchemaClassUnsafe<any,any,any,any,any,any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -492,15 +527,6 @@ declare type current_as_old_for_Interface_TreeNodeSchemaClass = requireAssignabl
  * "Interface_TreeNodeSchemaCore": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_TreeNodeSchemaCore = requireAssignableTo<TypeOnly<current.TreeNodeSchemaCore<any,any,any>>, TypeOnly<old.TreeNodeSchemaCore<any,any,any>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_TreeNodeSchemaNonClass": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_TreeNodeSchemaNonClass = requireAssignableTo<TypeOnly<current.TreeNodeSchemaNonClass>, TypeOnly<old.TreeNodeSchemaNonClass>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -597,6 +623,26 @@ declare type current_as_old_for_TypeAlias_ImplicitFieldSchema = requireAssignabl
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_Input": {"forwardCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type old_as_current_for_TypeAlias_Input = requireAssignableTo<TypeOnly<old.Input<any>>, TypeOnly<current.Input<any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_Input": {"backCompat": false}
+ */
+// @ts-expect-error compatibility expected to be broken
+declare type current_as_old_for_TypeAlias_Input = requireAssignableTo<TypeOnly<current.Input<any>>, TypeOnly<old.Input<any>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_InsertableObjectFromSchemaRecordUnsafe": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_InsertableObjectFromSchemaRecordUnsafe = requireAssignableTo<TypeOnly<old.InsertableObjectFromSchemaRecordUnsafe<any>>, TypeOnly<current.InsertableObjectFromSchemaRecordUnsafe<any>>>
@@ -617,7 +663,7 @@ declare type current_as_old_for_TypeAlias_InsertableObjectFromSchemaRecordUnsafe
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeFieldFromImplicitField": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_InsertableTreeFieldFromImplicitField = requireAssignableTo<TypeOnly<old.InsertableTreeFieldFromImplicitField>, TypeOnly<current.InsertableTreeFieldFromImplicitField>>
+declare type old_as_current_for_TypeAlias_InsertableTreeFieldFromImplicitField = requireAssignableTo<TypeOnly<old.InsertableTreeFieldFromImplicitField<any>>, TypeOnly<current.InsertableTreeFieldFromImplicitField<any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -626,8 +672,7 @@ declare type old_as_current_for_TypeAlias_InsertableTreeFieldFromImplicitField =
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeFieldFromImplicitField": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_TypeAlias_InsertableTreeFieldFromImplicitField = requireAssignableTo<TypeOnly<current.InsertableTreeFieldFromImplicitField>, TypeOnly<old.InsertableTreeFieldFromImplicitField>>
+declare type current_as_old_for_TypeAlias_InsertableTreeFieldFromImplicitField = requireAssignableTo<TypeOnly<current.InsertableTreeFieldFromImplicitField<any>>, TypeOnly<old.InsertableTreeFieldFromImplicitField<any>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -652,9 +697,45 @@ declare type current_as_old_for_TypeAlias_InsertableTreeFieldFromImplicitFieldUn
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_InsertableTreeNodeFromAllowedTypes": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_InsertableTreeNodeFromAllowedTypes = requireAssignableTo<TypeOnly<old.InsertableTreeNodeFromAllowedTypes<any>>, TypeOnly<current.InsertableTreeNodeFromAllowedTypes<any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_InsertableTreeNodeFromAllowedTypes": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_InsertableTreeNodeFromAllowedTypes = requireAssignableTo<TypeOnly<current.InsertableTreeNodeFromAllowedTypes<any>>, TypeOnly<old.InsertableTreeNodeFromAllowedTypes<any>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_InsertableTreeNodeFromAllowedTypesUnsafe": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_InsertableTreeNodeFromAllowedTypesUnsafe = requireAssignableTo<TypeOnly<old.InsertableTreeNodeFromAllowedTypesUnsafe<any>>, TypeOnly<current.InsertableTreeNodeFromAllowedTypesUnsafe<any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_InsertableTreeNodeFromAllowedTypesUnsafe": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_InsertableTreeNodeFromAllowedTypesUnsafe = requireAssignableTo<TypeOnly<current.InsertableTreeNodeFromAllowedTypesUnsafe<any>>, TypeOnly<old.InsertableTreeNodeFromAllowedTypesUnsafe<any>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<old.InsertableTreeNodeFromImplicitAllowedTypes>, TypeOnly<current.InsertableTreeNodeFromImplicitAllowedTypes>>
+declare type old_as_current_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<old.InsertableTreeNodeFromImplicitAllowedTypes<any>>, TypeOnly<current.InsertableTreeNodeFromImplicitAllowedTypes<any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -663,8 +744,7 @@ declare type old_as_current_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedT
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<current.InsertableTreeNodeFromImplicitAllowedTypes>, TypeOnly<old.InsertableTreeNodeFromImplicitAllowedTypes>>
+declare type current_as_old_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<current.InsertableTreeNodeFromImplicitAllowedTypes<any>>, TypeOnly<old.InsertableTreeNodeFromImplicitAllowedTypes<any>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -725,9 +805,27 @@ declare type current_as_old_for_TypeAlias_InternalTypes__InlineTrick = requireAs
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_InternalTypes_AllowedTypesUnsafe": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_InternalTypes_AllowedTypesUnsafe = requireAssignableTo<TypeOnly<old.InternalTypes.AllowedTypesUnsafe>, TypeOnly<current.InternalTypes.AllowedTypesUnsafe>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_InternalTypes_AllowedTypesUnsafe": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_InternalTypes_AllowedTypesUnsafe = requireAssignableTo<TypeOnly<current.InternalTypes.AllowedTypesUnsafe>, TypeOnly<old.InternalTypes.AllowedTypesUnsafe>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_InternalTypes_ApplyKind": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_InternalTypes_ApplyKind = requireAssignableTo<TypeOnly<old.InternalTypes.ApplyKind<any,any,any>>, TypeOnly<current.InternalTypes.ApplyKind<any,any,any>>>
+declare type old_as_current_for_TypeAlias_InternalTypes_ApplyKind = requireAssignableTo<TypeOnly<old.InternalTypes.ApplyKind<any,any>>, TypeOnly<current.InternalTypes.ApplyKind<any,any>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -736,7 +834,25 @@ declare type old_as_current_for_TypeAlias_InternalTypes_ApplyKind = requireAssig
  * typeValidation.broken:
  * "TypeAlias_InternalTypes_ApplyKind": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_InternalTypes_ApplyKind = requireAssignableTo<TypeOnly<current.InternalTypes.ApplyKind<any,any,any>>, TypeOnly<old.InternalTypes.ApplyKind<any,any,any>>>
+declare type current_as_old_for_TypeAlias_InternalTypes_ApplyKind = requireAssignableTo<TypeOnly<current.InternalTypes.ApplyKind<any,any>>, TypeOnly<old.InternalTypes.ApplyKind<any,any>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_InternalTypes_ApplyKindInput": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_InternalTypes_ApplyKindInput = requireAssignableTo<TypeOnly<old.InternalTypes.ApplyKindInput<any,any,any>>, TypeOnly<current.InternalTypes.ApplyKindInput<any,any,any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_InternalTypes_ApplyKindInput": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_InternalTypes_ApplyKindInput = requireAssignableTo<TypeOnly<current.InternalTypes.ApplyKindInput<any,any,any>>, TypeOnly<old.InternalTypes.ApplyKindInput<any,any,any>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1076,6 +1192,24 @@ declare type current_as_old_for_TypeAlias_InternalTypes_TreeNodeFromImplicitAllo
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_InternalTypes_TreeNodeSchemaUnsafe": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_InternalTypes_TreeNodeSchemaUnsafe = requireAssignableTo<TypeOnly<old.InternalTypes.TreeNodeSchemaUnsafe>, TypeOnly<current.InternalTypes.TreeNodeSchemaUnsafe>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_InternalTypes_TreeNodeSchemaUnsafe": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_InternalTypes_TreeNodeSchemaUnsafe = requireAssignableTo<TypeOnly<current.InternalTypes.TreeNodeSchemaUnsafe>, TypeOnly<old.InternalTypes.TreeNodeSchemaUnsafe>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_InternalTypes_TreeObjectNodeUnsafe": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_InternalTypes_TreeObjectNodeUnsafe = requireAssignableTo<TypeOnly<old.InternalTypes.TreeObjectNodeUnsafe<any>>, TypeOnly<current.InternalTypes.TreeObjectNodeUnsafe<any>>>
@@ -1177,7 +1311,6 @@ declare type old_as_current_for_TypeAlias_NodeFromSchema = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_NodeFromSchema": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_NodeFromSchema = requireAssignableTo<TypeOnly<current.NodeFromSchema<any>>, TypeOnly<old.NodeFromSchema<any>>>
 
 /*
@@ -1277,7 +1410,6 @@ declare type old_as_current_for_TypeAlias_TreeFieldFromImplicitField = requireAs
  * typeValidation.broken:
  * "TypeAlias_TreeFieldFromImplicitField": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_TreeFieldFromImplicitField = requireAssignableTo<TypeOnly<current.TreeFieldFromImplicitField>, TypeOnly<old.TreeFieldFromImplicitField>>
 
 /*
@@ -1314,7 +1446,6 @@ declare type old_as_current_for_TypeAlias_TreeNodeFromImplicitAllowedTypes = req
  * typeValidation.broken:
  * "TypeAlias_TreeNodeFromImplicitAllowedTypes": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_TreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<current.TreeNodeFromImplicitAllowedTypes>, TypeOnly<old.TreeNodeFromImplicitAllowedTypes>>
 
 /*
@@ -1325,6 +1456,24 @@ declare type current_as_old_for_TypeAlias_TreeNodeFromImplicitAllowedTypes = req
  * "TypeAlias_TreeNodeSchema": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_TreeNodeSchema = requireAssignableTo<TypeOnly<current.TreeNodeSchema>, TypeOnly<old.TreeNodeSchema>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_TreeNodeSchemaClass": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_TreeNodeSchemaClass = requireAssignableTo<TypeOnly<current.TreeNodeSchemaClass>, TypeOnly<old.TreeNodeSchemaClass>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_TreeNodeSchemaNonClass": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_TreeNodeSchemaNonClass = requireAssignableTo<TypeOnly<current.TreeNodeSchemaNonClass>, TypeOnly<old.TreeNodeSchemaNonClass>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1397,6 +1546,24 @@ declare type old_as_current_for_TypeAlias_Unhydrated = requireAssignableTo<TypeO
  * "TypeAlias_Unhydrated": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_Unhydrated = requireAssignableTo<TypeOnly<current.Unhydrated<any>>, TypeOnly<old.Unhydrated<any>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_UnionToIntersection": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_UnionToIntersection = requireAssignableTo<TypeOnly<old.UnionToIntersection<any>>, TypeOnly<current.UnionToIntersection<any>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_UnionToIntersection": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_UnionToIntersection = requireAssignableTo<TypeOnly<current.UnionToIntersection<any>>, TypeOnly<old.UnionToIntersection<any>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

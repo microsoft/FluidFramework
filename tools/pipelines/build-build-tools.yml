@@ -118,7 +118,4 @@ extends:
     checkoutSubmodules: true
     taskBundleAnalysis: false
     checks:
-    - syncpack:deps
-    - syncpack:versions
-    - generate:packageList
-    - check:format
+    - checks
