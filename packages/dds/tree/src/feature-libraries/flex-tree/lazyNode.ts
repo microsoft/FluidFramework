@@ -10,6 +10,7 @@ import {
 	type AnchorNode,
 	CursorLocationType,
 	type FieldKey,
+	type ITreeCursorSynchronous,
 	type FieldKindIdentifier,
 	type ITreeSubscriptionCursor,
 	type TreeNavigationResult,
@@ -89,6 +90,10 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
+	}
+
+	public borrowCursor(): ITreeCursorSynchronous {
+		return this[cursorSymbol] as ITreeCursorSynchronous;
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](

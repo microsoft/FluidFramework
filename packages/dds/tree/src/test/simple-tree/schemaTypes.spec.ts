@@ -32,6 +32,7 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
+	areImplicitFieldSchemaEqual,
 	normalizeAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
@@ -39,6 +40,7 @@ import type {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
+	UnionToIntersection,
 } from "../../util/index.js";
 
 const schema = new SchemaFactory("com.example");
@@ -246,6 +248,7 @@ describe("schemaTypes", () => {
 				type I1 = InsertableTreeFieldFromImplicitField<typeof List>;
 				type I2 = InsertableTypedNode<typeof List>;
 				type I3 = NodeBuilderData<typeof List>;
+				type I4 = NodeBuilderData<UnionToIntersection<typeof List>>;
 
 				type N1 = NodeFromSchema<typeof List>;
 				type N2 = TreeNodeFromImplicitAllowedTypes<typeof List>;
@@ -254,6 +257,7 @@ describe("schemaTypes", () => {
 				type _check1 = requireTrue<areSafelyAssignable<I1, I2>>;
 				type _check2 = requireTrue<areSafelyAssignable<I2, N1 | Iterable<number>>>;
 				type _check3 = requireTrue<areSafelyAssignable<I3, Iterable<number>>>;
+				type _check6 = requireTrue<areSafelyAssignable<I4, Iterable<number>>>;
 				type _check4 = requireTrue<areSafelyAssignable<N1, N2>>;
 				type _check5 = requireTrue<areSafelyAssignable<N2, N3>>;
 			}
@@ -286,12 +290,14 @@ describe("schemaTypes", () => {
 			const A = schema.object("A", {});
 			const B = schema.object("B", { a: A });
 
+			type A = NodeFromSchema<typeof A>;
+
 			const a = new A({});
 			const b = new B({ a });
 			const b2 = new B({ a: {} });
 
 			// @ts-expect-error empty nodes should not allow non objects.
-			const a2: NodeFromSchema<typeof A> = 0;
+			const a2: A = 0;
 			// @ts-expect-error empty nodes should not allow non objects.
 			const a3: InsertableTypedNode<typeof A> = 0;
 
@@ -433,5 +439,48 @@ describe("schemaTypes", () => {
 				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
 			);
 		});
+	});
+
+	it("areImplicitFieldSchemaEqual", () => {
+		const sf = new SchemaFactory("test");
+		function check(a: ImplicitFieldSchema, b: ImplicitFieldSchema, expected: boolean) {
+			assert.equal(areImplicitFieldSchemaEqual(a, b), expected);
+		}
+
+		check(sf.number, sf.number, true); // Same type
+		check(sf.number, sf.string, false); // Different types
+		check([sf.number], sf.number, true); // Array vs. single
+		check([sf.number], [sf.number], true); // Both arrays
+		check([sf.number, sf.string], [sf.number, sf.string], true); // Multiple types
+		check([sf.number, sf.string], [sf.string, sf.number], true); // Multiple types in different order
+		check(sf.required(sf.number), sf.number, true); // Explicit vs. implicit
+		check(sf.required(sf.number), [sf.number], true); // Explicit vs. implicit in array
+		check(sf.required([sf.number, sf.string]), [sf.string, sf.number], true); // Multiple explicit vs. implicit
+		check(sf.required(sf.number), sf.optional(sf.number), false); // Different kinds
+		check(sf.required(sf.number), sf.required(sf.number, {}), true); // One with empty props
+		check(sf.required(sf.number, { key: "a" }), sf.required(sf.number, { key: "a" }), true); // Props with same key
+		check(sf.required(sf.number, { key: "a" }), sf.required(sf.number, { key: "b" }), false); // Props with different key
+		check(sf.required(sf.number, {}), sf.required(sf.number, { metadata: {} }), true); // One with empty metadata
+		check(
+			sf.required(sf.number, { metadata: { description: "a" } }),
+			sf.required(sf.number, { metadata: { description: "a" } }),
+			true,
+		); // Same description
+		check(
+			sf.required(sf.number, { metadata: { description: "a" } }),
+			sf.required(sf.number, { metadata: { description: "b" } }),
+			false,
+		); // Different description
+		check(
+			sf.required(sf.number, { metadata: { custom: "a" } }),
+			sf.required(sf.number, { metadata: { custom: "a" } }),
+			true,
+		); // Same custom metadata
+		check(
+			sf.required(sf.number, { metadata: { custom: "a" } }),
+			sf.required(sf.number, { metadata: { custom: "b" } }),
+			false,
+		); // Different custom metadata
+		check(sf.identifier, sf.optional(sf.string), false); // Identifier vs. optional string
 	});
 });
