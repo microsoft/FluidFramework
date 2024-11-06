@@ -23,6 +23,7 @@ import {
 	nullSchema,
 	numberSchema,
 	stringSchema,
+	type IterableTreeArrayContent,
 } from "@fluidframework/tree/internal";
 
 import {
@@ -101,7 +102,6 @@ function contentWithIds(content: TreeNode, idGenerator: IdGenerator): TreeEditOb
  * Manages applying the various types of {@link TreeEdit}'s to a a given {@link TreeNode}.
  */
 export function applyAgentEdit(
-	treeNode: TreeNode,
 	treeEdit: TreeEdit,
 	idGenerator: IdGenerator,
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
@@ -127,7 +127,7 @@ export function applyAgentEdit(
 					const simpleNodeSchema = allowedType as unknown as new (dummy: unknown) => TreeNode;
 					const insertNode = new simpleNodeSchema(treeEdit.content);
 					validator?.(insertNode);
-					array.insertAt(index, insertNode);
+					array.insertAt(index, insertNode as unknown as IterableTreeArrayContent<never>);
 					return {
 						...treeEdit,
 						content: contentWithIds(insertNode, idGenerator),
@@ -143,15 +143,9 @@ export function applyAgentEdit(
 				const parentNode = Tree.parent(node);
 				// Case for deleting rootNode
 				if (parentNode === undefined) {
-					const treeSchema = Tree.schema(treeNode);
-					if (treeSchema instanceof FieldSchema && treeSchema.kind === FieldKind.Optional) {
-						// eslint-disable-next-line no-param-reassign, @typescript-eslint/no-explicit-any
-						(treeNode as any) = undefined;
-					} else {
-						throw new UsageError(
-							"The root is required, and cannot be removed. Please use modify edit instead.",
-						);
-					}
+					throw new UsageError(
+						"The root is required, and cannot be removed. Please use modify edit instead.",
+					);
 				} else if (Tree.schema(parentNode).kind === NodeKind.Array) {
 					const nodeIndex = Tree.key(node) as number;
 					(parentNode as TreeArrayNode).removeAt(nodeIndex);

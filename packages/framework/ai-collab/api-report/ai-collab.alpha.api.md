@@ -24,7 +24,6 @@ export interface AiCollabOptions {
         readonly maxModelCalls?: number;
         readonly tokenLimits?: TokenLimits;
     };
-    // (undocumented)
     readonly openAI: OpenAiClientOptions;
     readonly planningStep?: boolean;
     readonly prompt: {

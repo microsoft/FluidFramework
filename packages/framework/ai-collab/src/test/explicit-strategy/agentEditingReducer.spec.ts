@@ -143,7 +143,7 @@ describe("applyAgentEdit", () => {
 					place: "after",
 				},
 			};
-			applyAgentEdit(view.root, insertEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(insertEdit, idGenerator, simpleSchema.definitions);
 
 			const insertEdit2: TreeEdit = {
 				explanation: "Insert a vector",
@@ -155,7 +155,7 @@ describe("applyAgentEdit", () => {
 					place: "after",
 				},
 			};
-			applyAgentEdit(view.root, insertEdit2, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(insertEdit2, idGenerator, simpleSchema.definitions);
 
 			const identifier1 = (view.root.vectors[0] as Vector).id;
 			const identifier2 = (view.root.vectors[1] as Vector).id;
@@ -222,7 +222,7 @@ describe("applyAgentEdit", () => {
 					place: "after",
 				},
 			};
-			applyAgentEdit(view.root, insertEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(insertEdit, idGenerator, simpleSchema.definitions);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const identifier1 = view.root.vectors[0]!.id;
@@ -283,7 +283,7 @@ describe("applyAgentEdit", () => {
 					location: "start",
 				},
 			};
-			applyAgentEdit(view.root, insertEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(insertEdit, idGenerator, simpleSchema.definitions);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const identifier1 = view.root.vectors[0]!.id;
@@ -339,7 +339,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view.root, insertEdit, idGenerator, simpleSchema.definitions),
+				() => applyAgentEdit(insertEdit, idGenerator, simpleSchema.definitions),
 				validateUsageError(/provided data is incompatible/),
 			);
 		});
@@ -374,7 +374,7 @@ describe("applyAgentEdit", () => {
 				},
 			};
 			assert.throws(
-				() => applyAgentEdit(view.root, insertEdit, idGenerator, simpleSchema.definitions),
+				() => applyAgentEdit(insertEdit, idGenerator, simpleSchema.definitions),
 				validateUsageError(/Expected child to be in an array node/),
 			);
 		});
@@ -408,7 +408,7 @@ describe("applyAgentEdit", () => {
 				{ [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
 			],
 		};
-		applyAgentEdit(view.root, modifyEdit, idGenerator, simpleSchema.definitions);
+		applyAgentEdit(modifyEdit, idGenerator, simpleSchema.definitions);
 
 		const modifyEdit2: TreeEdit = {
 			explanation: "Modify a vector",
@@ -417,7 +417,7 @@ describe("applyAgentEdit", () => {
 			field: "bools",
 			modification: [false],
 		};
-		applyAgentEdit(view.root, modifyEdit2, idGenerator, simpleSchema.definitions);
+		applyAgentEdit(modifyEdit2, idGenerator, simpleSchema.definitions);
 
 		idGenerator.assignIds(view.root);
 		const vectorId2 =
@@ -430,7 +430,7 @@ describe("applyAgentEdit", () => {
 			field: "x",
 			modification: 111,
 		};
-		applyAgentEdit(view.root, modifyEdit3, idGenerator, simpleSchema.definitions);
+		applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions);
 
 		const identifier = (view.root.vectors[0] as Vector).id;
 		const identifier2 = (view.root.vectors[1] as Vector2).id;
@@ -487,7 +487,7 @@ describe("applyAgentEdit", () => {
 				type: "remove",
 				source: { target: vectorId1 },
 			};
-			applyAgentEdit(view.root, removeEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions);
 
 			const expected = {
 				"str": "testStr",
@@ -530,7 +530,7 @@ describe("applyAgentEdit", () => {
 				type: "remove",
 				source: { target: vectorId1 },
 			};
-			applyAgentEdit(view.root.innerObject, removeEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions);
 
 			const expected = {
 				"innerObject": {
@@ -572,7 +572,7 @@ describe("applyAgentEdit", () => {
 				type: "remove",
 				source: { target: singleVectorId },
 			};
-			applyAgentEdit(view.root, removeEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions);
 
 			const expected = {
 				"vectors": [],
@@ -615,7 +615,7 @@ describe("applyAgentEdit", () => {
 				type: "remove",
 				source: { target: singleVectorId },
 			};
-			applyAgentEdit(view.root.innerObject, removeEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions);
 
 			const expected = {
 				"innerObject": {
@@ -657,7 +657,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view.root, removeEdit, idGenerator, simpleSchema.definitions),
+				() => applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions),
 
 				validateUsageError(
 					/The root is required, and cannot be removed. Please use modify edit instead./,
@@ -704,7 +704,7 @@ describe("applyAgentEdit", () => {
 					},
 				},
 			};
-			applyAgentEdit(view.root, removeEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions);
 
 			const expected = {
 				"str": "testStr",
@@ -762,7 +762,7 @@ describe("applyAgentEdit", () => {
 					},
 				},
 			};
-			applyAgentEdit(view.root, removeEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions);
 
 			const expected = {
 				"innerObject": {
@@ -819,7 +819,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view.root, removeEdit, idGenerator, simpleSchema.definitions),
+				() => applyAgentEdit(removeEdit, idGenerator, simpleSchema.definitions),
 				validateUsageError(
 					/The "from" node and "to" nodes of the range must be in the same parent array./,
 				),
@@ -862,7 +862,7 @@ describe("applyAgentEdit", () => {
 					location: "start",
 				},
 			};
-			applyAgentEdit(view.root, moveEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(moveEdit, idGenerator, simpleSchema.definitions);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const identifier = view.root.vectors2[0]!.id;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -940,7 +940,7 @@ describe("applyAgentEdit", () => {
 					location: "start",
 				},
 			};
-			applyAgentEdit(view.root, moveEdit, idGenerator, simpleSchema.definitions);
+			applyAgentEdit(moveEdit, idGenerator, simpleSchema.definitions);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const identifier = view.root.vectors2[0]!.id;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1027,7 +1027,7 @@ describe("applyAgentEdit", () => {
 				},
 			};
 			assert.throws(
-				() => applyAgentEdit(view.root, moveEdit, idGenerator, simpleSchema.definitions),
+				() => applyAgentEdit(moveEdit, idGenerator, simpleSchema.definitions),
 				validateUsageError(/Illegal node type in destination array/),
 			);
 		});
@@ -1081,7 +1081,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view.root, moveEdit, idGenerator, simpleSchema.definitions),
+				() => applyAgentEdit(moveEdit, idGenerator, simpleSchema.definitions),
 				validateUsageError(
 					/The "from" node and "to" nodes of the range must be in the same parent array./,
 				),
@@ -1126,7 +1126,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view.root, moveEdit, idGenerator, simpleSchema.definitions),
+				() => applyAgentEdit(moveEdit, idGenerator, simpleSchema.definitions),
 				validateUsageError(/the source node must be within an arrayNode/),
 			);
 		});
@@ -1169,7 +1169,7 @@ describe("applyAgentEdit", () => {
 			};
 
 			assert.throws(
-				() => applyAgentEdit(view.root, moveEdit, idGenerator, simpleSchema.definitions),
+				() => applyAgentEdit(moveEdit, idGenerator, simpleSchema.definitions),
 				validateUsageError(/No child under field field/),
 			);
 		});
@@ -1205,7 +1205,7 @@ describe("applyAgentEdit", () => {
 		};
 
 		assert.throws(
-			() => applyAgentEdit(view.root, insertEdit, idGenerator, simpleSchema.definitions),
+			() => applyAgentEdit(insertEdit, idGenerator, simpleSchema.definitions),
 			validateUsageError(/objectIdKey testObjectId does not exist/),
 		);
 
@@ -1222,7 +1222,7 @@ describe("applyAgentEdit", () => {
 		};
 
 		assert.throws(
-			() => applyAgentEdit(view.root, insertEdit2, idGenerator, simpleSchema.definitions),
+			() => applyAgentEdit(insertEdit2, idGenerator, simpleSchema.definitions),
 			validateUsageError(/objectIdKey testObjectId does not exist/),
 		);
 
@@ -1251,7 +1251,7 @@ describe("applyAgentEdit", () => {
 		const objectIdKeys = ["testObjectId1", "testObjectId2", "testObjectId3"];
 		const errorMessage = `objectIdKeys [${objectIdKeys.join(",")}] does not exist`;
 		assert.throws(
-			() => applyAgentEdit(view.root, moveEdit, idGenerator, simpleSchema.definitions),
+			() => applyAgentEdit(moveEdit, idGenerator, simpleSchema.definitions),
 			validateUsageError(errorMessage),
 		);
 
@@ -1271,7 +1271,7 @@ describe("applyAgentEdit", () => {
 		const objectIdKeys2 = ["testObjectId1", "testObjectId2"];
 		const errorMessage2 = `objectIdKeys [${objectIdKeys2.join(",")}] does not exist`;
 		assert.throws(
-			() => applyAgentEdit(view.root, moveEdit2, idGenerator, simpleSchema.definitions),
+			() => applyAgentEdit(moveEdit2, idGenerator, simpleSchema.definitions),
 			validateUsageError(errorMessage2),
 		);
 
@@ -1284,7 +1284,7 @@ describe("applyAgentEdit", () => {
 		};
 
 		assert.throws(
-			() => applyAgentEdit(view.root, modifyEdit, idGenerator, simpleSchema.definitions),
+			() => applyAgentEdit(modifyEdit, idGenerator, simpleSchema.definitions),
 			validateUsageError(/objectIdKey testObjectId does not exist/),
 		);
 	});

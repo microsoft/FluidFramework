@@ -102,7 +102,6 @@ export async function generateTreeEdits(
 		)) {
 			try {
 				const result = applyAgentEdit(
-					options.treeNode,
 					edit,
 					idGenerator,
 					simpleSchema.definitions,
