@@ -1867,6 +1867,20 @@ export const handlers: Handler[] = [
 				return;
 			}
 
+			// If package does not have an exports field, we have nothing to validate
+			if (packageJson.exports?.length === 0 || packageJson.exports === undefined) {
+				return;
+			}
+
+			// `publicPackageRequirements` are not required for experimental, example and tooling related packages
+			if (
+				packageJson.name.includes("experimental") ||
+				packageJson.name.includes("example") ||
+				packageJson.name.includes("tools")
+			) {
+				return;
+			}
+
 			const requirements = getFlubConfig(rootDirectoryPath).policy?.publicPackageRequirements;
 			if (requirements === undefined) {
 				// If no requirements have been specified, we have nothing to validate.
