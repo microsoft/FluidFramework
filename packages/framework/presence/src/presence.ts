@@ -37,13 +37,13 @@ export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSes
  */
 export const SessionClientStatus = {
 	/**
-	 * The session client is connected to the delta stream.
+	 * The session client is connected to the Fluid service.
 	 * Can send to and receive updates from other session clients.
 	 */
 	Connected: "Connected",
 
 	/**
-	 * The session client is not connected to the delta stream.
+	 * The session client is not connected to the Fluid service.
 	 * Cannot send to or receive updates from other session clients.
 	 */
 	Disconnected: "Disconnected",
