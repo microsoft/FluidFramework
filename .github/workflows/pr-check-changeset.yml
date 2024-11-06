@@ -71,7 +71,8 @@ jobs:
           echo $(jq -c '. += {required: false}' changeset-metadata.json) > changeset-metadata.json
 
       - name: Upload changeset metadata
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # ratchet:actions/upload-artifact@v3
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.0
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # ratchet:actions/upload-artifact@v4.4.0
         with:
           name: changeset-metadata
           path: ./changeset-metadata.json
@@ -96,7 +97,8 @@ jobs:
           echo $(jq -c '. += { pr: "${{ github.event.number }}" }' changeset-metadata.json) > changeset-metadata.json
 
       - name: Upload changeset metadata
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # ratchet:actions/upload-artifact@v3
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.0
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # ratchet:actions/upload-artifact@v4.4.0
         with:
           name: changeset-metadata
           path: ./changeset-metadata.json
