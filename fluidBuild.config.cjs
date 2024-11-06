@@ -582,6 +582,10 @@ module.exports = {
 				// 	body: "fluid-build . --task api",
 				// },
 				{
+					name: "build:docs",
+					body: "api-extractor run --local",
+				},
+				{
 					name: "ci:build:docs",
 					body: "api-extractor run",
 				},
