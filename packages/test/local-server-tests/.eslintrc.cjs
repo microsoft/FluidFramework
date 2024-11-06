@@ -15,4 +15,13 @@ module.exports = {
 	parserOptions: {
 		project: ["./src/test/tsconfig.json"],
 	},
+	overrides: [
+		{
+			// This package is only used to run its tests. It's ok for the src/utils.ts to import from devDependencies.
+			files: ["src/utils.ts"],
+			rules: {
+				"import/no-extraneous-dependencies": "off",
+			},
+		},
+	],
 };
