@@ -41,5 +41,12 @@ module.exports = {
 				ignore: ["^@docusaurus/", "^@theme/", "^@theme-original/"],
 			},
 		],
+
+		"import/no-extraneous-dependencies": [
+			"error",
+			{
+				devDependencies: ["test/**"],
+			},
+		],
 	},
 };

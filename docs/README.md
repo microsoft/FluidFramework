@@ -248,8 +248,8 @@ The replacement syntax to use in `.mdx` files would be:
 
 ### Nice to have before merging into main
 
--   Add component-level unit testing (with accessibility tests)
--   Add end-to-end testing
+-   Add component-level unit testing
+-   Add accessibility tests
 
 ### After merging into main
 
@@ -320,6 +320,8 @@ The following npm scripts are supported in this directory:
 | `serve` | Serves the built website using Docusaurus. |
 | `serve-with-azure-emulation` | Serves the built website using Docusaurus, including Azure service emulation for our Azure functions. |
 | `start` | Runs the website in watch mode with Docusaurus. |
+| `pretest` | Install necessary `playwright` dependencies before running tests. |
+| `test` | Run tests using `playwright` |
 
 <!-- prettier-ignore-end -->
 

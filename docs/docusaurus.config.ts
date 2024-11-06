@@ -145,8 +145,8 @@ const config: Config = {
 					position: "left",
 					label: "Docs",
 				},
-				{ to: "/community", label: "Community", position: "left" },
-				{ to: "/support", label: "Support", position: "left" },
+				{ to: "/community/", label: "Community", position: "left" },
+				{ to: "/support/", label: "Support", position: "left" },
 			],
 		},
 		// Note: we have configured a custom footer component. See src/theme/Footer/index.tsx.
