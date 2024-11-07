@@ -79,7 +79,7 @@ class DeepMonomorphicNode extends builder.object("wrapped-item", {
 }) {}
 
 // Array with nodes which are nested
-class RootNodeSchemaWithNestedNodes extends builder.array(
+class DeepMonomorphicArray extends builder.array(
 	"root-item-with-nested-nodes",
 	DeepMonomorphicNode,
 ) {}
@@ -277,13 +277,13 @@ describe("SharedTree memory usage", () => {
 						public readonly title =
 							`initialize ${numberOfNodes} nested nodes into tree with schema that is efficient for chunked forest using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
 
-						private sharedTree: TreeView<typeof RootNodeSchemaWithNestedNodes> | undefined;
+						private sharedTree: TreeView<typeof DeepMonomorphicArray> | undefined;
 
 						public async run(): Promise<void> {
 							this.sharedTree = createLocalSharedTree(
 								"testSharedTree",
-								RootNodeSchemaWithNestedNodes,
-								new RootNodeSchemaWithNestedNodes(
+								DeepMonomorphicArray,
+								new DeepMonomorphicArray(
 									Array.from(
 										{ length: numberOfNodes },
 										(_, index) =>
