@@ -33,7 +33,7 @@ npm start
 
 #### Limitations
 
-Note: the following functionality will not work in this mode.
+The following functionality will not work in this mode.
 Instead, you will need to [build](#build) and [serve](#serve)
 
 Note that offline search will not work in this mode.
