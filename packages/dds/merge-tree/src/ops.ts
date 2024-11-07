@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { AdjustParams } from "./adjust.js";
-
 /**
  * Flags enum that dictates behavior of a {@link ReferencePosition}
  * @legacy
@@ -189,21 +187,45 @@ export interface IMergeTreeObliterateSidedMsg extends IMergeTreeDelta {
  * @legacy
  * @alpha
  */
-export interface IMergeTreeAnnotateMsg {
+export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.ANNOTATE;
 	pos1?: number;
 	relativePos1?: IRelativePosition;
 	pos2?: number;
 	relativePos2?: IRelativePosition;
-	props: Record<string, unknown>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	props: Record<string, any>;
 	adjust?: undefined;
+}
+
+/**
+ * Used to define per key adjustments in an {@link IMergeTreeAnnotateAdjustMsg}
+ * @alpha
+ * @legacy
+ */
+export interface AdjustParams {
+	/**
+	 * The adjustment value which will be summed with the current value if it is a number,
+	 * or summed with zero if the current value is not a number.
+	 */
+	value: number;
+	/**
+	 * An optional minimum value for the computed value of the key this adjustment is applied too.
+	 * The minimum will be applied after the value is applied.
+	 */
+	min?: number | undefined;
+	/**
+	 * An optional maximum value for the computed value of the key this adjustment is applied too.
+	 * The maximum will be applied after the value is applied.
+	 */
+	max?: number | undefined;
 }
 
 /**
  * @legacy
  * @alpha
  */
-export interface IMergeTreeAnnotateAdjustMsg {
+export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.ANNOTATE;
 	pos1?: number;
 	pos2?: number;

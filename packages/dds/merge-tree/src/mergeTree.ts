@@ -9,7 +9,6 @@
 import { assert, Heap, IComparer } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { AdjustParams } from "./adjust.js";
 import { IAttributionCollectionSerializer } from "./attributionCollection.js";
 import { Client } from "./client.js";
 import { DoublyLinkedList, ListNode } from "./collections/index.js";
@@ -77,6 +76,7 @@ import {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	type AdjustParams,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { AdjustParams } from "./adjust.js";
 import { ISegment, Marker } from "./mergeTreeNodes.js";
 import {
 	IMergeTreeAnnotateMsg,
@@ -15,6 +14,7 @@ import {
 	IMergeTreeObliterateMsg,
 	IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
+	type AdjustParams,
 	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";

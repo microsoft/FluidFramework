@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { AdjustParams } from "./adjust.js";
 export {
 	IAttributionCollection,
 	IAttributionCollectionSerializer,
@@ -89,6 +88,7 @@ export {
 	createObliterateRangeOp,
 } from "./opBuilder.js";
 export {
+	AdjustParams,
 	IJSONSegment,
 	IMarkerDef,
 	IMergeTreeAnnotateMsg,

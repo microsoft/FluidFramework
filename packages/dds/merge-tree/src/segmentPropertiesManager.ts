@@ -5,14 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import {
-	computeValue,
-	type AdjustParams,
-	type Change,
-	type PendingChanges,
-} from "./adjust.js";
 import { DoublyLinkedList, iterateListValues } from "./collections/index.js";
 import { UnassignedSequenceNumber } from "./constants.js";
+import type { AdjustParams } from "./ops.js";
 import { MapLike, PropertySet, clone, createMap } from "./properties.js";
 
 /**
@@ -53,7 +48,46 @@ export function copyPropertiesAndManager(
 	}
 }
 
+type PropertyChange = {
+	seq: number;
+} & ({ adjust: AdjustParams; raw?: undefined } | { raw: unknown; adjust?: undefined });
+
+interface PropertyChanges {
+	msnConsensus: unknown;
+	remote: DoublyLinkedList<PropertyChange>;
+	local: DoublyLinkedList<PropertyChange>;
+}
+
+function computePropertyValue(
+	consensus: unknown,
+	...changes: Iterable<PropertyChange>[]
+): unknown {
+	let computedValue: unknown = consensus;
+	for (const change of changes) {
+		for (const op of change) {
+			const { raw, adjust } = op;
+			if (adjust === undefined) {
+				computedValue = raw;
+			} else {
+				const adjusted =
+					(typeof computedValue === "number" ? computedValue : 0) + adjust.value;
+				if (adjust.max && adjusted > adjust.max) {
+					computedValue = adjust.max;
+				} else if (adjust.min && adjusted < adjust.min) {
+					computedValue = adjust.min;
+				} else {
+					computedValue = adjusted;
+				}
+			}
+		}
+	}
+	return computedValue;
+}
+
 /**
+ *
+ * This class handles changes to properties, both remote and local. It manages the lifecycle for local property changes,
+ * and ensures all property changes are eventually consistent.
  * @internal
  */
 export class PropertiesManager {
@@ -70,9 +104,9 @@ export class PropertiesManager {
 
 		for (const [key, value] of [
 			...Object.entries(op.props ?? {})
-				.map<[string, Change]>(([k, raw]) => [k, { raw, seq }])
+				.map<[string, PropertyChange]>(([k, raw]) => [k, { raw, seq }])
 				.filter(([_, v]) => v.raw !== undefined),
-			...Object.entries(op.adjust ?? {}).map<[string, Change]>(([k, adjust]) => [
+			...Object.entries(op.adjust ?? {}).map<[string, PropertyChange]>(([k, adjust]) => [
 				k,
 				{ adjust, seq },
 			]),
@@ -85,19 +119,19 @@ export class PropertiesManager {
 				if (collaborating) {
 					assert(pending !== undefined, "pending must exist for rollback");
 					pending.local.pop();
-					properties[key] = computeValue(
+					properties[key] = computePropertyValue(
 						pending.msnConsensus,
 						pending.remote.map((n) => n.data),
 						pending.local.map((n) => n.data),
 					);
 				} else {
 					assert(pending === undefined, "must not have pending when not collaborating");
-					properties[key] = computeValue(previousValue, [value]);
+					properties[key] = computePropertyValue(previousValue, [value]);
 				}
 				deltas[key] = previousValue;
 			} else {
 				if (collaborating) {
-					const pending: PendingChanges | undefined = this.changes.get(key) ?? {
+					const pending: PropertyChanges | undefined = this.changes.get(key) ?? {
 						msnConsensus: previousValue,
 						remote: new DoublyLinkedList(),
 						local: new DoublyLinkedList(),
@@ -112,12 +146,12 @@ export class PropertiesManager {
 						// need to track remotes at all to support emitting the legacy snapshot format, which only sharedstring
 						// uses. when we remove the ability to emit that format, we can remove all remote op tracking
 						if (value.raw !== undefined && pending.remote.empty) {
-							pending.msnConsensus = computeValue(pending.msnConsensus, [value]);
+							pending.msnConsensus = computePropertyValue(pending.msnConsensus, [value]);
 						} else {
 							pending.remote.push(value);
 						}
 					}
-					properties[key] = computeValue(
+					properties[key] = computePropertyValue(
 						pending.msnConsensus,
 						pending.remote.map((n) => n.data),
 						pending.local.map((n) => n.data),
@@ -126,7 +160,7 @@ export class PropertiesManager {
 						deltas[key] = previousValue;
 					}
 				} else {
-					properties[key] = computeValue(previousValue, [value]);
+					properties[key] = computePropertyValue(previousValue, [value]);
 					deltas[key] = previousValue;
 				}
 			}
@@ -140,7 +174,7 @@ export class PropertiesManager {
 		return deltas;
 	}
 
-	private readonly changes = new Map<string, PendingChanges>();
+	private readonly changes = new Map<string, PropertyChanges>();
 
 	public ack(
 		seq: number,
@@ -149,9 +183,9 @@ export class PropertiesManager {
 	): void {
 		for (const [key, value] of [
 			...Object.entries(op.props ?? {})
-				.map<[string, Change]>(([k, raw]) => [k, { raw, seq }])
+				.map<[string, PropertyChange]>(([k, raw]) => [k, { raw, seq }])
 				.filter(([_, v]) => v.raw !== undefined),
-			...Object.entries(op.adjust ?? {}).map<[string, Change]>(([k, adjust]) => [
+			...Object.entries(op.adjust ?? {}).map<[string, PropertyChange]>(([k, adjust]) => [
 				k,
 				{ adjust, seq },
 			]),
@@ -164,7 +198,7 @@ export class PropertiesManager {
 			// need to track remotes at all to support emitting the legacy snapshot format, which only sharedstring
 			// uses. when we remove the ability to emit that format, we can remove all remote op tracking
 			if (value.raw !== undefined && change.remote.empty) {
-				change.msnConsensus = computeValue(change.msnConsensus, [value]);
+				change.msnConsensus = computePropertyValue(change.msnConsensus, [value]);
 			} else {
 				change.remote.push(value);
 			}
@@ -174,7 +208,7 @@ export class PropertiesManager {
 
 	public updateMsn(msn: number): void {
 		for (const [key, pending] of this.changes) {
-			pending.msnConsensus = computeValue(
+			pending.msnConsensus = computePropertyValue(
 				pending.msnConsensus,
 				iterateListValues(pending.remote.first, (n) => {
 					if (n.data.seq <= msn) {
@@ -219,7 +253,7 @@ export class PropertiesManager {
 	): MapLike<unknown> {
 		const properties: MapLike<unknown> = { ...oldProps };
 		for (const [key, changes] of this.changes) {
-			properties[key] = computeValue(
+			properties[key] = computePropertyValue(
 				changes.msnConsensus,
 				iterateListValues(changes.remote.first, (c) => c.data.seq <= sequenceNumber),
 			);

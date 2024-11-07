@@ -4,13 +4,10 @@
 
 ```ts
 
-// @alpha (undocumented)
+// @alpha
 export interface AdjustParams {
-    // (undocumented)
     max?: number | undefined;
-    // (undocumented)
     min?: number | undefined;
-    // (undocumented)
     value: number;
 }
 
@@ -172,7 +169,7 @@ export interface IMergeNodeCommon {
 }
 
 // @alpha (undocumented)
-export interface IMergeTreeAnnotateAdjustMsg {
+export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
     // (undocumented)
     adjust: Record<string, AdjustParams>;
     // (undocumented)
@@ -190,7 +187,7 @@ export interface IMergeTreeAnnotateAdjustMsg {
 }
 
 // @alpha (undocumented)
-export interface IMergeTreeAnnotateMsg {
+export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     // (undocumented)
     adjust?: undefined;
     // (undocumented)
@@ -198,7 +195,7 @@ export interface IMergeTreeAnnotateMsg {
     // (undocumented)
     pos2?: number;
     // (undocumented)
-    props: Record<string, unknown>;
+    props: Record<string, any>;
     // (undocumented)
     relativePos1?: IRelativePosition;
     // (undocumented)
