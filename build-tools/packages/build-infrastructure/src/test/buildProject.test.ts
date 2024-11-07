@@ -11,7 +11,7 @@ import { describe, it } from "mocha";
 import * as semver from "semver";
 import { simpleGit } from "simple-git";
 
-import { loadFluidRepo, setDependencyRange } from "../fluidRepo.js";
+import { loadBuildProject, setDependencyRange } from "../buildProject.js";
 import { findGitRootSync } from "../git.js";
 import type { ReleaseGroupName, WorkspaceName } from "../types.js";
 
@@ -21,10 +21,10 @@ chai.use(assertArrays);
 
 const git = simpleGit(testRepoRoot);
 
-describe("loadFluidRepo", () => {
+describe("loadBuildProject", () => {
 	describe("testRepo", () => {
 		it("loads correctly", () => {
-			const repo = loadFluidRepo(testRepoRoot);
+			const repo = loadBuildProject(testRepoRoot);
 			assert.strictEqual(
 				repo.workspaces.size,
 				2,
@@ -62,7 +62,7 @@ describe("loadFluidRepo", () => {
 		});
 
 		it("releaseGroupDependencies", async () => {
-			const repo = loadFluidRepo(testRepoRoot);
+			const repo = loadBuildProject(testRepoRoot);
 			const mainReleaseGroup = repo.releaseGroups.get("main" as ReleaseGroupName);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- test data (validated by another test) guarantees this has a value
 			const actualDependencies = mainReleaseGroup!.releaseGroupDependencies;
@@ -76,7 +76,7 @@ describe("loadFluidRepo", () => {
 	describe("FluidFramework repo - tests backCompat config loading", () => {
 		it("loads correctly", () => {
 			// Load the root config
-			const repo = loadFluidRepo(findGitRootSync());
+			const repo = loadBuildProject(findGitRootSync());
 			expect(repo.workspaces.size).to.be.greaterThan(1);
 
 			const client = repo.workspaces.get("client" as WorkspaceName);
@@ -97,7 +97,7 @@ describe("loadFluidRepo", () => {
 		});
 
 		it("releaseGroupDependencies", async () => {
-			const repo = loadFluidRepo(findGitRootSync());
+			const repo = loadBuildProject(findGitRootSync());
 			const clientReleaseGroup = repo.releaseGroups.get("client" as ReleaseGroupName);
 			assert(clientReleaseGroup !== undefined);
 
@@ -110,7 +110,7 @@ describe("loadFluidRepo", () => {
 });
 
 describe("setDependencyRange", () => {
-	const repo = loadFluidRepo(testRepoRoot);
+	const repo = loadBuildProject(testRepoRoot);
 	const main = repo.releaseGroups.get("main" as ReleaseGroupName);
 	assert(main !== undefined);
 	const mainPackages = new Set(main.packages);

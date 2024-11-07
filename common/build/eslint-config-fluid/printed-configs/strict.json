@@ -44,6 +44,9 @@
         "@fluid-internal/fluid/no-member-release-tags": [
             "error"
         ],
+        "@fluid-internal/fluid/no-unchecked-record-access": [
+            "error"
+        ],
         "@rushstack/no-new-null": [
             "error"
         ],
