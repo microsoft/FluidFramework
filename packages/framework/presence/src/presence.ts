@@ -94,6 +94,9 @@ export interface ISessionClient<
 	 */
 	getConnectionStatus(): SessionClientStatus;
 
+	/**
+	 * Set client connection status to disconnected.
+	 */
 	setDisconnected(): void;
 }
 

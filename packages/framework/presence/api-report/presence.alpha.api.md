@@ -40,7 +40,6 @@ export interface ISessionClient<SpecificSessionClientId extends ClientSessionId 
     getConnectionId(): ClientConnectionId;
     getConnectionStatus(): SessionClientStatus;
     readonly sessionId: SpecificSessionClientId;
-    // (undocumented)
     setDisconnected(): void;
 }
 
