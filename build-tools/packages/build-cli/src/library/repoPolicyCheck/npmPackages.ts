@@ -1874,9 +1874,9 @@ export const handlers: Handler[] = [
 
 			// `publicPackageRequirements` are not required for experimental, example and tooling related packages
 			if (
-				packageJson.name.includes("experimental") ||
-				packageJson.name.includes("example") ||
-				packageJson.name.includes("tools")
+				packageJson.name.includes("@fluid-experimental") ||
+				packageJson.name.includes("@fluid-example") ||
+				packageJson.name.includes("@fluid-tools")
 			) {
 				return;
 			}
