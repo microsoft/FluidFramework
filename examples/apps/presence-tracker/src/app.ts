@@ -109,7 +109,7 @@ async function start() {
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 
 	renderFocusPresence(mySessionClient, appPresence, contentDiv);
-	renderMousePresence(appPresence, mouseContentDiv);
+	renderMousePresence(appPresence, presence, services.audience, mouseContentDiv);
 	addWindowListeners(appPresence);
 }
 

@@ -1,6 +1,7 @@
 import {
 	Latest,
 	type IPresence,
+	type ISessionClient,
 	type PresenceStates,
 	type PresenceStatesSchema,
 } from "@fluid-experimental/presence";
@@ -28,3 +29,6 @@ export function initializePresenceWorkspace(presence: IPresence): AppPresence {
 	const workspace = presence.getStates("name:presenceDataStates", statesSchema);
 	return workspace;
 }
+
+export const positionMap = new Map<ISessionClient, IMousePosition>();
+export const focusMap = new Map<ISessionClient, IMousePosition>();

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ISessionClient } from "@fluid-experimental/presence";
+import type { IPresence, ISessionClient } from "@fluid-experimental/presence";
+import type { IMember, IServiceAudience } from "fluid-framework";
 
-import { type AppPresence, IMousePosition } from "./presence.js";
+import { type AppPresence, IMousePosition, positionMap } from "./presence.js";
 
 export function renderFocusPresence(
 	mySessionClient: ISessionClient,
@@ -82,22 +83,33 @@ function getFocusPresencesString(
 	return focusString.join(newLineSeparator);
 }
 
-export function renderMousePresence(appPresence: AppPresence, div: HTMLDivElement) {
+export function renderMousePresence(appPresence: AppPresence, presence: IPresence, audience: IServiceAudience<IMember>, div: HTMLDivElement) {
+
 	const { mouse, focus } = appPresence;
 	const onPositionChanged = () => {
 		console.log("entered onPositionChanged");
 
 		div.innerHTML = "";
-		console.log(`looping mouse.clients()`);
-		for (const client of mouse.clients()) {
-			const connectionId = client.getConnectionId();
-			console.log(`connectionId: ${connectionId}`);
+		// console.log(`looping mouse.clients()`);
+		// for (const client of mouse.clients()) {
+		// 	const connectionId = client.getConnectionId();
+		// 	console.log(`connectionId: ${connectionId}`);
 
-			// Workaroud for NYI .clientValues
-			const position = mouse.clientValue(client).value;
+		// 	// Workaroud for NYI .clientValues
+		// 	const position = mouse.clientValue(client).value;
 
+		// 	const posDiv = document.createElement("div");
+		// 	posDiv.textContent = `session ID: ${client.sessionId}`;
+		// 	posDiv.style.position = "absolute";
+		// 	posDiv.style.left = `${position.x}px`;
+		// 	posDiv.style.top = `${position.y}px`;
+		// 	posDiv.style.fontWeight = "bold";
+		// 	div.appendChild(posDiv);
+		// }
+		const positions = getMousePresences(audience, presence);
+		for (const [id, position] of positions) {
 			const posDiv = document.createElement("div");
-			posDiv.textContent = `session ID: ${client.sessionId}`;
+			posDiv.textContent = `UserId.connectionId: ${id}`;
 			posDiv.style.position = "absolute";
 			posDiv.style.left = `${position.x}px`;
 			posDiv.style.top = `${position.y}px`;
@@ -106,11 +118,24 @@ export function renderMousePresence(appPresence: AppPresence, div: HTMLDivElemen
 		}
 	};
 	onPositionChanged();
-	mouse.events.on("updated", onPositionChanged);
+
+	mouse.events.on("updated", ({client, value})=> {
+		positionMap.set(client, value);
+		onPositionChanged();
+	});
+
+	presence.events.on("attendeeJoined", (sessionClient: ISessionClient) => {
+		positionMap.set(sessionClient, { x: 0, y: 0 });
+		onPositionChanged();
+	});
+
+	presence.events.on("attendeeDisconnected", (sessionClient: ISessionClient) => {
+		positionMap.delete(sessionClient);
+		onPositionChanged();
+	});
 }
 
 export function addWindowListeners(appPresence: AppPresence) {
-	// console.log("Adding mousemove window event listener");
 	window.addEventListener("mousemove", (e) => {
 		// console.log(`mousemove: ${e}`);
 		const position: IMousePosition = {
@@ -130,4 +155,31 @@ export function addWindowListeners(appPresence: AppPresence) {
 		console.log("focus false");
 		appPresence.focus.local = { focused: false };
 	});
+}
+
+export function getMousePresences(
+	audience: IServiceAudience<IMember>,
+	presence: IPresence,
+	// appPresence: AppPresence,
+): Map<string, IMousePosition> {
+	const statuses = new Map<string, IMousePosition>();
+	// Demonstrates connecting service audience and presence attendees.
+	// Getting from presence attendee to service audience member is not
+	// as easy as there is no connection to the service audience member
+	// lookup.
+	for (const [userId, member] of audience.getMembers()) {
+		for (const connection of member.connections) {
+			const attendee = presence.getAttendee(connection.id);
+			try {
+				const position = positionMap.get(attendee);
+				if (position !== undefined) {
+					statuses.set(`${userId}.${connection.id}`, position);
+				}
+			}catch(error) {
+				console.log(error);
+				continue;
+			}
+		}
+	}
+	return statuses;
 }
