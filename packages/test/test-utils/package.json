@@ -167,7 +167,20 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_TestFluidObject": {
+				"backCompat": false
+			},
+			"ClassStatics_TestFluidObject": {
+				"backCompat": false
+			},
+			"Interface_ITestFluidObject": {
+				"backCompat": false
+			},
+			"Interface_IProvideTestFluidObject": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

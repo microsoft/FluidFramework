@@ -11,8 +11,8 @@ import {
 	Migrator,
 } from "@fluid-example/migration-tools/internal";
 
-import React from "react";
-import ReactDOM from "react-dom";
+import { createElement } from "react";
+import { createRoot } from "react-dom/client";
 
 import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";
 import { DemoCodeLoader } from "../src/demoCodeLoader.js";
@@ -72,26 +72,23 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	const appDiv = document.createElement("div");
 	const debugDiv = document.createElement("div");
 
+	const appRoot = createRoot(appDiv);
+	const debugRoot = createRoot(debugDiv);
+
 	const render = (model: IVersionedModel, migrationTool: IMigrationTool) => {
-		ReactDOM.unmountComponentAtNode(appDiv);
 		// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 		// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 		// view code loader to pull in the view dynamically based on the version we discover.
 		if (isIInventoryListAppModel(model)) {
-			ReactDOM.render(
-				React.createElement(InventoryListAppView, { model, migrationTool }),
-				appDiv,
-			);
+			appRoot.render(createElement(InventoryListAppView, { model, migrationTool }));
 
 			// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
-			ReactDOM.unmountComponentAtNode(debugDiv);
-			ReactDOM.render(
-				React.createElement(DebugView, {
+			debugRoot.render(
+				createElement(DebugView, {
 					model,
 					migrationTool,
 					getUrlForContainerId,
 				}),
-				debugDiv,
 			);
 		} else {
 			throw new Error(`Don't know how to render version ${model.version}`);

@@ -33,7 +33,6 @@ export type {
 	PresenceStates,
 	PresenceStatesEntries,
 	PresenceStatesEntry,
-	PresenceStatesMethods,
 	PresenceStatesSchema,
 	PresenceWorkspaceAddress,
 } from "./types.js";

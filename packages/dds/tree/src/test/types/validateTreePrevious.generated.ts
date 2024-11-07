@@ -292,6 +292,7 @@ declare type current_as_old_for_Interface_InternalTypes_TreeApi = requireAssigna
  * typeValidation.broken:
  * "Interface_InternalTypes_TreeArrayNodeBase": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_InternalTypes_TreeArrayNodeBase = requireAssignableTo<TypeOnly<current.InternalTypes.TreeArrayNodeBase<any,any>>, TypeOnly<old.InternalTypes.TreeArrayNodeBase<any,any>>>
 
 /*
