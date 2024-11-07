@@ -132,8 +132,8 @@ import {
 	type TreeViewConfiguration,
 	SchemaFactory,
 	toStoredSchema,
-	type TreeViewEvents,
 	type TreeView,
+	type TreeBranchEvents,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -1047,7 +1047,7 @@ export function rootFromDeltaFieldMap(
 }
 
 export function createTestUndoRedoStacks(
-	events: Listenable<TreeViewEvents | CheckoutEvents>,
+	events: Listenable<TreeBranchEvents | CheckoutEvents>,
 ): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
@@ -1079,9 +1079,9 @@ export function createTestUndoRedoStacks(
 		}
 	}
 
-	const unsubscribeFromCommitApplied = events.on("commitApplied", onNewCommit);
+	const unsubscribeFromChangedEvent = events.on("changed", onNewCommit);
 	const unsubscribe = (): void => {
-		unsubscribeFromCommitApplied();
+		unsubscribeFromChangedEvent();
 		for (const revertible of undoStack) {
 			revertible.dispose();
 		}

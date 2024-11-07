@@ -561,6 +561,13 @@ export interface RuntimeHeaderData {
 	allowTombstone?: boolean;
 }
 
+/** Default values for Runtime Headers */
+export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
+	wait: true,
+	viaHandle: false,
+	allowTombstone: false,
+};
+
 /**
  * Available compression algorithms for op compression.
  * @legacy
@@ -2812,17 +2819,6 @@ export class ContainerRuntime
 					: false /* groupedBatch */,
 			);
 		} else {
-			if (!runtimeBatch) {
-				// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
-				// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
-				if (
-					typeof messageCopy.contents === "string" &&
-					messageCopy.contents !== "" &&
-					messageCopy.type !== MessageType.ClientLeave
-				) {
-					messageCopy.contents = JSON.parse(messageCopy.contents);
-				}
-			}
 			this.processInboundMessages(
 				[{ message: messageCopy, localOpMetadata: undefined }],
 				{ batchStart: true, batchEnd: true }, // Single message
@@ -2921,7 +2917,7 @@ export class ContainerRuntime
 
 			// Helper that processes the previous bunch of messages.
 			const sendBunchedMessages = () => {
-				assert(previousMessage !== undefined, "previous message must exist");
+				assert(previousMessage !== undefined, 0xa67 /* previous message must exist */);
 				this.ensureNoDataModelChanges(() => {
 					this.validateAndProcessRuntimeMessages(
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -2987,6 +2983,16 @@ export class ContainerRuntime
 		// the document is no longer dirty.
 		if (!this.hasPendingMessages()) {
 			this.updateDocumentDirtyState(false);
+		}
+
+		// The DeltaManager used to do this, but doesn't anymore as of Loader v2.4
+		// Anyone listening to our "op" event would expect the contents to be parsed per this same logic
+		if (
+			typeof message.contents === "string" &&
+			message.contents !== "" &&
+			message.type !== MessageType.ClientLeave
+		) {
+			message.contents = JSON.parse(message.contents);
 		}
 
 		this.emit("op", message, false /* runtimeMessage */);
