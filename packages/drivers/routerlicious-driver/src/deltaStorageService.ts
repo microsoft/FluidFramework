@@ -172,7 +172,6 @@ export class DeltaStorageService implements IDeltaStorageService {
 					details: JSON.stringify({
 						firstOpSeqNumber: response.content[0]?.sequenceNumber,
 						lastOpSeqNumber: response.content[response.content.length - 1]?.sequenceNumber,
-						fetchReason: fetchReason ?? "",
 					}),
 					...response.propsToLog,
 					...getW3CData(response.requestUrl, "xmlhttprequest"),
