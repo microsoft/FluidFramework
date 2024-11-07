@@ -55,7 +55,7 @@ export function MockDiceRollerSample({
 	const [containerId] = React.useState(Date.now().toString());
 	const [diceValue, setDiceValue] = React.useState(1);
 
-	const rollDice = () => {
+	const rollDice = (): void => {
 		setDiceValue(Math.floor(Math.random() * 6) + 1);
 	};
 

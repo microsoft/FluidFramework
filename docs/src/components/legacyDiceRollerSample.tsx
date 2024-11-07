@@ -22,10 +22,10 @@ export function LegacyDiceRollerSample(): JSX.Element {
 		script.src = `https://storage.fluidframework.com/static/js/dice-roller.2021-09-24.js`;
 		script.async = true;
 
-		document.body.appendChild(script);
+		document.body.append(script);
 
 		return () => {
-			document.body.removeChild(script);
+			script.remove();
 		};
 	}, []);
 

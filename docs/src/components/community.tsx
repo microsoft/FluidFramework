@@ -68,7 +68,7 @@ export default function CommunityLinks(): JSX.Element {
 	);
 }
 
-function CommunityLink({ title, Icon, description, linkUrl: href }: CommunityLinkItem) {
+function CommunityLink({ title, Icon, description, linkUrl: href }: CommunityLinkItem): React.ReactElement {
 	return (
 		<div className={clsx("col col--4")}>
 			<div className="text--center">

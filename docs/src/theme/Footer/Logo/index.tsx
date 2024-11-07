@@ -12,7 +12,7 @@ import React from "react";
 
 import styles from "./styles.module.css";
 
-function LogoImage({ logo }: Props) {
+function LogoImage({ logo }: Props): React.ReactElement {
 	const { withBaseUrl } = useBaseUrlUtils();
 	const sources = {
 		light: withBaseUrl(logo.src),

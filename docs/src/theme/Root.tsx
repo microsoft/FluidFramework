@@ -13,6 +13,6 @@ export type RootProps = React.PropsWithChildren;
  *
  * @see {@link https://docusaurus.io/docs/swizzling#wrapper-your-site-with-root}
  */
-export default function Root({ children }: RootProps) {
+export default function Root({ children }: RootProps): React.ReactElement {
 	return <>{children}</>;
 }

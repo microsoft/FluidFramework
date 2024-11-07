@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json"],
 	},
@@ -48,5 +45,13 @@ module.exports = {
 				devDependencies: ["test/**"],
 			},
 		],
+
+		// Unfortunately, some of the import aliases supported by Docusaurus are not recognized by TSC / the eslint parser.
+		// So we have to disable some rules that enforce strong typing.
+		// Could be worth investigating if there's a way to make TSC aware of how the aliases are resolved, but until then,
+		// these rules are disabled.
+		"@typescript-eslint/no-unsafe-assignment": "off",
+		"@typescript-eslint/no-unsafe-call": "off",
+		"@typescript-eslint/no-unsafe-member-access": "off",
 	},
 };
