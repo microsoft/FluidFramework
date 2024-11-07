@@ -78,7 +78,9 @@ class DeepMonomorphicNode extends builder.object("wrapped-item", {
 	}),
 }) {}
 
-// Array with nodes which are nested
+/**
+ * Array of Deep monomorphic nodes to emphasize chunked forest's efficiency
+ */
 class DeepMonomorphicArray extends builder.array(
 	"root-item-with-nested-nodes",
 	DeepMonomorphicNode,
