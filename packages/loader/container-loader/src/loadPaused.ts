@@ -5,11 +5,13 @@
 
 import {
 	ILoader,
+	isIDeltaManagerFull,
 	LoaderHeader,
 	type IContainer,
 } from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable jsdoc/check-indentation */
@@ -63,6 +65,7 @@ export async function loadContainerPaused(
 	const lastProcessedSequenceNumber = dm.initialSequenceNumber;
 
 	const pauseContainer = (): void => {
+		assert(isIDeltaManagerFull(dm), "Delta manager does not have inbound/outbound queues.");
 		// eslint-disable-next-line no-void
 		void dm.inbound.pause();
 		// eslint-disable-next-line no-void

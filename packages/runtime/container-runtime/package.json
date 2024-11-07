@@ -231,7 +231,59 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_LocalFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"ClassStatics_LocalFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"Class_LocalFluidDataStoreContextBase": {
+				"backCompat": false
+			},
+			"ClassStatics_LocalFluidDataStoreContextBase": {
+				"backCompat": false
+			},
+			"Class_ChannelCollection": {
+				"backCompat": false
+			},
+			"ClassStatics_ChannelCollection": {
+				"backCompat": false
+			},
+			"Class_ContainerRuntime": {
+				"backCompat": false
+			},
+			"Class_DocumentsSchemaController": {
+				"forwardCompat": false
+			},
+			"ClassStatics_ContainerRuntime": {
+				"backCompat": false
+			},
+			"Class_FluidDataStoreContext": {
+				"backCompat": false
+			},
+			"ClassStatics_FluidDataStoreContext": {
+				"backCompat": false
+			},
+			"Interface_ISummarizerRuntime": {
+				"backCompat": false
+			},
+			"Interface_ILocalFluidDataStoreContextProps": {
+				"backCompat": false
+			},
+			"Interface_IFluidDataStoreContextInternal": {
+				"backCompat": false
+			},
+			"Interface_IFluidDataStoreContextProps": {
+				"backCompat": false
+			},
+			"Interface_ILocalDetachedFluidDataStoreContextProps": {
+				"backCompat": false
+			},
+			"Interface_LoadContainerRuntimeParams": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
