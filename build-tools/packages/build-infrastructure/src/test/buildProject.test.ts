@@ -123,36 +123,12 @@ describe("setDependencyRange", () => {
 	assert(mainWorkspace !== undefined);
 	const mainWorkspacePackages = new Set(mainWorkspace.packages);
 
-	const secondWorkspace = repo.workspaces.get("second" as WorkspaceName);
-	assert(secondWorkspace !== undefined);
-	// const secondWorkspacePackages = new Set(secondWorkspace.packages);
-
 	afterEach(async () => {
 		await git.checkout(["HEAD", "--", testRepoRoot]);
 		repo.reload();
 	});
 
-	// it("updates the dependency range to explicit version", async () => {
-	// 	const version = semver.parse("2.0.0");
-	// 	assert(version !== null);
-	// 	await setDependencyRange(mainPackages, group2Packages, version);
-	// 	const allCorrect = main.packages
-	// 		.filter((pkg) => group2Packages.has(pkg))
-	// 		.every((pkg) => pkg.version === "2.0.0");
-	// 	expect(allCorrect).to.be.true;
-	// });
-
-	// it("updates the dependency range given superset workspace package dependencies", async () => {
-	// 	const workspaceVersion = semver.parse(mainWorkspace.rootPackage.version);
-	// 	assert(workspaceVersion !== null);
-	// 	await setDependencyRange(mainPackages, mainWorkspacePackages, workspaceVersion);
-	// 	const allCorrect = main.packages
-	// 		.filter((pkg) => mainWorkspacePackages.has(pkg))
-	// 		.every((pkg) => pkg.version === mainWorkspace.rootPackage.version);
-	// 	expect(allCorrect).to.be.true;
-	// });
-
-	it("updates the dependency range to explicit version", async () => {
+	it("updates the dependency range to explicit version given group2 packages", async () => {
 		const version = semver.parse("2.0.0");
 		assert(version !== null);
 		await setDependencyRange(mainPackages, group2Packages, version);
@@ -168,7 +144,7 @@ describe("setDependencyRange", () => {
 		expect(allCorrect).to.be.true;
 	});
 
-	it("updates the dependency range given workspace", async () => {
+	it("updates the dependency range to explicit version given superset workspace", async () => {
 		const version = semver.parse("2.0.0");
 		assert(version !== null);
 		await setDependencyRange(mainPackages, mainWorkspacePackages, version);
@@ -188,6 +164,24 @@ describe("setDependencyRange", () => {
 				"@group2/pkg-d" in dependencies ? dependencies["@group2/pkg-d"] === "2.0.0" : true;
 
 			return pkgbUpdated && pkgcUpdated && sharedUpdated && pkgdUpdated;
+		});
+		expect(allCorrect).to.be.true;
+	});
+
+	it("updates the dependency range to explicit version given main packages", async () => {
+		const version = semver.parse("2.0.0");
+		assert(version !== null);
+		await setDependencyRange(mainPackages, mainPackages, version);
+
+		const allCorrect = main.packages.every((pkg) => {
+			const dependencies = pkg.packageJson.dependencies ?? {};
+
+			const pkgbUpdated = "pkg-b" in dependencies ? dependencies["pkg-b"] === "2.0.0" : true;
+
+			const sharedUpdated =
+				"@shared/shared" in dependencies ? dependencies["@shared/shared"] === "2.0.0" : true;
+
+			return pkgbUpdated && sharedUpdated;
 		});
 		expect(allCorrect).to.be.true;
 	});
