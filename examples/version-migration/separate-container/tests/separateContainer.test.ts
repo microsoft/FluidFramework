@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IMigrator } from "@fluid-example/migration-tools/internal";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IMigrator } from "@fluid-example/migration-tools/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { ISequencedClient } from "@fluidframework/driver-definitions/internal";
+
 import { globals } from "../jest.config.cjs";
 
 describe("separate-container migration", () => {
@@ -38,7 +40,7 @@ describe("separate-container migration", () => {
 				const migrationStatusElement = document.querySelector(".migration-status");
 				return migrationStatusElement?.textContent?.includes("one") === true;
 			});
-			await expect(containsOne).toEqual(true);
+			expect(containsOne).toEqual(true);
 		});
 
 		it("migrates and shows the correct code version after migration", async () => {
@@ -55,17 +57,17 @@ describe("separate-container migration", () => {
 				const migrationStatusElements = document.querySelectorAll(".migration-status");
 				return migrationStatusElements[1]?.textContent?.includes("one") === true;
 			});
-			await expect(leftContainsOne).toEqual(true);
-			await expect(rightContainsOne).toEqual(true);
+			expect(leftContainsOne).toEqual(true);
+			expect(rightContainsOne).toEqual(true);
 
 			const migratorsLength = await page.evaluate(() => {
-				return window["migrators"].length;
+				return (window["migrators"] as IMigrator[]).length;
 			});
-			await expect(migratorsLength).toEqual(2);
+			expect(migratorsLength).toEqual(2);
 
 			// Get a promise that will resolve when both sides have finished migration
-			const migrationP = page.evaluate(() => {
-				const migrationPs = (window["migrators"] as IMigrator[]).map((migrator) => {
+			const migrationP = page.evaluate(async () => {
+				const migrationPs = (window["migrators"] as IMigrator[]).map(async (migrator) => {
 					return new Promise<void>((resolve) => {
 						migrator.events.once("migrated", resolve);
 					});
@@ -86,8 +88,8 @@ describe("separate-container migration", () => {
 				const migrationStatusElements = document.querySelectorAll(".migration-status");
 				return migrationStatusElements[1]?.textContent?.includes("two") === true;
 			});
-			await expect(leftContainsTwo).toEqual(true);
-			await expect(rightContainsTwo).toEqual(true);
+			expect(leftContainsTwo).toEqual(true);
+			expect(rightContainsTwo).toEqual(true);
 		});
 	});
 
@@ -120,27 +122,28 @@ describe("separate-container migration", () => {
 				const migrationStatusElements = document.querySelectorAll(".migration-status");
 				return migrationStatusElements[1]?.textContent?.includes("one") === true;
 			});
-			await expect(leftContainsOne).toEqual(true);
-			await expect(rightContainsOne).toEqual(true);
+			expect(leftContainsOne).toEqual(true);
+			expect(rightContainsOne).toEqual(true);
 
 			// Wait until we see the summarizer join
-			await page.evaluate(() => {
+			await page.evaluate(async () => {
 				// This is reaching a bit, but we just need to watch it for test purposes.
 				const leftQuorum = (
-					window["migrators"][0]._currentMigratable.model.container as IContainer
-				).getQuorum();
-				const alreadyHasSummarizer =
-					[...leftQuorum.getMembers().values()].find(
-						(client) => client.client.details.type === "summarizer",
-					) !== undefined;
+					(window["migrators"] as IMigrator[])[0].currentModel as unknown as {
+						container: IContainer;
+					}
+				).container.getQuorum();
+				const alreadyHasSummarizer = [...leftQuorum.getMembers().values()].some(
+					(sequencedClient) => sequencedClient.client.details.type === "summarizer",
+				);
 				if (alreadyHasSummarizer) {
 					// This should be the path taken since demo mode should spawn the summarizer instantly.
 					return;
 				}
 				// In case the summarizer isn't quite connected yet, return a Promise so we can await for it to join.
 				return new Promise<void>((resolve) => {
-					const watchForSummarizer = (clientId, details) => {
-						if (details.type === "summarizer") {
+					const watchForSummarizer = (clientId, sequencedClient: ISequencedClient): void => {
+						if (sequencedClient.client.details.type === "summarizer") {
 							resolve();
 							leftQuorum.off("addMember", watchForSummarizer);
 						}
@@ -150,28 +153,23 @@ describe("separate-container migration", () => {
 			});
 
 			const migratorsLength = await page.evaluate(() => {
-				return window["migrators"].length;
+				return (window["migrators"] as IMigrator[]).length;
 			});
-			await expect(migratorsLength).toEqual(2);
-
-			await expect(page).toClick("button", { text: '"two"' });
+			expect(migratorsLength).toEqual(2);
 
 			// Get a promise that will resolve when both sides have finished migration
-			await page.evaluate(() => {
-				const migrationPs = (window["migrators"] as IMigrator[]).map((migrator) => {
+			const migrationP = page.evaluate(async () => {
+				const migrationPs = (window["migrators"] as IMigrator[]).map(async (migrator) => {
 					return new Promise<void>((resolve) => {
-						// Catch both cases:
-						// 1. Migration has already happened after clicking the button but before this
-						//    page.evaluate and so the version is "two"
-						// 2. Migration has not happened yet, so we need to wait for the "migrated" event
-						if (migrator.currentModel.version === "two") {
-							resolve();
-						}
 						migrator.events.once("migrated", resolve);
 					});
 				});
 				return Promise.all(migrationPs);
 			});
+
+			await expect(page).toClick("button", { text: '"two"' });
+
+			await migrationP;
 
 			// Validate the migration status shows "two" after the migration
 			const leftContainsTwo = await page.evaluate(() => {
@@ -182,8 +180,8 @@ describe("separate-container migration", () => {
 				const migrationStatusElements = document.querySelectorAll(".migration-status");
 				return migrationStatusElements[1]?.textContent?.includes("two") === true;
 			});
-			await expect(leftContainsTwo).toEqual(true);
-			await expect(rightContainsTwo).toEqual(true);
+			expect(leftContainsTwo).toEqual(true);
+			expect(rightContainsTwo).toEqual(true);
 		});
 	});
 });
