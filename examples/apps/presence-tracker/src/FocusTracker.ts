@@ -3,120 +3,78 @@
  * Licensed under the MIT License.
  */
 
-// import { ISignaler } from "@fluid-experimental/data-objects";
-// import { TypedEventEmitter } from "@fluid-internal/client-utils";
-// import type { IAzureAudience } from "@fluidframework/azure-client";
-// import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	Latest,
+	type IPresence,
+	type ISessionClient,
+	type LatestValueManager,
+	type PresenceStates,
+} from "@fluid-experimental/presence";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IAzureAudience } from "@fluidframework/azure-client";
 import { IEvent } from "@fluidframework/core-interfaces";
-// import { IMember } from "fluid-framework";
 
 export interface IFocusTrackerEvents extends IEvent {
 	(event: "focusChanged", listener: () => void): void;
 }
 
-export interface IFocusSignalPayload {
-	userId: string;
-	focus: boolean;
+export interface IFocusState {
+	hasFocus: boolean;
 }
 
-// export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
-// 	private static readonly focusSignalType = "changedFocus";
-// 	private static readonly focusRequestType = "focusRequest";
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+	private readonly focus: LatestValueManager<IFocusState>;
 
-// 	/**
-// 	 * Local map of focus status for clients
-// 	 *
-// 	 * @example
-// 	 *
-// 	 * ```typescript
-// 	 * Map<userId, Map<clientid, hasFocus>>
-// 	 * ```
-// 	 */
-// 	private readonly focusMap = new Map<string, Map<string, boolean>>();
+	/**
+	 * Local map of focus status for clients
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * Map<ISessionClient, IFocusState>
+	 * ```
+	 */
+	private readonly focusMap = new Map<ISessionClient, IFocusState>();
 
-// 	private readonly onFocusSignalFn = (clientId: string, payload: IFocusSignalPayload) => {
-// 		const userId: string = payload.userId;
-// 		const hasFocus: boolean = payload.focus;
+	constructor(
+		public readonly presence: IPresence,
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		statesWorkspace: PresenceStates<{}>,
+		public readonly audience: IAzureAudience,
+	) {
+		super();
 
-// 		let clientIdMap = this.focusMap.get(userId);
-// 		if (clientIdMap === undefined) {
-// 			clientIdMap = new Map<string, boolean>();
-// 			this.focusMap.set(userId, clientIdMap);
-// 		}
-// 		clientIdMap.set(clientId, hasFocus);
-// 		this.emit("focusChanged");
-// 	};
+		statesWorkspace.add("focus", Latest({ hasFocus: true }));
+		this.focus = statesWorkspace.focus;
 
-// 	constructor(
-// 		container: IContainer,
-// 		public readonly audience: IAzureAudience,
-// 		private readonly signaler: ISignaler,
-// 	) {
-// 		super();
+		this.presence.events.on("attendeeDisconnected", (client: ISessionClient) => {
+			this.focusMap.delete(client);
+		});
 
-// 		this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
-// 			const focusClientIdMap = this.focusMap.get(member.id);
-// 			if (focusClientIdMap !== undefined) {
-// 				focusClientIdMap.delete(clientId);
-// 				if (focusClientIdMap.size === 0) {
-// 					this.focusMap.delete(member.id);
-// 				}
-// 			}
-// 			this.emit("focusChanged");
-// 		});
+		this.focus.events.on("updated", ({ client, value }) => {
+			this.focusMap.set(client, value);
+			this.emit("mousePositionChanged");
+		});
 
-// 		this.signaler.on("error", (error) => {
-// 			this.emit("error", error);
-// 		});
-// 		this.signaler.onSignal(
-// 			FocusTracker.focusSignalType,
-// 			(clientId: string, local: boolean, payload: IFocusSignalPayload) => {
-// 				this.onFocusSignalFn(clientId, payload);
-// 			},
-// 		);
+		window.addEventListener("focus", (e) => {
+			// Alert all connected clients that there has been a change to a client's mouse position
+			this.focus.local = {
+				hasFocus: true,
+			};
+		});
+	}
 
-// 		this.signaler.onSignal(FocusTracker.focusRequestType, () => {
-// 			this.sendFocusSignal(document.hasFocus());
-// 		});
-// 		window.addEventListener("focus", () => {
-// 			this.sendFocusSignal(true);
-// 		});
-// 		window.addEventListener("blur", () => {
-// 			this.sendFocusSignal(false);
-// 		});
-// 		container.on("connected", () => {
-// 			this.signaler.submitSignal(FocusTracker.focusRequestType);
-// 		});
-// 		this.signaler.submitSignal(FocusTracker.focusRequestType);
-// 	}
-
-// 	/**
-// 	 * Alert all connected clients that there has been a change to a client's focus
-// 	 */
-// 	private sendFocusSignal(hasFocus: boolean) {
-// 		this.signaler.submitSignal(FocusTracker.focusSignalType, {
-// 			userId: this.audience.getMyself()?.id,
-// 			focus: hasFocus,
-// 		});
-// 	}
-
-// 	public getFocusPresences(): Map<string, boolean> {
-// 		const statuses: Map<string, boolean> = new Map<string, boolean>();
-// 		this.audience.getMembers().forEach((member, userId) => {
-// 			member.connections.forEach((connection) => {
-// 				const focus = this.getFocusPresenceForUser(userId, connection.id);
-// 				if (focus !== undefined) {
-// 					statuses.set(member.name, focus);
-// 				}
-// 			});
-// 		});
-// 		return statuses;
-// 	}
-
-// 	/**
-// 	 * Returns focus status of specified client
-// 	 */
-// 	public getFocusPresenceForUser(userId: string, clientId: string): boolean | undefined {
-// 		return this.focusMap.get(userId)?.get(clientId);
-// 	}
-// }
+	public getFocusPresences(): Map<string, boolean> {
+		const statuses: Map<string, boolean> = new Map<string, boolean>();
+		this.audience.getMembers().forEach((member) => {
+			member.connections.forEach((connection) => {
+				const attendee = this.presence.getAttendee(connection.id);
+				const focus = this.focusMap.get(attendee);
+				if (focus?.hasFocus !== undefined) {
+					statuses.set(member.name, focus.hasFocus);
+				}
+			});
+		});
+		return statuses;
+	}
+}
