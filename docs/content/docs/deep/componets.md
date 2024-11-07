@@ -83,6 +83,9 @@ This is similar to TypeScript classes and interfaces where the specializations r
 Contrast this with SharedTree's existing unions support which works like TypeScript unions where the union definition refers directly to the member types.
 This feature is particularly important for apps which which to define the schema for a component as part of the component (which is encouraged) when the components can be nested co-recursively resulting in the normal way to declare schema causing a cyclic dependency.
 This can actually work (even without this feature by using to lazy schema references), but is often undesirable.
+This feature can also be leveraged to encapsulate schema (ex: not have to export if from a package) for a component since it type erases the child schema in the parent union.
+It possible for the application to require any registered member of the union to implement some interface (for the schema statically or for the nodes) so it can, in a type safe way,
+ensure all components at that location in the tree implement some required contract (for example projecting their data into a view, or handling selection)
 2. Adapters: An API to allow an app to declare additional formats/schema an item  might have, and how to convert from that format to the canonical one.
 This allows separating support for these (typically legacy) formats into their own standalone code which only needs to be referenced once when configuring the application to include the adapters in the TreeConfiguration.
 This avoids having to complicate the logic for reading/viewing/editing the tree from having to know about or handle these alternative formats.
