@@ -26,8 +26,7 @@ import {
 	IConfigProviderBase,
 	IRequest,
 	IRequestHeader,
-	IFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
@@ -1057,6 +1056,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("resends attach op", async function () {
 		const newMapId = "newMap";
+		let id;
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
@@ -1067,13 +1067,17 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 				const createdDataStore = await runtime.createDataStore(["default"]);
 				const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
+				id = dataStore.context.id;
 
-				const channel = SharedMap.create(dataStore.runtime);
+				const channel = dataStore.runtime.createChannel(
+					newMapId,
+					"https://graph.microsoft.com/types/map",
+				);
 				assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
+				((await channel.handle.get()) as SharedObject).bindToContext();
 				defaultDataStore.root.set("someDataStore", dataStore.handle);
-				dataStore.root.set(newMapId, channel.handle);
-				channel.set(testKey, testValue);
+				(channel as ISharedMap).set(testKey, testValue);
 			},
 		);
 
@@ -1082,14 +1086,14 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// get new datastore from first container
 		const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
+		const containerRuntime = entryPoint.context
+			.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
+
+		// TODO: Remove usage of "resolveHandle" AB#6340
+		const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
+		const map2 = response.value as ISharedMap;
 		await provider.ensureSynchronized();
-		const newDatastore = await entryPoint.root
-			.get<IFluidHandleInternal<ITestFluidObject>>("someDataStore")
-			?.get();
-		const map2 = await newDatastore?.root
-			.get<IFluidHandleInternal<ISharedMap>>(newMapId)
-			?.get();
-		assert.strictEqual(map2?.get(testKey), testValue);
+		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
 	it("doesn't resend successful attach op", async function () {
@@ -1634,6 +1638,14 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("load offline with blob redirect table", async function () {
+		// TODO: AB#22741: Re-enable "load offline with blob redirect table"
+		if (
+			provider.driver.type === "odsp" ||
+			(provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs")
+		) {
+			this.skip();
+		}
+
 		const container = await loader.resolve({ url });
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
@@ -1740,6 +1752,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("offline attach", async function () {
 		const newMapId = "newMap";
+		let id;
 		// stash attach op
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
@@ -1751,12 +1764,17 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 				const createdDataStore = await runtime.createDataStore(["default"]);
 				const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
+				id = dataStore.context.id;
 
-				const channel = SharedMap.create(dataStore.runtime);
+				const channel = dataStore.runtime.createChannel(
+					newMapId,
+					"https://graph.microsoft.com/types/map",
+				);
 				assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+
+				((await channel.handle.get()) as SharedObject).bindToContext();
 				defaultDataStore.root.set("someDataStore", dataStore.handle);
-				dataStore.root.set(newMapId, channel.handle);
-				channel.set(testKey, testValue);
+				(channel as ISharedMap).set(testKey, testValue);
 			},
 		);
 
@@ -1764,13 +1782,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await loadOffline(testContainerConfig, provider, { url }, pendingOps);
 		{
 			const entryPoint = (await container2.container.getEntryPoint()) as ITestFluidObject;
-			const newDatastore = await entryPoint.root
-				.get<IFluidHandleInternal<ITestFluidObject>>("someDataStore")
-				?.get();
-			const map2 = await newDatastore?.root
-				.get<IFluidHandleInternal<ISharedMap>>(newMapId)
-				?.get();
-			assert.strictEqual(map2?.get(testKey), testValue);
+			const containerRuntime = entryPoint.context
+				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
+			// TODO: Remove usage of "resolveHandle" AB#6340
+			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
+			const map2 = response.value as ISharedMap;
+			assert.strictEqual(map2.get(testKey), testValue);
 			map2.set(testKey2, testValue);
 		}
 
@@ -1779,16 +1796,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// get new datastore from first container
 		{
-			await provider.ensureSynchronized();
 			const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
-			const newDatastore = await entryPoint.root
-				.get<IFluidHandleInternal<ITestFluidObject>>("someDataStore")
-				?.get();
-			const map3 = await newDatastore?.root
-				.get<IFluidHandleInternal<ISharedMap>>(newMapId)
-				?.get();
-			assert.strictEqual(map3?.get(testKey), testValue);
-			assert.strictEqual(map3?.get(testKey2), testValue);
+			const containerRuntime = entryPoint.context
+				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
+			// TODO: Remove usage of "resolveHandle" AB#6340
+			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
+			const map3 = response.value as ISharedMap;
+			await provider.ensureSynchronized();
+			assert.strictEqual(map3.get(testKey), testValue);
+			assert.strictEqual(map3.get(testKey2), testValue);
 		}
 	});
 
@@ -1848,6 +1864,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
 	it("works with summary while offline", async function () {
+		// TODO: AB#22740: Re-enable "works with summary while offline" on ODSP
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
+
 		map1.set("test op 1", "test op 1");
 		await waitForSummary(provider, container1, testContainerConfig);
 

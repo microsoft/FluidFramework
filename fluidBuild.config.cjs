@@ -271,6 +271,9 @@ module.exports = {
 			// This file is a test file.
 			"tools/markdown-magic/test/package.json",
 
+			// Not a real package
+			"docs/api/",
+
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
@@ -628,9 +631,10 @@ module.exports = {
 	releaseNotes: {
 		sections: {
 			feature: { heading: "✨ New Features" },
-			tree: { heading: "🌳 SharedTree DDS changes" },
+			tree: { heading: "🌳 SharedTree DDS Changes" },
 			fix: { heading: "🐛 Bug Fixes" },
 			deprecation: { heading: "⚠️ Deprecations" },
+			legacy: { heading: "Legacy API Changes" },
 			other: { heading: "Other Changes" },
 		},
 	},

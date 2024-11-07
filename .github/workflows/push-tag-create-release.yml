@@ -69,7 +69,8 @@ jobs:
         run: |
           flub release fromTag $TAG_NAME --json | jq -c > release-metadata.json
       - name: Upload release metadata JSON
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # ratchet:actions/upload-artifact@v3
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
         with:
           name: release-metadata
           path: release-metadata.json
@@ -98,7 +99,8 @@ jobs:
           mkdir reports
           flub release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o reports
       - name: Upload release reports
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # ratchet:actions/upload-artifact@v3
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
         with:
           name: release-reports
           path: reports
