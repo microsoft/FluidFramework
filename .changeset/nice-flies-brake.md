@@ -17,7 +17,6 @@
 "section": legacy
 ---
 
-Removing deprecated IDeltaManager.inbound and IDeltaManager.outbound properties on the interface.
+The inbound and outbound properties have been removed from IDeltaManager
 
-Removing deprecated IDeltaManager.inbound and IDeltaManager.outbound properties on the interface. Please check this PR
-[link](https://github.com/microsoft/FluidFramework/pull/19636) for the alternatives.
+The inbound and outbound properties were deprecated in a previous release and have been removed from IDeltaManager. Please check pull request [#19636](https://github.com/microsoft/FluidFramework/pull/19636) for alternative APIs.
