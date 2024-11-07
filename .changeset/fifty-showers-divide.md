@@ -7,9 +7,9 @@
 "section": deprecation
 ---
 
-Unsupported Merge-Tree Types and Exposures Removed
+Unsupported merge-tree types and related exposed internals have been removed
 
-As part of ongoing improvements, several exposed internals that are unnecessary for any supported scenarios and could lead to errors if used have been removed. Since direct usage would likely result in errors, it is not expected that these changes will impact any Fluid Framework consumers.
+As part of ongoing improvements, several internal types and related APIs have been removed. These types are unnecessary for any supported scenarios and could lead to errors if used. Since directly using these types would likely result in errors, these changes are not likely to impact any Fluid Framework consumers.
 
 Removed types:
 - IMergeTreeTextHelper
@@ -20,7 +20,7 @@ Removed types:
 - SegmentGroup
 - SegmentGroupCollection
 
-In addition to removing the above types, their exposures have also been removed from interfaces and their implementations: `ISegment`, `ReferencePosition`, and `ISerializableInterval`.
+In addition to removing the above types, they are no longer exposed through the following interfaces and their implementations: `ISegment`, `ReferencePosition`, and `ISerializableInterval`.
 
 Removed functions:
 - addProperties
