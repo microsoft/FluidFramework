@@ -125,51 +125,70 @@ describe("setDependencyRange", () => {
 
 	const secondWorkspace = repo.workspaces.get("second" as WorkspaceName);
 	assert(secondWorkspace !== undefined);
-	const secondWorkspacePackages = new Set(secondWorkspace.packages);
+	// const secondWorkspacePackages = new Set(secondWorkspace.packages);
 
 	afterEach(async () => {
 		await git.checkout(["HEAD", "--", testRepoRoot]);
 		repo.reload();
 	});
 
-	it("updates the dependency range given release group package dependencies", async () => {
-		const group2Version = semver.parse(group2.version);
-		assert(group2Version !== null);
-		await setDependencyRange(mainPackages, group2Packages, group2Version);
-		const allCorrect = main.packages
-			.filter((pkg) => group2Packages.has(pkg))
-			.every((pkg) => pkg.version === group2.version);
-		expect(allCorrect).to.be.true;
-	});
+	// it("updates the dependency range to explicit version", async () => {
+	// 	const version = semver.parse("2.0.0");
+	// 	assert(version !== null);
+	// 	await setDependencyRange(mainPackages, group2Packages, version);
+	// 	const allCorrect = main.packages
+	// 		.filter((pkg) => group2Packages.has(pkg))
+	// 		.every((pkg) => pkg.version === "2.0.0");
+	// 	expect(allCorrect).to.be.true;
+	// });
 
-	it("updates the dependency range given workspace package dependencies", async () => {
-		const workspace2Version = semver.parse(secondWorkspace.rootPackage.version);
-		assert(workspace2Version !== null);
-		await setDependencyRange(mainPackages, secondWorkspacePackages, workspace2Version);
-
-		const allCorrect = main.packages
-			.filter((pkg) => secondWorkspacePackages.has(pkg))
-			.every((pkg) => pkg.version === secondWorkspace.rootPackage.version);
-		expect(allCorrect).to.be.true;
-	});
+	// it("updates the dependency range given superset workspace package dependencies", async () => {
+	// 	const workspaceVersion = semver.parse(mainWorkspace.rootPackage.version);
+	// 	assert(workspaceVersion !== null);
+	// 	await setDependencyRange(mainPackages, mainWorkspacePackages, workspaceVersion);
+	// 	const allCorrect = main.packages
+	// 		.filter((pkg) => mainWorkspacePackages.has(pkg))
+	// 		.every((pkg) => pkg.version === mainWorkspace.rootPackage.version);
+	// 	expect(allCorrect).to.be.true;
+	// });
 
 	it("updates the dependency range to explicit version", async () => {
 		const version = semver.parse("2.0.0");
 		assert(version !== null);
 		await setDependencyRange(mainPackages, group2Packages, version);
-		const allCorrect = main.packages
-			.filter((pkg) => group2Packages.has(pkg))
-			.every((pkg) => pkg.version === "2.0.0");
+
+		const allCorrect = main.packages.every((pkg) => {
+			const dependencies = pkg.packageJson.dependencies ?? {};
+
+			const group2PkgDUpdated =
+				"@group2/pkg-d" in dependencies ? dependencies["@group2/pkg-d"] === "2.0.0" : true;
+
+			return group2PkgDUpdated;
+		});
 		expect(allCorrect).to.be.true;
 	});
 
-	it("updates the dependency range given superset workspace package dependencies", async () => {
-		const workspaceVersion = semver.parse(mainWorkspace.rootPackage.version);
-		assert(workspaceVersion !== null);
-		await setDependencyRange(mainPackages, mainWorkspacePackages, workspaceVersion);
-		const allCorrect = main.packages
-			.filter((pkg) => mainWorkspacePackages.has(pkg))
-			.every((pkg) => pkg.version === mainWorkspace.rootPackage.version);
+	it("updates the dependency range given workspace", async () => {
+		const version = semver.parse("2.0.0");
+		assert(version !== null);
+		await setDependencyRange(mainPackages, mainWorkspacePackages, version);
+
+		const allCorrect = main.packages.every((pkg) => {
+			const dependencies = pkg.packageJson.dependencies ?? {};
+
+			const pkgbUpdated = "pkg-b" in dependencies ? dependencies["pkg-b"] === "2.0.0" : true;
+
+			const pkgcUpdated =
+				"@private/pkg-c" in dependencies ? dependencies["@private/pkg-c"] === "2.0.0" : true;
+
+			const sharedUpdated =
+				"@shared/shared" in dependencies ? dependencies["@shared/shared"] === "2.0.0" : true;
+
+			const pkgdUpdated =
+				"@group2/pkg-d" in dependencies ? dependencies["@group2/pkg-d"] === "2.0.0" : true;
+
+			return pkgbUpdated && pkgcUpdated && sharedUpdated && pkgdUpdated;
+		});
 		expect(allCorrect).to.be.true;
 	});
 });

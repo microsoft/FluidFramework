@@ -248,9 +248,9 @@ export function getAllDependenciesInRepo(
  * @param dependencies - An array of objects that the packagesToUpdate depend on.
  * @param dependencyRange - The new version range to set for the packageToUpdate dependencies.
  */
-export async function setDependencyRange(
-	packagesToUpdate: Iterable<IPackage>,
-	dependencies: Iterable<IPackage>,
+export async function setDependencyRange<P extends IPackage>(
+	packagesToUpdate: Iterable<P>,
+	dependencies: Iterable<P>,
 	dependencyRange: InterdependencyRange,
 ): Promise<void> {
 	const dependencySet = new Set(Array.from(dependencies, (d) => d.name));
