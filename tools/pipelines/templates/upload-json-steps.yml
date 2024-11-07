@@ -7,17 +7,20 @@ parameters:
 - name: STORAGE_ACCOUNT
   type: string
 
+# Determines if artifact should be published as latest.tar.gz (for main branch)
 - name: uploadAsLatest
   type: boolean
   default: false
 
+# Determines if artifact should be published as latest-v*.tar.gz (for release branches)
 - name: uploadAsLatestRelease
   type: boolean
   default: false
 
+# Major version to upload as latest-v*.tar.gz
 - name: majorVersion
   type: string
-  default: ''
+  default: none
 
 steps:
 - checkout: none
