@@ -50,8 +50,18 @@ module.exports = {
 		// So we have to disable some rules that enforce strong typing.
 		// Could be worth investigating if there's a way to make TSC aware of how the aliases are resolved, but until then,
 		// these rules are disabled.
+		"@typescript-eslint/no-unsafe-argument": "off",
 		"@typescript-eslint/no-unsafe-assignment": "off",
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
 	},
+	overrides: [
+		{
+			// Test files
+			files: ["test/**/*"],
+			parserOptions: {
+				project: ["./test/tsconfig.json"],
+			},
+		}
+	]
 };
