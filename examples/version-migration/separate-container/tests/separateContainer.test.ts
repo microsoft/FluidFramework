@@ -160,6 +160,13 @@ describe("separate-container migration", () => {
 			// Get a promise that will resolve when both sides have finished migration
 			const migrationP = page.evaluate(async () => {
 				const migrationPs = (window["migrators"] as IMigrator[]).map(async (migrator) => {
+					// Since we expect this to run before the button click below, nothing should have migrated.
+					// However, we are getting flaky errors and want to rule out the possibility that the puppeteer interaction
+					// is somehow permitting these to occur out of order.  Throwing here will cause the returned migrationP
+					// promise to immediately reject (since Promise.all rejects as soon as the first rejection occurs).
+					if (migrator.currentModel.version === "two") {
+						throw new Error("Unexpected early migration!");
+					}
 					return new Promise<void>((resolve) => {
 						migrator.events.once("migrated", resolve);
 					});
