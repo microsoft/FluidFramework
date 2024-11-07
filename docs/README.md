@@ -143,15 +143,6 @@ The replacement syntax to use in `.mdx` files would be:
 
 ### Before merging into main
 
-## Site changes relative to current website
-
-
-This branch includes an offline implementation of search.
-An offline solution comes with some downsides (slower build, larger bundle), and probably isn't what we want long term.
-That said, it is much better than what our current website has (no search whatsoever).
-
-We should come back to this after v1 of our new website.
-
 ## Scripts
 
 The following npm scripts are supported in this directory:
