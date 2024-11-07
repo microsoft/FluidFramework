@@ -26,7 +26,7 @@
 	},
 	"main": "lib/index.js",
 	"bin": {
-		"repo-layout": "./bin/run.mjs"
+		"buildProject": "./bin/run.mjs"
 	},
 	"files": [
 		"/bin",
@@ -111,8 +111,8 @@
 		"unionfs": "^4.5.4"
 	},
 	"oclif": {
-		"bin": "repo-layout",
-		"dirname": "repo-layout",
+		"bin": "buildProject",
+		"dirname": "buildProject",
 		"commands": "./lib/commands",
 		"additionalHelpFlags": [
 			"-h"

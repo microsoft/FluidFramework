@@ -13,32 +13,32 @@ import {
 } from "./types.js";
 
 /**
- * The version of the fluidRepo configuration currently used.
+ * The version of the BuildProject configuration currently used.
  */
-export const FLUIDREPO_CONFIG_VERSION = 1;
+export const BUILDPROJECT_CONFIG_VERSION = 1;
 
 /**
- * Top-most configuration for repo layout settings.
+ * Top-most configuration for BuildProject settings.
  */
-export interface IFluidRepoLayout {
+export interface BuildProjectConfig {
 	/**
 	 * The version of the config.
 	 */
-	version: typeof FLUIDREPO_CONFIG_VERSION;
+	version: typeof BUILDPROJECT_CONFIG_VERSION;
 
 	/**
 	 * **BACK-COMPAT ONLY**
 	 *
 	 * A mapping of package or release group names to metadata about the package or release group.
 	 *
-	 * @deprecated Use the repoLayout property instead.
+	 * @deprecated Use the buildProject property instead.
 	 */
 	repoPackages?: IFluidBuildDirs;
 
 	/**
-	 * The layout of repo into workspaces and release groups.
+	 * The layout of the build project into workspaces and release groups.
 	 */
-	repoLayout?: {
+	buildProject?: {
 		workspaces: {
 			/**
 			 * A mapping of workspace name to folder containing a workspace config file (e.g. pnpm-workspace.yaml).
@@ -105,21 +105,21 @@ export interface ReleaseGroupDefinition {
 }
 
 /**
- * @deprecated Use repoLayout and associated types instead.
+ * @deprecated Use buildProject and associated types instead.
  */
 export interface IFluidBuildDirs {
 	[name: string]: IFluidBuildDirEntry;
 }
 
 /**
- * @deprecated Use repoLayout and associated types instead.
+ * @deprecated Use buildProject and associated types instead.
  */
 export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
 
 /**
  * Configures a package or release group
  *
- * @deprecated Use repoLayout and associated types instead.
+ * @deprecated Use buildProject and associated types instead.
  */
 export interface IFluidBuildDir {
 	/**
@@ -185,12 +185,12 @@ export function findReleaseGroupForPackage(
 	}
 }
 
-const configName = "repoLayout";
+const configName = "buildProject";
 
 /**
- * A cosmiconfig explorer to find the repoLayout config. First looks for JavaScript config files and falls back to the
- * `repoLayout` property in package.json. We create a single explorer here because cosmiconfig internally caches configs
- * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
+ * A cosmiconfig explorer to find the buildProject config. First looks for JavaScript config files and falls back to the
+ * `buildProject` property in package.json. We create a single explorer here because cosmiconfig internally caches
+ * configs for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */
 const configExplorer = cosmiconfigSync(configName, {
 	searchPlaces: [
@@ -201,39 +201,39 @@ const configExplorer = cosmiconfigSync(configName, {
 		"fluidBuild.config.cjs",
 		"fluidBuild.config.js",
 
-		// Or the repoLayout property in package.json
+		// Or the buildProject property in package.json
 		"package.json",
 	],
 	packageProp: [configName],
 });
 
 /**
- * Search a path for a repo layout config file, and return the parsed config and the path to the config file.
+ * Search a path for a build project config file, and return the parsed config and the path to the config file.
  *
  * @param searchPath - The path to start searching for config files in.
  * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
- * @returns The loaded repoLayout config and the path to the config file.
+ * @returns The loaded build project config and the path to the config file.
  *
  * @throws If a config is not found or if the config version is not supported.
  */
-export function getFluidRepoLayout(
+export function getBuildProjectConfig(
 	searchPath: string,
 	noCache = false,
-): { config: IFluidRepoLayout; configFilePath: string } {
+): { config: BuildProjectConfig; configFilePath: string } {
 	if (noCache === true) {
 		configExplorer.clearCaches();
 	}
 
 	const configResult = configExplorer.search(searchPath);
 	if (configResult === null || configResult === undefined) {
-		throw new Error("No fluidRepo configuration found.");
+		throw new Error("No BuildProject configuration found.");
 	}
-	const config = configResult.config as IFluidRepoLayout;
+	const config = configResult.config as BuildProjectConfig;
 
 	// Only version 1 of the config is supported. If any other value is provided, throw an error.
-	if (config.version !== FLUIDREPO_CONFIG_VERSION) {
+	if (config.version !== BUILDPROJECT_CONFIG_VERSION) {
 		throw new Error(
-			`Configuration version is not supported: ${config?.version}. Config version must be ${FLUIDREPO_CONFIG_VERSION}.`,
+			`Configuration version is not supported: ${config?.version}. Config version must be ${BUILDPROJECT_CONFIG_VERSION}.`,
 		);
 	}
 
