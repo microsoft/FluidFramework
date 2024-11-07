@@ -62,6 +62,20 @@ module.exports = {
 			parserOptions: {
 				project: ["./test/tsconfig.json"],
 			},
-		}
-	]
+		},
+		{
+			// Config files
+			files: ["docusaurus.config.ts", "playwright.config.ts"],
+			rules: {
+				// Dev dependencies and internal modules may be used in config files
+				"import/no-extraneous-dependencies": [
+					"error",
+					{
+						devDependencies: true,
+					},
+				],
+				"import/no-internal-modules": "off",
+			},
+		},
+	],
 };
