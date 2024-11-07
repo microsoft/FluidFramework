@@ -43,23 +43,25 @@ export function renderFocusPresence(
 		// const currentUserConnectionId = mySessionClient.getConnectionId();
 		// console.log(`currentUserConnectionId: ${currentUserConnectionId}`);
 
-		const localSessionId = mySessionClient.sessionId;
-		console.log(`localSessionId: ${localSessionId}`);
+		const localClientSessionId = mySessionClient.sessionId;
+		console.log(`localSessionId: ${localClientSessionId}`);
 		// .clients()
-			// .map((c) => {
-			// 	console.log(c);
-			// 	return c;
-			// })
-			// .find((c) => c.getConnectionId() === currentUserConnectionId)?.sessionId;
+		// .map((c) => {
+		// 	console.log(c);
+		// 	return c;
+		// })
+		// .find((c) => c.getConnectionId() === currentUserConnectionId)?.sessionId;
 		// const focusPresences = getFocusPresences(appPresence);
 
 		focusDiv.innerHTML = `
-            Current user: ${localSessionId}</br>
+            Current user: ${localClientSessionId}</br>
             ${getFocusPresencesString("</br>", appPresence)}
         `;
 
 		focusMessageDiv.style.display =
-			localSessionId !== undefined && !focus.clientValue(mySessionClient).value.focused ? "" : "none";
+			localClientSessionId !== undefined && focus.clientValue(mySessionClient).value.focused
+				? ""
+				: "none";
 	};
 
 	// onFocusChanged();
@@ -75,11 +77,13 @@ function getFocusPresencesString(
 	const { focus } = appPresence;
 	const focusString: string[] = [];
 
-	for (const s of focus.clientValues()) {
-		const prefix = `User ${s.client.sessionId}:`;
-		if (s.value.focused === undefined) {
+	for (const client of focus.clients()) {
+		// Workaroud for NYI .clientValues
+		const { focused } = focus.clientValue(client).value;
+		const prefix = `User ${client.sessionId}:`;
+		if (focused === undefined) {
 			focusString.push(`${prefix} unknown focus`);
-		} else if (s.value.focused) {
+		} else if (focused) {
 			focusString.push(`${prefix} has focus`);
 		} else {
 			focusString.push(`${prefix} missing focus`);
