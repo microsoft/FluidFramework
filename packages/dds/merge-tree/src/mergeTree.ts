@@ -2105,7 +2105,11 @@ export class MergeTree {
 
 		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
 		// opArgs == undefined => test code
-		if (start.pos !== end.pos || start.side !== end.side) {
+		if (
+			(clientId === this.collabWindow.clientId &&
+				(start.pos !== end.pos || start.side !== end.side)) ||
+			movedSegments.length > 0
+		) {
 			this.mergeTreeDeltaCallback?.(opArgs, {
 				operation: MergeTreeDeltaType.OBLITERATE,
 				deltaSegments: movedSegments,
