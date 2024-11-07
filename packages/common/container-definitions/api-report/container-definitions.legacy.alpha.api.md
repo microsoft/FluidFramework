@@ -204,8 +204,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
     readonly hasCheckpointSequenceNumber: boolean;
-    // @deprecated
-    readonly inbound: IDeltaQueue<T>;
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;
     readonly initialSequenceNumber: number;
     readonly lastKnownSeqNumber: number;
@@ -213,8 +211,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly lastSequenceNumber: number;
     readonly maxMessageSize: number;
     readonly minimumSequenceNumber: number;
-    // @deprecated
-    readonly outbound: IDeltaQueue<U[]>;
     // (undocumented)
     readonly readOnlyInfo: ReadOnlyInfo;
     readonly serviceConfiguration: IClientConfiguration | undefined;
