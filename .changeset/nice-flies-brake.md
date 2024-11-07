@@ -19,7 +19,7 @@
 
 The inbound and outbound properties have been removed from IDeltaManager
 
-The inbound and outbound properties were deprecated in a previous release and have been removed from IDeltaManager. Please check pull request [#19636](https://github.com/microsoft/FluidFramework/pull/19636) for alternative APIs.
+The inbound and outbound properties were [deprecated in version 2.0.0-rc.2.0.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.0.0-rc.2.0.0.md#container-definitions-deprecate-ideltamanagerinbound-and-ideltamanageroutbound) and have been removed from `IDeltaManager`.
 
 `IDeltaManager.inbound` was deprecated because it was not very useful to the customer and there are pieces of functionality that can break the core runtime if used improperly. For example, summarization and processing batches. Do not use the apis on this if possible. Data loss/corruption may occur in these scenarios in which `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` get called.
 
