@@ -33,11 +33,22 @@ type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boole
 Kind
 ] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
 
+// @alpha
+export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
+
 // @public
 export enum AttachState {
     Attached = "Attached",
     Attaching = "Attaching",
     Detached = "Detached"
+}
+
+// @alpha @sealed
+export interface BranchableTree extends ViewableTree {
+    branch(): TreeBranchFork;
+    merge(branch: TreeBranchFork): void;
+    merge(branch: TreeBranchFork, disposeMerged: boolean): void;
+    rebase(branch: TreeBranchFork): void;
 }
 
 // @public
@@ -219,11 +230,11 @@ export enum ForestType {
     Reference = 0
 }
 
-// @alpha
-export function getBranch(tree: ITree): TreeBranch;
+// @alpha @deprecated
+export function getBranch(tree: ITree): BranchableTree;
 
-// @alpha
-export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(view: TreeViewAlpha<T>): TreeBranch;
+// @alpha @deprecated
+export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(view: TreeViewAlpha<T>): BranchableTree;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
@@ -580,7 +591,6 @@ declare namespace InternalTypes {
         ApplyKindInput,
         NodeBuilderData,
         FieldHasDefault,
-        TreeArrayNodeBase,
         ScopedSchemaName,
         DefaultProvider,
         typeNameSymbol,
@@ -1012,6 +1022,7 @@ export const Tree: TreeApi;
 
 // @alpha @sealed
 export const TreeAlpha: {
+    branch(node: TreeNode): TreeBranch | undefined;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: Partial<ParseOptions<IFluidHandle>>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
@@ -1036,16 +1047,7 @@ interface TreeApi extends TreeNodeApi {
 }
 
 // @public @sealed
-export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypes<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>> {
-}
-
-// @public
-export const TreeArrayNode: {
-    readonly spread: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
-};
-
-// @public @sealed
-interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom = ReadonlyArrayNode> extends ReadonlyArrayNode<T> {
+export interface TreeArrayNode<TAllowedTypes extends Unenforced<ImplicitAllowedTypes> = ImplicitAllowedTypes, out T = [TAllowedTypes] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TAllowedTypes> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, in TNew = [TAllowedTypes] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes> : InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, in TMoveFrom = ReadonlyArrayNode> extends ReadonlyArrayNode<T> {
     insertAt(index: number, ...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
@@ -1066,8 +1068,13 @@ interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom = ReadonlyArrayNode> ex
     values(): IterableIterator<T>;
 }
 
+// @public
+export const TreeArrayNode: {
+    readonly spread: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
+};
+
 // @public @sealed
-export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>> extends TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>> {
+export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>> extends TreeArrayNode<TAllowedTypes, TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>> {
 }
 
 // @beta @sealed
@@ -1077,16 +1084,25 @@ export const TreeBeta: {
 };
 
 // @alpha @sealed
-export interface TreeBranch extends ViewableTree {
-    branch(): TreeBranchFork;
-    merge(branch: TreeBranchFork): void;
-    merge(branch: TreeBranchFork, disposeMerged: boolean): void;
-    rebase(branch: TreeBranchFork): void;
+export interface TreeBranch extends IDisposable {
+    dispose(error?: Error): void;
+    readonly events: Listenable<TreeBranchEvents>;
+    fork(): TreeBranch;
+    hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
+    merge(branch: TreeBranch, disposeMerged?: boolean): void;
+    rebaseOnto(branch: TreeBranch): void;
 }
 
 // @alpha @sealed
-export interface TreeBranchFork extends TreeBranch, IDisposable {
-    rebaseOnto(branch: TreeBranch): void;
+export interface TreeBranchEvents {
+    changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+    schemaChanged(): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchFork extends BranchableTree, IDisposable {
+    rebaseOnto(branch: BranchableTree): void;
 }
 
 // @public @sealed
@@ -1227,8 +1243,12 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
     upgradeSchema(): void;
 }
 
-// @alpha
-export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize"> {
+// @alpha @sealed
+export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">, TreeBranch {
+    // (undocumented)
+    readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
+    // (undocumented)
+    fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
     // (undocumented)
     initialize(content: InsertableField<TSchema>): void;
     // (undocumented)
