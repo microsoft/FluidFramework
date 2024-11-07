@@ -146,7 +146,6 @@ export {
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
-	type TreeArrayNodeBase,
 	type ReadonlyArrayNode,
 } from "./arrayNode.js";
 export {
