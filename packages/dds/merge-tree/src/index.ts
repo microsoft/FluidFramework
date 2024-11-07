@@ -66,7 +66,6 @@ export {
 	ISegment,
 	ISegmentAction,
 	Marker,
-	MergeNode,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
 	SegmentGroup,
@@ -124,8 +123,11 @@ export {
 	reservedRangeLabelsKey,
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
-export { SegmentGroupCollection } from "./segmentGroupCollection.js";
-export { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+export {
+	copyPropertiesAndManager,
+	PropertiesManager,
+	PropertiesRollback,
+} from "./segmentPropertiesManager.js";
 export {
 	InteriorSequencePlace,
 	Side,
