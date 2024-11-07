@@ -36,9 +36,11 @@ npm start
 The following functionality will not work in this mode.
 Instead, you will need to [build](#build) and [serve](#serve)
 
-Note that offline search will not work in this mode.
+##### Search
+
+Our current offline search implementation does not work in this mode.
 It requires running a full build to run its indexing.
-To test search, you will need to use the [`build` and `serve`](#build-and-serve) workflow.
+To test search, you will need to use the [`build` and `serve`](#build-and-serve) workflow instead.
 
 ### `build` and `serve`
 
