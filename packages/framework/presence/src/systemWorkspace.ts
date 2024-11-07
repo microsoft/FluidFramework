@@ -150,12 +150,12 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				clientSessionId,
 				clientConnectionId,
 				/* order */ value.rev,
-				senderConnectionId,
 			);
 
 			if (isNew) {
 				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
 			}
+
 			const knownSessionId: InternalTypes.ValueRequiredState<ClientSessionId> | undefined =
 				this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
@@ -164,6 +164,16 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				assert(knownSessionId.value === value.value, 0xa5a /* Mismatched SessionId */);
 			}
 		}
+
+		const audienceMembers = this.runtime.getAudience().getMembers();
+
+		for (const attendee of this.getAttendees()) {
+			const connectionId = attendee.getConnectionId();
+			if (!audienceMembers.has(connectionId) && senderConnectionId !== connectionId) {
+				attendee.setDisconnected();
+			}
+		}
+
 		// TODO: reorganize processUpdate and caller to process actions after all updates are processed.
 		for (const action of postUpdateActions) {
 			action();
@@ -226,11 +236,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		clientSessionId: ClientSessionId,
 		clientConnectionId: ClientConnectionId,
 		order: number,
-		senderConnectionId: ClientConnectionId,
 	): { attendee: SessionClient; isNew: boolean } {
 		let attendee = this.attendees.get(clientSessionId);
 		let isNew = false;
-		const audienceMembers = this.runtime.getAudience().getMembers();
 
 		if (attendee === undefined) {
 			// New attendee. Create SessionClient and add session ID based
@@ -242,19 +250,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			// The given association is newer than the one we have.
 			// Update the order and current connection ID.
 			attendee.order = order;
-			attendee.setConnectionId(clientConnectionId, /* updateStatus */ false);
+			attendee.setConnectionId(clientConnectionId);
+			isNew = true;
 		}
 		// Always update entry for the connection ID. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
-
-		// If the attendee's connection id is not present in audience, the attendee is not currently connected.
-		// If message is sent from joining client itself, we should assume client is connected.
-		if (
-			!audienceMembers.has(clientConnectionId) &&
-			senderConnectionId !== clientConnectionId
-		) {
-			attendee.setDisconnected();
-		}
 
 		return { attendee, isNew };
 	}

@@ -93,6 +93,8 @@ export interface ISessionClient<
 	 *
 	 */
 	getConnectionStatus(): SessionClientStatus;
+
+	setDisconnected(): void;
 }
 
 /**

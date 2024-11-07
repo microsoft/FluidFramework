@@ -5,6 +5,7 @@
 
 import type { IPresence, LatestValueManager } from "@fluid-experimental/presence";
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+import type { IFluidContainer } from "fluid-framework";
 
 import { ICustomUserDetails } from "./app.js";
 import { IDiceRollerController } from "./controller.js";
@@ -171,6 +172,16 @@ function makePresenceView(
 			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} with id ${attendee.sessionId} joined`;
 			addLogEntry(logContentDiv, update);
 		});
+
+		presenceConfig.presence.events.on("attendeeDisconnected", (attendee) => {
+			// Filter for remote attendees
+			const self = audience.getMyself();
+			if (self && attendee !== presenceConfig.presence.getAttendee(self.currentConnection)) {
+				const name = audience.getMembers().get(attendee.getConnectionId())?.name;
+				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} with id ${attendee.sessionId} left`;
+				addLogEntry(logContentDiv, update);
+			}
+		});
 	}
 	logDiv.append(logHeaderDiv, logContentDiv);
 
@@ -185,7 +196,67 @@ function makePresenceView(
 	return presenceDiv;
 }
 
+function makeAttendeeView(container: IFluidContainer, presence?: IPresence): HTMLDivElement {
+	const attendeeDiv = document.createElement("div");
+	if (presence === undefined) {
+		attendeeDiv.textContent = "No presence provided";
+		return attendeeDiv;
+	}
+
+	attendeeDiv.style.display = "flex";
+	attendeeDiv.style.justifyContent = "center";
+	attendeeDiv.style.margin = "70px";
+
+	presence.events.on("attendeeJoined", () => {
+		updateAttendees(presence, attendeeDiv);
+		updateButton(container, attendeeDiv);
+	});
+	presence.events.on("attendeeDisconnected", () => {
+		updateAttendees(presence, attendeeDiv);
+		updateButton(container, attendeeDiv);
+	});
+	container.on("connected", () => {
+		updateAttendees(presence, attendeeDiv);
+		updateButton(container, attendeeDiv);
+	});
+	container.on("disconnected", () => {
+		updateAttendees(presence, attendeeDiv);
+		updateButton(container, attendeeDiv);
+	});
+
+	return attendeeDiv;
+}
+
+function updateButton(container: IFluidContainer, attendeeDiv: HTMLDivElement): void {
+	const toggleButton = document.createElement("button");
+
+	toggleButton.style.marginLeft = "10px";
+
+	const connected = container.connectionState === 2;
+
+	toggleButton.addEventListener("click", () => {
+		if (connected) {
+			container.disconnect();
+		} else {
+			container.connect();
+		}
+	});
+	toggleButton.innerHTML = `${connected ? "Disconnect" : "Connect"}`;
+	attendeeDiv.append(toggleButton);
+}
+
+function updateAttendees(presence: IPresence, attendeeDiv: HTMLDivElement): void {
+	// Clear the existing attendees
+	attendeeDiv.innerHTML = "";
+	const attendeeDivEntry = document.createElement("div");
+	for (const attendee of presence.getAttendees()) {
+		attendeeDivEntry.innerHTML += `Attendee ${attendee.sessionId} is ${attendee.getConnectionStatus()} <br/>`;
+		attendeeDiv.append(attendeeDivEntry);
+	}
+}
+
 export function makeAppView(
+	container: IFluidContainer,
 	diceRollerControllers: IDiceRollerController[],
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
 	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
@@ -204,7 +275,9 @@ export function makeAppView(
 
 	const presenceView = makePresenceView(presenceConfig, audience);
 
+	const attendeeView = makeAttendeeView(container, presenceConfig?.presence);
+
 	const wrapperDiv = document.createElement("div");
-	wrapperDiv.append(diceView, audienceView, presenceView);
+	wrapperDiv.append(diceView, audienceView, presenceView, attendeeView);
 	return wrapperDiv;
 }

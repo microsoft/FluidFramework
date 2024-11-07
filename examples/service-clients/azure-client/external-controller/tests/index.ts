@@ -140,7 +140,7 @@ async function createContainerAndRenderInElement(
 	const diceRollerController = new DiceRollerController(sharedMap1, () => {});
 	const diceRollerController2 = new DiceRollerController(sharedMap2, () => {});
 
-	element.append(makeAppView([diceRollerController, diceRollerController2]));
+	element.append(makeAppView(fluidContainer, [diceRollerController, diceRollerController2]));
 }
 
 /**

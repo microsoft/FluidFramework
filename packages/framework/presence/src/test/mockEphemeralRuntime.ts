@@ -90,8 +90,10 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	public readonly listeners: {
 		connected: ((clientId: ClientConnectionId) => void)[];
+		disconnected: (() => void)[];
 	} = {
 		connected: [],
+		disconnected: [],
 	};
 	private isSupportedEvent(event: string): event is keyof typeof this.listeners {
 		return event in this.listeners;
