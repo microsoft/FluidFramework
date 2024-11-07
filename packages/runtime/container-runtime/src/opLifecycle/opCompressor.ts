@@ -30,6 +30,7 @@ export class OpCompressor {
 	 * Combines the contents of the batch into a single JSON string and compresses it, putting
 	 * the resulting string as the first message of the batch. The rest of the messages are
 	 * empty placeholders to reserve sequence numbers.
+	 * This should only take a single grouped batch and compress it.
 	 * @param batch - The batch to compress
 	 * @returns A batch of the same length as the input batch, containing a single compressed message followed by empty placeholders
 	 */
