@@ -96,6 +96,21 @@ export function getPlanningSystemPrompt(
 }
 
 /**
+ * Generates a prompt that provides a history of the edits an LLM has made to a SharedTree as well as any errors that occured from attemping to apply each respsecitve edit to the tree.
+ */
+export function createEditListHistoryPrompt(edits: EditLog): string {
+	return edits
+		.map((edit, index) => {
+			const error =
+				edit.error === undefined
+					? ""
+					: ` This edit produced an error, and was discarded. The error message was: "${edit.error}"`;
+			return `${index + 1}. ${JSON.stringify(edit.edit)}${error}`;
+		})
+		.join("\n");
+}
+
+/**
  * Generates the main prompt of this explicit strategy.
  * This prompt is designed to give an LLM instructions on how it can modify a SharedTree using specific types of {@link TreeEdit}'s
  * and provides with both a serialized version of the current state of the provided tree node as well as  the interfaces that compromise said tree nodes data.
@@ -111,18 +126,6 @@ export function getEditingSystemPrompt(
 	const schema = Tree.schema(treeNode);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(getJsonSchema(schema));
 	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
-
-	function createEditList(edits: EditLog): string {
-		return edits
-			.map((edit, index) => {
-				const error =
-					edit.error === undefined
-						? ""
-						: ` This edit produced an error, and was discarded. The error message was: "${edit.error}"`;
-				return `${index + 1}. ${JSON.stringify(edit.edit)}${error}`;
-			})
-			.join("\n");
-	}
 
 	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
 		appGuidance === undefined
@@ -147,7 +150,7 @@ export function getEditingSystemPrompt(
 		log.length === 0
 			? ""
 			: `You have already performed the following edits:
-			${createEditList(log)}
+			${createEditListHistoryPrompt(log)}
 			This means that the current state of the tree reflects these changes.`
 	}
 	The current state of the tree is: ${decoratedTreeJson}.
