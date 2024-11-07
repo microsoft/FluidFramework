@@ -79,10 +79,6 @@ To include repo-local API documentation when building the site locally, you will
 So long as the `LOCAL_API_DOCS` environment variable is set to `true`, local API documentation will be included when building the site.
 To remove the local API docs, simply remove the above variable or set it to `false`, `npm run clean` and rebuild as needed.
 
-## Docs Versioning
-
-TODO
-
 ## Docusaurus
 
 ### Notes
