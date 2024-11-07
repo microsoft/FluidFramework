@@ -136,8 +136,7 @@ describe("setDependencyRange", () => {
 		const allCorrect = main.packages.every((pkg) => {
 			const dependencies = pkg.packageJson.dependencies ?? {};
 
-			const group2PkgDUpdated =
-				"@group2/pkg-d" in dependencies ? dependencies["@group2/pkg-d"] === "2.0.0" : true;
+			const group2PkgDUpdated = (dependencies["@group2/pkg-d"] ?? "2.0.0") === "2.0.0";
 
 			return group2PkgDUpdated;
 		});
@@ -152,16 +151,13 @@ describe("setDependencyRange", () => {
 		const allCorrect = main.packages.every((pkg) => {
 			const dependencies = pkg.packageJson.dependencies ?? {};
 
-			const pkgbUpdated = "pkg-b" in dependencies ? dependencies["pkg-b"] === "2.0.0" : true;
+			const pkgbUpdated = (dependencies["pkg-b"] ?? "2.0.0") === "2.0.0";
 
-			const pkgcUpdated =
-				"@private/pkg-c" in dependencies ? dependencies["@private/pkg-c"] === "2.0.0" : true;
+			const pkgcUpdated = (dependencies["@private/pkg-c"] ?? "2.0.0") === "2.0.0";
 
-			const sharedUpdated =
-				"@shared/shared" in dependencies ? dependencies["@shared/shared"] === "2.0.0" : true;
+			const sharedUpdated = (dependencies["@shared/shared"] ?? "2.0.0") === "2.0.0";
 
-			const pkgdUpdated =
-				"@group2/pkg-d" in dependencies ? dependencies["@group2/pkg-d"] === "2.0.0" : true;
+			const pkgdUpdated = (dependencies["@group2/pkg-d"] ?? "2.0.0") === "2.0.0";
 
 			return pkgbUpdated && pkgcUpdated && sharedUpdated && pkgdUpdated;
 		});
@@ -176,10 +172,9 @@ describe("setDependencyRange", () => {
 		const allCorrect = main.packages.every((pkg) => {
 			const dependencies = pkg.packageJson.dependencies ?? {};
 
-			const pkgbUpdated = "pkg-b" in dependencies ? dependencies["pkg-b"] === "2.0.0" : true;
+			const pkgbUpdated = (dependencies["pkg-b"] ?? "2.0.0") === "2.0.0";
 
-			const sharedUpdated =
-				"@shared/shared" in dependencies ? dependencies["@shared/shared"] === "2.0.0" : true;
+			const sharedUpdated = (dependencies["@shared/shared"] ?? "2.0.0") === "2.0.0";
 
 			return pkgbUpdated && sharedUpdated;
 		});
