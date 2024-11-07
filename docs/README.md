@@ -81,7 +81,9 @@ To include repo-local API documentation when building the site locally, you will
 So long as the `LOCAL_API_DOCS` environment variable is set to `true`, local API documentation will be included when building the site.
 To remove the local API docs, simply remove the above variable or set it to `false`, `npm run clean` and rebuild as needed.
 
-## Docusaurus
+## Writing site documentation
+
+TODO
 
 ### MDX
 
@@ -90,6 +92,10 @@ But there is a subset of standard Markdown syntax that is not supported.
 For example, any HTML-like syntax will _always_ be treated as JSX syntax, so standard embedded HTML patterns don't work.
 Most of the time, this isn't an issue, since substituting JSX syntax is generally fine.
 With some exceptions.
+
+#### Leveraging React components
+
+TODO
 
 #### Comments
 
@@ -107,7 +113,20 @@ The replacement syntax to use in `.mdx` files would be:
 
 (just like you would do in a JSX context!)
 
-#### Other best practices
+### Mermaid
+
+Docusaurus has built-in support for [mermaid]() diagrams.
+We recommend leveraging these when possible over alternatives (ascii art, binary image files, SVG, etc.).
+
+Rationale:
+- Docusaurus will ensure consistent styling
+- Non-binary source, directly in the document.
+
+#### Example
+
+TODO
+
+### Best practices
 
 -   Don't include file extensions in links. E.g., prefer `[foo](./foo)` over `[foo](./foo.md)`.
     -   Rationale: more portable (if a document changes from `.md` to `.mdx`, for example, links will not need to be updated).
