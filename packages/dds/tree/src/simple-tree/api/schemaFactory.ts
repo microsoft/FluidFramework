@@ -223,12 +223,36 @@ export class SchemaFactory<
 	 * If each library exporting schema picks its own globally unique scope for its SchemaFactory,
 	 * then all schema an application might depend on, directly or transitively,
 	 * will end up with a unique fully qualified name which is required to refer to it in persisted data and errors.
-	 *
-	 * @param scope - Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
-	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
-	 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
 	 */
-	public constructor(public readonly scope: TScope) {}
+	public constructor(
+		/**
+		 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
+		 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
+		 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
+		 *
+		 * @remarks
+		 * Generally each library which is developed independently (possible a package, but could also be part of a package or multiple packages developed together) should get its own globally unique `scope`.
+		 * This ensures that the given library can name its schema (via the name parameter passed to the schema building methods, or implicitly for structurally named schema)
+		 * in a way that must only be unique within the library.
+		 * Following this pattern allows a single application to depend on multiple libraries which define their own schema, and use them together in a single tree without risk of collisions.
+		 * If a library logically contains sub-libraries with their own schema, they can be given a scope nested inside the parent scope, such as "ParentScope.ChildScope".
+		 *
+		 * @example
+		 * Fluid Framework follows this pattern, placing the schema for the built in leaf types in the `com.fluidframework.leaf` scope.
+		 * If Fluid Framework publishes more schema in the future, they would be under some other `com.fluidframework` scope.
+		 * This ensures that any schema use by any other library will not conflict with Fluid Framework's schema
+		 * as long as the library uses the recommended
+		 * [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 based scopes.
+		 *
+		 * @example
+		 * A library could generate a random UUIDv4, like `242c4397-49ed-47e6-8dd0-d5c3bc31778b` and use that as the scope.
+		 * Note: do not use this UUID: a new one must be randomly generated when needed to ensure collision resistance.
+		 * ```typescript
+		 * const factory = new SchemaFactory("242c4397-49ed-47e6-8dd0-d5c3bc31778b");
+		 * ```
+		 */
+		public readonly scope: TScope,
+	) {}
 
 	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
 		return (
