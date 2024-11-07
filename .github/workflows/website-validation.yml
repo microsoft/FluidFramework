@@ -38,7 +38,8 @@ jobs:
           pnpm i --frozen-lockfile
           npm run build
       - name: Upload site artifact
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # ratchet:actions/upload-artifact@v3
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
         with:
           name: fluidframework-site
           path: docs/build
@@ -105,7 +106,8 @@ jobs:
         run: mkdir -p ./results
 
       - name: Download site artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # ratchet:actions/download-artifact@v3
+         # release notes: https://github.com/actions/download-artifact/releases/tag/v4.1.8
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
         with:
           name: fluidframework-site
           path: docs/build
@@ -127,7 +129,8 @@ jobs:
           cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
           echo -e "\n\`\`\`" | tee -a ./results/linkcheck
       - name: Upload results artifact
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # ratchet:actions/upload-artifact@v3
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
         with:
           name: website-validation-results
           path: ./docs/results

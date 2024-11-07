@@ -114,7 +114,17 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IContainer": {
+				"backCompat": false
+			},
+			"Interface_IContainerContext": {
+				"backCompat": false
+			},
+			"Interface_IDeltaManager": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

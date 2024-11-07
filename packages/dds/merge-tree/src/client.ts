@@ -862,7 +862,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private resetPendingDeltaToOps(
 		resetOp: IMergeTreeDeltaOp,
 		// eslint-disable-next-line import/no-deprecated
-		segmentGroup: SegmentGroup,
+		segmentGroup: SegmentGroup<ISegmentLeaf>,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
 		const NACKedSegmentGroup = this.pendingRebase?.shift()?.data;
@@ -895,7 +895,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			a.ordinal < b.ordinal ? -1 : 1,
 		)) {
 			assert(
-				segment.segmentGroups.remove?.(segmentGroup) === true,
+				segment.segmentGroups?.remove?.(segmentGroup) === true,
 				0x035 /* "Segment group not in segment pending queue" */,
 			);
 			assert(
@@ -1015,7 +1015,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					opList.push(newOp);
 				}
 			} else if (newOp) {
-				// eslint-disable-next-line import/no-deprecated
 				const newSegmentGroup: SegmentGroup = {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
@@ -1179,7 +1178,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segmentGroup: SegmentGroup | SegmentGroup[],
 	): IMergeTreeOp {
 		if (this.pendingRebase === undefined || this.pendingRebase.empty) {
-			// eslint-disable-next-line import/no-deprecated
 			let firstGroup: SegmentGroup;
 			if (Array.isArray(segmentGroup)) {
 				if (segmentGroup.length === 0) {
