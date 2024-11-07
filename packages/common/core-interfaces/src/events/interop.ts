@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent } from "@fluidframework/core-interfaces";
+import type { IEvent } from "../events.js";
+
 import type { Listeners } from "./listeners.js";
-import type { UnionToIntersection } from "../util/index.js";
+import type { UnionToIntersection } from "./util.js";
 
 // TODO: this file is currently unused. Use it or remove it.
 

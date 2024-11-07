@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { setInNestedMap } from "../util/index.js";
 import type { Listenable, Listeners, Off } from "./listeners.js";
+import { setInNestedMap } from "./util.js";
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
@@ -158,11 +158,9 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 	): Off {
 		const off: Off = () => {
 			const currentListeners = this.listeners.get(eventName);
-			if (currentListeners?.delete(off) === true) {
-				if (currentListeners.size === 0) {
-					this.listeners.delete(eventName);
-					this.noListeners?.(eventName);
-				}
+			if (currentListeners?.delete(off) === true && currentListeners.size === 0) {
+				this.listeners.delete(eventName);
+				this.noListeners?.(eventName);
 			}
 		};
 
@@ -172,7 +170,7 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 
 	public hasListeners(eventName?: keyof TListeners): boolean {
 		if (eventName === undefined) {
-			return this.listeners.size !== 0;
+			return this.listeners.size > 0;
 		}
 		return this.listeners.has(eventName);
 	}
