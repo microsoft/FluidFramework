@@ -266,21 +266,19 @@ module.exports = {
 		// We use formatting tools like Biome or prettier to format code, so most formatting-related rules are superfluous
 		// and are disabled. Running fewer rules also improves lint performance.
 
-		// Disabled because it conflicts with formatter rules
+		// Disabled per conflicts with formatter rules
 		"@typescript-eslint/brace-style": "off",
 		"@typescript-eslint/comma-spacing": "off",
 		"@typescript-eslint/func-call-spacing": "off",
 		"@typescript-eslint/keyword-spacing": "off",
 		"@typescript-eslint/member-delimiter-style": "off",
-
-		// this rule is also deprecated.
-		"@typescript-eslint/object-curly-spacing": "off",
 		"@typescript-eslint/semi": "off",
 		"@typescript-eslint/space-before-function-paren": "off",
 		"@typescript-eslint/space-infix-ops": "off",
 		"@typescript-eslint/type-annotation-spacing": "off",
 
 		// The rules below are all deprecated
+		"@typescript-eslint/object-curly-spacing": "off",
 		"array-bracket-spacing": "off",
 		"arrow-spacing": "off",
 		"block-spacing": "off",
