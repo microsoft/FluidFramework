@@ -18,6 +18,7 @@ export interface LatestValueControls {
 	 * cause a delay.
 	 */
 	allowableUpdateLatency: number;
+
 	/**
 	 * Target time in milliseconds between oldest changed local state
 	 * has been broadcast and forced rebroadcast of all local values.
