@@ -16,7 +16,6 @@ import {
 	configuredSharedTree,
 	ForestType,
 	SchemaFactory,
-	SharedTree,
 	TreeCompressionStrategy,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
@@ -24,6 +23,7 @@ import {
 	type SharedTreeOptions,
 	type TreeView,
 } from "../../index.js";
+import type { NodeBuilderData } from "../../internalTypes.js";
 
 const builder = new SchemaFactory("shared-tree-test");
 
@@ -45,22 +45,27 @@ const initialState = {
 		propertyTwo: {
 			itemOne: "",
 		},
-		propertyThree: new Map([["numberOne", 1]]),
+		propertyThree: { numberOne: 1 },
 	},
-};
+} satisfies NodeBuilderData<typeof RootNodeSchema>;
 
-// Array has 2 allowable types to make it less efficient for uniform chunks.
-class RootNodeSchemaBasicChunks extends builder.array("root-item-with-basic-chunks", [
+/**
+ * Polymorphic array schema to make uniform chunking less efficient.
+ */
+class PolymorphicArray extends builder.array("root-item-with-basic-chunks", [
 	builder.number,
 	builder.string,
 ]) {}
 
-class RootNodeSchemaUniform extends builder.array(
-	"root-item-with-basic-chunks",
-	builder.number,
-) {}
+/**
+ * Monomorphic array schema to make uniform chunking more efficient.
+ */
+class MonomorphicArray extends builder.array("root-item-with-basic-chunks", builder.number) {}
 
-class NestedNodeSchema extends builder.object("wrapped-item", {
+/**
+ * Deep monomorphic node schema to highlight efficiency of chunked forest.
+ */
+class DeepMonomorphicNode extends builder.object("wrapped-item", {
 	layer1: builder.object("nested-1", {
 		layer2: builder.object("nested-2", {
 			layer3: builder.object("nested-3", {
@@ -76,17 +81,16 @@ class NestedNodeSchema extends builder.object("wrapped-item", {
 // Array with nodes which are nested
 class RootNodeSchemaWithNestedNodes extends builder.array(
 	"root-item-with-nested-nodes",
-	NestedNodeSchema,
+	DeepMonomorphicNode,
 ) {}
 
 function createLocalSharedTree<TSchema extends ImplicitFieldSchema>(
 	id: string,
 	schema: TSchema,
 	content: InsertableTreeFieldFromImplicitField<TSchema>,
-	sharedTreeOptions?: SharedTreeOptions,
+	sharedTreeOptions: SharedTreeOptions = {},
 ): TreeView<TSchema> {
-	const sharedTree =
-		sharedTreeOptions !== undefined ? configuredSharedTree(sharedTreeOptions) : SharedTree;
+	const sharedTree = configuredSharedTree(sharedTreeOptions);
 	const tree = sharedTree.create(
 		new MockFluidDataStoreRuntime({
 			registry: [sharedTree.getFactory()],
@@ -225,13 +229,13 @@ describe("SharedTree memory usage", () => {
 						public readonly title =
 							`initialize ${numberOfNodes} nodes into tree with schema that is inefficient for chunked forest using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
 
-						private sharedTree: TreeView<typeof RootNodeSchemaBasicChunks> | undefined;
+						private sharedTree: TreeView<typeof PolymorphicArray> | undefined;
 
 						public async run(): Promise<void> {
 							this.sharedTree = createLocalSharedTree(
 								"testSharedTree",
-								RootNodeSchemaBasicChunks,
-								new RootNodeSchemaBasicChunks(
+								PolymorphicArray,
+								new PolymorphicArray(
 									Array.from({ length: numberOfNodes }, (_, index) => index + 1),
 								),
 								{ forest: forestType },
@@ -249,13 +253,13 @@ describe("SharedTree memory usage", () => {
 						public readonly title =
 							`initialize ${numberOfNodes} nodes into tree with schema that is efficient for chunked forest using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
 
-						private sharedTree: TreeView<typeof RootNodeSchemaUniform> | undefined;
+						private sharedTree: TreeView<typeof MonomorphicArray> | undefined;
 
 						public async run(): Promise<void> {
 							this.sharedTree = createLocalSharedTree(
 								"testSharedTree",
-								RootNodeSchemaUniform,
-								new RootNodeSchemaUniform(
+								MonomorphicArray,
+								new MonomorphicArray(
 									Array.from({ length: numberOfNodes }, (_, index) => index + 1),
 								),
 								{ forest: forestType, treeEncodeType: TreeCompressionStrategy.Compressed },
@@ -283,7 +287,7 @@ describe("SharedTree memory usage", () => {
 									Array.from(
 										{ length: numberOfNodes },
 										(_, index) =>
-											new NestedNodeSchema({
+											new DeepMonomorphicNode({
 												layer1: { layer2: { layer3: { layer4: { x: index, y: index + 1 } } } },
 											}),
 									),
