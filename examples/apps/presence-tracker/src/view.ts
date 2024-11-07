@@ -40,9 +40,6 @@ export function renderFocusPresence(
 
 	const onFocusChanged = () => {
 		console.log("entered onFocusChanged");
-		// const currentUserConnectionId = mySessionClient.getConnectionId();
-		// console.log(`currentUserConnectionId: ${currentUserConnectionId}`);
-
 		const localClientSessionId = mySessionClient.sessionId;
 		console.log(`localSessionId: ${localClientSessionId}`);
 		// .clients()
@@ -82,11 +79,11 @@ function getFocusPresencesString(
 		const { focused } = focus.clientValue(client).value;
 		const prefix = `User ${client.sessionId}:`;
 		if (focused === undefined) {
-			focusString.push(`${prefix} unknown focus`);
+			focusString.push(`${prefix} ==> unknown focus`);
 		} else if (focused) {
-			focusString.push(`${prefix} has focus`);
+			focusString.push(`${prefix} ==> has focus`);
 		} else {
-			focusString.push(`${prefix} missing focus`);
+			focusString.push(`${prefix} ==> missing focus`);
 		}
 	}
 
@@ -96,7 +93,7 @@ function getFocusPresencesString(
 export function renderMousePresence(
 	// mouseTracker: LatestValueManager<IMousePosition>,
 	// focusTracker: FocusTracker,
-	mySessionClient: ISessionClient,
+	// mySessionClient: ISessionClient,
 	appPresence: AppPresence,
 	div: HTMLDivElement,
 ) {
@@ -105,17 +102,14 @@ export function renderMousePresence(
 		console.log("entered onPositionChanged");
 
 		div.innerHTML = "";
-		console.log(`mouse.clients()`);
-		// console.assert(mouse.clients().length > 0, "mouse.clients().length > 0");
+		console.log(`looping mouse.clients()`);
 		for (const client of mouse.clients()) {
-			// console.log(client);
 			const connectionId = client.getConnectionId();
 			console.log(`connectionId: ${connectionId}`);
+
+			// Workaroud for NYI .clientValues
 			const position = mouse.clientValue(client).value;
 
-			// if (
-			// 	[...focus.clientValues()].some(({ client }) => client.sessionId === p.client.sessionId)
-			// ) {
 			const posDiv = document.createElement("div");
 			posDiv.textContent = `session ID: ${client.sessionId}`;
 			posDiv.style.position = "absolute";
@@ -123,7 +117,6 @@ export function renderMousePresence(
 			posDiv.style.top = `${position.y}px`;
 			posDiv.style.fontWeight = "bold";
 			div.appendChild(posDiv);
-			// }
 		}
 	};
 	onPositionChanged();

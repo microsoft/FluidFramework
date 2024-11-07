@@ -115,8 +115,8 @@ async function start() {
 	document.title = id;
 
 	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
-	const mySessionClient = presence.getMyself();
 	const appPresence = initializePresenceWorkspace(presence);
+	const mySessionClient = presence.getMyself();
 
 	// update the browser URL and the window title with the actual container ID
 	location.hash = id;
@@ -126,7 +126,7 @@ async function start() {
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 
 	renderFocusPresence(mySessionClient, appPresence, contentDiv);
-	renderMousePresence(mySessionClient, appPresence, mouseContentDiv);
+	renderMousePresence(appPresence, mouseContentDiv);
 	addWindowListeners(appPresence);
 }
 
