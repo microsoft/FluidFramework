@@ -120,6 +120,10 @@ export type ScopedSchemaName<
  * Typically this is just `string` but it is also possible to use `string` or `number` based enums if you prefer to identify your types that way.
  *
  * @remarks
+ * For details related to inputting data constrained by schema (including via assignment), and how non-exact schema types are handled in general refer to {@link Input}.
+ * For information about recursive schema support, see methods postfixed with "recursive" and {@link ValidateRecursiveSchema}.
+ * To apply schema defined with this factory to a tree, see {@link ViewableTree.viewWith} and {@link TreeViewConfiguration}.
+ *
  * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by combining the {@link SchemaFactory.scope} with the schema's `Name`.
  * The `Name` part may be explicitly provided as a parameter, or inferred as a structural combination of the provided types.
  * The APIs which use this second approach, structural naming, also deduplicate all equivalent calls.
@@ -337,7 +341,8 @@ export class SchemaFactory<
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
-		T
+		T,
+		undefined
 	>;
 
 	/**
@@ -359,7 +364,8 @@ export class SchemaFactory<
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
-		T
+		T,
+		undefined
 	>;
 
 	/**
@@ -391,7 +397,8 @@ export class SchemaFactory<
 				TreeMapNode<T>,
 				MapNodeInsertableData<T>,
 				true,
-				T
+				T,
+				undefined
 			>;
 		}
 		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
@@ -401,7 +408,8 @@ export class SchemaFactory<
 			TreeMapNode<T>,
 			MapNodeInsertableData<T>,
 			true,
-			T
+			T,
+			undefined
 		> = this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
 		return out;
 	}
@@ -426,7 +434,8 @@ export class SchemaFactory<
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
-		T
+		T,
+		undefined
 	> {
 		return mapSchema(
 			this.scoped(name),
@@ -478,7 +487,8 @@ export class SchemaFactory<
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
-		T
+		T,
+		undefined
 	>;
 
 	/**
@@ -502,7 +512,8 @@ export class SchemaFactory<
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
-		T
+		T,
+		undefined
 	>;
 
 	/**
@@ -531,7 +542,8 @@ export class SchemaFactory<
 				TreeArrayNode<T>,
 				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 				true,
-				T
+				T,
+				undefined
 			>;
 		}
 		const out: TreeNodeSchemaBoth<
@@ -540,7 +552,8 @@ export class SchemaFactory<
 			TreeArrayNode<T>,
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			true,
-			T
+			T,
+			undefined
 		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
 		return out;
 	}
@@ -569,7 +582,8 @@ export class SchemaFactory<
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
-		T
+		T,
+		undefined
 	> {
 		return arraySchema(this.scoped(name), allowedTypes, implicitlyConstructable, customizable);
 	}
@@ -743,7 +757,8 @@ export class SchemaFactory<
 				[Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
 			},
 			false,
-			T
+			T,
+			undefined
 		>;
 	}
 
@@ -789,7 +804,8 @@ export class SchemaFactory<
 			// Ideally this would be included, but doing so breaks recursive types.
 			// | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
 			false,
-			T
+			T,
+			undefined
 		>;
 	}
 }

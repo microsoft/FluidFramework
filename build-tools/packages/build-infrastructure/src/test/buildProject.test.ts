@@ -9,7 +9,7 @@ import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
 
-import { loadFluidRepo } from "../fluidRepo.js";
+import { loadBuildProject } from "../buildProject.js";
 import { findGitRootSync } from "../git.js";
 import type { ReleaseGroupName, WorkspaceName } from "../types.js";
 
@@ -17,10 +17,10 @@ import { testRepoRoot } from "./init.js";
 
 chai.use(assertArrays);
 
-describe("loadFluidRepo", () => {
+describe("loadBuildProject", () => {
 	describe("testRepo", () => {
 		it("loads correctly", () => {
-			const repo = loadFluidRepo(testRepoRoot);
+			const repo = loadBuildProject(testRepoRoot);
 			assert.strictEqual(
 				repo.workspaces.size,
 				2,
@@ -58,7 +58,7 @@ describe("loadFluidRepo", () => {
 		});
 
 		it("releaseGroupDependencies", async () => {
-			const repo = loadFluidRepo(testRepoRoot);
+			const repo = loadBuildProject(testRepoRoot);
 			const mainReleaseGroup = repo.releaseGroups.get("main" as ReleaseGroupName);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- test data (validated by another test) guarantees this has a value
 			const actualDependencies = mainReleaseGroup!.releaseGroupDependencies;
@@ -72,7 +72,7 @@ describe("loadFluidRepo", () => {
 	describe("FluidFramework repo - tests backCompat config loading", () => {
 		it("loads correctly", () => {
 			// Load the root config
-			const repo = loadFluidRepo(findGitRootSync());
+			const repo = loadBuildProject(findGitRootSync());
 			expect(repo.workspaces.size).to.be.greaterThan(1);
 
 			const client = repo.workspaces.get("client" as WorkspaceName);
@@ -93,7 +93,7 @@ describe("loadFluidRepo", () => {
 		});
 
 		it("releaseGroupDependencies", async () => {
-			const repo = loadFluidRepo(findGitRootSync());
+			const repo = loadBuildProject(findGitRootSync());
 			const clientReleaseGroup = repo.releaseGroups.get("client" as ReleaseGroupName);
 			assert(clientReleaseGroup !== undefined);
 

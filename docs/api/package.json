@@ -1,0 +1,12 @@
+{
+	"name": "fluidframework-docs-api",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "docs/api"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"type": "commonjs"
+}

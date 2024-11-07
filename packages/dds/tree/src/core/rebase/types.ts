@@ -18,7 +18,6 @@ import {
 	brandedNumberType,
 	brandedStringType,
 } from "../../util/index.js";
-import type { TaggedChange } from "./changeRebaser.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -154,8 +153,6 @@ export interface GraphCommit<TChange> {
 	readonly change: TChange;
 	/** The parent of this commit, on whose change this commit's change is based */
 	readonly parent?: GraphCommit<TChange>;
-	/** The rollback of this commit */
-	rollback?: TaggedChange<TChange, RevisionTag>;
 }
 
 /**
@@ -164,11 +161,11 @@ export interface GraphCommit<TChange> {
  * @public
  */
 export enum CommitKind {
-	/** A commit corresponding to a change that is not the result of an undo/redo. */
+	/** A commit corresponding to a change that is not the result of an undo/redo from this client. */
 	Default,
-	/** A commit that is the result of an undo. */
+	/** A commit that is the result of an undo from this client. */
 	Undo,
-	/** A commit that is the result of a redo. */
+	/** A commit that is the result of a redo from this client. */
 	Redo,
 }
 
@@ -206,13 +203,4 @@ export function mintCommit<TChange>(
 		change,
 		parent,
 	};
-}
-
-export function replaceChange<TChange>(
-	commit: GraphCommit<TChange>,
-	change: TChange,
-): GraphCommit<TChange> {
-	const output = { ...commit, change };
-	delete output.rollback;
-	return output;
 }

@@ -56,18 +56,11 @@ variables:
     value: true
   - name: isMain
     value: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
-  - name: shouldDeploy
-    value: ${{ or(
-      eq(parameters.deployOverride, 'force'),
-      and(eq(parameters.deployOverride, 'default'))
-      )}}
   - name: shouldRetainGuardianAssets
     value: ${{ or(
       eq(parameters.guardianAssetRetentionOverride, 'force'),
       and(eq(parameters.guardianAssetRetentionOverride, 'default'))
       )}}
-  - name: arrow.releasedtoproduction
-    value: eq(variables.shouldDeploy, true)
   - name: deploymentToken
     ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
       value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
@@ -147,7 +140,14 @@ stages:
   displayName: 'Deploy website'
   pool: Small
   dependsOn: ['build', 'guardian', 'check_branch_version']
-  condition: eq(stageDependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'], 'true')
+  variables:
+    deployOverrideVar: ${{ parameters.deployOverride }}
+  condition: and(
+    not(eq(variables['deployOverrideVar'], 'skip')),
+    or(
+      eq(dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'], 'true'),
+      eq(variables['deployOverrideVar'], 'force')
+    ))
   jobs:
     - job: deploy_site
       displayName: 'Deploy website'
