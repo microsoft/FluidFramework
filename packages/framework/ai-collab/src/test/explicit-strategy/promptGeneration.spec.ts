@@ -332,27 +332,6 @@ describe("Prompt Generation Regression Tests", () => {
 			treeNode: view.root,
 		});
 		assert.deepStrictEqual(actualPromptWithPlanAndEditLog, expectedPromptWithPlanAndEditLog);
-
-		// Another test for an edit log with a single edit
-		const actualPromptWithPlanAndSingleEditEditLog = getEditingSystemPrompt(
-			userAsk,
-			idGenerator,
-			view.root,
-			editLog,
-			systemRoleContext,
-			plan,
-		).split("\n");
-
-		const expectedPromptWithPlanAndSingleEditEditLog = getExpectedEditingSystemPrompt({
-			plan,
-			userAsk,
-			editLog,
-			treeNode: view.root,
-		});
-		assert.deepStrictEqual(
-			actualPromptWithPlanAndSingleEditEditLog,
-			expectedPromptWithPlanAndSingleEditEditLog,
-		);
 	});
 
 	it("Review System Prompt has no regression", () => {
