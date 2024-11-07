@@ -3,18 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IPresence, ISessionClient } from "@fluid-experimental/presence";
-import type { IMember, IServiceAudience } from "fluid-framework";
+import { FocusTracker } from "./FocusTracker.js";
+import { MouseTracker } from "./MouseTracker.js";
 
-import { type AppPresence, IMousePosition, positionMap } from "./presence.js";
-
-export function renderFocusPresence(
-	mySessionClient: ISessionClient,
-	appPresence: AppPresence,
-	div: HTMLDivElement,
-) {
-	const { focus } = appPresence;
-
+export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "left";
 	wrapperDiv.style.margin = "70px";
@@ -39,147 +31,63 @@ export function renderFocusPresence(
 	wrapperDiv.appendChild(focusMessageDiv);
 
 	const onFocusChanged = () => {
-		console.log("entered onFocusChanged");
-		const localClientSessionId = mySessionClient.sessionId;
-		console.log(`localSessionId: ${localClientSessionId}`);
+		const currentUser = focusTracker.audience.getMyself()?.name;
+		const focusPresences = focusTracker.getFocusPresences();
 
 		focusDiv.innerHTML = `
-            Current user: ${localClientSessionId}</br>
-            ${getFocusPresencesString("</br>", appPresence)}
+            Current user: ${currentUser}</br>
+            ${getFocusPresencesString("</br>", focusTracker)}
         `;
 
 		focusMessageDiv.style.display =
-			localClientSessionId !== undefined && focus.clientValue(mySessionClient).value.focused
-				? ""
-				: "none";
+			currentUser !== undefined && focusPresences.get(currentUser) === false ? "" : "none";
 	};
 
-	// onFocusChanged();
-	focus.events.on("updated", onFocusChanged);
+	onFocusChanged();
+	focusTracker.on("focusChanged", onFocusChanged);
 
 	wrapperDiv.appendChild(focusDiv);
 }
 
 function getFocusPresencesString(
 	newLineSeparator: string = "\n",
-	appPresence: AppPresence,
+	focusTracker: FocusTracker,
 ): string {
-	const { focus } = appPresence;
 	const focusString: string[] = [];
 
-	for (const client of focus.clients()) {
-		// Workaroud for NYI .clientValues
-		const { focused } = focus.clientValue(client).value;
-		const prefix = `User ${client.sessionId}:`;
-		if (focused === undefined) {
-			focusString.push(`${prefix} ==> unknown focus`);
-		} else if (focused) {
-			focusString.push(`${prefix} ==> has focus`);
+	focusTracker.getFocusPresences().forEach((focus, userName) => {
+		const prefix = `User ${userName}:`;
+		if (focus === undefined) {
+			focusString.push(`${prefix} unknown focus`);
+		} else if (focus === true) {
+			focusString.push(`${prefix} has focus`);
 		} else {
-			focusString.push(`${prefix} ==> missing focus`);
+			focusString.push(`${prefix} missing focus`);
 		}
-	}
-
+	});
 	return focusString.join(newLineSeparator);
 }
 
-export function renderMousePresence(appPresence: AppPresence, presence: IPresence, audience: IServiceAudience<IMember>, div: HTMLDivElement) {
-
-	const { mouse, focus } = appPresence;
+export function renderMousePresence(
+	mouseTracker: MouseTracker,
+	focusTracker: FocusTracker,
+	div: HTMLDivElement,
+) {
 	const onPositionChanged = () => {
-		console.log("entered onPositionChanged");
-
 		div.innerHTML = "";
-		// console.log(`looping mouse.clients()`);
-		// for (const client of mouse.clients()) {
-		// 	const connectionId = client.getConnectionId();
-		// 	console.log(`connectionId: ${connectionId}`);
-
-		// 	// Workaroud for NYI .clientValues
-		// 	const position = mouse.clientValue(client).value;
-
-		// 	const posDiv = document.createElement("div");
-		// 	posDiv.textContent = `session ID: ${client.sessionId}`;
-		// 	posDiv.style.position = "absolute";
-		// 	posDiv.style.left = `${position.x}px`;
-		// 	posDiv.style.top = `${position.y}px`;
-		// 	posDiv.style.fontWeight = "bold";
-		// 	div.appendChild(posDiv);
-		// }
-		const positions = getMousePresences(audience, presence);
-		for (const [id, position] of positions) {
-			const posDiv = document.createElement("div");
-			posDiv.textContent = `UserId.connectionId: ${id}`;
-			posDiv.style.position = "absolute";
-			posDiv.style.left = `${position.x}px`;
-			posDiv.style.top = `${position.y}px`;
-			posDiv.style.fontWeight = "bold";
-			div.appendChild(posDiv);
-		}
-	};
-	onPositionChanged();
-
-	mouse.events.on("updated", ({client, value})=> {
-		positionMap.set(client, value);
-		onPositionChanged();
-	});
-
-	presence.events.on("attendeeJoined", (sessionClient: ISessionClient) => {
-		positionMap.set(sessionClient, { x: 0, y: 0 });
-		onPositionChanged();
-	});
-
-	presence.events.on("attendeeDisconnected", (sessionClient: ISessionClient) => {
-		positionMap.delete(sessionClient);
-		onPositionChanged();
-	});
-}
-
-export function addWindowListeners(appPresence: AppPresence) {
-	window.addEventListener("mousemove", (e) => {
-		// console.log(`mousemove: ${e}`);
-		const position: IMousePosition = {
-			x: e.clientX,
-			y: e.clientY,
-		};
-		appPresence.mouse.local = position;
-		// onPositionChanged();
-	});
-
-	window.addEventListener("focus", () => {
-		console.log("focus true");
-		appPresence.focus.local = { focused: true };
-	});
-
-	window.addEventListener("blur", () => {
-		console.log("focus false");
-		appPresence.focus.local = { focused: false };
-	});
-}
-
-export function getMousePresences(
-	audience: IServiceAudience<IMember>,
-	presence: IPresence,
-	// appPresence: AppPresence,
-): Map<string, IMousePosition> {
-	const statuses = new Map<string, IMousePosition>();
-	// Demonstrates connecting service audience and presence attendees.
-	// Getting from presence attendee to service audience member is not
-	// as easy as there is no connection to the service audience member
-	// lookup.
-	for (const [userId, member] of audience.getMembers()) {
-		for (const connection of member.connections) {
-			const attendee = presence.getAttendee(connection.id);
-			try {
-				const position = positionMap.get(attendee);
-				if (position !== undefined) {
-					statuses.set(`${userId}.${connection.id}`, position);
-				}
-			}catch(error) {
-				console.log(error);
-				continue;
+		mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
+			if (focusTracker.getFocusPresences().get(userName) === true) {
+				const posDiv = document.createElement("div");
+				posDiv.textContent = userName;
+				posDiv.style.position = "absolute";
+				posDiv.style.left = `${mousePosition.x}px`;
+				posDiv.style.top = `${mousePosition.y}px`;
+				posDiv.style.fontWeight = "bold";
+				div.appendChild(posDiv);
 			}
-		}
-	}
-	return statuses;
+		});
+	};
+
+	onPositionChanged();
+	mouseTracker.on("mousePositionChanged", onPositionChanged);
 }

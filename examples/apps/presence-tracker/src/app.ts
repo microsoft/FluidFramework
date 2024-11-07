@@ -11,16 +11,15 @@ import {
 	AzureClient,
 	AzureContainerServices,
 	AzureLocalConnectionConfig,
-	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedMap } from "fluid-framework/legacy";
 
-import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
-import { initializePresenceWorkspace } from "./presence.js";
-import { addWindowListeners, renderFocusPresence, renderMousePresence } from "./view.js";
+import { FocusTracker } from "./FocusTracker.js";
+import { MouseTracker } from "./MouseTracker.js";
+import { renderFocusPresence, renderMousePresence } from "./view.js";
 
 // Define the server we will be using and initialize Fluid
 const useAzure = process.env.FLUID_CLIENT === "azure";
@@ -30,19 +29,7 @@ const user = {
 	name: "Test User",
 };
 
-const azureUser = {
-	id: user.id,
-	name: user.name,
-};
-
-const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
-	? {
-			type: "remote",
-			tenantId: "",
-			tokenProvider: new AzureFunctionTokenProvider("", azureUser),
-			endpoint: "",
-		}
-	: {
+const connectionConfig: AzureLocalConnectionConfig = {
 			type: "local",
 			tokenProvider: new InsecureTokenProvider("fooBar", user),
 			endpoint: "http://localhost:7070",
@@ -98,8 +85,8 @@ async function start() {
 	document.title = id;
 
 	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
-	const appPresence = initializePresenceWorkspace(presence);
-	const mySessionClient = presence.getMyself();
+	const appPresence = presence.getStates("name:trackerData", {});
+	// const mySessionClient = presence.getMyself();
 
 	// update the browser URL and the window title with the actual container ID
 	location.hash = id;
@@ -108,9 +95,12 @@ async function start() {
 	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 
-	renderFocusPresence(mySessionClient, appPresence, contentDiv);
-	renderMousePresence(appPresence, presence, services.audience, mouseContentDiv);
-	addWindowListeners(appPresence);
+	const focusTracker = new FocusTracker(presence, appPresence, services.audience);
+	const mouseTracker = new MouseTracker(presence, appPresence, services.audience);
+
+	renderFocusPresence(focusTracker, contentDiv);
+	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
+	// addWindowListeners(appPresence);
 }
 
 start().catch(console.error);
