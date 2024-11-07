@@ -17,10 +17,17 @@ Each container gets its own service client and thus separate op stream, storage 
 If desired, an application can open a second copy of a container as a mechanism to have a separate "branch" (independent view which can have edits speculatively applied).
 This is currently not well optimized (for performance, memory use or ergonomics) and the functionality of this is rather limited (its impractical to use it to preview changes, and keep rebasing them to stay up to date before committing them for example).
 
+An application using multiple containers can (though for bundle size generally shouldn't) use different versions or copies of the framework and its runtime for different containers.
+
 ## Data Objects and Distributed Data Structures (DDSes)
 
 Each container gets a `ContainerSchema`, which defines a tree (currently implemented using shared directory) of statically defined DDSes and DataObjects.
 The container also can contain dynamically allocated DDSes and DataObjects which can be referenced from others via an `IFluidHandle`, and garbage collected when unreferenced.
+
+When configuring the container, the application specifies which DDSes and DataObjects implementations the container supports, which implicitly selects the concrete implementation (which package version and which copy of the package if there are multiple) the container will use for the DDses and DataObjects.
+
+Smaller libraries/components which the applications uses to work with data within the container should define version ranges of the Fluid client libraries they are compatible with, and the application should ensure all code using the same container is using the same copies of the Fluid client packages.
+Some exceptions to this are known to work: TODO: list working/supported exceptions here.
 
 An application can select which DDses (TODO: or DataObjects?) in the container to load, allowing both reading and writing to containers which are only partially loaded.
 (TODO: note scalability implications due to summary client, op bandwidth).
@@ -28,7 +35,7 @@ An application can select which DDses (TODO: or DataObjects?) in the container t
 Within a container, all DDses are synchronized, and operations can between different DDSes are ordered.
 Each DDS has its own merge resolution, so there is no way to do things like multi DDS transactions, or have changes in one DDS impact how a change is merged in another, which can limit the fidelity of operations like moves of content between DDSes, even within a container.
 
-The Fluid Framework provides a garbage collector which can delete DDSes when they become unreferenced by the container (no reachable from the root DDS, which is typically the shared directory created from the container schema)
+The Fluid Framework provides a garbage collector which can delete DDSes when they become unreferenced by the container (no reachable from the root DDS, which is typically the shared directory created from the container schema).
 
 ### Data Objects
 
