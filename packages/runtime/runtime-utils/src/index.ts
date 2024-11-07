@@ -19,6 +19,7 @@ export {
 	toFluidHandleErased,
 	toFluidHandleInternal,
 	FluidHandleBase,
+	compareFluidHandles,
 } from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
 export {
