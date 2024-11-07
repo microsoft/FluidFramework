@@ -1,5 +1,10 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## 5.5.1
+
+Update rule overrides for test code to better support patterns in the repo.
+Namely, adds the allowance to "**/tests" directories.
+
 ## [5.5.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.5.0)
 
 ### Disabled rules
