@@ -1910,91 +1910,50 @@ export class MergeTree {
 
 	/**
 	 * Annotate a range with properties
-	 * @param start -
-	 * @param end -
-	 * @param props -
-	 * @param refSeq -
-	 * @param clientId -
-	 * @param seq -
-	 * @param opArgs -
-	 * @param rollback -
+	 * @param start - The inclusive start position of the range to annotate
+	 * @param end - The exclusive end position of the range to annotate
+	 * @param props - The properties to annotate the range with
+	 * @param refSeq - The reference sequence number to use to apply the annotate
+	 * @param clientId - The id of the client making the annotate
+	 * @param seq - The sequence number of the annotate operation
+	 * @param opArgs - The op args for the annotate op. this is passed to the merge tree callback if there is one
+	 * @param rollback - Whether this is for a local rollback and what kind
 	 */
-	public annotateRange({
-		start,
-		end,
-		props,
-		adjust,
-		referenceSequenceNumber,
-		clientId,
-		sequenceNumber,
-		opArgs,
-		rollback,
-	}: {
-		/**
-		 * The inclusive start position of the range to annotate
-		 */
-		start: number;
-		/**
-		 * The exclusive end position of the range to annotate
-		 */
-		end: number;
-		/**
-		 * The properties to annotate the range with
-		 */
-		props: PropertySet | undefined;
+	public annotateRange(
+		start: number,
+		end: number,
+		changes:
+			| { props: PropertySet; adjust?: undefined }
+			| { props?: undefined; adjust: MapLike<AdjustParams> },
+		refSeq: number,
+		clientId: number,
+		seq: number,
+		opArgs: IMergeTreeDeltaOpArgs,
 
-		/**
-		 *
-		 */
-		adjust: MapLike<AdjustParams> | undefined;
-		/**
-		 * The reference sequence number to use to apply the annotate
-		 */
-		referenceSequenceNumber: number;
-		/**
-		 * The id of the client making the annotate
-		 */
-		clientId: number;
-		/**
-		 * The sequence number of the annotate operation
-		 */
-		sequenceNumber: number;
-		/**
-		 * The op args for the annotate op. this is passed to the merge tree callback if there is one
-		 */
-		opArgs: IMergeTreeDeltaOpArgs;
-		/**
-		 * Whether this is for a local rollback and what kind
-		 */
-		rollback?: PropertiesRollback;
-	}): void {
-		if (this.options?.mergeTreeEnableAnnotateAdjust !== true && adjust !== undefined) {
-			throw new UsageError(
-				"mergeTreeEnableAnnotateAdjust must be enabled if adjustments are specified.",
-			);
-		}
-
-		this.ensureIntervalBoundary(start, referenceSequenceNumber, clientId);
-		this.ensureIntervalBoundary(end, referenceSequenceNumber, clientId);
+		// eslint-disable-next-line import/no-deprecated
+		rollback: PropertiesRollback = PropertiesRollback.None,
+	): void {
+		this.ensureIntervalBoundary(start, refSeq, clientId);
+		this.ensureIntervalBoundary(end, refSeq, clientId);
 		const deltaSegments: IMergeTreeSegmentDelta[] = [];
 		const localSeq =
-			sequenceNumber === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
+			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup | undefined;
+		const changeObj = changes.props ?? changes.adjust;
 		const annotateSegment = (segment: ISegmentLeaf): boolean => {
 			assert(
 				!Marker.is(segment) ||
-					props === undefined ||
-					!(reservedMarkerIdKey in props) ||
-					props.markerId === segment.properties?.markerId,
+					!(reservedMarkerIdKey in changeObj) ||
+					changeObj.markerId === segment.properties?.markerId,
 				0x5ad /* Cannot change the markerId of an existing marker */,
 			);
 
 			const propertyManager = (segment.propertyManager ??= new PropertiesManager());
 			const propertyDeltas = propertyManager.handleProperties(
-				{ props, adjust },
+				changes,
 				segment,
-				sequenceNumber,
+				seq,
 				this.collabWindow.minSeq,
 				this.collabWindow.collaborating,
 				rollback,
@@ -2004,7 +1963,7 @@ export class MergeTree {
 				deltaSegments.push({ segment, propertyDeltas });
 			}
 			if (this.collabWindow.collaborating) {
-				if (sequenceNumber === UnassignedSequenceNumber) {
+				if (seq === UnassignedSequenceNumber) {
 					segmentGroup = this.addToPendingList(
 						segment,
 						segmentGroup,
@@ -2013,22 +1972,14 @@ export class MergeTree {
 					);
 				} else {
 					if (MergeTree.options.zamboniSegments) {
-						this.addToLRUSet(segment, sequenceNumber);
+						this.addToLRUSet(segment, seq);
 					}
 				}
 			}
 			return true;
 		};
 
-		this.nodeMap(
-			referenceSequenceNumber,
-			clientId,
-			annotateSegment,
-			undefined,
-			undefined,
-			start,
-			end,
-		);
+		this.nodeMap(refSeq, clientId, annotateSegment, undefined, undefined, start, end);
 
 		// OpArgs == undefined => test code
 		if (deltaSegments.length > 0) {
@@ -2039,7 +1990,7 @@ export class MergeTree {
 		}
 		if (
 			this.collabWindow.collaborating &&
-			sequenceNumber !== UnassignedSequenceNumber &&
+			seq !== UnassignedSequenceNumber &&
 			MergeTree.options.zamboniSegments
 		) {
 			zamboniSegments(this);
@@ -2475,17 +2426,17 @@ export class MergeTree {
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					const props = pendingSegmentGroup.previousProps![i];
 					const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props);
-					this.annotateRange({
+					this.annotateRange(
 						start,
-						end: start + segment.cachedLength,
-						props,
-						adjust: undefined,
-						sequenceNumber: UniversalSequenceNumber,
-						clientId: this.collabWindow.clientId,
-						referenceSequenceNumber: UniversalSequenceNumber,
-						opArgs: { op: annotateOp },
-						rollback: PropertiesRollback.Rollback,
-					});
+						start + segment.cachedLength,
+						{ props },
+						UniversalSequenceNumber,
+						this.collabWindow.clientId,
+						UniversalSequenceNumber,
+						{ op: annotateOp },
+
+						PropertiesRollback.Rollback,
+					);
 					i++;
 				}
 			}

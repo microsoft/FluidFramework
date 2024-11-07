@@ -577,13 +577,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		const range = this.getValidOpRange(op, clientArgs);
 
-		this._mergeTree.annotateRange({
-			...range,
-			...clientArgs,
-			props: op.props,
-			adjust: op.adjust,
+		this._mergeTree.annotateRange(
+			range.start,
+			range.end,
+			op,
+			clientArgs.referenceSequenceNumber,
+			clientArgs.clientId,
+			clientArgs.sequenceNumber,
 			opArgs,
-		});
+		);
 	}
 
 	/**

@@ -17,7 +17,6 @@ import { Marker, type ISegmentLeaf } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
-import { oldAnnotateParamsToObject } from "./testUtils.js";
 import { insertSegments } from "./testUtils.js";
 
 function splitAt(mergeTree: MergeTree, pos: number): ISegmentLeaf | undefined {
@@ -76,17 +75,15 @@ describe("MergeTree", () => {
 		describe("not collaborating", () => {
 			it("remote", () => {
 				mergeTree.annotateRange(
-					oldAnnotateParamsToObject(
-						annotateStart,
-						annotateEnd,
-						{
-							propertySource: "remote",
-						},
-						currentSequenceNumber,
-						remoteClientId,
-						currentSequenceNumber + 1,
-						undefined as never,
-					),
+					annotateStart,
+					annotateEnd,
+					{
+						props: { propertySource: "remote" },
+					},
+					currentSequenceNumber,
+					remoteClientId,
+					currentSequenceNumber + 1,
+					undefined as never,
 				);
 
 				const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -100,17 +97,15 @@ describe("MergeTree", () => {
 
 			it("local", () => {
 				mergeTree.annotateRange(
-					oldAnnotateParamsToObject(
-						annotateStart,
-						annotateEnd,
-						{
-							propertySource: "local",
-						},
-						currentSequenceNumber,
-						localClientId,
-						UnassignedSequenceNumber,
-						undefined as never,
-					),
+					annotateStart,
+					annotateEnd,
+					{
+						props: { propertySource: "local" },
+					},
+					currentSequenceNumber,
+					localClientId,
+					UnassignedSequenceNumber,
+					undefined as never,
 				);
 
 				const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -132,19 +127,17 @@ describe("MergeTree", () => {
 			});
 			describe("local first", () => {
 				const props = {
-					propertySource: "local",
+					props: { propertySource: "local" },
 				};
 				beforeEach(() => {
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							props,
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						props,
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 				});
 
@@ -160,17 +153,15 @@ describe("MergeTree", () => {
 
 				it("unsequenced local after unsequenced local", () => {
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								secondProperty: "local",
-							},
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { secondProperty: "local" },
+						},
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -196,34 +187,34 @@ describe("MergeTree", () => {
 
 				it("unsequenced local after unsequenced local split", () => {
 					const secondChangeProps = {
-						secondChange: 1,
+						props: {
+							secondChange: 1,
+						},
 					};
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							secondChangeProps,
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						secondChangeProps,
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 
 					const splitOnlyProps = {
-						splitOnly: 1,
+						props: {
+							splitOnly: 1,
+						},
 					};
 
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							splitPos,
-							annotateEnd,
-							splitOnlyProps,
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						splitPos,
+						annotateEnd,
+						splitOnlyProps,
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -319,18 +310,15 @@ describe("MergeTree", () => {
 
 				it("unsequenced local before remote", () => {
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								propertySource: "remote",
-								remoteProperty: 1,
-							},
-							currentSequenceNumber,
-							remoteClientId,
-							++currentSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { propertySource: "remote", remoteProperty: 1 },
+						},
+						currentSequenceNumber,
+						remoteClientId,
+						++currentSequenceNumber,
+						undefined as never,
 					);
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -382,18 +370,15 @@ describe("MergeTree", () => {
 					});
 
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								propertySource: "remote",
-								remoteProperty: 1,
-							},
-							currentSequenceNumber,
-							remoteClientId,
-							++currentSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { propertySource: "remote", remoteProperty: 1 },
+						},
+						currentSequenceNumber,
+						remoteClientId,
+						++currentSequenceNumber,
+						undefined as never,
 					);
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -419,37 +404,34 @@ describe("MergeTree", () => {
 					assert.equal(segment.properties?.propertySource, "local");
 
 					const props2 = {
-						propertySource: "local2",
-						secondSource: 1,
+						props: { propertySource: "local2", secondSource: 1 },
 					};
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							props2,
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						props2,
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 
 					assert.equal(segment.properties?.propertySource, "local2");
 					assert.equal(segment.properties?.secondSource, 1);
 
 					const props3 = {
-						thirdSource: 1,
+						props: {
+							thirdSource: 1,
+						},
 					};
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							props3,
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						props3,
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 
 					assert.equal(segment.properties?.propertySource, "local2");
@@ -507,17 +489,15 @@ describe("MergeTree", () => {
 
 				it("two local changes with interleaved remote", () => {
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								secondSource: "local2",
-							},
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { secondSource: "local2" },
+						},
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 
 					mergeTree.ackPendingSegment({
@@ -533,19 +513,15 @@ describe("MergeTree", () => {
 					});
 
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								propertySource: "remote",
-								remoteOnly: 1,
-								secondSource: "remote",
-							},
-							currentSequenceNumber,
-							remoteClientId,
-							++currentSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { propertySource: "remote", remoteOnly: 1, secondSource: "remote" },
+						},
+						currentSequenceNumber,
+						remoteClientId,
+						++currentSequenceNumber,
+						undefined as never,
 					);
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -563,18 +539,15 @@ describe("MergeTree", () => {
 			describe("remote first", () => {
 				beforeEach(() => {
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								propertySource: "remote",
-								remoteProperty: 1,
-							},
-							currentSequenceNumber,
-							remoteClientId,
-							++currentSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { propertySource: "remote", remoteProperty: 1 },
+						},
+						currentSequenceNumber,
+						remoteClientId,
+						++currentSequenceNumber,
+						undefined as never,
 					);
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -611,17 +584,15 @@ describe("MergeTree", () => {
 
 				it("remote before unsequenced local", () => {
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								propertySource: "local",
-							},
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { propertySource: "local" },
+						},
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -636,7 +607,7 @@ describe("MergeTree", () => {
 
 				it("remote before sequenced local", () => {
 					const props = {
-						propertySource: "local",
+						props: { propertySource: "local" },
 					};
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -647,15 +618,13 @@ describe("MergeTree", () => {
 					assert(segmentInfo.segment?.segmentGroups?.empty !== false);
 
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							props,
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						props,
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 
 					assert.equal(segmentInfo.segment?.segmentGroups?.size, 1);
@@ -679,36 +648,31 @@ describe("MergeTree", () => {
 			});
 			describe("local with rewrite first", () => {
 				const props = {
-					propertySource: "local",
+					props: { propertySource: "local" },
 				};
 				beforeEach(() => {
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							props,
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						props,
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 				});
 
 				it("unsequenced local after unsequenced local", () => {
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								propertySource: "local2",
-								secondProperty: "local",
-							},
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { propertySource: "local2", secondProperty: "local" },
+						},
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -723,18 +687,15 @@ describe("MergeTree", () => {
 
 				it("unsequenced local before remote", () => {
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								propertySource: "remote",
-								remoteProperty: 1,
-							},
-							currentSequenceNumber,
-							remoteClientId,
-							++currentSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { propertySource: "remote", remoteProperty: 1 },
+						},
+						currentSequenceNumber,
+						remoteClientId,
+						++currentSequenceNumber,
+						undefined as never,
 					);
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -763,18 +724,15 @@ describe("MergeTree", () => {
 					});
 
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								propertySource: "remote",
-								remoteProperty: 1,
-							},
-							currentSequenceNumber,
-							remoteClientId,
-							++currentSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { propertySource: "remote", remoteProperty: 1 },
+						},
+						currentSequenceNumber,
+						remoteClientId,
+						++currentSequenceNumber,
+						undefined as never,
 					);
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -791,17 +749,15 @@ describe("MergeTree", () => {
 
 				it("two local changes with interleaved remote", () => {
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								secondSource: "local2",
-							},
-							currentSequenceNumber,
-							localClientId,
-							UnassignedSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { secondSource: "local2" },
+						},
+						currentSequenceNumber,
+						localClientId,
+						UnassignedSequenceNumber,
+						undefined as never,
 					);
 
 					mergeTree.ackPendingSegment({
@@ -817,19 +773,15 @@ describe("MergeTree", () => {
 					});
 
 					mergeTree.annotateRange(
-						oldAnnotateParamsToObject(
-							annotateStart,
-							annotateEnd,
-							{
-								propertySource: "remote",
-								remoteOnly: 1,
-								secondSource: "remote",
-							},
-							currentSequenceNumber,
-							remoteClientId,
-							++currentSequenceNumber,
-							undefined as never,
-						),
+						annotateStart,
+						annotateEnd,
+						{
+							props: { propertySource: "remote", remoteOnly: 1, secondSource: "remote" },
+						},
+						currentSequenceNumber,
+						remoteClientId,
+						++currentSequenceNumber,
+						undefined as never,
 					);
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
