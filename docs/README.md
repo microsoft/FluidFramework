@@ -5,7 +5,7 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 ## Dependency installation
 
 ```shell
-$ pnpm i
+pnpm i
 ```
 
 ## Local Development
@@ -28,7 +28,7 @@ npm run build:generate-content
 Then, run:
 
 ```shell
-$ npm start
+npm start
 ```
 
 #### Limitations
@@ -46,7 +46,7 @@ The second option, which is substantially slower, leverages the same build that 
 First, run:
 
 ```shell
-$ npm run build
+npm run build
 ```
 
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
@@ -227,6 +227,7 @@ The replacement syntax to use in `.mdx` files would be:
 #### Other best practices
 
 -   Don't include file extensions in links. E.g., prefer `[foo](./foo)` over `[foo](./foo.md)`.
+    -   Rationale: more portable (if a document changes from `.md` to `.mdx`, for example, links will not need to be updated).
 
 ## TODOs
 
