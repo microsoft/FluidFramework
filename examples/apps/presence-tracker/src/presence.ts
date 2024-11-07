@@ -5,7 +5,10 @@ import {
 	type PresenceStatesSchema,
 } from "@fluid-experimental/presence";
 
-import type { IMousePosition } from "./MouseTracker.js";
+export interface IMousePosition {
+	x: number;
+	y: number;
+}
 
 export interface IFocusState {
 	focused: boolean;
@@ -44,19 +47,4 @@ export type AppPresence = PresenceStates<typeof statesSchema>;
 export function initializePresenceWorkspace(presence: IPresence): AppPresence {
 	const workspace = presence.getStates("name:presenceDataStates", statesSchema);
 	return workspace;
-
-	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
-	// const presenceWorkspace: typeof workspace = workspace;
-
-	// return presenceWorkspace;
-}
-
-export function getFocusPresences(appPresence: AppPresence): Map<string, boolean> {
-	const statuses: Map<string, boolean> = new Map<string, boolean>();
-	const { focus } = appPresence;
-	for (const f of focus.clientValues()) {
-		const { focused } = f.value;
-		statuses.set(f.client.sessionId, focused);
-	}
-	return statuses;
 }

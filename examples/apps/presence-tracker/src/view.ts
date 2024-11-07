@@ -5,8 +5,7 @@
 
 import type { ISessionClient } from "@fluid-experimental/presence";
 
-import type { IMousePosition } from "./MouseTracker.js";
-import { type AppPresence } from "./presence.js";
+import { type AppPresence, IMousePosition } from "./presence.js";
 
 export function renderFocusPresence(
 	mySessionClient: ISessionClient,
@@ -42,13 +41,6 @@ export function renderFocusPresence(
 		console.log("entered onFocusChanged");
 		const localClientSessionId = mySessionClient.sessionId;
 		console.log(`localSessionId: ${localClientSessionId}`);
-		// .clients()
-		// .map((c) => {
-		// 	console.log(c);
-		// 	return c;
-		// })
-		// .find((c) => c.getConnectionId() === currentUserConnectionId)?.sessionId;
-		// const focusPresences = getFocusPresences(appPresence);
 
 		focusDiv.innerHTML = `
             Current user: ${localClientSessionId}</br>
@@ -90,13 +82,7 @@ function getFocusPresencesString(
 	return focusString.join(newLineSeparator);
 }
 
-export function renderMousePresence(
-	// mouseTracker: LatestValueManager<IMousePosition>,
-	// focusTracker: FocusTracker,
-	// mySessionClient: ISessionClient,
-	appPresence: AppPresence,
-	div: HTMLDivElement,
-) {
+export function renderMousePresence(appPresence: AppPresence, div: HTMLDivElement) {
 	const { mouse, focus } = appPresence;
 	const onPositionChanged = () => {
 		console.log("entered onPositionChanged");

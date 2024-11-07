@@ -13,9 +13,10 @@ import {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-// import { createDevtoolsLogger } from "@fluidframework/devtools/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedMap } from "fluid-framework/legacy";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
 import { initializePresenceWorkspace } from "./presence.js";
@@ -52,6 +53,7 @@ const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig
 // when the Container is first created.
 const containerSchema = {
 	initialObjects: {
+		map1: SharedMap,
 		// A Presence Manager object temporarily needs to be placed within container schema
 		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
 		presence: ExperimentalPresenceManager,
@@ -66,16 +68,8 @@ type PresenceTrackerSchema = typeof containerSchema;
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start() {
-	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
-	// and hook to the Telemetry system
-	// const baseLogger = createChildLogger();
-
-	// Wrap telemetry logger for use with Devtools
-	// const devtoolsLogger = createDevtoolsLogger(baseLogger);
-
 	const clientProps = {
 		connection: connectionConfig,
-		// logger: devtoolsLogger,
 	};
 	const client = new AzureClient(clientProps);
 	let container: IFluidContainer<PresenceTrackerSchema>;
@@ -89,15 +83,6 @@ async function start() {
 		// A detached container will enable the app to modify the container before attaching it to the client
 		({ container, services } = await client.createContainer(containerSchema, "2"));
 
-		// const map1 = container.initialObjects.map1 as ISharedMap;
-		// map1.set("diceValue", 1);
-		// const map2 = container.initialObjects.map1 as ISharedMap;
-		// map2.set("diceValue", 1);
-		// console.log(map1.get("diceValue"));
-		// Initialize our models so they are ready for use with our controllers
-		// [diceRollerController1Props, diceRollerController2Props] =
-		// 	await initializeNewContainer(container);
-
 		// If the app is in a `createNew` state, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
 		id = await container.attach();
@@ -108,8 +93,6 @@ async function start() {
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
 		({ container, services } = await client.getContainer(id, containerSchema, "2"));
-		// [diceRollerController1Props, diceRollerController2Props] =
-		// 	createDiceRollerControllerPropsFromContainer(container);
 	}
 
 	document.title = id;
