@@ -132,8 +132,8 @@ import {
 	type TreeViewConfiguration,
 	SchemaFactory,
 	toStoredSchema,
-	type TreeViewEvents,
 	type TreeView,
+	type TreeBranchEvents,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -1051,7 +1051,7 @@ export function rootFromDeltaFieldMap(
 }
 
 export function createTestUndoRedoStacks(
-	events: Listenable<TreeViewEvents | CheckoutEvents>,
+	events: Listenable<TreeBranchEvents | CheckoutEvents>,
 ): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
@@ -1083,9 +1083,9 @@ export function createTestUndoRedoStacks(
 		}
 	}
 
-	const unsubscribeFromCommitApplied = events.on("commitApplied", onNewCommit);
+	const unsubscribeFromChangedEvent = events.on("changed", onNewCommit);
 	const unsubscribe = (): void => {
-		unsubscribeFromCommitApplied();
+		unsubscribeFromChangedEvent();
 		for (const revertible of undoStack) {
 			revertible.dispose();
 		}
@@ -1206,7 +1206,7 @@ export function treeTestFactory(
  *
  * Typically, users will want to initialize the returned view with some content (thereby setting its schema) using `TreeView.initialize`.
  */
-export function getView<TSchema extends ImplicitFieldSchema>(
+export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 	logger?: ITelemetryLoggerExt,
@@ -1231,7 +1231,7 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 /**
  * Views the supplied checkout with the given schema.
  */
-export function viewCheckout<TSchema extends ImplicitFieldSchema>(
+export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
 	checkout: TreeCheckout,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {

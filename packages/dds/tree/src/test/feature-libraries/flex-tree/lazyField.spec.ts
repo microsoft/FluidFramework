@@ -51,7 +51,7 @@ import {
 	SchemaFactory,
 	stringSchema,
 } from "../../../simple-tree/index.js";
-import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
+import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { JsonObject, JsonUnion, singleJsonCursor } from "../../json/index.js";
 
 const detachedField: FieldKey = brand("detached");

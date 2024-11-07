@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "node:assert";
-import { type Revertible, type UpPath, rootFieldKey } from "../../core/index.js";
+import {
+	type FieldUpPath,
+	type Revertible,
+	type UpPath,
+	rootFieldKey,
+} from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
 import { SharedTreeFactory, type ITreeCheckout, getBranch } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
@@ -14,11 +19,21 @@ import {
 	moveWithin,
 	testIdCompressor,
 } from "../utils.js";
-import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
-import { SharedTree, type TreeView } from "../../index.js";
+import { SharedTree } from "../../index.js";
+import { insert, jsonSequenceRootSchema, remove } from "../sequenceRootUtils.js";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+import {
+	asTreeViewAlpha,
+	SchemaFactory,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { initialize } from "../../shared-tree/schematizeTree.js";
 
 const rootPath: UpPath = {
 	parent: undefined,
@@ -26,7 +41,7 @@ const rootPath: UpPath = {
 	parentIndex: 0,
 };
 
-const rootField = {
+const rootField: FieldUpPath = {
 	parent: undefined,
 	field: rootFieldKey,
 };
@@ -154,280 +169,282 @@ const testCases: {
 ];
 
 describe("Undo and redo", () => {
-	for (const {
-		name,
-		skip,
-		edit,
-		undoCount,
-		initialState,
-		editedState,
-		undoState,
-		mergeState,
-	} of testCases) {
-		const count = undoCount ?? 1;
-		const itFn = skip ? it.skip : it;
-		itFn(`${name} (act on fork undo on fork)`, () => {
-			const view = makeTreeFromJsonSequence(initialState);
-			const fork = view.branch();
+	for (const attached of [true, false]) {
+		const attachStr = attached ? "attached" : "detached";
+		for (const {
+			name,
+			skip,
+			edit,
+			undoCount,
+			initialState,
+			editedState,
+			undoState,
+			mergeState,
+		} of testCases) {
+			const count = undoCount ?? 1;
+			const itFn = skip ? it.skip : it;
+			itFn(`${name} (act on fork undo on fork - ${attachStr})`, () => {
+				const view = createCheckout(initialState, attached);
+				const fork = view.branch();
 
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
-			edit(fork, view);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
+				edit(fork, view);
 
-			fork.rebaseOnto(view);
-			expectJsonTree(fork, editedState);
+				fork.rebaseOnto(view);
+				expectJsonTree(fork, editedState);
 
-			for (let i = 0; i < count; i++) {
-				undoStack.pop()?.revert();
-			}
+				for (let i = 0; i < count; i++) {
+					undoStack.pop()?.revert();
+				}
 
-			fork.rebaseOnto(view);
-			expectJsonTree(fork, undoState ?? initialState);
+				fork.rebaseOnto(view);
+				expectJsonTree(fork, undoState ?? initialState);
 
-			while (redoStack.length > 0) {
-				redoStack.pop()?.revert();
-			}
+				while (redoStack.length > 0) {
+					redoStack.pop()?.revert();
+				}
 
-			fork.rebaseOnto(view);
-			expectJsonTree(fork, editedState);
+				fork.rebaseOnto(view);
+				expectJsonTree(fork, editedState);
+				unsubscribe();
+			});
+
+			// TODO: unskip once forking revertibles is supported
+			it.skip(`${name} (act on view undo on fork - ${attachStr})`, () => {
+				const view = createCheckout(initialState, attached);
+				const fork = view.branch();
+
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
+				edit(view, fork);
+
+				fork.rebaseOnto(view);
+				expectJsonTree(fork, editedState);
+
+				for (let i = 0; i < count; i++) {
+					undoStack.pop()?.revert();
+				}
+
+				fork.rebaseOnto(view);
+				expectJsonTree(fork, undoState ?? initialState);
+
+				while (redoStack.length > 0) {
+					redoStack.pop()?.revert();
+				}
+
+				fork.rebaseOnto(view);
+				expectJsonTree(fork, editedState);
+				unsubscribe();
+			});
+
+			itFn(`${name} (act on view undo on view - ${attachStr})`, () => {
+				const view = createCheckout(initialState, attached);
+				const fork = view.branch();
+
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+				edit(view, fork);
+
+				view.merge(fork, false);
+				expectJsonTree(view, editedState);
+
+				for (let i = 0; i < count; i++) {
+					undoStack.pop()?.revert();
+				}
+
+				view.merge(fork, false);
+				expectJsonTree(view, mergeState ?? initialState);
+
+				while (redoStack.length > 0) {
+					redoStack.pop()?.revert();
+				}
+
+				view.merge(fork);
+				expectJsonTree(view, editedState);
+				unsubscribe();
+			});
+
+			// TODO: unskip once forking revertibles is supported
+			it.skip(`${name} (act on fork undo on view - ${attachStr})`, () => {
+				const view = createCheckout(initialState, attached);
+				const fork = view.branch();
+
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+				edit(fork, view);
+
+				view.merge(fork, false);
+				expectJsonTree(view, editedState);
+
+				for (let i = 0; i < count; i++) {
+					undoStack.pop()?.revert();
+				}
+
+				view.merge(fork, false);
+				expectJsonTree(view, undoState ?? initialState);
+
+				while (redoStack.length > 0) {
+					redoStack.pop()?.revert();
+				}
+
+				view.merge(fork);
+				expectJsonTree(view, editedState);
+				unsubscribe();
+			});
+
+			it(`${name} multiple times (${attachStr})`, () => {
+				const tree = createCheckout(initialState, attached);
+				const fork = tree.branch();
+
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
+				edit(tree, fork);
+
+				tree.merge(fork, false);
+				expectJsonTree(tree, editedState);
+				while (undoStack.length > 0) {
+					undoStack.pop()?.revert();
+				}
+				expectJsonTree(tree, mergeState ?? initialState);
+				while (redoStack.length > 0) {
+					redoStack.pop()?.revert();
+				}
+				expectJsonTree(tree, editedState);
+				while (undoStack.length > 0) {
+					undoStack.pop()?.revert();
+				}
+				expectJsonTree(tree, mergeState ?? initialState);
+				while (redoStack.length > 0) {
+					redoStack.pop()?.revert();
+				}
+				expectJsonTree(tree, editedState);
+				unsubscribe();
+			});
+		}
+
+		it(`can undo before and after rebasing a branch (${attachStr})`, () => {
+			const tree1 = createCheckout([0, 0, 0], attached);
+			const tree2 = tree1.branch();
+
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
+			tree1.editor.sequenceField(rootField).insert(3, singleJsonCursor(1));
+			tree2.editor.sequenceField(rootField).insert(0, singleJsonCursor(2));
+			tree2.editor.sequenceField(rootField).insert(0, singleJsonCursor(3));
+			undoStack.pop()?.revert();
+			expectJsonTree(tree2, [2, 0, 0, 0]);
+			tree2.rebaseOnto(tree1);
+			expectJsonTree(tree2, [2, 0, 0, 0, 1]);
+			undoStack.pop()?.revert();
+			expectJsonTree(tree2, [0, 0, 0, 1]);
 			unsubscribe();
 		});
 
 		// TODO: unskip once forking revertibles is supported
-		it.skip(`${name} (act on view undo on fork)`, () => {
-			const view = makeTreeFromJsonSequence(initialState);
-			const fork = view.branch();
+		it.skip(`can undo after forking a branch (${attachStr})`, () => {
+			const tree1 = createCheckout(["A", "B", "C"], attached);
 
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
-			edit(view, fork);
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
+				tree1.events,
+			);
+			tree1.editor.sequenceField(rootField).remove(0, 1);
+			tree1.editor.sequenceField(rootField).remove(1, 1);
 
-			fork.rebaseOnto(view);
-			expectJsonTree(fork, editedState);
-
-			for (let i = 0; i < count; i++) {
-				undoStack.pop()?.revert();
-			}
-
-			fork.rebaseOnto(view);
-			expectJsonTree(fork, undoState ?? initialState);
-
-			while (redoStack.length > 0) {
-				redoStack.pop()?.revert();
-			}
-
-			fork.rebaseOnto(view);
-			expectJsonTree(fork, editedState);
-			unsubscribe();
-		});
-
-		itFn(`${name} (act on view undo on view)`, () => {
-			const view = makeTreeFromJsonSequence(initialState);
-			const fork = view.branch();
-
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
-			edit(view, fork);
-
-			view.merge(fork, false);
-			expectJsonTree(view, editedState);
-
-			for (let i = 0; i < count; i++) {
-				undoStack.pop()?.revert();
-			}
-
-			view.merge(fork, false);
-			expectJsonTree(view, mergeState ?? initialState);
-
-			while (redoStack.length > 0) {
-				redoStack.pop()?.revert();
-			}
-
-			view.merge(fork);
-			expectJsonTree(view, editedState);
-			unsubscribe();
+			const tree2 = tree1.branch();
+			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
+				tree2.events,
+			);
+			expectJsonTree(tree2, ["B"]);
+			undoStack1.pop()?.revert();
+			expectJsonTree(tree2, ["B", "C"]);
+			undoStack2.pop()?.revert();
+			expectJsonTree(tree2, ["A", "B", "C"]);
+			unsubscribe1();
+			unsubscribe2();
 		});
 
 		// TODO: unskip once forking revertibles is supported
-		it.skip(`${name} (act on fork undo on view)`, () => {
-			const view = makeTreeFromJsonSequence(initialState);
-			const fork = view.branch();
+		it.skip(`can redo after forking a branch (${attachStr})`, () => {
+			const tree1 = createCheckout(["B"], attached);
 
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
-			edit(fork, view);
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
+				tree1.events,
+			);
+			tree1.editor.sequenceField(rootField).insert(0, singleJsonCursor("A"));
+			tree1.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+			undoStack1.pop()?.revert();
+			undoStack1.pop()?.revert();
 
-			view.merge(fork, false);
-			expectJsonTree(view, editedState);
-
-			for (let i = 0; i < count; i++) {
-				undoStack.pop()?.revert();
-			}
-
-			view.merge(fork, false);
-			expectJsonTree(view, undoState ?? initialState);
-
-			while (redoStack.length > 0) {
-				redoStack.pop()?.revert();
-			}
-
-			view.merge(fork);
-			expectJsonTree(view, editedState);
-			unsubscribe();
+			const tree2 = tree1.branch();
+			const { redoStack: redoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
+				tree2.events,
+			);
+			expectJsonTree(tree2, ["B"]);
+			redoStack2.pop()?.revert();
+			expectJsonTree(tree2, ["A", "B"]);
+			redoStack2.pop()?.revert();
+			expectJsonTree(tree2, ["A", "B", "C"]);
+			unsubscribe1();
+			unsubscribe2();
 		});
 
-		it(`${name} multiple times`, () => {
-			const tree = makeTreeFromJsonSequence(initialState);
-			const fork = tree.branch();
+		it(`can undo/redo a transaction (${attachStr})`, () => {
+			const tree = createCheckout(["A", "B"], attached);
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-			edit(tree, fork);
+			tree.transaction.start();
+			tree.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+			tree.editor.sequenceField(rootField).remove(0, 1);
+			tree.transaction.commit();
 
-			tree.merge(fork, false);
-			expectJsonTree(tree, editedState);
-			while (undoStack.length > 0) {
-				undoStack.pop()?.revert();
-			}
-			expectJsonTree(tree, mergeState ?? initialState);
-			while (redoStack.length > 0) {
-				redoStack.pop()?.revert();
-			}
-			expectJsonTree(tree, editedState);
-			while (undoStack.length > 0) {
-				undoStack.pop()?.revert();
-			}
-			expectJsonTree(tree, mergeState ?? initialState);
-			while (redoStack.length > 0) {
-				redoStack.pop()?.revert();
-			}
-			expectJsonTree(tree, editedState);
+			expectJsonTree(tree, ["B", "C"]);
+			undoStack.pop()?.revert();
+			expectJsonTree(tree, ["A", "B"]);
+			redoStack.pop()?.revert();
+			expectJsonTree(tree, ["B", "C"]);
+			unsubscribe();
+		});
+
+		it(`can undo/redo a merge (${attachStr})`, () => {
+			const tree = createCheckout(["A", "B"], attached);
+
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
+			const branch = tree.branch();
+			branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+			branch.editor.sequenceField(rootField).remove(0, 1);
+			tree.merge(branch);
+
+			expectJsonTree(tree, ["B", "C"]);
+			undoStack.pop()?.revert();
+			expectJsonTree(tree, ["A", "B", "C"]);
+			undoStack.pop()?.revert();
+			expectJsonTree(tree, ["A", "B"]);
+			redoStack.pop()?.revert();
+			expectJsonTree(tree, ["A", "B", "C"]);
+			redoStack.pop()?.revert();
+			expectJsonTree(tree, ["B", "C"]);
+			unsubscribe();
+		});
+
+		it(`can undo multiple merges (${attachStr})`, () => {
+			const tree = createCheckout(["A", "B"], attached);
+
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
+
+			const branch = tree.branch();
+
+			branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+			tree.merge(branch, false);
+			expectJsonTree(tree, ["A", "B", "C"]);
+			undoStack.pop()?.revert();
+			expectJsonTree(tree, ["A", "B"]);
+
+			branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+			tree.merge(branch);
+			expectJsonTree(tree, ["A", "B", "C"]);
+			undoStack.pop()?.revert();
+			expectJsonTree(tree, ["A", "B"]);
+
 			unsubscribe();
 		});
 	}
 
-	it("can undo before and after rebasing a branch", () => {
-		const tree1 = makeTreeFromJsonSequence([0, 0, 0]);
-		const tree2 = tree1.branch();
-
-		const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
-		tree1.editor.sequenceField(rootField).insert(3, singleJsonCursor(1));
-		tree2.editor.sequenceField(rootField).insert(0, singleJsonCursor(2));
-		tree2.editor.sequenceField(rootField).insert(0, singleJsonCursor(3));
-		undoStack.pop()?.revert();
-		expectJsonTree(tree2, [2, 0, 0, 0]);
-		tree2.rebaseOnto(tree1);
-		expectJsonTree(tree2, [2, 0, 0, 0, 1]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree2, [0, 0, 0, 1]);
-		unsubscribe();
-	});
-
-	// TODO: unskip once forking revertibles is supported
-	it.skip("can undo after forking a branch", () => {
-		const tree1 = makeTreeFromJsonSequence(["A", "B", "C"]);
-
-		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
-			tree1.events,
-		);
-		tree1.editor.sequenceField(rootField).remove(0, 1);
-		tree1.editor.sequenceField(rootField).remove(1, 1);
-
-		const tree2 = tree1.branch();
-		const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
-			tree2.events,
-		);
-		expectJsonTree(tree2, ["B"]);
-		undoStack1.pop()?.revert();
-		expectJsonTree(tree2, ["B", "C"]);
-		undoStack2.pop()?.revert();
-		expectJsonTree(tree2, ["A", "B", "C"]);
-		unsubscribe1();
-		unsubscribe2();
-	});
-
-	// TODO: unskip once forking revertibles is supported
-	it.skip("can redo after forking a branch", () => {
-		const tree1 = makeTreeFromJsonSequence(["B"]);
-
-		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
-			tree1.events,
-		);
-		tree1.editor.sequenceField(rootField).insert(0, singleJsonCursor("A"));
-		tree1.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
-		undoStack1.pop()?.revert();
-		undoStack1.pop()?.revert();
-
-		const tree2 = tree1.branch();
-		const { redoStack: redoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
-			tree2.events,
-		);
-		expectJsonTree(tree2, ["B"]);
-		redoStack2.pop()?.revert();
-		expectJsonTree(tree2, ["A", "B"]);
-		redoStack2.pop()?.revert();
-		expectJsonTree(tree2, ["A", "B", "C"]);
-		unsubscribe1();
-		unsubscribe2();
-	});
-
-	it("can undo/redo a transaction", () => {
-		const tree = makeTreeFromJsonSequence(["A", "B"]);
-
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-		tree.transaction.start();
-		tree.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
-		tree.editor.sequenceField(rootField).remove(0, 1);
-		tree.transaction.commit();
-
-		expectJsonTree(tree, ["B", "C"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-		redoStack.pop()?.revert();
-		expectJsonTree(tree, ["B", "C"]);
-		unsubscribe();
-	});
-
-	it("can undo/redo a merge", () => {
-		const tree = makeTreeFromJsonSequence(["A", "B"]);
-
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-		const branch = tree.branch();
-		branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
-		branch.editor.sequenceField(rootField).remove(0, 1);
-		tree.merge(branch);
-
-		expectJsonTree(tree, ["B", "C"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B", "C"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-		redoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B", "C"]);
-		redoStack.pop()?.revert();
-		expectJsonTree(tree, ["B", "C"]);
-		unsubscribe();
-	});
-
-	it("can undo multiple merges", () => {
-		const tree = makeTreeFromJsonSequence(["A", "B"]);
-
-		const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-
-		const branch = tree.branch();
-
-		branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
-		tree.merge(branch, false);
-		expectJsonTree(tree, ["A", "B", "C"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-
-		branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
-		tree.merge(branch);
-		expectJsonTree(tree, ["A", "B", "C"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-
-		unsubscribe();
-	});
-
-	// TODO:#20949: Enable when undo/redo is supported for detached trees (currently failing with error: "refresher data not found")
-	it.skip("can undo while detached", () => {
+	it("can undo while detached", () => {
 		const sf = new SchemaFactory(undefined);
 		class Schema extends sf.object("Object", { foo: sf.number }) {}
 		const sharedTreeFactory = new SharedTreeFactory();
@@ -437,7 +454,7 @@ describe("Undo and redo", () => {
 		view.initialize({ foo: 1 });
 		assert.equal(tree.isAttached(), false);
 		let revertible: Revertible | undefined;
-		view.events.on("commitApplied", (_, getRevertible) => {
+		view.events.on("changed", (_, getRevertible) => {
 			revertible = getRevertible?.();
 		});
 		view.root.foo = 2;
@@ -448,8 +465,7 @@ describe("Undo and redo", () => {
 	});
 
 	it.only("revert the original and forked revertibles separately", () => {
-		const originalView: TreeView<typeof RootNodeSchema> =
-			createLocalSharedTree("testSharedTree");
+		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
 
 		const {
 			undoStack: undoStack1,
@@ -457,18 +473,13 @@ describe("Undo and redo", () => {
 			unsubscribe: unsubscribe1,
 		} = createClonableUndoRedoStacks(originalView.events);
 
-		if (originalView.root.child !== undefined) {
-			originalView.root.child.propertyOne = 256; // 128 -> 256
-			originalView.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
-		}
+		assert(originalView.root.child !== undefined);
+		originalView.root.child.propertyOne = 256; // 128 -> 256
 
-		const forkedBranch = getBranch(originalView).branch();
-		const forkedView = forkedBranch.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
+		const forkedView = originalView.fork();
 
 		const propertyTwoUndo = undoStack1.pop();
-		const clonedPropertyTwoUndo = propertyTwoUndo?.clone(forkedBranch);
+		const clonedPropertyTwoUndo = propertyTwoUndo?.clone(forkedView);
 
 		propertyTwoUndo?.revert();
 
@@ -495,7 +506,7 @@ class RootNodeSchema extends builder.object("root-item", {
 	child: builder.optional(ChildNodeSchema),
 }) {}
 
-function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
+function createLocalSharedTree(id: string) {
 	const sharedTree = SharedTree.create(
 		new MockFluidDataStoreRuntime({
 			registry: [SharedTree.getFactory()],
@@ -519,3 +530,31 @@ function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
 
 	return view;
 }
+
+/**
+ * Create a checkout belonging to a SharedTree with the given JSON data.
+ * @param attachTree - whether or not the SharedTree should be attached to the Fluid runtime
+ */
+export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITreeCheckout {
+	const sharedTreeFactory = new SharedTreeFactory();
+	const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+	const tree = sharedTreeFactory.create(runtime, "tree");
+	const runtimeFactory = new MockContainerRuntimeFactory();
+	runtimeFactory.createContainerRuntime(runtime);
+	initialize(tree.checkout, {
+		schema: jsonSequenceRootSchema,
+		initialTree: json.map(singleJsonCursor),
+	});
+
+	if (attachTree) {
+		tree.connect({
+			deltaConnection: runtime.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+	}
+
+	temp = tree;
+	return tree.checkout;
+}
+
+let temp: unknown;

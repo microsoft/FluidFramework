@@ -47,6 +47,7 @@ import {
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
 	ForestType,
+	getBranch,
 	type ISharedTree,
 	type SharedTree,
 	SharedTreeFactory,
@@ -63,7 +64,7 @@ import {
 	SchemaFactory,
 	toStoredSchema,
 	type TreeFieldFromImplicitField,
-	type TreeView,
+	type TreeViewAlpha,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { brand, fail } from "../../util/index.js";
@@ -91,6 +92,7 @@ import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { JsonArray, singleJsonCursor } from "../json/index.js";
+import { AttachState } from "@fluidframework/container-definitions";
 
 const enableSchemaValidation = true;
 
@@ -534,6 +536,53 @@ describe("SharedTree", () => {
 		});
 	});
 
+	it("can load a summary while detached", async () => {
+		// This test exercises the case where a detached tree loads a summary from another detached tree.
+		// Both trees in this test are detached for the whole duration of the test (because of the `attachState` argument passed to the mock runtime below).
+		// Detached trees are not connected to the sequencing service, but they still "sequence" their edits as if they were totally ordered.
+		// The second tree must take care to avoid sequencing its edits with sequence numbers that the first tree already used.
+		// If it doesn't, the second tree will throw an error when trying to sequence a commit with sequence number that has "gone backwards" and this test will fail.
+		const sharedTreeFactory = new SharedTreeFactory();
+		const runtime = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
+			attachState: AttachState.Detached,
+		});
+		const tree = sharedTreeFactory.create(runtime, "tree");
+		const runtimeFactory = new MockContainerRuntimeFactory();
+		runtimeFactory.createContainerRuntime(runtime);
+
+		const view = tree.viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+		view.initialize(["a"]);
+		// Create a branch to prevent the EditManager from evicting all of its commits - otherwise, the summary won't have these edits in the trunk.
+		getBranch(tree).branch();
+		view.root.insertAtEnd("b");
+
+		const tree2 = sharedTreeFactory.create(runtime, "tree2");
+		await tree2.load({
+			deltaConnection: runtime.createDeltaConnection(),
+			objectStorage: MockStorage.createFromSummary((await tree.summarize()).summary),
+		});
+
+		const loadedView = tree2.viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+
+		loadedView.root.insertAtEnd("c");
+
+		validateTreeContent(tree2.checkout, {
+			schema: StringArray,
+			initialTree: singleJsonCursor(["a", "b", "c"]),
+		});
+	});
+
 	it("can load a summary from a tree and receive edits that require detached tree refreshers", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
@@ -783,6 +832,83 @@ describe("SharedTree", () => {
 	});
 
 	describe("Undo and redo", () => {
+		it("the insert of a node in a sequence field using the commitApplied event", () => {
+			const value = "42";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0];
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view1.initialize([]);
+
+			const undoStack: Revertible[] = [];
+			const redoStack: Revertible[] = [];
+
+			function onDispose(disposed: Revertible): void {
+				const redoIndex = redoStack.indexOf(disposed);
+				if (redoIndex !== -1) {
+					redoStack.splice(redoIndex, 1);
+				} else {
+					const undoIndex = undoStack.indexOf(disposed);
+					if (undoIndex !== -1) {
+						undoStack.splice(undoIndex, 1);
+					}
+				}
+			}
+
+			const unsubscribeFromCommitAppliedEvent = view1.events.on(
+				"commitApplied",
+				(commit, getRevertible) => {
+					if (getRevertible !== undefined) {
+						const revertible = getRevertible(onDispose);
+						if (commit.kind === CommitKind.Undo) {
+							redoStack.push(revertible);
+						} else {
+							undoStack.push(revertible);
+						}
+					}
+				},
+			);
+			const unsubscribe = (): void => {
+				unsubscribeFromCommitAppliedEvent();
+				for (const revertible of undoStack) {
+					revertible.dispose();
+				}
+				for (const revertible of redoStack) {
+					revertible.dispose();
+				}
+			};
+
+			provider.processMessages();
+			const tree2 = provider.trees[1];
+			const view2 = tree2.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			provider.processMessages();
+
+			// Insert node
+			view1.root.insertAtStart(value);
+			provider.processMessages();
+
+			// Validate insertion
+			assert.deepEqual([...view2.root], [value]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual([...view1.root], []);
+			assert.deepEqual([...view2.root], []);
+
+			// Redo node insertion
+			redoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual([...view1.root], [value]);
+			assert.deepEqual([...view2.root], [value]);
+			unsubscribe();
+		});
+
 		it("the insert of a node in a sequence field", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
@@ -1110,7 +1236,7 @@ describe("SharedTree", () => {
 
 			interface Peer extends ConnectionSetter {
 				readonly checkout: TreeCheckout;
-				readonly view: TreeView<typeof schema>;
+				readonly view: TreeViewAlpha<typeof schema>;
 				readonly outerList: TreeFieldFromImplicitField<typeof schema>;
 				readonly innerList: TreeFieldFromImplicitField<typeof innerListSchema>;
 				assertOuterListEquals(expected: readonly (readonly string[])[]): void;
@@ -1119,7 +1245,7 @@ describe("SharedTree", () => {
 
 			function makeUndoableEdit(peer: Peer, edit: () => void): Revertible {
 				const undos: Revertible[] = [];
-				const unsubscribe = peer.view.events.on("commitApplied", ({ kind }, getRevertible) => {
+				const unsubscribe = peer.view.events.on("changed", ({ kind }, getRevertible) => {
 					if (kind !== CommitKind.Undo && getRevertible !== undefined) {
 						undos.push(getRevertible());
 					}
@@ -1424,6 +1550,76 @@ describe("SharedTree", () => {
 
 			unsubscribe1();
 			unsubscribe2();
+		});
+
+		// TODO: move this event test to the tree view tests
+		it("emits a changed event for local edits", () => {
+			const value = "42";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0];
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view1.initialize([]);
+			provider.processMessages();
+
+			let localEdits = 0;
+			let remoteEdits = 0;
+
+			const unsubscribe = view1.events.on("changed", (metadata) => {
+				if (metadata.isLocal === true) {
+					localEdits++;
+				} else {
+					remoteEdits++;
+				}
+			});
+
+			// Insert node
+			view1.root.insertAtStart(value);
+			provider.processMessages();
+
+			// Validate insertion
+			assert.deepEqual([...view1.root], [value]);
+
+			assert.equal(localEdits, 1);
+			// check that the edit is not counted twice
+			assert.equal(remoteEdits, 0);
+
+			unsubscribe();
+		});
+
+		it("emits a changed event for remote edits", () => {
+			const value = "42";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0];
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view1.initialize([]);
+			provider.processMessages();
+			const tree2 = provider.trees[1];
+			const view2 = tree2.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+
+			let remoteEdits = 0;
+
+			const unsubscribe = view1.events.on("changed", (metadata) => {
+				if (metadata.isLocal !== true) {
+					remoteEdits++;
+				}
+			});
+
+			// Insert node
+			view2.root.insertAtStart(value);
+			provider.processMessages();
+
+			// Validate insertion
+			assert.deepEqual([...view1.root], [value]);
+
+			assert.equal(remoteEdits, 1);
+
+			unsubscribe();
 		});
 	});
 
