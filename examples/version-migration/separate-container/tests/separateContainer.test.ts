@@ -164,7 +164,7 @@ describe("separate-container migration", () => {
 					// However, we are getting flaky errors and want to rule out the possibility that the puppeteer interaction
 					// is somehow permitting these to occur out of order.  Throwing here will cause the returned migrationP
 					// promise to immediately reject (since Promise.all rejects as soon as the first rejection occurs).
-					if (migrator.currentModel.version === "two") {
+					if (migrator.currentModel.version !== "one") {
 						throw new Error("Unexpected early migration!");
 					}
 					return new Promise<void>((resolve) => {
