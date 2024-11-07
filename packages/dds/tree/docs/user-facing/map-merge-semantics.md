@@ -47,15 +47,26 @@ Postconditions:
   Note: this will remove whatever value (if any) is associated with the key,
   even if that value was changed by concurrent edits that were sequenced earlier.
 
-## Noteworthy Implications
+Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
+Changes made to them will apply despite their removed status.
 
-* The `set` and `delete` operations are effective even when the map whose being updated has been removed.
-* If multiple edits concurrently set the same field, then the field's final value will will be that of the edit that is sequenced last.
-  In other words, the `set` operation has last-write-wins semantics.
-* If user A calls `map.set("key", 42)` and user B concurrently calls `map.delete("key", 42)` on same map node,
-  then the outcome depends on the arbitrary ordering that is imposed by the sequencing service:
-  If the `delete` call is ordered before the `set` call, then the `set` will win out, setting the new associated value for that key.
-  If the `set` call is ordered before the `delete` call, then the `delete` will win out, clearing the associated value for that key.
+## Additional Notes
+
+### Operations on Removed Maps
+
+All of the above operations are effective even when the targeted map has been moved or removed.
+
+### Last-Write-Wins semantics
+
+If multiple edits concurrently set the same field, then the field's final value will will be that of the edit that is sequenced last.
+In other words, the `set` operation has last-write-wins semantics.
+
+### Delete Clears Whichever Value is Present
+
+If user A calls `map.set("key", 42)` and user B concurrently calls `map.delete("key", 42)` on same map node,
+then the outcome depends on the arbitrary ordering that is imposed by the sequencing service:
+If the `delete` call is ordered before the `set` call, then the `set` will win out, setting the new associated value for that key.
+If the `set` call is ordered before the `delete` call, then the `delete` will win out, clearing the associated value for that key.
 
 This last point means that one user may end up deleting a value they have never seen.
 Consider the following scenario:
@@ -68,3 +79,25 @@ and if client A's edit is sequenced before client B's edit,
 then client B's edit will end up removing the value `"bar"`.
 This is typically acceptable, but in cases where it proves problematic,
 it's possible to put the `delete` operation in a transaction with a constraint that ensures the value to be deleted is still in the tree.
+
+### Removing and Re-inserting Nodes
+
+When dealing with plain JavaScript maps,
+it is possible to move items around by removing them and adding them back in.
+For example, if some node N needs to be moved from `mapA` to `mapB`,
+that can accomplished with the following operations:
+```typescript
+mapA.delete(key); // Remove node N from mapA
+mapB.set(key, N); // Insert node N into mapB
+```
+
+As of October 2024, SharedTree maps do not support this pattern because it would require (re)inserting node N, which has previously been inserted.
+Note that even without this restriction, the above would not perform the desired change if some other user concurrently moved N from `mapA` to some other `mapC`.
+If that were the case...
+* Node N may no longer be in `mapA` by the time the edit `mapA.delete(key)` is applied.
+  At best that edit would have no effect, and at worst it may inadvertently remove some other node.
+* Node N may still be in `mapC` by the time the edit `mapB.set(key, N)` is applied.
+  If so, this would lead to an error since a single node cannot reside in multiple maps at the same time.
+  (This would violate the requirement that the document remains tree-shaped)
+
+Work is underway to address this lack flexibility.

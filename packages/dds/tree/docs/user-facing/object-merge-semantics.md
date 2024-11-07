@@ -36,10 +36,19 @@ Preconditions:
   (This precondition will be removed soon)
 
 Postconditions:
-* The property's value is the value that was on the right hand side of the `=` operator.
+* The value (if any) associated with that property immediately prior to the change being applied is removed.
+* The new value (if any) associated with that property is the value that was on the right hand side of the `=` operator.
 
-## Noteworthy Implications
+Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
+Changes made to them will apply despite their removed status.
 
-* A property assignment edit is effective even when the object whose property is being assigned to has been removed.
-* If multiple edits concurrently edit the same field, then the field's final value will will be that of the edit that is sequenced last.
-  In other words, property assignment has last-write-wins semantics.
+## Additional Notes
+
+### Operations on Removed Objects
+
+All of the above operations are effective even when the targeted object has been moved or removed.
+
+### Last-Write-Wins semantics
+
+If multiple edits concurrently edit the same field, then the field's final value will will be that of the edit that is sequenced last.
+In other words, property assignment has last-write-wins semantics.

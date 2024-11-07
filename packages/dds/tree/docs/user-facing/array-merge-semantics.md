@@ -13,7 +13,7 @@ A postcondition defines a guarantee that is made about the effect of the edit.
 
 ## Gaps
 
-The merge semantics of array operations that attach array elements (i.e., inserts and moves) are based on the concept of a gap.
+The merge semantics of array operations that insert (or move in) array elements are based on the concept of a gap.
 A gap is a location where array elements can be inserted or moved.
 For example, in an array with two nodes `[A, B]` there are three gaps: one before A, one between A and B, and one after C.
 If we represented gaps with the `_` character, then would describe the array `[A, B]` as `[ _ A _ B _ ]`.
@@ -22,11 +22,9 @@ If we represented gaps with the `_` character, then would describe the array `[A
 To insert a new node X in the gap between nodes A and B,
 one would call `insertAt(1, X)` because the integer `1` refers to the second gap.
 
-This seems consistent with how insertions are typically performed:
-on a plain JS array, one would call `splice(1, 0, X)` to perform the same operation.
 The reason we need this concept of gap is that `insertAt(1, X)` will not necessarily insert X at index 1.
 Instead, `insertAt(1, X)` will insert X *in the gap that was at index 1 at the time the edit was made*.
-This is important because by the time the edit is applied, that gap may no longer be at index 1.
+This is relevant because by the time the edit is applied, that gap may no longer be at index 1.
 
 Example 1:
 * Starting state: `[A, B]`
@@ -88,7 +86,7 @@ Preconditions:
 * There is no schema change edit that this edit is both concurrent to and sequenced after.
 
 Postconditions:
-* The items that were between the `sourceStart` and `sourceEnd` indices are located where the destination [gap](#gaps) used to be.
+* The items that were between the `sourceStart` and `sourceEnd` indices located where the destination [gap](#gaps) used to be.
   * The set of items being moved is determined at the time the edit is first made (as opposed to when the edit is applied).
   For example, if one user moves nodes A and B to the end of array `[A, B, C]` by using a `sourceStart` of 0 and a `sourceEnd` of 2,
   and some other user concurrently inserts some node X between A and B (thus changing the state to `[A, X, B, C]`),
@@ -97,6 +95,17 @@ Postconditions:
   For example, if one user moves nodes A and B to the end of array `[A, B, C]` by using a `sourceStart` of 0 and a `sourceEnd` of 2,
   and some other user concurrently swaps the order of A and B (thus changing the state to `[B, A, C]`),
   then the outcome will still be `[C, A, B]` as opposed to `[C, B, A]`.
+
+If multiple clients concurrently move an item,
+then that item will be moved to the destination indicated by the move of the client whose edit is ordered last.
+
+A moved item may be removed as a result of a simultaneous remove operation from another client.
+For example, if one client moves items 3-5,
+and another client concurrently removes items 4 and 5,
+then, if the remove operation is ordered last,
+items 4 and 5 are removed from their destination by the remove operation.
+If the move operation is ordered last,
+then all three items will be moved to the destination.
 
 ## `moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void`
 
@@ -136,12 +145,52 @@ Equivalent to `array.moveRangeToIndex(array.length, sourceIndex, sourceIndex + 1
 
 ## `removeRange(start?: number, end?: number): void`
 
-Removes all items between the specified indices.
+Removes the items between the specified indices.
+
+Preconditions:
+* There is no schema change edit that this edit is both concurrent to and sequenced after.
+
+Postconditions:
+* The items that were between the `sourceStart` and `sourceEnd` are removed.
+  * The set of items being removed is determined at the time the edit is first made (as opposed to when the edit is applied).
+  For example, if one user removes nodes A and B from array `[A, B, C]` by using a `sourceStart` of 0 and a `sourceEnd` of 2,
+  and some other user concurrently inserts some node X between A and B (thus changing the state to `[A, X, B, C]`),
+  then the removal will still affect nodes A and B (and only these), thus yielding `[X, C]` as opposed to `[B, C]` or `[C]`.
+
+Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
+Changes made to them will apply despite their removed status.
+
+A removed item may be restored as a result of a concurrent move operation from another client.
+For example, if one client removes items 3-5,
+and another client concurrently moves items 4 and 5,
+then, if the move operation is ordered last,
+only item 3 is removed (items 4 and 5 are restored and moved to their destination by the move operation).
+If the remove operation is ordered last,
+then all three items will be removed, no matter where they reside.
 
 ## `removeAt(index: number): void`
 
 Equivalent to `array.removeRange(index, index + 1)`.
 
-## Noteworthy Implications
+## Additional Notes
 
-* 
+### Operations on Removed Arrays
+
+All of the above operations are effective even when the targeted array has been moved or removed.
+
+### Removing and Re-inserting Nodes
+
+When dealing with plain JavaScript arrays,
+it is possible to move items around by removing them and adding them back in.
+For example, the node C can be moved to the start of the array `[A, B, C]` performing the following operations:
+```typescript
+const C = array.pop(); // Remove C -> [A, B]
+array.unshift(C); // Insert C at the start -> [C, A, B]
+```
+
+As of October 2024, SharedTree arrays do not support this pattern because it would require (re)inserting node C, which has previously been inserted.
+Instead, it is necessary to use the move operation:
+```typescript
+array.moveToStart(2);
+```
+Work is underway to address this lack flexibility.
