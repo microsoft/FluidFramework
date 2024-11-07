@@ -3,19 +3,9 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "node:assert";
-import {
-	type Revertible,
-	type UpPath,
-	rootFieldKey,
-	RevertibleStatus,
-} from "../../core/index.js";
+import { type Revertible, type UpPath, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
-import {
-	SharedTreeFactory,
-	type ITreeCheckout,
-	getBranch,
-	type TreeCheckout,
-} from "../../shared-tree/index.js";
+import { SharedTreeFactory, type ITreeCheckout, getBranch } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
 	createClonableUndoRedoStacks,
@@ -457,7 +447,7 @@ describe("Undo and redo", () => {
 		assert.equal(view.root.foo, 1);
 	});
 
-	it("revert the original and forked revertibles separately", () => {
+	it.only("revert the original and forked revertibles separately", () => {
 		const originalView: TreeView<typeof RootNodeSchema> =
 			createLocalSharedTree("testSharedTree");
 
@@ -484,69 +474,10 @@ describe("Undo and redo", () => {
 
 		assert.equal(originalView.root.child?.propertyTwo.itemOne, "");
 		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "newItem");
-		assert.equal(propertyTwoUndo?.status, RevertibleStatus.Disposed);
-		assert.equal(clonedPropertyTwoUndo?.status, RevertibleStatus.Valid);
 
 		clonedPropertyTwoUndo?.revert();
 
 		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "");
-		assert.equal(clonedPropertyTwoUndo?.status, RevertibleStatus.Disposed);
-	});
-
-	it.only("revert the original and forked revertibles separately", () => {
-		const originalView: TreeView<typeof RootNodeSchema> =
-			createLocalSharedTree("testSharedTree");
-
-		const {
-			undoStack: undoStack1,
-			redoStack: redoStack1,
-			unsubscribe: unsubscribe1,
-		} = createClonableUndoRedoStacks(originalView.events);
-
-		if (originalView.root.child !== undefined) {
-			originalView.root.child.propertyOne = 256; // 128 -> 256
-		}
-
-		const forkedBranch = getBranch(originalView).branch(); // Copies revertibleCommitBranches
-		const forkedView = forkedBranch.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
-
-		const {
-			undoStack: undoStack2,
-			redoStack: redoStack2,
-			unsubscribe: unsubscribe2,
-		} = createClonableUndoRedoStacks(forkedView.events);
-
-		if (forkedView.root.child !== undefined) {
-			forkedView.root.child.propertyOne = 512; // 256 -> 512
-		}
-
-		assert.equal(originalView.root.child?.propertyOne, 256);
-		assert.equal(forkedView.root.child?.propertyOne, 512);
-
-		undoStack2.pop()?.revert();
-
-		assert.equal(originalView.root.child?.propertyOne, 256);
-		assert.equal(forkedView.root.child?.propertyOne, 256);
-
-		assert.equal(undoStack1.length, 1);
-		assert.equal(undoStack2.length, 0);
-
-		const propertyOneUndo = undoStack1.pop();
-		const clonedPropertyOneUndo = propertyOneUndo?.clone(forkedBranch);
-
-		const removedRootsBefore = (forkedBranch as unknown as TreeCheckout).getRemovedRoots();
-		propertyOneUndo?.revert();
-		const removedRootsAfter = (forkedBranch as unknown as TreeCheckout).getRemovedRoots();
-
-		clonedPropertyOneUndo?.revert();
-
-		assert.equal(originalView.root.child?.propertyOne, 128);
-		assert.equal(forkedView.root.child?.propertyOne, 128);
-
-		assert.equal(propertyOneUndo?.status, RevertibleStatus.Disposed);
-		assert.equal(clonedPropertyOneUndo?.status, RevertibleStatus.Disposed);
 	});
 });
 

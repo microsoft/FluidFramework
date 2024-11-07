@@ -461,13 +461,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.removedRoots = snapshot;
 		});
 
-		// Temporary solution to {@link Revertible} disposed after creation when using Mock Test Runtime.
-		// TODO: Remove this after finding the solution.
-		const branchToDispose: Map<
-			RevisionTag,
-			SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
-		> = new Map();
-
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
 		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
@@ -476,14 +469,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			if (event.change !== undefined) {
 				// Always create a branch for {@link Revertible} when `commitApplied` event emitted.
 				// TODO: Remove this after finding the solution.
-				if (
-					event.type === "append" ||
-					(event.type === "replace" && getChangeReplaceType(event) === "transactionCommit")
-				) {
-					for (const commit of event.newCommits) {
-						branchToDispose.set(commit.revision, _branch.fork(commit));
-					}
-				}
 
 				const revision =
 					event.type === "replace"
@@ -596,11 +581,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 										},
 									};
 
-									const revisionCommit = branchToDispose.get(revision);
-									branchToDispose.delete(revision);
-									assert(revisionCommit !== undefined, "A revertible commit must exist");
-
-									this.revertibleCommitBranches.set(revision, revisionCommit);
+									this.revertibleCommitBranches.set(revision, _branch.fork(commit));
 									this.revertibles.add(revertible);
 									return revertible;
 								};
@@ -609,9 +590,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						this.events.emit("commitApplied", { isLocal: true, kind }, getRevertible);
 						withinEventContext = false;
 					}
-				}
-				for (const commit of branchToDispose.values()) {
-					commit.dispose();
 				}
 			}
 		});
