@@ -162,6 +162,7 @@ stages:
             useSameSourceVersion: False
             useSameBranch: False
             branchToUse: test/michaelzhen
+            buildParameters: 'deployEnvironment:${{ parameters.deployEnvironment }}, guardianAssetRetentionOverride:${{ parameters.guardianAssetRetentionOverride }}, publishGuardianBaselines:${{ parameters.publishGuardianBaselines }}'
             storeInEnvironmentVariable: True
             authenticationMethod: 'OAuth Token'
             password: '$(System.AccessToken)'
