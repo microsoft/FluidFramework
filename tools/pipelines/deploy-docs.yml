@@ -193,10 +193,10 @@ stages:
             artifactName: .gdn
 # END Secure development tasks
 
-- stage: deploy
-  displayName: 'Deploy website'
-  pool: Small
-  dependsOn: ['build', 'guardian']
+- stage: link_check
+  displayName: 'Website Link Check'
+  dependsOn: [] # run in parallel
+  pool: Large
   jobs:
     - job: link_check
       displayName: 'Website Link Check'
@@ -238,6 +238,7 @@ stages:
 - stage: deploy
   displayName: 'Deploy website'
   pool: Small
+  dependsOn: ['build', 'guardian']
   jobs:
     - job: deploy_site
       displayName: 'Deploy website'
