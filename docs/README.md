@@ -175,15 +175,16 @@ The following npm scripts are supported in this directory:
 |--------|-------------|
 | `build` | Build the site, including API documentation. |
 | `build:api-documentation` | Download API model artifacts and generate API documentation. |
-| `build:docusaurus` | `docusaurus build` |
 | `build:generate-content` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
 | `build:markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
+| `prebuild:site` | Runs pre-site build metadata generation |
 | `build:site` | Build the website with Docusaurus. |
 | `check-links` | Run link validation on the website. |
 | `clean` | Clean up generated artifacts (build output, etc.). |
 | `clean:api-documentation` | Clean up generate API documentation content. |
 | `clean:doc-models` | Clean up downloaded API model artifacts. |
 | `clean:docusaurus` | Run Docusaurus's "clean". |
+| `clean:test` | Clean up generated test output |
 | `clean:versions-json` | Clean up generated `versions.json` file. |
 | `download-doc-models` | Download API model artifacts published from our release branches. |
 | `eslint` | Run `eslint`. |
@@ -198,6 +199,7 @@ The following npm scripts are supported in this directory:
 | `rebuild` | Clean up existing generated artifacts and re-run the build. |
 | `serve` | Serves the built website using Docusaurus. |
 | `serve-with-azure-emulation` | Serves the built website using Docusaurus, including Azure service emulation for our Azure functions. |
+| `prestart` | Runs pre-site build metadata generation  |
 | `start` | Runs the website in watch mode with Docusaurus. |
 | `pretest` | Install necessary `playwright` dependencies before running tests. |
 | `test` | Run tests using `playwright` |
