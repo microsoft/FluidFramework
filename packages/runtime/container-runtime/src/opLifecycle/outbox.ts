@@ -352,9 +352,12 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const processedBatch = this.compressBatch(
-				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
-			);
+			const processedBatch = !disableGroupedBatching
+				? this.compressBatch(
+						shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
+					)
+				: rawBatch;
+
 			clientSequenceNumber = this.sendBatch(processedBatch);
 			assert(
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
