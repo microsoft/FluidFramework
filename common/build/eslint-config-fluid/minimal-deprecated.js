@@ -101,6 +101,15 @@ module.exports = {
 		"@fluid-internal/fluid/no-member-release-tags": "error",
 
 		/**
+		 * Rule to enforce safe property access on index signature types.
+		 *
+		 * Reports issues when non-array index properties are accessed without handling
+		 * the possibility that they are absent.
+		 * Enabling `noUncheckedIndexedAccess` will disable these checks.
+		 */
+		"@fluid-internal/fluid/no-unchecked-record-access": "error",
+
+		/**
 		 * The @rushstack rules are documented in the package README:
 		 * {@link https://www.npmjs.com/package/@rushstack/eslint-plugin}
 		 */
