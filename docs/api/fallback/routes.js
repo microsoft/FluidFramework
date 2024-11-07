@@ -26,6 +26,9 @@ const routes = [
 	// If the user explicitly navigates to "v2", we should support that.
 	{ from: "/docs/v2", to: "/docs" },
 
+	// Legacy path we wish to preserve.
+	{ from: "/docs/deep/architecture", to: "/docs/concepts/architecture" },
+
 	// Counter DDS document was removed in v2.
 	// Redirect legacy URL to v1 document.
 	{ from: "/docs/data-structures/counter", to: "/docs/v1/data-structures/counter" },
