@@ -154,6 +154,12 @@ export async function generateTreeEdits(
 		if (error instanceof Error) {
 			DEBUG_LOG?.push(`Error: ${error.message}`);
 		}
+
+		if (options.dumpDebugLog ?? false) {
+			console.log(DEBUG_LOG.join("\n\n"));
+			DEBUG_LOG.length = 0;
+		}
+
 		if (error instanceof TokenLimitExceededError) {
 			return {
 				status:

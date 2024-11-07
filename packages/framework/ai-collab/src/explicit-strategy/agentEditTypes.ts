@@ -106,8 +106,8 @@ export interface ObjectTarget {
 
 /**
  * Desribes where an object can be inserted into an array.
- * For example, if an you have an array with 5 objects, and you insert an object at index 3, this differentiates whether you want
- * the existing item at index 3 should be shifted forward (if the 'place' is 'before') or shifted backwards (if the 'place' is 'after')
+ * For example, if you have an array with 5 objects, and you insert an object at index 3, this differentiates whether you want
+ * the existing item at index 3 to be shifted forward (if the 'location' is 'start') or shifted backwards (if the 'location' is 'end')
  *
  * @remarks TODO: Allow support for nested arrays
  */
@@ -120,8 +120,8 @@ export interface ArrayPlace {
 
 /**
  * Desribes where an object can be inserted into an array.
- * For example, if an you have an array with 5 objects, and you insert an object at index 3, this differentiates whether you want
- * the existing item at index 3 should be shifted forward (if the 'place' is 'before') or shifted backwards (if the 'place' is 'after')
+ * For example, if you have an array with 5 objects, and you insert an object at index 3, this differentiates whether you want
+ * the existing item at index 3 to be shifted forward (if the 'location' is 'start') or shifted backwards (if the 'location' is 'end')
  *
  * @remarks Why does this and {@link ArrayPlace} exist together?
  */
