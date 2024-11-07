@@ -53,15 +53,6 @@ export class OpCompressor {
 			compression: CompressionAlgorithms.lz4,
 		});
 
-		// Add empty placeholder messages to reserve the sequence numbers
-		for (const message of batch.messages.slice(1)) {
-			messages.push({
-				localOpMetadata: message.localOpMetadata,
-				metadata: message.metadata,
-				referenceSequenceNumber: message.referenceSequenceNumber,
-			});
-		}
-
 		const compressedBatch: IBatch = {
 			contentSizeInBytes: compressedContent.length,
 			messages,
