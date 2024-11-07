@@ -4,7 +4,7 @@ Fluid Framework powered applications have several ways to modularize their code 
 
 ## Containers
 
-We expect most Fluid applications to to operate on a single container at a time, ans store all their persisted content in that container.
+We expect most Fluid applications to operate on a single container at a time and store all their persisted content in that container.
 It is however possible to use multiple containers, and some use-cases may require it.
 Specifically data which require different permissions, or to be stored in different locations, has to be split into separate containers.
 
@@ -48,15 +48,15 @@ Currently no public APIs exist for defining new data-object types, but the exist
 A data structure in a container, with its own self contained editing and merge resolution logic.
 May contain handles to other DDSes.
 
-Some DDSes (mainly SHaredTree) provide their own functionality for further componentization of their content.
+Some DDSes (mainly SharedTree) provide their own functionality for further componentization of their content.
 
-While while the user of the container can choose which DDSes to load, DDSes themselves currently can not support being only partially loaded: either the whole DDS is available or not.
+While the user of the container can choose which DDSes to load, DDSes themselves currently cannot support being only partially loaded: either the whole DDS is available or not.
 The one exception to this is blobs which the user of the container can asynchronously upload then insert handle to them into the DDS.
 Future work (See SharedTree) may enable some DDSes to load subsets of their data on demand.
 
 ## SharedTree
 
-SharedTree is design to encourage componentization by subtree / schema.
+SharedTree is designed to encourage componentization by subtree / schema.
 Typical usage is a given component defines its schema and logic which works with that schema.
 This schema/component is then referenced/depended on by its parent, adding its schema as a child.
 
@@ -65,7 +65,7 @@ it should be practical to either package the view code for the component alongsi
 
 If the same data (same schema) needs to be handled differently in different parts of the application, that logic (anything which differs) should be separate from the schema.
 Anything which is always the same however can be included as methods or additional state declared as part of the schema class if this is helpful.
-While the entire tre is branched, creating a branch can be done from just a subtree, so as long as the rest of the tree isn't modified, its indistinguishable from just branching the specific subtree.
+While the entire tree is branched, creating a branch can be done from just a subtree, so as long as the rest of the tree isn't modified, its indistinguishable from just branching the specific subtree.
 
 Tree provides its own branching feature, allowing additional local alternative views with buffered speculative edits.
 This does not however provide any way to branch other DDSes the tree references via handles, so everything which needs to be branched this way should be kept in the same tree.
