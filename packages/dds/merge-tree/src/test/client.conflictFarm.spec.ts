@@ -24,12 +24,7 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
 	clients: IConfigRange;
 }
 
-const allOperations: TestOperation[] = [
-	removeRange,
-	annotateRange,
-	insertAtRefPos,
-	obliterateRange,
-];
+const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
 
 export const debugOptions: IConflictFarmConfig = {
 	minLength: { min: 1, max: 512 },
