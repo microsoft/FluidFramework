@@ -253,8 +253,6 @@ export async function setDependencyRange<P extends IPackage>(
 	dependencyRange: InterdependencyRange,
 ): Promise<void> {
 	const dependencySet = new Set(Array.from(dependencies, (d) => d.name));
-	 // set to track changed packages to reload
-	const packagesToReload = new Set<P>();
 	// collect the "save" promises to resolve in parallel
 	const savePromises: Promise<void>[] = [];
 
@@ -281,16 +279,14 @@ export async function setDependencyRange<P extends IPackage>(
 				} else if (depKind === "peer" && pkg.packageJson.peerDependencies !== undefined) {
 					pkg.packageJson.peerDependencies[depName] = depRange;
 				}
-
-				packagesToReload.add(pkg);
 			}
 		}
 		savePromises.push(pkg.savePackageJson());
 	}
 	await Promise.all(savePromises);
 
-	// Reload all changed packages to refresh the in-memory data
-	for (const pkg of packagesToReload) {
+	// Reload all packages to refresh the in-memory data
+	for (const pkg of packagesToUpdate) {
 		pkg.reload();
 	}
 }
