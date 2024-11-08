@@ -5,7 +5,7 @@
 
 module.exports = {
 	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		require.resolve("@fluidframework/eslint-config-fluid"),
 		"prettier",
 	],
 	parserOptions: {
@@ -29,25 +29,8 @@ module.exports = {
 		// TODO: Remove this override once dependency on eslint-config-fluid has been updated to 5.2.0+
 		"import/order": "off",
 
-		// TODO: Remove these overrides once this config has been updated to extend at least the "recommended" base config.
-		"@typescript-eslint/no-explicit-any": [
-			"error",
-			{
-				ignoreRestArgs: true,
-			},
-		],
-		"@typescript-eslint/explicit-function-return-type": [
-			"error",
-			{
-				allowExpressions: true,
-				allowTypedFunctionExpressions: true,
-				allowHigherOrderFunctions: true,
-				allowDirectConstAssertionInArrowFunctions: true,
-				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
-			},
-		],
+		// #region TODO: Remove these overrides once this config has been updated to extend the "strict" base config.
 
-		// TODO: Remove these overrides once this config has been updated to extend the "strict" base config.
 		"@typescript-eslint/explicit-member-accessibility": "error",
 		"@typescript-eslint/consistent-type-exports": [
 			"error",
@@ -58,6 +41,37 @@ module.exports = {
 			{ fixStyle: "inline-type-imports" },
 		],
 		"@typescript-eslint/no-import-type-side-effects": "error",
+
+		// #endregion
+
+		// #region TODO:AB#6983: Remove these overrides and fix violations
+
+		"@typescript-eslint/explicit-module-boundary-types": "off",
+
+		// Causes eslint to stack-overflow in this package. Will need investigation.
+		"@typescript-eslint/no-unsafe-argument": "off",
+
+		// Causes eslint to stack-overflow in this package. Will need investigation.
+		"@typescript-eslint/no-unsafe-assignment": "off",
+
+		"@typescript-eslint/no-unsafe-call": "off",
+		"@typescript-eslint/no-unsafe-member-access": "off",
+
+		"jsdoc/require-description": "warn",
+
+		"unicorn/explicit-length-check": "off",
+		"unicorn/no-array-callback-reference": "off",
+		"unicorn/no-array-for-each": "off",
+		"unicorn/no-array-reduce": "off",
+		"unicorn/no-lonely-if": "off",
+		"unicorn/no-negated-condition": "off",
+		"unicorn/no-null": "off",
+		"unicorn/prefer-default-parameters": "off",
+		"unicorn/prefer-export-from": "off",
+		"unicorn/prefer-set-has": "off",
+		"unicorn/text-encoding-identifier-case": "off",
+
+		// #endregion
 	},
 	overrides: [
 		{
