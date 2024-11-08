@@ -38,6 +38,7 @@ import {
 	tagChange,
 	visitDelta,
 	type RevertibleFactory,
+	type ClonableRevertibleFactory,
 } from "../core/index.js";
 import {
 	type HasListeners,
@@ -68,6 +69,7 @@ import type {
 	TreeViewConfiguration,
 	UnsafeUnknownSchema,
 	ViewableTree,
+	TreeBranch,
 } from "../simple-tree/index.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
@@ -92,7 +94,10 @@ export interface CheckoutEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
 	 * this change is not revertible.
 	 */
-	changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+	changed(
+		data: CommitMetadata,
+		getRevertible?: RevertibleFactory | ClonableRevertibleFactory,
+	): void;
 }
 
 /**
@@ -397,14 +402,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	/**
 	 * Set of revertibles maintained for automatic disposal
 	 */
-	private readonly revertibles = new Set<DisposableRevertible>();
+	private readonly revertibles = new Set<ClonableRevertible>();
 
 	/**
 	 * Each branch's head commit corresponds to a revertible commit.
 	 * Maintaining a whole branch ensures the commit graph is not pruned in a way that would prevent the commit from
 	 * being reverted.
 	 */
-	private readonly revertibleCommitBranches = new Map<
+	private revertibleCommitBranches = new Map<
 		RevisionTag,
 		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
 	>();
@@ -537,7 +542,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 										);
 									}
 									const revertibleCommits = this.revertibleCommitBranches;
-									const revertible: DisposableRevertible = {
+									const revertible: ClonableRevertible = {
 										get status(): RevertibleStatus {
 											const revertibleCommit = revertibleCommits.get(revision);
 											return revertibleCommit === undefined
@@ -560,6 +565,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 											if (release) {
 												revertible.dispose();
 											}
+										},
+										clone: (branch?: TreeBranch): ClonableRevertible => {
+											return this.cloneRevertible(revision, kind, branch);
 										},
 										dispose: () => {
 											if (revertible.status === RevertibleStatus.Disposed) {
@@ -626,6 +634,54 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
+	private cloneRevertible(
+		revision: RevisionTag,
+		kind: CommitKind,
+		branch?: TreeBranch,
+		onRevertibleDisposed?: (revertible: Revertible) => void,
+	): ClonableRevertible {
+		const checkout = branch ? (branch as unknown as TreeCheckout) : this;
+		const commitBranches = checkout.revertibleCommitBranches;
+
+		const revertible: ClonableRevertible = {
+			get status(): RevertibleStatus {
+				const revertibleCommit = commitBranches.get(revision);
+				return revertibleCommit === undefined
+					? RevertibleStatus.Disposed
+					: RevertibleStatus.Valid;
+			},
+			revert: (release: boolean = true) => {
+				if (revertible.status === RevertibleStatus.Disposed) {
+					throw new UsageError("Unable to revert a revertible that has been disposed.");
+				}
+
+				const revertMetrics = checkout.revertRevertible(revision, kind);
+				checkout.logger?.sendTelemetryEvent({
+					eventName: TreeCheckout.revertTelemetryEventName,
+					...revertMetrics,
+				});
+
+				if (release) {
+					revertible.dispose();
+				}
+			},
+			clone: (forkedBranch?: TreeBranch) => {
+				return checkout.cloneRevertible(revision, kind, forkedBranch);
+			},
+			dispose: () => {
+				if (revertible.status === RevertibleStatus.Disposed) {
+					throw new UsageError(
+						"Unable to dispose a revertible that has already been disposed.",
+					);
+				}
+				checkout.disposeRevertible(revertible, revision);
+				onRevertibleDisposed?.(revertible);
+			},
+		};
+
+		return revertible;
+	}
+
 	// For the new TreeViewAlpha API
 	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
@@ -675,7 +731,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
 		const transaction = new Transaction(branch);
-		return new TreeCheckout(
+		const branchedCheckout = new TreeCheckout(
 			transaction,
 			branch,
 			true,
@@ -690,6 +746,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.logger,
 			this.breaker,
 		);
+
+		/**
+		 * Clones new immutable revertible commit branches and revertibles from the parent branch.
+		 */
+		branchedCheckout.revertibleCommitBranches = new Map(this.revertibleCommitBranches);
+
+		return branchedCheckout;
 	}
 
 	public rebase(checkout: TreeCheckout): void {
@@ -792,7 +855,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
-	private disposeRevertible(revertible: DisposableRevertible, revision: RevisionTag): void {
+	private disposeRevertible(revertible: ClonableRevertible, revision: RevisionTag): void {
 		this.revertibleCommitBranches.get(revision)?.dispose();
 		this.revertibleCommitBranches.delete(revision);
 		this.revertibles.delete(revertible);
@@ -891,6 +954,7 @@ export function runSynchronous(
 		: view.transaction.commit();
 }
 
-interface DisposableRevertible extends Revertible {
+export interface ClonableRevertible extends Revertible {
 	dispose: () => void;
+	clone: (forkedBranch?: TreeBranch) => ClonableRevertible;
 }

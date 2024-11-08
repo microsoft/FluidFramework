@@ -12,7 +12,14 @@ import {
 import { singleJsonCursor } from "../json/index.js";
 import { SharedTreeFactory, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
-import { createTestUndoRedoStacks, expectJsonTree, moveWithin } from "../utils.js";
+import {
+	createTestUndoRedoStacks,
+	createClonableUndoRedoStacks,
+	expectJsonTree,
+	moveWithin,
+	testIdCompressor,
+} from "../utils.js";
+import { SharedTree } from "../../index.js";
 import { insert, jsonSequenceRootSchema, remove } from "../sequenceRootUtils.js";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
@@ -21,7 +28,11 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import assert from "assert";
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import {
+	asTreeViewAlpha,
+	SchemaFactory,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
 
@@ -453,6 +464,33 @@ describe("Undo and redo", () => {
 		revertible.revert();
 		assert.equal(view.root.foo, 1);
 	});
+
+	it.only("revert the original and forked revertibles separately", () => {
+		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
+
+		const {
+			undoStack: undoStack1,
+			redoStack: redoStack1,
+			unsubscribe: unsubscribe1,
+		} = createClonableUndoRedoStacks(originalView.events);
+
+		assert(originalView.root.child !== undefined);
+		originalView.root.child.propertyOne = 256; // 128 -> 256
+
+		const forkedView = originalView.fork();
+
+		const propertyTwoUndo = undoStack1.pop();
+		const clonedPropertyTwoUndo = propertyTwoUndo?.clone(forkedView);
+
+		propertyTwoUndo?.revert();
+
+		assert.equal(originalView.root.child?.propertyTwo.itemOne, "");
+		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "newItem");
+
+		clonedPropertyTwoUndo?.revert();
+
+		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "");
+	});
 });
 
 /**
@@ -482,3 +520,42 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 }
 
 let temp: unknown;
+
+/**
+ * Schema Builder
+ */
+const builder = new SchemaFactory("shared-tree-test");
+class ChildNodeSchema extends builder.object("child-item", {
+	propertyOne: builder.optional(builder.number),
+	propertyTwo: builder.object("propertyTwo-item", {
+		itemOne: builder.string,
+	}),
+}) {}
+class RootNodeSchema extends builder.object("root-item", {
+	child: builder.optional(ChildNodeSchema),
+}) {}
+
+function createLocalSharedTree(id: string) {
+	const sharedTree = SharedTree.create(
+		new MockFluidDataStoreRuntime({
+			registry: [SharedTree.getFactory()],
+			idCompressor: testIdCompressor,
+		}),
+		id,
+	);
+
+	const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+
+	view.initialize(
+		new RootNodeSchema({
+			child: {
+				propertyOne: 128,
+				propertyTwo: {
+					itemOne: "",
+				},
+			},
+		}),
+	);
+
+	return view;
+}
