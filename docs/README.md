@@ -129,8 +129,18 @@ TODO
 
 ### Best practices
 
+#### Markdown
+
+##### Links
+
 -   Don't include file extensions in links. E.g., prefer `[foo](./foo)` over `[foo](./foo.md)`.
     -   Rationale: more portable (if a document changes from `.md` to `.mdx`, for example, links will not need to be updated).
+
+#### Assets
+
+##### Images
+
+TODO: CDN
 
 ## TODOs
 
