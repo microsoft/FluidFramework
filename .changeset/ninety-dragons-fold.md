@@ -27,4 +27,4 @@ This feature is only available when the configuration `Fluid.Sequence.mergeTreeE
 sharedString.annotateAdjustRange(start, end, {
     key: { value: 5, min: 0, max: 10 }
 });
-``
+```
