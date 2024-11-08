@@ -18,3 +18,20 @@ export const testDataPath = path.resolve(_dirname, packageRootPath, "src/test/da
  * Absolute path to the test repo.
  */
 export const testRepoRoot = path.join(testDataPath, "testRepo");
+
+/**
+ * Selects a subset of keys from an object and returns a new object with only the selected keys.
+ * @param obj - The object to pick from.
+ * @param keys - The keys to pick.
+ * @returns The new object.
+ */
+export function pick<T extends object, K extends keyof T>(obj: T , keys: K[]): Pick<T, K> {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const result = {} as Pick<T, K>;
+	for (const key of keys) {
+			if (key in obj) {
+					result[key] = obj[key];
+			}
+	}
+	return result;
+}

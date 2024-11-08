@@ -6,16 +6,15 @@
 import { strict as assert } from "node:assert";
 import path from "node:path";
 
-import { expect } from "chai";
-import { afterEach, describe, it } from "mocha";
 import * as semver from "semver";
 import { simpleGit } from "simple-git";
+import { afterEach, expect, describe, it } from "vitest";
 
 import { loadBuildProject } from "../buildProject.js";
 import type { ReleaseGroupName, WorkspaceName } from "../types.js";
 import { setVersion } from "../versions.js";
 
-import { testDataPath, testRepoRoot } from "./init.js";
+import { pick, testDataPath, testRepoRoot } from "./init.js";
 
 const repo = loadBuildProject(path.join(testDataPath, "./testRepo"));
 const main = repo.releaseGroups.get("main" as ReleaseGroupName);
@@ -45,17 +44,22 @@ describe("setVersion", () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		await setVersion(main.packages, semver.parse("1.2.1")!);
 
-		const allCorrect = main.packages.every((pkg) => pkg.version === "1.2.1");
-		expect(main.version).to.equal("1.2.1");
-		expect(allCorrect).to.be.true;
+		const results = main.packages.map((pkg)=> {
+			return pick(pkg.packageJson, ["name", "version"]);
+		});
+
+		expect(results).toMatchSnapshot();
 	});
 
 	it("workspace", async () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		await setVersion(secondWorkspace.packages, semver.parse("2.2.1")!);
 
-		const allCorrect = secondWorkspace.packages.every((pkg) => pkg.version === "2.2.1");
-		expect(allCorrect).to.be.true;
+		const results = secondWorkspace.packages.map((pkg)=> {
+			return pick(pkg.packageJson, ["name", "version"]);
+		});
+
+		expect(results).toMatchSnapshot();
 	});
 
 	it("repo", async () => {
@@ -63,7 +67,10 @@ describe("setVersion", () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		await setVersion(packages, semver.parse("1.2.1")!);
 
-		const allCorrect = packages.every((pkg) => pkg.version === "1.2.1");
-		expect(allCorrect).to.be.true;
+		const results = packages.map((pkg)=> {
+			return pick(pkg.packageJson, ["name", "version"]);
+		});
+
+		expect(results).toMatchSnapshot();
 	});
 });
