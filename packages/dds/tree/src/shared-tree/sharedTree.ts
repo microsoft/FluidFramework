@@ -31,7 +31,7 @@ import {
 	type IEmitter,
 	type Listenable,
 	createEmitter,
-} from "../events/index.js";
+} from "@fluidframework/core-interfaces";
 import {
 	DetachedFieldIndexSummarizer,
 	ForestSummarizer,

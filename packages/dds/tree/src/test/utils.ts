@@ -88,7 +88,7 @@ import {
 	CursorLocationType,
 	type RevertibleFactory,
 } from "../core/index.js";
-import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
+import type { HasListeners, IEmitter, Listenable } from "@fluidframework/core-interfaces";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	type NodeKeyManager,

@@ -10,7 +10,7 @@
 // 	createEmitter,
 // 	// eslint-disable-next-line import/no-internal-modules
 // } from "../../events/emitter.js";
-// import type { Listenable } from "../../events/index.js";
+// import type { Listenable } from "@fluidframework/core-utils";
 
 // interface TestEvents {
 // 	open: () => void;

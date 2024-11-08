@@ -8,6 +8,7 @@ import { setInNestedMap } from "./util.js";
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
+ * @public
  */
 export interface IEmitter<TListeners extends Listeners<TListeners>> {
 	/**
@@ -39,6 +40,7 @@ export interface IEmitter<TListeners extends Listeners<TListeners>> {
 /**
  * Called when the last listener for `eventName` is removed.
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
+ * @public
  */
 export type NoListenersCallback<TListeners extends object> = (
 	eventName: keyof Listeners<TListeners>,
@@ -46,6 +48,7 @@ export type NoListenersCallback<TListeners extends object> = (
 
 /**
  * Allows querying if an object has listeners.
+ * @public
  * @sealed
  */
 export interface HasListeners<TListeners extends Listeners<TListeners>> {
@@ -97,6 +100,7 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
  * 	}
  * }
  * ```
+ * @public
  */
 export class EventEmitter<TListeners extends Listeners<TListeners>>
 	implements Listenable<TListeners>, HasListeners<TListeners>
@@ -225,6 +229,7 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  * 	}
  * }
  * ```
+ * @public
  */
 export function createEmitter<TListeners extends object>(
 	noListeners?: NoListenersCallback<TListeners>,

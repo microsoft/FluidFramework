@@ -7,10 +7,27 @@
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
+// @public
+export function createEmitter<TListeners extends object>(noListeners?: NoListenersCallback<TListeners>): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners>;
+
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
     protected abstract brand(dummy: never): Name;
+}
+
+// @public
+export class EventEmitter<TListeners extends Listeners<TListeners>> implements Listenable<TListeners>, HasListeners<TListeners> {
+    protected constructor(noListeners?: NoListenersCallback<TListeners> | undefined);
+    // (undocumented)
+    protected emit<K extends keyof TListeners>(eventName: K, ...args: Parameters<TListeners[K]>): void;
+    // (undocumented)
+    protected emitAndCollect<K extends keyof TListeners>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
+    // (undocumented)
+    hasListeners(eventName?: keyof TListeners): boolean;
+    // (undocumented)
+    protected readonly listeners: Map<keyof TListeners, Map<Off, (...args: any[]) => TListeners[keyof TListeners]>>;
+    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
 
 // @public
@@ -30,6 +47,11 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
+// @public @sealed
+export interface HasListeners<TListeners extends Listeners<TListeners>> {
+    hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
+}
+
 // @public
 export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
@@ -39,6 +61,12 @@ export interface IConfigProviderBase {
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
+}
+
+// @public
+export interface IEmitter<TListeners extends Listeners<TListeners>> {
+    emit<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): void;
+    emitAndCollect<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
 }
 
 // @public
@@ -287,6 +315,9 @@ export interface IResponse {
 }
 
 // @public
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+
+// @public
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)
     category: string;
@@ -305,6 +336,16 @@ export interface ITelemetryBaseProperties {
     [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
+// @public @sealed
+export interface Listenable<TListeners extends object> {
+    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+}
+
+// @public
+export type Listeners<T extends object> = {
+    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
+};
+
 // @public
 export const LogLevel: {
     readonly verbose: 10;
@@ -314,6 +355,12 @@ export const LogLevel: {
 
 // @public
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+
+// @public
+export type NoListenersCallback<TListeners extends object> = (eventName: keyof Listeners<TListeners>) => void;
+
+// @public
+export type Off = () => void;
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {

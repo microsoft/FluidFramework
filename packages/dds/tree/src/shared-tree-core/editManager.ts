@@ -41,7 +41,7 @@ import {
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
-import { createEmitter } from "../events/index.js";
+import { createEmitter } from "@fluidframework/core-interfaces";
 import {
 	TelemetryEventBatcher,
 	measure,

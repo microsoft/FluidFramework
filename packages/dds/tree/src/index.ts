@@ -33,13 +33,6 @@ export {
 export { type Brand } from "./util/index.js";
 
 export {
-	type Listeners,
-	type IsListener,
-	type Listenable,
-	type Off,
-} from "./events/index.js";
-
-export {
 	TreeStatus,
 	TreeCompressionStrategy,
 } from "./feature-libraries/index.js";

@@ -33,7 +33,7 @@ import {
 	aboveRootPlaceholder,
 	deepCopyMapTree,
 } from "../../core/index.js";
-import { createEmitter } from "../../events/index.js";
+import { createEmitter } from "@fluidframework/core-interfaces";
 import {
 	assertNonNegativeSafeInteger,
 	assertValidIndex,

@@ -43,7 +43,7 @@ import {
 	cursorForMapTreeNode,
 } from "../../feature-libraries/index.js";
 import type { Context } from "./context.js";
-import { createEmitter, type Listenable } from "../../events/index.js";
+import { createEmitter, type Listenable } from "@fluidframework/core-interfaces";
 
 interface UnhydratedTreeSequenceFieldEditBuilder
 	extends SequenceFieldEditBuilder<ExclusiveMapTree[]> {
