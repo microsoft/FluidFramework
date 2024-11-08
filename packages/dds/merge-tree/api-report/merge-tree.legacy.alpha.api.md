@@ -177,7 +177,7 @@ export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
     // (undocumented)
     pos2?: number;
     // (undocumented)
-    props?: undefined;
+    props?: never;
     // (undocumented)
     relativePos1?: undefined;
     // (undocumented)
@@ -189,7 +189,7 @@ export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
 // @alpha (undocumented)
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     // (undocumented)
-    adjust?: undefined;
+    adjust?: never;
     // (undocumented)
     pos1?: number;
     // (undocumented)

@@ -195,7 +195,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	relativePos2?: IRelativePosition;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	props: Record<string, any>;
-	adjust?: undefined;
+	adjust?: never;
 }
 
 /**
@@ -231,7 +231,7 @@ export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
 	pos2?: number;
 	relativePos1?: undefined;
 	relativePos2?: undefined;
-	props?: undefined;
+	props?: never;
 	adjust: Record<string, AdjustParams>;
 }
 

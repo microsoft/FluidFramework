@@ -76,17 +76,10 @@ import {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
-	type AdjustParams,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
-import {
-	PropertySet,
-	createMap,
-	extend,
-	extendIfUndefined,
-	type MapLike,
-} from "./properties.js";
+import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
 	ReferencePosition,
@@ -101,6 +94,7 @@ import {
 	copyPropertiesAndManager,
 	PropertiesManager,
 	PropertiesRollback,
+	type PropsOrAdjust,
 } from "./segmentPropertiesManager.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
@@ -1912,7 +1906,7 @@ export class MergeTree {
 	 * Annotate a range with properties
 	 * @param start - The inclusive start position of the range to annotate
 	 * @param end - The exclusive end position of the range to annotate
-	 * @param props - The properties to annotate the range with
+	 * @param propsOrAdjust - The properties or adjustments to annotate the range with
 	 * @param refSeq - The reference sequence number to use to apply the annotate
 	 * @param clientId - The id of the client making the annotate
 	 * @param seq - The sequence number of the annotate operation
@@ -1922,14 +1916,11 @@ export class MergeTree {
 	public annotateRange(
 		start: number,
 		end: number,
-		changes:
-			| { props: PropertySet; adjust?: undefined }
-			| { props?: undefined; adjust: MapLike<AdjustParams> },
+		propsOrAdjust: PropsOrAdjust,
 		refSeq: number,
 		clientId: number,
 		seq: number,
 		opArgs: IMergeTreeDeltaOpArgs,
-
 		// eslint-disable-next-line import/no-deprecated
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): void {
@@ -1940,18 +1931,18 @@ export class MergeTree {
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup | undefined;
-		const changeObj = changes.props ?? changes.adjust;
+		const opObj = propsOrAdjust.props ?? propsOrAdjust.adjust;
 		const annotateSegment = (segment: ISegmentLeaf): boolean => {
 			assert(
 				!Marker.is(segment) ||
-					!(reservedMarkerIdKey in changeObj) ||
-					changeObj.markerId === segment.properties?.markerId,
+					!(reservedMarkerIdKey in opObj) ||
+					opObj.markerId === segment.properties?.markerId,
 				0x5ad /* Cannot change the markerId of an existing marker */,
 			);
 
 			const propertyManager = (segment.propertyManager ??= new PropertiesManager());
 			const propertyDeltas = propertyManager.handleProperties(
-				changes,
+				propsOrAdjust,
 				segment,
 				seq,
 				this.collabWindow.minSeq,
@@ -2434,7 +2425,6 @@ export class MergeTree {
 						this.collabWindow.clientId,
 						UniversalSequenceNumber,
 						{ op: annotateOp },
-
 						PropertiesRollback.Rollback,
 					);
 					i++;

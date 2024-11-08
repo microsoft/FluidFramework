@@ -15,6 +15,7 @@ import {
 import { MergeTree } from "../mergeTree.js";
 import { Marker, type ISegmentLeaf } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import type { PropsOrAdjust } from "../segmentPropertiesManager.js";
 import { TextSegment } from "../textSegment.js";
 
 import { insertSegments } from "./testUtils.js";
@@ -126,7 +127,7 @@ describe("MergeTree", () => {
 				);
 			});
 			describe("local first", () => {
-				const props = {
+				const props: PropsOrAdjust = {
 					props: { propertySource: "local" },
 				};
 				beforeEach(() => {
@@ -186,7 +187,7 @@ describe("MergeTree", () => {
 				});
 
 				it("unsequenced local after unsequenced local split", () => {
-					const secondChangeProps = {
+					const secondChangeProps: PropsOrAdjust = {
 						props: {
 							secondChange: 1,
 						},
@@ -201,7 +202,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const splitOnlyProps = {
+					const splitOnlyProps: PropsOrAdjust = {
 						props: {
 							splitOnly: 1,
 						},
@@ -245,7 +246,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							props,
+							...props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -267,7 +268,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							props: secondChangeProps,
+							...secondChangeProps,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -289,7 +290,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: splitPos,
 							pos2: annotateEnd,
-							props: splitOnlyProps,
+							...splitOnlyProps,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -338,7 +339,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							props,
+							...props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -361,7 +362,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							props,
+							...props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -403,7 +404,7 @@ describe("MergeTree", () => {
 
 					assert.equal(segment.properties?.propertySource, "local");
 
-					const props2 = {
+					const props2: PropsOrAdjust = {
 						props: { propertySource: "local2", secondSource: 1 },
 					};
 					mergeTree.annotateRange(
@@ -419,7 +420,7 @@ describe("MergeTree", () => {
 					assert.equal(segment.properties?.propertySource, "local2");
 					assert.equal(segment.properties?.secondSource, 1);
 
-					const props3 = {
+					const props3: PropsOrAdjust = {
 						props: {
 							thirdSource: 1,
 						},
@@ -442,7 +443,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							props,
+							...props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -458,7 +459,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							props: props2,
+							...props2,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -474,7 +475,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							props: props3,
+							...props3,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -504,7 +505,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							props,
+							...props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -606,7 +607,7 @@ describe("MergeTree", () => {
 				});
 
 				it("remote before sequenced local", () => {
-					const props = {
+					const props: PropsOrAdjust = {
 						props: { propertySource: "local" },
 					};
 
@@ -633,7 +634,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							props,
+							...props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -647,7 +648,7 @@ describe("MergeTree", () => {
 				});
 			});
 			describe("local with rewrite first", () => {
-				const props = {
+				const props: PropsOrAdjust = {
 					props: { propertySource: "local" },
 				};
 				beforeEach(() => {
@@ -715,7 +716,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							props,
+							...props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -764,7 +765,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							props,
+							...props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {

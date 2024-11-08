@@ -126,6 +126,7 @@ export {
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
 export {
+	PropsOrAdjust,
 	copyPropertiesAndManager,
 	PropertiesManager,
 	PropertiesRollback,

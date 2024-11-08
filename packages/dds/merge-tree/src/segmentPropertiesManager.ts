@@ -6,8 +6,12 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { DoublyLinkedList, iterateListValues } from "./collections/index.js";
-import { UnassignedSequenceNumber } from "./constants.js";
-import type { AdjustParams } from "./ops.js";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
+import type {
+	AdjustParams,
+	IMergeTreeAnnotateAdjustMsg,
+	IMergeTreeAnnotateMsg,
+} from "./ops.js";
 import { MapLike, PropertySet, clone, createMap } from "./properties.js";
 
 /**
@@ -85,111 +89,136 @@ function computePropertyValue(
 }
 
 /**
- *
- * This class handles changes to properties, both remote and local. It manages the lifecycle for local property changes,
- * and ensures all property changes are eventually consistent.
+ * @internal
+ */
+export type PropsOrAdjust =
+	| Pick<IMergeTreeAnnotateAdjustMsg, "props" | "adjust">
+	| Pick<IMergeTreeAnnotateMsg, "props" | "adjust">;
+
+const opToChanges = (op: PropsOrAdjust, seq: number): [string, PropertyChange][] => [
+	...Object.entries(op.props ?? {})
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		.map<[string, PropertyChange]>(([k, raw]) => [k, { raw, seq }])
+		.filter(([_, v]) => v.raw !== undefined),
+	...Object.entries(op.adjust ?? {}).map<[string, PropertyChange]>(([k, adjust]) => [
+		k,
+		{ adjust, seq },
+	]),
+];
+
+function applyChanges(
+	op: PropsOrAdjust,
+	seg: { properties?: MapLike<unknown> },
+	seq: number,
+	run: (
+		properties: MapLike<unknown>,
+		deltas: MapLike<unknown>,
+		key: string,
+		value: PropertyChange,
+	) => void,
+): MapLike<unknown> {
+	const properties = (seg.properties ??= createMap<unknown>());
+	const deltas: MapLike<unknown> = {};
+	for (const [key, value] of opToChanges(op, seq)) {
+		run(properties, deltas, key, value);
+		if (properties[key] === null) {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete properties[key];
+		}
+	}
+	return deltas;
+}
+
+/**
+ * The PropertiesManager class handles changes to properties, both remote and local.
+ * It manages the lifecycle for local property changes, ensures all property changes are eventually consistent,
+ * and provides methods to acknowledge changes, update the minimum sequence number (msn), and copy properties to another manager.
+ * This class is essential for maintaining the integrity and consistency of property changes in collaborative environments.
  * @internal
  */
 export class PropertiesManager {
+	private readonly changes = new Map<string, PropertyChanges>();
+
+	public rollbackProperties(
+		op: PropsOrAdjust,
+		seg: { properties?: MapLike<unknown> },
+		collaborating: boolean = false,
+	): MapLike<unknown> {
+		return applyChanges(op, seg, UniversalSequenceNumber, (properties, deltas, key, value) => {
+			// eslint-disable-next-line unicorn/no-null
+			const previousValue = properties[key] ?? null;
+
+			const pending = this.changes.get(key);
+			if (collaborating) {
+				assert(pending !== undefined, "pending must exist for rollback");
+				pending.local.pop();
+				properties[key] = computePropertyValue(
+					pending.msnConsensus,
+					pending.remote.map((n) => n.data),
+					pending.local.map((n) => n.data),
+				);
+			} else {
+				assert(pending === undefined, "must not have pending when not collaborating");
+				properties[key] = computePropertyValue(previousValue, [value]);
+			}
+			deltas[key] = previousValue;
+		});
+	}
+
 	public handleProperties(
-		op: { props?: MapLike<unknown>; adjust?: MapLike<AdjustParams> },
+		op: PropsOrAdjust,
 		seg: { properties?: MapLike<unknown> },
 		seq: number,
 		msn: number,
 		collaborating: boolean = false,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): MapLike<unknown> {
-		const properties = (seg.properties ??= createMap<unknown>());
-		const deltas: MapLike<unknown> = {};
-
-		for (const [key, value] of [
-			...Object.entries(op.props ?? {})
-				.map<[string, PropertyChange]>(([k, raw]) => [k, { raw, seq }])
-				.filter(([_, v]) => v.raw !== undefined),
-			...Object.entries(op.adjust ?? {}).map<[string, PropertyChange]>(([k, adjust]) => [
-				k,
-				{ adjust, seq },
-			]),
-		]) {
+		if (rollback === PropertiesRollback.Rollback) {
+			return this.rollbackProperties(op, seg, collaborating);
+		}
+		const rtn = applyChanges(op, seg, seq, (properties, deltas, key, value) => {
 			// eslint-disable-next-line unicorn/no-null
 			const previousValue = properties[key] ?? null;
-
-			if (rollback === PropertiesRollback.Rollback) {
-				const pending = this.changes.get(key);
-				if (collaborating) {
-					assert(pending !== undefined, "pending must exist for rollback");
-					pending.local.pop();
-					properties[key] = computePropertyValue(
-						pending.msnConsensus,
-						pending.remote.map((n) => n.data),
-						pending.local.map((n) => n.data),
-					);
+			if (collaborating) {
+				const pending: PropertyChanges | undefined = this.changes.get(key) ?? {
+					msnConsensus: previousValue,
+					remote: new DoublyLinkedList(),
+					local: new DoublyLinkedList(),
+				};
+				this.changes.set(key, pending);
+				const local = seq === UnassignedSequenceNumber;
+				if (local) {
+					pending.local.push(value);
 				} else {
-					assert(pending === undefined, "must not have pending when not collaborating");
-					properties[key] = computePropertyValue(previousValue, [value]);
-				}
-				deltas[key] = previousValue;
-			} else {
-				if (collaborating) {
-					const pending: PropertyChanges | undefined = this.changes.get(key) ?? {
-						msnConsensus: previousValue,
-						remote: new DoublyLinkedList(),
-						local: new DoublyLinkedList(),
-					};
-					this.changes.set(key, pending);
-					const local = seq === UnassignedSequenceNumber;
-					if (local) {
-						pending.local.push(value);
+					// we only track remotes if there are adjusts, as only adjusts make application anti-commutative
+					// this will limit the impact of this change to only those using adjusts. Additionally, we only
+					// need to track remotes at all to support emitting the legacy snapshot format, which only sharedstring
+					// uses. when we remove the ability to emit that format, we can remove all remote op tracking
+					if (value.raw !== undefined && pending.remote.empty) {
+						pending.msnConsensus = computePropertyValue(pending.msnConsensus, [value]);
 					} else {
-						// we only track remotes if there are adjusts, as only adjusts make application anti-commutative
-						// this will limit the impact of this change to only those using adjusts. Additionally, we only
-						// need to track remotes at all to support emitting the legacy snapshot format, which only sharedstring
-						// uses. when we remove the ability to emit that format, we can remove all remote op tracking
-						if (value.raw !== undefined && pending.remote.empty) {
-							pending.msnConsensus = computePropertyValue(pending.msnConsensus, [value]);
-						} else {
-							pending.remote.push(value);
-						}
+						pending.remote.push(value);
 					}
-					properties[key] = computePropertyValue(
-						pending.msnConsensus,
-						pending.remote.map((n) => n.data),
-						pending.local.map((n) => n.data),
-					);
-					if (local || pending.local.empty || properties[key] !== previousValue) {
-						deltas[key] = previousValue;
-					}
-				} else {
-					properties[key] = computePropertyValue(previousValue, [value]);
+				}
+				properties[key] = computePropertyValue(
+					pending.msnConsensus,
+					pending.remote.map((n) => n.data),
+					pending.local.map((n) => n.data),
+				);
+				if (local || pending.local.empty || properties[key] !== previousValue) {
 					deltas[key] = previousValue;
 				}
+			} else {
+				properties[key] = computePropertyValue(previousValue, [value]);
+				deltas[key] = previousValue;
 			}
-
-			if (properties[key] === null) {
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-				delete properties[key];
-			}
-		}
+		});
 		this.updateMsn(msn);
-		return deltas;
+		return rtn;
 	}
 
-	private readonly changes = new Map<string, PropertyChanges>();
-
-	public ack(
-		seq: number,
-		msn: number,
-		op: { props?: MapLike<unknown>; adjust?: MapLike<AdjustParams> },
-	): void {
-		for (const [key, value] of [
-			...Object.entries(op.props ?? {})
-				.map<[string, PropertyChange]>(([k, raw]) => [k, { raw, seq }])
-				.filter(([_, v]) => v.raw !== undefined),
-			...Object.entries(op.adjust ?? {}).map<[string, PropertyChange]>(([k, adjust]) => [
-				k,
-				{ adjust, seq },
-			]),
-		]) {
+	public ack(seq: number, msn: number, op: PropsOrAdjust): void {
+		for (const [key, value] of opToChanges(op, seq)) {
 			const change = this.changes.get(key);
 			const acked = change?.local?.shift();
 			assert(change !== undefined && acked !== undefined, "must have local change to ack");
