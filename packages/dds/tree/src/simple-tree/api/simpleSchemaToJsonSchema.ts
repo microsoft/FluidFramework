@@ -150,8 +150,8 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 					};
 
 		// Don't include "description" property at all if it's not present in the input.
-		if (value.description !== undefined) {
-			output.description = value.description;
+		if (value.metadata?.description !== undefined) {
+			output.description = value.metadata.description;
 		}
 
 		properties[key] = output;

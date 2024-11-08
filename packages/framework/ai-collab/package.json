@@ -61,8 +61,8 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "echo \"TESTS ARE CURRENTLY FAILING. SKIPPING RUN.;\" # mocha --recursive \"dist/test/**/*.spec.js\"",
-		"test:mocha:esm": "echo \"TESTS ARE CURRENTLY FAILING. SKIPPING RUN.;\" # mocha --recursive \"lib/test/**/*.spec.js\"",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.js\"",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
@@ -89,7 +89,12 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
+		"openai": "^4.67.3",
+		"typechat": "^0.1.1",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
@@ -100,6 +105,9 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.50.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:^",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
