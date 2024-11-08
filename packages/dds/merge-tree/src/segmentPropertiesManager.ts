@@ -139,6 +139,16 @@ function applyChanges(
 export class PropertiesManager {
 	private readonly changes = new Map<string, PropertyChanges>();
 
+	/**
+	 * Rolls back local property changes.
+	 * This method reverts property changes based on the provided operation and segment.
+	 * If the operation is part of a collaborative session, it ensures that the changes are consistent with the remote state.
+	 *
+	 * @param op - The operation containing property changes. This can be an adjustment or a set of properties.
+	 * @param seg - The segment containing properties. This object may have a properties map that will be modified.
+	 * @param collaborating - Indicates if the operation is part of a collaborative session. Defaults to false.
+	 * @returns The deltas of the rolled-back properties. This is a map-like object representing the changes that were reverted.
+	 */
 	public rollbackProperties(
 		op: PropsOrAdjust,
 		seg: { properties?: MapLike<unknown> },
@@ -150,7 +160,10 @@ export class PropertiesManager {
 
 			const pending = this.changes.get(key);
 			if (collaborating) {
-				assert(pending !== undefined, "pending must exist for rollback");
+				assert(
+					pending !== undefined,
+					"Pending changes must exist for rollback when collaborating",
+				);
 				pending.local.pop();
 				properties[key] = computePropertyValue(
 					pending.msnConsensus,
@@ -158,13 +171,26 @@ export class PropertiesManager {
 					pending.local.map((n) => n.data),
 				);
 			} else {
-				assert(pending === undefined, "must not have pending when not collaborating");
+				assert(pending === undefined, "Pending changes must not exist when not collaborating");
 				properties[key] = computePropertyValue(previousValue, [value]);
 			}
 			deltas[key] = previousValue;
 		});
 	}
 
+	/**
+	 * Handles property changes.
+	 * This method applies property changes based on the provided operation, segment, sequence number, and collaboration state.
+	 * It also handles rolling back changes if specified.
+	 *
+	 * @param op - The operation containing property changes.
+	 * @param seg - The segment containing properties.
+	 * @param seq - The sequence number for the operation.
+	 * @param msn - The minimum sequence number for the operation.
+	 * @param collaborating - Indicates if the operation is part of a collaborative session. Defaults to false.
+	 * @param rollback - Specifies if the changes should be rolled back. Defaults to PropertiesRollback.None.
+	 * @returns The deltas of the applied or rolled-back properties. This is a map-like object representing the changes.
+	 */
 	public handleProperties(
 		op: PropsOrAdjust,
 		seg: { properties?: MapLike<unknown> },
@@ -217,6 +243,14 @@ export class PropertiesManager {
 		return rtn;
 	}
 
+	/**
+	 * Acknowledges property changes.
+	 * This method acknowledges the property changes based on the provided sequence number and operation.
+	 *
+	 * @param seq - The sequence number for the operation.
+	 * @param msn - The minimum sequence number for the operation.
+	 * @param op - The operation containing property changes.
+	 */
 	public ack(seq: number, msn: number, op: PropsOrAdjust): void {
 		for (const [key, value] of opToChanges(op, seq)) {
 			const change = this.changes.get(key);
@@ -235,6 +269,12 @@ export class PropertiesManager {
 		this.updateMsn(msn);
 	}
 
+	/**
+	 * Updates the minimum sequence number (msn).
+	 * This method updates the minimum sequence number and removes any changes that have been acknowledged.
+	 *
+	 * @param msn - The minimum sequence number to update.
+	 */
 	public updateMsn(msn: number): void {
 		for (const [key, pending] of this.changes) {
 			pending.msnConsensus = computePropertyValue(
@@ -253,6 +293,13 @@ export class PropertiesManager {
 		}
 	}
 
+	/**
+	 * Copies properties to another manager.
+	 * This method copies the properties and their changes from the current manager to the destination manager.
+	 *
+	 * @param oldProps - The old properties to be copied.
+	 * @param dest - The destination object containing properties and property manager.
+	 */
 	public copyTo(
 		oldProps: PropertySet | undefined,
 		dest: {
@@ -272,9 +319,14 @@ export class PropertiesManager {
 	}
 
 	/**
-	 * This is only needed to support emitting snapshots in the legacy format
-	 * If we remove the ability to emit the legacy format, we can remove this
-	 * method, along with the need to track remote changes at all.
+	 * Gets properties at a specific sequence number.
+	 * This method retrieves the properties at the given sequence number.
+	 * This is only needed to support emitting snapshots in the legacy format.
+	 * If we remove the ability to emit the legacy format, we can remove this method, along with the need to track remote changes at all.
+	 *
+	 * @param oldProps - The old properties to be retrieved.
+	 * @param sequenceNumber - The sequence number to get properties at.
+	 * @returns The properties at the given sequence number.
 	 */
 	public getAtSeq(
 		oldProps: MapLike<unknown> | undefined,
@@ -294,6 +346,13 @@ export class PropertiesManager {
 		return properties;
 	}
 
+	/**
+	 * Checks if there are pending properties.
+	 * This method checks if there are any pending properties that need to be acknowledged.
+	 *
+	 * @param props - The properties to check.
+	 * @returns True if there are pending properties, false otherwise.
+	 */
 	public hasPendingProperties(props: PropertySet): boolean {
 		for (const [key, value] of Object.entries(props)) {
 			if (value !== undefined && !this.changes.has(key)) {
