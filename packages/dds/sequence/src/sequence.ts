@@ -621,19 +621,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
 	}
 
-	/**
-	 * Annotates a specified range within the sequence by applying the provided adjustments.
-	 *
-	 * @param start - The inclusive start position of the range to annotate. This is a zero-based index.
-	 * @param end - The exclusive end position of the range to annotate. This is a zero-based index.
-	 * @param adjust - A map-like object specifying the properties to adjust. Each key-value pair represents a property and its corresponding adjustment to be applied over the range.
-	 *                An adjustment is defined by an object containing a `value` to be added to the current property value, and optional `min` and `max` constraints to limit the adjusted value.
-	 *
-	 * @remarks
-	 * The range is defined by the start and end positions, where the start position is inclusive and the end position is exclusive.
-	 * The properties provided in the adjust parameter will be applied to the specified range. Each adjustment modifies the current value of the property by adding the specified `value`.
-	 * If the current value is not a number, it is treated as zero. The optional `min` and `max` constraints are applied after the adjustment to ensure the final value falls within the specified bounds.
-	 */
 	public annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void {
 		this.guardReentrancy(() => this.client.annotateAdjustRangeLocal(start, end, adjust));
 	}
