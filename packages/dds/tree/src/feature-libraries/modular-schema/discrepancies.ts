@@ -406,6 +406,7 @@ export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema)
 		switch (incompatibility.mismatch) {
 			case "nodeKind": {
 				if (incompatibility.stored !== undefined) {
+					// It's fine for the view schema to know of a node type that the stored schema doesn't know about.
 					return false;
 				}
 				break;
@@ -570,7 +571,7 @@ function compareFieldKind(
 	bKind: FieldKindIdentifier | undefined,
 ): boolean {
 	if (aKind === undefined || bKind === undefined) {
-		return false;
+		return aKind === bKind;
 	}
 
 	return posetLte(aKind, bKind, fieldRealizer);

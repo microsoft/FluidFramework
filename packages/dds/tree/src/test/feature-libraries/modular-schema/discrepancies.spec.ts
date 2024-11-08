@@ -647,11 +647,6 @@ describe("Schema Discrepancies", () => {
 
 		describe("on field kinds for root fields of identical content", () => {
 			const allFieldKinds = Object.values(FieldKinds);
-			it("verify this test is exhaustive", () => {
-				// Test case expectations below are generated manually. When new supported field kinds are added, this suite must be updated.
-				// This likely also necessitates changes to the production code this describe block validates.
-				assert.equal(allFieldKinds.length, 5);
-			});
 			const testCases: {
 				superset: FlexFieldKind;
 				original: FlexFieldKind;
@@ -688,6 +683,13 @@ describe("Schema Discrepancies", () => {
 					expected: true,
 				})),
 			];
+
+			it("verify this test is exhaustive", () => {
+				// Test case expectations below are generated manually. When new supported field kinds are added, this suite must be updated.
+				// This likely also necessitates changes to the production code this describe block validates.
+				assert.equal(allFieldKinds.length, 5);
+				assert.equal(allFieldKinds.length ** 2, testCases.length);
+			});
 
 			for (const { superset, original, expected } of testCases) {
 				it(`${superset.identifier} ${expected ? "⊇" : "⊉"} ${original.identifier}`, () => {
