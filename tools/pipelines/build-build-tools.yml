@@ -112,6 +112,6 @@ stages:
             branchToUse: test/michaelzhen
             storeInEnvironmentVariable: True
             authenticationMethod: 'OAuth Token'
-            buildParameters: 'releaseBuildOverride:${{ parameters.releaseBuildOverride }}, publishOverride:${{ parameters.publishOverride }}, interdependencyRange:${{ parameters.interdependencyRange }}'
+            buildParameters: 'releaseBuildOverride:${{ parameters.releaseBuildOverride }}, publishOverride:${{ parameters.publishOverride }}, interdependencyRange:${{ parameters.interdependencyRange }}, deployOverride:default, deployEnvironment:new, guardianAssetRetentionOverride:default, publishGuardianBaselines:false'
             password: '$(System.AccessToken)'
           displayName: Run build-docs pipeline
