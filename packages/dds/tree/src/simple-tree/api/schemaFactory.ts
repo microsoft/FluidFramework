@@ -224,8 +224,6 @@ export class SchemaFactory<
 	public constructor(
 		/**
 		 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
-		 * Use of {@link https://en.wikipedia.org/wiki/Reverse_domain_name_notation | Reverse domain name notation} or a UUIDv4 is recommended to avoid collisions.
-		 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
 		 *
 		 * @remarks
 		 * Generally each developed independently library (possibly a package, but could also be part of a package or multiple packages developed together) should get its own globally unique `scope`.
@@ -233,6 +231,9 @@ export class SchemaFactory<
 		 * These are joined (with a period) to form the globally unique {@link TreeNodeSchemaCore.identifier|schema identifier}.
 		 * Following this pattern allows a single application to depend on multiple libraries which define their own schema, and use them together in a single tree without risk of collisions.
 		 * If a library logically contains sub-libraries with their own schema, they can be given a scope nested inside the parent scope, such as "ParentScope.ChildScope".
+		 *
+		 * Use of {@link https://en.wikipedia.org/wiki/Reverse_domain_name_notation | Reverse domain name notation} or a UUIDv4 is recommended to avoid collisions.
+		 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
 		 *
 		 * @example
 		 * Fluid Framework follows this pattern, placing the schema for the built in leaf types in the `com.fluidframework.leaf` scope.
