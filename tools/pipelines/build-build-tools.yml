@@ -92,6 +92,10 @@ stages:
   pool: Small
   jobs:
     - job: testBash
+      variables:
+        releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+        publishOverride: ${{ parameters.publishOverride }}
+        interdependencyRange: ${{ parameters.interdependencyRange }}
       displayName: 'testbash'
       steps:
         - task: Bash@3
@@ -111,7 +115,7 @@ stages:
             useSameBranch: False
             branchToUse: test/michaelzhen
             storeInEnvironmentVariable: True
-            buildParameters: 'releaseBuildOverride:${{ parameters.releaseBuildOverride }}, publishOverride:${{ parameters.publishOverride }}, interdependencyRange:${{ parameters.interdependencyRange }}, deployOverride:default, deployEnvironment:new, guardianAssetRetentionOverride:default, publishGuardianBaselines:false'
+            buildParameters: 'releaseBuildOverride:$(releaseBuildOverride), publishOverride:$(publishOverride), interdependencyRange:$(interdependencyRange)'
             authenticationMethod: 'OAuth Token'
             password: '$(System.AccessToken)'
           displayName: Run build-docs pipeline

@@ -138,6 +138,10 @@ stages:
             echo releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
             echo publishOverride: ${{ parameters.publishOverride }}
             echo interdependencyRange: ${{ parameters.interdependencyRange }}
+            echo deployOverride: ${{ parameters.deployOverride }}
+            echo deployEnvironment: ${{ parameters.deployEnvironment }}
+            echo guardianAssetRetentionOverride: ${{ parameters.guardianAssetRetentionOverride }}
+            echo publishGuardianBaselines: ${{ parameters.publishGuardianBaselines }}
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
       steps:
