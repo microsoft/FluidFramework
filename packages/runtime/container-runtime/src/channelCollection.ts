@@ -885,7 +885,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				return;
 			}
 			const currentContext = this.contexts.get(currentMessageState.address);
-			assert(!!currentContext, "Context not found");
+			assert(!!currentContext, 0xa66 /* Context not found */);
 
 			currentContext.processMessages({
 				envelope: { ...messageCollection.envelope, type: currentMessageState.type },
