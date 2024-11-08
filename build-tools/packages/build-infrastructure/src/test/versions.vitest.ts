@@ -48,6 +48,7 @@ describe("setVersion", () => {
 			return pick(pkg.packageJson, ["name", "version"]);
 		});
 
+		expect(main.version).to.equal("1.2.1");
 		expect(results).toMatchSnapshot();
 	});
 
