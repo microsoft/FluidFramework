@@ -19,6 +19,7 @@ export {
 	toFluidHandleErased,
 	toFluidHandleInternal,
 	FluidHandleBase,
+	compareFluidHandles,
 } from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
 export {
@@ -46,4 +47,7 @@ export {
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
 export { ReadAndParseBlob, seqFromTree, encodeCompactIdToString } from "./utils.js";
 export { isSnapshotFetchRequiredForLoadingGroupId } from "./snapshotUtils.js";
-export { toDeltaManagerErased, toDeltaManagerInternal } from "./deltaManager.js";
+export {
+	toDeltaManagerErased,
+	toDeltaManagerInternal,
+} from "./deltaManager.js";
