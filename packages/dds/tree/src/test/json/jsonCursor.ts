@@ -22,7 +22,7 @@ import {
 } from "../../feature-libraries/index.js";
 import { brand, isReadonlyArray, type JsonCompatible } from "../../util/index.js";
 
-import { JsonArray, JsonObject } from "./jsonDomainSchema.js";
+import { JsonArray, JsonObject } from "../../jsonDomainSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	booleanSchema,

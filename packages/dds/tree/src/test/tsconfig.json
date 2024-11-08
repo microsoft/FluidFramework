@@ -13,7 +13,7 @@
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["./**/*"],
+	"include": ["./**/*", "../jsonDomainSchema.ts"],
 	"references": [
 		{
 			"path": "../../tsconfig.json",
