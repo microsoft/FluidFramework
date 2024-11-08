@@ -8,13 +8,14 @@ Target audience: `SharedTree` users and maintainers.
 
 Each edit's merge semantics is defined in terms of its preconditions and postconditions.
 A precondition defines a requirement that must be met for the edit to be valid.
-(Invalid edits are ignored along with all other edits in same transaction, and postconditions do not hold)
+(Invalid edits are ignored along with all other edits in the same transaction, and postconditions do not hold)
 A postcondition defines a guarantee that is made about the effect of the edit.
 
-## Property Assignment
+## Operator `=`
 
 Assigning a value to the property on an object node updates the value associated with that property on the object.
-This is done using the assignment operator (`=`).
+
+Examples:
 
 ```typescript
 rectangle.topLeft = new Point({ x: 0, y: 0 });
@@ -32,12 +33,12 @@ proposal.text = undefined;
 
 Preconditions:
 * There is no schema change edit that the property assignment edit is both concurrent to and sequenced after.
-* If the new value is an internal node (i.e., an object, map, or array), that node has never been part of the document tree before.
+* The value on the right side of the `=` operator must have status `TreeStatus.New` or be a primitive.
   (This precondition will be removed soon)
 
 Postconditions:
-* The value (if any) associated with that property immediately prior to the change being applied is removed.
-* The new value (if any) associated with that property is the value that was on the right hand side of the `=` operator.
+* The value that was on the right hand side of the `=` operator is now associated with the targeted property.
+* The value (if any) that was associated with the object property immediately prior to the application of the edit is removed (its status becomes `TreeStatus.Removed`).
 
 Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
 Changes made to them will apply despite their removed status.
@@ -48,7 +49,29 @@ Changes made to them will apply despite their removed status.
 
 All of the above operations are effective even when the targeted object has been moved or removed.
 
-### Last-Write-Wins semantics
+### Last-Write-Wins Semantics
 
-If multiple edits concurrently edit the same field, then the field's final value will will be that of the edit that is sequenced last.
+If multiple edits concurrently edit the same field,
+then the field's final value will will be that of the edit that is sequenced last.
 In other words, property assignment has last-write-wins semantics.
+
+Note that this means one user may overwrite a value set by another user without realizing it.
+Consider the following scenario:
+Alice and Bob are editing a document that contains sticky notes whose background color can be changed.
+Alice changes the background color of one sticky note from yellow to red,
+while Bob concurrently changes the background color of one sticky note from yellow to blue.
+The sequencing is such that Bob's edit is sequenced after Alice's edit.
+
+![Bob's edit overwrites Alice's edit](../.attachments/blue-over-red.png)<br />
+_A: Bob receives Alice's edit.
+Since Bob's client has yet to receive his own edit back from the sequencing service,
+Bob's client can deduce that his edit is sequenced later and therefore wins out over Alice's.
+This means the color property can remain blue.<br />
+B: Alice receives Bob's edit.
+Even though the edit was originally created in a context where it changed the color from yellow to blue,
+the edit now changes the color red to blue._
+
+Such overwriting is rare in application where users are given visual cues as to what data other users may be concurrently inspecting/editing.
+It' possible to prevent such overwrites by using constraints (effectively changing the semantics to first-write-wins),
+but note that this causes the the later edit to be dropped,
+and the data associated with it to be lost.

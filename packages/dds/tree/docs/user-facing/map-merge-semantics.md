@@ -8,28 +8,30 @@ Target audience: `SharedTree` users and maintainers.
 
 Each edit's merge semantics is defined in terms of its preconditions and postconditions.
 A precondition defines a requirement that must be met for the edit to be valid.
-(Invalid edits are ignored along with all other edits in same transaction, and postconditions do not hold)
+(Invalid edits are ignored along with all other edits in the same transaction, and postconditions do not hold)
 A postcondition defines a guarantee that is made about the effect of the edit.
 
 ## `set(key: string, value: T): void`
 
 Updates the value associated with the given key.
 
+Examples:
 ```typescript
 users.set("bob", new User({ id: "bob", email: "bob@contoso.com" });
 ```
 
 ```typescript
-parts.set("bolt", 42);
+partCounts.set("bolts", 42);
 ```
 
 Preconditions:
 * There is no schema change edit that the `set` edit is both concurrent to and sequenced after.
-* If the new value is an internal node (i.e., an object, map, or array), that node has never been part of the document tree before.
+* The value on the right side of the `=` operator must have status `TreeStatus.New` or be a primitive.
   (This precondition will be removed soon)
 
 Postconditions:
-* The value associated with the key is the value passed to the `set` call.
+* The given value is now associated with the given key.
+* The value (if any) that was associated with the given key immediately prior to the application of the edit is removed (its status becomes `TreeStatus.Removed`).
 
 ## `delete(key: string): void`
 
@@ -43,8 +45,9 @@ Preconditions:
 * There is no schema change edit that the `delete` edit is both concurrent to and sequenced after.
 
 Postconditions:
-* There is no longer a value associated with the given key.
-  Note: this will remove whatever value (if any) is associated with the key,
+* There is no longer any value associated with the given key.
+  The value (if any) that was associated with the given key immediately prior to the application of the edit is removed (its status becomes `TreeStatus.Removed`).
+  Note: this will remove whatever value is associated with the key,
   even if that value was changed by concurrent edits that were sequenced earlier.
 
 Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
@@ -56,10 +59,14 @@ Changes made to them will apply despite their removed status.
 
 All of the above operations are effective even when the targeted map has been moved or removed.
 
-### Last-Write-Wins semantics
+### Last-Write-Wins Semantics
 
 If multiple edits concurrently set the same field, then the field's final value will will be that of the edit that is sequenced last.
 In other words, the `set` operation has last-write-wins semantics.
+
+Note that this means one user may overwrite a value set by another user without realizing it.
+This is identical to the semantics of the `=` operator on object nodes.
+Refer to its [Last-Write-Wins Semantics section](./object-merge-semantics.md#last-write-wins-semantics) for more details.
 
 ### Delete Clears Whichever Value is Present
 
@@ -101,3 +108,13 @@ If that were the case...
   (This would violate the requirement that the document remains tree-shaped)
 
 Work is underway to address this lack flexibility.
+
+### Clearing The Map
+
+As of October 2024, there is no support for clearing the whole map in one operation.
+If you find yourself wishing for such an operation, please reach out to the Fluid team.
+
+Note that one client can, in a transaction, iterate through all existing key and use the `delete` operation on each of them.
+This does not however guarantee that the map will be empty after the transaction is applied
+because other users may have concurrently added entries to new keys.
+This approach is also much less efficient than a `clear` operation would be since it needs to transmit the set of existing key over the network.

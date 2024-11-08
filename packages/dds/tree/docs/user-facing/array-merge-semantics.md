@@ -8,77 +8,166 @@ Target audience: `SharedTree` users and maintainers.
 
 Each edit's merge semantics is defined in terms of its preconditions and postconditions.
 A precondition defines a requirement that must be met for the edit to be valid.
-(Invalid edits are ignored along with all other edits in same transaction, and postconditions do not hold)
+(Invalid edits are ignored along with all other edits in the same transaction, and postconditions do not hold)
 A postcondition defines a guarantee that is made about the effect of the edit.
 
-## Gaps
+## Specifying the Location of Inserted Items
 
-The merge semantics of array operations that insert (or move in) array elements are based on the concept of a gap.
-A gap is a location where array elements can be inserted or moved.
-For example, in an array with two nodes `[A, B]` there are three gaps: one before A, one between A and B, and one after C.
-If we represented gaps with the `_` character, then would describe the array `[A, B]` as `[ _ A _ B _ ]`.
-(More generally, an array with `K` nodes as `K+1` gaps.)
+### The Problem
 
-To insert a new node X in the gap between nodes A and B,
-one would call `insertAt(1, X)` because the integer `1` refers to the second gap.
+Array operations that insert (or move in) array items take an integer that describes where in the array the new item(s) should be added.
+For example, we to insert the value `"o"` in the array `["c", "a", "t"]` to change it to  `["c", "o", "a", "t"]` by calling `insertAt(1, "o")`.
 
-The reason we need this concept of gap is that `insertAt(1, X)` will not necessarily insert X at index 1.
-Instead, `insertAt(1, X)` will insert X *in the gap that was at index 1 at the time the edit was made*.
-This is relevant because by the time the edit is applied, that gap may no longer be at index 1.
+In a collaborative editing environment,
+it's possible for the state of the array to change between the time the edit is first created and the time it is applied.
+Consider what would happen if the argument that describes the destination of the insert were to be treated as a fixed integer index:
 
 Example 1:
-* Starting state: `[A, B]`
-* User 1: (currently to user 1) insert node W before A (this changes the state from `[A, B]` to `[W, A, B]`)
-* User 2: (currently to user 2) insert node X between A and B (this changes the state from `[A, B]` to `[A, X, B]`)
+* Starting state: `["c", "a", "t"]`
+* Alice's edit: `insertAt(0, "r", "e", "d", " ")` with the expectation of getting `["r", "e", "d", " ", "c", "a", "t"]`.
+* Bob's edit: `insertAt(1, "o")` with the expectation of getting `["c", "o", "a", "t"]`.
 
-If user 1's change is sequenced before user 2's change,
-then the gap that X is inserted into will be at index 2, yielding `[W, A, X, B]`.
-If X had been inserted at index 1 then the result would have been `[W, X, A, B]`.
+If Alice and Bob's edits are concurrent, and Alice's edit is sequenced first,
+then inserting `"o"` at index 1 would yield `["r", "o", "e", "d", " ", "c", "a", "t"]`.
+This would not truly match the intention of Bob,
+who would likely have wanted to get `["r", "e", "d", " ", "c", "o", "a", "t"]` instead.
 
 Example 2:
-* Starting state: `[A, B]`
-* User 1: (currently to user 1) remove node A (this changes the state from `[A, B]` to `[B]`)
-* User 2: (currently to user 2) insert node X between A and B (this changes the state from `[A, B]` to `[A, X, B]`)
+* Starting state: `["r", "e", "d", " ", "c", "a", "t"]`
+* Alice's edit: `removeRange(0, 4)` with the expectation of getting `["c", "a", "t"]`.
+* Bob's edit: `insertAt(5, "o")` with the expectation of getting `["r", "e", "d", " ", "c", "o", "a", "t"]`.
 
-If user 1's change is sequenced before user 2's change,
-then the gap that X is inserted into will be at index 0, yielding `[X, B]`.
-If X had been inserted at index 1 then the result would have been `[B, A]`.
+If Alice and Bob's edits are concurrent, and Alice's edit is sequenced first,
+then inserting `"o"` at index 5 would either crash or yield `["c", "a", "t", "o"]`.
+This would not truly match the intention of Bob,
+who would likely have wanted to get `["c", "o", "a", "t"]` instead.
 
-Note that multiple edits may concurrently attempt to insert or move in elements into the same gap.
-When that's the case, the elements end up ordered based on the edit sequencing service such that the elements inserted by the edit that is sequenced earlier will appear after the elements inserted by the edits that is sequenced later.
+### The Solution: Inserting in Gaps
+
+Instead of treating the destination parameter of insert and move operations as a fixed insertion index,
+SharedTree's array implementation interprets that parameter as referring to a gap in the array.
+
+For example, in an array with two items `[A, B]` there are three gaps:
+one before A, one between A and B, and one after C.
+If we represented gaps with the `_` character, then would describe the array `[A, B]` as `[ _ A _ B _ ]`.
+(More generally, an array with `K` items has `K+1` gaps.)
+
+This means that calling `insertAt(1, "o")` on an array with initial state `["c", "a", "t"]`
+singles out the following gap as the location to perform the insert: `["c" _ "a" "t"]`.
+This conversion from index 1 to the corresponding gap is done at the time the edit is first created.
+SharedTree's array implementation then keeps track of that gap's position when reconciling this insertion against concurrent edits.
+Reusing the scenario from example 1 in the previous section,
+the gap's position after reconciling with the concurrent edit from Alice (`insertAt(0, "r", "e", "d", " ")`)
+is as follows: `["r" "e" "d" " " "c" _ "a" "t"]`,
+thus yielding the adequate result after inserting "o" `["r", "e", "d", " ", "c", "o", "a", "t"]`.
+
+### Tie-Breaking
+
+Note that multiple edits may concurrently attempt to insert or move in items into the same gap.
+When that's the case,
+the items end up ordered such that the items inserted by the edit that is sequenced earlier will appear after the items inserted by the edits that is sequenced later.
 
 Example:
 * Starting state: `[]`
-* User 1: (currently to users 2 and 3) insert nodes A and B (this changes the state from `[]` to `[A, B]`)
-* User 2: (currently to users 1 and 3) insert nodes R and S (this changes the state from `[]` to `[R, S]`)
-* User 3: (currently to users 1 and 2) insert nodes X and Y (this changes the state from `[]` to `[X, Y]`)
+* Edit 1: (currently to edits 2 and 3) insert items A and B (this changes the state from `[]` to `[A, B]`)
+* Edit 2: (currently to edits 1 and 3) insert items R and S (this changes the state from `[]` to `[R, S]`)
+* Edit 3: (currently to edits 1 and 2) insert items X and Y (this changes the state from `[]` to `[X, Y]`)
 
-If the edits are sequenced in order of increasing user number,
+If the edits are sequenced in increasing order (i.e., edit 1, edit 2, edit 3),
 then the resulting state will be `[X, Y, R, S, A, B]`.
 
-## `insertAt(gapIndex: number, ...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void`
+## Specifying the Set of (Re)Moved Items
 
-Inserts new elements at the location described by `gapIndex`.
+Each move or remove operations affects a specific set of array items.
+When a single item is targeted,
+the item can be specified using its index in the current state.
+For example, removing the `"o"` from `["c", "o", "a", "t"]` with `removeAt(1)`.
+
+When targeting multiple contiguous items,
+it is possible specify them as a range.
+For example, `"o"` and `"a"` from `["c", "o", "a", "t"]` with `removeRange(1, 2)`.
+
+From the point of view of merge semantics,
+calling `removeRange(1, 2)` is equivalent to individually removing each of the two middle letters in one transaction.
+Using the range-based API is typically more convenient,
+it is also optimized to have less overhead than making separate calls for each individual item.
+
+The same is true for `moveRange` compared to `moveAt`,
+with the additional property that `moveRange` preserves the order that the items are in at the time is edit is created.
+For example, if one user moves items A and B to the end of array `[A, B, C]` by using a `sourceStart` of 0 and a `sourceEnd` of 2,
+and some other user concurrently swaps the order of A and B (thus changing the state to `[B, A, C]`),
+then the outcome will still be `[C, A, B]` as opposed to `[C, B, A]`.
+
+### The Problem
+
+Array operations that insert (or move in) array items take an integer that describes where in the array the new item(s) should be added.
+For example, we to insert the value `"o"` in the array `["c", "a", "t"]` to change it to  `["c", "o", "a", "t"]` by calling `insertAt(1, "o")`.
+
+In a collaborative editing environment,
+it's possible for the state of the array to change between the time the edit is first created and the time it is applied.
+Consider what would happen if the arguments that describes the affected items were to be treated as a fixed integer index:
+* Starting state: `["c", "o", "a", "t"]`
+* Alice's edit: `insertAt(0, "r", "e", "d", " ")` with the expectation of getting `["r", "e", "d", " ", "c", "o", "a", "t"]`.
+* Bob's edit: `removeAt(1)` with the expectation of getting `["c", "a", "t"]`.
+
+If Alice and Bob's edits are concurrent, and Alice's edit is sequenced first,
+then removing the item at index 1 would yield `["r", "d", " ", "c", "o", "a", "t"]`.
+This would not truly match the intention of Bob,
+who would likely have wanted to get `["r", "e", "d", " ", "c", "a", "t"]` instead.
+
+### The Solution: Targeting Items
+
+Instead of treating the parameters of move and remove as a fixed index to detach items at,
+SharedTree's array implementation interprets these parameter as referring to the items themselves.
+In other words, `removeAt(1)` doesn't mean "remove whichever item happens to be at index 1 when the edit is applied".
+Instead, it means "remove the specific item that is currently at index 1, no matter what index that item it at when the edit is applied".
+
+### Noteworthy Implications
+
+Inserting items within a range that is concurrently being moved has no impact on the set of moved items.
+For example, if one user moves items A and B to the end of array `[A, B, C]` by using a `sourceStart` of 0 and a `sourceEnd` of 2,
+and some other user concurrently inserts some item X between A and B (thus changing the state to `[A, X, B, C]`),
+then the move will still affect items A and B (and only these), thus yielding `[X, C, A, B]`.
+This is true no matter how the concurrent edits are ordered.
+
+If multiple users concurrently attempt to move the same item in a last-write-wins fashion.
+For example, if one user moves item B leftward to the start of array `[A, B, C]`,
+and some other user concurrently moves item B rightward to the end of the array,
+then the item will be affected by each successive move in sequencing order:
+* If the leftward move is sequenced before the rightward move
+  then A will first be moved to the start (thus yielding `[B, A, C]`)
+  then moved to the end (thus yielding `[A, C, B]`).
+* If the rightward move is sequenced before the leftward move
+  then A will first be moved to the end (thus yielding `[A, C, B]`)
+  then moved to the start (thus yielding `[B, A, C]`).
+
+A removed item may be restored as a result of a concurrent move operation
+and a moved item may be removed as a result of a concurrent remove operation.
+For example, if one user moves item A to the end of array `[A, B, C]`,
+and some other user concurrently removes item A,
+then the item will be affected by each successive operation in sequencing order:
+* If the move is sequenced before the remove
+  then A will first be moved to the end of the array (thus yielding `[C, B, A]`)
+  then removed (thus yielding `[C, B]`).
+* If the remove is sequenced before the move
+  then A will first be removed (thus yielding `[C, B]`)
+  then moved (thus yielding `[C, B, A]`).
+
+## Core Editing Operations
+
+### `insertAt(gapIndex: number, ...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void`
+
+Inserts new items at the location described by `gapIndex`.
 
 Preconditions:
 * There is no schema change edit that this edit is both concurrent to and sequenced after.
-* If the new value is an internal node (i.e., an object, map, or array), that node has never been part of the document tree before.
+* The inserted values must have status `TreeStatus.New` or be primitives.
   (This precondition will be removed soon)
 
 Postconditions:
-* The new value is located where the [gap](#gaps) described by `gapIndex` used to be.
-  * If multiple values are inserted, then the first value is located at the given index,
-    the second value is located at the index after that, etc.
+* The values are inserted in the targeted [gap](#location-of-inserted-items).
 
-## `insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void`
-
-Equivalent to `array.insertAt(0, ...value)`.
-
-## `insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void`
-
-Equivalent to `array.insertAt(array.length, ...value)`.
-
-## `moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number, source: TMoveFrom): void`
+### `moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number, source: TMoveFrom): void`
 
 Moves the specified items from the given source array to the desired location within the array.
 
@@ -86,64 +175,12 @@ Preconditions:
 * There is no schema change edit that this edit is both concurrent to and sequenced after.
 
 Postconditions:
-* The items that were between the `sourceStart` and `sourceEnd` indices located where the destination [gap](#gaps) used to be.
-  * The set of items being moved is determined at the time the edit is first made (as opposed to when the edit is applied).
-  For example, if one user moves nodes A and B to the end of array `[A, B, C]` by using a `sourceStart` of 0 and a `sourceEnd` of 2,
-  and some other user concurrently inserts some node X between A and B (thus changing the state to `[A, X, B, C]`),
-  then the move will still affect nodes A and B (and only these), thus yielding `[X, C, A, B]` as opposed to `[C, A, X, B]` or `[B, C, A, X]`.
-  * The items will end up in the order they were in at the time the edit is first made (as opposed to when the edit is applied).
-  For example, if one user moves nodes A and B to the end of array `[A, B, C]` by using a `sourceStart` of 0 and a `sourceEnd` of 2,
-  and some other user concurrently swaps the order of A and B (thus changing the state to `[B, A, C]`),
-  then the outcome will still be `[C, A, B]` as opposed to `[C, B, A]`.
+* The [specified items](#specifying-the-set-of-removed-items) are moved to the targeted [gap](#location-of-inserted-items).
 
 If multiple clients concurrently move an item,
 then that item will be moved to the destination indicated by the move of the client whose edit is ordered last.
 
-A moved item may be removed as a result of a simultaneous remove operation from another client.
-For example, if one client moves items 3-5,
-and another client concurrently removes items 4 and 5,
-then, if the remove operation is ordered last,
-items 4 and 5 are removed from their destination by the remove operation.
-If the move operation is ordered last,
-then all three items will be moved to the destination.
-
-## `moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void`
-
-Equivalent to `array.moveRangeToIndex(destinationGap, sourceStart, sourceEnd, array)`.
-
-## `moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void`
-
-Equivalent to `array.moveRangeToIndex(0, sourceStart, sourceEnd, source)`.
-
-## `moveRangeToStart(sourceStart: number, sourceEnd: number): void`
-
-Equivalent to `array.moveRangeToIndex(0, sourceStart, sourceEnd, array)`.
-
-## `moveToStart(sourceIndex: number, source: TMoveFrom): void`
-
-Equivalent to `array.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source)`.
-
-## `moveToStart(sourceIndex: number): void`
-
-Equivalent to `array.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, array)`.
-
-## `moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void`
-
-Equivalent to `array.moveRangeToIndex(array.length, sourceStart, sourceEnd, source)`.
-
-## `moveRangeToEnd(sourceStart: number, sourceEnd: number): void`
-
-Equivalent to `array.moveRangeToIndex(array.length, sourceStart, sourceEnd, array)`.
-
-## `moveToEnd(sourceIndex: number, source: TMoveFrom): void`
-
-Equivalent to `array.moveRangeToIndex(array.length, sourceIndex, sourceIndex + 1, source)`.
-
-## `moveToEnd(sourceIndex: number): void`
-
-Equivalent to `array.moveRangeToIndex(array.length, sourceIndex, sourceIndex + 1, array)`.
-
-## `removeRange(start?: number, end?: number): void`
+### `removeRange(start?: number, end?: number): void`
 
 Removes the items between the specified indices.
 
@@ -151,26 +188,56 @@ Preconditions:
 * There is no schema change edit that this edit is both concurrent to and sequenced after.
 
 Postconditions:
-* The items that were between the `sourceStart` and `sourceEnd` are removed.
-  * The set of items being removed is determined at the time the edit is first made (as opposed to when the edit is applied).
-  For example, if one user removes nodes A and B from array `[A, B, C]` by using a `sourceStart` of 0 and a `sourceEnd` of 2,
-  and some other user concurrently inserts some node X between A and B (thus changing the state to `[A, X, B, C]`),
-  then the removal will still affect nodes A and B (and only these), thus yielding `[X, C]` as opposed to `[B, C]` or `[C]`.
+* The [specified items](#specifying-the-set-of-removed-items) are removed.
 
 Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
 Changes made to them will apply despite their removed status.
 
-A removed item may be restored as a result of a concurrent move operation from another client.
-For example, if one client removes items 3-5,
-and another client concurrently moves items 4 and 5,
-then, if the move operation is ordered last,
-only item 3 is removed (items 4 and 5 are restored and moved to their destination by the move operation).
-If the remove operation is ordered last,
-then all three items will be removed, no matter where they reside.
+## Other Operations
 
-## `removeAt(index: number): void`
+The following operations are just syntactic sugar:
 
-Equivalent to `array.removeRange(index, index + 1)`.
+`insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void`
+equates to `array.insertAt(0, ...value)`.
+
+`insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void`
+equates to `array.insertAt(array.length, ...value)`.
+
+`moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void`
+equates to `array.moveRangeToIndex(destinationGap, sourceStart, sourceEnd, array)`.
+
+`moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void`
+equates to `array.moveRangeToIndex(0, sourceStart, sourceEnd, source)`.
+
+`moveRangeToStart(sourceStart: number, sourceEnd: number): void`
+equates to `array.moveRangeToIndex(0, sourceStart, sourceEnd, array)`.
+
+`moveToIndex(destinationGap: number, sourceIndex: number, source: TMoveFrom): void`
+equates to `array.moveRangeToIndex(destinationGap, sourceIndex, sourceIndex+1, source)`.
+
+`moveToIndex(destinationGap: number, sourceIndex: number): void`
+equates to `array.moveRangeToIndex(destinationGap, sourceIndex, sourceIndex+1, array)`.
+
+`moveToStart(sourceIndex: number, source: TMoveFrom): void`
+equates to `array.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source)`.
+
+`moveToStart(sourceIndex: number): void`
+equates to `array.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, array)`.
+
+`moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void`
+equates to `array.moveRangeToIndex(array.length, sourceStart, sourceEnd, source)`.
+
+`moveRangeToEnd(sourceStart: number, sourceEnd: number): void`
+equates to `array.moveRangeToIndex(array.length, sourceStart, sourceEnd, array)`.
+
+`moveToEnd(sourceIndex: number, source: TMoveFrom): void`
+equates to `array.moveRangeToIndex(array.length, sourceIndex, sourceIndex + 1, source)`.
+
+`moveToEnd(sourceIndex: number): void`
+equates to `array.moveRangeToIndex(array.length, sourceIndex, sourceIndex + 1, array)`.
+
+`removeAt(index: number): void`
+equates to `array.removeRange(index, index + 1)`
 
 ## Additional Notes
 
@@ -178,17 +245,17 @@ Equivalent to `array.removeRange(index, index + 1)`.
 
 All of the above operations are effective even when the targeted array has been moved or removed.
 
-### Removing and Re-inserting Nodes
+### Removing and Re-inserting Items
 
 When dealing with plain JavaScript arrays,
 it is possible to move items around by removing them and adding them back in.
-For example, the node C can be moved to the start of the array `[A, B, C]` performing the following operations:
+For example, the item C can be moved to the start of the array `[A, B, C]` performing the following operations:
 ```typescript
 const C = array.pop(); // Remove C -> [A, B]
 array.unshift(C); // Insert C at the start -> [C, A, B]
 ```
 
-As of October 2024, SharedTree arrays do not support this pattern because it would require (re)inserting node C, which has previously been inserted.
+As of October 2024, SharedTree arrays do not support this pattern because it would require (re)inserting item C, which has previously been inserted.
 Instead, it is necessary to use the move operation:
 ```typescript
 array.moveToStart(2);
