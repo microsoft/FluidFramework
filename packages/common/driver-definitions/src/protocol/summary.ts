@@ -167,7 +167,9 @@ export interface ISummaryAttachment {
 export interface ISummaryTree {
 	type: SummaryType.Tree;
 
-	// TODO type I can infer from SummaryObject. File mode I may want to directly specify so have symlink+exec access
+	/**
+	 * The object containing all the tree's {@link SummaryObject} children.
+	 */
 	tree: { [path: string]: SummaryObject };
 
 	/**

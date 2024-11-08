@@ -159,6 +159,7 @@ export interface SummaryTreeBuilderParams {
 	groupId?: string;
 }
 /**
+ * SummaryTreeBuilder is a helper class following the builder pattern that helps build a summary tree.
  * @legacy
  * @alpha
  */
@@ -190,6 +191,11 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private readonly summaryTree: { [path: string]: SummaryObject } = {};
 	private summaryStats: ISummaryStats;
 
+	/**
+	 * Add a blob to the summary tree. This blob will be stored at the given key in the summary tree.
+	 * @param key - The key to store the blob at in the current summary tree being generated. Should not contain any "/" characters.
+	 * @param content - The content of the blob to be added to the summary tree.
+	 */
 	public addBlob(key: string, content: string | Uint8Array): void {
 		// Prevent cloning by directly referencing underlying private properties
 		addBlobToSummary(
@@ -228,15 +234,29 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 		this.summaryStats.handleNodeCount++;
 	}
 
+	/**
+	 *
+	 * @param key - The key to store the handle at in the current summary tree being generated. Should not contain any "/" characters.
+	 * The key should be unique within the current summary tree, and not transform when encodeURIComponent is called.
+	 * @param summarizeResult - Similar to {@link ISummaryTreeWithStats}. The provided summary can be either a {@link ISummaryHandle} or {@link ISummaryTree}.
+	 */
 	public addWithStats(key: string, summarizeResult: ISummarizeResult): void {
 		this.summaryTree[key] = summarizeResult.summary;
 		this.summaryStats = mergeStats(this.summaryStats, summarizeResult.stats);
 	}
 
+	/**
+	 * Adds an attachment to the summary. This blob needs to already be uploaded to storage.
+	 * @param id - The id of the attachment to be added to the summary tree.
+	 */
 	public addAttachment(id: string) {
 		this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
 	}
 
+	/**
+	 * Use this once you're done building the summary tree, the stats should automatically be generated.
+	 * @returns The summary tree and stats built by the SummaryTreeBuilder.
+	 */
 	public getSummaryTree(): ISummaryTreeWithStats {
 		return { summary: this.summary, stats: this.stats };
 	}
