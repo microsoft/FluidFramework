@@ -6,6 +6,7 @@
 import {
 	type FieldUpPath,
 	type Revertible,
+	RevertibleStatus,
 	type UpPath,
 	rootFieldKey,
 } from "../../core/index.js";
@@ -479,17 +480,21 @@ describe("Undo and redo", () => {
 
 		const forkedView = originalView.fork();
 
-		const propertyTwoUndo = undoStack1.pop();
-		const clonedPropertyTwoUndo = propertyTwoUndo?.clone(forkedView);
+		const propertyOneUndo = undoStack1.pop();
+		const clonedPropertyOneUndo = propertyOneUndo?.clone(forkedView);
 
-		propertyTwoUndo?.revert();
+		propertyOneUndo?.revert();
 
-		assert.equal(originalView.root.child?.propertyTwo.itemOne, "");
-		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "newItem");
+		assert.equal(originalView.root.child?.propertyOne, 128);
+		assert.equal(forkedView.root.child?.propertyOne, 256);
+		assert.equal(propertyOneUndo?.status, RevertibleStatus.Disposed);
+		assert.equal(clonedPropertyOneUndo?.status, RevertibleStatus.Valid);
 
-		clonedPropertyTwoUndo?.revert();
+		clonedPropertyOneUndo?.revert();
 
 		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "");
+
+		assert.equal(clonedPropertyOneUndo?.status, RevertibleStatus.Disposed);
 	});
 });
 

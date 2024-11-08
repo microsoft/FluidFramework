@@ -409,7 +409,7 @@ export class SchematizingSimpleTreeView<
  * @remarks Currently, all contexts are also {@link SchematizingSimpleTreeView}s.
  * Other checkout implementations (e.g. not associated with a view) may be supported in the future.
  */
-function getCheckout(context: TreeBranch): TreeCheckout {
+export function getCheckout(context: TreeBranch): TreeCheckout {
 	if (context instanceof SchematizingSimpleTreeView) {
 		return context.checkout;
 	}
