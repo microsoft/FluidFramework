@@ -176,6 +176,14 @@ stages:
             workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run build'
 
+        # Run the tests
+        - task: Npm@1
+          displayName: Run tests
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run test'
+
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
           inputs:
@@ -297,51 +305,6 @@ stages:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run check-links'
-
-# TODO: this redundantly builds the website.
-# This pipeline should be updated to publish a usable build artifact in the `build` stage,
-# and let subsequent stages download and work off of that.
-- stage: test
-  displayName: Run tests
-  dependsOn: [] # run in parallel
-  pool: Large
-  jobs:
-    - job: test
-      displayName: Run tests
-      continueOnError: true
-      steps:
-        - checkout: self
-          submodules: false
-          clean: true
-
-        - template: templates/include-use-node-version.yml
-
-        - template: templates/include-install-pnpm.yml
-          parameters:
-            buildDirectory: $(Build.SourcesDirectory)/docs
-
-        - task: Bash@3
-          displayName: Install dependencies
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)/docs
-            script: |
-              set -eu -o pipefail
-              pnpm i --frozen-lockfile
-
-        - task: Npm@1
-          displayName: Build
-          inputs:
-            command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run build'
-
-        - task: Npm@1
-          displayName: Run tests
-          inputs:
-            command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run test'
 
 - stage: check_branch_version
   displayName: 'Check Version Deployment Condition'
