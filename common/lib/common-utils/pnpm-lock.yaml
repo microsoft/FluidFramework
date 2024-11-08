@@ -48,7 +48,7 @@ importers:
         specifier: npm:@fluidframework/common-utils@1.0.0
         version: /@fluidframework/common-utils@1.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.1
+        specifier: ^5.5.1
         version: 5.5.1(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
