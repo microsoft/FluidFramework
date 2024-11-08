@@ -239,13 +239,12 @@ export function getAllDependencies(
 }
 
 /**
- * Sets the dependency range for a set of packages given a group dependencies to update.
- * This function will update the package.json files.
+ * Sets the dependency range for a group of packages given a group of dependencies to update.
+ * The changes are written to package.json. After the update, the packages are
+ * reloaded so the in-memory data reflects the version changes.
  *
- * Note that any loaded objects such as an IFluidRepo instance may need to be reloaded after calling this function.
- *
- * @param packagesToUpdate - An array of objects whose version should be updated.
- * @param dependencies - An array of objects that the packagesToUpdate depend on.
+ * @param packagesToUpdate - A list of objects whose version should be updated.
+ * @param dependencies - A list of objects that the packagesToUpdate depend on that should have updated ranges.
  * @param dependencyRange - The new version range to set for the packageToUpdate dependencies.
  */
 export async function setDependencyRange<P extends IPackage>(
@@ -254,6 +253,8 @@ export async function setDependencyRange<P extends IPackage>(
 	dependencyRange: InterdependencyRange,
 ): Promise<void> {
 	const dependencySet = new Set(Array.from(dependencies, (d) => d.name));
+	 // set to track changed packages to reload
+	const packagesToReload = new Set<P>();
 	// collect the "save" promises to resolve in parallel
 	const savePromises: Promise<void>[] = [];
 
@@ -280,9 +281,16 @@ export async function setDependencyRange<P extends IPackage>(
 				} else if (depKind === "peer" && pkg.packageJson.peerDependencies !== undefined) {
 					pkg.packageJson.peerDependencies[depName] = depRange;
 				}
+
+				packagesToReload.add(pkg);
 			}
 		}
 		savePromises.push(pkg.savePackageJson());
 	}
 	await Promise.all(savePromises);
+
+	// Reload all changed packages to refresh the in-memory data
+	for (const pkg of packagesToReload) {
+		pkg.reload();
+	}
 }
