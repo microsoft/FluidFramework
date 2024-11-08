@@ -8,7 +8,12 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { OdspClient, OdspConnectionConfig } from "@fluidframework/odsp-client/internal";
-import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	createChildLogger,
+	createMultiSinkLogger,
+	type ITelemetryLoggerPropertyBags,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";
 
@@ -113,6 +118,7 @@ export function createOdspClient(
 	creds: IOdspLoginCredentials,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
+	properties?: ITelemetryLoggerPropertyBags,
 ): OdspClient {
 	const siteUrl = process.env.odsp__client__siteUrl as string;
 	const driveId = process.env.odsp__client__driveId as string;
@@ -149,9 +155,21 @@ export function createOdspClient(
 		}
 		return logger ?? testLogger;
 	};
+
+	const createLogger = createChildLogger({
+		logger: getLogger(),
+		properties: {
+			all: {
+				...properties?.all,
+				driverType: "odsp",
+				driverEndpointName: "odsp",
+			},
+		},
+	});
+
 	return new OdspClient({
 		connection: connectionProps,
-		logger: getLogger(),
+		logger: createLogger,
 		configProvider,
 	});
 }

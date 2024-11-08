@@ -35,7 +35,9 @@ for (const testOpts of testMatrix) {
 		const isEphemeral: boolean = testOpts.options.isEphemeral;
 
 		beforeEach("createAzureClient", () => {
-			client = createAzureClient();
+			client = createAzureClient(undefined, undefined, undefined, undefined, undefined, {
+				all: { isEphemeral },
+			});
 		});
 
 		/**

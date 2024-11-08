@@ -33,7 +33,9 @@ for (const testOpts of testMatrix) {
 		} satisfies ContainerSchema;
 
 		beforeEach("createAzureClient", () => {
-			client = createAzureClient();
+			client = createAzureClient(undefined, undefined, undefined, undefined, undefined, {
+				all: { isEphemeral },
+			});
 		});
 
 		beforeEach("skipForNonAzure", async function () {

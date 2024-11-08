@@ -21,6 +21,7 @@ import {
 	MockLogger,
 	createChildLogger,
 	createMultiSinkLogger,
+	type ITelemetryLoggerPropertyBags,
 } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { default as Axios, AxiosResponse, type AxiosRequestConfig } from "axios";
@@ -38,7 +39,21 @@ export function createAzureClient(
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 	scopes?: ScopeType[],
+	properties?: ITelemetryLoggerPropertyBags,
 ): AzureClient {
+	const args = process.argv.slice(2);
+
+	const driverIndex = args.indexOf("--driver");
+	const r11sEndpointNameIndex = args.indexOf("--r11sEndpointName");
+
+	// Get values associated with the flags
+	const driver = driverIndex === -1 ? undefined : args[driverIndex + 1];
+	const r11sEndpointName =
+		r11sEndpointNameIndex === -1 ? undefined : args[r11sEndpointNameIndex + 1];
+
+	console.log("DRIVER:", driver);
+	console.log("R11S Endpoint Name:", r11sEndpointName);
+
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure
 		? (process.env.azure__fluid__relay__service__tenantId as string)
@@ -82,11 +97,9 @@ export function createAzureClient(
 		logger: getLogger(),
 		properties: {
 			all: {
-				// testType: this.type,
-				driverType: "r11s",
-				driverEndpointName: "frs",
-				// driverTenantName: this.driver.tenantName,
-				// driverUserIndex: this.driver.userIndex,
+				...properties?.all,
+				driverType: useAzure ? r11sEndpointName : driver,
+				driverEndpointName: driver,
 			},
 		},
 	});
