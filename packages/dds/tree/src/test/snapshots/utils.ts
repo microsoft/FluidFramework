@@ -21,11 +21,17 @@ function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {
 	switch (type) {
 		case SummaryType.Blob:
 		case SummaryType.Attachment:
-			return "blob";
+			{
+				return "blob";
+			}
 		case SummaryType.Tree:
-			return "tree";
+			{
+				return "tree";
+			}
 		default:
-			throw new Error(`Unknown type: ${type}`);
+			{
+				throw new Error(`Unknown type: ${type}`);
+			}
 	}
 }
 
