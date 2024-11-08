@@ -54,18 +54,28 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
 
+		"import/order": "off",
+
+		"jsdoc/multiline-blocks": "off",
+
+		// Set to a warning to encourage adding docs :)
 		"jsdoc/require-description": "warn",
 
 		"unicorn/explicit-length-check": "off",
 		"unicorn/no-array-callback-reference": "off",
 		"unicorn/no-array-for-each": "off",
+		"unicorn/no-array-method-this-argument": "off",
 		"unicorn/no-array-reduce": "off",
 		"unicorn/no-lonely-if": "off",
 		"unicorn/no-negated-condition": "off",
 		"unicorn/no-null": "off",
+		"unicorn/no-zero-fractions": "off",
+		"unicorn/prefer-code-point": "off",
 		"unicorn/prefer-default-parameters": "off",
 		"unicorn/prefer-export-from": "off",
+		"unicorn/prefer-native-coercion-functions": "off",
 		"unicorn/prefer-set-has": "off",
+		"unicorn/prefer-spread": "off",
 		"unicorn/text-encoding-identifier-case": "off",
 
 		// #endregion
