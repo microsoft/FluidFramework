@@ -227,7 +227,7 @@ export class SchemaFactory<
 	public constructor(
 		/**
 		 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
-		 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
+		 * Use of {@link https://en.wikipedia.org/wiki/Reverse_domain_name_notation | Reverse domain name notation} or a UUIDv4 is recommended to avoid collisions.
 		 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
 		 *
 		 * @remarks
@@ -242,7 +242,7 @@ export class SchemaFactory<
 		 * If Fluid Framework publishes more schema in the future, they would be under some other `com.fluidframework` scope.
 		 * This ensures that any schema use by any other library will not conflict with Fluid Framework's schema
 		 * as long as the library uses the recommended
-		 * [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 based scopes.
+		 * {@link https://en.wikipedia.org/wiki/Reverse_domain_name_notation | Reverse domain name notation} or a UUIDv4 based scopes.
 		 *
 		 * @example
 		 * A library could generate a random UUIDv4, like `242c4397-49ed-47e6-8dd0-d5c3bc31778b` and use that as the scope.
