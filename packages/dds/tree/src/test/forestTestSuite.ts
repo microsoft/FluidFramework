@@ -606,7 +606,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					);
 
 					const log: string[] = [];
-					forest.on("beforeChange", () => {
+					forest.events.on("beforeChange", () => {
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
 						log.push("beforeChange");
@@ -629,7 +629,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				);
 
 				const log: string[] = [];
-				forest.on("beforeChange", () => {
+				forest.events.on("beforeChange", () => {
 					log.push("beforeChange");
 				});
 

@@ -634,7 +634,7 @@ describe("SharedTreeCore", () => {
 			assert.equal(tree.preparedCommitsCount, 0);
 
 			// Temporarily make commit application fail
-			const disableFailure = tree.getLocalBranch().on("beforeChange", () => {
+			const disableFailure = tree.getLocalBranch().events.on("beforeChange", () => {
 				throw new Error("Invalid commit");
 			});
 			assert.throws(() => changeTree(tree));

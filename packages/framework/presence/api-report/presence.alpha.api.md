@@ -37,9 +37,8 @@ export interface IPresence {
 
 // @alpha @sealed
 export interface ISessionClient<SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
-    connectionId(): ClientConnectionId;
-    getStatus(): SessionClientStatus;
-    // (undocumented)
+    getConnectionId(): ClientConnectionId;
+    getConnectionStatus(): SessionClientStatus;
     readonly sessionId: SpecificSessionClientId;
 }
 
@@ -188,23 +187,21 @@ export interface PresenceNotificationsSchema {
 }
 
 // @alpha @sealed
-export type PresenceStates<TSchema extends PresenceStatesSchema, TManagerRestrictions = unknown> = PresenceStatesEntries<TSchema, TManagerRestrictions> & PresenceStatesMethods<TSchema, TManagerRestrictions>;
+export interface PresenceStates<TSchema extends PresenceStatesSchema, TManagerConstraints = unknown> {
+    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is PresenceStates<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
+    readonly props: PresenceStatesEntries<TSchema>;
+}
 
 // @alpha @sealed
-export type PresenceStatesEntries<TSchema extends PresenceStatesSchema, TManagerRestrictions> = {
+export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
     /**
     * Registered `Value Manager`s
     */
-    readonly [Key in Exclude<keyof TSchema, keyof PresenceStatesMethods<TSchema, TManagerRestrictions>>]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager> ? TManager : never;
+    readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager> ? TManager : never;
 };
 
 // @alpha
 export type PresenceStatesEntry<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
-
-// @alpha @sealed
-export interface PresenceStatesMethods<TSchema extends PresenceStatesSchema, TManagerRestrictions> {
-    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerRestrictions>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is PresenceStates<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>>;
-}
 
 // @alpha
 export interface PresenceStatesSchema {

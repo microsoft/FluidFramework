@@ -689,7 +689,7 @@ export class FluidDataStoreRuntime
 
 			// process the last set of channel ops
 			const channelContext = this.contexts.get(currentAddress);
-			assert(!!channelContext, "Channel context not found");
+			assert(!!channelContext, 0xa6b /* Channel context not found */);
 
 			channelContext.processMessages({
 				envelope: messageCollection.envelope,

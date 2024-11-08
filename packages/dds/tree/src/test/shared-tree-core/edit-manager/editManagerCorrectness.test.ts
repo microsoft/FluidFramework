@@ -749,7 +749,7 @@ function trackTrimmed(
 	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
 ): ReadonlySet<RevisionTag> {
 	const trimmedCommits = new Set<RevisionTag>();
-	branch.on("ancestryTrimmed", (trimmedRevisions) => {
+	branch.events.on("ancestryTrimmed", (trimmedRevisions) => {
 		trimmedRevisions.forEach((revision) => trimmedCommits.add(revision));
 	});
 	return trimmedCommits;

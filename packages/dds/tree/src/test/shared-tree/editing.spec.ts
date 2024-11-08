@@ -1770,7 +1770,7 @@ describe("Editing", () => {
 				beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {},
 				afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {},
 			};
-			const unsubscribePathVisitor = node.on(
+			const unsubscribePathVisitor = node.events.on(
 				"subtreeChanging",
 				(n: AnchorNode) => pathVisitor,
 			);
@@ -2614,7 +2614,7 @@ describe("Editing", () => {
 				beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {},
 				afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {},
 			};
-			const unsubscribePathVisitor = node.on(
+			const unsubscribePathVisitor = node.events.on(
 				"subtreeChanging",
 				(n: AnchorNode) => pathVisitor,
 			);
