@@ -217,3 +217,14 @@ class MyCompositionClass implements Listenable<MyEvents> {
 		return this.events.on(eventName, listener);
 	}
 }
+
+class MyExposingClass {
+	private readonly _events = createEmitter<MyEvents>();
+
+	public readonly events: Listenable<MyEvents> = this._events;
+
+	private load() {
+		this._events.emit("loaded");
+		const results: number[] = this._events.emitAndCollect("computed");
+	}
+}

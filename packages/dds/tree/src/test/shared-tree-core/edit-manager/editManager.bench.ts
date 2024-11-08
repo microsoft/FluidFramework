@@ -272,7 +272,7 @@ describe("EditManager - Bench", () => {
 							const family = testChangeFamilyFactory(new NoOpChangeRebaser());
 							const manager = editManagerFactory(family);
 							// Subscribe to the local branch to emulate the behavior of SharedTree
-							manager.localBranch.on("afterChange", ({ change }) => {});
+							manager.localBranch.events.on("afterChange", ({ change }) => {});
 							const sequencedEdits: Commit<TestChange>[] = [];
 							for (let iChange = 0; iChange < count; iChange++) {
 								const revision = mintRevisionTag();
