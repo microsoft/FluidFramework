@@ -119,8 +119,9 @@ Docusaurus has built-in support for [mermaid]() diagrams.
 We recommend leveraging these when possible over alternatives (ascii art, binary image files, SVG, etc.).
 
 Rationale:
-- Docusaurus will ensure consistent styling
-- Non-binary source, directly in the document.
+
+-   Docusaurus will ensure consistent styling
+-   Non-binary source, directly in the document.
 
 #### Example
 
