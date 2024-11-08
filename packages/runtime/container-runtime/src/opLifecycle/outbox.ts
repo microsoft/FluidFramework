@@ -337,7 +337,8 @@ export class Outbox {
 
 		const rawBatch = batchManager.popBatch(resubmittingBatchId);
 		const shouldGroup =
-			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
+			(!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch)) ||
+			rawBatch.messages.length >= 2;
 		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
