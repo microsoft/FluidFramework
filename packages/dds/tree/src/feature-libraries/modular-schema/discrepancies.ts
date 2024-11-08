@@ -124,14 +124,12 @@ type SchemaFactoryNodeKind = "object" | "leaf" | "map";
  *
  * @returns the discrepancies between two TreeStoredSchema objects
  */
-export function getAllowedContentDiscrepancies(
+export function* getAllowedContentDiscrepancies(
 	view: TreeStoredSchema,
 	stored: TreeStoredSchema,
-): Discrepancy[] {
-	const discrepancies: Discrepancy[] = [];
-
+): Iterable<Discrepancy> {
 	// check root schema discrepancies
-	discrepancies.push(...trackFieldDiscrepancies(view.rootFieldSchema, stored.rootFieldSchema));
+	yield* getFieldDiscrepancies(view.rootFieldSchema, stored.rootFieldSchema);
 
 	// Verify the existence and type of a node schema given its identifier (key), then determine if
 	// an exhaustive search is necessary.
@@ -141,12 +139,12 @@ export function getAllowedContentDiscrepancies(
 
 		if (viewNodeSchema instanceof ObjectNodeStoredSchema) {
 			if (!stored.nodeSchema.has(key)) {
-				discrepancies.push({
+				yield {
 					identifier: key,
 					mismatch: "nodeKind",
 					view: "object",
 					stored: undefined,
-				});
+				};
 			} else {
 				const storedNodeSchema = stored.nodeSchema.get(key);
 				assert(
@@ -154,27 +152,27 @@ export function getAllowedContentDiscrepancies(
 					0x9be /* The storedNodeSchema in stored.nodeSchema should not be undefined */,
 				);
 				if (storedNodeSchema instanceof MapNodeStoredSchema) {
-					discrepancies.push({
+					yield {
 						identifier: key,
 						mismatch: "nodeKind",
 						view: "object",
 						stored: "map",
-					} satisfies NodeKindDiscrepancy);
+					} satisfies NodeKindDiscrepancy;
 				} else if (storedNodeSchema instanceof LeafNodeStoredSchema) {
-					discrepancies.push({
+					yield {
 						identifier: key,
 						mismatch: "nodeKind",
 						view: "object",
 						stored: "leaf",
-					} satisfies NodeKindDiscrepancy);
+					} satisfies NodeKindDiscrepancy;
 				} else if (storedNodeSchema instanceof ObjectNodeStoredSchema) {
 					const differences = trackObjectNodeDiscrepancies(viewNodeSchema, storedNodeSchema);
 					if (differences.length > 0) {
-						discrepancies.push({
+						yield {
 							identifier: key,
 							mismatch: "fields",
 							differences,
-						} satisfies NodeFieldsDiscrepancy);
+						} satisfies NodeFieldsDiscrepancy;
 					}
 				} else {
 					throwUnsupportedNodeType(storedNodeSchema.constructor.name);
@@ -182,12 +180,12 @@ export function getAllowedContentDiscrepancies(
 			}
 		} else if (viewNodeSchema instanceof MapNodeStoredSchema) {
 			if (!stored.nodeSchema.has(key)) {
-				discrepancies.push({
+				yield {
 					identifier: key,
 					mismatch: "nodeKind",
 					view: "map",
 					stored: undefined,
-				} satisfies NodeKindDiscrepancy);
+				} satisfies NodeKindDiscrepancy;
 			} else {
 				const storedNodeSchema = stored.nodeSchema.get(key);
 				assert(
@@ -195,26 +193,24 @@ export function getAllowedContentDiscrepancies(
 					0x9bf /* The storedNodeSchema in stored.nodeSchema should not be undefined */,
 				);
 				if (storedNodeSchema instanceof ObjectNodeStoredSchema) {
-					discrepancies.push({
+					yield {
 						identifier: key,
 						mismatch: "nodeKind",
 						view: "map",
 						stored: "object",
-					} satisfies NodeKindDiscrepancy);
+					} satisfies NodeKindDiscrepancy;
 				} else if (storedNodeSchema instanceof LeafNodeStoredSchema) {
-					discrepancies.push({
+					yield {
 						identifier: key,
 						mismatch: "nodeKind",
 						view: "map",
 						stored: "leaf",
-					} satisfies NodeKindDiscrepancy);
+					} satisfies NodeKindDiscrepancy;
 				} else if (storedNodeSchema instanceof MapNodeStoredSchema) {
-					discrepancies.push(
-						...trackFieldDiscrepancies(
-							viewNodeSchema.mapFields,
-							storedNodeSchema.mapFields,
-							key,
-						),
+					yield* getFieldDiscrepancies(
+						viewNodeSchema.mapFields,
+						storedNodeSchema.mapFields,
+						key,
 					);
 				} else {
 					throwUnsupportedNodeType(storedNodeSchema.constructor.name);
@@ -222,12 +218,12 @@ export function getAllowedContentDiscrepancies(
 			}
 		} else if (viewNodeSchema instanceof LeafNodeStoredSchema) {
 			if (!stored.nodeSchema.has(key)) {
-				discrepancies.push({
+				yield {
 					identifier: key,
 					mismatch: "nodeKind",
 					view: "leaf",
 					stored: undefined,
-				});
+				};
 			} else {
 				const storedNodeSchema = stored.nodeSchema.get(key);
 				assert(
@@ -235,27 +231,27 @@ export function getAllowedContentDiscrepancies(
 					0x9c0 /* The storedNodeSchema in stored.nodeSchema should not be undefined */,
 				);
 				if (storedNodeSchema instanceof MapNodeStoredSchema) {
-					discrepancies.push({
+					yield {
 						identifier: key,
 						mismatch: "nodeKind",
 						view: "leaf",
 						stored: "map",
-					} satisfies NodeKindDiscrepancy);
+					} satisfies NodeKindDiscrepancy;
 				} else if (storedNodeSchema instanceof ObjectNodeStoredSchema) {
-					discrepancies.push({
+					yield {
 						identifier: key,
 						mismatch: "nodeKind",
 						view: "leaf",
 						stored: "object",
-					} satisfies NodeKindDiscrepancy);
+					} satisfies NodeKindDiscrepancy;
 				} else if (storedNodeSchema instanceof LeafNodeStoredSchema) {
 					if (viewNodeSchema.leafValue !== storedNodeSchema.leafValue) {
-						discrepancies.push({
+						yield {
 							identifier: key,
 							mismatch: "valueSchema",
 							view: viewNodeSchema.leafValue,
 							stored: storedNodeSchema.leafValue,
-						} satisfies ValueSchemaDiscrepancy);
+						} satisfies ValueSchemaDiscrepancy;
 					}
 				} else {
 					throwUnsupportedNodeType(storedNodeSchema.constructor.name);
@@ -268,7 +264,7 @@ export function getAllowedContentDiscrepancies(
 
 	for (const [key, storedNodeSchema] of stored.nodeSchema) {
 		if (!viewNodeKeys.has(key)) {
-			discrepancies.push({
+			yield {
 				identifier: key,
 				mismatch: "nodeKind",
 				view: undefined,
@@ -278,11 +274,9 @@ export function getAllowedContentDiscrepancies(
 						: storedNodeSchema instanceof ObjectNodeStoredSchema
 							? "object"
 							: "leaf",
-			} satisfies NodeKindDiscrepancy);
+			} satisfies NodeKindDiscrepancy;
 		}
 	}
-
-	return discrepancies;
 }
 
 /**
@@ -290,13 +284,11 @@ export function getAllowedContentDiscrepancies(
  *
  * @param keyOrRoot - If the key is missing, it indicates that this is the root field schema.
  */
-function trackFieldDiscrepancies(
+function* getFieldDiscrepancies(
 	view: TreeFieldStoredSchema,
 	stored: TreeFieldStoredSchema,
 	keyOrRoot?: string,
-): FieldDiscrepancy[] {
-	const differences: FieldDiscrepancy[] = [];
-
+): Iterable<FieldDiscrepancy> {
 	// Only track the symmetric differences of two sets.
 	const findSetDiscrepancies = (
 		a: TreeTypeSet,
@@ -309,24 +301,22 @@ function trackFieldDiscrepancies(
 
 	const allowedTypesDiscrepancies = findSetDiscrepancies(view.types, stored.types);
 	if (allowedTypesDiscrepancies[0].length > 0 || allowedTypesDiscrepancies[1].length > 0) {
-		differences.push({
+		yield {
 			identifier: keyOrRoot,
 			mismatch: "allowedTypes",
 			view: allowedTypesDiscrepancies[0],
 			stored: allowedTypesDiscrepancies[1],
-		} satisfies AllowedTypeDiscrepancy);
+		} satisfies AllowedTypeDiscrepancy;
 	}
 
 	if (view.kind !== stored.kind) {
-		differences.push({
+		yield {
 			identifier: keyOrRoot,
 			mismatch: "fieldKind",
 			view: view.kind,
 			stored: stored.kind,
-		} satisfies FieldKindDiscrepancy);
+		} satisfies FieldKindDiscrepancy;
 	}
-
-	return differences;
 }
 
 function trackObjectNodeDiscrepancies(
@@ -360,7 +350,7 @@ function trackObjectNodeDiscrepancies(
 			} satisfies FieldKindDiscrepancy);
 		} else {
 			differences.push(
-				...trackFieldDiscrepancies(
+				...getFieldDiscrepancies(
 					view.objectNodeFields.get(fieldKey) as TreeFieldStoredSchema,
 					stored.objectNodeFields.get(fieldKey) as TreeFieldStoredSchema,
 					fieldKey,
