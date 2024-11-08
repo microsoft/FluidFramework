@@ -671,7 +671,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 						assert(
 							documentId !== undefined,
-							"documentId is required when multiplexing is enabled.",
+							0xa65 /* documentId is required when multiplexing is enabled. */,
 						);
 
 						if (documentId !== this.documentId) {
