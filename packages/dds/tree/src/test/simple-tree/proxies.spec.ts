@@ -25,7 +25,6 @@ import { getView } from "../utils.js";
 
 import { hydrate, pretty } from "./utils.js";
 
-
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
 
