@@ -173,12 +173,14 @@ The following npm scripts are supported in this directory:
 
 | Script | Description |
 |--------|-------------|
-| `build` | Build the site, including API documentation. |
+| `build` | Build everything: the API documentation, the website, the tests, etc. |
 | `build:api-documentation` | Download API model artifacts and generate API documentation. |
+| `prebuild:docusaurus` | Runs pre-site build metadata generation. |
+| `build:docusaurus` | Build the website with Docusaurus. |
 | `build:generate-content` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
 | `build:markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
-| `prebuild:site` | Runs pre-site build metadata generation |
-| `build:site` | Build the website with Docusaurus. |
+| `build:site` | Build the site, including API documentation. |
+| `build:test` | TSC build of the test code as a sanity check. |
 | `check-links` | Run link validation on the website. |
 | `clean` | Clean up generated artifacts (build output, etc.). |
 | `clean:api-documentation` | Clean up generate API documentation content. |
@@ -199,7 +201,7 @@ The following npm scripts are supported in this directory:
 | `rebuild` | Clean up existing generated artifacts and re-run the build. |
 | `serve` | Serves the built website using Docusaurus. |
 | `serve-with-azure-emulation` | Serves the built website using Docusaurus, including Azure service emulation for our Azure functions. |
-| `prestart` | Runs pre-site build metadata generation  |
+| `prestart` | Runs pre-site build metadata generation. |
 | `start` | Runs the website in watch mode with Docusaurus. |
 | `pretest` | Install necessary `playwright` dependencies before running tests. |
 | `test` | Run tests using `playwright` |
