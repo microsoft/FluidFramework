@@ -111,6 +111,7 @@ stages:
             useSameBranch: False
             branchToUse: test/michaelzhen
             storeInEnvironmentVariable: True
+            buildParameters: 'releaseBuildOverride:${{ parameters.releaseBuildOverride }}, publishOverride:${{ parameters.publishOverride }}, interdependencyRange:${{ parameters.interdependencyRange }}'
             authenticationMethod: 'OAuth Token'
             password: '$(System.AccessToken)'
           displayName: Run build-docs pipeline

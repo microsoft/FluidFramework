@@ -14,6 +14,33 @@
 name: $(Build.BuildId)
 
 parameters:
+  - name: releaseBuildOverride
+    displayName: Release Build (default = not released)
+    type: string
+    default: none
+    values:
+      - none
+      - prerelease
+      - release
+  - name: publishOverride
+    displayName: Publish Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+  - name: interdependencyRange
+    displayName: Range to use for interdependencies (only affects releases) (default = ~)
+    type: string
+    default: "~"
+    # The " " value (a space) is a hacky workaround. ADO doesn't support empty string, but we ultimately use this value as
+    # an environment variable in a bash script (the 'update package versions' step), where it gets coerced back to the
+    # empty string.
+    values:
+      - "^"
+      - "~"
+      - " "
   - name: deployOverride
     displayName: Deployment Override (default = based on branch)
     type: string
@@ -101,6 +128,16 @@ stages:
   displayName: 'Check Version Deployment Condition'
   pool: Small
   jobs:
+    - job: debug_variables
+      displayName: Show Variables
+      dependsOn: [] # run in parallel
+      pool: Small
+      steps:
+        - checkout: none
+        - script: |
+            echo releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+            echo publishOverride: ${{ parameters.publishOverride }}
+            echo interdependencyRange: ${{ parameters.interdependencyRange }}
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
       steps:
