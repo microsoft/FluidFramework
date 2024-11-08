@@ -238,7 +238,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	 *
 	 * @param key - The key to store the handle at in the current summary tree being generated. Should not contain any "/" characters.
 	 * The key should be unique within the current summary tree, and not transform when encodeURIComponent is called.
-	 * @param summarizeResult - Similar to {@link ISummaryTreeWithStats}. The provided summary can be either a {@link ISummaryHandle} or {@link ISummaryTree}.
+	 * @param summarizeResult - Similar to {@link @fluidframework/runtime-definitions#ISummaryTreeWithStats}. The provided summary can be either a {@link @fluidframework/driver-definitions#ISummaryHandle} or {@link @fluidframework/driver-definitions#ISummaryTree}.
 	 */
 	public addWithStats(key: string, summarizeResult: ISummarizeResult): void {
 		this.summaryTree[key] = summarizeResult.summary;
