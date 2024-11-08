@@ -1924,6 +1924,10 @@ export class MergeTree {
 		// eslint-disable-next-line import/no-deprecated
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): void {
+		if (propsOrAdjust.adjust !== undefined) {
+			errorIfOptionNotTrue(this.options, "mergeTreeEnableAnnotateAdjust");
+		}
+
 		this.ensureIntervalBoundary(start, refSeq, clientId);
 		this.ensureIntervalBoundary(end, refSeq, clientId);
 		const deltaSegments: IMergeTreeSegmentDelta[] = [];
