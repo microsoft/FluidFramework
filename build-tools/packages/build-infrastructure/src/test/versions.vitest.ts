@@ -44,7 +44,7 @@ describe("setVersion", () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		await setVersion(main.packages, semver.parse("1.2.1")!);
 
-		const results = main.packages.map((pkg)=> {
+		const results = main.packages.map((pkg) => {
 			return pick(pkg.packageJson, ["name", "version"]);
 		});
 
@@ -55,7 +55,7 @@ describe("setVersion", () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		await setVersion(secondWorkspace.packages, semver.parse("2.2.1")!);
 
-		const results = secondWorkspace.packages.map((pkg)=> {
+		const results = secondWorkspace.packages.map((pkg) => {
 			return pick(pkg.packageJson, ["name", "version"]);
 		});
 
@@ -67,7 +67,7 @@ describe("setVersion", () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		await setVersion(packages, semver.parse("1.2.1")!);
 
-		const results = packages.map((pkg)=> {
+		const results = packages.map((pkg) => {
 			return pick(pkg.packageJson, ["name", "version"]);
 		});
 
