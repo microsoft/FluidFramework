@@ -40,6 +40,11 @@ export class OpCompressor {
 			0x5a4 /* Batch should not be empty */,
 		);
 
+		assert(
+			batch.messages.length === 1,
+			"Compressor expects a single string" /* Compressor expects a single string */,
+		);
+
 		const compressionStart = Date.now();
 		const contentsAsBuffer = new TextEncoder().encode(this.serializeBatchContents(batch));
 		const compressedContents = compress(contentsAsBuffer);
