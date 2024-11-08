@@ -74,6 +74,7 @@ module.exports = {
 		"unicorn/no-object-as-default-parameter": "off",
 		"unicorn/no-useless-fallback-in-spread": "off",
 		"unicorn/no-zero-fractions": "off",
+		"unicorn/prefer-array-some": "off",
 		"unicorn/prefer-code-point": "off",
 		"unicorn/prefer-default-parameters": "off",
 		"unicorn/prefer-dom-node-remove": "off",
