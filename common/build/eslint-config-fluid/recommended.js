@@ -196,10 +196,17 @@ module.exports = {
 		},
 		{
 			// Rules for test code
-			files: ["*.spec.ts", "*.test.ts", "**/test/**"],
+			files: [
+				"*.spec.ts",
+				"*.test.ts",
+				"**/test/**",
+				// TODO: consider unifying code across the repo to use "test" and not "tests", then we can remove this.
+				"**/tests/**",
+			],
 			rules: {
 				// Does not work well with describe/it block scoping
 				"unicorn/consistent-function-scoping": "off",
+
 				// We run most of our tests in a Node.js environment, so this rule is not important and makes
 				// file-system logic more cumbersome.
 				"unicorn/prefer-module": "off",
