@@ -44,7 +44,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		super();
 
 		statesWorkspace.add("cursor", Latest({ x: 0, y: 0 }));
-		this.cursor = statesWorkspace.cursor;
+		this.cursor = statesWorkspace.props.cursor;
 
 		this.presence.events.on("attendeeDisconnected", (client: ISessionClient) => {
 			this.posMap.delete(client);

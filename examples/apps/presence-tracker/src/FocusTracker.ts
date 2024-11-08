@@ -45,7 +45,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		super();
 
 		statesWorkspace.add("focus", Latest({ hasFocus: true }));
-		this.focus = statesWorkspace.focus;
+		this.focus = statesWorkspace.props.focus;
 
 		this.presence.events.on("attendeeDisconnected", (client: ISessionClient) => {
 			this.focusMap.delete(client);
