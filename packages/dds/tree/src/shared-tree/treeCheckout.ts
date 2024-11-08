@@ -71,7 +71,7 @@ import type {
 	ViewableTree,
 	TreeBranch,
 } from "../simple-tree/index.js";
-import { SchematizingSimpleTreeView, getCheckout } from "./schematizingTreeView.js";
+import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -409,9 +409,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * Maintaining a whole branch ensures the commit graph is not pruned in a way that would prevent the commit from
 	 * being reverted.
 	 */
-	private readonly revertibleCommitBranches =
-		this.forkedRevertibleCommitBranches ??
-		new Map<RevisionTag, SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>>();
+	private readonly revertibleCommitBranches = new Map<
+		RevisionTag,
+		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
+	>();
 
 	/**
 	 * copies of the removed roots used as snapshots for reverting to previous state when transactions are aborted
@@ -446,11 +447,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		/** Optional logger for telemetry. */
 		private readonly logger?: ITelemetryLoggerExt,
 		private readonly breaker: Breakable = new Breakable("TreeCheckout"),
-		/** Optional Forked RevertibleCommitBranches */
-		private readonly forkedRevertibleCommitBranches?: Map<
-			RevisionTag,
-			SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
-		>,
 	) {
 		// when a transaction is started, take a snapshot of the current state of removed roots
 		_branch.on("transactionStarted", () => {
@@ -646,6 +642,15 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	): ClonableRevertible {
 		const checkout = branch ? getCheckout(branch) : this;
 
+		/**
+		 * Deep clone `revertibleCommitBranches` of the original checkout to forked checkout.
+		 */
+		if (branch !== undefined) {
+			const revertibleBranch = this.revertibleCommitBranches.get(revision);
+			assert(revertibleBranch !== undefined, "TODO");
+			checkout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+		}
+
 		const commitBranches = checkout.revertibleCommitBranches;
 
 		const revertible: ClonableRevertible = {
@@ -736,7 +741,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
 		const transaction = new Transaction(branch);
-		const forkedBranch = new Map(this.revertibleCommitBranches);
 		return new TreeCheckout(
 			transaction,
 			branch,
@@ -751,7 +755,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.removedRoots.clone(),
 			this.logger,
 			this.breaker,
-			forkedBranch,
 		);
 	}
 
