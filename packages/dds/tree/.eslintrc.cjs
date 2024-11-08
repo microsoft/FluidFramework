@@ -26,9 +26,6 @@ module.exports = {
 			},
 		],
 
-		// TODO: Remove this override once dependency on eslint-config-fluid has been updated to 5.2.0+
-		"import/order": "off",
-
 		// #region TODO: Remove these overrides once this config has been updated to extend the "strict" base config.
 
 		"@typescript-eslint/explicit-member-accessibility": "error",
