@@ -30,10 +30,10 @@ const user = {
 };
 
 const connectionConfig: AzureLocalConnectionConfig = {
-			type: "local",
-			tokenProvider: new InsecureTokenProvider("fooBar", user),
-			endpoint: "http://localhost:7070",
-		};
+	type: "local",
+	tokenProvider: new InsecureTokenProvider("fooBar", user),
+	endpoint: "http://localhost:7070",
+};
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created

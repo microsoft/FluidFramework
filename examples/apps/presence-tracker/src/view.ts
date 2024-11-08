@@ -75,17 +75,18 @@ export function renderMousePresence(
 ) {
 	const onPositionChanged = () => {
 		div.innerHTML = "";
-		mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
+
+		for (const [userName, mousePosition] of mouseTracker.getMousePresences()) {
 			if (focusTracker.getFocusPresences().get(userName) === true) {
 				const posDiv = document.createElement("div");
-				posDiv.textContent = userName;
+				posDiv.textContent = `/${userName}`;
 				posDiv.style.position = "absolute";
 				posDiv.style.left = `${mousePosition.x}px`;
-				posDiv.style.top = `${mousePosition.y}px`;
+				posDiv.style.top = `${mousePosition.y - 6}px`;
 				posDiv.style.fontWeight = "bold";
 				div.appendChild(posDiv);
 			}
-		});
+		}
 	};
 
 	onPositionChanged();

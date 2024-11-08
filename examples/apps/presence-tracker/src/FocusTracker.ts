@@ -56,25 +56,31 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 			this.emit("mousePositionChanged");
 		});
 
-		window.addEventListener("focus", (e) => {
-			// Alert all connected clients that there has been a change to a client's mouse position
+		// Alert all connected clients that there has been a change to a client's focus state
+		window.addEventListener("focus", () => {
 			this.focus.local = {
 				hasFocus: true,
+			};
+		});
+		window.addEventListener("blur", () => {
+			this.focus.local = {
+				hasFocus: false,
 			};
 		});
 	}
 
 	public getFocusPresences(): Map<string, boolean> {
 		const statuses: Map<string, boolean> = new Map<string, boolean>();
-		this.audience.getMembers().forEach((member) => {
-			member.connections.forEach((connection) => {
+
+		for (const [, member] of this.audience.getMembers()) {
+			for (const connection of member.connections) {
 				const attendee = this.presence.getAttendee(connection.id);
 				const focus = this.focusMap.get(attendee);
-				if (focus?.hasFocus !== undefined) {
+				if (focus !== undefined) {
 					statuses.set(member.name, focus.hasFocus);
 				}
-			});
-		});
+			}
+		}
 		return statuses;
 	}
 }
