@@ -40,6 +40,8 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
+	type IRuntimeMessageCollection,
+	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
@@ -875,7 +877,7 @@ describe("Runtime", () => {
 			const getMockChannelCollection = (): ChannelCollection => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
-					process: (..._args) => {},
+					processMessages: (..._args) => {},
 					setConnectionState: (..._args) => {},
 				} as ChannelCollection;
 			};
@@ -2142,6 +2144,7 @@ describe("Runtime", () => {
 		});
 
 		describe("Load Partial Snapshot with datastores with GroupId", () => {
+			const sandbox = createSandbox();
 			let snapshotWithContents: ISnapshot;
 			let blobContents: Map<string, ArrayBuffer>;
 			let ops: ISequencedDocumentMessage[];
@@ -2264,8 +2267,8 @@ describe("Runtime", () => {
 				logger.clear();
 			});
 
-			function createSnapshot(addMissindDatasore: boolean, setGroupId: boolean = true) {
-				if (addMissindDatasore) {
+			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true) {
+				if (addMissingDatastore) {
 					snapshotTree.trees[".channels"].trees.missingDataStore = {
 						blobs: { ".component": "id" },
 						trees: {
@@ -2521,34 +2524,41 @@ describe("Runtime", () => {
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
-				// Add ops to this context.
-				const messages = [
+				const envelopes: ISequencedMessageEnvelope[] = [
 					{ sequenceNumber: 1 },
 					{ sequenceNumber: 2 },
 					{ sequenceNumber: 3 },
 					{ sequenceNumber: 4 },
-				];
-				// eslint-disable-next-line @typescript-eslint/dot-notation
-				missingDataStoreContext["pending"] = messages as ISequencedDocumentMessage[];
+				] as unknown as ISequencedMessageEnvelope[];
+				envelopes.forEach((envelope) => {
+					missingDataStoreContext.processMessages({
+						envelope,
+						messagesContent: [
+							{ contents: "message", localOpMetadata: undefined, clientSequenceNumber: 1 },
+						],
+						local: false,
+					});
+				});
 
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
 				(containerContext.deltaManager as any).lastSequenceNumber = 2;
 
 				let opsProcessed = 0;
 				let opsStart: number | undefined;
-				missingDataStoreRuntime.process = (
-					message: ISequencedDocumentMessage,
-					local: boolean,
-					localOpMetadata,
-				) => {
+				const processMessagesStub = (messageCollection: IRuntimeMessageCollection) => {
 					if (opsProcessed === 0) {
-						opsStart = message.sequenceNumber;
+						opsStart = messageCollection.envelope.sequenceNumber;
 					}
-					opsProcessed++;
+					opsProcessed += messageCollection.messagesContent.length;
 				};
+				const stub = sandbox
+					.stub(missingDataStoreRuntime, "processMessages")
+					.callsFake(processMessagesStub);
 				await assert.doesNotReject(async () => {
 					await containerRuntime.resolveHandle({ url: "/missingDataStore" });
 				}, "resolveHandle should work fine");
+
+				stub.restore();
 
 				assert(opsProcessed === 2, "only 2 ops should be processed with seq number 3 and 4");
 				assert(opsStart === 3, "first op processed should have seq number 3");
@@ -2706,19 +2716,22 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 1,
-							signalsLost: 0,
-							outOfOrderSignals: 0,
+							sent: 1,
+							lost: 0,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 0,
-							outOfOrderSignals: 0,
+							sent: 100,
+							lost: 0,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 					],
 					"Signal latency telemetry should be logged after 100 signals",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -2733,9 +2746,12 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 2,
+							expectedSequenceNumber: 2,
+							clientBroadcastSignalSequenceNumber: 4,
 						},
 					],
 					"SignalLost telemetry should be logged when signal is dropped",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -2750,10 +2766,12 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 1,
+							expectedSequenceNumber: 2,
+							clientBroadcastSignalSequenceNumber: 3,
 						},
 					],
 					"SignalLost telemetry should be logged when signal is dropped",
-					undefined,
+					/* inlineDetailsProp = */ true,
 					false,
 				);
 
@@ -2807,9 +2825,12 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 1,
+							expectedSequenceNumber: 1,
+							clientBroadcastSignalSequenceNumber: 2,
 						},
 					],
 					"SignalLost telemetry should be logged when signal is dropped",
+					/* inlineDetailsProp = */ true,
 				);
 
 				dropSignals(2);
@@ -2821,9 +2842,12 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 2,
+							expectedSequenceNumber: 3,
+							clientBroadcastSignalSequenceNumber: 5,
 						},
 					],
 					"SignalLost telemetry should be logged when signal is dropped",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -2883,17 +2907,18 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 97, // 101 (tracked latency signal) - 5 (earliest sent signal on reconnect) + 1 = 97
-							signalsLost: 0,
-							outOfOrderSignals: 0,
+							sent: 97, // 101 (tracked latency signal) - 5 (earliest sent signal on reconnect) + 1 = 97
+							lost: 0,
+							outOfOrder: 0,
 							reconnectCount: 1,
 						},
 					],
 					"SignalLatency telemetry should be logged with correct reconnect count",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
-			it("counts both relative and abosolute lost signal counts", () => {
+			it("counts both relative and absolute lost signal counts", () => {
 				sendSignals(60);
 				processSubmittedSignals(10);
 				dropSignals(1);
@@ -2904,9 +2929,12 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 1,
+							expectedSequenceNumber: 11,
+							clientBroadcastSignalSequenceNumber: 12,
 						},
 					],
 					"SignalLost telemetry should log relative lost signal count when a signal is dropped",
+					/* inlineDetailsProp = */ true,
 				);
 
 				dropSignals(5);
@@ -2922,19 +2950,25 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 5,
+							expectedSequenceNumber: 51,
+							clientBroadcastSignalSequenceNumber: 56,
 						},
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 4,
+							expectedSequenceNumber: 86,
+							clientBroadcastSignalSequenceNumber: 90,
 						},
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 10,
-							outOfOrderSignals: 0,
+							sent: 100,
+							lost: 10,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 					],
 					"SignalLost telemetry should log relative lost signal count and SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -2964,18 +2998,21 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 101,
-							signalsLost: 20,
-							outOfOrderSignals: 0,
+							sent: 101,
+							lost: 20,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 1,
-							outOfOrderSignals: 0,
+							sent: 100,
+							lost: 1,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 					],
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -3005,12 +3042,14 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 201,
-							signalsLost: 26,
-							outOfOrderSignals: 0,
+							sent: 201,
+							lost: 26,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 					],
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -3025,12 +3064,14 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 10,
-							outOfOrderSignals: 0,
+							sent: 100,
+							lost: 10,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 					],
 					"SignalLatency telemetry should log correct amount of sent and lost signals",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -3056,21 +3097,24 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 1,
-							outOfOrderSignals: 0,
+							sent: 100,
+							lost: 1,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 						{
 							eventName: "ContainerRuntime:SignalOutOfOrder",
 						},
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 0,
-							outOfOrderSignals: 1,
+							sent: 100,
+							lost: 0,
+							outOfOrder: 1,
+							reconnectCount: 0,
 						},
 					],
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals and SignalOutOfOrder event",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 			describe("multi-client", () => {
@@ -3132,12 +3176,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 					sendSignals(1); //               1 outstanding including 1 tracked signals (#101); one targeted
 					processSubmittedSignals(1); //   0 outstanding; none tracked
@@ -3147,12 +3193,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 
 					// Repeat the same for remote runtime which recevied targeted signal
@@ -3166,12 +3214,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 
 					sendRemoteSignals(1);
@@ -3182,12 +3232,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 				});
 				it("can detect dropped signal while ignoring non-self targeted signal in signalLatency telemetry", () => {
@@ -3216,12 +3268,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 10,
-								outOfOrderSignals: 5,
+								sent: 100,
+								lost: 10,
+								outOfOrder: 5,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 				});
 
@@ -3245,12 +3299,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 
 					sendSignals(1); //             	     1 outstanding including 1 tracked signals (#101); one targeted
@@ -3262,12 +3318,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 				});
 			});
