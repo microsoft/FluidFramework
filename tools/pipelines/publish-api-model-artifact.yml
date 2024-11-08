@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# build-docs pipeline
+# publish-api-model-artifact pipeline
 
 name: $(Build.BuildId)
 
@@ -158,12 +158,12 @@ stages:
         - task: TriggerBuild@4
           inputs:
             definitionIsInCurrentTeamProject: True
-            buildDefinition: 'build-docs'
+            buildDefinition: 'deploy-website'
             useSameSourceVersion: False
             useSameBranch: False
-            branchToUse: test/michaelzhen
+            branchToUse: main
             templateParameters: 'deployEnvironment:${{ parameters.deployEnvironment }}, guardianAssetRetentionOverride:${{ parameters.guardianAssetRetentionOverride }}, publishGuardianBaselines:${{ parameters.publishGuardianBaselines }}'
             storeInEnvironmentVariable: True
             authenticationMethod: 'OAuth Token'
             password: '$(System.AccessToken)'
-          displayName: Run build-docs pipeline
+          displayName: Run deploy-website pipeline
