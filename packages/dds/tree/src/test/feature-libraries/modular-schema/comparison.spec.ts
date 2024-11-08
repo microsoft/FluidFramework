@@ -508,7 +508,7 @@ function intoSimpleObject(obj: unknown): unknown {
 	if (typeof obj !== "object" || obj === null) {
 		return obj;
 	}
-	if (obj instanceof Array) {
+	if (Array.isArray(obj)) {
 		return Array.from(obj, intoSimpleObject);
 	}
 	if (obj instanceof Map) {

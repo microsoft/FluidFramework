@@ -64,7 +64,7 @@ describe("valueUtilities", () => {
 	it("isTreeValue", () => {
 		assert(isTreeValue(0));
 		assert(isTreeValue(0.001));
-		assert(isTreeValue(NaN));
+		assert(isTreeValue(Number.NaN));
 		assert(isTreeValue(true));
 		assert(isTreeValue(false));
 		assert(isTreeValue(""));
