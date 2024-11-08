@@ -581,10 +581,7 @@
         "import/no-extraneous-dependencies": [
             "error",
             {
-                "devDependencies": [
-                    "**/*.spec.ts",
-                    "src/test/**"
-                ]
+                "devDependencies": true
             }
         ],
         "import/no-internal-modules": [

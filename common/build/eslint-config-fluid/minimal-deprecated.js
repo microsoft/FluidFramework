@@ -426,7 +426,13 @@ module.exports = {
 		},
 		{
 			// Rules only for test files
-			files: ["*.spec.ts", "*.test.ts", "**/test/**"],
+			files: [
+				"*.spec.ts",
+				"*.test.ts",
+				"**/test/**",
+				// TODO: consider unifying code across the repo to use "test" and not "tests", then we can remove this.
+				"**/tests/**",
+			],
 			rules: {
 				"@typescript-eslint/no-invalid-this": "off",
 				"@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
@@ -446,6 +452,9 @@ module.exports = {
 						),
 					},
 				],
+
+				// Test code may leverage dev dependencies
+				"import/no-extraneous-dependencies": ["error", { devDependencies: true }],
 			},
 		},
 	],
