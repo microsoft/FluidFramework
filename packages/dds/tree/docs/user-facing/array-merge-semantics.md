@@ -16,7 +16,7 @@ A postcondition defines a guarantee that is made about the effect of the edit.
 ### The Problem
 
 Array operations that insert (or move in) array items take an integer that describes where in the array the new item(s) should be added.
-For example, we to insert the value `"o"` in the array `["c", "a", "t"]` to change it to  `["c", "o", "a", "t"]` by calling `insertAt(1, "o")`.
+For example, we can call `insertAt(1, "o")` to insert the value `"o"` in the array `["c", "a", "t"]` thus changing it to  `["c", "o", "a", "t"]`.
 
 In a collaborative editing environment,
 it's possible for the state of the array to change between the time the edit is first created and the time it is applied.
@@ -76,6 +76,38 @@ Example:
 If the edits are sequenced in increasing order (i.e., edit 1, edit 2, edit 3),
 then the resulting state will be `[X, Y, R, S, A, B]`.
 
+### Noteworthy Implications
+
+Creating and edit that inserts items before or after an existing item in an array will not necessarily insert next two that item.
+For example, inserting item X at the start of array `[Y, Z]` does not guarantee that X and Y will both appear together (in that order)
+if other users make concurrent edits to the array.
+
+Example 1: concurrent insert
+* Starting state: `[Y, Z]`
+* Alice's edit: insert A at the start of the array.
+* Bob's edit: insert X at the start of the array.
+If Alice's edit is sequenced before Bob's,
+then the result will be `[X, A, Y, Z]`.
+
+Example 2: concurrent remove
+* Starting state: `[Y, Z]`
+* Alice's edit: remove Y.
+* Bob's edit: insert X at the start of the array.
+No matter the order in which these edits are sequenced,
+the result will be `[X, Z]`.
+
+Example 3: concurrent move
+* Starting state: `[Y, Z]`
+* Alice's edit: move Y after Z.
+* Bob's edit: insert X at the start of the array.
+No matter the order in which these edits are sequenced,
+the result will be `[X, Z, Y]`
+as opposed to `[Z, X, Y]` which one might have expected if they thought of the insertion as happening "before Y".
+
+The takeaway from these examples is that while it's tempting to think of an insertion as occurring before or after an existing item,
+that doesn't quite match the merge semantics we have implemented.
+If you find yourself wishing for different merge semantics please reach out to the Fluid team.
+
 ## Specifying the Set of (Re)Moved Items
 
 Each move or remove operations affects a specific set of array items.
@@ -85,23 +117,22 @@ For example, removing the `"o"` from `["c", "o", "a", "t"]` with `removeAt(1)`.
 
 When targeting multiple contiguous items,
 it is possible specify them as a range.
-For example, `"o"` and `"a"` from `["c", "o", "a", "t"]` with `removeRange(1, 2)`.
+For example, `"o"` and `"a"` from `["c", "o", "a", "t"]` with `removeRange(1, 3)`.
 
 From the point of view of merge semantics,
-calling `removeRange(1, 2)` is equivalent to individually removing each of the two middle letters in one transaction.
-Using the range-based API is typically more convenient,
-it is also optimized to have less overhead than making separate calls for each individual item.
+calling `removeRange(1, 3)` is equivalent to individually removing each of the two middle letters in one transaction.
+Using the range-based API is typically more convenient.
+It is also optimized to have less overhead than making separate calls for each individual item.
 
 The same is true for `moveRange` compared to `moveAt`,
 with the additional property that `moveRange` preserves the order that the items are in at the time is edit is created.
 For example, if one user moves items A and B to the end of array `[A, B, C]` by using a `sourceStart` of 0 and a `sourceEnd` of 2,
 and some other user concurrently swaps the order of A and B (thus changing the state to `[B, A, C]`),
-then the outcome will still be `[C, A, B]` as opposed to `[C, B, A]`.
+then the outcome
+(assuming the swap edit is sequenced first)
+will still be `[C, A, B]` as opposed to `[C, B, A]`.
 
 ### The Problem
-
-Array operations that insert (or move in) array items take an integer that describes where in the array the new item(s) should be added.
-For example, we to insert the value `"o"` in the array `["c", "a", "t"]` to change it to  `["c", "o", "a", "t"]` by calling `insertAt(1, "o")`.
 
 In a collaborative editing environment,
 it's possible for the state of the array to change between the time the edit is first created and the time it is applied.
