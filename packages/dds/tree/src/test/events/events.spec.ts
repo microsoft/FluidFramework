@@ -11,6 +11,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../events/emitter.js";
 import type { Listenable } from "../../events/index.js";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 interface TestEvents {
 	open: () => void;
@@ -71,29 +72,51 @@ describe("EventEmitter", () => {
 		assert(closed);
 	});
 
-	it("deregisters events", () => {
+	it("deregisters events via callback", () => {
 		const emitter = createEmitter<TestEvents>();
 		let error = false;
-		const deregister = emitter.on("close", (e: boolean) => {
-			error = e;
-		});
+		const deregister = emitter.on("close", (e: boolean) => (error = e));
 		deregister();
 		emitter.emit("close", true);
 		assert.strictEqual(error, false);
 	});
 
-	it("deregisters multiple events", () => {
+	it("deregisters events via off", () => {
+		const emitter = createEmitter<TestEvents>();
+		let error = false;
+		const listener = (e: boolean) => (error = e);
+		emitter.on("close", listener);
+		emitter.off("close", listener);
+		emitter.emit("close", true);
+		assert.strictEqual(error, false);
+	});
+
+	it("deregisters multiple events via callback", () => {
 		const emitter = createEmitter<TestEvents>();
 		let opened = false;
 		let closed = false;
-		const deregisterOpen = emitter.on("open", () => {
-			opened = true;
-		});
-		const deregisterClosed = emitter.on("close", () => {
-			closed = true;
-		});
+		const deregisterOpen = emitter.on("open", () => (opened = true));
+		const deregisterClosed = emitter.on("close", () => (closed = true));
 		deregisterOpen();
 		deregisterClosed();
+		emitter.emit("open");
+		assert(!opened);
+		assert(!closed);
+		emitter.emit("close", false);
+		assert(!opened);
+		assert(!closed);
+	});
+
+	it("deregisters multiple events via off", () => {
+		const emitter = createEmitter<TestEvents>();
+		let opened = false;
+		let closed = false;
+		const listenerOpen = () => (opened = true);
+		const listenerClosed = () => (closed = true);
+		emitter.on("open", listenerOpen);
+		emitter.on("close", listenerClosed);
+		emitter.off("open", listenerOpen);
+		emitter.off("close", listenerClosed);
 		emitter.emit("open");
 		assert(!opened);
 		assert(!closed);
@@ -124,38 +147,43 @@ describe("EventEmitter", () => {
 		assert.strictEqual(count, 0);
 	});
 
-	// Note: This behavior is not contractually required (see docs for `Listenable.on()`),
-	// but is tested here to check for changes or regressions.
-	it("correctly handles multiple registrations of the same listener", () => {
+	it("errors on multiple registrations of the same listener", () => {
 		const emitter = createEmitter<TestEvents>();
-		let count: number;
+		let count = 0;
 		const listener = () => (count += 1);
-		const off1 = emitter.on("open", listener);
-		const off2 = emitter.on("open", listener);
-
-		count = 0;
-		emitter.emit("open");
-		assert.strictEqual(count, 2); // Listener should be fired twice
-
-		count = 0;
-		off1();
+		emitter.on("open", listener);
+		assert.throws(
+			() => emitter.on("open", listener),
+			(e: Error) => validateAssertionError(e, /register.*twice.*open/),
+		);
+		// If error is caught, the listener should still fire once for the first registration
 		emitter.emit("open");
 		assert.strictEqual(count, 1);
+	});
 
-		count = 0;
-		off2();
-		emitter.emit("open");
-		assert.strictEqual(count, 0);
+	it("allows registrations of event names that are symbols", () => {
+		const eventSymbol = Symbol("TestEvent");
+		const emitter = createEmitter<{ [eventSymbol]: () => void }>();
+		let count = 0;
+		const listener = () => (count += 1);
+		emitter.on(eventSymbol, listener);
+		emitter.emit(eventSymbol);
+		assert.equal(count, 1);
+		assert.throws(
+			() => emitter.on(eventSymbol, listener),
+			(e: Error) => validateAssertionError(e, /register.*twice.*TestEvent/),
+		);
 	});
 
 	it("allows repeat deregistrations", () => {
 		const emitter = createEmitter<TestEvents>();
 		const deregister = emitter.on("open", () => {});
-		const deregisterB = emitter.on("open", () => {});
+		const listenerB = () => {};
+		emitter.on("open", listenerB);
 		deregister();
 		deregister();
-		deregisterB();
-		deregisterB();
+		emitter.off("open", listenerB);
+		emitter.off("open", listenerB);
 	});
 
 	it("skips events adding during event", () => {
@@ -215,6 +243,10 @@ class MyCompositionClass implements Listenable<MyEvents> {
 
 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
 		return this.events.on(eventName, listener);
+	}
+
+	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
+		return this.events.off(eventName, listener);
 	}
 }
 

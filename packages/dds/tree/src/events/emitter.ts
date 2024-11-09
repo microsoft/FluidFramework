@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { setInNestedMap } from "../util/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { getOrCreate } from "../util/index.js";
 import type { Listenable, Listeners, Off } from "./listeners.js";
 
 /**
@@ -103,7 +104,7 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
  * ```typescript
  * class MyExposingClass {
  * 	private readonly _events = createEmitter<MyEvents>();
- *  public readonly events: Listenable<MyEvents> = this._events;
+ * 	public readonly events: Listenable<MyEvents> = this._events;
  *
  * 	private load() {
  * 		this._events.emit("loaded");
@@ -117,7 +118,7 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 {
 	protected readonly listeners = new Map<
 		keyof TListeners,
-		Map<Off, (...args: any[]) => TListeners[keyof TListeners]>
+		Set<(...args: any[]) => TListeners[keyof TListeners]>
 	>();
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
@@ -132,11 +133,10 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 		if (listeners !== undefined) {
 			// Current tsc (5.4.5) cannot spread `args` into `listener()`.
 			const argArray: unknown[] = args;
-
 			// This explicitly copies listeners so that new listeners added during this call to emit will not receive this event.
-			for (const [off, listener] of [...listeners]) {
+			for (const listener of [...listeners]) {
 				// If listener has been unsubscribed while invoking other listeners, skip it.
-				if (listeners.has(off)) {
+				if (listeners.has(listener)) {
 					listener(...argArray);
 				}
 			}
@@ -159,29 +159,32 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 		return [];
 	}
 
-	/**
-	 * Register an event listener.
-	 * @param eventName - the name of the event
-	 * @param listener - the handler to run when the event is fired by the emitter
-	 * @returns a function which will deregister the listener when run.
-	 * This function will error if called more than once.
-	 */
 	public on<K extends keyof Listeners<TListeners>>(
 		eventName: K,
 		listener: TListeners[K],
 	): Off {
-		const off: Off = () => {
-			const currentListeners = this.listeners.get(eventName);
-			if (currentListeners?.delete(off) === true) {
-				if (currentListeners.size === 0) {
-					this.listeners.delete(eventName);
-					this.noListeners?.(eventName);
-				}
-			}
-		};
+		const listeners = getOrCreate(this.listeners, eventName, () => new Set());
+		if (listeners.has(listener)) {
+			const eventDescription =
+				typeof eventName === "symbol" ? eventName.description : String(eventName.toString());
 
-		setInNestedMap(this.listeners, eventName, off, listener);
-		return off;
+			throw new UsageError(
+				`Attempted to register the same listener object twice for event ${eventDescription}`,
+			);
+		}
+		listeners.add(listener);
+		return () => this.off(eventName, listener);
+	}
+
+	public off<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		listener: TListeners[K],
+	): void {
+		const listeners = this.listeners.get(eventName);
+		if (listeners?.delete(listener) === true && listeners.size === 0) {
+			this.listeners.delete(eventName);
+			this.noListeners?.(eventName);
+		}
 	}
 
 	public hasListeners(eventName?: keyof TListeners): boolean {
@@ -239,6 +242,10 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  * 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): Off {
  * 		return this.events.on(eventName, listener);
  * 	}
+ *
+ *  public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
+ *    return this.events.off(eventName, listener);
+ *  }
  * }
  * ```
  */
