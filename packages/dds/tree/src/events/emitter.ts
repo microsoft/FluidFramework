@@ -63,7 +63,7 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
 /**
  * Provides an API for subscribing to and listening to events.
  *
- * @remarks Classes wishing to emit events may either extend this class or compose over it.
+ * @remarks Classes wishing to emit events may either extend this class, compose over it, or expose it as a property of type {@link Listenable}.
  *
  * @example Extending this class
  *
@@ -94,6 +94,20 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
  *
  * 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
  * 		return this.events.on(eventName, listener);
+ * 	}
+ * }
+ * ```
+ *
+ * @example Exposing this class as a property
+ *
+ * ```typescript
+ * class MyExposingClass {
+ * 	private readonly _events = createEmitter<MyEvents>();
+ *  public readonly events: Listenable<MyEvents> = this._events;
+ *
+ * 	private load() {
+ * 		this._events.emit("loaded");
+ * 		const results: number[] = this._events.emitAndCollect("computed");
  * 	}
  * }
  * ```

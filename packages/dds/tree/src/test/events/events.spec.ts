@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	EventEmitter,
@@ -215,5 +215,16 @@ class MyCompositionClass implements Listenable<MyEvents> {
 
 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
 		return this.events.on(eventName, listener);
+	}
+}
+
+class MyExposingClass {
+	private readonly _events = createEmitter<MyEvents>();
+
+	public readonly events: Listenable<MyEvents> = this._events;
+
+	private load() {
+		this._events.emit("loaded");
+		const results: number[] = this._events.emitAndCollect("computed");
 	}
 }
