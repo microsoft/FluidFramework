@@ -476,7 +476,7 @@ function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
 }
 
 /**
- * Types of {@link TreeNode|TreeNodes} or {@link TreeLeafValue|TreeLeafValue} allowed at a location in a tree.
+ * Types of {@link TreeNode|TreeNodes} or {@link TreeLeafValue|TreeLeafValues} allowed at a location in a tree.
  * @remarks
  * Used by {@link TreeViewConfiguration} for the root and various kinds of {@link TreeNodeSchema} to specify their allowed child types.
  *
@@ -486,10 +486,10 @@ function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
  *
  * Arrays of schema can be used to specify multiple types are allowed, which result in unions of those types in the Tree APIs.
  *
- * When saved into variables, avoid type erasing the details as doing so loses the compile time schema awareness of APIs derived from the types.
+ * When saved into variables, avoid type-erasing the details, as doing so loses the compile time schema awareness of APIs derived from the types.
  *
  * When referring to types that are declared after the definition of the `ImplicitAllowedTypes`, the schema can be wrapped in a lambda to allow the forward reference.
- * When constructing recursive schema see {@link ValidateRecursiveSchema} for details on how to structure the `ImplicitAllowedTypes` instances.
+ * See {@link ValidateRecursiveSchema} for details on how to structure the `ImplicitAllowedTypes` instances when constructing recursive schema.
  *
  * @example Explicit use with strong typing
  * ```typescript
