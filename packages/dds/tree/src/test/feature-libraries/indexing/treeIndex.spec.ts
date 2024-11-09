@@ -46,7 +46,7 @@ function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): s
 	return value;
 }
 
-describe("tree indexes", () => {
+describe.only("tree indexes", () => {
 	/** The field key under which the parentId node puts its identifier */
 	const parentKey: FieldKey = brand("parentKey");
 	/** The identifier of the parent node */
@@ -193,6 +193,31 @@ describe("tree indexes", () => {
 		assert(child !== undefined);
 		assertContents([parentId, parent], [childId, child]);
 	});
+
+	// TODO: implement these series of tests
+	// they're not currently required because the API that will be made public makes this case impossible
+	// but the lower level API should still support and test this case
+	describe.skip("can re-index nodes in the spine of a replaced value", () => {
+		// schemas for the nested objects
+		class Egg extends sf.object("Egg", {
+			color: sf.string,
+		}) {}
+		class Bird extends sf.object("Bird", {
+			eggs: sf.array(Egg),
+		}) {}
+		class Nest extends sf.object("Nest", {
+			bird: sf.required(Bird),
+		}) {}
+
+		// creates an index that indexes all nests that have blue eggs in them
+		function createNestIndex(root: SchematizingSimpleTreeView<typeof Nest[]>) { }
+
+		const config = new TreeViewConfiguration({ schema: Nest });
+		const view = getView(config);
+		view.initialize({ bird: { eggs: [{ color: "blue" }] } });
+
+		
+	})
 
 	it("does not include nodes that are detached when the index is created", () => {
 		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
