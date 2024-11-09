@@ -466,7 +466,7 @@ describe("Undo and redo", () => {
 		assert.equal(view.root.foo, 1);
 	});
 
-	it("revert the original and forked revertibles separately", () => {
+	it("reverts original & forked revertibles after making change to the original view", () => {
 		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
 
 		const {
@@ -497,7 +497,7 @@ describe("Undo and redo", () => {
 		assert.equal(clonedPropertyOneUndo?.status, RevertibleStatus.Disposed);
 	});
 
-	it("revert the original and forked revertibles separately", () => {
+	it("reverts original & forked revertibles after making separate changes to the original & forked view", () => {
 		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
 
 		const {
@@ -549,7 +549,7 @@ describe("Undo and redo", () => {
 		assert.equal(clonedUndoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 	});
 
-	it("revert the original and forked revertibles separately", () => {
+	it("reverts cloned revertible on original view", () => {
 		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
 
 		const {
