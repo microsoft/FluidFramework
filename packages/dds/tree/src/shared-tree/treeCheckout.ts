@@ -541,45 +541,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 											"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
 										);
 									}
-									const revertibleCommits = this.revertibleCommitBranches;
-									const revertible: ClonableRevertible = {
-										get status(): RevertibleStatus {
-											const revertibleCommit = revertibleCommits.get(revision);
-											return revertibleCommit === undefined
-												? RevertibleStatus.Disposed
-												: RevertibleStatus.Valid;
-										},
-										revert: (release: boolean = true) => {
-											if (revertible.status === RevertibleStatus.Disposed) {
-												throw new UsageError(
-													"Unable to revert a revertible that has been disposed.",
-												);
-											}
-
-											const revertMetrics = this.revertRevertible(revision, kind);
-											this.logger?.sendTelemetryEvent({
-												eventName: TreeCheckout.revertTelemetryEventName,
-												...revertMetrics,
-											});
-
-											if (release) {
-												revertible.dispose();
-											}
-										},
-										clone: (branch?: TreeBranch): ClonableRevertible => {
-											return this.cloneRevertible(revision, kind, branch);
-										},
-										dispose: () => {
-											if (revertible.status === RevertibleStatus.Disposed) {
-												throw new UsageError(
-													"Unable to dispose a revertible that has already been disposed.",
-												);
-											}
-											this.disposeRevertible(revertible, revision);
-											onRevertibleDisposed?.(revertible);
-										},
-									};
-
+									const revertible = this.createRevertible(
+										revision,
+										kind,
+										this,
+										onRevertibleDisposed,
+									);
 									this.revertibleCommitBranches.set(revision, _branch.fork(commit));
 									this.revertibles.add(revertible);
 									return revertible;
@@ -634,23 +601,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
-	private cloneRevertible(
+	private createRevertible(
 		revision: RevisionTag,
 		kind: CommitKind,
-		branch?: TreeBranch,
+		checkout: TreeCheckout = this,
 		onRevertibleDisposed?: (revertible: Revertible) => void,
 	): ClonableRevertible {
-		const checkout = branch ? getCheckout(branch) : this;
-
-		/**
-		 * Deep clone `revertibleCommitBranches` of the original checkout to forked checkout.
-		 */
-		if (branch !== undefined) {
-			const revertibleBranch = this.revertibleCommitBranches.get(revision);
-			assert(revertibleBranch !== undefined, "SharedTreeBranch for revertible not found.");
-			checkout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
-		}
-
 		const commitBranches = checkout.revertibleCommitBranches;
 
 		const revertible: ClonableRevertible = {
@@ -690,6 +646,23 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		};
 
 		return revertible;
+	}
+
+	private cloneRevertible(
+		revision: RevisionTag,
+		kind: CommitKind,
+		branch?: TreeBranch,
+		onRevertibleDisposed?: (revertible: Revertible) => void,
+	): ClonableRevertible {
+		const checkout = branch ? getCheckout(branch) : this;
+
+		if (branch !== undefined) {
+			const revertibleBranch = this.revertibleCommitBranches.get(revision);
+			assert(revertibleBranch !== undefined, "SharedTreeBranch for revertible not found.");
+			checkout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+		}
+
+		return this.createRevertible(revision, kind, checkout, onRevertibleDisposed);
 	}
 
 	// For the new TreeViewAlpha API

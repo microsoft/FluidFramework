@@ -28,7 +28,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import assert from "assert";
+import assert from "node:assert";
 import {
 	asTreeViewAlpha,
 	SchemaFactory,
