@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert } from "assert";
 
 import { getView } from "../../utils.js";
 import {
@@ -11,7 +11,13 @@ import {
 	AnchorTreeIndex,
 	isTreeValue,
 } from "../../../feature-libraries/index.js";
-import type { AnchorNode, FieldKey, ITreeSubscriptionCursor } from "../../../core/index.js";
+import type {
+	AnchorNode,
+	FieldKey,
+	IEditableForest,
+	ITreeSubscriptionCursor,
+	TreeValue,
+} from "../../../core/index.js";
 import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
 import {
 	getOrCreateInnerNode,
@@ -25,6 +31,10 @@ import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizi
 import { treeApi } from "../../../shared-tree/treeApi.js";
 // eslint-disable-next-line import/no-internal-modules
 import { proxySlot } from "../../../simple-tree/core/treeNodeKernel.js";
+// eslint-disable-next-line import/no-internal-modules
+import { makeTree } from "../../../feature-libraries/flex-tree/lazyNode.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getOrCreateNodeFromInnerNode } from "../../../simple-tree/core/index.js";
 
 function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
 	cursor.enterField(fieldKey);
@@ -48,28 +58,41 @@ describe("tree indexes", () => {
 
 	const sf = new SchemaFactory("tree-indexes");
 	class IndexableChild extends sf.object("IndexableChild", {
-		[childKey]: sf.string,
+		childKey: sf.string,
 	}) {}
 
 	class IndexableParent extends sf.object("IndexableParent", {
-		[parentKey]: sf.string,
+		parentKey: sf.string,
 		child: sf.optional(IndexableChild),
 	}) {}
 
 	function createView(child?: IndexableChild) {
 		const config = new TreeViewConfiguration({ schema: IndexableParent });
 		const view = getView(config);
-		view.initialize({ [parentKey]: parentId, child });
+		view.initialize({ parentKey: parentId, child });
 
 		return { view, parent: view.root };
 	}
 
+	function makeTreeNode(
+		anchorNode: AnchorNode,
+		forest: IEditableForest,
+		root: SchematizingSimpleTreeView<typeof IndexableParent>,
+	): TreeNode | TreeValue {
+		const cursor = forest.allocateCursor();
+		forest.moveCursorToPath(anchorNode, cursor);
+		const flexNode = makeTree(root.getView().context, cursor);
+		cursor.free();
+		return getOrCreateNodeFromInnerNode(flexNode);
+	}
+
 	function createIndex(root: SchematizingSimpleTreeView<typeof IndexableParent>) {
 		const anchorIds = new Map<AnchorNode, number>();
+		const { forest } = root.checkout;
 		let indexedAnchorNodeCount = 0;
 
 		const index = new AnchorTreeIndex(
-			root.checkout.forest,
+			forest,
 			// Return a separate indexing function for each kind of node (parent and child).
 			// These functions are very similar and could be collapsed into a single function,
 			// but having them be separate better demonstrates the indexer function pattern.
@@ -88,7 +111,7 @@ describe("tree indexes", () => {
 			},
 			(anchorNode: AnchorNode) => {
 				const simpleTree =
-					anchorNode.slots.get(proxySlot) ?? fail("todo node should be hydrated");
+					anchorNode.slots.get(proxySlot) ?? makeTreeNode(anchorNode, forest, root);
 				if (!isTreeValue(simpleTree)) {
 					return treeApi.status(simpleTree);
 				}
@@ -155,7 +178,7 @@ describe("tree indexes", () => {
 	}
 
 	it("can look up nodes in an initial tree", () => {
-		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
@@ -165,15 +188,14 @@ describe("tree indexes", () => {
 	it("can look up an inserted node", () => {
 		const { view, parent } = createView(); // create a parent with no child
 		const { assertContents } = createIndex(view);
-		parent.child = new IndexableChild({ [childKey]: childId });
+		parent.child = new IndexableChild({ childKey: childId });
 		const child = parent.child;
 		assert(child !== undefined);
 		assertContents([parentId, parent], [childId, child]);
 	});
 
-	// todo: detached/removed nodes should be filtered out of the index
 	it("does not include nodes that are detached when the index is created", () => {
-		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
 		const child = parent.child;
 		assert(child !== undefined);
 		parent.child = undefined;
@@ -182,7 +204,7 @@ describe("tree indexes", () => {
 	});
 
 	it("does not include a removed node", () => {
-		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
@@ -192,7 +214,7 @@ describe("tree indexes", () => {
 
 	it("can look up multiple nodes with the same key", () => {
 		// Give the child the same ID as the parent (`parentId` rather than `childId`)
-		const { view, parent } = createView(new IndexableChild({ [childKey]: parentId }));
+		const { view, parent } = createView(new IndexableChild({ childKey: parentId }));
 		const { assertContents } = createIndex(view);
 		const child = parent.child;
 		assert(child !== undefined);
@@ -200,7 +222,7 @@ describe("tree indexes", () => {
 	});
 
 	it("can be disposed only once", () => {
-		const { view } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view } = createView(new IndexableChild({ childKey: childId }));
 		const { index } = createIndex(view);
 		index[disposeSymbol]();
 		assert.throws(() => index[disposeSymbol]());

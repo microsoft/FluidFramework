@@ -33,10 +33,10 @@ const childId: FieldKey = brand("childId");
 
 const schemaFactory = new SchemaFactory(undefined);
 class IndexableChild extends schemaFactory.object("IndexableChild", {
-	[childKey]: schemaFactory.identifier,
+	childKey: schemaFactory.identifier,
 }) {}
 class IndexableParent extends schemaFactory.object("IndexableParent", {
-	[parentKey]: schemaFactory.identifier,
+	parentKey: schemaFactory.identifier,
 	child: schemaFactory.optional(IndexableChild),
 }) {}
 
@@ -47,7 +47,7 @@ function isStringKey(key: TreeIndexKey): key is string {
 function createView(child?: IndexableChild) {
 	const config = new TreeViewConfiguration({ schema: IndexableParent });
 	const view = getView(config);
-	view.initialize({ [parentKey]: parentId, child });
+	view.initialize(new IndexableParent({ parentKey: parentId, child }));
 
 	return { view, parent: view.root };
 }
@@ -64,7 +64,7 @@ describe("simple tree indexes", () => {
 	}
 
 	it("can index nodes", () => {
-		const { view } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view } = createView(new IndexableChild({ childKey: childId }));
 		const index = createSimpleTreeIndex(
 			view,
 			(s) => indexer(s),
@@ -80,7 +80,7 @@ describe("simple tree indexes", () => {
 	});
 
 	it("does not reify tree of nodes being scanned", () => {
-		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
 		const index = createSimpleTreeIndex(
 			view,
 			(s) => indexer(s),
@@ -111,7 +111,7 @@ describe("simple tree indexes", () => {
 	});
 
 	it("filters out removed nodes", () => {
-		const { view, parent } = createView(new IndexableChild({ [childKey]: childId }));
+		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
 		const index = createSimpleTreeIndex<
 			typeof IndexableParent,
 			string,
@@ -134,8 +134,8 @@ describe("simple tree indexes", () => {
 		assert.equal(index.get(childId), undefined);
 	});
 
-	// TODO change the event we're using to update the index so that this works
-	it.skip("updates when values fields are updated", () => {
+	// todo change the event we're using to update the index so that this works
+	it("updates when values fields are updated", () => {
 		class OtherIndexableChild extends schemaFactory.object("IndexableChild", {
 			other: schemaFactory.string,
 		}) {}
@@ -174,7 +174,7 @@ describe("identifier indexes", () => {
 	}
 
 	it("can look up nodes", () => {
-		const { parent, index } = init(new IndexableChild({ [childKey]: childId }));
+		const { parent, index } = init(new IndexableChild({ childKey: childId }));
 		assert.equal(index.get(parentId), parent);
 		const child = parent.child;
 		assert(child !== undefined);
@@ -183,15 +183,15 @@ describe("identifier indexes", () => {
 	});
 
 	it("indexes newly inserted nodes", () => {
-		const { parent, index } = init(new IndexableChild({ [childKey]: childId }));
-		parent.child = new IndexableChild({ [childKey]: `${childId}2` });
+		const { parent, index } = init(new IndexableChild({ childKey: childId }));
+		parent.child = new IndexableChild({ childKey: `${childId}2` });
 		assert.equal(index.get(parentId), parent);
 		assert.equal(index.get(`${childId}2`), parent.child);
 		assert.equal(index.get(childId), undefined);
 	});
 
 	it("does not index detached nodes", () => {
-		const { parent, index } = init(new IndexableChild({ [childKey]: childId }));
+		const { parent, index } = init(new IndexableChild({ childKey: childId }));
 		const child = parent.child;
 		assert(child !== undefined);
 		assert.equal(index.get(childId), child);
@@ -203,7 +203,7 @@ describe("identifier indexes", () => {
 	});
 
 	it("fail on lookup if two nodes have the same key", () => {
-		const { index } = init(new IndexableChild({ [childKey]: parentId }));
+		const { index } = init(new IndexableChild({ childKey: parentId }));
 		assert.throws(() => index.get(parentId));
 	});
 });

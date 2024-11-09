@@ -9,7 +9,6 @@ import {
 	type Anchor,
 	type AnchorNode,
 	type FieldKey,
-	type ProtoNodes,
 	type TreeNodeSchemaIdentifier,
 	forEachField,
 	forEachNode,
@@ -19,8 +18,9 @@ import {
 	type AnnouncedVisitor,
 	CursorLocationType,
 	rootField,
-	type DetachedField,
 	type UpPath,
+	type ProtoNodes,
+	keyAsDetachedField,
 } from "../../core/index.js";
 import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
 import { TreeStatus } from "../flex-tree/index.js";
@@ -45,9 +45,6 @@ export type KeyFinder<TKey extends TreeIndexKey> = (tree: ITreeSubscriptionCurso
  * @remarks
  * Detached nodes are stored in the index but filtered out when any public facing apis are called. This means that
  * calling {@link keys} will not include any keys that are stored in the index but only map to detached nodes.
- *
- * TODO: need to make sure key finders are deterministic or have a way to invalidate them
- * TODO: the index does not update on leaf node changes
  */
 export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	implements TreeIndex<TKey, TValue>
@@ -63,9 +60,13 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 */
 	private readonly nodes = new Map<TKey, AnchorNode[]>();
 	/**
+	 * Maintained for efficient removal of anchor nodes from the index when updating their keys
+	 */
+	private readonly anchorKeys = new Map<AnchorNode, TKey>();
+	/**
 	 * Keeps track of anchors for disposal.
 	 */
-	private readonly anchors = new Map<AnchorNode, Anchor>();
+	private readonly anchors = new Map<AnchorNode, Anchor[]>();
 
 	/**
 	 * @param forest - the forest that is being indexed
@@ -115,21 +116,20 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				this.indexField(detachedCursor);
 				detachedCursor.free();
 			},
-			afterAttach: () => {
-				assert(parent !== undefined, "must have a parent");
-				const cursor = this.forest.allocateCursor();
-				this.forest.moveCursorToPath(parent, cursor);
-				assert(cursor.mode === CursorLocationType.Nodes, "attach should happen in a node");
-				cursor.exitNode();
-				this.indexSpine(cursor);
-				cursor.clear();
-			},
 			beforeReplace: () => {
 				assert(parent !== undefined, "must have a parent");
 				const cursor = this.forest.allocateCursor();
 				this.forest.moveCursorToPath(parent, cursor);
-				// todo can we remove the previous value before the replace happens?
+				const anchor = cursor.buildAnchor();
+				const anchorNode = this.forest.anchors.locate(anchor);
+				if (anchorNode !== undefined) {
+					const previousKey = this.anchorKeys.get(anchorNode);
+					if (previousKey !== undefined) {
+						this.removeAnchor(anchorNode, previousKey);
+					}
+				}
 				cursor.clear();
+				this.forest.forgetAnchor(anchor);
 			},
 			afterReplace: () => {
 				assert(parent !== undefined, "must have a parent");
@@ -137,7 +137,6 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				this.forest.moveCursorToPath(parent, cursor);
 				assert(cursor.mode === CursorLocationType.Nodes, "replace should happen in a node");
 				cursor.exitNode();
-				// todo do we actually need to walk up the spine? at this point, the field is at the child
 				this.indexSpine(cursor);
 				cursor.clear();
 			},
@@ -251,8 +250,10 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 * Disposes this index and all the anchors it holds onto.
 	 */
 	public [disposeSymbol](): void {
-		for (const anchor of this.anchors.values()) {
-			this.forest.forgetAnchor(anchor);
+		for (const anchors of this.anchors.values()) {
+			for (const anchor of anchors) {
+				this.forest.forgetAnchor(anchor);
+			}
 		}
 		this.anchors.clear();
 		Reflect.defineProperty(this, disposeSymbol, {
@@ -265,19 +266,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	/**
 	 * Given a cursor in node mode, indexes it.
 	 */
-	private indexNode(nodeCursor: ITreeSubscriptionCursor, removeNodeFromIndex = false): void {
-		// clear node from the index if it has already been indexed
-		if (removeNodeFromIndex) {
-			const anchor = nodeCursor.buildAnchor();
-			const anchorNode = this.forest.anchors.locate(anchor);
-			if (anchorNode !== undefined) {
-				const previousKey = this.anchorKeys.get(anchorNode);
-				if (previousKey !== undefined) {
-					this.removeAnchor(anchorNode, previousKey);
-				}
-			}
-		}
-
+	private indexNode(nodeCursor: ITreeSubscriptionCursor): void {
 		const keyFinder = getOrCreate(
 			this.keyFinders,
 			// the node schema type to look up
@@ -292,6 +281,19 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			const anchor = nodeCursor.buildAnchor();
 			const anchorNode = this.forest.anchors.locate(anchor) ?? fail("expected anchor node");
 
+			// check if this anchor node already exists in the index
+			const existingKey = this.anchorKeys.get(anchorNode);
+			if (existingKey !== undefined) {
+				// if the node already exists but has the same key, we return early
+				if (existingKey === key) {
+					this.forest.forgetAnchor(anchor);
+					return;
+				} else {
+					// if the node has a different key, we remove the existing one first because it means the key had been detached
+					this.removeAnchor(anchorNode, existingKey);
+				}
+			}
+
 			const nodes = this.nodes.get(key);
 			if (nodes !== undefined) {
 				// if the key already exists in the index, the anchor node is appended to its list of nodes
@@ -299,8 +301,9 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			} else {
 				this.nodes.set(key, [anchorNode]);
 			}
+			this.anchorKeys.set(anchorNode, key);
 
-			this.anchors.set(anchorNode, anchor);
+			getOrCreate(this.anchors, anchorNode, () => []).push(anchor);
 			// when the anchor node is destroyed, delete it from the index
 			anchorNode.on("afterDestroy", () => {
 				this.removeAnchor(anchorNode, key);
@@ -311,15 +314,12 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	/**
 	 * Given a cursor in field mode, recursively indexes all nodes under the field.
 	 */
-	private indexField(
-		fieldCursor: ITreeSubscriptionCursor,
-		removeNodesFromIndex = false,
-	): void {
+	private indexField(fieldCursor: ITreeSubscriptionCursor): void {
 		forEachNode(fieldCursor, (nodeCursor) => {
-			this.indexNode(nodeCursor, removeNodesFromIndex);
+			this.indexNode(nodeCursor);
 
 			forEachField(nodeCursor, (f) => {
-				this.indexField(f, removeNodesFromIndex);
+				this.indexField(f);
 			});
 		});
 	}
@@ -328,17 +328,23 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 * Given a cursor in field mode, indexes all nodes under the field and then indexes all nodes up the spine.
 	 */
 	private indexSpine(cursor: ITreeSubscriptionCursor): void {
-		this.indexField(cursor, true);
-		cursor.exitField();
-		cursor.exitNode();
+		this.indexField(cursor);
+
+		if (keyAsDetachedField(cursor.getFieldKey()) !== rootField) {
+			cursor.exitField();
+			cursor.exitNode();
+		} else {
+			// return early if we're already at the root field
+			return;
+		}
 
 		// walk up the spine and index nodes until we reach the root
 		while (
 			cursor.mode === CursorLocationType.Fields &&
-			(cursor.getFieldKey() as unknown as DetachedField) !== rootField
+			keyAsDetachedField(cursor.getFieldKey()) !== rootField
 		) {
 			forEachNode(cursor, (nodeCursor) => {
-				this.indexNode(nodeCursor, true);
+				this.indexNode(nodeCursor);
 			});
 
 			cursor.exitField();
@@ -352,11 +358,12 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 		const index = indexedNodes.indexOf(anchorNode);
 		assert(index !== -1, "destroyed anchor node should be tracked by index");
 		const newNodes = filterNodes(indexedNodes, (n) => n !== anchorNode);
-		if (newNodes !== undefined) {
+		if (newNodes !== undefined && newNodes.length > 0) {
 			this.nodes.set(key, newNodes);
 		} else {
 			this.nodes.delete(key);
 		}
+		this.anchorKeys.delete(anchorNode);
 		assert(this.anchors.delete(anchorNode), "destroyed anchor should be tracked by index");
 	}
 
