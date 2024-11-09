@@ -2,18 +2,21 @@
 # Licensed under the MIT License.
 
 # deploy-website pipeline
+# This pipeline builds the Fluid Framework documentation website and deploys it to Azure Static Web Apps.
+# The api-model artifacts are downloaded from the azure blob storage and used to generate the markdown files.
+# The site build artifacts are published as a pipeline artifact and then deployed to Azure Static Web Apps.
 
 name: $(Build.BuildId)
 
 parameters:
-  - name: deployEnvironment
+  - name: deployEnvironment # determines deployment token to be used for Azure Static Web Apps
     displayName: Static web app environment to deploy to
     type: string
     default: new
     values:
       - new
       - old
-  - name: guardianAssetRetentionOverride
+  - name: guardianAssetRetentionOverride # determines whether to retain guardian assets
     displayName: Guardian Asset Retention Override (default = based on branch)
     type: string
     default: default
@@ -21,7 +24,7 @@ parameters:
       - default
       - skip
       - force
-  - name: publishGuardianBaselines
+  - name: publishGuardianBaselines # determines whether to publish guardian baseline files
     displayName: Publish Guardian Baseline Files
     type: boolean
     default: false
