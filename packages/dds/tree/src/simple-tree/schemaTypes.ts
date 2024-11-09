@@ -476,9 +476,24 @@ function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
 }
 
 /**
- * Types allowed in a field.
+ * Types of {@link TreeNode|TreeNodes} or {@link TreeLeafValue|TreeLeafValue} allowed at a location in a tree.
  * @remarks
+ * Used by {@link TreeViewConfiguration} for the root and various kinds of {@link TreeNodeSchema} to specify their allowed child types.
+ *
+ * Use {@link SchemaFactory} to access leaf schema or declare new composite schema.
+ *
  * Implicitly treats a single type as an array of one type.
+ *
+ * Arrays of schema can be used to specify multiple types are allowed, which result in unions of those types in the Tree APIs.
+ *
+ * When saved into variables, avoid type erasing the details as doing so loses the compile time schema awareness of APIs derived from the types.
+ *
+ * @example
+ * ```typescript
+ * const sf = new SchemaFactory("myScope");
+ * const childTypes = [sf.number, sf.string] as const satisfies ImplicitAllowedTypes;
+ * const config = new TreeViewConfiguration({ schema: childTypes });
+ * ```
  * @public
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
