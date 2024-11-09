@@ -466,7 +466,7 @@ describe("Undo and redo", () => {
 		assert.equal(view.root.foo, 1);
 	});
 
-	it.only("revert the original and forked revertibles separately", () => {
+	it("revert the original and forked revertibles separately", () => {
 		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
 
 		const {
@@ -497,7 +497,7 @@ describe("Undo and redo", () => {
 		assert.equal(clonedPropertyOneUndo?.status, RevertibleStatus.Disposed);
 	});
 
-	it.only("revert the original and forked revertibles separately", () => {
+	it("revert the original and forked revertibles separately", () => {
 		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
 
 		const {
@@ -543,6 +543,36 @@ describe("Undo and redo", () => {
 		assert.equal(forkedView.root.child?.propertyOne, 128);
 		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "");
 
+		assert.equal(undoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
+		assert.equal(undoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
+		assert.equal(clonedUndoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
+		assert.equal(clonedUndoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
+	});
+
+	it("revert the original and forked revertibles separately", () => {
+		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
+
+		const {
+			undoStack: undoStack1,
+			redoStack: redoStack1,
+			unsubscribe: unsubscribe1,
+		} = createClonableUndoRedoStacks(originalView.events);
+
+		assert(originalView.root.child !== undefined);
+		originalView.root.child.propertyOne = 256; // 128 -> 256
+		originalView.root.child.propertyTwo.itemOne = "newItem";
+
+		const undoOriginalPropertyOne = undoStack1.pop();
+		const undoOriginalPropertyTwo = undoStack1.pop();
+
+		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone(originalView);
+		const clonedUndoOriginalPropertyTwo = undoOriginalPropertyTwo?.clone(originalView);
+
+		clonedUndoOriginalPropertyOne?.revert();
+		clonedUndoOriginalPropertyTwo?.revert();
+
+		assert.equal(originalView.root.child?.propertyOne, 128);
+		assert.equal(originalView.root.child?.propertyTwo.itemOne, "");
 		assert.equal(undoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
 		assert.equal(undoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 		assert.equal(clonedUndoOriginalPropertyOne?.status, RevertibleStatus.Disposed);

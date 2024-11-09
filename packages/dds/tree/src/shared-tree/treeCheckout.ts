@@ -647,7 +647,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		 */
 		if (branch !== undefined) {
 			const revertibleBranch = this.revertibleCommitBranches.get(revision);
-			assert(revertibleBranch !== undefined, "TODO");
+			assert(revertibleBranch !== undefined, "SharedTreeBranch for revertible not found.");
 			checkout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
 		}
 
