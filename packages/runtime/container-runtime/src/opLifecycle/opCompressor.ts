@@ -42,7 +42,7 @@ export class OpCompressor {
 
 		assert(
 			batch.messages.length === 1,
-			"Compressor expects a single string" /* Compressor expects a single string */,
+			"Compressor expects a single message within the batch" /* Compressor expects a single message within the batch */,
 		);
 
 		const compressionStart = Date.now();
