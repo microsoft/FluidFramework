@@ -226,13 +226,18 @@ export class SchemaFactory<
 		 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
 		 *
 		 * @remarks
-		 * Generally each developed independently library (possibly a package, but could also be part of a package or multiple packages developed together) should get its own globally unique `scope`.
-		 * Then each schema the library get its own name which is unique within the library.
-		 * These are joined (with a period) to form the globally unique {@link TreeNodeSchemaCore.identifier|schema identifier}.
+		 * Generally each independently developed library
+		 * (possibly a package, but could also be part of a package or multiple packages developed together)
+		 * should get its own unique `scope`.
+		 * Then each schema in the library get a name which is unique within the library.
+		 * The scope and name are joined (with a period) to form the {@link TreeNodeSchemaCore.identifier|schema identifier}.
 		 * Following this pattern allows a single application to depend on multiple libraries which define their own schema, and use them together in a single tree without risk of collisions.
 		 * If a library logically contains sub-libraries with their own schema, they can be given a scope nested inside the parent scope, such as "ParentScope.ChildScope".
 		 *
-		 * Use of {@link https://en.wikipedia.org/wiki/Reverse_domain_name_notation | Reverse domain name notation} or a UUIDv4 is recommended to avoid collisions.
+		 * To avoid collisions between the scopes of libraries
+		 * it is recommended that the libraries use {@link https://en.wikipedia.org/wiki/Reverse_domain_name_notation | Reverse domain name notation} or a UUIDv4 for their scope.
+		 * If this pattern is followed, application can safely use third party libraries without risk of the schema in them colliding.
+		 *
 		 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
 		 *
 		 * @example
