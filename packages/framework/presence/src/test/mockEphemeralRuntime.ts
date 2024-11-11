@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
+import { expect } from "vitest";
 
 import type { ClientConnectionId } from "../baseTypes.js";
 import type { IEphemeralRuntime } from "../internalTypes.js";
@@ -144,14 +145,11 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	// #endregion
 }
 
-// export class SignalCollectorMockRuntime extends MockEphemeralRuntime {
-// 	public override submitSignal: IEphemeralRuntime["submitSignal"] = (
-// 		...args: Parameters<IEphemeralRuntime["submitSignal"]>
-// 	) => {
-// 		if (this.signalsExpected.length === 0) {
-// 			throw new Error(`Unexpected signal: ${JSON.stringify(args)}`);
-// 		}
-// 		const expected = this.signalsExpected.shift();
-// 		assert.deepStrictEqual(args, expected, "Unexpected signal");
-// 	};
-// }
+export class VitestMockRuntime extends MockEphemeralRuntime {
+	public override submitSignal: IEphemeralRuntime["submitSignal"] = (
+		...args: Parameters<IEphemeralRuntime["submitSignal"]>
+	) => {
+		super.submitSignal(args);
+		expect(args).toMatchSnapshot();
+	};
+}
