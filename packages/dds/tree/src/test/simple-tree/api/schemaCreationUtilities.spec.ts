@@ -394,5 +394,17 @@ describe("schemaCreationUtilities", () => {
 				legs: 4,
 			},
 		]);
+
+		const dog: IAnimal = {
+			aType: "dog",
+			hasFur: true,
+			legs: 4,
+		};
+		view.root.insertAtEnd({
+			...dog,
+			// Instead of _aType, aType would be preferred.
+			_aType: dog.aType,
+			// what happens to the extra property aType?
+		});
 	});
 });
