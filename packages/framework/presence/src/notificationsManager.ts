@@ -183,7 +183,6 @@ class NotificationsManagerImpl<
 		const eventArgs = value.value.args as Parameters<NotificationSubscriptions<T>[any]>;
 
 		if (this.notificationsInternal.hasListeners()) {
-			console.debug(eventName, eventArgs);
 			// work around typing errors with explicit cast
 			const args = [client, ...eventArgs] as Parameters<NotificationSubscriptions<T>[any]>;
 			this.notificationsInternal.emit(eventName, ...args);
