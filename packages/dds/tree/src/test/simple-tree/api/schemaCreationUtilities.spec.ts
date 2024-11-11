@@ -235,4 +235,164 @@ describe("schemaCreationUtilities", () => {
 			const _b: InsertableImplicit = new DayNodes.Tomorrow();
 		}
 	});
+
+	it("enum interop - adaptEnum with explicit schema", () => {
+		enum Day {
+			Today = "today",
+			Tomorrow = "tomorrow",
+		}
+
+		function getDay(value: string): Day {
+			switch (value) {
+				case "today":
+					return Day.Today;
+				case "tomorrow":
+					return Day.Tomorrow;
+				default:
+					throw new Error(`Invalid value: ${value}`);
+			}
+		}
+
+		const DayNodes = adaptEnum(schema, Day);
+
+		class DayObject extends schema.object("DayObject", {
+			value: DayNodes.schema,
+			name: schema.string,
+		}) {}
+		// @ts-expect-error Day is not compatible with value of Day.Today
+		const dayObject1 = new DayObject({ value: DayNodes("today"), name: "1" });
+		// @ts-expect-error Day is not compatible with value of Day.Today
+		const dayObject4 = new DayObject({ value: getDay("today"), name: "4" });
+		// @ts-expect-error Day is not compatible with value of Day.Today
+		const dayObject2 = new DayObject({ value: DayNodes("today" as Day), name: "2" });
+		const dayObject3 = new DayObject({ value: DayNodes(Day.Today), name: "3" });
+	});
+
+	it("enum interop - no adaptEnum", () => {
+		enum Day {
+			Today = "today",
+			Tomorrow = "tomorrow",
+		}
+
+		class DayObject extends schema.object("DayObject", {
+			value: schema.limitedString<Day>(),
+			name: schema.string,
+		}) {}
+
+		function getDay(value: string): Day {
+			switch (value) {
+				case "today":
+					return Day.Today;
+				case "tomorrow":
+					return Day.Tomorrow;
+				default:
+					throw new Error(`Invalid value: ${value}`);
+			}
+		}
+		const dayObject1 = new DayObject({ value: Day.Today, name: "1" });
+		const dayObject2 = new DayObject({ value: getDay("today"), name: "2" });
+	});
+
+	it("string interop", () => {
+		const factory = new TreeFactory({});
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
+
+		type AnimalType = "cat" | "dog" | "lizard";
+
+		interface IAnimal {
+			aType: AnimalType;
+			hasFur: boolean;
+			legs: number;
+		}
+
+		const goodCat: IAnimal = {
+			aType: "cat",
+			hasFur: true,
+			legs: 4,
+		};
+
+		const goodDog: IAnimal = {
+			aType: "dog",
+			hasFur: true,
+			legs: 4,
+		};
+
+		const badDog = {
+			aType: "badDog",
+			hasFur: true,
+			legs: 4,
+		};
+
+		class SomeAnimal
+			extends schema.object("tag", {
+				aType: schema.limitedString<AnimalType>(),
+				hasFur: schema.boolean,
+				legs: schema.number,
+			})
+			implements IAnimal {}
+
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: schema.array(SomeAnimal) }),
+		);
+
+		view.initialize([goodCat, goodDog]);
+		view.root.insertAtEnd(goodDog);
+
+		function insertBadDog() {
+			// @ts-expect-error badDog is not a valid IAnimal
+			view.root.insertAtEnd(badDog);
+		}
+
+		function badInitialize() {
+			// @ts-expect-error badDog is not a valid IAnimal
+			view.initialize([goodCat, badDog]);
+		}
+	});
+
+	it("original string interop", () => {
+		const factory = new TreeFactory({});
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
+
+		type AnimalType = "cat" | "dog" | "lizard";
+
+		interface IAnimal {
+			aType: AnimalType;
+			hasFur: boolean;
+			legs: number;
+		}
+
+		class SomeAnimal
+			extends schema.object("tag", {
+				_aType: schema.required(schema.string, { key: "aType" }),
+				hasFur: schema.boolean,
+				legs: schema.number,
+			})
+			implements IAnimal
+		{
+			public get aType(): AnimalType {
+				return this._aType as AnimalType;
+			}
+			public set aType(value: AnimalType) {
+				this._aType = value;
+			}
+		}
+
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: schema.array(SomeAnimal) }),
+		);
+		view.initialize([
+			{
+				// Instead of _aType, aType would be preferred.
+				_aType: "cat",
+				hasFur: true,
+				legs: 4,
+			},
+		]);
+	});
 });
