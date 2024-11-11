@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IPresence, LatestValueManager } from "@fluid-experimental/presence";
+import type { IPresence, LatestValueManager } from "@fluidframework/presence";
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 
 import { ICustomUserDetails } from "./app.js";

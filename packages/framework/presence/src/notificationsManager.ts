@@ -8,10 +8,10 @@ import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
-import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
-import { createEmitter } from "@fluid-experimental/presence/internal/events";
-import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
-import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
+import type { ISubscribable } from "@fluidframework/presence/internal/events";
+import { createEmitter } from "@fluidframework/presence/internal/events";
+import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
+import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 
 /**
  * @sealed

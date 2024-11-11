@@ -4245,7 +4245,7 @@ importers:
 
   examples/service-clients/azure-client/external-controller:
     dependencies:
-      '@fluid-experimental/presence':
+      '@fluidframework/presence':
         specifier: workspace:~
         version: link:../../../../packages/framework/presence
       '@fluidframework/azure-client':

@@ -14,7 +14,7 @@ import type {
 	PresenceWorkspaceAddress,
 } from "./types.js";
 
-import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
+import type { ISubscribable } from "@fluidframework/presence/internal/events";
 
 /**
  * A Fluid client session identifier.

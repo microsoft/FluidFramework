@@ -31,9 +31,9 @@ import type {
 import type {
 	IContainerExtension,
 	IExtensionMessage,
-} from "@fluid-experimental/presence/internal/container-definitions/internal";
-import type { IEmitter } from "@fluid-experimental/presence/internal/events";
-import { createEmitter } from "@fluid-experimental/presence/internal/events";
+} from "@fluidframework/presence/internal/container-definitions/internal";
+import type { IEmitter } from "@fluidframework/presence/internal/events";
+import { createEmitter } from "@fluidframework/presence/internal/events";
 
 /**
  * Portion of the container extension requirements ({@link IContainerExtension}) that are delegated to presence manager.

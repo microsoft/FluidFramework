@@ -9,7 +9,7 @@ import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitio
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 
-import type { IRuntimeInternal } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { IRuntimeInternal } from "@fluidframework/presence/internal/container-definitions/internal";
 
 /**
  * @internal

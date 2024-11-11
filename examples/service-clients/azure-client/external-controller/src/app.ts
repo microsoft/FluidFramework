@@ -6,7 +6,7 @@
 import {
 	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
-} from "@fluid-experimental/presence";
+} from "@fluidframework/presence";
 import {
 	AzureClient,
 	AzureContainerServices,

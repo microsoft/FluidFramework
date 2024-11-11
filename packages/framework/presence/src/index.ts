@@ -16,14 +16,14 @@
 // 	InternalUtilityTypes,
 // 	JsonDeserialized,
 // 	JsonSerializable,
-// } from "@fluid-experimental/presence/internal/core-interfaces";
+// } from "@fluidframework/presence/internal/core-interfaces";
 
 // If desired these are the "required" types from events.
 // export type {
 // 	Events,
 // 	IsEvent,
 // 	ISubscribable,
-// } from "@fluid-experimental/presence/internal/events";
+// } from "@fluidframework/presence/internal/events";
 
 export type { ClientConnectionId } from "./baseTypes.js";
 

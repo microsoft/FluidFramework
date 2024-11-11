@@ -42,7 +42,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-experimental/presence": "workspace:~",
+		"@fluidframework/presence": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
