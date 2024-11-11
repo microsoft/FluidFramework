@@ -38,13 +38,11 @@ export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSes
 export const SessionClientStatus = {
 	/**
 	 * The session client is connected to the Fluid service.
-	 * Can send to and receive updates from other session clients.
 	 */
 	Connected: "Connected",
 
 	/**
 	 * The session client is not connected to the Fluid service.
-	 * Cannot send to or receive updates from other session clients.
 	 */
 	Disconnected: "Disconnected",
 } as const;
@@ -53,7 +51,11 @@ export const SessionClientStatus = {
  * Represents the connection status of an {@link ISessionClient}.
  *
  * This type can be either `'Connected'` or `'Disconnected'`, indicating whether
- * the session client is currently able to send and receive updates.
+ * the session client is currently connected to the Fluid service.
+ *
+ * When `'Disconnected'`:
+ * - State changes are kept locally and communicated to others upon reconnect.
+ * - Notification requests are discarded (silently).
  *
  * @alpha
  */
