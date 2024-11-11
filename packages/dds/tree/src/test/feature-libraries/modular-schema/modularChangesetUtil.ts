@@ -40,7 +40,7 @@ import {
 	newTupleBTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 

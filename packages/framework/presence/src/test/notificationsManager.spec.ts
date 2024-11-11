@@ -69,7 +69,7 @@ export function checkCompiles(): void {
 		);
 	}
 
-	const chat = notifications.chat;
+	const chat = notifications.props.chat;
 
 	chat.emit.broadcast("msg", "howdy");
 
