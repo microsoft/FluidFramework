@@ -131,25 +131,24 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	public readonly submittedSignals: Parameters<IEphemeralRuntime["submitSignal"]>[] = [];
 
-	public submitSignal: IEphemeralRuntime["submitSignal"] = (
-		...args: Parameters<IEphemeralRuntime["submitSignal"]>
-	) => {
+	public submitSignal(...args: Parameters<IEphemeralRuntime["submitSignal"]>): void {
 		this.submittedSignals.push(args);
 		if (this.signalsExpected.length === 0) {
 			throw new Error(`Unexpected signal: ${JSON.stringify(args)}`);
 		}
 		const expected = this.signalsExpected.shift();
 		assert.deepStrictEqual(args, expected, "Unexpected signal");
-	};
+	}
 
 	// #endregion
 }
 
-export class VitestMockRuntime extends MockEphemeralRuntime {
-	public override submitSignal: IEphemeralRuntime["submitSignal"] = (
-		...args: Parameters<IEphemeralRuntime["submitSignal"]>
-	) => {
-		super.submitSignal(args);
-		expect(args).toMatchSnapshot();
-	};
+/**
+ * A mock runtime that checks that all submitted signals match snapshots.
+ */
+export class MockRuntimeSignalSnapshotter extends MockEphemeralRuntime {
+	public override submitSignal(...args: Parameters<IEphemeralRuntime["submitSignal"]>): void {
+		expect(args).toMatchSnapshot("submitted signal");
+		super.submitSignal(...args);
+	}
 }

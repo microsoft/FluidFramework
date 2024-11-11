@@ -22,7 +22,7 @@ import type { IEphemeralRuntime } from "../internalTypes.js";
 import type { IPresence } from "../presence.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
-import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { MockRuntimeSignalSnapshotter } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
 
 /**
@@ -80,7 +80,7 @@ const knownSignals = new Map<string, Parameters<IEphemeralRuntime["submitSignal"
 describe("Presence", () => {
 	describe("NotificationsManager", () => {
 		// Note: this test setup mimics the setup in src/test/presenceManager.spec.ts
-		let runtime: MockEphemeralRuntime;
+		let runtime: MockRuntimeSignalSnapshotter;
 		let logger: EventAndErrorTrackingLogger;
 		const initialTime = 1000;
 		let clock: SinonFakeTimers;
@@ -94,7 +94,7 @@ describe("Presence", () => {
 
 		beforeEach(() => {
 			logger = new EventAndErrorTrackingLogger();
-			runtime = new MockEphemeralRuntime(logger);
+			runtime = new MockRuntimeSignalSnapshotter(logger);
 
 			// TODO: runtime.connected has been hacked in past to lie about true connection.
 			// This will need to be updated to an alternate status provider.
