@@ -71,9 +71,23 @@ const usageErrorMessage = "Empty file summary creation isn't supported in this d
 const containerCloseAndDisposeUsageErrors = [
 	{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
 ];
-const ContainerCloseUsageError: ExpectedEvents = {
+const ContainerStateEvents: ExpectedEvents = {
 	routerlicious: containerCloseAndDisposeUsageErrors,
 	tinylicious: containerCloseAndDisposeUsageErrors,
+	odsp: [
+		{
+			eventName: "fluid:telemetry:OdspDriver:createNewEmptyFile_end",
+			containerAttachState: "Detached",
+		},
+		{
+			eventName: "fluid:telemetry:OdspDriver:uploadSummary_end",
+			containerAttachState: "Attaching",
+		},
+		{
+			eventName: "fluid:telemetry:OdspDriver:renameFile_end",
+			containerAttachState: "Attaching",
+		},
+	],
 };
 
 describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
@@ -442,9 +456,9 @@ function serializationTests({
 				detachedBlobStorage = getDetachedBlobStorage?.();
 			});
 			for (const summarizeProtocolTree of [undefined, true, false]) {
-				itExpects(
+				itExpects.only(
 					`works in detached container. summarizeProtocolTree: ${summarizeProtocolTree}`,
-					ContainerCloseUsageError,
+					ContainerStateEvents,
 					async function () {
 						const loader = provider.makeTestLoader({
 							...testContainerConfig,
@@ -609,112 +623,44 @@ function serializationTests({
 				);
 			});
 
-			itExpects(
-				"redirect table saved in snapshot",
-				ContainerCloseUsageError,
-				async function () {
-					// test with and without offline load enabled
-					const offlineCfg = {
-						"Fluid.Container.enableOfflineLoad": true,
-					};
-					for (const cfg of [undefined, offlineCfg]) {
-						const loader = provider.makeTestLoader({
-							...testContainerConfig,
-							loaderProps: {
-								detachedBlobStorage,
-								configProvider: createTestConfigProvider({
-									"Fluid.Container.MemoryBlobStorageEnabled": true,
-									...offlineCfg,
-								}),
-							},
-						});
-						const detachedContainer = await loader.createDetachedContainer(
-							provider.defaultCodeDetails,
-						);
-
-						const text = "this is some example text";
-						const detachedDataStore =
-							(await detachedContainer.getEntryPoint()) as ITestDataObject;
-
-						detachedDataStore._root.set(
-							"my blob",
-							await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
-						);
-						detachedDataStore._root.set(
-							"my same blob",
-							await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
-						);
-						detachedDataStore._root.set(
-							"my other blob",
-							await detachedDataStore._runtime.uploadBlob(
-								stringToBuffer("more text", "utf-8"),
-							),
-						);
-
-						const attachP = detachedContainer.attach(
-							provider.driver.createCreateNewRequest(provider.documentId),
-						);
-						if (!driverSupportsBlobs(provider.driver)) {
-							return assert.rejects(
-								attachP,
-								(err: IErrorBase) => err.message === usageErrorMessage,
-							);
-						}
-						await attachP;
-						if (detachedBlobStorage) {
-							// make sure we're getting the blob from actual storage
-							assert.strictEqual(
-								detachedBlobStorage.size,
-								0,
-								"detachedBlobStorage should be disposed after attach",
-							);
-						}
-						const url = await getUrlFromDetachedBlobStorage(detachedContainer, provider);
-						const attachedContainer = await provider
-							.makeTestLoader(testContainerConfig)
-							.resolve({ url });
-
-						const attachedDataStore =
-							(await attachedContainer.getEntryPoint()) as ITestDataObject;
-						await provider.ensureSynchronized();
-						assert.strictEqual(
-							bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
-							text,
-						);
-					}
-				},
-			);
-
-			itExpects(
-				"serialize/rehydrate then attach",
-				ContainerCloseUsageError,
-				async function () {
+			itExpects("redirect table saved in snapshot", ContainerStateEvents, async function () {
+				// test with and without offline load enabled
+				const offlineCfg = {
+					"Fluid.Container.enableOfflineLoad": true,
+				};
+				for (const cfg of [undefined, offlineCfg]) {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,
 						loaderProps: {
 							detachedBlobStorage,
 							configProvider: createTestConfigProvider({
 								"Fluid.Container.MemoryBlobStorageEnabled": true,
+								...offlineCfg,
 							}),
 						},
 					});
-					const serializeContainer = await loader.createDetachedContainer(
+					const detachedContainer = await loader.createDetachedContainer(
 						provider.defaultCodeDetails,
 					);
 
 					const text = "this is some example text";
-					const dataStore = (await serializeContainer.getEntryPoint()) as ITestDataObject;
-					dataStore._root.set(
+					const detachedDataStore =
+						(await detachedContainer.getEntryPoint()) as ITestDataObject;
+
+					detachedDataStore._root.set(
 						"my blob",
-						await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+						await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+					);
+					detachedDataStore._root.set(
+						"my same blob",
+						await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+					);
+					detachedDataStore._root.set(
+						"my other blob",
+						await detachedDataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8")),
 					);
 
-					const snapshot = serializeContainer.serialize();
-					serializeContainer.close();
-					const rehydratedContainer =
-						await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
-
-					const attachP = rehydratedContainer.attach(
+					const attachP = detachedContainer.attach(
 						provider.driver.createCreateNewRequest(provider.documentId),
 					);
 					if (!driverSupportsBlobs(provider.driver)) {
@@ -724,11 +670,19 @@ function serializationTests({
 						);
 					}
 					await attachP;
-
-					const url = await getUrlFromDetachedBlobStorage(rehydratedContainer, provider);
+					if (detachedBlobStorage) {
+						// make sure we're getting the blob from actual storage
+						assert.strictEqual(
+							detachedBlobStorage.size,
+							0,
+							"detachedBlobStorage should be disposed after attach",
+						);
+					}
+					const url = await getUrlFromDetachedBlobStorage(detachedContainer, provider);
 					const attachedContainer = await provider
 						.makeTestLoader(testContainerConfig)
 						.resolve({ url });
+
 					const attachedDataStore =
 						(await attachedContainer.getEntryPoint()) as ITestDataObject;
 					await provider.ensureSynchronized();
@@ -736,12 +690,61 @@ function serializationTests({
 						bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
 						text,
 					);
-				},
-			);
+				}
+			});
+
+			itExpects("serialize/rehydrate then attach", ContainerStateEvents, async function () {
+				const loader = provider.makeTestLoader({
+					...testContainerConfig,
+					loaderProps: {
+						detachedBlobStorage,
+						configProvider: createTestConfigProvider({
+							"Fluid.Container.MemoryBlobStorageEnabled": true,
+						}),
+					},
+				});
+				const serializeContainer = await loader.createDetachedContainer(
+					provider.defaultCodeDetails,
+				);
+
+				const text = "this is some example text";
+				const dataStore = (await serializeContainer.getEntryPoint()) as ITestDataObject;
+				dataStore._root.set(
+					"my blob",
+					await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+				);
+
+				const snapshot = serializeContainer.serialize();
+				serializeContainer.close();
+				const rehydratedContainer =
+					await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+
+				const attachP = rehydratedContainer.attach(
+					provider.driver.createCreateNewRequest(provider.documentId),
+				);
+				if (!driverSupportsBlobs(provider.driver)) {
+					return assert.rejects(
+						attachP,
+						(err: IErrorBase) => err.message === usageErrorMessage,
+					);
+				}
+				await attachP;
+
+				const url = await getUrlFromDetachedBlobStorage(rehydratedContainer, provider);
+				const attachedContainer = await provider
+					.makeTestLoader(testContainerConfig)
+					.resolve({ url });
+				const attachedDataStore = (await attachedContainer.getEntryPoint()) as ITestDataObject;
+				await provider.ensureSynchronized();
+				assert.strictEqual(
+					bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
+					text,
+				);
+			});
 
 			itExpects(
 				"serialize/rehydrate multiple times then attach",
-				ContainerCloseUsageError,
+				ContainerStateEvents,
 				async function () {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,

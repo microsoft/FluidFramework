@@ -781,7 +781,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				"temporaryFileName should only be set for new file creation in the empty file create flow",
 			);
 
-			await useCreateNewModule(this.logger, async (m) =>
+			const renameResponse = await useCreateNewModule(this.logger, async (m) =>
 				m.renameEmptyFluidFile(
 					this.getAuthHeader,
 					this.odspResolvedUrl,
@@ -791,6 +791,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				),
 			);
 			this.odspResolvedUrl.pendingRename = undefined;
+			this.odspResolvedUrl.fileName = renameResponse.name;
 		}
 
 		return id;
