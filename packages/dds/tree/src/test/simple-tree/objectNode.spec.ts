@@ -26,6 +26,8 @@ import type {
 import { validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
 import type {
+	ImplicitFieldSchema,
+	InsertableField,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTreeNodeFromAllowedTypes,
 	InsertableTypedNode,
@@ -234,9 +236,98 @@ describeHydration(
 				}) {}
 				const n = init(HasId, {});
 				assert.throws(() => {
-					// TODO: AB:9129: this should not compile
+					// @ts-expect-error this should not compile
 					n.id = "x";
 				});
+			});
+
+			it("assigning non-exact schema errors - ImplicitFieldSchema", () => {
+				const child: ImplicitFieldSchema = schemaFactory.number;
+				class NonExact extends schemaFactory.object("NonExact", {
+					child,
+				}) {}
+				// @ts-expect-error Should not compile, and does not due to non-exact typing.
+				const initial: InsertableField<NonExact> = { child: 1 };
+				const n: NonExact = init(NonExact, initial);
+				assert.throws(() => {
+					// @ts-expect-error this should not compile
+					n.child = "x";
+				});
+			});
+
+			it("assigning non-exact schema errors - union", () => {
+				const child = schemaFactory.number as
+					| typeof schemaFactory.number
+					| typeof schemaFactory.null;
+				class NonExact extends schemaFactory.object("NonExact", {
+					child,
+				}) {}
+				// @ts-expect-error Should not compile, and does not due to non-exact typing.
+				const initial: InsertableField<NonExact> = { child: 1 };
+				const n: NonExact = init(NonExact, initial);
+				const childRead = n.child;
+				assert.throws(() => {
+					// @ts-expect-error this should not compile
+					n.child = "x";
+				});
+
+				assert.throws(() => {
+					// @ts-expect-error this should not compile
+					n.child = null;
+				});
+
+				// @ts-expect-error this should not compile
+				n.child = 5;
+			});
+
+			it("assigning identifier errors - ImplicitFieldSchema - recursive", () => {
+				class HasId extends schemaFactory.objectRecursive("hasID", {
+					id: schemaFactory.identifier,
+				}) {}
+				const n = init(HasId, {});
+				assert.throws(() => {
+					// Due to recursive type limitations, this compiles but shouldn't, see ObjectFromSchemaRecordUnsafe
+					n.id = "x";
+				});
+			});
+
+			it("assigning non-exact schema errors - union - recursive", () => {
+				const child: ImplicitFieldSchema = schemaFactory.number;
+				class NonExact extends schemaFactory.objectRecursive("NonExact", {
+					child,
+				}) {}
+				// @ts-expect-error Should not compile, and does not due to non-exact typing.
+				const initial: InsertableField<NonExact> = { child: 1 };
+				const n: NonExact = init(NonExact, initial);
+				assert.throws(() => {
+					// Due to recursive type limitations, this compiles but shouldn't, see ObjectFromSchemaRecordUnsafe
+					n.child = "x";
+				});
+			});
+
+			it("assigning non-exact schema errors - recursive", () => {
+				const child = schemaFactory.number as
+					| typeof schemaFactory.number
+					| typeof schemaFactory.null;
+				class NonExact extends schemaFactory.objectRecursive("NonExact", {
+					child,
+				}) {}
+				// @ts-expect-error Should not compile, and does not due to non-exact typing.
+				const initial: InsertableField<NonExact> = { child: 1 };
+				const n: NonExact = init(NonExact, initial);
+				const childRead = n.child;
+				assert.throws(() => {
+					// @ts-expect-error this should not compile
+					n.child = "x";
+				});
+
+				assert.throws(() => {
+					// Due to recursive type limitations, this compiles but shouldn't, see ObjectFromSchemaRecordUnsafe
+					n.child = null;
+				});
+
+				// Due to recursive type limitations, this compiles but shouldn't, see ObjectFromSchemaRecordUnsafe
+				n.child = 5;
 			});
 		});
 
@@ -446,7 +537,8 @@ describeHydration(
 					foo: schemaFactory.optional(schemaFactory.number),
 				}) {
 					// Since fields are own properties, we expect inherited properties (like this) to be shadowed by fields.
-					// However in TypeScript they work like inherited properties, so the types don't make the runtime behavior.
+					// However in TypeScript they work like inherited properties, so the types don't match the runtime behavior.
+					// @ts-expect-error bad shadow
 					// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 					public override get foo(): 5 {
 						return 5;

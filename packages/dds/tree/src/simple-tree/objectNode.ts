@@ -26,6 +26,7 @@ import {
 	normalizeFieldSchema,
 	type ImplicitAllowedTypes,
 	FieldKind,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	type TreeNodeSchema,
@@ -41,7 +42,12 @@ import {
 	getOrCreateInnerNode,
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
+import {
+	type RestrictiveStringRecord,
+	fail,
+	type FlattenKeys,
+	type UnionToIntersection,
+} from "../util/index.js";
 import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
@@ -51,10 +57,51 @@ import { getUnhydratedContext } from "./createContext.js";
  * @public
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
-	-readonly [Property in keyof T]: Property extends string
+	// Due to https://github.com/microsoft/TypeScript/issues/43826 we can not set the desired setter type,
+	// but we can at least remove the setter (by setting the key to never) when there should be no setter.
+	-readonly [Property in keyof T as Property extends string
+		? [AssignableTreeFieldFromImplicitField<T[Property]>] extends [never]
+			? never
+			: Property
+		: never]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
+} & {
+	readonly [Property in keyof T]: Property extends string
 		? TreeFieldFromImplicitField<T[Property]>
 		: unknown;
 };
+
+/**
+ * Type of content that can be assigned to a field of the given schema.
+ *
+ * @see {@link Input}
+ *
+ * @typeparam TSchemaInput - Schema to process.
+ * @typeparam TSchema - Do not specify: default value used as implementation detail.
+ * @system @public
+ */
+export type AssignableTreeFieldFromImplicitField<
+	TSchemaInput extends ImplicitFieldSchema,
+	TSchema = UnionToIntersection<TSchemaInput>,
+> = [TSchema] extends [FieldSchema<infer Kind, infer Types>]
+	? ApplyKindAssignment<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind>
+	: [TSchema] extends [ImplicitAllowedTypes]
+		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
+		: never;
+
+/**
+ * Suitable for assignment.
+ *
+ * @see {@link Input}
+ * @system @public
+ */
+export type ApplyKindAssignment<T, Kind extends FieldKind> = [Kind] extends [
+	FieldKind.Required,
+]
+	? T
+	: [Kind] extends [FieldKind.Optional]
+		? T | undefined
+		: // Unknown, non-exact and identifier fields are not assignable.
+			never;
 
 /**
  * A {@link TreeNode} which modules a JavaScript object.
