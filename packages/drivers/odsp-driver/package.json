@@ -159,14 +159,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"TypeAlias_FetchTypeInternal": {
-				"backCompat": false
-			},
-			"TypeAlias_FetchType": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

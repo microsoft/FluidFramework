@@ -13,7 +13,6 @@ import {
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	ShareLinkInfoType,
-	type IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -21,7 +20,7 @@ import {
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICreateFileResponse, type IRenameFileResponse } from "./../contracts.js";
+import { ICreateFileResponse } from "./../contracts.js";
 import { ClpCompliantAppHeader } from "./../contractsPublic.js";
 import { createOdspUrl } from "./../createOdspUrl.js";
 import { EpochTracker } from "./../epochTracker.js";
@@ -75,18 +74,10 @@ export async function createNewFluidFile(
 	}
 
 	let itemId: string;
-	let pendingRename: string | undefined;
 	let summaryHandle: string = "";
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (createNewSummary === undefined) {
-		const content = await createNewEmptyFluidFile(
-			getAuthHeader,
-			newFileInfo,
-			logger,
-			epochTracker,
-		);
-		itemId = content.itemId;
-		pendingRename = newFileInfo.filename;
+		itemId = await createNewEmptyFluidFile(getAuthHeader, newFileInfo, logger, epochTracker);
 	} else {
 		const content = await createNewFluidFileFromSummary(
 			getAuthHeader,
@@ -112,7 +103,6 @@ export async function createNewFluidFile(
 	fileEntry.resolvedUrl = odspResolvedUrl;
 
 	odspResolvedUrl.shareLinkInfo = shareLinkInfo;
-	odspResolvedUrl.pendingRename = pendingRename;
 
 	if (createNewSummary !== undefined && createNewCaching) {
 		assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
@@ -188,8 +178,9 @@ export async function createNewEmptyFluidFile(
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
-): Promise<{ itemId: string; fileName: string }> {
+): Promise<string> {
 	const filePath = encodeFilePath(newFileInfo.filePath);
+	// add .tmp extension to empty file (host is expected to rename)
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
 	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
 		newFileInfo.driveId
@@ -237,68 +228,7 @@ export async function createNewEmptyFluidFile(
 				event.end({
 					...fetchResponse.propsToLog,
 				});
-				return { itemId: content.id, fileName: content.name };
-			},
-			{ end: true, cancel: "error" },
-		);
-	});
-}
-
-export async function renameEmptyFluidFile(
-	getAuthHeader: InstrumentedStorageTokenFetcher,
-	odspParts: IOdspUrlParts,
-	requestedFileName: string,
-	logger: ITelemetryLoggerExt,
-	epochTracker: EpochTracker,
-): Promise<IRenameFileResponse> {
-	const initialUrl = `${getApiRoot(new URL(odspParts.siteUrl))}/drives/${
-		odspParts.driveId
-	}/items/${odspParts.itemId}?@name.conflictBehavior=rename`;
-
-	return getWithRetryForTokenRefresh(async (options) => {
-		const url = initialUrl;
-		const method = "PATCH";
-		const authHeader = await getAuthHeader(
-			{ ...options, request: { url, method } },
-			"CreateNewFile",
-		);
-
-		return PerformanceEvent.timedExecAsync(
-			logger,
-			{ eventName: "renameFile" },
-			async (event) => {
-				const headers = getHeadersWithAuth(authHeader);
-				headers["Content-Type"] = "application/json";
-
-				const fetchResponse = await runWithRetry(
-					async () =>
-						epochTracker.fetchAndParseAsJSON<IRenameFileResponse>(
-							url,
-							{
-								body: JSON.stringify({
-									name: requestedFileName,
-								}),
-								headers,
-								method: "PATCH",
-							},
-							"renameFile",
-						),
-					"renameFile",
-					logger,
-				);
-
-				const content = fetchResponse.content;
-				if (!content?.id) {
-					throw new NonRetryableError(
-						"ODSP RenameFile call returned no item ID (for empty file)",
-						OdspErrorTypes.incorrectServerResponse,
-						{ driverVersion },
-					);
-				}
-				event.end({
-					...fetchResponse.propsToLog,
-				});
-				return content;
+				return content.id;
 			},
 			{ end: true, cancel: "error" },
 		);

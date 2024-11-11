@@ -189,13 +189,6 @@ export interface ICreateFileResponse {
 	"sharing"?: any;
 	"sharingLink"?: string;
 	"sharingLinkErrorReason"?: string;
-	"name": string;
-}
-
-export interface IRenameFileResponse {
-	"@odata.context": string;
-	"id": string;
-	"name": string;
 }
 
 export interface IVersionedValueWithEpoch {

@@ -54,7 +54,7 @@ export class EpochTracker implements IPersistedFileCache {
 }
 
 // @alpha (undocumented)
-export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" | "treesLatest" | "uploadSummary" | "push" | "versions" | "renameFile";
+export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" | "treesLatest" | "uploadSummary" | "push" | "versions";
 
 // @alpha (undocumented)
 export type FetchTypeInternal = FetchType | "cache";

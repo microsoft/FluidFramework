@@ -61,8 +61,7 @@ export type FetchType =
 	| "treesLatest"
 	| "uploadSummary"
 	| "push"
-	| "versions"
-	| "renameFile";
+	| "versions";
 
 /**
  * @legacy

@@ -96,8 +96,6 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
     isClpCompliantApp?: boolean;
     // (undocumented)
     odspResolvedUrl: true;
-    // (undocumented)
-    pendingRename?: string;
     shareLinkInfo?: ShareLinkInfoType;
     // (undocumented)
     summarizer: boolean;
