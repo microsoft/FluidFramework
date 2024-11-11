@@ -166,8 +166,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		}
 
 		const audienceMembers = this.runtime.getAudience().getMembers();
+		const attendees = new Set(this.attendees.values());
 
-		for (const attendee of this.getAttendees()) {
+		for (const attendee of attendees) {
 			const connectionId = attendee.getConnectionId();
 			if (!audienceMembers.has(connectionId) && senderConnectionId !== connectionId) {
 				attendee.setDisconnected();
