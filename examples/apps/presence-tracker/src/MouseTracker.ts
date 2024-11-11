@@ -67,13 +67,10 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 
 	public getMousePresences(): Map<string, IMousePosition> {
 		const statuses: Map<string, IMousePosition> = new Map<string, IMousePosition>();
-		for (const [, member] of this.audience.getMembers()) {
-			for (const connection of member.connections) {
-				const attendee = this.presence.getAttendee(connection.id);
-				const position = this.posMap.get(attendee);
-				if (position !== undefined) {
-					statuses.set(member.name, position);
-				}
+
+		for (const { client, value: position } of this.cursor.clientValues()) {
+			if (position !== undefined) {
+				statuses.set(client.getConnectionId(), position);
 			}
 		}
 		return statuses;

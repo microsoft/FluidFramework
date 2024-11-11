@@ -86,7 +86,6 @@ async function start() {
 
 	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
 	const appPresence = presence.getStates("name:trackerData", {});
-	// const mySessionClient = presence.getMyself();
 
 	// update the browser URL and the window title with the actual container ID
 	location.hash = id;
@@ -100,7 +99,6 @@ async function start() {
 
 	renderFocusPresence(focusTracker, contentDiv);
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
-	// addWindowListeners(appPresence);
 }
 
 start().catch(console.error);
