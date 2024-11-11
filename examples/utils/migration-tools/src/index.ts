@@ -21,8 +21,6 @@ export type {
 	IVersionedModel,
 	MigrationState,
 } from "./interfaces/index.js";
-export { MigrationToolFactory } from "./migrationTool.js";
-export { Migrator } from "./migrator.js";
 export {
 	CreateModelCallback,
 	IAttachedMigratableModel,
@@ -33,4 +31,6 @@ export {
 	MigratableModelLoader,
 	MigratableSessionStorageModelLoader,
 	MigratableTinyliciousModelLoader,
-} from "./modelLoader/index.js";
+} from "./migratableModelLoader/index.js";
+export { MigrationToolFactory } from "./migrationTool.js";
+export { Migrator } from "./migrator.js";
