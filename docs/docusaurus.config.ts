@@ -73,8 +73,6 @@ const config: Config = {
 		locales: ["en"],
 	},
 	plugins: [
-		// https://github.com/praveenn77/docusaurus-lunr-search
-		"docusaurus-lunr-search",
 		"docusaurus-plugin-sass",
 	],
 	presets: [
@@ -155,7 +153,23 @@ const config: Config = {
 			darkTheme: prismThemes.dracula,
 		},
 	} satisfies Preset.ThemeConfig,
-	themes: ["@docusaurus/theme-mermaid"],
+	themes: [
+		// Theme for rendering Mermaid diagrams in markdown.
+		"@docusaurus/theme-mermaid",
+
+		// Theme that adds local search support (including generating an index as a part of the build).
+		[
+			"@easyops-cn/docusaurus-search-local",
+			{
+				// `hashed` is recommended as long-term-cache of index file is possible.
+				hashed: true,
+
+				// Include pages (as opposed to docs) in search results.
+				// Default: false
+				indexPages: true,
+			},
+		],
+	],
 };
 
 export default config;
