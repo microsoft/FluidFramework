@@ -10,7 +10,45 @@ These tools rely on the model loading pattern.  This pattern allows you to defin
 
 This model object is instantiated by your container code during container load.  To simplify this, we provide `instantiateMigratableRuntime` which should be used in place of `ContainerRuntime.loadRuntime`.  In addition to the familiar parameters, this helper function takes a `CreateModelCallback` - you should write this function to instantiate your model.  The callback will provide an `IContainerRuntime` and `IContainer` to use in this instantiation.
 
-TODO: Example of the callback
+TODO: This is too much, how to make it simpler?
+
+```ts
+// Defining the model that the app (outside of the container code) will use.
+
+interface IInventoryListAppModel {
+	readonly inventoryList: IInventoryList;
+}
+
+class InventoryListAppModel implements IInventoryListAppModel {
+	public constructor(
+		public readonly inventoryList: IInventoryList,
+		private readonly container: IContainer,
+	) {}
+}
+
+// Ensuring the IRuntimeFactory knows how to create a model on demand with a CreateModelCallback
+// and the instantiateMigratableRuntime helper.
+
+const createModel = async (
+	runtime: IContainerRuntime,
+	container: IContainer,
+): Promise<IInventoryListAppModel> => {
+	return new InventoryListAppModel(
+		// Normal IContainerRuntime APIs can be used to get the relevant parts of the model.
+		// E.g. here we might get the data store from a known alias.
+		await getDataStoreEntryPoint<IInventoryList>(runtime, "inventory-list-id"),
+		container,
+	);
+};
+
+const runtime = await instantiateMigratableRuntime(
+	context,
+	existing,
+	this.registryEntries,
+	createModel,
+	this.runtimeOptions,
+);
+```
 
 ### Implementing `IMigratableModel`
 
