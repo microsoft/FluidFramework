@@ -182,8 +182,8 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
 	if (!parsedMessage) {
 		return {
 			contents: [],
-			documentId: null,
-			tenantId: null,
+			documentId: null as unknown as string,
+			tenantId: null as unknown as string,
 			type: BoxcarType,
 		};
 	}

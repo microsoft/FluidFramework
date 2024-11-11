@@ -45,7 +45,7 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "GET",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url: `${url}${queryString ? this.generateQueryString(queryString) : ""}`,
 		};
 		return this.request<T>(options, 200);
 	}
@@ -70,7 +70,7 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "POST",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url: `${url}${queryString ? this.generateQueryString(queryString) : ""}`,
 		};
 		return this.request<T>(options, 201);
 	}
@@ -93,7 +93,7 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "DELETE",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url: `${url}${queryString ? this.generateQueryString(queryString) : ""}`,
 		};
 		return this.request<T>(options, 204);
 	}
@@ -118,7 +118,7 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "PATCH",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url: `${url}${queryString ? this.generateQueryString(queryString) : ""}`,
 		};
 		return this.request<T>(options, 200);
 	}
@@ -223,7 +223,7 @@ export class BasicRestWrapper extends RestWrapper {
 						const retryConfig = { ...requestConfig };
 						retryConfig.headers = this.generateHeaders(
 							retryConfig.headers,
-							options.headers[CorrelationIdHeaderName] as string,
+							options.headers?.[CorrelationIdHeaderName],
 						);
 
 						this.request<T>(retryConfig, statusCode, false).then(resolve).catch(reject);
