@@ -634,7 +634,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 			},
 			clone: (forkedBranch?: TreeBranch) => {
-				return checkout.cloneRevertible(revision, kind, forkedBranch);
+				if (forkedBranch === undefined) {
+					return this.createRevertible(revision, kind, checkout, onRevertibleDisposed);
+				}
+
+				const forkedCheckout = getCheckout(forkedBranch);
+				const revertibleBranch = this.revertibleCommitBranches.get(revision);
+				assert(revertibleBranch !== undefined, "SharedTreeBranch for revertible not found.");
+				forkedCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+
+				return this.createRevertible(revision, kind, forkedCheckout, onRevertibleDisposed);
 			},
 			dispose: () => {
 				if (revertible.status === RevertibleStatus.Disposed) {
@@ -648,23 +657,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		};
 
 		return revertible;
-	}
-
-	private cloneRevertible(
-		revision: RevisionTag,
-		kind: CommitKind,
-		branch?: TreeBranch,
-		onRevertibleDisposed?: (revertible: Revertible) => void,
-	): RevertibleAlpha {
-		const checkout = branch ? getCheckout(branch) : this;
-
-		if (branch !== undefined) {
-			const revertibleBranch = this.revertibleCommitBranches.get(revision);
-			assert(revertibleBranch !== undefined, "SharedTreeBranch for revertible not found.");
-			checkout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
-		}
-
-		return this.createRevertible(revision, kind, checkout, onRevertibleDisposed);
 	}
 
 	// For the new TreeViewAlpha API
