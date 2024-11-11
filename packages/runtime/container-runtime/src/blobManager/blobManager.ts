@@ -36,7 +36,6 @@ import {
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	GenericError,
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
@@ -179,7 +178,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	// blobPath's format - `/<basePath>/<blobId>`.
 	private readonly isBlobDeleted: (blobPath: string) => boolean;
 	private readonly runtime: IBlobManagerRuntime;
-	private readonly closeContainer: (error?: ICriticalContainerError) => void;
 
 	constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -216,14 +214,12 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			isBlobDeleted,
 			runtime,
 			stashedBlobs,
-			closeContainer,
 		} = props;
 		this.routeContext = routeContext;
 		this.getStorage = getStorage;
 		this.blobRequested = blobRequested;
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
-		this.closeContainer = closeContainer;
 
 		this.mc = createChildMonitoringContext({
 			logger: this.runtime.baseLogger,
@@ -280,19 +276,30 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					expired,
 				});
 				if (expired) {
-					// we want to avoid submitting ops with broken handles
-					this.closeContainer(
-						new GenericError("Trying to submit a BlobAttach for expired blob", undefined, {
+					// handle reupload asynchronously
+					this.reuploadBlobAndSendOp(localId, pendingEntry).catch((error) => {
+						this.mc.logger.sendErrorEvent({
+							eventName: "BlobReuploadFailed",
+							error,
 							localId,
-							blobId,
-							secondsSinceUpload,
-						}),
-					);
+						});
+					});
+					return; // Return void to avoid promise violation
 				}
 			}
 			pendingEntry.opsent = true;
 			return sendBlobAttachOp(localId, blobId);
 		};
+	}
+
+	private async reuploadBlobAndSendOp(
+		localId: string,
+		pendingEntry: PendingBlob,
+	): Promise<void> {
+		await this.uploadBlob(localId, pendingEntry.blob).then(() =>
+			// uploadBlob and onUploadResolve will not send another blob attach so we need to do it here
+			this.sendBlobAttachOp(localId, pendingEntry.storageId),
+		);
 	}
 
 	public get allBlobsAttached(): boolean {
@@ -538,10 +545,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			this.deletePendingBlob(localId);
 			return;
 		}
-		assert(
-			entry.storageId === undefined,
-			0x386 /* Must have pending blob entry for uploaded blob */,
-		);
 		entry.stashedUpload = undefined;
 		entry.storageId = response.id;
 		entry.uploadTime = Date.now();
