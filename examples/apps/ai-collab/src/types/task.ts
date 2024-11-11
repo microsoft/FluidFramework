@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { TaskPriority, TaskStatus } from "./sharedTreeAppSchema";
+
 export interface TaskGroup {
 	id: string;
 	title: string;
@@ -27,17 +29,3 @@ export interface Task {
 	complexity: number;
 	status: TaskStatus;
 }
-
-export const TaskStatuses = {
-	TODO: "todo",
-	IN_PROGRESS: "in-progress",
-	DONE: "done",
-} as const;
-export type TaskStatus = (typeof TaskStatuses)[keyof typeof TaskStatuses];
-
-export const TaskPriorities = {
-	LOW: "low",
-	MEDIUM: "medium",
-	HIGH: "high",
-} as const;
-export type TaskPriority = (typeof TaskPriorities)[keyof typeof TaskPriorities];

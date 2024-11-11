@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type Difference, SharedTreeBranchManager } from "@fluid-experimental/ai-collab";
+import { aiCollab, type AiCollabErrorResponse, type AiCollabSuccessResponse, type Difference, SharedTreeBranchManager } from "@fluid-experimental/ai-collab";
 import {
-	type BranchableTree,
-	type TreeBranchFork,
+	Tree,
+	TreeAlpha,
+	type TreeBranch,
 	type TreeViewAlpha,
 } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
@@ -24,18 +25,20 @@ import {
 } from "@mui/material";
 import { type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import OpenAI from "openai";
 import React, { useState } from "react";
 
 import { TaskCard } from "./TaskCard";
 
-import { editTaskGroup } from "@/actions/task";
 import {
+	SharedTreeAppState,
+	SharedTreeTask,
 	SharedTreeTaskGroup,
-	sharedTreeTaskGroupToJson,
-	TREE_CONFIGURATION,
-	type SharedTreeAppState,
+	validateLlmTask,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
+
 
 export function TaskGroup(props: {
 	treeView: TreeView<typeof SharedTreeAppState>;
@@ -52,9 +55,8 @@ export function TaskGroup(props: {
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 	const [llmBranchData, setLlmBranchData] = useState<{
 		differences: Difference[];
-		originalBranch: BranchableTree;
-		forkBranch: TreeBranchFork;
-		forkView: TreeView<typeof SharedTreeAppState>;
+		originalBranch: TreeBranch;
+		forkBranch: TreeBranch;
 		newBranchTargetNode: SharedTreeTaskGroup;
 	}>();
 
@@ -107,30 +109,31 @@ export function TaskGroup(props: {
 
 				<Box sx={{ flexGrow: 1 }}></Box>
 
-				{isDiffModalOpen && props.treeView !== undefined && llmBranchData && (
-					<TaskGroupDiffModal
-						isOpen={isDiffModalOpen}
-						onClose={() => {
-							setIsDiffModalOpen(false);
-							setLlmBranchData(undefined);
-							setPopoverAnchor(undefined);
-						}}
-						onAccept={() => {
-							llmBranchData.originalBranch.merge(llmBranchData.forkBranch);
-							setIsDiffModalOpen(false);
-							setLlmBranchData(undefined);
-							setPopoverAnchor(undefined);
-						}}
-						onDecline={() => {
-							setIsDiffModalOpen(false);
-							setLlmBranchData(undefined);
-							setPopoverAnchor(undefined);
-						}}
-						treeView={llmBranchData.forkView}
-						differences={llmBranchData.differences}
-						newBranchTargetNode={llmBranchData.newBranchTargetNode}
-					></TaskGroupDiffModal>
-				)}
+				{isDiffModalOpen && props.treeView !== undefined && llmBranchData &&
+					(
+						<TaskGroupDiffModal
+							isOpen={isDiffModalOpen}
+							onClose={() => {
+								setIsDiffModalOpen(false);
+								setLlmBranchData(undefined);
+								setPopoverAnchor(undefined);
+							}}
+							onAccept={() => {
+								llmBranchData.originalBranch.merge(llmBranchData.forkBranch);
+								setIsDiffModalOpen(false);
+								setLlmBranchData(undefined);
+								setPopoverAnchor(undefined);
+							}}
+							onDecline={() => {
+								setIsDiffModalOpen(false);
+								setLlmBranchData(undefined);
+								setPopoverAnchor(undefined);
+							}}
+							treeView={llmBranchData.forkBranch as TreeViewAlpha<typeof SharedTreeAppState>}
+							differences={llmBranchData.differences}
+							newBranchTargetNode={llmBranchData.newBranchTargetNode}
+						></TaskGroupDiffModal>
+					)}
 
 				<Button
 					variant="contained"
@@ -177,44 +180,89 @@ export function TaskGroup(props: {
 									autoHideDuration: 5000,
 								});
 
-								// TODO: is this redundant? We already have props.sharedTreeTaskGroup
-								const indexOfTaskGroup = props.treeView.root.taskGroups.indexOf(
-									props.sharedTreeTaskGroup,
-								);
+								if (process.env.NEXT_PUBLIC_OPEN_AI_KEY === undefined) {
+									enqueueSnackbar(`Copilot: Cannot initiate request - No Open AI API key found.`, {
+										variant: "error",
+										autoHideDuration: 5000,
+									});
+									return;
+								}
 
-								const resp = await editTaskGroup(
-									sharedTreeTaskGroupToJson(props.sharedTreeTaskGroup),
-									query,
-								);
-								if (resp.success) {
-									console.log("initiating checkoutNewMergedBranch");
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								const currentBranch = TreeAlpha.branch(props.treeView.root)!;
+								const aiCollabBranch = currentBranch.fork() as TreeViewAlpha<typeof SharedTreeAppState>;
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								const aiCollabBranchTaskGroup = aiCollabBranch.root.taskGroups.find(taskGroup => taskGroup.id === props.sharedTreeTaskGroup.id)!;
+
+								let response: AiCollabSuccessResponse | AiCollabErrorResponse;
+								try {
+									response = await aiCollab({
+										openAI: {
+											client: new OpenAI({
+												apiKey: process.env.NEXT_PUBLIC_OPEN_AI_KEY,
+												dangerouslyAllowBrowser: true
+											}),
+											modelName: "gpt-4o-mini",
+										},
+										treeNode: aiCollabBranchTaskGroup,
+										prompt: {
+											systemRoleContext:
+												"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+											userAsk: query,
+										},
+										planningStep: true,
+										finalReviewStep: true,
+										dumpDebugLog: true,
+										validator: (treeNode) => {
+											console.log("validator running on treeNode", { ...treeNode });
+											if (treeNode !== undefined) {
+												const schema = Tree.schema(treeNode);
+												switch (schema.identifier) {
+													case SharedTreeTaskGroup.identifier: {
+														for (const task of (treeNode as SharedTreeTaskGroup).tasks) {
+															validateLlmTask(task);
+														}
+														break;
+													}
+													case SharedTreeTask.identifier: {
+														validateLlmTask(treeNode as SharedTreeTask);
+													}
+													default: {
+														break;
+													}
+												}
+											}
+										}
+									});
+								} catch (error) {
+									console.error("Error in aiCollab:", error);
+									enqueueSnackbar(`Copilot: Something went wrong processing your request - "${query}":  ${error instanceof Error ? error.message : "unknown error"}`, {
+										variant: "error",
+										autoHideDuration: 5000,
+									});
+									setIsAiTaskRunning(false);
+									return;
+								}
+
+
+								if (response.status === 'success') {
 									const branchManager = new SharedTreeBranchManager({
 										nodeIdAttributeName: "id",
 									});
 
 									const differences = branchManager.compare(
 										props.sharedTreeTaskGroup as unknown as Record<string, unknown>,
-										resp.data as unknown as Record<string, unknown>,
+										aiCollabBranchTaskGroup as unknown as Record<string, unknown>,
 									);
-									const { originalBranch, forkBranch, forkView, newBranchTargetNode } =
-										branchManager.checkoutNewMergedBranchV2(
-											// TODO: Remove cast when TreeViewAlpha becomes public
-											props.treeView as TreeViewAlpha<typeof SharedTreeAppState>,
-											TREE_CONFIGURATION,
-											["taskGroups", indexOfTaskGroup],
-										);
 
-									branchManager.mergeDiffs(differences, newBranchTargetNode);
-
-									console.log("forkBranch:", forkBranch);
-									console.log("newBranchTargetNode:", { ...newBranchTargetNode });
+									console.log("forkBranch:", aiCollabBranch);
+									console.log("newBranchTargetNode:", { ...aiCollabBranchTaskGroup });
 									console.log("differences:", { ...differences });
 									setLlmBranchData({
 										differences,
-										originalBranch,
-										forkBranch,
-										forkView,
-										newBranchTargetNode: newBranchTargetNode as unknown as SharedTreeTaskGroup,
+										originalBranch: currentBranch,
+										forkBranch: aiCollabBranch,
+										newBranchTargetNode: aiCollabBranchTaskGroup
 									});
 									setIsDiffModalOpen(true);
 									enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
@@ -223,11 +271,10 @@ export function TaskGroup(props: {
 									});
 								} else {
 									enqueueSnackbar(
-										`Copilot: Something went wrong processing your request - "${query}"`,
+										`Copilot: Something went wrong processing your request - "${query}": ${response.errorMessage}`,
 										{ variant: "error", autoHideDuration: 5000 },
 									);
 								}
-
 								setIsAiTaskRunning(false);
 							}}
 						>
@@ -319,6 +366,7 @@ export function TaskGroup(props: {
 							key={task.id}
 							sharedTreeTaskGroup={props.sharedTreeTaskGroup}
 							sharedTreeTask={task}
+							sharedTreeBranch={props.treeView}
 							branchDifferences={taskDiffs}
 						/>
 					);

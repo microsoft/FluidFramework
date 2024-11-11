@@ -6,11 +6,20 @@
 "use client";
 
 import {
+	aiCollab,
+	type AiCollabErrorResponse,
+	type AiCollabSuccessResponse,
 	type Difference,
 	type DifferenceChange,
 	type DifferenceMove,
 	SharedTreeBranchManager,
 } from "@fluid-experimental/ai-collab";
+import {
+	// Tree,
+	TreeAlpha,
+	// type TreeBranch,
+	type TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -29,39 +38,43 @@ import {
 	Tooltip,
 	Typography,
 } from "@mui/material";
-import { type TreeView } from "fluid-framework";
+import { Tree, type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import OpenAI from "openai";
 import React, { useState, type ReactNode, type SetStateAction } from "react";
 
-import { editTask } from "@/actions/task";
+// import { editTask } from "@/actions/task";
 import {
 	SharedTreeTask,
 	SharedTreeTaskGroup,
 	type SharedTreeAppState,
-} from "@/types/sharedTreeAppSchema";
-import {
 	TaskPriorities,
-	TaskStatuses,
-	type Task,
 	type TaskPriority,
-	type TaskStatus,
-} from "@/types/task";
+	TaskStatuses,
+	validateLlmTask,
+} from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
-function convertSharedTreeTaskToTask(sharedTreeTask: SharedTreeTask): Task {
-	return {
-		id: sharedTreeTask.id,
-		assignee: sharedTreeTask.assignee,
-		title: sharedTreeTask.title,
-		description: sharedTreeTask.description,
-		priority: sharedTreeTask.priority as TaskPriority,
-		complexity: sharedTreeTask.complexity,
-		status: sharedTreeTask.status as TaskStatus,
-	};
-}
+// import {
+// 	type Task,
+// } from "@/types/task";
+// import { useSharedTreeRerender } from "@/useSharedTreeRerender";
+
+// function convertSharedTreeTaskToTask(sharedTreeTask: SharedTreeTask): Task {
+// 	return {
+// 		id: sharedTreeTask.id,
+// 		assignee: sharedTreeTask.assignee,
+// 		title: sharedTreeTask.title,
+// 		description: sharedTreeTask.description,
+// 		priority: sharedTreeTask.priority as TaskPriority,
+// 		complexity: sharedTreeTask.complexity,
+// 		status: sharedTreeTask.status as TaskStatus,
+// 	};
+// }
 
 export function TaskCard(props: {
-	sharedTreeBranch?: TreeView<typeof SharedTreeAppState>;
+	sharedTreeBranch: TreeView<typeof SharedTreeAppState>;
 	branchDifferences?: Difference[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 	sharedTreeTask: SharedTreeTask;
@@ -83,12 +96,43 @@ export function TaskCard(props: {
 
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTask, logId: "TaskCard" });
 
+	const [branchDifferences, setBranchDifferences] = useState(props.branchDifferences);
+	// const [fieldDifferences, setFieldDifferences] = useState<{
+	// 	isNewCreation: boolean;
+	// 	changes: Record<string, DifferenceChange>;
+	// 	moved?: DifferenceMove;
+	// }>({
+	// 	isNewCreation: false,
+	// 	changes: {} satisfies Record<string, DifferenceChange>,
+	// })
+
+	// Update the computed field differences when the branch differences change
+	// useEffect(() => {
+	// 	const newFieldDifferences = { ...fieldDifferences };
+	// 	for (const diff of branchDifferences ?? []) {
+	// 		if (diff.type === "CHANGE") {
+	// 			const path = diff.path[diff.path.length - 1];
+	// 			if (path === undefined) {
+	// 				throw new Error(`List of paths in CHANGE diff is empty`);
+	// 			}
+	// 			newFieldDifferences.changes[path] = diff;
+	// 		}
+	// 		if (diff.type === "CREATE") {
+	// 			newFieldDifferences.isNewCreation = true;
+	// 		}
+	// 		if (diff.type === "MOVE") {
+	// 			newFieldDifferences.moved = diff;
+	// 		}
+	// 	}
+	// 	setFieldDifferences(newFieldDifferences);
+	// }, [branchDifferences]);
+
 	const deleteTask = (): void => {
 		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(props.sharedTreeTask);
 		props.sharedTreeTaskGroup.tasks.removeAt(taskIndex);
 	};
 
-	const task: Task = convertSharedTreeTaskToTask(props.sharedTreeTask);
+	// const task: Task = convertSharedTreeTaskToTask(props.sharedTreeTask);
 
 	const fieldDifferences: {
 		isNewCreation: boolean;
@@ -99,7 +143,7 @@ export function TaskCard(props: {
 		changes: {} satisfies Record<string, DifferenceChange>,
 	};
 
-	for (const diff of props.branchDifferences ?? []) {
+	for (const diff of branchDifferences ?? []) {
 		if (diff.type === "CHANGE") {
 			const path = diff.path[diff.path.length - 1];
 			if (path === undefined) {
@@ -131,7 +175,7 @@ export function TaskCard(props: {
 				width: "400px",
 				height: "245px",
 			}}
-			key={`${task.title}`}
+			key={`${props.sharedTreeTask.title}`}
 		>
 			{fieldDifferences.isNewCreation && (
 				<Box component="span" sx={{ position: "absolute", top: -15, left: -7.5 }}>
@@ -161,7 +205,7 @@ export function TaskCard(props: {
 				<Stack direction="row" justifyContent="space-between" alignItems="center">
 					<Box>
 						<Typography variant="h1" fontSize={24}>
-							{task.title}
+							{props.sharedTreeTask.title}
 						</Typography>
 						<Divider sx={{ fontSize: 12 }} />
 					</Box>
@@ -195,30 +239,86 @@ export function TaskCard(props: {
 											autoHideDuration: 5000,
 										});
 
-										const response = await editTask(task, query);
+										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+										const currentBranch = TreeAlpha.branch(props.sharedTreeBranch.root)!;
+										const aiCollabBranch = currentBranch.fork() as TreeViewAlpha<typeof SharedTreeAppState>;
+										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, -- Note that two levels up from the task is the task group node.
+										const parentTaskGroup = Tree.parent(Tree.parent(props.sharedTreeTask)!) as SharedTreeTaskGroup;
 
-										setIsAiTaskRunning(false);
+										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+										const aiCollabBranchTask = aiCollabBranch.root.taskGroups
+											.find(taskGroup => taskGroup.id === parentTaskGroup.id)!
+											.tasks.find(task => task.id === props.sharedTreeTask.id)!;
 
-										if (response.success) {
+										console.log("aiCollabBranchTask:", { ...aiCollabBranchTask });
+
+										let response: AiCollabSuccessResponse | AiCollabErrorResponse;
+										try {
+											response = await aiCollab({
+												openAI: {
+													client: new OpenAI({
+														apiKey: process.env.NEXT_PUBLIC_OPEN_AI_KEY,
+														dangerouslyAllowBrowser: true
+													}),
+													modelName: "gpt-4o",
+												},
+												treeNode: aiCollabBranchTask,
+												prompt: {
+													systemRoleContext:
+														"You are a manager that is helping out with a project management tool. You have been asked to edit a specific task.",
+													userAsk: query,
+												},
+												planningStep: true,
+												finalReviewStep: true,
+												dumpDebugLog: true,
+												validator: (treeNode) => {
+													console.log("validator running on treeNode", { ...treeNode });
+													if (treeNode !== undefined) {
+														const schema = Tree.schema(treeNode);
+														switch (schema.identifier) {
+															case SharedTreeTask.identifier: {
+																validateLlmTask(treeNode as SharedTreeTask);
+															}
+															default: {
+																break;
+															}
+														}
+													}
+												}
+											});
+										} catch (error) {
+											console.error("Error in aiCollab:", error);
+											enqueueSnackbar(`Copilot: Something went wrong processing your request - "${query}":  ${error instanceof Error ? error.message : "unknown error"}`, {
+												variant: "error",
+												autoHideDuration: 5000,
+											});
+											setIsAiTaskRunning(false);
+											return;
+										}
+
+										if (response.status === 'success') {
 											enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
 												variant: "success",
 												autoHideDuration: 5000,
 											});
 
-											const branchManager = new SharedTreeBranchManager({
-												nodeIdAttributeName: "id",
-											});
-											branchManager.mergeObject(
-												props.sharedTreeTask as unknown as Record<string, unknown>,
-												response.data as unknown as Record<string, unknown>,
-											);
+											const differences = new SharedTreeBranchManager({ nodeIdAttributeName: "id" })
+												.compare(
+													props.sharedTreeTask as unknown as Record<string, unknown>,
+													aiCollabBranchTask as unknown as Record<string, unknown>
+												);
+											setBranchDifferences(differences);
+											currentBranch.merge(aiCollabBranch);
 											setAiPromptPopoverAnchor(undefined);
 										} else {
 											enqueueSnackbar(
-												`Copilot: Something went wrong processing your request - "${query}"`,
+												`Copilot: Something went wrong processing your request - "${query}": ${response.errorMessage}`,
 												{ variant: "error", autoHideDuration: 5000 },
 											);
 										}
+
+
+										setIsAiTaskRunning(false);
 									}}
 								>
 									<TextField
@@ -293,7 +393,7 @@ export function TaskCard(props: {
 				<TextField
 					id="input-description-label-id"
 					label="Description"
-					value={task.description}
+					value={props.sharedTreeTask.description}
 					onChange={(e) => (props.sharedTreeTask.description = e.target.value)}
 					sx={{ height: "100%", width: "100%" }}
 					slotProps={{
@@ -334,7 +434,7 @@ export function TaskCard(props: {
 							<Select
 								labelId="select-priority-label-id"
 								id="select-priority-id"
-								value={task.priority}
+								value={props.sharedTreeTask.priority}
 								label="Priority"
 								onChange={(e) => {
 									props.sharedTreeTask.priority = e.target.value as TaskPriority;
@@ -385,7 +485,7 @@ export function TaskCard(props: {
 							<Select
 								labelId="select-status-label-id"
 								id="select-status-id"
-								value={task.status}
+								value={props.sharedTreeTask.status}
 								label="Status"
 								onChange={(e) => (props.sharedTreeTask.status = e.target.value)}
 								size="small"
@@ -423,9 +523,9 @@ export function TaskCard(props: {
 							<Select
 								labelId="select-assignee-label-id"
 								id="select-assignee-id"
-								value={task.assignee}
+								value={props.sharedTreeTask.assignee}
 								label="Assignee"
-								onChange={(e) => (props.sharedTreeTask.assignee = e.target.value as string)}
+								onChange={(e) => (props.sharedTreeTask.assignee = e.target.value)}
 								size="small"
 								inputProps={{
 									sx: {
@@ -463,7 +563,7 @@ export function TaskCard(props: {
 							<TextField
 								id="input-assignee-label-id"
 								label="Complexity"
-								value={task.complexity}
+								value={props.sharedTreeTask.complexity}
 								size="small"
 								slotProps={{
 									htmlInput: {
