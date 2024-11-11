@@ -236,6 +236,7 @@ describe("schemaCreationUtilities", () => {
 		}
 	});
 
+	// Highest priority issue
 	it("enum interop - adaptEnum with explicit schema", () => {
 		enum Day {
 			Today = "today",
@@ -268,7 +269,68 @@ describe("schemaCreationUtilities", () => {
 		const dayObject3 = new DayObject({ value: DayNodes(Day.Today), name: "3" });
 	});
 
-	it("enum interop - no adaptEnum", () => {
+	// More of an inconvenience than an issue, likely to cause friction for other developers
+	it("original string interop", () => {
+		const factory = new TreeFactory({});
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
+
+		type AnimalType = "cat" | "dog" | "lizard";
+
+		interface IAnimal {
+			aType: AnimalType;
+			hasFur: boolean;
+			legs: number;
+		}
+
+		class SomeAnimal
+			extends schema.object("tag", {
+				_aType: schema.required(schema.string, { key: "aType" }),
+				hasFur: schema.boolean,
+				legs: schema.number,
+			})
+			implements IAnimal
+		{
+			public get aType(): AnimalType {
+				return this._aType as AnimalType;
+			}
+			public set aType(value: AnimalType) {
+				this._aType = value;
+			}
+		}
+
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: schema.array(SomeAnimal) }),
+		);
+
+		// Friction is that _aType is used to initialize instead of aType.
+		view.initialize([
+			{
+				// Instead of _aType, aType would be preferred.
+				_aType: "cat",
+				hasFur: true,
+				legs: 4,
+			},
+		]);
+
+		const dog: IAnimal = {
+			aType: "dog",
+			hasFur: true,
+			legs: 4,
+		};
+		view.root.insertAtEnd({
+			// what happens to the extra property aType?
+			...dog,
+			// Instead of _aType, aType would be preferred.
+			_aType: dog.aType,
+		});
+	});
+
+	// Using a potential solution here. Was able to build more concise solutions
+	// Using limited string values here
+	it("enum interop - limitedString<Type>() solution", () => {
 		enum Day {
 			Today = "today",
 			Tomorrow = "tomorrow",
@@ -350,61 +412,5 @@ describe("schemaCreationUtilities", () => {
 			// @ts-expect-error badDog is not a valid IAnimal
 			view.initialize([goodCat, badDog]);
 		}
-	});
-
-	it("original string interop", () => {
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
-			"tree",
-		);
-
-		type AnimalType = "cat" | "dog" | "lizard";
-
-		interface IAnimal {
-			aType: AnimalType;
-			hasFur: boolean;
-			legs: number;
-		}
-
-		class SomeAnimal
-			extends schema.object("tag", {
-				_aType: schema.required(schema.string, { key: "aType" }),
-				hasFur: schema.boolean,
-				legs: schema.number,
-			})
-			implements IAnimal
-		{
-			public get aType(): AnimalType {
-				return this._aType as AnimalType;
-			}
-			public set aType(value: AnimalType) {
-				this._aType = value;
-			}
-		}
-
-		const view = tree.viewWith(
-			new TreeViewConfiguration({ schema: schema.array(SomeAnimal) }),
-		);
-		view.initialize([
-			{
-				// Instead of _aType, aType would be preferred.
-				_aType: "cat",
-				hasFur: true,
-				legs: 4,
-			},
-		]);
-
-		const dog: IAnimal = {
-			aType: "dog",
-			hasFur: true,
-			legs: 4,
-		};
-		view.root.insertAtEnd({
-			...dog,
-			// Instead of _aType, aType would be preferred.
-			_aType: dog.aType,
-			// what happens to the extra property aType?
-		});
 	});
 });
