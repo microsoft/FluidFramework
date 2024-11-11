@@ -128,9 +128,12 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	public getQuorum: () => ReturnType<IEphemeralRuntime["getQuorum"]>;
 
+	public readonly submittedSignals: Parameters<IEphemeralRuntime["submitSignal"]>[] = [];
+
 	public submitSignal: IEphemeralRuntime["submitSignal"] = (
 		...args: Parameters<IEphemeralRuntime["submitSignal"]>
 	) => {
+		this.submittedSignals.push(args);
 		if (this.signalsExpected.length === 0) {
 			throw new Error(`Unexpected signal: ${JSON.stringify(args)}`);
 		}
@@ -140,3 +143,15 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	// #endregion
 }
+
+// export class SignalCollectorMockRuntime extends MockEphemeralRuntime {
+// 	public override submitSignal: IEphemeralRuntime["submitSignal"] = (
+// 		...args: Parameters<IEphemeralRuntime["submitSignal"]>
+// 	) => {
+// 		if (this.signalsExpected.length === 0) {
+// 			throw new Error(`Unexpected signal: ${JSON.stringify(args)}`);
+// 		}
+// 		const expected = this.signalsExpected.shift();
+// 		assert.deepStrictEqual(args, expected, "Unexpected signal");
+// 	};
+// }

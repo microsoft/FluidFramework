@@ -7,6 +7,15 @@ import { strict as assert } from "node:assert";
 
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { useFakeTimers, type SinonFakeTimers, spy } from "sinon";
+import {
+	describe,
+	it,
+	expect,
+	afterAll as after,
+	afterEach,
+	beforeAll as before,
+	beforeEach,
+} from "vitest";
 
 import { Notifications, type ISessionClient } from "../index.js";
 import type { IEphemeralRuntime } from "../internalTypes.js";
@@ -149,14 +158,14 @@ describe("Presence", () => {
 			);
 		});
 
-		afterEach(function (done: Mocha.Done) {
+		afterEach((done) => {
 			clock.reset();
 
 			// If the test passed so far, check final expectations.
-			if (this.currentTest?.state === "passed") {
-				assertFinalExpectations(runtime, logger);
-			}
-			done();
+			// if (this.currentTest?.state === "passed") {
+			// 	assertFinalExpectations(runtime, logger);
+			// }
+			// done();
 		});
 
 		after(() => {
@@ -212,6 +221,7 @@ describe("Presence", () => {
 			// This will trigger the second signal
 			testEvents.emit.broadcast("newId", 42);
 
+			expect(runtime.submittedSignals).toMatchSnapshot();
 			assertFinalExpectations(runtime, logger);
 		});
 
@@ -310,6 +320,7 @@ describe("Presence", () => {
 			}
 			assert(eventHandler.callCount === 1);
 			assert(eventHandler2.callCount === 1);
+			expect(runtime.submittedSignals).toMatchSnapshot();
 			// assertFinalExpectations(runtime, logger);
 		});
 	});

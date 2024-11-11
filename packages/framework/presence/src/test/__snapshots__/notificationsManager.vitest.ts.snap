@@ -1,0 +1,132 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Presence > NotificationsManager > Fires event when signal is received 1`] = `
+[
+  [
+    "Pres:ClientJoin",
+    {
+      "avgLatency": 0,
+      "data": {
+        "n:name:testNotificationWorkspace": {},
+        "system:presence": {
+          "clientToSessionId": {
+            "client2": {
+              "rev": 0,
+              "timestamp": 1000,
+              "value": "sessionId-2",
+            },
+          },
+        },
+      },
+      "sendTimestamp": 1000,
+      "updateProviders": [
+        "client0",
+        "client1",
+        "client3",
+      ],
+    },
+  ],
+  [
+    "Pres:DatastoreUpdate",
+    {
+      "avgLatency": 10,
+      "data": {
+        "n:name:testNotificationWorkspace": {},
+        "system:presence": {
+          "clientToSessionId": {
+            "client2": {
+              "rev": 0,
+              "timestamp": 1000,
+              "value": "sessionId-2",
+            },
+          },
+        },
+      },
+      "isComplete": true,
+      "sendTimestamp": 1010,
+    },
+  ],
+]
+`;
+
+exports[`Presence > NotificationsManager > Sends signal when custom notifications event is emitted 1`] = `
+[
+  [
+    "Pres:ClientJoin",
+    {
+      "avgLatency": 0,
+      "data": {
+        "n:name:testNotificationWorkspace": {},
+        "system:presence": {
+          "clientToSessionId": {
+            "client2": {
+              "rev": 0,
+              "timestamp": 1000,
+              "value": "sessionId-2",
+            },
+          },
+        },
+      },
+      "sendTimestamp": 1000,
+      "updateProviders": [
+        "client0",
+        "client1",
+        "client3",
+      ],
+    },
+  ],
+  [
+    "Pres:DatastoreUpdate",
+    {
+      "avgLatency": 10,
+      "data": {
+        "n:name:testNotificationWorkspace": {},
+        "system:presence": {
+          "clientToSessionId": {
+            "client2": {
+              "rev": 0,
+              "timestamp": 1000,
+              "value": "sessionId-2",
+            },
+          },
+        },
+      },
+      "isComplete": true,
+      "sendTimestamp": 1010,
+    },
+  ],
+  [
+    "Pres:DatastoreUpdate",
+    {
+      "avgLatency": 10,
+      "data": {
+        "n:name:testNotificationWorkspace": {
+          "testEvents": {
+            "sessionId-2": {
+              "ignoreUnmonitored": true,
+              "rev": 0,
+              "timestamp": 0,
+              "value": {
+                "args": [
+                  42,
+                ],
+                "name": "newId",
+              },
+            },
+          },
+        },
+        "system:presence": {
+          "clientToSessionId": {
+            "client2": {
+              "rev": 0,
+              "timestamp": 1000,
+              "value": "sessionId-2",
+            },
+          },
+        },
+      },
+      "sendTimestamp": 1020,
+    },
+  ],
+]
+`;
