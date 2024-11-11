@@ -38,7 +38,7 @@ import {
 	tagChange,
 	visitDelta,
 	type RevertibleFactory,
-	type ClonableRevertibleFactory,
+	type RevertibleAlphaFactory,
 } from "../core/index.js";
 import {
 	type HasListeners,
@@ -72,6 +72,8 @@ import type {
 	TreeBranch,
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { RevertibleAlpha } from "../core/revertible.js";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -96,7 +98,7 @@ export interface CheckoutEvents {
 	 */
 	changed(
 		data: CommitMetadata,
-		getRevertible?: RevertibleFactory | ClonableRevertibleFactory,
+		getRevertible?: RevertibleFactory | RevertibleAlphaFactory,
 	): void;
 }
 
@@ -402,7 +404,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	/**
 	 * Set of revertibles maintained for automatic disposal
 	 */
-	private readonly revertibles = new Set<ClonableRevertible>();
+	private readonly revertibles = new Set<RevertibleAlpha>();
 
 	/**
 	 * Each branch's head commit corresponds to a revertible commit.
@@ -606,10 +608,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		kind: CommitKind,
 		checkout: TreeCheckout = this,
 		onRevertibleDisposed?: (revertible: Revertible) => void,
-	): ClonableRevertible {
+	): RevertibleAlpha {
 		const commitBranches = checkout.revertibleCommitBranches;
 
-		const revertible: ClonableRevertible = {
+		const revertible: RevertibleAlpha = {
 			get status(): RevertibleStatus {
 				const revertibleCommit = commitBranches.get(revision);
 				return revertibleCommit === undefined
@@ -653,7 +655,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		kind: CommitKind,
 		branch?: TreeBranch,
 		onRevertibleDisposed?: (revertible: Revertible) => void,
-	): ClonableRevertible {
+	): RevertibleAlpha {
 		const checkout = branch ? getCheckout(branch) : this;
 
 		if (branch !== undefined) {
@@ -831,7 +833,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
-	private disposeRevertible(revertible: ClonableRevertible, revision: RevisionTag): void {
+	private disposeRevertible(revertible: RevertibleAlpha, revision: RevisionTag): void {
 		this.revertibleCommitBranches.get(revision)?.dispose();
 		this.revertibleCommitBranches.delete(revision);
 		this.revertibles.delete(revertible);
@@ -928,9 +930,4 @@ export function runSynchronous(
 	return result === TransactionResult.Abort
 		? view.transaction.abort()
 		: view.transaction.commit();
-}
-
-export interface ClonableRevertible extends Revertible {
-	dispose: () => void;
-	clone: (forkedBranch?: TreeBranch) => ClonableRevertible;
 }

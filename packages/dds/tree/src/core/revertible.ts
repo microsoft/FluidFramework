@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-// eslint-disable-next-line import/no-internal-modules
-import type { ClonableRevertible } from "../shared-tree/treeCheckout.js";
+import type { TreeBranch } from "../simple-tree/index.js";
+
 /**
  * Allows reversion of a change made to SharedTree.
  *
@@ -40,6 +36,13 @@ export interface Revertible {
 	 * Disposes this revertible, allowing associated resources to be released.
 	 */
 	dispose(): void;
+}
+
+/**
+ * @alpha
+ */
+export interface RevertibleAlpha extends Revertible {
+	clone: (forkedBranch?: TreeBranch) => RevertibleAlpha;
 }
 
 /**
@@ -79,6 +82,6 @@ export type RevertibleFactory = (
  *
  * @sealed @public
  */
-export type ClonableRevertibleFactory = (
-	onRevertibleDisposed?: (revertible: ClonableRevertible) => void,
-) => ClonableRevertible;
+export type RevertibleAlphaFactory = (
+	onRevertibleDisposed?: (revertible: RevertibleAlpha) => void,
+) => RevertibleAlpha;

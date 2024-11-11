@@ -149,9 +149,7 @@ import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { ClonableRevertible } from "../shared-tree/treeCheckout.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { ClonableRevertibleFactory } from "../core/revertible.js";
+import type { RevertibleAlpha, RevertibleAlphaFactory } from "../core/revertible.js";
 
 // Testing utilities
 
@@ -454,6 +452,7 @@ export function spyOnMethod(
 }
 
 /**
+ * TODO
  * @returns `true` iff the given delta has a visible impact on the document tree.
  */
 export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
@@ -1099,14 +1098,14 @@ export function createTestUndoRedoStacks(
 export function createClonableUndoRedoStacks(
 	events: Listenable<TreeBranchEvents | CheckoutEvents>,
 ): {
-	undoStack: ClonableRevertible[];
-	redoStack: ClonableRevertible[];
+	undoStack: RevertibleAlpha[];
+	redoStack: RevertibleAlpha[];
 	unsubscribe: () => void;
 } {
-	const undoStack: ClonableRevertible[] = [];
-	const redoStack: ClonableRevertible[] = [];
+	const undoStack: RevertibleAlpha[] = [];
+	const redoStack: RevertibleAlpha[] = [];
 
-	function onDispose(disposed: ClonableRevertible): void {
+	function onDispose(disposed: RevertibleAlpha): void {
 		const redoIndex = redoStack.indexOf(disposed);
 		if (redoIndex !== -1) {
 			redoStack.splice(redoIndex, 1);
@@ -1118,10 +1117,7 @@ export function createClonableUndoRedoStacks(
 		}
 	}
 
-	function onNewCommit(
-		commit: CommitMetadata,
-		getRevertible?: ClonableRevertibleFactory,
-	): void {
+	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void {
 		if (getRevertible !== undefined) {
 			const revertible = getRevertible(onDispose);
 			if (commit.kind === CommitKind.Undo) {
