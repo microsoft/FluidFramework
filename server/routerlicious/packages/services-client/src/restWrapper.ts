@@ -45,7 +45,7 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "GET",
-			url: `${url}${queryString ? this.generateQueryString(queryString) : ""}`,
+			url: `${url}${this.generateQueryString(queryString)}`,
 		};
 		return this.request<T>(options, 200);
 	}
@@ -70,7 +70,7 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "POST",
-			url: `${url}${queryString ? this.generateQueryString(queryString) : ""}`,
+			url: `${url}${this.generateQueryString(queryString)}`,
 		};
 		return this.request<T>(options, 201);
 	}
@@ -93,7 +93,7 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "DELETE",
-			url: `${url}${queryString ? this.generateQueryString(queryString) : ""}`,
+			url: `${url}${this.generateQueryString(queryString)}`,
 		};
 		return this.request<T>(options, 204);
 	}
@@ -118,14 +118,16 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "PATCH",
-			url: `${url}${queryString ? this.generateQueryString(queryString) : ""}`,
+			url: `${url}${this.generateQueryString(queryString)}`,
 		};
 		return this.request<T>(options, 200);
 	}
 
 	protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 
-	protected generateQueryString(queryStringValues: Record<string, string | number | boolean>) {
+	protected generateQueryString(
+		queryStringValues: Record<string, string | number | boolean> | undefined,
+	) {
 		if (this.defaultQueryString || queryStringValues) {
 			const queryStringRecord = { ...this.defaultQueryString, ...queryStringValues };
 

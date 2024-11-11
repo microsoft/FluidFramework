@@ -623,7 +623,7 @@ export abstract class RestWrapper {
     // (undocumented)
     delete<T>(url: string, queryString?: Record<string, string | number | boolean>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
-    protected generateQueryString(queryStringValues: Record<string, string | number | boolean>): string;
+    protected generateQueryString(queryStringValues: Record<string, string | number | boolean> | undefined): string;
     // (undocumented)
     get<T>(url: string, queryString?: Record<string, string | number | boolean>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
