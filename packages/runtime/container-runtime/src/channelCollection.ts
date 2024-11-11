@@ -75,11 +75,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
-	DeletedResponseHeaderKey,
-	RuntimeHeaderData,
-	defaultRuntimeHeaderData,
-} from "./containerRuntime.js";
+import { DeletedResponseHeaderKey, RuntimeHeaderData } from "./containerRuntime.js";
 import {
 	IDataStoreAliasMessage,
 	channelToDataStore,
