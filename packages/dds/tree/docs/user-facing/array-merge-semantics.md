@@ -292,3 +292,42 @@ Instead, it is necessary to use the move operation:
 array.moveToStart(2);
 ```
 Work is underway to address this lack flexibility.
+
+### Replacing Items
+
+When dealing with plain JavaScript arrays, it is possible to replace items.
+For example, in array  `[A, B, C]`,
+the item B can be replaced with item X with [the `splice` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice):
+```typescript
+array.splice(1, 1, X);
+```
+...or simply by using the `=` operator:
+```typescript
+array[1] = X;
+```
+
+As of October 2024, SharedTree arrays do not support either of these approaches.
+The closest alternative is to remove and insert items in two separate calls:
+```typescript
+array.removeAt(1);
+array.insertAt(1, X);
+```
+
+Note that this approach may not yield ideal merge outcomes when it comes to concurrent insertions.
+
+Example:
+* Starting state: `["gold", "bronze"]`
+* User 1: replace "gold" and "bronze" with "1st place" and "3rd place":
+  * `removeRange(0, 2)`
+  * `insertAt(0, "1st place", "3rd place")`
+* User 2: insert "2nd place" between "gold" and "bronze":
+  * `insertAt(1, "2nd place")`
+* Merge outcome: `["1st place", "3rd place", "2nd place"]`
+
+This outcome is not consistent with the idea of replacement
+which would have yielded `["1st place", "2nd place", "3rd place"]` instead.
+This is because removing and inserting does not update the original items in place.
+So we effectively end up with `["1st place", "3rd place", `~~`"gold"`~~`, "2nd place", `~~`"bronze"`~~`]`.
+
+If in-place replacement is critical to you application's needs,
+please reach out to the Fluid team.

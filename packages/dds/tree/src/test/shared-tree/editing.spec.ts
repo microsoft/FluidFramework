@@ -77,6 +77,27 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expected);
 		});
 
+		it.only("replace vs insert", () => {
+			const root = makeTreeFromJsonSequence(["A", "C"]);
+
+			const tree1 = root.branch();
+			remove(tree1, 0, 2);
+			insert(tree1, 0, "a", "c");
+
+			const tree2 = root.branch();
+			insert(tree2, 1, "b");
+
+			const merge1then2 = root.branch();
+			merge1then2.merge(tree1, false);
+			merge1then2.merge(tree2, false);
+
+			const merge2then1 = root.branch();
+			merge2then1.merge(tree2, false);
+			merge2then1.merge(tree1, false);
+
+			expectJsonTree([merge1then2, merge2then1], ["a", "c", "b"]);
+		});
+
 		it("can rebase remove over move", () => {
 			const tree1 = makeTreeFromJsonSequence([]);
 			const tree2 = tree1.branch();
