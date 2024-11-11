@@ -5,13 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	EventEmitter,
 	createEmitter,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../events/emitter.js";
 import type { Listenable } from "../../events/index.js";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 interface TestEvents {
 	open: () => void;
@@ -161,7 +162,8 @@ describe("EventEmitter", () => {
 		assert.strictEqual(count, 1);
 	});
 
-	it("allows registrations of event names that are symbols", () => {
+	it("correctly handles registrations of event names that are symbols", () => {
+		// This test ensures that symbol types are registered, error on double registration, and include the description of the symbol in the error message.
 		const eventSymbol = Symbol("TestEvent");
 		const emitter = createEmitter<{ [eventSymbol]: () => void }>();
 		let count = 0;
@@ -186,20 +188,69 @@ describe("EventEmitter", () => {
 		emitter.off("open", listenerB);
 	});
 
-	it("skips events adding during event", () => {
+	it("skips events added during event", () => {
 		const emitter = createEmitter<TestEvents>();
 		const log: string[] = [];
-		const unsubscribe = emitter.on("open", () => {
+		const off = emitter.on("open", () => {
 			log.push("A");
 			emitter.on("open", () => {
 				log.push("B");
 			});
 		});
 		emitter.emit("open");
-		unsubscribe();
+		off();
 		assert.deepEqual(log, ["A"]);
 		emitter.emit("open");
 		assert.deepEqual(log, ["A", "B"]);
+	});
+
+	it("skips events removed during event", () => {
+		function test(remove: boolean, expected: string[]): void {
+			const log: string[] = [];
+			const emitter = createEmitter<TestEvents>();
+			emitter.on("open", () => {
+				log.push("A");
+				if (remove) {
+					offB();
+				}
+			});
+			const offB = emitter.on("open", () => {
+				log.push("B");
+			});
+			emitter.emit("open");
+			assert.deepEqual(log, expected);
+		}
+
+		// Because event ordering is not guaranteed, we first test the control case to ensure that the second event fires after the first...
+		test(false, ["A", "B"]);
+		// ... and then test the same scenario but with the second event removed before it can fire.
+		test(true, ["A"]);
+		// If event ordering ever changes, this test will need to be updated to account for that.
+	});
+
+	it("fires the noListeners callback when the last listener is removed", () => {
+		let noListenersFired = false;
+		const emitter = createEmitter<TestEvents>(() => (noListenersFired = true));
+		const offA = emitter.on("open", () => {});
+		const offB = emitter.on("open", () => {});
+		assert.equal(noListenersFired, false);
+		offA();
+		assert.equal(noListenersFired, false);
+		offB();
+		assert.equal(noListenersFired, true);
+	});
+
+	it("correctly implements hasListeners", () => {
+		const emitter = createEmitter<TestEvents>();
+		assert.equal(emitter.hasListeners(), false);
+		const offA = emitter.on("open", () => {});
+		assert.equal(emitter.hasListeners(), true);
+		const offB = emitter.on("open", () => {});
+		assert.equal(emitter.hasListeners(), true);
+		offB();
+		assert.equal(emitter.hasListeners(), true);
+		offA();
+		assert.equal(emitter.hasListeners(), false);
 	});
 
 	it("reentrant events", () => {
