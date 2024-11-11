@@ -8,7 +8,7 @@ Use of the migration tools imposes several requirements on the container code an
 
 These tools rely on the model loading pattern.  This pattern allows you to define whatever API surface you would like to expose from the Fluid container for your app to use.  This could be as simple as exposing a root data store for your app to access, or could contain much more advanced functionality if you desire.
 
-This model object is instantiated by your container code during container load.  To simplify this, we provide `instantiateMigratableRuntime` which should be used in place of `ContainerRuntime.loadRuntime`.  In addition to the familiar parameters, this helper function takes a `CreateModelCallback` - you should write this function to instantiate your model.  The callback will provide an `IContainerRuntime` and `IContainer` to use in this instantiation.
+This model object is instantiated by your container code during container load.  To simplify this, we provide `loadMigratableRuntime` which should be used in place of `ContainerRuntime.loadRuntime`.  In addition to the familiar parameters, this helper function takes a `CreateModelCallback` - you should write this function to instantiate your model.  The callback will provide an `IContainerRuntime` and `IContainer` to use in this instantiation.
 
 TODO: This is too much, how to make it simpler?
 
@@ -27,7 +27,7 @@ class InventoryListAppModel implements IInventoryListAppModel {
 }
 
 // Ensuring the IRuntimeFactory knows how to create a model on demand with a CreateModelCallback
-// and the instantiateMigratableRuntime helper.
+// and the loadMigratableRuntime helper.
 
 const createModel = async (
 	runtime: IContainerRuntime,
@@ -41,7 +41,7 @@ const createModel = async (
 	);
 };
 
-const runtime = await instantiateMigratableRuntime(
+const runtime = await loadMigratableRuntime(
 	context,
 	existing,
 	this.registryEntries,
@@ -64,7 +64,7 @@ Broadly, this includes:
 
 ### `MigratableModelLoader`
 
-This package provides a `MigratableModelLoader` which takes the place of the `Loader` class.  For this to work you must be using `instantiateMigratableRuntime` in your container code, and your model must implement `IMigratableModel`.
+This package provides a `MigratableModelLoader` which takes the place of the `Loader` class.  For this to work you must be using `loadMigratableRuntime` in your container code, and your model must implement `IMigratableModel`.
 
 TODO: Detail usage of the MigratableModelLoader
 
