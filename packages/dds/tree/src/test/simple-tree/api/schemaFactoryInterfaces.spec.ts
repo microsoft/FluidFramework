@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { SchemaFactory, TreeViewConfiguration } from "../../../simple-tree/index.js";
 import { TreeFactory } from "../../../treeFactory.js";
