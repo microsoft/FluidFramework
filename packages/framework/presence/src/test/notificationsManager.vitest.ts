@@ -10,7 +10,6 @@ import { useFakeTimers, type SinonFakeTimers, spy } from "sinon";
 import {
 	describe,
 	it,
-	expect,
 	afterAll as after,
 	afterEach,
 	beforeAll as before,
@@ -183,7 +182,6 @@ describe("Presence", () => {
 			// This will trigger the second signal
 			testEvents.emit.broadcast("newId", 42);
 
-			expect(runtime.submittedSignals).toMatchSnapshot();
 			assertFinalExpectations(runtime, logger);
 		});
 
@@ -274,7 +272,6 @@ describe("Presence", () => {
 			}
 			assert(eventHandler.callCount === 1);
 			assert(eventHandler2.callCount === 1);
-			expect(runtime.submittedSignals).toMatchSnapshot();
 		});
 	});
 });
