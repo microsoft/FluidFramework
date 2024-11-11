@@ -135,7 +135,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 			throw new Error(`Unexpected signal: ${JSON.stringify(args)}`);
 		}
 		const expected = this.signalsExpected.shift();
-		// console.debug(JSON.stringify(args, undefined, 2));
 		assert.deepStrictEqual(args, expected, "Unexpected signal");
 	};
 

@@ -349,13 +349,13 @@ export const arrayOfLiterals: readonly (
 // #region Class types
 export class ClassWithPrivateData {
 	public public = "public";
-	// // @ts-expect-error secret is never read
+	// @ts-expect-error secret is never read
 	private readonly secret = 0;
 }
 export const classInstanceWithPrivateData = new ClassWithPrivateData();
 export class ClassWithPrivateMethod {
 	public public = "public";
-	// // @ts-expect-error secret is never read
+	// @ts-expect-error secret is never read
 	private getSecret(): number {
 		return 0;
 	}
@@ -363,7 +363,7 @@ export class ClassWithPrivateMethod {
 export const classInstanceWithPrivateMethod = new ClassWithPrivateMethod();
 export class ClassWithPrivateGetter {
 	public public = "public";
-	// // @ts-expect-error secret is never read
+	// @ts-expect-error secret is never read
 	private get secret(): number {
 		return this.public.length;
 	}
@@ -371,7 +371,7 @@ export class ClassWithPrivateGetter {
 export const classInstanceWithPrivateGetter = new ClassWithPrivateGetter();
 export class ClassWithPrivateSetter {
 	public public = "public";
-	// // @ts-expect-error secret is never read
+	// @ts-expect-error secret is never read
 	private set secret(v: string) {
 		this.public = v;
 	}
