@@ -173,7 +173,7 @@ function setupSubComponents(
 		clientSessionId,
 		systemWorkspaceDatastore,
 		events,
-		runtime,
+		runtime.getAudience(),
 	);
 	const datastoreManager = new PresenceDatastoreManagerImpl(
 		clientSessionId,

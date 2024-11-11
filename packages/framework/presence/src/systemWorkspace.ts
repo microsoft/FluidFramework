@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import type { IAudience } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { IEphemeralRuntime } from "./internalTypes.js";
 import {
 	SessionClientStatus,
 	type ClientSessionId,
@@ -115,7 +115,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		public readonly events: IEmitter<
 			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
 		>,
-		private readonly runtime: IEphemeralRuntime,
+		private readonly audience: IAudience,
 	) {
 		this.selfAttendee = new SessionClient(clientSessionId);
 		this.attendees.set(clientSessionId, this.selfAttendee);
@@ -165,7 +165,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			}
 		}
 
-		const audienceMembers = this.runtime.getAudience().getMembers();
+		const audienceMembers = this.audience.getMembers();
 		const attendees = new Set(this.attendees.values());
 
 		for (const attendee of attendees) {
@@ -270,7 +270,7 @@ export function createSystemWorkspace(
 	clientSessionId: ClientSessionId,
 	datastore: SystemWorkspaceDatastore,
 	events: IEmitter<Pick<PresenceEvents, "attendeeJoined">>,
-	runtime: IEphemeralRuntime,
+	audience: IAudience,
 ): {
 	workspace: SystemWorkspace;
 	statesEntry: {
@@ -278,7 +278,7 @@ export function createSystemWorkspace(
 		public: PresenceStates<PresenceStatesSchema>;
 	};
 } {
-	const workspace = new SystemWorkspaceImpl(clientSessionId, datastore, events, runtime);
+	const workspace = new SystemWorkspaceImpl(clientSessionId, datastore, events, audience);
 	return {
 		workspace,
 		statesEntry: {
