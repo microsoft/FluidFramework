@@ -1096,7 +1096,7 @@ export function arraySchema<
 				// Since proxy reports this as a "non-configurable" property, it must exist on the underlying object used as the proxy target, not as an inherited property.
 				// This should not get used as the proxy should intercept all use.
 				Object.defineProperty(instance, "length", {
-					value: NaN,
+					value: Number.NaN,
 					writable: true,
 					enumerable: false,
 					configurable: false,
