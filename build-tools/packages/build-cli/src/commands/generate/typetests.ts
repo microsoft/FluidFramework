@@ -16,7 +16,6 @@ import { Flags } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import * as changeCase from "change-case";
 import { readJson } from "fs-extra/esm";
-import * as resolve from "resolve.exports";
 import {
 	JSDoc,
 	ModuleKind,
@@ -35,6 +34,9 @@ import {
 	knownApiLevels,
 	unscopedPackageNameString,
 } from "../../library/index.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
+import { getTypesPathFromPackage } from "../../library/packageExports.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
 import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGeneration.js";
@@ -219,91 +221,6 @@ function getTypesPathWithFallback(
 		}
 	}
 	return { typesPath: typesPath, entrypointUsed: chosenEntrypoint };
-}
-
-/**
- * Finds the path to the types of a package using the package's export map or types/typings field.
- * If the path is found, it is returned. Otherwise it returns undefined.
- *
- * This implementation uses resolve.exports to resolve the path to types for a level.
- *
- * @param packageJson - The package.json object to check for types paths.
- * @param level - An API level to get types paths for.
- * @returns A package relative path to the types.
- *
- * @remarks
- *
- * This implementation loosely follows TypeScript's process for finding types as described at
- * {@link https://www.typescriptlang.org/docs/handbook/modules/reference.html#packagejson-main-and-types}. If an export
- * map is found, the `types` and `typings` field are ignored. If an export map is not found, then the `types`/`typings`
- * fields will be used as a fallback _only_ for the public API level (which corresponds to the default export).
- *
- * Importantly, this code _does not_ implement falling back to the `main` field when `types` and `typings` are missing,
- * nor does it look up types from DefinitelyTyped (i.e. \@types/* packages). This fallback logic is not needed for our
- * packages because we always specify types explicitly in the types field, and types are always included in our packages
- * (as opposed to a separate \@types package).
- */
-export function getTypesPathFromPackage(
-	packageJson: PackageJson,
-	level: ApiLevel,
-	log: Logger,
-): string | undefined {
-	if (packageJson.exports === undefined) {
-		log.verbose(`${packageJson.name}: No export map found.`);
-		// Use types/typings field only when the public API level is used and no exports field is found
-		if (level === ApiLevel.public) {
-			log.verbose(`${packageJson.name}: Using the types/typings field value.`);
-			return packageJson.types ?? packageJson.typings;
-		}
-		// No exports and a non-public API level, so return undefined.
-		return undefined;
-	}
-
-	// Package has an export map, so map the requested API level to an entrypoint and check the exports conditions.
-	const entrypoint = level === ApiLevel.public ? "." : `./${level}`;
-
-	// resolve.exports sets some conditions by default, so the ones we supply supplement the defaults. For clarity the
-	// applied conditions are noted in comments.
-	let typesPath: string | undefined;
-	try {
-		// First try to resolve with the "import" condition, assuming the package is either ESM-only or dual-format.
-		// conditions: ["default", "types", "import", "node"]
-		const exports = resolve.exports(packageJson, entrypoint, { conditions: ["types"] });
-
-		// resolve.exports returns a `Exports.Output | void` type, though the documentation isn't clear under what
-		// conditions `void` would be the return type vs. just throwing an exception. Since the types say exports could be
-		// undefined or an empty array (Exports.Output is an array type), check for those conditions.
-		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
-	} catch {
-		// Catch and ignore any exceptions here; we'll retry with the require condition.
-		log.verbose(
-			`${packageJson.name}: No types found for ${entrypoint} using "import" condition.`,
-		);
-	}
-
-	// Found the types using the import condition, so return early.
-	if (typesPath !== undefined) {
-		return typesPath;
-	}
-
-	try {
-		// If nothing is found when using the "import" condition, try the "require" condition. It may be possible to do this
-		// in a single call to resolve.exports, but the documentation is a little unclear. This seems a safe, if inelegant
-		// solution.
-		// conditions: ["default", "types", "require", "node"]
-		const exports = resolve.exports(packageJson, entrypoint, {
-			conditions: ["types"],
-			require: true,
-		});
-		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
-	} catch {
-		// Catch and ignore any exceptions here; we'll retry with the require condition.
-		log.verbose(
-			`${packageJson.name}: No types found for ${entrypoint} using "require" condition.`,
-		);
-	}
-
-	return typesPath;
 }
 
 /**
@@ -619,10 +536,13 @@ export function generateCompatibilityTestCases(
  * Returns the name of the type preprocessing type meta-function to use, or undefined if no type test should be generated.
  */
 function selectTypePreprocessor(typeData: TypeData): string | undefined {
-	if (typeData.tags.has("type-test-minimal")) {
+	if (typeData.tags.has("system")) {
+		return undefined;
+	}
+	if (typeData.tags.has("typeTestMinimal")) {
 		return "MinimalType";
 	}
-	if (typeData.tags.has("type-test-full")) {
+	if (typeData.tags.has("typeTestFull")) {
 		return "FullType";
 	}
 	return "TypeOnly";

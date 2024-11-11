@@ -5,8 +5,6 @@
 
 "use client";
 
-import type { IFluidContainer } from "@fluidframework/fluid-static";
-import { type TreeView } from "@fluidframework/tree";
 import {
 	Box,
 	Button,
@@ -17,6 +15,7 @@ import {
 	Tabs,
 	Typography,
 } from "@mui/material";
+import type { IFluidContainer, TreeView } from "fluid-framework";
 import React, { useEffect, useState } from "react";
 
 import { TaskGroup } from "@/components/TaskGroup";
@@ -78,7 +77,7 @@ export default function TasksListPage(): JSX.Element {
 	return (
 		<Container
 			sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
-			maxWidth={"lg"}
+			maxWidth={false}
 		>
 			<Typography variant="h2" sx={{ my: 3 }}>
 				My Work Items
