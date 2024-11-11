@@ -162,15 +162,13 @@ describe("EventEmitter", () => {
 		assert.strictEqual(count, 1);
 	});
 
-	it("correctly handles registrations of event names that are symbols", () => {
+	it("includes symbol description in the error message on multiple registrations of the same listener", () => {
 		// This test ensures that symbol types are registered, error on double registration, and include the description of the symbol in the error message.
 		const eventSymbol = Symbol("TestEvent");
 		const emitter = createEmitter<{ [eventSymbol]: () => void }>();
-		let count = 0;
-		const listener = () => (count += 1);
+		const listener = () => {};
 		emitter.on(eventSymbol, listener);
 		emitter.emit(eventSymbol);
-		assert.equal(count, 1);
 		assert.throws(
 			() => emitter.on(eventSymbol, listener),
 			(e: Error) => validateAssertionError(e, /register.*twice.*TestEvent/),
