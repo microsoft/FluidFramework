@@ -160,6 +160,8 @@ export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
+	type AssignableTreeFieldFromImplicitField,
+	type ApplyKindAssignment,
 	type TreeObjectNode,
 	setField,
 } from "./objectNode.js";
