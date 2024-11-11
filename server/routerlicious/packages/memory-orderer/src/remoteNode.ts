@@ -116,7 +116,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 		const socket =
 			details.expiration >= Date.now()
 				? await Socket.connect<INodeMessage>(details.address, id)
-				: null;
+				: (null as unknown as Socket<INodeMessage>);
 		const node = new RemoteNode(id, socket);
 
 		return node;
@@ -175,7 +175,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 					if (!this.topicMap.has(fullId)) {
 						this.topicMap.set(fullId, []);
 					}
-					this.topicMap.get(fullId).push(socketConnection);
+					this.topicMap.get(fullId)?.push(socketConnection);
 
 					pendingConnect.deferred.resolve(socketConnection);
 					break;
@@ -226,7 +226,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 
 	private route(message: IOpMessage) {
 		const sockets = this.topicMap.get(message.topic);
-		for (const socket of sockets) {
+		for (const socket of sockets ?? []) {
 			socket.emit(message.op, message.data[0], ...message.data.slice(1));
 		}
 	}

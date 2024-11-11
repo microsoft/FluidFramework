@@ -37,7 +37,7 @@ export class ReservationManager extends EventEmitter implements IReservationMana
 
 		// Reservation can be null (first time), expired, or existing and within the time window
 		if (reservation === null) {
-			await this.makeReservation(node, key, null, reservations);
+			await this.makeReservation(node, key, null as unknown as any, reservations);
 			return node;
 		} else {
 			const remoteNode = await this.nodeTracker.loadRemote(reservation.node);

@@ -37,6 +37,7 @@ import {
 	IDocumentRepository,
 	ICheckpointRepository,
 	CheckpointService,
+	IDeltaService,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ILocalOrdererSetup } from "./interfaces";
@@ -51,7 +52,13 @@ const DefaultScribe: IScribe = {
 	lastClientSummaryHead: undefined,
 	logOffset: -1,
 	minimumSequenceNumber: -1,
-	protocolState: undefined,
+	protocolState: {
+		members: [],
+		minimumSequenceNumber: 0,
+		proposals: [],
+		sequenceNumber: 0,
+		values: [],
+	},
 	sequenceNumber: -1,
 	lastSummarySequenceNumber: 0,
 	validParentSummaries: undefined,
@@ -143,8 +150,8 @@ export class LocalOrderer implements IOrderer {
 		);
 	}
 
-	public rawDeltasKafka: LocalKafka;
-	public deltasKafka: LocalKafka;
+	public rawDeltasKafka!: LocalKafka;
+	public deltasKafka!: LocalKafka;
 
 	public scriptoriumLambda: LocalLambdaController | undefined;
 	public moiraLambda: LocalLambdaController | undefined;
@@ -241,7 +248,9 @@ export class LocalOrderer implements IOrderer {
 			this.scriptoriumContext,
 			async (lambdaSetup, context) => {
 				const deltasCollection = await lambdaSetup.deltaCollectionP();
-				return new ScriptoriumLambda(deltasCollection, context, undefined, undefined);
+				return new ScriptoriumLambda(deltasCollection, context, undefined, async () =>
+					Promise.resolve(),
+				);
 			},
 		);
 
@@ -343,6 +352,10 @@ export class LocalOrderer implements IOrderer {
 			() => -1,
 		);
 
+		if (!this.gitManager) {
+			throw new Error("Git manager is required to start scribe lambda.");
+		}
+
 		const summaryReader = new SummaryReader(
 			this.tenantId,
 			this.documentId,
@@ -355,7 +368,7 @@ export class LocalOrderer implements IOrderer {
 			this.tenantId,
 			this.documentId,
 			this.gitManager,
-			null /* deltaService */,
+			null as unknown as IDeltaService /* deltaService */,
 			scribeMessagesCollection,
 			false /* enableWholeSummaryUpload */,
 			latestSummary.messages,
@@ -374,7 +387,7 @@ export class LocalOrderer implements IOrderer {
 			this.documentId,
 			documentRepository,
 			scribeMessagesCollection,
-			null /* deltaService */,
+			null as unknown as IDeltaService /* deltaService */,
 			false /* getDeltasViaAlfred */,
 			false /* verifyLastOpPersistence */,
 			checkpointService,
@@ -400,7 +413,7 @@ export class LocalOrderer implements IOrderer {
 			true,
 			true,
 			true,
-			this.details.value.isEphemeralContainer,
+			this.details.value.isEphemeralContainer ?? false,
 			checkpointService.getLocalCheckpointEnabled(),
 			maxPendingCheckpointMessagesLength,
 		);
