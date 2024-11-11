@@ -6,14 +6,20 @@ Target audience: `SharedTree` users and maintainers.
 
 > While this document is self-contained, we recommend reading about [SharedTree's approach to merge semantics](merge-semantics) first.
 
-Each edit's merge semantics is defined in terms of its preconditions and postconditions.
+Each edit's merge semantics are defined in terms of the edit's preconditions and postconditions.
 A precondition defines a requirement that must be met for the edit to be valid.
-(Invalid edits are ignored along with all other edits in the same transaction, and postconditions do not hold)
 A postcondition defines a guarantee that is made about the effect of the edit.
+(Invalid edits are ignored along with all other edits in the same transaction, and postconditions do not hold).
 
-## Specifying the Location of Inserted Items
+## Key Challenges and Solutions
 
-### The Problem
+Before delving into the set editing operations supported by ShardTree arrays,
+it's helpful to understand the key challenges that come up when users are allowed to concurrently edit the same array,
+and how ShardTree arrays address these challenges.
+
+### Specifying the Location of Inserted Items
+
+#### The Problem
 
 Array operations that insert (or move in) array items take an integer that describes where in the array the new item(s) should be added.
 For example, we can call `insertAt(1, "o")` to insert the value `"o"` in the array `["c", "a", "t"]` thus changing it to  `["c", "o", "a", "t"]`.
@@ -42,7 +48,7 @@ then inserting `"o"` at index 5 would either crash or yield `["c", "a", "t", "o"
 This would not truly match the intention of Bob,
 who would likely have wanted to get `["c", "o", "a", "t"]` instead.
 
-### The Solution: Inserting in Gaps
+#### The Solution: Inserting in Gaps
 
 Instead of treating the destination parameter of insert and move operations as a fixed insertion index,
 SharedTree's array implementation interprets that parameter as referring to a gap in the array.
@@ -61,7 +67,7 @@ the gap's position after reconciling with the concurrent edit from Alice (`inser
 is as follows: `["r" "e" "d" " " "c" _ "a" "t"]`,
 thus yielding the adequate result after inserting "o" `["r", "e", "d", " ", "c", "o", "a", "t"]`.
 
-### Tie-Breaking
+#### Tie-Breaking
 
 Note that multiple edits may concurrently attempt to insert or move in items into the same gap.
 When that's the case,
@@ -69,16 +75,16 @@ the items end up ordered such that the items inserted by the edit that is sequen
 
 Example:
 * Starting state: `[]`
-* Edit 1: (currently to edits 2 and 3) insert items A and B (this changes the state from `[]` to `[A, B]`)
-* Edit 2: (currently to edits 1 and 3) insert items R and S (this changes the state from `[]` to `[R, S]`)
-* Edit 3: (currently to edits 1 and 2) insert items X and Y (this changes the state from `[]` to `[X, Y]`)
+* Edit 1: (concurrently to edits 2 and 3) insert items A and B (this changes the state from `[]` to `[A, B]`)
+* Edit 2: (concurrently to edits 1 and 3) insert items R and S (this changes the state from `[]` to `[R, S]`)
+* Edit 3: (concurrently to edits 1 and 2) insert items X and Y (this changes the state from `[]` to `[X, Y]`)
 
 If the edits are sequenced in increasing order (i.e., edit 1, edit 2, edit 3),
 then the resulting state will be `[X, Y, R, S, A, B]`.
 
-### Noteworthy Implications
+#### Noteworthy Implications
 
-Creating and edit that inserts items before or after an existing item in an array will not necessarily insert next two that item.
+Creating an edit that inserts items before or after an existing item in an array will not necessarily insert next to that item.
 For example, inserting item X at the start of array `[Y, Z]` does not guarantee that X and Y will both appear together (in that order)
 if other users make concurrent edits to the array.
 
@@ -108,7 +114,7 @@ The takeaway from these examples is that while it's tempting to think of an inse
 that doesn't quite match the merge semantics we have implemented.
 If you find yourself wishing for different merge semantics please reach out to the Fluid team.
 
-## Specifying the Set of (Re)Moved Items
+### Specifying the Set of (Re)Moved Items
 
 Each move or remove operations affects a specific set of array items.
 When a single item is targeted,
@@ -125,18 +131,23 @@ Using the range-based API is typically more convenient.
 It is also optimized to have less overhead than making separate calls for each individual item.
 
 The same is true for `moveRange` compared to `moveAt`,
-with the additional property that `moveRange` preserves the order that the items are in at the time is edit is created.
-For example, if one user moves items A and B to the end of array `[A, B, C]` by using a `sourceStart` of 0 and a `sourceEnd` of 2,
-and some other user concurrently swaps the order of A and B (thus changing the state to `[B, A, C]`),
-then the outcome
-(assuming the swap edit is sequenced first)
-will still be `[C, A, B]` as opposed to `[C, B, A]`.
+with the additional property that `moveRange` preserves the order that the items are in at the time the edit is created.
 
-### The Problem
+Example:
+* Starting state `[A, B, C]`
+* Edit 1: `moveRange(0, 1, 2)` (move B in the gap before A, yielding `[B, A, C]`)
+* Edit 2: `moveRange(3, 0, 2)` (move A and B in the gap after C, yielding `[C, A, B]`)
+
+If edit 1 is sequenced first, then, when edit 2 is finally applied,
+the state will change from `[B, A, C]` to `[C, A, B]`.
+If edit 2 is sequenced first, then, when edit 1 is finally applied,
+the state will change from `[C, A, B]`to `[B, C, A]`.
+
+#### The Problem
 
 In a collaborative editing environment,
 it's possible for the state of the array to change between the time the edit is first created and the time it is applied.
-Consider what would happen if the arguments that describes the affected items were to be treated as a fixed integer index:
+Consider what would happen if the arguments that describe the affected items were to be treated as fixed integer indexes:  
 * Starting state: `["c", "o", "a", "t"]`
 * Alice's edit: `insertAt(0, "r", "e", "d", " ")` with the expectation of getting `["r", "e", "d", " ", "c", "o", "a", "t"]`.
 * Bob's edit: `removeAt(1)` with the expectation of getting `["c", "a", "t"]`.
@@ -146,14 +157,14 @@ then removing the item at index 1 would yield `["r", "d", " ", "c", "o", "a", "t
 This would not truly match the intention of Bob,
 who would likely have wanted to get `["r", "e", "d", " ", "c", "a", "t"]` instead.
 
-### The Solution: Targeting Items
+#### The Solution: Targeting Items
 
 Instead of treating the parameters of move and remove as a fixed index to detach items at,
 SharedTree's array implementation interprets these parameter as referring to the items themselves.
 In other words, `removeAt(1)` doesn't mean "remove whichever item happens to be at index 1 when the edit is applied".
 Instead, it means "remove the specific item that is currently at index 1, no matter what index that item it at when the edit is applied".
 
-### Noteworthy Implications
+#### Noteworthy Implications
 
 Inserting items within a range that is concurrently being moved has no impact on the set of moved items.
 For example, if one user moves items A and B to the end of array `[A, B, C]` by using a `sourceStart` of 0 and a `sourceEnd` of 2,
@@ -161,7 +172,7 @@ and some other user concurrently inserts some item X between A and B (thus chang
 then the move will still affect items A and B (and only these), thus yielding `[X, C, A, B]`.
 This is true no matter how the concurrent edits are ordered.
 
-If multiple users concurrently attempt to move the same item in a last-write-wins fashion.
+If multiple users concurrently attempt to move the same item, the conflict is resolved in a last-write-wins fashion.
 For example, if one user moves item B leftward to the start of array `[A, B, C]`,
 and some other user concurrently moves item B rightward to the end of the array,
 then the item will be affected by each successive move in sequencing order:
@@ -191,7 +202,7 @@ then the item will be affected by each successive operation in sequencing order:
 Inserts new items at the location described by `gapIndex`.
 
 Preconditions:
-* There is no schema change edit that this edit is both concurrent to and sequenced after.
+* There is no concurrent schema change edit that is sequenced before this one.
 * The inserted values must have status `TreeStatus.New` or be primitives.
   (This precondition will be removed soon)
 
@@ -203,26 +214,26 @@ Postconditions:
 Moves the specified items from the given source array to the desired location within the array.
 
 Preconditions:
-* There is no schema change edit that this edit is both concurrent to and sequenced after.
+* There is no concurrent schema change edit that is sequenced before this one.
 
 Postconditions:
 * The [specified items](#specifying-the-set-of-removed-items) are moved to the targeted [gap](#location-of-inserted-items).
 
 If multiple clients concurrently move an item,
-then that item will be moved to the destination indicated by the move of the client whose edit is ordered last.
+then that item will be moved to the destination indicated by the move of the client whose edit is sequenced last.
 
 ### `removeRange(start?: number, end?: number): void`
 
 Removes the items between the specified indices.
 
 Preconditions:
-* There is no schema change edit that this edit is both concurrent to and sequenced after.
+* There is no concurrent schema change edit that is sequenced before this one.
 
 Postconditions:
 * The [specified items](#specifying-the-set-of-removed-items) are removed.
 
 Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
-Changes made to them will apply despite their removed status.
+Changes made to them by concurrent edits will apply despite their removed status.
 
 ## Other Operations
 
@@ -291,7 +302,7 @@ Instead, it is necessary to use the move operation:
 ```typescript
 array.moveToStart(2);
 ```
-Work is underway to address this lack flexibility.
+Work is underway to address this lack of flexibility.
 
 ### Replacing Items
 

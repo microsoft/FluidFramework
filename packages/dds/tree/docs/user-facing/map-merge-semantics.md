@@ -6,10 +6,10 @@ Target audience: `SharedTree` users and maintainers.
 
 > While this document is self-contained, we recommend reading about [SharedTree's approach to merge semantics](merge-semantics) first.
 
-Each edit's merge semantics is defined in terms of its preconditions and postconditions.
+Each edit's merge semantics are defined in terms of the edit's preconditions and postconditions.
 A precondition defines a requirement that must be met for the edit to be valid.
-(Invalid edits are ignored along with all other edits in the same transaction, and postconditions do not hold)
 A postcondition defines a guarantee that is made about the effect of the edit.
+(Invalid edits are ignored along with all other edits in the same transaction, and postconditions do not hold).
 
 ## `set(key: string, value: T): void`
 
@@ -25,7 +25,7 @@ partCounts.set("bolts", 42);
 ```
 
 Preconditions:
-* There is no schema change edit that the `set` edit is both concurrent to and sequenced after.
+* There is no concurrent schema change edit that is sequenced before the `set` edit.
 * The value on the right side of the `=` operator must have status `TreeStatus.New` or be a primitive.
   (This precondition will be removed soon)
 
@@ -42,7 +42,7 @@ users.delete("bob");
 ```
 
 Preconditions:
-* There is no schema change edit that the `delete` edit is both concurrent to and sequenced after.
+* There is no concurrent schema change edit that is sequenced before the `delete` edit.
 
 Postconditions:
 * There is no longer any value associated with the given key.
@@ -61,7 +61,7 @@ All of the above operations are effective even when the targeted map has been mo
 
 ### Last-Write-Wins Semantics
 
-If multiple edits concurrently set the same field, then the field's final value will will be that of the edit that is sequenced last.
+If multiple edits concurrently set the same key, then the key's final value will be that of the edit that is sequenced last.
 In other words, the `set` operation has last-write-wins semantics.
 
 Note that this means one user may overwrite a value set by another user without realizing it.
@@ -94,20 +94,28 @@ it is possible to move items around by removing them and adding them back in.
 For example, if some node N needs to be moved from `mapA` to `mapB`,
 that can accomplished with the following operations:
 ```typescript
+const N = mapA.get(key);
 mapA.delete(key); // Remove node N from mapA
 mapB.set(key, N); // Insert node N into mapB
 ```
 
-As of October 2024, SharedTree maps do not support this pattern because it would require (re)inserting node N, which has previously been inserted.
+Similarly, plain JavaScript maps allow moving a value from one key to another within the same map:
+```typescript
+const N = mapA.get("foo");
+mapA.delete("foo"); // Remove node N from mapA/key "foo"
+mapA.set("bar", N); // Insert node N into mapA/key "bar"
+```
+
+As of October 2024, SharedTree maps do not support these patterns because it would require (re)inserting node N, which has previously been inserted.
 Note that even without this restriction, the above would not perform the desired change if some other user concurrently moved N from `mapA` to some other `mapC`.
 If that were the case...
 * Node N may no longer be in `mapA` by the time the edit `mapA.delete(key)` is applied.
   At best that edit would have no effect, and at worst it may inadvertently remove some other node.
 * Node N may still be in `mapC` by the time the edit `mapB.set(key, N)` is applied.
   If so, this would lead to an error since a single node cannot reside in multiple maps at the same time.
-  (This would violate the requirement that the document remains tree-shaped)
+  (This would violate the requirement that the document remains tree-shaped).
 
-Work is underway to address this lack flexibility.
+Work is underway to address this lack of flexibility.
 
 ### Clearing The Map
 

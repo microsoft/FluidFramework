@@ -6,10 +6,10 @@ Target audience: `SharedTree` users and maintainers.
 
 > While this document is self-contained, we recommend reading about [SharedTree's approach to merge semantics](merge-semantics) first.
 
-Each edit's merge semantics is defined in terms of its preconditions and postconditions.
+Each edit's merge semantics are defined in terms of the edit's preconditions and postconditions.
 A precondition defines a requirement that must be met for the edit to be valid.
-(Invalid edits are ignored along with all other edits in the same transaction, and postconditions do not hold)
 A postcondition defines a guarantee that is made about the effect of the edit.
+(Invalid edits are ignored along with all other edits in the same transaction, and postconditions do not hold).
 
 ## Operator `=`
 
@@ -32,7 +32,7 @@ proposal.text = undefined;
 ```
 
 Preconditions:
-* There is no schema change edit that the property assignment edit is both concurrent to and sequenced after.
+* There is no concurrent schema change edit that is sequenced before the property assignment edit.
 * The value on the right side of the `=` operator must have status `TreeStatus.New` or be a primitive.
   (This precondition will be removed soon)
 
@@ -72,6 +72,6 @@ Even though the edit was originally created in a context where it changed the co
 the edit now changes the color red to blue._
 
 Such overwriting is rare in application where users are given visual cues as to what data other users may be concurrently inspecting/editing.
-It' possible to prevent such overwrites by using constraints (effectively changing the semantics to first-write-wins),
+It's possible to prevent such overwrites by using constraints (effectively changing the semantics to first-write-wins),
 but note that this causes the the later edit to be dropped,
 and the data associated with it to be lost.
