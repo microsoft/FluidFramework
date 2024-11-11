@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import chalk from "chalk";
 import { Machine } from "jssm";
+import chalk from "picocolors";
 
 import { type InstructionalPrompt, mapADOLinks } from "../instructionalPromptWriter.js";
 import {
