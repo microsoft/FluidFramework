@@ -170,6 +170,7 @@ TODO: CDN
 -   Add prettier coverage for /docs - currently ignored by repo-root `.prettierignore` to avoid content churn prior to merging into main.
 -   Add .md/.mdx linting (same as above)
 -   Figure out solution to markdown-magic in mdx (html comment syntax not supported)
+-   Look into [docusaurus-graph](https://github.com/Arsero/docusaurus-graph)
 
 ### Before merging into main
 
