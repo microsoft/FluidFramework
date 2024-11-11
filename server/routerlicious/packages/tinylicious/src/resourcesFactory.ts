@@ -49,7 +49,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		const databaseManager = new MongoDatabaseManager(
 			globalDbEnabled,
 			mongoManager,
-			null,
+			mongoManager,
 			collectionNames.nodes,
 			collectionNames.documents,
 			collectionNames.checkpoints,
@@ -60,7 +60,10 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		const documentRepository =
 			customizations?.documentRepository ?? new MongoDocumentRepository(documentsCollection);
 
-		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
+		const opsCollection = await databaseManager.getDeltaCollection(
+			null as unknown as string,
+			null as unknown as string,
+		);
 
 		const storage = new DocumentStorage(
 			documentRepository,
