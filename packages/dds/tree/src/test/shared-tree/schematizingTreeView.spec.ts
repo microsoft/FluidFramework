@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -13,17 +13,18 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import {
+	cursorFromInsertable,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
+	type InsertableField,
+	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
-	cursorFromInsertableTreeField,
 	validateUsageError,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
@@ -40,10 +41,10 @@ const configGeneralized2 = new TreeViewConfiguration({
 
 function checkoutWithInitialTree(
 	viewConfig: TreeViewConfiguration,
-	unhydratedInitialTree: InsertableTreeFieldFromImplicitField,
+	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
 	nodeKeyManager = new MockNodeKeyManager(),
 ): TreeCheckout {
-	const initialTree = cursorFromInsertableTreeField(
+	const initialTree = cursorFromInsertable<UnsafeUnknownSchema>(
 		viewConfig.schema,
 		unhydratedInitialTree,
 		nodeKeyManager,

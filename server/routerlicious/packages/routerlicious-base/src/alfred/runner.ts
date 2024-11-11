@@ -19,13 +19,14 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
+	IFluidAccessTokenGenerator,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { runnerHttpServerStop, type StartupCheck } from "@fluidframework/server-services-shared";
+import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
@@ -53,13 +54,14 @@ export class AlfredRunner implements IRunner {
 		private readonly producer: IProducer,
 		private readonly documentRepository: IDocumentRepository,
 		private readonly documentDeleteService: IDocumentDeleteService,
-		private readonly startupCheck: StartupCheck,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly enableClientIPLogging?: boolean,
 		private readonly readinessCheck?: IReadinessCheck,
+		private readonly fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -91,6 +93,7 @@ export class AlfredRunner implements IRunner {
 				this.clusterDrainingChecker,
 				this.enableClientIPLogging,
 				this.readinessCheck,
+				this.fluidAccessTokenGenerator,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);
@@ -116,7 +119,9 @@ export class AlfredRunner implements IRunner {
 
 		this.stopped = false;
 
-		this.startupCheck.setReady();
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 

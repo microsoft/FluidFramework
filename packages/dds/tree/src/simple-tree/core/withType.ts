@@ -4,6 +4,7 @@
  */
 
 import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
+import type { TreeNode } from "./types.js";
 
 /**
  * The type of a {@link TreeNode}.
@@ -87,5 +88,5 @@ export interface WithType<
 	/**
 	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
 	 */
-	get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, unknown, never, boolean, TInfo>;
+	get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, TreeNode, never, boolean, TInfo>;
 }

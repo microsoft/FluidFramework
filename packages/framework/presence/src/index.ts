@@ -33,7 +33,6 @@ export type {
 	PresenceStates,
 	PresenceStatesEntries,
 	PresenceStatesEntry,
-	PresenceStatesMethods,
 	PresenceStatesSchema,
 	PresenceWorkspaceAddress,
 } from "./types.js";
@@ -43,6 +42,7 @@ export type {
 	IPresence,
 	ISessionClient,
 	PresenceEvents,
+	SessionClientStatus,
 } from "./presence.js";
 
 export { acquirePresence } from "./experimentalAccess.js";
