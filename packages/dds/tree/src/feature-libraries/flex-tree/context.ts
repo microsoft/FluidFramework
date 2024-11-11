@@ -49,7 +49,8 @@ export interface FlexTreeContext {
  * A common context of a "forest" of FlexTrees.
  * It handles group operations like transforming cursors into anchors for edits.
  */
-export interface FlexTreeHydratedContext extends FlexTreeContext, Listenable<ForestEvents> {
+export interface FlexTreeHydratedContext extends FlexTreeContext {
+	readonly events: Listenable<ForestEvents>;
 	/**
 	 * Gets the root field of the tree.
 	 */
@@ -92,7 +93,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
 		this.eventUnregister = [
-			this.checkout.forest.on("beforeChange", () => {
+			this.checkout.forest.events.on("beforeChange", () => {
 				this.prepareForEdit();
 			}),
 		];
@@ -160,11 +161,8 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		return field;
 	}
 
-	public on<K extends keyof ForestEvents>(
-		eventName: K,
-		listener: ForestEvents[K],
-	): () => void {
-		return this.checkout.forest.on(eventName, listener);
+	public get events(): Listenable<ForestEvents> {
+		return this.checkout.forest.events;
 	}
 }
 

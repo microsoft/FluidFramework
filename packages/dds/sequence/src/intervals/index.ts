@@ -12,6 +12,7 @@ export {
 	IntervalDeltaOpType,
 	IIntervalHelpers,
 	IntervalStickiness,
+	ISerializableIntervalPrivate,
 	SerializedIntervalDelta,
 	CompressedSerializedInterval,
 	endReferenceSlidingPreference,
@@ -20,6 +21,7 @@ export {
 export { Interval, createInterval, intervalHelpers } from "./interval.js";
 export {
 	SequenceInterval,
+	SequenceIntervalClass,
 	createSequenceInterval,
 	createPositionReferenceFromSegoff,
 	sequenceIntervalHelpers,

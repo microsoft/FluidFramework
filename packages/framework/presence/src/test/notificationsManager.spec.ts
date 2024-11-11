@@ -206,7 +206,7 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { testEvents } = notifications;
+			const { testEvents } = notifications.props;
 
 			clock.tick(10);
 			// This will trigger the second signal
@@ -250,7 +250,7 @@ describe("Presence", () => {
 				}),
 			);
 
-			const { testEvents } = notifications;
+			const { testEvents } = notifications.props;
 
 			const eventHandlerFunction = (client: ISessionClient, id: number): void => {
 				console.debug(
@@ -360,9 +360,9 @@ export function checkCompiles(): void {
 	);
 
 	// "newId" should be allowed as a named event.
-	notifications.testEvents.emit.broadcast("newId", 42);
+	notifications.props.testEvents.emit.broadcast("newId", 42);
 
-	const { chat } = notifications;
+	const { chat } = notifications.props;
 
 	chat.emit.broadcast("msg", "howdy");
 
