@@ -77,10 +77,8 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		const statuses: Map<string, boolean> = new Map<string, boolean>();
 
 		for (const { client, value } of this.focus.clientValues()) {
-			if (value !== undefined) {
-				const { hasFocus } = value;
-				statuses.set(client.getConnectionId(), hasFocus);
-			}
+			const { hasFocus } = value;
+			statuses.set(client.getConnectionId(), hasFocus);
 		}
 
 		return statuses;
