@@ -38,7 +38,7 @@ export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSes
 export const SessionClientStatus = {
 	/**
 	 * The session client is connected to the Fluid service.
-	 * Can send to and receive updates from other session clients.
+	 * Can send updates to and receive updates from other session clients.
 	 */
 	Connected: "Connected",
 
