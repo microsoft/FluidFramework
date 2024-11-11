@@ -70,7 +70,7 @@ const migrationToolFactory = new MigrationToolFactory();
  * TODO: Consider switching to a property bag for parameters.
  * @alpha
  */
-export const instantiateMigratableRuntime = async <ModelType>(
+export const loadMigratableRuntime = async <ModelType>(
 	context: IContainerContext,
 	existing: boolean,
 	registryEntries: NamedFluidDataStoreRegistryEntries,

@@ -6,7 +6,7 @@
 import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import {
 	type IMigratableModel,
-	instantiateMigratableRuntime,
+	loadMigratableRuntime,
 } from "@fluid-example/migration-tools/internal";
 import type {
 	IContainer,
@@ -64,7 +64,7 @@ export class InventoryListContainerRuntimeFactory implements IRuntimeFactory {
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const runtime = await instantiateMigratableRuntime(
+		const runtime = await loadMigratableRuntime(
 			context,
 			existing,
 			this.registryEntries,

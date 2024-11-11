@@ -12,12 +12,12 @@ import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal"
 import type { IRequest } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { type IMigratableModelContainerRuntimeEntryPoint } from "./instantiateMigratableRuntime.js";
 import type {
 	IAttachedMigratableModel,
 	IDetachedMigratableModel,
 	IMigratableModelLoader,
 } from "./interfaces.js";
+import { type IMigratableModelContainerRuntimeEntryPoint } from "./loadMigratableRuntime.js";
 
 /**
  * @alpha

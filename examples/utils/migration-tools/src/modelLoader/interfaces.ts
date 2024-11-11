@@ -47,9 +47,9 @@ export interface IAttachedMigratableModel<ModelType> {
  */
 export interface IMigratableModelLoader<ModelType> {
 	/**
-	 * Check if the IMigratableModelLoader knows how to instantiate an appropriate model for the provided container code version.
-	 * It is async to permit dynamic model loading - e.g. referring to a remote service to determine if the requested
-	 * model is available.
+	 * Check if the IMigratableModelLoader knows how to instantiate the provided container code version.
+	 * It is async to permit dynamic code loading - e.g. referring to a remote service to determine if the requested
+	 * version is available.
 	 * @param version - the container code version to check
 	 */
 	supportsVersion(version: string): Promise<boolean>;

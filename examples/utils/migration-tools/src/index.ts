@@ -29,7 +29,7 @@ export {
 	IDetachedMigratableModel,
 	IMigratableModelContainerRuntimeEntryPoint,
 	IMigratableModelLoader,
-	instantiateMigratableRuntime,
+	loadMigratableRuntime,
 	MigratableModelLoader,
 	MigratableSessionStorageModelLoader,
 	MigratableTinyliciousModelLoader,

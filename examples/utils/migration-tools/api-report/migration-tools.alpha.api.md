@@ -103,12 +103,12 @@ export interface IMigratorEvents extends IEvent {
 }
 
 // @alpha
-export const instantiateMigratableRuntime: <ModelType>(context: IContainerContext, existing: boolean, registryEntries: NamedFluidDataStoreRegistryEntries, createModel: CreateModelCallback<ModelType>, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
-
-// @alpha
 export interface IVersionedModel {
     readonly version: string;
 }
+
+// @alpha
+export const loadMigratableRuntime: <ModelType>(context: IContainerContext, existing: boolean, registryEntries: NamedFluidDataStoreRegistryEntries, createModel: CreateModelCallback<ModelType>, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
 
 // @alpha (undocumented)
 export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {
