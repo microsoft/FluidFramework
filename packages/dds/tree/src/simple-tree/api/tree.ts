@@ -522,10 +522,12 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
 > extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">,
-		Omit<TreeBranch, "events"> {
+		TreeBranch {
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
+
+	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 
 	initialize(content: InsertableField<TSchema>): void;
 
@@ -618,6 +620,16 @@ export interface TreeBranchEvents {
 	 * The stored schema for the document has changed.
 	 */
 	schemaChanged(): void;
+
+	/**
+	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
+	 * can use to filter on changes they care about (e.g. local vs. remote changes).
+	 *
+	 * @param data - information about the change
+	 * @param getRevertible - a function that allows users to get a revertible for the change. If not provided,
+	 * this change is not revertible.
+	 */
+	changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 
 	/**
 	 * Fired when:
