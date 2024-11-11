@@ -11,7 +11,7 @@ import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfac
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import type { TreeValue, ValueSchema } from "../../core/index.js";
+import type { TreeValue } from "../../core/index.js";
 import type { NodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	type RestrictiveStringRecord,
@@ -23,7 +23,6 @@ import {
 	booleanSchema,
 	handleSchema,
 	LeafNodeSchema,
-	makeStringLeaf,
 	nullSchema,
 	numberSchema,
 	stringSchema,
@@ -277,12 +276,6 @@ export class SchemaFactory<
 	 * We should validate and/or normalize them when inserting content.
 	 */
 	public readonly string = stringSchema;
-
-	public limitedString<TString extends TreeValue<ValueSchema.String>>(): ReturnType<
-		typeof makeStringLeaf<TString>
-	> {
-		return makeStringLeaf<TString>();
-	}
 
 	/**
 	 * {@link TreeNodeSchema} for holding a JavaScript `number`.

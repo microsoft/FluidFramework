@@ -50,33 +50,6 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 	}
 }
 
-export class LimitedStringNodeSchema<H extends TreeValue<ValueSchema.String>>
-	extends LeafNodeSchema<`com.fluidframework.leaf.string`, ValueSchema.String>
-	implements TreeNodeSchemaNonClass<`com.fluidframework.leaf.string`, NodeKind.Leaf, H, H>
-{
-	public override create(data: H): H {
-		return data;
-	}
-
-	public override createFromInsertable(data: H): H {
-		return data;
-	}
-
-	public constructor() {
-		super(`com.fluidframework.leaf.string`, ValueSchema.String);
-	}
-}
-
-export function makeStringLeaf<H extends TreeValue<ValueSchema.String>>(): TreeNodeSchema<
-	`com.fluidframework.leaf.string`,
-	NodeKind.Leaf,
-	H,
-	H,
-	true
-> {
-	return new LimitedStringNodeSchema<H>();
-}
-
 /**
  * Wrapper around LeafNodeSchema's constructor that provides the return type that is desired in the package public API.
  */
