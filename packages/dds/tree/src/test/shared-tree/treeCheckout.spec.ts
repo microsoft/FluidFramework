@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type IMockLoggerExt,
@@ -75,8 +75,8 @@ describe("sharedTreeView", () => {
 			const root = view.root;
 			const anchorNode = getOrCreateInnerNode(root).anchorNode;
 			const log: string[] = [];
-			const unsubscribe = anchorNode.on("childrenChanging", () => log.push("change"));
-			const unsubscribeSubtree = anchorNode.on("subtreeChanging", () => {
+			const unsubscribe = anchorNode.events.on("childrenChanging", () => log.push("change"));
+			const unsubscribeSubtree = anchorNode.events.on("subtreeChanging", () => {
 				log.push("subtree");
 			});
 			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
@@ -115,10 +115,10 @@ describe("sharedTreeView", () => {
 			const root = view.root;
 			const anchorNode = getOrCreateInnerNode(root).anchorNode;
 			const log: string[] = [];
-			const unsubscribe = anchorNode.on("childrenChanging", (upPath) =>
+			const unsubscribe = anchorNode.events.on("childrenChanging", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
 			);
-			const unsubscribeSubtree = anchorNode.on("subtreeChanging", (upPath) => {
+			const unsubscribeSubtree = anchorNode.events.on("subtreeChanging", (upPath) => {
 				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
 			});
 			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));

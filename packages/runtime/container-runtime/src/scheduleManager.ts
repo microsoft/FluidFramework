@@ -5,7 +5,7 @@
 
 import type { EventEmitter } from "@fluid-internal/client-utils";
 import { performance } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
@@ -43,7 +43,7 @@ export class ScheduleManager {
 	private readonly deltaScheduler: DeltaScheduler;
 
 	constructor(
-		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		private readonly deltaManager: IDeltaManagerFull,
 		private readonly emitter: EventEmitter,
 		readonly getClientId: () => string | undefined,
 		private readonly logger: ITelemetryLoggerExt,
@@ -78,7 +78,7 @@ class ScheduleManagerCore {
 	private batchCount = 0;
 
 	constructor(
-		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		private readonly deltaManager: IDeltaManagerFull,
 		private readonly getClientId: () => string | undefined,
 		private readonly logger: ITelemetryLoggerExt,
 	) {

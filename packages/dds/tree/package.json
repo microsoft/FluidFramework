@@ -231,6 +231,9 @@
 			"TypeAlias_Input": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"Interface_InternalTypes_TreeArrayNodeBase": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "public"

@@ -3016,7 +3016,7 @@ function getFirstIntersectingCrossFieldEntry(
 	table: CrossFieldKeyTable,
 	[target, revision, id, count]: CrossFieldKeyRange,
 ): [CrossFieldKeyRange, FieldId] | undefined {
-	const entry = table.nextLowerPair([target, revision, id, Infinity]);
+	const entry = table.nextLowerPair([target, revision, id, Number.POSITIVE_INFINITY]);
 	if (entry === undefined) {
 		return undefined;
 	}

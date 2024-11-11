@@ -183,7 +183,7 @@ async function start(): Promise<void> {
 	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
 	const lastRoll: { die1?: DieValue; die2?: DieValue } = {};
 	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
-	const states = buildDicePresence(presence);
+	const states = buildDicePresence(presence).props;
 
 	// Initialize Devtools
 	initializeDevtools({

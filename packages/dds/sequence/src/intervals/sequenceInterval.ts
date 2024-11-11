@@ -28,6 +28,7 @@ import {
 	Side,
 	endpointPosAndSide,
 	addProperties,
+	copyPropertiesAndManager,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -191,7 +192,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
 	 */
-	public propertyManager: PropertiesManager = new PropertiesManager();
+	public propertyManager?: PropertiesManager;
 
 	/***/
 	public get stickiness(): IntervalStickiness {
@@ -407,17 +408,6 @@ export class SequenceIntervalClass implements SequenceInterval {
 	}
 
 	/**
-	 * {@inheritDoc ISerializableInterval.addProperties}
-	 */
-	public addProperties(
-		newProps: PropertySet,
-		collab: boolean = false,
-		seq?: number,
-	): PropertySet | undefined {
-		return this.propertyManager.addProperties(this.properties, newProps, seq, collab);
-	}
-
-	/**
 	 * @returns whether this interval overlaps two numerical positions.
 	 */
 	public overlapsPos(bstart: number, bend: number) {
@@ -498,13 +488,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 			startSide ?? this.startSide,
 			endSide ?? this.endSide,
 		);
-		if (this.properties) {
-			this.propertyManager.copyTo(
-				this.properties,
-				newInterval.properties,
-				newInterval.propertyManager,
-			);
-		}
+		copyPropertiesAndManager(this, newInterval);
 		return newInterval;
 	}
 }

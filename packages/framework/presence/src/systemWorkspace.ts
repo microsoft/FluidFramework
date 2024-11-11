@@ -112,7 +112,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	public constructor(
 		clientSessionId: ClientSessionId,
 		private readonly datastore: SystemWorkspaceDatastore,
-		public readonly events: IEmitter<
+		private readonly events: IEmitter<
 			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
 		>,
 		private readonly audience: IAudience,

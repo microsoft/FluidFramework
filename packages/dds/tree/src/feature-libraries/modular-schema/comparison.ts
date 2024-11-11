@@ -54,6 +54,10 @@ export function allowsTreeSuperset(
 		return false;
 	}
 
+	if (superset instanceof LeafNodeStoredSchema) {
+		return false;
+	}
+
 	assert(
 		original instanceof MapNodeStoredSchema || original instanceof ObjectNodeStoredSchema,
 		0x893 /* unsupported node kind */,
