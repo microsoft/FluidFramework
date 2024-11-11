@@ -134,7 +134,7 @@ describe("Presence", () => {
 						assert.equal(
 							newAttendee.getConnectionStatus(),
 							SessionClientStatus.Connected,
-							"Attendee has wrong status",
+							"Attendee connection status is not Connected",
 						);
 					});
 

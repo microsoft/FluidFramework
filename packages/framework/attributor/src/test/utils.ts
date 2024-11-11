@@ -21,11 +21,14 @@ export function makeMockAudience(clientIds: string[]): IAudience {
 		const stringId = String.fromCharCode(index + 65);
 		const name = stringId.repeat(10);
 		const userId = `${name}@microsoft.com`;
+		const email = userId;
 		const user = {
 			id: userId,
+			name,
+			email,
 		};
 		clients.set(clientId, {
-			mode: index % 2 === 0 ? "write" : "read",
+			mode: "write",
 			details: { capabilities: { interactive: true } },
 			permission: [],
 			user,
