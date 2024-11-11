@@ -355,7 +355,7 @@ export class ClassWithPrivateData {
 export const classInstanceWithPrivateData = new ClassWithPrivateData();
 export class ClassWithPrivateMethod {
 	public public = "public";
-	// @ts-expect-error secret is never read
+	// @ts-expect-error getSecret is never read
 	private getSecret(): number {
 		return 0;
 	}
