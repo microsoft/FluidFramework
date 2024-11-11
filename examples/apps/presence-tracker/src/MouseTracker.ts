@@ -48,7 +48,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 
 		this.presence.events.on("attendeeDisconnected", (client: ISessionClient) => {
 			this.posMap.delete(client);
-			this.emit("pointerChanged");
+			this.emit("mousePositionChanged");
 		});
 
 		this.cursor.events.on("updated", ({ client, value }) => {
@@ -67,7 +67,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 
 	public getMousePresences(): Map<string, IMousePosition> {
 		const statuses: Map<string, IMousePosition> = new Map<string, IMousePosition>();
-		for (const [userName, member] of this.audience.getMembers()) {
+		for (const [, member] of this.audience.getMembers()) {
 			for (const connection of member.connections) {
 				const attendee = this.presence.getAttendee(connection.id);
 				const position = this.posMap.get(attendee);
