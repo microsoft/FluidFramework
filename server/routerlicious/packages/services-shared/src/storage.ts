@@ -57,7 +57,8 @@ export class DocumentStorage implements IDocumentStorage {
 	/**
 	 * Retrieves database details for the given document
 	 */
-	public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	public async getDocument(tenantId: string, documentId: string): Promise<IDocument | null> {
 		return this.documentRepository.readOne({ tenantId, documentId });
 	}
 

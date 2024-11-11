@@ -244,7 +244,7 @@ function isWholeSummaryBlob(obj: unknown): obj is IWholeSummaryBlob {
  * @returns Whether the value is of IWholeSummaryBlob type
  */
 function isWholeSummaryTree(obj: any): obj is IWholeSummaryTree {
-	return obj && typeof obj === "object" && "type" in obj;
+	return typeof obj === "object" && obj !== null && "type" in obj;
 }
 
 /**

@@ -37,7 +37,8 @@ export interface IDocumentStaticProperties {
  * @internal
  */
 export interface IDocumentStorage {
-	getDocument(tenantId: string, documentId: string): Promise<IDocument>;
+	// eslint-disable-next-line @rushstack/no-new-null
+	getDocument(tenantId: string, documentId: string): Promise<IDocument | null>;
 
 	getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails>;
 

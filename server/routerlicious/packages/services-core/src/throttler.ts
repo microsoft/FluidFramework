@@ -55,7 +55,7 @@ export interface IThrottleAndUsageStorageManager {
 	/**
 	 * Get throttling metrics for the given id.
 	 */
-	getThrottlingMetric(id: string): Promise<IThrottlingMetrics>;
+	getThrottlingMetric(id: string): Promise<IThrottlingMetrics | undefined>;
 
 	/**
 	 * Store throttling metrics and usage data for the given id.
@@ -75,7 +75,7 @@ export interface IThrottleAndUsageStorageManager {
 	/**
 	 * Get usage data for given id.
 	 */
-	getUsageData(id: string): Promise<IUsageData>;
+	getUsageData(id: string): Promise<IUsageData | undefined>;
 }
 
 /**
@@ -97,7 +97,7 @@ export interface IThrottlerHelper {
 	/**
 	 * Retrieve most recent throttle status for given id.
 	 */
-	getThrottleStatus(id: string): Promise<IThrottlerResponse>;
+	getThrottleStatus(id: string): Promise<IThrottlerResponse | undefined>;
 }
 
 /**

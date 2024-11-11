@@ -46,7 +46,7 @@ export class Historian implements IHistorian {
 		public endpoint: string,
 		private readonly historianApi: boolean,
 		disableCache: boolean,
-		restWrapper: RestWrapper,
+		restWrapper?: RestWrapper,
 	) {
 		if (disableCache && this.historianApi) {
 			this.defaultQueryString.disableCache = disableCache;

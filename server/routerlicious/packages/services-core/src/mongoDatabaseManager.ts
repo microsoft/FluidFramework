@@ -51,7 +51,7 @@ export class MongoDatabaseManager implements IDatabaseManager {
 		return this.getCollection<ISequencedOperationMessage>(this.scribeDeltasCollectionName);
 	}
 
-	private async getCollection<T>(name: string) {
+	private async getCollection<T extends { [key: string]: any }>(name: string) {
 		const db =
 			name === this.documentsCollectionName && this.globalDbEnabled
 				? await this.globalDbMongoManager.getDatabase()

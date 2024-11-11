@@ -111,10 +111,10 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 		// Connect to the given remote node
 		const db = await mongoManager.getDatabase();
 		const nodeCollection = db.collection<INode>(nodeCollectionName);
-		const details = await nodeCollection.findOne({ _id: id });
+		const details = (await nodeCollection.findOne({ _id: id })) ?? undefined;
 
 		const socket =
-			details.expiration >= Date.now()
+			details !== undefined && details.expiration >= Date.now()
 				? await Socket.connect<INodeMessage>(details.address, id)
 				: (null as unknown as Socket<INodeMessage>);
 		const node = new RemoteNode(id, socket);

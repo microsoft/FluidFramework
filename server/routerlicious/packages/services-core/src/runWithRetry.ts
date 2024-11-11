@@ -41,19 +41,18 @@ export async function runWithRetry<T>(
 	onErrorFn?: (error) => void,
 	telemetryEnabled = false,
 	shouldLogInitialSuccessVerbose = false,
-): Promise<T | undefined> {
-	let result: T | undefined;
+): Promise<T> {
 	let retryCount = 0;
 	let success = false;
 	let metric: Lumber<LumberEventName.RunWithRetry> | undefined;
-	let metricError;
+	let latestResultError: unknown;
 	if (telemetryEnabled) {
 		metric = Lumberjack.newLumberMetric(LumberEventName.RunWithRetry, telemetryProperties);
 	}
 	try {
-		do {
+		while (retryCount < maxRetries || maxRetries === -1) {
 			try {
-				result = await api();
+				const result = await api();
 				success = true;
 				if (retryCount >= 1) {
 					Lumberjack.info(
@@ -61,11 +60,12 @@ export async function runWithRetry<T>(
 						telemetryProperties,
 					);
 				}
+				return result;
 			} catch (error) {
 				if (onErrorFn !== undefined) {
 					onErrorFn(error);
 				}
-				metricError = error;
+				latestResultError = error;
 				Lumberjack.error(
 					`Error running ${callName}: retryCount ${retryCount}`,
 					telemetryProperties,
@@ -85,22 +85,13 @@ export async function runWithRetry<T>(
 				// if maxRetries is -1, we retry indefinitely
 				// unless shouldRetry returns false at some point.
 				if (maxRetries !== -1 && retryCount >= maxRetries) {
-					Lumberjack.error(
-						`Error after retrying ${retryCount} times, rejecting`,
-						telemetryProperties,
-						error,
-					);
-					// Needs to be a full rejection here
-					throw error;
 				}
 
 				const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
 				await delay(intervalMs);
 				retryCount++;
 			}
-		} while (!success);
-
-		return result;
+		}
 	} finally {
 		if (telemetryEnabled && metric) {
 			metric.setProperty("retryCount", retryCount);
@@ -116,10 +107,18 @@ export async function runWithRetry<T>(
 					metric.success("runWithRetry succeeded");
 				}
 			} else {
-				metric.error("runWithRetry failed", metricError);
+				metric.error("runWithRetry failed", latestResultError);
 			}
 		}
 	}
+
+	Lumberjack.error(
+		`Error after retrying ${retryCount} times, rejecting`,
+		telemetryProperties,
+		latestResultError,
+	);
+	// Needs to be a full rejection here
+	throw latestResultError;
 }
 
 /**
