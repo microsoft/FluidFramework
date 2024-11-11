@@ -23,12 +23,6 @@ export interface IVersionedModel {
  */
 export interface IImportExportModel<ImportType, ExportType> {
 	/**
-	 * Permit format checking in a generic manner - without knowing the type of our data or the type of the model,
-	 * we can still check whether the model supports that data.
-	 */
-	supportsDataFormat: (initialData: unknown) => initialData is ImportType;
-
-	/**
 	 * importData must be called after initialization but before modifying or attaching the model (i.e. can only
 	 * be called on an unaltered, detached model).
 	 */
@@ -38,6 +32,12 @@ export interface IImportExportModel<ImportType, ExportType> {
 	 * Export the data from the model.  Can be passed into importData() for a new container to replicate the data.
 	 */
 	exportData: () => Promise<ExportType>;
+
+	/**
+	 * Permit format checking in a generic manner - without knowing the type of our data or the type of the model,
+	 * we can still check whether the model supports that data.
+	 */
+	supportsDataFormat: (initialData: unknown) => initialData is ImportType;
 }
 
 // TODO: Is there a better way to express the unknown format here?  I think I'd prefer to put the burden of calling
