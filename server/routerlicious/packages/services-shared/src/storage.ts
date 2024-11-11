@@ -50,7 +50,7 @@ export class DocumentStorage implements IDocumentStorage {
 		private readonly tenantManager: ITenantManager,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
-		private readonly storageNameAssigner: IStorageNameAllocator,
+		private readonly storageNameAssigner: IStorageNameAllocator | undefined,
 		private readonly ephemeralDocumentTTLSec: number = 60 * 60 * 24, // 24 hours in seconds
 	) {}
 

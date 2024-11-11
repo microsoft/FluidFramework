@@ -68,7 +68,10 @@ describe("Routerlicious", () => {
 				testDocumentRepository,
 				testTenantManager,
 				false,
-				await databaseManager.getDeltaCollection(undefined, undefined),
+				await databaseManager.getDeltaCollection(
+					null as unknown as string,
+					null as unknown as string,
+				),
 				undefined,
 			);
 		});

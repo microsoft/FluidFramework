@@ -153,7 +153,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 		const factory = await services.getDbFactory(config);
 		if (globalDbEnabled) {
-			globalDbMongoManager = new core.MongoManager(factory, false, null, true);
+			globalDbMongoManager = new core.MongoManager(
+				factory,
+				false,
+				undefined /* retryDelayMs */,
+				true /* global */,
+			);
 		}
 
 		// Database connection for operations db
@@ -196,7 +201,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const defaultTTLInSeconds = 864000;
 		const checkpointsTTLSeconds =
 			config.get("checkpoints:checkpointsTTLInSeconds") ?? defaultTTLInSeconds;
-		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
+		if (checkpointsCollection.createTTLIndex !== undefined) {
+			await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
+		}
 
 		const nodeCollectionName = config.get("mongo:collectionNames:nodes");
 
@@ -325,7 +332,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
 			| number
 			| undefined;
-		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
+		const opsCollection = await databaseManager.getDeltaCollection(
+			null as unknown as string,
+			null as unknown as string,
+		);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameAllocator = storagePerDocEnabled
 			? customizations?.storageNameAllocator ?? new StorageNameAllocator(tenantManager)
@@ -426,7 +436,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.startupCheck,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
-			null,
+			undefined,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
 			resources.readinessCheck,

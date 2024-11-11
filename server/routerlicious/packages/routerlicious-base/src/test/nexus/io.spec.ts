@@ -23,7 +23,7 @@ import {
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
-import { PubSub } from "@fluidframework/server-memory-orderer";
+import { LocalOrderManager, PubSub } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import { generateToken } from "@fluidframework/server-services-utils";
 import {
@@ -142,7 +142,10 @@ describe("Routerlicious", () => {
 						testDocumentRepository,
 						testTenantManager,
 						false,
-						await databaseManager.getDeltaCollection(undefined, undefined),
+						await databaseManager.getDeltaCollection(
+							null as unknown as string,
+							null as unknown as string,
+						),
 						undefined,
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(
@@ -154,7 +157,7 @@ describe("Routerlicious", () => {
 						false,
 						url,
 						testTenantManager,
-						null,
+						null as unknown as LocalOrderManager,
 						kafkaOrderer,
 					);
 
@@ -1010,7 +1013,7 @@ describe("Routerlicious", () => {
 						});
 						// generate a batch of messages
 						const generateMessageBatch = (size: number): IDocumentMessage[] => {
-							const batch = [];
+							const batch: IDocumentMessage[] = [];
 							for (let b = 0; b < size; b++) {
 								const message = messageFactory.createDocumentMessage();
 								batch.push(message);
@@ -1111,7 +1114,10 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						testDocumentRepository,
 						testTenantManager,
 						false,
-						await databaseManager.getDeltaCollection(undefined, undefined),
+						await databaseManager.getDeltaCollection(
+							null as unknown as string,
+							null as unknown as string,
+						),
 						undefined,
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(
@@ -1123,7 +1129,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						false,
 						url,
 						testTenantManager,
-						null,
+						null as unknown as LocalOrderManager,
 						kafkaOrderer,
 					);
 

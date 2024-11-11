@@ -16,7 +16,7 @@ import { DocumentLambda } from "./documentLambda";
 /**
  * @internal
  */
-export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+export class DocumentLambdaFactory<T> extends EventEmitter implements IPartitionLambdaFactory<T> {
 	constructor(
 		private readonly documentLambdaFactory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
 		private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,
@@ -29,7 +29,7 @@ export class DocumentLambdaFactory extends EventEmitter implements IPartitionLam
 		});
 	}
 
-	public async create(config: undefined, context: IContext): Promise<IPartitionLambda> {
+	public async create(config: T, context: IContext): Promise<IPartitionLambda> {
 		return new DocumentLambda(
 			this.documentLambdaFactory,
 			context,
