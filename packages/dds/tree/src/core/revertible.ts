@@ -39,7 +39,7 @@ export interface Revertible {
 }
 
 /**
- * Provides clone functionality for {@link Revertible}.
+ * A {@link Revertible} with features that are net yet stable.
  *
  * @alpha
  */
