@@ -99,7 +99,9 @@ export class OpGroupingManager {
 				length: batch.messages.length,
 				threshold: this.config.opCountThreshold,
 				reentrant: batch.hasReentrantOps,
-				referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
 			});
 		}
 		// We expect this will be on the first message, if present at all.
@@ -128,7 +130,9 @@ export class OpGroupingManager {
 			messages: [
 				{
 					metadata: { batchId: groupedBatchId },
-					referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
+					// TODO why are we non null asserting here?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
 					contents: serializedContent,
 				},
 			],
