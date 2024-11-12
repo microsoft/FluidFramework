@@ -4,8 +4,8 @@
  */
 
 import { Command } from "@oclif/core";
-import chalk from "chalk";
 import { Machine } from "jssm";
+import chalk from "picocolors";
 
 import { Context } from "../library/index.js";
 
