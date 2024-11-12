@@ -46,7 +46,7 @@ function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): s
 	return value;
 }
 
-describe.only("tree indexes", () => {
+describe("tree indexes", () => {
 	/** The field key under which the parentId node puts its identifier */
 	const parentKey: FieldKey = brand("parentKey");
 	/** The identifier of the parent node */
