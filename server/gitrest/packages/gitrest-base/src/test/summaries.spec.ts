@@ -261,7 +261,11 @@ testFileSystems.forEach((fileSystem) => {
 
 			// Test standard summary flow and storage access frequency.
 			it("Can create and read an initial summary and a subsequent incremental summary", async () => {
+				const fsManager = fsManagerFactory.create({
+					rootDir: repoManager.path,
+				});
 				const initialWriteResponse = await getWholeSummaryManager().writeSummary(
+					fsManager,
 					sampleInitialSummaryUpload,
 					true,
 				);
@@ -292,6 +296,7 @@ testFileSystems.forEach((fileSystem) => {
 				);
 
 				const channelWriteResponse = await getWholeSummaryManager().writeSummary(
+					fsManager,
 					sampleChannelSummaryUpload,
 					false,
 				);
@@ -311,6 +316,7 @@ testFileSystems.forEach((fileSystem) => {
 				);
 
 				const containerWriteResponse = await getWholeSummaryManager().writeSummary(
+					fsManager,
 					// Replace the referenced channel summary with the one we just wrote.
 					// This matters when low-io write is enabled, because it alters how the tree is stored.
 					replaceTestShas(sampleContainerSummaryUpload, [
@@ -379,7 +385,11 @@ testFileSystems.forEach((fileSystem) => {
 			 * 6. Wait until Client Summary is written
 			 */
 			it("Can create and read multiple summaries", async () => {
+				const fsManager = fsManagerFactory.create({
+					rootDir: repoManager.path,
+				});
 				const initialWriteResponse = await getWholeSummaryManager().writeSummary(
+					fsManager,
 					ElaborateInitialPayload,
 					true,
 				);
@@ -403,6 +413,7 @@ testFileSystems.forEach((fileSystem) => {
 				);
 
 				const firstChannelWriteResponse = await getWholeSummaryManager().writeSummary(
+					fsManager,
 					ElaborateFirstChannelPayload,
 					false,
 				);
@@ -422,6 +433,7 @@ testFileSystems.forEach((fileSystem) => {
 				);
 
 				const firstContainerWriteResponse = await getWholeSummaryManager().writeSummary(
+					fsManager,
 					// Replace the referenced channel summary with the one we just wrote.
 					// This matters when low-io write is enabled, because it alters how the tree is stored.
 					replaceTestShas(ElaborateFirstContainerPayload, [
@@ -463,6 +475,7 @@ testFileSystems.forEach((fileSystem) => {
 
 				const firstServiceContainerWriteResponse =
 					await getWholeSummaryManager().writeSummary(
+						fsManager,
 						// Replace the referenced channel summary with the one we just wrote.
 						// This matters when low-io write is enabled, because it alters how the tree is stored.
 						replaceTestShas(ElaborateFirstServiceContainerPayload, [
@@ -492,6 +505,7 @@ testFileSystems.forEach((fileSystem) => {
 				);
 
 				const secondChannelWriteResponse = await getWholeSummaryManager().writeSummary(
+					fsManager,
 					// Replace the referenced container summary with the one we just wrote.
 					replaceTestShas(ElaborateSecondChannelPayload, [
 						{
@@ -517,6 +531,7 @@ testFileSystems.forEach((fileSystem) => {
 				);
 
 				const secondContainerWriteResponse = await getWholeSummaryManager().writeSummary(
+					fsManager,
 					// Replace the referenced channel summary with the one we just wrote.
 					// This matters when low-io write is enabled, because it alters how the tree is stored.
 					replaceTestShas(ElaborateSecondContainerPayload, [
@@ -557,8 +572,12 @@ testFileSystems.forEach((fileSystem) => {
 				 * Validates that after deletion we cannot read and subsequent delete attempts are no-ops, not errors.
 				 */
 				it("Can hard-delete a document's summary data", async () => {
+					const fsManager = fsManagerFactory.create({
+						rootDir: repoManager.path,
+					});
 					// Write and validate initial summary.
 					const initialWriteResponse = await getWholeSummaryManager().writeSummary(
+						fsManager,
 						ElaborateInitialPayload,
 						true,
 					);
@@ -581,9 +600,6 @@ testFileSystems.forEach((fileSystem) => {
 					);
 
 					// Delete document.
-					const fsManager = fsManagerFactory.create({
-						rootDir: repoManager.path,
-					});
 					await getWholeSummaryManager().deleteSummary(fsManager, false /* softDelete */);
 					// Validate that we cannot read the summary.
 					await assert.rejects(
@@ -607,8 +623,12 @@ testFileSystems.forEach((fileSystem) => {
 				 * Validates that after deletion we cannot read and subsequent delete attempts are no-ops, not errors.
 				 */
 				it("Can soft-delete a document's summary data", async () => {
+					const fsManager = fsManagerFactory.create({
+						rootDir: repoManager.path,
+					});
 					// Write and validate initial summary.
 					const initialWriteResponse = await getWholeSummaryManager().writeSummary(
+						fsManager,
 						ElaborateInitialPayload,
 						true,
 					);
@@ -631,9 +651,6 @@ testFileSystems.forEach((fileSystem) => {
 					);
 
 					// Delete document.
-					const fsManager = fsManagerFactory.create({
-						rootDir: repoManager.path,
-					});
 					await getWholeSummaryManager().deleteSummary(fsManager, true /* softDelete */);
 					// Validate that soft-deletion flag is detected.
 					assert.rejects(
@@ -670,9 +687,12 @@ testFileSystems.forEach((fileSystem) => {
 				it(`Can read from and write to an initial summary stored ${
 					enableLowIoWrite ? "with" : "without"
 				} low-io write`, async () => {
+					const fsManager = fsManagerFactory.create({
+						rootDir: repoManager.path,
+					});
 					await getWholeSummaryManager({
 						enableLowIoWrite,
-					}).writeSummary(sampleInitialSummaryUpload, true);
+					}).writeSummary(fsManager, sampleInitialSummaryUpload, true);
 
 					const initialReadResponse =
 						await getWholeSummaryManager().readSummary(LatestSummaryId);
@@ -682,10 +702,12 @@ testFileSystems.forEach((fileSystem) => {
 						"Initial summary read response should match expected response.",
 					);
 					const channelWriteResponse = await getWholeSummaryManager().writeSummary(
+						fsManager,
 						sampleChannelSummaryUpload,
 						false,
 					);
 					const containerWriteResponse = await getWholeSummaryManager().writeSummary(
+						fsManager,
 						// Replace the referenced channel summary with the one we just wrote.
 						// This matters when low-io write is enabled, because it alters how the tree is stored.
 						JSON.parse(
@@ -711,15 +733,19 @@ testFileSystems.forEach((fileSystem) => {
 				it(`Can read an incremental summary stored ${
 					enableLowIoWrite ? "with" : "without"
 				} low-io write`, async () => {
+					const fsManager = fsManagerFactory.create({
+						rootDir: repoManager.path,
+					});
 					await getWholeSummaryManager({
 						enableLowIoWrite,
-					}).writeSummary(sampleInitialSummaryUpload, true);
+					}).writeSummary(fsManager, sampleInitialSummaryUpload, true);
 					const channelWriteResponse = await getWholeSummaryManager({
 						enableLowIoWrite,
-					}).writeSummary(sampleChannelSummaryUpload, false);
+					}).writeSummary(fsManager, sampleChannelSummaryUpload, false);
 					const containerWriteResponse = await getWholeSummaryManager({
 						enableLowIoWrite,
 					}).writeSummary(
+						fsManager,
 						// Replace the referenced channel summary with the one we just wrote.
 						// This matters when low-io write is enabled, because it alters how the tree is stored.
 						JSON.parse(

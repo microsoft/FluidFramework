@@ -110,10 +110,16 @@ export class GitWholeSummaryManager {
 		);
 		try {
 			// Create blob container if initial summary and blobContainerPerDoc is enabled.
-			if (isInitial && Date.now() > this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp) {
+			if (
+				isInitial &&
+				Date.now() > this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp
+			) {
 				const summaryFolderPath = this.repoManager.path;
 				await fileSystemManager.promises.mkdir(summaryFolderPath, "create-blob-container");
-				Lumberjack.warning(`[Azfs-debug] Created blob container for initial summary`, lumberjackProperties);
+				Lumberjack.warning(
+					`[Azfs-debug] Created blob container for initial summary`,
+					lumberjackProperties,
+				);
 			}
 			if (isChannelSummary(payload)) {
 				lumberjackProperties.summaryType = "channel";

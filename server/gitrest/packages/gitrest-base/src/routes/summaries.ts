@@ -260,14 +260,11 @@ export function create(
 	const enforceStrictPersistedFullSummaryReads: boolean =
 		store.get("git:enforceStrictPersistedFullSummaryReads") ?? false;
 	// Get the containerPerDocEnabling timestamp, the 1st element in the config array.
-	const containerPerDocMigrationCutoffTS: string = store.get(
-		"azureBlobFs:containerPerDocMigrationCutoffTS",
-	) ?? undefined;
+	const containerPerDocMigrationCutoffTS: string =
+		store.get("azureBlobFs:containerPerDocMigrationCutoffTS") ?? undefined;
 	let enableContainerPerDocTimeStamp: number = 0;
 	if (containerPerDocMigrationCutoffTS) {
-		const migrationCutoffTimeStamp = containerPerDocMigrationCutoffTS
-			.split(",")
-			.shift();
+		const migrationCutoffTimeStamp = containerPerDocMigrationCutoffTS.split(",").shift();
 		if (migrationCutoffTimeStamp) {
 			enableContainerPerDocTimeStamp = new Date(migrationCutoffTimeStamp.trim()).getTime();
 		}
