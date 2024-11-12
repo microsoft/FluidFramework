@@ -236,9 +236,11 @@ describe("Presence", () => {
 
 					it('is not announced via `attendeeJoined` when already "Connected"', () => {
 						// Setup
-						presence.events.on("attendeeJoined", () => {
-							assert.fail("No attendee should be announced in beforeEach");
-						});
+						afterCleanUp.push(
+							presence.events.on("attendeeJoined", () => {
+								assert.fail("No attendee should be announced in beforeEach");
+							}),
+						);
 
 						// Act - simulate join message from client
 						presence.processSignal("", initialAttendeeSignal, false);
@@ -280,6 +282,26 @@ describe("Presence", () => {
 							SessionClientStatus.Disconnected,
 							"Disconnected attendee has wrong status",
 						);
+					});
+
+					it('is not announced via `attendeeDisconnected` when already "Disconnected"', () => {
+						// Setup
+						let disconnectedAttendee: ISessionClient | undefined;
+
+						afterCleanUp.push(
+							presence.events.on("attendeeDisconnected", (attendee) => {
+								assert(
+									disconnectedAttendee === undefined,
+									"Only one attendee should be disconnected",
+								);
+								disconnectedAttendee = attendee;
+							}),
+						);
+
+						// Act - remove client connection id
+						presence.removeClientConnectionId(initialAttendeeConnectionId);
+						// Act - remove client connection id again
+						presence.removeClientConnectionId(initialAttendeeConnectionId);
 					});
 				});
 

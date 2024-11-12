@@ -201,7 +201,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		// If the last known connectionID is different from the connection ID being removed, the attendee has reconnected,
 		// therefore we should not change the attendee connection status or emit a disconnect event.
 		const attendeeReconnected = attendee.getConnectionId() !== clientConnectionId;
-		if (!attendeeReconnected) {
+		const connected = attendee.getConnectionStatus() === SessionClientStatus.Connected;
+		if (!attendeeReconnected && connected) {
 			attendee.setDisconnected();
 			this.events.emit("attendeeDisconnected", attendee);
 		}
