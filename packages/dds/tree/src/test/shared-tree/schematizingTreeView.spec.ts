@@ -24,7 +24,7 @@ import {
 import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import {
 	checkoutWithContent,
-	createTestUndoRedoStacks,
+	createRevertibleUndoRedoStacks,
 	validateUsageError,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
@@ -254,7 +254,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const checkout = checkoutWithContent(emptyContent);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
-		const { undoStack, redoStack } = createTestUndoRedoStacks(view.events);
+		const { undoStack, redoStack } = createRevertibleUndoRedoStacks(view.events);
 
 		insert(checkout, 0, "a");
 		assert.equal(undoStack.length, 1);

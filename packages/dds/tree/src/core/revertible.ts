@@ -46,6 +46,11 @@ export interface RevertibleAlpha extends Revertible {
 }
 
 /**
+ * Union type for {@link Revertible} and {@link RevertibleAlpha}.
+ */
+export type RevertibleType = Revertible | RevertibleAlpha;
+
+/**
  * The status of a {@link Revertible}.
  *
  * @public
@@ -85,3 +90,8 @@ export type RevertibleFactory = (
 export type RevertibleAlphaFactory = (
 	onRevertibleDisposed?: (revertible: RevertibleAlpha) => void,
 ) => RevertibleAlpha;
+
+/**
+ * Union type for {@link RevertibleFactory} and {@link RevertibleAlphaFactory}.
+ */
+export type RevertibleFactoryType = RevertibleFactory | RevertibleAlphaFactory;

@@ -86,7 +86,6 @@ import {
 	type TreeStoredSchemaSubscription,
 	type ITreeCursorSynchronous,
 	CursorLocationType,
-	type RevertibleFactory,
 } from "../core/index.js";
 import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
@@ -148,11 +147,14 @@ import type { Client } from "@fluid-private/test-dds-utils";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { RevertibleAlpha, RevertibleAlphaFactory } from "../core/revertible.js";
+import type {
+	RevertibleAlpha,
+	RevertibleFactoryType,
+	RevertibleType,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../core/revertible.js";
 
 // Testing utilities
-
 /**
  * A {@link IJsonCodec} implementation which fails on encode and decode.
  *
@@ -1049,17 +1051,17 @@ export function rootFromDeltaFieldMap(
 	return rootDelta;
 }
 
-export function createTestUndoRedoStacks(
+function createUndoRedoStacksCore<T extends RevertibleType>(
 	events: Listenable<TreeBranchEvents | CheckoutEvents>,
 ): {
-	undoStack: Revertible[];
-	redoStack: Revertible[];
+	undoStack: T[];
+	redoStack: T[];
 	unsubscribe: () => void;
 } {
-	const undoStack: Revertible[] = [];
-	const redoStack: Revertible[] = [];
+	const undoStack: T[] = [];
+	const redoStack: T[] = [];
 
-	function onDispose(disposed: Revertible): void {
+	function onDispose(disposed: T): void {
 		const redoIndex = redoStack.indexOf(disposed);
 		if (redoIndex !== -1) {
 			redoStack.splice(redoIndex, 1);
@@ -1071,9 +1073,9 @@ export function createTestUndoRedoStacks(
 		}
 	}
 
-	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactory): void {
+	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactoryType): void {
 		if (getRevertible !== undefined) {
-			const revertible = getRevertible(onDispose);
+			const revertible = getRevertible(onDispose as (disposed: RevertibleType) => void) as T;
 			if (commit.kind === CommitKind.Undo) {
 				redoStack.push(revertible);
 			} else {
@@ -1095,50 +1097,24 @@ export function createTestUndoRedoStacks(
 	return { undoStack, redoStack, unsubscribe };
 }
 
-export function createClonableUndoRedoStacks(
+export function createRevertibleUndoRedoStacks(
+	events: Listenable<TreeBranchEvents | CheckoutEvents>,
+): {
+	undoStack: Revertible[];
+	redoStack: Revertible[];
+	unsubscribe: () => void;
+} {
+	return createUndoRedoStacksCore<Revertible>(events);
+}
+
+export function createRevertibleAlphaUndoRedoStacks(
 	events: Listenable<TreeBranchEvents | CheckoutEvents>,
 ): {
 	undoStack: RevertibleAlpha[];
 	redoStack: RevertibleAlpha[];
 	unsubscribe: () => void;
 } {
-	const undoStack: RevertibleAlpha[] = [];
-	const redoStack: RevertibleAlpha[] = [];
-
-	function onDispose(disposed: RevertibleAlpha): void {
-		const redoIndex = redoStack.indexOf(disposed);
-		if (redoIndex !== -1) {
-			redoStack.splice(redoIndex, 1);
-		} else {
-			const undoIndex = undoStack.indexOf(disposed);
-			if (undoIndex !== -1) {
-				undoStack.splice(undoIndex, 1);
-			}
-		}
-	}
-
-	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void {
-		if (getRevertible !== undefined) {
-			const revertible = getRevertible(onDispose);
-			if (commit.kind === CommitKind.Undo) {
-				redoStack.push(revertible);
-			} else {
-				undoStack.push(revertible);
-			}
-		}
-	}
-
-	const unsubscribeFromCommitApplied = events.on("changed", onNewCommit);
-	const unsubscribe = (): void => {
-		unsubscribeFromCommitApplied();
-		for (const revertible of undoStack) {
-			revertible.dispose();
-		}
-		for (const revertible of redoStack) {
-			revertible.dispose();
-		}
-	};
-	return { undoStack, redoStack, unsubscribe };
+	return createUndoRedoStacksCore<RevertibleAlpha>(events);
 }
 
 export function assertIsSessionId(sessionId: string): SessionId {

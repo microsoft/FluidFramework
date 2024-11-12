@@ -14,8 +14,8 @@ import { singleJsonCursor } from "../json/index.js";
 import { SharedTreeFactory, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
-	createTestUndoRedoStacks,
-	createClonableUndoRedoStacks,
+	createRevertibleUndoRedoStacks,
+	createRevertibleAlphaUndoRedoStacks,
 	expectJsonTree,
 	moveWithin,
 	testIdCompressor,
@@ -189,7 +189,9 @@ describe("Undo and redo", () => {
 				const view = createCheckout(initialState, attached);
 				const fork = view.branch();
 
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
+				const { undoStack, redoStack, unsubscribe } = createRevertibleUndoRedoStacks(
+					fork.events,
+				);
 				edit(fork, view);
 
 				fork.rebaseOnto(view);
@@ -216,7 +218,9 @@ describe("Undo and redo", () => {
 				const view = createCheckout(initialState, attached);
 				const fork = view.branch();
 
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
+				const { undoStack, redoStack, unsubscribe } = createRevertibleUndoRedoStacks(
+					fork.events,
+				);
 				edit(view, fork);
 
 				fork.rebaseOnto(view);
@@ -242,7 +246,9 @@ describe("Undo and redo", () => {
 				const view = createCheckout(initialState, attached);
 				const fork = view.branch();
 
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+				const { undoStack, redoStack, unsubscribe } = createRevertibleUndoRedoStacks(
+					view.events,
+				);
 				edit(view, fork);
 
 				view.merge(fork, false);
@@ -269,7 +275,9 @@ describe("Undo and redo", () => {
 				const view = createCheckout(initialState, attached);
 				const fork = view.branch();
 
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+				const { undoStack, redoStack, unsubscribe } = createRevertibleUndoRedoStacks(
+					view.events,
+				);
 				edit(fork, view);
 
 				view.merge(fork, false);
@@ -295,7 +303,9 @@ describe("Undo and redo", () => {
 				const tree = createCheckout(initialState, attached);
 				const fork = tree.branch();
 
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
+				const { undoStack, redoStack, unsubscribe } = createRevertibleUndoRedoStacks(
+					tree.events,
+				);
 				edit(tree, fork);
 
 				tree.merge(fork, false);
@@ -324,7 +334,7 @@ describe("Undo and redo", () => {
 			const tree1 = createCheckout([0, 0, 0], attached);
 			const tree2 = tree1.branch();
 
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
+			const { undoStack, unsubscribe } = createRevertibleUndoRedoStacks(tree2.events);
 			tree1.editor.sequenceField(rootField).insert(3, singleJsonCursor(1));
 			tree2.editor.sequenceField(rootField).insert(0, singleJsonCursor(2));
 			tree2.editor.sequenceField(rootField).insert(0, singleJsonCursor(3));
@@ -341,16 +351,14 @@ describe("Undo and redo", () => {
 		it.skip(`can undo after forking a branch (${attachStr})`, () => {
 			const tree1 = createCheckout(["A", "B", "C"], attached);
 
-			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
-				tree1.events,
-			);
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
+				createRevertibleUndoRedoStacks(tree1.events);
 			tree1.editor.sequenceField(rootField).remove(0, 1);
 			tree1.editor.sequenceField(rootField).remove(1, 1);
 
 			const tree2 = tree1.branch();
-			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
-				tree2.events,
-			);
+			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
+				createRevertibleUndoRedoStacks(tree2.events);
 			expectJsonTree(tree2, ["B"]);
 			undoStack1.pop()?.revert();
 			expectJsonTree(tree2, ["B", "C"]);
@@ -364,18 +372,16 @@ describe("Undo and redo", () => {
 		it.skip(`can redo after forking a branch (${attachStr})`, () => {
 			const tree1 = createCheckout(["B"], attached);
 
-			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
-				tree1.events,
-			);
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
+				createRevertibleUndoRedoStacks(tree1.events);
 			tree1.editor.sequenceField(rootField).insert(0, singleJsonCursor("A"));
 			tree1.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
 			undoStack1.pop()?.revert();
 			undoStack1.pop()?.revert();
 
 			const tree2 = tree1.branch();
-			const { redoStack: redoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
-				tree2.events,
-			);
+			const { redoStack: redoStack2, unsubscribe: unsubscribe2 } =
+				createRevertibleUndoRedoStacks(tree2.events);
 			expectJsonTree(tree2, ["B"]);
 			redoStack2.pop()?.revert();
 			expectJsonTree(tree2, ["A", "B"]);
@@ -388,7 +394,9 @@ describe("Undo and redo", () => {
 		it(`can undo/redo a transaction (${attachStr})`, () => {
 			const tree = createCheckout(["A", "B"], attached);
 
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
+			const { undoStack, redoStack, unsubscribe } = createRevertibleUndoRedoStacks(
+				tree.events,
+			);
 			tree.transaction.start();
 			tree.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
 			tree.editor.sequenceField(rootField).remove(0, 1);
@@ -405,7 +413,9 @@ describe("Undo and redo", () => {
 		it(`can undo/redo a merge (${attachStr})`, () => {
 			const tree = createCheckout(["A", "B"], attached);
 
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
+			const { undoStack, redoStack, unsubscribe } = createRevertibleUndoRedoStacks(
+				tree.events,
+			);
 			const branch = tree.branch();
 			branch.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
 			branch.editor.sequenceField(rootField).remove(0, 1);
@@ -426,7 +436,7 @@ describe("Undo and redo", () => {
 		it(`can undo multiple merges (${attachStr})`, () => {
 			const tree = createCheckout(["A", "B"], attached);
 
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
+			const { undoStack, unsubscribe } = createRevertibleUndoRedoStacks(tree.events);
 
 			const branch = tree.branch();
 
@@ -473,7 +483,7 @@ describe("Undo and redo", () => {
 			undoStack: undoStack1,
 			redoStack: redoStack1,
 			unsubscribe: unsubscribe1,
-		} = createClonableUndoRedoStacks(originalView.events);
+		} = createRevertibleAlphaUndoRedoStacks(originalView.events);
 
 		assert(originalView.root.child !== undefined);
 		originalView.root.child.propertyOne = 256; // 128 -> 256
@@ -504,7 +514,7 @@ describe("Undo and redo", () => {
 			undoStack: undoStack1,
 			redoStack: redoStack1,
 			unsubscribe: unsubscribe1,
-		} = createClonableUndoRedoStacks(originalView.events);
+		} = createRevertibleAlphaUndoRedoStacks(originalView.events);
 
 		assert(originalView.root.child !== undefined);
 		originalView.root.child.propertyOne = 256; // 128 -> 256
@@ -515,7 +525,7 @@ describe("Undo and redo", () => {
 			undoStack: undoStack2,
 			redoStack: redoStack2,
 			unsubscribe: unsubscribe2,
-		} = createClonableUndoRedoStacks(forkedView.events);
+		} = createRevertibleAlphaUndoRedoStacks(forkedView.events);
 
 		assert(forkedView.root.child !== undefined);
 		forkedView.root.child.propertyOne = 512; // 256 -> 512
@@ -556,7 +566,7 @@ describe("Undo and redo", () => {
 			undoStack: undoStack1,
 			redoStack: redoStack1,
 			unsubscribe: unsubscribe1,
-		} = createClonableUndoRedoStacks(originalView.events);
+		} = createRevertibleAlphaUndoRedoStacks(originalView.events);
 
 		assert(originalView.root.child !== undefined);
 		originalView.root.child.propertyOne = 256; // 128 -> 256

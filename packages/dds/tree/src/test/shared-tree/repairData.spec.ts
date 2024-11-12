@@ -6,7 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { rootFieldKey } from "../../core/index.js";
-import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
+import {
+	StringArray,
+	TestTreeProviderLite,
+	createRevertibleUndoRedoStacks,
+} from "../utils.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { TestAnchor } from "../testAnchor.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
@@ -26,7 +30,7 @@ describe("Repair Data", () => {
 			view1.initialize(["A", "B", "C", "D"]);
 
 			// make sure that revertibles are created
-			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
+			const { unsubscribe } = createRevertibleUndoRedoStacks(view1.checkout.events);
 
 			provider.processMessages();
 			const view2 = provider.trees[1].viewWith(
@@ -125,7 +129,7 @@ describe("Repair Data", () => {
 			view1.initialize(["A", "B", "C", "D"]);
 
 			// make sure that revertibles are created
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
+			const { undoStack, unsubscribe } = createRevertibleUndoRedoStacks(view1.checkout.events);
 
 			// get anchors to the nodes we're removing
 			const anchorAOnTree1 = TestAnchor.fromValue(view1.checkout.forest, "A");
@@ -257,7 +261,7 @@ describe("Repair Data", () => {
 			view1.initialize(["A", "B", "C", "D"]);
 
 			// make sure that revertibles are created
-			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
+			const { unsubscribe } = createRevertibleUndoRedoStacks(view1.checkout.events);
 
 			provider.processMessages();
 			const view2 = provider.trees[1].viewWith(

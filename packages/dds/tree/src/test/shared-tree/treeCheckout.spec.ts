@@ -31,7 +31,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
-	createTestUndoRedoStacks,
+	createRevertibleUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
 	validateUsageError,
@@ -424,7 +424,7 @@ describe("sharedTreeView", () => {
 		);
 
 		itView("update anchors after undoing", ({ view }) => {
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { undoStack, unsubscribe } = createRevertibleUndoRedoStacks(view.events);
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
 			view.checkout.forest.moveCursorToPath(
@@ -864,14 +864,14 @@ describe("sharedTreeView", () => {
 		const storedSchema1 = toStoredSchema(schema1);
 		provider.processMessages();
 
-		const checkout1Revertibles = createTestUndoRedoStacks(view1.checkout.events);
+		const checkout1Revertibles = createRevertibleUndoRedoStacks(view1.checkout.events);
 
 		view1.root.removeAt(0); // Remove "A"
 		view1.root.removeAt(0); // Remove 1
 		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
 		provider.processMessages();
 
-		const checkout2Revertibles = createTestUndoRedoStacks(view2.checkout.events);
+		const checkout2Revertibles = createRevertibleUndoRedoStacks(view2.checkout.events);
 		view2.root.removeAt(1); // Remove "B"
 		view2.root.removeAt(1); // Remove 2
 		checkout2Revertibles.undoStack.pop()?.revert(); // Restore 2
@@ -1190,7 +1190,7 @@ describe("sharedTreeView", () => {
 			const viewBranch = asTreeViewAlpha(treeBranch.viewWith(view.config));
 			viewBranch.root.insertAtStart("A");
 
-			const stacks = createTestUndoRedoStacks(viewBranch.events);
+			const stacks = createRevertibleUndoRedoStacks(viewBranch.events);
 			viewBranch.root.insertAtStart("B");
 			viewBranch.root.insertAtStart("C");
 
