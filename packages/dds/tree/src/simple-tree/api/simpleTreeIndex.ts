@@ -37,7 +37,7 @@ export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<TKey,
  * Creates a {@link SimpleTreeIndex} with a specified indexer.
  *
  * @param view - the view for the tree being indexed
- * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns the field name that all nodes of the given schema 
+ * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns the field name that all nodes of the given schema
  * should be keyed on, must be pure and functional
  * @param getValue - given at least one {@link TreeNode}, returns an associated value
  * @param isKeyValid - function for verifying the validity of the key retrieved based on the information given by the indexer
@@ -58,7 +58,7 @@ export function createSimpleTreeIndex<
  * Creates a {@link SimpleTreeIndex} with a specified indexer.
  *
  * @param view - the view for the tree being indexed
- * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns the field name that all nodes of the given schema 
+ * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns the field name that all nodes of the given schema
  * should be keyed on, must be pure and functional
  * @param getValue - given at least one {@link TreeNode}, returns an associated value
  * @param isKeyValid - function for verifying the validity of the key retrieved based on the information given by the indexer
@@ -81,6 +81,12 @@ export function createSimpleTreeIndex<
 /**
  * Creates a {@link SimpleTreeIndex} with a specified indexer.
  *
+ * @param view - the view for the tree being indexed
+ * @param indexer - a map from {@link TreeNodeSchema} to the field name that all nodes of the given schema
+ * should be keyed on
+ * @param getValue - given at least one {@link TreeNode}, returns an associated value
+ * @param isKeyValid - function for verifying the validity of the key retrieved based on the information given by the indexer
+ *
  * @alpha
  */
 export function createSimpleTreeIndex<
@@ -89,7 +95,46 @@ export function createSimpleTreeIndex<
 	TValue,
 >(
 	view: TreeView<TFieldSchema>,
-	indexer: (schema: TreeNodeSchema) => string | undefined,
+	indexer: Map<TreeNodeSchema, string>,
+	getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue,
+	isKeyValid: (key: TreeIndexKey) => key is TKey,
+): SimpleTreeIndex<TKey, TValue>;
+/**
+ * Creates a {@link SimpleTreeIndex} with a specified indexer.
+ *
+ * @param view - the view for the tree being indexed
+ * @param indexer - a map from {@link TreeNodeSchema} to the field name that all nodes of the given schema
+ * should be keyed on
+ * @param getValue - given at least one {@link TreeNode}, returns an associated value
+ * @param isKeyValid - function for verifying the validity of the key retrieved based on the information given by the indexer
+ * @param indexableSchema - a list of all the schema types that can be indexed
+ *
+ * @alpha
+ */
+export function createSimpleTreeIndex<
+	TFieldSchema extends ImplicitFieldSchema,
+	TKey extends TreeIndexKey,
+	TValue,
+	TSchema extends TreeNodeSchema,
+>(
+	view: TreeView<TFieldSchema>,
+	indexer: Map<TreeNodeSchema, string>,
+	getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue,
+	isKeyValid: (key: TreeIndexKey) => key is TKey,
+	indexableSchema: readonly TSchema[],
+): SimpleTreeIndex<TKey, TValue>;
+/**
+ * Creates a {@link SimpleTreeIndex} with a specified indexer.
+ *
+ * @alpha
+ */
+export function createSimpleTreeIndex<
+	TFieldSchema extends ImplicitFieldSchema,
+	TKey extends TreeIndexKey,
+	TValue,
+>(
+	view: TreeView<TFieldSchema>,
+	indexer: ((schema: TreeNodeSchema) => string | undefined) | Map<TreeNodeSchema, string>,
 	getValue:
 		| ((nodes: TreeIndexNodes<TreeNode>) => TValue)
 		| ((nodes: TreeIndexNodes<NodeFromSchema<TreeNodeSchema>>) => TValue),
@@ -113,7 +158,8 @@ export function createSimpleTreeIndex<
 					// if indexable schema isn't provided, we check if the node is in schema
 					const schemus = indexableSchemaMap.get(schemaIdentifier);
 					if (schemus !== undefined) {
-						const keyLocation = indexer(schemus);
+						const keyLocation =
+							typeof indexer === "function" ? indexer(schemus) : indexer.get(schemus);
 						if (keyLocation !== undefined) {
 							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
 						}
@@ -124,7 +170,8 @@ export function createSimpleTreeIndex<
 			: (schemaIdentifier: TreeNodeSchemaIdentifier) => {
 					const schemus = indexableSchemaMap.get(schemaIdentifier);
 					if (schemus !== undefined) {
-						const keyLocation = indexer(schemus);
+						const keyLocation =
+							typeof indexer === "function" ? indexer(schemus) : indexer.get(schemus);
 						if (keyLocation !== undefined) {
 							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
 						}
