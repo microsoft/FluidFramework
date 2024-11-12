@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type Difference, SharedTreeBranchManager } from "@fluid-experimental/ai-collab";
+import { type Difference, SharedTreeBranchManager } from "@fluidframework/ai-collab";
 import {
 	type BranchableTree,
 	type TreeBranchFork,
