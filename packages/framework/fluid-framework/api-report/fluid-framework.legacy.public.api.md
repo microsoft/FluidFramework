@@ -559,6 +559,8 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 
+export { IsListener }
+
 // @public
 export interface ITelemetryBaseProperties {
     [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
@@ -592,6 +594,10 @@ export interface IValueChanged {
 
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
+
+export { Listenable }
+
+export { Listeners }
 
 // @public @sealed
 export interface MakeNominal {
@@ -645,6 +651,8 @@ type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchem
 type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+export { Off }
 
 // @public @sealed
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends ReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {
@@ -987,6 +995,8 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 // @public
 export type Unhydrated<T> = T;
+
+export { UnionToIntersection }
 
 // @public
 export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {

@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	oob,
+	type HasListeners,
+	type IEmitter,
+	createEmitter,
+} from "@fluidframework/core-utils/internal";
+import type { Listenable } from "@fluidframework/core-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	UsageError,
@@ -55,12 +62,6 @@ import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamil
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import type { IDisposable } from "@fluidframework/core-interfaces";
-import {
-	type HasListeners,
-	type IEmitter,
-	type Listenable,
-	createEmitter,
-} from "@fluidframework/core-utils";
 import type {
 	ImplicitFieldSchema,
 	ReadSchema,

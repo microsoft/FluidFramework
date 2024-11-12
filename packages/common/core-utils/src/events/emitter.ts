@@ -9,7 +9,7 @@ import { getOrCreate } from "./util.js";
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
- * @public
+ * @internal
  */
 export interface IEmitter<TListeners extends Listeners<TListeners>> {
 	/**
@@ -41,7 +41,7 @@ export interface IEmitter<TListeners extends Listeners<TListeners>> {
 /**
  * Called when the last listener for `eventName` is removed.
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
- * @public
+ * @internal
  */
 export type NoListenersCallback<TListeners extends object> = (
 	eventName: keyof Listeners<TListeners>,
@@ -49,7 +49,7 @@ export type NoListenersCallback<TListeners extends object> = (
 
 /**
  * Allows querying if an object has listeners.
- * @sealed @public
+ * @sealed @internal
  */
 export interface HasListeners<TListeners extends Listeners<TListeners>> {
 	/**
@@ -114,7 +114,7 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
  * 	}
  * }
  * ```
- * @public
+ * @internal
  */
 export class EventEmitter<TListeners extends Listeners<TListeners>>
 	implements Listenable<TListeners>, HasListeners<TListeners>
@@ -200,6 +200,7 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 
 /**
  * This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
+ * @internal
  */
 class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
 	extends EventEmitter<TListeners>
@@ -251,7 +252,7 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  * 	}
  * }
  * ```
- * @public
+ * @internal
  */
 export function createEmitter<TListeners extends object>(
 	noListeners?: NoListenersCallback<TListeners>,

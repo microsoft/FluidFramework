@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import type { HasListeners, IEmitter } from "@fluidframework/core-utils/internal";
+import type { Listenable } from "@fluidframework/core-utils";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
@@ -88,7 +90,6 @@ import {
 	CursorLocationType,
 	type RevertibleFactory,
 } from "../core/index.js";
-import type { HasListeners, IEmitter, Listenable } from "@fluidframework/core-utils";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	type NodeKeyManager,

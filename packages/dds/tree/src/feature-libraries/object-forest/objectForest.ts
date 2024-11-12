@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, createEmitter } from "@fluidframework/core-utils/internal";
+import type { Listenable } from "@fluidframework/core-utils";
 
 import {
 	type Anchor,
@@ -33,7 +34,6 @@ import {
 	aboveRootPlaceholder,
 	deepCopyMapTree,
 } from "../../core/index.js";
-import { createEmitter, type Listenable } from "@fluidframework/core-utils";
 import {
 	assertNonNegativeSafeInteger,
 	assertValidIndex,

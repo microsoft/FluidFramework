@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, createEmitter } from "@fluidframework/core-utils/internal";
+import type { Listenable } from "@fluidframework/core-utils";
 
 import {
 	type Anchor,
@@ -28,7 +29,6 @@ import {
 	mapCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { createEmitter, type Listenable } from "@fluidframework/core-utils";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";

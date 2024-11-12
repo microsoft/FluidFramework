@@ -311,6 +311,8 @@ declare namespace InternalTypes {
 }
 export { InternalTypes }
 
+export { IsListener }
+
 // @alpha
 export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
 
@@ -412,6 +414,10 @@ export interface JsonValidator {
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
+export { Listenable }
+
+export { Listeners }
+
 // @public @sealed
 export interface MakeNominal {
 }
@@ -464,6 +470,8 @@ type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchem
 type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+export { Off }
 
 // @alpha
 export interface ParseOptions<TCustom> {
@@ -896,6 +904,8 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 // @public
 export type Unhydrated<T> = T;
+
+export { UnionToIntersection }
 
 // @alpha
 export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union>> = IsUnion<Union> extends true ? UnionToTuple<Exclude<Union, First>, [First, ...A]> : [Union, ...A];

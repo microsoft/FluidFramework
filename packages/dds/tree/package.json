@@ -228,31 +228,11 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"TypeAlias_Listeners": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"TypeAlias_Off": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"TypeAlias_IsListener": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
 			"TypeAlias_Input": {
 				"backCompat": false,
 				"forwardCompat": false
 			},
 			"Interface_InternalTypes_TreeArrayNodeBase": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"Interface_Listenable": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"TypeAlias_UnionToIntersection": {
 				"backCompat": false,
 				"forwardCompat": false
 			}

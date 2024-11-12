@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
-import { createEmitter, type Listenable } from "@fluidframework/core-utils";
+import { assert, oob, createEmitter } from "@fluidframework/core-utils/internal";
+import type { Listenable } from "@fluidframework/core-utils";
 import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
 
 import {

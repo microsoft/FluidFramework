@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	unreachableCase,
+	type HasListeners,
+	type IEmitter,
+	createEmitter,
+} from "@fluidframework/core-utils/internal";
+import type { Listenable } from "@fluidframework/core-utils";
 import type {
 	IChannelAttributes,
 	IChannelFactory,
@@ -26,12 +33,6 @@ import {
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
-import {
-	type HasListeners,
-	type IEmitter,
-	type Listenable,
-	createEmitter,
-} from "@fluidframework/core-utils";
 import {
 	DetachedFieldIndexSummarizer,
 	ForestSummarizer,

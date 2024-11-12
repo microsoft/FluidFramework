@@ -225,3 +225,19 @@ export {
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
+
+export type {
+	Listeners,
+	Listenable,
+	Off,
+	IsListener,
+	UnionToIntersection,
+} from "@fluidframework/core-utils";
+
+export {
+	createEmitter,
+	EventEmitter,
+	type IEmitter,
+	type NoListenersCallback,
+	type HasListeners,
+} from "@fluidframework/core-utils/internal";

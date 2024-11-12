@@ -383,7 +383,6 @@ declare type current_as_old_for_Interface_ITreeViewConfiguration = requireAssign
  * typeValidation.broken:
  * "Interface_Listenable": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_Listenable = requireAssignableTo<TypeOnly<current.Listenable<any>>, TypeOnly<old.Listenable<any>>>
 
 /*
@@ -1232,7 +1231,6 @@ declare type current_as_old_for_TypeAlias_InternalTypes_TreeObjectNodeUnsafe = r
  * typeValidation.broken:
  * "TypeAlias_IsListener": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_IsListener = requireAssignableTo<TypeOnly<old.IsListener<any>>, TypeOnly<current.IsListener<any>>>
 
 /*
@@ -1242,7 +1240,6 @@ declare type old_as_current_for_TypeAlias_IsListener = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "TypeAlias_IsListener": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IsListener = requireAssignableTo<TypeOnly<current.IsListener<any>>, TypeOnly<old.IsListener<any>>>
 
 /*
@@ -1270,7 +1267,6 @@ declare type current_as_old_for_TypeAlias_LazyItem = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "TypeAlias_Listeners": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_Listeners = requireAssignableTo<TypeOnly<old.Listeners<any>>, TypeOnly<current.Listeners<any>>>
 
 /*
@@ -1280,7 +1276,6 @@ declare type old_as_current_for_TypeAlias_Listeners = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "TypeAlias_Listeners": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_Listeners = requireAssignableTo<TypeOnly<current.Listeners<any>>, TypeOnly<old.Listeners<any>>>
 
 /*
@@ -1326,7 +1321,6 @@ declare type current_as_old_for_TypeAlias_NodeFromSchema = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_Off": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_Off = requireAssignableTo<TypeOnly<old.Off>, TypeOnly<current.Off>>
 
 /*
@@ -1336,7 +1330,6 @@ declare type old_as_current_for_TypeAlias_Off = requireAssignableTo<TypeOnly<old
  * typeValidation.broken:
  * "TypeAlias_Off": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_Off = requireAssignableTo<TypeOnly<current.Off>, TypeOnly<old.Off>>
 
 /*
@@ -1562,7 +1555,6 @@ declare type current_as_old_for_TypeAlias_Unhydrated = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "TypeAlias_UnionToIntersection": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_UnionToIntersection = requireAssignableTo<TypeOnly<old.UnionToIntersection<any>>, TypeOnly<current.UnionToIntersection<any>>>
 
 /*
@@ -1572,7 +1564,6 @@ declare type old_as_current_for_TypeAlias_UnionToIntersection = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_UnionToIntersection": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_UnionToIntersection = requireAssignableTo<TypeOnly<current.UnionToIntersection<any>>, TypeOnly<old.UnionToIntersection<any>>>
 
 /*

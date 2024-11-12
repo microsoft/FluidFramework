@@ -5,7 +5,8 @@
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import { type Listenable, createEmitter } from "@fluidframework/core-utils";
+import { createEmitter } from "@fluidframework/core-utils/internal";
+import type { Listenable } from "@fluidframework/core-utils";
 import { compareStrings } from "../../util/index.js";
 
 import type { TreeNodeSchemaIdentifier } from "./format.js";
