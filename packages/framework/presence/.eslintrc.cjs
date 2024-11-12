@@ -19,6 +19,7 @@ module.exports = {
 		// TODO: Reenable no-explicit-any once need with ValueDirectoryOrState is
 		// understood. If `any` is still needed disable is on a per line basis.
 		"@typescript-eslint/no-explicit-any": "off",
+		"import/no-internal-modules": "off",
 	},
 	overrides: [
 		{
