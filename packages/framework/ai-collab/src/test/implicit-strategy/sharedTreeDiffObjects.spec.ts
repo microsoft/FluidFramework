@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree";
 
-import { sharedTreeDiff } from "../../shared-tree-diff/index.js";
+import { sharedTreeDiff } from "../../implicit-strategy/index.js";
 
 const schemaFactory = new SchemaFactory("TreeNodeTest");
 
@@ -57,6 +57,7 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["requiredString"],
+					objectId: undefined,
 					oldValue: "test",
 					value: "true",
 				},
@@ -75,6 +76,7 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["requiredBoolean"],
+					objectId: undefined,
 					oldValue: true,
 					value: false,
 				},
@@ -93,6 +95,7 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["requiredNumber"],
+					objectId: undefined,
 					oldValue: 0,
 					value: 1,
 				},
@@ -119,6 +122,7 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 			{
 				type: "CHANGE",
 				path: ["requiredObject", "requiredString"],
+				objectId: undefined,
 				oldValue: "test",
 				value: "SomethingDifferent",
 			},
@@ -135,6 +139,7 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["optionalBoolean"],
+					objectId: undefined,
 					oldValue: true,
 					value: undefined,
 				},
@@ -152,6 +157,7 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["optionalString"],
+					objectId: undefined,
 					oldValue: "true",
 					value: undefined,
 				},
@@ -169,6 +175,7 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["optionalNumber"],
+					objectId: undefined,
 					oldValue: 1,
 					value: undefined,
 				},
@@ -189,6 +196,7 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["optionalObject"],
+					objectId: undefined,
 					oldValue: { requiredString: "test" },
 					value: undefined,
 				},
@@ -211,6 +219,7 @@ describe("sharedTreeDiff() - Object - Change Diffs", () => {
 				{
 					type: "CHANGE",
 					path: ["optionalArray"],
+					objectId: undefined,
 					oldValue: arrayNode,
 					value: undefined,
 				},
@@ -298,6 +307,7 @@ describe("sharedTreeDiff() - Object - Remove Diffs", () => {
 		assert.deepStrictEqual(diffs, [
 			{
 				type: "REMOVE",
+				objectId: undefined,
 				path: ["optionalBoolean"],
 				oldValue: true,
 			},
@@ -311,6 +321,7 @@ describe("sharedTreeDiff() - Object - Remove Diffs", () => {
 			{
 				type: "REMOVE",
 				path: ["optionalString"],
+				objectId: undefined,
 				oldValue: "true",
 			},
 		]);
@@ -323,6 +334,7 @@ describe("sharedTreeDiff() - Object - Remove Diffs", () => {
 			{
 				type: "REMOVE",
 				path: ["optionalNumber"],
+				objectId: undefined,
 				oldValue: 1,
 			},
 		]);
@@ -340,6 +352,7 @@ describe("sharedTreeDiff() - Object - Remove Diffs", () => {
 			{
 				type: "REMOVE",
 				path: ["optionalArray"],
+				objectId: undefined,
 				oldValue: arrayNode,
 			},
 		]);
@@ -354,6 +367,7 @@ describe("sharedTreeDiff() - Object - Remove Diffs", () => {
 			{
 				type: "REMOVE",
 				path: ["optionalObject"],
+				objectId: undefined,
 				oldValue: { requiredString: "test" },
 			},
 		]);

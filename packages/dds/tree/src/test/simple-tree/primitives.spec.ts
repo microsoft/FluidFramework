@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type ImplicitFieldSchema,
@@ -157,7 +157,7 @@ describe("Primitives", () => {
 
 			// JSON coerces non-finite numbers to 'null'.  If 'null' violates schema,
 			// this must throw a TypeError.
-			[-Infinity, NaN, Infinity].forEach((value) => {
+			[Number.NEGATIVE_INFINITY, Number.NaN, Number.POSITIVE_INFINITY].forEach((value) => {
 				checkThrows(schema, value);
 			});
 
@@ -171,7 +171,9 @@ describe("Primitives", () => {
 			// JSON coerces non-finite numbers to 'null'.  This succeeds when 'null' is
 			// permitted by schema.
 			const schema = [schemaFactory.number, schemaFactory.null] as const;
-			[-Infinity, NaN, Infinity].forEach((value) => checkCoerced(schema, value));
+			[Number.NEGATIVE_INFINITY, Number.NaN, Number.POSITIVE_INFINITY].forEach((value) =>
+				checkCoerced(schema, value),
+			);
 		});
 	});
 
