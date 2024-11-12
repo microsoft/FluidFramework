@@ -44,7 +44,7 @@ stages:
     parameters:
       stageId: stress_tests_odsp
       stageDisplayName: Stress tests - Odsp
-      poolBuild: Large
+      poolBuild: Large-centralus
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -65,7 +65,7 @@ stages:
     parameters:
       stageId: stress_tests_odspdf
       stageDisplayName: Stress tests - Odspdf
-      poolBuild: Large
+      poolBuild: Large-centralus
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -86,7 +86,7 @@ stages:
     parameters:
       stageId: stress_tests_tinylicious
       stageDisplayName: Stress tests - tinylicious
-      poolBuild: Large
+      poolBuild: Large-centralus
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -106,7 +106,7 @@ stages:
     parameters:
       stageId: stress_tests_frs
       stageDisplayName: Stress tests - frs
-      poolBuild: Large
+      poolBuild: Large-centralus
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -126,7 +126,7 @@ stages:
     parameters:
       stageId: stress_tests_frs_canary
       stageDisplayName: Stress tests - frs canary
-      poolBuild: Large
+      poolBuild: Large-centralus
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)

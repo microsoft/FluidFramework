@@ -193,7 +193,7 @@ extends:
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
-    poolBuild: NewLarge-linux-1ES
+    poolBuild: Large-centralus
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false # Linting is captured by `ci:build` via fluid-build

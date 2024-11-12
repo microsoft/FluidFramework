@@ -52,7 +52,7 @@ parameters:
 
   - name: pool
     type: string
-    default: Small-1ES
+    default: Small-centralus
 
   - name: buildToolsVersionToInstall
     type: string

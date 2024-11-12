@@ -22,7 +22,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Large
+  default: Large-centralus
 
 - name: memoryTestPackages
   type: object
