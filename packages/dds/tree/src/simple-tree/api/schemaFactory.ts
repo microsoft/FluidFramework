@@ -805,7 +805,7 @@ export class SchemaFactory<
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
 			// Setting this (implicitlyConstructable) to true seems to work ok currently, but not for other node kinds.
-			// Supporting this could be fragile and might break other future changes, so its being kept as false for now.
+			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			false,
 		);
 
