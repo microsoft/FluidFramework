@@ -33,7 +33,7 @@
 @fluidframework/undo-redo
 @fluidframework/synthesize
 @fluidframework/request-handler
-@fluid-experimental/presence
+@fluidframework/presence
 @fluid-experimental/oldest-client-observer
 @fluidframework/fluid-static
 fluid-framework
