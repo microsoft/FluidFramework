@@ -9,6 +9,6 @@ module.exports = {
 		"prettier",
 	],
 	rules: {
-		"@fluid-internal/fluid/no-unchecked-record-access": "off",
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 };
