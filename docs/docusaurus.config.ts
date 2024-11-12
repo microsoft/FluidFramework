@@ -117,10 +117,10 @@ const config: Config = {
 			respectPrefersColorScheme: true,
 		},
 
-		// Temp announcement bar announcing Fluid v2.
+		// TODO: As needed, we can enable this to show an announcement bar.
 		// announcementBar: {
 		// 	id: "fluid-2-announcement",
-		// 	content: "🎉 Fluid Framework 2 is now in General Availability! <a target=\"_blank\" href=\"https://aka.ms/fluid/release_blog\">Learn more</a>.",
+		// 	content: '🎉 Fluid Framework 2 is now in General Availability! <a target="_blank" rel="noreferrer" href="https://aka.ms/fluid/release_blog">Learn more</a>.',
 		// 	isCloseable: true,
 		// },
 
