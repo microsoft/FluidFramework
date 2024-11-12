@@ -30,7 +30,7 @@ import {
 	type Summarizable,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 /**
  * A `SharedTreeCore` with

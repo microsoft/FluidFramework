@@ -136,9 +136,6 @@ importers:
       azure-devops-node-api:
         specifier: ^11.2.0
         version: 11.2.0
-      chalk:
-        specifier: ^5.3.0
-        version: 5.3.0
       change-case:
         specifier: ^3.1.0
         version: 3.1.0
@@ -208,6 +205,9 @@ importers:
       oclif:
         specifier: ^4.15.16
         version: 4.15.16(@types/node@18.19.60)
+      picocolors:
+        specifier: ^1.1.1
+        version: 1.1.1
       prettier:
         specifier: ~3.2.5
         version: 3.2.5
@@ -531,9 +531,6 @@ importers:
       async:
         specifier: ^3.2.6
         version: 3.2.6
-      chalk:
-        specifier: ^2.4.2
-        version: 2.4.2
       cosmiconfig:
         specifier: ^8.3.6
         version: 8.3.6(typescript@5.4.5)
@@ -573,6 +570,9 @@ importers:
       multimatch:
         specifier: ^5.0.0
         version: 5.0.0
+      picocolors:
+        specifier: ^1.1.1
+        version: 1.1.1
       picomatch:
         specifier: ^2.3.1
         version: 2.3.1
@@ -731,9 +731,6 @@ importers:
       '@oclif/plugin-not-found':
         specifier: ^3.2.24
         version: 3.2.24(@types/node@18.19.60)
-      chalk:
-        specifier: ^2.4.2
-        version: 2.4.2
       semver:
         specifier: ^7.6.3
         version: 7.6.3

@@ -559,7 +559,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			if (event.isLocal) {
 				this.submitSequenceMessage(opArgs.op);
 			}
-			this.emit("sequenceDelta", event, this);
+			if (deltaArgs.deltaSegments.length > 0) {
+				this.emit("sequenceDelta", event, this);
+			}
 		});
 
 		this.client.on("maintenance", (args, opArgs) => {

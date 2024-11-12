@@ -199,7 +199,7 @@ function ackSegment(
 			segment.localMovedSeq = obliterateInfo.localSeq = undefined;
 			const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
 			assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
-			moveInfo.movedSeqs[seqIdx] = obliterateInfo.seq = sequenceNumber;
+			moveInfo.movedSeqs[seqIdx] = sequenceNumber;
 
 			if (moveInfo.movedSeq === UnassignedSequenceNumber) {
 				moveInfo.movedSeq = sequenceNumber;
@@ -1330,11 +1330,9 @@ export class MergeTree {
 				});
 			});
 
-			if (
-				opArgs.op.type === MergeTreeDeltaType.OBLITERATE ||
-				opArgs.op.type === MergeTreeDeltaType.OBLITERATE_SIDED
-			) {
-				this.obliterates.addOrUpdate(pendingSegmentGroup.obliterateInfo!);
+			if (pendingSegmentGroup.obliterateInfo !== undefined) {
+				pendingSegmentGroup.obliterateInfo.seq = seq;
+				this.obliterates.addOrUpdate(pendingSegmentGroup.obliterateInfo);
 			}
 
 			// Perform slides after all segments have been acked, so that
@@ -2174,7 +2172,7 @@ export class MergeTree {
 
 		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
 		// opArgs == undefined => test code
-		if (movedSegments.length > 0) {
+		if (start.pos !== end.pos || start.side !== end.side) {
 			this.mergeTreeDeltaCallback?.(opArgs, {
 				operation: MergeTreeDeltaType.OBLITERATE,
 				deltaSegments: movedSegments,
