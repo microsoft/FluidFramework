@@ -210,7 +210,7 @@ export interface AdjustParams {
 	 */
 	value: number;
 	/**
-	 * An optional minimum value for the computed value of the key this adjustment is applied too.
+	 * An optional minimum value for the computed value of the key this adjustment is applied to.
 	 * The minimum will be applied after the value is applied.
 	 */
 	min?: number | undefined;
