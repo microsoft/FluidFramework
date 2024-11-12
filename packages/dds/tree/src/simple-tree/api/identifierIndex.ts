@@ -10,11 +10,7 @@ import type {
 	ITreeSubscriptionCursor,
 	TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
-// todo fix this
-// eslint-disable-next-line import/no-internal-modules
-import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
 import {
-	type Context,
 	AnchorTreeIndex,
 	isTreeValue,
 	type TreeIndexNodes,
@@ -25,21 +21,12 @@ import {
 } from "../../feature-libraries/index.js";
 import { brand, fail } from "../../util/index.js";
 import type { ImplicitFieldSchema, NodeFromSchema } from "../schemaTypes.js";
-import {
-	getOrCreateNodeFromInnerNode,
-	type TreeNode,
-	type TreeNodeSchema,
-} from "../core/index.js";
+import { treeNodeFromAnchor, type TreeNode, type TreeNodeSchema } from "../core/index.js";
 import { ObjectNodeSchema } from "../objectNodeTypes.js";
 import { treeNodeApi } from "./treeNodeApi.js";
-// todo
-// eslint-disable-next-line import/no-internal-modules
-import { proxySlot } from "../core/treeNodeKernel.js";
 import type { TreeView } from "./tree.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-// todo
-// eslint-disable-next-line import/no-internal-modules
-import type { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
+import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 
 /**
  * A {@link TreeIndex} that returns tree nodes given their associated keys.
@@ -149,8 +136,8 @@ export function createSimpleTreeIndex<
 		schemaIndexer,
 		(anchorNodes) => {
 			const simpleTreeNodes: TreeNode[] = [];
-			for (const a of anchorNodes) {
-				const simpleTree = getOrCreateSimpleTree(view, a);
+			for (const anchorNode of anchorNodes) {
+				const simpleTree = treeNodeFromAnchor(anchorNode);
 				if (!isTreeValue(simpleTree)) {
 					simpleTreeNodes.push(simpleTree);
 				}
@@ -161,7 +148,7 @@ export function createSimpleTreeIndex<
 			}
 		},
 		(anchorNode: AnchorNode) => {
-			const simpleTree = getOrCreateSimpleTree(view, anchorNode);
+			const simpleTree = treeNodeFromAnchor(anchorNode);
 			if (!isTreeValue(simpleTree)) {
 				return treeNodeApi.status(simpleTree);
 			}
@@ -220,30 +207,6 @@ export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(
 		},
 		isStringKey,
 	);
-}
-
-/**
- * Gets a simple tree from an anchor node
- */
-function getOrCreateSimpleTree<TSchema extends ImplicitFieldSchema>(
-	view: TreeView<TSchema>,
-	anchorNode: AnchorNode,
-): TreeNode | TreeIndexKey {
-	return (
-		anchorNode.slots.get(proxySlot) ??
-		makeTreeNode((view as SchematizingSimpleTreeView<TSchema>).getView().context, anchorNode)
-	);
-}
-
-/**
- * Make a tree node from an anchor node
- */
-function makeTreeNode(context: Context, anchorNode: AnchorNode): TreeNode | TreeIndexKey {
-	const cursor = context.checkout.forest.allocateCursor();
-	context.checkout.forest.moveCursorToPath(anchorNode, cursor);
-	const flexNode = makeTree(context, cursor);
-	cursor.free();
-	return getOrCreateNodeFromInnerNode(flexNode);
 }
 
 function makeGenericKeyFinder<TKey extends TreeIndexKey>(

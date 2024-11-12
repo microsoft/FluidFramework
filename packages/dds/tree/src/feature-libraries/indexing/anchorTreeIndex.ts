@@ -305,7 +305,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 
 			getOrCreate(this.anchors, anchorNode, () => []).push(anchor);
 			// when the anchor node is destroyed, delete it from the index
-			anchorNode.on("afterDestroy", () => {
+			anchorNode.events.on("afterDestroy", () => {
 				this.removeAnchor(anchorNode, key);
 			});
 		}

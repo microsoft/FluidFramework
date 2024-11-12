@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { getView } from "../../utils.js";
 import {
@@ -210,14 +210,12 @@ describe("tree indexes", () => {
 		}) {}
 
 		// creates an index that indexes all nests that have blue eggs in them
-		function createNestIndex(root: SchematizingSimpleTreeView<typeof Nest[]>) { }
+		function createNestIndex(root: SchematizingSimpleTreeView<(typeof Nest)[]>) {}
 
 		const config = new TreeViewConfiguration({ schema: Nest });
 		const view = getView(config);
 		view.initialize({ bird: { eggs: [{ color: "blue" }] } });
-
-		
-	})
+	});
 
 	it("does not include nodes that are detached when the index is created", () => {
 		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
