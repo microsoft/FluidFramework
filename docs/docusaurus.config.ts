@@ -147,8 +147,8 @@ const config: Config = {
 		},
 		// Note: we have configured a custom footer component. See src/theme/Footer/index.tsx.
 		prism: {
-			theme: prismThemes.github,
-			darkTheme: prismThemes.dracula,
+			theme: prismThemes.vsLight,
+			darkTheme: prismThemes.vsDark,
 		},
 	} satisfies Preset.ThemeConfig,
 	themes: [
