@@ -11,7 +11,7 @@ import {
 } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
 import { Config } from "@oclif/core";
-import chalk from "chalk";
+import chalk from "picocolors";
 
 import { findPackageOrReleaseGroup } from "../args.js";
 import {

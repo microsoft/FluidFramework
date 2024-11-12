@@ -16,9 +16,9 @@ import {
 } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
 import { Command, Flags, ux } from "@oclif/core";
-import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
 import { writeJson } from "fs-extra/esm";
+import chalk from "picocolors";
 import sortJson from "sort-json";
 import { table } from "table";
 
@@ -430,26 +430,26 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		this.log(chalk.underline(chalk.bold(`Release Report`)));
 		if (mode === "inRepo" && flags.releaseGroup !== undefined) {
 			this.log(
-				`${chalk.yellow.bold("\nIMPORTANT")}: This report only includes the ${chalk.blue(
+				`${chalk.yellow(chalk.bold("\nIMPORTANT"))}: This report only includes the ${chalk.blue(
 					flags.releaseGroup,
 				)} release group (version ${chalk.blue(
 					context.getVersion(flags.releaseGroup),
 				)}) and its ${chalk.bold("direct Fluid dependencies")}.`,
 			);
 			this.log(
-				`${chalk.yellow.bold(
-					"IMPORTANT",
+				`${chalk.yellow(
+					chalk.bold("IMPORTANT"),
 				)}: The release version was determined by the in-repo version of the release group.`,
 			);
 		} else if (flags.releaseGroup === undefined) {
 			this.log(
-				`${chalk.yellow.bold("\nIMPORTANT")}: This report includes ${chalk.blue(
+				`${chalk.yellow(chalk.bold("\nIMPORTANT"))}: This report includes ${chalk.blue(
 					"all packages and release groups",
 				)} in the repo.`,
 			);
 		} else if (flags.releaseGroup !== undefined) {
 			this.log(
-				`${chalk.yellow.bold("\nIMPORTANT")}: This report only includes the ${chalk.blue(
+				`${chalk.yellow(chalk.bold("\nIMPORTANT"))}: This report only includes the ${chalk.blue(
 					flags.releaseGroup,
 				)} release group! ${chalk.bold("None of its dependencies are included.")}`,
 			);
@@ -458,7 +458,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		switch (mode) {
 			case "interactive": {
 				this.log(
-					`${chalk.yellow.bold("IMPORTANT")}: Release versions were selected ${chalk.bold(
+					`${chalk.yellow(chalk.bold("IMPORTANT"))}: Release versions were selected ${chalk.bold(
 						"interactively",
 					)}.`,
 				);
@@ -467,7 +467,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			}
 			case "date": {
 				this.log(
-					`${chalk.yellow.bold("IMPORTANT")}: The latest release version ${chalk.bold(
+					`${chalk.yellow(chalk.bold("IMPORTANT"))}: The latest release version ${chalk.bold(
 						"by date",
 					)} was selected.`,
 				);
@@ -476,7 +476,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			}
 			case "version": {
 				this.log(
-					`${chalk.yellow.bold("IMPORTANT")}: The ${chalk.bold(
+					`${chalk.yellow(chalk.bold("IMPORTANT"))}: The ${chalk.bold(
 						"highest semver",
 					)} version was selected.`,
 				);
@@ -635,7 +635,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const bumpType = detectBumpType(prevVer ?? DEFAULT_MIN_VERSION, latestVer);
 			const displayBumpType = highlight(`${bumpType}`);
 
-			const displayVersionSection = chalk.grey(
+			const displayVersionSection = chalk.gray(
 				`${highlight(latestVer)} <-- ${displayPreviousVersion}`,
 			);
 
