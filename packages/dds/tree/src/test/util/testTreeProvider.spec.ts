@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import assert from "node:assert";
 
 import { SharedTreeCore } from "../../shared-tree-core/index.js";
 import { SummarizeType, TestTreeProvider, spyOnMethod } from "../utils.js";

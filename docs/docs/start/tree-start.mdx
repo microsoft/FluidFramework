@@ -181,7 +181,7 @@ class TodoList extends schemaFactory.object("TodoList", {
 
 These methods are designed to merge well in collaborative settings without you having to think much about it.
 See [schema definition](../data-structures/tree) for more details on the built-in editing methods.
-You can also read more about how these editing operations work in collaborative settings [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/main/merge-semantics.md).
+You can also read more about how these editing operations work in collaborative settings [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/merge-semantics.md).
 
 ### Grouping Edits into Transactions
 
