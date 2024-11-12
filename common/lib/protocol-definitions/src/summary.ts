@@ -159,6 +159,8 @@ export interface ISummaryTree {
 
 	/**
 	 * The object containing all the tree's {@link SummaryObject} children.
+	 *
+	 * @param path - The key to store the SummaryObject at in the current summary tree being generated. Should not contain any "/" characters and should not change when encodeURIComponent is called on it.
 	 */
 	tree: { [path: string]: SummaryObject };
 

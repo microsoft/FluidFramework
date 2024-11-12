@@ -247,14 +247,17 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	}
 
 	/**
-	 * Adds an attachment to the summary. This blob needs to already be uploaded to storage.
-	 * @param id - The id of the attachment to be added to the summary tree.
+	 * Adds an {@link @fluidframework/driver-definitions#ISummaryAttachment} to the summary. This blob needs to already be uploaded to storage.
+	 * @param id - The id of the uploaded attachment to be added to the summary tree.
 	 */
 	public addAttachment(id: string) {
 		this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
 	}
 
 	/**
+	 * Gives you the in-memory summary tree with stats built by the SummaryTreeBuilder.
+	 *
+	 * @remarks
 	 * Use this once you're done building the summary tree, the stats should automatically be generated.
 	 * @returns The summary tree and stats built by the SummaryTreeBuilder.
 	 */
