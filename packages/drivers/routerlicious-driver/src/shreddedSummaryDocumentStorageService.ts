@@ -98,13 +98,14 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {
 		let requestVersion = version;
-		if (!requestVersion) {
+		if (requestVersion === undefined) {
 			const versions = await this.getVersions(this.id, 1);
-			if (versions.length === 0) {
+			const firstVersion = versions[0];
+			if (firstVersion === undefined) {
 				return null;
 			}
 
-			requestVersion = versions[0];
+			requestVersion = firstVersion;
 		}
 
 		const cachedSnapshotTree = await this.snapshotTreeCache?.get(

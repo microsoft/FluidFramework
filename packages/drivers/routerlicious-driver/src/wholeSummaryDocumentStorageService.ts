@@ -161,13 +161,14 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	// eslint-disable-next-line @rushstack/no-new-null
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		let requestVersion = version;
-		if (!requestVersion) {
+		if (requestVersion === undefined) {
 			const versions = await this.getVersions(this.id, 1);
-			if (versions.length === 0) {
+			const firstVersion = versions[0];
+			if (firstVersion === undefined) {
 				return null;
 			}
 
-			requestVersion = versions[0];
+			requestVersion = firstVersion;
 		}
 
 		let normalizedWholeSnapshot = await this.snapshotTreeCache.get(
