@@ -31,7 +31,7 @@ export interface IProvideFluidDataStoreFactory {
  * with the data. Each data store is associated with a unique identifier (its `type` member)
  * and is typically provided to consumers through a data store registry.
  *
- * The factory plays a crucial role in the lifecycle of a data store. It is responsible
+ * The factory is responsible
  * for creating new instances of data stores and loading existing ones. The factory
  * ensures that the data store is correctly initialized and bound to its context.
  *
