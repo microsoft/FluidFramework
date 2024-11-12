@@ -114,7 +114,7 @@ describe("Presence", () => {
 					presence.removeClientConnectionId("unknownConnectionId");
 				});
 
-				describe("joining", () => {
+				describe("is joining", () => {
 					let newAttendee: ISessionClient | undefined;
 					beforeEach(() => {
 						newAttendee = undefined;
@@ -246,66 +246,58 @@ describe("Presence", () => {
 						presence.processSignal("", initialAttendeeSignal, false);
 					});
 
-					it("is announced via `attendeeDisconnected` when its connection is removed", () => {
+					describe("has their connection removed", () => {
 						// Setup
 						let disconnectedAttendee: ISessionClient | undefined;
-						afterCleanUp.push(
-							presence.events.on("attendeeDisconnected", (attendee) => {
+						beforeEach(() => {
+							afterCleanUp.push(
+								presence.events.on("attendeeDisconnected", (attendee) => {
+									assert(
+										disconnectedAttendee === undefined,
+										"Only one attendee should be disconnected",
+									);
+									disconnectedAttendee = attendee;
+								}),
+							);
+
+							// Act - remove client connection id
+							presence.removeClientConnectionId(initialAttendeeConnectionId);
+
+							it("is announced via `attendeeDisconnected`", () => {
 								assert(
-									disconnectedAttendee === undefined,
-									"Only one attendee should be disconnected",
+									disconnectedAttendee !== undefined,
+									"No attendee was disconnected in removeClientConnectionId",
 								);
-								disconnectedAttendee = attendee;
-							}),
-						);
-
-						// Act - remove client connection id
-						presence.removeClientConnectionId(initialAttendeeConnectionId);
-
-						// Verify
-						assert(
-							disconnectedAttendee !== undefined,
-							"No attendee was disconnected in removeClientConnectionId",
-						);
-						assert.equal(
-							disconnectedAttendee.sessionId,
-							newAttendeeSessionId,
-							"Disconnected attendee has wrong session id",
-						);
-						assert.equal(
-							disconnectedAttendee.getConnectionId(),
-							initialAttendeeConnectionId,
-							"Disconnected attendee has wrong client connection id",
-						);
-						assert.equal(
-							disconnectedAttendee.getConnectionStatus(),
-							SessionClientStatus.Disconnected,
-							"Disconnected attendee has wrong status",
-						);
-					});
-
-					it('is not announced via `attendeeDisconnected` when already "Disconnected"', () => {
-						// Setup
-						let disconnectedAttendee: ISessionClient | undefined;
-
-						afterCleanUp.push(
-							presence.events.on("attendeeDisconnected", (attendee) => {
+								assert.equal(
+									disconnectedAttendee.sessionId,
+									newAttendeeSessionId,
+									"Disconnected attendee has wrong session id",
+								);
+								assert.equal(
+									disconnectedAttendee.getConnectionId(),
+									initialAttendeeConnectionId,
+									"Disconnected attendee has wrong client connection id",
+								);
+								assert.equal(
+									disconnectedAttendee.getConnectionStatus(),
+									SessionClientStatus.Disconnected,
+									"Disconnected attendee has wrong status",
+								);
+							});
+							it('is not announced via `attendeeDisconnected` when already "Disconnected"', () => {
 								assert(
-									disconnectedAttendee === undefined,
-									"Only one attendee should be disconnected",
+									disconnectedAttendee !== undefined,
+									"No attendee was disconnected in removeClientConnectionId",
 								);
-								disconnectedAttendee = attendee;
-							}),
-						);
 
-						// Act - remove client connection id
-						presence.removeClientConnectionId(initialAttendeeConnectionId);
-						// Act - remove client connection id again
-						presence.removeClientConnectionId(initialAttendeeConnectionId);
+								// Act & Verify - remove client connection id again
+								presence.removeClientConnectionId(initialAttendeeConnectionId);
+							});
+						});
 					});
 				});
 
-				describe("rejoining", () => {
+				describe("is rejoining", () => {
 					let priorAttendee: ISessionClient | undefined;
 					beforeEach(() => {
 						afterCleanUp.push(
