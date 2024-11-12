@@ -634,7 +634,26 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			}
 		});
 
-		await super.initialize(connectMessage, timeout).finally(() => {
+		const p = new Deferred<void>();
+		// Due to socket reuse(multiplexing), we can get "disconnect" event from other clients in the socket reference.
+		// So, a race condition could happen, where this client is establishing connection and listening for "connect_document_success"
+		// on the socket among other events, but we get "disconnect" event on the socket reference from other clients, in which case,
+		// we dispose connection object and stop listening to further events on the socket. Due to this we get stuck as the connection
+		// is not yet established and so we don't return any connection object to the client(connection manager). So, we remain stuck.
+		// In order to handle this, listen for the "disconnect" event and reject the promise with the error so that the caller can
+		// know anf handle the error.
+		this.on("disconnect", (reason: IAnyDriverError) => {
+			if (!p.isCompleted) {
+				p.reject(reason);
+			}
+		});
+
+		super
+			.initialize(connectMessage, timeout)
+			.then(() => p.resolve())
+			.catch((error) => p.reject(error));
+
+		await p.promise.finally(() => {
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptInfo",
 				...this.getConnectionDetailsProps(),
@@ -642,7 +661,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		});
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	protected addTrackedListener(event: string, listener: (...args: any[]) => void): void {
 		// override some event listeners in order to support multiple documents/clients over the same websocket
 		switch (event) {
