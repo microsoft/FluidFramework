@@ -543,9 +543,9 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export type InsertableTreeFieldFromImplicitField<
 	TSchemaInput extends ImplicitFieldSchema,
 	TSchema = UnionToIntersection<TSchemaInput>,
-> = [TSchema] extends [FieldSchema<infer Kind, infer Types>]
+> = TSchema extends FieldSchema<infer Kind, infer Types>
 	? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
-	: [TSchema] extends [ImplicitAllowedTypes]
+	: TSchema extends ImplicitAllowedTypes
 		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
 		: never;
 
