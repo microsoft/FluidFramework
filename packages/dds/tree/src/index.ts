@@ -237,7 +237,10 @@ export type {
 export {
 	createEmitter,
 	EventEmitter,
-	type IEmitter,
-	type NoListenersCallback,
-	type HasListeners,
+} from "@fluidframework/core-utils/internal";
+
+export type {
+	IEmitter,
+	NoListenersCallback,
+	HasListeners,
 } from "@fluidframework/core-utils/internal";

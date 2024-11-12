@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	assert,
-	unreachableCase,
-	type HasListeners,
-	type IEmitter,
-	createEmitter,
-} from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, createEmitter } from "@fluidframework/core-utils/internal";
+import type { HasListeners, IEmitter } from "@fluidframework/core-utils/internal";
 import type { Listenable } from "@fluidframework/core-utils";
 import type {
 	IChannelAttributes,
