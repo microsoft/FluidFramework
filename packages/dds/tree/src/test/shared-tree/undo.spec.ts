@@ -589,7 +589,7 @@ describe("Undo and redo", () => {
 		assert.equal(clonedUndoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 	});
 
-	it.only("clone revertible fails if trees are different", () => {
+	it("clone revertible fails if trees are different", () => {
 		const viewA = asTreeViewAlpha(createLocalSharedTree("testSharedTreeOne"));
 		const viewB = asTreeViewAlpha(createLocalSharedTreeTwo("testSharedTreeTwo"));
 
