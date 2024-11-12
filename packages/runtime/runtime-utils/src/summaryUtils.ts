@@ -159,7 +159,8 @@ export interface SummaryTreeBuilderParams {
 	groupId?: string;
 }
 /**
- * SummaryTreeBuilder is a helper class following the builder pattern that helps build a summary tree.
+ * A helper class for building summary trees.
+ * @remarks Uses the builder pattern.
  * @legacy
  * @alpha
  */
