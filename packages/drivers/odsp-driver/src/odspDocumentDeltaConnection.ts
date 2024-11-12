@@ -641,7 +641,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		// we dispose connection object and stop listening to further events on the socket. Due to this we get stuck as the connection
 		// is not yet established and so we don't return any connection object to the client(connection manager). So, we remain stuck.
 		// In order to handle this, listen for the "disconnect" event and reject the promise with the error so that the caller can
-		// know anf handle the error.
+		// know and handle the error.
 		this.on("disconnect", (reason: IAnyDriverError) => {
 			if (!p.isCompleted) {
 				p.reject(reason);
