@@ -76,7 +76,7 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
  * @see {@link Input}
  *
  * @typeparam TSchemaInput - Schema to process.
- * @typeparam TSchema - Do not specify: default value used as implementation detail.
+ * @typeparam TSchema - Do not specify: default value used as an implementation detail.
  * @system @public
  */
 export type AssignableTreeFieldFromImplicitField<
