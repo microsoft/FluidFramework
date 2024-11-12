@@ -1,4 +1,4 @@
-# @fluid-experimental/presence
+# @fluidframework/presence
 
 A set of session-focused utilities for lightweight data sharing and messaging.
 
@@ -47,7 +47,7 @@ Notifications value managers are special case where no data is retained during a
 While this package is developing as experimental and other Fluid Framework internals are being updated to accommodate it, a temporary Shared Object must be added within container to gain access.
 
 ```typescript
-import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluid-experimental/presence";
+import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluidframework/presence";
 
 const containerSchema = {
 	initialObjects: {
@@ -118,12 +118,12 @@ If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), 
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluid-experimental/presence
+npm i @fluidframework/presence
 ```
 
 ## API Documentation
 
-API documentation for **@fluid-experimental/presence** is available at <https://fluidframework.com/docs/apis/presence>.
+API documentation for **@fluidframework/presence** is available at <https://fluidframework.com/docs/apis/presence>.
 
 ## Minimum Client Requirements
 
