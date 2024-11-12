@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-import chalk from "chalk";
 import { Machine } from "jssm";
+import chalk from "picocolors";
 
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 

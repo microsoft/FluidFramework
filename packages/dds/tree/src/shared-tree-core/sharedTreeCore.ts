@@ -183,16 +183,16 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			this.mintRevisionTag,
 			rebaseLogger,
 		);
-		this.editManager.localBranch.on("transactionStarted", () => {
+		this.editManager.localBranch.events.on("transactionStarted", () => {
 			this.commitEnricher.startNewTransaction();
 		});
-		this.editManager.localBranch.on("transactionAborted", () => {
+		this.editManager.localBranch.events.on("transactionAborted", () => {
 			this.commitEnricher.abortCurrentTransaction();
 		});
-		this.editManager.localBranch.on("transactionCommitted", () => {
+		this.editManager.localBranch.events.on("transactionCommitted", () => {
 			this.commitEnricher.commitCurrentTransaction();
 		});
-		this.editManager.localBranch.on("beforeChange", (change) => {
+		this.editManager.localBranch.events.on("beforeChange", (change) => {
 			// Ensure that any previously prepared commits that have not been sent are purged.
 			this.commitEnricher.purgePreparedCommits();
 			if (this.detachedRevision !== undefined) {
@@ -219,7 +219,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.commitEnricher.prepareCommit(change.newCommits[0] ?? oob(), true);
 			}
 		});
-		this.editManager.localBranch.on("afterChange", (change) => {
+		this.editManager.localBranch.events.on("afterChange", (change) => {
 			if (this.getLocalBranch().isTransacting()) {
 				// We do not submit ops for changes that are part of a transaction.
 				return;
