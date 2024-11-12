@@ -62,7 +62,6 @@ import {
 	type IEditableForest,
 	type IForestSubscription,
 	type JsonableTree,
-	type Revertible,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -86,7 +85,6 @@ import {
 	type TreeStoredSchemaSubscription,
 	type ITreeCursorSynchronous,
 	CursorLocationType,
-	type RevertibleFactory,
 } from "../core/index.js";
 import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
@@ -1047,52 +1045,6 @@ export function rootFromDeltaFieldMap(
 		rootDelta.destroy = destroy;
 	}
 	return rootDelta;
-}
-
-export function createTestUndoRedoStacks(
-	events: Listenable<TreeBranchEvents | CheckoutEvents>,
-): {
-	undoStack: Revertible[];
-	redoStack: Revertible[];
-	unsubscribe: () => void;
-} {
-	const undoStack: Revertible[] = [];
-	const redoStack: Revertible[] = [];
-
-	function onDispose(disposed: Revertible): void {
-		const redoIndex = redoStack.indexOf(disposed);
-		if (redoIndex !== -1) {
-			redoStack.splice(redoIndex, 1);
-		} else {
-			const undoIndex = undoStack.indexOf(disposed);
-			if (undoIndex !== -1) {
-				undoStack.splice(undoIndex, 1);
-			}
-		}
-	}
-
-	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactory): void {
-		if (getRevertible !== undefined) {
-			const revertible = getRevertible(onDispose);
-			if (commit.kind === CommitKind.Undo) {
-				redoStack.push(revertible);
-			} else {
-				undoStack.push(revertible);
-			}
-		}
-	}
-
-	const unsubscribeFromChangedEvent = events.on("changed", onNewCommit);
-	const unsubscribe = (): void => {
-		unsubscribeFromChangedEvent();
-		for (const revertible of undoStack) {
-			revertible.dispose();
-		}
-		for (const revertible of redoStack) {
-			revertible.dispose();
-		}
-	};
-	return { undoStack, redoStack, unsubscribe };
 }
 
 export function createClonableUndoRedoStacks(

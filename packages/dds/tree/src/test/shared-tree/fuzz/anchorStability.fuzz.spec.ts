@@ -15,7 +15,11 @@ import {
 } from "@fluid-private/test-dds-utils";
 
 import type { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
-import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
+import {
+	SharedTreeTestFactory,
+	createClonableUndoRedoStacks,
+	validateTree,
+} from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -184,7 +188,9 @@ describe("Fuzz - anchor stability", () => {
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
 				const view = viewFromState(initialState, client).checkout as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+				const { undoStack, redoStack, unsubscribe } = createClonableUndoRedoStacks(
+					view.events,
+				);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;

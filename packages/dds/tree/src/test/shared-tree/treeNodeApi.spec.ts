@@ -27,7 +27,7 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	TestTreeProviderLite,
-	createTestUndoRedoStacks,
+	createClonableUndoRedoStacks,
 	getView,
 	validateUsageError,
 } from "../utils.js";
@@ -115,7 +115,7 @@ describe("treeApi", () => {
 				const view = getTestObjectView();
 				const checkoutView = view.getView();
 				assert(checkoutView instanceof CheckoutFlexTreeView);
-				const { undoStack, redoStack } = createTestUndoRedoStacks(
+				const { undoStack, redoStack } = createClonableUndoRedoStacks(
 					checkoutView.checkout.events,
 				);
 
