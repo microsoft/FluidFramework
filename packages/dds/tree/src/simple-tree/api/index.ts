@@ -95,11 +95,10 @@ export type { EncodeOptions } from "./customTree.js";
 export { type ConciseTree, conciseFromCursor } from "./conciseTree.js";
 
 export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
+export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
 export {
-	createSimpleTreeIndex,
 	createIdentifierIndex,
 	type IdentifierIndex,
-	type SimpleTreeIndex,
 } from "./identifierIndex.js";
 
 export {

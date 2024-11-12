@@ -11,9 +11,8 @@ import {
 	type TreeNodeSchema,
 	TreeViewConfiguration,
 	createIdentifierIndex,
+	createSimpleTreeIndex,
 } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { createSimpleTreeIndex } from "../../simple-tree/api/identifierIndex.js";
 import {
 	flexTreeSlot,
 	type TreeIndexKey,
