@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluidframework/core-utils/internal";
+
 import type { ValueManager } from "./internalTypes.js";
 import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
 import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
-import { createEmitter } from "@fluid-experimental/presence/internal/events";
 import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
 import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
 
@@ -158,7 +159,6 @@ class NotificationsManagerImpl<
 
 	// @ts-expect-error TODO
 	public readonly notifications: NotificationSubscribable<T> =
-		// @ts-expect-error TODO
 		createEmitter<NotificationSubscriptions<T>>();
 
 	public constructor(

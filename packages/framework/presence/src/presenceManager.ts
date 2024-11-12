@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter, type IEmitter } from "@fluidframework/core-utils/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {
 	ITelemetryLoggerExt,
@@ -32,8 +33,6 @@ import type {
 	IContainerExtension,
 	IExtensionMessage,
 } from "@fluid-experimental/presence/internal/container-definitions/internal";
-import type { IEmitter } from "@fluid-experimental/presence/internal/events";
-import { createEmitter } from "@fluid-experimental/presence/internal/events";
 
 /**
  * Portion of the container extension requirements ({@link IContainerExtension}) that are delegated to presence manager.
