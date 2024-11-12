@@ -33,7 +33,7 @@ export interface IProvideFluidDataStoreFactory {
  *
  * The factory is responsible
  * for creating new instances of data stores and loading existing ones. The factory
- * ensures that the data store is correctly initialized and bound to its context.
+ * ensures that the data store is correctly initialized.
  *
  * @legacy
  * @alpha
