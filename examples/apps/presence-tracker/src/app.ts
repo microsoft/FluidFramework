@@ -21,9 +21,6 @@ import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 import { renderFocusPresence, renderMousePresence } from "./view.js";
 
-// Define the server we will be using and initialize Fluid
-const useAzure = process.env.FLUID_CLIENT === "azure";
-
 const user = {
 	id: "1234567890",
 	name: "Test User",
@@ -47,7 +44,7 @@ const containerSchema = {
 	},
 } satisfies ContainerSchema;
 
-type PresenceTrackerSchema = typeof containerSchema;
+export type PresenceTrackerSchema = typeof containerSchema;
 
 /**
  * Start the app and render.

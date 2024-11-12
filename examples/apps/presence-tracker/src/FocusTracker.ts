@@ -47,10 +47,6 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		statesWorkspace.add("focus", Latest({ hasFocus: true }));
 		this.focus = statesWorkspace.props.focus;
 
-		this.focus.local = {
-			hasFocus: true,
-		};
-
 		this.presence.events.on("attendeeDisconnected", (client: ISessionClient) => {
 			this.focusMap.delete(client);
 		});
@@ -73,12 +69,26 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		});
 	}
 
+	/**
+	 * A map of connection IDs to focus status.
+	 */
 	public getFocusPresences(): Map<string, boolean> {
 		const statuses: Map<string, boolean> = new Map<string, boolean>();
 
 		for (const { client, value } of this.focus.clientValues()) {
 			const { hasFocus } = value;
-			statuses.set(client.getConnectionId(), hasFocus);
+
+			for (const [_, member] of this.audience.getMembers()) {
+				const foundConnection = member.connections.some(
+					(connection) => connection.id === client.getConnectionId(),
+				);
+				if (foundConnection) {
+					statuses.set(client.getConnectionId(), hasFocus);
+					break;
+				} else {
+					statuses.delete(client.getConnectionId());
+				}
+			}
 		}
 
 		return statuses;

@@ -31,16 +31,19 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	wrapperDiv.appendChild(focusMessageDiv);
 
 	const onFocusChanged = () => {
-		const currentUser = focusTracker.audience.getMyself()?.name;
+		const currentUser = focusTracker.audience.getMyself();
 		const focusPresences = focusTracker.getFocusPresences();
 
 		focusDiv.innerHTML = `
-            Current user: ${currentUser}</br>
+            Current user: ${currentUser?.name} - connection: ${currentUser?.currentConnection}</br>
             ${getFocusPresencesString("</br>", focusTracker)}
         `;
 
-		focusMessageDiv.style.display =
-			currentUser !== undefined && focusPresences.get(currentUser) === false ? "" : "none";
+		const display =
+			currentUser !== undefined && focusPresences.get(currentUser.currentConnection) === true
+				? ""
+				: "none";
+		focusMessageDiv.style.display = display;
 	};
 
 	onFocusChanged();

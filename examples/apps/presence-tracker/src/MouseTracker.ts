@@ -65,12 +65,24 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		});
 	}
 
+	/**
+	 * A map of connection IDs to mouse positions.
+	 */
 	public getMousePresences(): Map<string, IMousePosition> {
-		const statuses: Map<string, IMousePosition> = new Map<string, IMousePosition>();
+		const statuses: Map<string, IMousePosition> = new Map();
 
 		for (const { client, value: position } of this.cursor.clientValues()) {
-			if (position !== undefined) {
-				statuses.set(client.getConnectionId(), position);
+			const clientConnectionId = client.getConnectionId();
+
+			for (const [_, member] of this.audience.getMembers()) {
+				const foundConnection = member.connections.some(
+					(connection) => connection.id === clientConnectionId,
+				);
+				if (foundConnection) {
+					statuses.set(clientConnectionId, position);
+				} else {
+					statuses.delete(clientConnectionId);
+				}
 			}
 		}
 		return statuses;

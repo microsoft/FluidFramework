@@ -1,56 +1,104 @@
-// /*!
-//  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-//  * Licensed under the MIT License.
-//  */
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
-// import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
-// import { ITrackerAppModel, TrackerContainerRuntimeFactory } from "../src/containerCode.js";
-// import { renderFocusPresence, renderMousePresence } from "../src/view.js";
+import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluid-experimental/presence";
+import {
+	AzureClient,
+	type AzureContainerServices,
+	type AzureLocalConnectionConfig,
+} from "@fluidframework/azure-client";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
+import type { ContainerSchema, IFluidContainer } from "fluid-framework";
+import { SharedMap } from "fluid-framework/legacy";
 
-// /**
-//  * This is a helper function for loading the page. It's required because getting the Fluid Container
-//  * requires making async calls.
-//  */
-// async function setup() {
-// 	const sessionStorageModelLoader = new SessionStorageModelLoader<ITrackerAppModel>(
-// 		new StaticCodeLoader(new TrackerContainerRuntimeFactory()),
-// 	);
+import { FocusTracker } from "../src/FocusTracker.js";
+import { MouseTracker } from "../src/MouseTracker.js";
+import { renderFocusPresence, renderMousePresence } from "../src/view.js";
 
-// 	let id: string;
-// 	let model: ITrackerAppModel;
+	const user = {
+		id: "1234567890",
+		name: "Test User",
+	};
 
-// 	if (location.hash.length === 0) {
-// 		// Normally our code loader is expected to match up with the version passed here.
-// 		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
-// 		// the version doesn't actually matter.
-// 		const createResponse = await sessionStorageModelLoader.createDetached("1.0");
-// 		model = createResponse.model;
-// 		id = await createResponse.attach();
-// 	} else {
-// 		id = location.hash.substring(1);
-// 		model = await sessionStorageModelLoader.loadExisting(id);
-// 	}
+	const connectionConfig: AzureLocalConnectionConfig = {
+		type: "local",
+		tokenProvider: new InsecureTokenProvider("fooBar", user),
+		endpoint: "http://localhost:7070",
+	};
 
-// 	// update the browser URL and the window title with the actual container ID
-// 	location.hash = id;
-// 	document.title = id;
+	const clientProps = {
+		connection: connectionConfig,
+	};
 
-// 	// Render page focus information for audience members
-// 	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
-// 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
+	const containerSchema = {
+		initialObjects: {
+			map1: SharedMap,
+			// A Presence Manager object temporarily needs to be placed within container schema
+			// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
+			presence: ExperimentalPresenceManager,
+		},
+	} satisfies ContainerSchema;
 
-// 	renderFocusPresence(model.focusTracker, contentDiv);
-// 	renderMousePresence(model.mouseTracker, model.focusTracker, mouseContentDiv);
+	export type PresenceTrackerSchema = typeof containerSchema;
 
-// 	// Setting "fluidStarted" is just for our test automation
-// 	// eslint-disable-next-line @typescript-eslint/dot-notation
-// 	window["fluidStarted"] = true;
-// }
+/**
+ * This is a helper function for loading the page. It's required because getting the Fluid Container
+ * requires making async calls.
+ */
+async function setup() {
+	const client = new AzureClient(clientProps);
+	let container: IFluidContainer<PresenceTrackerSchema>;
+	let services: AzureContainerServices;
 
-// setup().catch((e) => {
-// 	console.error(e);
-// 	console.log(
-// 		"%cThere were issues setting up and starting the in memory FLuid Server",
-// 		"font-size:30px",
-// 	);
-// });
+	let id: string;
+
+	const createNew = location.hash.length === 0;
+	if (createNew) {
+		// The client will create a new detached container using the schema
+		// A detached container will enable the app to modify the container before attaching it to the client
+		({ container, services } = await client.createContainer(containerSchema, "2"));
+
+		// If the app is in a `createNew` state, and the container is detached, we attach the container.
+		// This uploads the container to the service and connects to the collaboration session.
+		id = await container.attach();
+		// The newly attached container is given a unique ID that can be used to access the container in another session
+		location.hash = id;
+	} else {
+		id = location.hash.slice(1);
+		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
+		// collaboration session.
+		({ container, services } = await client.getContainer(id, containerSchema, "2"));
+	}
+
+	document.title = id;
+
+	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
+	const appPresence = presence.getStates("name:trackerData", {});
+
+	// update the browser URL and the window title with the actual container ID
+	location.hash = id;
+	document.title = id;
+
+	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
+	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
+
+	const focusTracker = new FocusTracker(presence, appPresence, services.audience);
+	const mouseTracker = new MouseTracker(presence, appPresence, services.audience);
+
+	renderFocusPresence(focusTracker, contentDiv);
+	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
+
+	// Setting "fluidStarted" is just for our test automation
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	window["fluidStarted"] = true;
+}
+
+setup().catch((e) => {
+	console.error(e);
+	console.log(
+		"%cThere were issues setting up and starting the in memory FLuid Server",
+		"font-size:30px",
+	);
+});
