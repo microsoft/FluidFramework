@@ -4,10 +4,6 @@
  */
 
 import {
-	acquirePresenceViaDataObject,
-	ExperimentalPresenceManager,
-} from "@fluidframework/presence";
-import {
 	AzureClient,
 	AzureContainerServices,
 	AzureLocalConnectionConfig,
@@ -15,6 +11,10 @@ import {
 } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/internal";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
+import {
+	acquirePresenceViaDataObject,
+	ExperimentalPresenceManager,
+} from "@fluidframework/presence";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema } from "fluid-framework";
