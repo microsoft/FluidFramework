@@ -32,11 +32,4 @@ export interface ISimpleLoader {
 	 * @param id - the id of the container to load
 	 */
 	loadExisting(id: string): Promise<IContainer>;
-
-	/**
-	 * Load the container with the given id to at least the specified sequence number.
-	 * @param id - the id of the container to load
-	 * @param sequenceNumber - the sequence number we want to load to at minimum
-	 */
-	loadExistingToSequenceNumber(id: string, sequenceNumber: number): Promise<IContainer>;
 }

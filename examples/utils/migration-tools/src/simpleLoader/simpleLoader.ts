@@ -13,6 +13,27 @@ import type { IRequest } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type { ISimpleLoader } from "./interfaces.js";
+/**
+ * Get a promise that will resolve once the container has advanced to at least the given sequence number
+ * @param container - the container to observe
+ * @param sequenceNumber - the sequence number we want to load to at minimum
+ */
+export const waitForAtLeastSequenceNumber = async (
+	container: IContainer,
+	sequenceNumber: number,
+): Promise<void> =>
+	new Promise<void>((resolve) => {
+		if (sequenceNumber <= container.deltaManager.lastSequenceNumber) {
+			resolve();
+		}
+		const callbackOps = (message: ISequencedDocumentMessage): void => {
+			if (sequenceNumber <= message.sequenceNumber) {
+				resolve();
+				container.deltaManager.off("op", callbackOps);
+			}
+		};
+		container.deltaManager.on("op", callbackOps);
+	});
 
 /**
  * @alpha
@@ -70,7 +91,7 @@ export class SimpleLoader implements ISimpleLoader {
 		return { container, attach };
 	}
 
-	private async loadContainer(id: string): Promise<IContainer> {
+	public async loadExisting(id: string): Promise<IContainer> {
 		return this.loader.resolve({
 			url: id,
 			headers: {
@@ -83,29 +104,5 @@ export class SimpleLoader implements ISimpleLoader {
 				},
 			},
 		});
-	}
-
-	public async loadExisting(id: string): Promise<IContainer> {
-		return this.loadContainer(id);
-	}
-
-	public async loadExistingToSequenceNumber(
-		id: string,
-		sequenceNumber: number,
-	): Promise<IContainer> {
-		const container = await this.loadContainer(id);
-		await new Promise<void>((resolve) => {
-			if (sequenceNumber <= container.deltaManager.lastSequenceNumber) {
-				resolve();
-			}
-			const callbackOps = (message: ISequencedDocumentMessage): void => {
-				if (sequenceNumber <= message.sequenceNumber) {
-					resolve();
-					container.deltaManager.off("op", callbackOps);
-				}
-			};
-			container.deltaManager.on("op", callbackOps);
-		});
-		return container;
 	}
 }
