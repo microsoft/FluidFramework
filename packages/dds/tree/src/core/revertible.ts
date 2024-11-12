@@ -41,7 +41,7 @@ export interface Revertible {
 /**
  * A {@link Revertible} with features that are net yet stable.
  *
- * @alpha
+ * @sealed @alpha
  */
 export interface RevertibleAlpha extends Revertible {
 	/**
