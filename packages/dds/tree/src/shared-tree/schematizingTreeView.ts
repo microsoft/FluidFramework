@@ -297,7 +297,7 @@ export class SchematizingSimpleTreeView<
 				new HydratedContext(this.rootFieldSchema.allowedTypeSet, view.context),
 			);
 
-			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
 				unregister();
 				this.unregisterCallbacks.delete(unregister);
 				view[disposeSymbol]();
@@ -307,7 +307,7 @@ export class SchematizingSimpleTreeView<
 			this.view = undefined;
 			this.checkout.forest.anchors.slots.delete(SimpleContextSlot);
 
-			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
 				unregister();
 				this.unregisterCallbacks.delete(unregister);
 				this.update();

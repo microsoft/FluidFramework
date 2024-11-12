@@ -4,7 +4,17 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
-import type { MapGetSet, NestedMap } from "@fluidframework/core-interfaces";
+
+import type { MapGetSet } from "./utils.js";
+
+/**
+ * A dictionary whose values are keyed off of two objects (key1, key2).
+ * As it is a nested map, size() will return the number of distinct key1s.
+ * If you need constant-time access to the number of values, use SizedNestedMap instead.
+ *
+ * This code assumes values will not be undefined (keys can be undefined).
+ */
+export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 /**
  * A read-only version of {@link NestedMap}.

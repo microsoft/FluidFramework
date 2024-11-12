@@ -134,7 +134,7 @@ export class Chunker implements IChunker {
 		if (cached !== undefined) {
 			return cached;
 		}
-		this.unregisterSchemaCallback = this.schema.on("afterSchemaChange", () =>
+		this.unregisterSchemaCallback = this.schema.events.on("afterSchemaChange", () =>
 			this.schemaChanged(),
 		);
 		return this.tryShapeFromSchema(this.schema, this.policy, schema, this.typeShapes);

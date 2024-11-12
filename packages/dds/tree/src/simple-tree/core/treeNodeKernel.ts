@@ -95,7 +95,7 @@ function isHydrated(state: HydrationState): state is HydratedState {
  * The kernel has the same lifetime as the node and spans both its unhydrated and hydrated states.
  * When hydration occurs, the kernel is notified via the {@link TreeNodeKernel.hydrate | hydrate} method.
  */
-export class TreeNodeKernel implements Listenable<KernelEvents> {
+export class TreeNodeKernel {
 	private disposed = false;
 
 	/**
@@ -205,9 +205,9 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 		this.#hydrationState = {
 			anchorNode,
 			offAnchorNode: new Set([
-				anchorNode.on("afterDestroy", () => this.dispose()),
+				anchorNode.events.on("afterDestroy", () => this.dispose()),
 				// TODO: this should be triggered on change even for unhydrated nodes.
-				anchorNode.on("childrenChanging", () => {
+				anchorNode.events.on("childrenChanging", () => {
 					this.generationNumber += 1;
 				}),
 			]),
@@ -221,7 +221,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 					this.#hydrationState.offAnchorNode.add(
 						// Argument is forwarded between matching events, so the type should be correct.
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						anchorNode.on(eventName, (arg: any) => events.emit(eventName, arg)),
+						anchorNode.events.on(eventName, (arg: any) => events.emit(eventName, arg)),
 					);
 				}
 			}
@@ -248,13 +248,11 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 		return treeStatusFromAnchorCache(this.#hydrationState.anchorNode);
 	}
 
-	public on<K extends keyof KernelEvents>(eventName: K, listener: KernelEvents[K]): Off {
+	public get events(): Listenable<KernelEvents> {
 		// Retrieve the correct events object based on whether this node is pre or post hydration.
-		const events: Listenable<KernelEvents> = isHydrated(this.#hydrationState)
-			? this.#hydrationState.anchorNode
+		return isHydrated(this.#hydrationState)
+			? this.#hydrationState.anchorNode.events
 			: this.#unhydratedEvents.value;
-
-		return events.on(eventName, listener);
 	}
 
 	public dispose(): void {
@@ -339,7 +337,7 @@ export class TreeNodeKernel implements Listenable<KernelEvents> {
 			off();
 		};
 		anchorForgetters.set(this.node, forget);
-		const off = anchorNode.on("afterDestroy", forget);
+		const off = anchorNode.events.on("afterDestroy", forget);
 		return anchorNode;
 	}
 
