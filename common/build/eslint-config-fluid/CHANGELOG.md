@@ -1,11 +1,6 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## 5.5.1
-
-Update rule overrides for test code to better support patterns in the repo.
-Namely, adds the allowance to "\*\*/tests" directories.
-
-## [5.5.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.5.0)
+## [5.5.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.5.1)
 
 ### Disabled rules
 
@@ -37,6 +32,11 @@ All rules below are deprecated. See <https://eslint.org/docs/latest/rules/#depre
 -   key-spacing
 -   space-unary-ops
 -   switch-colon-spacing
+
+### Better test pattern support
+
+Update rule overrides for test code to better support patterns in the repo.
+Namely, adds the allowance to "\*\*/tests" directories.
 
 ## [5.4.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.4.0)
 
