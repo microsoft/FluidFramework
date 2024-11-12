@@ -88,7 +88,7 @@ export type RevertibleFactory = (
  * whichever happens first.
  * This is typically used to clean up any resources associated with the `Revertible` in the host application.
  *
- * @sealed @public
+ * @sealed @alpha
  */
 export type RevertibleAlphaFactory = (
 	onRevertibleDisposed?: (revertible: RevertibleAlpha) => void,
