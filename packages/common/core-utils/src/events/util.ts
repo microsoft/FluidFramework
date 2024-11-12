@@ -3,14 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-	EventEmitter,
-	type HasListeners,
-	type IEmitter,
-	type NoListenersCallback,
-} from "./emitter.js";
-import type { Listenable, Listeners } from "./listeners.js";
-
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
  * @privateRemarks
@@ -75,63 +67,6 @@ export function setInNestedMap<Key1, Key2, Value>(
 ): void {
 	const innerMap = getOrAddInMap(map, key1, new Map<Key2, Value>());
 	innerMap.set(key2, value);
-}
-
-/**
- * Create a {@link Listenable} that can be instructed to emit events via the {@link IEmitter} interface.
- *
- * A class can delegate handling {@link Listenable} to the returned value while using it to emit the events.
- * See also {@link EventEmitter} which be used as a base class to implement {@link Listenable} via extension.
- * @example Forwarding events to the emitter
- * ```typescript
- * interface MyEvents {
- * 	loaded(): void;
- * }
- *
- * class MyClass implements Listenable<MyEvents> {
- * 	private readonly events = createEmitterMinimal<MyEvents>();
- *
- * 	private load(): void {
- * 		this.events.emit("loaded");
- * 	}
- *
- * 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): Off {
- * 		return this.events.on(eventName, listener);
- * 	}
- * }
- * ```
- * @public
- */
-export function createEmitter<TListeners extends object>(
-	noListeners?: NoListenersCallback<TListeners>,
-): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners> {
-	return new ComposableEventEmitter<TListeners>(noListeners);
-}
-
-/**
- * This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
- */
-class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
-	extends EventEmitter<TListeners>
-	implements IEmitter<TListeners>
-{
-	public constructor(noListeners?: NoListenersCallback<TListeners>) {
-		super(noListeners);
-	}
-
-	public override emit<K extends keyof TListeners>(
-		eventName: K,
-		...args: Parameters<TListeners[K]>
-	): void {
-		return super.emit(eventName, ...args);
-	}
-
-	public override emitAndCollect<K extends keyof TListeners>(
-		eventName: K,
-		...args: Parameters<TListeners[K]>
-	): ReturnType<TListeners[K]>[] {
-		return super.emitAndCollect(eventName, ...args);
-	}
 }
 
 /**

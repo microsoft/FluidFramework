@@ -251,6 +251,7 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  * 	}
  * }
  * ```
+ * @public
  */
 export function createEmitter<TListeners extends object>(
 	noListeners?: NoListenersCallback<TListeners>,
