@@ -1,7 +1,6 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../../../common/build/build-common/api-extractor-model.esm.json",
-	// presence has no alpha/beta APIs but does have a hand-written legacy API; use that for complete model
+	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-lint.entrypoint.json",
 	"mainEntryPointFilePath": "<projectFolder>/lib/legacy.d.ts",
 	"messages": {
 		"extractorMessageReporting": {
