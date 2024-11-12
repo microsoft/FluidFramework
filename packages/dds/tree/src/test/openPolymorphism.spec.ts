@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	SchemaFactory,
-	type InternalTreeNode,
+	type AssignableTreeFieldFromImplicitField,
 	type NodeKind,
 	type ObjectFromSchemaRecord,
 	type TreeNode,
@@ -16,6 +16,12 @@ import {
 } from "../simple-tree/index.js";
 import { Tree } from "../shared-tree/index.js";
 import { validateUsageError } from "./utils.js";
+import {
+	customizeSchemaTyping,
+	type FieldKind,
+	type FieldSchema,
+	type InsertableField,
+} from "../simple-tree/schemaTypes.js";
 
 const sf = new SchemaFactory("test");
 
@@ -176,24 +182,68 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 
 	it("mutable static registry, safer editing API", () => {
 		const ItemTypes: ItemSchema[] = [];
-		class Container extends sf.object("Container", { child: sf.optional(ItemTypes) }) {
-			// Allow any Item in the constructor. This isn't fully type safe since it permits items which have not been registered as allowed, but it likely the API we want.
-			public constructor(item: InternalTreeNode | undefined | { child?: undefined | Item }) {
-				super(item as never);
-			}
-
-			// public override set child(item: Item | undefined) {
-			// 	// This should require a type cast, but TypeScript gets the super type wrong here.
-			// 	super.child = item;
-			// }
-		}
+		class Container extends sf.object("Container", {
+			child: customizeSchemaTyping(sf.optional(ItemTypes))<{
+				input: Item | undefined;
+				output: Item | undefined;
+				readWrite: Item | undefined;
+				allowDefault: true;
+			}>(),
+		}) {}
 
 		ItemTypes.push(TextItem);
 
 		const container = new Container({ child: undefined });
 		const container2 = new Container({ child: TextItem.default() });
 
-		// This should not build.
+		type T3 = AssignableTreeFieldFromImplicitField<(typeof Container.info)["child"]>;
+
+		// Enabled by custom setter
+		container.child = TextItem.default();
+		container.child = undefined;
+	});
+
+	it("mutable static registry, safer editing API", () => {
+		const ItemTypes: ItemSchema[] = [];
+		class Container extends sf.object("Container", {
+			child: sf.optional(ItemTypes),
+		}) {
+			public allowItem<T extends ItemSchema>(
+				schema: T,
+			): asserts this is Container &
+				ObjectFromSchemaRecord<{ child: FieldSchema<FieldKind.Optional, [T, ItemSchema]> }> {
+				assert(Container.fields.get("child")?.allowedTypeSet.has(schema) ?? false);
+			}
+
+			public static allowItem<T extends ItemSchema>(
+				schema: T,
+			): asserts this is new (item: { child?: InsertableField<T> }) => Container {
+				assert(Container.fields.get("child")?.allowedTypeSet.has(schema) ?? false);
+			}
+
+			public static fromItemAndSchema<T extends ItemSchema>(
+				schema: T,
+				item: InsertableField<T>,
+			): Container {
+				const x: typeof Container = Container;
+				x.allowItem(schema);
+				return new x({ child: item });
+			}
+
+			public static fromItem(item: Item): Container {
+				const schema = Tree.schema(item);
+				return Container.fromItemAndSchema(schema as ItemSchema, item);
+			}
+		}
+
+		ItemTypes.push(TextItem);
+
+		Container.allowItem(TextItem);
+		const container: Container = new Container({ child: undefined });
+		const container2 = Container.fromItem(TextItem.default());
+
+		container.allowItem(TextItem);
+		const read = container.child;
 		container.child = TextItem.default();
 		container.child = undefined;
 	});
