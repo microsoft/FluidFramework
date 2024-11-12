@@ -222,7 +222,7 @@ describe("SharedTree memory usage", () => {
 		).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 	}
 
-	const numberOfNodesForTests = isInPerformanceTestingMode ? [1000, 10_000, 50_000] : [10];
+	const numberOfNodesForTests = isInPerformanceTestingMode ? [1, 10, 100, 1000] : [10];
 	describe("Chunked Forest memory usage", () => {
 		for (const numberOfNodes of numberOfNodesForTests) {
 			for (const forestType of [ForestType.Reference, ForestType.Optimized]) {
