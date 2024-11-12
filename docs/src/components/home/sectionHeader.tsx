@@ -34,7 +34,7 @@ export function SectionHeader({ title, subtitle }: SectionHeaderProps): JSX.Elem
 				) : (
 					<p className="ffcom-section-header-subtitle">{subtitle}</p>
 				)}
-				<p className="ffcom-section-header-title">{title}</p>
+				<h2 className="ffcom-section-header-title">{title}</h2>
 			</div>
 		</div>
 	);

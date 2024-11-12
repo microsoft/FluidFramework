@@ -29,7 +29,7 @@ const titleBoxDescriptionText =
 function TitleBox(): React.ReactElement {
 	return (
 		<div className="ffcom-title-box">
-			<h3 className="ffcom-title">Fluid Framework</h3>
+			<h1 className="ffcom-title">Fluid Framework</h1>
 			<span className="ffcom-description">{titleBoxDescriptionText}</span>
 		</div>
 	);
