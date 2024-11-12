@@ -103,7 +103,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
 		this.value.value = value;
-		this.datastore.localUpdate(this.key, this.value, /* forceUpdate */ false);
+		this.datastore.localUpdate(this.key, this.value, { forceBroadcast: false });
 	}
 
 	public *clientValues(): IterableIterator<LatestValueClientData<T>> {

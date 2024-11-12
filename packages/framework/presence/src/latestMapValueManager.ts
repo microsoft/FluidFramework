@@ -12,6 +12,7 @@ import type {
 	LatestValueMetadata,
 } from "./latestValueTypes.js";
 import type { ClientSessionId, ISessionClient, SpecificSessionClient } from "./presence.js";
+import type { LocalUpdateOptions } from "./presenceStates.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -191,7 +192,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 		private readonly value: InternalTypes.MapValueState<T>,
 		private readonly localUpdate: (
 			updates: InternalTypes.MapValueState<T>,
-			forceUpdate: boolean,
+			options: LocalUpdateOptions,
 		) => void,
 	) {
 		// All initial items are expected to be defined.
@@ -210,7 +211,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 			item.value = value;
 		}
 		const update = { rev: this.value.rev, items: { [key]: item } };
-		this.localUpdate(update, /* forceUpdate */ false);
+		this.localUpdate(update, { forceBroadcast: false });
 	}
 
 	public clear(): void {
@@ -333,8 +334,8 @@ class LatestMapValueManagerImpl<
 
 		this.local = new ValueMapImpl<T, Keys>(
 			value,
-			(updates: InternalTypes.MapValueState<T>, forceUpdate: boolean) => {
-				datastore.localUpdate(key, updates, forceUpdate);
+			(updates: InternalTypes.MapValueState<T>, options: LocalUpdateOptions) => {
+				datastore.localUpdate(key, updates, options);
 			},
 		);
 	}

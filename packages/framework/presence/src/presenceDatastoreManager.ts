@@ -12,6 +12,7 @@ import type { IEphemeralRuntime } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
 	ClientUpdateEntry,
+	LocalUpdateOptions,
 	PresenceStatesInternal,
 	ValueElementMap,
 } from "./presenceStates.js";
@@ -148,7 +149,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		const localUpdate = (
 			states: { [key: string]: ClientUpdateEntry },
-			forceBroadcast: boolean,
+			options: LocalUpdateOptions,
 		): void => {
 			// Check for connectivity before sending updates.
 			if (!this.runtime.connected) {
@@ -177,7 +178,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					},
 					[internalWorkspaceAddress]: updates,
 				},
-				forceBroadcast,
+				options,
 			);
 		};
 
@@ -195,7 +196,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		return entry.public;
 	}
 
-	private localUpdate(data: DatastoreMessageContent, _forceBroadcast: boolean): void {
+	private localUpdate(data: DatastoreMessageContent, options: LocalUpdateOptions): void {
 		const content = {
 			sendTimestamp: Date.now(),
 			avgLatency: this.averageLatency,

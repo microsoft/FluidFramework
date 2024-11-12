@@ -26,10 +26,18 @@ export type MapSchemaElement<
 /**
  * @internal
  */
+export interface LocalUpdateOptions {
+	forceBroadcast: boolean;
+	allowableUpdateLatency?: number;
+}
+
+/**
+ * @internal
+ */
 export interface PresenceRuntime {
 	readonly clientSessionId: ClientSessionId;
 	lookupClient(clientId: ClientConnectionId): ISessionClient;
-	localUpdate(states: { [key: string]: ClientUpdateEntry }, forceBroadcast: boolean): void;
+	localUpdate(states: { [key: string]: ClientUpdateEntry }, options: LocalUpdateOptions): void;
 }
 
 type PresenceSubSchemaFromWorkspaceSchema<
@@ -242,7 +250,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 			this.props = this.nodes as unknown as PresenceStates<TSchema>["props"];
 
 			if (anyInitialValues) {
-				this.runtime.localUpdate(initial.newValues, false);
+				this.runtime.localUpdate(initial.newValues, { forceBroadcast: false });
 			}
 		}
 	}
@@ -262,9 +270,9 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	public localUpdate<Key extends keyof TSchema & string>(
 		key: Key,
 		value: MapSchemaElement<TSchema, "value", Key> & ClientUpdateEntry,
-		forceBroadcast: boolean,
+		options: LocalUpdateOptions,
 	): void {
-		this.runtime.localUpdate({ [key]: value }, forceBroadcast);
+		this.runtime.localUpdate({ [key]: value }, options);
 	}
 
 	public update<Key extends keyof TSchema & string>(
@@ -301,7 +309,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 				this.datastore[key] = {};
 			}
 			this.datastore[key][this.runtime.clientSessionId] = nodeData.value;
-			this.runtime.localUpdate({ [key]: nodeData.value }, false);
+			this.runtime.localUpdate({ [key]: nodeData.value }, { forceBroadcast: false });
 		}
 	}
 
