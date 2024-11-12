@@ -234,6 +234,13 @@
 			},
 			"Interface_InternalTypes_TreeArrayNodeBase": {
 				"backCompat": false
+			},
+			"TypeAlias_InsertableTreeFieldFromImplicitField": {
+				"backCompat": false
+			},
+			"TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"

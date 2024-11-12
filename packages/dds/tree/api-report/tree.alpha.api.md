@@ -246,7 +246,7 @@ export type InsertableObjectFromSchemaRecordUnsafe<T extends Unenforced<Restrict
 };
 
 // @public
-export type InsertableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : never;
+export type InsertableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = UnionToIntersection<TSchemaInput>> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true> : TSchema extends ImplicitAllowedTypes ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : never;
 
 // @public
 export type InsertableTreeFieldFromImplicitFieldUnsafe<TSchemaInput extends Unenforced<ImplicitFieldSchema>, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchemaUnsafe<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : never;
@@ -479,9 +479,11 @@ export const noopValidator: JsonValidator;
 
 // @public
 type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
-    -readonly [Property in keyof T as Property extends string ? [AssignableTreeFieldFromImplicitField<T[Property]>] extends [never] ? never : Property : never]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
+    -readonly [Property in keyof T as [
+    AssignableTreeFieldFromImplicitField<T[Property & string]>
+    ] extends [never | undefined] ? never : Property]: TreeFieldFromImplicitField<T[Property & string]>;
 } & {
-    readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
+    readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property & string]>;
 };
 
 // @public
