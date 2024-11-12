@@ -4,6 +4,7 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
+
 import type { MapGetSet } from "./utils.js";
 
 /**

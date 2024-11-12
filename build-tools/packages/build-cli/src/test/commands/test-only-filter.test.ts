@@ -4,12 +4,11 @@
  */
 
 import { Package } from "@fluidframework/build-tools";
-import chai, { expect } from "chai";
+import { runCommand } from "@oclif/test";
+import chai, { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
+import { describe, it } from "mocha";
 
-import { initializeCommandTestFunction } from "../init.js";
-
-const test = initializeCommandTestFunction(import.meta.url);
 chai.use(assertArrays);
 
 interface jsonOutput {
@@ -18,93 +17,84 @@ interface jsonOutput {
 }
 
 describe("flub test-only-filter", () => {
-	test
-		.stdout()
-		.command(["test-only-filter", "--quiet", "--json", "--all"])
-		.it(`--all selector`, (ctx) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			const { selected, filtered } = output;
-			expect(selected.length).to.equal(filtered.length);
+	it(`--all selector`, async () => {
+		const { stdout } = await runCommand(["test-only-filter", "--quiet", "--json", "--all"], {
+			root: import.meta.url,
 		});
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
+		const { selected, filtered } = output;
+		expect(selected).to.be.ofSize(filtered.length);
+	});
 
-	test
-		.stdout()
-		.command(["test-only-filter", "--quiet", "--json", "--dir", "."])
-		.it(`--dir selector`, (ctx) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			const { selected, filtered } = output;
-			expect(selected).to.be.ofSize(1);
-			expect(filtered).to.be.ofSize(1);
+	it(`--dir selector`, async () => {
+		const { stdout } = await runCommand(
+			["test-only-filter", "--quiet", "--json", "--dir", "."],
+			{ root: import.meta.url },
+		);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
+		const { selected, filtered } = output;
+		expect(selected.length).to.equal(1);
+		expect(filtered.length).to.equal(1);
 
-			const pkg = filtered[0];
+		const pkg = filtered[0];
 
-			expect(pkg?.name).to.equal("@fluid-tools/build-cli");
-			expect(pkg?.directory).to.equal("build-tools/packages/build-cli");
+		assert(pkg !== undefined);
+		expect(pkg.name).to.equal("@fluid-tools/build-cli");
+		expect(pkg.directory).to.equal("build-tools/packages/build-cli");
+	});
 
-			expect(selected.length).to.equal(1);
-			expect(filtered.length).to.equal(1);
+	it(`--releaseGroup selector`, async () => {
+		const { stdout } = await runCommand(
+			["test-only-filter", "--quiet", "--json", "--releaseGroup", "build-tools"],
+			{ root: import.meta.url },
+		);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
+		const { selected, filtered } = output;
+		expect(selected.length).to.equal(5);
+		expect(filtered.length).to.equal(5);
+	});
+
+	it(`--private filter`, async () => {
+		const { stdout } = await runCommand(
+			["test-only-filter", "--quiet", "--json", "--all", "--private"],
+			{ root: import.meta.url },
+		);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
+		const { filtered } = output;
+
+		const names = filtered.map((p) => p.name);
+		expect(names).to.be.containing("@fluid-private/changelog-generator-wrapper");
+		expect(names).to.be.containing("@fluid-example/example-utils");
+	});
+
+	it(`--no-private filter`, async () => {
+		const { stdout } = await runCommand(
+			["test-only-filter", "--quiet", "--json", "--all", "--no-private"],
+			{ root: import.meta.url },
+		);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
+		const { filtered } = output;
+
+		const names = filtered.map((p) => p.name);
+		expect(names).not.to.be.containing("@fluid-private/changelog-generator-wrapper");
+	});
+
+	it(`--scope filter`, async () => {
+		const { stdout } = await runCommand(
+			["test-only-filter", "--quiet", "--json", "--all", "--skipScope", "@fluidframework"],
+			{ root: import.meta.url },
+		);
+		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
+		const { filtered } = output;
+
+		const names = filtered.map((p) => p.name);
+		[
+			"@fluid-private/changelog-generator-wrapper",
+			"@fluid-tools/build-cli",
+			"fluid-framework",
+			// eslint-disable-next-line unicorn/no-array-for-each
+		].forEach((item) => {
+			expect(names).to.be.containing(item);
 		});
-
-	test
-		.stdout()
-		.command(["test-only-filter", "--quiet", "--json", "--releaseGroup", "build-tools"])
-		.it(`--releaseGroup selector`, (ctx) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			const { selected, filtered } = output;
-			expect(selected).to.be.ofSize(4);
-			expect(filtered).to.be.ofSize(4);
-		});
-
-	test
-		.stdout()
-		.command(["test-only-filter", "--quiet", "--json", "--all", "--private"])
-		.it(`--private filter`, (ctx) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			const { filtered } = output;
-
-			const names = filtered.map((p) => p.name);
-			expect(names).to.be.containingAllOf([
-				"@fluid-private/changelog-generator-wrapper",
-				"@fluid-example/example-utils",
-			]);
-		});
-
-	test
-		.stdout()
-		.command(["test-only-filter", "--quiet", "--json", "--all", "--no-private"])
-		.it(`--no-private filter`, (ctx) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			const { filtered } = output;
-
-			const names = filtered.map((p) => p.name);
-			expect(names).to.not.be.containingAnyOf(["@fluid-private/changelog-generator-wrapper"]);
-		});
-
-	test
-		.stdout()
-		.command([
-			"test-only-filter",
-			"--quiet",
-			"--json",
-			"--all",
-			"--skipScope",
-			"@fluidframework",
-		])
-		.it(`--scope filter`, (ctx) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const output: jsonOutput = JSON.parse(ctx.stdout);
-			const { filtered } = output;
-
-			const names = filtered.map((p) => p.name);
-			expect(names).to.be.containingAllOf([
-				"@fluid-private/changelog-generator-wrapper",
-				"@fluid-tools/build-cli",
-				"fluid-framework",
-			]);
-		});
+	});
 });

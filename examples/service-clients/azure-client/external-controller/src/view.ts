@@ -167,7 +167,7 @@ function makePresenceView(
 	logContentDiv.style.border = "1px solid black";
 	if (audience !== undefined) {
 		presenceConfig.presence.events.on("attendeeJoined", (attendee) => {
-			const name = audience.getMembers().get(attendee.currentConnectionId())?.name;
+			const name = audience.getMembers().get(attendee.getConnectionId())?.name;
 			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} with id ${attendee.sessionId} joined`;
 			addLogEntry(logContentDiv, update);
 		});

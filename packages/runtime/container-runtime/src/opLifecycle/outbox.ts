@@ -145,6 +145,18 @@ export class Outbox {
 		return this.mainBatch.length + this.blobAttachBatch.length + this.idAllocationBatch.length;
 	}
 
+	public get mainBatchMessageCount(): number {
+		return this.mainBatch.length;
+	}
+
+	public get blobAttachBatchMessageCount(): number {
+		return this.blobAttachBatch.length;
+	}
+
+	public get idAllocationBatchMessageCount(): number {
+		return this.idAllocationBatch.length;
+	}
+
 	public get isEmpty(): boolean {
 		return this.messageCount === 0;
 	}

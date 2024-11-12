@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { FieldKind, NodeKind, type JsonTreeSchema } from "../../../simple-tree/index.js";
-import { getJsonValidator } from "../jsonSchemaUtilities.js";
+import { getJsonValidator } from "./jsonSchemaUtilities.js";
 import type {
 	SimpleNodeSchema,
 	SimpleTreeSchema,
@@ -172,12 +172,19 @@ describe("simpleSchemaToJsonSchema", () => {
 							"foo": {
 								kind: FieldKind.Optional,
 								allowedTypes: new Set<string>(["test.number"]),
-								description: "A number representing the concept of Foo.",
+								metadata: { description: "A number representing the concept of Foo." },
 							},
 							"bar": {
 								kind: FieldKind.Required,
 								allowedTypes: new Set<string>(["test.string"]),
-								description: "A string representing the concept of Bar.",
+								metadata: { description: "A string representing the concept of Bar." },
+							},
+							"id": {
+								kind: FieldKind.Identifier,
+								allowedTypes: new Set<string>(["test.string"]),
+								metadata: {
+									description: "Unique identifier for the test object.",
+								},
 							},
 						},
 					},
@@ -203,6 +210,10 @@ describe("simpleSchemaToJsonSchema", () => {
 						bar: {
 							$ref: "#/$defs/test.string",
 							description: "A string representing the concept of Bar.",
+						},
+						id: {
+							$ref: "#/$defs/test.string",
+							description: "Unique identifier for the test object.",
 						},
 					},
 					required: ["bar"],

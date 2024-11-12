@@ -27,6 +27,7 @@ import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
+	findAncestor,
 	type GraphCommit,
 	type RevisionTag,
 	RevisionTagCodec,
@@ -80,7 +81,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	public readonly breaker: Breakable = new Breakable("Shared Tree");
 
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
-	private readonly summarizables: readonly Summarizable[];
+	private readonly summarizables: readonly [EditManagerSummarizer<TChange>, ...Summarizable[]];
 	/**
 	 * The sequence number that this instance is at.
 	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
@@ -182,16 +183,16 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			this.mintRevisionTag,
 			rebaseLogger,
 		);
-		this.editManager.localBranch.on("transactionStarted", () => {
+		this.editManager.localBranch.events.on("transactionStarted", () => {
 			this.commitEnricher.startNewTransaction();
 		});
-		this.editManager.localBranch.on("transactionAborted", () => {
+		this.editManager.localBranch.events.on("transactionAborted", () => {
 			this.commitEnricher.abortCurrentTransaction();
 		});
-		this.editManager.localBranch.on("transactionCommitted", () => {
+		this.editManager.localBranch.events.on("transactionCommitted", () => {
 			this.commitEnricher.commitCurrentTransaction();
 		});
-		this.editManager.localBranch.on("beforeChange", (change) => {
+		this.editManager.localBranch.events.on("beforeChange", (change) => {
 			// Ensure that any previously prepared commits that have not been sent are purged.
 			this.commitEnricher.purgePreparedCommits();
 			if (this.detachedRevision !== undefined) {
@@ -218,7 +219,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.commitEnricher.prepareCommit(change.newCommits[0] ?? oob(), true);
 			}
 		});
-		this.editManager.localBranch.on("afterChange", (change) => {
+		this.editManager.localBranch.events.on("afterChange", (change) => {
 			if (this.getLocalBranch().isTransacting()) {
 				// We do not submit ops for changes that are part of a transaction.
 				return;
@@ -308,14 +309,42 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
-		const loadSummaries = this.summarizables.map(async (summaryElement) =>
-			summaryElement.load(
-				scopeStorageService(services, summarizablesTreeKey, summaryElement.key),
-				(contents) => this.serializer.parse(contents),
-			),
+		const [editManagerSummarizer, ...summarizables] = this.summarizables;
+		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services);
+		const loadSummarizables = summarizables.map(async (s) =>
+			this.loadSummarizable(s, services),
 		);
 
-		await Promise.all(loadSummaries);
+		if (this.detachedRevision !== undefined) {
+			// If we are detached but loading from a summary, then we need to update our detached revision to ensure that it is ahead of all detached revisions in the summary.
+			// First, finish loading the edit manager so that we can inspect the sequence numbers of the commits on the trunk.
+			await loadEditManager;
+			// Find the most recent detached revision in the summary trunk...
+			let latestDetachedSequenceNumber: SeqNumber | undefined;
+			findAncestor(this.editManager.getTrunkHead(), (c) => {
+				const sequenceNumber = this.editManager.getSequenceNumber(c);
+				if (sequenceNumber !== undefined && sequenceNumber < 0) {
+					latestDetachedSequenceNumber = sequenceNumber;
+					return true;
+				}
+				return false;
+			});
+			// ...and set our detached revision to be as it would be if we had been already created that revision.
+			this.detachedRevision = latestDetachedSequenceNumber ?? this.detachedRevision;
+			await Promise.all(loadSummarizables);
+		} else {
+			await Promise.all([loadEditManager, ...loadSummarizables]);
+		}
+	}
+
+	private async loadSummarizable(
+		summarizable: Summarizable,
+		services: IChannelStorageService,
+	): Promise<void> {
+		return summarizable.load(
+			scopeStorageService(services, summarizablesTreeKey, summarizable.key),
+			(contents) => this.serializer.parse(contents),
+		);
 	}
 
 	/**
@@ -351,7 +380,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				newRevision,
 				this.detachedRevision,
 			);
-			this.editManager.advanceMinimumSequenceNumber(newRevision);
+			this.editManager.advanceMinimumSequenceNumber(newRevision, false);
 			return undefined;
 		}
 		const message = this.messageCodec.encode(

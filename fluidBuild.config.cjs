@@ -271,6 +271,9 @@ module.exports = {
 			// This file is a test file.
 			"tools/markdown-magic/test/package.json",
 
+			// Not a real package
+			"docs/api/",
+
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
@@ -433,6 +436,14 @@ module.exports = {
 				"package.json",
 			],
 			"npm-package-json-script-dep": [],
+			"npm-package-license": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+			],
+			"npm-private-packages": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+			],
 			"npm-public-package-requirements": [
 				// Test packages published only for the purpose of running tests in CI.
 				"^azure/packages/test/",
@@ -461,6 +472,10 @@ module.exports = {
 				"^experimental/framework/data-objects/",
 				"^tools/telemetry-generator/",
 				"^packages/tools/webpack-fluid-loader/",
+			],
+			"pnpm-npm-package-json-preinstall": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 		},
 		packageNames: {
@@ -523,7 +538,6 @@ module.exports = {
 				["nyc", "nyc"],
 				["oclif", "oclif"],
 				["prettier", "prettier"],
-				["renamer", "renamer"],
 				["rimraf", "rimraf"],
 				["tinylicious", "tinylicious"],
 				["ts2esm", "ts2esm"],
@@ -617,9 +631,10 @@ module.exports = {
 	releaseNotes: {
 		sections: {
 			feature: { heading: "✨ New Features" },
-			tree: { heading: "🌳 SharedTree DDS changes" },
+			tree: { heading: "🌳 SharedTree DDS Changes" },
 			fix: { heading: "🐛 Bug Fixes" },
 			deprecation: { heading: "⚠️ Deprecations" },
+			legacy: { heading: "Legacy API Changes" },
 			other: { heading: "Other Changes" },
 		},
 	},

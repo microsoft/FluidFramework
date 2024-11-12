@@ -171,8 +171,10 @@ export class MockDeltaConnection implements IDeltaConnection {
     dirty(): void;
     // (undocumented)
     handler: IDeltaHandler | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // (undocumented)
+    processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
     reSubmit(content: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -446,8 +448,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     options: Record<string | number, any>;
     // (undocumented)
     readonly path = "";
-    // (undocumented)
+    // @deprecated (undocumented)
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // (undocumented)
+    processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
     processSignal(message: any, local: boolean): void;
     // (undocumented)

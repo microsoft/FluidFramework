@@ -206,7 +206,12 @@ export interface AnchorSetRootEvents {
 /**
  * Node in a tree of anchors.
  */
-export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents> {
+export interface AnchorNode extends UpPath<AnchorNode> {
+	/**
+	 * Events for this anchor node.
+	 */
+	readonly events: Listenable<AnchorEvents>;
+
 	/**
 	 * Allows access to data stored on the Anchor in "slots".
 	 * Use {@link anchorSlot} to create slots.
@@ -277,8 +282,10 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent> {
  *
  * @sealed
  */
-export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator {
-	private readonly events = createEmitter<AnchorSetRootEvents>();
+export class AnchorSet implements AnchorLocator {
+	readonly #events = createEmitter<AnchorSetRootEvents>();
+	public readonly events: Listenable<AnchorSetRootEvents> = this.#events;
+
 	/**
 	 * Incrementing counter to give each anchor in this set a unique index for its identifier.
 	 * "0" is reserved for the `NeverAnchor`.
@@ -312,7 +319,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 	private activeVisitor?: DeltaVisitor;
 
 	public constructor() {
-		this.on("treeChanging", () => {
+		this.events.on("treeChanging", () => {
 			this.generationNumber += 1;
 		});
 	}
@@ -342,13 +349,6 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			}
 			node = stack.pop();
 		}
-	}
-
-	public on<K extends keyof AnchorSetRootEvents>(
-		eventName: K,
-		listener: AnchorSetRootEvents[K],
-	): () => void {
-		return this.events.on(eventName, listener);
 	}
 
 	/**
@@ -792,7 +792,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			notifyChildrenChanging(): void {
 				this.maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
-					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
+					() => this.anchorSet.#events.emit("childrenChanging", this.anchorSet),
 				);
 			},
 			notifyChildrenChanged(): void {
@@ -1098,7 +1098,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				this.parentField = undefined;
 			},
 		};
-		this.events.emit("treeChanging", this);
+		this.#events.emit("treeChanging", this);
 		this.activeVisitor = visitor;
 		return visitor;
 	}
@@ -1207,13 +1207,6 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		public parentPath: PathNode | undefined,
 	) {
 		super(1);
-	}
-
-	public on<K extends keyof AnchorEvents>(
-		eventName: K,
-		listener: AnchorEvents[K],
-	): () => void {
-		return this.events.on(eventName, listener);
 	}
 
 	public child(key: FieldKey, index: number): UpPath<AnchorNode> {

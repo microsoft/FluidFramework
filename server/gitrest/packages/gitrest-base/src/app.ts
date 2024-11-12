@@ -28,10 +28,7 @@ import {
 	IRepositoryManagerFactory,
 } from "./utils";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import {
-	createHealthCheckEndpoints,
-	type StartupCheck,
-} from "@fluidframework/server-services-shared";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 
 function getTenantIdForGitRestRequest(params: IRepoManagerParams, request: express.Request) {
 	return params.storageRoutingId?.tenantId ?? (request.body as ICreateRepoParams)?.name;
@@ -41,7 +38,7 @@ export function create(
 	store: nconf.Provider,
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	repositoryManagerFactory: IRepositoryManagerFactory,
-	startupCheck: StartupCheck,
+	startupCheck: IReadinessCheck,
 	readinessCheck?: IReadinessCheck,
 ) {
 	// Express app configuration
