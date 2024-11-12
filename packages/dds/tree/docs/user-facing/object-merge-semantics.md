@@ -62,7 +62,7 @@ Alice changes the background color of one sticky note from yellow to red,
 while Bob concurrently changes the background color of one sticky note from yellow to blue.
 The sequencing is such that Bob's edit is sequenced after Alice's edit.
 
-![Bob's edit overwrites Alice's edit](../.attachments/blue-over-red.png)<br />
+![Bob's edit overwrites Alice's edit](https://storage.fluidframework.com/static/images/blue-over-red.png)<br />
 _A: Bob receives Alice's edit.
 Since Bob's client has yet to receive his own edit back from the sequencing service,
 Bob's client can deduce that his edit is sequenced later and therefore wins out over Alice's.
