@@ -53,7 +53,7 @@ export function PartnersSection(): JSX.Element {
 						learnMoreHref={loopLink}
 					/>
 					<PartnerEntry
-						icon={<img src={TeamsLogo} title="Microsoft Teams"/>}
+						icon={<img src={TeamsLogo} title="Microsoft Teams" />}
 						labelText="Microsoft Teams"
 						bodyText={bodyTextPlaceholder}
 						learnMoreHref={teamsLink}
@@ -83,7 +83,12 @@ interface PartnerEntryProps {
 	learnMoreHref: string;
 }
 
-function PartnerEntry({ icon, labelText, learnMoreHref, bodyText }: PartnerEntryProps): JSX.Element {
+function PartnerEntry({
+	icon,
+	labelText,
+	learnMoreHref,
+	bodyText,
+}: PartnerEntryProps): JSX.Element {
 	return (
 		<div className="ffcom-partner-entry">
 			<div className="ffcom-partner-entry-inner">
@@ -100,7 +105,12 @@ function PartnerEntry({ icon, labelText, learnMoreHref, bodyText }: PartnerEntry
 					<p className="ffcom-partner-entry-description-text ">{bodyText}</p>
 					<div className="ffcom-partner-entry-learn-more-container ">
 						<div className="ffcom-partner-entry-learn-more-container-inner">
-							<a className="ffcom-partner-entry-learn-more-text" href={learnMoreHref} target="_blank" rel="noreferrer">
+							<a
+								className="ffcom-partner-entry-learn-more-text"
+								href={learnMoreHref}
+								target="_blank"
+								rel="noreferrer"
+							>
 								Learn more
 							</a>
 						</div>
