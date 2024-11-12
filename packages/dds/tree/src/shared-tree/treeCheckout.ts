@@ -24,7 +24,6 @@ import {
 	type IEditableForest,
 	type IForestSubscription,
 	type JsonableTree,
-	type Revertible,
 	RevertibleStatus,
 	type RevisionTag,
 	type RevisionTagCodec,
@@ -37,8 +36,8 @@ import {
 	rootFieldKey,
 	tagChange,
 	visitDelta,
-	type RevertibleFactory,
 	type RevertibleAlphaFactory,
+	type RevertibleAlpha,
 } from "../core/index.js";
 import {
 	type HasListeners,
@@ -72,8 +71,6 @@ import type {
 	TreeBranch,
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { RevertibleAlpha } from "../core/revertible.js";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -96,10 +93,7 @@ export interface CheckoutEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
 	 * this change is not revertible.
 	 */
-	changed(
-		data: CommitMetadata,
-		getRevertible?: RevertibleAlphaFactory,
-	): void;
+	changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 /**
@@ -532,7 +526,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 						const getRevertible = hasSchemaChange(change)
 							? undefined
-							: (onRevertibleDisposed?: (revertible: Revertible) => void) => {
+							: (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => {
 									if (!withinEventContext) {
 										throw new UsageError(
 											"Cannot get a revertible outside of the context of a changed event.",
@@ -607,7 +601,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		revision: RevisionTag,
 		kind: CommitKind,
 		checkout: TreeCheckout,
-		onRevertibleDisposed: (revertible: Revertible) => void,
+		onRevertibleDisposed: (revertible: RevertibleAlpha) => void,
 	): RevertibleAlpha {
 		const commitBranches = checkout.revertibleCommitBranches;
 

@@ -211,4 +211,5 @@ export {
 	RevertibleStatus,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
+	type RevertibleAlpha,
 } from "./revertible.js";
