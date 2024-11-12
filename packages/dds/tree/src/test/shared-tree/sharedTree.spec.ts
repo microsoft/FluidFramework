@@ -76,7 +76,7 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
-	createRevertibleUndoRedoStacks,
+	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	treeTestFactory,
 	validateTreeConsistency,
@@ -594,7 +594,7 @@ describe("SharedTree", () => {
 		);
 		view.initialize(["a", "b", "c"]);
 
-		const { undoStack, unsubscribe } = createRevertibleUndoRedoStacks(
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(
 			summarizingTree.checkout.events,
 		);
 
@@ -917,7 +917,7 @@ describe("SharedTree", () => {
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
 			view1.initialize([]);
-			const { undoStack, redoStack, unsubscribe } = createRevertibleUndoRedoStacks(
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 				tree1.checkout.events,
 			);
 			provider.processMessages();
@@ -960,7 +960,7 @@ describe("SharedTree", () => {
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
 			view1.initialize([]);
-			const { undoStack, redoStack, unsubscribe } = createRevertibleUndoRedoStacks(
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 				tree1.checkout.events,
 			);
 			provider.processMessages();
@@ -1024,7 +1024,7 @@ describe("SharedTree", () => {
 				undoStack: undoStack1,
 				redoStack: redoStack1,
 				unsubscribe: unsubscribe1,
-			} = createRevertibleUndoRedoStacks(tree1.checkout.events);
+			} = createTestUndoRedoStacks(tree1.checkout.events);
 
 			provider.processMessages();
 			const tree2 = provider.trees[1];
@@ -1035,7 +1035,7 @@ describe("SharedTree", () => {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
 				unsubscribe: unsubscribe2,
-			} = createRevertibleUndoRedoStacks(tree2.checkout.events);
+			} = createTestUndoRedoStacks(tree2.checkout.events);
 
 			const initialState = {
 				schema: StringArray,
@@ -1099,7 +1099,7 @@ describe("SharedTree", () => {
 			);
 			view1.initialize(["A", "B", "C", "D"]);
 
-			const { undoStack, redoStack, unsubscribe } = createRevertibleUndoRedoStacks(
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 				tree1.checkout.events,
 			);
 
@@ -1175,7 +1175,7 @@ describe("SharedTree", () => {
 					view1.initialize([["a"]]);
 
 					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-						createRevertibleUndoRedoStacks(tree1.checkout.events);
+						createTestUndoRedoStacks(tree1.checkout.events);
 
 					// This test does not correctly handle views getting invalidated by schema changes, so avoid concurrent schematize
 					// which causes view invalidation when resolving the merge.
@@ -1186,7 +1186,7 @@ describe("SharedTree", () => {
 						new TreeViewConfiguration({ schema, enableSchemaValidation }),
 					);
 					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
-						createRevertibleUndoRedoStacks(tree2.checkout.events);
+						createTestUndoRedoStacks(tree2.checkout.events);
 
 					provider.processMessages();
 
@@ -1465,12 +1465,12 @@ describe("SharedTree", () => {
 				undoStack: undoStack1,
 				redoStack: redoStack1,
 				unsubscribe: unsubscribe1,
-			} = createRevertibleUndoRedoStacks(tree1.checkout.events);
+			} = createTestUndoRedoStacks(tree1.checkout.events);
 			const {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
 				unsubscribe: unsubscribe2,
-			} = createRevertibleUndoRedoStacks(tree2.checkout.events);
+			} = createTestUndoRedoStacks(tree2.checkout.events);
 
 			// Insert node
 			view1.root.insertAtStart(value);
@@ -1522,10 +1522,12 @@ describe("SharedTree", () => {
 			// Validate initialization
 			validateViewConsistency(tree1.checkout, tree2.checkout);
 
-			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-				createRevertibleUndoRedoStacks(tree1.checkout.events);
-			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
-				createRevertibleUndoRedoStacks(tree2.checkout.events);
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
+			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
+				tree2.checkout.events,
+			);
 
 			const root1 = view1.root;
 			const root2 = view2.root;
@@ -1904,7 +1906,7 @@ describe("SharedTree", () => {
 			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
 
 			const tree = provider.trees[0];
-			const { undoStack } = createRevertibleUndoRedoStacks(tree.checkout.events);
+			const { undoStack } = createTestUndoRedoStacks(tree.checkout.events);
 
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),

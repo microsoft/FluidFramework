@@ -86,6 +86,7 @@ import {
 	type TreeStoredSchemaSubscription,
 	type ITreeCursorSynchronous,
 	CursorLocationType,
+	type RevertibleFactory,
 } from "../core/index.js";
 import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
@@ -147,14 +148,11 @@ import type { Client } from "@fluid-private/test-dds-utils";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
-import type {
-	RevertibleAlpha,
-	RevertibleFactoryType,
-	RevertibleType,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../core/revertible.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { RevertibleAlpha, RevertibleAlphaFactory } from "../core/revertible.js";
 
 // Testing utilities
+
 /**
  * A {@link IJsonCodec} implementation which fails on encode and decode.
  *
@@ -1051,17 +1049,17 @@ export function rootFromDeltaFieldMap(
 	return rootDelta;
 }
 
-function createUndoRedoStacksCore<T extends RevertibleType>(
+export function createTestUndoRedoStacks(
 	events: Listenable<TreeBranchEvents | CheckoutEvents>,
 ): {
-	undoStack: T[];
-	redoStack: T[];
+	undoStack: Revertible[];
+	redoStack: Revertible[];
 	unsubscribe: () => void;
 } {
-	const undoStack: T[] = [];
-	const redoStack: T[] = [];
+	const undoStack: Revertible[] = [];
+	const redoStack: Revertible[] = [];
 
-	function onDispose(disposed: T): void {
+	function onDispose(disposed: Revertible): void {
 		const redoIndex = redoStack.indexOf(disposed);
 		if (redoIndex !== -1) {
 			redoStack.splice(redoIndex, 1);
@@ -1073,9 +1071,9 @@ function createUndoRedoStacksCore<T extends RevertibleType>(
 		}
 	}
 
-	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactoryType): void {
+	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactory): void {
 		if (getRevertible !== undefined) {
-			const revertible = getRevertible(onDispose as (disposed: RevertibleType) => void) as T;
+			const revertible = getRevertible(onDispose);
 			if (commit.kind === CommitKind.Undo) {
 				redoStack.push(revertible);
 			} else {
@@ -1097,24 +1095,50 @@ function createUndoRedoStacksCore<T extends RevertibleType>(
 	return { undoStack, redoStack, unsubscribe };
 }
 
-export function createRevertibleUndoRedoStacks(
-	events: Listenable<TreeBranchEvents | CheckoutEvents>,
-): {
-	undoStack: Revertible[];
-	redoStack: Revertible[];
-	unsubscribe: () => void;
-} {
-	return createUndoRedoStacksCore<Revertible>(events);
-}
-
-export function createRevertibleAlphaUndoRedoStacks(
+export function createClonableUndoRedoStacks(
 	events: Listenable<TreeBranchEvents | CheckoutEvents>,
 ): {
 	undoStack: RevertibleAlpha[];
 	redoStack: RevertibleAlpha[];
 	unsubscribe: () => void;
 } {
-	return createUndoRedoStacksCore<RevertibleAlpha>(events);
+	const undoStack: RevertibleAlpha[] = [];
+	const redoStack: RevertibleAlpha[] = [];
+
+	function onDispose(disposed: RevertibleAlpha): void {
+		const redoIndex = redoStack.indexOf(disposed);
+		if (redoIndex !== -1) {
+			redoStack.splice(redoIndex, 1);
+		} else {
+			const undoIndex = undoStack.indexOf(disposed);
+			if (undoIndex !== -1) {
+				undoStack.splice(undoIndex, 1);
+			}
+		}
+	}
+
+	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void {
+		if (getRevertible !== undefined) {
+			const revertible = getRevertible(onDispose);
+			if (commit.kind === CommitKind.Undo) {
+				redoStack.push(revertible);
+			} else {
+				undoStack.push(revertible);
+			}
+		}
+	}
+
+	const unsubscribeFromCommitApplied = events.on("changed", onNewCommit);
+	const unsubscribe = (): void => {
+		unsubscribeFromCommitApplied();
+		for (const revertible of undoStack) {
+			revertible.dispose();
+		}
+		for (const revertible of redoStack) {
+			revertible.dispose();
+		}
+	};
+	return { undoStack, redoStack, unsubscribe };
 }
 
 export function assertIsSessionId(sessionId: string): SessionId {
