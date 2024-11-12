@@ -5,7 +5,6 @@
 		"lib": ["ESNext", "DOM"],
 		"outDir": "./lib",
 		"types": ["react", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
-		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],

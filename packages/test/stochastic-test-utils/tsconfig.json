@@ -7,6 +7,5 @@
 		"outDir": "./lib",
 		"types": ["node", "mocha"],
 		"exactOptionalPropertyTypes": false,
-		"noUncheckedIndexedAccess": false,
 	},
 }

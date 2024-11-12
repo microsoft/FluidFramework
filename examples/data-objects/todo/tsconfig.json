@@ -10,7 +10,6 @@
 			"jest-environment-puppeteer",
 			"expect-puppeteer",
 		],
-		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],

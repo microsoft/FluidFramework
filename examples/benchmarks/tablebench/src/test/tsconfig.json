@@ -6,7 +6,6 @@
 		"types": ["mocha", "node"],
 		"noImplicitAny": true,
 		"noImplicitOverride": true,
-		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["./**/*"],
 	"references": [
