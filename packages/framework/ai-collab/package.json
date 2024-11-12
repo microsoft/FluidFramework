@@ -13,7 +13,7 @@
 	"sideEffects": false,
 	"type": "module",
 	"exports": {
-		".": {
+		"./alpha": {
 			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
