@@ -11,8 +11,8 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
-import type { ClientConnectionId, ClientSessionId } from "@fluid-experimental/presence";
-import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { ClientConnectionId, ClientSessionId } from "@fluidframework/presence";
+import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 /**
  * Generates expected join signal for a client that was initialized while connected.
