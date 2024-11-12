@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluid-experimental/presence";
+import {
+	acquirePresenceViaDataObject,
+	ExperimentalPresenceManager,
+} from "@fluid-experimental/presence";
 import {
 	AzureClient,
 	type AzureContainerServices,
@@ -17,31 +20,31 @@ import { FocusTracker } from "../src/FocusTracker.js";
 import { MouseTracker } from "../src/MouseTracker.js";
 import { renderFocusPresence, renderMousePresence } from "../src/view.js";
 
-	const user = {
-		id: "1234567890",
-		name: "Test User",
-	};
+const user = {
+	id: "1234567890",
+	name: "Test User",
+};
 
-	const connectionConfig: AzureLocalConnectionConfig = {
-		type: "local",
-		tokenProvider: new InsecureTokenProvider("fooBar", user),
-		endpoint: "http://localhost:7070",
-	};
+const connectionConfig: AzureLocalConnectionConfig = {
+	type: "local",
+	tokenProvider: new InsecureTokenProvider("unused", user),
+	endpoint: "http://localhost:7070",
+};
 
-	const clientProps = {
-		connection: connectionConfig,
-	};
+const clientProps = {
+	connection: connectionConfig,
+};
 
-	const containerSchema = {
-		initialObjects: {
-			map1: SharedMap,
-			// A Presence Manager object temporarily needs to be placed within container schema
-			// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
-			presence: ExperimentalPresenceManager,
-		},
-	} satisfies ContainerSchema;
+const containerSchema = {
+	initialObjects: {
+		map1: SharedMap,
+		// A Presence Manager object temporarily needs to be placed within container schema
+		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
+		presence: ExperimentalPresenceManager,
+	},
+} satisfies ContainerSchema;
 
-	export type PresenceTrackerSchema = typeof containerSchema;
+export type PresenceTrackerSchema = typeof containerSchema;
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -98,7 +101,7 @@ async function setup() {
 setup().catch((e) => {
 	console.error(e);
 	console.log(
-		"%cThere were issues setting up and starting the in memory FLuid Server",
+		"%cThere were issues setting up and starting the in memory Fluid Server",
 		"font-size:30px",
 	);
 });
