@@ -50,7 +50,11 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		//       checking that 'position' is in bounds until 'cacheMiss(..)'.  This yields an
 		//       ~40% speedup when the position is in the cache (node v12 x64).
 
-		return index < this.handles.length ? this.handles[index] : this.cacheMiss(position);
+		const handle = this.handles[index];
+		if (handle !== undefined) {
+			return handle;
+		}
+		return this.cacheMiss(position);
 	}
 
 	/**
@@ -62,7 +66,9 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		const index = this.getIndex(position);
 		if (index < this.handles.length) {
 			assert(
-				!isHandleValid(this.handles[index]),
+				// Non null asserting, above we checked that the index is less than the length.
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				!isHandleValid(this.handles[index]!),
 				0x018 /* "Trying to insert handle into position with already valid handle!" */,
 			);
 			this.handles[index] = handle;
@@ -104,7 +110,9 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		if (_position < this.start) {
 			this.handles = [...this.getHandles(_position, this.start), ...this.handles];
 			this.start = _position;
-			return this.handles[0];
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return this.handles[0]!;
 		} else {
 			ensureRange(_position, this.vector.getLength());
 
@@ -112,7 +120,9 @@ export class HandleCache implements IVectorConsumer<Handle> {
 				...this.handles,
 				...this.getHandles(this.start + this.handles.length, _position + 1),
 			];
-			return this.handles[this.handles.length - 1];
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return this.handles[this.handles.length - 1]!;
 		}
 	}
 

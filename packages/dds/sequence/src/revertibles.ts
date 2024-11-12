@@ -326,7 +326,9 @@ export function appendSharedStringDeltaToRevertibles(
 				event: IntervalOpType.POSITION_REMOVE,
 				intervals: [],
 				revertibleRefs,
-				mergeTreeRevertible: removeRevertibles[0],
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				mergeTreeRevertible: removeRevertibles[0]!,
 			};
 
 			// add an interval for each startInterval, accounting for any corresponding endIntervals
@@ -337,7 +339,9 @@ export function appendSharedStringDeltaToRevertibles(
 				});
 				let endOffset: number | undefined;
 				if (endIntervalIndex !== -1) {
-					endOffset = endIntervals[endIntervalIndex].offset;
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					endOffset = endIntervals[endIntervalIndex]!.offset;
 					endIntervals.splice(endIntervalIndex, 1);
 				}
 
@@ -587,7 +591,9 @@ interface RangeInfo {
 // eslint-disable-next-line import/no-deprecated
 class SortedRangeSet extends SortedSet<RangeInfo, string> {
 	protected getKey(item: RangeInfo): string {
-		return item.ranges[0].segment.ordinal;
+		// TODO Non null asserting, why is this not null?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return item.ranges[0]!.segment.ordinal;
 	}
 }
 
