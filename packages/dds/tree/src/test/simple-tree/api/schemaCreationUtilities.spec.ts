@@ -260,13 +260,16 @@ describe("schemaCreationUtilities", () => {
 			value: DayNodes.schema,
 			name: schema.string,
 		}) {}
-		// @ts-expect-error Day is not compatible with value of Day.Today
-		const dayObject1 = new DayObject({ value: DayNodes("today"), name: "1" });
-		// @ts-expect-error Day is not compatible with value of Day.Today
-		const dayObject4 = new DayObject({ value: getDay("today"), name: "4" });
-		// @ts-expect-error Day is not compatible with value of Day.Today
-		const dayObject2 = new DayObject({ value: DayNodes("today" as Day), name: "2" });
-		const dayObject3 = new DayObject({ value: DayNodes(Day.Today), name: "3" });
+		function createDayObjects(value: Day, name: string): DayObject[] {
+			// @ts-expect-error Day is not compatible with value of Day.Today
+			const dayObject1 = new DayObject({ value: DayNodes("today"), name: "1" });
+			// @ts-expect-error Day is not compatible with value of Day.Today
+			const dayObject4 = new DayObject({ value: getDay("today"), name: "4" });
+			// @ts-expect-error Day is not compatible with value of Day.Today
+			const dayObject2 = new DayObject({ value: DayNodes("today" as Day), name: "2" });
+			const dayObject3 = new DayObject({ value: DayNodes(Day.Today), name: "3" });
+			return [dayObject1, dayObject2, dayObject3, dayObject4];
+		}
 	});
 
 	// More of an inconvenience than an issue, likely to cause friction for other developers
@@ -277,7 +280,7 @@ describe("schemaCreationUtilities", () => {
 			"tree",
 		);
 
-		type AnimalType = "cat" | "dog" | "lizard";
+		type AnimalType = "cat" | "dog";
 
 		interface IAnimal {
 			aType: AnimalType;
