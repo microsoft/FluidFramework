@@ -7,13 +7,13 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import {
-	SessionClientStatus,
-	type ClientSessionId,
-	type IPresence,
-	type ISessionClient,
-	type PresenceEvents,
+import type {
+	ClientSessionId,
+	IPresence,
+	ISessionClient,
+	PresenceEvents,
 } from "./presence.js";
+import { SessionClientStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import type { PresenceStates, PresenceStatesSchema } from "./types.js";
 
