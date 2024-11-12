@@ -215,7 +215,7 @@ export interface AdjustParams {
 	 */
 	min?: number | undefined;
 	/**
-	 * An optional maximum value for the computed value of the key this adjustment is applied too.
+	 * An optional maximum value for the computed value of the key this adjustment is applied to.
 	 * The maximum will be applied after the value is applied.
 	 */
 	max?: number | undefined;
