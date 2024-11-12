@@ -588,6 +588,24 @@ describe("Undo and redo", () => {
 		assert.equal(clonedUndoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
 		assert.equal(clonedUndoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 	});
+
+	it.only("clone revertible fails if trees are different", () => {
+		const viewA = asTreeViewAlpha(createLocalSharedTree("testSharedTreeOne"));
+		const viewB = asTreeViewAlpha(createLocalSharedTreeTwo("testSharedTreeTwo"));
+
+		const {
+			undoStack: undoStack1,
+			redoStack: redoStack1,
+			unsubscribe: unsubscribe1,
+		} = createRevertibleAlphaUndoRedoStacks(viewA.events);
+
+		assert(viewA.root.child !== undefined);
+		viewA.root.child.propertyOne = 256; // 128 -> 256
+
+		const undoOriginalPropertyOne = undoStack1.pop();
+
+		assert.throws(() => undoOriginalPropertyOne?.clone(viewB).revert(), "Error: 0x576"); // "branch A and branch B must be related", error code 0x576
+	});
 });
 
 /**
@@ -619,20 +637,20 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 let temp: unknown;
 
 /**
- * Schema Builder
+ * Create a simple shared tree for {@link RevertibleAlpha} tests.
  */
-const factory = new SchemaFactory("shared-tree-test");
-class ChildNodeSchema extends factory.object("child-item", {
-	propertyOne: factory.optional(factory.number),
-	propertyTwo: factory.object("propertyTwo-item", {
-		itemOne: factory.string,
-	}),
-}) {}
-class RootNodeSchema extends factory.object("root-item", {
-	child: factory.optional(ChildNodeSchema),
-}) {}
-
 function createLocalSharedTree(id: string) {
+	const factory = new SchemaFactory("shared-tree-test");
+	class ChildNodeSchema extends factory.object("child-item", {
+		propertyOne: factory.optional(factory.number),
+		propertyTwo: factory.object("propertyTwo-item", {
+			itemOne: factory.string,
+		}),
+	}) {}
+	class RootNodeSchema extends factory.object("root-item", {
+		child: factory.optional(ChildNodeSchema),
+	}) {}
+
 	const sharedTree = SharedTree.create(
 		new MockFluidDataStoreRuntime({
 			registry: [SharedTree.getFactory()],
@@ -650,6 +668,39 @@ function createLocalSharedTree(id: string) {
 				propertyTwo: {
 					itemOne: "",
 				},
+			},
+		}),
+	);
+
+	return view;
+}
+
+/**
+ * Create a simple shared tree for {@link RevertibleAlpha} tests.
+ */
+function createLocalSharedTreeTwo(id: string) {
+	const factory = new SchemaFactory("shared-tree-test");
+	class ChildNodeSchema extends factory.object("child-item", {
+		itemOne: factory.string,
+	}) {}
+	class RootNodeSchema extends factory.object("root-item", {
+		child: factory.optional(ChildNodeSchema),
+	}) {}
+
+	const sharedTree = SharedTree.create(
+		new MockFluidDataStoreRuntime({
+			registry: [SharedTree.getFactory()],
+			idCompressor: testIdCompressor,
+		}),
+		id,
+	);
+
+	const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+
+	view.initialize(
+		new RootNodeSchema({
+			child: {
+				itemOne: "hello world!",
 			},
 		}),
 	);
