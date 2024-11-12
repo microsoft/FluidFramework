@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { useColorMode } from '@docusaurus/theme-common';
+import { useColorMode } from "@docusaurus/theme-common";
 import Link from "@docusaurus/Link";
 import GitHubIcon from "@theme/Icon/Socials/GitHub";
 import XIcon from "@theme/Icon/Socials/X";
@@ -101,7 +101,8 @@ function FooterPrivacyLinks(): JSX.Element {
 
 function FooterCopyright(): JSX.Element {
 	const { colorMode } = useColorMode();
-	const imageFileName = colorMode === "light" ? "microsoft-logo-inverted.png" : "microsoft-logo.png";
+	const imageFileName =
+		colorMode === "light" ? "microsoft-logo-inverted.png" : "microsoft-logo.png";
 	return (
 		<div className="ffcom-footer-copyright">
 			<FooterLogo
