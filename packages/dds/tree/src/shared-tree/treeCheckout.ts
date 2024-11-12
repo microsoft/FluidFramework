@@ -98,7 +98,7 @@ export interface CheckoutEvents {
 	 */
 	changed(
 		data: CommitMetadata,
-		getRevertible?: RevertibleFactory | RevertibleAlphaFactory,
+		getRevertible?: RevertibleAlphaFactory,
 	): void;
 }
 
