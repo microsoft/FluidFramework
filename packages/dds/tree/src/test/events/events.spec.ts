@@ -238,7 +238,7 @@ describe("EventEmitter", () => {
 		assert.equal(noListenersFired, true);
 	});
 
-	it("correctly implements hasListeners", () => {
+	it("reports whether or not it has listeners", () => {
 		const emitter = createEmitter<TestEvents>();
 		assert.equal(emitter.hasListeners(), false);
 		const offA = emitter.on("open", () => {});
@@ -249,6 +249,24 @@ describe("EventEmitter", () => {
 		assert.equal(emitter.hasListeners(), true);
 		offA();
 		assert.equal(emitter.hasListeners(), false);
+	});
+
+	it("reports whether or not it has listeners for a given event", () => {
+		const emitter = createEmitter<TestEvents>();
+		assert.equal(emitter.hasListeners("open"), false);
+		assert.equal(emitter.hasListeners("close"), false);
+		const offA = emitter.on("open", () => {});
+		assert.equal(emitter.hasListeners("open"), true);
+		assert.equal(emitter.hasListeners("close"), false);
+		const offB = emitter.on("close", () => {});
+		assert.equal(emitter.hasListeners("open"), true);
+		assert.equal(emitter.hasListeners("close"), true);
+		offA();
+		assert.equal(emitter.hasListeners("open"), false);
+		assert.equal(emitter.hasListeners("close"), true);
+		offB();
+		assert.equal(emitter.hasListeners("open"), false);
+		assert.equal(emitter.hasListeners("close"), false);
 	});
 
 	it("reentrant events", () => {
