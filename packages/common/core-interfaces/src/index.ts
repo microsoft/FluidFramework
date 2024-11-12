@@ -63,4 +63,5 @@ export {
 	type NestedMap,
 	getOrAddInMap,
 	setInNestedMap,
+	getOrCreate,
 } from "./events/index.js";

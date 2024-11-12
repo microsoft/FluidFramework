@@ -4,6 +4,7 @@
  */
 
 import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
+import { getOrCreate } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { CommitMetadata, RevertibleFactory } from "../../core/index.js";
@@ -24,7 +25,7 @@ import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
 import { markSchemaMostDerived } from "./schemaFactory.js";
-import { fail, getOrCreate } from "../../util/index.js";
+import { fail } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 /**

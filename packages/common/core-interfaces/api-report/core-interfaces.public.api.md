@@ -26,7 +26,10 @@ export class EventEmitter<TListeners extends Listeners<TListeners>> implements L
     // (undocumented)
     hasListeners(eventName?: keyof TListeners): boolean;
     // (undocumented)
-    protected readonly listeners: Map<keyof TListeners, Map<Off, (...args: any[]) => TListeners[keyof TListeners]>>;
+    protected readonly listeners: Map<keyof TListeners, Set<(...args: any[]) => TListeners[keyof TListeners]>>;
+    // (undocumented)
+    off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+    // (undocumented)
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
 
@@ -49,6 +52,9 @@ export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string
 
 // @public
 export function getOrAddInMap<Key, Value>(map: MapGetSet<Key, Value>, key: Key, value: Value): Value;
+
+// @public
+export function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V;
 
 // @public @sealed
 export interface HasListeners<TListeners extends Listeners<TListeners>> {
@@ -341,6 +347,7 @@ export interface ITelemetryBaseProperties {
 
 // @public @sealed
 export interface Listenable<TListeners extends object> {
+    off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
 

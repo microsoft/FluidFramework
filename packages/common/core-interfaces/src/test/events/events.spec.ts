@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+// import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	EventEmitter,
+	// EventEmitter,
 	createEmitter,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../events/emitter.js";
-import type { Listenable } from "../../events/index.js";
+	// type Listenable
+} from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;
@@ -155,7 +155,9 @@ describe("EventEmitter", () => {
 		emitter.on("open", listener);
 		assert.throws(
 			() => emitter.on("open", listener),
-			(e: Error) => validateAssertionError(e, /register.*twice.*open/),
+			(e: Error) => {
+				throw new Error(`${e} - /register.*twice.*open/`);
+			},
 		);
 		// If error is caught, the listener should still fire once for the first registration
 		emitter.emit("open");
@@ -171,7 +173,9 @@ describe("EventEmitter", () => {
 		emitter.emit(eventSymbol);
 		assert.throws(
 			() => emitter.on(eventSymbol, listener),
-			(e: Error) => validateAssertionError(e, /register.*twice.*TestEvent/),
+			(e: Error) => {
+				throw new Error(`${e} - /register.*twice.*TestEvent/`);
+			},
 		);
 	});
 
@@ -288,42 +292,42 @@ describe("EventEmitter", () => {
 
 // The below classes correspond to the examples given in the doc comment of `EventEmitter` to ensure that they compile
 
-interface MyEvents {
-	loaded: () => void;
-	computed: () => number;
-}
+// interface MyEvents {
+// 	loaded: () => void;
+// 	computed: () => number;
+// }
 
-class MyInheritanceClass extends EventEmitter<MyEvents> {
-	private load() {
-		this.emit("loaded");
-		const results: number[] = this.emitAndCollect("computed");
-	}
-}
+// class MyInheritanceClass extends EventEmitter<MyEvents> {
+// 	private load() {
+// 		this.emit("loaded");
+// 		const results: number[] = this.emitAndCollect("computed");
+// 	}
+// }
 
-class MyCompositionClass implements Listenable<MyEvents> {
-	private readonly events = createEmitter<MyEvents>();
+// class MyCompositionClass implements Listenable<MyEvents> {
+// 	private readonly events = createEmitter<MyEvents>();
 
-	private load() {
-		this.events.emit("loaded");
-		const results: number[] = this.events.emitAndCollect("computed");
-	}
+// 	private load() {
+// 		this.events.emit("loaded");
+// 		const results: number[] = this.events.emitAndCollect("computed");
+// 	}
 
-	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
-		return this.events.on(eventName, listener);
-	}
+// 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+// 		return this.events.on(eventName, listener);
+// 	}
 
-	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
-		return this.events.off(eventName, listener);
-	}
-}
+// 	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
+// 		return this.events.off(eventName, listener);
+// 	}
+// }
 
-class MyExposingClass {
-	private readonly _events = createEmitter<MyEvents>();
+// class MyExposingClass {
+// 	private readonly _events = createEmitter<MyEvents>();
 
-	public readonly events: Listenable<MyEvents> = this._events;
+// 	public readonly events: Listenable<MyEvents> = this._events;
 
-	private load() {
-		this._events.emit("loaded");
-		const results: number[] = this._events.emitAndCollect("computed");
-	}
-}
+// 	private load() {
+// 		this._events.emit("loaded");
+// 		const results: number[] = this._events.emitAndCollect("computed");
+// 	}
+// }

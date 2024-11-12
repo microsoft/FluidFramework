@@ -594,12 +594,6 @@ export interface IValueChanged {
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public @sealed
-export interface Listenable<TListeners extends object> {
-    off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
-    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
-}
-
-// @public @sealed
 export interface MakeNominal {
 }
 
@@ -993,9 +987,6 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 // @public
 export type Unhydrated<T> = T;
-
-// @public
-export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
 
 // @public
 export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {

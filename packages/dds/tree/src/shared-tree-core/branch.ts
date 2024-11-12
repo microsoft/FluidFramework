@@ -4,6 +4,7 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import { createEmitter, type Listenable } from "@fluidframework/core-interfaces";
 import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -21,7 +22,6 @@ import {
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import { createEmitter, type Listenable } from "../events/index.js";
 
 import { TransactionStack } from "./transactionStack.js";
 import { fail } from "../util/index.js";

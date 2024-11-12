@@ -4,6 +4,7 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import { getOrCreate } from "@fluidframework/core-interfaces";
 
 import {
 	CursorLocationType,
@@ -22,7 +23,7 @@ import {
 	Multiplicity,
 	ValueSchema,
 } from "../../core/index.js";
-import { fail, getOrCreate } from "../../util/index.js";
+import { fail } from "../../util/index.js";
 import type { FullSchemaPolicy } from "../modular-schema/index.js";
 
 import { BasicChunk } from "./basicChunk.js";

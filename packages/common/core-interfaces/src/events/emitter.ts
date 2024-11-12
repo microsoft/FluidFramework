@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { getOrCreate } from "../util/index.js";
+// import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { Listenable, Listeners, Off } from "./listeners.js";
+import { getOrCreate } from "./util.js";
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
+ * @public
  */
 export interface IEmitter<TListeners extends Listeners<TListeners>> {
 	/**
@@ -40,6 +41,7 @@ export interface IEmitter<TListeners extends Listeners<TListeners>> {
 /**
  * Called when the last listener for `eventName` is removed.
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
+ * @public
  */
 export type NoListenersCallback<TListeners extends object> = (
 	eventName: keyof Listeners<TListeners>,
@@ -47,7 +49,7 @@ export type NoListenersCallback<TListeners extends object> = (
 
 /**
  * Allows querying if an object has listeners.
- * @sealed
+ * @sealed @public
  */
 export interface HasListeners<TListeners extends Listeners<TListeners>> {
 	/**
@@ -112,6 +114,7 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
  * 	}
  * }
  * ```
+ * @public
  */
 export class EventEmitter<TListeners extends Listeners<TListeners>>
 	implements Listenable<TListeners>, HasListeners<TListeners>
@@ -168,7 +171,7 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 			const eventDescription =
 				typeof eventName === "symbol" ? eventName.description : String(eventName.toString());
 
-			throw new UsageError(
+			throw new Error(
 				`Attempted to register the same listener object twice for event ${eventDescription}`,
 			);
 		}
@@ -189,7 +192,7 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 
 	public hasListeners(eventName?: keyof TListeners): boolean {
 		if (eventName === undefined) {
-			return this.listeners.size !== 0;
+			return this.listeners.size > 0;
 		}
 		return this.listeners.has(eventName);
 	}

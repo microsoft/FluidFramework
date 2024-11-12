@@ -4,7 +4,7 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
-import { createEmitter, type Listenable } from "@fluidframework/core-interfaces";
+import { createEmitter, type Listenable, getOrCreate } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -24,7 +24,7 @@ import {
 	type TreeStoredSchema,
 	type Value,
 } from "../../core/index.js";
-import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
+import { brand, fail, mapIterable } from "../../util/index.js";
 import {
 	type FlexTreeContext,
 	FlexTreeEntityKind,

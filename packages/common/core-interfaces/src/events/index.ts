@@ -24,4 +24,5 @@ export {
 	type NestedMap,
 	getOrAddInMap,
 	setInNestedMap,
+	getOrCreate,
 } from "./util.js";

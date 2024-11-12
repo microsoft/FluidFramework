@@ -8,16 +8,13 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 // which degrades the API-Extractor report quality since API-Extractor can not tell the inline import is the same as the non-inline one.
 // eslint-disable-next-line unused-imports/no-unused-imports
 import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfaces";
+import { getOrCreate } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
 import type { NodeKeyManager } from "../../feature-libraries/index.js";
-import {
-	type RestrictiveStringRecord,
-	getOrCreate,
-	isReadonlyArray,
-} from "../../util/index.js";
+import { type RestrictiveStringRecord, isReadonlyArray } from "../../util/index.js";
 
 import {
 	booleanSchema,

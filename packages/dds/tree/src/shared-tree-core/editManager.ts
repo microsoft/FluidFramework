@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { createEmitter, getOrCreate } from "@fluidframework/core-interfaces";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
@@ -19,7 +20,7 @@ import {
 	type RebaseStatsWithDuration,
 	tagChange,
 } from "../core/index.js";
-import { type Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
+import { type Mutable, brand, fail, mapIterable } from "../util/index.js";
 
 import {
 	SharedTreeBranch,
@@ -41,7 +42,6 @@ import {
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
-import { createEmitter } from "@fluidframework/core-interfaces";
 import {
 	TelemetryEventBatcher,
 	measure,
