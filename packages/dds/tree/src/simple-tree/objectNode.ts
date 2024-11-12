@@ -59,15 +59,14 @@ import { getUnhydratedContext } from "./createContext.js";
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
 	// Due to https://github.com/microsoft/TypeScript/issues/43826 we can not set the desired setter type,
 	// but we can at least remove the setter (by setting the key to never) when there should be no setter.
-	-readonly [Property in keyof T as Property extends string
-		? [AssignableTreeFieldFromImplicitField<T[Property]>] extends [never]
-			? never
-			: Property
-		: never]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
+	-readonly [Property in keyof T as [
+		AssignableTreeFieldFromImplicitField<T[Property & string]>,
+		// If the types we want to allow setting to are just never or undefined, remove the setter
+	] extends [never | undefined]
+		? never
+		: Property]: TreeFieldFromImplicitField<T[Property & string]>;
 } & {
-	readonly [Property in keyof T]: Property extends string
-		? TreeFieldFromImplicitField<T[Property]>
-		: unknown;
+	readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property & string]>;
 };
 
 /**

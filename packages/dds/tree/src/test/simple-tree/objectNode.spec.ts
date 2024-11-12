@@ -12,6 +12,7 @@ import {
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type NodeBuilderData,
+	type TreeNode,
 } from "../../simple-tree/index.js";
 import type {
 	InsertableObjectFromSchemaRecord,
@@ -31,6 +32,8 @@ import type {
 	InsertableTreeFieldFromImplicitField,
 	InsertableTreeNodeFromAllowedTypes,
 	InsertableTypedNode,
+	TreeFieldFromImplicitField,
+	TreeLeafValue,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 
@@ -253,6 +256,35 @@ describeHydration(
 					// @ts-expect-error this should not compile
 					n.child = "x";
 				});
+			});
+
+			it("assigning non-exact optional schema", () => {
+				const child: ImplicitFieldSchema = schemaFactory.number;
+				class NonExact extends schemaFactory.object("NonExact", {
+					child: schemaFactory.optional(child),
+				}) {}
+				// @ts-expect-error Should not compile, and does not due to non-exact typing.
+				const initial: InsertableField<NonExact> = { child: 1 };
+				const n: NonExact = init(NonExact, initial);
+
+				assert.throws(() => {
+					// @ts-expect-error this should not compile
+					n.child = "x";
+				});
+
+				type Read = TreeFieldFromImplicitField<(typeof NonExact.info)["child"]>;
+				type _check1 = requireTrue<
+					areSafelyAssignable<Read, undefined | TreeNode | TreeLeafValue>
+				>;
+
+				const read = n.child;
+				type _check2 = requireTrue<
+					areSafelyAssignable<typeof read, undefined | TreeNode | TreeLeafValue>
+				>;
+
+				// This would be ok, but allowing it forces allowing assigning any of the values that can be read, which is very unsafe here.
+				// @ts-expect-error this should not compile
+				n.child = undefined;
 			});
 
 			it("assigning non-exact schema errors - union", () => {
