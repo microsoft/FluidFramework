@@ -13,6 +13,7 @@ import {
 	ISegment,
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaOperationTypes,
+	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
 	PropertySet, // eslint-disable-next-line import/no-deprecated
 	SortedSegmentSet,
@@ -77,10 +78,15 @@ export abstract class SequenceEventClass<
 		// eslint-disable-next-line import/no-deprecated
 		private readonly mergeTreeClient: Client,
 	) {
-		assert(
-			deltaArgs.deltaSegments.length > 0,
-			0x2d8 /* "Empty change event should not be emitted." */,
-		);
+		if (
+			deltaArgs.operation !== MergeTreeDeltaType.OBLITERATE &&
+			deltaArgs.operation !== MergeTreeMaintenanceType.ACKNOWLEDGED
+		) {
+			assert(
+				deltaArgs.deltaSegments.length > 0,
+				0x2d8 /* "Empty change event should not be emitted." */,
+			);
+		}
 		this.deltaOperation = deltaArgs.operation;
 		this.isLocal = opArgs?.sequencedMessage === undefined;
 
