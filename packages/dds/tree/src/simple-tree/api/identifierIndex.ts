@@ -54,6 +54,7 @@ export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<TKey,
  * @param view - the view for the tree being indexed
  * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns the field name that all nodes of the given schema should be keyed on
  * @param getValue - given at least one {@link TreeNode}, returns an associated value
+ * @param isKeyValid - function for verifying the validity of the key retrieved based on the information given by the indexer
  *
  * @alpha
  */
@@ -73,6 +74,7 @@ export function createSimpleTreeIndex<
  * @param view - the view for the tree being indexed
  * @param indexer - - a function that takes in a {@link TreeNodeSchema} and returns the field name that all nodes of the given schema should be keyed on
  * @param getValue - given at least one {@link TreeNode}, returns an associated value
+ * @param isKeyValid - function for verifying the validity of the key retrieved based on the information given by the indexer
  * @param indexableSchema - a list of all the schema types that can be indexed
  *
  * @alpha
