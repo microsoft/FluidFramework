@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IContainer,
-	type IHostLoader,
-	LoaderHeader,
-} from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
+import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+
+import {
+	type ISimpleLoader,
+	SimpleLoader,
+	waitForAtLeastSequenceNumber,
+} from "../simpleLoader/index.js";
 
 import type {
 	IAttachedMigratableModel,
@@ -23,8 +24,7 @@ import { type IMigratableModelContainerRuntimeEntryPoint } from "./loadMigratabl
  * @alpha
  */
 export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {
-	private readonly loader: IHostLoader;
-	private readonly generateCreateNewRequest: () => IRequest;
+	private readonly loader: ISimpleLoader;
 
 	// TODO: See if there's a nicer way to parameterize the createNew request.
 	// Here we specifically pick just the loader props we know we need to keep API exposure low.  Fine to add more
@@ -37,13 +37,22 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 			generateCreateNewRequest: () => IRequest;
 		},
 	) {
-		this.loader = new Loader({
-			urlResolver: props.urlResolver,
-			documentServiceFactory: props.documentServiceFactory,
-			codeLoader: props.codeLoader,
-			logger: props.logger,
+		const {
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			logger,
+			generateCreateNewRequest,
+		} = props;
+
+		// TODO: inject this instead of creating here?
+		this.loader = new SimpleLoader({
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			logger,
+			generateCreateNewRequest,
 		});
-		this.generateCreateNewRequest = props.generateCreateNewRequest;
 	}
 
 	public async supportsVersion(version: string): Promise<boolean> {
@@ -89,39 +98,14 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 	// TODO: Consider making the version param optional, and in that case having a mechanism to query the codeLoader
 	// for the latest/default version to use?
 	public async createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>> {
-		const container = await this.loader.createDetachedContainer({ package: version });
+		const { container, attach } = await this.loader.createDetached(version);
 		const { model, migrationTool } =
 			await this.getModelAndMigrationToolFromContainer(container);
-		// The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,
-		// without leaking out the loader, service, etc.  We also return the container ID here so we don't have
-		// to stamp it on something that would rather not know it (e.g. the model).
-		const attach = async (): Promise<string> => {
-			await container.attach(this.generateCreateNewRequest());
-			if (container.resolvedUrl === undefined) {
-				throw new Error("Resolved Url not available on attached container");
-			}
-			return container.resolvedUrl.id;
-		};
 		return { model, migrationTool, attach };
 	}
 
-	private async loadContainer(id: string): Promise<IContainer> {
-		return this.loader.resolve({
-			url: id,
-			headers: {
-				[LoaderHeader.loadMode]: {
-					// Here we use "all" to ensure we are caught up before returning.  This is particularly important
-					// for direct-link scenarios, where the user might have a direct link to a data object that was
-					// just attached (i.e. the "attach" op and the "set" of the handle into some map is in the
-					// trailing ops).  If we don't fully process those ops, the expected object won't be found.
-					opsBeforeReturn: "all",
-				},
-			},
-		});
-	}
-
 	public async loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>> {
-		const container = await this.loadContainer(id);
+		const container = await this.loader.loadExisting(id);
 		const { model, migrationTool } =
 			await this.getModelAndMigrationToolFromContainer(container);
 		return { model, migrationTool };
@@ -131,19 +115,8 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 		id: string,
 		sequenceNumber: number,
 	): Promise<IAttachedMigratableModel<ModelType>> {
-		const container = await this.loadContainer(id);
-		await new Promise<void>((resolve) => {
-			if (sequenceNumber <= container.deltaManager.lastSequenceNumber) {
-				resolve();
-			}
-			const callbackOps = (message: ISequencedDocumentMessage): void => {
-				if (sequenceNumber <= message.sequenceNumber) {
-					resolve();
-					container.deltaManager.off("op", callbackOps);
-				}
-			};
-			container.deltaManager.on("op", callbackOps);
-		});
+		const container = await this.loader.loadExisting(id);
+		await waitForAtLeastSequenceNumber(container, sequenceNumber);
 		const { model, migrationTool } =
 			await this.getModelAndMigrationToolFromContainer(container);
 		return { model, migrationTool };
