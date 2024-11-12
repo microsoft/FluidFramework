@@ -77,7 +77,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expected);
 		});
 
-		it.only("replace vs insert", () => {
+		it("replace vs insert", () => {
 			const root = makeTreeFromJsonSequence(["A", "C"]);
 
 			const tree1 = root.branch();
