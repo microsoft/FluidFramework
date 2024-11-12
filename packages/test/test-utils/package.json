@@ -168,6 +168,12 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Class_TestFluidObject": {
+				"backCompat": false
+			},
+			"ClassStatics_TestFluidObject": {
+				"backCompat": false
+			},
 			"Interface_IProvideTestFluidObject": {
 				"backCompat": false
 			},
