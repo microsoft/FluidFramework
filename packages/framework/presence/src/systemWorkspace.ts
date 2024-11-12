@@ -17,7 +17,7 @@ import { SessionClientStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import type { PresenceStates, PresenceStatesSchema } from "./types.js";
 
-import type { IEmitter } from "@fluid-experimental/presence/internal/events";
+import type { IEmitter } from "@fluidframework/presence/internal/events";
 
 /**
  * The system workspace's datastore structure.

@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-experimental/presence",
+	"name": "@fluidframework/presence",
 	"version": "2.10.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",

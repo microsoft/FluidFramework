@@ -8,8 +8,8 @@ import type { IPresence } from "../presence.js";
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
-import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
+} from "@fluidframework/presence/internal/core-interfaces";
+import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
 
 describe("Presence", () => {
 	describe("PresenceStates", () => {
