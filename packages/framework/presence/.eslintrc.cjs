@@ -20,6 +20,7 @@ module.exports = {
 		// understood. If `any` is still needed disable is on a per line basis.
 		"@typescript-eslint/no-explicit-any": "off",
 		"import/no-internal-modules": "off",
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 	overrides: [
 		{
