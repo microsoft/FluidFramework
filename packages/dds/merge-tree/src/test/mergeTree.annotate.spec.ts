@@ -15,7 +15,6 @@ import {
 import { MergeTree } from "../mergeTree.js";
 import { Marker, type ISegmentLeaf } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
-import type { PropsOrAdjust } from "../segmentPropertiesManager.js";
 import { TextSegment } from "../textSegment.js";
 
 import { insertSegments } from "./testUtils.js";
@@ -79,7 +78,7 @@ describe("MergeTree", () => {
 					annotateStart,
 					annotateEnd,
 					{
-						props: { propertySource: "remote" },
+						propertySource: "remote",
 					},
 					currentSequenceNumber,
 					remoteClientId,
@@ -101,7 +100,7 @@ describe("MergeTree", () => {
 					annotateStart,
 					annotateEnd,
 					{
-						props: { propertySource: "local" },
+						propertySource: "local",
 					},
 					currentSequenceNumber,
 					localClientId,
@@ -127,8 +126,8 @@ describe("MergeTree", () => {
 				);
 			});
 			describe("local first", () => {
-				const props: PropsOrAdjust = {
-					props: { propertySource: "local" },
+				const props = {
+					propertySource: "local",
 				};
 				beforeEach(() => {
 					mergeTree.annotateRange(
@@ -157,7 +156,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { secondProperty: "local" },
+							secondProperty: "local",
 						},
 						currentSequenceNumber,
 						localClientId,
@@ -187,10 +186,8 @@ describe("MergeTree", () => {
 				});
 
 				it("unsequenced local after unsequenced local split", () => {
-					const secondChangeProps: PropsOrAdjust = {
-						props: {
-							secondChange: 1,
-						},
+					const secondChangeProps = {
+						secondChange: 1,
 					};
 					mergeTree.annotateRange(
 						annotateStart,
@@ -202,10 +199,8 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const splitOnlyProps: PropsOrAdjust = {
-						props: {
-							splitOnly: 1,
-						},
+					const splitOnlyProps = {
+						splitOnly: 1,
 					};
 
 					mergeTree.annotateRange(
@@ -246,7 +241,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							...props,
+							props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -268,7 +263,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							...secondChangeProps,
+							props: secondChangeProps,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -290,7 +285,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: splitPos,
 							pos2: annotateEnd,
-							...splitOnlyProps,
+							props: splitOnlyProps,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -314,7 +309,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { propertySource: "remote", remoteProperty: 1 },
+							propertySource: "remote",
+							remoteProperty: 1,
 						},
 						currentSequenceNumber,
 						remoteClientId,
@@ -339,7 +335,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							...props,
+							props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -362,7 +358,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							...props,
+							props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -374,7 +370,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { propertySource: "remote", remoteProperty: 1 },
+							propertySource: "remote",
+							remoteProperty: 1,
 						},
 						currentSequenceNumber,
 						remoteClientId,
@@ -404,8 +401,9 @@ describe("MergeTree", () => {
 
 					assert.equal(segment.properties?.propertySource, "local");
 
-					const props2: PropsOrAdjust = {
-						props: { propertySource: "local2", secondSource: 1 },
+					const props2 = {
+						propertySource: "local2",
+						secondSource: 1,
 					};
 					mergeTree.annotateRange(
 						annotateStart,
@@ -420,10 +418,8 @@ describe("MergeTree", () => {
 					assert.equal(segment.properties?.propertySource, "local2");
 					assert.equal(segment.properties?.secondSource, 1);
 
-					const props3: PropsOrAdjust = {
-						props: {
-							thirdSource: 1,
-						},
+					const props3 = {
+						thirdSource: 1,
 					};
 					mergeTree.annotateRange(
 						annotateStart,
@@ -443,7 +439,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							...props,
+							props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -459,7 +455,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							...props2,
+							props: props2,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -475,7 +471,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							...props3,
+							props: props3,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -493,7 +489,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { secondSource: "local2" },
+							secondSource: "local2",
 						},
 						currentSequenceNumber,
 						localClientId,
@@ -505,7 +501,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							...props,
+							props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -517,7 +513,9 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { propertySource: "remote", remoteOnly: 1, secondSource: "remote" },
+							propertySource: "remote",
+							remoteOnly: 1,
+							secondSource: "remote",
 						},
 						currentSequenceNumber,
 						remoteClientId,
@@ -543,7 +541,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { propertySource: "remote", remoteProperty: 1 },
+							propertySource: "remote",
+							remoteProperty: 1,
 						},
 						currentSequenceNumber,
 						remoteClientId,
@@ -588,7 +587,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { propertySource: "local" },
+							propertySource: "local",
 						},
 						currentSequenceNumber,
 						localClientId,
@@ -607,8 +606,8 @@ describe("MergeTree", () => {
 				});
 
 				it("remote before sequenced local", () => {
-					const props: PropsOrAdjust = {
-						props: { propertySource: "local" },
+					const props = {
+						propertySource: "local",
 					};
 
 					const segmentInfo = mergeTree.getContainingSegment<ISegmentLeaf>(
@@ -634,7 +633,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							...props,
+							props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -648,8 +647,8 @@ describe("MergeTree", () => {
 				});
 			});
 			describe("local with rewrite first", () => {
-				const props: PropsOrAdjust = {
-					props: { propertySource: "local" },
+				const props = {
+					propertySource: "local",
 				};
 				beforeEach(() => {
 					mergeTree.annotateRange(
@@ -668,7 +667,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { propertySource: "local2", secondProperty: "local" },
+							propertySource: "local2",
+							secondProperty: "local",
 						},
 						currentSequenceNumber,
 						localClientId,
@@ -691,7 +691,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { propertySource: "remote", remoteProperty: 1 },
+							propertySource: "remote",
+							remoteProperty: 1,
 						},
 						currentSequenceNumber,
 						remoteClientId,
@@ -716,7 +717,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							...props,
+							props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -728,7 +729,8 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { propertySource: "remote", remoteProperty: 1 },
+							propertySource: "remote",
+							remoteProperty: 1,
 						},
 						currentSequenceNumber,
 						remoteClientId,
@@ -753,7 +755,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { secondSource: "local2" },
+							secondSource: "local2",
 						},
 						currentSequenceNumber,
 						localClientId,
@@ -765,7 +767,7 @@ describe("MergeTree", () => {
 						op: {
 							pos1: annotateStart,
 							pos2: annotateEnd,
-							...props,
+							props,
 							type: MergeTreeDeltaType.ANNOTATE,
 						},
 						sequencedMessage: {
@@ -777,7 +779,9 @@ describe("MergeTree", () => {
 						annotateStart,
 						annotateEnd,
 						{
-							props: { propertySource: "remote", remoteOnly: 1, secondSource: "remote" },
+							propertySource: "remote",
+							remoteOnly: 1,
+							secondSource: "remote",
 						},
 						currentSequenceNumber,
 						remoteClientId,

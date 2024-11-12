@@ -18,7 +18,7 @@ import {
 
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegment, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { ISegment } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
 import {
 	JsonSegmentSpecs,
@@ -193,7 +193,7 @@ export class SnapshotLegacy {
 
 	extractSync(): ISegment[] {
 		const collabWindow = this.mergeTree.collabWindow;
-		const seq = (this.seq = collabWindow.minSeq);
+		this.seq = collabWindow.minSeq;
 		this.header = {
 			segmentsTotalLength: this.mergeTree.getLength(
 				this.mergeTree.collabWindow.minSeq,
@@ -205,9 +205,9 @@ export class SnapshotLegacy {
 		let originalSegments = 0;
 
 		const segs: ISegment[] = [];
-		let prev: ISegmentLeaf | undefined;
+		let prev: ISegment | undefined;
 		const extractSegment = (
-			segment: ISegmentLeaf,
+			segment: ISegment,
 			pos: number,
 			refSeq: number,
 			clientId: number,
@@ -216,26 +216,29 @@ export class SnapshotLegacy {
 		): boolean => {
 			if (
 				segment.seq !== UnassignedSequenceNumber &&
-				segment.seq! <= seq &&
+				segment.seq! <= this.seq! &&
 				(segment.removedSeq === undefined ||
 					segment.removedSeq === UnassignedSequenceNumber ||
-					segment.removedSeq > seq)
+					segment.removedSeq > this.seq!)
 			) {
 				originalSegments += 1;
-				const properties =
-					segment.propertyManager?.getAtSeq(segment.properties, seq) ?? segment.properties;
-				if (prev?.canAppend(segment) && matchProperties(prev.properties, properties)) {
+				if (prev?.canAppend(segment) && matchProperties(prev.properties, segment.properties)) {
+					prev = prev.clone();
 					prev.append(segment.clone());
 				} else {
-					prev = segment.clone();
-					prev.properties = properties;
-					segs.push(prev);
+					if (prev) {
+						segs.push(prev);
+					}
+					prev = segment;
 				}
 			}
 			return true;
 		};
 
 		this.mergeTree.mapRange(extractSegment, this.seq, NonCollabClient, undefined);
+		if (prev) {
+			segs.push(prev);
+		}
 
 		this.segments = [];
 		let totalLength: number = 0;

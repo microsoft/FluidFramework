@@ -70,23 +70,7 @@ export const annotateRange: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
-	random: IRandom,
-) => {
-	// eslint-disable-next-line unicorn/prefer-ternary
-	if (random.bool()) {
-		return client.annotateRangeLocal(opStart, opEnd, {
-			[random.integer(1, 5)]: client.longClientId,
-		});
-	} else {
-		return client.annotateAdjustRangeLocal(opStart, opEnd, {
-			[random.integer(0, 2).toString()]: {
-				value: random.integer(-5, 5),
-				min: random.pick([undefined, random.integer(-100, 10)]),
-				max: random.pick([undefined, random.integer(-10, 100)]),
-			},
-		});
-	}
-};
+) => client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
 
 export const insertAtRefPos: TestOperation = (
 	client: TestClient,
