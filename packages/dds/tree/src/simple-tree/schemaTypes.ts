@@ -28,6 +28,7 @@ import type {
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./toMapTree.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
+import type { AssignableTreeFieldFromImplicitField } from "./objectNode.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
@@ -574,6 +575,109 @@ export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
  * @alpha
  */
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
+
+/**
+ * {@inheritdoc (UnsafeUnknownSchema:type)}
+ * @alpha
+ */
+export const CustomizedTyping: unique symbol = Symbol("CustomizedTyping");
+
+/**
+ * A special type which can be provided to some APIs as the schema type parameter when schema cannot easily be provided at compile time and an unsafe (instead of disabled) editing API is desired.
+ * @remarks
+ * When used, this means the TypeScript typing should err on the side of completeness (allow all inputs that could be valid).
+ * This introduces the risk that out-of-schema data could be allowed at compile time, and only error at runtime.
+ *
+ * @privateRemarks
+ * This only applies to APIs which input data which is expected to be in schema, since APIs outputting have easy mechanisms to do so in a type safe way even when the schema is unknown.
+ * In most cases that amounts to returning `TreeNode | TreeLeafValue`.
+ *
+ * This can be contrasted with the default behavior of TypeScript, which is to require the intersection of the possible types for input APIs,
+ * which for unknown schema defining input trees results in the `never` type.
+ *
+ * Any APIs which use this must produce UsageErrors when out of schema data is encountered, and never produce unrecoverable errors,
+ * or silently accept invalid data.
+ * This is currently only type exported from the package: the symbol is just used as a way to get a named type.
+ * @alpha
+ */
+export type CustomizedTyping = typeof CustomizedTyping;
+
+// TODO: use this to implement typing for field kinds? (Replace ApplyKind)
+interface CustomTypes<
+	TReadWrite = unknown,
+	TInput = TReadWrite,
+	TOutput extends TReadWrite = TReadWrite,
+	TAllowDefault extends boolean = boolean,
+> {
+	readonly allowDefault: TAllowDefault;
+	readonly input: TInput;
+	// Set to never to disable setter.
+	readonly readWrite: TReadWrite;
+	readonly output: TOutput;
+}
+
+export type CustomizedSchemaTyping<TSchema, TCustom extends CustomTypes> = TSchema & {
+	[CustomizedTyping]: TCustom;
+};
+
+export interface StrictTypes<TSchema extends ImplicitFieldSchema> {
+	input: InsertableTreeFieldFromImplicitField<TSchema>;
+	readWrite: AssignableTreeFieldFromImplicitField<TSchema>;
+	output: TreeFieldFromImplicitField<TSchema>;
+	allowDefault: false;
+}
+
+export interface RelaxedTypes<TSchema extends ImplicitFieldSchema> {
+	input: InsertableTreeFieldFromImplicitField<TSchema, TSchema>;
+	readWrite: TreeFieldFromImplicitField<TSchema>;
+	output: TreeFieldFromImplicitField<TSchema>;
+	allowDefault: undefined extends InsertableTreeFieldFromImplicitField<TSchema, TSchema>
+		? true
+		: false;
+}
+
+export interface AnyTypes {
+	input: InsertableField<UnsafeUnknownSchema>;
+	readWrite: TreeNode | TreeLeafValue;
+	output: TreeNode | TreeLeafValue;
+	allowDefault: true;
+}
+
+export interface UnknownTypes {
+	input: never;
+	readWrite: never;
+	output: TreeNode | TreeLeafValue;
+	allowDefault: false;
+}
+
+export function relaxSchemaTyping<
+	TSchema extends ImplicitFieldSchema,
+	TCustom extends CustomTypes = {
+		input: InsertableTreeFieldFromImplicitField<TSchema, TSchema>;
+		readWrite: TreeFieldFromImplicitField<TSchema>;
+		output: TreeFieldFromImplicitField<TSchema>;
+		allowDefault: undefined extends InsertableTreeFieldFromImplicitField<TSchema, TSchema>
+			? true
+			: false;
+	},
+>(schema: TSchema): CustomizedSchemaTyping<TSchema, TCustom> {
+	return schema as CustomizedSchemaTyping<TSchema, TCustom>;
+}
+
+export function customizeSchemaTyping<TSchema extends ImplicitFieldSchema>(
+	schema: TSchema,
+): <
+	TCustom extends CustomTypes = {
+		input: InsertableTreeFieldFromImplicitField<TSchema, TSchema>;
+		readWrite: TreeFieldFromImplicitField<TSchema>;
+		output: TreeFieldFromImplicitField<TSchema>;
+		allowDefault: undefined extends InsertableTreeFieldFromImplicitField<TSchema, TSchema>
+			? true
+			: false;
+	},
+>() => CustomizedSchemaTyping<TSchema, TCustom> {
+	return <TCustom extends CustomTypes>() => schema as CustomizedSchemaTyping<TSchema, TCustom>;
+}
 
 /**
  * Content which could be inserted into a tree.
