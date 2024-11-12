@@ -621,15 +621,15 @@ let temp: unknown;
 /**
  * Schema Builder
  */
-const builder = new SchemaFactory("shared-tree-test");
-class ChildNodeSchema extends builder.object("child-item", {
-	propertyOne: builder.optional(builder.number),
-	propertyTwo: builder.object("propertyTwo-item", {
-		itemOne: builder.string,
+const factory = new SchemaFactory("shared-tree-test");
+class ChildNodeSchema extends factory.object("child-item", {
+	propertyOne: factory.optional(factory.number),
+	propertyTwo: factory.object("propertyTwo-item", {
+		itemOne: factory.string,
 	}),
 }) {}
-class RootNodeSchema extends builder.object("root-item", {
-	child: builder.optional(ChildNodeSchema),
+class RootNodeSchema extends factory.object("root-item", {
+	child: factory.optional(ChildNodeSchema),
 }) {}
 
 function createLocalSharedTree(id: string) {

@@ -454,7 +454,7 @@ export function spyOnMethod(
 }
 
 /**
- * TODO
+ *
  * @returns `true` iff the given delta has a visible impact on the document tree.
  */
 export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
