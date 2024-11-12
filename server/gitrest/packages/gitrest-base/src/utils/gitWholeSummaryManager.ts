@@ -112,6 +112,7 @@ export class GitWholeSummaryManager {
 			// Create blob container if initial summary and blobContainerPerDoc is enabled.
 			if (
 				isInitial &&
+				this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp &&
 				Date.now() > this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp
 			) {
 				const summaryFolderPath = this.repoManager.path;
