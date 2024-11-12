@@ -47,6 +47,7 @@ import {
 	type ReadSchema,
 	type UnsafeUnknownSchema,
 	type TreeBranch,
+	type TreeBranchEvents,
 } from "../simple-tree/index.js";
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
@@ -84,9 +85,9 @@ export class SchematizingSimpleTreeView<
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
 	private readonly schemaPolicy: SchemaPolicy;
-	public readonly events: Listenable<TreeViewEvents> &
-		IEmitter<TreeViewEvents> &
-		HasListeners<TreeViewEvents> = createEmitter();
+	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
+		IEmitter<TreeViewEvents & TreeBranchEvents> &
+		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
 	private readonly viewSchema: ViewSchema;
 
@@ -133,9 +134,10 @@ export class SchematizingSimpleTreeView<
 		this.update();
 
 		this.unregisterCallbacks.add(
-			this.checkout.events.on("commitApplied", (data, getRevertible) =>
-				this.events.emit("commitApplied", data, getRevertible),
-			),
+			this.checkout.events.on("changed", (data, getRevertible) => {
+				this.events.emit("changed", data, getRevertible);
+				this.events.emit("commitApplied", data, getRevertible);
+			}),
 		);
 	}
 
@@ -295,7 +297,7 @@ export class SchematizingSimpleTreeView<
 				new HydratedContext(this.rootFieldSchema.allowedTypeSet, view.context),
 			);
 
-			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
 				unregister();
 				this.unregisterCallbacks.delete(unregister);
 				view[disposeSymbol]();
@@ -305,7 +307,7 @@ export class SchematizingSimpleTreeView<
 			this.view = undefined;
 			this.checkout.forest.anchors.slots.delete(SimpleContextSlot);
 
-			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
 				unregister();
 				this.unregisterCallbacks.delete(unregister);
 				this.update();

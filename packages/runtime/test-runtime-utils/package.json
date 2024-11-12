@@ -134,11 +134,11 @@
 		"@arethetypeswrong/cli": "^0.16.4",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.49.0",
+		"@fluid-tools/build-cli": "^0.50.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.49.0",
+		"@fluidframework/build-tools": "^0.50.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@~2.4.0",
+		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.5.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^9.1.1",
@@ -158,11 +158,11 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Class_MockDeltaConnection": {
-				"forwardCompat": false
+			"Class_MockFluidDataStoreContext": {
+				"backCompat": false
 			},
-			"Class_MockFluidDataStoreRuntime": {
-				"forwardCompat": false
+			"ClassStatics_MockFluidDataStoreContext": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "legacy"

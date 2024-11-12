@@ -102,11 +102,11 @@ describe("treeApi", () => {
 				try {
 					run(view, (root) => {
 						root.content = 43;
-						throw Error("Oh no");
+						throw new Error("Oh no");
 					});
-				} catch (e) {
-					assert(e instanceof Error);
-					assert.equal(e.message, "Oh no");
+				} catch (error) {
+					assert(error instanceof Error);
+					assert.equal(error.message, "Oh no");
 				}
 				assert.equal(view.root.content, 42);
 			});

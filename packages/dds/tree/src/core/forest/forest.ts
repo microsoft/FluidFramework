@@ -59,7 +59,12 @@ export interface ForestEvents {
  *
  * When invalidating, all outstanding cursors must be freed or cleared.
  */
-export interface IForestSubscription extends Listenable<ForestEvents> {
+export interface IForestSubscription {
+	/**
+	 * Events for this forest.
+	 */
+	readonly events: Listenable<ForestEvents>;
+
 	/**
 	 * Set of anchors this forest is tracking.
 	 *

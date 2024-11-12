@@ -122,7 +122,7 @@ export {
 	type TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
-	type TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
+	type TreeStoredSchemaSubscription,
 	type MutableTreeStoredSchema,
 	type FieldKindIdentifier,
 	type FieldKindData,

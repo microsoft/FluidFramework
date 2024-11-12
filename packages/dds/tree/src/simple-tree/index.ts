@@ -55,7 +55,14 @@ export {
 	type IdentifierIndex,
 	createSimpleTreeIndex,
 	createIdentifierIndex,
+	type SimpleNodeSchemaBase,
 	type SimpleTreeSchema,
+	type SimpleNodeSchema,
+	type SimpleFieldSchema,
+	type SimpleLeafNodeSchema,
+	type SimpleMapNodeSchema,
+	type SimpleArrayNodeSchema,
+	type SimpleObjectNodeSchema,
 	type JsonSchemaId,
 	type JsonSchemaType,
 	type JsonObjectNodeSchema,
@@ -137,6 +144,7 @@ export {
 	type InsertableField,
 	type Insertable,
 	type UnsafeUnknownSchema,
+	normalizeAllowedTypes,
 	type ApplyKindInput,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
@@ -150,7 +158,6 @@ export {
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
-	type TreeArrayNodeBase,
 	type ReadonlyArrayNode,
 } from "./arrayNode.js";
 export {

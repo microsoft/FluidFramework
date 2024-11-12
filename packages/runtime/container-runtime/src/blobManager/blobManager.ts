@@ -180,6 +180,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly isBlobDeleted: (blobPath: string) => boolean;
 	private readonly runtime: IBlobManagerRuntime;
 	private readonly closeContainer: (error?: ICriticalContainerError) => void;
+	private readonly localBlobIdGenerator: () => string;
+	// TODO: consider to replace with a lazy promise
+	private readonly pendingStashedBlobs: Map<string, Promise<ICreateBlobResponse | void>> =
+		new Map();
+	private stashedBlobsUploadP: Promise<(void | ICreateBlobResponse)[]> | undefined = undefined;
 
 	constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -205,6 +210,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		readonly runtime: IBlobManagerRuntime;
 		stashedBlobs: IPendingBlobs | undefined;
 		readonly closeContainer: (error?: ICriticalContainerError) => void;
+		readonly localBlobIdGenerator?: (() => string) | undefined;
 	}) {
 		super();
 		const {
@@ -217,6 +223,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			runtime,
 			stashedBlobs,
 			closeContainer,
+			localBlobIdGenerator,
 		} = props;
 		this.routeContext = routeContext;
 		this.getStorage = getStorage;
@@ -224,6 +231,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
 		this.closeContainer = closeContainer;
+		this.localBlobIdGenerator = localBlobIdGenerator ?? uuid;
 
 		this.mc = createChildMonitoringContext({
 			logger: this.runtime.baseLogger,
@@ -256,14 +264,18 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					return;
 				}
 			}
-
+			this.pendingStashedBlobs.set(localId, this.uploadBlob(localId, blob));
 			this.pendingBlobs.set(localId, {
 				...pendingEntry,
 				...stashedPendingBlobOverrides,
-				uploadP: this.uploadBlob(localId, blob),
+				uploadP: this.pendingStashedBlobs.get(localId),
 			});
 		});
-
+		this.waitForStashedBlobs()
+			.catch(() => {})
+			.finally(() => {
+				this.pendingStashedBlobs.clear();
+			});
 		this.sendBlobAttachOp = (localId: string, blobId?: string) => {
 			const pendingEntry = this.pendingBlobs.get(localId);
 			assert(
@@ -293,6 +305,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			pendingEntry.opsent = true;
 			return sendBlobAttachOp(localId, blobId);
 		};
+	}
+
+	public async waitForStashedBlobs(): Promise<(void | ICreateBlobResponse)[]> {
+		if (!this.stashedBlobsUploadP) {
+			this.stashedBlobsUploadP = Promise.all(this.pendingStashedBlobs.values()).finally(() => {
+				this.stashedBlobsUploadP = undefined;
+				return;
+			});
+		}
+
+		return this.stashedBlobsUploadP;
 	}
 
 	public get allBlobsAttached(): boolean {
@@ -435,7 +458,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		// Create a local ID for the blob. After uploading it to storage and before returning it, a local ID to
 		// storage ID mapping is created.
-		const localId = uuid();
+		const localId = this.localBlobIdGenerator();
 		const pendingEntry: PendingBlob = {
 			blob,
 			handleP: new Deferred(),

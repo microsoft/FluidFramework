@@ -478,10 +478,10 @@ function runTransactionInCheckout<TResult>(
 	let result: ReturnType<typeof transaction>;
 	try {
 		result = transaction();
-	} catch (e) {
+	} catch (error) {
 		// If the transaction has an unhandled error, abort and rollback the transaction but continue to propagate the error.
 		checkout.transaction.abort();
-		throw e;
+		throw error;
 	}
 
 	if (result === rollback) {
