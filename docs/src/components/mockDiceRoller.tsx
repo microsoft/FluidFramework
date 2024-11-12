@@ -106,6 +106,7 @@ function DiceRollerCard({
 					className="ffcom-dice-image"
 					src={imageUrl}
 					alt={`Dice showing ${diceValue}`}
+					aria-live="polite"
 				/>
 				<button className="ffcom-roll-button" onClick={onClick}>
 					<span className="ffcom-roll-button-label">Roll</span>
