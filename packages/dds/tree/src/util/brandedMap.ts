@@ -6,7 +6,7 @@
 import type { Brand } from "./brand.js";
 import type { Opaque } from "./opaque.js";
 import type { Invariant } from "./typeCheck.js";
-import { getOrCreate } from "@fluidframework/core-interfaces";
+import { getOrCreate } from "@fluidframework/core-utils";
 
 /**
  * Key in a {@link BrandedMapSubset}.

@@ -54,13 +54,13 @@ import { Breakable, TransactionResult, disposeSymbol, fail } from "../util/index
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import {
-	type IDisposable,
 	type HasListeners,
 	type IEmitter,
 	type Listenable,
 	createEmitter,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-utils";
 import type {
 	ImplicitFieldSchema,
 	ReadSchema,

@@ -12,7 +12,7 @@ import {
 	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { Listenable } from "@fluidframework/core-utils";
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
 import type { NodeKeyManager } from "../node-key/index.js";
 

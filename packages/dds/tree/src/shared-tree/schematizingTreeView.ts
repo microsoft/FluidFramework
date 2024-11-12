@@ -17,7 +17,7 @@ import {
 	type IEmitter,
 	type Listenable,
 	createEmitter,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-utils";
 import {
 	type NodeKeyManager,
 	defaultSchemaPolicy,

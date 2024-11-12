@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { Listenable } from "@fluidframework/core-utils";
 import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
 	type Anchor,

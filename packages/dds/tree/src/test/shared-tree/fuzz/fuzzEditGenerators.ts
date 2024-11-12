@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { getOrCreate } from "@fluidframework/core-interfaces";
+import { getOrCreate } from "@fluidframework/core-utils";
 import {
 	type AsyncGenerator,
 	type BaseFuzzTestState,

@@ -4,7 +4,7 @@
  */
 
 import { defaultSchemaPolicy } from "../feature-libraries/index.js";
-import { getOrCreate } from "@fluidframework/core-interfaces";
+import { getOrCreate } from "@fluidframework/core-utils";
 import { Context, UnhydratedContext } from "./core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
 import { toStoredSchema } from "./toStoredSchema.js";

@@ -4,6 +4,80 @@
 
 ```ts
 
+// @public
+export function createEmitter<TListeners extends object>(noListeners?: NoListenersCallback<TListeners>): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners>;
+
+// @public
+export class EventEmitter<TListeners extends Listeners<TListeners>> implements Listenable<TListeners>, HasListeners<TListeners> {
+    protected constructor(noListeners?: NoListenersCallback<TListeners> | undefined);
+    // (undocumented)
+    protected emit<K extends keyof TListeners>(eventName: K, ...args: Parameters<TListeners[K]>): void;
+    // (undocumented)
+    protected emitAndCollect<K extends keyof TListeners>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
+    // (undocumented)
+    hasListeners(eventName?: keyof TListeners): boolean;
+    // (undocumented)
+    protected readonly listeners: Map<keyof TListeners, Set<(...args: any[]) => TListeners[keyof TListeners]>>;
+    // (undocumented)
+    off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+    // (undocumented)
+    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+}
+
+// @public
+export function getOrAddInMap<Key, Value>(map: MapGetSet<Key, Value>, key: Key, value: Value): Value;
+
+// @public
+export function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V;
+
+// @public @sealed
+export interface HasListeners<TListeners extends Listeners<TListeners>> {
+    hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
+}
+
+// @public
+export interface IEmitter<TListeners extends Listeners<TListeners>> {
+    emit<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): void;
+    emitAndCollect<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
+}
+
+// @public
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+
+// @public @sealed
+export interface Listenable<TListeners extends object> {
+    off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+}
+
+// @public
+export type Listeners<T extends object> = {
+    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
+};
+
+// @public
+export interface MapGetSet<K, V> {
+    // (undocumented)
+    get(key: K): V | undefined;
+    // (undocumented)
+    set(key: K, value: V): void;
+}
+
+// @public
+export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
+
+// @public
+export type NoListenersCallback<TListeners extends object> = (eventName: keyof Listeners<TListeners>) => void;
+
+// @public
+export type Off = () => void;
+
+// @public
+export function setInNestedMap<Key1, Key2, Value>(map: NestedMap<Key1, Key2, Value>, key1: Key1, key2: Key2, value: Value): void;
+
+// @public
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
+
 // (No @packageDocumentation comment for this package)
 
 ```

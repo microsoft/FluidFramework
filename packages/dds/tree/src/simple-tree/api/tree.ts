@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
-import { getOrCreate } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable, IDisposable } from "@fluidframework/core-interfaces";
+import type { Listenable } from "@fluidframework/core-utils";
+import { getOrCreate } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { CommitMetadata, RevertibleFactory } from "../../core/index.js";

@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { createEmitter, getOrCreate } from "@fluidframework/core-interfaces";
+import { createEmitter, getOrCreate } from "@fluidframework/core-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 

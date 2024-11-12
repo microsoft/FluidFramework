@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { UnionToIntersection } from "@fluidframework/core-interfaces";
+import type { UnionToIntersection } from "@fluidframework/core-utils";
 
 /**
  * Utilities for manipulating types.

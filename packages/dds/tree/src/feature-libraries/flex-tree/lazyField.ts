@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { getOrCreate } from "@fluidframework/core-interfaces";
+import { getOrCreate } from "@fluidframework/core-utils";
 
 import {
 	type AnchorNode,

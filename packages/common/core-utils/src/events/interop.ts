@@ -3,10 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent } from "../events.js";
+// import type { IEvent } from "@fluidframework/core-interfaces";
 
 import type { Listeners } from "./listeners.js";
 import type { UnionToIntersection } from "./util.js";
+
+/**
+ * Base interface for event emitters.
+ * Duplicate of `@fluidframework/core-interfaces#IEvent`
+ * @public
+ */
+export interface IEvent {
+	/**
+	 * Base event emitter signature.
+	 *
+	 * @remarks The event emitter polyfill and the node event emitter have different event types:
+	 * `string | symbol` vs. `string | number`.
+	 *
+	 * So for our typing we'll contrain to string, that way we work with both.
+	 *
+	 * @eventProperty
+	 */
+
+	(event: string, listener: (...args: any[]) => void);
+}
 
 // TODO: this file is currently unused. Use it or remove it.
 

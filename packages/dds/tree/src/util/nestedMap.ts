@@ -5,7 +5,7 @@
 
 import { oob } from "@fluidframework/core-utils/internal";
 
-import type { MapGetSet } from "@fluidframework/core-interfaces";
+import type { MapGetSet } from "@fluidframework/core-utils";
 
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).

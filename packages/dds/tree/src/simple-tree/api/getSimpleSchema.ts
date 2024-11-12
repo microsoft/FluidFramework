@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getOrCreate } from "@fluidframework/core-interfaces";
+import { getOrCreate } from "@fluidframework/core-utils";
 import type { TreeNodeSchema } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
 import type { SimpleTreeSchema } from "./simpleSchema.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { MapGetSet } from "@fluidframework/core-interfaces";
+import type { MapGetSet } from "@fluidframework/core-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
