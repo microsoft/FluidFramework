@@ -67,13 +67,13 @@ export class LimitedStringNodeSchema<H extends TreeValue<ValueSchema.String>>
 	}
 }
 
-export function makeStringLeaf<H extends TreeValue<ValueSchema.String>>(): TreeNodeSchema<
-	`com.fluidframework.leaf.string`,
-	NodeKind.Leaf,
-	H,
-	H,
-	true
-> {
+/**
+ * Makes a leaf schema that has limited values for strings
+ * @internal
+ */
+export function makeStringLeaf<
+	H extends TreeValue<ValueSchema.String>,
+>(): TreeNodeSchemaNonClass<`com.fluidframework.leaf.string`, NodeKind.Leaf, H, H, true> {
 	return new LimitedStringNodeSchema<H>();
 }
 

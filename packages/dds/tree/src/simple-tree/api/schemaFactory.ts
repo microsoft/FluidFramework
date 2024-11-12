@@ -11,7 +11,7 @@ import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfac
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import type { TreeValue, ValueSchema } from "../../core/index.js";
+import type { TreeValue } from "../../core/index.js";
 import type { NodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	type RestrictiveStringRecord,
@@ -278,8 +278,12 @@ export class SchemaFactory<
 	 */
 	public readonly string = stringSchema;
 
-	public limitedString<TString extends TreeValue<ValueSchema.String>>(): ReturnType<
-		typeof makeStringLeaf<TString>
+	public limitedString<TString extends string>(): TreeNodeSchemaNonClass<
+		(typeof this.string)["identifier"],
+		NodeKind.Leaf,
+		TString,
+		TString,
+		true
 	> {
 		return makeStringLeaf<TString>();
 	}

@@ -53,6 +53,18 @@ describe("schemaFactory Interfaces", () => {
 			legs: number;
 		}
 
+		class SomeAnimal
+			extends schema.object("tag", {
+				aType: schema.limitedString<AnimalType>(),
+				hasFur: schema.boolean,
+				legs: schema.number,
+			})
+			implements IAnimal {}
+
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: schema.array(SomeAnimal) }),
+		);
+
 		const goodCat: IAnimal = {
 			aType: "cat",
 			hasFur: true,
@@ -70,18 +82,6 @@ describe("schemaFactory Interfaces", () => {
 			hasFur: true,
 			legs: 4,
 		};
-
-		class SomeAnimal
-			extends schema.object("tag", {
-				aType: schema.limitedString<AnimalType>(),
-				hasFur: schema.boolean,
-				legs: schema.number,
-			})
-			implements IAnimal {}
-
-		const view = tree.viewWith(
-			new TreeViewConfiguration({ schema: schema.array(SomeAnimal) }),
-		);
 
 		view.initialize([goodCat, goodDog]);
 		view.root.insertAtEnd(goodDog);
