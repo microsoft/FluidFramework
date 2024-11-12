@@ -3,6 +3,7 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../lib/test",
+		"types": ["node", "mocha"],
 	},
 	"include": ["./**/*"],
 	"references": [

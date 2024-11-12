@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { NestedMap } from "@fluidframework/core-interfaces";
 import type {
 	OpSpaceCompressedId,
 	SessionId,
@@ -12,7 +13,6 @@ import { Type } from "@sinclair/typebox";
 
 import {
 	type Brand,
-	type NestedMap,
 	type RangeMap,
 	brand,
 	brandedNumberType,

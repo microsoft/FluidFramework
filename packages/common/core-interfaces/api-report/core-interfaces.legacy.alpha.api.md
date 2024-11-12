@@ -59,6 +59,9 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
+// @public
+export function getOrAddInMap<Key, Value>(map: MapGetSet<Key, Value>, key: Key, value: Value): Value;
+
 // @public @sealed
 export interface HasListeners<TListeners extends Listeners<TListeners>> {
     hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
@@ -413,6 +416,17 @@ export const LogLevel: {
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
+export interface MapGetSet<K, V> {
+    // (undocumented)
+    get(key: K): V | undefined;
+    // (undocumented)
+    set(key: K, value: V): void;
+}
+
+// @public
+export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
+
+// @public
 export type NoListenersCallback<TListeners extends object> = (eventName: keyof Listeners<TListeners>) => void;
 
 // @public
@@ -422,6 +436,9 @@ export type Off = () => void;
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
+
+// @public
+export function setInNestedMap<Key1, Key2, Value>(map: NestedMap<Key1, Key2, Value>, key1: Key1, key2: Key2, value: Value): void;
 
 // @public
 export interface Tagged<V, T extends string = string> {
@@ -436,6 +453,9 @@ export type TelemetryBaseEventPropertyType = string | number | boolean | undefin
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
+
+// @public
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
 
 // (No @packageDocumentation comment for this package)
 

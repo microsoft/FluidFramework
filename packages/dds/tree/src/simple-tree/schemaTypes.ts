@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	ErasedType,
+	IFluidHandle,
+	UnionToIntersection,
+} from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -12,7 +16,6 @@ import {
 	type MakeNominal,
 	brand,
 	isReadonlyArray,
-	type UnionToIntersection,
 	compareSets,
 	type requireTrue,
 	type areOnlyKeys,

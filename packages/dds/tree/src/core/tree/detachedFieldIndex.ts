@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import type { NestedMap } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { type ICodecOptions, type IJsonCodec, noopValidator } from "../../codec/index.js";
 import {
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
-	type NestedMap,
 	brand,
 	deleteFromNestedMap,
 	forEachInNestedMap,

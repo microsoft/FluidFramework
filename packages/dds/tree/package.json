@@ -251,6 +251,10 @@
 			"Interface_Listenable": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"TypeAlias_UnionToIntersection": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"

@@ -3,17 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type { MapGetSet } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
-
-/**
- * Subset of Map interface.
- */
-export interface MapGetSet<K, V> {
-	get(key: K): V | undefined;
-	set(key: K, value: V): void;
-}
 
 /**
  * Make all transitive properties in T readonly

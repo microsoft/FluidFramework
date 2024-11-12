@@ -58,4 +58,9 @@ export {
 	type Listenable,
 	type Off,
 	type IsListener,
+	type UnionToIntersection,
+	type MapGetSet,
+	type NestedMap,
+	getOrAddInMap,
+	setInNestedMap,
 } from "./events/index.js";

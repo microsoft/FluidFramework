@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { RestrictiveStringRecord, UnionToIntersection } from "../../util/index.js";
+import type { UnionToIntersection } from "@fluidframework/core-interfaces";
+import type { RestrictiveStringRecord } from "../../util/index.js";
 
 import type {
 	ApplyKind,

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type NestedMap, getOrDefaultInNestedMap, setInNestedMap } from "./nestedMap.js";
+import type { NestedMap } from "@fluidframework/core-interfaces";
+import { getOrDefaultInNestedMap, setInNestedMap } from "./nestedMap.js";
 
 export type NestedSet<Key1, Key2> = NestedMap<Key1, Key2, boolean>;
 

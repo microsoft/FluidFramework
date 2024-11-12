@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { UnionToIntersection } from "@fluidframework/core-interfaces";
+
 /**
  * Utilities for manipulating types.
  */
@@ -149,19 +151,6 @@ export type IsUnion<T, T2 = T> = T extends unknown
 		? false
 		: true
 	: "error";
-
-/**
- * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
- * @privateRemarks
- * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
- * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
- * @system @public
- */
-export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
-	k: infer U,
-) => unknown
-	? U
-	: never;
 
 /**
  * Gets the first item of a union type.

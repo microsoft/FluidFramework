@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { UnionToIntersection } from "@fluidframework/core-interfaces";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
@@ -40,7 +41,6 @@ import type {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
-	UnionToIntersection,
 } from "../../util/index.js";
 
 const schema = new SchemaFactory("com.example");

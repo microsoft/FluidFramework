@@ -191,7 +191,6 @@ export {
 	type RestrictiveStringRecord,
 	type MakeNominal,
 	type IsUnion,
-	type UnionToIntersection,
 	type UnionToTuple,
 	type PopUnion,
 } from "./util/index.js";

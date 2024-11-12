@@ -4,7 +4,6 @@
  */
 
 export {
-	createEmitter,
 	EventEmitter,
 	type IEmitter,
 	type NoListenersCallback,
@@ -17,3 +16,12 @@ export {
 	type Off,
 	type IsListener,
 } from "./listeners.js";
+
+export {
+	createEmitter,
+	type UnionToIntersection,
+	type MapGetSet,
+	type NestedMap,
+	getOrAddInMap,
+	setInNestedMap,
+} from "./util.js";

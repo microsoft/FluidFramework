@@ -5,8 +5,9 @@
 
 import { strict as assert } from "assert";
 
+import type { NestedMap } from "@fluidframework/core-interfaces";
+
 import {
-	type NestedMap,
 	SizedNestedMap,
 	deleteFromNestedMap,
 	getOrAddInNestedMap,

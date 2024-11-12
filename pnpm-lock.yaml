@@ -7442,6 +7442,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
+      '@types/mocha':
+        specifier: ^9.1.1
+        version: 9.1.1
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.54

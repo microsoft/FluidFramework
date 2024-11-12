@@ -24,7 +24,6 @@ export {
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
 	forEachInNestedMap,
-	type NestedMap,
 	type ReadonlyNestedMap,
 	SizedNestedMap,
 	populateNestedMap,
@@ -101,7 +100,6 @@ export type {
 	_InlineTrick,
 	FlattenKeys,
 	IsUnion,
-	UnionToIntersection,
 	UnionToTuple,
 	PopUnion,
 } from "./typeUtils.js";

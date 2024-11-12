@@ -819,9 +819,6 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 }
 
 // @public
-export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
-
-// @public
 export interface ITelemetryBaseProperties {
     [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
@@ -866,11 +863,6 @@ export type LazyItem<Item = unknown> = Item | (() => Item);
 export interface Listenable<TListeners extends object> {
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
-
-// @public
-export type Listeners<T extends object> = {
-    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
-};
 
 // @public @sealed
 export interface MakeNominal {
@@ -924,9 +916,6 @@ type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchem
 type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
-
-// @public
-export type Off = () => void;
 
 // @public @sealed
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends ReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {

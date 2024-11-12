@@ -4,6 +4,7 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import { createEmitter, type Listenable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -43,7 +44,6 @@ import {
 	cursorForMapTreeNode,
 } from "../../feature-libraries/index.js";
 import type { Context } from "./context.js";
-import { createEmitter, type Listenable } from "@fluidframework/core-interfaces";
 
 interface UnhydratedTreeSequenceFieldEditBuilder
 	extends SequenceFieldEditBuilder<ExclusiveMapTree[]> {
