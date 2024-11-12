@@ -5,13 +5,11 @@
 
 "use client";
 
-// eslint-disable-next-line import/no-extraneous-dependencies
 import {
 	type Difference,
 	type DifferenceChange,
 	type DifferenceMove,
 	SharedTreeBranchManager,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/ai-collab/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";

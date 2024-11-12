@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules, import/no-extraneous-dependencies
 import { type Difference, SharedTreeBranchManager } from "@fluidframework/ai-collab/alpha";
 import {
 	type BranchableTree,

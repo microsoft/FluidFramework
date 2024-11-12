@@ -13,13 +13,23 @@
 	"sideEffects": false,
 	"type": "module",
 	"exports": {
-		"./alpha": {
+		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
+				"types": "./dist/public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -34,7 +44,12 @@
 			}
 		}
 	},
+	"main": "lib/index.js",
+	"types": "lib/public.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
@@ -64,7 +79,9 @@
 		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.js\"",
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"typetests:gen": "flub generate typetests --dir . -v",
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
 		"all": true,
@@ -123,6 +140,18 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:esnext": [
+				"...",
+				"typetests:gen"
+			],
+			"tsc": [
+				"...",
+				"typetests:gen"
+			]
+		}
 	},
 	"typeValidation": {
 		"disabled": true,
