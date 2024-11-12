@@ -15,7 +15,8 @@ export interface KeyFeatureCardProps {
 	imageAltText: string;
 	bodyLabel: string;
 	bodyText: string;
-	footerHref: string;
+	learnMoreLinkHref: string;
+	learnMoreLinkAltText: string;
 }
 
 /**
@@ -26,12 +27,18 @@ export function KeyFeatureCard({
 	imageAltText,
 	bodyLabel,
 	bodyText,
-	footerHref,
+	learnMoreLinkHref,
+	learnMoreLinkAltText,
 }: KeyFeatureCardProps): JSX.Element {
 	return (
 		<div className="ffcom-key-feature-card">
 			<KeyFeatureImage src={imageSrc} alt={imageAltText} />
-			<KeyFeatureCardContents label={bodyLabel} text={bodyText} href={footerHref} />
+			<KeyFeatureCardContents
+				label={bodyLabel}
+				bodyText={bodyText}
+				learnMoreLinkHref={learnMoreLinkHref}
+				learnMoreLinkAltText={learnMoreLinkAltText}
+			/>
 		</div>
 	);
 }
@@ -44,29 +51,57 @@ function KeyFeatureImage(props: { src: string; alt: string }): JSX.Element {
 	);
 }
 
-function KeyFeatureCardContents(props: { label: string; text: string; href: string }): JSX.Element {
+interface KeyFeatureCardContentsProps {
+	label: string;
+	bodyText: string;
+	learnMoreLinkHref: string;
+	learnMoreLinkAltText: string;
+}
+
+function KeyFeatureCardContents({
+	label,
+	bodyText,
+	learnMoreLinkHref,
+	learnMoreLinkAltText,
+}: KeyFeatureCardContentsProps): JSX.Element {
 	return (
 		<div className="ffcom-key-feature-card-contents">
-			<KeyFeatureCardBody label={props.label} text={props.text} />
-			<KeyFeatureCardFooter href={props.href} />
+			<KeyFeatureCardBody label={label} bodyText={bodyText} />
+			<KeyFeatureCardFooter
+				learnMoreLinkHref={learnMoreLinkHref}
+				learnMoreLinkAltText={learnMoreLinkAltText}
+			/>
 		</div>
 	);
 }
 
-function KeyFeatureCardBody(props: { label: string; text: string }): JSX.Element {
+interface KeyFeatureCardBodyProps {
+	label: string;
+	bodyText: string;
+}
+
+function KeyFeatureCardBody({ label, bodyText }: KeyFeatureCardBodyProps): JSX.Element {
 	return (
 		<div className="ffcom-key-feature-card-body ">
 			<div className="ffcom-key-feature-card-body-label-container">
-				<p className="ffcom-key-feature-card-body-label">{props.label}</p>
+				<p className="ffcom-key-feature-card-body-label">{label}</p>
 			</div>
 			<div className="ffcom-key-feature-card-body-text-container">
-				<p className="ffcom-key-feature-card-body-text">{props.text}</p>
+				<p className="ffcom-key-feature-card-body-text">{bodyText}</p>
 			</div>
 		</div>
 	);
 }
 
-function KeyFeatureCardFooter(props: { href: string }): JSX.Element {
+interface KeyFeatureCardFooterProps {
+	learnMoreLinkHref: string;
+	learnMoreLinkAltText: string;
+}
+
+function KeyFeatureCardFooter({
+	learnMoreLinkHref,
+	learnMoreLinkAltText,
+}: KeyFeatureCardFooterProps): JSX.Element {
 	return (
 		<div className="ffcom-key-feature-card-footer">
 			<div className="ffcom-key-feature-card-footer-content">
@@ -75,7 +110,8 @@ function KeyFeatureCardFooter(props: { href: string }): JSX.Element {
 					<div className="ffcom-key-feature-card-footer-link-label-frame">
 						<a
 							className="ffcom-key-feature-card-footer-link-label-text"
-							href={props.href}
+							href={learnMoreLinkHref}
+							aria-label={learnMoreLinkAltText}
 						>
 							Learn more
 						</a>
