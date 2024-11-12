@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { useColorMode } from '@docusaurus/theme-common';
 import Link from "@docusaurus/Link";
 import GitHubIcon from "@theme/Icon/Socials/GitHub";
 import XIcon from "@theme/Icon/Socials/X";
@@ -34,10 +35,11 @@ const xUrl = "https://x.com/fluidframework";
  * Swizzled Docusaurus "classic" theme Footer component.
  */
 function Footer(): JSX.Element {
+	const { colorMode } = useColorMode();
 	return (
 		<footer
 			className={clsx("footer", {
-				"footer--dark": true,
+				"footer--dark": colorMode === "dark",
 			})}
 		>
 			<FooterSocialLinks />
@@ -98,10 +100,12 @@ function FooterPrivacyLinks(): JSX.Element {
 }
 
 function FooterCopyright(): JSX.Element {
+	const { colorMode } = useColorMode();
+	const imageFileName = colorMode === "light" ? "microsoft-logo-inverted.png" : "microsoft-logo.png";
 	return (
 		<div className="ffcom-footer-copyright">
 			<FooterLogo
-				src="https://storage.fluidframework.com/static/images/microsoft-logo.png"
+				src={`https://storage.fluidframework.com/static/images/${imageFileName}`}
 				href="https://www.microsoft.com/"
 				width={200}
 				alt="Microsoft Logo"
