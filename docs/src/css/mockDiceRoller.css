@@ -29,6 +29,8 @@
 	background: #0078d4;
 	border-style: none;
 	border-radius: 8px;
+
+	cursor: pointer;
 }
 
 .ffcom-roll-button-label {
