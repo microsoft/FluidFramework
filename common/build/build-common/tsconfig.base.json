@@ -17,7 +17,7 @@
 		"types": [],
 		// Enabling these compiler flags is necessary for typechecking compliance with semver as per https://www.semver-ts.org/
 		// See specifically https://www.semver-ts.org/formal-spec/5-compiler-considerations.html#strictness.
+		// As a replacement for noUncheckedIndexedAccess, we are using our custom lint rule no-unchecked-record-access
 		"exactOptionalPropertyTypes": true,
-		"noUncheckedIndexedAccess": true,
 	},
 }
