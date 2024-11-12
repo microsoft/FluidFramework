@@ -40,7 +40,7 @@ export interface IProvideFluidDataStoreFactory {
  */
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 	/**
-	 * A string that uniquely identifies the type of data store created by this factory.
+	 * Uniquely identifies the type of data store created by this factory.
 	 */
 	type: string;
 
