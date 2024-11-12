@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
+// eslint-disable-next-line import/no-internal-modules
 import { SharedMap } from "fluid-framework/legacy";
 
 import { FocusTracker } from "../src/FocusTracker.js";

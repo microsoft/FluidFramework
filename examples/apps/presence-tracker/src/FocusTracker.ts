@@ -79,14 +79,14 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 			const { hasFocus } = value;
 
 			for (const [_, member] of this.audience.getMembers()) {
+				// TODO: Without this comparison of audience connection to presence client, the list of client seems to grow
+				// every refresh.
 				const foundConnection = member.connections.some(
 					(connection) => connection.id === client.getConnectionId(),
 				);
 				if (foundConnection) {
 					statuses.set(client.getConnectionId(), hasFocus);
 					break;
-				} else {
-					statuses.delete(client.getConnectionId());
 				}
 			}
 		}

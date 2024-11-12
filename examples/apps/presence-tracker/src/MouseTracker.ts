@@ -75,13 +75,14 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 			const clientConnectionId = client.getConnectionId();
 
 			for (const [_, member] of this.audience.getMembers()) {
+				// TODO: Without this comparison of audience connection to presence client, the list of client seems to grow
+				// every refresh.
 				const foundConnection = member.connections.some(
 					(connection) => connection.id === clientConnectionId,
 				);
 				if (foundConnection) {
 					statuses.set(clientConnectionId, position);
-				} else {
-					statuses.delete(clientConnectionId);
+					break;
 				}
 			}
 		}
