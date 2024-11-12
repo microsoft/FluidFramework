@@ -97,7 +97,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	}
 
 	/**
-	 * @deprecated back-compat: to be removed in 2.0
+	 * @deprecated
+	 * // back-compat: to be removed in 2.20
 	 */
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		return callback();
