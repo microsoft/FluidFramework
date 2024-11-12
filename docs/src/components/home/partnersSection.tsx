@@ -19,6 +19,13 @@ import "@site/src/css/home/partnersSection.css";
 const bodyTextPlaceholder =
 	"This is placeholder text. It should be replaced with real contents before this site goes live. Repeat: this is only placeholder text. In the event of real text, you would not be reading this text.";
 
+const autodeskLink = "https://www.autodesk.com/";
+const hexagonLink = "https://hexagon.com/";
+const loopLink = "https://www.microsoft.com/microsoft-loop";
+const powerAppsLink = "https://www.microsoft.com/power-platform/products/power-apps";
+const teamsLink = "https://www.microsoft.com/microsoft-teams";
+const whiteboardLink = "https://www.microsoft.com/microsoft-365/microsoft-whiteboard";
+
 /**
  * Homepage "Partners" section component.
  */
@@ -31,31 +38,37 @@ export function PartnersSection(): JSX.Element {
 						icon={<img src={AutodeskLogo} title="Autodesk" />}
 						labelText="Autodesk"
 						bodyText={bodyTextPlaceholder}
+						learnMoreHref={autodeskLink}
 					/>
 					<PartnerEntry
 						icon={<img src={HexagonLogo} title="Hexagon" />}
 						labelText="Hexagon"
 						bodyText={bodyTextPlaceholder}
+						learnMoreHref={hexagonLink}
 					/>
 					<PartnerEntry
 						icon={<LoopLogo title="Microsoft Loop" />}
 						labelText="Microsoft Loop"
 						bodyText={bodyTextPlaceholder}
+						learnMoreHref={loopLink}
 					/>
 					<PartnerEntry
 						icon={<img src={TeamsLogo} title="Microsoft Teams"/>}
 						labelText="Microsoft Teams"
 						bodyText={bodyTextPlaceholder}
+						learnMoreHref={teamsLink}
 					/>
 					<PartnerEntry
 						icon={<img src={PowerAppsLogo} title="Power Apps" />}
 						labelText="Power Apps"
 						bodyText={bodyTextPlaceholder}
+						learnMoreHref={powerAppsLink}
 					/>
 					<PartnerEntry
 						icon={<img src={WhiteboardLogo} title="Whiteboard" />}
 						labelText="Whiteboard"
 						bodyText={bodyTextPlaceholder}
+						learnMoreHref={whiteboardLink}
 					/>
 				</div>
 			</div>
@@ -65,15 +78,12 @@ export function PartnersSection(): JSX.Element {
 
 interface PartnerEntryProps {
 	icon: React.Component;
-	iconAltText: string;
 	labelText: string;
 	bodyText: string;
+	learnMoreHref: string;
 }
 
-// TODO: is this right?
-const learnMoreHref = "/docs";
-
-function PartnerEntry({ icon, labelText, bodyText }: PartnerEntryProps): JSX.Element {
+function PartnerEntry({ icon, labelText, learnMoreHref, bodyText }: PartnerEntryProps): JSX.Element {
 	return (
 		<div className="ffcom-partner-entry">
 			<div className="ffcom-partner-entry-inner">
@@ -90,7 +100,7 @@ function PartnerEntry({ icon, labelText, bodyText }: PartnerEntryProps): JSX.Ele
 					<p className="ffcom-partner-entry-description-text ">{bodyText}</p>
 					<div className="ffcom-partner-entry-learn-more-container ">
 						<div className="ffcom-partner-entry-learn-more-container-inner">
-							<a className="ffcom-partner-entry-learn-more-text" href={learnMoreHref}>
+							<a className="ffcom-partner-entry-learn-more-text" href={learnMoreHref} target="_blank" rel="noreferrer">
 								Learn more
 							</a>
 						</div>
