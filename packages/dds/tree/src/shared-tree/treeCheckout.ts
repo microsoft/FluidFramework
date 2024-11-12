@@ -547,7 +547,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 										revision,
 										kind,
 										this,
-										onRevertibleDisposed,
+										onRevertibleDisposed ?? (() => {}),
 									);
 									this.revertibleCommitBranches.set(revision, _branch.fork(commit));
 									this.revertibles.add(revertible);
@@ -606,8 +606,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	private createRevertible(
 		revision: RevisionTag,
 		kind: CommitKind,
-		checkout: TreeCheckout = this,
-		onRevertibleDisposed?: (revertible: Revertible) => void,
+		checkout: TreeCheckout,
+		onRevertibleDisposed: (revertible: Revertible) => void,
 	): RevertibleAlpha {
 		const commitBranches = checkout.revertibleCommitBranches;
 
