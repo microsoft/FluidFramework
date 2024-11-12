@@ -28,32 +28,32 @@ export function PartnersSection(): JSX.Element {
 			<div className="ffcom-partners-section-contents">
 				<div className="ffcom-partners-section-contents-inner">
 					<PartnerEntry
-						icon={<img src={AutodeskLogo} />}
+						icon={<img src={AutodeskLogo} title="Autodesk" />}
 						labelText="Autodesk"
 						bodyText={bodyTextPlaceholder}
 					/>
 					<PartnerEntry
-						icon={<img src={HexagonLogo} />}
+						icon={<img src={HexagonLogo} title="Hexagon" />}
 						labelText="Hexagon"
 						bodyText={bodyTextPlaceholder}
 					/>
 					<PartnerEntry
-						icon={<LoopLogo />}
+						icon={<LoopLogo title="Microsoft Loop" />}
 						labelText="Microsoft Loop"
 						bodyText={bodyTextPlaceholder}
 					/>
 					<PartnerEntry
-						icon={<img src={TeamsLogo} />}
+						icon={<img src={TeamsLogo} title="Microsoft Teams"/>}
 						labelText="Microsoft Teams"
 						bodyText={bodyTextPlaceholder}
 					/>
 					<PartnerEntry
-						icon={<img src={PowerAppsLogo} />}
+						icon={<img src={PowerAppsLogo} title="Power Apps" />}
 						labelText="Power Apps"
 						bodyText={bodyTextPlaceholder}
 					/>
 					<PartnerEntry
-						icon={<img src={WhiteboardLogo} />}
+						icon={<img src={WhiteboardLogo} title="Whiteboard" />}
 						labelText="Whiteboard"
 						bodyText={bodyTextPlaceholder}
 					/>
