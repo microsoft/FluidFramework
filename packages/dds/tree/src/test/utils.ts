@@ -85,6 +85,8 @@ import {
 	type TreeStoredSchemaSubscription,
 	type ITreeCursorSynchronous,
 	CursorLocationType,
+	type RevertibleAlpha,
+	type RevertibleAlphaFactory,
 } from "../core/index.js";
 import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
@@ -146,8 +148,6 @@ import type { Client } from "@fluid-private/test-dds-utils";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { RevertibleAlpha, RevertibleAlphaFactory } from "../core/revertible.js";
 
 // Testing utilities
 
