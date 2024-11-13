@@ -169,7 +169,8 @@ function makePresenceView(
 	if (audience !== undefined) {
 		presenceConfig.presence.events.on("attendeeJoined", (attendee) => {
 			const name = audience.getMembers().get(attendee.getConnectionId())?.name;
-			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} with id ${attendee.sessionId} joined`;
+			const connected = attendee.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
+			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ${connected} with id ${attendee.sessionId} joined`;
 			addLogEntry(logContentDiv, update);
 		});
 
@@ -178,7 +179,8 @@ function makePresenceView(
 			const self = audience.getMyself();
 			if (self && attendee !== presenceConfig.presence.getAttendee(self.currentConnection)) {
 				const name = audience.getMembers().get(attendee.getConnectionId())?.name;
-				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} with id ${attendee.sessionId} left`;
+				const connected = attendee.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
+				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ${connected} with id ${attendee.sessionId} left`;
 				addLogEntry(logContentDiv, update);
 			}
 		});
@@ -186,7 +188,8 @@ function makePresenceView(
 	logDiv.append(logHeaderDiv, logContentDiv);
 
 	presenceConfig.lastRoll.events.on("updated", (update) => {
-		const updateText = `updated ${update.client.sessionId.slice(0, 8)}'s last rolls to ${JSON.stringify(update.value)}`;
+		const connected = update.client.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
+		const updateText = `updated ${update.client.sessionId.slice(0, 8)}'s ${connected} last rolls to ${JSON.stringify(update.value)}`;
 		addLogEntry(logContentDiv, updateText);
 
 		makeDiceValuesView(statesContentDiv, presenceConfig.lastRoll);
@@ -194,65 +197,6 @@ function makePresenceView(
 
 	presenceDiv.append(statesDiv, logDiv);
 	return presenceDiv;
-}
-
-function makeAttendeeView(container: IFluidContainer, presence?: IPresence): HTMLDivElement {
-	const attendeeDiv = document.createElement("div");
-	if (presence === undefined) {
-		attendeeDiv.textContent = "No presence provided";
-		return attendeeDiv;
-	}
-
-	attendeeDiv.style.display = "flex";
-	attendeeDiv.style.justifyContent = "center";
-	attendeeDiv.style.margin = "70px";
-
-	presence.events.on("attendeeJoined", () => {
-		updateAttendees(presence, attendeeDiv);
-		updateButton(container, attendeeDiv);
-	});
-	presence.events.on("attendeeDisconnected", () => {
-		updateAttendees(presence, attendeeDiv);
-		updateButton(container, attendeeDiv);
-	});
-	container.on("connected", () => {
-		updateAttendees(presence, attendeeDiv);
-		updateButton(container, attendeeDiv);
-	});
-	container.on("disconnected", () => {
-		updateAttendees(presence, attendeeDiv);
-		updateButton(container, attendeeDiv);
-	});
-
-	return attendeeDiv;
-}
-
-function updateButton(container: IFluidContainer, attendeeDiv: HTMLDivElement): void {
-	const toggleButton = document.createElement("button");
-
-	toggleButton.style.marginLeft = "10px";
-
-	const connected = container.connectionState === 2;
-
-	toggleButton.addEventListener("click", () => {
-		if (connected) {
-			container.disconnect();
-		} else {
-			container.connect();
-		}
-	});
-	toggleButton.innerHTML = `${connected ? "Disconnect" : "Connect"}`;
-	attendeeDiv.append(toggleButton);
-}
-
-function updateAttendees(presence: IPresence, attendeeDiv: HTMLDivElement): void {
-	// Clear the existing attendees
-	attendeeDiv.innerHTML = "";
-	const attendeeDivEntry = document.createElement("div");
-	for (const attendee of presence.getAttendees()) {
-		attendeeDivEntry.innerHTML += `Attendee ${attendee.sessionId} is ${attendee.getConnectionStatus()} <br/>`;
-		attendeeDiv.append(attendeeDivEntry);
-	}
 }
 
 export function makeAppView(
@@ -275,9 +219,7 @@ export function makeAppView(
 
 	const presenceView = makePresenceView(presenceConfig, audience);
 
-	const attendeeView = makeAttendeeView(container, presenceConfig?.presence);
-
 	const wrapperDiv = document.createElement("div");
-	wrapperDiv.append(diceView, audienceView, presenceView, attendeeView);
+	wrapperDiv.append(diceView, audienceView, presenceView);
 	return wrapperDiv;
 }
