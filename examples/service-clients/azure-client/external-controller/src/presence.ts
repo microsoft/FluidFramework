@@ -9,7 +9,7 @@ import {
 	LatestMap,
 	type PresenceStates,
 	type PresenceStatesSchema,
-} from "@fluidframework/presence";
+} from "@fluidframework/presence/alpha";
 
 import type { DieValue } from "./controller.js";
 

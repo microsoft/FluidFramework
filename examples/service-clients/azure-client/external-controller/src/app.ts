@@ -14,7 +14,7 @@ import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/intern
 import {
 	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
-} from "@fluidframework/presence";
+} from "@fluidframework/presence/alpha";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema } from "fluid-framework";
