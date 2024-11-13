@@ -539,7 +539,7 @@ export interface Revertible {
     readonly status: RevertibleStatus;
 }
 
-// @alpha
+// @alpha @sealed
 export interface RevertibleAlpha extends Revertible {
     clone: (forkedBranch?: TreeBranch) => RevertibleAlpha;
 }

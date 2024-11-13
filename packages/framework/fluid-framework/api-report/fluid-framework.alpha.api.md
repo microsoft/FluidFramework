@@ -892,6 +892,14 @@ export interface Revertible {
     readonly status: RevertibleStatus;
 }
 
+// @alpha @sealed
+export interface RevertibleAlpha extends Revertible {
+    clone: (forkedBranch?: TreeBranch) => RevertibleAlpha;
+}
+
+// @alpha @sealed
+export type RevertibleAlphaFactory = (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => RevertibleAlpha;
+
 // @public @sealed
 export type RevertibleFactory = (onRevertibleDisposed?: (revertible: Revertible) => void) => Revertible;
 
@@ -1096,8 +1104,8 @@ export interface TreeBranch extends IDisposable {
 
 // @alpha @sealed
 export interface TreeBranchEvents {
-    changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
-    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+    changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+    commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
     schemaChanged(): void;
 }
 
