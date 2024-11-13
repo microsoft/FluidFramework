@@ -102,7 +102,7 @@ function FooterPrivacyLinks(): JSX.Element {
 function FooterCopyright(): JSX.Element {
 	const { colorMode } = useColorMode();
 	const imageFileName =
-		colorMode === "light" ? "microsoft-logo-inverted.png" : "microsoft-logo.png";
+		colorMode === "dark" ? "microsoft-logo.png" : "microsoft-logo-inverted.png";
 	return (
 		<div className="ffcom-footer-copyright">
 			<FooterLogo
