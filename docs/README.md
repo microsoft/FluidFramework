@@ -193,7 +193,7 @@ The following npm scripts are supported in this directory:
 | `build:markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
 | `build:site` | Build the site, including API documentation. |
 | `build:test` | TSC build of the test code as a sanity check. |
-| `check-links` | Run link validation on the website. |
+| `check-links` | Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`. |
 | `clean` | Clean up generated artifacts (build output, etc.). |
 | `clean:api-documentation` | Clean up generate API documentation content. |
 | `clean:doc-models` | Clean up downloaded API model artifacts. |
