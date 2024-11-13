@@ -297,7 +297,6 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	readonly local: ValueMap<Keys, T>;
 	/**
 	 * Iterable access to remote clients' map of values.
-	 * @remarks This is not yet implemented.
 	 */
 	clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
 	/**
