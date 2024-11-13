@@ -126,7 +126,7 @@ For details on the steps required, see [here](https://eng.ms/docs/experiences-de
 
 #### Store Assets
 
-The following are links to image assets for uploading to the extension stores:
+The following are links to image assets intended for use in the extension store pages:
 
 - Logo (128 x 128 pixels): https://storage.fluidframework.com/static/images/devtools/logo.png
 - Large marquee (1400 x 560 pixels): https://storage.fluidframework.com/static/images/devtools/marquee-large.png
@@ -137,6 +137,7 @@ The following are links to image assets for uploading to the extension stores:
   - Telemetry View: https://storage.fluidframework.com/static/images/devtools/screenshots/telemetry-view.png
 
 Updates to these assets can only be made by a Microsoft Fluid team member.
+If you update these images, be sure to update each of the browser extension store pages with the new images.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
