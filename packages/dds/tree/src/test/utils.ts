@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
 	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
@@ -145,9 +145,10 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
+import { JsonUnion } from "../jsonDomainSchema.js";
 
 // Testing utilities
 

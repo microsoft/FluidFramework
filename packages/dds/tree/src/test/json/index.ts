@@ -8,4 +8,3 @@ export {
 	cursorToJsonObject,
 	fieldJsonCursor,
 } from "./jsonCursor.js";
-export { JsonUnion, JsonArray, JsonObject, jsonPrimitiveSchema } from "./jsonDomainSchema.js";

@@ -233,3 +233,13 @@ export {
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
+
+export {
+	JsonUnion,
+	JsonArray,
+	JsonObject,
+	JsonPrimitive,
+	_RecursiveArrayWorkaroundJsonArray,
+	_APIExtractorWorkaroundJsonObjectBase,
+	_APIExtractorWorkaroundJsonArrayBase,
+} from "./jsonDomainSchema.js";
