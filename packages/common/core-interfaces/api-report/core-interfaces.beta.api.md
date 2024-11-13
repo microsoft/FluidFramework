@@ -30,6 +30,11 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
+// @public @sealed
+export interface HasListeners<TListeners extends Listeners<TListeners>> {
+    hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
+}
+
 // @public
 export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
@@ -39,6 +44,12 @@ export interface IConfigProviderBase {
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
+}
+
+// @public
+export interface IEmitter<TListeners extends Listeners<TListeners>> {
+    emit<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): void;
+    emitAndCollect<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
 }
 
 // @public
@@ -287,6 +298,9 @@ export interface IResponse {
 }
 
 // @public
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+
+// @public
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)
     category: string;
@@ -305,6 +319,17 @@ export interface ITelemetryBaseProperties {
     [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
+// @public @sealed
+export interface Listenable<TListeners extends object> {
+    off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+}
+
+// @public
+export type Listeners<T extends object> = {
+    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
+};
+
 // @public
 export const LogLevel: {
     readonly verbose: 10;
@@ -314,6 +339,23 @@ export const LogLevel: {
 
 // @public
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+
+// @public
+export interface MapGetSet<K, V> {
+    // (undocumented)
+    get(key: K): V | undefined;
+    // (undocumented)
+    set(key: K, value: V): void;
+}
+
+// @public
+export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
+
+// @public
+export type NoListenersCallback<TListeners extends object> = (eventName: keyof Listeners<TListeners>) => void;
+
+// @public
+export type Off = () => void;
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
@@ -333,6 +375,9 @@ export type TelemetryBaseEventPropertyType = string | number | boolean | undefin
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
+
+// @public
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
 
 // (No @packageDocumentation comment for this package)
 

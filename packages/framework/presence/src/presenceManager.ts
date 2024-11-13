@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { createEmitter, type IEmitter } from "@fluidframework/core-utils/internal";
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluidframework/core-utils/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {
 	ITelemetryLoggerExt,

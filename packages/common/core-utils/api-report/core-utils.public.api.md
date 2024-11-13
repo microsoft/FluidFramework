@@ -4,46 +4,6 @@
 
 ```ts
 
-// @public
-export function getOrAddInMap<Key, Value>(map: MapGetSet<Key, Value>, key: Key, value: Value): Value;
-
-// @public
-export function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V;
-
-// @public
-export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
-
-// @public @sealed
-export interface Listenable<TListeners extends object> {
-    off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
-    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
-}
-
-// @public
-export type Listeners<T extends object> = {
-    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
-};
-
-// @public
-export interface MapGetSet<K, V> {
-    // (undocumented)
-    get(key: K): V | undefined;
-    // (undocumented)
-    set(key: K, value: V): void;
-}
-
-// @public
-export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
-
-// @public
-export type Off = () => void;
-
-// @public
-export function setInNestedMap<Key1, Key2, Value>(map: NestedMap<Key1, Key2, Value>, key1: Key1, key2: Key2, value: Value): void;
-
-// @public
-export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
-
 // (No @packageDocumentation comment for this package)
 
 ```

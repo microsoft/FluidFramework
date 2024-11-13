@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { UnionToIntersection } from "@fluidframework/core-utils";
+import type { UnionToIntersection } from "@fluidframework/core-interfaces/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";

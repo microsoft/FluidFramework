@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { NestedMap } from "@fluidframework/core-utils";
+import type { NestedMap } from "@fluidframework/core-interfaces/internal";
 
 import { setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";

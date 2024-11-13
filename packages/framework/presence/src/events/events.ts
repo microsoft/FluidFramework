@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent } from "@fluidframework/core-interfaces";
-import type { UnionToIntersection } from "@fluidframework/core-utils";
+import type { IEvent, UnionToIntersection } from "@fluidframework/core-interfaces/internal";
 
 /**
  * `true` iff the given type is an acceptable shape for an event

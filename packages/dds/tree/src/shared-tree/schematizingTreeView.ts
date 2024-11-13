@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, createEmitter } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -12,12 +12,11 @@ import {
 	Compatibility,
 	type SchemaPolicy,
 } from "../core/index.js";
-import type { Listenable } from "@fluidframework/core-utils";
-import {
-	type HasListeners,
-	type IEmitter,
-	createEmitter,
-} from "@fluidframework/core-utils/internal";
+import type {
+	Listenable,
+	HasListeners,
+	IEmitter,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	type NodeKeyManager,
 	defaultSchemaPolicy,

@@ -4,8 +4,11 @@
  */
 
 import { assert, unreachableCase, createEmitter } from "@fluidframework/core-utils/internal";
-import type { HasListeners, IEmitter } from "@fluidframework/core-utils/internal";
-import type { Listenable } from "@fluidframework/core-utils";
+import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
 import type {
 	IChannelAttributes,
 	IChannelFactory,

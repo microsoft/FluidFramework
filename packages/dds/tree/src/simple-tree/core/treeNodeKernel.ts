@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Listenable, Off } from "@fluidframework/core-utils";
+import type { Listenable, Off } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, createEmitter } from "@fluidframework/core-utils/internal";
 import type { TreeNode, Unhydrated } from "./types.js";
 import {

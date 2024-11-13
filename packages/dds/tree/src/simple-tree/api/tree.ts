@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidLoadable, IDisposable } from "@fluidframework/core-interfaces";
-import type { Listenable } from "@fluidframework/core-utils";
-import { getOrCreate } from "@fluidframework/core-utils";
+import type {
+	Listenable,
+	IFluidLoadable,
+	IDisposable,
+} from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { CommitMetadata, RevertibleFactory } from "../../core/index.js";
@@ -23,10 +26,9 @@ import {
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
-import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
 import { markSchemaMostDerived } from "./schemaFactory.js";
-import { fail } from "../../util/index.js";
+import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 /**

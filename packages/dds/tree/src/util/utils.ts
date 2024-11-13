@@ -3,10 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { MapGetSet } from "@fluidframework/core-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
+
+/**
+ * Subset of Map interface.
+ */
+export interface MapGetSet<K, V> {
+	get(key: K): V | undefined;
+	set(key: K, value: V): void;
+}
 
 /**
  * Make all transitive properties in T readonly
@@ -123,6 +130,26 @@ export function compareSets<T>({
 		}
 	}
 	return true;
+}
+
+/**
+ * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
+ * @param map - The map to query/update
+ * @param key - The key to lookup in the map
+ * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
+ * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
+ */
+export function getOrCreate<K, V>(
+	map: MapGetSet<K, V>,
+	key: K, //
+	defaultValue: (key: K) => V,
+): V {
+	let value = map.get(key);
+	if (value === undefined) {
+		value = defaultValue(key);
+		map.set(key, value);
+	}
+	return value;
 }
 
 /**

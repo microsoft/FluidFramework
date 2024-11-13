@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { getOrCreate } from "@fluidframework/core-utils";
 
 import {
 	CursorLocationType,
@@ -16,7 +15,7 @@ import {
 	type Value,
 	forEachNode,
 } from "../../../core/index.js";
-import { fail } from "../../../util/index.js";
+import { fail, getOrCreate } from "../../../util/index.js";
 import type { FlexFieldKind } from "../../modular-schema/index.js";
 
 import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";

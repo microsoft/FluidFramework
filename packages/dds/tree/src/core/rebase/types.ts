@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { NestedMap } from "@fluidframework/core-utils";
+import type { NestedMap } from "@fluidframework/core-interfaces/internal";
 import type {
 	OpSpaceCompressedId,
 	SessionId,

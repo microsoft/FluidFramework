@@ -44,7 +44,8 @@ export type Listeners<T extends object> = {
  * ```
  * {@link createEmitter} can help implement this interface via delegation.
  *
- * @sealed @public
+ * @sealed
+ * @public
  */
 export interface Listenable<TListeners extends object> {
 	/**

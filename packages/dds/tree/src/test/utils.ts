@@ -5,8 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import type { HasListeners, IEmitter } from "@fluidframework/core-utils/internal";
-import type { Listenable } from "@fluidframework/core-utils";
+import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,

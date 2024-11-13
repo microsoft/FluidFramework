@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { getOrCreate } from "@fluidframework/core-utils";
 
 import {
 	type AnchorNode,
@@ -22,7 +21,7 @@ import {
 	iterateCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { disposeSymbol, fail } from "../../util/index.js";
+import { disposeSymbol, fail, getOrCreate } from "../../util/index.js";
 import {
 	FieldKinds,
 	type OptionalFieldEditBuilder,

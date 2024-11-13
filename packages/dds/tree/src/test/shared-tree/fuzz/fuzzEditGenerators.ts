@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { getOrCreate } from "@fluidframework/core-utils";
 import {
 	type AsyncGenerator,
 	type BaseFuzzTestState,
@@ -31,7 +30,7 @@ import {
 	type SharedTree,
 	type SharedTreeFactory,
 } from "../../../shared-tree/index.js";
-import { fail, makeArray } from "../../../util/index.js";
+import { fail, makeArray, getOrCreate } from "../../../util/index.js";
 
 import {
 	type FuzzNode,

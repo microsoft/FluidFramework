@@ -2,17 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "node:assert";
 
 // import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 
 import {
 	EventEmitter,
 	createEmitter,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../events/emitter.js";
-import type { Listenable } from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;

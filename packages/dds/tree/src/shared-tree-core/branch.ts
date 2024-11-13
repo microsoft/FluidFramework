@@ -4,7 +4,7 @@
  */
 
 import { assert, oob, createEmitter } from "@fluidframework/core-utils/internal";
-import type { Listenable } from "@fluidframework/core-utils";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
 
 import {

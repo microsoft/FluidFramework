@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { getOrCreate } from "@fluidframework/core-utils";
 
 import {
 	normalizeFieldSchema,
@@ -22,6 +21,7 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 import type { ValueSchema } from "../../core/index.js";
+import { getOrCreate } from "../../util/index.js";
 import type { Mutable } from "../../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";

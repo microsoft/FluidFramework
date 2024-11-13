@@ -231,16 +231,13 @@ export type {
 	Listenable,
 	Off,
 	IsListener,
+	IEmitter,
+	NoListenersCallback,
+	HasListeners,
 	UnionToIntersection,
-} from "@fluidframework/core-utils";
+} from "@fluidframework/core-interfaces/internal";
 
 export {
 	createEmitter,
 	EventEmitter,
-} from "@fluidframework/core-utils/internal";
-
-export type {
-	IEmitter,
-	NoListenersCallback,
-	HasListeners,
 } from "@fluidframework/core-utils/internal";

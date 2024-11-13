@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, type IEmitter } from "@fluidframework/core-utils/internal";
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";

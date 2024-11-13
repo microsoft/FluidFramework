@@ -17,22 +17,7 @@ export { PromiseTimer, setLongTimeout, Timer } from "./timer.js";
 export { unreachableCase } from "./unreachable.js";
 export { isObject, isPromiseLike } from "./typesGuards.js";
 export { oob } from "./oob.js";
-export type {
-	IEmitter,
-	NoListenersCallback,
-	HasListeners,
-	Listeners,
-	Listenable,
-	Off,
-	IsListener,
-	UnionToIntersection,
-	MapGetSet,
-	NestedMap,
-} from "./events/index.js";
 export {
 	createEmitter,
 	EventEmitter,
-	getOrAddInMap,
-	setInNestedMap,
-	getOrCreate,
 } from "./events/index.js";

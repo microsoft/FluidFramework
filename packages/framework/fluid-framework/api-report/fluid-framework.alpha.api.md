@@ -239,6 +239,11 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(v
 // @alpha
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
 
+// @public @sealed
+export interface HasListeners<TListeners extends Listeners<TListeners>> {
+    hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
+}
+
 // @alpha
 export interface ICodecOptions {
     readonly jsonValidator: JsonValidator;
@@ -257,6 +262,12 @@ export type ICriticalContainerError = IErrorBase;
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
+}
+
+// @public
+export interface IEmitter<TListeners extends Listeners<TListeners>> {
+    emit<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): void;
+    emitAndCollect<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
 }
 
 // @public
@@ -646,7 +657,8 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 
-export { IsListener }
+// @public
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 // @alpha
 export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
@@ -754,9 +766,16 @@ export interface JsonValidator {
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
-export { Listenable }
+// @public @sealed
+export interface Listenable<TListeners extends object> {
+    off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+}
 
-export { Listeners }
+// @public
+export type Listeners<T extends object> = {
+    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
+};
 
 // @public @sealed
 export interface MakeNominal {
@@ -806,6 +825,9 @@ export enum NodeKind {
     Object = 2
 }
 
+// @public
+export type NoListenersCallback<TListeners extends object> = (eventName: keyof Listeners<TListeners>) => void;
+
 // @alpha
 export const noopValidator: JsonValidator;
 
@@ -819,7 +841,8 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<I
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
-export { Off }
+// @public
+export type Off = () => void;
 
 // @alpha
 export interface ParseOptions<TCustom> {
@@ -943,7 +966,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly null: TreeNodeSchemaNonClass<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null, true, unknown, never>;
     readonly number: TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never>;
     object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & { readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property], UnionToIntersection<T[Property]>>; } & { readonly [Property_1 in keyof T as FieldHasDefaultUnsafe<T[Property_1]> extends true ? Property_1 : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property_1], UnionToIntersection<T[Property_1]>> | undefined; }, false, T>;
+    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & { readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property], UnionToIntersection_2<T[Property]>>; } & { readonly [Property_1 in keyof T as FieldHasDefaultUnsafe<T[Property_1]> extends true ? Property_1 : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property_1], UnionToIntersection_2<T[Property_1]>> | undefined; }, false, T>;
     optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">): FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
     optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Optional, T>;
     required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">): FieldSchema<FieldKind.Required, T, TCustomMetadata>;
@@ -1280,7 +1303,8 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
 // @public
 export type Unhydrated<T> = T;
 
-export { UnionToIntersection }
+// @public
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
 
 // @alpha
 export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union>> = IsUnion<Union> extends true ? UnionToTuple<Exclude<Union, First>, [First, ...A]> : [Union, ...A];

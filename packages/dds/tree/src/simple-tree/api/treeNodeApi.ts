@@ -24,7 +24,7 @@ import {
 } from "../leafNodeSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { Off } from "@fluidframework/core-utils";
+import type { Off } from "@fluidframework/core-interfaces/internal";
 import {
 	getKernel,
 	isTreeNode,
