@@ -14,6 +14,7 @@ import {
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeView,
+	customizeSchemaTyping,
 } from "../../../simple-tree/index.js";
 import { TreeFactory } from "../../../treeFactory.js";
 
@@ -110,7 +111,7 @@ describe("Class based end to end example", () => {
 	});
 
 	// Confirm that the alternative syntax for initialTree from the example above actually works.
-	it("using a mix of insertible content and nodes", () => {
+	it("using a mix of insertable content and nodes", () => {
 		const factory = new TreeFactory({});
 		const theTree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -126,5 +127,17 @@ describe("Class based end to end example", () => {
 				],
 			}),
 		);
+	});
+
+	it("customized narrowing", () => {
+		class Specific extends schema.object("Specific", {
+			s: customizeSchemaTyping(schema.string).simplified<"foo" | "bar">(),
+		}) {}
+		const parent = new Specific({ s: "bar" });
+		// Reading field gives narrowed type
+		const s: "foo" | "bar" = parent.s;
+
+		// @ts-expect-error custom typing violation does not build, but runs without error
+		const invalid = new Specific({ s: "x" });
 	});
 });
