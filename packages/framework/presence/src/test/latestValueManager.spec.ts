@@ -58,155 +58,278 @@ describe("Presence", () => {
 			clock.restore();
 		});
 
-		it("sends update signal with updated data", async () => {
-			// Setup
-			runtime.signalsExpected.push(
-				[
-					"Pres:DatastoreUpdate",
-					{
-						"sendTimestamp": 1010,
-						"avgLatency": 10,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+		describe("batching", () => {
+			it("sends signal immediately when allowableUpdateLatency is 0", async () => {
+				// Setup
+				runtime.signalsExpected.push(
+					[
+						"Pres:DatastoreUpdate",
+						{
+							"sendTimestamp": 1010,
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+									},
 								},
-							},
-							"s:name:testStateWorkspace": {
-								"data": {
-									"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
-								},
-							},
-						},
-					},
-				],
-				[
-					"Pres:DatastoreUpdate",
-					{
-						"sendTimestamp": 1010,
-						"avgLatency": 10,
-						"isComplete": true,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
-								},
-							},
-							"s:name:testStateWorkspace": {
-								"data": {
-									"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
+								"s:name:testStateWorkspace": {
+									"data": {
+										"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
+									},
 								},
 							},
 						},
-					},
-				],
-				[
-					"Pres:DatastoreUpdate",
-					{
-						"sendTimestamp": 1010,
-						"avgLatency": 10,
-						"isComplete": true,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+					],
+					[
+						"Pres:DatastoreUpdate",
+						{
+							"sendTimestamp": 1010,
+							"avgLatency": 10,
+							"isComplete": true,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+									},
 								},
-							},
-							"s:name:testStateWorkspace": {
-								"data": {
-									"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
-								},
-							},
-						},
-					},
-				],
-				[
-					"Pres:DatastoreUpdate",
-					{
-						"sendTimestamp": 1020,
-						"avgLatency": 10,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
-								},
-							},
-							"s:name:testStateWorkspace": {
-								"data": {
-									"sessionId-2": { "rev": 1, "timestamp": 1020, "value": { "num": 42 } },
+								"s:name:testStateWorkspace": {
+									"data": {
+										"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
+									},
 								},
 							},
 						},
-					},
-				],
-				[
-					"Pres:DatastoreUpdate",
-					{
-						"sendTimestamp": 1030,
-						"avgLatency": 10,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+					],
+					[
+						"Pres:DatastoreUpdate",
+						{
+							"sendTimestamp": 1010,
+							"avgLatency": 10,
+							"isComplete": true,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+									},
 								},
-							},
-							"s:name:testStateWorkspace": {
-								"data": {
-									"sessionId-2": { "rev": 2, "timestamp": 1030, "value": { "num": 65 } },
+								"s:name:testStateWorkspace": {
+									"data": {
+										"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
+									},
 								},
 							},
 						},
-					},
-				],
-			);
+					],
+					[
+						"Pres:DatastoreUpdate",
+						{
+							"sendTimestamp": 1020,
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+									},
+								},
+								"s:name:testStateWorkspace": {
+									"data": {
+										"sessionId-2": { "rev": 1, "timestamp": 1020, "value": { "num": 42 } },
+									},
+								},
+							},
+						},
+					],
+					[
+						"Pres:DatastoreUpdate",
+						{
+							"sendTimestamp": 1030,
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+									},
+								},
+								"s:name:testStateWorkspace": {
+									"data": {
+										"sessionId-2": { "rev": 2, "timestamp": 1030, "value": { "num": 65 } },
+									},
+								},
+							},
+						},
+					],
+				);
 
-			// Configure a state workspace
-			const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-				data: Latest({ num: 0 }),
+				// Configure a state workspace
+				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+					data: Latest({ num: 0 }, { allowableUpdateLatency: 0, forcedRefreshInterval: 0 }),
+				});
+
+				const { data } = stateWorkspace.props;
+
+				// Process client join
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:ClientJoin",
+						content: {
+							sendTimestamp: clock.now - 50,
+							avgLatency: 50,
+							data: {},
+							updateProviders: ["client2"],
+						},
+						clientId: "client4",
+					},
+					false,
+				);
+
+				const joinSignal = generateBasicClientJoin(clock.now - 50, {
+					averageLatency: 50,
+					clientSessionId: "sessionId-3",
+					clientConnectionId: "client3",
+					updateProviders: ["client2"],
+				});
+
+				presence.processSignal("", joinSignal, false);
+
+				clock.tick(10);
+				// This will trigger the third signal
+				data.local = { num: 42 };
+
+				clock.tick(10);
+				// This will trigger the fourth signal
+				data.local = { num: 65 };
+
+				assertFinalExpectations(runtime, logger);
 			});
 
-			const { data } = stateWorkspace.props;
+			it("batches signals sent within the allowableUpdateLatency", async () => {
+				// Setup
+				runtime.signalsExpected.push(
+					[
+						"Pres:DatastoreUpdate",
+						{
+							"sendTimestamp": 1010,
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+									},
+								},
+								"s:name:testStateWorkspace": {
+									"data": {
+										"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
+									},
+								},
+							},
+						},
+					],
+					[
+						"Pres:DatastoreUpdate",
+						{
+							"sendTimestamp": 1010,
+							"avgLatency": 10,
+							"isComplete": true,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+									},
+								},
+								"s:name:testStateWorkspace": {
+									"data": {
+										"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
+									},
+								},
+							},
+						},
+					],
+					[
+						"Pres:DatastoreUpdate",
+						{
+							"sendTimestamp": 1010,
+							"avgLatency": 10,
+							"isComplete": true,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+									},
+								},
+								"s:name:testStateWorkspace": {
+									"data": {
+										"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
+									},
+								},
+							},
+						},
+					],
+					[
+						"Pres:DatastoreUpdate",
+						{
+							"sendTimestamp": 1030,
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+									},
+								},
+								"s:name:testStateWorkspace": {
+									"data": {
+										"sessionId-2": { "rev": 2, "timestamp": 1030, "value": { "num": 65 } },
+									},
+								},
+							},
+						},
+					],
+				);
 
-			// Process client join
-			presence.processSignal(
-				"",
-				{
-					type: "Pres:ClientJoin",
-					content: {
-						sendTimestamp: clock.now - 50,
-						avgLatency: 50,
-						data: {},
-						updateProviders: ["client2"],
+				// Configure a state workspace
+				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+					data: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 10 }),
+				});
+
+				const { data } = stateWorkspace.props;
+
+				// Process client join
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:ClientJoin",
+						content: {
+							sendTimestamp: clock.now - 50,
+							avgLatency: 50,
+							data: {},
+							updateProviders: ["client2"],
+						},
+						clientId: "client4",
 					},
-					clientId: "client4",
-				},
-				false,
-			);
+					false,
+				);
 
-			const joinSignal = generateBasicClientJoin(clock.now - 50, {
-				averageLatency: 50,
-				clientSessionId: "sessionId-3",
-				clientConnectionId: "client3",
-				updateProviders: ["client2"],
+				const joinSignal = generateBasicClientJoin(clock.now - 50, {
+					averageLatency: 50,
+					clientSessionId: "sessionId-3",
+					clientConnectionId: "client3",
+					updateProviders: ["client2"],
+				});
+
+				presence.processSignal("", joinSignal, false);
+
+				clock.tick(10);
+				// This will trigger the third signal
+				data.local = { num: 42 };
+
+				clock.tick(100);
+				// This will trigger the fourth signal
+				data.local = { num: 65 };
+
+				assertFinalExpectations(runtime, logger);
 			});
-
-			presence.processSignal("", joinSignal, false);
-
-			clock.tick(10);
-			// This will trigger the third signal
-			data.local = { num: 42 };
-
-			clock.tick(10);
-			// This will trigger the fourth signal
-			data.local = { num: 65 };
-
-			assertFinalExpectations(runtime, logger);
 		});
-
-		/**
-		 * See {@link checkCompiles} below
-		 */
-		it("API use compiles", () => {});
 	});
 });
 

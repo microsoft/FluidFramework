@@ -198,27 +198,31 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 	private batchEpoch = Date.now();
 
-	private readonly batchIntervalInMs = 10_000;
+	// private readonly batchIntervalInMs = 10_000;
 
-	private readonly messageQueue: DatastoreUpdateMessage["content"][] = [];
+	// private queuedMessage: DatastoreMessageContent | undefined;
 
-	// private queuedData: DatastoreMessageContent | undefined;
+	private queuedMessage: DatastoreUpdateMessage["content"] | undefined;
+
 	private localUpdate(data: DatastoreMessageContent, options: LocalUpdateOptions): void {
-		const { forceBroadcast, allowableUpdateLatency } = options;
+		const { forceBroadcast, allowableUpdateLatency: batchIntervalInMs } = options;
+		const currentMessageData = data;
+		const queuedMessageData = this.queuedMessage?.data;
 
-		// Merge the
+		// Merge the queued data with the next update.
+		const newData: DatastoreMessageContent = { ...queuedMessageData, ...currentMessageData };
 
 		// Check if the current update can be queued; it can only be queued if the batchIntervalInMs has not elapsed and its
 		// deadline is not beyond the batch deadline. The deadlines are the times by which the signals are expected to be
 		// sent.
-		const batchDeadline = this.batchEpoch + this.batchIntervalInMs;
+		const batchDeadline = this.batchEpoch + (batchIntervalInMs ?? 0);
 		const now = Date.now();
-		const updateDeadline = now + (allowableUpdateLatency ?? 0);
-		const content = {
+		const updateDeadline = now + (batchIntervalInMs ?? 0);
+		const newContent = {
 			sendTimestamp: now,
 			avgLatency: this.averageLatency,
 			// isComplete: false,
-			data,
+			data: newData,
 		} satisfies DatastoreUpdateMessage["content"];
 
 		if (
@@ -231,19 +235,18 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			updateDeadline > batchDeadline
 		) {
 			// Queue the update
+			this.queuedMessage = newContent;
 			return;
 		}
 
-		// We're submitting messages, so reset the epoch
-		this.batchEpoch = now;
-
-		// TODO: Unqueue messages and send them
-		this.runtime.submitSignal(datastoreUpdateMessageType, content);
+		this.sendQueuedMessage(newContent);
 	}
 
-	// private sendQueuedMessages(): void {
-
-	// }
+	private sendQueuedMessage(newContent: DatastoreUpdateMessage["content"]): void {
+		// We're submitting messages, so reset the epoch
+		this.batchEpoch = Date.now();
+		this.runtime.submitSignal(datastoreUpdateMessageType, newContent);
+	}
 
 	private broadcastAllKnownState(): void {
 		this.runtime.submitSignal(datastoreUpdateMessageType, {
