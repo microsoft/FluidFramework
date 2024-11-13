@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent, UnionToIntersection } from "@fluidframework/core-interfaces/internal";
-
 /**
  * `true` iff the given type is an acceptable shape for an event
  * @alpha
@@ -33,31 +31,6 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 export type Events<E> = {
 	[P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
 };
-
-/**
- * Converts an `Events` type (i.e. the event registry for an {@link ISubscribable}) into a type consumable
- * by an IEventProvider from `@fluidframework/core-interfaces`.
- * @param E - the `Events` type to transform
- * @param Target - an optional `IEvent` type that will be merged into the result along with the transformed `E`
- *
- * @example
- *
- * ```typescript
- * interface MyEvents {
- *   load: (user: string, data: IUserData) => void;
- *   error: (errorCode: number) => void;
- * }
- *
- * class MySharedObject extends SharedObject<TransformEvents<MyEvents, ISharedObjectEvents>> {
- *    // ...
- * }
- * ```
- */
-export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent> = {
-	[P in keyof Events<E>]: (event: P, listener: E[P]) => void;
-} extends Record<any, infer Z>
-	? UnionToIntersection<Z> & Target
-	: never;
 
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens.

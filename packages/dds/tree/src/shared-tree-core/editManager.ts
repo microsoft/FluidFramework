@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, createEmitter } from "@fluidframework/core-utils/internal";
+import { assert, createEmitter, getOrCreate } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
@@ -19,7 +19,7 @@ import {
 	type RebaseStatsWithDuration,
 	tagChange,
 } from "../core/index.js";
-import { type Mutable, brand, fail, mapIterable, getOrCreate } from "../util/index.js";
+import { type Mutable, brand, fail, mapIterable } from "../util/index.js";
 
 import {
 	SharedTreeBranch,

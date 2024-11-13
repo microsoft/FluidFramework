@@ -239,11 +239,6 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(v
 // @alpha
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
 
-// @public @sealed
-export interface HasListeners<TListeners extends Listeners<TListeners>> {
-    hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
-}
-
 // @alpha
 export interface ICodecOptions {
     readonly jsonValidator: JsonValidator;
@@ -262,12 +257,6 @@ export type ICriticalContainerError = IErrorBase;
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
-}
-
-// @public
-export interface IEmitter<TListeners extends Listeners<TListeners>> {
-    emit<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): void;
-    emitAndCollect<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
 }
 
 // @public
@@ -824,9 +813,6 @@ export enum NodeKind {
     Map = 0,
     Object = 2
 }
-
-// @public
-export type NoListenersCallback<TListeners extends object> = (eventName: keyof Listeners<TListeners>) => void;
 
 // @alpha
 export const noopValidator: JsonValidator;

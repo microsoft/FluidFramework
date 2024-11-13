@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-
+import { assert, unreachableCase, getOrCreate } from "@fluidframework/core-utils/internal";
 import {
 	normalizeFieldSchema,
 	type FieldSchema,
@@ -21,7 +20,6 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 import type { ValueSchema } from "../../core/index.js";
-import { getOrCreate } from "../../util/index.js";
 import type { Mutable } from "../../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";

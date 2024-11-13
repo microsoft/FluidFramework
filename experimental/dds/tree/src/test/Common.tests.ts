@@ -3,19 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { getOrCreate } from '@fluidframework/core-utils/internal';
 import { expect } from 'chai';
 
-import {
-	RestOrArray,
-	filter,
-	find,
-	getOrCreate,
-	identity,
-	map,
-	memoizeGetter,
-	reduce,
-	unwrapRestOrArray,
-} from '../Common.js';
+import { RestOrArray, filter, find, identity, map, memoizeGetter, reduce, unwrapRestOrArray } from '../Common.js';
 
 describe('Common', () => {
 	it('function memoizeGetter() correctly memoizes', () => {

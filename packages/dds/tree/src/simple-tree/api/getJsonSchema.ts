@@ -7,7 +7,7 @@ import type { JsonTreeSchema } from "./jsonSchema.js";
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 import { getSimpleSchema } from "./getSimpleSchema.js";
-import { getOrCreate } from "../../util/index.js";
+import { getOrCreate } from "@fluidframework/core-utils/internal";
 import type { TreeNodeSchema } from "../core/index.js";
 
 /**

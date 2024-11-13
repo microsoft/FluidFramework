@@ -4,7 +4,7 @@
  */
 
 /**
- * `true` iff the given type is an acceptable shape for a {@link Listeners | event} listener
+ * `true` if the given type is an acceptable shape for a {@link Listeners | event} listener
  * @public
  */
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;

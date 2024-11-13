@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-// import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { Listeners } from "./listeners.js";
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
- * @public
+ * @internal
  */
 export interface IEmitter<TListeners extends Listeners<TListeners>> {
 	/**
@@ -40,7 +39,7 @@ export interface IEmitter<TListeners extends Listeners<TListeners>> {
 /**
  * Called when the last listener for `eventName` is removed.
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
- * @public
+ * @internal
  */
 export type NoListenersCallback<TListeners extends object> = (
 	eventName: keyof Listeners<TListeners>,
@@ -49,7 +48,7 @@ export type NoListenersCallback<TListeners extends object> = (
 /**
  * Allows querying if an object has listeners.
  * @sealed
- * @public
+ * @internal
  */
 export interface HasListeners<TListeners extends Listeners<TListeners>> {
 	/**
@@ -64,22 +63,8 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
 }
 
 /**
- * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
- * @privateRemarks
- * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
- * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
- * @system
- * @public
- */
-export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
-	k: infer U,
-) => unknown
-	? U
-	: never;
-
-/**
  * Subset of Map interface.
- * @public
+ * @internal
  */
 export interface MapGetSet<K, V> {
 	get(key: K): V | undefined;
@@ -92,6 +77,6 @@ export interface MapGetSet<K, V> {
  * If you need constant-time access to the number of values, use SizedNestedMap instead.
  *
  * This code assumes values will not be undefined (keys can be undefined).
- * @public
+ * @internal
  */
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;

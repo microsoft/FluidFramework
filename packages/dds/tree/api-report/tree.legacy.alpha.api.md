@@ -97,10 +97,6 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
-export { HasListeners }
-
-export { IEmitter }
-
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
@@ -264,8 +260,6 @@ export enum NodeKind {
     Map = 0,
     Object = 2
 }
-
-export { NoListenersCallback }
 
 // @public
 type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
@@ -593,7 +587,8 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
 // @public
 export type Unhydrated<T> = T;
 
-export { UnionToIntersection }
+// @public
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
 
 // @public
 export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {

@@ -187,14 +187,10 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(v
 // @alpha
 export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema;
 
-export { HasListeners }
-
 // @alpha
 export interface ICodecOptions {
     readonly jsonValidator: JsonValidator;
 }
-
-export { IEmitter }
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -461,8 +457,6 @@ export enum NodeKind {
     Map = 0,
     Object = 2
 }
-
-export { NoListenersCallback }
 
 // @alpha
 export const noopValidator: JsonValidator;
@@ -911,7 +905,8 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
 // @public
 export type Unhydrated<T> = T;
 
-export { UnionToIntersection }
+// @public
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
 
 // @alpha
 export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union>> = IsUnion<Union> extends true ? UnionToTuple<Exclude<Union, First>, [First, ...A]> : [Union, ...A];

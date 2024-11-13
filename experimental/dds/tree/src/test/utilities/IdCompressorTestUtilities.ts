@@ -17,9 +17,10 @@ import {
 	take,
 } from '@fluid-private/stochastic-test-utils';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { getOrCreate } from '@fluidframework/core-utils/internal';
 import { assert, expect } from 'chai';
 
-import { ClosedMap, assertNotUndefined, fail, getOrCreate } from '../../Common.js';
+import { ClosedMap, assertNotUndefined, fail } from '../../Common.js';
 import {
 	AttributionId,
 	FinalCompressedId,

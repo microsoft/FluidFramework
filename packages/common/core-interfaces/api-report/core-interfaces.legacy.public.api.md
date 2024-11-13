@@ -30,11 +30,6 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @public @sealed
-export interface HasListeners<TListeners extends Listeners<TListeners>> {
-    hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
-}
-
 // @public
 export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
@@ -44,12 +39,6 @@ export interface IConfigProviderBase {
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
-}
-
-// @public
-export interface IEmitter<TListeners extends Listeners<TListeners>> {
-    emit<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): void;
-    emitAndCollect<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
 }
 
 // @public
@@ -341,20 +330,6 @@ export const LogLevel: {
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
-export interface MapGetSet<K, V> {
-    // (undocumented)
-    get(key: K): V | undefined;
-    // (undocumented)
-    set(key: K, value: V): void;
-}
-
-// @public
-export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
-
-// @public
-export type NoListenersCallback<TListeners extends object> = (eventName: keyof Listeners<TListeners>) => void;
-
-// @public
 export type Off = () => void;
 
 // @public
@@ -375,9 +350,6 @@ export type TelemetryBaseEventPropertyType = string | number | boolean | undefin
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
-
-// @public
-export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
 
 // (No @packageDocumentation comment for this package)
 

@@ -7,7 +7,6 @@ export type {
 	IEmitter,
 	NoListenersCallback,
 	HasListeners,
-	UnionToIntersection,
 	MapGetSet,
 	NestedMap,
 } from "./emitter.js";

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { UnionToIntersection } from "@fluidframework/core-interfaces/internal";
-
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
@@ -15,6 +13,7 @@ import type {
 	IsUnion,
 	RestrictiveReadonlyRecord,
 	RestrictiveStringRecord,
+	UnionToIntersection,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../util/typeUtils.js";

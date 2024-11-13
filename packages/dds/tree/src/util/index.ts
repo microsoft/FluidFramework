@@ -60,7 +60,6 @@ export {
 	compareSets,
 	fail,
 	getOrAddEmptyToMap,
-	getOrCreate,
 	isJsonObject,
 	isReadonlyArray,
 	type JsonCompatible,
@@ -100,6 +99,7 @@ export type {
 	_InlineTrick,
 	FlattenKeys,
 	IsUnion,
+	UnionToIntersection,
 	UnionToTuple,
 	PopUnion,
 } from "./typeUtils.js";

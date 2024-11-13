@@ -3,41 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { MapGetSet, NestedMap } from "@fluidframework/core-interfaces/internal";
-
-/**
- * Sets the value at `key` in map to value if not already present.
- * Returns the value at `key` after setting it.
- * This is equivalent to a get or default that adds the default to the map.
- * @internal
- */
-export function getOrAddInMap<Key, Value>(
-	map: MapGetSet<Key, Value>,
-	key: Key,
-	value: Value,
-): Value {
-	const currentValue = map.get(key);
-	if (currentValue !== undefined) {
-		return currentValue;
-	}
-	map.set(key, value);
-	return value;
-}
-
-/**
- * Sets the value at (key1, key2) in map to value.
- * If there already is a value for (key1, key2), it is replaced with the provided one.
- * @internal
- */
-export function setInNestedMap<Key1, Key2, Value>(
-	map: NestedMap<Key1, Key2, Value>,
-	key1: Key1,
-	key2: Key2,
-	value: Value,
-): void {
-	const innerMap = getOrAddInMap(map, key1, new Map<Key2, Value>());
-	innerMap.set(key2, value);
-}
+import type { MapGetSet } from "@fluidframework/core-interfaces/internal";
 
 /**
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.

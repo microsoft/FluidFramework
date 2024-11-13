@@ -206,6 +206,7 @@ export {
 	type RestrictiveStringRecord,
 	type MakeNominal,
 	type IsUnion,
+	type UnionToIntersection,
 	type UnionToTuple,
 	type PopUnion,
 } from "./util/index.js";
@@ -234,7 +235,6 @@ export type {
 	IEmitter,
 	NoListenersCallback,
 	HasListeners,
-	UnionToIntersection,
 } from "@fluidframework/core-interfaces/internal";
 
 export {

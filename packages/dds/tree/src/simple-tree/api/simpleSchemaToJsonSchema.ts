@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
+import { oob, unreachableCase, getOrCreate } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ValueSchema } from "../../core/index.js";
-import { getOrCreate } from "../../util/index.js";
 import type { Mutable } from "../../util/index.js";
 import type {
 	JsonArrayNodeSchema,

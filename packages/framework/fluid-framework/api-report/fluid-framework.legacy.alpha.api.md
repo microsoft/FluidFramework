@@ -149,11 +149,6 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @public @sealed
-export interface HasListeners<TListeners extends Listeners<TListeners>> {
-    hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
-}
-
 // @alpha
 export interface IBranchOrigin {
     id: string;
@@ -202,12 +197,6 @@ export interface IDirectoryValueChanged extends IValueChanged {
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
-}
-
-// @public
-export interface IEmitter<TListeners extends Listeners<TListeners>> {
-    emit<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): void;
-    emitAndCollect<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
 }
 
 // @public
@@ -926,9 +915,6 @@ export enum NodeKind {
     Map = 0,
     Object = 2
 }
-
-// @public
-export type NoListenersCallback<TListeners extends object> = (eventName: keyof Listeners<TListeners>) => void;
 
 // @public
 type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {

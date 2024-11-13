@@ -8,8 +8,4 @@ export {
 	EventEmitter,
 } from "./emitter.js";
 
-export {
-	getOrAddInMap,
-	setInNestedMap,
-	getOrCreate,
-} from "./util.js";
+export { getOrCreate } from "./util.js";
