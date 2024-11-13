@@ -140,8 +140,12 @@ TODO
 
 ##### Images
 
-TODO: CDN
-https://github.com/microsoft/FluidFramework/wiki/Uploading-images-for-the-website-to-Azure-blob-storage
+When adding image assets for use in the website, please follow the instructions outlined [here](https://github.com/microsoft/FluidFramework/wiki/Uploading-images-for-the-website-to-Azure-blob-storage).
+Namely, avoid adding binary files like images to the GitHub repo.
+Instead, upload them to our Azure blob storage, and reference by URL.
+
+Images may only be uploaded by Microsoft Fluid team members.
+If you do not have the appropriate permissions, but would like to contribute to our documentation, please reach out to us [here](https://github.com/microsoft/FluidFramework/issues/new/choose).
 
 ## TODOs
 
