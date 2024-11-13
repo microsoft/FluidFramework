@@ -107,7 +107,7 @@ describe("Presence", () => {
 				it("is not announced via `attendeeDisconnected` when unknown connection is removed", () => {
 					// Setup
 					presence.events.on("attendeeDisconnected", () => {
-						assert.fail("No attendee should be disconnected in beforeEach");
+						assert.fail("ateendeeDisconnected should not be emitted for unknown connection.");
 					});
 
 					// Act & Verify - remove unknown connection id
