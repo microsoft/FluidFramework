@@ -14,6 +14,7 @@ import {
 	TreeViewConfiguration,
 	type TreeView,
 	type InsertableTreeFieldFromImplicitField,
+	type TreeNodeFromImplicitAllowedTypes,
 } from "../../../simple-tree/index.js";
 import {
 	adaptEnum,
@@ -22,7 +23,12 @@ import {
 } from "../../../simple-tree/api/schemaCreationUtilities.js";
 import { TreeFactory } from "../../../treeFactory.js";
 import { testIdCompressor } from "../../utils.js";
-import { unsafeArrayToTuple } from "../../../util/index.js";
+import {
+	unsafeArrayToTuple,
+	type areSafelyAssignable,
+	type requireFalse,
+	type requireTrue,
+} from "../../../util/index.js";
 
 const schema = new SchemaFactory("test");
 
@@ -63,7 +69,7 @@ describe("schemaCreationUtilities", () => {
 	it("enumFromStrings example", () => {
 		const schemaFactory = new SchemaFactory("com.myApp");
 		const Mode = enumFromStrings(schemaFactory, ["Fun", "Cool"]);
-		type Mode = NodeFromSchema<(typeof Mode.schema)[number]>;
+		type Mode = TreeNodeFromImplicitAllowedTypes<typeof Mode.schema>;
 		const nodeFromString: Mode = Mode("Fun");
 		const nodeFromSchema: Mode = new Mode.Fun();
 
@@ -71,6 +77,47 @@ describe("schemaCreationUtilities", () => {
 		const nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
 
 		class Parent extends schemaFactory.object("Parent", { mode: Mode.schema }) {}
+	});
+
+	it("enumFromStrings - construction tests", () => {
+		const schemaFactory = new SchemaFactory("com.myApp");
+
+		const ModeNodes = enumFromStrings(new SchemaFactory(`${schemaFactory.scope}.Mode`), [
+			"A",
+			"B",
+			"C",
+		]);
+		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
+
+		type I0 = NodeFromSchema<(typeof ModeNodes.schema)[0]>;
+		type I1 = NodeFromSchema<(typeof ModeNodes.schema)[1]>;
+		type I2 = NodeFromSchema<(typeof ModeNodes.schema)[2]>;
+
+		type _checkI = requireTrue<areSafelyAssignable<I0 | I1 | I2, ModeNodes>>;
+
+		type A = NodeFromSchema<typeof ModeNodes.A>;
+		type B = NodeFromSchema<typeof ModeNodes.B>;
+
+		type _checkDifferent = requireFalse<areSafelyAssignable<A, B>>;
+
+		const fromLiteral = ModeNodes("A");
+
+		type _check1 = requireTrue<areSafelyAssignable<typeof fromLiteral, A>>;
+		const fromUnion = ModeNodes("A" as "A" | "B");
+		type _check2 = requireTrue<areSafelyAssignable<typeof fromUnion, A | B>>;
+		const fromAny = ModeNodes("A" as "A" | "B" | "C");
+		type _check3 = requireTrue<areSafelyAssignable<typeof fromAny, ModeNodes>>;
+
+		const fromA = new ModeNodes.A();
+		type _checkA = requireTrue<areSafelyAssignable<typeof fromA, A>>;
+
+		class Parent extends schemaFactory.object("Parent", {
+			mode: ModeNodes.schema,
+		}) {}
+
+		const parent1 = new Parent({ mode: ModeNodes("A") });
+		const parent2 = new Parent({ mode: ModeNodes("A" as "A" | "B") });
+		const parent3 = new Parent({ mode: ModeNodes("A" as "A" | "B" | "C") });
 	});
 
 	it("adaptEnum example from docs", () => {
@@ -83,7 +130,7 @@ describe("schemaCreationUtilities", () => {
 		// Define the schema for each member of the enum using a nested scope to group them together.
 		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
 		// Defined the types of the nodes which correspond to this the schema.
-		type ModeNodes = NodeFromSchema<(typeof ModeNodes.schema)[number]>;
+		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 		// An example schema which has an enum as a child.
 		class Parent extends schemaFactory.object("Parent", {
 			// adaptEnum's return value has a ".schema" property can be use as an `AllowedTypes` array allowing any of the members of the enum.
@@ -102,6 +149,38 @@ describe("schemaCreationUtilities", () => {
 		}
 	});
 
+	it("adaptEnum - construction tests", () => {
+		const schemaFactory = new SchemaFactory("com.myApp");
+		enum Mode {
+			a = "A",
+			b = "B",
+			c = "C",
+		}
+		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
+		class Parent extends schemaFactory.object("Parent", {
+			mode: ModeNodes.schema,
+		}) {}
+
+		const fromEnumValue = ModeNodes(Mode.a);
+		type _check1 = requireTrue<
+			areSafelyAssignable<typeof fromEnumValue, NodeFromSchema<typeof ModeNodes.a>>
+		>;
+		const fromEnumUnion = ModeNodes(Mode.a as Mode.a | Mode.b);
+		type _check2 = requireTrue<
+			areSafelyAssignable<
+				typeof fromEnumUnion,
+				NodeFromSchema<typeof ModeNodes.a> | NodeFromSchema<typeof ModeNodes.b>
+			>
+		>;
+		const fromEnum = ModeNodes(Mode.a as Mode);
+		type _check3 = requireTrue<areSafelyAssignable<typeof fromEnum, ModeNodes>>;
+
+		const parent1 = new Parent({ mode: ModeNodes(Mode.a) });
+		const parent2 = new Parent({ mode: ModeNodes(Mode.a as Mode.a | Mode.b) });
+		const parent3 = new Parent({ mode: ModeNodes(Mode.a as Mode) });
+	});
+
 	it("adaptEnum example", () => {
 		const schemaFactory = new SchemaFactory("x");
 
@@ -110,7 +189,7 @@ describe("schemaCreationUtilities", () => {
 			b = "B",
 		}
 		const ModeNodes = adaptEnum(schema, Mode);
-		type ModeNodes = NodeFromSchema<(typeof ModeNodes.schema)[number]>;
+		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 		const nodeFromString: ModeNodes = ModeNodes(Mode.a);
 		const nodeFromSchema: ModeNodes = new ModeNodes.a();
 
@@ -126,27 +205,16 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enum value switch", () => {
-		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
+		const Mode = enumFromStrings(schema, ["Fun", "Bonus"]);
 		class Parent extends schema.object("Parent", { mode: Mode.schema }) {}
-		const config = new TreeViewConfiguration({ schema: Parent });
+		const root = new Parent({ mode: new Mode.Bonus() });
+		const mode = root.mode;
 
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
-			"tree",
-		);
-		const view: TreeView<typeof Parent> = tree.viewWith(config);
-		view.initialize(
-			new Parent({
-				mode: new Mode.Bonus(),
-			}),
-		);
-		const mode = view.root.mode;
-		switch (mode.value) {
+		// mode.value must be copied out into its own variable for the switch to narrow it correctly.
+		const value = mode.value;
+
+		switch (value) {
 			case "Fun": {
-				assert.fail();
-			}
-			case "Cool": {
 				assert.fail();
 			}
 			case "Bonus": {
@@ -154,7 +222,28 @@ describe("schemaCreationUtilities", () => {
 				break;
 			}
 			default:
-				unreachableCase(mode.value);
+				unreachableCase(value);
+		}
+	});
+
+	it("enum value switch - minimal", () => {
+		const Mode = enumFromStrings(schema, ["Fun", "Bonus"]);
+		type Mode = TreeNodeFromImplicitAllowedTypes<typeof Mode.schema>;
+		const node = new Mode.Bonus() as Mode;
+
+		// node.value must be copied out into its own variable for the switch to narrow it correctly.
+		const value = node.value;
+
+		switch (value) {
+			case "Fun": {
+				assert.fail();
+			}
+			case "Bonus": {
+				// This one runs
+				break;
+			}
+			default:
+				unreachableCase(value);
 		}
 	});
 
@@ -178,7 +267,10 @@ describe("schemaCreationUtilities", () => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(day));
 
-		switch (view.root.value) {
+		// view.root.value must be copied out into its own variable for the switch to narrow it correctly.
+		const value = view.root.value;
+
+		switch (value) {
 			case Day.Today: {
 				// This one runs
 				break;
@@ -187,7 +279,7 @@ describe("schemaCreationUtilities", () => {
 				assert.fail();
 			}
 			default:
-				unreachableCase(view.root.value);
+				unreachableCase(value);
 		}
 	});
 
