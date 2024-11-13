@@ -450,8 +450,7 @@ export function spyOnMethod(
 }
 
 /**
- *
- * @returns `true` iff the given delta has a visible impact on the document tree.
+ * Determines whether or not the given delta has a visible impact on the document tree.
  */
 export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
 	for (const mark of delta.local ?? []) {
