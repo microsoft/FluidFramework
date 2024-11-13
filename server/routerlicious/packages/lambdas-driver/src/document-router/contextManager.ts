@@ -132,6 +132,7 @@ export class DocumentContextManager extends EventEmitter {
 
 		// Checkpoint once the offset has changed
 		if (queuedMessage.offset !== this.lastCheckpoint.offset) {
+			console.log("TEST!! Checkpointing offset in kafka: ", queuedMessage.offset);
 			this.partitionContext.checkpoint(queuedMessage, restartOnCheckpointFailure);
 			this.lastCheckpoint = queuedMessage;
 		}

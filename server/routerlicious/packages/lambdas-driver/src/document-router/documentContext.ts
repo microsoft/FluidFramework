@@ -89,6 +89,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 				`(${message.topic}, ${message.partition}, ${this.routingKey.tenantId}/${this.routingKey.documentId})`,
 		);
 
+		console.log("TEST!! DocumentContext checkpointing document queue message offset:", message.offset);
 		// Update the tail and broadcast the checkpoint
 		this.tailInternal = message;
 		this.emit("checkpoint", restartOnCheckpointFailure);
