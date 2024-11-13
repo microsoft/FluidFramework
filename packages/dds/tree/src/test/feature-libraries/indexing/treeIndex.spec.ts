@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { getView } from "../../utils.js";
+import { getView, TestTreeProviderLite } from "../../utils.js";
 import {
 	type FlexTreeNode,
 	AnchorTreeIndex,
@@ -249,5 +249,36 @@ describe("tree indexes", () => {
 		const { index } = createIndex(view);
 		index[disposeSymbol]();
 		assert.throws(() => index[disposeSymbol]());
+	});
+
+	it("completely removes nodes when they are garbage collected", () => {
+		const provider = new TestTreeProviderLite(1);
+		const tree = provider.trees[0];
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: IndexableParent, enableSchemaValidation: true }),
+		);
+		view.initialize(
+			new IndexableParent({
+				parentKey: parentId,
+				child: new IndexableChild({ childKey: childId }),
+			}),
+		);
+		provider.processMessages();
+		const { index } = createIndex(view);
+		const parent = view.root;
+		const child = parent.child;
+		assert(child !== undefined);
+		parent.child = undefined;
+		provider.processMessages();
+		// check that the detached child still exists on the index
+		assert.deepEqual(Array.from(index.allEntries()), [
+			[parentId, [0]],
+			[childId, [1]],
+		]);
+		// send an edit so that the detached node is garbage collected
+		parent.child = new IndexableChild({ childKey: parentId });
+		provider.processMessages();
+		// check that the detached child is removed from the index
+		assert.deepEqual(Array.from(index.allEntries()), [[parentId, [0, 2]]]);
 	});
 });

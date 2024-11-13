@@ -247,6 +247,19 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	}
 
 	/**
+	 * Returns an iterable of key, value pairs for every entry in the index, including ones that are detached.
+	 * This function should only be used for testing purposes, it is not exposed as part of the public {@link TreeIndex} API.
+	 */
+	public *allEntries(): IterableIterator<[TKey, TValue]> {
+		for (const [key, nodes] of this.nodes.entries()) {
+			const value = this.getValue(nodes as unknown as TreeIndexNodes<AnchorNode>);
+			if (value !== undefined) {
+				yield [key, value];
+			}
+		}
+	}
+
+	/**
 	 * Disposes this index and all the anchors it holds onto.
 	 */
 	public [disposeSymbol](): void {
