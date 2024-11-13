@@ -141,6 +141,7 @@ TODO
 ##### Images
 
 TODO: CDN
+https://github.com/microsoft/FluidFramework/wiki/Uploading-images-for-the-website-to-Azure-blob-storage
 
 ## TODOs
 
