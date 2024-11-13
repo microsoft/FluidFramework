@@ -33,16 +33,15 @@ export type {
 	PresenceStates,
 	PresenceStatesEntries,
 	PresenceStatesEntry,
-	PresenceStatesMethods,
 	PresenceStatesSchema,
 	PresenceWorkspaceAddress,
 } from "./types.js";
 
-export type {
-	ClientSessionId,
-	IPresence,
-	ISessionClient,
-	PresenceEvents,
+export {
+	type ClientSessionId,
+	type IPresence,
+	type ISessionClient,
+	type PresenceEvents,
 	SessionClientStatus,
 } from "./presence.js";
 

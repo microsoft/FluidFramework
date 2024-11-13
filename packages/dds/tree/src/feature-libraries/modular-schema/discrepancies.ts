@@ -11,12 +11,14 @@ import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	storedEmptyFieldSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
 	type TreeTypeSet,
 	type ValueSchema,
 } from "../../core/index.js";
+import { brand } from "../../util/index.js";
 
 // TODO:
 // The comparisons in this file seem redundant with those in comparison.ts.
@@ -79,8 +81,8 @@ export interface AllowedTypeIncompatibility {
 export interface FieldKindIncompatibility {
 	identifier: string | undefined; // undefined indicates root field schema
 	mismatch: "fieldKind";
-	view: FieldKindIdentifier | undefined;
-	stored: FieldKindIdentifier | undefined;
+	view: FieldKindIdentifier;
+	stored: FieldKindIdentifier;
 }
 
 export interface ValueSchemaIncompatibility {
@@ -348,12 +350,15 @@ function trackObjectNodeDiscrepancies(
 
 	for (const [fieldKey, fieldStoredSchema] of view.objectNodeFields) {
 		viewFieldKeys.add(fieldKey);
-		if (!stored.objectNodeFields.has(fieldKey)) {
+		if (
+			!stored.objectNodeFields.has(fieldKey) &&
+			fieldStoredSchema.kind !== storedEmptyFieldSchema.kind
+		) {
 			differences.push({
 				identifier: fieldKey,
 				mismatch: "fieldKind",
 				view: fieldStoredSchema.kind,
-				stored: undefined,
+				stored: storedEmptyFieldSchema.kind,
 			} satisfies FieldKindIncompatibility);
 		} else {
 			differences.push(
@@ -370,12 +375,15 @@ function trackObjectNodeDiscrepancies(
 		if (viewFieldKeys.has(fieldKey)) {
 			continue;
 		}
-		differences.push({
-			identifier: fieldKey,
-			mismatch: "fieldKind",
-			view: undefined,
-			stored: fieldStoredSchema.kind,
-		} satisfies FieldKindIncompatibility);
+
+		if (fieldStoredSchema.kind !== storedEmptyFieldSchema.kind) {
+			differences.push({
+				identifier: fieldKey,
+				mismatch: "fieldKind",
+				view: storedEmptyFieldSchema.kind,
+				stored: fieldStoredSchema.kind,
+			} satisfies FieldKindIncompatibility);
+		}
 	}
 
 	return differences;
@@ -404,7 +412,11 @@ export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema)
 	for (const incompatibility of incompatibilities) {
 		switch (incompatibility.mismatch) {
 			case "nodeKind": {
-				return false;
+				if (incompatibility.stored !== undefined) {
+					// It's fine for the view schema to know of a node type that the stored schema doesn't know about.
+					return false;
+				}
+				break;
 			}
 			case "valueSchema":
 			case "allowedTypes":
@@ -439,17 +451,7 @@ function validateFieldIncompatibility(incompatibility: FieldIncompatibility): bo
 			return incompatibility.stored.length === 0;
 		}
 		case "fieldKind": {
-			if (incompatibility.stored === undefined) {
-				// Add an optional field
-				if (incompatibility.view === "Optional") {
-					return true;
-				}
-			} else {
-				// Relax the field to make it more general
-				return compareFieldKind(incompatibility.stored, incompatibility.view);
-			}
-
-			break;
+			return posetLte(incompatibility.stored, incompatibility.view, fieldRealizer);
 		}
 		case "valueSchema": {
 			return false;
@@ -460,41 +462,105 @@ function validateFieldIncompatibility(incompatibility: FieldIncompatibility): bo
 }
 
 /**
- * A mapping that defines the order of field kinds for comparison purposes.
- * The numeric values indicate the hierarchy or "strength" of each field kind, where lower numbers are more restrictive.
- * This is used to determine if one field kind can be considered a superset of another.
+ * A linear extension of a partially-ordered set of `T`s. See:
+ * https://en.wikipedia.org/wiki/Linear_extension
  *
- * - "Forbidden": The most restrictive, represented by 1. Indicates a forbidden field.
- * - "Value": Represented by 2. Indicates a required field with a specific value.
- * - "Optional": Represented by 3. Indicates an optional field.
- *
- * Note:
- * - "Sequence": (Currently commented out) was intended to represent a sequence field kind with a value of 4.
- * Relaxing non-sequence fields to sequences is not currently supported but may be considered in the future.
- *
- * TODO: We may need more coverage in realm to prove the correctness of the Forbidden -\> Value transaction
+ * The linear extension is represented as a lookup from each poset element to its index in the linear extension.
  */
-const fieldKindOrder: { [key: string]: number } = {
-	"Forbidden": 1,
-	"Value": 2,
-	"Optional": 3,
-	// "Sequence": 4,  // Relaxing non-sequence fields to sequences is not currently supported, though we could consider doing so in the future.
+type LinearExtension<T> = Map<T, number>;
+
+/**
+ * A realizer for a partially-ordered set. See:
+ * https://en.wikipedia.org/wiki/Order_dimension
+ */
+type Realizer<T> = LinearExtension<T>[];
+
+/**
+ * @privateRemarks
+ * TODO: Knowledge of specific field kinds is not appropriate for modular schema.
+ * This bit of field comparison should be dependency injected by default-schema if this comparison logic remains in modular-schema
+ * (this is analogous to what is done in comparison.ts).
+ */
+const FieldKindIdentifiers = {
+	forbidden: brand<FieldKindIdentifier>("Forbidden"),
+	required: brand<FieldKindIdentifier>("Value"),
+	identifier: brand<FieldKindIdentifier>("Identifier"),
+	optional: brand<FieldKindIdentifier>("Optional"),
+	sequence: brand<FieldKindIdentifier>("Sequence"),
 };
 
-function compareFieldKind(
-	aKind: FieldKindIdentifier | undefined,
-	bKind: FieldKindIdentifier | undefined,
-): boolean {
-	if (aKind === undefined || bKind === undefined) {
-		return false;
+/**
+ * A realizer for the partial order of field kind relaxability.
+ *
+ * It seems extremely likely that this partial order will remain dimension 2 over time (i.e. the set of allowed relaxations can be visualized
+ * with a [dominance drawing](https://en.wikipedia.org/wiki/Dominance_drawing)), so this strategy allows efficient comarison between field kinds
+ * without excessive casework.
+ *
+ * Hasse diagram for the partial order is shown below (lower fields can be relaxed to higher fields):
+ * ```
+ * sequence
+ *    |
+ * optional
+ *    |    \
+ * required forbidden
+ *    |
+ * identifier
+ * ```
+ */
+const fieldRealizer: Realizer<FieldKindIdentifier> = [
+	[
+		FieldKindIdentifiers.forbidden,
+		FieldKindIdentifiers.identifier,
+		FieldKindIdentifiers.required,
+		FieldKindIdentifiers.optional,
+		FieldKindIdentifiers.sequence,
+	],
+	[
+		FieldKindIdentifiers.identifier,
+		FieldKindIdentifiers.required,
+		FieldKindIdentifiers.forbidden,
+		FieldKindIdentifiers.optional,
+		FieldKindIdentifiers.sequence,
+	],
+].map((extension) => new Map(extension.map((identifier, index) => [identifier, index])));
+
+const PosetComparisonResult = {
+	Less: "<",
+	Greater: ">",
+	Equal: "=",
+	Incomparable: "||",
+} as const;
+type PosetComparisonResult =
+	(typeof PosetComparisonResult)[keyof typeof PosetComparisonResult];
+
+function comparePosetElements<T>(a: T, b: T, realizer: Realizer<T>): PosetComparisonResult {
+	let hasLessThanResult = false;
+	let hasGreaterThanResult = false;
+	for (const extension of realizer) {
+		const aIndex = extension.get(a);
+		const bIndex = extension.get(b);
+		assert(aIndex !== undefined && bIndex !== undefined, "Invalid realizer");
+		if (aIndex < bIndex) {
+			hasLessThanResult = true;
+		} else if (aIndex > bIndex) {
+			hasGreaterThanResult = true;
+		}
 	}
 
-	if (!(aKind in fieldKindOrder) || !(bKind in fieldKindOrder)) {
-		return false;
-	}
+	return hasLessThanResult
+		? hasGreaterThanResult
+			? PosetComparisonResult.Incomparable
+			: PosetComparisonResult.Less
+		: hasGreaterThanResult
+			? PosetComparisonResult.Greater
+			: PosetComparisonResult.Equal;
+}
 
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	return fieldKindOrder[aKind]! <= fieldKindOrder[bKind]!;
+function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
+	const comparison = comparePosetElements(a, b, realizer);
+	return (
+		comparison === PosetComparisonResult.Less || comparison === PosetComparisonResult.Equal
+	);
 }
 
 function throwUnsupportedNodeType(type: string): never {

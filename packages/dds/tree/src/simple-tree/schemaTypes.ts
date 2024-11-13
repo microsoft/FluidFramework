@@ -13,6 +13,9 @@ import {
 	brand,
 	isReadonlyArray,
 	type UnionToIntersection,
+	compareSets,
+	type requireTrue,
+	type areOnlyKeys,
 } from "../util/index.js";
 import type {
 	Unhydrated,
@@ -20,6 +23,7 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	TreeNode,
+	TreeNodeSchemaCore,
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./toMapTree.js";
@@ -27,6 +31,7 @@ import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
+ * @internal
  */
 export function isTreeNodeSchemaClass<
 	Name extends string,
@@ -362,6 +367,8 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
  *
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
+ *
+ * @internal
  */
 export function normalizeAllowedTypes(
 	types: ImplicitAllowedTypes,
@@ -377,6 +384,87 @@ export function normalizeAllowedTypes(
 	return normalized;
 }
 
+/**
+ * Returns true if the given {@link ImplicitFieldSchema} are equivalent, otherwise false.
+ * @remarks Two ImplicitFieldSchema are considered equivalent if all of the following are true:
+ * 1. They have the same {@link FieldKind | kinds}.
+ * 2. They have {@link areFieldPropsEqual | equivalent FieldProps}.
+ * 3. They have the same exact set of allowed types. The allowed types must be (respectively) reference equal.
+ *
+ * For example, comparing an ImplicitFieldSchema that is a {@link TreeNodeSchema} to an ImplicitFieldSchema that is a {@link FieldSchema}
+ * will return true if they are the same kind, the FieldSchema has exactly one allowed type (the TreeNodeSchema), and they have equivalent FieldProps.
+ */
+export function areImplicitFieldSchemaEqual(
+	a: ImplicitFieldSchema,
+	b: ImplicitFieldSchema,
+): boolean {
+	return areFieldSchemaEqual(normalizeFieldSchema(a), normalizeFieldSchema(b));
+}
+
+/**
+ * Returns true if the given {@link FieldSchema} are equivalent, otherwise false.
+ * @remarks Two FieldSchema are considered equivalent if all of the following are true:
+ * 1. They have the same {@link FieldKind | kinds}.
+ * 2. They have {@link areFieldPropsEqual | equivalent FieldProps}.
+ * 3. They have the same exact set of allowed types. The allowed types must be reference equal.
+ */
+export function areFieldSchemaEqual(a: FieldSchema, b: FieldSchema): boolean {
+	if (a === b) {
+		return true;
+	}
+
+	if (a.kind !== b.kind) {
+		return false;
+	}
+
+	if (!areFieldPropsEqual(a.props, b.props)) {
+		return false;
+	}
+
+	return compareSets({ a: a.allowedTypeSet, b: b.allowedTypeSet });
+}
+
+/**
+ * Returns true if the given {@link FieldProps} are equivalent, otherwise false.
+ * @remarks FieldProps are considered equivalent if their keys and default providers are reference equal, and their metadata are {@link areMetadataEqual | equivalent}.
+ */
+function areFieldPropsEqual(a: FieldProps | undefined, b: FieldProps | undefined): boolean {
+	// If any new fields are added to FieldProps, this check will stop compiling as a reminder that this function needs to be updated.
+	type _keys = requireTrue<areOnlyKeys<FieldProps, "key" | "defaultProvider" | "metadata">>;
+
+	if (a === b) {
+		return true;
+	}
+
+	if (a?.key !== b?.key || a?.defaultProvider !== b?.defaultProvider) {
+		return false;
+	}
+
+	if (!areMetadataEqual(a?.metadata, b?.metadata)) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Returns true if the given {@link FieldSchemaMetadata} are equivalent, otherwise false.
+ * @remarks FieldSchemaMetadata are considered equivalent if their custom data and descriptions are (respectively) reference equal.
+ */
+function areMetadataEqual(
+	a: FieldSchemaMetadata | undefined,
+	b: FieldSchemaMetadata | undefined,
+): boolean {
+	// If any new fields are added to FieldSchemaMetadata, this check will stop compiling as a reminder that this function needs to be updated.
+	type _keys = requireTrue<areOnlyKeys<FieldSchemaMetadata, "custom" | "description">>;
+
+	if (a === b) {
+		return true;
+	}
+
+	return a?.custom === b?.custom && a?.description === b?.description;
+}
+
 function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
 	const evaluatedSchema = isLazy(value) ? value() : value;
 	if (evaluatedSchema === undefined) {
@@ -388,9 +476,34 @@ function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
 }
 
 /**
- * Types allowed in a field.
+ * Types of {@link TreeNode|TreeNodes} or {@link TreeLeafValue|TreeLeafValues} allowed at a location in a tree.
  * @remarks
+ * Used by {@link TreeViewConfiguration} for the root and various kinds of {@link TreeNodeSchema} to specify their allowed child types.
+ *
+ * Use {@link SchemaFactory} to access leaf schema or declare new composite schema.
+ *
  * Implicitly treats a single type as an array of one type.
+ *
+ * Arrays of schema can be used to specify multiple types are allowed, which result in unions of those types in the Tree APIs.
+ *
+ * When saved into variables, avoid type-erasing the details, as doing so loses the compile time schema awareness of APIs derived from the types.
+ *
+ * When referring to types that are declared after the definition of the `ImplicitAllowedTypes`, the schema can be wrapped in a lambda to allow the forward reference.
+ * See {@link ValidateRecursiveSchema} for details on how to structure the `ImplicitAllowedTypes` instances when constructing recursive schema.
+ *
+ * @example Explicit use with strong typing
+ * ```typescript
+ * const sf = new SchemaFactory("myScope");
+ * const childTypes = [sf.number, sf.string] as const satisfies ImplicitAllowedTypes;
+ * const config = new TreeViewConfiguration({ schema: childTypes });
+ * ```
+ *
+ * @example Forward reference
+ * ```typescript
+ * const sf = new SchemaFactory("myScope");
+ * class A extends sf.array("example", [() => B]) {}
+ * class B extends sf.array("Inner", sf.number) {}
+ * ```
  * @public
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -490,6 +603,31 @@ export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownS
 	: [TSchema] extends [UnsafeUnknownSchema]
 		? InsertableContent | undefined
 		: never;
+
+/**
+ * Content which could be read from a field within a tree.
+ *
+ * @remarks
+ * Extended version of {@link TreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
+ * Since reading from fields with non-exact schema is still safe, this is only useful (compared to {@link TreeFieldFromImplicitField}) when the schema is also used as input and thus allows {@link (UnsafeUnknownSchema:type)}
+ * for use
+ * @system @alpha
+ */
+export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> =
+	TreeFieldFromImplicitField<ReadSchema<TSchema>>;
+
+/**
+ * Adapter to remove {@link (UnsafeUnknownSchema:type)} from a schema type so it can be used with types for generating APIs for reading data.
+ *
+ * @remarks
+ * Since reading with non-exact schema is still safe, this is mainly useful when the schema is also used as input and thus allows {@link (UnsafeUnknownSchema:type)}.
+ * @system @alpha
+ */
+export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
+	TSchema,
+] extends [ImplicitFieldSchema]
+	? TSchema
+	: ImplicitFieldSchema;
 
 /**
  * Suitable for output.
@@ -663,20 +801,15 @@ export type InsertableTypedNode<
 /**
  * Given a node's schema, return the corresponding object from which the node could be built.
  * @privateRemarks
- * Currently this assumes factory functions take exactly one argument.
- * This could be changed if needed.
- *
- * These factory functions can also take a FlexTreeNode, but this is not exposed in the public facing types.
+ * This uses TreeNodeSchemaCore, and thus depends on TreeNodeSchemaCore.createFromInsertable for the typing.
+ * This works almost the same as using TreeNodeSchema,
+ * except that the more complex typing in TreeNodeSchema case breaks for non-class schema and leaks in `undefined` from optional crete parameters.
  * @system @public
  */
-export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<
-	string,
-	NodeKind,
-	TreeNode | TreeLeafValue,
-	infer TBuild
->
-	? TBuild
-	: never;
+export type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> =
+	T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild>
+		? TBuild
+		: never;
 
 /**
  * Value that may be stored as a leaf node.

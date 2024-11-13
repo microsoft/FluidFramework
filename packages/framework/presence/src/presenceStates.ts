@@ -11,7 +11,7 @@ import type { ClientRecord } from "./internalTypes.js";
 import { brandedObjectEntries } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import { handleFromDatastore, type StateDatastore } from "./stateDatastore.js";
-import type { PresenceStates, PresenceStatesMethods, PresenceStatesSchema } from "./types.js";
+import type { PresenceStates, PresenceStatesSchema } from "./types.js";
 import { unbrandIVM } from "./valueManager.js";
 
 /**
@@ -196,13 +196,14 @@ export function mergeUntrackedDatastore(
 class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	implements
 		PresenceStatesInternal,
-		PresenceStatesMethods<TSchema, unknown>,
+		PresenceStates<TSchema>,
 		StateDatastore<
 			keyof TSchema & string,
 			MapSchemaElement<TSchema, "value", keyof TSchema & string>
 		>
 {
-	public readonly nodes: MapEntries<TSchema>;
+	private readonly nodes: MapEntries<TSchema>;
+	public readonly props: PresenceStates<TSchema>["props"];
 
 	public constructor(
 		private readonly runtime: PresenceRuntime,
@@ -235,6 +236,11 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 				},
 			);
 			this.nodes = initial.nodes;
+			// props is the public view of nodes that limits the entries types to
+			// the public interface of the value manager with an additional type
+			// filter that beguiles the type system. So just reinterpret cast.
+			this.props = this.nodes as unknown as PresenceStates<TSchema>["props"];
+
 			if (anyInitialValues) {
 				this.runtime.localUpdate(initial.newValues, false);
 			}
@@ -344,29 +350,10 @@ export function createPresenceStates<TSchema extends PresenceStatesSchema>(
 	datastore: ValueElementMap<PresenceStatesSchema>,
 	initialContent: TSchema,
 ): { public: PresenceStates<TSchema>; internal: PresenceStatesInternal } {
-	const impl = new PresenceStatesImpl(runtime, datastore, initialContent);
-
-	// Capture the top level "public" map. Both the map implementation and
-	// the wrapper object reference this object.
-	const nodes = impl.nodes;
-
-	// Create a wrapper object that has just the public interface methods and nothing more.
-	const wrapper = {
-		add: impl.add.bind(impl),
-	};
+	const impl = new PresenceStatesImpl<TSchema>(runtime, datastore, initialContent);
 
 	return {
-		public: new Proxy(wrapper as PresenceStates<TSchema>, {
-			get(target, p, receiver): unknown {
-				if (typeof p === "string") {
-					return target[p] ?? nodes[p];
-				}
-				return Reflect.get(target, p, receiver);
-			},
-			set(_target, _p, _newValue, _receiver): false {
-				return false;
-			},
-		}),
+		public: impl,
 		internal: impl,
 	};
 }

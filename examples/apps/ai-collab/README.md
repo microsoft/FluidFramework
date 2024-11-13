@@ -1,6 +1,6 @@
 # @fluid-example/ai-collab
 
-This is an example app that showcases the `@fluid-experimental/ai-collab` package to interact with an LLM (Large Language
+This is an example app that showcases the `@fluidframework/ai-collab` package to interact with an LLM (Large Language
 Model).
 
 By default it uses Tinylicious as the server, but you can also use SharePoint embedded.

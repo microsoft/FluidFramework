@@ -23,6 +23,7 @@ export {
 	HydratedContext,
 	SimpleContextSlot,
 	getOrCreateInnerNode,
+	getKernel,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -50,7 +51,14 @@ export {
 	type NodeChangedData,
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type SimpleNodeSchemaBase,
 	type SimpleTreeSchema,
+	type SimpleNodeSchema,
+	type SimpleFieldSchema,
+	type SimpleLeafNodeSchema,
+	type SimpleMapNodeSchema,
+	type SimpleArrayNodeSchema,
+	type SimpleObjectNodeSchema,
 	type JsonSchemaId,
 	type JsonSchemaType,
 	type JsonObjectNodeSchema,
@@ -97,6 +105,15 @@ export {
 	type TreeNodeSchemaNonClassUnsafe,
 	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	type TreeViewAlpha,
+	type TreeBranch,
+	type TreeBranchEvents,
+	tryGetSchema,
+	applySchemaToParserOptions,
+	cursorFromVerbose,
+	verboseFromCursor,
+	conciseFromCursor,
+	createFromCursor,
+	asTreeViewAlpha,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -116,14 +133,19 @@ export {
 	type DefaultProvider,
 	type FieldProps,
 	normalizeFieldSchema,
+	areFieldSchemaEqual,
+	areImplicitFieldSchemaEqual,
 	type ApplyKind,
 	type FieldSchemaMetadata,
 	type InsertableField,
 	type Insertable,
 	type UnsafeUnknownSchema,
+	normalizeAllowedTypes,
 	type ApplyKindInput,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
+	type ReadableField,
+	type ReadSchema,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
@@ -132,7 +154,6 @@ export {
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
-	type TreeArrayNodeBase,
 	type ReadonlyArrayNode,
 } from "./arrayNode.js";
 export {

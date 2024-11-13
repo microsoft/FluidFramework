@@ -4,11 +4,8 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt, formatTick } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -25,7 +22,7 @@ import { ITelemetryLoggerExt, formatTick } from "@fluidframework/telemetry-utils
  * processed, the time and number of turns it took to process the ops.
  */
 export class DeltaScheduler {
-	private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	private readonly deltaManager: IDeltaManagerFull;
 	// The time for processing ops in a single turn.
 	public static readonly processingTime = 50;
 
@@ -53,7 +50,7 @@ export class DeltaScheduler {
 		| undefined;
 
 	constructor(
-		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		deltaManager: IDeltaManagerFull,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.deltaManager = deltaManager;
