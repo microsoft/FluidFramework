@@ -61,7 +61,7 @@ const config: Config = {
 
 	// Reports many false positives for API documentation
 	onBrokenAnchors: "ignore",
-	onBrokenLinks: "warn",
+	onBrokenLinks: "warn", // TODO:AB#23443: Set to "throw" once violations have been fixed.
 	onBrokenMarkdownLinks: "throw",
 	onDuplicateRoutes: "throw",
 
