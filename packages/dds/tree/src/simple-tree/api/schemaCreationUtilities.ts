@@ -141,7 +141,7 @@ export function adaptEnum<
 	const factoryOut = <TValue extends Values>(value: TValue) => {
 		return new out[
 			inverse.get(value) ?? fail("missing enum value")
-			// "extends unknown" is required here handle when TValue is an union: each member of the union should be processed independently.
+			// "extends unknown" is required here to handle when TValue is an union: each member of the union should be processed independently.
 		]() as TValue extends unknown
 			? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>>
 			: never;
@@ -216,7 +216,7 @@ export function enumFromStrings<
 
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends MembersUnion>(value: TValue) => {
-		// "extends unknown" is required here handle when TValue is an union: each member of the union should be processed independently.
+		// "extends unknown" is required here to handle when TValue is an union: each member of the union should be processed independently.
 		return new recordOut[value]() as TValue extends unknown
 			? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>>
 			: never;

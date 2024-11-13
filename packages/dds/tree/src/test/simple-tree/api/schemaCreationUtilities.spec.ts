@@ -102,7 +102,6 @@ describe("schemaCreationUtilities", () => {
 		type _checkDifferent = requireFalse<isAssignableTo<A, B>>;
 
 		const fromLiteral = ModeNodes("A");
-
 		type _check1 = requireTrue<areSafelyAssignable<typeof fromLiteral, A>>;
 		const fromUnion = ModeNodes("A" as "A" | "B");
 		type _check2 = requireTrue<areSafelyAssignable<typeof fromUnion, A | B>>;
