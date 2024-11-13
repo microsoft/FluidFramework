@@ -142,6 +142,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		senderConnectionId: ClientConnectionId,
 	): void {
 		const postUpdateActions: (() => void)[] = [];
+		const audienceMembers = this.audience.getMembers();
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
@@ -152,7 +153,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				/* order */ value.rev,
 			);
 
-			if (isNew) {
+			// Check new attendee against audience to see if they're currently connected
+			const isAttendeeConnected = audienceMembers.has(clientConnectionId);
+
+			if (isNew && isAttendeeConnected) {
+				// If the attendee is both new and in audience (i.e. currently connected), emit an attendeeJoined event.
 				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
 			}
 
@@ -165,9 +170,10 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			}
 		}
 
-		const audienceMembers = this.audience.getMembers();
+		// Unique list attendees
 		const attendees = new Set(this.attendees.values());
 
+		// Set connection status of all attendees that are not in the audience as disconnected
 		for (const attendee of attendees) {
 			const connectionId = attendee.getConnectionId();
 			if (!audienceMembers.has(connectionId) && senderConnectionId !== connectionId) {
