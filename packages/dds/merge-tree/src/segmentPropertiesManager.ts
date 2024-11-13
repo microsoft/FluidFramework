@@ -170,6 +170,9 @@ export class PropertiesManager {
 					pending.remote.map((n) => n.data),
 					pending.local.map((n) => n.data),
 				);
+				if (pending.local.empty && pending.remote.empty) {
+					this.changes.delete(key);
+				}
 			} else {
 				assert(pending === undefined, "Pending changes must not exist when not collaborating");
 				properties[key] = computePropertyValue(previousValue, [value]);
