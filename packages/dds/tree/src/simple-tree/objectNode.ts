@@ -26,7 +26,7 @@ import {
 	normalizeFieldSchema,
 	type ImplicitAllowedTypes,
 	FieldKind,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type GetTypes,
 } from "./schemaTypes.js";
 import {
 	type TreeNodeSchema,
@@ -64,7 +64,7 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
 		// If the types we want to allow setting to are just never or undefined, remove the setter
 	] extends [never | undefined]
 		? never
-		: Property]: TreeFieldFromImplicitField<T[Property & string]>;
+		: Property]: AssignableTreeFieldFromImplicitField<T[Property & string]>;
 } & {
 	readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property & string]>;
 };
@@ -82,9 +82,9 @@ export type AssignableTreeFieldFromImplicitField<
 	TSchemaInput extends ImplicitFieldSchema,
 	TSchema = UnionToIntersection<TSchemaInput>,
 > = [TSchema] extends [FieldSchema<infer Kind, infer Types>]
-	? ApplyKindAssignment<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind>
+	? ApplyKindAssignment<GetTypes<Types>["readWrite"], Kind>
 	: [TSchema] extends [ImplicitAllowedTypes]
-		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
+		? GetTypes<TSchema>["readWrite"]
 		: never;
 
 /**

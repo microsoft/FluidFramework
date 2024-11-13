@@ -7,21 +7,19 @@ import { strict as assert } from "node:assert";
 
 import {
 	SchemaFactory,
-	type AssignableTreeFieldFromImplicitField,
+	type InternalTreeNode,
 	type NodeKind,
 	type ObjectFromSchemaRecord,
 	type TreeNode,
 	type TreeNodeSchema,
 	type Unhydrated,
+	type FieldKind,
+	type FieldSchema,
+	type Insertable,
 } from "../simple-tree/index.js";
 import { Tree } from "../shared-tree/index.js";
 import { validateUsageError } from "./utils.js";
-import {
-	customizeSchemaTyping,
-	type FieldKind,
-	type FieldSchema,
-	type InsertableField,
-} from "../simple-tree/schemaTypes.js";
+import { customizeSchemaTyping } from "../simple-tree/index.js";
 
 const sf = new SchemaFactory("test");
 
@@ -183,12 +181,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 	it("mutable static registry, safer editing API", () => {
 		const ItemTypes: ItemSchema[] = [];
 		class Container extends sf.object("Container", {
-			child: customizeSchemaTyping(sf.optional(ItemTypes))<{
-				input: Item | undefined;
-				output: Item | undefined;
-				readWrite: Item | undefined;
-				allowDefault: true;
-			}>(),
+			child: sf.optional(customizeSchemaTyping(ItemTypes).simplified<Item>()),
 		}) {}
 
 		ItemTypes.push(TextItem);
@@ -196,15 +189,24 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		const container = new Container({ child: undefined });
 		const container2 = new Container({ child: TextItem.default() });
 
-		type T3 = AssignableTreeFieldFromImplicitField<(typeof Container.info)["child"]>;
-
-		// Enabled by custom setter
+		// Enabled by customizeSchemaTyping
 		container.child = TextItem.default();
 		container.child = undefined;
 	});
 
 	it("mutable static registry, safer editing API", () => {
 		const ItemTypes: ItemSchema[] = [];
+
+		type ContainerNodeWith<T extends ItemSchema> = Container &
+			ObjectFromSchemaRecord<{ child: FieldSchema<FieldKind.Optional, [T, ItemSchema]> }>;
+
+		type ContainerSchemaWith<T extends ItemSchema> = {
+			info: { child: [T, ItemSchema] };
+			new (item: {
+				child: InternalTreeNode | undefined | Insertable<T>;
+			}): ContainerNodeWith<T>;
+		} & typeof Container;
+
 		class Container extends sf.object("Container", {
 			child: sf.optional(ItemTypes),
 		}) {
@@ -215,18 +217,32 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				assert(Container.fields.get("child")?.allowedTypeSet.has(schema) ?? false);
 			}
 
+			/**
+			 * Narrows Container schema to one that allows T as a child.
+			 * @remarks
+			 * It is annoying to actually use this in practice.
+			 * `withAllowItem` is easier in most cases.
+			 *
+			 */
 			public static allowItem<T extends ItemSchema>(
 				schema: T,
-			): asserts this is new (item: { child?: InsertableField<T> }) => Container {
+			): asserts this is ContainerSchemaWith<T> {
 				assert(Container.fields.get("child")?.allowedTypeSet.has(schema) ?? false);
+			}
+
+			/**
+			 * Returns this, but types to allow schema. If schema is not allowed, throws.
+			 */
+			public static withAllowItem<T extends ItemSchema>(schema: T): ContainerSchemaWith<T> {
+				this.allowItem(schema);
+				return this;
 			}
 
 			public static fromItemAndSchema<T extends ItemSchema>(
 				schema: T,
-				item: InsertableField<T>,
-			): Container {
-				const x: typeof Container = Container;
-				x.allowItem(schema);
+				item: Insertable<T> | undefined,
+			): ContainerNodeWith<T> {
+				const x = Container.withAllowItem(schema);
 				return new x({ child: item });
 			}
 
@@ -238,7 +254,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 
 		ItemTypes.push(TextItem);
 
-		Container.allowItem(TextItem);
+		// Container.allowItem(TextItem);
 		const container: Container = new Container({ child: undefined });
 		const container2 = Container.fromItem(TextItem.default());
 
@@ -246,5 +262,12 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		const read = container.child;
 		container.child = TextItem.default();
 		container.child = undefined;
+
+		const C2 = Container.withAllowItem(TextItem);
+		const xxx = new C2({ child: TextItem.default() });
+		xxx.child = TextItem.default();
+
+		type XXXXX = Insertable<[typeof TextItem, ItemSchema]>;
+		type XXXXXx = Insertable<[ItemSchema]>;
 	});
 });

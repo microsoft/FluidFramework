@@ -12,20 +12,23 @@ import {
 	SchemaFactory,
 	type booleanSchema,
 	type InsertableObjectFromSchemaRecord,
+	type NodeKind,
 	type numberSchema,
 	type stringSchema,
 	type TreeNode,
 	type TreeNodeSchema,
+	type TreeNodeSchemaClass,
 } from "../../simple-tree/index.js";
 import {
 	type AllowedTypes,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTreeNodeFromAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type InsertableTypedNode,
 	type NodeBuilderData,
 	type NodeFromSchema,
@@ -101,22 +104,24 @@ describe("schemaTypes", () => {
 			type _check8 = requireTrue<areSafelyAssignable<I10, never>>;
 		}
 
-		// InsertableTreeNodeFromImplicitAllowedTypes
+		// DefaultInsertableTreeNodeFromImplicitAllowedTypes
 		{
 			// Input
-			type I3 = InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>;
-			type I4 = InsertableTreeNodeFromImplicitAllowedTypes<AllowedTypes>;
-			type I5 = InsertableTreeNodeFromImplicitAllowedTypes<
+			type I3 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>;
+			type I4 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<AllowedTypes>;
+			type I5 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<
 				typeof numberSchema | typeof stringSchema
 			>;
-			type I8 = InsertableTreeNodeFromImplicitAllowedTypes<TreeNodeSchema>;
+			type I8 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<TreeNodeSchema>;
 
-			type I6 = InsertableTreeNodeFromImplicitAllowedTypes<
+			type I6 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<
 				typeof numberSchema & typeof stringSchema
 			>;
-			type I7 = InsertableTreeNodeFromImplicitAllowedTypes<AllowedTypes & TreeNodeSchema>;
+			type I7 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<
+				AllowedTypes & TreeNodeSchema
+			>;
 
-			type I9 = InsertableTreeNodeFromImplicitAllowedTypes<typeof A | typeof B>;
+			type I9 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<typeof A | typeof B>;
 
 			// These types should behave contravariantly
 			type _check3 = requireTrue<areSafelyAssignable<I3, never>>;
@@ -125,19 +130,19 @@ describe("schemaTypes", () => {
 			type _check6 = requireTrue<areSafelyAssignable<I8, never>>;
 
 			// Actual schema unions
-			type I12 = InsertableTreeNodeFromImplicitAllowedTypes<typeof numberSchema>;
+			type I12 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<typeof numberSchema>;
 			type _check12 = requireTrue<areSafelyAssignable<I12, number>>;
-			type I10 = InsertableTreeNodeFromImplicitAllowedTypes<[typeof numberSchema]>;
+			type I10 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<[typeof numberSchema]>;
 			type _check10 = requireTrue<areSafelyAssignable<I10, number>>;
 
-			type I11 = InsertableTreeNodeFromImplicitAllowedTypes<
+			type I11 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<
 				[typeof numberSchema, typeof stringSchema]
 			>;
 			type _check11 = requireTrue<areSafelyAssignable<I11, number | string>>;
 
 			// boolean
 			// boolean is sometimes a union of true and false, so it can break in its owns special ways
-			type I13 = InsertableTreeNodeFromImplicitAllowedTypes<typeof booleanSchema>;
+			type I13 = DefaultInsertableTreeNodeFromImplicitAllowedTypes<typeof booleanSchema>;
 			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
 		}
 
@@ -214,6 +219,45 @@ describe("schemaTypes", () => {
 			// boolean is sometimes a union of true and false, so it can break in its owns special ways
 			type I13 = InsertableField<typeof booleanSchema>;
 			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
+		}
+
+		// DefaultTreeNodeFromImplicitAllowedTypes
+		{
+			class Simple extends schema.object("A", { x: [schema.number] }) {}
+			class Customized extends schema.object("B", { x: [schema.number] }) {
+				public customized = true;
+			}
+
+			type TA = DefaultTreeNodeFromImplicitAllowedTypes<typeof Simple>;
+			type _checkA = requireAssignableTo<TA, Simple>;
+
+			type TB = DefaultTreeNodeFromImplicitAllowedTypes<typeof Customized>;
+			type _checkB = requireAssignableTo<TB, Customized>;
+		}
+
+		// NodeFromSchema
+		{
+			class Simple extends schema.object("A", { x: [schema.number] }) {}
+			class Customized extends schema.object("B", { x: [schema.number] }) {
+				public customized = true;
+			}
+
+			type TA = NodeFromSchema<typeof Simple>;
+			type _checkA = requireAssignableTo<TA, Simple>;
+
+			type TB = NodeFromSchema<typeof Customized>;
+			type _checkB = requireAssignableTo<TB, Customized>;
+
+			type TC = typeof Customized extends TreeNodeSchema<string, NodeKind, infer TNode>
+				? TNode
+				: never;
+			// @ts-expect-error It is unknown why this does not work, but NodeFromSchema works around this issue. If this starts compiling that workaround should be removed!
+			type _checkC = requireAssignableTo<TC, Customized>;
+
+			type TD = typeof Customized extends TreeNodeSchemaClass<string, NodeKind, infer TNode>
+				? TNode
+				: never;
+			type _checkD = requireAssignableTo<TD, Customized>;
 		}
 	}
 

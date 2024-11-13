@@ -88,8 +88,8 @@ export function describeHydration(
 	title: string,
 	runBoth: (
 		init: <
-			TInsertable,
 			TSchema extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, TInsertable>,
+			TInsertable,
 		>(
 			schema: TSchema,
 			tree: TInsertable,

@@ -241,6 +241,15 @@
 			"TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"Interface_TreeView": {
+				"backCompat": false
+			},
+			"TypeAlias_InternalTypes_ObjectFromSchemaRecord": {
+				"backCompat": false
+			},
+			"TypeAlias_TreeObjectNode": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "public"

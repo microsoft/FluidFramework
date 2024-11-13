@@ -536,6 +536,7 @@ declare type current_as_old_for_Interface_TreeNodeSchemaCore = requireAssignable
  * typeValidation.broken:
  * "Interface_TreeView": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_TreeView = requireAssignableTo<TypeOnly<current.TreeView<any>>, TypeOnly<old.TreeView<any>>>
 
 /*
@@ -1117,6 +1118,7 @@ declare type old_as_current_for_TypeAlias_InternalTypes_ObjectFromSchemaRecord =
  * typeValidation.broken:
  * "TypeAlias_InternalTypes_ObjectFromSchemaRecord": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_InternalTypes_ObjectFromSchemaRecord = requireAssignableTo<TypeOnly<current.InternalTypes.ObjectFromSchemaRecord<any>>, TypeOnly<old.InternalTypes.ObjectFromSchemaRecord<any>>>
 
 /*
@@ -1495,6 +1497,7 @@ declare type old_as_current_for_TypeAlias_TreeObjectNode = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_TreeObjectNode": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_TreeObjectNode = requireAssignableTo<TypeOnly<current.TreeObjectNode<any>>, TypeOnly<old.TreeObjectNode<any>>>
 
 /*
