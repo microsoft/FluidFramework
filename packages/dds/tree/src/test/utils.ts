@@ -1047,7 +1047,7 @@ export function rootFromDeltaFieldMap(
 	return rootDelta;
 }
 
-export function createClonableUndoRedoStacks(
+export function createTestUndoRedoStacks(
 	events: Listenable<TreeBranchEvents | CheckoutEvents>,
 ): {
 	undoStack: RevertibleAlpha[];
