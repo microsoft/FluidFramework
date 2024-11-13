@@ -8,7 +8,7 @@ import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
-import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
+import type { Events, ISubscribable } from "@fluid-experimental/presence/internal/events";
 import { createEmitter } from "@fluid-experimental/presence/internal/events";
 import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
 import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
@@ -65,7 +65,7 @@ export interface NotificationSubscribable<
 export type NotificationSubscriptions<E extends InternalUtilityTypes.NotificationEvents<E>> = {
 	[K in string & keyof InternalUtilityTypes.NotificationEvents<E>]: (
 		sender: ISessionClient,
-		...args: InternalUtilityTypes.JsonSerializableParameters<E[K]>
+		...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>
 	) => void;
 };
 
@@ -156,10 +156,13 @@ class NotificationsManagerImpl<
 		},
 	};
 
-	// @ts-expect-error TODO
-	public readonly notifications: NotificationSubscribable<T> =
+	// Workaround for types
+	private readonly notificationsInternal =
 		// @ts-expect-error TODO
 		createEmitter<NotificationSubscriptions<T>>();
+
+	// @ts-expect-error TODO
+	public readonly notifications: NotificationSubscribable<T> = this.notificationsInternal;
 
 	public constructor(
 		private readonly key: Key,
@@ -167,15 +170,38 @@ class NotificationsManagerImpl<
 			Key,
 			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
 		>,
-		_initialSubscriptions: Partial<NotificationSubscriptions<T>>,
-	) {}
+		initialSubscriptions: Partial<NotificationSubscriptions<T>>,
+	) {
+		// Add event listeners provided at instantiation
+		for (const [nameString, value] of Object.entries(initialSubscriptions)) {
+			// Without schema validation, we don't know that the args are the correct type.
+			// For now we assume the user is sending the correct types and there is no corruption along the way.
+			const name = nameString as keyof Events<NotificationSubscriptions<T>>;
+			this.notificationsInternal.on(name, value as NotificationSubscriptions<T>[typeof name]);
+		}
+	}
 
 	public update(
 		client: ISessionClient,
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): void {
-		this.events.emit("unattendedNotification", value.value.name, client, ...value.value.args);
+		const eventName = value.value.name as keyof Events<NotificationSubscriptions<T>>;
+		if (this.notificationsInternal.hasListeners(eventName)) {
+			// Without schema validation, we don't know that the args are the correct type.
+			// For now we assume the user is sending the correct types and there is no corruption along the way.
+			const args = [client, ...value.value.args] as Parameters<
+				NotificationSubscriptions<T>[typeof eventName]
+			>;
+			this.notificationsInternal.emit(eventName, ...args);
+		} else {
+			this.events.emit(
+				"unattendedNotification",
+				value.value.name,
+				client,
+				...value.value.args,
+			);
+		}
 	}
 }
 

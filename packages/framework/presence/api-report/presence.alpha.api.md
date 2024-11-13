@@ -165,7 +165,7 @@ export interface NotificationSubscribable<E extends InternalUtilityTypes.Notific
 
 // @alpha @sealed
 export type NotificationSubscriptions<E extends InternalUtilityTypes.NotificationEvents<E>> = {
-    [K in string & keyof InternalUtilityTypes.NotificationEvents<E>]: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonSerializableParameters<E[K]>) => void;
+    [K in string & keyof InternalUtilityTypes.NotificationEvents<E>]: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void;
 };
 
 // @alpha @sealed (undocumented)
