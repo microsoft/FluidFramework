@@ -47,6 +47,15 @@ export interface ApiLinkProps {
 
 	/**
 	 * (Optional) heading ID on the target page to link to.
+	 *
+	 * @remarks
+	 * This is useful for linking to a particular member of an API item, if that member is rendered to its parent item's page.
+	 *
+	 * @privateRemarks
+	 * TODO: in the future, it would be better to consume aspects of the API docs config, and automatically derive
+	 * the right path to link to any kind of API item, regardless of whether or not it is configured to render to its
+	 * own page or its parents.
+	 * This would also be much more resilient to changes in the API docs config.
 	 */
 	headingId?: string;
 }
