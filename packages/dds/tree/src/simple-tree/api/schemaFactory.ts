@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, getOrCreate } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 // Include this unused import to avoid TypeScript generating an inline import for IFluidHandle in the d.ts file
 // which degrades the API-Extractor report quality since API-Extractor can not tell the inline import is the same as the non-inline one.
 // eslint-disable-next-line unused-imports/no-unused-imports
@@ -13,7 +13,11 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
 import type { NodeKeyManager } from "../../feature-libraries/index.js";
-import { type RestrictiveStringRecord, isReadonlyArray } from "../../util/index.js";
+import {
+	type RestrictiveStringRecord,
+	isReadonlyArray,
+	getOrCreate,
+} from "../../util/index.js";
 
 import {
 	booleanSchema,

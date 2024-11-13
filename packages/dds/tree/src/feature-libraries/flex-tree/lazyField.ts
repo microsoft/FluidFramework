@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, getOrCreate } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -21,7 +21,7 @@ import {
 	iterateCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { disposeSymbol, fail } from "../../util/index.js";
+import { disposeSymbol, fail, getOrCreate } from "../../util/index.js";
 import {
 	FieldKinds,
 	type OptionalFieldEditBuilder,

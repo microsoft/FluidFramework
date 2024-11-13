@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "node:assert";
 
 // import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
@@ -298,19 +297,27 @@ interface MyEvents {
 	computed: () => number;
 }
 
-class MyInheritanceClass extends EventEmitter<MyEvents> {
-	private load(): void {
+/**
+ * docs
+ */
+export class MyInheritanceClass extends EventEmitter<MyEvents> {
+	private load(): number[] {
 		this.emit("loaded");
 		const results: number[] = this.emitAndCollect("computed");
+		return results;
+	}
+	public triggerLoadForTesting(): void {
+		this.load();
 	}
 }
 
 class MyCompositionClass implements Listenable<MyEvents> {
 	private readonly events = createEmitter<MyEvents>();
 
-	private load(): void {
+	private load(): number[] {
 		this.events.emit("loaded");
 		const results: number[] = this.events.emitAndCollect("computed");
+		return results;
 	}
 
 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
@@ -320,15 +327,38 @@ class MyCompositionClass implements Listenable<MyEvents> {
 	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
 		return this.events.off(eventName, listener);
 	}
+
+	public triggerLoadForTesting(): void {
+		this.load();
+	}
 }
+
+const compositionExample = new MyCompositionClass();
+compositionExample.on("loaded", () =>
+	console.log("MyCompositionClass loaded event triggered"),
+);
+compositionExample.on("computed", () => 99);
+compositionExample.triggerLoadForTesting();
 
 class MyExposingClass {
 	private readonly _events = createEmitter<MyEvents>();
 
 	public readonly events: Listenable<MyEvents> = this._events;
 
-	private load(): void {
+	private load(): number[] {
 		this._events.emit("loaded");
 		const results: number[] = this._events.emitAndCollect("computed");
+		return results;
+	}
+
+	public triggerLoadForTesting(): void {
+		this.load();
 	}
 }
+
+const exposingExample = new MyExposingClass();
+exposingExample.events.on("loaded", () =>
+	console.log("MyExposingClass loaded event triggered"),
+);
+exposingExample.events.on("computed", () => 100);
+exposingExample.triggerLoadForTesting();

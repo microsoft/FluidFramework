@@ -7,5 +7,3 @@ export {
 	createEmitter,
 	EventEmitter,
 } from "./emitter.js";
-
-export { getOrCreate } from "./util.js";

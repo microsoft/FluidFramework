@@ -228,13 +228,15 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
 
 export type {
+	IEmitter,
+	NoListenersCallback,
+	HasListeners,
 	Listeners,
 	Listenable,
 	Off,
 	IsListener,
-	IEmitter,
-	NoListenersCallback,
-	HasListeners,
+	MapGetSet,
+	NestedMap,
 } from "@fluidframework/core-interfaces/internal";
 
 export {

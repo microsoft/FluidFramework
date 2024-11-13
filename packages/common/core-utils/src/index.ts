@@ -20,5 +20,4 @@ export { oob } from "./oob.js";
 export {
 	createEmitter,
 	EventEmitter,
-	getOrCreate,
 } from "./events/index.js";

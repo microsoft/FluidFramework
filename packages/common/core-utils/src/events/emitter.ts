@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	Listenable,
 	Listeners,
@@ -11,9 +10,25 @@ import type {
 	NoListenersCallback,
 	HasListeners,
 	IEmitter,
+	MapGetSet,
 } from "@fluidframework/core-interfaces/internal";
 
-import { getOrCreate } from "./util.js";
+/**
+ * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
+ * @param map - The map to query/update
+ * @param key - The key to lookup in the map
+ * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
+ * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
+ * @internal
+ */
+function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V {
+	let value = map.get(key);
+	if (value === undefined) {
+		value = defaultValue(key);
+		map.set(key, value);
+	}
+	return value;
+}
 
 /**
  * Provides an API for subscribing to and listening to events.
@@ -138,7 +153,6 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 		const listeners = this.listeners.get(eventName);
 		if (listeners?.delete(listener) === true && listeners.size === 0) {
 			this.listeners.delete(eventName);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			this.noListeners?.(eventName);
 		}
 	}
@@ -209,7 +223,6 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  */
 export function createEmitter<TListeners extends object>(
 	noListeners?: NoListenersCallback<TListeners>,
-	// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 ): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners> {
 	return new ComposableEventEmitter<TListeners>(noListeners);
 }

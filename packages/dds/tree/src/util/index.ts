@@ -60,6 +60,7 @@ export {
 	compareSets,
 	fail,
 	getOrAddEmptyToMap,
+	getOrCreate,
 	isJsonObject,
 	isReadonlyArray,
 	type JsonCompatible,
