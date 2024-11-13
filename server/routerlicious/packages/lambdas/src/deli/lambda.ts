@@ -502,7 +502,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				setTimeout(() => {
 					this.context.resume();
 				}, 60000); // resume after 1 minute
-				this.context.pause(0, "error:testing circuit breaker");
+				this.context.pause(rawMessage.offset - 1, "error:testing circuit breaker"); // lastSuccessfulOffset needs to be more reliable
 				return;
 			}
 
