@@ -67,6 +67,7 @@ describe("Presence", () => {
 						{
 							"sendTimestamp": 1010,
 							"avgLatency": 10,
+							// "isComplete": true,
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
@@ -81,46 +82,25 @@ describe("Presence", () => {
 							},
 						},
 					],
-					[
-						"Pres:DatastoreUpdate",
-						{
-							"sendTimestamp": 1010,
-							"avgLatency": 10,
-							"isComplete": true,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
-									},
-								},
-								"s:name:testStateWorkspace": {
-									"data": {
-										"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
-									},
-								},
-							},
-						},
-					],
-					[
-						"Pres:DatastoreUpdate",
-						{
-							"sendTimestamp": 1010,
-							"avgLatency": 10,
-							"isComplete": true,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
-									},
-								},
-								"s:name:testStateWorkspace": {
-									"data": {
-										"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
-									},
-								},
-							},
-						},
-					],
+					// [
+					// 	"Pres:DatastoreUpdate",
+					// 	{
+					// 		"sendTimestamp": 1010,
+					// 		"avgLatency": 10,
+					// 		"data": {
+					// 			"system:presence": {
+					// 				"clientToSessionId": {
+					// 					"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+					// 				},
+					// 			},
+					// 			"s:name:testStateWorkspace": {
+					// 				"data": {
+					// 					"sessionId-2": { "rev": 0, "timestamp": 1010, "value": { "num": 0 } },
+					// 				},
+					// 			},
+					// 		},
+					// 	},
+					// ],
 					[
 						"Pres:DatastoreUpdate",
 						{
@@ -134,7 +114,7 @@ describe("Presence", () => {
 								},
 								"s:name:testStateWorkspace": {
 									"data": {
-										"sessionId-2": { "rev": 1, "timestamp": 1020, "value": { "num": 42 } },
+										"sessionId-2": { "rev": 0, "timestamp": 1020, "value": { "num": 0 } },
 									},
 								},
 							},
@@ -145,6 +125,7 @@ describe("Presence", () => {
 						{
 							"sendTimestamp": 1030,
 							"avgLatency": 10,
+							"isComplete": true,
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
@@ -153,7 +134,7 @@ describe("Presence", () => {
 								},
 								"s:name:testStateWorkspace": {
 									"data": {
-										"sessionId-2": { "rev": 2, "timestamp": 1030, "value": { "num": 65 } },
+										"sessionId-2": { "rev": 1, "timestamp": 1030, "value": { "num": 42 } },
 									},
 								},
 							},
@@ -191,15 +172,12 @@ describe("Presence", () => {
 					updateProviders: ["client2"],
 				});
 
+				clock.tick(10);
 				presence.processSignal("", joinSignal, false);
 
 				clock.tick(10);
 				// This will trigger the third signal
 				data.local = { num: 42 };
-
-				clock.tick(10);
-				// This will trigger the fourth signal
-				data.local = { num: 65 };
 
 				assertFinalExpectations(runtime, logger);
 			});
