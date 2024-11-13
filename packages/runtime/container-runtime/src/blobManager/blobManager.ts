@@ -185,6 +185,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly pendingStashedBlobs: Map<string, Promise<ICreateBlobResponse | void>> =
 		new Map();
 	private stashedBlobsUploadP: Promise<(void | ICreateBlobResponse)[]> | undefined = undefined;
+	// Blobs that were already processed and deleted. This can happen if the blob was reuploaded by the stashing process
+	// This set is used to avoid processing the same blob twice.
+	private readonly tombstoneBlobs: Set<string> = new Set();
 
 	constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -548,10 +551,21 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		if (this.pendingBlobs.delete(id) && !this.hasPendingBlobs) {
 			this.emit("noPendingBlobs");
 		}
+		this.tombstoneBlobs.add(id);
 	}
 
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
+		if (entry === undefined && this.tombstoneBlobs.has(localId)) {
+			// The blob was already processed and deleted. This can happen if the blob was reuploaded by
+			// the stashing process and the original upload was processed before the stashed upload.
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "BlobAlreadyProcessedOnUploadResolve",
+				localId,
+			});
+			return;
+		}
+
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
 		if ((entry.abortSignal?.aborted === true && !entry.opsent) || this.stopAttaching) {
 			this.mc.logger.sendTelemetryEvent({

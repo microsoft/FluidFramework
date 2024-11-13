@@ -115,7 +115,7 @@ describe("BlobManager.stashed", () => {
 		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
 	});
 
-	it("Repro bug: Process blob and complete stashed upload after", async () => {
+	it("Process blob and complete stashed upload after", async () => {
 		const createResponse = new Deferred<ICreateBlobResponse>();
 		const blobManager = createBlobManager({
 			sendBlobAttachOp(_localId, _storageId) {},
@@ -127,13 +127,14 @@ describe("BlobManager.stashed", () => {
 					},
 				}),
 			localBlobIdGenerator: () => "stubbed-local-id",
+			isBlobDeleted: () => false,
+			blobRequested: () => {},
 		});
-
 		const blob: ArrayBufferLike = stringToBuffer("content", "utf8");
-		const sameBlobAsStashedP = blobManager.createBlob(blob);
+		const blobHandleP = blobManager.createBlob(blob);
 		const pendingBlobsP = blobManager.attachAndGetPendingBlobs();
-		const sameBlobAsStashed = await sameBlobAsStashedP;
-		sameBlobAsStashed.attachGraph();
+		const blobHandle = await blobHandleP;
+		blobHandle.attachGraph();
 		const pendingBlobs = await pendingBlobsP;
 
 		const createResponse2 = new Deferred<ICreateBlobResponse>();
@@ -145,6 +146,7 @@ describe("BlobManager.stashed", () => {
 						return createResponse2.promise;
 					},
 				}),
+			isBlobDeleted: () => false,
 		});
 		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
 
@@ -170,12 +172,7 @@ describe("BlobManager.stashed", () => {
 		createResponse2.resolve({
 			id: "new-storage-id",
 		});
-		try {
-			await blobManager2.waitForStashedBlobs();
-			assert.fail("Should have thrown");
-		} catch (error: any) {
-			assert.strictEqual(error.message, "0x6c8");
-		}
+		await blobManager2.waitForStashedBlobs();
 	});
 
 	it("Already stashed blob", async () => {
