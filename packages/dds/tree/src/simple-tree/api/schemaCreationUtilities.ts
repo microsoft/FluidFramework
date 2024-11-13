@@ -73,8 +73,8 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 /**
  * Converts an enum into a collection of schema which can be used in a union.
  * @remarks
- * Currently only supports `string` enums.
  * The string value of the enum is used as the name of the schema: callers must ensure that it is stable and unique.
+ * Numeric enums values have the value implicitly converted into a string.
  * Consider making a dedicated schema factory with a nested scope to avoid the enum members colliding with other schema.
  * @example
  * ```typescript
@@ -106,8 +106,6 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * }
  * ```
  * @privateRemarks
- * TODO:
- * Extend this to support numeric enums.
  * Maybe provide `SchemaFactory.nested` to ease creating nested scopes?
  * @see {@link enumFromStrings} for a similar function that works on arrays of strings instead of an enum.
  * @alpha
