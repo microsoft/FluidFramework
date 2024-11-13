@@ -205,17 +205,17 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
  */
 export interface AdjustParams {
 	/**
-	 * The adjustment value which will be summed with the current value if it is a number,
+	 * The adjustment delta which will be summed with the current value if it is a number,
 	 * or summed with zero if the current value is not a number.
 	 */
-	value: number;
+	delta: number;
 	/**
-	 * An optional minimum value for the computed value of the key this adjustment is applied too.
+	 * An optional minimum value for the computed value of the key this adjustment is applied to.
 	 * The minimum will be applied after the value is applied.
 	 */
 	min?: number | undefined;
 	/**
-	 * An optional maximum value for the computed value of the key this adjustment is applied too.
+	 * An optional maximum value for the computed value of the key this adjustment is applied to.
 	 * The maximum will be applied after the value is applied.
 	 */
 	max?: number | undefined;

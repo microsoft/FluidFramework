@@ -91,7 +91,7 @@ describe("PropertiesManager", () => {
 			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = {
 				properties: { key: 1 },
 			};
-			const op: PropsOrAdjust = { adjust: { key: { value: 1 } } };
+			const op: PropsOrAdjust = { adjust: { key: { delta: 1 } } };
 			const deltas = propertiesManager.handleProperties(op, seg, 2, 1, true);
 			assert.deepEqual(deltas, { key: 1 });
 			assert.deepEqual(seg.properties, { key: 2 });
@@ -103,7 +103,7 @@ describe("PropertiesManager", () => {
 				properties: { key: 1, otherKey: "value" },
 			};
 			const op1: PropsOrAdjust = { props: { otherKey: "newValue" } };
-			const op2: PropsOrAdjust = { adjust: { key: { value: 1 } } };
+			const op2: PropsOrAdjust = { adjust: { key: { delta: 1 } } };
 			propertiesManager.handleProperties(op1, seg, 2, 1, true);
 			const deltas = propertiesManager.handleProperties(op2, seg, 3, 2, true);
 			assert.deepEqual(deltas, { key: 1 });
@@ -187,7 +187,7 @@ describe("PropertiesManager", () => {
 	describe("getAtSeq", () => {
 		it("should retrieve properties at a specific sequence number", () => {
 			const propertiesManager = new PropertiesManager();
-			const op: PropsOrAdjust = { adjust: { key: { value: 5 } } };
+			const op: PropsOrAdjust = { adjust: { key: { delta: 5 } } };
 			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = { properties: {} };
 
 			propertiesManager.handleProperties(op, seg, 1, 0, true);

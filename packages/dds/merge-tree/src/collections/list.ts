@@ -274,17 +274,23 @@ export function walkList<T>(
 	return true;
 }
 
-export function iterateListValues<T>(
+/**
+ * Creates a lazily evaluated iterable which returns values while the predicate returns true,
+ * and stops iterating at the first value where the predicate is false.
+ * @param start - the node to start the iteration from
+ * @param includePredicate - determine if the current value be included in the iteration or stop if iteration
+ */
+export function iterateListValuesWhile<T>(
 	start: ListNode<T> | undefined,
 	includePredicate: (n: ListNode<T>) => boolean,
 ): Iterable<T> {
-	let node: ListNode<T> | undefined = start;
+	let next: ListNode<T> | undefined = start;
 	const iterator: IterableIterator<T> = {
 		next: (): IteratorResult<T> => {
-			if (node !== undefined) {
-				const current = node;
-				if (includePredicate(node) === true) {
-					node = current.next;
+			if (next !== undefined) {
+				const current = next;
+				next = current.next;
+				if (includePredicate(current) === true) {
 					return { value: current.data, done: false };
 				}
 			}

@@ -359,7 +359,7 @@ export function createSharedStringGeneratorOperations(
 		const { random } = state;
 		const key = random.pick(options.propertyNamePool);
 		const value: AdjustParams = {
-			value: random.integer(-5, 5),
+			delta: random.integer(-5, 5),
 			max: random.pick([undefined, random.integer(-10, 100)]),
 			min: random.pick([undefined, random.integer(-100, 10)]),
 		};

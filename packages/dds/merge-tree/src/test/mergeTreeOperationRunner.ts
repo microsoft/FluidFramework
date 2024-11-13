@@ -80,7 +80,7 @@ export const annotateRange: TestOperation = (
 	} else {
 		return client.annotateAdjustRangeLocal(opStart, opEnd, {
 			[random.integer(0, 2).toString()]: {
-				value: random.integer(-5, 5),
+				delta: random.integer(-5, 5),
 				min: random.pick([undefined, random.integer(-100, 10)]),
 				max: random.pick([undefined, random.integer(-10, 100)]),
 			},
