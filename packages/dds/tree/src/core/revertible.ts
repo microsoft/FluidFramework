@@ -47,10 +47,10 @@ export interface RevertibleAlpha extends Revertible {
 	/**
 	 * Clones the {@link Revertible} to a target branch.
 	 *
-	 * @param forkedBranch - A target branch to apply the revertible to. If not given, spawns a cloned revertible of the original branch.
+	 * @param branch - A target branch to apply the revertible to. If not given, spawns a cloned revertible of the original branch.
 	 * @returns A cloned revertible.
 	 */
-	clone: (forkedBranch?: TreeBranch) => RevertibleAlpha;
+	clone: (branch?: TreeBranch) => RevertibleAlpha;
 }
 
 /**
