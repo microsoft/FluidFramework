@@ -264,7 +264,7 @@ describe("schemaCreationUtilities", () => {
 			// @ts-expect-error Day is not compatible with value of Day.Today
 			const dayObject1 = new DayObject({ value: DayNodes("today"), name: "1" });
 			// @ts-expect-error Day is not compatible with value of Day.Today
-			const dayObject4 = new DayObject({ value: getDay("today"), name: "4" });
+			const dayObject4 = new DayObject({ value: DayNodes(getDay("today") as Day.Today), name: "4" });
 			// @ts-expect-error Day is not compatible with value of Day.Today
 			const dayObject2 = new DayObject({ value: DayNodes("today" as Day), name: "2" });
 			const dayObject3 = new DayObject({ value: DayNodes(Day.Today), name: "3" });
