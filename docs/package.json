@@ -20,7 +20,7 @@
 		"build:site": "npm run build:generate-content && npm run build:docusaurus",
 		"build:test": "tsc --project test/tsconfig.json --pretty --noEmit",
 		"check-links": "linkcheck http://localhost:3000 --skip-file skipped-urls.txt",
-		"ci:check-links": "start-server-and-test serve 3000 check-links",
+		"ci:check-links": "start-server-and-test \"npm run serve -- --no-open\" 3000 check-links",
 		"clean": "concurrently \"npm:clean:*\"",
 		"clean:api-documentation": "rimraf --glob \"docs/api/**/*.md\" \"versioned_docs/*/api/**/*.md\"",
 		"clean:doc-models": "rimraf --glob .doc-models",
