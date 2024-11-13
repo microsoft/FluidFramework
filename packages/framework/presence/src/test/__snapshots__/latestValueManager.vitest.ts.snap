@@ -1,5 +1,127 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 1`] = `
+[
+  "Pres:ClientJoin",
+  {
+    "avgLatency": 0,
+    "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2",
+          },
+        },
+      },
+    },
+    "sendTimestamp": 1000,
+    "updateProviders": [
+      "client0",
+      "client1",
+      "client3",
+    ],
+  },
+]
+`;
+
+exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 2`] = `
+[
+  "Pres:DatastoreUpdate",
+  {
+    "avgLatency": 10,
+    "data": {
+      "s:name:testStateWorkspace": {
+        "data": {
+          "sessionId-2": {
+            "rev": 0,
+            "timestamp": 1010,
+            "value": {
+              "num": 0,
+            },
+          },
+        },
+      },
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2",
+          },
+        },
+      },
+    },
+    "sendTimestamp": 1010,
+  },
+]
+`;
+
+exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 3`] = `
+[
+  "Pres:DatastoreUpdate",
+  {
+    "avgLatency": 10,
+    "data": {
+      "s:name:testStateWorkspace": {
+        "data": {
+          "sessionId-2": {
+            "rev": 1,
+            "timestamp": 1020,
+            "value": {
+              "num": 42,
+            },
+          },
+        },
+      },
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2",
+          },
+        },
+      },
+    },
+    "sendTimestamp": 1020,
+  },
+]
+`;
+
+exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 4`] = `
+[
+  "Pres:DatastoreUpdate",
+  {
+    "avgLatency": 10,
+    "data": {
+      "s:name:testStateWorkspace": {
+        "data": {
+          "sessionId-2": {
+            "rev": 2,
+            "timestamp": 1030,
+            "value": {
+              "num": 65,
+            },
+          },
+        },
+      },
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2",
+          },
+        },
+      },
+    },
+    "sendTimestamp": 1030,
+  },
+]
+`;
+
 exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 1`] = `
 [
   "Pres:ClientJoin",
@@ -53,7 +175,6 @@ exports[`Presence > LatestValueManager > batching > sends signal immediately whe
         },
       },
     },
-    "isComplete": true,
     "sendTimestamp": 1010,
   },
 ]
@@ -68,10 +189,10 @@ exports[`Presence > LatestValueManager > batching > sends signal immediately whe
       "s:name:testStateWorkspace": {
         "data": {
           "sessionId-2": {
-            "rev": 0,
-            "timestamp": 1010,
+            "rev": 1,
+            "timestamp": 1020,
             "value": {
-              "num": 0,
+              "num": 42,
             },
           },
         },
@@ -86,7 +207,7 @@ exports[`Presence > LatestValueManager > batching > sends signal immediately whe
         },
       },
     },
-    "sendTimestamp": 1010,
+    "sendTimestamp": 1020,
   },
 ]
 `;

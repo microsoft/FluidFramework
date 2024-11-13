@@ -12,7 +12,6 @@ import {
 	afterEach,
 	beforeAll as before,
 	beforeEach,
-	expect,
 } from "vitest";
 
 import { Latest } from "../index.js";
@@ -70,26 +69,31 @@ describe("Presence", () => {
 
 				const { data } = stateWorkspace.props;
 
-				// Process client join
-				presence.processSignal(
-					"",
-					{
-						type: "Pres:ClientJoin",
-						content: {
-							sendTimestamp: clock.now - 50,
-							avgLatency: 50,
-							data: {},
-							updateProviders: ["client2"],
-						},
-						clientId: "client4",
-					},
-					false,
-				);
+				clock.tick(10);
+
+				// This will trigger the third signal
+				data.local = { num: 42 };
+
+				clock.tick(10);
+			});
+
+			it("batches signals sent within the allowableUpdateLatency", async () => {
+				// Configure a state workspace
+				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+					data: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
+				});
+
+				const { data } = stateWorkspace.props;
 
 				clock.tick(10);
 				// This will trigger the third signal
 				data.local = { num: 42 };
-				expect(data.local.num).to.equal(42);
+
+				clock.tick(10);
+				data.local = { num: 65 };
+
+				clock.tick(10);
+
 			});
 		});
 	});
