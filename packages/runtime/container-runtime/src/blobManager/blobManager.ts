@@ -17,7 +17,7 @@ import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { assert, Deferred, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
 	ICreateBlobResponse,
@@ -183,7 +183,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly localBlobIdGenerator: () => string;
 	private readonly pendingStashedBlobs: Map<string, Promise<ICreateBlobResponse | void>> =
 		new Map();
-	private stashedBlobsUploadP: Promise<(void | ICreateBlobResponse)[]> | undefined = undefined;
+	public readonly stashedBlobsUploadP: Promise<(void | ICreateBlobResponse)[]>;
 
 	constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -270,11 +270,18 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				uploadP: this.pendingStashedBlobs.get(localId),
 			});
 		});
-		this.waitForStashedBlobs()
-			.catch(() => {})
-			.finally(() => {
-				this.pendingStashedBlobs.clear();
-			});
+
+		this.stashedBlobsUploadP = new LazyPromise(async () =>
+			PerformanceEvent.timedExecAsync(
+				this.mc.logger,
+				{ eventName: "BlobUploadProcessStashedChanges", count: this.pendingStashedBlobs.size },
+				async () => Promise.all(this.pendingStashedBlobs.values()),
+				{ start: true, end: true },
+			),
+		).finally(() => {
+			this.pendingStashedBlobs.clear();
+		});
+
 		this.sendBlobAttachOp = (localId: string, blobId?: string) => {
 			const pendingEntry = this.pendingBlobs.get(localId);
 			assert(
@@ -304,25 +311,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			pendingEntry.opsent = true;
 			return sendBlobAttachOp(localId, blobId);
 		};
-	}
-
-	/**
-	 * Wait for upload blobs added while offline. This must be completed before connecting and resubmitting ops.
-	 */
-	public async waitForStashedBlobs(): Promise<(void | ICreateBlobResponse)[] | undefined> {
-		if (!this.stashedBlobsUploadP && this.pendingStashedBlobs.size > 0) {
-			this.stashedBlobsUploadP = PerformanceEvent.timedExecAsync(
-				this.mc.logger,
-				{
-					eventName: "BlobUploadProcessStashedChanges",
-					count: this.pendingStashedBlobs.size,
-				},
-				async () => Promise.all(this.pendingStashedBlobs.values()),
-				{ start: true, end: true },
-			);
-		}
-
-		return this.stashedBlobsUploadP;
 	}
 
 	public get allBlobsAttached(): boolean {
