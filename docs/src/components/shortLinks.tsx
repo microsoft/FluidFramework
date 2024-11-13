@@ -74,7 +74,7 @@ export function ApiLink({
 function useLinkPathBase(): string {
 	const docContext = useDoc();
 	const version = docContext.metadata.version;
-	return `/docs/${version ? `v${version}/` : ""}api/`;
+	return `/docs/${version === "current" ? "" : `v${version}/`}api/`;
 }
 
 /**
