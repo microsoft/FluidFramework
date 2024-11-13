@@ -22,7 +22,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_FluidDataStoreRuntime": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<old.FluidDataStoreRuntime>, TypeOnly<current.FluidDataStoreRuntime>>
 
 /*
@@ -32,6 +31,7 @@ declare type old_as_current_for_Class_FluidDataStoreRuntime = requireAssignableT
  * typeValidation.broken:
  * "Class_FluidDataStoreRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<current.FluidDataStoreRuntime>, TypeOnly<old.FluidDataStoreRuntime>>
 
 /*
@@ -59,6 +59,7 @@ declare type current_as_old_for_Class_FluidObjectHandle = requireAssignableTo<Ty
  * typeValidation.broken:
  * "ClassStatics_FluidDataStoreRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<typeof current.FluidDataStoreRuntime>, TypeOnly<typeof old.FluidDataStoreRuntime>>
 
 /*

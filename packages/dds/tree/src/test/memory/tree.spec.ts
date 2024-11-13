@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
 	type IMemoryTestObject,
 	benchmarkMemory,
@@ -81,11 +81,11 @@ describe("SharedTree memory usage", () => {
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
 			public readonly title = "Create empty SharedTree";
-
-			private sharedTree: TreeView<typeof RootNodeSchema> | undefined;
+			// Assign to this field so that JS GC does not collect the SharedTree instance.
+			private _sharedTree?: TreeView<typeof RootNodeSchema>;
 
 			public async run(): Promise<void> {
-				this.sharedTree = createLocalSharedTree("testSharedTree");
+				this._sharedTree = createLocalSharedTree("testSharedTree");
 			}
 		})(),
 	);
@@ -99,11 +99,10 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Set an integer property ${x} times in a local SharedTree`;
-				private sharedTree: TreeView<typeof RootNodeSchema> =
-					createLocalSharedTree("testSharedTree");
+				private sharedTree?: TreeView<typeof RootNodeSchema>;
 
 				public async run(): Promise<void> {
-					assert(this.sharedTree.root.child !== undefined);
+					assert(this.sharedTree?.root.child !== undefined);
 
 					for (let i = 0; i < x; i++) {
 						this.sharedTree.root.child.propertyOne = x;
@@ -119,11 +118,9 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Set a string property ${x} times in a local SharedTree`;
-				private sharedTree: TreeView<typeof RootNodeSchema> =
-					createLocalSharedTree("testSharedTree");
-
+				private sharedTree?: TreeView<typeof RootNodeSchema>;
 				public async run(): Promise<void> {
-					assert(this.sharedTree.root.child !== undefined);
+					assert(this.sharedTree?.root.child !== undefined);
 
 					for (let i = 0; i < x; i++) {
 						this.sharedTree.root.child.propertyTwo.itemOne = i.toString().padStart(6, "0");
@@ -140,11 +137,10 @@ describe("SharedTree memory usage", () => {
 			new (class implements IMemoryTestObject {
 				public readonly title =
 					`Set an optional integer property ${x} times in a local SharedTree, then clear it`;
-				private sharedTree: TreeView<typeof RootNodeSchema> =
-					createLocalSharedTree("testSharedTree");
+				private sharedTree?: TreeView<typeof RootNodeSchema>;
 
 				public async run(): Promise<void> {
-					assert(this.sharedTree.root.child !== undefined);
+					assert(this.sharedTree?.root.child !== undefined);
 
 					for (let i = 0; i < x; i++) {
 						this.sharedTree.root.child.propertyOne = x;

@@ -6,6 +6,7 @@
 
 import type { Opaque } from 'type-fest';
 import type { PackageJson as PackageJson_2 } from 'type-fest';
+import { SemVer } from 'semver';
 import type { SetRequired } from 'type-fest';
 import { SimpleGit } from 'simple-git';
 
@@ -13,24 +14,11 @@ import { SimpleGit } from 'simple-git';
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 // @public
-export function createPackageManager(name: PackageManagerName): IPackageManager;
-
-// @public
-export interface FluidPackageJsonFields {
-    pnpm?: {
-        overrides?: Record<string, string>;
-    };
-}
-
-// @public
-export const FLUIDREPO_CONFIG_VERSION = 1;
-
-// @public
-export class FluidRepoBase<P extends IPackage> implements IFluidRepo<P> {
+export class BuildProject<P extends IPackage> implements IBuildProject<P> {
     constructor(searchPath: string,
     upstreamRemotePartialUrl?: string | undefined);
     protected readonly configFilePath: string;
-    readonly configuration: IFluidRepoLayout;
+    readonly configuration: BuildProjectLayout;
     getGitRepository(): Promise<Readonly<SimpleGit>>;
     getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
     get packages(): Map<PackageName, P>;
@@ -43,17 +31,55 @@ export class FluidRepoBase<P extends IPackage> implements IFluidRepo<P> {
 }
 
 // @public
-export function getAllDependenciesInRepo(repo: IFluidRepo, packages: IPackage[]): {
+export const BUILDPROJECT_CONFIG_VERSION = 1;
+
+// @public
+export interface BuildProjectLayout {
+    buildProject?: {
+        workspaces: {
+            [name: string]: WorkspaceDefinition;
+        };
+    };
+    // @deprecated
+    repoPackages?: IFluidBuildDirs;
+    version: typeof BUILDPROJECT_CONFIG_VERSION;
+}
+
+// @public
+export function createPackageManager(name: PackageManagerName): IPackageManager;
+
+// @public
+export interface FluidPackageJsonFields {
+    pnpm?: {
+        overrides?: Record<string, string>;
+    };
+}
+
+// @public
+export function getAllDependencies(repo: IBuildProject, packages: IPackage[]): {
     packages: IPackage[];
     releaseGroups: IReleaseGroup[];
     workspaces: IWorkspace[];
 };
 
 // @public
-export function getFluidRepoLayout(searchPath: string, noCache?: boolean): {
-    config: IFluidRepoLayout;
+export function getBuildProjectConfig(searchPath: string, noCache?: boolean): {
+    config: BuildProjectLayout;
     configFilePath: string;
 };
+
+// @public
+export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable {
+    configuration: BuildProjectLayout;
+    getGitRepository(): Promise<Readonly<SimpleGit>>;
+    getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
+    packages: Map<PackageName, P>;
+    relativeToRepo(p: string): string;
+    releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
+    root: string;
+    upstreamRemotePartialUrl?: string;
+    workspaces: Map<WorkspaceName, IWorkspace>;
+}
 
 // @public @deprecated
 export interface IFluidBuildDir {
@@ -69,31 +95,6 @@ export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuil
 export interface IFluidBuildDirs {
     // (undocumented)
     [name: string]: IFluidBuildDirEntry;
-}
-
-// @public
-export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
-    configuration: IFluidRepoLayout;
-    getGitRepository(): Promise<Readonly<SimpleGit>>;
-    getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
-    packages: Map<PackageName, P>;
-    relativeToRepo(p: string): string;
-    releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
-    root: string;
-    upstreamRemotePartialUrl?: string;
-    workspaces: Map<WorkspaceName, IWorkspace>;
-}
-
-// @public
-export interface IFluidRepoLayout {
-    repoLayout?: {
-        workspaces: {
-            [name: string]: WorkspaceDefinition;
-        };
-    };
-    // @deprecated
-    repoPackages?: IFluidBuildDirs;
-    version: typeof FLUIDREPO_CONFIG_VERSION;
 }
 
 // @public
@@ -125,7 +126,7 @@ export interface IPackage<J extends PackageJson = PackageJson> extends Installab
 
 // @public
 export interface IPackageManager {
-    installCommand(updateLockfile: boolean): string;
+    getInstallCommandWithArgs(updateLockfile: boolean): string[];
     readonly lockfileName: string;
     readonly name: PackageManagerName;
 }
@@ -151,8 +152,8 @@ export function isIReleaseGroup(toCheck: Exclude<any, string | number | ReleaseG
 
 // @public
 export interface IWorkspace extends Installable, Reloadable {
+    buildProject: IBuildProject;
     directory: string;
-    fluidRepo: IFluidRepo;
     name: WorkspaceName;
     packages: IPackage[];
     releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
@@ -162,7 +163,7 @@ export interface IWorkspace extends Installable, Reloadable {
 }
 
 // @public
-export function loadFluidRepo<P extends IPackage>(searchPath: string, upstreamRemotePartialUrl?: string): IFluidRepo<P>;
+export function loadBuildProject<P extends IPackage>(searchPath: string, upstreamRemotePartialUrl?: string): IBuildProject<P>;
 
 // @public
 export class NotInGitRepository extends Error {
@@ -233,6 +234,9 @@ export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
 export interface Reloadable {
     reload(): void;
 }
+
+// @public
+export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;
 
 // @public
 export interface WorkspaceDefinition {

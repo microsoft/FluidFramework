@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
@@ -634,7 +634,7 @@ describe("SharedTreeCore", () => {
 			assert.equal(tree.preparedCommitsCount, 0);
 
 			// Temporarily make commit application fail
-			const disableFailure = tree.getLocalBranch().on("beforeChange", () => {
+			const disableFailure = tree.getLocalBranch().events.on("beforeChange", () => {
 				throw new Error("Invalid commit");
 			});
 			assert.throws(() => changeTree(tree));

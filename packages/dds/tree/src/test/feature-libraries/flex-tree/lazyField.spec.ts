@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -51,7 +51,7 @@ import {
 	SchemaFactory,
 	stringSchema,
 } from "../../../simple-tree/index.js";
-import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
+import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { JsonObject, JsonUnion, singleJsonCursor } from "../../json/index.js";
 
 const detachedField: FieldKey = brand("detached");

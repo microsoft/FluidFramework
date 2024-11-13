@@ -58,8 +58,12 @@ export {
 	rollback,
 	type ForestOptions,
 	getBranch,
-	type TreeBranch,
+	type BranchableTree,
 	type TreeBranchFork,
+	independentInitializedView,
+	type ViewContent,
+	TreeAlpha,
+	independentView,
 } from "./shared-tree/index.js";
 
 export {
@@ -115,6 +119,7 @@ export {
 	type InsertableTreeFieldFromImplicitFieldUnsafe,
 	type FieldSchemaUnsafe,
 	type TreeNodeSchemaClassUnsafe,
+	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -125,7 +130,6 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
-	typedObjectValues,
 	type UnsafeUnknownSchema,
 	type TreeViewAlpha,
 	type InsertableField,
@@ -133,6 +137,8 @@ export {
 	type InsertableContent,
 	type FactoryContent,
 	type FactoryContentObject,
+	type ReadableField,
+	type ReadSchema,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -140,8 +146,13 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type VerboseTreeNode,
+	type EncodeOptions,
+	type ParseOptions,
+	type VerboseTree,
 	extractPersistedSchema,
 	comparePersistedSchema,
+	type ConciseTree,
 	// Back to normal types
 	type JsonTreeSchema,
 	type JsonSchemaId,
@@ -159,17 +170,38 @@ export {
 	getJsonSchema,
 	type LazyItem,
 	type Unenforced,
+	type SimpleNodeSchemaBase,
+	type SimpleTreeSchema,
+	type SimpleNodeSchema,
+	type SimpleFieldSchema,
+	type SimpleLeafNodeSchema,
+	type SimpleMapNodeSchema,
+	type SimpleArrayNodeSchema,
+	type SimpleObjectNodeSchema,
+	normalizeAllowedTypes,
+	getSimpleSchema,
+	numberSchema,
+	stringSchema,
+	booleanSchema,
+	handleSchema,
+	nullSchema,
 	type ReadonlyArrayNode,
+	type InsertableTreeNodeFromAllowedTypes,
+	type Input,
+	type TreeBranch,
+	type TreeBranchEvents,
+	asTreeViewAlpha,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
 } from "./treeFactory.js";
 
-export type {
-	ICodecOptions,
-	JsonValidator,
-	SchemaValidationFunction,
+export {
+	type ICodecOptions,
+	type JsonValidator,
+	type SchemaValidationFunction,
+	FluidClientVersion,
 } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
@@ -180,6 +212,10 @@ export {
 	type RestrictiveReadonlyRecord,
 	type RestrictiveStringRecord,
 	type MakeNominal,
+	type IsUnion,
+	type UnionToIntersection,
+	type UnionToTuple,
+	type PopUnion,
 } from "./util/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
