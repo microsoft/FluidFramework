@@ -226,6 +226,9 @@ describe("schemaCreationUtilities", () => {
 	it("enum value switch - minimal", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Bonus"]);
 		type Mode = TreeNodeFromImplicitAllowedTypes<typeof Mode.schema>;
+
+		// Removing this "as" cast, even if you explicitly put ": Mode" as the type does not work,
+		// since TypeScript types the variable as the more specific "Bonus" node, causing the "Fun" case in the switch to not build.
 		const node = new Mode.Bonus() as Mode;
 
 		switch (node.value) {
