@@ -580,7 +580,7 @@ describe("Undo and redo", () => {
 
 	it("clone revertible fails if trees are different", () => {
 		const viewA = asTreeViewAlpha(createLocalSharedTree("testSharedTreeOne"));
-		const viewB = asTreeViewAlpha(createLocalSharedTreeTwo("testSharedTreeTwo"));
+		const viewB = asTreeViewAlpha(createLocalSharedTree("testSharedTreeTwo"));
 
 		const {
 			undoStack: undoStack1,
@@ -657,39 +657,6 @@ function createLocalSharedTree(id: string) {
 				propertyTwo: {
 					itemOne: "",
 				},
-			},
-		}),
-	);
-
-	return view;
-}
-
-/**
- * Create a simple shared tree for {@link RevertibleAlpha} tests.
- */
-function createLocalSharedTreeTwo(id: string) {
-	const factory = new SchemaFactory("shared-tree-test");
-	class ChildNodeSchema extends factory.object("child-item", {
-		itemOne: factory.string,
-	}) {}
-	class RootNodeSchema extends factory.object("root-item", {
-		child: factory.optional(ChildNodeSchema),
-	}) {}
-
-	const sharedTree = SharedTree.create(
-		new MockFluidDataStoreRuntime({
-			registry: [SharedTree.getFactory()],
-			idCompressor: testIdCompressor,
-		}),
-		id,
-	);
-
-	const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
-
-	view.initialize(
-		new RootNodeSchema({
-			child: {
-				itemOne: "hello world!",
 			},
 		}),
 	);
