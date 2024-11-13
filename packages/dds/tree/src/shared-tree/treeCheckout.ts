@@ -541,7 +541,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 										revision,
 										kind,
 										this,
-										onRevertibleDisposed ?? (() => {}),
+										onRevertibleDisposed,
 									);
 									this.revertibleCommitBranches.set(revision, _branch.fork(commit));
 									this.revertibles.add(revertible);
@@ -600,17 +600,17 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	/**
 	 * Creates a {@link RevertibleAlpha} object that can undo a specific change in the tree's history.
 	 *
-	 * @param revision - The revision tag identifying the change to be made revertible
-	 * @param kind - The kind of commit (e.g., Default, Undo, Redo) this revertible represents
-	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to
-	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed
+	 * @param revision - The revision tag identifying the change to be made revertible.
+	 * @param kind - The kind of commit (e.g., Default, Undo, Redo) this revertible represents.
+	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to.
+	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed.
 	 * @returns - {@link RevertibleAlpha}
 	 */
 	private createRevertible(
 		revision: RevisionTag,
 		kind: CommitKind,
 		checkout: TreeCheckout,
-		onRevertibleDisposed: (revertible: RevertibleAlpha) => void,
+		onRevertibleDisposed: ((revertible: RevertibleAlpha) => void) | undefined,
 	): RevertibleAlpha {
 		const commitBranches = checkout.revertibleCommitBranches;
 
