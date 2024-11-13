@@ -1,7 +1,7 @@
 .ffcom-key-features-card-grid {
 	display: flex;
 	flex-direction: row;
-	justify-content: space-between;
+	justify-content: space-around;
 	align-items: flex-start;
 	flex-wrap: wrap;
 
@@ -15,6 +15,8 @@
 	flex-direction: column;
 	align-items: flex-start;
 
+	max-width: 500px;
+
 	padding: 0px;
 	isolation: isolate;
 
@@ -23,28 +25,4 @@
 		0px 0px 2px rgba(0, 0, 0, 0.12),
 		0px 2px 4px rgba(0, 0, 0, 0.14);
 	border-radius: 24px;
-}
-
-@media (max-width: 2560px) {
-	.ffcom-key-features-card-grid {
-		justify-content: space-between;
-	}
-}
-
-@media (max-width: 1024px) {
-	.ffcom-key-features-card-grid {
-		justify-content: space-around;
-	}
-}
-
-@media (max-width: 768px) {
-	.ffcom-key-features-card-grid {
-		justify-content: space-around;
-	}
-}
-
-@media (max-width: 635px) {
-	.ffcom-key-features-card-grid {
-		justify-content: space-around;
-	}
 }

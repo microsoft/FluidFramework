@@ -139,30 +139,3 @@
 
 	color: #2a446f;
 }
-
-@media (max-width: 2560px) {
-	.ffcom-key-feature-card {
-		min-width: 30%;
-		max-width: 32%;
-	}
-}
-
-@media (max-width: 1024px) {
-	.ffcom-key-feature-card {
-		min-width: 35%;
-		max-width: 45%;
-	}
-}
-
-@media (max-width: 768px) {
-	.ffcom-key-feature-card {
-		min-width: 44%;
-		max-width: 48%;
-	}
-}
-
-@media (max-width: 635px) {
-	.ffcom-key-feature-card {
-		min-width: 80%;
-	}
-}
