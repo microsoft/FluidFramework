@@ -1116,7 +1116,7 @@ export class ContainerRuntime
 			undefined, // summaryConfiguration
 		);
 
-		runtime.blobManager.trackPendingStashedUploads().then(
+		runtime.blobManager.waitForStashedBlobs().then(
 			() => {
 				// make sure we didn't reconnect before the promise resolved
 				if (runtime.delayConnectClientId !== undefined && !runtime.disposed) {

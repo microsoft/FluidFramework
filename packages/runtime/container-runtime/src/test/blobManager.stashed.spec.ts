@@ -81,7 +81,7 @@ describe("BlobManager.stashed", () => {
 	it("No Pending Stashed Uploads", async () => {
 		const blobManager = createBlobManager();
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
-		await blobManager.trackPendingStashedUploads();
+		await blobManager.waitForStashedBlobs();
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
 	});
 
@@ -167,7 +167,7 @@ describe("BlobManager.stashed", () => {
 		);
 		await Promise.race([
 			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager2.trackPendingStashedUploads(),
+			blobManager2.waitForStashedBlobs(),
 		]);
 		createResponse2.resolve({
 			id: "new-storage-id",
@@ -193,7 +193,7 @@ describe("BlobManager.stashed", () => {
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		await Promise.race([
 			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.trackPendingStashedUploads(),
+			blobManager.waitForStashedBlobs(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		createResponse.resolve({
@@ -201,7 +201,7 @@ describe("BlobManager.stashed", () => {
 		});
 		await Promise.race([
 			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.trackPendingStashedUploads(),
+			blobManager.waitForStashedBlobs(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
 		assert.strictEqual(blobManager.allBlobsAttached, true);
@@ -223,7 +223,7 @@ describe("BlobManager.stashed", () => {
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		await Promise.race([
 			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.trackPendingStashedUploads(),
+			blobManager.waitForStashedBlobs(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		createResponse.resolve({
@@ -231,7 +231,7 @@ describe("BlobManager.stashed", () => {
 		});
 		await Promise.race([
 			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.trackPendingStashedUploads(),
+			blobManager.waitForStashedBlobs(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
 		assert.strictEqual(blobManager.allBlobsAttached, true);
@@ -244,7 +244,7 @@ describe("BlobManager.stashed", () => {
 			},
 		});
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
-		await blobManager.trackPendingStashedUploads();
+		await blobManager.waitForStashedBlobs();
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
 	});
 
@@ -264,7 +264,7 @@ describe("BlobManager.stashed", () => {
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		await Promise.race([
 			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.trackPendingStashedUploads(),
+			blobManager.waitForStashedBlobs(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		createResponse.resolve({
@@ -272,7 +272,7 @@ describe("BlobManager.stashed", () => {
 		});
 		await Promise.race([
 			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.trackPendingStashedUploads(),
+			blobManager.waitForStashedBlobs(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
 		assert.strictEqual(blobManager.allBlobsAttached, true);
@@ -309,14 +309,14 @@ describe("BlobManager.stashed", () => {
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		await Promise.race([
 			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.trackPendingStashedUploads(),
+			blobManager.waitForStashedBlobs(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
 		letUploadsComplete.resolve();
 
 		await Promise.race([
 			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.trackPendingStashedUploads(),
+			blobManager.waitForStashedBlobs(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
 

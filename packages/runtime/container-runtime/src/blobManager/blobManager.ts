@@ -181,7 +181,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly runtime: IBlobManagerRuntime;
 	private readonly closeContainer: (error?: ICriticalContainerError) => void;
 	private readonly localBlobIdGenerator: () => string;
-	// TODO: consider to replace with a lazy promise
 	private readonly pendingStashedBlobs: Map<string, Promise<ICreateBlobResponse | void>> =
 		new Map();
 	private stashedBlobsUploadP: Promise<(void | ICreateBlobResponse)[]> | undefined = undefined;
@@ -310,9 +309,20 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		};
 	}
 
-	public async waitForStashedBlobs(): Promise<(void | ICreateBlobResponse)[]> {
-		if (!this.stashedBlobsUploadP) {
-			this.stashedBlobsUploadP = Promise.all(this.pendingStashedBlobs.values()).finally(() => {
+	/**
+	 * Wait for upload blobs added while offline. This must be completed before connecting and resubmitting ops.
+	 */
+	public async waitForStashedBlobs(): Promise<(void | ICreateBlobResponse)[] | undefined> {
+		if (!this.stashedBlobsUploadP && this.pendingStashedBlobs.size > 0) {
+			this.stashedBlobsUploadP = PerformanceEvent.timedExecAsync(
+				this.mc.logger,
+				{
+					eventName: "BlobUploadProcessStashedChanges",
+					count: this.pendingStashedBlobs.size,
+				},
+				async () => Promise.all(this.pendingStashedBlobs.values()),
+				{ start: true, end: true },
+			).finally(() => {
 				this.stashedBlobsUploadP = undefined;
 				return;
 			});
@@ -346,26 +356,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	public hasPendingStashedUploads(): boolean {
 		return Array.from(this.pendingBlobs.values()).some((e) => e.stashedUpload === true);
-	}
-	/**
-	 * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
-	 */
-	public async trackPendingStashedUploads(): Promise<void> {
-		const pendingUploads = Array.from(this.pendingBlobs.values())
-			.filter((e) => e.stashedUpload === true)
-			.map(async (e) => e.uploadP);
-		if (pendingUploads.length === 0) {
-			return;
-		}
-		await PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{
-				eventName: "BlobUploadProcessStashedChanges",
-				count: pendingUploads.length,
-			},
-			async () => Promise.all(pendingUploads),
-			{ start: true, end: true },
-		);
 	}
 
 	public async getBlob(blobId: string): Promise<ArrayBufferLike> {
