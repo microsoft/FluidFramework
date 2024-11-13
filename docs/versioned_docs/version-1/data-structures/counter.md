@@ -159,7 +159,7 @@ For a comprehensive view of the `counter` package's API documentation, see [the 
 <!-- Links -->
 <!-- TODO: use ApiLink -->
 [increment]: ../api/counter/isharedcounter-interface#increment-methodsignature
-[incremented]: ../api/counter/isharedcounter-interface#_call_-callsignature
+[incremented]: ../api/counter/isharedcounterevents-interface#_call_-callsignature
 [Optimistic DDS]: ../build/dds#optimistic-data-structures
 [SharedMap]: ./map
 [SharedMap creation]: ./map#creation
