@@ -182,6 +182,8 @@ export function create(
 		}),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
+			Lumberjack.info(`This is the request: ${JSON.stringify(request)}.`);
+			Lumberjack.info(`Here is the request.heads ${JSON.stringify(request.headers)}.`);
 			const clientIPAddress = request.ip ? request.ip : "";
 			const result = getNetworkInformationFromIP(clientIPAddress);
 			// Tenant and document
