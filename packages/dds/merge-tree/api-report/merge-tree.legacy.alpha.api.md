@@ -6,9 +6,9 @@
 
 // @alpha
 export interface AdjustParams {
+    delta: number;
     max?: number | undefined;
     min?: number | undefined;
-    value: number;
 }
 
 // @alpha

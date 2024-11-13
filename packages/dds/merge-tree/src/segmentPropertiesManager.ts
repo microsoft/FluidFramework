@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { DoublyLinkedList, iterateListValues } from "./collections/index.js";
+import { DoublyLinkedList, iterateListValuesWhile } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import type {
 	AdjustParams,
@@ -74,10 +74,10 @@ function computePropertyValue(
 				computedValue = raw;
 			} else {
 				const adjusted =
-					(typeof computedValue === "number" ? computedValue : 0) + adjust.value;
-				if (adjust.max && adjusted > adjust.max) {
+					(typeof computedValue === "number" ? computedValue : 0) + adjust.delta;
+				if (adjust.max !== undefined && adjusted > adjust.max) {
 					computedValue = adjust.max;
-				} else if (adjust.min && adjusted < adjust.min) {
+				} else if (adjust.min !== undefined && adjusted < adjust.min) {
 					computedValue = adjust.min;
 				} else {
 					computedValue = adjusted;
@@ -279,7 +279,7 @@ export class PropertiesManager {
 		for (const [key, pending] of this.changes) {
 			pending.msnConsensus = computePropertyValue(
 				pending.msnConsensus,
-				iterateListValues(pending.remote.first, (n) => {
+				iterateListValuesWhile(pending.remote.first, (n) => {
 					if (n.data.seq <= msn) {
 						n.list?.remove(n);
 						return true;
@@ -336,7 +336,7 @@ export class PropertiesManager {
 		for (const [key, changes] of this.changes) {
 			properties[key] = computePropertyValue(
 				changes.msnConsensus,
-				iterateListValues(changes.remote.first, (c) => c.data.seq <= sequenceNumber),
+				iterateListValuesWhile(changes.remote.first, (c) => c.data.seq <= sequenceNumber),
 			);
 			if (properties[key] === null) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -347,15 +347,14 @@ export class PropertiesManager {
 	}
 
 	/**
-	 * Checks if there are pending properties.
-	 * This method checks if there are any pending properties that need to be acknowledged.
+	 * Determines if all of the defined properties in a given property set are pending.
 	 *
 	 * @param props - The properties to check.
-	 * @returns True if there are pending properties, false otherwise.
+	 * @returns True if all the properties are pending, false otherwise.
 	 */
 	public hasPendingProperties(props: PropertySet): boolean {
 		for (const [key, value] of Object.entries(props)) {
-			if (value !== undefined && !this.changes.has(key)) {
+			if (value !== undefined && this.changes.get(key)?.local.empty !== false) {
 				return false;
 			}
 		}

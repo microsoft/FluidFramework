@@ -8,7 +8,7 @@ export {
 	ListNode,
 	ListNodeRange,
 	walkList,
-	iterateListValues,
+	iterateListValuesWhile,
 } from "./list.js";
 export {
 	ConflictAction,
