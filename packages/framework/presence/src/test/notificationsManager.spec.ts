@@ -264,9 +264,12 @@ describe("Presence", () => {
 				false,
 			);
 
-			assert(eventHandlerCalls.original.length === 1);
-			assert(eventHandlerCalls.secondary.length === 1);
-			assert(eventHandlerCalls.tertiary.length === 1);
+			assert(eventHandlerCalls.original.length === 1, "original event handler was not called");
+			assert(
+				eventHandlerCalls.secondary.length === 1,
+				"secondary event handler was not called",
+			);
+			assert(eventHandlerCalls.tertiary.length === 1, "tertiary event handler was not called");
 
 			// Cleanup
 			for (const disconnect of disconnectFunctions) {

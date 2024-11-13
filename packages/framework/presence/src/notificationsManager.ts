@@ -170,8 +170,16 @@ class NotificationsManagerImpl<
 			Key,
 			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
 		>,
-		_initialSubscriptions: Partial<NotificationSubscriptions<T>>,
-	) {}
+		initialSubscriptions: Partial<NotificationSubscriptions<T>>,
+	) {
+		// Add event listeners provided at instantiation
+		for (const [nameString, value] of Object.entries(initialSubscriptions)) {
+			// Without schema validation, we don't know that the args are the correct type.
+			// For now we assume the user is sending the correct types and there is no corruption along the way.
+			const name = nameString as keyof Events<NotificationSubscriptions<T>>;
+			this.notificationsInternal.on(name, value as NotificationSubscriptions<T>[typeof name]);
+		}
+	}
 
 	public update(
 		client: ISessionClient,
