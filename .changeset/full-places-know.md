@@ -13,7 +13,7 @@ When using the return value from [`adaptEnum`](https://fluidframework.com/docs/a
 Additionally [`enumFromStrings`](https://fluidframework.com/docs/api/v2/tree#enumfromstrings-function) has improved the typing of its schema, ensuring the returned object's members have sufficiently specific types.
 Part of this improvement was fixing the `.schema` property to be a tuple over each of the schema where it was previously a tuple of a single combined schema due to a bug.
 
-One side-effect of these fixes is that narrowing of the `value` field of a node typed from the `.schema` behaves slightly different, such the node type is now a union instead of it being a single type with a `.value` that is a union.
+One side-effect of these fixes is that narrowing of the `value` field of a node typed from the `.schema` behaves slightly different, such that the node type is now a union instead of it being a single type with a `.value` that is a union.
 This means the `.value` property needs to be read into its own variable to be able to be narrowed (for example in a switch statement).
 
 ```typescript
