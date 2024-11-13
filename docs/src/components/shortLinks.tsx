@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { useDoc } from "@docusaurus/plugin-content-docs/client";
 import React from "react";
 
 // TODO: how will versioning interact with these?
@@ -24,8 +25,9 @@ export interface PackageLinkProps {
  * A convenient mechanism for linking to a package's API documentation.
  */
 export function PackageLink({ headingId, packageName, children }: PackageLinkProps): JSX.Element {
+	const root = useLinkPathBase();
 	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
-	return <a href={`/docs/api/${packageName}${headingPostfix}`}>{children ?? packageName}</a>;
+	return <a href={`${root}${packageName}${headingPostfix}`}>{children ?? packageName}</a>;
 }
 
 /**
@@ -42,6 +44,10 @@ export interface ApiLinkProps {
 	// TODO: import directly from `api-extractor-model`
 	// TODO: do we have enough context to determine this automatically when unambiguous?
 	apiType: "class" | "enum" | "function" | "interface" | "namespace" | "type" | "variable";
+
+	/**
+	 * (Optional) heading ID on the target page to link to.
+	 */
 	headingId?: string;
 }
 
@@ -55,10 +61,20 @@ export function ApiLink({
 	headingId,
 	children,
 }: ApiLinkProps): JSX.Element {
+	const root = useLinkPathBase();
 	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
-	// TODO: how to deal with namespaces?
-	const path = `/docs/api/${packageName}/${apiName}-${apiType}${headingPostfix}`;
+	const path = `${root}${packageName}/${apiName.toLocaleLowerCase()}-${apiType}${headingPostfix}`;
 	return <a href={path}>{children ?? apiName}</a>;
+}
+
+/**
+ * Gets the base URI for a link to API docs.
+ * Accounts for versioning.
+ */
+function useLinkPathBase(): string {
+	const docContext = useDoc();
+	const version = docContext.metadata.version;
+	return `/docs/${version ? `v${version}/` : ""}api/`;
 }
 
 /**
