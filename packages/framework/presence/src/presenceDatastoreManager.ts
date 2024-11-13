@@ -196,15 +196,54 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		return entry.public;
 	}
 
+	private batchEpoch = Date.now();
+
+	private readonly batchIntervalInMs = 10_000;
+
+	private readonly messageQueue: DatastoreUpdateMessage["content"][] = [];
+
+	// private queuedData: DatastoreMessageContent | undefined;
 	private localUpdate(data: DatastoreMessageContent, options: LocalUpdateOptions): void {
+		const { forceBroadcast, allowableUpdateLatency } = options;
+
+		// Merge the
+
+		// Check if the current update can be queued; it can only be queued if the batchIntervalInMs has not elapsed and its
+		// deadline is not beyond the batch deadline. The deadlines are the times by which the signals are expected to be
+		// sent.
+		const batchDeadline = this.batchEpoch + this.batchIntervalInMs;
+		const now = Date.now();
+		const updateDeadline = now + (allowableUpdateLatency ?? 0);
 		const content = {
-			sendTimestamp: Date.now(),
+			sendTimestamp: now,
 			avgLatency: this.averageLatency,
 			// isComplete: false,
 			data,
 		} satisfies DatastoreUpdateMessage["content"];
+
+		if (
+			// The update is not 'forced'. Forced updates cannot be queued because they are expected to be sent immediately.
+			!forceBroadcast &&
+			// The batch deadline has not expired; if it has then the queued messages must be sent.
+			batchDeadline < now &&
+			// The update has a deadline after the batch deadline, meaning the batch update is fast enough for this update.
+			// Therefore it can be queued
+			updateDeadline > batchDeadline
+		) {
+			// Queue the update
+			return;
+		}
+
+		// We're submitting messages, so reset the epoch
+		this.batchEpoch = now;
+
+		// TODO: Unqueue messages and send them
 		this.runtime.submitSignal(datastoreUpdateMessageType, content);
 	}
+
+	// private sendQueuedMessages(): void {
+
+	// }
 
 	private broadcastAllKnownState(): void {
 		this.runtime.submitSignal(datastoreUpdateMessageType, {
