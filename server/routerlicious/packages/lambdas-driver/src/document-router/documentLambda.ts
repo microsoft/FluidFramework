@@ -45,6 +45,18 @@ export class DocumentLambda implements IPartitionLambda {
 			);
 			context.error(error, errorData);
 		});
+		this.contextManager.on("pause", (offset: number, reason?: any) => {
+			console.log(
+				`TEST!! Listening for pause in documentLambda, offset: ${offset}, reason: ${reason}`,
+			);
+			context.pause(offset, reason);
+		});
+		this.contextManager.on("resume", () => {
+			console.log(
+				`TEST!! Listening for resume in documentLambda`,
+			);
+			context.resume();
+		});
 		this.activityCheckTimer = setInterval(
 			this.inactivityCheck.bind(this),
 			documentLambdaServerConfiguration.partitionActivityCheckInterval,
@@ -84,6 +96,18 @@ export class DocumentLambda implements IPartitionLambda {
 		}
 
 		this.documents.clear();
+	}
+
+	public pause(): void {
+		for (const [, partition] of this.documents) {
+			partition.pause();
+		}
+	}
+
+	public resume(): void {
+		for (const [, partition] of this.documents) {
+			partition.resume();
+		}
 	}
 
 	private handlerCore(message: IQueuedMessage): void {
@@ -194,7 +218,7 @@ export class DocumentLambda implements IPartitionLambda {
 	/**
 	 * Closes inactive documents
 	 */
-	private inactivityCheck() {
+	private inactivityCheck() { // should not close the documents in paused state - TODO test.
 		const now = Date.now();
 
 		const documentPartitions = Array.from(this.documents);

@@ -170,6 +170,10 @@ export class Partition extends EventEmitter {
 		this.paused = false;
 
 		this.q.resume();
+
+		if (this.lambda?.resume) { // for documentLambdas, this would be needed
+			this.lambda.resume();
+		}
 		Lumberjack.info(`Partition resumed`, { partitionId: this.id });
 	}
 

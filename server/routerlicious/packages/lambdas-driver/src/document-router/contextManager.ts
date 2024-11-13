@@ -65,6 +65,14 @@ export class DocumentContextManager extends EventEmitter {
 			Lumberjack.verbose("Emitting error from contextManager, context error event.");
 			this.emit("error", error, errorData);
 		});
+		context.addListener("pause", (offset: number, reason?: any) => {
+			console.log(`TEST!! Emitting pause from contextManager, offset: ${offset}, reason: ${reason}`);
+			this.emit("pause", offset, reason);
+		});
+		context.addListener("resume", () => {
+			console.log(`TEST!! Emitting resume from contextManager`);
+			this.emit("resume");
+		});
 		return context;
 	}
 

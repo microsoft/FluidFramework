@@ -15,7 +15,6 @@ import {
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { QueueObject, queue } from "async";
 import { DocumentContext } from "./documentContext";
-import { serializeError } from "serialize-error";
 
 export class DocumentPartition {
 	private readonly q: QueueObject<IQueuedMessage>;
@@ -83,15 +82,15 @@ export class DocumentPartition {
 			}
 		});
 
-		this.context.on("pause", (offset: number, reason?: any) => {
-			console.log("TEST!! DocumentPartition pause event", offset, reason);
-			this.pause(reason);
-		});
+		// this.context.on("pause", (offset: number, reason?: any) => {
+		// 	console.log("TEST!! DocumentPartition pause event", offset, reason);
+		// 	this.pause(reason);
+		// });
 
-		this.context.on("resume", () => {
-			console.log("TEST!! DocumentPartition resume event");
-			this.resume();
-		});
+		// this.context.on("resume", () => {
+		// 	console.log("TEST!! DocumentPartition resume event");
+		// 	this.resume();
+		// });
 
 		// Create the lambda to handle the document messages
 		this.lambdaP = factory
@@ -101,9 +100,6 @@ export class DocumentPartition {
 				this.q.resume();
 			})
 			.catch((error) => {
-				// if (error.circuitBreakerOpen === true) {
-				// 	this.context.pause(0, error); // lastSuccessfuloffset = 0 because it is not relevant in this case
-				// } else
 				if (error.name && this.restartOnErrorNames.includes(error.name as string)) {
 					this.context.error(error, {
 						restart: true,
@@ -222,7 +218,7 @@ export class DocumentPartition {
 			activityTime !== undefined ? activityTime : cacluatedActivityTimeout;
 	}
 
-	private pause(reason?: any) {
+	public pause() {
 		if (this.paused) {
 			Lumberjack.info(`TEST!! Doc partition already paused, returning early.`, { documentId: this.documentId, tenantId: this.tenantId });
 			return;
@@ -230,26 +226,22 @@ export class DocumentPartition {
 		this.paused = true;
 
 		this.q.pause();
+		this.q.remove(() => true); // flush all the messages in the queue since kafka consumer will resume from last successful offset
 
 		if (this.lambda?.pause) {
 			this.lambda.pause();
 		}
-		Lumberjack.info(`TEST!! Doc partition paused`, { documentIs: this.documentId, tenantId: this.tenantId, reason: serializeError(reason) });
+		Lumberjack.info(`TEST!! Doc partition paused`, { documentId: this.documentId, tenantId: this.tenantId });
 	}
 
-	private resume() {
+	public resume() {
 		if (!this.paused) {
 			Lumberjack.info(`TEST!! Doc partition already resumed, returning early.`, { documentId: this.documentId, tenantId: this.tenantId });
 			return;
 		}
 		this.paused = false;
 
-		// if (!this.lambda) {
-		// 	// i.e. when factory.create() failed and paused, and is now resuming
-		// 	// TODO recreate lambda
-		// }
-
-		this.q.resume(); // Should automatically resume from last tailInternal offset?
+		this.q.resume(); // Should resume from the failed offset
 		Lumberjack.info(`TEST!! Doc partition resumed`, { documentId: this.documentId, tenantId: this.tenantId });
 	}
 }
