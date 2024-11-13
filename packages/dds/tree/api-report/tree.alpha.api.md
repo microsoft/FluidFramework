@@ -544,7 +544,7 @@ export interface RevertibleAlpha extends Revertible {
     clone: (branch?: TreeBranch) => RevertibleAlpha;
 }
 
-// @alpha @sealed
+// @alpha @sealed (undocumented)
 export type RevertibleAlphaFactory = (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => RevertibleAlpha;
 
 // @public @sealed

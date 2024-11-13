@@ -597,6 +597,15 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
+	/**
+	 * Creates a {@link RevertibleAlpha} object that can undo a specific change in the tree's history.
+	 *
+	 * @param revision - The revision tag identifying the change to be made revertible
+	 * @param kind - The kind of commit (e.g., Default, Undo, Redo) this revertible represents
+	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to
+	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed
+	 * @returns - {@link RevertibleAlpha}
+	 */
 	private createRevertible(
 		revision: RevisionTag,
 		kind: CommitKind,
