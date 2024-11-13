@@ -86,12 +86,14 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"test": "npm run test:mocha",
+		"test": "npm run test:mocha && npm run test:vitest",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"test:vitest": "vitest run",
+		"test:vitest:coverage": "npm run test:vitest -- --coverage",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist"
 	},
 	"c8": {
@@ -155,7 +157,8 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^18.0.1",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"vitest": "^2.1.4"
 	},
 	"fluidBuild": {
 		"tasks": {

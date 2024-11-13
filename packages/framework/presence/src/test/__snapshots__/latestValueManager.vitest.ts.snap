@@ -1,0 +1,92 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 1`] = `
+[
+  "Pres:ClientJoin",
+  {
+    "avgLatency": 0,
+    "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2",
+          },
+        },
+      },
+    },
+    "sendTimestamp": 1000,
+    "updateProviders": [
+      "client0",
+      "client1",
+      "client3",
+    ],
+  },
+]
+`;
+
+exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 2`] = `
+[
+  "Pres:DatastoreUpdate",
+  {
+    "avgLatency": 10,
+    "data": {
+      "s:name:testStateWorkspace": {
+        "data": {
+          "sessionId-2": {
+            "rev": 0,
+            "timestamp": 1010,
+            "value": {
+              "num": 0,
+            },
+          },
+        },
+      },
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2",
+          },
+        },
+      },
+    },
+    "isComplete": true,
+    "sendTimestamp": 1010,
+  },
+]
+`;
+
+exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 3`] = `
+[
+  "Pres:DatastoreUpdate",
+  {
+    "avgLatency": 10,
+    "data": {
+      "s:name:testStateWorkspace": {
+        "data": {
+          "sessionId-2": {
+            "rev": 0,
+            "timestamp": 1010,
+            "value": {
+              "num": 0,
+            },
+          },
+        },
+      },
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2",
+          },
+        },
+      },
+    },
+    "sendTimestamp": 1010,
+  },
+]
+`;
