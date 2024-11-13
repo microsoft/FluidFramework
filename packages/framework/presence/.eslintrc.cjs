@@ -22,7 +22,11 @@ module.exports = {
 		"import/no-internal-modules": [
 			"error",
 			{
-				"allow": ["@fluidframework/*/internal{,/**}", "*/index.js", "@fluidframework/presence/alpha"],
+				"allow": [
+					"@fluidframework/*/internal{,/**}",
+					"*/index.js",
+					"@fluidframework/presence/alpha",
+				],
 			},
 		],
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
