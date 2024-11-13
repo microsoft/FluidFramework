@@ -83,7 +83,21 @@ To remove the local API docs, simply remove the above variable or set it to `fal
 
 ## Writing site documentation
 
-TODO
+For details about authoring documentation content in Docusaurus, see [here](https://docusaurus.io/docs/create-doc).
+
+### File organization
+
+```
+|--- docs (Current version documentation)
+|--- versioned_docs (previous and future version documentation)
+|    |---version-x (version *x* documentation)
+|    |---version-local (special directory in which repo-local API docs are generated and can be previewed when building the site locally)
+|--- src
+|    |--- components (React components available to other site documents, pages, and components)
+|    |--- css (CSS modules available to other site documents, pages, and components)
+|    |--- pages (Unversioned site contents)
+|    |--- theme (Theme component / page overrides)
+```
 
 ### MDX
 
@@ -95,7 +109,12 @@ With some exceptions.
 
 #### Leveraging React components
 
-TODO
+For an overview of how to leverage React components in MDX documentation, see [here](https://docusaurus.io/docs/markdown-features/react).
+
+##### Adding React components
+
+React components should be saved under `src/components/...`.
+They can be imported in other components, pages, and documents via `@site/src/components/...`.
 
 #### Comments
 
@@ -123,9 +142,7 @@ Rationale:
 -   Docusaurus will ensure consistent styling
 -   Non-binary source, directly in the document.
 
-#### Example
-
-TODO
+For more details about leveraging Mermaid diagrams in Docusaurus, see [here](https://docusaurus.io/docs/markdown-features/diagrams).
 
 ### Best practices
 
@@ -163,6 +180,7 @@ If you do not have the appropriate permissions, but would like to contribute to 
     -   Content changes:
         -   `/docs/api/index.mdx`
         -   `/versioned_docs/api/index.mdx`
+        -   `/versioned_docs/api/fluid-framework.mdx`
         -   TODO: what else?
     -   v2 Release notes just link to GitHub. Is this what we want?
 
