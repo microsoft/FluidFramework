@@ -13,6 +13,24 @@ import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type { ClientConnectionId, ClientSessionId } from "@fluid-experimental/presence";
 import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/core-interfaces";
+
+/**
+ * Use to compile-time assert types of two variables are identical.
+ */
+export function assertIdenticalTypes<T, U>(
+	_actual: T & InternalUtilityTypes.IfSameType<T, U>,
+	_expected: U & InternalUtilityTypes.IfSameType<T, U>,
+): InternalUtilityTypes.IfSameType<T, U> {
+	return undefined as InternalUtilityTypes.IfSameType<T, U>;
+}
+
+/**
+ * Creates a non-viable (`undefined`) instance of type T to be used for type checking.
+ */
+export function createInstanceOf<T>(): T {
+	return undefined as T;
+}
 
 /**
  * Generates expected join signal for a client that was initialized while connected.
@@ -115,7 +133,7 @@ export function prepareConnectedPresence(
 }
 
 /**
- * Asserts that all expected telemetry abd signals were sent.
+ * Asserts that all expected telemetry and signals were sent.
  */
 export function assertFinalExpectations(
 	runtime: MockEphemeralRuntime,
