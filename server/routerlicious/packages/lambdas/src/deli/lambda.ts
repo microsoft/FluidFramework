@@ -503,6 +503,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					this.context.resume();
 				}, 60000); // resume after 1 minute
 				this.context.pause(0, "error:testing circuit breaker");
+				return;
 			}
 
 			switch (ticketedMessage.ticketType) {
