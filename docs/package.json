@@ -20,6 +20,7 @@
 		"build:site": "npm run build:generate-content && npm run build:docusaurus",
 		"build:test": "tsc --project test/tsconfig.json --pretty --noEmit",
 		"check-links": "linkcheck http://localhost:3000 --skip-file skipped-urls.txt",
+		"ci:check-links": "start-server-and-test serve 3000 check-links",
 		"clean": "concurrently \"npm:clean:*\"",
 		"clean:api-documentation": "rimraf --glob \"docs/api/**/*.md\" \"versioned_docs/*/api/**/*.md\"",
 		"clean:doc-models": "rimraf --glob .doc-models",
@@ -94,6 +95,7 @@
 		"playwright": "^1.48.0",
 		"prettier": "^3.2.5",
 		"rimraf": "^5.0.10",
+		"start-server-and-test": "^2.0.8",
 		"typescript": "~5.5.2"
 	},
 	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",

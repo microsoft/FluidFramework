@@ -304,7 +304,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run check-links'
+            customCommand: 'run ci:check-links'
 
 - stage: check_branch_version
   displayName: 'Check Version Deployment Condition'
