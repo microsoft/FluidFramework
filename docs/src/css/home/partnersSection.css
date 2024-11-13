@@ -17,9 +17,9 @@
 	align-items: flex-start;
 	justify-content: space-between;
 	flex-wrap: wrap;
-	padding: 0px;
+	padding: 50px;
 	width: 100%;
-	gap: 20px;
+	gap: 30px;
 	flex: none;
 	order: 5;
 	flex-grow: 0;
@@ -27,7 +27,7 @@
 
 .ffcom-partner-entry {
 	max-width: 30%;
-	min-width: 250px;
+	min-width: 350px;
 
 	display: flex;
 	flex-direction: row;
