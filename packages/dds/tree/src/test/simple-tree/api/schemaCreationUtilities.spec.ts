@@ -26,6 +26,7 @@ import { testIdCompressor } from "../../utils.js";
 import {
 	unsafeArrayToTuple,
 	type areSafelyAssignable,
+	type isAssignableTo,
 	type requireFalse,
 	type requireTrue,
 } from "../../../util/index.js";
@@ -98,7 +99,7 @@ describe("schemaCreationUtilities", () => {
 		type A = NodeFromSchema<typeof ModeNodes.A>;
 		type B = NodeFromSchema<typeof ModeNodes.B>;
 
-		type _checkDifferent = requireFalse<areSafelyAssignable<A, B>>;
+		type _checkDifferent = requireFalse<isAssignableTo<A, B>>;
 
 		const fromLiteral = ModeNodes("A");
 
