@@ -18,11 +18,11 @@ export interface TestInterfaceWithIndexSignature
 
 ## Index Signature Details
 
-### \[foo: number\]: { bar: string; } {#_indexer_-indexsignature}
+### \[foo: number\]: { bar: string; } {#\_indexer\_-indexsignature}
 
 Test index signature.
 
-#### Signature {#_indexer_-signature}
+#### Signature {#\_indexer\_-signature}
 
 ```typescript
 [foo: number]: {

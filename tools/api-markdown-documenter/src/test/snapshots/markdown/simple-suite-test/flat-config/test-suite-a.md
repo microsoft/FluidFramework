@@ -151,17 +151,17 @@ Here are some remarks about the interface
 
 ### Construct Signature Details
 
-#### new (): TestInterface {#testinterface-_new_-constructsignature}
+#### new (): TestInterface {#testinterface-\_new\_-constructsignature}
 
 Test construct signature.
 
-##### Signature {#_new_-signature}
+##### Signature {#\_new\_-signature}
 
 ```typescript
 new (): TestInterface;
 ```
 
-##### Returns {#_new_-returns}
+##### Returns {#\_new\_-returns}
 
 **Return type:** [TestInterface](docs/test-suite-a#testinterface-interface)
 
@@ -266,31 +266,31 @@ Here are some remarks about the method
 
 ### Call Signature Details
 
-#### (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any {#testinterface-_call_-callsignature}
+#### (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any {#testinterface-\_call\_-callsignature}
 
 Test interface event call signature
 
-##### Signature {#_call_-signature}
+##### Signature {#\_call\_-signature}
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-##### Remarks {#_call_-remarks}
+##### Remarks {#\_call\_-remarks}
 
 Here are some remarks about the event call signature
 
-#### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#testinterface-_call__1-callsignature}
+#### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#testinterface-\_call\_\_1-callsignature}
 
 Another example call signature
 
-##### Signature {#_call__1-signature}
+##### Signature {#\_call\_\_1-signature}
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
-##### Remarks {#_call__1-remarks}
+##### Remarks {#\_call\_\_1-remarks}
 
 Here are some remarks about the event call signature
 
@@ -380,11 +380,11 @@ export interface TestInterfaceWithIndexSignature
 
 ### Index Signature Details
 
-#### \[foo: number\]: { bar: string; } {#testinterfacewithindexsignature-_indexer_-indexsignature}
+#### \[foo: number\]: { bar: string; } {#testinterfacewithindexsignature-\_indexer\_-indexsignature}
 
 Test index signature.
 
-##### Signature {#_indexer_-signature}
+##### Signature {#\_indexer\_-signature}
 
 ```typescript
 [foo: number]: {
@@ -471,17 +471,17 @@ export declare abstract class TestAbstractClass
 
 ### Constructor Details
 
-#### (constructor) {#testabstractclass-_constructor_-constructor}
+#### (constructor) {#testabstractclass-\_constructor\_-constructor}
 
 This is a _{@customTag constructor}_.
 
-##### Signature {#_constructor_-signature}
+##### Signature {#\_constructor\_-signature}
 
 ```typescript
 protected constructor(privateProperty: number, protectedProperty: TestEnum);
 ```
 
-##### Parameters {#_constructor_-parameters}
+##### Parameters {#\_constructor\_-parameters}
 
 | Parameter | Type | Description |
 | --- | --- | --- |
@@ -625,21 +625,21 @@ Here are some remarks about the class
 
 ### Constructor Details
 
-#### (constructor) {#testclass-_constructor_-constructor}
+#### (constructor) {#testclass-\_constructor\_-constructor}
 
 Test class constructor
 
-##### Signature {#_constructor_-signature}
+##### Signature {#\_constructor\_-signature}
 
 ```typescript
 constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
-##### Remarks {#_constructor_-remarks}
+##### Remarks {#\_constructor\_-remarks}
 
 Here are some remarks about the constructor
 
-##### Parameters {#_constructor_-parameters}
+##### Parameters {#\_constructor\_-parameters}
 
 | Parameter | Type | Description |
 | --- | --- | --- |
@@ -1139,7 +1139,7 @@ class TestClass
 
 ##### Constructor Details
 
-###### (constructor) {#testnamespace-testclass-_constructor_-constructor}
+###### (constructor) {#testnamespace-testclass-\_constructor\_-constructor}
 
 Test class constructor
 
