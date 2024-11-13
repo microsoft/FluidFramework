@@ -16,5 +16,6 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-nodejs-modules": "off",
 		"no-case-declarations": "off",
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 };

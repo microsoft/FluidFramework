@@ -372,15 +372,15 @@ importers:
       '@emotion/styled':
         specifier: ^11.13.0
         version: 11.13.0(@emotion/react@11.13.3)(@types/react@18.3.11)(react@18.3.1)
-      '@fluid-experimental/ai-collab':
-        specifier: workspace:~
-        version: link:../../../packages/framework/ai-collab
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.50.0
         version: 0.50.0(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/ai-collab':
+        specifier: workspace:~
+        version: link:../../../packages/framework/ai-collab
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
