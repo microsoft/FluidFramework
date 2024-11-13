@@ -65,7 +65,7 @@ module.exports = {
 		},
 		{
 			// Config files
-			files: ["docusaurus.config.ts", "playwright.config.ts"],
+			files: ["docusaurus.config.ts", "playwright.config.ts", "infra/**/*"],
 			rules: {
 				// Dev dependencies and internal modules may be used in config files
 				"import/no-extraneous-dependencies": [
