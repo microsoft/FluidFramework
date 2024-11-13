@@ -15,6 +15,7 @@ import {
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { QueueObject, queue } from "async";
 import { DocumentContext } from "./documentContext";
+import { serializeError } from "serialize-error";
 
 export class DocumentPartition {
 	private readonly q: QueueObject<IQueuedMessage>;
@@ -22,6 +23,7 @@ export class DocumentPartition {
 	private lambda: IPartitionLambda | undefined;
 	private corrupt = false;
 	private closed = false;
+	private paused = false;
 	private activityTimeoutTime: number | undefined;
 	private readonly restartOnErrorNames: string[] = [];
 
@@ -81,6 +83,16 @@ export class DocumentPartition {
 			}
 		});
 
+		this.context.on("pause", (offset: number, reason?: any) => {
+			console.log("TEST!! DocumentPartition pause event", offset, reason);
+			this.pause(reason);
+		});
+
+		this.context.on("resume", () => {
+			console.log("TEST!! DocumentPartition resume event");
+			this.resume();
+		});
+
 		// Create the lambda to handle the document messages
 		this.lambdaP = factory
 			.create(documentConfig, context, this.updateActivityTime.bind(this))
@@ -89,11 +101,15 @@ export class DocumentPartition {
 				this.q.resume();
 			})
 			.catch((error) => {
+				// if (error.circuitBreakerOpen === true) {
+				// 	this.context.pause(0, error); // lastSuccessfuloffset = 0 because it is not relevant in this case
+				// } else
 				if (error.name && this.restartOnErrorNames.includes(error.name as string)) {
 					this.context.error(error, {
 						restart: true,
 						tenantId: this.tenantId,
 						documentId: this.documentId,
+						errorLabel: "docPartition:lambdaFactory.create",
 					});
 				} else {
 					// There is no need to pass the message to be checkpointed to markAsCorrupt().
@@ -106,6 +122,10 @@ export class DocumentPartition {
 				}
 			});
 	}
+
+	// private createLambda() {
+
+	// }
 
 	public process(message: IQueuedMessage) {
 		if (this.closed) {
@@ -200,5 +220,36 @@ export class DocumentPartition {
 			Date.now() + (this.lambda?.activityTimeout ?? this.activityTimeout);
 		this.activityTimeoutTime =
 			activityTime !== undefined ? activityTime : cacluatedActivityTimeout;
+	}
+
+	private pause(reason?: any) {
+		if (this.paused) {
+			Lumberjack.info(`TEST!! Doc partition already paused, returning early.`, { documentId: this.documentId, tenantId: this.tenantId });
+			return;
+		}
+		this.paused = true;
+
+		this.q.pause();
+
+		if (this.lambda?.pause) {
+			this.lambda.pause();
+		}
+		Lumberjack.info(`TEST!! Doc partition paused`, { documentIs: this.documentId, tenantId: this.tenantId, reason: serializeError(reason) });
+	}
+
+	private resume() {
+		if (!this.paused) {
+			Lumberjack.info(`TEST!! Doc partition already resumed, returning early.`, { documentId: this.documentId, tenantId: this.tenantId });
+			return;
+		}
+		this.paused = false;
+
+		// if (!this.lambda) {
+		// 	// i.e. when factory.create() failed and paused, and is now resuming
+		// 	// TODO recreate lambda
+		// }
+
+		this.q.resume(); // Should automatically resume from last tailInternal offset?
+		Lumberjack.info(`TEST!! Doc partition resumed`, { documentId: this.documentId, tenantId: this.tenantId });
 	}
 }
