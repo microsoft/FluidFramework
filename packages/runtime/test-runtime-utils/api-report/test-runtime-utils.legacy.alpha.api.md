@@ -302,8 +302,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     deleteChildSummarizerNode(id: string): void;
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // @deprecated (undocumented)
-    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
