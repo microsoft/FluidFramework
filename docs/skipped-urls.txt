@@ -32,7 +32,7 @@ https://www.iso.org/iso-8601-date-and-time-format.html
 https://foo-my.sharepoint.com*
 
 # Docusaurus infra
-http://localhost:3000/assets/css/styles.43b55291.css
+http://localhost:3000/assets/css/styles.*.css
 
 # TODO:AB#23443: Docusaurus ignores doc files whose names begin with "_".
 # See https://docusaurus.io/docs/create-doc
