@@ -1,4 +1,4 @@
-# @fluid-experimental/ai-collab
+# @fluidframework/ai-collab
 
 ## 2.5.0
 
