@@ -114,9 +114,10 @@ describe("Presence", () => {
 					presence.removeClientConnectionId("unknownConnectionId");
 				});
 
-				describe("is joining", () => {
-					let newAttendee: ISessionClient | undefined;
-					beforeEach(() => {
+				describe("that is joining", () => {
+					it('is announced via `attendeeJoined` with status "Connected" when new', () => {
+						// Setup
+						let newAttendee: ISessionClient | undefined;
 						newAttendee = undefined;
 						afterCleanUp.push(
 							presence.events.on("attendeeJoined", (attendee) => {
@@ -124,8 +125,7 @@ describe("Presence", () => {
 								newAttendee = attendee;
 							}),
 						);
-					});
-					it('is announced via `attendeeJoined` with status "Connected" when new', () => {
+
 						// Act - simulate join message from client
 						presence.processSignal("", initialAttendeeSignal, false);
 
@@ -246,7 +246,7 @@ describe("Presence", () => {
 						presence.processSignal("", initialAttendeeSignal, false);
 					});
 
-					describe("has their connection removed", () => {
+					describe("and has their connection removed", () => {
 						// Setup
 						let disconnectedAttendee: ISessionClient | undefined;
 						beforeEach(() => {
