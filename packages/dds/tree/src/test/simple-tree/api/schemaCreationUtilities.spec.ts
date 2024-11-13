@@ -210,10 +210,7 @@ describe("schemaCreationUtilities", () => {
 		const root = new Parent({ mode: new Mode.Bonus() });
 		const mode = root.mode;
 
-		// mode.value must be copied out into its own variable for the switch to narrow it correctly.
-		const value = mode.value;
-
-		switch (value) {
+		switch (mode.value) {
 			case "Fun": {
 				assert.fail();
 			}
@@ -222,7 +219,7 @@ describe("schemaCreationUtilities", () => {
 				break;
 			}
 			default:
-				unreachableCase(value);
+				unreachableCase(mode);
 		}
 	});
 
@@ -231,10 +228,7 @@ describe("schemaCreationUtilities", () => {
 		type Mode = TreeNodeFromImplicitAllowedTypes<typeof Mode.schema>;
 		const node = new Mode.Bonus() as Mode;
 
-		// node.value must be copied out into its own variable for the switch to narrow it correctly.
-		const value = node.value;
-
-		switch (value) {
+		switch (node.value) {
 			case "Fun": {
 				assert.fail();
 			}
@@ -243,7 +237,7 @@ describe("schemaCreationUtilities", () => {
 				break;
 			}
 			default:
-				unreachableCase(value);
+				unreachableCase(node);
 		}
 	});
 
@@ -267,10 +261,7 @@ describe("schemaCreationUtilities", () => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(day));
 
-		// view.root.value must be copied out into its own variable for the switch to narrow it correctly.
-		const value = view.root.value;
-
-		switch (value) {
+		switch (view.root.value) {
 			case Day.Today: {
 				// This one runs
 				break;
@@ -279,7 +270,7 @@ describe("schemaCreationUtilities", () => {
 				assert.fail();
 			}
 			default:
-				unreachableCase(value);
+				unreachableCase(view.root);
 		}
 	});
 

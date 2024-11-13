@@ -14,17 +14,15 @@ Additionally [`enumFromStrings`](https://fluidframework.com/docs/api/v2/tree#enu
 Part of this improvement was fixing the `.schema` property to be a tuple over each of the schema where it was previously a tuple of a single combined schema due to a bug.
 
 One side-effect of these fixes is that narrowing of the `value` field of a node typed from the `.schema` behaves slightly different, such that the node type is now a union instead of it being a single type with a `.value` that is a union.
-This means the `.value` property needs to be read into its own variable to be able to be narrowed (for example in a switch statement).
+This means that narrowing based on `.value` property narrows which node type you have, not just the value property.
+This mainly matters when matching all cases like the switch statement below:
 
 ```typescript
 const Mode = enumFromStrings(schema, ["Fun", "Bonus"]);
 type Mode = TreeNodeFromImplicitAllowedTypes<typeof Mode.schema>;
 const node = new Mode.Bonus() as Mode;
 
-// node.value now must be copied out into its own variable for the switch to narrow it correctly.
-const value = node.value;
-
-switch (value) {
+switch (node.value) {
 	case "Fun": {
 		assert.fail();
 	}
@@ -33,6 +31,7 @@ switch (value) {
 		break;
 	}
 	default:
-		unreachableCase(value);
+		// Before this change, "node.value" was never here, now "node" is never.
+		unreachableCase(node);
 }
 ```
