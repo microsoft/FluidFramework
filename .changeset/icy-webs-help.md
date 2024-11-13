@@ -7,6 +7,6 @@
 "section": legacy
 ---
 
-Removed uses of ensureNoDataModelChanges.
+"Remove IFluidParentContext.ensureNoDataModelChanges and its implementations
 
-- `IFluidParentContext.ensureNoDataModelChanges` has been moved. [prior deprecation commit](https://github.com/microsoft/FluidFramework/commit/c9d156264bdfa211a3075bdf29cde442ecea234c).
+- `IFluidParentContext.ensureNoDataModelChanges` has been removed. [prior deprecation commit](https://github.com/microsoft/FluidFramework/commit/c9d156264bdfa211a3075bdf29cde442ecea234c)
