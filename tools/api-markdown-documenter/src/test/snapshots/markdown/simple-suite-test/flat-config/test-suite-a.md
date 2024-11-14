@@ -1143,14 +1143,14 @@ class TestClass
 
 Test class constructor
 
-<a name="_constructor_-signature" />
+<a id="_constructor_-signature"></a>
 **Signature**
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-<a name="_constructor_-parameters" />
+<a id="_constructor_-parameters"></a>
 **Parameters**
 
 | Parameter | Type | Description |
@@ -1163,7 +1163,7 @@ constructor(testClassProperty: string);
 
 Test interface property
 
-<a name="testclassproperty-signature" />
+<a id="testclassproperty-signature"></a>
 **Signature**
 
 ```typescript
@@ -1178,28 +1178,28 @@ readonly testClassProperty: string;
 
 Test class method
 
-<a name="testclassmethod-signature" />
+<a id="testclassmethod-signature"></a>
 **Signature**
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-<a name="testclassmethod-parameters" />
+<a id="testclassmethod-parameters"></a>
 **Parameters**
 
 | Parameter | Type | Description |
 | --- | --- | --- |
 | testParameter | string | A string |
 
-<a name="testclassmethod-returns" />
+<a id="testclassmethod-returns"></a>
 **Returns**
 
 A Promise
 
 **Return type:** Promise&lt;string&gt;
 
-<a name="testclassmethod-throws" />
+<a id="testclassmethod-throws"></a>
 **Throws**
 
 An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
@@ -1231,7 +1231,7 @@ enum TestEnum
 
 Test enum value 1
 
-<a name="testenumvalue1-signature" />
+<a id="testenumvalue1-signature"></a>
 **Signature**
 
 ```typescript
@@ -1242,7 +1242,7 @@ TestEnumValue1 = 0
 
 Test enum value 2
 
-<a name="testenumvalue2-signature" />
+<a id="testenumvalue2-signature"></a>
 **Signature**
 
 ```typescript
