@@ -165,14 +165,6 @@
 			"eslint": [
 				"build:esnext",
 				"^build:test:esm"
-			],
-			"build:esnext": [
-				"...",
-				"typetests:gen"
-			],
-			"tsc": [
-				"...",
-				"typetests:gen"
 			]
 		}
 	},
