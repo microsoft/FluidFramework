@@ -356,14 +356,24 @@ extends:
 
           # Job - Build
           - job: afterBuild
-            displayName: Build
+            displayName: afterBuild
             dependsOn: build
             steps:
               - task: DownloadPipelineArtifact@2
                 inputs:
-                  artifact: buildOutput  # Name of the artifact
-                  targetPath: $(Pipeline.Workspace)  # Shared workspace for the downloaded artifact
+                  artifact: buildOutput
+                  targetPath: $(Pipeline.Workspace)
 
+              - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+              - template: /tools/pipelines/templates/include-install.yml@self
+                parameters:
+                  packageManager: '${{ parameters.packageManager }}'
+                  buildDirectory: '${{ parameters.buildDirectory }}'
+                  packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+
+              - script: ls $(Pipeline.Workspace)/buildOutput  # Adjust path if different
+                displayName: "List downloaded artifacts"
                   # Test
               - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
                   # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
