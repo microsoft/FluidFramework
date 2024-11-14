@@ -6,7 +6,7 @@
 import {
 	AdaptedViewSchema,
 	type Adapters,
-	Compatibility,
+	type FieldKindIdentifier,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
@@ -14,23 +14,44 @@ import {
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
+	FieldKinds,
 	type FullSchemaPolicy,
-	allowsRepoSuperset,
+	getAllowedContentDiscrepancies,
 	isNeverTree,
 } from "../../feature-libraries/index.js";
+import {
+	normalizeFieldSchema,
+	type FieldSchema,
+	type ImplicitFieldSchema,
+} from "../schemaTypes.js";
+import { toStoredSchema } from "../toStoredSchema.js";
+import type { FieldDiscrepancy } from "../../feature-libraries/modular-schema/discrepancies.js";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
  * A collection of View information for schema, including policy.
  */
 export class ViewSchema {
 	/**
-	 * @param schema - Cached conversion of view schema in the stored schema format.
+	 * Cached conversion of the view schema in the stored schema format.
+	 */
+	private viewSchemaAsStored: TreeStoredSchema;
+	/**
+	 * Normalized view schema (implicitly allowed view schema types are converted to their canonical form).
+	 */
+	public readonly schema: FieldSchema;
+	/**
+	 * @param viewSchema - Schema for the root field of this view.
 	 */
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
 		public readonly adapters: Adapters,
-		public readonly schema: TreeStoredSchema,
-	) {}
+		viewSchema: ImplicitFieldSchema,
+	) {
+		this.schema = normalizeFieldSchema(viewSchema);
+		this.viewSchemaAsStored = toStoredSchema(this.schema);
+	}
 
 	/**
 	 * Determines the compatibility of a stored document
@@ -42,53 +63,124 @@ export class ViewSchema {
 	 * TODO: this API violates the parse don't validate design philosophy.
 	 * It should be wrapped with (or replaced by) a parse style API.
 	 */
-	public checkCompatibility(stored: TreeStoredSchema): {
-		read: Compatibility;
-		write: Compatibility;
-		writeAllowingStoredSchemaUpdates: Compatibility;
-	} {
+	public checkCompatibility(
+		stored: TreeStoredSchema,
+	): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 		// TODO: support adapters
 		// const adapted = this.adaptRepo(stored);
 
-		const read = allowsRepoSuperset(this.policy, stored, this.schema)
-			? Compatibility.Compatible
-			: // TODO: support adapters
-				// : allowsRepoSuperset(this.policy, adapted.adaptedForViewSchema, this.storedSchema)
-				// ? Compatibility.RequiresAdapters
-				Compatibility.Incompatible;
-		// TODO: Extract subset of adapters that are valid to use on stored
-		// TODO: separate adapters from schema updates
-		const write = allowsRepoSuperset(this.policy, this.schema, stored)
-			? Compatibility.Compatible
-			: // TODO: support adapters
-				// : allowsRepoSuperset(this.policy, this.storedSchema, adapted.adaptedForViewSchema)
-				// TODO: IThis assumes adapters are bidirectional.
-				//   Compatibility.RequiresAdapters
-				Compatibility.Incompatible;
+		// TODO: This does not handle never trees analogously to the previous codepath, but should before checkin.
 
-		// TODO: compute this properly (and maybe include the set of schema changes needed for it?).
-		// Maybe updates would happen lazily when needed to store data?
-		// When willingness to updates can avoid need for some adapters,
-		// how should it be decided if the adapter should be used to avoid the update?
-		// TODO: is this case actually bi-variant, making this correct if we did it for each schema independently?
-		let writeAllowingStoredSchemaUpdates =
-			// TODO: This should consider just the updates needed
-			// (ex: when view covers a subset of stored after stored has a update to that subset).
-			allowsRepoSuperset(this.policy, stored, this.schema)
-				? Compatibility.Compatible
-				: // TODO: this assumes adapters can translate in both directions. In general this will not be true.
-					// TODO: this also assumes that schema updates to the adapted repo would translate to
-					// updates on the stored schema, which is also likely untrue.
-					// // TODO: support adapters
-					// allowsRepoSuperset(this.policy, adapted.adaptedForViewSchema, this.storedSchema)
-					// ? Compatibility.RequiresAdapters // Requires schema updates. TODO: consider adapters that can update writes.
-					Compatibility.Incompatible;
+		// View schema allows a subset of documents that stored schema does, and the discrepancies are allowed by policy
+		// determined by the view schema (i.e. objects with extra optional fields in the stored schema have opted into allowing this.
+		// In the future, this would also include things like:
+		// - fields with more allowed types in the stored schema than in the view schema have out-of-schema "unknown content" adapters
+		let canView = true;
+		// View schema allows a superset of documents that stored schema does, hence the document could be upgraded to use a persisted version
+		// of this view schema as its stored schema.
+		let canUpgrade = true;
 
-		// Since the above does not consider partial updates,
-		// we can improve the tolerance a bit by considering the op-op update:
-		writeAllowingStoredSchemaUpdates = Math.max(writeAllowingStoredSchemaUpdates, write);
+		const updateCompatibilityFromFieldDiscrepancy = (discrepancy: FieldDiscrepancy) => {
+			switch (discrepancy.mismatch) {
+				case "allowedTypes": {
+					// Since we only track the symmetric difference between the allowed types in the view and
+					// stored schemas, it's sufficient to check if any extra allowed types still exist in the
+					// stored schema.
+					if (discrepancy.stored.length > 0) {
+						// Stored schema has extra allowed types that the view schema does not.
+						canUpgrade = false;
+					}
 
-		return { read, write, writeAllowingStoredSchemaUpdates };
+					if (discrepancy.view.length > 0) {
+						// View schema has extra allowed types that the stored schema does not.
+						canView = false;
+					}
+					break;
+				}
+				case "fieldKind": {
+					const result = comparePosetElements(
+						discrepancy.stored,
+						discrepancy.view,
+						fieldRealizer,
+					);
+
+					if (result === PosetComparisonResult.Greater) {
+						// Stored schema is more relaxed than view schema.
+						canUpgrade = false;
+					}
+
+					if (result === PosetComparisonResult.Less) {
+						// View schema is more relaxed than stored schema.
+						canView = false;
+					}
+
+					if (result === PosetComparisonResult.Incomparable) {
+						canUpgrade = false;
+						canView = false;
+					}
+
+					break;
+				}
+				case "valueSchema": {
+					canView = false;
+					canUpgrade = false;
+					break;
+				}
+				default:
+					unreachableCase(discrepancy);
+			}
+		};
+
+		for (const discrepancy of getAllowedContentDiscrepancies(
+			this.viewSchemaAsStored,
+			stored,
+		)) {
+			switch (discrepancy.mismatch) {
+				case "nodeKind": {
+					// We conservatively do not allow node types to change.
+					// The only time this might be valid in the sense that the data canonically converts is converting an object node
+					// to a map node over the union of all the object fields' types.
+					if (discrepancy.stored === undefined) {
+						// View schema has added a node type that the stored schema doesn't know about.
+						canView = false;
+					} else if (discrepancy.view === undefined) {
+						// Stored schema has a node type that the view schema doesn't know about.
+						canUpgrade = false;
+					} else {
+						// Node type exists in both schemas but has changed. We conservatively never allow this.
+						canView = false;
+						canUpgrade = false;
+					}
+					break;
+				}
+				case "valueSchema":
+				case "allowedTypes":
+				case "fieldKind": {
+					updateCompatibilityFromFieldDiscrepancy(discrepancy);
+					break;
+				}
+				case "fields": {
+					discrepancy.differences.forEach(updateCompatibilityFromFieldDiscrepancy);
+					break;
+				}
+				// No default
+			}
+
+			// We could consider early exiting for many incompatibilities, but in practice that shouldn't be a common scenario
+			// (most of the time, well-formed apps will have either allowRead or allowUpgrade be true)
+		}
+
+		// TODO: AB#8121: Weaken this check to support viewing under additional circumstances.
+		// In the near term, this should support viewing documents with additional optional fields in their schema on object types.
+		// Longer-term (as demand arises), we could also add APIs to constructing view schema to allow for more flexibility
+		// (e.g. out-of-schema content handlers could allow support for viewing docs which have extra allowed types in a particular field)
+		canView &&= canUpgrade;
+
+		return {
+			canView,
+			canUpgrade,
+			isEquivalent: canView && canUpgrade,
+		};
 	}
 
 	/**
@@ -102,8 +194,15 @@ export class ViewSchema {
 		// since there never is a reason to have a never type as an adapter input,
 		// and its impossible for an adapter to be correctly implemented if its output type is never
 		// (unless its input is also never).
+
 		for (const adapter of this.adapters?.tree ?? []) {
-			if (isNeverTree(this.policy, this.schema, this.schema.nodeSchema.get(adapter.output))) {
+			if (
+				isNeverTree(
+					this.policy,
+					this.viewSchemaAsStored,
+					this.viewSchemaAsStored.nodeSchema.get(adapter.output),
+				)
+			) {
 				fail("tree adapter for stored adapter.output should not be never");
 			}
 		}
@@ -144,4 +243,111 @@ export class ViewSchema {
 		// TODO: support adapters like missing field adapters.
 		return original;
 	}
+}
+
+/**
+ * A linear extension of a partially-ordered set of `T`s. See:
+ * https://en.wikipedia.org/wiki/Linear_extension
+ *
+ * The linear extension is represented as a lookup from each poset element to its index in the linear extension.
+ */
+type LinearExtension<T> = Map<T, number>;
+
+/**
+ * A realizer for a partially-ordered set. See:
+ * https://en.wikipedia.org/wiki/Order_dimension
+ */
+type Realizer<T> = LinearExtension<T>[];
+
+function isFieldDiscrepancyCompatible(discrepancy: FieldDiscrepancy): boolean {
+	switch (discrepancy.mismatch) {
+		case "allowedTypes": {
+			// Since we only track the symmetric difference between the allowed types in the view and
+			// stored schemas, it's sufficient to check if any extra allowed types still exist in the
+			// stored schema.
+			return discrepancy.stored.length === 0;
+		}
+		case "fieldKind": {
+			return posetLte(discrepancy.stored, discrepancy.view, fieldRealizer);
+		}
+		case "valueSchema": {
+			return false;
+		}
+		// No default
+	}
+	return false;
+}
+
+/**
+ * A realizer for the partial order of field kind relaxability.
+ *
+ * It seems extremely likely that this partial order will remain dimension 2 over time (i.e. the set of allowed relaxations can be visualized
+ * with a [dominance drawing](https://en.wikipedia.org/wiki/Dominance_drawing)), so this strategy allows efficient comarison between field kinds
+ * without excessive casework.
+ *
+ * Hasse diagram for the partial order is shown below (lower fields can be relaxed to higher fields):
+ * ```
+ * sequence
+ *    |
+ * optional
+ *    |    \
+ * required forbidden
+ *    |
+ * identifier
+ * ```
+ */
+const fieldRealizer: Realizer<FieldKindIdentifier> = [
+	[
+		FieldKinds.forbidden,
+		FieldKinds.identifier,
+		FieldKinds.required,
+		FieldKinds.optional,
+		FieldKinds.sequence,
+	],
+	[
+		FieldKinds.identifier,
+		FieldKinds.required,
+		FieldKinds.forbidden,
+		FieldKinds.optional,
+		FieldKinds.sequence,
+	],
+].map((extension) => new Map(extension.map((kind, index) => [kind.identifier, index])));
+
+const PosetComparisonResult = {
+	Less: "<",
+	Greater: ">",
+	Equal: "=",
+	Incomparable: "||",
+} as const;
+type PosetComparisonResult =
+	(typeof PosetComparisonResult)[keyof typeof PosetComparisonResult];
+
+function comparePosetElements<T>(a: T, b: T, realizer: Realizer<T>): PosetComparisonResult {
+	let hasLessThanResult = false;
+	let hasGreaterThanResult = false;
+	for (const extension of realizer) {
+		const aIndex = extension.get(a);
+		const bIndex = extension.get(b);
+		assert(aIndex !== undefined && bIndex !== undefined, "Invalid realizer");
+		if (aIndex < bIndex) {
+			hasLessThanResult = true;
+		} else if (aIndex > bIndex) {
+			hasGreaterThanResult = true;
+		}
+	}
+
+	return hasLessThanResult
+		? hasGreaterThanResult
+			? PosetComparisonResult.Incomparable
+			: PosetComparisonResult.Less
+		: hasGreaterThanResult
+			? PosetComparisonResult.Greater
+			: PosetComparisonResult.Equal;
+}
+
+function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
+	const comparison = comparePosetElements(a, b, realizer);
+	return (
+		comparison === PosetComparisonResult.Less || comparison === PosetComparisonResult.Equal
+	);
 }

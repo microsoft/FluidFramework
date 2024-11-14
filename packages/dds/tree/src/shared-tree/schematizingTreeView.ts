@@ -117,7 +117,7 @@ export class SchematizingSimpleTreeView<
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 		this.schemaPolicy = defaultSchemaPolicy;
 
-		this.viewSchema = new ViewSchema(policy, {}, toStoredSchema(this.rootFieldSchema));
+		this.viewSchema = new ViewSchema(policy, {}, this.rootFieldSchema);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -162,7 +162,7 @@ export class SchematizingSimpleTreeView<
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.viewSchema.schema,
+				schema: toStoredSchema(this.viewSchema.schema),
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -189,7 +189,7 @@ export class SchematizingSimpleTreeView<
 				AllowedUpdateType.SchemaCompatible,
 				this.checkout,
 				{
-					schema: this.viewSchema.schema,
+					schema: toStoredSchema(this.viewSchema.schema),
 					initialTree: undefined,
 				},
 			);
@@ -388,8 +388,7 @@ export function requireSchema(
 	{
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
 		assert(
-			compatibility.write === Compatibility.Compatible &&
-				compatibility.read === Compatibility.Compatible,
+			compatibility.canView && compatibility.canUpgrade,
 			0x8c3 /* requireSchema invoked with incompatible schema */,
 		);
 	}

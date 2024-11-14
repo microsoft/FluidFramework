@@ -85,14 +85,13 @@ export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompati
  */
 export function comparePersistedSchema(
 	persisted: JsonCompatible,
-	view: JsonCompatible,
+	view: ImplicitFieldSchema,
 	options: ICodecOptions,
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
 	const schemaCodec = makeSchemaCodec(options);
 	const stored = schemaCodec.decode(persisted as Format);
-	const viewParsed = schemaCodec.decode(view as Format);
-	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, viewParsed);
+	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);
 	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);
 }
 
@@ -105,22 +104,8 @@ export function comparePersistedSchemaInternal(
 	viewSchema: ViewSchema,
 	canInitialize: boolean,
 ): SchemaCompatibilityStatus {
-	const result = viewSchema.checkCompatibility(stored);
-
-	// TODO: AB#8121: Weaken this check to support viewing under additional circumstances.
-	// In the near term, this should support viewing documents with additional optional fields in their schema on object types.
-	// Longer-term (as demand arises), we could also add APIs to constructing view schema to allow for more flexibility
-	// (e.g. out-of-schema content handlers could allow support for viewing docs which have extra allowed types in a particular field)
-	const canView =
-		result.write === Compatibility.Compatible && result.read === Compatibility.Compatible;
-	const canUpgrade = result.read === Compatibility.Compatible;
-	const isEquivalent = canView && canUpgrade;
-	const compatibility: SchemaCompatibilityStatus = {
-		canView,
-		canUpgrade,
-		isEquivalent,
+	return {
+		...viewSchema.checkCompatibility(stored),
 		canInitialize,
 	};
-
-	return compatibility;
 }
