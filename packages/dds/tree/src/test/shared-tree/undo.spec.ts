@@ -495,22 +495,14 @@ describe("Undo and redo", () => {
 	it("reverts original & forked revertibles after making separate changes to the original & forked view", () => {
 		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
 
-		const {
-			undoStack: undoStack1,
-			redoStack: redoStack1,
-			unsubscribe: unsubscribe1,
-		} = createTestUndoRedoStacks(originalView.events);
+		const { undoStack: undoStack1 } = createTestUndoRedoStacks(originalView.events);
 
 		assert(originalView.root.child !== undefined);
 		originalView.root.child.propertyOne = 256; // 128 -> 256
 		originalView.root.child.propertyTwo.itemOne = "newItem";
 
 		const forkedView = originalView.fork();
-		const {
-			undoStack: undoStack2,
-			redoStack: redoStack2,
-			unsubscribe: unsubscribe2,
-		} = createTestUndoRedoStacks(forkedView.events);
+		const { undoStack: undoStack2 } = createTestUndoRedoStacks(forkedView.events);
 
 		assert(forkedView.root.child !== undefined);
 		forkedView.root.child.propertyOne = 512; // 256 -> 512
@@ -547,24 +539,20 @@ describe("Undo and redo", () => {
 	it("reverts cloned revertible on original view", () => {
 		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
 
-		const {
-			undoStack: undoStack1,
-			redoStack: redoStack1,
-			unsubscribe: unsubscribe1,
-		} = createTestUndoRedoStacks(originalView.events);
+		const { undoStack } = createTestUndoRedoStacks(originalView.events);
 
 		assert(originalView.root.child !== undefined);
 		originalView.root.child.propertyOne = 256; // 128 -> 256
 		originalView.root.child.propertyTwo.itemOne = "newItem";
 
-		const undoOriginalPropertyOne = undoStack1.pop();
-		const undoOriginalPropertyTwo = undoStack1.pop();
+		const undoOriginalPropertyTwo = undoStack.pop();
+		const undoOriginalPropertyOne = undoStack.pop();
 
-		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone(originalView);
 		const clonedUndoOriginalPropertyTwo = undoOriginalPropertyTwo?.clone(originalView);
+		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone(originalView);
 
-		clonedUndoOriginalPropertyOne?.revert();
 		clonedUndoOriginalPropertyTwo?.revert();
+		clonedUndoOriginalPropertyOne?.revert();
 
 		assert.equal(originalView.root.child?.propertyOne, 128);
 		assert.equal(originalView.root.child?.propertyTwo.itemOne, "");
@@ -574,22 +562,79 @@ describe("Undo and redo", () => {
 		assert.equal(clonedUndoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 	});
 
+	it("reverts cloned revertible prior to original revertible", () => {
+		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
+
+		const { undoStack } = createTestUndoRedoStacks(originalView.events);
+
+		assert(originalView.root.child !== undefined);
+		originalView.root.child.propertyOne = 256; // 128 -> 256
+		originalView.root.child.propertyTwo.itemOne = "newItem";
+
+		const forkedView = originalView.fork();
+
+		const undoOriginalPropertyTwo = undoStack.pop();
+		const undoOriginalPropertyOne = undoStack.pop();
+
+		const clonedUndoOriginalPropertyTwo = undoOriginalPropertyTwo?.clone(forkedView);
+		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone(forkedView);
+
+		clonedUndoOriginalPropertyTwo?.revert();
+		clonedUndoOriginalPropertyOne?.revert();
+
+		assert.equal(originalView.root.child?.propertyOne, 256);
+		assert.equal(originalView.root.child?.propertyTwo.itemOne, "newItem");
+		assert.equal(forkedView.root.child?.propertyOne, 128);
+		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "");
+		assert.equal(undoOriginalPropertyOne?.status, RevertibleStatus.Valid);
+		assert.equal(undoOriginalPropertyTwo?.status, RevertibleStatus.Valid);
+		assert.equal(clonedUndoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
+		assert.equal(clonedUndoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
+
+		undoOriginalPropertyTwo?.revert();
+		undoOriginalPropertyOne?.revert();
+
+		assert.equal(originalView.root.child?.propertyOne, 128);
+		assert.equal(originalView.root.child?.propertyTwo.itemOne, "");
+		assert.equal(undoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
+		assert.equal(undoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
+	});
+
 	it("clone revertible fails if trees are different", () => {
 		const viewA = asTreeViewAlpha(createLocalSharedTree("testSharedTreeOne"));
 		const viewB = asTreeViewAlpha(createLocalSharedTree("testSharedTreeTwo"));
 
-		const {
-			undoStack: undoStack1,
-			redoStack: redoStack1,
-			unsubscribe: unsubscribe1,
-		} = createTestUndoRedoStacks(viewA.events);
+		const { undoStack } = createTestUndoRedoStacks(viewA.events);
 
 		assert(viewA.root.child !== undefined);
 		viewA.root.child.propertyOne = 256; // 128 -> 256
 
-		const undoOriginalPropertyOne = undoStack1.pop();
+		const undoOriginalPropertyOne = undoStack.pop();
 
 		assert.throws(() => undoOriginalPropertyOne?.clone(viewB).revert(), "Error: 0x576"); // "branch A and branch B must be related", error code 0x576
+	});
+
+	it("cloned revertible fails if already applied", () => {
+		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTreeOne"));
+
+		const { undoStack } = createTestUndoRedoStacks(originalView.events);
+
+		assert(originalView.root.child !== undefined);
+		originalView.root.child.propertyOne = 256; // 128 -> 256
+
+		const undoOriginalPropertyOne = undoStack.pop();
+		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone();
+
+		undoOriginalPropertyOne?.revert();
+
+		assert.equal(originalView.root.child?.propertyOne, 128);
+		assert.equal(undoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
+		assert.equal(clonedUndoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
+
+		assert.throws(
+			() => clonedUndoOriginalPropertyOne?.revert(),
+			"Error: Unable to revert a revertible that has been disposed.",
+		);
 	});
 });
 
