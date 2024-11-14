@@ -9,6 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
+import type { ClientConnectionId } from "../baseTypes.js";
 import { SessionClientStatus, type ISessionClient } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 
@@ -90,54 +91,72 @@ describe("Presence", () => {
 			});
 
 			describe("attendee", () => {
-				const newAttendeeSessionId: string = "sessionId-4";
-				const initialAttendeeConnectionId: string = "client4";
+				const attendeeSessionId = "sessionId-4";
+				const initialAttendeeConnectionId = "client4";
+				// Note: this connection id exists in the mock runtime audience since
+				// initialization, but should go unnoticed by the presence manager
+				// until there is a join signal related to it.
+				const rejoinAttendeeConnectionId = "client7";
 				let initialAttendeeSignal: ReturnType<typeof generateBasicClientJoin>;
+				let rejoinAttendeeSignal: ReturnType<typeof generateBasicClientJoin>;
 
 				beforeEach(() => {
+					// Ignore submitted signals
 					runtime.submitSignal = () => {};
+
 					initialAttendeeSignal = generateBasicClientJoin(clock.now - 50, {
 						averageLatency: 50,
-						clientSessionId: newAttendeeSessionId,
+						clientSessionId: attendeeSessionId,
 						clientConnectionId: initialAttendeeConnectionId,
 						updateProviders: ["client2"],
+					});
+
+					rejoinAttendeeSignal = generateBasicClientJoin(clock.now - 20, {
+						averageLatency: 20,
+						clientSessionId: attendeeSessionId, // Same session id
+						clientConnectionId: rejoinAttendeeConnectionId, // Different connection id
+						connectionOrder: 1,
+						updateProviders: ["client2"],
+						priorClientToSessionId:
+							initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
 					});
 				});
 
 				it("is not announced via `attendeeDisconnected` when unknown connection is removed", () => {
 					// Setup
 					presence.events.on("attendeeDisconnected", () => {
-						assert.fail("ateendeeDisconnected should not be emitted for unknown connection.");
+						assert.fail(
+							"`attendeeDisconnected` should not be emitted for unknown connection.",
+						);
 					});
 
-					// Act & Verify - remove unknown connection id
-					presence.removeClientConnectionId("unknownConnectionId");
+					// Act & Verify - remove connection unknown to presence
+					runtime.removeMember("client5");
 				});
 
 				describe("that is joining", () => {
-					it('is announced via `attendeeJoined` with status "Connected" when new', () => {
-						// Setup
-						let newAttendee: ISessionClient | undefined;
+					let newAttendee: ISessionClient | undefined;
+
+					beforeEach(() => {
+						newAttendee = undefined;
 						afterCleanUp.push(
 							presence.events.on("attendeeJoined", (attendee) => {
 								assert(newAttendee === undefined, "Only one attendee should be announced");
 								newAttendee = attendee;
 							}),
 						);
+					});
 
-						// Act - simulate join message from client
-						presence.processSignal("", initialAttendeeSignal, false);
-
-						// Verify
+					function verifyNewAttendee(expectedConnectionId: ClientConnectionId): void {
 						assert(newAttendee !== undefined, "No attendee was announced");
 						assert.equal(
 							newAttendee.sessionId,
-							newAttendeeSessionId,
+							attendeeSessionId,
 							"Attendee has wrong session id",
 						);
 						assert.equal(
 							newAttendee.getConnectionId(),
-							initialAttendeeConnectionId,
+							expectedConnectionId,
 							"Attendee has wrong client connection id",
 						);
 						assert.equal(
@@ -145,110 +164,182 @@ describe("Presence", () => {
 							SessionClientStatus.Connected,
 							"Attendee connection status is not Connected",
 						);
+					}
+
+					it('first time is announced via `attendeeJoined` with status "Connected"', () => {
+						// Act - simulate join message from client
+						presence.processSignal("", initialAttendeeSignal, false);
+
+						// Verify
+						verifyNewAttendee(initialAttendeeConnectionId);
+					});
+
+					it('second time is announced once via `attendeeJoined` with status "Connected" when prior is unknown', () => {
+						// Setup
+						runtime.removeMember(initialAttendeeConnectionId);
+
+						// Act - simulate join message from client
+						presence.processSignal("", rejoinAttendeeSignal, false);
+
+						// Verify
+						verifyNewAttendee(rejoinAttendeeConnectionId);
+					});
+
+					it.skip('second time is announced once via `attendeeJoined` with status "Connected" when prior is still connected', () => {
+						// Act - simulate join message from client
+						presence.processSignal("", rejoinAttendeeSignal, false);
+
+						// Verify
+						verifyNewAttendee(rejoinAttendeeConnectionId);
+					});
+
+					it.skip('first time is announced via `attendeeJoined` with status "Connected" even if unknown to audience', () => {
+						// Setup - remove connection from audience
+						runtime.removeMember(initialAttendeeConnectionId);
+
+						// Act - simulate join message from client
+						presence.processSignal("", initialAttendeeSignal, false);
+
+						// Verify
+						verifyNewAttendee(initialAttendeeConnectionId);
+					});
+
+					it('second time is announced once via `attendeeJoined` with status "Connected" even if most recent unknown to audience', () => {
+						// Setup - remove connection from audience
+						runtime.removeMember(rejoinAttendeeConnectionId);
+
+						// Act - simulate join message from client
+						presence.processSignal("", rejoinAttendeeSignal, false);
+
+						// Verify
+						verifyNewAttendee(rejoinAttendeeConnectionId);
+					});
+
+					it("as collateral and disconnected is NOT announced via `attendeeJoined`", () => {
+						// Setup - remove connections from audience
+						const collateralAttendeeConnectionId = "client3";
+						const collateralAttendeeSignal = generateBasicClientJoin(clock.now - 10, {
+							averageLatency: 40,
+							clientSessionId: attendeeSessionId,
+							clientConnectionId: rejoinAttendeeConnectionId,
+							connectionOrder: 1,
+							updateProviders: ["client2"],
+							priorClientToSessionId: {
+								...initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
+								[collateralAttendeeConnectionId]: {
+									rev: 0,
+									timestamp: 0,
+									value: "collateral-id",
+								},
+							},
+						});
+						runtime.removeMember(initialAttendeeConnectionId);
+						runtime.removeMember(collateralAttendeeConnectionId);
+
+						// Act - simulate join message from client
+						presence.processSignal("", collateralAttendeeSignal, false);
+
+						// Verify only the rejoining attendee is announced
+						verifyNewAttendee(rejoinAttendeeConnectionId);
 					});
 				});
 
 				describe("that is already known", () => {
 					let knownAttendee: ISessionClient | undefined;
+
 					beforeEach(() => {
-						afterCleanUp.push(
-							presence.events.on("attendeeJoined", (attendee) => {
-								knownAttendee = attendee;
-							}),
-						);
+						const removeListener = presence.events.on("attendeeJoined", (attendee) => {
+							knownAttendee = attendee;
+						});
+
 						// Setup - simulate join message from client
 						presence.processSignal("", initialAttendeeSignal, false);
 						assert(knownAttendee !== undefined, "No attendee was announced in setup");
+						removeListener();
 					});
 
-					for (const [desc, id] of [
-						["connection id", initialAttendeeConnectionId] as const,
-						["session id", newAttendeeSessionId] as const,
+					it('is NOT announced when "rejoined" with same connection (duplicate signal)', () => {
+						afterCleanUp.push(
+							presence.events.on("attendeeJoined", (attendee) => {
+								assert.fail(
+									"Attendee should not be announced when rejoining with same connection",
+								);
+							}),
+						);
+
+						clock.tick(10);
+
+						// Act & Verify - simulate duplicate join message from client
+						presence.processSignal("", initialAttendeeSignal, false);
+					});
+
+					// To retain symmetry across Joined and Disconnected events, do not announce
+					// attendeeJoined when the attendee is already connected and we only see
+					// a connection id update. This can happen when audience removal is late.
+					it.skip('is not announced via `attendeeJoined` when already "Connected"', () => {
+						// Setup
+						afterCleanUp.push(
+							presence.events.on("attendeeJoined", () => {
+								assert.fail("No attendee should be announced in join processing");
+							}),
+						);
+
+						// Act - simulate join message from client
+						presence.processSignal("", rejoinAttendeeSignal, false);
+					});
+
+					for (const [status, setup] of [
+						[SessionClientStatus.Connected, () => {}] as const,
+						[
+							SessionClientStatus.Disconnected,
+							() => runtime.removeMember(initialAttendeeConnectionId),
+						] as const,
 					]) {
-						describe(`is available from \`getAttendee\` by ${desc}`, () => {
-							it('with status "Connected"', () => {
+						for (const [desc, id] of [
+							["connection id", initialAttendeeConnectionId] as const,
+							["session id", attendeeSessionId] as const,
+						]) {
+							it(`with status "${status}" is available from \`getAttendee\` by ${desc}`, () => {
+								// Setup
+								setup();
+
 								// Act
 								const attendee = presence.getAttendee(id);
-								// Verify
-								assert.equal(attendee, knownAttendee, "getAttendee returned wrong attendee");
-								assert.equal(
-									attendee.getConnectionStatus(),
-									SessionClientStatus.Connected,
-									"getAttendee returned attendee with wrong status",
-								);
-							});
-
-							it('with status "Disconnected" after disconnect', () => {
-								// Act - remove client connection id
-								presence.removeClientConnectionId(initialAttendeeConnectionId);
-								const attendee = presence.getAttendee(id);
 
 								// Verify
-								assert.equal(attendee, knownAttendee, "getAttendee returned wrong attendee");
+								assert.equal(attendee, knownAttendee, "`getAttendee` returned wrong attendee");
 								assert.equal(
 									attendee.getConnectionStatus(),
-									SessionClientStatus.Disconnected,
-									"getAttendee returned attendee with wrong status",
+									status,
+									"`getAttendee` returned attendee with wrong status",
 								);
 							});
-						});
-					}
+						}
 
-					describe("is available from `getAttendees`", () => {
-						it('with status "Connected"', () => {
+						it(`with status "${status}" is available from \`getAttendees\``, () => {
 							// Setup
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+							setup();
 
 							// Act
 							const attendees = presence.getAttendees();
 							assert(
 								attendees.has(knownAttendee),
-								"getAttendees set does not contain attendee",
+								"`getAttendees` set does not contain attendee",
 							);
 							assert.equal(
 								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Connected,
-								"getAttendees set contains attendee with wrong status",
+								status,
+								"`getAttendees` set contains attendee with wrong status",
 							);
 						});
-
-						it('with status "Disconnected"', () => {
-							// Setup
-							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
-
-							// Act - remove client connection id
-							presence.removeClientConnectionId(initialAttendeeConnectionId);
-
-							// Verify
-							const attendees = presence.getAttendees();
-							assert(
-								attendees.has(knownAttendee),
-								"getAttendees set does not contain attendee",
-							);
-							assert.equal(
-								knownAttendee.getConnectionStatus(),
-								SessionClientStatus.Disconnected,
-								"getAttendees set contains attendee with wrong status",
-							);
-						});
-					});
-
-					it('is not announced via `attendeeJoined` when already "Connected"', () => {
-						// Setup
-						afterCleanUp.push(
-							presence.events.on("attendeeJoined", () => {
-								assert.fail("No attendee should be announced in beforeEach");
-							}),
-						);
-
-						// Act - simulate join message from client
-						presence.processSignal("", initialAttendeeSignal, false);
-					});
+					}
 
 					describe("and has their connection removed", () => {
-						let disconnectedAttendee: ISessionClient | undefined;
-						beforeEach(() => {
-							disconnectedAttendee = undefined;
+						it("is announced via `attendeeDisconnected`", () => {
+							// Setup
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+							let disconnectedAttendee: ISessionClient | undefined;
 							afterCleanUp.push(
 								presence.events.on("attendeeDisconnected", (attendee) => {
 									assert(
@@ -260,15 +351,12 @@ describe("Presence", () => {
 							);
 
 							// Act - remove client connection id
-							presence.removeClientConnectionId(initialAttendeeConnectionId);
-						});
+							runtime.removeMember(initialAttendeeConnectionId);
 
-						it("is announced via `attendeeDisconnected`", () => {
-							//
-							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+							// Verify
 							assert(
 								disconnectedAttendee !== undefined,
-								"No attendee was disconnected in removeClientConnectionId",
+								"No attendee was disconnected during `removeMember`",
 							);
 							assert.equal(
 								disconnectedAttendee.sessionId,
@@ -288,13 +376,30 @@ describe("Presence", () => {
 						});
 
 						it('is not announced via `attendeeDisconnected` when already "Disconnected"', () => {
-							assert(
-								disconnectedAttendee !== undefined,
-								"No attendee was disconnected in removeClientConnectionId",
+							// Setup
+
+							const clientToDisconnect = runtime.audience.getMember(
+								initialAttendeeConnectionId,
+							);
+							assert(clientToDisconnect !== undefined, "No client to disconnect");
+
+							// Remove client connection id
+							runtime.removeMember(initialAttendeeConnectionId);
+
+							afterCleanUp.push(
+								presence.events.on("attendeeDisconnected", (attendee) => {
+									assert.fail(
+										"`attendeeDisconnected` should not be emitted for already disconnected attendee",
+									);
+								}),
 							);
 
-							// Act & Verify - remove client connection id again
-							presence.removeClientConnectionId(initialAttendeeConnectionId);
+							// Act & Verify - fake event to remove client connection id again
+							runtime.audience.emit(
+								"removeMember",
+								initialAttendeeConnectionId,
+								clientToDisconnect,
+							);
 						});
 					});
 				});
@@ -302,15 +407,17 @@ describe("Presence", () => {
 				describe("that is rejoining", () => {
 					let priorAttendee: ISessionClient | undefined;
 					beforeEach(() => {
-						afterCleanUp.push(
-							presence.events.on("attendeeJoined", (attendee) => {
-								priorAttendee = attendee;
-							}),
-						);
+						const removeListener = presence.events.on("attendeeJoined", (attendee) => {
+							priorAttendee = attendee;
+						});
 
 						// Setup - simulate join message from client
 						presence.processSignal("", initialAttendeeSignal, false);
 						assert(priorAttendee !== undefined, "No attendee was announced in setup");
+						removeListener();
+
+						// Disconnect the attendee
+						runtime.removeMember(initialAttendeeConnectionId);
 					});
 
 					it("is NOT announced when rejoined with same connection (duplicate signal)", () => {
@@ -332,40 +439,25 @@ describe("Presence", () => {
 						// Setup
 						assert(priorAttendee !== undefined, "No attendee was set in beforeEach");
 
-						const updatedClientConnectionId = "client5";
 						clock.tick(20);
-						const rejoinedAttendeeSignal = generateBasicClientJoin(clock.now - 20, {
-							averageLatency: 20,
-							clientSessionId: newAttendeeSessionId, // Same session id
-							clientConnectionId: updatedClientConnectionId, // Different connection id
-							connectionOrder: 1,
-							updateProviders: ["client2"],
-						});
-						rejoinedAttendeeSignal.content.data["system:presence"].clientToSessionId[
-							initialAttendeeConnectionId
-						] =
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							initialAttendeeSignal.content.data["system:presence"].clientToSessionId[
-								initialAttendeeConnectionId
-							]!;
 
 						// Act - simulate new join message from same client (without disconnect)
-						presence.processSignal("", rejoinedAttendeeSignal, false);
+						presence.processSignal("", rejoinAttendeeSignal, false);
 
 						// Verify
 						// Session id is unchanged
 						assert.equal(
 							priorAttendee.sessionId,
-							newAttendeeSessionId,
+							attendeeSessionId,
 							"Attendee has wrong session id",
 						);
 						// Current connection id is updated
 						assert(
-							priorAttendee.getConnectionId() === updatedClientConnectionId,
+							priorAttendee.getConnectionId() === rejoinAttendeeConnectionId,
 							"Attendee does not have updated client connection id",
 						);
 						// Attendee is available via new connection id
-						const attendeeViaUpdatedId = presence.getAttendee(updatedClientConnectionId);
+						const attendeeViaUpdatedId = presence.getAttendee(rejoinAttendeeConnectionId);
 						assert.equal(
 							attendeeViaUpdatedId,
 							priorAttendee,

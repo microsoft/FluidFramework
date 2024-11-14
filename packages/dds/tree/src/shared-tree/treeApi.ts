@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { TreeStatus } from "../feature-libraries/index.js";
@@ -464,10 +464,12 @@ function runTransactionInCheckout<TResult>(
 		switch (constraint.type) {
 			case "nodeInDocument": {
 				const node = getOrCreateInnerNode(constraint.node);
-				assert(
-					treeApi.status(constraint.node) === TreeStatus.InDocument,
-					0x90f /* Attempted to apply "nodeExists" constraint when building a transaction, but the node is not in the document. */,
-				);
+				const nodeStatus = treeApi.status(constraint.node);
+				if (nodeStatus !== TreeStatus.InDocument) {
+					throw new UsageError(
+						`Attempted to add a "nodeInDocument" constraint, but the node is not currently in the document. Node status: ${nodeStatus}`,
+					);
+				}
 				checkout.editor.addNodeExistsConstraint(node.anchorNode);
 				break;
 			}

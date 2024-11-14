@@ -212,7 +212,7 @@ describe("Schema Evolution Examples", () => {
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:
 			const compatNew = view2.checkCompatibility(stored);
-			const report = getAllowedContentDiscrepancies(viewCollection2, stored);
+			const report = Array.from(getAllowedContentDiscrepancies(viewCollection2, stored));
 			assert.deepEqual(report, []);
 			assertEnumEqual(Compatibility, compatNew.read, Compatibility.Compatible);
 			// It is now possible to write our date into the document.
