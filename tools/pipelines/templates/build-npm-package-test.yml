@@ -351,7 +351,7 @@ extends:
 
               - task: 1ES.PublishPipelineArtifact@1
                 inputs:
-                  targetPath: $(Build.ArtifactStagingDirectory)
+                  targetPath: '${{ parameters.buildDirectory }}'
                   artifact: buildOutput
 
           # Job - Build
@@ -393,7 +393,7 @@ extends:
                     artifact: buildOutput
                     targetPath: '${{ parameters.buildDirectory }}'
 
-                    # Test
+                # Test
                 - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
                     # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
                     - script: |
@@ -506,6 +506,7 @@ extends:
                         buildDirectory: '${{ parameters.buildDirectory }}'
                         testResultDirs: '${{ parameters.testResultDirs }}'
 
+                # Add another job that depends on all the test jobs to run the final steps
                 # Pack
                 - ${{ if ne(parameters.taskPack, false) }}:
                     - task: Bash@3
