@@ -20,6 +20,8 @@ permissions:
 
 jobs:
 
+  # Build the website (including API documentation).
+  # Publish the build artifact for subsequent jobs to leverage.
   build_site:
     runs-on: ubuntu-latest
     name: Build site
@@ -45,6 +47,7 @@ jobs:
           path: docs/build
           retention-days: 3
 
+  # Run linter checks against the website content and infrastructure.
   lint:
     runs-on: ubuntu-latest
     name: pnpm lint
@@ -63,6 +66,7 @@ jobs:
           pnpm i --frozen-lockfile
           pnpm lint
 
+  # Run the website's tests.
   test:
     runs-on: ubuntu-latest
     name: 🧪 Website Tests
@@ -88,6 +92,8 @@ jobs:
       - name: Run tests
         run: "npm run test"
 
+  # Run the link checker against the website.
+  # Publish the results to the PR as a comment.
   broken_link_check:
     runs-on: ubuntu-latest
     name: 🔗 Broken Link Check
