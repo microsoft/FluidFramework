@@ -143,7 +143,7 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
 }
 
 // @alpha
-export function Notifications<T extends InternalUtilityTypes.NotificationEvents<T>, Key extends string = string>(initialSubscriptions: NotificationSubscriptions<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<T>>;
+export function Notifications<T extends InternalUtilityTypes.NotificationEvents<T>, Key extends string = string>(initialSubscriptions: Partial<NotificationSubscriptions<T>>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<T>>;
 
 // @alpha @sealed
 export interface NotificationsManager<T extends InternalUtilityTypes.NotificationEvents<T>> {

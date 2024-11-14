@@ -192,6 +192,7 @@ class NotificationsManagerImpl<
 			}
 		}
 	}
+
 	public update(
 		client: ISessionClient,
 		_received: number,
@@ -229,7 +230,7 @@ export function Notifications<
 	T extends InternalUtilityTypes.NotificationEvents<T>,
 	Key extends string = string,
 >(
-	initialSubscriptions: NotificationSubscriptions<T>,
+	initialSubscriptions: Partial<NotificationSubscriptions<T>>,
 ): InternalTypes.ManagerFactory<
 	Key,
 	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
