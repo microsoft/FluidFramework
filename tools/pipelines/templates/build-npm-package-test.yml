@@ -359,6 +359,11 @@ extends:
             displayName: Build
             dependsOn: build
             steps:
+              - task: DownloadPipelineArtifact@2
+                inputs:
+                  artifact: buildOutput  # Name of the artifact
+                  targetPath: $(Pipeline.Workspace)  # Shared workspace for the downloaded artifact
+
                   # Test
               - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
                   # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
