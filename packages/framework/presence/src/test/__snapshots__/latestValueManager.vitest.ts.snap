@@ -67,10 +67,10 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
       "s:name:testStateWorkspace": {
         "data": {
           "sessionId-2": {
-            "rev": 1,
-            "timestamp": 1020,
+            "rev": 2,
+            "timestamp": 1100,
             "value": {
-              "num": 42,
+              "num": 34,
             },
           },
         },
@@ -85,7 +85,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
         },
       },
     },
-    "sendTimestamp": 1020,
+    "sendTimestamp": 1100,
   },
 ]
 `;
@@ -99,10 +99,10 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
       "s:name:testStateWorkspace": {
         "data": {
           "sessionId-2": {
-            "rev": 2,
-            "timestamp": 1030,
+            "rev": 5,
+            "timestamp": 1220,
             "value": {
-              "num": 65,
+              "num": 90,
             },
           },
         },
@@ -117,7 +117,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
         },
       },
     },
-    "sendTimestamp": 1030,
+    "sendTimestamp": 1220,
   },
 ]
 `;

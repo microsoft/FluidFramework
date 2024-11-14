@@ -143,7 +143,7 @@ class NotificationsManagerImpl<
 				this.key,
 				// @ts-expect-error TODO
 				{ rev: 0, timestamp: 0, value: { name, args: [...args] }, ignoreUnmonitored: true },
-				true,
+				{ forceBroadcast: true },
 			);
 		},
 		unicast: (name, targetClient, ...args) => {

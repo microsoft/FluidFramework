@@ -102,6 +102,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 	private readonly workspaces = new Map<string, PresenceStatesEntry<PresenceStatesSchema>>();
 
+	private readonly timer = new TimerManager();
+
 	public constructor(
 		private readonly clientSessionId: ClientSessionId,
 		private readonly runtime: IEphemeralRuntime,
@@ -198,28 +200,25 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 	private queuedMessage: DatastoreUpdateMessage["content"] | undefined;
 
-	private sendMessageDeadline: number = Date.now();
+	private sendMessageDeadline: number = 0;
 
-	private timeoutId: number | undefined;
+	// private timeoutId: number | undefined;
 
 	private localUpdate(data: DatastoreMessageContent, options: LocalUpdateOptions): void {
-		const { allowableUpdateLatency } = options;
+		const allowableUpdateLatency = options.allowableUpdateLatency ?? 0;
+
+		const now = Date.now();
+		const updateDeadline = now + allowableUpdateLatency;
+		if (this.queuedMessage === undefined) {
+			// no queued message, so set the deadline based on the current message's allowable latency
+			this.sendMessageDeadline = updateDeadline;
+		}
+
 		const currentMessageData = data;
 		const queuedMessageData = this.queuedMessage?.data;
 
 		// Merge the queued data with the next update.
 		const newData: DatastoreMessageContent = { ...queuedMessageData, ...currentMessageData };
-
-		// Check if the current update can be queued; it can only be queued if the batchIntervalInMs has not elapsed and its
-		// deadline is not beyond the batch deadline. The deadlines are the times by which the signals are expected to be
-		// sent.
-
-		const now = Date.now();
-		const updateDeadline = now + (allowableUpdateLatency ?? 0);
-		if(this.queuedMessage === undefined) {
-			// no queued messages, so set the deadline based on the current message's allowable latency
-			this.sendMessageDeadline = updateDeadline;
-		}
 
 		const newContent = {
 			sendTimestamp: now,
@@ -230,22 +229,31 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		// this.timeoutId = setTimeout(this.sendQueuedMessage.bind(this), allowableUpdateLatency, newContent);
 
-		if(updateDeadline >= this.sendMessageDeadline) {
+		if (updateDeadline >= this.sendMessageDeadline) {
 			// Queue the update
 			this.queuedMessage = newContent;
-			clearTimeout(this.timeoutId);
-			this.timeoutId = setTimeout(this.sendQueuedMessage.bind(this), allowableUpdateLatency);
-			return;
+			// if the timer has not expired, we can short-circuit because the timer will fire
+			// and cover this update
+			if (!this.timer.hasExpired()) {
+				return;
+			}
 		}
 
-		this.sendQueuedMessage();
+		const timeoutInMs = updateDeadline - now;
+		if (timeoutInMs > 0) {
+			this.timer.clearTimeout();
+			this.timer.setTimeout(this.sendQueuedMessage.bind(this), timeoutInMs);
+		} else {
+			this.sendQueuedMessage();
+		}
 	}
 
 	private sendQueuedMessage(): void {
-		if(this.queuedMessage === undefined){
+		if (this.queuedMessage === undefined) {
 			return;
 		}
 		this.runtime.submitSignal(datastoreUpdateMessageType, this.queuedMessage);
+		this.queuedMessage = undefined;
 	}
 
 	private broadcastAllKnownState(): void {
@@ -402,5 +410,37 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				}
 			}, waitTime);
 		}
+	}
+}
+
+/**
+ * Timer manager to track whether timers have been triggered or not
+ */
+export class TimerManager {
+	private timeoutId: number | undefined;
+	public startTime: number = 0;
+	public delay: number = 0;
+	private expired: boolean = true;
+
+	public setTimeout(callback: () => void, delay: number): void {
+		this.clearTimeout(); // Clear any existing timeout
+		this.startTime = Date.now();
+		this.delay = delay;
+		this.expired = false;
+		this.timeoutId = setTimeout(() => {
+			this.expired = true;
+			callback();
+		}, delay);
+	}
+
+	public clearTimeout(): void {
+		if (this.timeoutId !== null) {
+			clearTimeout(this.timeoutId);
+			this.timeoutId = undefined;
+		}
+	}
+
+	public hasExpired(): boolean {
+		return this.expired;
 	}
 }
