@@ -9,14 +9,17 @@ import {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
+// eslint-disable-next-line import/no-internal-modules
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/internal";
+// eslint-disable-next-line import/no-internal-modules
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
 import {
 	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/alpha";
+// eslint-disable-next-line import/no-internal-modules
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema } from "fluid-framework";
 import { IFluidContainer } from "fluid-framework";
