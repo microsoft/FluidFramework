@@ -356,7 +356,8 @@ extends:
 
           # Job - Build
           - ${{ each taskTestStep in parameters.taskTest }}:
-            - job: Test_${{ taskTestStep }}
+            # TODO: fix naming of the job
+            - job: Test_job
               displayName: "Run Task Test ${{ taskTestStep }}"
               dependsOn: build
               variables:
