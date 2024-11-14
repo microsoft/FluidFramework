@@ -208,7 +208,15 @@ function createFrontMatter(documentApiItem, config) {
 		title = `${sidebarLabel} ${documentApiItem.kind}`;
 	}
 
-	const frontMatter = ["---", `title: "${title}"`, `sidebar_label: "${sidebarLabel}"`, "---"];
+	const frontMatter = [
+		"---",
+		`title: "${title}"`,
+		`sidebar_label: "${sidebarLabel}"`,
+		// Associate the document with the "docs" sidebar to ensure the navigation is displayed when viewing this document.
+		// Also ensures that Docusaurus generates a breadcrumb for this document.
+		'displayed_sidebar: "docsSidebar"',
+		"---",
+	];
 
 	return frontMatter.join("\n");
 }
