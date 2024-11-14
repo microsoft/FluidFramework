@@ -108,6 +108,12 @@ function createLocalSharedTree<TSchema extends ImplicitFieldSchema>(
 	return view;
 }
 
+enum SubtreeType {
+	Monomorphic,
+	Polymorphic,
+	DeepMonomorphic,
+}
+
 describe("SharedTree memory usage", () => {
 	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
 	// because they won't be out of scope when we garbage-collect between runs of the same test,
@@ -222,88 +228,76 @@ describe("SharedTree memory usage", () => {
 		).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 	}
 
-	const numberOfNodesForTests = isInPerformanceTestingMode ? [1, 10, 100, 1000] : [10];
-	describe("Chunked Forest memory usage", () => {
-		for (const numberOfNodes of numberOfNodesForTests) {
+	function runBenchmarkMemoryForSubTree<TSchema extends ImplicitFieldSchema>(
+		title: string,
+		schema: TSchema,
+		generateContent: (numberOfNodes: number) => InsertableTreeFieldFromImplicitField<TSchema>,
+		testNodeCounts: number[],
+	) {
+		for (const numberOfNodes of testNodeCounts) {
 			for (const forestType of [ForestType.Reference, ForestType.Optimized]) {
-				benchmarkMemory(
-					new (class implements IMemoryTestObject {
-						public readonly title =
-							`initialize ${numberOfNodes} nodes into tree with schema that is inefficient for chunked forest using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
+				describe(title, () => {
+					benchmarkMemory(
+						new (class implements IMemoryTestObject {
+							public readonly title =
+								`initialize ${numberOfNodes} nodes into tree with schema that is efficient for chunked forest using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
 
-						private sharedTree: TreeView<typeof PolymorphicArray> | undefined;
+							private sharedTree: TreeView<typeof schema> | undefined;
 
-						public async run(): Promise<void> {
-							this.sharedTree = createLocalSharedTree(
-								"testSharedTree",
-								PolymorphicArray,
-								new PolymorphicArray(
-									Array.from({ length: numberOfNodes }, (_, index) => index + 1),
-								),
-								{ forest: forestType },
-							);
-						}
+							public async run(): Promise<void> {
+								this.sharedTree = createLocalSharedTree(
+									"testSharedTree",
+									schema,
+									generateContent(numberOfNodes),
+									{
+										forest: forestType,
+										treeEncodeType: TreeCompressionStrategy.Compressed,
+									},
+								);
+							}
 
-						public beforeIteration(): void {
-							this.sharedTree = undefined;
-						}
-					})(),
-				).timeout(40000);
-
-				benchmarkMemory(
-					new (class implements IMemoryTestObject {
-						public readonly title =
-							`initialize ${numberOfNodes} nodes into tree with schema that is efficient for chunked forest using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
-
-						private sharedTree: TreeView<typeof MonomorphicArray> | undefined;
-
-						public async run(): Promise<void> {
-							this.sharedTree = createLocalSharedTree(
-								"testSharedTree",
-								MonomorphicArray,
-								new MonomorphicArray(
-									Array.from({ length: numberOfNodes }, (_, index) => index + 1),
-								),
-								{ forest: forestType, treeEncodeType: TreeCompressionStrategy.Compressed },
-							);
-						}
-
-						public beforeIteration(): void {
-							this.sharedTree = undefined;
-						}
-					})(),
-				).timeout(400000);
-
-				benchmarkMemory(
-					new (class implements IMemoryTestObject {
-						public readonly title =
-							`initialize ${numberOfNodes} nested nodes into tree with schema that is efficient for chunked forest using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
-
-						private sharedTree: TreeView<typeof DeepMonomorphicArray> | undefined;
-
-						public async run(): Promise<void> {
-							this.sharedTree = createLocalSharedTree(
-								"testSharedTree",
-								DeepMonomorphicArray,
-								new DeepMonomorphicArray(
-									Array.from(
-										{ length: numberOfNodes },
-										(_, index) =>
-											new DeepMonomorphicNode({
-												layer1: { layer2: { layer3: { layer4: { x: index, y: index + 1 } } } },
-											}),
-									),
-								),
-								{ forest: forestType, treeEncodeType: TreeCompressionStrategy.Compressed },
-							);
-						}
-
-						public beforeIteration(): void {
-							this.sharedTree = undefined;
-						}
-					})(),
-				).timeout(400000);
+							public beforeIteration(): void {
+								this.sharedTree = undefined;
+							}
+						})(),
+					).timeout(400000);
+				});
 			}
 		}
+	}
+
+	const numberOfNodesForTests = isInPerformanceTestingMode ? [1] : [10];
+	describe("Chunked Forest memory usage", () => {
+		runBenchmarkMemoryForSubTree(
+			"Array of monomorphic leaves",
+			MonomorphicArray,
+			(numberOfNodes: number) =>
+				new MonomorphicArray(Array.from({ length: numberOfNodes }, (_, index) => index + 1)),
+			numberOfNodesForTests,
+		);
+
+		runBenchmarkMemoryForSubTree(
+			"Array of polymorphic leaves",
+			PolymorphicArray,
+			(numberOfNodes: number) =>
+				new PolymorphicArray(Array.from({ length: numberOfNodes }, (_, index) => index + 1)),
+			numberOfNodesForTests,
+		);
+
+		runBenchmarkMemoryForSubTree(
+			"Array of deep monomorphic leaves",
+			DeepMonomorphicArray,
+			(numberOfNodes: number) =>
+				new DeepMonomorphicArray(
+					Array.from(
+						{ length: numberOfNodes },
+						(_, index) =>
+							new DeepMonomorphicNode({
+								layer1: { layer2: { layer3: { layer4: { x: index, y: index + 1 } } } },
+							}),
+					),
+				),
+			numberOfNodesForTests,
+		);
 	});
 });
