@@ -349,11 +349,10 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
-              # Publish the build artifacts to be used by the test jobs
-              - task: PublishPipelineArtifact@1
-                inputs:
-                  targetPath: $(Build.ArtifactStagingDirectory)
-                  artifact: buildOutput
+              - output:
+                  pipelineArtifact:
+                    path: $(Build.ArtifactStagingDirectory)
+                    artifactName: buildOutput
 
               # Test
               - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
