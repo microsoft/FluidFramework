@@ -186,6 +186,9 @@ export class MigratableTinyliciousModelLoader<ModelType> implements IMigratableM
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
 // @alpha (undocumented)
+export const migrationToolEntryPointPiece: IEntryPointPiece;
+
+// @alpha (undocumented)
 export class MigrationToolFactory implements IFluidDataStoreFactory {
     // (undocumented)
     get IFluidDataStoreFactory(): IFluidDataStoreFactory;

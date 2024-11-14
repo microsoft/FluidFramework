@@ -56,9 +56,7 @@ export const modelEntryPointPiece: IEntryPointPiece = {
 	onLoad: async (runtime: IContainerRuntime): Promise<void> => {},
 	createPiece: async (
 		runtime: IContainerRuntime,
-	): Promise<
-		(runtime: IContainerRuntime, container: IContainer) => Promise<IInventoryListAppModel>
-	> => {
-		return createModel;
+	): Promise<(container: IContainer) => Promise<IInventoryListAppModel>> => {
+		return async (container: IContainer) => createModel(runtime, container);
 	},
 };

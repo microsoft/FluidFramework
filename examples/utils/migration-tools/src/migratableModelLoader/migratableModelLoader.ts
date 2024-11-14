@@ -7,6 +7,7 @@ import { type IContainer } from "@fluidframework/container-definitions/internal"
 import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
+import type { IMigrationTool } from "../interfaces/index.js";
 import {
 	type ISimpleLoader,
 	SimpleLoader,
@@ -18,7 +19,6 @@ import type {
 	IDetachedMigratableModel,
 	IMigratableModelLoader,
 } from "./interfaces.js";
-import { type IMigratableModelContainerRuntimeEntryPoint } from "./loadMigratableRuntime.js";
 
 /**
  * @alpha
@@ -74,23 +74,24 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 	private async getModelAndMigrationToolFromContainer(
 		container: IContainer,
 	): Promise<IAttachedMigratableModel<ModelType>> {
-		const entryPoint =
-			(await container.getEntryPoint()) as IMigratableModelContainerRuntimeEntryPoint<ModelType>;
+		// TODO: Fix typing here
+		const entryPoint = (await container.getEntryPoint()) as {
+			getModel: (container: IContainer) => Promise<ModelType>;
+			migrationTool: IMigrationTool;
+		};
 		// If the user tries to use this model loader with an incompatible container runtime, we want to give them
 		// a comprehensible error message.  So distrust the type by default and do some basic type checking.
-		if (typeof entryPoint.getModelAndMigrationTool !== "function") {
-			throw new TypeError(
-				"Incompatible container runtime: doesn't provide getModelAndMigrationTool",
-			);
+		if (typeof entryPoint.getModel !== "function") {
+			throw new TypeError("Incompatible container runtime: doesn't provide getModel");
 		}
-		const modelAndMigrationTool = await entryPoint.getModelAndMigrationTool(container);
-		if (typeof modelAndMigrationTool.model !== "object") {
+		const model = await entryPoint.getModel(container);
+		if (typeof model !== "object") {
 			throw new TypeError("Incompatible container runtime: doesn't provide model");
 		}
-		if (typeof modelAndMigrationTool.migrationTool !== "object") {
+		if (typeof entryPoint.migrationTool !== "object") {
 			throw new TypeError("Incompatible container runtime: doesn't provide migrationTool");
 		}
-		return modelAndMigrationTool;
+		return { model, migrationTool: entryPoint.migrationTool };
 	}
 
 	// It would be preferable for attaching to look more like service.attach(model) rather than returning an attach

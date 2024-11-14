@@ -33,6 +33,9 @@ async function getDataStoreEntryPoint<T>(
 	return entryPointHandle.get();
 }
 
+/**
+ * @alpha
+ */
 export const migrationToolEntryPointPiece: IEntryPointPiece = {
 	name: migrationToolEntryPointPieceName,
 	registryEntries: [[migrationToolRegistryKey, Promise.resolve(migrationToolFactory)]],

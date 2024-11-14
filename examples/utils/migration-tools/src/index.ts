@@ -34,6 +34,7 @@ export {
 	MigratableModelLoader,
 	MigratableSessionStorageModelLoader,
 	MigratableTinyliciousModelLoader,
+	migrationToolEntryPointPiece,
 } from "./migratableModelLoader/index.js";
 export { MigrationToolFactory } from "./migrationTool.js";
 export { Migrator } from "./migrator.js";
