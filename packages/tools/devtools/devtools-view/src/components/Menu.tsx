@@ -175,19 +175,6 @@ const useMenuSectionStyles = makeStyles({
 		display: "flex",
 		flexDirection: "column",
 	},
-	header: {
-		alignItems: "center",
-		display: "flex",
-		flexDirection: "row",
-		fontWeight: "bold",
-	},
-	headerButton: {
-		alignItems: "center",
-		display: "flex",
-		flexDirection: "row",
-		fontWeight: "bold",
-		cursor: "pointer",
-	},
 });
 
 /**
