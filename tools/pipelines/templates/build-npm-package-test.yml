@@ -355,7 +355,7 @@ extends:
                   artifact: buildOutput
 
         # Job - Build
-        ${{ each taskTestStep in parameters.taskTest }}:
+      - ${{ each taskTestStep in parameters.taskTest }}:
           - job: Test_${{ taskTestStep }}
             displayName: "Run Task Test ${{ taskTestStep }}"
             dependsOn: build
