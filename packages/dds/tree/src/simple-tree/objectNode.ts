@@ -42,7 +42,7 @@ import {
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
-import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
+import type { ObjectNodeSchemaInternal } from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
 
@@ -153,7 +153,7 @@ function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): Simp
  * If not provided `{}` is used for the target.
  */
 function createProxyHandler(
-	schema: ObjectNodeSchema & ObjectNodeSchemaInternalData,
+	schema: ObjectNodeSchemaInternal,
 	allowAdditionalProperties: boolean,
 ): ProxyHandler<TreeNode> {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
@@ -323,7 +323,7 @@ export function objectSchema<
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-): ObjectNodeSchema<TName, T, ImplicitlyConstructable> & ObjectNodeSchemaInternalData {
+): ObjectNodeSchemaInternal<TName, T, ImplicitlyConstructable> {
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
 	assertUniqueKeys(identifier, info);
@@ -408,7 +408,7 @@ export function objectSchema<
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
-			const schema = this as unknown as ObjectNodeSchema & ObjectNodeSchemaInternalData;
+			const schema = this as unknown as ObjectNodeSchemaInternal;
 			handler = createProxyHandler(schema, customizable);
 			unhydratedContext = getUnhydratedContext(schema);
 

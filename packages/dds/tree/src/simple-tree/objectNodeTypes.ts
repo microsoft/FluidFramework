@@ -14,33 +14,35 @@ import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/
 import type { FieldKey } from "../core/index.js";
 
 /**
- * A schema for {@link TreeObjectNode}s.
- * @privateRemarks
- * This is a candidate for being promoted to the public package API.
+ * Additional data about a {@link TreeNodeSchema} for {@link TreeObjectNode}s.
+ * @public
  */
-export interface ObjectNodeSchema<
-	TName extends string = string,
-	T extends
-		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
-	ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaClass<
-		TName,
-		NodeKind.Object,
-		TreeObjectNode<T, TName>,
-		object & InsertableObjectFromSchemaRecord<T>,
-		ImplicitlyConstructable,
-		T
-	> {
+export interface ObjectNodeSchema {
 	/**
 	 * From property keys to the associated schema.
 	 */
 	readonly fields: ReadonlyMap<string, FieldSchema>;
 }
 
+export interface ObjectNodeSchemaInternal<
+	TName extends string = string,
+	T extends
+		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
+	ImplicitlyConstructable extends boolean = boolean,
+> extends TreeNodeSchemaClass<
+			TName,
+			NodeKind.Object,
+			TreeObjectNode<T, TName>,
+			object & InsertableObjectFromSchemaRecord<T>,
+			ImplicitlyConstructable,
+			T
+		>,
+		ObjectNodeSchemaInternalData {}
+
 /**
- * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.
+ * Extra data provided on all {@link ObjectNodeSchema} in addition to the public ObjectNodeSchema type.
  */
-export interface ObjectNodeSchemaInternalData {
+export interface ObjectNodeSchemaInternalData extends ObjectNodeSchema {
 	/**
 	 * {@inheritdoc SimpleKeyMap}
 	 */
@@ -57,17 +59,21 @@ export interface ObjectNodeSchemaInternalData {
 	readonly identifierFieldKeys: readonly FieldKey[];
 }
 
+/**
+ * {@inheritdoc (ObjectNodeSchema:interface)}
+ * @public
+ */
 export const ObjectNodeSchema = {
 	/**
 	 * instanceof-based narrowing support for ObjectNodeSchema in Javascript and TypeScript 5.3 or newer.
 	 */
-	[Symbol.hasInstance](value: TreeNodeSchema): value is ObjectNodeSchema {
+	[Symbol.hasInstance](value: TreeNodeSchema): value is TreeNodeSchema & ObjectNodeSchema {
 		return isObjectNodeSchema(value);
 	},
 } as const;
 
 export function isObjectNodeSchema(
 	schema: TreeNodeSchema,
-): schema is ObjectNodeSchema & ObjectNodeSchemaInternalData {
+): schema is ObjectNodeSchemaInternal {
 	return schema.kind === NodeKind.Object;
 }

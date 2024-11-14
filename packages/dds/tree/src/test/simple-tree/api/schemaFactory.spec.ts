@@ -32,7 +32,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
+import { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
@@ -376,7 +376,8 @@ describe("schemaFactory", () => {
 
 			const foo = hydrate(Foo, { bar: 37 });
 
-			const schema = Tree.schema(foo) as ObjectNodeSchema;
+			const schema = Tree.schema(foo);
+			assert(schema instanceof ObjectNodeSchema);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			assert.deepEqual(schema.fields.get("bar")!.metadata, barMetadata);
 		});
