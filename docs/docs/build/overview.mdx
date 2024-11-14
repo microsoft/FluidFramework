@@ -21,12 +21,22 @@ There are three primary concepts to understand when building an application with
 
 Fluid clients require a centralized service that all connected clients use to send and receive operations. Fluid offers multiple service implementations that developers can use without any modifications. For each of them, there is a corresponding client library. You must use the client library that corresponds to the service you are connecting to. See [Available Fluid Services](../deployment/service-options) for more information about Fluid service options.
 
-Each service-specific library adheres to a common API structure and has the primary goal of creating and retrieving container objects. The common structure enables you to switch from one service to another with minimal code changes. There are two services currently available:
-
--   The [Tinylicious service](/docs/testing/tinylicious) runs on your development computer and is used for development and testing. It is used in Fluid examples throughout this documentation.
--   [Azure Fluid Relay](../deployment/azure-frs) runs in Azure and enables high-scale production scenarios.
+Each service-specific library adheres to a common API structure and has the primary goal of creating and retrieving container objects. The common structure enables you to switch from one service to another with minimal code changes.
 
 See [Service-specific client libraries](#service-specific-client-libraries) for more details.
+
+#### Azure Fluid Relay
+
+[Azure Fluid Relay](../deployment/azure-frs) is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share.
+
+#### SharePoint Embedded
+
+Microsoft [SharePoint Embedded](../deployment/sharepoint-embedded) is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.
+
+#### Tinylicious
+
+The [Tinylicious service](/docs/testing/tinylicious) runs on your development computer and is used for development and testing.
+It is used in Fluid examples throughout this documentation.
 
 ### Container
 
