@@ -90,10 +90,8 @@ describe("Presence", () => {
 			});
 
 			describe("attendee", () => {
-
 				const newAttendeeSessionId: string = "sessionId-4";
 				const initialAttendeeConnectionId: string = "client4";
-				let newAttendee: ISessionClient | undefined;
 				let initialAttendeeSignal: ReturnType<typeof generateBasicClientJoin>;
 
 				beforeEach(() => {
