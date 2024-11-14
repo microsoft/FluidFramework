@@ -27,7 +27,7 @@ However, a DDS is not *just* a local object. A DDS can also be changed by other 
 
 :::tip
 
-Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedTree*, etc. This prefix indicates that the object is shared between multiple clients.
+Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedString*, etc. This prefix indicates that the object is shared between multiple clients.
 
 :::
 
@@ -68,7 +68,7 @@ The potential down-side to this approach is consistency; if another collaborator
 
 The DDSes will apply remote operations as they are made, and will always arrive at a consistent state.
 
-Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedString][], and in Fluid Framework 2.0 and later [SharedTree][].
+Many of the most commonly used DDSes are optimistic, including [SharedMap][] and [SharedString][].
 
 ### Consensus-based data structures
 
@@ -114,7 +114,7 @@ see [Fluid handles](../concepts/handles).
 
 :::note
 
-If you are considering storing a DDS within another DDS in order to give your app's data a hierarchical structure, consider using a [SharedTree](/docs/data-structures/tree) DDS instead.
+If you are considering storing a DDS within another DDS in order to give your app's data a hierarchical structure, consider using a [SharedTree][] DDS instead, available starting with Fluid Framework 2.0.
 
 :::
 
@@ -189,29 +189,24 @@ etc. With this data model, users can change individual properties of the shape w
 You likely have more than one shape in your data model, so you could create a `SharedMap` object to store all the shapes, then
 store the `SharedMaps` representing each shape within that parent `SharedMap` object.
 
-In version 2.0, there's a better, way. Store a shape as an object node of a `SharedTree`. Your code can store the length in one property of the object node, the width in another, etc. Again, users can change individual properties of the shape without overwriting other users' changes.
+:::note
+
+In version 2.0, there's a better, way. Store a shape as an object node of a [SharedTree][]. Your code can store the length in one property of the object node, the width in another, etc. Again, users can change individual properties of the shape without overwriting other users' changes.
 
 When you have more than one shape in your data model, you could create a *array* node in the `SharedTree`, with child object nodes to store all the shapes.
+
+:::
 
 ### Key-value data
 
 These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
 *   [SharedMap][] -- a basic key-value distributed data structure.
-*   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](../concepts/handles).
-
-### Array-like data
-
-*   Array nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](../concepts/handles).
-
-### Object data
-
-*   Object nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](../concepts/handles).
 
 ### Specialized data structures
 
 *   [SharedCounter][] -- a distributed counter. (Deprecated in Fluid Framework 2.0.)
-*   [SharedString][] -- a specialized data structure for handling collaborative text. (Deprecated in Fluid Framework 2.0.)
+*   [SharedString][] -- a specialized data structure for handling collaborative text.
 
 {/* Links */}
 
@@ -219,3 +214,4 @@ These DDSes are used for storing key-value data. They are all optimistic and use
 [SharedCounter]: ../data-structures/counter
 [SharedMap]: ../data-structures/map
 [SharedString]: ../data-structures/string
+[SharedTree]: /docs/data-structures/tree
