@@ -5,7 +5,6 @@
 
 import type { IPresence, LatestValueManager } from "@fluid-experimental/presence";
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
-import type { IFluidContainer } from "fluid-framework";
 
 import { ICustomUserDetails } from "./app.js";
 import { IDiceRollerController } from "./controller.js";
@@ -169,8 +168,7 @@ function makePresenceView(
 	if (audience !== undefined) {
 		presenceConfig.presence.events.on("attendeeJoined", (attendee) => {
 			const name = audience.getMembers().get(attendee.getConnectionId())?.name;
-			const connected = attendee.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
-			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ${connected} with id ${attendee.sessionId} joined`;
+			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} 🔗 with id ${attendee.sessionId} joined`;
 			addLogEntry(logContentDiv, update);
 		});
 
@@ -179,8 +177,7 @@ function makePresenceView(
 			const self = audience.getMyself();
 			if (self && attendee !== presenceConfig.presence.getAttendee(self.currentConnection)) {
 				const name = audience.getMembers().get(attendee.getConnectionId())?.name;
-				const connected = attendee.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
-				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ${connected} with id ${attendee.sessionId} left`;
+				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ⛓️‍💥 with id ${attendee.sessionId} left`;
 				addLogEntry(logContentDiv, update);
 			}
 		});
@@ -200,7 +197,6 @@ function makePresenceView(
 }
 
 export function makeAppView(
-	container: IFluidContainer,
 	diceRollerControllers: IDiceRollerController[],
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
 	// eslint-disable-next-line @typescript-eslint/member-delimiter-style

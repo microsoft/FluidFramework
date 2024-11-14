@@ -138,6 +138,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	): void {
 		const postUpdateActions: (() => void)[] = [];
 		const audienceMembers = this.audience.getMembers();
+		const connectedAttendees = new Set<SessionClient>();
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
@@ -151,9 +152,18 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			// Check new attendee against audience to see if they're currently connected
 			const isAttendeeConnected = audienceMembers.has(clientConnectionId);
 
-			if (isNew && isAttendeeConnected) {
-				// If the attendee is both new and in audience (i.e. currently connected), emit an attendeeJoined event.
-				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
+			if (isAttendeeConnected) {
+				connectedAttendees.add(attendee);
+				attendee.setConnectionId(clientConnectionId);
+				if (isNew) {
+					// If the attendee is both new and in audience (i.e. currently connected), emit an attendeeJoined event.
+					postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
+				}
+			}
+
+			// If the attendee is not in the audience, they are considered disconnected.
+			if (!connectedAttendees.has(attendee)) {
+				attendee.setDisconnected();
 			}
 
 			const knownSessionId: InternalTypes.ValueRequiredState<ClientSessionId> | undefined =
@@ -162,17 +172,6 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				this.datastore.clientToSessionId[clientConnectionId] = value;
 			} else {
 				assert(knownSessionId.value === value.value, 0xa5a /* Mismatched SessionId */);
-			}
-		}
-
-		// Unique list attendees
-		const attendees = new Set(this.attendees.values());
-
-		// Set connection status of all attendees that are not in the audience as disconnected
-		for (const attendee of attendees) {
-			const connectionId = attendee.getConnectionId();
-			if (!audienceMembers.has(connectionId) && senderConnectionId !== connectionId) {
-				attendee.setDisconnected();
 			}
 		}
 

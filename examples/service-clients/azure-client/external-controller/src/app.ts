@@ -225,7 +225,6 @@ async function start(): Promise<void> {
 	const contentDiv = document.querySelector("#content") as HTMLDivElement;
 	contentDiv.append(
 		makeAppView(
-			container,
 			[diceRollerController1, diceRollerController2],
 			{ presence, lastRoll: states.lastRoll },
 			services.audience,
