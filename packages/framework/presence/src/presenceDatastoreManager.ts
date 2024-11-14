@@ -218,6 +218,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		const queuedMessageData = this.queuedMessage?.data;
 
 		// Merge the queued data with the next update.
+		// TODO: this is not working as I expect. Data from multiple LVMs is not combined.
 		const newData: DatastoreMessageContent = { ...queuedMessageData, ...currentMessageData };
 
 		const newContent = {
@@ -226,8 +227,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// isComplete: false,
 			data: newData,
 		} satisfies DatastoreUpdateMessage["content"];
-
-		// this.timeoutId = setTimeout(this.sendQueuedMessage.bind(this), allowableUpdateLatency, newContent);
 
 		if (updateDeadline >= this.sendMessageDeadline) {
 			// Queue the update

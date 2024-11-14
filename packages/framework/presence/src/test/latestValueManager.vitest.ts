@@ -106,6 +106,28 @@ describe("Presence", () => {
 				// signal with the value from the last signal (num=90). This is signal #4
 				// for this test.
 			});
+
+			it.skip("batches signals with different allowed latencies", async () => {
+				// Configure a state workspace
+				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+					data: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
+					otherData: Latest({message: ""}, {allowableUpdateLatency: 50, forcedRefreshInterval: 0})
+				});
+
+				const { data, otherData } = stateWorkspace.props;
+
+				clock.tick(10); // Time is now 1020
+				otherData.local = { message: "will be queued" }; // will be queued, deadline is set to 1070
+				data.local = { num: 12 }; // will be queued; deadline remains 1070
+
+				clock.tick(30); // Time is now 1050
+				data.local = { num: 34 }; // will be queued; deadline remains 1070
+
+				clock.tick(30); // Time is now 1080
+				// The deadline has now passed, so the timer will fire and send a single
+				// signal with the value from the last signal (num=34, message="will be queued").
+				// This is signal #3 for this test.
+			});
 		});
 	});
 });
