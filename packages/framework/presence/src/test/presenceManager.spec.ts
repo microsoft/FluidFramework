@@ -299,7 +299,7 @@ describe("Presence", () => {
 					});
 				});
 
-				describe("is rejoining", () => {
+				describe("that is rejoining", () => {
 					let priorAttendee: ISessionClient | undefined;
 					beforeEach(() => {
 						afterCleanUp.push(
