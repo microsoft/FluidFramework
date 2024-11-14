@@ -29,6 +29,7 @@ export {
 	IFileSystemManagerFactory,
 	IFileSystemManagerParams,
 	IFileSystemPromises,
+	IFRSMakeDirectoryOptions,
 	IRepoManagerParams,
 	IRepositoryManager,
 	IRepositoryManagerFactory,

@@ -5,6 +5,7 @@
 
 import fsPromises from "fs/promises";
 import * as git from "@fluidframework/gitresources";
+import type { MakeDirectoryOptions } from "fs";
 
 export enum Constants {
 	StorageRoutingIdHeader = "Storage-Routing-Id",
@@ -113,6 +114,14 @@ export interface IRepoManagerParams {
 	fileSystemManagerParams?: IFileSystemManagerParams;
 	optimizeForInitialSummary?: boolean;
 	isEphemeralContainer?: boolean;
+	// This maybe the place to hookup cmk scope.
+}
+
+export interface IFRSMakeDirectoryOptions extends MakeDirectoryOptions {
+	/**
+	 * FRS specific cmk encryption scope.
+	 */
+	scope: string;
 }
 
 export interface IRepositoryManagerFactory {

@@ -10,7 +10,11 @@ import {
 	isNetworkError,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IRepositoryManager, type IFileSystemManager } from "./definitions";
+import {
+	IRepositoryManager,
+	type IFileSystemManager,
+	type IFRSMakeDirectoryOptions,
+} from "./definitions";
 import { GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 import {
 	Constants,
@@ -115,8 +119,12 @@ export class GitWholeSummaryManager {
 				this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp &&
 				Date.now() > this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp
 			) {
+				const frsOptions: IFRSMakeDirectoryOptions = {
+					recursive: false,
+					scope: "cmk-scope",
+				};
 				const summaryFolderPath = this.repoManager.path;
-				await fileSystemManager.promises.mkdir(summaryFolderPath, "create-blob-container");
+				await fileSystemManager.promises.mkdir(summaryFolderPath, frsOptions);
 				Lumberjack.warning(
 					`[Azfs-debug] Created blob container for initial summary`,
 					lumberjackProperties,
