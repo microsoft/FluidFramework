@@ -55,7 +55,7 @@ export function ServiceSection(): JSX.Element {
 						logoAltText="Microsoft logo"
 						title="Sharepoint Embedded"
 						description={speCardDescription}
-						learnMoreHref="https://azure.microsoft.com/en-us/products/fluid-relay/#overview"
+						learnMoreHref="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview"
 					/>
 				</div>
 			</div>
