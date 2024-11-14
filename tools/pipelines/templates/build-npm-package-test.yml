@@ -349,6 +349,12 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
+              # Publish the build artifacts to be used by the test jobs
+              - task: PublishPipelineArtifact@1
+                inputs:
+                  targetPath: $(Build.ArtifactStagingDirectory)
+                  artifact: buildOutput
+
               # Test
               - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
                   # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
