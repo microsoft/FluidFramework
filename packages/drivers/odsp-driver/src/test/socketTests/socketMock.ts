@@ -109,7 +109,7 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 
 	/**
 	 * Use this to set connect response when the socket is reused.
-	 * @param connectResponse - response to be send on connect event.
+	 * @param connectResponse - response to be sent on connect event.
 	 */
 	public setMockSocketConnectResponseForReuse(
 		connectResponse: IMockSocketConnectResponse,
