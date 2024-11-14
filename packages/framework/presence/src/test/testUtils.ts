@@ -11,7 +11,7 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
-import type { ClientConnectionId, ClientSessionId } from "@fluid-experimental/presence/alpha";
+import type { ClientConnectionId, ClientSessionId } from "@fluidframework/presence/alpha";
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 import type { InternalUtilityTypes } from "@fluidframework/presence/internal/core-interfaces";
 
