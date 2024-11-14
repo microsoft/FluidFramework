@@ -65,7 +65,6 @@ export interface LatestValueManager<T> {
 
 	/**
 	 * Iterable access to remote clients' values.
-	 * @remarks This is not yet implemented.
 	 */
 	clientValues(): IterableIterator<LatestValueClientData<T>>;
 	/**
