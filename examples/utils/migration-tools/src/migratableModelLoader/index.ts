@@ -13,11 +13,6 @@ export {
 	IEntryPointPiece,
 	loadCompositeRuntime,
 } from "./loadCompositeRuntime.js";
-export {
-	CreateModelCallback,
-	IMigratableModelContainerRuntimeEntryPoint,
-	loadMigratableRuntime,
-} from "./loadMigratableRuntime.js";
 export { MigratableModelLoader } from "./migratableModelLoader.js";
 export { MigratableSessionStorageModelLoader } from "./migratableSessionStorageModelLoader.js";
 export { MigratableTinyliciousModelLoader } from "./migratableTinyliciousModelLoader.js";

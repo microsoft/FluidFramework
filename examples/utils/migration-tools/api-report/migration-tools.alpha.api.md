@@ -19,9 +19,6 @@ export class CompositeEntryPoint {
 }
 
 // @alpha
-export type CreateModelCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;
-
-// @alpha
 export type DataTransformationCallback = (exportedData: unknown, modelVersion: string) => Promise<unknown>;
 
 // @alpha
@@ -67,15 +64,6 @@ export interface IImportExportModel<ImportType, ExportType> {
 // @alpha
 export interface IMigratableModel extends IVersionedModel, IImportExportModel<unknown, unknown> {
     dispose(): void;
-}
-
-// @alpha (undocumented)
-export interface IMigratableModelContainerRuntimeEntryPoint<T> {
-    // (undocumented)
-    getModelAndMigrationTool(container: IContainer): Promise<{
-        model: T;
-        migrationTool: IMigrationTool;
-    }>;
 }
 
 // @alpha (undocumented)
@@ -137,9 +125,6 @@ export interface IVersionedModel {
 
 // @alpha
 export const loadCompositeRuntime: (context: IContainerContext, existing: boolean, compositeEntryPoint: CompositeEntryPoint, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
-
-// @alpha
-export const loadMigratableRuntime: <ModelType>(context: IContainerContext, existing: boolean, registryEntries: NamedFluidDataStoreRegistryEntries, createModel: CreateModelCallback<ModelType>, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
 
 // @alpha (undocumented)
 export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {

@@ -23,14 +23,11 @@ export type {
 } from "./interfaces/index.js";
 export {
 	CompositeEntryPoint,
-	CreateModelCallback,
 	IAttachedMigratableModel,
 	IDetachedMigratableModel,
 	IEntryPointPiece,
-	IMigratableModelContainerRuntimeEntryPoint,
 	IMigratableModelLoader,
 	loadCompositeRuntime,
-	loadMigratableRuntime,
 	MigratableModelLoader,
 	MigratableSessionStorageModelLoader,
 	MigratableTinyliciousModelLoader,
