@@ -8,11 +8,6 @@ export {
 	IDetachedMigratableModel,
 	IMigratableModelLoader,
 } from "./interfaces.js";
-export {
-	CompositeEntryPoint,
-	IEntryPointPiece,
-	loadCompositeRuntime,
-} from "./loadCompositeRuntime.js";
 export { MigratableModelLoader } from "./migratableModelLoader.js";
 export { MigratableSessionStorageModelLoader } from "./migratableSessionStorageModelLoader.js";
 export { MigratableTinyliciousModelLoader } from "./migratableTinyliciousModelLoader.js";

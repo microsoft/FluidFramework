@@ -9,6 +9,11 @@
  * They are not currently intended for use in production scenarios.
  */
 
+export {
+	CompositeEntryPoint,
+	IEntryPointPiece,
+	loadCompositeRuntime,
+} from "./compositeRuntime/index.js";
 export type {
 	DataTransformationCallback,
 	IAcceptedMigrationDetails,
@@ -22,12 +27,9 @@ export type {
 	MigrationState,
 } from "./interfaces/index.js";
 export {
-	CompositeEntryPoint,
 	IAttachedMigratableModel,
 	IDetachedMigratableModel,
-	IEntryPointPiece,
 	IMigratableModelLoader,
-	loadCompositeRuntime,
 	MigratableModelLoader,
 	MigratableSessionStorageModelLoader,
 	MigratableTinyliciousModelLoader,

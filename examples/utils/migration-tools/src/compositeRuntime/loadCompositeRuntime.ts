@@ -14,17 +14,7 @@ import type {
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
 
-/**
- * @alpha
- */
-export interface IEntryPointPiece {
-	readonly name: string;
-	readonly registryEntries: NamedFluidDataStoreRegistryEntries;
-	readonly onCreate: (runtime: IContainerRuntime) => Promise<void>;
-	readonly onLoad: (runtime: IContainerRuntime) => Promise<void>;
-	// TODO: Maybe FluidObject instead of unknown, to keep in the same style of getEntryPoint()?
-	readonly createPiece: (runtime: IContainerRuntime) => Promise<unknown>;
-}
+import type { IEntryPointPiece } from "./interfaces.js";
 
 // TODO: CompositeEntryPoint isn't really the right name - this is more like CompositeContainerContents
 // or CompositeContainerCode?
