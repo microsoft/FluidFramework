@@ -745,6 +745,8 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         string,
         InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>
         ]>;
+    } | {
+        readonly [x: string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
     }, false, T, undefined>;
     readonly null: TreeNodeSchemaNonClass<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null, true, unknown, never>;
     readonly number: TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never>;

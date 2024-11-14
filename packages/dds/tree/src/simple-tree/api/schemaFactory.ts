@@ -796,6 +796,8 @@ export class SchemaFactory<
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
+			// Setting this (implicitlyConstructable) to true seems to work ok currently, but not for other node kinds.
+			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			false,
 		);
 
@@ -803,24 +805,29 @@ export class SchemaFactory<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
 			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			{
-				/**
-				 * Iterator for the iterable of content for this node.
-				 * @privateRemarks
-				 * Wrapping the constructor parameter for recursive arrays and maps in an inlined object type avoids (for unknown reasons)
-				 * the following compile error when declaring the recursive schema:
-				 * `Function implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.`
-				 * To benefit from this without impacting the API, the definition of `Iterable` has been inlined as such an object.
-				 *
-				 * If this workaround is kept, ideally this comment would be deduplicated with the other instance of it.
-				 * Unfortunately attempts to do this failed to avoid the compile error this was introduced to solve.
-				 */
-				[Symbol.iterator](): Iterator<
-					[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
-				>;
-			},
-			// Ideally this would be included, but doing so breaks recursive types.
-			// | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+			| {
+					/**
+					 * Iterator for the iterable of content for this node.
+					 * @privateRemarks
+					 * Wrapping the constructor parameter for recursive arrays and maps in an inlined object type avoids (for unknown reasons)
+					 * the following compile error when declaring the recursive schema:
+					 * `Function implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.`
+					 * To benefit from this without impacting the API, the definition of `Iterable` has been inlined as such an object.
+					 *
+					 * If this workaround is kept, ideally this comment would be deduplicated with the other instance of it.
+					 * Unfortunately attempts to do this failed to avoid the compile error this was introduced to solve.
+					 */
+					[Symbol.iterator](): Iterator<
+						[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
+					>;
+			  }
+			// Ideally this would be
+			// RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+			// but doing so breaks recursive types.
+			// Instead we do a less nice version:
+			| {
+					readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
+			  },
 			false,
 			T,
 			undefined

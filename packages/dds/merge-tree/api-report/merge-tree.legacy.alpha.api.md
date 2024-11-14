@@ -5,6 +5,13 @@
 ```ts
 
 // @alpha
+export interface AdjustParams {
+    delta: number;
+    max?: number | undefined;
+    min?: number | undefined;
+}
+
+// @alpha
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha (undocumented)
@@ -162,7 +169,27 @@ export interface IMergeNodeCommon {
 }
 
 // @alpha (undocumented)
+export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
+    // (undocumented)
+    adjust: Record<string, AdjustParams>;
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    // (undocumented)
+    props?: never;
+    // (undocumented)
+    relativePos1?: undefined;
+    // (undocumented)
+    relativePos2?: undefined;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.ANNOTATE;
+}
+
+// @alpha (undocumented)
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
+    // (undocumented)
+    adjust?: never;
     // (undocumented)
     pos1?: number;
     // (undocumented)

@@ -342,7 +342,7 @@ describe("Schema Discrepancies", () => {
 						{
 							identifier: "y",
 							mismatch: "fieldKind",
-							view: undefined,
+							view: "Forbidden",
 							stored: "Optional",
 						},
 					],
@@ -446,20 +446,16 @@ describe("Schema Discrepancies", () => {
 				root,
 			);
 
-			assert.deepEqual(getAllowedContentIncompatibilities(emptyTree, emptyLocalFieldTree), [
-				{
-					identifier: testTreeNodeIdentifier,
-					mismatch: "fields",
-					differences: [
-						{
-							identifier: "x",
-							mismatch: "fieldKind",
-							view: undefined,
-							stored: "Forbidden",
-						},
-					],
-				},
-			]);
+			assert.equal(
+				allowsRepoSuperset(defaultSchemaPolicy, emptyTree, emptyLocalFieldTree),
+				true,
+			);
+			assert.equal(
+				allowsRepoSuperset(defaultSchemaPolicy, emptyLocalFieldTree, emptyTree),
+				true,
+			);
+
+			assert.deepEqual(getAllowedContentIncompatibilities(emptyTree, emptyLocalFieldTree), []);
 
 			assert.deepEqual(getAllowedContentIncompatibilities(emptyTree, objectNodeSchema), [
 				{
@@ -469,7 +465,7 @@ describe("Schema Discrepancies", () => {
 						{
 							identifier: "x",
 							mismatch: "fieldKind",
-							view: undefined,
+							view: "Forbidden",
 							stored: "Value",
 						},
 					],
