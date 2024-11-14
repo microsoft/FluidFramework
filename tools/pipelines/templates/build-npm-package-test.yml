@@ -349,6 +349,14 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
+              - script: pnpm rimraf */**/node_modules
+                workingDirectory: '${{ parameters.buildDirectory }}'
+                displayName: Remove workspace node_modules
+
+              - pwsh: Move-Item ./node_modules -Destination $(Agent.TempDirectory)
+                workingDirectory: '${{ parameters.buildDirectory }}'
+                displayName: Relocate root node_modules
+
               - task: 1ES.PublishPipelineArtifact@1
                 inputs:
                   targetPath: '${{ parameters.buildDirectory }}'
