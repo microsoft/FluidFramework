@@ -80,7 +80,7 @@ export interface FluidReleaseStateHandlerData {
 	/**
 	 * The bump type used for this release.
 	 */
-	bumpType: Lazy<Promise<VersionBumpType>>;
+	readonly bumpType: Lazy<Promise<VersionBumpType>>;
 
 	/**
 	 * An {@link InstructionalPromptWriter} that the command can use to display instructional prompts.
