@@ -15,7 +15,7 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 export class MockRuntimeSignalSnapshotter extends MockEphemeralRuntime {
 	public override submitSignal(...args: Parameters<IEphemeralRuntime["submitSignal"]>): void {
 		this.submittedSignals.push(args);
-		expect(args).toMatchSnapshot("submitted signal");
+		expect(JSON.stringify(args, undefined, 2)).toMatchSnapshot("submitted signal");
 	}
 
 	public override assertAllSignalsSubmitted(): void {

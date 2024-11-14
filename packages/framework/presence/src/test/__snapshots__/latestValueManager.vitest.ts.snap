@@ -1,9 +1,10 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 1`] = `
-[
+"[
   "Pres:ClientJoin",
   {
+    "sendTimestamp": 1000,
     "avgLatency": 0,
     "data": {
       "system:presence": {
@@ -11,121 +12,121 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
           "client2": {
             "rev": 0,
             "timestamp": 1000,
-            "value": "sessionId-2",
-          },
-        },
-      },
+            "value": "sessionId-2"
+          }
+        }
+      }
     },
-    "sendTimestamp": 1000,
     "updateProviders": [
       "client0",
       "client1",
-      "client3",
-    ],
-  },
-]
+      "client3"
+    ]
+  }
+]"
 `;
 
 exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 2`] = `
-[
+"[
   "Pres:DatastoreUpdate",
   {
+    "sendTimestamp": 1010,
     "avgLatency": 10,
     "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
       "s:name:testStateWorkspace": {
         "data": {
           "sessionId-2": {
             "rev": 0,
             "timestamp": 1010,
             "value": {
-              "num": 0,
-            },
-          },
-        },
-      },
+              "num": 0
+            }
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 3`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1100,
+    "avgLatency": 10,
+    "data": {
       "system:presence": {
         "clientToSessionId": {
           "client2": {
             "rev": 0,
             "timestamp": 1000,
-            "value": "sessionId-2",
-          },
-        },
+            "value": "sessionId-2"
+          }
+        }
       },
-    },
-    "sendTimestamp": 1010,
-  },
-]
-`;
-
-exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 3`] = `
-[
-  "Pres:DatastoreUpdate",
-  {
-    "avgLatency": 10,
-    "data": {
       "s:name:testStateWorkspace": {
         "data": {
           "sessionId-2": {
             "rev": 2,
             "timestamp": 1100,
             "value": {
-              "num": 34,
-            },
-          },
-        },
-      },
+              "num": 34
+            }
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 4`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1220,
+    "avgLatency": 5,
+    "data": {
       "system:presence": {
         "clientToSessionId": {
           "client2": {
             "rev": 0,
             "timestamp": 1000,
-            "value": "sessionId-2",
-          },
-        },
+            "value": "sessionId-2"
+          }
+        }
       },
-    },
-    "sendTimestamp": 1100,
-  },
-]
-`;
-
-exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 4`] = `
-[
-  "Pres:DatastoreUpdate",
-  {
-    "avgLatency": 5,
-    "data": {
       "s:name:testStateWorkspace": {
         "data": {
           "sessionId-2": {
             "rev": 5,
             "timestamp": 1220,
             "value": {
-              "num": 90,
-            },
-          },
-        },
-      },
-      "system:presence": {
-        "clientToSessionId": {
-          "client2": {
-            "rev": 0,
-            "timestamp": 1000,
-            "value": "sessionId-2",
-          },
-        },
-      },
-    },
-    "sendTimestamp": 1220,
-  },
-]
+              "num": 90
+            }
+          }
+        }
+      }
+    }
+  }
+]"
 `;
 
 exports[`Presence > LatestValueManager > batching > batches signals with different allowed latencies > submitted signal 1`] = `
-[
+"[
   "Pres:ClientJoin",
   {
+    "sendTimestamp": 1000,
     "avgLatency": 0,
     "data": {
       "system:presence": {
@@ -133,107 +134,107 @@ exports[`Presence > LatestValueManager > batching > batches signals with differe
           "client2": {
             "rev": 0,
             "timestamp": 1000,
-            "value": "sessionId-2",
-          },
-        },
-      },
+            "value": "sessionId-2"
+          }
+        }
+      }
     },
-    "sendTimestamp": 1000,
     "updateProviders": [
       "client0",
       "client1",
-      "client3",
-    ],
-  },
-]
+      "client3"
+    ]
+  }
+]"
 `;
 
 exports[`Presence > LatestValueManager > batching > batches signals with different allowed latencies > submitted signal 2`] = `
-[
+"[
   "Pres:DatastoreUpdate",
   {
+    "sendTimestamp": 1010,
     "avgLatency": 10,
     "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
       "s:name:testStateWorkspace": {
         "data": {
           "sessionId-2": {
             "rev": 0,
             "timestamp": 1010,
             "value": {
-              "num": 0,
-            },
-          },
+              "num": 0
+            }
+          }
         },
         "otherData": {
           "sessionId-2": {
             "rev": 0,
             "timestamp": 1010,
             "value": {
-              "message": "",
-            },
-          },
-        },
-      },
+              "message": ""
+            }
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > LatestValueManager > batching > batches signals with different allowed latencies > submitted signal 3`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1060,
+    "avgLatency": 10,
+    "data": {
       "system:presence": {
         "clientToSessionId": {
           "client2": {
             "rev": 0,
             "timestamp": 1000,
-            "value": "sessionId-2",
-          },
-        },
+            "value": "sessionId-2"
+          }
+        }
       },
-    },
-    "sendTimestamp": 1010,
-  },
-]
-`;
-
-exports[`Presence > LatestValueManager > batching > batches signals with different allowed latencies > submitted signal 3`] = `
-[
-  "Pres:DatastoreUpdate",
-  {
-    "avgLatency": 10,
-    "data": {
       "s:name:testStateWorkspace": {
-        "data": {
-          "sessionId-2": {
-            "rev": 2,
-            "timestamp": 1050,
-            "value": {
-              "num": 34,
-            },
-          },
-        },
         "otherData": {
           "sessionId-2": {
             "rev": 2,
             "timestamp": 1060,
             "value": {
-              "message": "final message",
-            },
-          },
+              "message": "final message"
+            }
+          }
         },
-      },
-      "system:presence": {
-        "clientToSessionId": {
-          "client2": {
-            "rev": 0,
-            "timestamp": 1000,
-            "value": "sessionId-2",
-          },
-        },
-      },
-    },
-    "sendTimestamp": 1060,
-  },
-]
+        "data": {
+          "sessionId-2": {
+            "rev": 2,
+            "timestamp": 1050,
+            "value": {
+              "num": 34
+            }
+          }
+        }
+      }
+    }
+  }
+]"
 `;
 
 exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 1`] = `
-[
+"[
   "Pres:ClientJoin",
   {
+    "sendTimestamp": 1000,
     "avgLatency": 0,
     "data": {
       "system:presence": {
@@ -241,81 +242,80 @@ exports[`Presence > LatestValueManager > batching > sends signal immediately whe
           "client2": {
             "rev": 0,
             "timestamp": 1000,
-            "value": "sessionId-2",
-          },
-        },
-      },
+            "value": "sessionId-2"
+          }
+        }
+      }
     },
-    "sendTimestamp": 1000,
     "updateProviders": [
       "client0",
       "client1",
-      "client3",
-    ],
-  },
-]
+      "client3"
+    ]
+  }
+]"
 `;
 
 exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 2`] = `
-[
+"[
   "Pres:DatastoreUpdate",
   {
+    "sendTimestamp": 1010,
     "avgLatency": 10,
     "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
       "s:name:testStateWorkspace": {
         "data": {
           "sessionId-2": {
             "rev": 0,
             "timestamp": 1010,
             "value": {
-              "num": 0,
-            },
-          },
-        },
-      },
+              "num": 0
+            }
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 3`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1020,
+    "avgLatency": 10,
+    "data": {
       "system:presence": {
         "clientToSessionId": {
           "client2": {
             "rev": 0,
             "timestamp": 1000,
-            "value": "sessionId-2",
-          },
-        },
+            "value": "sessionId-2"
+          }
+        }
       },
-    },
-    "sendTimestamp": 1010,
-  },
-]
-`;
-
-exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 3`] = `
-[
-  "Pres:DatastoreUpdate",
-  {
-    "avgLatency": 10,
-    "data": {
       "s:name:testStateWorkspace": {
         "data": {
           "sessionId-2": {
             "rev": 1,
             "timestamp": 1020,
             "value": {
-              "num": 42,
-            },
-          },
-        },
-      },
-      "system:presence": {
-        "clientToSessionId": {
-          "client2": {
-            "rev": 0,
-            "timestamp": 1000,
-            "value": "sessionId-2",
-          },
-        },
-      },
-    },
-    "sendTimestamp": 1020,
-  },
-]
+              "num": 42
+            }
+          }
+        }
+      }
+    }
+  }
+]"
 `;
