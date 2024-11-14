@@ -308,7 +308,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	 * @param start - The inclusive start position of the range to annotate. This is a zero-based index.
 	 * @param end - The exclusive end position of the range to annotate. This is a zero-based index.
 	 * @param adjust - A map-like object specifying the properties to adjust. Each key-value pair represents a property and its corresponding adjustment to be applied over the range.
-	 * An adjustment is defined by an object containing a `value` to be added to the current property value, and optional `min` and `max` constraints to limit the adjusted value.
+	 * An adjustment is defined by an object containing a `delta` to be added to the current property value, and optional `min` and `max` constraints to limit the adjusted value.
 	 *
 	 * @remarks
 	 * The range is defined by the start and end positions, where the start position is inclusive and the end position is exclusive.
