@@ -355,10 +355,10 @@ extends:
                   artifact: buildOutput
 
           # Job - Build
-          - ${{ each taskTestStep in parameters.taskTest }}:
+          - ${{ each i in range(0, length(parameters.taskTest)) }}:
             # TODO: fix naming of the job
-            - job: Test_job
-              displayName: "Run Task Test ${{ taskTestStep }}"
+            - job: Test_job_${{ i }}
+              displayName: "Run Task Test ${{ parameters.taskTest[i] }}"
               dependsOn: build
               variables:
                 - group: ado-feeds
@@ -402,7 +402,7 @@ extends:
 
                     - template: /tools/pipelines/templates/include-test-task.yml@self
                       parameters:
-                        taskTestStep: '${{ taskTestStep }}'
+                        taskTestStep: '${{ parameters.taskTest[i] }}'
                         buildDirectory: '${{ parameters.buildDirectory }}'
                         # Don't run with coverage if the task is a PR and the task is a tinylicious service and stress test. We don't include coverage for these tests in our baseline coverage stats, so we don't need to run them with coverage here too.
                         testCoverage: ${{
