@@ -25,7 +25,7 @@ module.exports = {
 					"@/components/**",
 
 					// Experimental package APIs and exports are unknown, so allow any imports from them.
-					"@fluid-experimental/**",
+					"@fluidframework/ai-collab/alpha",
 				],
 			},
 		],

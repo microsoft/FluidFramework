@@ -34,7 +34,7 @@ import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
-import type { IInboundSignalMessage } from "./protocol.js";
+import type { IInboundSignalMessage, IRuntimeMessageCollection } from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
@@ -122,28 +122,24 @@ export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilitySt
  * @sealed
  */
 export interface IContainerRuntimeBaseEvents extends IEvent {
-	(
-		event: "batchBegin",
-		listener: (
-			op: Omit<ISequencedDocumentMessage, "contents"> & {
-				/** @deprecated Use the "op" event to get details about the message contents */
-				contents: unknown;
-			},
-		) => void,
-	);
+	/**
+	 * Indicates the beginning of an incoming batch of ops
+	 * @param op - The first op in the batch. Can be inspected to learn about the sequence numbers relevant for this batch.
+	 */
+	(event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void);
+	/**
+	 * Indicates the end of an incoming batch of ops
+	 * @param error - If an error occurred while processing the batch, it is provided here.
+	 * @param op - The last op in the batch. Can be inspected to learn about the sequence numbers relevant for this batch.
+	 */
 	(
 		event: "batchEnd",
-		listener: (
-			error: any,
-			op: Omit<ISequencedDocumentMessage, "contents"> & {
-				/** @deprecated Use the "op" event to get details about the message contents */
-				contents: unknown;
-			},
-		) => void,
+		listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents">) => void,
 	);
 	/**
+	 * Indicates that an incoming op has been processed.
 	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. its type and content
-	 * represent internal container runtime type / content.
+	 * represent internal container runtime type / content. i.e. A grouped batch of N ops will result in N "op" events
 	 */
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
@@ -336,7 +332,14 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
+	 * Process messages for this channel. The messages here are contiguous messages in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	processMessages?(messageCollection: IRuntimeMessageCollection): void;
+
+	/**
 	 * Processes the op.
+	 * @deprecated processMessages should be used instead to process messages for a channel.
 	 */
 	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
 
@@ -422,6 +425,15 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 /**
+ * The state maintained for messages that are received when a channel isn't yet loaded.
+ * @internal
+ */
+export interface IPendingMessagesState {
+	messageCollections: IRuntimeMessageCollection[];
+	pendingCount: number;
+}
+
+/**
  * Represents the context for the data store like objects. It is used by the data store runtime to
  * get information and call functionality to its parent.
  *
@@ -476,19 +488,6 @@ export interface IFluidParentContext
 	 * Returns the current audience.
 	 */
 	getAudience(): IAudience;
-
-	/**
-	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
-	 *
-	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 *
-	 * @param callback - the callback to be invoked
-	 *
-	 * @deprecated
-	 * // back-compat: to be removed in 2.0
-	 */
-	ensureNoDataModelChanges<T>(callback: () => T): T;
 
 	/**
 	 * Submits the message to be sent to other clients.

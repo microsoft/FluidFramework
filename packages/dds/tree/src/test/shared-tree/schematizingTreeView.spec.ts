@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -21,7 +21,7 @@ import {
 	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,

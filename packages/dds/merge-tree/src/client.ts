@@ -29,7 +29,11 @@ import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
-import { IMergeTreeOptions, MergeTree, errorIfOptionNotTrue } from "./mergeTree.js";
+import {
+	MergeTree,
+	errorIfOptionNotTrue,
+	type IMergeTreeOptionsInternal,
+} from "./mergeTree.js";
 import type {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
@@ -100,9 +104,7 @@ export interface IIntegerRange {
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
  * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
  * they need for rebasing their ops on reconnection.
- * @legacy
- * @alpha
- * @deprecated  This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface IClientEvents {
 	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
@@ -125,9 +127,12 @@ export interface IClientEvents {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @legacy
- * @alpha
+ * This class encapsulates a merge-tree, and provides a local client specific view over it and
+ * the capability to modify it as the local client. Additionally it provides
+ * binding for processing remote ops on the encapsulated merge tree, and projects local and remote events
+ * caused by all modification to the underlying merge-tree.
+ *
+ * @internal
  */
 export class Client extends TypedEventEmitter<IClientEvents> {
 	public longClientId: string | undefined;
@@ -155,7 +160,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	constructor(
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
 		public readonly logger: ITelemetryLoggerExt,
-		options?: IMergeTreeOptions & PropertySet,
+		options?: IMergeTreeOptionsInternal & PropertySet,
 		private readonly getMinInFlightRefSeq: () => number | undefined = (): undefined =>
 			undefined,
 	) {
@@ -322,7 +327,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		accum: TClientData,
 		splitRange?: boolean,
 	): void;
-	public walkSegments<undefined>(
+	public walkSegments(
 		handler: ISegmentAction<undefined>,
 		start?: number,
 		end?: number,
@@ -857,7 +862,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private resetPendingDeltaToOps(
 		resetOp: IMergeTreeDeltaOp,
 		// eslint-disable-next-line import/no-deprecated
-		segmentGroup: SegmentGroup,
+		segmentGroup: SegmentGroup<ISegmentLeaf>,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
 		const NACKedSegmentGroup = this.pendingRebase?.shift()?.data;
@@ -890,7 +895,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			a.ordinal < b.ordinal ? -1 : 1,
 		)) {
 			assert(
-				segment.segmentGroups.remove?.(segmentGroup) === true,
+				segment.segmentGroups?.remove?.(segmentGroup) === true,
 				0x035 /* "Segment group not in segment pending queue" */,
 			);
 			assert(
@@ -1010,7 +1015,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					opList.push(newOp);
 				}
 			} else if (newOp) {
-				// eslint-disable-next-line import/no-deprecated
 				const newSegmentGroup: SegmentGroup = {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
@@ -1174,7 +1178,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segmentGroup: SegmentGroup | SegmentGroup[],
 	): IMergeTreeOp {
 		if (this.pendingRebase === undefined || this.pendingRebase.empty) {
-			// eslint-disable-next-line import/no-deprecated
 			let firstGroup: SegmentGroup;
 			if (Array.isArray(segmentGroup)) {
 				if (segmentGroup.length === 0) {
