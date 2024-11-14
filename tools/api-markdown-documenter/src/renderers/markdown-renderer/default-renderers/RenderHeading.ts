@@ -84,6 +84,6 @@ function renderHeadingWithMarkdownSyntax(
  */
 function renderAnchor(anchorId: string, writer: DocumentWriter): void {
 	writer.ensureNewLine(); // Ensure line break before tag
-	writer.write(`<a name="${anchorId}" />`);
+	writer.write(`<a id="${anchorId}"></a>`);
 	writer.ensureNewLine(); // Ensure line break after tag
 }
