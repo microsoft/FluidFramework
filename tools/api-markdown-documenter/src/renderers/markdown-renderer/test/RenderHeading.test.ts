@@ -64,7 +64,7 @@ describe("Heading Markdown rendering tests", () => {
 					"Hello World",
 					/* id: */ "_heading-id_",
 				);
-				const result = testRender(input);
+				const result = testRender(input, { headingLevel: 7 });
 				const expected = ["", '<a id="_heading-id_"></a>', "**Hello World**", "", ""].join(
 					"\n",
 				);
