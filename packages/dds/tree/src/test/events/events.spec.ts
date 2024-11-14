@@ -2,16 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 
-// import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import type { Listenable } from "@fluidframework/core-interfaces/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	EventEmitter,
-	createEmitter,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../events/emitter.js";
+import { EventEmitter, createEmitter } from "@fluidframework/core-utils/internal";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 
 interface TestEvents {
 	open: () => void;
@@ -30,8 +27,8 @@ describe("EventEmitter", () => {
 
 	it("emits events and collects their results", () => {
 		const emitter = createEmitter<TestEvents>();
-		const listener1 = (arg: string): string => arg.toUpperCase();
-		const listener2 = (arg: string): string => arg.toLowerCase();
+		const listener1 = (arg: string) => arg.toUpperCase();
+		const listener2 = (arg: string) => arg.toLowerCase();
 		emitter.on("compute", listener1);
 		emitter.on("compute", listener2);
 		const results = emitter.emitAndCollect("compute", "hello");
@@ -84,7 +81,7 @@ describe("EventEmitter", () => {
 	it("deregisters events via off", () => {
 		const emitter = createEmitter<TestEvents>();
 		let error = false;
-		const listener = (e: boolean): boolean => (error = e);
+		const listener = (e: boolean) => (error = e);
 		emitter.on("close", listener);
 		emitter.off("close", listener);
 		emitter.emit("close", true);
@@ -111,8 +108,8 @@ describe("EventEmitter", () => {
 		const emitter = createEmitter<TestEvents>();
 		let opened = false;
 		let closed = false;
-		const listenerOpen = (): boolean => (opened = true);
-		const listenerClosed = (): boolean => (closed = true);
+		const listenerOpen = () => (opened = true);
+		const listenerClosed = () => (closed = true);
 		emitter.on("open", listenerOpen);
 		emitter.on("close", listenerClosed);
 		emitter.off("open", listenerOpen);
@@ -128,7 +125,7 @@ describe("EventEmitter", () => {
 	it("correctly handles multiple registrations for the same event", () => {
 		const emitter = createEmitter<TestEvents>();
 		let count: number;
-		const listener = (): number => (count += 1);
+		const listener = () => (count += 1);
 		const off1 = emitter.on("open", listener);
 		const off2 = emitter.on("open", () => listener());
 
@@ -150,14 +147,11 @@ describe("EventEmitter", () => {
 	it("errors on multiple registrations of the same listener", () => {
 		const emitter = createEmitter<TestEvents>();
 		let count = 0;
-		const listener = (): number => (count += 1);
+		const listener = () => (count += 1);
 		emitter.on("open", listener);
 		assert.throws(
 			() => emitter.on("open", listener),
-			// (e: Error) => validateAssertionError(e, /register.*twice.*open/),
-			(e: Error) => {
-				throw new Error(`${e} - /register.*twice.*open/`);
-			},
+			(e: Error) => validateAssertionError(e, /register.*twice.*open/),
 		);
 		// If error is caught, the listener should still fire once for the first registration
 		emitter.emit("open");
@@ -168,21 +162,19 @@ describe("EventEmitter", () => {
 		// This test ensures that symbol types are registered, error on double registration, and include the description of the symbol in the error message.
 		const eventSymbol = Symbol("TestEvent");
 		const emitter = createEmitter<{ [eventSymbol]: () => void }>();
-		const listener = (): void => {};
+		const listener = () => {};
 		emitter.on(eventSymbol, listener);
 		emitter.emit(eventSymbol);
 		assert.throws(
 			() => emitter.on(eventSymbol, listener),
-			(e: Error) => {
-				throw new Error(`${e} - /register.*twice.*TestEvent/`);
-			},
+			(e: Error) => validateAssertionError(e, /register.*twice.*TestEvent/),
 		);
 	});
 
 	it("allows repeat deregistrations", () => {
 		const emitter = createEmitter<TestEvents>();
 		const deregister = emitter.on("open", () => {});
-		const listenerB = (): void => {};
+		const listenerB = () => {};
 		emitter.on("open", listenerB);
 		deregister();
 		deregister();
@@ -297,27 +289,19 @@ interface MyEvents {
 	computed: () => number;
 }
 
-/**
- * docs
- */
-export class MyInheritanceClass extends EventEmitter<MyEvents> {
-	private load(): number[] {
+class MyInheritanceClass extends EventEmitter<MyEvents> {
+	private load() {
 		this.emit("loaded");
 		const results: number[] = this.emitAndCollect("computed");
-		return results;
-	}
-	public triggerLoadForTesting(): void {
-		this.load();
 	}
 }
 
 class MyCompositionClass implements Listenable<MyEvents> {
 	private readonly events = createEmitter<MyEvents>();
 
-	private load(): number[] {
+	private load() {
 		this.events.emit("loaded");
 		const results: number[] = this.events.emitAndCollect("computed");
-		return results;
 	}
 
 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
@@ -327,38 +311,15 @@ class MyCompositionClass implements Listenable<MyEvents> {
 	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
 		return this.events.off(eventName, listener);
 	}
-
-	public triggerLoadForTesting(): void {
-		this.load();
-	}
 }
-
-const compositionExample = new MyCompositionClass();
-compositionExample.on("loaded", () =>
-	console.log("MyCompositionClass loaded event triggered"),
-);
-compositionExample.on("computed", () => 99);
-compositionExample.triggerLoadForTesting();
 
 class MyExposingClass {
 	private readonly _events = createEmitter<MyEvents>();
 
 	public readonly events: Listenable<MyEvents> = this._events;
 
-	private load(): number[] {
+	private load() {
 		this._events.emit("loaded");
 		const results: number[] = this._events.emitAndCollect("computed");
-		return results;
-	}
-
-	public triggerLoadForTesting(): void {
-		this.load();
 	}
 }
-
-const exposingExample = new MyExposingClass();
-exposingExample.events.on("loaded", () =>
-	console.log("MyExposingClass loaded event triggered"),
-);
-exposingExample.events.on("computed", () => 100);
-exposingExample.triggerLoadForTesting();
