@@ -7,8 +7,7 @@ import React from "react";
 
 import "@site/src/css/home/banner.css";
 
-const videoSourceUrl = "https://www.youtube.com/embed/uL2nMYk6WTQ";
-
+const videoSourceUrl = "https://www.youtube.com/embed/fjRfTdIYzWg";
 /**
  * Homepage banner component.
  */
