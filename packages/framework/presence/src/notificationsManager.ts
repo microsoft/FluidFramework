@@ -125,6 +125,12 @@ export interface NotificationsManager<T extends InternalUtilityTypes.Notificatio
 	readonly notifications: NotificationSubscribable<T>;
 }
 
+/**
+ * Object.keys retyped to support specific records keys and
+ * branded string-based keys.
+ */
+const recordKeys = Object.keys as <K extends string>(o: Partial<Record<K, unknown>>) => K[];
+
 class NotificationsManagerImpl<
 	T extends InternalUtilityTypes.NotificationEvents<T>,
 	Key extends string,
@@ -173,14 +179,19 @@ class NotificationsManagerImpl<
 		initialSubscriptions: Partial<NotificationSubscriptions<T>>,
 	) {
 		// Add event listeners provided at instantiation
-		for (const [nameString, value] of Object.entries(initialSubscriptions)) {
-			// Without schema validation, we don't know that the args are the correct type.
-			// For now we assume the user is sending the correct types and there is no corruption along the way.
-			const name = nameString as keyof Events<NotificationSubscriptions<T>>;
-			this.notificationsInternal.on(name, value as NotificationSubscriptions<T>[typeof name]);
+		for (const subscriptionName of recordKeys(initialSubscriptions)) {
+			// Lingering Event typing issues with Notifications specialization requires
+			// this cast. The only thing that really matters is that name is a string.
+			const name = subscriptionName as keyof Events<NotificationSubscriptions<T>>;
+			const value = initialSubscriptions[subscriptionName];
+			// This check should not be needed while using exactOptionalPropertyTypes, but
+			// typescript appears to ignore that with Partial<>. Good to be defensive
+			// against callers sending `undefined` anyway.
+			if (value !== undefined) {
+				this.notificationsInternal.on(name, value);
+			}
 		}
 	}
-
 	public update(
 		client: ISessionClient,
 		_received: number,
