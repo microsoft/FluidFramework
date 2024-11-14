@@ -282,10 +282,17 @@ export function MenuSectionButtonHeader(
 	const { label, icon, onClick, altText } = props;
 	const styles = useMenuSectionButtonHeaderStyles();
 
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
+		if ((event.key === "Enter" || event.key === " ") && onClick) {
+			onClick();
+		}
+	};
+
 	return (
 		<div
 			className={styles.root}
 			onClick={onClick}
+			onKeyDown={handleKeyDown}
 			aria-label={altText}
 			tabIndex={0}
 		>
