@@ -2,32 +2,6 @@
 
 exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 1`] = `
 "[
-  "Pres:ClientJoin",
-  {
-    "sendTimestamp": 1000,
-    "avgLatency": 0,
-    "data": {
-      "system:presence": {
-        "clientToSessionId": {
-          "client2": {
-            "rev": 0,
-            "timestamp": 1000,
-            "value": "sessionId-2"
-          }
-        }
-      }
-    },
-    "updateProviders": [
-      "client0",
-      "client1",
-      "client3"
-    ]
-  }
-]"
-`;
-
-exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 2`] = `
-"[
   "Pres:DatastoreUpdate",
   {
     "sendTimestamp": 1010,
@@ -58,7 +32,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 3`] = `
+exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 2`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -90,7 +64,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 4`] = `
+exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 3`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -123,32 +97,6 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 `;
 
 exports[`Presence > LatestValueManager > batching > batches signals with different allowed latencies > submitted signal 1`] = `
-"[
-  "Pres:ClientJoin",
-  {
-    "sendTimestamp": 1000,
-    "avgLatency": 0,
-    "data": {
-      "system:presence": {
-        "clientToSessionId": {
-          "client2": {
-            "rev": 0,
-            "timestamp": 1000,
-            "value": "sessionId-2"
-          }
-        }
-      }
-    },
-    "updateProviders": [
-      "client0",
-      "client1",
-      "client3"
-    ]
-  }
-]"
-`;
-
-exports[`Presence > LatestValueManager > batching > batches signals with different allowed latencies > submitted signal 2`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -189,7 +137,7 @@ exports[`Presence > LatestValueManager > batching > batches signals with differe
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > batches signals with different allowed latencies > submitted signal 3`] = `
+exports[`Presence > LatestValueManager > batching > batches signals with different allowed latencies > submitted signal 2`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -232,32 +180,6 @@ exports[`Presence > LatestValueManager > batching > batches signals with differe
 
 exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 1`] = `
 "[
-  "Pres:ClientJoin",
-  {
-    "sendTimestamp": 1000,
-    "avgLatency": 0,
-    "data": {
-      "system:presence": {
-        "clientToSessionId": {
-          "client2": {
-            "rev": 0,
-            "timestamp": 1000,
-            "value": "sessionId-2"
-          }
-        }
-      }
-    },
-    "updateProviders": [
-      "client0",
-      "client1",
-      "client3"
-    ]
-  }
-]"
-`;
-
-exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 2`] = `
-"[
   "Pres:DatastoreUpdate",
   {
     "sendTimestamp": 1010,
@@ -288,7 +210,7 @@ exports[`Presence > LatestValueManager > batching > sends signal immediately whe
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 3`] = `
+exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 2`] = `
 "[
   "Pres:DatastoreUpdate",
   {

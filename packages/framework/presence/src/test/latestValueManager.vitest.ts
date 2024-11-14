@@ -45,8 +45,16 @@ describe("Presence", () => {
 				// it to 1010 so all tests start at that time.
 				clock.setSystemTime(initialTime);
 
+				// Disable submitting signals with a dummy fuinction. This ensures we don't capture signals from
+				// test setup, like the prepareConnectedPresence call.
+				const submitSignalOriginal = runtime.submitSignal;
+				runtime.submitSignal = () => {};
+
 				// Set up the presence connection
 				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+
+				// Restore the submiSignal function
+				runtime.submitSignal = submitSignalOriginal;
 			});
 
 			afterEach(() => {
