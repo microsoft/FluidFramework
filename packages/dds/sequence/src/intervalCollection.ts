@@ -15,7 +15,6 @@ import {
 	DetachedReferencePosition,
 	ISegment,
 	LocalReferencePosition,
-	MergeTreeDeltaType,
 	PropertySet,
 	ReferenceType,
 	SlidingPreference,
@@ -1329,10 +1328,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			let newInterval: TInterval | undefined;
 			if (props !== undefined) {
 				interval.propertyManager ??= new PropertiesManager();
-				deltaProps = interval.propertyManager.addProperties(
-					interval.properties,
-					props,
+				deltaProps = interval.propertyManager.handleProperties(
+					{ props },
+					interval,
 					this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
+					UniversalSequenceNumber,
 					true,
 				);
 			}
@@ -1492,9 +1492,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (local) {
 			interval.propertyManager ??= new PropertiesManager();
 			// Let the propertyManager prune its pending change-properties set.
-			interval.propertyManager.ackPendingProperties({
-				type: MergeTreeDeltaType.ANNOTATE,
-				props: serializedInterval.properties ?? {},
+			interval.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
+				props: newProps,
 			});
 
 			this.ackInterval(interval, op);
@@ -1524,10 +1523,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					) ?? interval;
 			}
 			newInterval.propertyManager ??= new PropertiesManager();
-			const deltaProps = newInterval.propertyManager.addProperties(
-				newInterval.properties,
-				newProps,
+			const deltaProps = newInterval.propertyManager.handleProperties(
+				{ props: newProps },
+				newInterval,
 				op.sequenceNumber,
+				op.minimumSequenceNumber,
 				true,
 			);
 			if (this.onDeserialize) {
