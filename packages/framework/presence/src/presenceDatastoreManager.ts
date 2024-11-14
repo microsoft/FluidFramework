@@ -240,7 +240,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		const timeoutInMs = updateDeadline - now;
 		if (timeoutInMs > 0) {
-			this.timer.clearTimeout();
 			this.timer.setTimeout(this.sendQueuedMessage.bind(this), timeoutInMs);
 		} else {
 			this.sendQueuedMessage();
