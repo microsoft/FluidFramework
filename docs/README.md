@@ -134,7 +134,7 @@ The replacement syntax to use in `.mdx` files would be:
 
 ### Mermaid
 
-Docusaurus has built-in support for [mermaid]() diagrams.
+Docusaurus has built-in support for [mermaid](https://mermaid.js.org/) diagrams.
 We recommend leveraging these when possible over alternatives (ascii art, binary image files, SVG, etc.).
 
 Rationale:
