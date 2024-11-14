@@ -50,6 +50,11 @@ export interface ISummaryWriteFeatureFlags {
 	 * to avoid unnecessary storage operations. This can improve performance when creating a new document.
 	 */
 	optimizeForInitialSummary: boolean;
+	/**
+	 * If the runtime time stamp is greater than enableContainerPerDocTimeStamp, meaning blobContainerPerDoc is enabled.
+	 * The azure blob container for the document will be explictily created before initial summary upload.
+	 */
+	enableContainerPerDocTimeStamp: number;
 }
 
 /**

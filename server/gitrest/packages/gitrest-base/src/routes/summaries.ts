@@ -138,6 +138,7 @@ async function createSummary(
 	persistLatestFullEphemeralSummary = false,
 	enableLowIoWrite: "initial" | boolean = false,
 	optimizeForInitialSummary: boolean = false,
+	enableContainerPerDocTimeStamp: number = 0,
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
 	const lumberjackProperties = {
 		...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
@@ -152,12 +153,14 @@ async function createSummary(
 		{
 			enableLowIoWrite,
 			optimizeForInitialSummary,
+			enableContainerPerDocTimeStamp,
 		},
 	);
 
 	Lumberjack.info("Creating summary", lumberjackProperties);
 
 	const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(
+		fileSystemManager,
 		payload,
 		isInitialSummary,
 	);
@@ -256,6 +259,16 @@ export function create(
 	const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 	const enforceStrictPersistedFullSummaryReads: boolean =
 		store.get("git:enforceStrictPersistedFullSummaryReads") ?? false;
+	// Get the containerPerDocEnabling timestamp, the 1st element in the config array.
+	const containerPerDocMigrationCutoffTS: string =
+		store.get("azureBlobFs:containerPerDocMigrationCutoffTS") ?? undefined;
+	let enableContainerPerDocTimeStamp: number = 0;
+	if (containerPerDocMigrationCutoffTS) {
+		const migrationCutoffTimeStamp = containerPerDocMigrationCutoffTS.split(",").shift();
+		if (migrationCutoffTimeStamp) {
+			enableContainerPerDocTimeStamp = new Date(migrationCutoffTimeStamp.trim()).getTime();
+		}
+	}
 
 	/**
 	 * Retrieves a summary.
@@ -315,6 +328,7 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
+		// Todo: Add cmk encryption scope here.
 		const tenantId = repoManagerParams.storageRoutingId?.tenantId;
 		const documentId = repoManagerParams.storageRoutingId?.documentId;
 		// request.query type is { [string]: string } but it's actually { [string]: any }
@@ -384,6 +398,7 @@ export function create(
 					persistLatestFullEphemeralSummary,
 					enableLowIoWrite,
 					optimizeForInitialSummary,
+					enableContainerPerDocTimeStamp,
 				);
 			})().catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 			handleResponse(resultP, response, undefined, undefined, 201);

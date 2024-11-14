@@ -10,7 +10,11 @@ import {
 	isNetworkError,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IRepositoryManager, type IFileSystemManager } from "./definitions";
+import {
+	IRepositoryManager,
+	type IFileSystemManager,
+	type IFRSMakeDirectoryOptions,
+} from "./definitions";
 import { GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 import {
 	Constants,
@@ -27,6 +31,7 @@ import { getSoftDeletedMarkerPath } from "./helpers";
 const DefaultSummaryWriteFeatureFlags: ISummaryWriteFeatureFlags = {
 	enableLowIoWrite: false,
 	optimizeForInitialSummary: false,
+	enableContainerPerDocTimeStamp: 0,
 };
 
 export { isChannelSummary, isContainerSummary } from "./wholeSummary";
@@ -92,6 +97,7 @@ export class GitWholeSummaryManager {
 	 * If the summary is a "channel" summary, the tree sha will be returned so that it can be referenced by a future "container" summary.
 	 */
 	public async writeSummary(
+		fileSystemManager: IFileSystemManager,
 		payload: IWholeSummaryPayload,
 		isInitial?: boolean,
 	): Promise<IWriteSummaryInfo> {
@@ -99,6 +105,7 @@ export class GitWholeSummaryManager {
 			...this.lumberjackProperties,
 			enableLowIoWrite: this.summaryWriteFeatureFlags.enableLowIoWrite,
 			optimizeForInitialSummary: this.summaryWriteFeatureFlags.optimizeForInitialSummary,
+			enableContainerPerDocTS: this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp,
 			isInitial,
 		};
 		const writeSummaryMetric = Lumberjack.newLumberMetric(
@@ -106,6 +113,23 @@ export class GitWholeSummaryManager {
 			lumberjackProperties,
 		);
 		try {
+			// Create blob container if initial summary and blobContainerPerDoc is enabled.
+			if (
+				isInitial &&
+				this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp &&
+				Date.now() > this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp
+			) {
+				const frsOptions: IFRSMakeDirectoryOptions = {
+					recursive: false,
+					scope: "cmk-scope",
+				};
+				const summaryFolderPath = this.repoManager.path;
+				await fileSystemManager.promises.mkdir(summaryFolderPath, frsOptions);
+				Lumberjack.warning(
+					`[Azfs-debug] Created blob container for initial summary`,
+					lumberjackProperties,
+				);
+			}
 			if (isChannelSummary(payload)) {
 				lumberjackProperties.summaryType = "channel";
 				writeSummaryMetric.setProperty("summaryType", "channel");
