@@ -15,7 +15,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small-centralus
+  default: Small-eastus2
 
 - name: publishFlags
   type: string

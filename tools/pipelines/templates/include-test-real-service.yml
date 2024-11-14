@@ -34,7 +34,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Small-centralus
+  default: Small-eastus2
 
 - name: testPackage
   type: string

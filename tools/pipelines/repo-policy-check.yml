@@ -39,7 +39,7 @@ extends:
     template: v1/M365.Unofficial.PipelineTemplate.yml@m365Pipelines
   parameters:
     pool:
-      name: Small-centralus
+      name: Small-eastus2
       os: linux
     sdl:
       ${{ if eq(variables['System.TeamProject'], 'internal') }}:
