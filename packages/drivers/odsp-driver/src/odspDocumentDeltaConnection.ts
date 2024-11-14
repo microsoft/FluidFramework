@@ -351,6 +351,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	private flushOpNonce: string | undefined;
 	private flushDeferred: Deferred<FlushResult> | undefined;
 	private connectionNotYetDisposedTimeout: ReturnType<typeof setTimeout> | undefined;
+	// Due to socket reuse(multiplexing), we can get "disconnect" event from other clients in the socket reference.
+	// So, a race condition could happen, where this client is establishing connection and listening for "connect_document_success"
+	// on the socket among other events, but we get "disconnect" event on the socket reference from other clients, in which case,
+	// we dispose connection object and stop listening to further events on the socket. Due to this we get stuck as the connection
+	// is not yet established and so we don't return any connection object to the client(connection manager). So, we remain stuck.
+	// In order to handle this, we use this deferred promise to keep track of connection initialization and reject this promise with
+	// error in the disconnectCore so that the caller can know and handle the error.
+	private connectionInitializeDeferredP: Deferred<void> | undefined;
 
 	/**
 	 * Error raising for socket.io issues
@@ -634,26 +642,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			}
 		});
 
-		const p = new Deferred<void>();
-		// Due to socket reuse(multiplexing), we can get "disconnect" event from other clients in the socket reference.
-		// So, a race condition could happen, where this client is establishing connection and listening for "connect_document_success"
-		// on the socket among other events, but we get "disconnect" event on the socket reference from other clients, in which case,
-		// we dispose connection object and stop listening to further events on the socket. Due to this we get stuck as the connection
-		// is not yet established and so we don't return any connection object to the client(connection manager). So, we remain stuck.
-		// In order to handle this, listen for the "disconnect" event and reject the promise with the error so that the caller can
-		// know and handle the error.
-		this.on("disconnect", (reason: IAnyDriverError) => {
-			if (!p.isCompleted) {
-				p.reject(reason);
-			}
-		});
+		this.connectionInitializeDeferredP = new Deferred<void>();
 
 		super
 			.initialize(connectMessage, timeout)
-			.then(() => p.resolve())
-			.catch((error) => p.reject(error));
+			.then(() => this.connectionInitializeDeferredP?.resolve())
+			.catch((error) => this.connectionInitializeDeferredP?.reject(error));
 
-		await p.promise.finally(() => {
+		await this.connectionInitializeDeferredP.promise.finally(() => {
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptInfo",
 				...this.getConnectionDetailsProps(),
@@ -827,7 +823,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Disconnect from the websocket
 	 */
-	protected disconnectCore(): void {
+	protected disconnectCore(err: IAnyDriverError): void {
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
 		this.socketReference = undefined;
@@ -839,5 +835,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		}
 
 		socket.removeSocketIoReference();
+		if (
+			this.connectionInitializeDeferredP !== undefined &&
+			!this.connectionInitializeDeferredP.isCompleted
+		) {
+			this.connectionInitializeDeferredP.reject(err);
+		}
 	}
 }
