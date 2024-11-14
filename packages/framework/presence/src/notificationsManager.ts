@@ -192,6 +192,7 @@ class NotificationsManagerImpl<
 			}
 		}
 	}
+
 	public update(
 		client: ISessionClient,
 		_received: number,
