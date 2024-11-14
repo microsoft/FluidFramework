@@ -53,7 +53,7 @@ export function ServiceSection(): JSX.Element {
 					<ServiceSectionCard
 						logoSource={MicrosoftLogo}
 						logoAltText="Microsoft logo"
-						title="Sharepoint Embedded"
+						title="SharePoint Embedded"
 						description={speCardDescription}
 						learnMoreHref="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview"
 					/>
