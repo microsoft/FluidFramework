@@ -232,7 +232,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// Queue the update
 			this.queuedMessage = newContent;
 			// if the timer has not expired, we can short-circuit because the timer will fire
-			// and cover this update
+			// and cover this update. in other words, queuing this will be fast enough to
+			// meet its deadline, because a timer is already scheduled to fire before its deadline.
 			if (!this.timer.hasExpired()) {
 				return;
 			}
