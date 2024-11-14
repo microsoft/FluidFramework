@@ -349,10 +349,10 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
-              - output:
-                  pipelineArtifact:
-                    path: $(Build.ArtifactStagingDirectory)
-                    artifactName: buildOutput
+              - task: 1ES.PublishPipelineArtifact@1
+                inputs:
+                  targetPath: $(Build.ArtifactStagingDirectory)
+                  artifact: buildOutput
 
               # Test
               - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
