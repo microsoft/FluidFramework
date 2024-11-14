@@ -11,13 +11,11 @@ import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/intern
 import {
 	IOdspResolvedUrl,
 	OdspErrorTypes,
-	type IOdspError,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	MockLogger,
 	isFluidError,
-	type IFluidErrorAnnotations,
 } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 import { Socket } from "socket.io-client";
