@@ -433,7 +433,7 @@ export class TimerManager {
 	}
 
 	public clearTimeout(): void {
-		if (this.timeoutId !== null) {
+		if (this.timeoutId !== undefined) {
 			clearTimeout(this.timeoutId);
 			this.timeoutId = undefined;
 		}
