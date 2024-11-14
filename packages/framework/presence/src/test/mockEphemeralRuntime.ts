@@ -5,12 +5,47 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IAudience } from "@fluidframework/container-definitions";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
-import { MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
+import type {
+	IClient,
+	IQuorumClients,
+	ISequencedClient,
+} from "@fluidframework/driver-definitions";
+import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ClientConnectionId } from "../baseTypes.js";
 import type { IEphemeralRuntime } from "../internalTypes.js";
+
+/**
+ * Creates a mock {@link @fluidframework/container-definitions#IAudience} for testing.
+ */
+export function makeMockAudience(clientIds: string[]): IAudience {
+	const clients = new Map<string, IClient>();
+	for (const [index, clientId] of clientIds.entries()) {
+		// eslint-disable-next-line unicorn/prefer-code-point
+		const stringId = String.fromCharCode(index + 65);
+		const name = stringId.repeat(10);
+		const userId = `${name}@microsoft.com`;
+		const user = {
+			id: userId,
+		};
+		clients.set(clientId, {
+			mode: index % 2 === 0 ? "write" : "read",
+			details: { capabilities: { interactive: true } },
+			permission: [],
+			user,
+			scopes: [],
+		});
+	}
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const audience = new MockAudience();
+	for (const [clientId, client] of clients.entries()) {
+		audience.addMember(clientId, client);
+	}
+
+	return audience as IAudience;
+}
 
 /**
  * Creates a mock {@link @fluidframework/protocol-definitions#IQuorumClients} for testing.
@@ -48,11 +83,14 @@ export function makeMockQuorum(clientIds: string[]): IQuorumClients {
 export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public logger?: ITelemetryBaseLogger;
 	public readonly quorum: IQuorumClients;
+	public readonly audience: IAudience;
 
 	public readonly listeners: {
 		connected: ((clientId: ClientConnectionId) => void)[];
+		disconnected: (() => void)[];
 	} = {
 		connected: [],
+		disconnected: [],
 	};
 	private isSupportedEvent(event: string): event is keyof typeof this.listeners {
 		return event in this.listeners;
@@ -65,14 +103,12 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		if (logger !== undefined) {
 			this.logger = logger;
 		}
-		const quorum = makeMockQuorum([
-			"client0",
-			"client1",
-			"client2",
-			"client3",
-			"client4",
-			"client5",
-		]);
+
+		const clients = ["client0", "client1", "client2", "client3", "client4", "client5"];
+		const quorum = makeMockQuorum(clients);
+		const audience: IAudience = makeMockAudience(clients);
+		this.audience = audience;
+		this.getAudience = () => audience;
 		this.quorum = quorum;
 		this.getQuorum = () => quorum;
 		this.on = (
@@ -125,6 +161,8 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	): any => {
 		throw new Error("IEphemeralRuntime.off method not implemented.");
 	};
+
+	public getAudience: () => ReturnType<IEphemeralRuntime["getAudience"]>;
 
 	public getQuorum: () => ReturnType<IEphemeralRuntime["getQuorum"]>;
 

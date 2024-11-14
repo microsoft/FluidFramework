@@ -104,6 +104,7 @@ export interface PresenceStatesInternal {
 		received: number,
 		timeModifier: number,
 		remoteDatastore: ValueUpdateRecord,
+		senderConnectionId: ClientConnectionId,
 	): void;
 }
 
