@@ -4,6 +4,20 @@
 
 ```ts
 
+// @alpha (undocumented)
+export class CompositeEntryPoint {
+    // (undocumented)
+    readonly addEntryPointPiece: (entryPointPiece: IEntryPointPiece) => void;
+    // (undocumented)
+    readonly onCreate: (runtime: IContainerRuntime) => Promise<void>;
+    // (undocumented)
+    readonly onLoad: (runtime: IContainerRuntime) => Promise<void>;
+    // (undocumented)
+    readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<Record<string, unknown>>;
+    // (undocumented)
+    get registryEntries(): NamedFluidDataStoreRegistryEntries;
+}
+
 // @alpha
 export type CreateModelCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;
 
@@ -27,6 +41,20 @@ export interface IDetachedMigratableModel<ModelType> {
     attach: () => Promise<string>;
     migrationTool: IMigrationTool;
     model: ModelType;
+}
+
+// @alpha (undocumented)
+export interface IEntryPointPiece {
+    // (undocumented)
+    readonly createPiece: (runtime: IContainerRuntime) => Promise<unknown>;
+    // (undocumented)
+    readonly name: string;
+    // (undocumented)
+    readonly onCreate: (runtime: IContainerRuntime) => Promise<void>;
+    // (undocumented)
+    readonly onLoad: (runtime: IContainerRuntime) => Promise<void>;
+    // (undocumented)
+    readonly registryEntries: NamedFluidDataStoreRegistryEntries;
 }
 
 // @alpha
@@ -106,6 +134,9 @@ export interface IMigratorEvents extends IEvent {
 export interface IVersionedModel {
     readonly version: string;
 }
+
+// @alpha
+export const loadCompositeRuntime: (context: IContainerContext, existing: boolean, compositeEntryPoint: CompositeEntryPoint, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
 
 // @alpha
 export const loadMigratableRuntime: <ModelType>(context: IContainerContext, existing: boolean, registryEntries: NamedFluidDataStoreRegistryEntries, createModel: CreateModelCallback<ModelType>, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;

@@ -14,6 +14,9 @@ import type {
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
 
+/**
+ * @alpha
+ */
 export interface IEntryPointPiece {
 	readonly name: string;
 	readonly registryEntries: NamedFluidDataStoreRegistryEntries;
@@ -25,6 +28,9 @@ export interface IEntryPointPiece {
 
 // TODO: CompositeEntryPoint isn't really the right name - this is more like CompositeContainerContents
 // or CompositeContainerCode?
+/**
+ * @alpha
+ */
 export class CompositeEntryPoint {
 	private readonly _entryPointPieces: IEntryPointPiece[] = [];
 	public readonly addEntryPointPiece = (entryPointPiece: IEntryPointPiece): void => {
@@ -63,6 +69,10 @@ export class CompositeEntryPoint {
 	};
 }
 
+/**
+ * TODO: Make lint happy
+ * @alpha
+ */
 export const loadCompositeRuntime = async (
 	context: IContainerContext,
 	existing: boolean,

@@ -9,6 +9,11 @@ export {
 	IMigratableModelLoader,
 } from "./interfaces.js";
 export {
+	CompositeEntryPoint,
+	IEntryPointPiece,
+	loadCompositeRuntime,
+} from "./loadCompositeRuntime.js";
+export {
 	CreateModelCallback,
 	IMigratableModelContainerRuntimeEntryPoint,
 	loadMigratableRuntime,
