@@ -41,13 +41,9 @@ export type MenuSectionProps = React.PropsWithChildren<{
 
 	/**
 	 * Callback function that runs when the header is clicked.
+	 * @remarks If specified, the header element will be treated as focusable, and will be given the "button" role.
 	 */
 	onHeaderClick?(): void;
-
-	/**
-	 * If true, the section is focusable.
-	 */
-	focusable?: boolean;
 }>;
 
 const useMenuStyles = makeStyles({
@@ -91,8 +87,14 @@ const useMenuSectionStyles = makeStyles({
 		display: "flex",
 		flexDirection: "row",
 		fontWeight: "bold",
-		cursor: "pointer",
 	},
+	headerButton: {
+		alignItems: "center",
+		display: "flex",
+		flexDirection: "row",
+		fontWeight: "bold",
+		cursor: "pointer",
+	}
 });
 
 /**
@@ -204,7 +206,7 @@ function RefreshButton(): React.ReactElement {
  */
 export function MenuSection(props: MenuSectionProps): React.ReactElement {
 	const { header, icon, children, onHeaderClick } = props;
-	const focusable = props.focusable === undefined ? false : true;
+	const treatAsButton = onHeaderClick !== undefined;
 
 	const styles = useMenuSectionStyles();
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
@@ -216,10 +218,11 @@ export function MenuSection(props: MenuSectionProps): React.ReactElement {
 	return (
 		<div className={styles.root}>
 			<div
-				className={styles.header}
+				className={treatAsButton ? styles.headerButton : styles.header}
 				onClick={onHeaderClick}
 				onKeyDown={handleKeyDown}
-				tabIndex={focusable ? 0 : -1}
+				tabIndex={treatAsButton ? 0 : -1}
+				role={treatAsButton ? "button" : undefined}
 			>
 				{header}
 				{icon}
@@ -431,12 +434,7 @@ export function Menu(props: MenuProps): React.ReactElement {
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
-		<MenuSection
-			header="Home"
-			key="home-menu-section"
-			onHeaderClick={onHomeClicked}
-			focusable={true}
-		/>,
+		<MenuSection header="Home" key="home-menu-section" onHeaderClick={onHomeClicked} />,
 		<ContainersMenuSection
 			key="containers-menu-section"
 			containers={containers}
@@ -468,7 +466,6 @@ export function Menu(props: MenuProps): React.ReactElement {
 				header="Op Latency"
 				key="op-latency-menu-section"
 				onHeaderClick={onOpLatencyClicked}
-				focusable={true}
 			/>,
 		);
 	}
@@ -478,7 +475,6 @@ export function Menu(props: MenuProps): React.ReactElement {
 			header="Settings"
 			key="settings-menu-section"
 			onHeaderClick={onSettingsClicked}
-			focusable={true}
 		/>,
 	);
 
