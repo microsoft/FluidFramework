@@ -21,6 +21,37 @@ import type {
 } from "./interfaces.js";
 
 /**
+ * The purpose of the model pattern and the model loader is to wrap the IContainer in a more useful object and
+ * interface.  This demo uses a convention of the entrypoint providing a getModelAndMigrationTool method to do so.
+ * It does this with the expectation that the model has been bundled with the container code.
+ *
+ * Other strategies to obtain the wrapping model could also work fine here - for example a standalone model code
+ * loader that separately fetches model code and wraps the container from the outside.
+ */
+const getModelAndMigrationToolFromContainer = async <ModelType>(
+	container: IContainer,
+): Promise<IAttachedMigratableModel<ModelType>> => {
+	// TODO: Fix typing here
+	const entryPoint = (await container.getEntryPoint()) as {
+		getModel: (container: IContainer) => Promise<ModelType>;
+		migrationTool: IMigrationTool;
+	};
+	// If the user tries to use this model loader with an incompatible container runtime, we want to give them
+	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
+	if (typeof entryPoint.getModel !== "function") {
+		throw new TypeError("Incompatible container runtime: doesn't provide getModel");
+	}
+	const model = await entryPoint.getModel(container);
+	if (typeof model !== "object") {
+		throw new TypeError("Incompatible container runtime: doesn't provide model");
+	}
+	if (typeof entryPoint.migrationTool !== "object") {
+		throw new TypeError("Incompatible container runtime: doesn't provide migrationTool");
+	}
+	return { model, migrationTool: entryPoint.migrationTool };
+};
+
+/**
  * @alpha
  */
 export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {
@@ -63,37 +94,6 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 		return true;
 	}
 
-	/**
-	 * The purpose of the model pattern and the model loader is to wrap the IContainer in a more useful object and
-	 * interface.  This demo uses a convention of the entrypoint providing a getModelAndMigrationTool method to do so.
-	 * It does this with the expectation that the model has been bundled with the container code.
-	 *
-	 * Other strategies to obtain the wrapping model could also work fine here - for example a standalone model code
-	 * loader that separately fetches model code and wraps the container from the outside.
-	 */
-	private async getModelAndMigrationToolFromContainer(
-		container: IContainer,
-	): Promise<IAttachedMigratableModel<ModelType>> {
-		// TODO: Fix typing here
-		const entryPoint = (await container.getEntryPoint()) as {
-			getModel: (container: IContainer) => Promise<ModelType>;
-			migrationTool: IMigrationTool;
-		};
-		// If the user tries to use this model loader with an incompatible container runtime, we want to give them
-		// a comprehensible error message.  So distrust the type by default and do some basic type checking.
-		if (typeof entryPoint.getModel !== "function") {
-			throw new TypeError("Incompatible container runtime: doesn't provide getModel");
-		}
-		const model = await entryPoint.getModel(container);
-		if (typeof model !== "object") {
-			throw new TypeError("Incompatible container runtime: doesn't provide model");
-		}
-		if (typeof entryPoint.migrationTool !== "object") {
-			throw new TypeError("Incompatible container runtime: doesn't provide migrationTool");
-		}
-		return { model, migrationTool: entryPoint.migrationTool };
-	}
-
 	// It would be preferable for attaching to look more like service.attach(model) rather than returning an attach
 	// callback here, but this callback at least allows us to keep the method off the model interface.
 	// TODO: Consider making the version param optional, and in that case having a mechanism to query the codeLoader
@@ -101,14 +101,14 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 	public async createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>> {
 		const { container, attach } = await this.loader.createDetached(version);
 		const { model, migrationTool } =
-			await this.getModelAndMigrationToolFromContainer(container);
+			await getModelAndMigrationToolFromContainer<ModelType>(container);
 		return { model, migrationTool, attach };
 	}
 
 	public async loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>> {
 		const container = await this.loader.loadExisting(id);
 		const { model, migrationTool } =
-			await this.getModelAndMigrationToolFromContainer(container);
+			await getModelAndMigrationToolFromContainer<ModelType>(container);
 		return { model, migrationTool };
 	}
 
@@ -119,7 +119,7 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 		const container = await this.loader.loadExisting(id);
 		await waitForAtLeastSequenceNumber(container, sequenceNumber);
 		const { model, migrationTool } =
-			await this.getModelAndMigrationToolFromContainer(container);
+			await getModelAndMigrationToolFromContainer<ModelType>(container);
 		return { model, migrationTool };
 	}
 }
