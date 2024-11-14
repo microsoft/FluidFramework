@@ -353,6 +353,8 @@ extends:
                 inputs:
                   targetPath: '${{ parameters.buildDirectory }}'
                   artifact: buildOutput
+                  parallel: true
+                  parallelCount: 8
 
           # Job - Build
           - ${{ each test in parameters.taskTest }}:
