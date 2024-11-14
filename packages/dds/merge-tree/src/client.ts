@@ -257,6 +257,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		adjust: MapLike<AdjustParams>,
 	): IMergeTreeAnnotateAdjustMsg | undefined {
 		const annotateOp = createAdjustRangeOp(start, end, adjust);
+
+		for (const [key, value] of Object.entries(adjust)) {
+			if (value.min !== undefined && value.max !== undefined && value.min > value.max) {
+				throw new UsageError(`min is greater than max for ${key}`);
+			}
+		}
+
 		this.applyAnnotateRangeOp({ op: annotateOp });
 		return annotateOp;
 	}
