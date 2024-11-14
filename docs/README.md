@@ -4,6 +4,9 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 
 ## Dependency installation
 
+The Fluid Framework repository uses [pnpm](https://pnpm.io/) for dependency management.
+If you don't have `pnpm` installed, you will need to do so first.
+
 ```shell
 pnpm i
 ```
