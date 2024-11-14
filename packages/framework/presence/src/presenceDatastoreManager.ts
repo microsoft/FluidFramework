@@ -415,7 +415,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 /**
  * Timer manager to track whether timers have been triggered or not
  */
-export class TimerManager {
+class TimerManager {
 	private timeoutId: number | undefined;
 	public startTime: number = 0;
 	public delay: number = 0;
