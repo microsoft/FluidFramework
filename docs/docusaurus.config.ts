@@ -48,7 +48,7 @@ if (includeLocalApiDocs) {
 
 const config: Config = {
 	title: "Fluid Framework",
-	// tagline: "TODO",
+	tagline: "Build collaborative apps fast!",
 	favicon: "assets/fluid-icon.svg",
 
 	// Set the production url of your site here
@@ -105,9 +105,6 @@ const config: Config = {
 		mermaid: true,
 	},
 	themeConfig: {
-		// // Replace with your project's social card
-		// image: "TODO",
-
 		colorMode: {
 			// Default to user's browser preference
 			respectPrefersColorScheme: true,
