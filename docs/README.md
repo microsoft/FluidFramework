@@ -164,40 +164,6 @@ Instead, upload them to our Azure blob storage, and reference by URL.
 Images may only be uploaded by Microsoft Fluid team members.
 If you do not have the appropriate permissions, but would like to contribute to our documentation, please reach out to us [here](https://github.com/microsoft/FluidFramework/issues/new/choose).
 
-## TODOs
-
-### Critical
-
--   Restore link check scripts (restore related infra from main branch - it should be able to work the same as it did before)
-    -   Docusaurus validates links between the pages it serves, but it won't validate links to external URLs, nor to static contents.
-        So we still want this validation.
--   Review content changes with tech writer
-    -   Structural changes (contents added/removed by version)
-        -   \- Experimental-Features.md for v1
-        -   \- Tree.md for v1
-        -   \- Counter.md for v2
-        -   TODO: what else?
-    -   Content changes:
-        -   `/docs/api/index.mdx`
-        -   `/versioned_docs/api/index.mdx`
-        -   `/versioned_docs/api/fluid-framework.mdx`
-        -   TODO: what else?
-    -   v2 Release notes just link to GitHub. Is this what we want?
-
-### Nice to have before merging into main
-
--   Add component-level unit testing
--   Add accessibility tests
-
-### After merging into main
-
--   Add prettier coverage for /docs - currently ignored by repo-root `.prettierignore` to avoid content churn prior to merging into main.
--   Add .md/.mdx linting (same as above)
--   Figure out solution to markdown-magic in mdx (html comment syntax not supported)
--   Look into [docusaurus-graph](https://github.com/Arsero/docusaurus-graph)
-
-### Before merging into main
-
 ## Scripts
 
 The following npm scripts are supported in this directory:
