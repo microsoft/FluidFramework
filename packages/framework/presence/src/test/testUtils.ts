@@ -44,12 +44,17 @@ export function generateBasicClientJoin(
 		updateProviders = ["client0", "client1", "client3"],
 		connectionOrder = 0,
 		averageLatency = 0,
+		priorClientToSessionId = {},
 	}: {
 		clientSessionId?: string;
 		clientConnectionId?: ClientConnectionId;
 		updateProviders?: string[];
 		connectionOrder?: number;
 		averageLatency?: number;
+		priorClientToSessionId?: Record<
+			ClientConnectionId,
+			{ rev: number; timestamp: number; value: string }
+		>;
 	},
 ) {
 	return {
@@ -59,6 +64,7 @@ export function generateBasicClientJoin(
 			"data": {
 				"system:presence": {
 					"clientToSessionId": {
+						...priorClientToSessionId,
 						[clientConnectionId]: {
 							"rev": connectionOrder,
 							"timestamp": fixedTime,
