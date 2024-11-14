@@ -1,6 +1,8 @@
 # Website
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+This directory contains the code and content for <https://fluidframework.com>.
+
+The website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
 ## Dependency installation
 
