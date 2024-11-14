@@ -11493,9 +11493,6 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
-      '@fluid-experimental/presence':
-        specifier: ^2.5
-        version: 2.5.0
       '@fluid-tools/build-cli':
         specifier: ^0.50.0
         version: 0.50.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -11511,6 +11508,9 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/presence-previous':
+        specifier: npm:@fluid-experimental/presence@2.5.0
+        version: /@fluid-experimental/presence@2.5.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
