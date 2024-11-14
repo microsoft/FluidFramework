@@ -154,7 +154,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 
 			if (isAttendeeConnected) {
 				connectedAttendees.add(attendee);
-				attendee.setConnectionId(clientConnectionId);
+				if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected) {
+					attendee.setConnectionId(clientConnectionId);
+				}
 				if (isNew) {
 					// If the attendee is both new and in audience (i.e. currently connected), emit an attendeeJoined event.
 					postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
