@@ -468,18 +468,14 @@ describe("Undo and redo", () => {
 	it("reverts original & forked revertibles after making change to the original view", () => {
 		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
 
-		const {
-			undoStack: undoStack1,
-			redoStack: redoStack1,
-			unsubscribe: unsubscribe1,
-		} = createTestUndoRedoStacks(originalView.events);
+		const { undoStack } = createTestUndoRedoStacks(originalView.events);
 
 		assert(originalView.root.child !== undefined);
 		originalView.root.child.propertyOne = 256; // 128 -> 256
 
 		const forkedView = originalView.fork();
 
-		const propertyOneUndo = undoStack1.pop();
+		const propertyOneUndo = undoStack.pop();
 		const clonedPropertyOneUndo = propertyOneUndo?.clone(forkedView);
 
 		propertyOneUndo?.revert();

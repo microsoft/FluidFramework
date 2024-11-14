@@ -599,6 +599,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	/**
 	 * Creates a {@link RevertibleAlpha} object that can undo a specific change in the tree's history.
+	 * Revision must exist in the given {@link TreeCheckout}'s branch.
 	 *
 	 * @param revision - The revision tag identifying the change to be made revertible.
 	 * @param kind - The kind of commit (e.g., Default, Undo, Redo) this revertible represents.
@@ -644,7 +645,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
 				const forkedCheckout = getCheckout(forkedBranch);
 				const revertibleBranch = this.revertibleCommitBranches.get(revision);
-				assert(revertibleBranch !== undefined, "change to revert does not exist on the given forked branch");
+				assert(
+					revertibleBranch !== undefined,
+					"change to revert does not exist on the given forked branch",
+				);
 				forkedCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
 
 				return this.createRevertible(revision, kind, forkedCheckout, onRevertibleDisposed);
