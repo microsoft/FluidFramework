@@ -27,6 +27,7 @@ import {
 	StateHandler,
 } from "../handlers/index.js";
 import { PromptWriter } from "../instructionalPromptWriter.js";
+import { Lazy } from "../lazy.js";
 // eslint-disable-next-line import/no-deprecated
 import { MonoRepoKind, getDefaultBumpTypeForBranch } from "../library/index.js";
 import { FluidReleaseMachine } from "../machines/index.js";
@@ -97,14 +98,18 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		const releaseVersion = packageOrReleaseGroup.version;
 
 		const currentBranch = await context.gitRepo.getCurrentBranchName();
-		const bumpType = await getBumpType(flags.bumpType, currentBranch, releaseVersion);
+		const bumpType = new Lazy(async () => {
+			const bumpTypeInner = await getBumpType(flags.bumpType, currentBranch, releaseVersion);
 
-		// eslint-disable-next-line no-warning-comments
-		// TODO: can be removed once server team owns server releases
-		// eslint-disable-next-line import/no-deprecated
-		if (flags.releaseGroup === MonoRepoKind.Server && bumpType === "minor") {
-			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
-		}
+			// eslint-disable-next-line no-warning-comments
+			// TODO: can be removed once server team owns server releases
+			// eslint-disable-next-line import/no-deprecated
+			if (flags.releaseGroup === MonoRepoKind.Server && bumpTypeInner === "minor") {
+				this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
+			}
+
+			return bumpTypeInner;
+		});
 
 		// oclif doesn't support nullable boolean flags, so this works around that limitation by checking the args
 		// passed into the command. If neither are passed, then the default is determined by the branch config.

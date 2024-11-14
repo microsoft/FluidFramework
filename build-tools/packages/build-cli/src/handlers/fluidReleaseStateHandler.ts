@@ -12,6 +12,7 @@ import { Context } from "../library/index.js";
 import { ReleaseVersion, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
 
 import { InstructionalPromptWriter } from "../instructionalPromptWriter.js";
+import type { Lazy } from "../lazy.js";
 import { CommandLogger } from "../logging.js";
 import { MachineState } from "../machines/index.js";
 import { ReleaseGroup, ReleasePackage } from "../releaseGroups.js";
@@ -79,7 +80,7 @@ export interface FluidReleaseStateHandlerData {
 	/**
 	 * The bump type used for this release.
 	 */
-	bumpType: VersionBumpType;
+	bumpType: Lazy<Promise<VersionBumpType>>;
 
 	/**
 	 * An {@link InstructionalPromptWriter} that the command can use to display instructional prompts.
