@@ -13,16 +13,6 @@
 	"sideEffects": false,
 	"type": "module",
 	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./alpha": {
 			"import": {
 				"types": "./lib/alpha.d.ts",
