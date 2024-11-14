@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	type FieldKey,
 	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -169,6 +168,8 @@ export function* getAllowedContentDiscrepancies(
 				yield* getNodeDiscrepancies(result.key, result.valueA, result.valueB);
 				break;
 			}
+			default:
+				break;
 		}
 	}
 }
@@ -214,7 +215,7 @@ function* getNodeDiscrepancies(
 				identifier,
 			);
 			break;
-		case "leaf":
+		case "leaf": {
 			const viewValue = (view as LeafNodeStoredSchema).leafValue;
 			const storedValue = (stored as LeafNodeStoredSchema).leafValue;
 			if (viewValue !== storedValue) {
@@ -225,6 +226,9 @@ function* getNodeDiscrepancies(
 					stored: storedValue,
 				};
 			}
+			break;
+		}
+		default:
 			break;
 	}
 }
@@ -319,6 +323,9 @@ function* trackObjectNodeDiscrepancies(
 				yield* getFieldDiscrepancies(result.valueA, result.valueB, fieldKey);
 				break;
 			}
+			default: {
+				break;
+			}
 		}
 	}
 }
@@ -333,11 +340,9 @@ function* compareMaps<K, V1, V2>(
 > {
 	for (const [key, valueA] of a) {
 		const valueB = b.get(key);
-		if (valueB === undefined) {
-			yield { type: "aExtra", key, value: valueA };
-		} else {
-			yield { type: "both", key, valueA, valueB };
-		}
+		yield valueB === undefined
+			? { type: "aExtra", key, value: valueA }
+			: { type: "both", key, valueA, valueB };
 	}
 	for (const [key, valueB] of b) {
 		if (!a.has(key)) {
