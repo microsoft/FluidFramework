@@ -54,7 +54,7 @@ import { getUnhydratedContext } from "./createContext.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
- * @public
+ * @system @public
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
 	// Due to https://github.com/microsoft/TypeScript/issues/43826 we can not set the desired setter type,
