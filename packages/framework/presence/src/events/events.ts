@@ -45,7 +45,7 @@ export type Events<E> = {
  * }>
  * ```
  * @privateRemarks
- * {@link createEmitter} can help implement this interface via delegation.
+ * {@link @fluidframework/core-utils#createEmitter} can help implement this interface via delegation.
  *
  * @alpha
  */
