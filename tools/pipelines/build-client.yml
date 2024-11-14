@@ -208,14 +208,14 @@ extends:
     # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
-    - check:are-the-types-wrong
-    - webpack
-    - ci:test:mocha
-    - ci:test:jest
-    - ci:test:realsvc:local
-    - ci:test:realsvc:tinylicious
-    - ci:test:stress:tinylicious
-    - test:copyresults
+    - { name: "are-the-types-wrong", jobName: "CheckTypes" }
+    - { name: "webpack", jobName: "WebpackTest" }
+    - { name: "ci:test:mocha", jobName: "MochaTest" }
+    - { name: "ci:test:jest", jobName: "JestTest" }
+    - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest" }
+    - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest" }
+    - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest" }
+    - { name: "test:copyresults", jobName: "CopyResultsTest" }
     testResultDirs:
     - nyc/examples
     - nyc/experimental
