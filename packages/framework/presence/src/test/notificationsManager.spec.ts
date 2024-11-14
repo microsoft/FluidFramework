@@ -75,9 +75,10 @@ describe("Presence", () => {
 						newId: (id: number) => void;
 					},
 					"testEvents"
-				>({
-					newId: (_client: ISessionClient, _id: number) => {},
-				}),
+				>(
+					// A default handler is not required
+					{},
+				),
 			);
 
 			// Verify
@@ -264,12 +265,18 @@ describe("Presence", () => {
 				false,
 			);
 
-			assert(eventHandlerCalls.original.length === 1, "original event handler was not called");
+			assert(
+				eventHandlerCalls.original.length === 1,
+				`original event handler was called ${eventHandlerCalls.original.length} times; expected 1`,
+			);
 			assert(
 				eventHandlerCalls.secondary.length === 1,
-				"secondary event handler was not called",
+				`secondary event handler was called ${eventHandlerCalls.secondary.length} times; expected 1`,
 			);
-			assert(eventHandlerCalls.tertiary.length === 1, "tertiary event handler was not called");
+			assert(
+				eventHandlerCalls.tertiary.length === 1,
+				`secondary event handler was called ${eventHandlerCalls.tertiary.length} times; expected 1`,
+			);
 
 			// Cleanup
 			for (const disconnect of disconnectFunctions) {
