@@ -116,7 +116,8 @@
 	"typeValidation": {
 		"broken": {
 			"Interface_IContainer": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"Interface_IContainerContext": {
 				"backCompat": false

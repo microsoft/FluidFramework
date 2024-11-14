@@ -253,20 +253,15 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		// If the user has passed an empty dataStorePath, then extract it from the resolved url.
 		const actualDataStorePath = dataStorePath || (odspResolvedUrl.dataStorePath ?? "");
 
-		const context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
+		odspResolvedUrl.context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
 
 		const containerPackageName: string | undefined =
 			getContainerPackageName(packageInfoSource) ??
 			odspResolvedUrl.codeHint?.containerPackageName;
 
-		return appendNavParam(
-			baseUrl,
-			odspResolvedUrl,
-			actualDataStorePath,
-			containerPackageName,
-			context,
-			this.appName,
-		);
+		odspResolvedUrl.appName = this.appName;
+
+		return appendNavParam(baseUrl, odspResolvedUrl, actualDataStorePath, containerPackageName);
 	}
 
 	/**

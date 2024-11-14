@@ -112,8 +112,6 @@ export async function createNewFluidFile(
 				odspResolvedUrl,
 				odspResolvedUrl.dataStorePath ?? "/",
 				resolvedUrl?.codeHint?.containerPackageName,
-				resolvedUrl?.context,
-				resolvedUrl?.appName,
 			);
 			shareLinkInfo.createLink.link.webUrl = newWebUrl;
 		}

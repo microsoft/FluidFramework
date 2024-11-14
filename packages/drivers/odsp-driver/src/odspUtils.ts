@@ -579,8 +579,6 @@ export function appendNavParam(
 	odspResolvedUrl: IOdspResolvedUrl,
 	dataStorePath: string,
 	containerPackageName?: string,
-	context?: string,
-	appName?: string,
 ): string {
 	const url = new URL(baseUrl);
 
@@ -592,10 +590,10 @@ export function appendNavParam(
 		driveId: odspResolvedUrl.driveId,
 		itemId: odspResolvedUrl.itemId,
 		dataStorePath: actualDataStorePath,
-		appName,
+		appName: odspResolvedUrl.appName,
 		containerPackageName,
 		fileVersion: odspResolvedUrl.fileVersion,
-		context,
+		context: odspResolvedUrl.context,
 	});
 
 	return url.href;

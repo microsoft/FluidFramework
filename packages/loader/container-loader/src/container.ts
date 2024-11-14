@@ -67,6 +67,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	type ConnectionMode,
+	type IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -718,6 +719,14 @@ export class Container
 		return this._loadedCodeDetails;
 	}
 
+	/**
+	 * Get the package info for the code details that were used to load the container.
+	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined
+	 */
+	public getPackageInfo(): IContainerPackageInfo {
+		return getPackageName(this._loadedCodeDetails);
+	}
+
 	private _loadedModule: IFluidModuleWithDetails | undefined;
 
 	/**
@@ -1335,14 +1344,7 @@ export class Container
 						async (summary) => {
 							// Actually go and create the resolved document
 							if (this.service === undefined) {
-								const newRequest: IRequest = {
-									url: request.url,
-									headers: {
-										...request.headers,
-										"containerPackageName": getPackageName(this._loadedCodeDetails),
-									},
-								};
-								const createNewResolvedUrl = await this.urlResolver.resolve(newRequest);
+								const createNewResolvedUrl = await this.urlResolver.resolve(request);
 								assert(
 									this.client.details.type !== summarizerClientType &&
 										createNewResolvedUrl !== undefined,
