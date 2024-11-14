@@ -118,7 +118,6 @@ describe("Presence", () => {
 					it('is announced via `attendeeJoined` with status "Connected" when new', () => {
 						// Setup
 						let newAttendee: ISessionClient | undefined;
-						newAttendee = undefined;
 						afterCleanUp.push(
 							presence.events.on("attendeeJoined", (attendee) => {
 								assert(newAttendee === undefined, "Only one attendee should be announced");
@@ -247,9 +246,9 @@ describe("Presence", () => {
 					});
 
 					describe("and has their connection removed", () => {
-						// Setup
 						let disconnectedAttendee: ISessionClient | undefined;
 						beforeEach(() => {
+							disconnectedAttendee = undefined;
 							afterCleanUp.push(
 								presence.events.on("attendeeDisconnected", (attendee) => {
 									assert(
@@ -262,37 +261,40 @@ describe("Presence", () => {
 
 							// Act - remove client connection id
 							presence.removeClientConnectionId(initialAttendeeConnectionId);
+						});
 
-							it("is announced via `attendeeDisconnected`", () => {
-								assert(
-									disconnectedAttendee !== undefined,
-									"No attendee was disconnected in removeClientConnectionId",
-								);
-								assert.equal(
-									disconnectedAttendee.sessionId,
-									newAttendeeSessionId,
-									"Disconnected attendee has wrong session id",
-								);
-								assert.equal(
-									disconnectedAttendee.getConnectionId(),
-									initialAttendeeConnectionId,
-									"Disconnected attendee has wrong client connection id",
-								);
-								assert.equal(
-									disconnectedAttendee.getConnectionStatus(),
-									SessionClientStatus.Disconnected,
-									"Disconnected attendee has wrong status",
-								);
-							});
-							it('is not announced via `attendeeDisconnected` when already "Disconnected"', () => {
-								assert(
-									disconnectedAttendee !== undefined,
-									"No attendee was disconnected in removeClientConnectionId",
-								);
+						it("is announced via `attendeeDisconnected`", () => {
+							//
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+							assert(
+								disconnectedAttendee !== undefined,
+								"No attendee was disconnected in removeClientConnectionId",
+							);
+							assert.equal(
+								disconnectedAttendee.sessionId,
+								knownAttendee.sessionId,
+								"Disconnected attendee has wrong session id",
+							);
+							assert.equal(
+								disconnectedAttendee.getConnectionId(),
+								initialAttendeeConnectionId,
+								"Disconnected attendee has wrong client connection id",
+							);
+							assert.equal(
+								disconnectedAttendee.getConnectionStatus(),
+								SessionClientStatus.Disconnected,
+								"Disconnected attendee has wrong status",
+							);
+						});
 
-								// Act & Verify - remove client connection id again
-								presence.removeClientConnectionId(initialAttendeeConnectionId);
-							});
+						it('is not announced via `attendeeDisconnected` when already "Disconnected"', () => {
+							assert(
+								disconnectedAttendee !== undefined,
+								"No attendee was disconnected in removeClientConnectionId",
+							);
+
+							// Act & Verify - remove client connection id again
+							presence.removeClientConnectionId(initialAttendeeConnectionId);
 						});
 					});
 				});
@@ -309,6 +311,21 @@ describe("Presence", () => {
 						// Setup - simulate join message from client
 						presence.processSignal("", initialAttendeeSignal, false);
 						assert(priorAttendee !== undefined, "No attendee was announced in setup");
+					});
+
+					it("is NOT announced when rejoined with same connection (duplicate signal)", () => {
+						afterCleanUp.push(
+							presence.events.on("attendeeJoined", (attendee) => {
+								assert.fail(
+									"Attendee should not be announced when rejoining with same connection",
+								);
+							}),
+						);
+
+						clock.tick(10);
+
+						// Act & Verify - simulate duplicate join message from client
+						presence.processSignal("", initialAttendeeSignal, false);
 					});
 
 					it("is announced when rejoined with different connection and current information is updated", () => {
