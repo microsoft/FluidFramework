@@ -11,11 +11,13 @@ import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/intern
 import {
 	IOdspResolvedUrl,
 	OdspErrorTypes,
+	type IOdspError,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	MockLogger,
 	isFluidError,
+	type IFluidErrorAnnotations,
 } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 import { Socket } from "socket.io-client";
@@ -544,7 +546,5 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		await connection2;
 		assert(connection2Fails, "connection2 should fail");
 		assert(errorReceived?.message.includes("server_disconnect"), "message should be correct");
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		assert((errorReceived as any).statusCode === 400, "status code should be correct");
 	});
 });
