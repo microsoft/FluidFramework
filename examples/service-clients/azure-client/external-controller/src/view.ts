@@ -4,6 +4,7 @@
  */
 
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+// eslint-disable-next-line import/no-internal-modules
 import type { IPresence, LatestValueManager } from "@fluidframework/presence/alpha";
 
 import { ICustomUserDetails } from "./app.js";

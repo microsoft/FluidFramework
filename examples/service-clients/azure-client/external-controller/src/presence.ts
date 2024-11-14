@@ -9,6 +9,7 @@ import {
 	LatestMap,
 	type PresenceStates,
 	type PresenceStatesSchema,
+	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/alpha";
 
 import type { DieValue } from "./controller.js";
