@@ -391,7 +391,7 @@ extends:
                 - task: DownloadPipelineArtifact@2
                   inputs:
                     artifact: buildOutput
-                    targetPath: $(Pipeline.Workspace)
+                    targetPath: '${{ parameters.buildDirectory }}'
 
                     # Test
                 - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
