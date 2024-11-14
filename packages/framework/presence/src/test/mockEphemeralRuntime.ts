@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
+import { expect } from "vitest";
 
 import type { ClientConnectionId } from "../baseTypes.js";
 import type { IEphemeralRuntime } from "../internalTypes.js";
@@ -128,15 +129,26 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	public getQuorum: () => ReturnType<IEphemeralRuntime["getQuorum"]>;
 
-	public submitSignal: IEphemeralRuntime["submitSignal"] = (
-		...args: Parameters<IEphemeralRuntime["submitSignal"]>
-	) => {
+	public readonly submittedSignals: Parameters<IEphemeralRuntime["submitSignal"]>[] = [];
+
+	public submitSignal(...args: Parameters<IEphemeralRuntime["submitSignal"]>): void {
+		this.submittedSignals.push(args);
 		if (this.signalsExpected.length === 0) {
 			throw new Error(`Unexpected signal: ${JSON.stringify(args)}`);
 		}
 		const expected = this.signalsExpected.shift();
 		assert.deepStrictEqual(args, expected, "Unexpected signal");
-	};
+	}
 
 	// #endregion
+}
+
+/**
+ * A mock runtime that checks that all submitted signals match snapshots.
+ */
+export class MockRuntimeSignalSnapshotter extends MockEphemeralRuntime {
+	public override submitSignal(...args: Parameters<IEphemeralRuntime["submitSignal"]>): void {
+		expect(args).toMatchSnapshot("submitted signal");
+		super.submitSignal(...args);
+	}
 }

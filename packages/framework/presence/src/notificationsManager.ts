@@ -156,10 +156,13 @@ class NotificationsManagerImpl<
 		},
 	};
 
-	// @ts-expect-error TODO
-	public readonly notifications: NotificationSubscribable<T> =
+	// Workaround for types
+	private readonly notificationsInternal =
 		// @ts-expect-error TODO
 		createEmitter<NotificationSubscriptions<T>>();
+
+	// @ts-expect-error TODO
+	public readonly notifications: NotificationSubscribable<T> = this.notificationsInternal;
 
 	public constructor(
 		private readonly key: Key,
@@ -175,7 +178,22 @@ class NotificationsManagerImpl<
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): void {
-		this.events.emit("unattendedNotification", value.value.name, client, ...value.value.args);
+		// work around typing errors with explicit casts and any
+		const eventName: any = value.value.name;
+		const eventArgs = value.value.args as Parameters<NotificationSubscriptions<T>[any]>;
+
+		if (this.notificationsInternal.hasListeners()) {
+			// work around typing errors with explicit cast
+			const args = [client, ...eventArgs] as Parameters<NotificationSubscriptions<T>[any]>;
+			this.notificationsInternal.emit(eventName, ...args);
+		} else {
+			this.events.emit(
+				"unattendedNotification",
+				value.value.name,
+				client,
+				...value.value.args,
+			);
+		}
 	}
 }
 
