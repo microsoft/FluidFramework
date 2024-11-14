@@ -17,7 +17,13 @@ import {
 	customizeSchemaTyping,
 } from "../../../simple-tree/index.js";
 import { TreeFactory } from "../../../treeFactory.js";
-import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
+import {
+	brand,
+	type areSafelyAssignable,
+	type Brand,
+	type BrandedType,
+	type requireTrue,
+} from "../../../util/index.js";
 
 // Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
 const schema = new SchemaFactory("com.example");
@@ -171,5 +177,18 @@ describe("Class based end to end example", () => {
 		// and reading just gives string, since this example choose to do so since other clients could set unexpected strings as its not enforced by schema:
 		const s2 = a[0];
 		type _check2 = requireTrue<areSafelyAssignable<typeof s2, string>>;
+	});
+
+	it("customized branding", () => {
+		type SpecialString = Brand<string, "tree.SpecialString">;
+
+		class Specific extends schema.object("Specific", {
+			s: customizeSchemaTyping(schema.string).simplified<SpecialString>(),
+		}) {}
+		const parent = new Specific({ s: brand("bar") });
+		const s: SpecialString = parent.s;
+
+		// @ts-expect-error custom typing violation does not build, but runs without error
+		const invalid = new Specific({ s: "x" });
 	});
 });
