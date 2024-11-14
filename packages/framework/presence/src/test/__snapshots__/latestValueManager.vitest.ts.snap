@@ -196,6 +196,15 @@ exports[`Presence > LatestValueManager > batching > batches signals with differe
     "avgLatency": 10,
     "data": {
       "s:name:testStateWorkspace": {
+        "data": {
+          "sessionId-2": {
+            "rev": 2,
+            "timestamp": 1050,
+            "value": {
+              "num": 34,
+            },
+          },
+        },
         "otherData": {
           "sessionId-2": {
             "rev": 2,

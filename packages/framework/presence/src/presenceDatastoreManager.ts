@@ -6,6 +6,10 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+// TODO: This lib weighs 585 bytes minified and gzipped; 1.1 kb minified only
+// https://bundlephobia.com/package/ts-deepmerge@7.0.1
+// If this is too heavy it should be possible to write a bespoke merger
+import { merge } from "ts-deepmerge";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
@@ -202,8 +206,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 	private sendMessageDeadline: number = 0;
 
-	// private timeoutId: number | undefined;
-
 	private localUpdate(data: DatastoreMessageContent, options: LocalUpdateOptions): void {
 		const allowableUpdateLatency = options.allowableUpdateLatency ?? 0;
 
@@ -214,22 +216,27 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			this.sendMessageDeadline = updateDeadline;
 		}
 
-		const currentMessageData = data;
 		const queuedMessageData = this.queuedMessage?.data;
+		const currentMessageData: DatastoreMessageContent = data;
 
 		// Merge the queued data with the next update.
 		// TODO: this is not working as I expect. Data from multiple LVMs is not combined.
-		const newData: DatastoreMessageContent = { ...queuedMessageData, ...currentMessageData };
-
+		// const newData: DatastoreMessageContent = deepMerge(queuedMessageData, currentMessageData);
+		const newData =
+			queuedMessageData === undefined
+				? currentMessageData
+				: merge(queuedMessageData, currentMessageData);
 		const newContent = {
 			sendTimestamp: now,
 			avgLatency: this.averageLatency,
 			// isComplete: false,
+			// @ts-expect-error TODO
 			data: newData,
 		} satisfies DatastoreUpdateMessage["content"];
 
 		if (updateDeadline >= this.sendMessageDeadline) {
 			// Queue the update
+			// @ts-expect-error TODO
 			this.queuedMessage = newContent;
 			// if the timer has not expired, we can short-circuit because the timer will fire
 			// and cover this update. in other words, queuing this will be fast enough to
@@ -443,3 +450,26 @@ class TimerManager {
 		return this.expired;
 	}
 }
+
+// function deepMerge<T extends object>(target: T, source: T): T {
+// 	// eslint-disable-next-line no-restricted-syntax
+// 	for (const key in source) {
+// 		if (Object.prototype.hasOwnProperty.call(source, key)) {
+// 			if (isObject(source[key])) {
+// 				if (target[key] === undefined) {
+// 					// @ts-expect-error TODO
+// 					target[key] = {};
+// 				}
+// 				deepMerge(target[key] as T, source[key] as T);
+// 			} else {
+// 				target[key] = source[key];
+// 			}
+// 		}
+// 	}
+// 	return target;
+// }
+
+// function isObject(item: any): item is object {
+// 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/strict-boolean-expressions
+// 	return item && typeof item === "object" && !Array.isArray(item);
+// }

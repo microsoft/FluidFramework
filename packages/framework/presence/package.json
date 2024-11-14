@@ -131,7 +131,8 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~"
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"ts-deepmerge": "^7.0.1"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.16.4",
