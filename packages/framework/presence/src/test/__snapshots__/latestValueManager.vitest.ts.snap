@@ -94,7 +94,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 [
   "Pres:DatastoreUpdate",
   {
-    "avgLatency": 10,
+    "avgLatency": 5,
     "data": {
       "s:name:testStateWorkspace": {
         "data": {
@@ -196,12 +196,12 @@ exports[`Presence > LatestValueManager > batching > batches signals with differe
     "avgLatency": 10,
     "data": {
       "s:name:testStateWorkspace": {
-        "data": {
+        "otherData": {
           "sessionId-2": {
             "rev": 2,
-            "timestamp": 1050,
+            "timestamp": 1060,
             "value": {
-              "num": 34,
+              "message": "final message",
             },
           },
         },
@@ -216,7 +216,7 @@ exports[`Presence > LatestValueManager > batching > batches signals with differe
         },
       },
     },
-    "sendTimestamp": 1050,
+    "sendTimestamp": 1060,
   },
 ]
 `;

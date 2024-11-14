@@ -18,7 +18,7 @@ import { Latest } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockRuntimeSignalSnapshotter } from "./snapshotEphemeralRuntime.js";
-import { prepareConnectedPresence } from "./testUtils.js";
+import { generateBasicClientJoin, prepareConnectedPresence } from "./testUtils.js";
 
 describe("Presence", () => {
 	describe("LatestValueManager", () => {
@@ -88,6 +88,13 @@ describe("Presence", () => {
 				data.local = { num: 34 }; // will be queued; deadline remains 1120
 
 				clock.tick(30); // Time is now 1130
+				const expectedClientJoin = generateBasicClientJoin(clock.now, {
+					clientSessionId: "sessionId-3",
+					clientConnectionId: "client3",
+					updateProviders: ["client2"],
+					averageLatency: 10,
+				});
+				presence.processSignal("", expectedClientJoin, true);
 				// The deadline has now passed, so the timer will fire and send a single
 				// signal with the value from the last signal (num=34). This is signal #3
 				// for this test.
@@ -107,11 +114,14 @@ describe("Presence", () => {
 				// for this test.
 			});
 
-			it.skip("batches signals with different allowed latencies", async () => {
+			it("batches signals with different allowed latencies", async () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					data: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
-					otherData: Latest({message: ""}, {allowableUpdateLatency: 50, forcedRefreshInterval: 0})
+					otherData: Latest(
+						{ message: "" },
+						{ allowableUpdateLatency: 50, forcedRefreshInterval: 0 },
+					),
 				});
 
 				const { data, otherData } = stateWorkspace.props;
@@ -123,9 +133,12 @@ describe("Presence", () => {
 				clock.tick(30); // Time is now 1050
 				data.local = { num: 34 }; // will be queued; deadline remains 1070
 
+				clock.tick(10); // Time is now 1060
+				otherData.local = { message: "final message" }; // will be queued; deadline remains 1070
+
 				clock.tick(30); // Time is now 1080
 				// The deadline has now passed, so the timer will fire and send a single
-				// signal with the value from the last signal (num=34, message="will be queued").
+				// signal with the value from the last signal (num=34, message="final message").
 				// This is signal #3 for this test.
 			});
 		});
