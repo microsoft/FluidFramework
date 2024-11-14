@@ -1,4 +1,8 @@
-# @fluid-experimental/ai-collab
+# @fluidframework/ai-collab
+
+## 2.5.0
+
+Dependency updates only.
 
 ## 2.4.0
 

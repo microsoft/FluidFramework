@@ -63,6 +63,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 	timeoutAwait,
+	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
@@ -114,7 +115,10 @@ const getPendingOps = async (
 
 	await testObjectProvider.ensureSynchronized();
 	await testObjectProvider.opProcessingController.pauseProcessing(container);
-	assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+	const deltaManagerInternal = toIDeltaManagerFull(
+		toDeltaManagerInternal(dataStore.runtime.deltaManager),
+	);
+	assert(deltaManagerInternal.outbound.paused);
 
 	await cb(container, dataStore);
 
@@ -1276,7 +1280,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.ok(serializedClientId);
 
 			await provider.opProcessingController.pauseProcessing(container);
-			assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+			const deltaManagerFull = toIDeltaManagerFull(
+				toDeltaManagerInternal(dataStore.runtime.deltaManager),
+			);
+			assert(deltaManagerFull.outbound.paused);
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
@@ -1479,7 +1486,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 
 			await provider.opProcessingController.pauseProcessing(container2);
-			assert(toDeltaManagerInternal(dataStore2.runtime.deltaManager).outbound.paused);
+			const deltaManagerFull = toIDeltaManagerFull(
+				toDeltaManagerInternal(dataStore2.runtime.deltaManager),
+			);
+			assert(deltaManagerFull.outbound.paused);
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 			const morePendingOps = await container2.getPendingLocalState?.();
@@ -1638,6 +1648,14 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("load offline with blob redirect table", async function () {
+		// TODO: AB#22741: Re-enable "load offline with blob redirect table"
+		if (
+			provider.driver.type === "odsp" ||
+			(provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs")
+		) {
+			this.skip();
+		}
+
 		const container = await loader.resolve({ url });
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
@@ -1856,6 +1874,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
 	it("works with summary while offline", async function () {
+		// TODO: AB#22740: Re-enable "works with summary while offline" on ODSP
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
+
 		map1.set("test op 1", "test op 1");
 		await waitForSummary(provider, container1, testContainerConfig);
 
@@ -1918,7 +1941,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		)) as IContainerExperimental;
 
 		// pause outgoing ops so we can detect dropped stashed changes
-		await container.deltaManager.outbound.pause();
+		await toIDeltaManagerFull(container.deltaManager).outbound.pause();
 		let pendingState: string | undefined;
 		let pendingStateP;
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
@@ -2220,7 +2243,7 @@ describeCompat(
 						},
 						pendingLocalState,
 					);
-					await container.deltaManager.outbound.pause();
+					await toIDeltaManagerFull(container.deltaManager).outbound.pause();
 					container.connect();
 
 					// Wait for the container to connect, and then pause the inbound queue
@@ -2229,7 +2252,7 @@ describeCompat(
 						reject: true,
 						errorMsg: `${loggingId} didn't connect in time`,
 					});
-					await container.deltaManager.inbound.pause();
+					await toIDeltaManagerFull(container.deltaManager).inbound.pause();
 
 					// Now this container should submit the op when we resume the outbound queue
 					return container;
@@ -2245,27 +2268,29 @@ describeCompat(
 				const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 				const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
+				const container2DeltaManager = toIDeltaManagerFull(container2.deltaManager);
+				const container3DeltaManager = toIDeltaManagerFull(container3.deltaManager);
 				// Here's the "in parallel" part - resume both outbound queues at the same time,
 				// and then resume both inbound queues once the outbound queues are idle (done sending).
 				const allSentP = Promise.all([
 					timeoutPromise<unknown>(
 						(resolve) => {
-							container2.deltaManager.outbound.once("idle", resolve);
+							container2DeltaManager.outbound.once("idle", resolve);
 						},
 						{ errorMsg: "container2 outbound queue never reached idle state" },
 					),
 					timeoutPromise<unknown>(
 						(resolve) => {
-							container3.deltaManager.outbound.once("idle", resolve);
+							container3DeltaManager.outbound.once("idle", resolve);
 						},
 						{ errorMsg: "container3 outbound queue never reached idle state" },
 					),
 				]);
-				container2.deltaManager.outbound.resume();
-				container3.deltaManager.outbound.resume();
+				container2DeltaManager.outbound.resume();
+				container3DeltaManager.outbound.resume();
 				await allSentP;
-				container2.deltaManager.inbound.resume();
-				container3.deltaManager.inbound.resume();
+				container2DeltaManager.inbound.resume();
+				container3DeltaManager.inbound.resume();
 
 				// At this point, both rehydrated containers should have submitted the same Counter op.
 				// ContainerRuntime will use PSM and BatchTracker and it will play out like this:
