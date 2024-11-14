@@ -42,27 +42,24 @@ function KeyFeaturesCardGrid(): JSX.Element {
 				imageAltText="Easy to use"
 				bodyLabel="Easy to use"
 				bodyText={easyToUseText}
-				// TODO: Update link target and alt text
-				learnMoreLinkHref="/docs"
-				learnMoreLinkAltText="Learn more about Fluid Framework"
+				learnMoreLinkHref="/docs/start/quick-start"
+				learnMoreLinkAltText="Fluid Framework Quick Start"
 			/>
 			<KeyFeatureCard
 				imageSrc={OpenSourecImage}
 				imageAltText="Open source"
 				bodyLabel="Open Source"
 				bodyText={openSourceText}
-				// TODO: Update link target and alt text
-				learnMoreLinkHref="/docs"
-				learnMoreLinkAltText="Learn more about Fluid Framework"
+				learnMoreLinkHref="/community"
+				learnMoreLinkAltText="Community"
 			/>
 			<KeyFeatureCard
 				imageSrc={PerformanceImage}
 				imageAltText="Industry-leading speed and performance"
 				bodyLabel="Industry-leading speed & performance"
 				bodyText={performanceText}
-				// TODO: Update link target and alt text
-				learnMoreLinkHref="/docs"
-				learnMoreLinkAltText="Learn more about Fluid Framework"
+				learnMoreLinkHref="/docs/build/dds#performance-characteristics"
+				learnMoreLinkAltText="Performance"
 			/>
 		</div>
 	);
