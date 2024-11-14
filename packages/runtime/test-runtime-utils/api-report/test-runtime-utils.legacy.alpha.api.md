@@ -303,8 +303,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
-    ensureNoDataModelChanges<T>(callback: () => T): T;
-    // (undocumented)
     readonly existing: boolean;
     // (undocumented)
     readonly gcThrowOnTombstoneUsage = false;

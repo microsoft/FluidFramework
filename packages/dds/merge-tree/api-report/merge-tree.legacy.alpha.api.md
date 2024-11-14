@@ -5,15 +5,18 @@
 ```ts
 
 // @alpha
+export interface AdjustParams {
+    delta: number;
+    max?: number | undefined;
+    min?: number | undefined;
+}
+
+// @alpha
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha (undocumented)
 export abstract class BaseSegment implements ISegment {
     constructor(properties?: PropertySet);
-    // @deprecated (undocumented)
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
-    // @deprecated
-    addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
@@ -56,14 +59,10 @@ export abstract class BaseSegment implements ISegment {
     ordinal: string;
     // (undocumented)
     properties?: PropertySet;
-    // @deprecated
-    propertyManager?: PropertiesManager;
     // (undocumented)
     removedClientIds?: number[];
     // (undocumented)
     removedSeq?: number;
-    // @deprecated (undocumented)
-    readonly segmentGroups: SegmentGroupCollection;
     // (undocumented)
     seq: number;
     // (undocumented)
@@ -170,7 +169,27 @@ export interface IMergeNodeCommon {
 }
 
 // @alpha (undocumented)
+export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
+    // (undocumented)
+    adjust: Record<string, AdjustParams>;
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    // (undocumented)
+    props?: never;
+    // (undocumented)
+    relativePos1?: undefined;
+    // (undocumented)
+    relativePos2?: undefined;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.ANNOTATE;
+}
+
+// @alpha (undocumented)
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
+    // (undocumented)
+    adjust?: never;
     // (undocumented)
     pos1?: number;
     // (undocumented)
@@ -300,12 +319,6 @@ export interface IMergeTreeSegmentDelta {
     segment: ISegment;
 }
 
-// @alpha @deprecated (undocumented)
-export interface IMergeTreeTextHelper {
-    // (undocumented)
-    getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
-}
-
 // @alpha
 export interface IMoveInfo {
     localMovedSeq?: number;
@@ -340,10 +353,6 @@ export interface IRemovalInfo {
 
 // @alpha
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
-    // @deprecated (undocumented)
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
-    // @deprecated
-    addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     append(segment: ISegment): void;
     attribution?: IAttributionCollection<AttributionKey>;
@@ -358,10 +367,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     localRemovedSeq?: number;
     localSeq?: number;
     properties?: PropertySet;
-    // @deprecated
-    propertyManager?: PropertiesManager;
-    // @deprecated (undocumented)
-    readonly segmentGroups: SegmentGroupCollection;
     seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
@@ -470,18 +475,6 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
     readonly type = "Marker";
 }
 
-// @alpha @deprecated (undocumented)
-export class MergeNode implements IMergeNodeCommon {
-    // (undocumented)
-    cachedLength: number;
-    // (undocumented)
-    index: number;
-    // (undocumented)
-    isLeaf(): this is ISegment;
-    // (undocumented)
-    ordinal: string;
-}
-
 // @alpha (undocumented)
 export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | typeof MergeTreeDeltaType.INSERT | typeof MergeTreeDeltaType.REMOVE | typeof MergeTreeDeltaType.OBLITERATE;
 
@@ -535,50 +528,11 @@ export interface MergeTreeRevertibleDriver {
     removeRange(start: number, end: number): void;
 }
 
-// @alpha @deprecated (undocumented)
-export interface ObliterateInfo {
-    // (undocumented)
-    clientId: number;
-    // (undocumented)
-    end: LocalReferencePosition;
-    // (undocumented)
-    localSeq: number | undefined;
-    // (undocumented)
-    refSeq: number;
-    // (undocumented)
-    segmentGroup: SegmentGroup | undefined;
-    // (undocumented)
-    seq: number;
-    // (undocumented)
-    start: LocalReferencePosition;
-}
-
-// @alpha @deprecated (undocumented)
-export class PropertiesManager {
-    // (undocumented)
-    ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void;
-    // (undocumented)
-    addProperties(oldProps: PropertySet, newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
-    // (undocumented)
-    copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
-    hasPendingProperties(props: PropertySet): boolean;
-    // (undocumented)
-    hasPendingProperty(key: string): boolean;
-}
-
-// @alpha @deprecated (undocumented)
-export enum PropertiesRollback {
-    None = 0,
-    Rollback = 1
-}
-
 // @alpha
 export type PropertySet = MapLike<any>;
 
 // @alpha
 export interface ReferencePosition {
-    // @deprecated (undocumented)
-    addProperties(newProps: PropertySet): void;
     getOffset(): number;
     getSegment(): ISegment | undefined;
     // (undocumented)
@@ -612,39 +566,6 @@ export const reservedMarkerIdKey = "markerId";
 
 // @alpha
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
-
-// @alpha @deprecated (undocumented)
-export interface SegmentGroup {
-    // (undocumented)
-    localSeq?: number;
-    // (undocumented)
-    obliterateInfo?: ObliterateInfo;
-    // (undocumented)
-    previousProps?: PropertySet[];
-    // (undocumented)
-    refSeq: number;
-    // (undocumented)
-    segments: ISegment[];
-}
-
-// @alpha @deprecated (undocumented)
-export class SegmentGroupCollection {
-    constructor(segment: ISegment);
-    // (undocumented)
-    copyTo(segment: ISegment): void;
-    // (undocumented)
-    dequeue(): SegmentGroup | undefined;
-    // (undocumented)
-    get empty(): boolean;
-    // (undocumented)
-    enqueue(segmentGroup: SegmentGroup): void;
-    // (undocumented)
-    pop?(): SegmentGroup | undefined;
-    // (undocumented)
-    remove?(segmentGroup: SegmentGroup): boolean;
-    // (undocumented)
-    get size(): number;
-}
 
 // @alpha (undocumented)
 export interface SequenceOffsets {
