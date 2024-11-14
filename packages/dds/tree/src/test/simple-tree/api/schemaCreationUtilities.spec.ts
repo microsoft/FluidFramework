@@ -197,6 +197,7 @@ describe("schemaCreationUtilities", () => {
 			b = "B",
 			c = "C",
 		}
+		// Uses a nested schema factory, as recommended by adaptEnum's docs to ensure that pattern works.
 		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
