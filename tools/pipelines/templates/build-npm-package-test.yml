@@ -411,8 +411,8 @@ extends:
                             or(
                               ne(variables['Build.Reason'], 'PullRequest'),
                               and(
-                                not(contains(taskTestStep, 'realsvc:tinylicious')),
-                                not(contains(taskTestStep, 'stress:tinylicious'))
+                                not(contains(parameters.taskTestStep, 'realsvc:tinylicious')),
+                                not(contains(parameters.taskTestStep, 'stress:tinylicious'))
                               )
                             )
                           )}}
