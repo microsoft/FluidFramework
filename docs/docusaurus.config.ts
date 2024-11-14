@@ -13,9 +13,7 @@ import DocsVersions from "./config/docs-versions.mjs";
 const includeLocalApiDocs = process.env.LOCAL_API_DOCS === "true";
 
 const githubUrl = "https://github.com/microsoft/FluidFramework";
-
-// TODO: set back to main before merging
-const githubMainBranchUrl = `${githubUrl}/tree/dev/docs/docusaurus`;
+const githubMainBranchUrl = `${githubUrl}/tree/main`;
 const githubDocsUrl = `${githubMainBranchUrl}/docs`;
 
 // #region Generate the Docusaurus versions from our versions config.
