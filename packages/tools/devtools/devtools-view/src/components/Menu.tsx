@@ -25,27 +25,6 @@ import { useLogger } from "../TelemetryUtils.js";
 
 import { Waiting } from "./index.js";
 
-/**
- * Props for {@link MenuSection}
- */
-export type MenuSectionProps = React.PropsWithChildren<{
-	/**
-	 * The text to display in header of the menu section.
-	 */
-	header: string;
-
-	/**
-	 * The icon to display in the header of the menu section.
-	 */
-	icon?: React.ReactElement;
-
-	/**
-	 * Callback function that runs when the header is clicked.
-	 * @remarks If specified, the header element will be treated as focusable, and will be given the "button" role.
-	 */
-	onHeaderClick?(): void;
-}>;
-
 const useMenuStyles = makeStyles({
 	root: {
 		...shorthands.gap("0px", "10px"),
@@ -75,26 +54,6 @@ const useMenuStyles = makeStyles({
 			backgroundColor: tokens.colorNeutralBackground1Hover,
 		},
 	},
-});
-
-const useMenuSectionStyles = makeStyles({
-	root: {
-		display: "flex",
-		flexDirection: "column",
-	},
-	header: {
-		alignItems: "center",
-		display: "flex",
-		flexDirection: "row",
-		fontWeight: "bold",
-	},
-	headerButton: {
-		alignItems: "center",
-		display: "flex",
-		flexDirection: "row",
-		fontWeight: "bold",
-		cursor: "pointer",
-	}
 });
 
 /**
@@ -202,32 +161,136 @@ function RefreshButton(): React.ReactElement {
 }
 
 /**
+ * Props for {@link MenuSection}
+ */
+export type MenuSectionProps = React.PropsWithChildren<{
+	/**
+	 * Section header.
+	 */
+	header: React.ReactElement;
+}>;
+
+const useMenuSectionStyles = makeStyles({
+	root: {
+		display: "flex",
+		flexDirection: "column",
+	},
+	header: {
+		alignItems: "center",
+		display: "flex",
+		flexDirection: "row",
+		fontWeight: "bold",
+	},
+	headerButton: {
+		alignItems: "center",
+		display: "flex",
+		flexDirection: "row",
+		fontWeight: "bold",
+		cursor: "pointer",
+	},
+});
+
+/**
  * Generic component for a section of the menu.
  */
 export function MenuSection(props: MenuSectionProps): React.ReactElement {
-	const { header, icon, children, onHeaderClick } = props;
-	const treatAsButton = onHeaderClick !== undefined;
+	const { header, children } = props;
 
 	const styles = useMenuSectionStyles();
-	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
-		if ((event.key === "Enter" || event.key === " ") && onHeaderClick) {
-			onHeaderClick();
-		}
-	};
 
 	return (
 		<div className={styles.root}>
-			<div
-				className={treatAsButton ? styles.headerButton : styles.header}
-				onClick={onHeaderClick}
-				onKeyDown={handleKeyDown}
-				tabIndex={treatAsButton ? 0 : -1}
-				role={treatAsButton ? "button" : undefined}
-			>
-				{header}
-				{icon}
-			</div>
+			{header}
 			{children}
+		</div>
+	);
+}
+
+/**
+ * Props for {@link MenuSectionLabelHeader}
+ */
+export interface MenuSectionLabelHeaderProps {
+	/**
+	 * The text to display in header of the menu section.
+	 */
+	label: string;
+
+	/**
+	 * The icon to display in the header of the menu section.
+	 */
+	icon?: React.ReactElement;
+}
+
+const useMenuSectionLabelHeaderStyles = makeStyles({
+	root: {
+		alignItems: "center",
+		display: "flex",
+		flexDirection: "row",
+		fontWeight: "bold",
+	},
+});
+
+/**
+ * Simple menu section header with a label.
+ */
+export function MenuSectionLabelHeader(
+	props: MenuSectionLabelHeaderProps,
+): React.ReactElement {
+	const { label, icon } = props;
+	const styles = useMenuSectionLabelHeaderStyles();
+
+	return (
+		<div className={styles.root}>
+			{label}
+			{icon}
+		</div>
+	);
+}
+
+/**
+ * Props for {@link MenuSectionButtonHeader}
+ */
+export interface MenuSectionButtonHeaderProps extends MenuSectionLabelHeaderProps {
+	/**
+	 * Callback function that runs when the header is clicked.
+	 */
+	onClick?(): void;
+
+	/**
+	 * Button alt text.
+	 */
+	altText: string;
+}
+
+const useMenuSectionButtonHeaderStyles = makeStyles({
+	root: {
+		alignItems: "center",
+		display: "flex",
+		flexDirection: "row",
+		fontWeight: "bold",
+		cursor: "pointer",
+		role: "button",
+	},
+});
+
+/**
+ * Menu section header that behaves like a button.
+ */
+export function MenuSectionButtonHeader(
+	props: MenuSectionButtonHeaderProps,
+): React.ReactElement {
+	const { label, icon, onClick, altText } = props;
+	const styles = useMenuSectionButtonHeaderStyles();
+
+	return (
+		<div
+			className={styles.root}
+			onClick={onClick}
+			aria-label={altText}
+			tabIndex={0}
+		>
+			{label}
+			{icon}
 		</div>
 	);
 }
@@ -373,9 +436,8 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 
 	return (
 		<MenuSection
-			header="Containers"
+			header={<MenuSectionLabelHeader label="Containers" icon={<RefreshButton />} />}
 			key="container-selection-menu-section"
-			icon={<RefreshButton />}
 		>
 			{containerSectionInnerView}
 		</MenuSection>
@@ -434,7 +496,10 @@ export function Menu(props: MenuProps): React.ReactElement {
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
-		<MenuSection header="Home" key="home-menu-section" onHeaderClick={onHomeClicked} />,
+		<MenuSection
+			header={<MenuSectionButtonHeader label="Home" altText="Home" onClick={onHomeClicked} />}
+			key="home-menu-section"
+		/>,
 		<ContainersMenuSection
 			key="containers-menu-section"
 			containers={containers}
@@ -450,7 +515,10 @@ export function Menu(props: MenuProps): React.ReactElement {
 	// Display the Telemetry menu section only if the corresponding Devtools instance supports telemetry messaging.
 	if (supportedFeatures.telemetry === true) {
 		menuSections.push(
-			<MenuSection header="Telemetry" key="telemetry-menu-section">
+			<MenuSection
+				header={<MenuSectionLabelHeader label="Telemetry" />}
+				key="telemetry-menu-section"
+			>
 				<MenuItem
 					isActive={currentSelection?.type === "telemetryMenuSelection"}
 					text="Events"
@@ -463,18 +531,28 @@ export function Menu(props: MenuProps): React.ReactElement {
 	if (supportedFeatures.opLatencyTelemetry === true) {
 		menuSections.push(
 			<MenuSection
-				header="Op Latency"
+				header={
+					<MenuSectionButtonHeader
+						label="Op Latency"
+						altText="Op Latency"
+						onClick={onOpLatencyClicked}
+					/>
+				}
 				key="op-latency-menu-section"
-				onHeaderClick={onOpLatencyClicked}
 			/>,
 		);
 	}
 
 	menuSections.push(
 		<MenuSection
-			header="Settings"
+			header={
+				<MenuSectionButtonHeader
+					label="Settings"
+					altText="Settings"
+					onClick={onSettingsClicked}
+				/>
+			}
 			key="settings-menu-section"
-			onHeaderClick={onSettingsClicked}
 		/>,
 	);
 
