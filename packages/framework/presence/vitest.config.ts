@@ -20,8 +20,12 @@ export default defineConfig({
 			reportsDirectory: "./nyc/report",
 		},
 		snapshotFormat: {
-			// Disable sorting
-			compareKeys: undefined
-		}
+			// Disable sorting -- this setting doesn't work. It has no effect, despite the documentation indicates it does.
+			// https://github.com/jestjs/jest/blob/main/packages/pretty-format/README.md#config
+			//
+			// One possible workaround is to JSON stringify the objects to be snapshotted.
+			// See src/test/snapshotEphemeralRuntime.ts for an example.
+			compareKeys: null,
+		},
 	},
 });
