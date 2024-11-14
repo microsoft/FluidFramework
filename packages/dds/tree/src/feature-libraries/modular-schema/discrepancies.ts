@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	type FieldKey,
 	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -14,6 +13,7 @@ import {
 	storedEmptyFieldSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type TreeTypeSet,
 	type ValueSchema,
@@ -107,6 +107,17 @@ export interface NodeFieldsDiscrepancy {
 
 type SchemaFactoryNodeKind = "object" | "leaf" | "map";
 
+function getNodeSchemaType(nodeSchema: TreeNodeStoredSchema): SchemaFactoryNodeKind {
+	if (nodeSchema instanceof ObjectNodeStoredSchema) {
+		return "object";
+	} else if (nodeSchema instanceof MapNodeStoredSchema) {
+		return "map";
+	} else if (nodeSchema instanceof LeafNodeStoredSchema) {
+		return "leaf";
+	}
+	throwUnsupportedNodeType(nodeSchema.constructor.name);
+}
+
 /**
  * Finds and reports discrepancies between a view schema and a stored schema.
  *
@@ -124,165 +135,102 @@ type SchemaFactoryNodeKind = "object" | "leaf" | "map";
  *
  * @returns the discrepancies between two TreeStoredSchema objects
  */
-export function getAllowedContentDiscrepancies(
+export function* getAllowedContentDiscrepancies(
 	view: TreeStoredSchema,
 	stored: TreeStoredSchema,
-): Discrepancy[] {
-	const discrepancies: Discrepancy[] = [];
-
+): Iterable<Discrepancy> {
 	// check root schema discrepancies
-	discrepancies.push(...trackFieldDiscrepancies(view.rootFieldSchema, stored.rootFieldSchema));
+	yield* getFieldDiscrepancies(view.rootFieldSchema, stored.rootFieldSchema);
 
-	// Verify the existence and type of a node schema given its identifier (key), then determine if
-	// an exhaustive search is necessary.
-	const viewNodeKeys = new Set<TreeNodeSchemaIdentifier>();
-	for (const [key, viewNodeSchema] of view.nodeSchema) {
-		viewNodeKeys.add(key);
-
-		if (viewNodeSchema instanceof ObjectNodeStoredSchema) {
-			if (!stored.nodeSchema.has(key)) {
-				discrepancies.push({
-					identifier: key,
+	for (const result of compareMaps(view.nodeSchema, stored.nodeSchema)) {
+		switch (result.type) {
+			case "aExtra": {
+				const viewType = getNodeSchemaType(result.value);
+				yield {
+					identifier: result.key,
 					mismatch: "nodeKind",
-					view: "object",
+					view: viewType,
 					stored: undefined,
-				});
-			} else {
-				const storedNodeSchema = stored.nodeSchema.get(key);
-				assert(
-					storedNodeSchema !== undefined,
-					0x9be /* The storedNodeSchema in stored.nodeSchema should not be undefined */,
-				);
-				if (storedNodeSchema instanceof MapNodeStoredSchema) {
-					discrepancies.push({
-						identifier: key,
-						mismatch: "nodeKind",
-						view: "object",
-						stored: "map",
-					} satisfies NodeKindDiscrepancy);
-				} else if (storedNodeSchema instanceof LeafNodeStoredSchema) {
-					discrepancies.push({
-						identifier: key,
-						mismatch: "nodeKind",
-						view: "object",
-						stored: "leaf",
-					} satisfies NodeKindDiscrepancy);
-				} else if (storedNodeSchema instanceof ObjectNodeStoredSchema) {
-					const differences = trackObjectNodeDiscrepancies(viewNodeSchema, storedNodeSchema);
-					if (differences.length > 0) {
-						discrepancies.push({
-							identifier: key,
-							mismatch: "fields",
-							differences,
-						} satisfies NodeFieldsDiscrepancy);
-					}
-				} else {
-					throwUnsupportedNodeType(storedNodeSchema.constructor.name);
-				}
+				};
+				break;
 			}
-		} else if (viewNodeSchema instanceof MapNodeStoredSchema) {
-			if (!stored.nodeSchema.has(key)) {
-				discrepancies.push({
-					identifier: key,
+			case "bExtra": {
+				const storedType = getNodeSchemaType(result.value);
+				yield {
+					identifier: result.key,
 					mismatch: "nodeKind",
-					view: "map",
-					stored: undefined,
-				} satisfies NodeKindDiscrepancy);
-			} else {
-				const storedNodeSchema = stored.nodeSchema.get(key);
-				assert(
-					storedNodeSchema !== undefined,
-					0x9bf /* The storedNodeSchema in stored.nodeSchema should not be undefined */,
-				);
-				if (storedNodeSchema instanceof ObjectNodeStoredSchema) {
-					discrepancies.push({
-						identifier: key,
-						mismatch: "nodeKind",
-						view: "map",
-						stored: "object",
-					} satisfies NodeKindDiscrepancy);
-				} else if (storedNodeSchema instanceof LeafNodeStoredSchema) {
-					discrepancies.push({
-						identifier: key,
-						mismatch: "nodeKind",
-						view: "map",
-						stored: "leaf",
-					} satisfies NodeKindDiscrepancy);
-				} else if (storedNodeSchema instanceof MapNodeStoredSchema) {
-					discrepancies.push(
-						...trackFieldDiscrepancies(
-							viewNodeSchema.mapFields,
-							storedNodeSchema.mapFields,
-							key,
-						),
-					);
-				} else {
-					throwUnsupportedNodeType(storedNodeSchema.constructor.name);
-				}
+					view: undefined,
+					stored: storedType,
+				};
+				break;
 			}
-		} else if (viewNodeSchema instanceof LeafNodeStoredSchema) {
-			if (!stored.nodeSchema.has(key)) {
-				discrepancies.push({
-					identifier: key,
-					mismatch: "nodeKind",
-					view: "leaf",
-					stored: undefined,
-				});
-			} else {
-				const storedNodeSchema = stored.nodeSchema.get(key);
-				assert(
-					storedNodeSchema !== undefined,
-					0x9c0 /* The storedNodeSchema in stored.nodeSchema should not be undefined */,
-				);
-				if (storedNodeSchema instanceof MapNodeStoredSchema) {
-					discrepancies.push({
-						identifier: key,
-						mismatch: "nodeKind",
-						view: "leaf",
-						stored: "map",
-					} satisfies NodeKindDiscrepancy);
-				} else if (storedNodeSchema instanceof ObjectNodeStoredSchema) {
-					discrepancies.push({
-						identifier: key,
-						mismatch: "nodeKind",
-						view: "leaf",
-						stored: "object",
-					} satisfies NodeKindDiscrepancy);
-				} else if (storedNodeSchema instanceof LeafNodeStoredSchema) {
-					if (viewNodeSchema.leafValue !== storedNodeSchema.leafValue) {
-						discrepancies.push({
-							identifier: key,
-							mismatch: "valueSchema",
-							view: viewNodeSchema.leafValue,
-							stored: storedNodeSchema.leafValue,
-						} satisfies ValueSchemaDiscrepancy);
-					}
-				} else {
-					throwUnsupportedNodeType(storedNodeSchema.constructor.name);
-				}
+			case "both": {
+				yield* getNodeDiscrepancies(result.key, result.valueA, result.valueB);
+				break;
 			}
-		} else {
-			throwUnsupportedNodeType(viewNodeSchema.constructor.name);
+			default:
+				break;
 		}
 	}
+}
 
-	for (const [key, storedNodeSchema] of stored.nodeSchema) {
-		if (!viewNodeKeys.has(key)) {
-			discrepancies.push({
-				identifier: key,
-				mismatch: "nodeKind",
-				view: undefined,
-				stored:
-					storedNodeSchema instanceof MapNodeStoredSchema
-						? "map"
-						: storedNodeSchema instanceof ObjectNodeStoredSchema
-							? "object"
-							: "leaf",
-			} satisfies NodeKindDiscrepancy);
-		}
+function* getNodeDiscrepancies(
+	identifier: TreeNodeSchemaIdentifier,
+	view: TreeNodeStoredSchema,
+	stored: TreeNodeStoredSchema,
+): Iterable<Discrepancy> {
+	const viewType = getNodeSchemaType(view);
+	const storedType = getNodeSchemaType(stored);
+	if (viewType !== storedType) {
+		yield {
+			identifier,
+			mismatch: "nodeKind",
+			view: viewType,
+			stored: storedType,
+		};
+		return;
 	}
 
-	return discrepancies;
+	switch (viewType) {
+		case "object": {
+			const differences = Array.from(
+				trackObjectNodeDiscrepancies(
+					view as ObjectNodeStoredSchema,
+					stored as ObjectNodeStoredSchema,
+				),
+			);
+			if (differences.length > 0) {
+				yield {
+					identifier,
+					mismatch: "fields",
+					differences,
+				} satisfies NodeFieldsDiscrepancy;
+			}
+			break;
+		}
+		case "map":
+			yield* getFieldDiscrepancies(
+				(view as MapNodeStoredSchema).mapFields,
+				(stored as MapNodeStoredSchema).mapFields,
+				identifier,
+			);
+			break;
+		case "leaf": {
+			const viewValue = (view as LeafNodeStoredSchema).leafValue;
+			const storedValue = (stored as LeafNodeStoredSchema).leafValue;
+			if (viewValue !== storedValue) {
+				yield {
+					identifier,
+					mismatch: "valueSchema",
+					view: viewValue,
+					stored: storedValue,
+				};
+			}
+			break;
+		}
+		default:
+			break;
+	}
 }
 
 /**
@@ -290,13 +238,11 @@ export function getAllowedContentDiscrepancies(
  *
  * @param keyOrRoot - If the key is missing, it indicates that this is the root field schema.
  */
-function trackFieldDiscrepancies(
+function* getFieldDiscrepancies(
 	view: TreeFieldStoredSchema,
 	stored: TreeFieldStoredSchema,
 	keyOrRoot?: string,
-): FieldDiscrepancy[] {
-	const differences: FieldDiscrepancy[] = [];
-
+): Iterable<FieldDiscrepancy> {
 	// Only track the symmetric differences of two sets.
 	const findSetDiscrepancies = (
 		a: TreeTypeSet,
@@ -307,34 +253,30 @@ function trackFieldDiscrepancies(
 		return [aDiff, bDiff];
 	};
 
-	const allowedTypesDiscrepancies = findSetDiscrepancies(view.types, stored.types);
-	if (allowedTypesDiscrepancies[0].length > 0 || allowedTypesDiscrepancies[1].length > 0) {
-		differences.push({
+	const [viewExtra, storedExtra] = findSetDiscrepancies(view.types, stored.types);
+	if (viewExtra.length > 0 || storedExtra.length > 0) {
+		yield {
 			identifier: keyOrRoot,
 			mismatch: "allowedTypes",
-			view: allowedTypesDiscrepancies[0],
-			stored: allowedTypesDiscrepancies[1],
-		} satisfies AllowedTypeDiscrepancy);
+			view: viewExtra,
+			stored: storedExtra,
+		} satisfies AllowedTypeDiscrepancy;
 	}
 
 	if (view.kind !== stored.kind) {
-		differences.push({
+		yield {
 			identifier: keyOrRoot,
 			mismatch: "fieldKind",
 			view: view.kind,
 			stored: stored.kind,
-		} satisfies FieldKindDiscrepancy);
+		} satisfies FieldKindDiscrepancy;
 	}
-
-	return differences;
 }
 
-function trackObjectNodeDiscrepancies(
+function* trackObjectNodeDiscrepancies(
 	view: ObjectNodeStoredSchema,
 	stored: ObjectNodeStoredSchema,
-): FieldDiscrepancy[] {
-	const differences: FieldDiscrepancy[] = [];
-	const viewFieldKeys = new Set<FieldKey>();
+): Iterable<FieldDiscrepancy> {
 	/**
 	 * Similar to the logic used for tracking discrepancies between two node schemas, we will identify
 	 * three types of differences:
@@ -346,47 +288,68 @@ function trackObjectNodeDiscrepancies(
 	 * Then, the stored schema is iterated to find the third type.
 	 */
 
-	for (const [fieldKey, fieldStoredSchema] of view.objectNodeFields) {
-		viewFieldKeys.add(fieldKey);
-		if (
-			!stored.objectNodeFields.has(fieldKey) &&
-			fieldStoredSchema.kind !== storedEmptyFieldSchema.kind
-		) {
-			differences.push({
-				identifier: fieldKey,
-				mismatch: "fieldKind",
-				view: fieldStoredSchema.kind,
-				stored: storedEmptyFieldSchema.kind,
-			} satisfies FieldKindDiscrepancy);
-		} else {
-			differences.push(
-				...trackFieldDiscrepancies(
-					view.objectNodeFields.get(fieldKey) as TreeFieldStoredSchema,
-					stored.objectNodeFields.get(fieldKey) as TreeFieldStoredSchema,
-					fieldKey,
-				),
-			);
+	for (const result of compareMaps(view.objectNodeFields, stored.objectNodeFields)) {
+		const fieldKey = result.key;
+		switch (result.type) {
+			case "aExtra": {
+				if (result.value.kind === storedEmptyFieldSchema.kind) {
+					// In one of view/stored, this field is explicitly forbidden, but in the other it is implicitly forbidden
+					// (by way of omission). We treat these identically anyway.
+					break;
+				}
+				yield {
+					identifier: fieldKey,
+					mismatch: "fieldKind",
+					view: result.value.kind,
+					stored: storedEmptyFieldSchema.kind,
+				} satisfies FieldKindDiscrepancy;
+				break;
+			}
+			case "bExtra": {
+				if (result.value.kind === storedEmptyFieldSchema.kind) {
+					// In one of view/stored, this field is explicitly forbidden, but in the other it is implicitly forbidden
+					// (by way of omission). We treat these identically anyway.
+					break;
+				}
+				yield {
+					identifier: fieldKey,
+					mismatch: "fieldKind",
+					view: storedEmptyFieldSchema.kind,
+					stored: result.value.kind,
+				} satisfies FieldKindDiscrepancy;
+				break;
+			}
+			case "both": {
+				yield* getFieldDiscrepancies(result.valueA, result.valueB, fieldKey);
+				break;
+			}
+			default: {
+				break;
+			}
 		}
 	}
-
-	for (const [fieldKey, fieldStoredSchema] of stored.objectNodeFields) {
-		if (viewFieldKeys.has(fieldKey)) {
-			continue;
-		}
-
-		if (fieldStoredSchema.kind !== storedEmptyFieldSchema.kind) {
-			differences.push({
-				identifier: fieldKey,
-				mismatch: "fieldKind",
-				view: storedEmptyFieldSchema.kind,
-				stored: fieldStoredSchema.kind,
-			} satisfies FieldKindDiscrepancy);
-		}
-	}
-
-	return differences;
 }
 
+function* compareMaps<K, V1, V2>(
+	a: ReadonlyMap<K, V1>,
+	b: ReadonlyMap<K, V2>,
+): Iterable<
+	| { type: "aExtra"; key: K; value: V1 }
+	| { type: "bExtra"; key: K; value: V2 }
+	| { type: "both"; key: K; valueA: V1; valueB: V2 }
+> {
+	for (const [key, valueA] of a) {
+		const valueB = b.get(key);
+		yield valueB === undefined
+			? { type: "aExtra", key, value: valueA }
+			: { type: "both", key, valueA, valueB };
+	}
+	for (const [key, valueB] of b) {
+		if (!a.has(key)) {
+			yield { type: "bExtra", key, value: valueB };
+		}
+	}
+}
 /**
  * @remarks
  *
@@ -419,7 +382,7 @@ export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema)
 			case "valueSchema":
 			case "allowedTypes":
 			case "fieldKind": {
-				if (!validateFieldIncompatibility(discrepancy)) {
+				if (!isFieldDiscrepancyCompatible(discrepancy)) {
 					return false;
 				}
 				break;
@@ -427,7 +390,7 @@ export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema)
 			case "fields": {
 				if (
 					discrepancy.differences.some(
-						(difference) => !validateFieldIncompatibility(difference),
+						(difference) => !isFieldDiscrepancyCompatible(difference),
 					)
 				) {
 					return false;
@@ -440,7 +403,7 @@ export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema)
 	return true;
 }
 
-function validateFieldIncompatibility(discrepancy: FieldDiscrepancy): boolean {
+function isFieldDiscrepancyCompatible(discrepancy: FieldDiscrepancy): boolean {
 	switch (discrepancy.mismatch) {
 		case "allowedTypes": {
 			// Since we only track the symmetric difference between the allowed types in the view and
