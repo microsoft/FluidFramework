@@ -17,6 +17,7 @@ import {
 	customizeSchemaTyping,
 } from "../../../simple-tree/index.js";
 import { TreeFactory } from "../../../treeFactory.js";
+import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 
 // Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
 const schema = new SchemaFactory("com.example");
@@ -139,5 +140,36 @@ describe("Class based end to end example", () => {
 
 		// @ts-expect-error custom typing violation does not build, but runs without error
 		const invalid = new Specific({ s: "x" });
+	});
+
+	it("customized narrowing - safer", () => {
+		const specialString = customizeSchemaTyping(schema.string).custom<{
+			input: "foo" | "bar";
+			// Assignment can't be made be more restrictive than the read type, but we can choose to disable it.
+			readWrite: never;
+		}>();
+		class Specific extends schema.object("Specific", {
+			s: specialString,
+		}) {}
+		const parent = new Specific({ s: "bar" });
+		// Reading gives string
+		const s = parent.s;
+		type _check = requireTrue<areSafelyAssignable<typeof s, string>>;
+
+		// @ts-expect-error Assigning is disabled;
+		parent.s = "x";
+
+		// @ts-expect-error custom typing violation does not build, but runs without error
+		const invalid = new Specific({ s: "x" });
+
+		class Array extends schema.array("Specific", specialString) {}
+
+		// Array constructor is also narrowed correctly.
+		const a = new Array(["bar"]);
+		// Array insertion is narrowed as well.
+		a.insertAtEnd("bar");
+		// and reading just gives string, since this example choose to do so since other clients could set unexpected strings as its not enforced by schema:
+		const s2 = a[0];
+		type _check2 = requireTrue<areSafelyAssignable<typeof s2, string>>;
 	});
 });

@@ -577,12 +577,15 @@ export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 
 /**
- * {@inheritdoc (UnsafeUnknownSchema:type)}
+ * {@inheritdoc (CustomizedTyping:type)}
  * @alpha
  */
 export const CustomizedTyping: unique symbol = Symbol("CustomizedTyping");
 
 /**
+ * TODO: rewrite this doc and/or dedup this with UnsafeUnknownSchema.
+ * This system should be able to replace how UnsafeUnknownSchema is used.
+ *
  * A special type which can be provided to some APIs as the schema type parameter when schema cannot easily be provided at compile time and an unsafe (instead of disabled) editing API is desired.
  * @remarks
  * When used, this means the TypeScript typing should err on the side of completeness (allow all inputs that could be valid).
@@ -602,10 +605,32 @@ export const CustomizedTyping: unique symbol = Symbol("CustomizedTyping");
  */
 export type CustomizedTyping = typeof CustomizedTyping;
 
+/**
+ * Collection of schema aware types.
+ * @remarks
+ * This type is only uses as a type constraint.
+ * It's fields are similar to an unordered set of generic type parameters.
+ * @sealed @public
+ */
 export interface CustomTypes {
+	/**
+	 * Type used for inserting values.
+	 */
 	readonly input: unknown;
-	// Set to never to disable setter.
+	/**
+	 * Type used for the read+write property on object nodes.
+	 *
+	 * Set to never to disable setter.
+	 * @remarks
+	 * Due to https://github.com/microsoft/TypeScript/issues/43826 we cannot set the desired setter type.
+	 * Instead we can only control the types of the read+write property and the type of a readonly property.
+	 */
 	readonly readWrite: TreeLeafValue | TreeNode;
+	/**
+	 * Type for reading data.
+	 * @remarks
+	 * See limitation for read+write properties on ObjectNodes in {@link CustomTypes.readWrite}.
+	 */
 	readonly output: TreeLeafValue | TreeNode;
 }
 
