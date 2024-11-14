@@ -56,9 +56,12 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
  */
 export type ObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
-> = {
-	-readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
-};
+> =
+	// Due to https://github.com/microsoft/TypeScript/issues/43826 we can not set the desired setter type.
+	// Partial mitigation for this (used for non-recursive types) breaks compilation if used here, so recursive object end up allowing some unsafe assignments which will error at runtime.
+	{
+		-readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
+	};
 
 /**
  * {@link Unenforced} version of {@link TreeNodeSchema}.

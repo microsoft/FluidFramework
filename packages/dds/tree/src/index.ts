@@ -191,6 +191,8 @@ export {
 	type TreeBranch,
 	type TreeBranchEvents,
 	asTreeViewAlpha,
+	type AssignableTreeFieldFromImplicitField,
+	type ApplyKindAssignment,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

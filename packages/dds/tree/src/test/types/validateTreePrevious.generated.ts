@@ -673,6 +673,7 @@ declare type old_as_current_for_TypeAlias_InsertableTreeFieldFromImplicitField =
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeFieldFromImplicitField": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_InsertableTreeFieldFromImplicitField = requireAssignableTo<TypeOnly<current.InsertableTreeFieldFromImplicitField<any>>, TypeOnly<old.InsertableTreeFieldFromImplicitField<any>>>
 
 /*
@@ -961,6 +962,7 @@ declare type current_as_old_for_TypeAlias_InternalTypes_FlexListToUnion = requir
  * typeValidation.broken:
  * "TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord = requireAssignableTo<TypeOnly<old.InternalTypes.InsertableObjectFromSchemaRecord<any>>, TypeOnly<current.InternalTypes.InsertableObjectFromSchemaRecord<any>>>
 
 /*
@@ -970,6 +972,7 @@ declare type old_as_current_for_TypeAlias_InternalTypes_InsertableObjectFromSche
  * typeValidation.broken:
  * "TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_InternalTypes_InsertableObjectFromSchemaRecord = requireAssignableTo<TypeOnly<current.InternalTypes.InsertableObjectFromSchemaRecord<any>>, TypeOnly<old.InternalTypes.InsertableObjectFromSchemaRecord<any>>>
 
 /*
