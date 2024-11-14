@@ -19,5 +19,9 @@ export default defineConfig({
 			reporter: ["cobertura", "html", "text"],
 			reportsDirectory: "./nyc/report",
 		},
+		snapshotFormat: {
+			// Disable sorting
+			compareKeys: undefined
+		}
 	},
 });
