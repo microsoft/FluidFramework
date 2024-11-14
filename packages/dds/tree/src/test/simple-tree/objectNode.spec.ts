@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -277,11 +277,11 @@ describeHydration(
 					class Root extends schemaFactory.object("", {
 						x: [schemaFactory.number, schemaFactory.null],
 					}) {}
-					const node = init(Root, { x: NaN });
+					const node = init(Root, { x: Number.NaN });
 					assert.equal(node.x, null);
 					node.x = 6;
 					assert.equal(node.x, 6);
-					node.x = Infinity;
+					node.x = Number.POSITIVE_INFINITY;
 					assert.equal(node.x, null);
 					node.x = -0;
 					assert(Object.is(node.x, 0));
@@ -293,7 +293,7 @@ describeHydration(
 					}) {}
 					const node = init(Root, { x: 1 });
 					assert.throws(() => {
-						node.x = NaN;
+						node.x = Number.NaN;
 					}, validateUsageError(/NaN/));
 					assert.equal(node.x, 1);
 					node.x = -0;

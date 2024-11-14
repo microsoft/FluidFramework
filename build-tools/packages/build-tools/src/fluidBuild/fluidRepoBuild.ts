@@ -5,8 +5,8 @@
 
 import { existsSync } from "node:fs";
 import * as path from "node:path";
-import chalk from "chalk";
 import registerDebug from "debug";
+import chalk from "picocolors";
 
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";

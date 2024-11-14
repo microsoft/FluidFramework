@@ -94,15 +94,8 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 // @alpha @sealed (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
-    // (undocumented)
-    (event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents"> & {
-        contents: unknown;
-    }) => void): any;
-    // (undocumented)
-    (event: "batchEnd", listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents"> & {
-        contents: unknown;
-    }) => void): any;
-    // (undocumented)
+    (event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
+    (event: "batchEnd", listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
     (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
@@ -208,8 +201,6 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     deleteChildSummarizerNode(id: string): void;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // @deprecated
-    ensureNoDataModelChanges<T>(callback: () => T): T;
     // @deprecated (undocumented)
     readonly gcThrowOnTombstoneUsage: boolean;
     // @deprecated (undocumented)
