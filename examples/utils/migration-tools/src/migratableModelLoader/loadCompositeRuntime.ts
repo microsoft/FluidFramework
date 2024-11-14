@@ -33,6 +33,8 @@ export interface IEntryPointPiece {
  */
 export class CompositeEntryPoint {
 	private readonly _entryPointPieces: IEntryPointPiece[] = [];
+	// TODO: Consider taking a "name" argument here, and don't include "name" on the IEntryPointPiece
+	// Or maybe allow a default name from the piece but allow override here?
 	public readonly addEntryPointPiece = (entryPointPiece: IEntryPointPiece): void => {
 		// TODO: Consider validating no conflicts (e.g. name already exists, registry entry collision)
 		this._entryPointPieces.push(entryPointPiece);
