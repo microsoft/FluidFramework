@@ -358,7 +358,26 @@ extends:
           - job: afterBuild
             displayName: afterBuild
             dependsOn: build
+            variables:
+              - group: ado-feeds
+              - group: storage-vars
+              - name: releaseBuildVar
+                value: '$[variables.releaseBuild]'
+              - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                - name: targetBranchName
+                  value: $(System.PullRequest.TargetBranch)
+              # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
+              # used in a few places in the pipeline to push custom telemetry to Kusto.
+              - name: absolutePathToTelemetryGenerator
+                value: $(Build.SourcesDirectory)/tools/telemetry-generator
+                readonly: true
             steps:
+              # Setup
+              - checkout: self
+                clean: true
+                lfs: '${{ parameters.checkoutSubmodules }}'
+                submodules: '${{ parameters.checkoutSubmodules }}'
+
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
               - template: /tools/pipelines/templates/include-install.yml@self
