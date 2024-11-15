@@ -127,7 +127,7 @@ export function generateGenericEditTypes(
 						allowedTypes,
 						(name) => typeMap.get(name) ?? fail("Unknown type"),
 					);
-					assert(hasAtLeastTwo(types), "Expected at least two types");
+					assert(hasAtLeastTwo(types), 0xa7d /* Expected at least two types */);
 					return z.union(types);
 				}
 			}
@@ -349,7 +349,7 @@ function getTypeForAllowedTypes(
 				);
 			}),
 		];
-		assert(hasAtLeastTwo(types), "Expected at least two types");
+		assert(hasAtLeastTwo(types), 0xa7e /* Expected at least two types */);
 		return z.union(types);
 	} else {
 		return getOrCreateType(
