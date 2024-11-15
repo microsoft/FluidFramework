@@ -18,7 +18,7 @@ const easyToUseText =
 	"Transform your collaborative experience with our developer friendly framework - where simplicity meets powerful functionality effortlessly. The framework provides usability that drives innovation within Microsoft and across the industry by dramatically lowering the difficulty and cost of building innovative, collaborative software.";
 
 const openSourceText =
-	"We believe that an open, inclusive, and respectful community will help shape a better future for this project. That's why Fluid Framework is made available for FREE as an Open Source project under the MIT license.";
+	"We believe that an open, inclusive, and respectful community will help shape a better future for this project. That's why Fluid Framework is made available for FREE as an Open Source project under the MIT license.";
 
 const performanceText =
 	"Unleash unparalleled speed and performance with our cutting-edge solution for building real-time collaborative applications. Collaborative features are only successful if they are fast, scale to large data and user bases. Fluid offers an approachable programming model that leverages mainstream web technology while delivering best-in-class performance.";
