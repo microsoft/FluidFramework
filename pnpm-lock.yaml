@@ -4245,15 +4245,15 @@ importers:
 
   examples/service-clients/azure-client/external-controller:
     dependencies:
-      '@fluid-experimental/presence':
-        specifier: workspace:~
-        version: link:../../../../packages/framework/presence
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/azure-client
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../../packages/dds/map
+      '@fluidframework/presence':
+        specifier: workspace:~
+        version: link:../../../../packages/framework/presence
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../../../packages/drivers/routerlicious-driver
@@ -11508,6 +11508,9 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.4.0
         version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/presence-previous':
+        specifier: npm:@fluid-experimental/presence@2.5.0
+        version: /@fluid-experimental/presence@2.5.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -19280,6 +19283,27 @@ packages:
       '@fluidframework/runtime-utils': 2.5.0(debug@4.3.7)
       '@fluidframework/shared-object-base': 2.5.0(debug@4.3.7)
       path-browserify: 1.0.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: true
+
+  /@fluid-experimental/presence@2.5.0:
+    resolution: {integrity: sha512-FmDIlAElEth5NYOKylv8fTXc2WKfyIQizXoopjzxAI7mnt5EqQHMy/BHgyEpLvWLO80Se7rCyBl67rdnm6mO2Q==}
+    dependencies:
+      '@fluidframework/container-definitions': 2.5.0
+      '@fluidframework/container-loader': 2.5.0
+      '@fluidframework/container-runtime-definitions': 2.5.0
+      '@fluidframework/core-interfaces': 2.5.0
+      '@fluidframework/core-utils': 2.5.0
+      '@fluidframework/datastore': 2.5.0(debug@4.3.7)
+      '@fluidframework/datastore-definitions': 2.5.0
+      '@fluidframework/fluid-static': 2.5.0
+      '@fluidframework/id-compressor': 2.5.0
+      '@fluidframework/runtime-definitions': 2.5.0
+      '@fluidframework/runtime-utils': 2.5.0(debug@4.3.7)
+      '@fluidframework/shared-object-base': 2.5.0(debug@4.3.7)
+      '@fluidframework/telemetry-utils': 2.5.0
     transitivePeerDependencies:
       - debug
       - supports-color

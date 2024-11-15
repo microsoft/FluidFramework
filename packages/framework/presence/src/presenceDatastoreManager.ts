@@ -23,7 +23,7 @@ import type {
 	PresenceWorkspaceAddress,
 } from "./types.js";
 
-import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
 	public: PresenceStates<TSchema>;

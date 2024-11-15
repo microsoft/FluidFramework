@@ -1,5 +1,5 @@
 ---
-"@fluid-experimental/presence": minor
+"@fluidframework/presence": minor
 ---
 ---
 "section": other
