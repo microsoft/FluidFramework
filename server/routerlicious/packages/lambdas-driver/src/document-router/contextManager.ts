@@ -66,8 +66,15 @@ export class DocumentContextManager extends EventEmitter {
 			this.emit("error", error, errorData);
 		});
 		context.addListener("pause", (offset: number, reason?: any) => {
-			console.log(`TEST!! Emitting pause from contextManager, offset: ${offset}, reason: ${reason}`);
-			this.emit("pause", offset, reason);
+			// Find the lowest offset of all contexts and emit pause
+			let lowestOffset = offset;
+			for (const docContext of this.contexts) {
+				if (docContext.head.offset < lowestOffset) {
+					lowestOffset = docContext.head.offset;
+				}
+			}
+			console.log(`TEST!! Emitting pause from contextManager, lowestOffset: ${lowestOffset}, offset: ${offset}, reason: ${reason}`);
+			this.emit("pause", lowestOffset, offset, reason);
 		});
 		context.addListener("resume", () => {
 			console.log(`TEST!! Emitting resume from contextManager`);
@@ -86,11 +93,15 @@ export class DocumentContextManager extends EventEmitter {
 	}
 
 	/**
-	 * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards.
+	 * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards, except if the allowBackToOffset is specified.
+	 * allowBackToOffset is specified during resume after a lambda pause (eg: circuit breaker)
 	 * @returns True if the head was updated, false if it was not.
 	 */
-	public setHead(head: IQueuedMessage) {
-		if (head.offset > this.head.offset) {
+	public setHead(head: IQueuedMessage, allowBackToOffset?: number | undefined) {
+		if (head.offset > this.head.offset || head.offset === allowBackToOffset) {
+			if (head.offset <= this.head.offset) {
+				Lumberjack.info("Allowing the contextManager head to move to the specified offset", { allowBackToOffset, currentHeadOffset: this.head.offset });
+			}
 			this.head = head;
 			return true;
 		}
@@ -98,11 +109,15 @@ export class DocumentContextManager extends EventEmitter {
 		return false;
 	}
 
-	public setTail(tail: IQueuedMessage) {
+	public setTail(tail: IQueuedMessage, allowBackToOffset?: number | undefined) {
 		assert(
-			tail.offset > this.tail.offset && tail.offset <= this.head.offset,
-			`${tail.offset} > ${this.tail.offset} && ${tail.offset} <= ${this.head.offset}`,
+			(tail.offset > this.tail.offset || tail.offset === allowBackToOffset) && tail.offset <= this.head.offset,
+			`(${tail.offset} > ${this.tail.offset} || ${tail.offset} === ${allowBackToOffset}) && ${tail.offset} <= ${this.head.offset}`,
 		);
+
+		if (tail.offset <= this.tail.offset) {
+			Lumberjack.info("Allowing the contextManager tail to move to the specified offset.", { allowBackToOffset, currentTailOffset: this.tail.offset });
+		}
 
 		this.tail = tail;
 		this.updateCheckpoint();

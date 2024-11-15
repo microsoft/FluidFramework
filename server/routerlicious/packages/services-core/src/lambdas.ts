@@ -133,7 +133,7 @@ export interface IPartitionLambda {
 	/**
 	 * Pauses the lambda. It should clear any pending work.
 	 */
-	pause?(): void;
+	pause?(offset: number): void;
 
 	/**
 	 * Resumes the lambda. This is relevant for documentLambda to resume the documentPartition queueus.

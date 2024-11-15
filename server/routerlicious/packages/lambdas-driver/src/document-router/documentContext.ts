@@ -59,12 +59,16 @@ export class DocumentContext extends EventEmitter implements IContext {
 	/**
 	 * Updates the head offset for the context.
 	 */
-	public setHead(head: IQueuedMessage) {
+	public setHead(head: IQueuedMessage, allowBackToOffset?: number | undefined) {
 		assert(
-			head.offset > this.head.offset,
-			`${head.offset} > ${this.head.offset} ` +
+			head.offset > this.head.offset || head.offset === allowBackToOffset,
+			`${head.offset} > ${this.head.offset} || ${head.offset} === ${allowBackToOffset}` +
 				`(${head.topic}, ${head.partition}, ${this.routingKey.tenantId}/${this.routingKey.documentId})`,
 		);
+
+		if (head.offset <= this.head.offset) {
+			Lumberjack.info("Allowing the document context head to move to the specified offset", { allowBackToOffset, currentHeadOffset: this.head.offset, documentId: this.routingKey.documentId });
+		}
 
 		// When moving back to a state where head and tail differ we set the tail to be the old head, as in the
 		// constructor, to make tail represent the inclusive top end of the checkpoint range.

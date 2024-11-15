@@ -82,16 +82,6 @@ export class DocumentPartition {
 			}
 		});
 
-		// this.context.on("pause", (offset: number, reason?: any) => {
-		// 	console.log("TEST!! DocumentPartition pause event", offset, reason);
-		// 	this.pause(reason);
-		// });
-
-		// this.context.on("resume", () => {
-		// 	console.log("TEST!! DocumentPartition resume event");
-		// 	this.resume();
-		// });
-
 		// Create the lambda to handle the document messages
 		this.lambdaP = factory
 			.create(documentConfig, context, this.updateActivityTime.bind(this))
@@ -118,10 +108,6 @@ export class DocumentPartition {
 				}
 			});
 	}
-
-	// private createLambda() {
-
-	// }
 
 	public process(message: IQueuedMessage) {
 		if (this.closed) {
@@ -218,7 +204,7 @@ export class DocumentPartition {
 			activityTime !== undefined ? activityTime : cacluatedActivityTimeout;
 	}
 
-	public pause() {
+	public pause(offset: number) {
 		if (this.paused) {
 			Lumberjack.info(`TEST!! Doc partition already paused, returning early.`, { documentId: this.documentId, tenantId: this.tenantId });
 			return;
@@ -229,7 +215,7 @@ export class DocumentPartition {
 		this.q.remove(() => true); // flush all the messages in the queue since kafka consumer will resume from last successful offset
 
 		if (this.lambda?.pause) {
-			this.lambda.pause();
+			this.lambda.pause(offset);
 		}
 		Lumberjack.info(`TEST!! Doc partition paused`, { documentId: this.documentId, tenantId: this.tenantId });
 	}
