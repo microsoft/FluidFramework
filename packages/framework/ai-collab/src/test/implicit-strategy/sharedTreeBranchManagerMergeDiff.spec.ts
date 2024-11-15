@@ -248,7 +248,7 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Create Diffs", () => {
 		branchManager.mergeDiffs(
 			[
 				{
-					type: "CREATE",
+					type: "INSERT",
 					path: ["optionalBoolean"],
 					value: true,
 				},
@@ -264,7 +264,7 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Create Diffs", () => {
 		branchManager.mergeDiffs(
 			[
 				{
-					type: "CREATE",
+					type: "INSERT",
 					path: ["optionalString"],
 					value: "true",
 				},
@@ -280,7 +280,7 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Create Diffs", () => {
 		branchManager.mergeDiffs(
 			[
 				{
-					type: "CREATE",
+					type: "INSERT",
 					path: ["optionalNumber"],
 					value: 1,
 				},
@@ -302,7 +302,7 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Create Diffs", () => {
 		branchManager.mergeDiffs(
 			[
 				{
-					type: "CREATE",
+					type: "INSERT",
 					path: ["optionalArray"],
 					value: arrayNode,
 				},
@@ -318,7 +318,7 @@ describe("SharedTreeBranchManager.mergeDiff() - Objects - Create Diffs", () => {
 		branchManager.mergeDiffs(
 			[
 				{
-					type: "CREATE",
+					type: "INSERT",
 					path: ["optionalObject"],
 					value: { requiredString: "test" },
 				},

@@ -20,12 +20,12 @@ import {
 } from "@fluidframework/tree/alpha";
 import type { z } from "zod";
 
+import type { Difference, ObjectPath } from "../aiCollabApi.js";
+
 import {
 	createMergableDiffSeries,
 	createMergableIdDiffSeries,
 	sharedTreeDiff,
-	type Difference,
-	type ObjectPath,
 } from "./sharedTreeDiff.js";
 import { isTreeMapNode, isTreeArrayNode, sharedTreeTraverse } from "./utils.js";
 
@@ -191,7 +191,7 @@ export class SharedTreeBranchManager {
 		if (isTreeMapNode(targetObject)) {
 			switch (diff.type) {
 				case "CHANGE":
-				case "CREATE": {
+				case "INSERT": {
 					// This code is doing non-schema aware editing, which is not a supported feature of this API.
 					// Casting to any is a way to get this unsupported and rather unsafe operation to compile.
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
@@ -211,7 +211,7 @@ export class SharedTreeBranchManager {
 			const isTargetIndexValid = targetIndex >= 0 && targetIndex <= targetObject.length - 1;
 			switch (diff.type) {
 				case "CHANGE":
-				case "CREATE": {
+				case "INSERT": {
 					if (isTargetIndexValid) {
 						// This code is doing non-schema aware editing, which is not a supported feature of this API.
 						// Casting to any is a way to get this unsupported and rather unsafe operation to compile.
@@ -260,7 +260,7 @@ export class SharedTreeBranchManager {
 		} else if (typeof targetObject === "object" && targetObject !== null) {
 			switch (diff.type) {
 				case "CHANGE":
-				case "CREATE": {
+				case "INSERT": {
 					targetObject[diff.path[diff.path.length - 1] as string] = diff.value;
 					return true;
 				}

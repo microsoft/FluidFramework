@@ -13,12 +13,6 @@
  */
 
 export {
-	type DifferenceCreate,
-	type DifferenceChange,
-	type DifferenceMove,
-	type DifferenceRemove,
-	type Difference,
-	type ObjectPath,
 	type Options,
 	sharedTreeDiff,
 	createMergableIdDiffSeries,
@@ -31,8 +25,14 @@ export {
 	type AiCollabOptions,
 	type AiCollabSuccessResponse,
 	type AiCollabErrorResponse,
+	type DifferenceInsert,
+	type DifferenceChange,
+	type DifferenceMove,
+	type DifferenceRemove,
+	type Difference,
 	type TokenUsage,
 	type TokenLimits,
+	type ObjectPath,
 	type OpenAiClientOptions,
 } from "./aiCollabApi.js";
 

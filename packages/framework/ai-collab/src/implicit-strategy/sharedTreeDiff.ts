@@ -5,80 +5,14 @@
 
 import { type TreeArrayNode, NodeKind } from "@fluidframework/tree";
 
+import type {
+	Difference,
+	DifferenceMove,
+	DifferenceRemove,
+	ObjectPath,
+} from "../aiCollabApi.js";
+
 import { isTreeMapNode, sharedTreeTraverse } from "./utils.js";
-
-/**
- * Represents a path through a tree of objects.
- * number values represent array indices whereas string values represent object keys.
- *
- * @alpha
- */
-export type ObjectPath = (string | number)[];
-
-/**
- * Represents a create operation between two branches of a tree.
- * Meaning that an attribute (a shared tree node) was identified as being created.
- *
- * @alpha
- */
-export interface DifferenceCreate {
-	type: "CREATE";
-	path: ObjectPath;
-	value: unknown;
-}
-
-/**
- * Represents a remove operation between two branches of a tree.
- * Meaning that an attribute (a shared tree node) was identified as being deleted.
- * When using object ids, removes are idenitified by an object with a given id no longer existing.
- *
- * @alpha
- */
-export interface DifferenceRemove {
-	type: "REMOVE";
-	path: ObjectPath;
-	oldValue: unknown;
-	objectId?: string | number | undefined;
-}
-
-/**
- * Represents a change operation between two branches of a tree.
- * Meaning that an attribute (a shared tree node) was identified as being changed from one value to another.
- *
- * @alpha
- */
-export interface DifferenceChange {
-	type: "CHANGE";
-	path: ObjectPath;
-	value: unknown;
-	oldValue: unknown;
-	objectId?: string | number | undefined;
-}
-
-/**
- * Represents a move operation between two branches of a tree.
- * Meaning that an object (shared tree node) was identified as being moved from one index to another based on its unique id.
- *
- * @alpha
- */
-export interface DifferenceMove {
-	type: "MOVE";
-	path: ObjectPath;
-	newIndex: number;
-	value: unknown;
-	objectId?: string | number | undefined;
-}
-
-/**
- * Union for all possible difference types.
- *
- * @alpha
- */
-export type Difference =
-	| DifferenceCreate
-	| DifferenceRemove
-	| DifferenceChange
-	| DifferenceMove;
 
 /**
  * Options for tree diffing.
@@ -352,7 +286,7 @@ export function sharedTreeDiff(
 		if (!isKeyInOldObject) {
 			if (options.useObjectIds === undefined) {
 				diffs.push({
-					type: "CREATE",
+					type: "INSERT",
 					path: [path],
 					value: newObjValue,
 				});
@@ -385,7 +319,7 @@ export function sharedTreeDiff(
 				// Then we assume this was a newly created object.
 				else {
 					diffs.push({
-						type: "CREATE",
+						type: "INSERT",
 						path: [path],
 						value: newObjValue,
 					});
@@ -395,7 +329,7 @@ export function sharedTreeDiff(
 			// We'll assume that a brand new key and value pair in the new object means that a new value was created.
 			else {
 				diffs.push({
-					type: "CREATE",
+					type: "INSERT",
 					path: [path],
 					value: newObjValue,
 				});
@@ -416,7 +350,7 @@ export function sharedTreeDiff(
 				// If this object has an id and it does not exist in the old array, then it was created.
 				if (objectId !== undefined && oldObjArrayItemIdsToIndex.has(objectId) === false) {
 					diffs.push({
-						type: "CREATE",
+						type: "INSERT",
 						path: [path],
 						value: newObjValue,
 					});
