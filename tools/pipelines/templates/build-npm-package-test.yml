@@ -349,13 +349,20 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
-              - script: rm -rf */**/node_modules
+              - task: Bash@3
+                displayName: Prune node_modules
+                condition: always()
+                continueOnError: true
                 workingDirectory: '${{ parameters.buildDirectory }}'
-                displayName: Remove workspace node_modules
-
-              - pwsh: mv ./node_modules $(Agent.TempDirectory)
-                workingDirectory: '${{ parameters.buildDirectory }}'
-                displayName: Relocate root node_modules
+                inputs:
+                  targetType: inline
+                  script: |
+                    sizeBefore=$(du -sh . | awk '{print $1}');
+                    echo "Size before: $sizeBefore";
+                    rm -rf */**/node_modules
+                    mv ./node_modules $(Agent.TempDirectory)
+                    sizeAfter=$(du -sh . | awk '{print $1}');
+                    echo "Size after: $sizeAfter";
 
               - task: 1ES.PublishPipelineArtifact@1
                 inputs:
