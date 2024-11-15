@@ -68,7 +68,7 @@ describe("Presence", () => {
 			});
 
 			it("sends signal immediately when allowable latency is 0", async () => {
-				// Configure a state workspace
+				// Configure a state workspace; SIGNAL #1
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatency: 0, forcedRefreshInterval: 0 }),
 				});
@@ -87,7 +87,7 @@ describe("Presence", () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
-				});
+				});// SIGNAL #1 DUE TO AB#24392
 
 				const { count } = stateWorkspace.props;
 
@@ -132,7 +132,7 @@ describe("Presence", () => {
 						{ num: 0 },
 						{ allowableUpdateLatency: 0, forcedRefreshInterval: 0 },
 					),
-				});
+				}); // SIGNAL #1 DUE TO AB#24392
 
 				const { count, immediateUpdate } = stateWorkspace.props;
 
@@ -157,7 +157,7 @@ describe("Presence", () => {
 						{ message: "" },
 						{ allowableUpdateLatency: 50, forcedRefreshInterval: 0 },
 					),
-				});
+				}); // SIGNAL #1 DUE TO AB#24392
 
 				const { count, note } = stateWorkspace.props;
 
@@ -172,6 +172,7 @@ describe("Presence", () => {
 				note.local = { message: "final message" }; // will be queued; deadline remains 1070
 
 				clock.tick(30); // Time is now 1080
+				// SIGNAL #2
 				// The deadline has now passed, so the timer will fire and send a single
 				// signal with the value from the last signal (num=34, message="final message").
 			});
