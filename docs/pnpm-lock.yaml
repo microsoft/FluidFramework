@@ -2524,7 +2524,7 @@ packages:
       '@docusaurus/theme-common': 3.6.1(@docusaurus/plugin-content-docs@3.6.1)(react-dom@18.3.1)(react@18.3.1)(typescript@5.5.4)
       '@docusaurus/types': 3.6.1(react-dom@18.3.1)(react@18.3.1)
       '@docusaurus/utils-validation': 3.6.1(react-dom@18.3.1)(react@18.3.1)(typescript@5.5.4)
-      mermaid: 10.9.1
+      mermaid: 10.9.3
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       tslib: 2.7.0
@@ -10382,8 +10382,8 @@ packages:
     engines: {node: '>= 8'}
     dev: true
 
-  /mermaid@10.9.1:
-    resolution: {integrity: sha512-Mx45Obds5W1UkW1nv/7dHRsbfMM1aOKA2+Pxs/IGHNonygDHwmng8xTHyS9z4KWVi0rbko8gjiBmuwwXQ7tiNA==}
+  /mermaid@10.9.3:
+    resolution: {integrity: sha512-V80X1isSEvAewIL3xhmz/rVmc27CVljcsbWxkxlWJWY/1kQa4XOABqpDl2qQLGKzpKm6WbTfUEKImBlUfFYArw==}
     dependencies:
       '@braintree/sanitize-url': 6.0.4
       '@types/d3-scale': 4.0.8
