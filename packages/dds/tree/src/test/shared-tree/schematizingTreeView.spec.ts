@@ -265,17 +265,40 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(redoStack.length, 1);
 	});
 
-	it("schemaChanged event", () => {
-		const content = {
-			schema: toStoredSchema([]),
-			initialTree: undefined,
-		};
-		const checkout = checkoutWithContent(content);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
-		const log: string[] = [];
-		view.events.on("schemaChanged", () => log.push("changed"));
-		assert.deepEqual(log, []);
-		view.upgradeSchema();
-		assert.deepEqual(log, ["changed"]);
+	describe("events", () => {
+		it("schemaChanged", () => {
+			const content = {
+				schema: toStoredSchema([]),
+				initialTree: undefined,
+			};
+			const checkout = checkoutWithContent(content);
+			const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+			const log: string[] = [];
+			view.events.on("schemaChanged", () => log.push("changed"));
+			assert.deepEqual(log, []);
+			view.upgradeSchema();
+			assert.deepEqual(log, ["changed"]);
+		});
+
+		it("emits changed events for local edits", () => {
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			const checkout = checkoutWithContent(emptyContent);
+			const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+
+			let localChanges = 0;
+
+			const unsubscribe = view.events.on("changed", (data) => {
+				if (data.isLocal) {
+					localChanges++;
+				}
+			});
+
+			insert(checkout, 0, "a");
+			assert.equal(localChanges, 1);
+			unsubscribe();
+		});
 	});
 });
