@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IAudience } from "@fluidframework/container-definitions";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
@@ -98,8 +97,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		this.quorum = makeMockQuorum(clientsData);
 		this.getQuorum = () => this.quorum;
 		this.audience = makeMockAudience(clientsData);
-		// TODO: Correct MockAudience to implement IAudience.getSelf accurately.
-		this.getAudience = () => this.audience as IAudience;
+		this.getAudience = () => this.audience;
 		this.on = (
 			event: string,
 			listener: (...args: any[]) => void,
