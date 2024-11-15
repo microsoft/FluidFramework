@@ -33,19 +33,6 @@ export interface IAcceptedMigrationDetails {
     newVersion: string;
 }
 
-// @alpha
-export interface IAttachedMigratableModel<ModelType> {
-    migrationTool: IMigrationTool;
-    model: ModelType;
-}
-
-// @alpha
-export interface IDetachedMigratableModel<ModelType> {
-    attach: () => Promise<string>;
-    migrationTool: IMigrationTool;
-    model: ModelType;
-}
-
 // @alpha (undocumented)
 export interface IEntryPointPiece {
     // (undocumented)
@@ -70,14 +57,6 @@ export interface IImportExportModel<ImportType, ExportType> {
 // @alpha
 export interface IMigratableModel extends IVersionedModel, IImportExportModel<unknown, unknown> {
     dispose(): void;
-}
-
-// @alpha (undocumented)
-export interface IMigratableModelLoader<ModelType> {
-    createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>>;
-    loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>>;
-    loadExistingToSequenceNumber(id: string, sequenceNumber: number): Promise<IAttachedMigratableModel<ModelType>>;
-    supportsVersion(version: string): Promise<boolean>;
 }
 
 // @alpha (undocumented)
@@ -141,34 +120,6 @@ export interface IVersionedModel {
 
 // @alpha
 export const loadCompositeRuntime: (context: IContainerContext, existing: boolean, compositeEntryPoint: CompositeEntryPoint, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
-
-// @alpha (undocumented)
-export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {
-    constructor(props: Pick<ILoaderProps, "urlResolver" | "documentServiceFactory" | "codeLoader" | "logger"> & {
-        generateCreateNewRequest: () => IRequest;
-    });
-    // (undocumented)
-    createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExistingToSequenceNumber(id: string, sequenceNumber: number): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    supportsVersion(version: string): Promise<boolean>;
-}
-
-// @alpha (undocumented)
-export class MigratableSessionStorageModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {
-    constructor(codeLoader: ICodeDetailsLoader, logger?: ITelemetryBaseLogger | undefined);
-    // (undocumented)
-    createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExistingToSequenceNumber(id: string, sequenceNumber: number): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    supportsVersion(version: string): Promise<boolean>;
-}
 
 // @alpha
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";

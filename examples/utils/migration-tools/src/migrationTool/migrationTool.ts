@@ -32,7 +32,7 @@ import type {
 	IMigrationTool,
 	IMigrationToolEvents,
 	MigrationState,
-} from "./interfaces/index.js";
+} from "../interfaces/index.js";
 
 const consensusRegisterCollectionId = "consensus-register-collection";
 const pactMapId = "pact-map";

@@ -26,15 +26,7 @@ export type {
 	IVersionedModel,
 	MigrationState,
 } from "./interfaces/index.js";
-export {
-	IAttachedMigratableModel,
-	IDetachedMigratableModel,
-	IMigratableModelLoader,
-	MigratableModelLoader,
-	MigratableSessionStorageModelLoader,
-	migrationToolEntryPointPiece,
-} from "./migratableModelLoader/index.js";
-export { MigrationToolFactory } from "./migrationTool.js";
+export { migrationToolEntryPointPiece, MigrationToolFactory } from "./migrationTool/index.js";
 export {
 	ISimpleLoader,
 	SessionStorageSimpleLoader,
