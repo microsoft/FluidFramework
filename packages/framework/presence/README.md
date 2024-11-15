@@ -47,7 +47,7 @@ Notifications value managers are special case where no data is retained during a
 While this package is developing as experimental and other Fluid Framework internals are being updated to accommodate it, a temporary Shared Object must be added within container to gain access.
 
 ```typescript
-import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluidframework/presence";
+import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
 
 const containerSchema = {
 	initialObjects: {
@@ -92,38 +92,10 @@ Notifications API is mostly unimplemented. All messages are always broadcast eve
 
 Notifications are fundamentally unreliable at this time as there are no built-in acknowledgements nor retained state. To prevent most common loss of notifications, always check for connection before sending.
 
-
-### Experimental
-
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-**IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
-
-**Do not use in production scenarios.**
-
-## Using Fluid Framework libraries
-
-When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
-While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
-library consumers should always prefer `^`.
-
-If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
-
-## Installation
-
-To get started, install the package by running the following command:
-
-```bash
-npm i @fluidframework/presence
-```
-
-## API Documentation
-
-API documentation for **@fluidframework/presence** is available at <https://fluidframework.com/docs/apis/presence>.
 
 ## Minimum Client Requirements
 
