@@ -4,18 +4,52 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+
+import type { IMigrationTool, MigrationState } from "../migrationTool/index.js";
+import { type ISimpleLoader, waitForAtLeastSequenceNumber } from "../simpleLoader/index.js";
 
 import type {
 	DataTransformationCallback,
 	IMigratableModel,
-	IMigrationTool,
 	IMigrator,
 	IMigratorEvents,
-	MigrationState,
-} from "./interfaces/index.js";
-import type { IDetachedMigratableModel, IMigratableModelLoader } from "./modelLoader/index.js";
+} from "./interfaces.js";
+
+// TODO: This probably shouldn't be exported, consider having the migrator get its own model/tool out.
+/**
+ * The purpose of the model pattern and the model loader is to wrap the IContainer in a more useful object and
+ * interface.  This demo uses a convention of the entrypoint providing a getModelAndMigrationTool method to do so.
+ * It does this with the expectation that the model has been bundled with the container code.
+ *
+ * Other strategies to obtain the wrapping model could also work fine here - for example a standalone model code
+ * loader that separately fetches model code and wraps the container from the outside.
+ * @alpha
+ */
+export const getModelAndMigrationToolFromContainer = async <ModelType>(
+	container: IContainer,
+): Promise<{ model: ModelType; migrationTool: IMigrationTool }> => {
+	// TODO: Fix typing here
+	const entryPoint = (await container.getEntryPoint()) as {
+		getModel: (container: IContainer) => Promise<ModelType>;
+		migrationTool: IMigrationTool;
+	};
+	// If the user tries to use this model loader with an incompatible container runtime, we want to give them
+	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
+	if (typeof entryPoint.getModel !== "function") {
+		throw new TypeError("Incompatible container runtime: doesn't provide getModel");
+	}
+	const model = await entryPoint.getModel(container);
+	if (typeof model !== "object") {
+		throw new TypeError("Incompatible container runtime: doesn't provide model");
+	}
+	if (typeof entryPoint.migrationTool !== "object") {
+		throw new TypeError("Incompatible container runtime: doesn't provide migrationTool");
+	}
+	return { model, migrationTool: entryPoint.migrationTool };
+};
 
 /**
  * As the Migrator migrates, it updates its reference to the current version of the model.
@@ -72,10 +106,13 @@ export class Migrator implements IMigrator {
 	 */
 	private _migratedLoadP: Promise<void> | undefined;
 
+	// TODO: Better typing, decide if we can just retain attach()
 	/**
 	 * Detached model that is ready to attach. This is stored for retry scenarios.
 	 */
-	private _preparedDetachedModel: IDetachedMigratableModel<IMigratableModel> | undefined;
+	private _preparedDetachedModel:
+		| { container: IContainer; attach: () => Promise<string> }
+		| undefined;
 
 	/**
 	 * After attaching the prepared model, but before we have written its ID into the current model, we'll store the ID
@@ -84,7 +121,7 @@ export class Migrator implements IMigrator {
 	private _preparedModelId: string | undefined;
 
 	public constructor(
-		private readonly modelLoader: IMigratableModelLoader<IMigratableModel>,
+		private readonly simpleLoader: ISimpleLoader,
 		initialMigratable: IMigratableModel,
 		initialMigrationTool: IMigrationTool,
 		initialId: string,
@@ -159,7 +196,8 @@ export class Migrator implements IMigrator {
 				// forward, or at least advise the end user to refresh the page or something.
 				// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
 				// a new MigratableModelLoader?
-				const migrationSupported = await this.modelLoader.supportsVersion(
+				// TODO: Does the above TODO still matter now that this uses SimpleLoader?
+				const migrationSupported = await this.simpleLoader.supportsVersion(
 					acceptedMigration.newVersion,
 				);
 				if (!migrationSupported) {
@@ -168,19 +206,27 @@ export class Migrator implements IMigrator {
 					return;
 				}
 
-				const detachedModel = await this.modelLoader.createDetached(
+				const detachedContainer = await this.simpleLoader.createDetached(
 					acceptedMigration.newVersion,
 				);
-				const migratedModel = detachedModel.model;
+				const { model: detachedModel } =
+					await getModelAndMigrationToolFromContainer<IMigratableModel>(
+						detachedContainer.container,
+					);
+				const migratedModel = detachedModel;
 
 				// Here we load the model to at least the acceptance sequence number and export.  We do this with a
 				// separately loaded model to ensure we don't include any local un-ack'd changes.  Late-arriving messages
 				// may or may not make it into the migrated data, there is no guarantee either way.
 				// TODO: Consider making this a read-only client
-				const { model: exportModel } = await this.modelLoader.loadExistingToSequenceNumber(
-					this.currentModelId,
+				const container = await this.simpleLoader.loadExisting(this.currentModelId);
+				await waitForAtLeastSequenceNumber(
+					container,
 					acceptedMigration.migrationSequenceNumber,
 				);
+				// TODO: verify IMigratableModel
+				const { model: exportModel } =
+					await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
 				const exportedData = await exportModel.exportData();
 				exportModel.dispose();
 
@@ -217,7 +263,7 @@ export class Migrator implements IMigrator {
 				await migratedModel.importData(transformedData);
 
 				// Store the detached model for later use and retry scenarios
-				this._preparedDetachedModel = detachedModel;
+				this._preparedDetachedModel = detachedContainer;
 			};
 
 			const completeTheMigration = async (): Promise<void> => {
@@ -319,7 +365,7 @@ export class Migrator implements IMigrator {
 		const doTheLoad = async (): Promise<void> => {
 			// doTheLoad() should only be called once. It will resolve once we complete loading.
 
-			const migrationSupported = await this.modelLoader.supportsVersion(
+			const migrationSupported = await this.simpleLoader.supportsVersion(
 				acceptedMigration.newVersion,
 			);
 			if (!migrationSupported) {
@@ -327,8 +373,9 @@ export class Migrator implements IMigrator {
 				this._migratedLoadP = undefined;
 				return;
 			}
+			const migratedContainer = await this.simpleLoader.loadExisting(migratedId);
 			const { model: migratedModel, migrationTool: migratedMigrationTool } =
-				await this.modelLoader.loadExisting(migratedId);
+				await getModelAndMigrationToolFromContainer<IMigratableModel>(migratedContainer);
 			// Note: I'm choosing not to dispose the old migratable here, and instead allow the lifecycle management
 			// of the migratable to be the responsibility of whoever created the Migrator (and handed it its first
 			// migratable).  It could also be fine to dispose here, just need to have an explicit contract to clarify

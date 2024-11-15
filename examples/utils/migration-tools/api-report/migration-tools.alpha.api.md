@@ -4,11 +4,28 @@
 
 ```ts
 
-// @alpha
-export type CreateModelCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;
+// @alpha (undocumented)
+export class CompositeEntryPoint {
+    // (undocumented)
+    readonly addEntryPointPiece: (entryPointPiece: IEntryPointPiece) => void;
+    // (undocumented)
+    readonly onCreate: (runtime: IContainerRuntime) => Promise<void>;
+    // (undocumented)
+    readonly onLoad: (runtime: IContainerRuntime) => Promise<void>;
+    // (undocumented)
+    readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<Record<string, unknown>>;
+    // (undocumented)
+    get registryEntries(): NamedFluidDataStoreRegistryEntries;
+}
 
 // @alpha
 export type DataTransformationCallback = (exportedData: unknown, modelVersion: string) => Promise<unknown>;
+
+// @alpha
+export const getModelAndMigrationToolFromContainer: <ModelType>(container: IContainer) => Promise<{
+    model: ModelType;
+    migrationTool: IMigrationTool;
+}>;
 
 // @alpha
 export interface IAcceptedMigrationDetails {
@@ -16,17 +33,18 @@ export interface IAcceptedMigrationDetails {
     newVersion: string;
 }
 
-// @alpha
-export interface IAttachedMigratableModel<ModelType> {
-    migrationTool: IMigrationTool;
-    model: ModelType;
-}
-
-// @alpha
-export interface IDetachedMigratableModel<ModelType> {
-    attach: () => Promise<string>;
-    migrationTool: IMigrationTool;
-    model: ModelType;
+// @alpha (undocumented)
+export interface IEntryPointPiece {
+    // (undocumented)
+    readonly createPiece: (runtime: IContainerRuntime) => Promise<unknown>;
+    // (undocumented)
+    readonly name: string;
+    // (undocumented)
+    readonly onCreate: (runtime: IContainerRuntime) => Promise<void>;
+    // (undocumented)
+    readonly onLoad: (runtime: IContainerRuntime) => Promise<void>;
+    // (undocumented)
+    readonly registryEntries: NamedFluidDataStoreRegistryEntries;
 }
 
 // @alpha
@@ -39,23 +57,6 @@ export interface IImportExportModel<ImportType, ExportType> {
 // @alpha
 export interface IMigratableModel extends IVersionedModel, IImportExportModel<unknown, unknown> {
     dispose(): void;
-}
-
-// @alpha (undocumented)
-export interface IMigratableModelContainerRuntimeEntryPoint<T> {
-    // (undocumented)
-    getModelAndMigrationTool(container: IContainer): Promise<{
-        model: T;
-        migrationTool: IMigrationTool;
-    }>;
-}
-
-// @alpha (undocumented)
-export interface IMigratableModelLoader<ModelType> {
-    createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>>;
-    loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>>;
-    loadExistingToSequenceNumber(id: string, sequenceNumber: number): Promise<IAttachedMigratableModel<ModelType>>;
-    supportsVersion(version: string): Promise<boolean>;
 }
 
 // @alpha (undocumented)
@@ -102,57 +103,29 @@ export interface IMigratorEvents extends IEvent {
     (event: "migrationNotSupported", listener: (version: string) => void): any;
 }
 
+// @alpha (undocumented)
+export interface ISimpleLoader {
+    createDetached(version: string): Promise<{
+        container: IContainer;
+        attach: () => Promise<string>;
+    }>;
+    loadExisting(id: string): Promise<IContainer>;
+    supportsVersion(version: string): Promise<boolean>;
+}
+
 // @alpha
 export interface IVersionedModel {
     readonly version: string;
 }
 
 // @alpha
-export const loadMigratableRuntime: <ModelType>(context: IContainerContext, existing: boolean, registryEntries: NamedFluidDataStoreRegistryEntries, createModel: CreateModelCallback<ModelType>, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
-
-// @alpha (undocumented)
-export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {
-    constructor(props: Pick<ILoaderProps, "urlResolver" | "documentServiceFactory" | "codeLoader" | "logger"> & {
-        generateCreateNewRequest: () => IRequest;
-    });
-    // (undocumented)
-    createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExistingToSequenceNumber(id: string, sequenceNumber: number): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    supportsVersion(version: string): Promise<boolean>;
-}
-
-// @alpha (undocumented)
-export class MigratableSessionStorageModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {
-    constructor(codeLoader: ICodeDetailsLoader, logger?: ITelemetryBaseLogger | undefined);
-    // (undocumented)
-    createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExistingToSequenceNumber(id: string, sequenceNumber: number): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    supportsVersion(version: string): Promise<boolean>;
-}
-
-// @alpha (undocumented)
-export class MigratableTinyliciousModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {
-    constructor(codeLoader: ICodeDetailsLoader);
-    // (undocumented)
-    createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExistingToSequenceNumber(id: string, sequenceNumber: number): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    supportsVersion(version: string): Promise<boolean>;
-}
+export const loadCompositeRuntime: (context: IContainerContext, existing: boolean, compositeEntryPoint: CompositeEntryPoint, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
 
 // @alpha
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
+
+// @alpha (undocumented)
+export const migrationToolEntryPointPiece: IEntryPointPiece;
 
 // @alpha (undocumented)
 export class MigrationToolFactory implements IFluidDataStoreFactory {
@@ -166,7 +139,7 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 
 // @alpha
 export class Migrator implements IMigrator {
-    constructor(modelLoader: IMigratableModelLoader<IMigratableModel>, initialMigratable: IMigratableModel, initialMigrationTool: IMigrationTool, initialId: string, dataTransformationCallback?: DataTransformationCallback | undefined);
+    constructor(simpleLoader: ISimpleLoader, initialMigratable: IMigratableModel, initialMigrationTool: IMigrationTool, initialId: string, dataTransformationCallback?: DataTransformationCallback | undefined);
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -179,6 +152,36 @@ export class Migrator implements IMigrator {
     get events(): IEventProvider<IMigratorEvents>;
     // (undocumented)
     get migrationState(): MigrationState;
+}
+
+// @alpha (undocumented)
+export class SessionStorageSimpleLoader implements ISimpleLoader {
+    constructor(codeLoader: ICodeDetailsLoader, logger?: ITelemetryBaseLogger | undefined);
+    // (undocumented)
+    createDetached(version: string): Promise<{
+        container: IContainer;
+        attach: () => Promise<string>;
+    }>;
+    // (undocumented)
+    loadExisting(id: string): Promise<IContainer>;
+    // (undocumented)
+    supportsVersion(version: string): Promise<boolean>;
+}
+
+// @alpha (undocumented)
+export class SimpleLoader implements ISimpleLoader {
+    constructor(props: Pick<ILoaderProps, "urlResolver" | "documentServiceFactory" | "codeLoader" | "logger"> & {
+        generateCreateNewRequest: () => IRequest;
+    });
+    // (undocumented)
+    createDetached(version: string): Promise<{
+        container: IContainer;
+        attach: () => Promise<string>;
+    }>;
+    // (undocumented)
+    loadExisting(id: string): Promise<IContainer>;
+    // (undocumented)
+    supportsVersion(version: string): Promise<boolean>;
 }
 
 ```

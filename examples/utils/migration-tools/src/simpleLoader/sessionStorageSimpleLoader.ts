@@ -3,27 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
+	type ICodeDetailsLoader,
+	type IContainer,
+} from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import {
+	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
 	LocalResolver,
 	LocalSessionStorageDbFactory,
-	createLocalResolverCreateNewRequest,
 } from "@fluidframework/local-driver/internal";
 import {
-	ILocalDeltaConnectionServer,
+	type ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import { v4 as uuid } from "uuid";
 
-import type {
-	IAttachedMigratableModel,
-	IDetachedMigratableModel,
-	IMigratableModelLoader,
-} from "./interfaces.js";
-import { MigratableModelLoader } from "./migratableModelLoader.js";
+import type { ISimpleLoader } from "./interfaces.js";
+import { SimpleLoader } from "./simpleLoader.js";
 
 const urlResolver = new LocalResolver();
 
@@ -41,9 +40,7 @@ const getDocumentServiceFactory = (documentId: string): IDocumentServiceFactory 
 /**
  * @alpha
  */
-export class MigratableSessionStorageModelLoader<ModelType>
-	implements IMigratableModelLoader<ModelType>
-{
+export class SessionStorageSimpleLoader implements ISimpleLoader {
 	public constructor(
 		private readonly codeLoader: ICodeDetailsLoader,
 		private readonly logger?: ITelemetryBaseLogger,
@@ -53,9 +50,11 @@ export class MigratableSessionStorageModelLoader<ModelType>
 		return true;
 	}
 
-	public async createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>> {
+	public async createDetached(
+		version: string,
+	): Promise<{ container: IContainer; attach: () => Promise<string> }> {
 		const documentId = uuid();
-		const modelLoader = new MigratableModelLoader<ModelType>({
+		const modelLoader = new SimpleLoader({
 			urlResolver,
 			documentServiceFactory: getDocumentServiceFactory(documentId),
 			codeLoader: this.codeLoader,
@@ -64,9 +63,9 @@ export class MigratableSessionStorageModelLoader<ModelType>
 		});
 		return modelLoader.createDetached(version);
 	}
-	public async loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>> {
+	public async loadExisting(id: string): Promise<IContainer> {
 		const documentId = id;
-		const modelLoader = new MigratableModelLoader<ModelType>({
+		const modelLoader = new SimpleLoader({
 			urlResolver,
 			documentServiceFactory: getDocumentServiceFactory(documentId),
 			codeLoader: this.codeLoader,
@@ -74,20 +73,5 @@ export class MigratableSessionStorageModelLoader<ModelType>
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
 		});
 		return modelLoader.loadExisting(`${window.location.origin}/${id}`);
-	}
-	public async loadExistingToSequenceNumber(
-		id: string,
-		sequenceNumber: number,
-	): Promise<IAttachedMigratableModel<ModelType>> {
-		const modelLoader = new MigratableModelLoader<ModelType>({
-			urlResolver,
-			documentServiceFactory: getDocumentServiceFactory(id),
-			codeLoader: this.codeLoader,
-			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(id),
-		});
-		return modelLoader.loadExistingToSequenceNumber(
-			`${window.location.origin}/${id}`,
-			sequenceNumber,
-		);
 	}
 }
