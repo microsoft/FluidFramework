@@ -193,6 +193,15 @@ export {
 	asTreeViewAlpha,
 	type AssignableTreeFieldFromImplicitField,
 	type ApplyKindAssignment,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
+	type Customizer,
+	type GetTypes,
+	type StrictTypes,
+	type CustomTypes,
+	type CustomizedSchemaTyping,
+	CustomizedTyping,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
+	customizeSchemaTyping,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

@@ -577,7 +577,7 @@ export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 
 /**
  * {@inheritdoc (CustomizedTyping:type)}
- * @alpha
+ * @system @public
  */
 export const CustomizedTyping: unique symbol = Symbol("CustomizedTyping");
 
@@ -600,7 +600,7 @@ export const CustomizedTyping: unique symbol = Symbol("CustomizedTyping");
  * Any APIs which use this must produce UsageErrors when out of schema data is encountered, and never produce unrecoverable errors,
  * or silently accept invalid data.
  * This is currently only type exported from the package: the symbol is just used as a way to get a named type.
- * @alpha
+ * @system @public
  */
 export type CustomizedTyping = typeof CustomizedTyping;
 
@@ -648,6 +648,7 @@ export type CustomizedSchemaTyping<TSchema, TCustom extends CustomTypes> = TSche
  * @typeparam TOutput - Internal: do not specify.
  * @remarks
  * Handles input types contravariantly so any input which might be invalid is rejected.
+ * @sealed @public
  */
 export interface StrictTypes<
 	TSchema extends ImplicitAllowedTypes,
@@ -660,50 +661,15 @@ export interface StrictTypes<
 }
 
 /**
- * Relaxed policy: allows possible invalid edits (which will err at runtime) when schema is not exact.
+ * Default strict policy.
+ *
+ * @typeparam TSchema - The schema to process
+ * @typeparam TInput - Internal: do not specify.
+ * @typeparam TOutput - Internal: do not specify.
  * @remarks
- * Handles input types covariantly so any input which might be valid with the schema is allowed
- * instead of the default strict policy of only inputs with all possible schema re allowed.
+ * Handles input types contravariantly so any input which might be invalid is rejected.
+ * @sealed @alpha
  */
-export interface RelaxedTypes<TSchema extends ImplicitAllowedTypes> {
-	input: TSchema extends TreeNodeSchema
-		? InsertableTypedNode<TSchema>
-		: TSchema extends AllowedTypes
-			? TSchema[number] extends LazyItem<infer TSchemaInner extends TreeNodeSchema>
-				? InsertableTypedNode<TSchemaInner>
-				: never
-			: never;
-	readWrite: TreeNodeFromImplicitAllowedTypes<TSchema>;
-	output: TreeNodeFromImplicitAllowedTypes<TSchema>;
-}
-
-/**
- * Ignores schema, and allows any edit at compile time.
- */
-export interface AnyTypes {
-	input: InsertableField<UnsafeUnknownSchema>;
-	readWrite: TreeNode | TreeLeafValue;
-	output: TreeNode | TreeLeafValue;
-}
-
-/**
- * Ignores schema, forbidding all edits.
- */
-export interface UnknownTypes {
-	input: never;
-	readWrite: never;
-	output: TreeNode | TreeLeafValue;
-}
-
-/**
- * Replaces all typing with a single type.
- */
-export interface SimpleReplacedType<T> {
-	input: T;
-	readWrite: T;
-	output: T;
-}
-
 export function customizeSchemaTyping<TSchema extends ImplicitAllowedTypes>(
 	schema: TSchema,
 ): Customizer<TSchema> {
@@ -713,15 +679,35 @@ export function customizeSchemaTyping<TSchema extends ImplicitAllowedTypes>(
 	return { strict: f, relaxed: f, simplified: f, simplifiedUnrestricted: f, custom: f };
 }
 
+/**
+ * Utility for customizing the types used for data matching a given schema.
+ * @sealed @public
+ */
 export interface Customizer<TSchema extends ImplicitAllowedTypes> {
 	/**
 	 * The default {@link StrictTypes}, explicitly applied.
 	 */
 	strict(): CustomizedSchemaTyping<TSchema, StrictTypes<TSchema>>;
 	/**
-	 * {@link RelaxedTypes}.
+	 * Relaxed policy: allows possible invalid edits (which will err at runtime) when schema is not exact.
+	 * @remarks
+	 * Handles input types covariantly so any input which might be valid with the schema is allowed
+	 * instead of the default strict policy of only inputs with all possible schema re allowed.
 	 */
-	relaxed(): CustomizedSchemaTyping<TSchema, RelaxedTypes<TSchema>>;
+	relaxed(): CustomizedSchemaTyping<
+		TSchema,
+		{
+			input: TSchema extends TreeNodeSchema
+				? InsertableTypedNode<TSchema>
+				: TSchema extends AllowedTypes
+					? TSchema[number] extends LazyItem<infer TSchemaInner extends TreeNodeSchema>
+						? InsertableTypedNode<TSchemaInner>
+						: never
+					: never;
+			readWrite: TreeNodeFromImplicitAllowedTypes<TSchema>;
+			output: TreeNodeFromImplicitAllowedTypes<TSchema>;
+		}
+	>;
 	/**
 	 * Replace typing with a single substitute which allowed types must implement.
 	 * @remarks
@@ -731,7 +717,11 @@ export interface Customizer<TSchema extends ImplicitAllowedTypes> {
 	 */
 	simplified<T extends TreeNodeFromImplicitAllowedTypes<TSchema>>(): CustomizedSchemaTyping<
 		TSchema,
-		SimpleReplacedType<T>
+		{
+			input: T;
+			readWrite: T;
+			output: T;
+		}
 	>;
 
 	/**
@@ -739,7 +729,11 @@ export interface Customizer<TSchema extends ImplicitAllowedTypes> {
 	 */
 	simplifiedUnrestricted<T extends TreeNode | TreeLeafValue>(): CustomizedSchemaTyping<
 		TSchema,
-		SimpleReplacedType<T>
+		{
+			input: T;
+			readWrite: T;
+			output: T;
+		}
 	>;
 
 	/**
@@ -761,6 +755,10 @@ export interface Customizer<TSchema extends ImplicitAllowedTypes> {
 	>;
 }
 
+/**
+ * Fetch types associated with a schema, or use the default if not customized.
+ * @system @public
+ */
 export type GetTypes<TSchema extends ImplicitAllowedTypes> = [TSchema] extends [
 	CustomizedSchemaTyping<unknown, infer TCustom>,
 ]
@@ -856,7 +854,6 @@ export type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extend
  * @typeparam TSchema - Schema to process.
  * @remarks
  * Defaults to {@link DefaultTreeNodeFromImplicitAllowedTypes}.
- * Use {@link Customizer} to customize.
  * @public
  */
 export type TreeNodeFromImplicitAllowedTypes<
@@ -934,7 +931,6 @@ export type Input<T extends never> = T;
  * @typeparam TSchema - Schema to process.
  * @remarks
  * Defaults to {@link DefaultInsertableTreeNodeFromImplicitAllowedTypes}.
- * Use {@link Customizer} to customize.
  * @public
  */
 export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> =

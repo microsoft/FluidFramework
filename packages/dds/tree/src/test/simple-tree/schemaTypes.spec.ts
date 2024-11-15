@@ -33,6 +33,7 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
+	type UnsafeUnknownSchema,
 	areImplicitFieldSchemaEqual,
 	normalizeAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
@@ -232,6 +233,26 @@ describe("schemaTypes", () => {
 			type TB = DefaultTreeNodeFromImplicitAllowedTypes<typeof Customized>;
 			type _checkB = requireAssignableTo<TB, Customized>;
 		}
+	}
+
+	// Example CustomTypes
+
+	/**
+	 * Ignores schema, and allows any edit at compile time.
+	 */
+	interface AnyTypes {
+		input: InsertableField<UnsafeUnknownSchema>;
+		readWrite: TreeNode | TreeLeafValue;
+		output: TreeNode | TreeLeafValue;
+	}
+
+	/**
+	 * Ignores schema, forbidding all edits.
+	 */
+	interface UnknownTypes {
+		input: never;
+		readWrite: never;
+		output: TreeNode | TreeLeafValue;
 	}
 
 	describe("insertable", () => {

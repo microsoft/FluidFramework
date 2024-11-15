@@ -147,6 +147,14 @@ export {
 	type ReadableField,
 	type ReadSchema,
 	customizeSchemaTyping,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
+	type Customizer,
+	type GetTypes,
+	type StrictTypes,
+	type CustomTypes,
+	type CustomizedSchemaTyping,
+	CustomizedTyping,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
