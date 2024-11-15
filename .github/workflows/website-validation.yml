@@ -83,7 +83,8 @@ jobs:
           cache-dependency-path: docs/pnpm-lock.yaml
 
       - name: Download site artifact
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # ratchet:actions/download-artifact@v3
+         # release notes: https://github.com/actions/download-artifact/releases/tag/v4.1.8
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
         with:
           name: fluidframework-site
           path: docs/build
