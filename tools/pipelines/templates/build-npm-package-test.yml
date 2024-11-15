@@ -353,7 +353,6 @@ extends:
                 displayName: Prune node_modules
                 condition: always()
                 continueOnError: true
-                workingDirectory: '${{ parameters.buildDirectory }}'
                 inputs:
                   targetType: inline
                   script: |
