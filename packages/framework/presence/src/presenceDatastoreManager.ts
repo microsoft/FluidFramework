@@ -9,10 +9,9 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 // TODO: This lib weighs 585 bytes minified and gzipped; 1.1 kb minified only
 // https://bundlephobia.com/package/ts-deepmerge@7.0.1
 // If this is too heavy it should be possible to write a bespoke merger
-import { merge } from "ts-deepmerge";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { IEphemeralRuntime } from "./internalTypes.js";
+import { brandedObjectEntries, type IEphemeralRuntime } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
 	ClientUpdateEntry,
@@ -20,7 +19,11 @@ import type {
 	PresenceStatesInternal,
 	ValueElementMap,
 } from "./presenceStates.js";
-import { createPresenceStates, mergeUntrackedDatastore } from "./presenceStates.js";
+import {
+	createPresenceStates,
+	mergeUntrackedDatastore,
+	mergeValueDirectory,
+} from "./presenceStates.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import type {
 	PresenceStates,
@@ -204,10 +207,18 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 	private queuedMessage: DatastoreUpdateMessage["content"] | undefined;
 
+	/**
+	 * The time at which the presence data must be sent. When presence updates are submitted, this value is calculated
+	 * based on the allowable latency for the update. A timer will fire at this time, sending any queued message
+	 * immediately. Note that if updates come in with allowable latencies that require sending before this deadline, those
+	 * messages will be sent immediately. Therefore this value can be considered the time of the next scheduled presence
+	 * update.
+	 */
 	private sendMessageDeadline: number = 0;
 
 	private localUpdate(data: DatastoreMessageContent, options: LocalUpdateOptions): void {
 		const allowableUpdateLatency = options.allowableUpdateLatency ?? 0;
+		const forceBroadcast = options.forceBroadcast;
 
 		const now = Date.now();
 		const updateDeadline = now + allowableUpdateLatency;
@@ -216,43 +227,75 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			this.sendMessageDeadline = updateDeadline;
 		}
 
-		const queuedMessageData = this.queuedMessage?.data;
+		// This function-local "datastore" will hold the merged message data
+		const queueDatastore: {
+			[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
+		} = this.queuedMessage?.data ?? {};
+
 		const currentMessageData: DatastoreMessageContent = data;
 
-		// Merge the queued data with the next update.
-		const newData =
-			queuedMessageData === undefined
-				? currentMessageData
-				: merge(queuedMessageData, currentMessageData);
+		// Iterate over the current message data; individual items are workspaces
+		for (const workspaceName of Object.keys(currentMessageData)) {
+			const workspaceData = currentMessageData[workspaceName];
 
-		const newContent = {
+			// Initialize the merged data as the queued datastore entry for the workspace
+			// Since the key might not exist, create an empty object in that case. It will
+			// be set explicitly after the loop.
+			const mergedData = queueDatastore?.[workspaceName] ?? {};
+
+			// Iterate over each value manager and its data, merging it as needed
+			for (const valueManagerKey of Object.keys(workspaceData)) {
+				for (const [clientSessionId, value] of brandedObjectEntries(
+					workspaceData[valueManagerKey],
+				)) {
+					// TODO: Should any values be ignored here? E.g. values with ignoreUnmonitored?
+					mergedData[valueManagerKey] ??= {};
+					mergedData[valueManagerKey][clientSessionId] = mergeValueDirectory(
+						mergedData[valueManagerKey][clientSessionId],
+						value,
+						0, // TODO: what value should be passed here?
+					);
+					console.log(clientSessionId, value);
+				}
+			}
+
+			// Store the merged data in the function-local queue workspace. The whole contents of this
+			// datstore will be sent as the message data.
+			queueDatastore[workspaceName] = mergedData;
+		}
+
+		const newMessage = {
 			sendTimestamp: now,
 			avgLatency: this.averageLatency,
 			// isComplete: false,
-			// @ts-expect-error TODO
-			data: newData,
+			// TODO: fix typing
+			data: queueDatastore as DatastoreMessageContent,
 		} satisfies DatastoreUpdateMessage["content"];
 
 		if (updateDeadline >= this.sendMessageDeadline) {
-			// Queue the update
-			// @ts-expect-error TODO
-			this.queuedMessage = newContent;
+			// Queue the message
+			this.queuedMessage = newMessage;
 			// if the timer has not expired, we can short-circuit because the timer will fire
 			// and cover this update. in other words, queuing this will be fast enough to
 			// meet its deadline, because a timer is already scheduled to fire before its deadline.
-			if (!this.timer.hasExpired()) {
+			if (!this.timer.hasExpired() && !forceBroadcast) {
 				return;
 			}
 		}
 
+		// Note that timeoutInMs === allowableUpdateLatency, but the calculation is done this way for clarity.
 		const timeoutInMs = updateDeadline - now;
-		if (timeoutInMs > 0) {
+		if (timeoutInMs > 0 && !forceBroadcast) {
+			// Schedule the queued messages to be sent at the updateDeadline
 			this.timer.setTimeout(this.sendQueuedMessage.bind(this), timeoutInMs);
 		} else {
 			this.sendQueuedMessage();
 		}
 	}
 
+	/**
+	 * Send any queued signal immediate. Does nothing if no message is queued.
+	 */
 	private sendQueuedMessage(): void {
 		if (this.queuedMessage === undefined) {
 			return;

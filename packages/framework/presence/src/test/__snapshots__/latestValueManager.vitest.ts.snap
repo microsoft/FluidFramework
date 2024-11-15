@@ -415,6 +415,21 @@ exports[`Presence > LatestValueManager > batching > notification signals cause q
             }
           }
         }
+      },
+      "n:name:testNotificationWorkspace": {
+        "testEvents": {
+          "sessionId-2": {
+            "rev": 0,
+            "timestamp": 0,
+            "value": {
+              "name": "newId",
+              "args": [
+                99
+              ]
+            },
+            "ignoreUnmonitored": true
+          }
+        }
       }
     }
   }
@@ -485,6 +500,15 @@ exports[`Presence > LatestValueManager > batching > queued signal is sent immedi
             "timestamp": 1100,
             "value": {
               "num": 34
+            }
+          }
+        },
+        "immediateUpdate": {
+          "sessionId-2": {
+            "rev": 1,
+            "timestamp": 1110,
+            "value": {
+              "num": 56
             }
           }
         }

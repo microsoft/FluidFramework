@@ -116,6 +116,9 @@ export interface PresenceStatesInternal {
 	): void;
 }
 
+/**
+ * Type guard for ValueDirectories.
+ */
 function isValueDirectory<
 	T,
 	TValueState extends
@@ -127,7 +130,12 @@ function isValueDirectory<
 	return "items" in value;
 }
 
-function mergeValueDirectory<
+/**
+ * Merge a value directory.
+ *
+ * @internal
+ */
+export function mergeValueDirectory<
 	T,
 	TValueState extends
 		| InternalTypes.ValueRequiredState<T>
