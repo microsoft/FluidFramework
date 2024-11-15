@@ -59,7 +59,13 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 	// Delete existing documentation output
 	logProgress("Removing existing generated API docs...");
 	await fs.ensureDir(outputDir);
-	// await fs.emptyDir(outputDir); // TODO: respect gitignore here
+
+	// TODO:AB#24394: Add logic to clean existing API docs output directory while respecting our .gitignore config.
+	// Most of the files in the `api` directories are generated and git-ignored, but not all of them.
+	// We need to clean up all of the git-ignored files, but not the user-created files.
+	// Currently we work around this by running the `clean:api-documentation` script before running the script that
+	// builds the API documentation, but ideally that shouldn't be required.
+	// await fs.emptyDir(outputDir);
 
 	// Process API reports
 	logProgress("Loading API model...");

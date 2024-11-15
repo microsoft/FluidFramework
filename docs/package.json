@@ -12,6 +12,7 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"build": "concurrently npm:build:site npm:build:test",
+		"prebuild:api-documentation": "npm run clean:api-documentation",
 		"build:api-documentation": "npm run download-doc-models && npm run generate-api-documentation",
 		"prebuild:docusaurus": "npm run generate-versions",
 		"build:docusaurus": "docusaurus build",
