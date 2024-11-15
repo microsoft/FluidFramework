@@ -53,7 +53,7 @@ class PresenceManagerDataObject extends LoadableFluidObject {
  * Factory class to create {@link IPresence} in own data store.
  */
 class PresenceManagerFactory {
-	public is(value: IFluidLoadable | ExperimentalPresenceDO): value is ExperimentalPresenceDO {
+	public is(value: IFluidLoadable | PresenceDO): value is PresenceDO {
 		return value instanceof PresenceManagerDataObject;
 	}
 
@@ -64,7 +64,7 @@ class PresenceManagerFactory {
 }
 
 /**
- * Brand for Experimental Presence Data Object.
+ * Brand for Presence Data Object.
  *
  * @remarks
  * See {@link acquirePresenceViaDataObject} for example usage.
@@ -72,8 +72,8 @@ class PresenceManagerFactory {
  * @sealed
  * @alpha
  */
-export declare class ExperimentalPresenceDO {
-	private readonly _self: ExperimentalPresenceDO;
+export declare class PresenceDO {
+	private readonly _self: PresenceDO;
 }
 
 /**
@@ -83,7 +83,7 @@ export declare class ExperimentalPresenceDO {
  * @alpha
  */
 export const PresenceManager = new PresenceManagerFactory() as unknown as SharedObjectKind<
-	IFluidLoadable & ExperimentalPresenceDO
+	IFluidLoadable & PresenceDO
 >;
 
 /**
@@ -93,21 +93,21 @@ export const PresenceManager = new PresenceManagerFactory() as unknown as Shared
  * ```typescript
  * const containerSchema = {
  * 	initialObjects: {
- * 		experimentalPresence: ExperimentalPresenceDO,
+ * 		presence: PresenceDO,
  * 	},
  * } satisfies ContainerSchema;
  * ```
  * then
  * ```typescript
  * const presence = acquirePresenceViaDataObject(
- * 	container.initialObjects.experimentalPresence,
+ * 	container.initialObjects.presence,
  * 	);
  * ```
  *
  * @alpha
  */
 export function acquirePresenceViaDataObject(
-	fluidLoadable: ExperimentalPresenceDO,
+	fluidLoadable: PresenceDO,
 ): IPresence {
 	if (fluidLoadable instanceof PresenceManagerDataObject) {
 		return fluidLoadable.presenceManager();

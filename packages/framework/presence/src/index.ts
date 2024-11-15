@@ -4,7 +4,7 @@
  */
 
 /**
- * Experimental package for client presence within a connected session.
+ * Package for client presence within a connected session.
  *
  * See {@link https://github.com/microsoft/FluidFramework/tree/main/packages/framework/presence#readme | README.md } for an overview of the package.
  *
@@ -49,7 +49,7 @@ export { acquirePresence } from "./experimentalAccess.js";
 
 export {
 	acquirePresenceViaDataObject,
-	type ExperimentalPresenceDO,
+	type PresenceDO,
 	PresenceManager,
 } from "./datastorePresenceManagerFactory.js";
 
