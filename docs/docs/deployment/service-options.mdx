@@ -7,18 +7,6 @@ import { PackageLink } from "@site/src/components/shortLinks"
 
 The Fluid Framework can be used with any compatible service implementation. Some services, like Tinylicious, are intended only for testing and development, while other hosted options provide the high scalability needed for production-quality applications.
 
-## Tinylicious
-
-[tinylicious](https://www.npmjs.com/package/tinylicious) is a minimal, self-contained implementation of the Fluid Framework service that is much smaller (tinier!) than Routerlicious, the reference implementation of the service.
-
-Tinylicious is intended for testing and development only.
-
-:::tip
-
-The easiest way to try out Fluid is with Tinylicious or Azure Fluid Relay.
-
-:::
-
 ## Azure Fluid Relay
 
 Microsoft [Azure Fluid Relay](https://aka.ms/azurefluidrelay) is a hosted Fluid service. You can [provision Fluid Relay services](https://docs.microsoft.com/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal) as part of your Microsoft Azure subscription and use the <PackageLink packageName="azure-client">@fluidframework/azure-client</PackageLink> library to create and load Fluid containers.
@@ -32,6 +20,18 @@ Microsoft [SharePoint Embedded](https://learn.microsoft.com/en-us/sharepoint/dev
 :::note
 
 SharePoint Embedded is currently in public preview and Fluid Framework integration is not enabled for all M365 tenants. This functionality will be broadly available in February, 2024.
+
+:::
+
+## Tinylicious
+
+[tinylicious](https://www.npmjs.com/package/tinylicious) is a minimal, self-contained implementation of the Fluid Framework service that is much smaller (tinier!) than Routerlicious, the reference implementation of the service.
+
+Tinylicious is intended for testing and development only.
+
+:::tip
+
+The easiest way to try out Fluid is with Tinylicious or Azure Fluid Relay.
 
 :::
 
