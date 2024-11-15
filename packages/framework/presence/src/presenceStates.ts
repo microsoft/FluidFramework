@@ -259,6 +259,9 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 			this.props = this.nodes as unknown as PresenceStates<TSchema>["props"];
 
 			if (anyInitialValues) {
+				// TODO: The options passed below are not complete. Because the value managers'
+				// configured options are not passed through, the initial messages are not queued
+				// and batched according to the allowableLatencyValue like they should be. See AB#24392
 				this.runtime.localUpdate(initial.newValues, { forceBroadcast: false });
 			}
 		}
