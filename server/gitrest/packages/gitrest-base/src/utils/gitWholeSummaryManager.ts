@@ -124,11 +124,11 @@ export class GitWholeSummaryManager {
 					scope: "cmk-scope",
 				};
 				const summaryFolderPath = this.repoManager.path;
-				await fileSystemManager.promises.mkdir(summaryFolderPath, frsOptions);
 				Lumberjack.warning(
-					`[Azfs-debug] Created blob container for initial summary`,
+					`[Azfs-debug] Force created blob container, path: ${summaryFolderPath}`,
 					lumberjackProperties,
 				);
+				await fileSystemManager.promises.mkdir(summaryFolderPath, frsOptions);
 			}
 			if (isChannelSummary(payload)) {
 				lumberjackProperties.summaryType = "channel";
