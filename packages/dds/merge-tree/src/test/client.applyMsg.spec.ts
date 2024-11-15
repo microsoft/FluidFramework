@@ -7,9 +7,10 @@
 
 import { strict as assert } from "node:assert";
 
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
+
 import { UnassignedSequenceNumber } from "../constants.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegment, ISegmentLeaf, SegmentGroup } from "../mergeTreeNodes.js";
@@ -20,7 +21,6 @@ import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
 import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 
 describe("client.applyMsg", () => {
 	const localUserLongId = "localUser";

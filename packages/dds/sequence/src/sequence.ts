@@ -313,7 +313,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	 * @remarks
 	 * The range is defined by the start and end positions, where the start position is inclusive and the end position is exclusive.
 	 * The properties provided in the adjust parameter will be applied to the specified range. Each adjustment modifies the current value of the property by adding the specified `value`.
-	 * If the current value is not a number, it is treated as zero. The optional `min` and `max` constraints are applied after the adjustment to ensure the final value falls within the specified bounds.
+	 * If the current value is not a number, the `delta` will be summed with 0 to compute the new value. The optional `min` and `max` constraints are applied after the adjustment to ensure the final value falls within the specified bounds.
 	 */
 	annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
 
