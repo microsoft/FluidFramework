@@ -39,55 +39,23 @@ DDSes vary from each other by three characteristics:
 
 Below we've enumerated the data structures and described when they may be most useful.
 
-## Key-value data
+## SharedMap
 
-These DDSes are used for storing key-value data. They are optimistic and use a last-writer-wins merge policy. Although
-the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
+[SharedMap](./map) is a basic key-value data structure.
+It is optimistic and uses a last-writer-wins merge policy.
+Although the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
 
--   [SharedMap][] -- a basic key-value data structure.
+### Common Problems
 
-### Key Value Scenarios
+-   Storing a lot of data in one key-value entry may cause performance or merge issues.
+  Each update will update the entire value rather than merging two updates.
+  Try splitting the data across multiple keys.
+-   Storing arrays, lists, or logs in a single key-value entry may lead to unexpected behavior because users can't collaboratively modify parts of one entry.
+  Instread, try storing the data in an array node in a [SharedTree](#sharedtree).
 
-Key-value data structures are the most common choice for many scenarios.
+## SharedString
 
--   User preference data.
--   Current state of a survey.
--   The configuration of a view.
-
-### Common issues and best practices for key-value DDSes
-
--   Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
-  value rather than merging two updates. Try splitting the data across multiple keys.
-
-### Sequence scenarios
-
--   Tabular data
--   Timelines
--   Lists
-
-### Common issues and best practices for sequence DDSes
-
--   Store only immutable data as an item in a sequence. The only way to change the value of an item is to first remove it
-  from the sequence and then insert a new value at the position where the old value was. But because other clients can
-  insert and remove, there's no reliable way of getting the new value into the the desired position.
-
-## Strings
-
-The SharedString DDS is used for unstructured text data that can be collaboratively edited. It is optimistic.
-
--   [SharedString][] -- a data structure for handling collaborative text.
-
-### String scenarios
-
--   Text editor
-
-## Specialized data structures
-
--   [SharedCounter][] -- a counter. (Deprecated in Fluid Framework 2.0.)
-    -   `SharedCounter` is useful to keep track of increments/decrements of integer values.
-    While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can [cause issues](./counter#why-a-specialized-dds).
-    By contrast, clients can increase or decrease the `SharedCounter` value by a specified amount, but they can't set it to a specified value.
-    It is optimistic.
+The [SharedString](./string) DDS is used for unstructured text data that can be collaboratively edited. It is optimistic.
 
 ## Consensus data structures
 
