@@ -61,7 +61,10 @@ class SessionClient implements ISessionClient {
 		return this.connectionStatus;
 	}
 
-	public setConnectionId(connectionId: ClientConnectionId, updateStatus: boolean = true): void {
+	public setConnectionId(
+		connectionId: ClientConnectionId,
+		updateStatus: boolean = true,
+	): void {
 		this.connectionId = connectionId;
 		if (updateStatus) {
 			this.connectionStatus = SessionClientStatus.Connected;
