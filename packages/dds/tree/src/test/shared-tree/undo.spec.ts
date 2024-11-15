@@ -18,6 +18,7 @@ import {
 	expectJsonTree,
 	moveWithin,
 	testIdCompressor,
+	TestTreeProviderLite,
 } from "../utils.js";
 import { SharedTree } from "../../index.js";
 import { insert, jsonSequenceRootSchema, remove } from "../sequenceRootUtils.js";
@@ -168,6 +169,53 @@ const testCases: {
 		skip: true,
 	},
 ];
+
+/**
+ * Schema definitions for forkable revertible test suites.
+ * Should be removed once #24414 is implemented.
+ */
+const factory = new SchemaFactory("shared-tree-test");
+class ChildNodeSchema extends factory.object("child-item", {
+	propertyOne: factory.optional(factory.number),
+	propertyTwo: factory.object("propertyTwo-item", {
+		itemOne: factory.string,
+	}),
+}) {}
+class RootNodeSchema extends factory.object("root-item", {
+	child: factory.optional(ChildNodeSchema),
+}) {}
+
+const sharedTree = SharedTree.create(
+	new MockFluidDataStoreRuntime({
+		registry: [SharedTree.getFactory()],
+		idCompressor: testIdCompressor,
+	}),
+	"sharedTreeTest",
+);
+
+function createInitializedView() {
+	const provider = new TestTreeProviderLite();
+	const view = asTreeViewAlpha(
+		provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: RootNodeSchema,
+			}),
+		),
+	);
+
+	view.initialize(
+		new RootNodeSchema({
+			child: {
+				propertyOne: 128,
+				propertyTwo: {
+					itemOne: "",
+				},
+			},
+		}),
+	);
+
+	return view;
+}
 
 describe("Undo and redo", () => {
 	for (const attached of [true, false]) {
@@ -465,9 +513,9 @@ describe("Undo and redo", () => {
 		assert.equal(view.root.foo, 1);
 	});
 
+	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
 	it("reverts original & forked revertibles after making change to the original view", () => {
-		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
-
+		const originalView = createInitializedView();
 		const { undoStack } = createTestUndoRedoStacks(originalView.events);
 
 		assert(originalView.root.child !== undefined);
@@ -488,13 +536,12 @@ describe("Undo and redo", () => {
 		clonedPropertyOneUndo?.revert();
 
 		assert.equal(forkedView.root.child?.propertyOne, 128);
-
 		assert.equal(clonedPropertyOneUndo?.status, RevertibleStatus.Disposed);
 	});
 
+	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
 	it("reverts original & forked revertibles after making separate changes to the original & forked view", () => {
-		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
-
+		const originalView = createInitializedView();
 		const { undoStack: undoStack1 } = createTestUndoRedoStacks(originalView.events);
 
 		assert(originalView.root.child !== undefined);
@@ -536,35 +583,35 @@ describe("Undo and redo", () => {
 		assert.equal(clonedUndoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 	});
 
+	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
 	it("reverts cloned revertible on original view", () => {
-		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
+		const view = createInitializedView();
+		const { undoStack } = createTestUndoRedoStacks(view.events);
 
-		const { undoStack } = createTestUndoRedoStacks(originalView.events);
-
-		assert(originalView.root.child !== undefined);
-		originalView.root.child.propertyOne = 256; // 128 -> 256
-		originalView.root.child.propertyTwo.itemOne = "newItem";
+		assert(view.root.child !== undefined);
+		view.root.child.propertyOne = 256; // 128 -> 256
+		view.root.child.propertyTwo.itemOne = "newItem";
 
 		const undoOriginalPropertyTwo = undoStack.pop();
 		const undoOriginalPropertyOne = undoStack.pop();
 
-		const clonedUndoOriginalPropertyTwo = undoOriginalPropertyTwo?.clone(originalView);
-		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone(originalView);
+		const clonedUndoOriginalPropertyTwo = undoOriginalPropertyTwo?.clone(view);
+		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone(view);
 
 		clonedUndoOriginalPropertyTwo?.revert();
 		clonedUndoOriginalPropertyOne?.revert();
 
-		assert.equal(originalView.root.child?.propertyOne, 128);
-		assert.equal(originalView.root.child?.propertyTwo.itemOne, "");
+		assert.equal(view.root.child?.propertyOne, 128);
+		assert.equal(view.root.child?.propertyTwo.itemOne, "");
 		assert.equal(undoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
 		assert.equal(undoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 		assert.equal(clonedUndoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
 		assert.equal(clonedUndoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 	});
 
+	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
 	it("reverts cloned revertible prior to original revertible", () => {
-		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTree"));
-
+		const originalView = createInitializedView();
 		const { undoStack } = createTestUndoRedoStacks(originalView.events);
 
 		assert(originalView.root.child !== undefined);
@@ -600,9 +647,10 @@ describe("Undo and redo", () => {
 		assert.equal(undoOriginalPropertyTwo?.status, RevertibleStatus.Disposed);
 	});
 
+	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
 	it("clone revertible fails if trees are different", () => {
-		const viewA = asTreeViewAlpha(createLocalSharedTree("testSharedTreeOne"));
-		const viewB = asTreeViewAlpha(createLocalSharedTree("testSharedTreeTwo"));
+		const viewA = createInitializedView();
+		const viewB = createInitializedView();
 
 		const { undoStack } = createTestUndoRedoStacks(viewA.events);
 
@@ -611,23 +659,23 @@ describe("Undo and redo", () => {
 
 		const undoOriginalPropertyOne = undoStack.pop();
 
-		assert.throws(() => undoOriginalPropertyOne?.clone(viewB).revert(), "Error: 0x576"); // "branch A and branch B must be related", error code 0x576
+		assert.throws(() => undoOriginalPropertyOne?.clone(viewB).revert(), "Error: 0x576");
 	});
 
+	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
 	it("cloned revertible fails if already applied", () => {
-		const originalView = asTreeViewAlpha(createLocalSharedTree("testSharedTreeOne"));
+		const view = createInitializedView();
+		const { undoStack } = createTestUndoRedoStacks(view.events);
 
-		const { undoStack } = createTestUndoRedoStacks(originalView.events);
-
-		assert(originalView.root.child !== undefined);
-		originalView.root.child.propertyOne = 256; // 128 -> 256
+		assert(view.root.child !== undefined);
+		view.root.child.propertyOne = 256; // 128 -> 256
 
 		const undoOriginalPropertyOne = undoStack.pop();
 		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone();
 
 		undoOriginalPropertyOne?.revert();
 
-		assert.equal(originalView.root.child?.propertyOne, 128);
+		assert.equal(view.root.child?.propertyOne, 128);
 		assert.equal(undoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
 		assert.equal(clonedUndoOriginalPropertyOne?.status, RevertibleStatus.Disposed);
 
@@ -665,42 +713,3 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 }
 
 let temp: unknown;
-
-/**
- * Create a simple shared tree for {@link RevertibleAlpha} tests.
- */
-function createLocalSharedTree(id: string) {
-	const factory = new SchemaFactory("shared-tree-test");
-	class ChildNodeSchema extends factory.object("child-item", {
-		propertyOne: factory.optional(factory.number),
-		propertyTwo: factory.object("propertyTwo-item", {
-			itemOne: factory.string,
-		}),
-	}) {}
-	class RootNodeSchema extends factory.object("root-item", {
-		child: factory.optional(ChildNodeSchema),
-	}) {}
-
-	const sharedTree = SharedTree.create(
-		new MockFluidDataStoreRuntime({
-			registry: [SharedTree.getFactory()],
-			idCompressor: testIdCompressor,
-		}),
-		id,
-	);
-
-	const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
-
-	view.initialize(
-		new RootNodeSchema({
-			child: {
-				propertyOne: 128,
-				propertyTwo: {
-					itemOne: "",
-				},
-			},
-		}),
-	);
-
-	return view;
-}
