@@ -6,12 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	AllowedUpdateType,
-	anchorSlot,
-	Compatibility,
-	type SchemaPolicy,
-} from "../core/index.js";
+import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
 import {
 	type HasListeners,
 	type IEmitter,

@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
+	type FieldKey,
 	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -65,42 +66,59 @@ export type FieldDiscrepancy =
 	| FieldKindDiscrepancy
 	| ValueSchemaDiscrepancy;
 
-export interface AllowedTypeDiscrepancy {
-	identifier: string | undefined; // undefined indicates root field schema
+/**
+ * Information about where a field discrepancy is located within a collection of schema.
+ */
+export interface FieldDiscrepancyLocation {
+	/**
+	 * The {@link TreeNodeSchemaIdentifier} that contains the discrepancy.
+	 *
+	 * Undefined iff the discrepancy is part of the root field schema.
+	 */
+	identifier: TreeNodeSchemaIdentifier | undefined;
+	/**
+	 * The {@link FieldKey} for the field that contains the discrepancy.
+	 * Undefined when:
+	 * - the discrepancy is part of the root field schema
+	 * - the discrepancy is for 'all fields' of a map node
+	 */
+	fieldKey: FieldKey | undefined;
+}
+
+export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	mismatch: "allowedTypes";
 	/**
 	 * List of allowed type identifiers in viewed schema
 	 */
-	view: string[];
+	view: TreeNodeSchemaIdentifier[];
 	/**
 	 * List of allowed type identifiers in stored schema
 	 */
-	stored: string[];
+	stored: TreeNodeSchemaIdentifier[];
 }
 
-export interface FieldKindDiscrepancy {
-	identifier: string | undefined; // undefined indicates root field schema
+export interface FieldKindDiscrepancy extends FieldDiscrepancyLocation {
 	mismatch: "fieldKind";
-	view: FieldKindIdentifier;
-	stored: FieldKindIdentifier;
+	view: TreeFieldStoredSchema;
+	stored: TreeFieldStoredSchema;
 }
 
 export interface ValueSchemaDiscrepancy {
-	identifier: string;
+	identifier: TreeNodeSchemaIdentifier;
 	mismatch: "valueSchema";
 	view: ValueSchema | undefined;
 	stored: ValueSchema | undefined;
 }
 
 export interface NodeKindDiscrepancy {
-	identifier: string;
+	identifier: TreeNodeSchemaIdentifier;
 	mismatch: "nodeKind";
 	view: SchemaFactoryNodeKind | undefined;
 	stored: SchemaFactoryNodeKind | undefined;
 }
 
 export interface NodeFieldsDiscrepancy {
-	identifier: string;
+	identifier: TreeNodeSchemaIdentifier;
 	mismatch: "fields";
 	differences: FieldDiscrepancy[];
 }
@@ -140,7 +158,12 @@ export function* getAllowedContentDiscrepancies(
 	stored: TreeStoredSchema,
 ): Iterable<Discrepancy> {
 	// check root schema discrepancies
-	yield* getFieldDiscrepancies(view.rootFieldSchema, stored.rootFieldSchema);
+	yield* getFieldDiscrepancies(
+		view.rootFieldSchema,
+		stored.rootFieldSchema,
+		undefined,
+		undefined,
+	);
 
 	for (const result of compareMaps(view.nodeSchema, stored.nodeSchema)) {
 		switch (result.type) {
@@ -193,6 +216,7 @@ function* getNodeDiscrepancies(
 		case "object": {
 			const differences = Array.from(
 				trackObjectNodeDiscrepancies(
+					identifier,
 					view as ObjectNodeStoredSchema,
 					stored as ObjectNodeStoredSchema,
 				),
@@ -211,6 +235,7 @@ function* getNodeDiscrepancies(
 				(view as MapNodeStoredSchema).mapFields,
 				(stored as MapNodeStoredSchema).mapFields,
 				identifier,
+				undefined,
 			);
 			break;
 		case "leaf":
@@ -236,7 +261,8 @@ function* getNodeDiscrepancies(
 function* getFieldDiscrepancies(
 	view: TreeFieldStoredSchema,
 	stored: TreeFieldStoredSchema,
-	keyOrRoot?: string,
+	identifier: TreeNodeSchemaIdentifier | undefined,
+	fieldKey: FieldKey | undefined,
 ): Iterable<FieldDiscrepancy> {
 	// Only track the symmetric differences of two sets.
 	const findSetDiscrepancies = (
@@ -251,7 +277,8 @@ function* getFieldDiscrepancies(
 	const [viewExtra, storedExtra] = findSetDiscrepancies(view.types, stored.types);
 	if (viewExtra.length > 0 || storedExtra.length > 0) {
 		yield {
-			identifier: keyOrRoot,
+			identifier,
+			fieldKey,
 			mismatch: "allowedTypes",
 			view: viewExtra,
 			stored: storedExtra,
@@ -260,15 +287,17 @@ function* getFieldDiscrepancies(
 
 	if (view.kind !== stored.kind) {
 		yield {
-			identifier: keyOrRoot,
+			identifier,
+			fieldKey,
 			mismatch: "fieldKind",
-			view: view.kind,
-			stored: stored.kind,
+			view,
+			stored,
 		} satisfies FieldKindDiscrepancy;
 	}
 }
 
 function* trackObjectNodeDiscrepancies(
+	identifier: TreeNodeSchemaIdentifier,
 	view: ObjectNodeStoredSchema,
 	stored: ObjectNodeStoredSchema,
 ): Iterable<FieldDiscrepancy> {
@@ -293,10 +322,11 @@ function* trackObjectNodeDiscrepancies(
 					break;
 				}
 				yield {
-					identifier: fieldKey,
+					identifier,
+					fieldKey,
 					mismatch: "fieldKind",
-					view: result.value.kind,
-					stored: storedEmptyFieldSchema.kind,
+					view: result.value,
+					stored: storedEmptyFieldSchema,
 				} satisfies FieldKindDiscrepancy;
 				break;
 			}
@@ -307,15 +337,16 @@ function* trackObjectNodeDiscrepancies(
 					break;
 				}
 				yield {
-					identifier: fieldKey,
+					identifier,
+					fieldKey,
 					mismatch: "fieldKind",
-					view: storedEmptyFieldSchema.kind,
-					stored: result.value.kind,
+					view: storedEmptyFieldSchema,
+					stored: result.value,
 				} satisfies FieldKindDiscrepancy;
 				break;
 			}
 			case "both": {
-				yield* getFieldDiscrepancies(result.valueA, result.valueB, fieldKey);
+				yield* getFieldDiscrepancies(result.valueA, result.valueB, identifier, fieldKey);
 				break;
 			}
 		}
@@ -406,7 +437,7 @@ function isFieldDiscrepancyCompatible(discrepancy: FieldDiscrepancy): boolean {
 			return discrepancy.stored.length === 0;
 		}
 		case "fieldKind": {
-			return posetLte(discrepancy.stored, discrepancy.view, fieldRealizer);
+			return posetLte(discrepancy.stored.kind, discrepancy.view.kind, fieldRealizer);
 		}
 		case "valueSchema": {
 			return false;

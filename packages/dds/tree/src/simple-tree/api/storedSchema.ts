@@ -4,7 +4,7 @@
  */
 
 import type { ICodecOptions } from "../../codec/index.js";
-import { Compatibility, type TreeStoredSchema } from "../../core/index.js";
+import { type TreeStoredSchema } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,

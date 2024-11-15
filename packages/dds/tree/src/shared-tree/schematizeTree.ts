@@ -7,7 +7,6 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	AllowedUpdateType,
-	Compatibility,
 	CursorLocationType,
 	type ITreeCursorSynchronous,
 	type TreeStoredSchema,

@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 
 import {
 	type Adapters,
-	Compatibility,
 	EmptyKey,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,

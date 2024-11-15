@@ -5,11 +5,11 @@
 
 import {
 	AdaptedViewSchema,
+	TreeNodeStoredSchema,
 	type Adapters,
 	type FieldKindIdentifier,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
@@ -17,6 +17,7 @@ import {
 	FieldKinds,
 	type FullSchemaPolicy,
 	getAllowedContentDiscrepancies,
+	isNeverField,
 	isNeverTree,
 } from "../../feature-libraries/index.js";
 import {
@@ -86,23 +87,47 @@ export class ViewSchema {
 					// Since we only track the symmetric difference between the allowed types in the view and
 					// stored schemas, it's sufficient to check if any extra allowed types still exist in the
 					// stored schema.
-					if (discrepancy.stored.length > 0) {
+					if (
+						discrepancy.stored.length > 0 &&
+						discrepancy.stored.some(
+							(identifier) =>
+								!isNeverTree(this.policy, stored, stored.nodeSchema.get(identifier)!),
+						)
+					) {
 						// Stored schema has extra allowed types that the view schema does not.
 						canUpgrade = false;
 					}
 
-					if (discrepancy.view.length > 0) {
+					if (
+						discrepancy.view.length > 0 &&
+						discrepancy.view.some(
+							(identifier) =>
+								!isNeverTree(
+									this.policy,
+									this.viewSchemaAsStored,
+									this.viewSchemaAsStored.nodeSchema.get(identifier)!,
+								),
+						)
+					) {
 						// View schema has extra allowed types that the stored schema does not.
 						canView = false;
 					}
 					break;
 				}
 				case "fieldKind": {
-					const result = comparePosetElements(
-						discrepancy.stored,
+					const storedNormalized = isNeverField(this.policy, stored, discrepancy.stored)
+						? FieldKinds.forbidden.identifier
+						: discrepancy.stored.kind;
+
+					const viewNormalized = isNeverField(
+						this.policy,
+						this.viewSchemaAsStored,
 						discrepancy.view,
-						fieldRealizer,
-					);
+					)
+						? FieldKinds.forbidden.identifier
+						: discrepancy.view.kind;
+
+					const result = comparePosetElements(storedNormalized, viewNormalized, fieldRealizer);
 
 					if (result === PosetComparisonResult.Greater) {
 						// Stored schema is more relaxed than view schema.
@@ -137,19 +162,45 @@ export class ViewSchema {
 		)) {
 			switch (discrepancy.mismatch) {
 				case "nodeKind": {
+					const viewNodeSchema = this.viewSchemaAsStored.nodeSchema.get(
+						discrepancy.identifier,
+					);
+					const storedNodeSchema = stored.nodeSchema.get(discrepancy.identifier);
 					// We conservatively do not allow node types to change.
 					// The only time this might be valid in the sense that the data canonically converts is converting an object node
 					// to a map node over the union of all the object fields' types.
 					if (discrepancy.stored === undefined) {
-						// View schema has added a node type that the stored schema doesn't know about.
-						canView = false;
+						const viewIsNever =
+							viewNodeSchema !== undefined
+								? isNeverTree(this.policy, this.viewSchemaAsStored, viewNodeSchema)
+								: true;
+						if (!viewIsNever) {
+							// View schema has added a node type that the stored schema doesn't know about.
+							canView = false;
+						}
 					} else if (discrepancy.view === undefined) {
-						// Stored schema has a node type that the view schema doesn't know about.
-						canUpgrade = false;
+						const storedIsNever =
+							storedNodeSchema !== undefined
+								? isNeverTree(this.policy, stored, storedNodeSchema)
+								: true;
+						if (!storedIsNever) {
+							// Stored schema has a node type that the view schema doesn't know about.
+							canUpgrade = false;
+						}
 					} else {
 						// Node type exists in both schemas but has changed. We conservatively never allow this.
-						canView = false;
-						canUpgrade = false;
+						const storedIsNever =
+							storedNodeSchema !== undefined
+								? isNeverTree(this.policy, stored, storedNodeSchema)
+								: true;
+						const viewIsNever =
+							viewNodeSchema !== undefined
+								? isNeverTree(this.policy, this.viewSchemaAsStored, viewNodeSchema)
+								: true;
+						if (!storedIsNever || !viewIsNever) {
+							canView = false;
+							canUpgrade = false;
+						}
 					}
 					break;
 				}
@@ -258,25 +309,6 @@ type LinearExtension<T> = Map<T, number>;
  * https://en.wikipedia.org/wiki/Order_dimension
  */
 type Realizer<T> = LinearExtension<T>[];
-
-function isFieldDiscrepancyCompatible(discrepancy: FieldDiscrepancy): boolean {
-	switch (discrepancy.mismatch) {
-		case "allowedTypes": {
-			// Since we only track the symmetric difference between the allowed types in the view and
-			// stored schemas, it's sufficient to check if any extra allowed types still exist in the
-			// stored schema.
-			return discrepancy.stored.length === 0;
-		}
-		case "fieldKind": {
-			return posetLte(discrepancy.stored, discrepancy.view, fieldRealizer);
-		}
-		case "valueSchema": {
-			return false;
-		}
-		// No default
-	}
-	return false;
-}
 
 /**
  * A realizer for the partial order of field kind relaxability.
