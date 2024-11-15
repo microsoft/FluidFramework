@@ -154,7 +154,7 @@ function ackSegment(
 ): boolean {
 	const currentSegmentGroup = segment.segmentGroups?.dequeue();
 	assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
-	assert(opArgs.sequencedMessage !== undefined, "must have sequencedMessage");
+	assert(opArgs.sequencedMessage !== undefined, 0xa6e /* must have sequencedMessage */);
 	const {
 		op,
 		sequencedMessage: { sequenceNumber, minimumSequenceNumber },
