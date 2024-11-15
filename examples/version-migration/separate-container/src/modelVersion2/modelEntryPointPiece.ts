@@ -19,16 +19,6 @@ const modelEntryPointPieceName = "getModel";
 
 const inventoryListId = "default-inventory-list";
 
-const createModel = async (
-	runtime: IContainerRuntime,
-	container: IContainer,
-): Promise<IInventoryListAppModel> => {
-	return new InventoryListAppModel(
-		await getDataStoreEntryPoint<IInventoryList>(runtime, inventoryListId),
-		container,
-	);
-};
-
 async function getDataStoreEntryPoint<T>(
 	containerRuntime: IContainerRuntime,
 	alias: string,
@@ -44,6 +34,16 @@ async function getDataStoreEntryPoint<T>(
 	return entryPointHandle.get();
 }
 
+const createPiece = async (
+	runtime: IContainerRuntime,
+): Promise<(container: IContainer) => Promise<IInventoryListAppModel>> => {
+	return async (container: IContainer) =>
+		new InventoryListAppModel(
+			await getDataStoreEntryPoint<IInventoryList>(runtime, inventoryListId),
+			container,
+		);
+};
+
 export const modelEntryPointPiece: IEntryPointPiece = {
 	name: modelEntryPointPieceName,
 	registryEntries: [InventoryListInstantiationFactory.registryEntry],
@@ -54,9 +54,5 @@ export const modelEntryPointPiece: IEntryPointPiece = {
 		await inventoryList.trySetAlias(inventoryListId);
 	},
 	onLoad: async (runtime: IContainerRuntime): Promise<void> => {},
-	createPiece: async (
-		runtime: IContainerRuntime,
-	): Promise<(container: IContainer) => Promise<IInventoryListAppModel>> => {
-		return async (container: IContainer) => createModel(runtime, container);
-	},
+	createPiece,
 };

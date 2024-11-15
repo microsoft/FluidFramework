@@ -4,51 +4,104 @@ This package contains tools for migrating data from one version to another, used
 
 Use of the migration tools imposes several requirements on the container code and application, detailed here.
 
-## Implementing the model loading pattern
+## Implementing the composite runtime pattern
 
-These tools rely on the model loading pattern.  This pattern allows you to define whatever API surface you would like to expose from the Fluid container for your app to use.  This could be as simple as exposing a root data store for your app to access, or could contain much more advanced functionality if you desire.
+These tools expect to find certain contents in the `entryPoint` of the container - namely, your data model implementing `IMigratableModel` and an `IMigrationTool`.  These two pieces are separable - neither needs to know about the other in order for them to operate.  As a result, we can compose the two together using the composite runtime pattern.
 
-This model object is instantiated by your container code during container load.  To simplify this, we provide `loadMigratableRuntime` which should be used in place of `ContainerRuntime.loadRuntime`.  In addition to the familiar parameters, this helper function takes a `CreateModelCallback` - you should write this function to instantiate your model.  The callback will provide an `IContainerRuntime` and `IContainer` to use in this instantiation.
+This package provides a `CompositeEntryPoint`, which takes your entry point "pieces" and can then be used with `loadCompositeRuntime()` in place of `ContainerRuntime.loadRuntime()` to produce a runtime with the desired `entryPoint`.  In the example below, the resulting `entryPoint` will have the shape:
 
-TODO: This is too much, how to make it simpler?
+TODO: This isn't correct typing, actually don't know the type of the returned model.  Should use FluidObject maybe?
+
+TODO: Consider using a standalone example rather than the more complicated migration example
 
 ```ts
-// Defining the model that the app (outside of the container code) will use.
+{
+	getModel: (container: IContainer) => Promise<InventoryListAppModel>;
+	migrationTool: IMigrationTool;
+}
+```
 
+### Defining the model
+
+```ts
 interface IInventoryListAppModel {
 	readonly inventoryList: IInventoryList;
 }
 
-class InventoryListAppModel implements IInventoryListAppModel {
+class InventoryListAppModel implements IInventoryListAppModel, IMigratableModel {
 	public constructor(
 		public readonly inventoryList: IInventoryList,
 		private readonly container: IContainer,
 	) {}
+
+	// Rest of app model implementation...
+}
+```
+
+### Defining the entry point piece
+
+TODO: Code comments
+
+```ts
+const modelEntryPointPieceName = "getModel";
+
+const inventoryListId = "default-inventory-list";
+
+async function getDataStoreEntryPoint<T>(
+	containerRuntime: IContainerRuntime,
+	alias: string,
+): Promise<T> {
+	const entryPointHandle = (await containerRuntime.getAliasedDataStoreEntryPoint(alias)) as
+		| IFluidHandle<T>
+		| undefined;
+
+	if (entryPointHandle === undefined) {
+		throw new Error(`Default dataStore [${alias}] must exist`);
+	}
+
+	return entryPointHandle.get();
 }
 
-// Ensuring the IRuntimeFactory knows how to create a model on demand with a CreateModelCallback
-// and the loadMigratableRuntime helper.
-
-const createModel = async (
+const createPiece = async (
 	runtime: IContainerRuntime,
-	container: IContainer,
-): Promise<IInventoryListAppModel> => {
-	return new InventoryListAppModel(
-		// Normal IContainerRuntime APIs can be used to get the relevant parts of the model.
-		// E.g. here we might get the data store from a known alias.
-		await getDataStoreEntryPoint<IInventoryList>(runtime, "inventory-list-id"),
+): Promise<(container: IContainer) => Promise<IInventoryListAppModel>> => {
+	return async (container: IContainer) => new InventoryListAppModel(
+		await getDataStoreEntryPoint<IInventoryList>(runtime, inventoryListId),
 		container,
 	);
-};
+}
 
-const runtime = await loadMigratableRuntime(
-	context,
-	existing,
-	this.registryEntries,
-	createModel,
-	this.runtimeOptions,
-);
+export const modelEntryPointPiece: IEntryPointPiece = {
+	name: modelEntryPointPieceName,
+	registryEntries: [InventoryListInstantiationFactory.registryEntry],
+	onCreate: async (runtime: IContainerRuntime): Promise<void> => {
+		const inventoryList = await runtime.createDataStore(
+			InventoryListInstantiationFactory.type,
+		);
+		await inventoryList.trySetAlias(inventoryListId);
+	},
+	onLoad: async (runtime: IContainerRuntime): Promise<void> => {},
+	createPiece,
+};
 ```
+
+### Composing and loading the runtime
+
+```ts
+public async instantiateRuntime(
+	context: IContainerContext,
+	existing: boolean,
+): Promise<IRuntime> {
+	const compositeEntryPoint = new CompositeEntryPoint();
+	compositeEntryPoint.addEntryPointPiece(modelEntryPointPiece);
+	compositeEntryPoint.addEntryPointPiece(migrationToolEntryPointPiece);
+	return loadCompositeRuntime(context, existing, compositeEntryPoint, this.runtimeOptions);
+}
+```
+
+### `migrationToolEntryPointPiece`
+
+This package additionally provides a `migrationToolEntryPointPiece` which is an off-the-shelf implementation of the piece to provide the `IMigrationTool`.  With these provided pieces, you're only responsible for implementing the `IMigratableModel` piece with your data model.
 
 ### Implementing `IMigratableModel`
 
@@ -60,27 +113,29 @@ Broadly, this includes:
     1. `importData: (initialData: ImportType) => Promise<void>`
 	1. `exportData: () => Promise<ExportType>`
 	1. `supportsDataFormat: (initialData: unknown) => initialData is ImportType`
-1. A `dispose` method to clean up the old container after migrating away from it - most likely mapping to `IContainer.dispose`.
+1. A `dispose` method to clean up the old container after migrating away from it - most likely calling `IContainer.dispose`.
 
-### `MigratableModelLoader`
+### `SimpleLoader`
 
-This package provides a `MigratableModelLoader` which takes the place of the `Loader` class.  For this to work you must be using `loadMigratableRuntime` in your container code, and your model must implement `IMigratableModel`.
+This package provides a `SimpleLoader` which takes the place of the `Loader` class.  This class wraps the `Loader` with a simpler interface that the `Migrator` can use more easily.
 
-TODO: Detail usage of the MigratableModelLoader
+TODO: Detail usage of the SimpleLoader
+
+TODO: Can the `Migrator` take a normal `Loader` and wrap it itself to avoid teaching a new concept here?
 
 ### Code loader
 
-To migrate between two different code versions, you must also provide a code loader to the `MigratableModelLoader` that is capable of loading those two respective code versions.  This uses the usual `ICodeDetailsLoader` interface.
+To migrate between two different code versions, you must also provide a code loader to the `SimpleLoader` that is capable of loading those two respective code versions.  This uses the usual `ICodeDetailsLoader` interface.
 
 ## `Migrator`
 
-Finally, to actually execute the migration we provide the `Migrator` class.  This takes the `MigratableModelLoader`, the initially loaded model, migration tool, and container ID (TODO: can we simplify this handoff), as well as an optional `DataTransformationCallback` (see below).  The migrator provides a collection of APIs to observe the state of the migration, as well as to acquire the new container after migration completes. (TODO: should the migrate() API also live here?)
+Finally, to actually execute the migration we provide the `Migrator` class.  This takes the `SimpleLoader`, the initially loaded model, migration tool, and container ID (TODO: can we simplify this handoff), as well as an optional `DataTransformationCallback` (see below).  The migrator provides a collection of APIs to observe the state of the migration, as well as to acquire the new container after migration completes. (TODO: should the migrate() API also live here?)
 
 TODO: Detail usage of the Migrator
 
 ### `DataTransformationCallback`
 
-If your old and new code share an import/export format, you don't need a `DataTransformationCallback`.  If not, you can provide this callback to the `Migrator`, and it will be called with the old exported data.  This callback is responsible for transforming the data to the new format and returning the transformed data.
+If your old and new code share an import/export format, you don't need a `DataTransformationCallback`.  But if the import/export format has changed between versions, you can provide this callback to the `Migrator` and it will be called with the old exported data.  This callback is responsible for transforming the data to the new format and returning the transformed data.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
