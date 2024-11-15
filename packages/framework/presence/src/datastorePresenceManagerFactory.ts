@@ -106,9 +106,7 @@ export const PresenceManager = new PresenceManagerFactory() as unknown as Shared
  *
  * @alpha
  */
-export function acquirePresenceViaDataObject(
-	fluidLoadable: PresenceDO,
-): IPresence {
+export function acquirePresenceViaDataObject(fluidLoadable: PresenceDO): IPresence {
 	if (fluidLoadable instanceof PresenceManagerDataObject) {
 		return fluidLoadable.presenceManager();
 	}

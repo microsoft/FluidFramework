@@ -8,7 +8,7 @@
 export function acquirePresence(fluidContainer: IFluidContainer): IPresence;
 
 // @alpha
-export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): IPresence;
+export function acquirePresenceViaDataObject(fluidLoadable: PresenceDO): IPresence;
 
 // @alpha
 export type ClientConnectionId = string;
@@ -17,10 +17,6 @@ export type ClientConnectionId = string;
 export type ClientSessionId = SessionId & {
     readonly ClientSessionId: "ClientSessionId";
 };
-
-// @alpha @sealed
-export class ExperimentalPresenceDO {
-}
 
 // @alpha @sealed
 export interface IPresence {
@@ -165,6 +161,10 @@ export type NotificationSubscriptions<E extends InternalUtilityTypes.Notificatio
     [K in string & keyof InternalUtilityTypes.NotificationEvents<E>]: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void;
 };
 
+// @alpha @sealed
+export class PresenceDO {
+}
+
 // @alpha @sealed (undocumented)
 export interface PresenceEvents {
     // @eventProperty
@@ -175,7 +175,7 @@ export interface PresenceEvents {
 }
 
 // @alpha
-export const PresenceManager: SharedObjectKind<IFluidLoadable & ExperimentalPresenceDO>;
+export const PresenceManager: SharedObjectKind<IFluidLoadable & PresenceDO>;
 
 // @alpha @sealed
 export type PresenceNotifications<TSchema extends PresenceNotificationsSchema> = PresenceStates<TSchema, NotificationsManager<any>>;
