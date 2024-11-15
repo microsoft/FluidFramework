@@ -234,13 +234,13 @@ describe("SharedTree memory usage", () => {
 		generateContent: (numberOfNodes: number) => InsertableTreeFieldFromImplicitField<TSchema>,
 		testNodeCounts: number[],
 	) {
-		for (const numberOfNodes of testNodeCounts) {
-			for (const forestType of [ForestType.Reference, ForestType.Optimized]) {
-				describe(title, () => {
+		describe(title, () => {
+			for (const numberOfNodes of testNodeCounts) {
+				for (const forestType of [ForestType.Reference, ForestType.Optimized]) {
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
 							public readonly title =
-								`initialize ${numberOfNodes} nodes into tree with schema that is efficient for chunked forest using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
+								`initialize ${numberOfNodes} nodes into tree using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
 
 							private sharedTree: TreeView<typeof schema> | undefined;
 
@@ -261,13 +261,13 @@ describe("SharedTree memory usage", () => {
 							}
 						})(),
 					).timeout(400000);
-				});
+				}
 			}
-		}
+		});
 	}
 
-	const numberOfNodesForTests = isInPerformanceTestingMode ? [1] : [10];
-	describe("Chunked Forest memory usage", () => {
+	const numberOfNodesForTests = isInPerformanceTestingMode ? [1, 10, 100, 1000] : [10];
+	describe("Forest memory usage", () => {
 		runBenchmarkMemoryForSubTree(
 			"Array of monomorphic leaves",
 			MonomorphicArray,
