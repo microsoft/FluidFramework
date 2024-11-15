@@ -106,15 +106,13 @@ export async function createNewFluidFile(
 
 	if (shareLinkInfo?.createLink?.link) {
 		let newWebUrl = shareLinkInfo.createLink.link.webUrl;
-		if (newWebUrl) {
-			newWebUrl = appendNavParam(
-				newWebUrl,
-				odspResolvedUrl,
-				odspResolvedUrl.dataStorePath ?? "/",
-				resolvedUrl?.codeHint?.containerPackageName,
-			);
-			shareLinkInfo.createLink.link.webUrl = newWebUrl;
-		}
+		newWebUrl = appendNavParam(
+			newWebUrl,
+			odspResolvedUrl,
+			odspResolvedUrl.dataStorePath ?? "/",
+			resolvedUrl?.codeHint?.containerPackageName,
+		);
+		shareLinkInfo.createLink.link.webUrl = newWebUrl;
 	}
 
 	odspResolvedUrl.shareLinkInfo = shareLinkInfo;
