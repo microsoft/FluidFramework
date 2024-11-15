@@ -14,11 +14,6 @@ export {
 	IEntryPointPiece,
 	loadCompositeRuntime,
 } from "./compositeRuntime/index.js";
-export type {
-	IImportExportModel,
-	IMigratableModel,
-	IVersionedModel,
-} from "./interfaces/index.js";
 export {
 	IAcceptedMigrationDetails,
 	IMigrationTool,
@@ -30,8 +25,11 @@ export {
 export {
 	DataTransformationCallback,
 	getModelAndMigrationToolFromContainer,
+	IImportExportModel,
+	IMigratableModel,
 	IMigrator,
 	IMigratorEvents,
+	IVersionedModel,
 	Migrator,
 } from "./migrator/index.js";
 export {

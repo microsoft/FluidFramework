@@ -5,8 +5,11 @@
 
 export {
 	DataTransformationCallback,
+	IImportExportModel,
+	IMigratableModel,
 	IMigrator,
 	IMigratorEvents,
+	IVersionedModel,
 } from "./interfaces.js";
 export {
 	getModelAndMigrationToolFromContainer,
