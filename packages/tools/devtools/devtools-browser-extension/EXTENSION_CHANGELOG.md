@@ -4,6 +4,9 @@
 
 <!-- Enumerate unpublished changes here. They can be merged into release sections when the next release is published. -->
 
+# 1.0.0
+
+- Fixed some lingering accessibility issues.
 - Update icon assets with new Fluid logo.
 - Update sample screenshots to reflect various UI updates.
 

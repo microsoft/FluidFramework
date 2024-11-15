@@ -40,10 +40,7 @@ export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements 
     // (undocumented)
     getMembers(): Map<string, IClient>;
     // (undocumented)
-    getSelf(): {
-        clientId: string;
-        client: undefined;
-    } | undefined;
+    getSelf(): ISelf | undefined;
     // (undocumented)
     removeMember(clientId: string): boolean;
     // (undocumented)
