@@ -51,17 +51,17 @@ Here are some remarks about the interface
 
 ## Construct Signature Details
 
-### new (): TestInterface {#_new_-constructsignature}
+### new (): TestInterface {#\_new\_-constructsignature}
 
 Test construct signature.
 
-#### Signature {#_new_-signature}
+#### Signature {#\_new\_-signature}
 
 ```typescript
 new (): TestInterface;
 ```
 
-#### Returns {#_new_-returns}
+#### Returns {#\_new\_-returns}
 
 **Return type:** [TestInterface](./test-suite-a/testinterface-interface)
 
@@ -166,31 +166,31 @@ Here are some remarks about the method
 
 ## Call Signature Details
 
-### (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any {#_call_-callsignature}
+### (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any {#\_call\_-callsignature}
 
 Test interface event call signature
 
-#### Signature {#_call_-signature}
+#### Signature {#\_call\_-signature}
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-#### Remarks {#_call_-remarks}
+#### Remarks {#\_call\_-remarks}
 
 Here are some remarks about the event call signature
 
-### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#_call__1-callsignature}
+### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#\_call\_\_1-callsignature}
 
 Another example call signature
 
-#### Signature {#_call__1-signature}
+#### Signature {#\_call\_\_1-signature}
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
-#### Remarks {#_call__1-remarks}
+#### Remarks {#\_call\_\_1-remarks}
 
 Here are some remarks about the event call signature
 
