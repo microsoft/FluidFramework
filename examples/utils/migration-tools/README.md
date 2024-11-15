@@ -116,11 +116,7 @@ Broadly, this includes:
 
 ### `SimpleLoader`
 
-This package provides a `SimpleLoader` which takes the place of the `Loader` class.  This class wraps the `Loader` with a simpler interface that the `Migrator` can use more easily.
-
-TODO: Detail usage of the SimpleLoader
-
-TODO: Can the `Migrator` take a normal `Loader` and wrap it itself to avoid teaching a new concept here?
+See documentation for `SimpleLoader` [here](./src/simpleLoader/README.md).
 
 ### Code loader
 
