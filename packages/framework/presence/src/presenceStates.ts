@@ -29,6 +29,7 @@ export type MapSchemaElement<
 export interface LocalUpdateOptions {
 	forceBroadcast: boolean;
 	allowableUpdateLatency?: number;
+	targetClient?: ISessionClient;
 }
 
 /**

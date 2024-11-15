@@ -12,6 +12,7 @@ import {
 	afterEach,
 	beforeAll as before,
 	beforeEach,
+	expect,
 } from "vitest";
 
 import { Latest, Notifications, type PresenceNotifications } from "../index.js";
@@ -68,10 +69,10 @@ describe("Presence", () => {
 			});
 
 			it("sends signal immediately when allowable latency is 0", async () => {
-				// Configure a state workspace; SIGNAL #1
+				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatency: 0, forcedRefreshInterval: 0 }),
-				});
+				}); // SIGNAL #1 DUE TO AB#24392
 
 				const { count } = stateWorkspace.props;
 
@@ -80,7 +81,7 @@ describe("Presence", () => {
 				// SIGNAL #2
 				count.local = { num: 42 };
 
-				clock.tick(10); // Time is now 1030
+				expect(runtime.submittedSignals).toHaveLength(2);
 			});
 
 			it("batches signals sent within the allowableUpdateLatency", async () => {
@@ -122,6 +123,8 @@ describe("Presence", () => {
 				// SIGNAL #3
 				// The deadline has now passed, so the timer will fire and send a single
 				// signal with the value from the last signal (num=90).
+
+				expect(runtime.submittedSignals).toHaveLength(3);
 			});
 
 			it("queued signal is sent immediately with immediate update message", async () => {
@@ -147,6 +150,8 @@ describe("Presence", () => {
 				// SIGNAL #2
 				// This should cause the queued signals to be merged with this immediately-sent
 				// signal with the value from the last signal (num=34).
+
+				expect(runtime.submittedSignals).toHaveLength(2);
 			});
 
 			it("batches signals with different allowed latencies", async () => {
@@ -175,6 +180,8 @@ describe("Presence", () => {
 				// SIGNAL #2
 				// The deadline has now passed, so the timer will fire and send a single
 				// signal with the value from the last signal (num=34, message="final message").
+
+				expect(runtime.submittedSignals).toHaveLength(2);
 			});
 
 			it("batches signals from multiple workspaces", async () => {
@@ -202,10 +209,14 @@ describe("Presence", () => {
 				clock.tick(10); // Time is now 1060
 				note.local = { message: "final message" }; // will be queued; deadline remains 1070
 
-				clock.tick(30); // Time is now 1080
+				// Messages are auto-sent at time 1070, the deadline
+
+				clock.tick(30); // Time is now 1090
 				// SIGNAL #3
-				// The deadline has now passed, so the timer will fire and send a single
-				// signal with the value from the last signal (num=34, message="final message").
+				// The deadline has now passed, so the timer will fire at time 1070 and send a single
+				// signal with the values from the last workspace updates (num=34, message="final message").
+
+				expect(runtime.submittedSignals).toHaveLength(3);
 			});
 
 			it("notification signals are sent immediately", async () => {
@@ -245,6 +256,8 @@ describe("Presence", () => {
 				clock.tick(10);
 				testEvents.emit.broadcast("newId", 99);
 				// SIGNAL #2
+
+				expect(runtime.submittedSignals).toHaveLength(2);
 			});
 
 			// TODO: RESULTS NOT VALID!!!
@@ -291,6 +304,8 @@ describe("Presence", () => {
 				// signal with the value from the last signal (num=12)
 				// There should also be a signal for the notification, which is NOT
 				// being sent
+
+				expect(runtime.submittedSignals).toHaveLength(2);
 			});
 		});
 	});
