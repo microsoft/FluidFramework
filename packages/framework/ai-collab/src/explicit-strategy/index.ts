@@ -18,6 +18,7 @@ import type {
 import { z } from "zod";
 
 import type {
+	AiCollabOptions,
 	Diff,
 	GenerateTreeEditsResponse,
 	OpenAiClientOptions,
@@ -64,137 +65,13 @@ export interface GenerateTreeEditsOptions {
 	planningStep?: boolean;
 }
 
-// interface GenerateTreeEditsSuccessResponse {
-// 	status: "success";
-// 	tokensUsed: TokenUsage;
-// }
-
-// interface GenerateTreeEditsErrorResponse {
-// 	status: "failure" | "partial-failure";
-// 	errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted";
-// 	tokensUsed: TokenUsage;
-// }
-
-/**
- * Prompts the provided LLM client to generate valid tree edits.
- * Applies those edits to the provided tree branch before returning.
- *
- * @remarks
- * - Optional root nodes are not supported
- * - Primitive root nodes are not supported
- *
- * @internal
- */
-// export async function generateTreeEdits(
-// 	options: GenerateTreeEditsOptions,
-// ): Promise<GenerateTreeEditsSuccessResponse | GenerateTreeEditsErrorResponse> {
-// 	const idGenerator = new IdGenerator();
-// 	const editLog: EditLog = [];
-// 	let editCount = 0;
-// 	let sequentialErrorCount = 0;
-
-// 	const simpleSchema = getSimpleSchema(Tree.schema(options.treeNode));
-
-// 	const tokensUsed = { inputTokens: 0, outputTokens: 0 };
-
-// 	try {
-// 		for await (const edit of generateEdits(
-// 			options,
-// 			simpleSchema,
-// 			idGenerator,
-// 			editLog,
-// 			options.limiters?.tokenLimits,
-// 			tokensUsed,
-// 		)) {
-// 			try {
-// 				const result = applyAgentEdit(
-// 					edit,
-// 					idGenerator,
-// 					simpleSchema.definitions,
-// 					options.validator,
-// 				);
-// 				const explanation = result.explanation;
-// 				editLog.push({ edit: { ...result, explanation } });
-// 				sequentialErrorCount = 0;
-// 			} catch (error: unknown) {
-// 				if (error instanceof Error) {
-// 					sequentialErrorCount += 1;
-// 					editLog.push({ edit, error: error.message });
-// 					DEBUG_LOG?.push(`Error: ${error.message}`);
-// 				} else {
-// 					throw error;
-// 				}
-// 			}
-
-// 			const responseStatus =
-// 				editCount > 0 && sequentialErrorCount < editCount ? "partial-failure" : "failure";
-
-// 			if (options.limiters?.abortController?.signal.aborted === true) {
-// 				return {
-// 					status: responseStatus,
-// 					errorMessage: "aborted",
-// 					tokensUsed,
-// 				};
-// 			}
-
-// 			if (
-// 				sequentialErrorCount >
-// 				(options.limiters?.maxSequentialErrors ?? Number.POSITIVE_INFINITY)
-// 			) {
-// 				return {
-// 					status: responseStatus,
-// 					errorMessage: "tooManyErrors",
-// 					tokensUsed,
-// 				};
-// 			}
-
-// 			if (++editCount >= (options.limiters?.maxModelCalls ?? Number.POSITIVE_INFINITY)) {
-// 				return {
-// 					status: responseStatus,
-// 					errorMessage: "tooManyModelCalls",
-// 					tokensUsed,
-// 				};
-// 			}
-// 		}
-// 	} catch (error: unknown) {
-// 		if (error instanceof Error) {
-// 			DEBUG_LOG?.push(`Error: ${error.message}`);
-// 		}
-
-// 		if (options.dumpDebugLog ?? false) {
-// 			console.log(DEBUG_LOG.join("\n\n"));
-// 			DEBUG_LOG.length = 0;
-// 		}
-
-// 		if (error instanceof TokenLimitExceededError) {
-// 			return {
-// 				status:
-// 					editCount > 0 && sequentialErrorCount < editCount ? "partial-failure" : "failure",
-// 				errorMessage: "tokenLimitExceeded",
-// 				tokensUsed,
-// 			};
-// 		}
-// 		throw error;
-// 	}
-
-// 	if (options.dumpDebugLog ?? false) {
-// 		console.log(DEBUG_LOG.join("\n\n"));
-// 		DEBUG_LOG.length = 0;
-// 	}
-
-// 	return {
-// 		status: "success",
-// 		tokensUsed,
-// 	};
-// }
-
 /**
  * The editLog is transformed into an array of Diff objects. Each Diff object includes
  * an id, type (either "error" or "edit"), and description (either the error message or
  * the edit explanation).
  */
-export async function generateTreeEditsWithDiff(
-	options: any,
+export async function generateTreeEdits(
+	options: AiCollabOptions,
 ): Promise<GenerateTreeEditsResponse> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];
@@ -288,8 +165,9 @@ export async function generateTreeEditsWithDiff(
 	// Transform editLog into diffs
 	const diffs: Diff[] = editLog.map((log, index) => ({
 		id: `diff-${index}`,
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		type: log.error ? "error" : "edit",
-		description: log.error ? log.error : log.edit.explanation,
+		description: log.error ?? log.edit.explanation ?? "No description available",
 	}));
 	if (options.dumpDebugLog ?? false) {
 		console.log(DEBUG_LOG.join("\n\n"));

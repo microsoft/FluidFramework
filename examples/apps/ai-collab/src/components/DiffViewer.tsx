@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Diff } from "@fluid-experimental/ai-collab";
+import { Diff } from "@fluidframework/ai-collab/alpha";
 import { Card, Typography, Box } from "@mui/material";
 import React from "react";
 

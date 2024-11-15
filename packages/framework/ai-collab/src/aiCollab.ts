@@ -4,7 +4,7 @@
  */
 
 import type { AiCollabOptions, GenerateTreeEditsResponse } from "./aiCollabApi.js";
-import { generateTreeEditsWithDiff } from "./explicit-strategy/index.js";
+import { generateTreeEdits } from "./explicit-strategy/index.js";
 
 /**
  * Calls an LLM to modify the provided SharedTree in a series of real time edits based on the provided users prompt input.
@@ -65,7 +65,7 @@ import { generateTreeEditsWithDiff } from "./explicit-strategy/index.js";
  * @alpha
  */
 export async function aiCollab(options: AiCollabOptions): Promise<GenerateTreeEditsResponse> {
-	const response = await generateTreeEditsWithDiff({
+	const response = await generateTreeEdits({
 		treeNode: options.treeNode,
 		validator: options.validator,
 		openAI: options.openAI,
