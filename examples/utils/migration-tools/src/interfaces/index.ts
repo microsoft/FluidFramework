@@ -8,8 +8,3 @@ export {
 	IMigratableModel,
 	IVersionedModel,
 } from "./migratableModel.js";
-export {
-	DataTransformationCallback,
-	IMigrator,
-	IMigratorEvents,
-} from "./migrator.js";

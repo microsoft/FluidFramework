@@ -15,11 +15,8 @@ export {
 	loadCompositeRuntime,
 } from "./compositeRuntime/index.js";
 export type {
-	DataTransformationCallback,
 	IImportExportModel,
 	IMigratableModel,
-	IMigrator,
-	IMigratorEvents,
 	IVersionedModel,
 } from "./interfaces/index.js";
 export {
@@ -31,9 +28,12 @@ export {
 	MigrationToolFactory,
 } from "./migrationTool/index.js";
 export {
+	DataTransformationCallback,
 	getModelAndMigrationToolFromContainer,
+	IMigrator,
+	IMigratorEvents,
 	Migrator,
-} from "./migrator.js";
+} from "./migrator/index.js";
 export {
 	ISimpleLoader,
 	SessionStorageSimpleLoader,

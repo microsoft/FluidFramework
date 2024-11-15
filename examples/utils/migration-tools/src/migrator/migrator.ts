@@ -8,14 +8,11 @@ import type { IContainer } from "@fluidframework/container-definitions/internal"
 import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type {
-	DataTransformationCallback,
-	IMigratableModel,
-	IMigrator,
-	IMigratorEvents,
-} from "./interfaces/index.js";
-import type { IMigrationTool, MigrationState } from "./migrationTool/index.js";
-import { type ISimpleLoader, waitForAtLeastSequenceNumber } from "./simpleLoader/index.js";
+import type { IMigratableModel } from "../interfaces/index.js";
+import type { IMigrationTool, MigrationState } from "../migrationTool/index.js";
+import { type ISimpleLoader, waitForAtLeastSequenceNumber } from "../simpleLoader/index.js";
+
+import type { DataTransformationCallback, IMigrator, IMigratorEvents } from "./interfaces.js";
 
 // TODO: This probably shouldn't be exported, consider having the migrator get its own model/tool out.
 /**
