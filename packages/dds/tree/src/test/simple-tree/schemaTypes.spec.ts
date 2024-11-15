@@ -12,12 +12,10 @@ import {
 	SchemaFactory,
 	type booleanSchema,
 	type InsertableObjectFromSchemaRecord,
-	type NodeKind,
 	type numberSchema,
 	type stringSchema,
 	type TreeNode,
 	type TreeNodeSchema,
-	type TreeNodeSchemaClass,
 } from "../../simple-tree/index.js";
 import {
 	type AllowedTypes,
@@ -233,31 +231,6 @@ describe("schemaTypes", () => {
 
 			type TB = DefaultTreeNodeFromImplicitAllowedTypes<typeof Customized>;
 			type _checkB = requireAssignableTo<TB, Customized>;
-		}
-
-		// NodeFromSchema
-		{
-			class Simple extends schema.object("A", { x: [schema.number] }) {}
-			class Customized extends schema.object("B", { x: [schema.number] }) {
-				public customized = true;
-			}
-
-			type TA = NodeFromSchema<typeof Simple>;
-			type _checkA = requireAssignableTo<TA, Simple>;
-
-			type TB = NodeFromSchema<typeof Customized>;
-			type _checkB = requireAssignableTo<TB, Customized>;
-
-			type TC = typeof Customized extends TreeNodeSchema<string, NodeKind, infer TNode>
-				? TNode
-				: never;
-			// @ts-expect-error It is unknown why this does not work, but NodeFromSchema works around this issue. If this starts compiling that workaround should be removed!
-			type _checkC = requireAssignableTo<TC, Customized>;
-
-			type TD = typeof Customized extends TreeNodeSchemaClass<string, NodeKind, infer TNode>
-				? TNode
-				: never;
-			type _checkD = requireAssignableTo<TD, Customized>;
 		}
 	}
 

@@ -21,7 +21,6 @@ import {
 	brand,
 	type areSafelyAssignable,
 	type Brand,
-	type BrandedType,
 	type requireTrue,
 } from "../../../util/index.js";
 
@@ -118,7 +117,7 @@ describe("Class based end to end example", () => {
 	});
 
 	// Confirm that the alternative syntax for initialTree from the example above actually works.
-	it("using a mix of insertable content and nodes", () => {
+	it("using a mix of insertible content and nodes", () => {
 		const factory = new TreeFactory({});
 		const theTree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),

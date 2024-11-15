@@ -74,7 +74,6 @@ import type {
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { TreeNodeValid } from "../treeNodeValid.js";
 import { isLazy } from "../flexList.js";
-import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -323,7 +322,17 @@ export class SchemaFactory<
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-	>(name: Name, fields: T): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true> {
+	>(
+		name: Name,
+		fields: T,
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Object,
+		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
+		object & InsertableObjectFromSchemaRecord<T>,
+		true,
+		T
+	> {
 		return objectSchema(this.scoped(name), fields, true);
 	}
 
@@ -386,7 +395,6 @@ export class SchemaFactory<
 	>;
 
 	/**
-	 * The implementation (this doc does nothing but make JS-doc lint happy).
 	 * @privateRemarks
 	 * This should return `TreeNodeSchemaBoth`, however TypeScript gives an error if one of the overloads implicitly up-casts the return type of the implementation.
 	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload

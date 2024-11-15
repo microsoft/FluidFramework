@@ -149,15 +149,6 @@ import { validateUsageError } from "../../utils.js";
 		type FromArray = TreeFieldFromImplicitField<[typeof Note, typeof Note]>;
 		type _check5 = requireTrue<areSafelyAssignable<FromArray, Note>>;
 	}
-
-	// Subclassing
-	{
-		const n = new NodeMap();
-		// These schema based types can have methods provided based on their node kind. In this case maps have `get`.
-		// The type returned from `get` is `Note | undefined`, and shows that way in the intellisense:
-		// It does not show some complex type expression equivalent to that which is a big improvement over the previous setup.
-		const item: Note | undefined = n.get("x");
-	}
 }
 
 describe("schemaFactory", () => {

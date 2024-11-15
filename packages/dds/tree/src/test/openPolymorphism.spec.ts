@@ -7,15 +7,11 @@ import { strict as assert } from "node:assert";
 
 import {
 	SchemaFactory,
-	type InternalTreeNode,
 	type NodeKind,
 	type ObjectFromSchemaRecord,
 	type TreeNode,
 	type TreeNodeSchema,
 	type Unhydrated,
-	type FieldKind,
-	type FieldSchema,
-	type Insertable,
 } from "../simple-tree/index.js";
 import { Tree } from "../shared-tree/index.js";
 import { validateUsageError } from "./utils.js";

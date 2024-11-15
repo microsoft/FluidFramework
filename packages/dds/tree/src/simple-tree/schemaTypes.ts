@@ -24,7 +24,6 @@ import type {
 	TreeNodeSchemaClass,
 	TreeNode,
 	TreeNodeSchemaCore,
-	TreeNodeSchemaNonClass,
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./toMapTree.js";
@@ -544,9 +543,9 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export type InsertableTreeFieldFromImplicitField<
 	TSchemaInput extends ImplicitFieldSchema,
 	TSchema = UnionToIntersection<TSchemaInput>,
-> = TSchema extends FieldSchema<infer Kind, infer Types>
+> = [TSchema] extends [FieldSchema<infer Kind, infer Types>]
 	? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
-	: TSchema extends ImplicitAllowedTypes
+	: [TSchema] extends [ImplicitAllowedTypes]
 		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
 		: never;
 
@@ -978,20 +977,15 @@ export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> =
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
- * @privateRemarks
- * For unknown reasons,
- * this has to test TreeNodeSchemaClass and TreeNodeSchemaNonClass independently (previously testing just TreeNodeSchema worked).
  * @public
  */
-export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaClass<
+export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 	string,
 	NodeKind,
 	infer TNode
 >
 	? TNode
-	: T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode>
-		? TNode
-		: never;
+	: never;
 
 /**
  * Data which can be used as a node to be inserted.
