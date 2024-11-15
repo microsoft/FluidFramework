@@ -17,10 +17,8 @@ import {
 	createTestUndoRedoStacks,
 	expectJsonTree,
 	moveWithin,
-	testIdCompressor,
 	TestTreeProviderLite,
 } from "../utils.js";
-import { SharedTree } from "../../index.js";
 import { insert, jsonSequenceRootSchema, remove } from "../sequenceRootUtils.js";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
@@ -174,26 +172,17 @@ const testCases: {
  * Schema definitions for forkable revertible test suites.
  * Should be removed once #24414 is implemented.
  */
-const factory = new SchemaFactory("shared-tree-test");
-class ChildNodeSchema extends factory.object("child-item", {
-	propertyOne: factory.optional(factory.number),
-	propertyTwo: factory.object("propertyTwo-item", {
-		itemOne: factory.string,
-	}),
-}) {}
-class RootNodeSchema extends factory.object("root-item", {
-	child: factory.optional(ChildNodeSchema),
-}) {}
-
-const sharedTree = SharedTree.create(
-	new MockFluidDataStoreRuntime({
-		registry: [SharedTree.getFactory()],
-		idCompressor: testIdCompressor,
-	}),
-	"sharedTreeTest",
-);
-
 function createInitializedView() {
+	const factory = new SchemaFactory("shared-tree-test");
+	class ChildNodeSchema extends factory.object("child-item", {
+		propertyOne: factory.optional(factory.number),
+		propertyTwo: factory.object("propertyTwo-item", {
+			itemOne: factory.string,
+		}),
+	}) {}
+	class RootNodeSchema extends factory.object("root-item", {
+		child: factory.optional(ChildNodeSchema),
+	}) {}
 	const provider = new TestTreeProviderLite();
 	const view = asTreeViewAlpha(
 		provider.trees[0].viewWith(
