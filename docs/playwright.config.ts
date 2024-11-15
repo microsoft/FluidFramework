@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { defineConfig, devices } from "@playwright/test";
 
 const frontendPort = 3000;
