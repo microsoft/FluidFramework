@@ -255,7 +255,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		start: number,
 		end: number,
 		adjust: MapLike<AdjustParams>,
-	): IMergeTreeAnnotateAdjustMsg | undefined {
+	): IMergeTreeAnnotateAdjustMsg {
 		const annotateOp = createAdjustRangeOp(start, end, adjust);
 
 		for (const [key, value] of Object.entries(adjust)) {

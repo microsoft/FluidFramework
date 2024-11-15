@@ -358,10 +358,12 @@ export function createSharedStringGeneratorOperations(
 	async function annotateAdjustRange(state: ClientOpState): Promise<AnnotateAdjustRange> {
 		const { random } = state;
 		const key = random.pick(options.propertyNamePool);
+		const max = random.pick([undefined, random.integer(-10, 100)]);
+		const min = random.pick([undefined, random.integer(-100, 10)]);
 		const value: AdjustParams = {
 			delta: random.integer(-5, 5),
-			max: random.pick([undefined, random.integer(-10, 100)]),
-			min: random.pick([undefined, random.integer(-100, 10)]),
+			max,
+			min: (min ?? max ?? 0) > (max ?? 0) ? undefined : min,
 		};
 		return {
 			type: "annotateAdjustRange",

@@ -78,11 +78,13 @@ export const annotateRange: TestOperation = (
 			[random.integer(1, 5)]: client.longClientId,
 		});
 	} else {
+		const max = random.pick([undefined, random.integer(-10, 100)]);
+		const min = random.pick([undefined, random.integer(-100, 10)]);
 		return client.annotateAdjustRangeLocal(opStart, opEnd, {
 			[random.integer(0, 2).toString()]: {
 				delta: random.integer(-5, 5),
-				min: random.pick([undefined, random.integer(-100, 10)]),
-				max: random.pick([undefined, random.integer(-10, 100)]),
+				min: (min ?? max ?? 0) > (max ?? 0) ? undefined : min,
+				max,
 			},
 		});
 	}
