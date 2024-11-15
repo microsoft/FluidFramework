@@ -8,7 +8,7 @@
 import type { IEntryPointPiece } from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
 
@@ -19,13 +19,11 @@ const modelEntryPointPieceName = "getModel";
 
 const inventoryListId = "default-inventory-list";
 
-async function getDataStoreEntryPoint<T>(
+async function getDataStoreEntryPoint(
 	containerRuntime: IContainerRuntime,
 	alias: string,
-): Promise<T> {
-	const entryPointHandle = (await containerRuntime.getAliasedDataStoreEntryPoint(alias)) as
-		| IFluidHandle<T>
-		| undefined;
+): Promise<FluidObject> {
+	const entryPointHandle = await containerRuntime.getAliasedDataStoreEntryPoint(alias);
 
 	if (entryPointHandle === undefined) {
 		throw new Error(`Default dataStore [${alias}] must exist`);
@@ -39,7 +37,7 @@ const createPiece = async (
 ): Promise<(container: IContainer) => Promise<IInventoryListAppModel>> => {
 	return async (container: IContainer) =>
 		new InventoryListAppModel(
-			await getDataStoreEntryPoint<IInventoryList>(runtime, inventoryListId),
+			(await getDataStoreEntryPoint(runtime, inventoryListId)) as IInventoryList,
 			container,
 		);
 };
