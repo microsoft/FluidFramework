@@ -22,7 +22,10 @@ export class CompositeEntryPoint {
 export type DataTransformationCallback = (exportedData: unknown, modelVersion: string) => Promise<unknown>;
 
 // @alpha
-export const getModelAndMigrationToolFromContainer: <ModelType>(container: IContainer) => Promise<IAttachedMigratableModel<ModelType>>;
+export const getModelAndMigrationToolFromContainer: <ModelType>(container: IContainer) => Promise<{
+    model: ModelType;
+    migrationTool: IMigrationTool;
+}>;
 
 // @alpha
 export interface IAcceptedMigrationDetails {

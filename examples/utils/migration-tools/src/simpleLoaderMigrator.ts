@@ -16,8 +16,7 @@ import type {
 	IMigratorEvents,
 	MigrationState,
 } from "./interfaces/index.js";
-import type { IAttachedMigratableModel } from "./migratableModelLoader/index.js";
-import { waitForAtLeastSequenceNumber, type ISimpleLoader } from "./simpleLoader/index.js";
+import { type ISimpleLoader, waitForAtLeastSequenceNumber } from "./simpleLoader/index.js";
 
 // TODO: This probably shouldn't be exported, consider having the migrator get its own model/tool out.
 /**
@@ -31,7 +30,7 @@ import { waitForAtLeastSequenceNumber, type ISimpleLoader } from "./simpleLoader
  */
 export const getModelAndMigrationToolFromContainer = async <ModelType>(
 	container: IContainer,
-): Promise<IAttachedMigratableModel<ModelType>> => {
+): Promise<{ model: ModelType; migrationTool: IMigrationTool }> => {
 	// TODO: Fix typing here
 	const entryPoint = (await container.getEntryPoint()) as {
 		getModel: (container: IContainer) => Promise<ModelType>;
@@ -197,6 +196,7 @@ export class SimpleLoaderMigrator implements IMigrator {
 				// forward, or at least advise the end user to refresh the page or something.
 				// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
 				// a new MigratableModelLoader?
+				// TODO: Does the above TODO still matter now that this uses SimpleLoader?
 				const migrationSupported = await this.simpleLoader.supportsVersion(
 					acceptedMigration.newVersion,
 				);
