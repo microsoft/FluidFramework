@@ -16,8 +16,8 @@ import WhiteboardLogo from "@site/static/assets/whiteboard-logo.png";
 
 import "@site/src/css/home/partnersSection.css";
 
-// TODO: replace with real content for each partner section once we have gotten agreement on language.
-const bodyTextPlaceholder = "";
+// TODO: the spec calls for text contents between the title and the footer, but we don't have that text yet.
+// Once we have that text, restore the commented out code below and fill in the necessary text.
 
 const autodeskLink = "https://www.autodesk.com/";
 const hexagonLink = "https://hexagon.com/";
@@ -36,38 +36,38 @@ export function PartnersSection(): JSX.Element {
 				<div className="ffcom-partners-section-contents-inner">
 					<PartnerEntry
 						icon={<img src={AutodeskLogo} title="Autodesk" />}
-						labelText="Autodesk"
-						bodyText={bodyTextPlaceholder}
+						title="Autodesk"
+						// bodyText={TODO}
 						learnMoreHref={autodeskLink}
 					/>
 					<PartnerEntry
 						icon={<img src={HexagonLogo} title="Hexagon" />}
-						labelText="Hexagon"
-						bodyText={bodyTextPlaceholder}
+						title="Hexagon"
+						// bodyText={TODO}
 						learnMoreHref={hexagonLink}
 					/>
 					<PartnerEntry
 						icon={<LoopLogo title="Microsoft Loop" />}
-						labelText="Microsoft Loop"
-						bodyText={bodyTextPlaceholder}
+						title="Microsoft Loop"
+						// bodyText={TODO}
 						learnMoreHref={loopLink}
 					/>
 					<PartnerEntry
 						icon={<img src={TeamsLogo} title="Microsoft Teams" />}
-						labelText="Microsoft Teams"
-						bodyText={bodyTextPlaceholder}
+						title="Microsoft Teams"
+						// bodyText={TODO}
 						learnMoreHref={teamsLink}
 					/>
 					<PartnerEntry
 						icon={<img src={PowerAppsLogo} title="Power Apps" />}
-						labelText="Power Apps"
-						bodyText={bodyTextPlaceholder}
+						title="Power Apps"
+						// bodyText={TODO}
 						learnMoreHref={powerAppsLink}
 					/>
 					<PartnerEntry
 						icon={<img src={WhiteboardLogo} title="Whiteboard" />}
-						labelText="Whiteboard"
-						bodyText={bodyTextPlaceholder}
+						title="Whiteboard"
+						// bodyText={TODO}
 						learnMoreHref={whiteboardLink}
 					/>
 				</div>
@@ -78,44 +78,75 @@ export function PartnersSection(): JSX.Element {
 
 interface PartnerEntryProps {
 	icon: React.Component;
-	labelText: string;
-	bodyText: string;
+	title: string;
+	// bodyText: string;
 	learnMoreHref: string;
 }
 
-function PartnerEntry({
-	icon,
-	labelText,
-	learnMoreHref,
-	bodyText,
-}: PartnerEntryProps): JSX.Element {
+function PartnerEntry({ icon, title, learnMoreHref }: PartnerEntryProps): JSX.Element {
 	return (
 		<div className="ffcom-partner-entry">
 			<div className="ffcom-partner-entry-inner">
-				<div className="ffcom-partner-entry-icon">{icon}</div>
 				<div className="ffcom-partner-entry-body">
-					<div className="ffcom-partner-entry-label-container ">
-						<div className="ffcom-partner-entry-label-container-inner">
-							<div className="ffcom-partner-entry-label-indicator-container">
-								<div className="ffcom-partner-entry-label-indicator-shape" />
-							</div>
-							<p className="ffcom-partner-entry-label-text">{labelText}</p>
-						</div>
-					</div>
-					<p className="ffcom-partner-entry-description-text ">{bodyText}</p>
-					<div className="ffcom-partner-entry-learn-more-container ">
-						<div className="ffcom-partner-entry-learn-more-container-inner">
-							<a
-								className="ffcom-partner-entry-learn-more-text"
-								href={learnMoreHref}
-								target="_blank"
-								rel="noreferrer"
-							>
-								Learn more
-							</a>
-						</div>
-					</div>
+					<PartnerEntryIcon icon={icon} />
+					<PartnerEntryLabel title={title} />
+					{/* TODO: restore this once we have body text contents: <PartnerEntryBody bodyText={bodyText} /> */}
+					<PartnerEntryFooter learnMoreHref={learnMoreHref} />
 				</div>
+			</div>
+		</div>
+	);
+}
+
+interface PartnerEntryIconProps {
+	icon: React.Component;
+}
+
+function PartnerEntryIcon({ icon }: PartnerEntryIconProps): React.ReactElement {
+	return <div className="ffcom-partner-entry-icon">{icon}</div>;
+}
+
+interface PartnerEntryLabelProps {
+	title: string;
+}
+
+function PartnerEntryLabel({ title }: PartnerEntryLabelProps): React.ReactElement {
+	return (
+		<div className="ffcom-partner-entry-label-container ">
+			<div className="ffcom-partner-entry-label-container-inner">
+				<div className="ffcom-partner-entry-label-indicator-container">
+					<div className="ffcom-partner-entry-label-indicator-shape" />
+				</div>
+				<p className="ffcom-partner-entry-label-text">{title}</p>
+			</div>
+		</div>
+	);
+}
+
+// interface PartnerEntryBodyProps {
+// 	bodyText: string;
+// }
+
+// function PartnerEntryBody({ bodyText }: PartnerEntryBodyProps): React.ReactElement {
+// 	return <p className="ffcom-partner-entry-description-text ">{bodyText}</p>;
+// }
+
+interface PartnerEntryFooterProps {
+	learnMoreHref: string;
+}
+
+function PartnerEntryFooter({ learnMoreHref }: PartnerEntryFooterProps): React.ReactElement {
+	return (
+		<div className="ffcom-partner-entry-learn-more-container ">
+			<div className="ffcom-partner-entry-learn-more-container-inner">
+				<a
+					className="ffcom-partner-entry-learn-more-text"
+					href={learnMoreHref}
+					target="_blank"
+					rel="noreferrer"
+				>
+					Learn more
+				</a>
 			</div>
 		</div>
 	);
