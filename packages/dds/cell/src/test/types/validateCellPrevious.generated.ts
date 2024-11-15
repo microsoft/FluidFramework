@@ -94,7 +94,7 @@ declare type current_as_old_for_Interface_ISharedCell = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_ISharedCellEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedCellEvents = requireAssignableTo<TypeOnly<old.ISharedCellEvents<any>>, TypeOnly<current.ISharedCellEvents<any>>>
+declare type old_as_current_for_Interface_ISharedCellEvents = requireAssignableTo<TypeOnly<old.ISharedCellEvents<never>>, TypeOnly<current.ISharedCellEvents<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -103,7 +103,7 @@ declare type old_as_current_for_Interface_ISharedCellEvents = requireAssignableT
  * typeValidation.broken:
  * "Interface_ISharedCellEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedCellEvents = requireAssignableTo<TypeOnly<current.ISharedCellEvents<any>>, TypeOnly<old.ISharedCellEvents<any>>>
+declare type current_as_old_for_Interface_ISharedCellEvents = requireAssignableTo<TypeOnly<current.ISharedCellEvents<never>>, TypeOnly<old.ISharedCellEvents<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
