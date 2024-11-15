@@ -101,7 +101,7 @@ export class DuplicateBatchDetector {
 		}
 
 		telemetryContext?.set(
-			"fluid_DuplicateBatchDetector",
+			"fluid_DuplicateBatchDetector_",
 			"recentBatchCount",
 			this.batchIdsBySeqNum.size,
 		);
