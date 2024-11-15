@@ -265,8 +265,9 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		};
 
 		const startTime = Date.now();
+		let response;
 		try {
-			await aiCollab({
+			response = await aiCollab({
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
@@ -342,6 +343,7 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		}
 		const foundJohnDoe = createJohnDoeCandidateTask.data;
 		assert(foundJohnDoe !== undefined);
+		assert(response.diffs !== undefined);
 
 		measureSubTaskBenchmark(
 			completedTasksBenchmark,
