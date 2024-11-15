@@ -6,9 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-// TODO: This lib weighs 585 bytes minified and gzipped; 1.1 kb minified only
-// https://bundlephobia.com/package/ts-deepmerge@7.0.1
-// If this is too heavy it should be possible to write a bespoke merger
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import { brandedObjectEntries, type IEphemeralRuntime } from "./internalTypes.js";
