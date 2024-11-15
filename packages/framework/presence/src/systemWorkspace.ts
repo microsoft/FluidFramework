@@ -138,6 +138,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	): void {
 		const postUpdateActions: (() => void)[] = [];
 		const audienceMembers = this.audience.getMembers();
+		const announcedAttendees = new Set<ClientSessionId>();
 		const connectedAttendees = new Set<SessionClient>();
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
@@ -149,22 +150,23 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				/* order */ value.rev,
 			);
 
-			// Check new attendee against audience to see if they're currently connected
-			const isAttendeeConnected = audienceMembers.has(clientConnectionId);
+			// Check new attendee to see if they're currently connected
+			const isAttendeeConnected =
+				audienceMembers.has(clientConnectionId) ||
+				senderConnectionId === clientConnectionId ||
+				connectedAttendees.has(attendee);
 
 			if (isAttendeeConnected) {
+				// If attendee is connected, update their connection ID and status.
 				connectedAttendees.add(attendee);
-				if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected) {
-					attendee.setConnectionId(clientConnectionId);
-				}
-				if (isNew) {
-					// If the attendee is both new and in audience (i.e. currently connected), emit an attendeeJoined event.
+				attendee.setConnectionId(clientConnectionId);
+				if (isNew && !announcedAttendees.has(clientSessionId)) {
+					// If the attendee is both new and currently connected, emit an attendeeJoined event.
 					postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
+					announcedAttendees.add(clientSessionId);
 				}
-			}
-
-			// If the attendee is not in the audience, they are considered disconnected.
-			if (!connectedAttendees.has(attendee)) {
+			} else {
+				// If the attendee is not connected, update their connection status.
 				attendee.setDisconnected();
 			}
 
@@ -254,8 +256,10 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			// The given association is newer than the one we have.
 			// Update the order and current connection ID.
 			attendee.order = order;
+			if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected) {
+				isNew = true;
+			}
 			attendee.setConnectionId(clientConnectionId);
-			isNew = true;
 		}
 		// Always update entry for the connection ID. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);

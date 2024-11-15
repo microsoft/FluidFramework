@@ -185,7 +185,7 @@ describe("Presence", () => {
 						verifyNewAttendee(rejoinAttendeeConnectionId);
 					});
 
-					it.skip('second time is announced once via `attendeeJoined` with status "Connected" when prior is still connected', () => {
+					it('second time is announced once via `attendeeJoined` with status "Connected" when prior is still connected', () => {
 						// Act - simulate join message from client
 						presence.processSignal("", rejoinAttendeeSignal, false);
 
@@ -193,7 +193,7 @@ describe("Presence", () => {
 						verifyNewAttendee(rejoinAttendeeConnectionId);
 					});
 
-					it.skip('first time is announced via `attendeeJoined` with status "Connected" even if unknown to audience', () => {
+					it('first time is announced via `attendeeJoined` with status "Connected" even if unknown to audience', () => {
 						// Setup - remove connection from audience
 						runtime.removeMember(initialAttendeeConnectionId);
 
@@ -276,7 +276,7 @@ describe("Presence", () => {
 					// To retain symmetry across Joined and Disconnected events, do not announce
 					// attendeeJoined when the attendee is already connected and we only see
 					// a connection id update. This can happen when audience removal is late.
-					it.skip('is not announced via `attendeeJoined` when already "Connected"', () => {
+					it('is not announced via `attendeeJoined` when already "Connected"', () => {
 						// Setup
 						afterCleanUp.push(
 							presence.events.on("attendeeJoined", () => {
