@@ -110,6 +110,7 @@
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
+		"@fluidframework/presence": "workspace:~",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
