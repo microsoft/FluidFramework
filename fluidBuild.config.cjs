@@ -361,6 +361,10 @@ module.exports = {
 				// markdown-magic's build step update the README.md file that are checked in. No need to clean.
 				"tools/markdown-magic/package.json",
 			],
+			"npm-package-json-clean-script": [
+				// Docs directory breaks cleaning down into multiple scripts.
+				"docs/package.json",
+			],
 			"npm-package-json-script-mocha-config": [
 				// these don't use mocha config for reporters yet.
 				"^server/",
