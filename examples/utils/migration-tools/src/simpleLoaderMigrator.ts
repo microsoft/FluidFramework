@@ -19,6 +19,7 @@ import type {
 import type { IAttachedMigratableModel } from "./migratableModelLoader/index.js";
 import { waitForAtLeastSequenceNumber, type ISimpleLoader } from "./simpleLoader/index.js";
 
+// TODO: This probably shouldn't be exported, consider having the migrator get its own model/tool out.
 /**
  * The purpose of the model pattern and the model loader is to wrap the IContainer in a more useful object and
  * interface.  This demo uses a convention of the entrypoint providing a getModelAndMigrationTool method to do so.
@@ -26,8 +27,9 @@ import { waitForAtLeastSequenceNumber, type ISimpleLoader } from "./simpleLoader
  *
  * Other strategies to obtain the wrapping model could also work fine here - for example a standalone model code
  * loader that separately fetches model code and wraps the container from the outside.
+ * @alpha
  */
-const getModelAndMigrationToolFromContainer = async <ModelType>(
+export const getModelAndMigrationToolFromContainer = async <ModelType>(
 	container: IContainer,
 ): Promise<IAttachedMigratableModel<ModelType>> => {
 	// TODO: Fix typing here

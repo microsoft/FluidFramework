@@ -8,7 +8,11 @@ import type {
 	IMigrationTool,
 	IVersionedModel,
 } from "@fluid-example/migration-tools/internal";
-import { MigratableModelLoader, Migrator } from "@fluid-example/migration-tools/internal";
+import {
+	getModelAndMigrationToolFromContainer,
+	SimpleLoader,
+	SimpleLoaderMigrator,
+} from "@fluid-example/migration-tools/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,
@@ -74,7 +78,7 @@ async function start(): Promise<void> {
 	// container.getEntryPoint().model if we knew that was the model.
 	// TODO: This is really loading an IInventoryListAppModel & IMigratableModel (we know this because of what the
 	// DemoCodeLoader supports).  Should we just use that more-specific type in the typing here?
-	const modelLoader = new MigratableModelLoader<IMigratableModel>({
+	const modelLoader = new SimpleLoader({
 		urlResolver: new InsecureTinyliciousUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(
 			new InsecureTinyliciousTokenProvider(),
@@ -90,15 +94,19 @@ async function start(): Promise<void> {
 	if (location.hash.length === 0) {
 		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
 		// Normally we would create with the most-recent version.
-		const createResponse = await modelLoader.createDetached("one");
-		model = createResponse.model;
-		migrationTool = createResponse.migrationTool;
-		id = await createResponse.attach();
+		const { container, attach } = await modelLoader.createDetached("one");
+		const modelAndMigrationTool =
+			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
+		model = modelAndMigrationTool.model;
+		migrationTool = modelAndMigrationTool.migrationTool;
+		id = await attach();
 	} else {
 		id = location.hash.slice(1);
-		const loadResponse = await modelLoader.loadExisting(id);
-		model = loadResponse.model;
-		migrationTool = loadResponse.migrationTool;
+		const container = await modelLoader.loadExisting(id);
+		const modelAndMigrationTool =
+			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
+		model = modelAndMigrationTool.model;
+		migrationTool = modelAndMigrationTool.migrationTool;
 	}
 
 	// The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
@@ -107,7 +115,7 @@ async function start(): Promise<void> {
 	// import with newly created models.
 	// TODO: Consider just passing the ModelLoader (or even the model loader construction args?) and kind of wrapping it.
 	// Then this becomes something like a MigratingModelLoader.  Then the model can have a migrationTool but sort of hide it.
-	const migrator = new Migrator(
+	const migrator = new SimpleLoaderMigrator(
 		modelLoader,
 		model,
 		migrationTool,
