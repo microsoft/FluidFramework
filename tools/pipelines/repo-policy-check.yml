@@ -39,7 +39,7 @@ extends:
     template: v1/M365.Unofficial.PipelineTemplate.yml@m365Pipelines
   parameters:
     pool:
-      name: Small-1ES # This is one of the Fluid Orgs new 1ES hosted pools.
+      name: Small-eastus2
       os: linux
     sdl:
       ${{ if eq(variables['System.TeamProject'], 'internal') }}:

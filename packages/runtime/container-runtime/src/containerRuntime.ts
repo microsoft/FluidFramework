@@ -1116,7 +1116,7 @@ export class ContainerRuntime
 			undefined, // summaryConfiguration
 		);
 
-		runtime.blobManager.trackPendingStashedUploads().then(
+		runtime.blobManager.stashedBlobsUploadP.then(
 			() => {
 				// make sure we didn't reconnect before the promise resolved
 				if (runtime.delayConnectClientId !== undefined && !runtime.disposed) {
@@ -1532,7 +1532,7 @@ export class ContainerRuntime
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		};
 
-		assert(isIDeltaManagerFull(deltaManager), "Invalid delta manager");
+		assert(isIDeltaManagerFull(deltaManager), 0xa80 /* Invalid delta manager */);
 		this.innerDeltaManager = deltaManager;
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
