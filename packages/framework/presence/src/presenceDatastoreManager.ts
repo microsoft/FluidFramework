@@ -495,25 +495,3 @@ class TimerManager {
 	}
 }
 
-// function deepMerge<T extends object>(target: T, source: T): T {
-// 	// eslint-disable-next-line no-restricted-syntax
-// 	for (const key in source) {
-// 		if (Object.prototype.hasOwnProperty.call(source, key)) {
-// 			if (isObject(source[key])) {
-// 				if (target[key] === undefined) {
-// 					// @ts-expect-error TODO
-// 					target[key] = {};
-// 				}
-// 				deepMerge(target[key] as T, source[key] as T);
-// 			} else {
-// 				target[key] = source[key];
-// 			}
-// 		}
-// 	}
-// 	return target;
-// }
-
-// function isObject(item: any): item is object {
-// 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/strict-boolean-expressions
-// 	return item && typeof item === "object" && !Array.isArray(item);
-// }
