@@ -61,9 +61,11 @@ class SessionClient implements ISessionClient {
 		return this.connectionStatus;
 	}
 
-	public setConnectionId(connectionId: ClientConnectionId): void {
+	public setConnectionId(connectionId: ClientConnectionId, updateStatus: boolean = true): void {
 		this.connectionId = connectionId;
-		this.connectionStatus = SessionClientStatus.Connected;
+		if (updateStatus) {
+			this.connectionStatus = SessionClientStatus.Connected;
+		}
 	}
 
 	public setDisconnected(): void {
@@ -264,6 +266,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected) {
 				isJoining = true;
 			}
+			attendee.setConnectionId(clientConnectionId, /* updateStatus */ false);
 		}
 		// Always update entry for the connection ID. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
