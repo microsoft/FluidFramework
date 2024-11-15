@@ -260,16 +260,13 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			// The given association is newer than the one we have.
 			// Update the order and current connection ID.
 			attendee.order = order;
-
 			// Known attendee is joining the session if they are currently disconnected
 			if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected) {
 				isJoining = true;
 			}
-			attendee.setConnectionId(clientConnectionId);
 		}
 		// Always update entry for the connection ID. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
-
 		return { attendee, isJoining };
 	}
 }
