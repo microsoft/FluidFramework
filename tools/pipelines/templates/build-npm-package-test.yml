@@ -160,18 +160,18 @@ extends:
     pool:
       name: ${{ parameters.poolBuild }}
       os: linux
-    # sdl:
-    #   ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-    #     arrow:
-    #       # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
-    #       serviceConnection: ff-internal-arrow-sc
-    #   sourceAnalysisPool:
-    #     name: Azure-Pipelines-1ESPT-ExDShared
-    #     image: windows-2022
-    #     os: windows
-    #   # Tentative workaround for the occasional Credscan failures
-    #   credscan:
-    #     batchSize: 4
+    sdl:
+      ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+        arrow:
+          # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
+          serviceConnection: ff-internal-arrow-sc
+      sourceAnalysisPool:
+        name: Azure-Pipelines-1ESPT-ExDShared
+        image: windows-2022
+        os: windows
+      # Tentative workaround for the occasional Credscan failures
+      credscan:
+        batchSize: 4
     # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
     settings:
       skipBuildTagsForGitHubPullRequests: true
@@ -349,11 +349,11 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
-              - script: pnpm rimraf */**/node_modules
+              - script: rm -rf */**/node_modules
                 workingDirectory: '${{ parameters.buildDirectory }}'
                 displayName: Remove workspace node_modules
 
-              - pwsh: Move-Item ./node_modules -Destination $(Agent.TempDirectory)
+              - pwsh: mv ./node_modules $(Agent.TempDirectory)
                 workingDirectory: '${{ parameters.buildDirectory }}'
                 displayName: Relocate root node_modules
 
