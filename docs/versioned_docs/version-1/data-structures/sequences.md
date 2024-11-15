@@ -1,8 +1,6 @@
 ---
 title: Sequences
 sidebar_position: 3
-aliases:
-  - "/docs/data-structures/sequence"
 ---
 
 <!-- IMPORTANT: Don't manually edit the auto-generated content below. Instead, edit the source file (look at the path

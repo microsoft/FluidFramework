@@ -1,9 +1,6 @@
 ---
 title: Summarization
 sidebar_position: 10
-aliases:
-  - "/docs/advanced/summarizer/"
-  - "/docs/deep/summarizer/"
 ---
 
 <!-- IMPORTANT: Don't manually edit the auto-generated content below. Instead, edit the source file (look at the path
