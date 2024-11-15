@@ -220,12 +220,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		const currentMessageData: DatastoreMessageContent = data;
 
 		// Merge the queued data with the next update.
-		// TODO: this is not working as I expect. Data from multiple LVMs is not combined.
-		// const newData: DatastoreMessageContent = deepMerge(queuedMessageData, currentMessageData);
 		const newData =
 			queuedMessageData === undefined
 				? currentMessageData
 				: merge(queuedMessageData, currentMessageData);
+
 		const newContent = {
 			sendTimestamp: now,
 			avgLatency: this.averageLatency,

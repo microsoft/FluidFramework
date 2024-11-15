@@ -104,7 +104,7 @@ describe("Presence", () => {
 				});
 				presence.processSignal("", expectedClientJoin, true);
 				// The deadline has now passed, so the timer will fire and send a single
-				// signal with the value from the last signal (num=34). This is signal #3
+				// signal with the value from the last signal (num=34). This is signal #1
 				// for this test.
 
 				clock.tick(10); // Time is now 1140
@@ -118,36 +118,65 @@ describe("Presence", () => {
 
 				clock.tick(30); // Time is now 1250
 				// The deadline has now passed, so the timer will fire and send a single
-				// signal with the value from the last signal (num=90). This is signal #4
+				// signal with the value from the last signal (num=90). This is signal #2
 				// for this test.
 			});
 
 			it("batches signals with different allowed latencies", async () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					data: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
-					otherData: Latest(
+					level: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
+					note: Latest(
 						{ message: "" },
 						{ allowableUpdateLatency: 50, forcedRefreshInterval: 0 },
 					),
 				});
 
-				const { data, otherData } = stateWorkspace.props;
+				const { level, note } = stateWorkspace.props;
 
 				clock.tick(10); // Time is now 1020
-				otherData.local = { message: "will be queued" }; // will be queued, deadline is set to 1070
-				data.local = { num: 12 }; // will be queued; deadline remains 1070
+				note.local = { message: "will be queued" }; // will be queued, deadline is set to 1070
+				level.local = { num: 12 }; // will be queued; deadline remains 1070
 
 				clock.tick(30); // Time is now 1050
-				data.local = { num: 34 }; // will be queued; deadline remains 1070
+				level.local = { num: 34 }; // will be queued; deadline remains 1070
 
 				clock.tick(10); // Time is now 1060
-				otherData.local = { message: "final message" }; // will be queued; deadline remains 1070
+				note.local = { message: "final message" }; // will be queued; deadline remains 1070
 
 				clock.tick(30); // Time is now 1080
 				// The deadline has now passed, so the timer will fire and send a single
 				// signal with the value from the last signal (num=34, message="final message").
-				// This is signal #3 for this test.
+			});
+
+			it("batches signals from multiple workspaces", async () => {
+				// Configure two state workspaces
+				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+					level: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
+				});
+				const stateWorkspace2 = presence.getStates("name:testStateWorkspace2", {
+					note: Latest(
+						{ message: "" },
+						{ allowableUpdateLatency: 50, forcedRefreshInterval: 0 },
+					),
+				});
+
+				const { level } = stateWorkspace.props;
+				const { note } = stateWorkspace2.props;
+
+				clock.tick(10); // Time is now 1020
+				note.local = { message: "will be queued" }; // will be queued, deadline is set to 1070
+				level.local = { num: 12 }; // will be queued; deadline remains 1070
+
+				clock.tick(30); // Time is now 1050
+				level.local = { num: 34 }; // will be queued; deadline remains 1070
+
+				clock.tick(10); // Time is now 1060
+				note.local = { message: "final message" }; // will be queued; deadline remains 1070
+
+				clock.tick(30); // Time is now 1080
+				// The deadline has now passed, so the timer will fire and send a single
+				// signal with the value from the last signal (num=34, message="final message").
 			});
 		});
 	});
