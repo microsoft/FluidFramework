@@ -61,8 +61,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
       '@fluid-tools/api-markdown-documenter':
-        specifier: ^0.17.1
-        version: 0.17.1(@types/node@22.9.0)
+        specifier: ^0.17.2
+        version: 0.17.2(@types/node@22.9.0)
       '@fluid-tools/markdown-magic':
         specifier: file:../tools/markdown-magic
         version: file:../tools/markdown-magic(@types/node@22.9.0)(markdown-magic@2.6.1)
@@ -2842,8 +2842,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluid-tools/api-markdown-documenter@0.17.1(@types/node@22.9.0):
-    resolution: {integrity: sha512-GP9OlzEcvqDJTN77V6KYf774uoG7i2hIIwcsLC94rmBbC51ckjjkyaMZFslqUB6OyOohbkrBJY9I0Wf/2wyaNw==}
+  /@fluid-tools/api-markdown-documenter@0.17.2(@types/node@22.9.0):
+    resolution: {integrity: sha512-GqRjShw43OZHZnQT0rQwBXmkqeWZrjH6XDikfqX60+A7WGzvR//y7bLGoSAucvxpooff0J/RerLtYXsUIk5EMQ==}
     dependencies:
       '@microsoft/api-extractor-model': 7.28.21(@types/node@22.9.0)
       '@microsoft/tsdoc': 0.14.2

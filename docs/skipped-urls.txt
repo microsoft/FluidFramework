@@ -38,3 +38,4 @@ http://localhost:3000/assets/css/styles.*.css
 # See https://docusaurus.io/docs/create-doc
 # We need to update our API docs build configuration to not emit files starting with "_"s.
 http://localhost:3000/docs/api/fluid-framework/internaltypes/_inlinetrick-typealias
+http://localhost:3000/docs/api/tree/internaltypes/_inlinetrick-typealias

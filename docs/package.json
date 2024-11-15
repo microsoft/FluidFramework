@@ -77,7 +77,7 @@
 	},
 	"devDependencies": {
 		"@azure/static-web-apps-cli": "^2.0.1",
-		"@fluid-tools/api-markdown-documenter": "^0.17.1",
+		"@fluid-tools/api-markdown-documenter": "^0.17.2",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
