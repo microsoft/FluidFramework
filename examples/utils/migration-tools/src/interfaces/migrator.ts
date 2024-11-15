@@ -5,8 +5,9 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
+import type { MigrationState } from "../migrationTool/index.js";
+
 import type { IMigratableModel } from "./migratableModel.js";
-import type { MigrationState } from "./migrationTool.js";
 
 /**
  * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import

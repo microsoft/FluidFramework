@@ -7,8 +7,8 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { IEntryPointPiece } from "../compositeRuntime/index.js";
-import type { IMigrationTool } from "../interfaces/index.js";
 
+import type { IMigrationTool } from "./interfaces.js";
 import { MigrationToolFactory } from "./migrationTool.js";
 
 const migrationToolEntryPointPieceName = "migrationTool";

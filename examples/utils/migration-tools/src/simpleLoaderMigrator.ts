@@ -11,11 +11,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	DataTransformationCallback,
 	IMigratableModel,
-	IMigrationTool,
 	IMigrator,
 	IMigratorEvents,
-	MigrationState,
 } from "./interfaces/index.js";
+import type { IMigrationTool, MigrationState } from "./migrationTool/index.js";
 import { type ISimpleLoader, waitForAtLeastSequenceNumber } from "./simpleLoader/index.js";
 
 // TODO: This probably shouldn't be exported, consider having the migrator get its own model/tool out.

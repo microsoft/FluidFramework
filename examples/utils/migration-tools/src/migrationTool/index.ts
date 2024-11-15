@@ -3,5 +3,11 @@
  * Licensed under the MIT License.
  */
 
+export {
+	IAcceptedMigrationDetails,
+	IMigrationTool,
+	IMigrationToolEvents,
+	MigrationState,
+} from "./interfaces.js";
 export { MigrationToolFactory } from "./migrationTool.js";
 export { migrationToolEntryPointPiece } from "./migrationToolEntryPointPiece.js";

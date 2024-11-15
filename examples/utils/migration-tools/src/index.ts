@@ -16,17 +16,20 @@ export {
 } from "./compositeRuntime/index.js";
 export type {
 	DataTransformationCallback,
-	IAcceptedMigrationDetails,
 	IImportExportModel,
 	IMigratableModel,
-	IMigrationTool,
-	IMigrationToolEvents,
 	IMigrator,
 	IMigratorEvents,
 	IVersionedModel,
-	MigrationState,
 } from "./interfaces/index.js";
-export { migrationToolEntryPointPiece, MigrationToolFactory } from "./migrationTool/index.js";
+export {
+	IAcceptedMigrationDetails,
+	IMigrationTool,
+	IMigrationToolEvents,
+	MigrationState,
+	migrationToolEntryPointPiece,
+	MigrationToolFactory,
+} from "./migrationTool/index.js";
 export {
 	ISimpleLoader,
 	SessionStorageSimpleLoader,
