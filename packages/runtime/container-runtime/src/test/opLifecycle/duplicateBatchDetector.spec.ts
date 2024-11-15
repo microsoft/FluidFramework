@@ -215,7 +215,7 @@ describe("DuplicateBatchDetector", () => {
 			const telemetryContext = {
 				set: (key: string, subKey: string, value: any) => {
 					++setCalled;
-					assert.equal(key, "fluid_DuplicateBatchDetector");
+					assert.equal(key, "fluid_DuplicateBatchDetector_");
 					assert.equal(subKey, "recentBatchCount");
 					assert.equal(value, 2);
 				},
