@@ -144,7 +144,7 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
-		"@vitest/coverage-v8": "2.1.4",
+		"@vitest/coverage-v8": "^2.1.4",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",

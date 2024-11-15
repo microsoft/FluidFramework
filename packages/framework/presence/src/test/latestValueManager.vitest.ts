@@ -87,7 +87,7 @@ describe("Presence", () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
-				});// SIGNAL #1 DUE TO AB#24392
+				}); // SIGNAL #1 DUE TO AB#24392
 
 				const { count } = stateWorkspace.props;
 
