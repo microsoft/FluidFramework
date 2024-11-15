@@ -202,7 +202,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		return entry.public;
 	}
 
-	private queuedMessage: DatastoreUpdateMessage["content"] | undefined;
+	/**
+	 * The combined contents of all queued updates. Will be undefined when no messages are queued.
+	 */
+	private queuedData:
+		| {
+				[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
+		  }
+		| undefined;
 
 	/**
 	 * The time at which the presence data must be sent. When presence updates are submitted, this value is calculated
@@ -219,26 +226,22 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		const now = Date.now();
 		const updateDeadline = now + allowableUpdateLatency;
-		if (this.queuedMessage === undefined) {
-			// no queued message, so set the deadline based on the current message's allowable latency
+		if (this.queuedData === undefined) {
+			// No queued message, so set the deadline based on the current message's allowable latency
 			this.sendMessageDeadline = updateDeadline;
 		}
 
 		// This function-local "datastore" will hold the merged message data
-		const queueDatastore: {
-			[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
-		} = this.queuedMessage?.data ?? {};
-
-		const currentMessageData: DatastoreMessageContent = data;
+		const queueDatastore = this.queuedData ?? {};
 
 		// Iterate over the current message data; individual items are workspaces
-		for (const workspaceName of Object.keys(currentMessageData)) {
-			const workspaceData = currentMessageData[workspaceName];
+		for (const workspaceName of Object.keys(data)) {
+			const workspaceData = data[workspaceName];
 
 			// Initialize the merged data as the queued datastore entry for the workspace
 			// Since the key might not exist, create an empty object in that case. It will
 			// be set explicitly after the loop.
-			const mergedData = queueDatastore?.[workspaceName] ?? {};
+			const mergedData = queueDatastore[workspaceName] ?? {};
 
 			// Iterate over each value manager and its data, merging it as needed
 			for (const valueManagerKey of Object.keys(workspaceData)) {
@@ -261,19 +264,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			queueDatastore[workspaceName] = mergedData;
 		}
 
-		const newMessage = {
-			sendTimestamp: now,
-			avgLatency: this.averageLatency,
-			// isComplete: false,
-			// TODO: fix typing
-			data: queueDatastore as DatastoreMessageContent,
-		} satisfies DatastoreUpdateMessage["content"];
-
 		if (updateDeadline >= this.sendMessageDeadline) {
 			// Queue the message
-			this.queuedMessage = newMessage;
-			// if the timer has not expired, we can short-circuit because the timer will fire
-			// and cover this update. in other words, queuing this will be fast enough to
+			this.queuedData = queueDatastore;
+			// If the timer has not expired, we can short-circuit because the timer will fire
+			// and cover this update. In other words, queuing this will be fast enough to
 			// meet its deadline, because a timer is already scheduled to fire before its deadline.
 			if (!this.timer.hasExpired() && !forceBroadcast) {
 				return;
@@ -294,11 +289,20 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	 * Send any queued signal immediate. Does nothing if no message is queued.
 	 */
 	private sendQueuedMessage(): void {
-		if (this.queuedMessage === undefined) {
+		if (this.queuedData === undefined) {
 			return;
 		}
-		this.runtime.submitSignal(datastoreUpdateMessageType, this.queuedMessage);
-		this.queuedMessage = undefined;
+
+		const newMessage = {
+			sendTimestamp: Date.now(),
+			avgLatency: this.averageLatency,
+			// isComplete: false,
+			// TODO: fix typing
+			data: this.queuedData as DatastoreMessageContent,
+		} satisfies DatastoreUpdateMessage["content"];
+
+		this.runtime.submitSignal(datastoreUpdateMessageType, newMessage);
+		this.queuedData = undefined;
 	}
 
 	private broadcastAllKnownState(): void {
@@ -494,4 +498,3 @@ class TimerManager {
 		return this.expired;
 	}
 }
-

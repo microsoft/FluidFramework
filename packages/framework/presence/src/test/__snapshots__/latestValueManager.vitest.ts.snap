@@ -68,7 +68,7 @@ exports[`Presence > LatestValueManager > batching > batches signals from multipl
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1060,
+    "sendTimestamp": 1070,
     "avgLatency": 10,
     "data": {
       "system:presence": {
@@ -143,7 +143,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1100,
+    "sendTimestamp": 1120,
     "avgLatency": 10,
     "data": {
       "system:presence": {
@@ -175,7 +175,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1220,
+    "sendTimestamp": 1240,
     "avgLatency": 5,
     "data": {
       "system:presence": {
@@ -248,7 +248,7 @@ exports[`Presence > LatestValueManager > batching > batches signals with differe
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1060,
+    "sendTimestamp": 1070,
     "avgLatency": 10,
     "data": {
       "system:presence": {
@@ -393,7 +393,7 @@ exports[`Presence > LatestValueManager > batching > notification signals cause q
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1020,
+    "sendTimestamp": 1050,
     "avgLatency": 10,
     "data": {
       "system:presence": {
@@ -481,7 +481,7 @@ exports[`Presence > LatestValueManager > batching > queued signal is sent immedi
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1100,
+    "sendTimestamp": 1110,
     "avgLatency": 10,
     "data": {
       "system:presence": {
