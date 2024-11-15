@@ -118,6 +118,16 @@ export interface IMigratorEvents extends IEvent {
     (event: "migrationNotSupported", listener: (version: string) => void): any;
 }
 
+// @alpha (undocumented)
+export interface ISimpleLoader {
+    createDetached(version: string): Promise<{
+        container: IContainer;
+        attach: () => Promise<string>;
+    }>;
+    loadExisting(id: string): Promise<IContainer>;
+    supportsVersion(version: string): Promise<boolean>;
+}
+
 // @alpha
 export interface IVersionedModel {
     readonly version: string;
@@ -186,6 +196,39 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 // @alpha
 export class Migrator implements IMigrator {
     constructor(modelLoader: IMigratableModelLoader<IMigratableModel>, initialMigratable: IMigratableModel, initialMigrationTool: IMigrationTool, initialId: string, dataTransformationCallback?: DataTransformationCallback | undefined);
+    // (undocumented)
+    get connected(): boolean;
+    // (undocumented)
+    get currentMigrationTool(): IMigrationTool;
+    // (undocumented)
+    get currentModel(): IMigratableModel;
+    // (undocumented)
+    get currentModelId(): string;
+    // (undocumented)
+    get events(): IEventProvider<IMigratorEvents>;
+    // (undocumented)
+    get migrationState(): MigrationState;
+}
+
+// @alpha (undocumented)
+export class SimpleLoader implements ISimpleLoader {
+    constructor(props: Pick<ILoaderProps, "urlResolver" | "documentServiceFactory" | "codeLoader" | "logger"> & {
+        generateCreateNewRequest: () => IRequest;
+    });
+    // (undocumented)
+    createDetached(version: string): Promise<{
+        container: IContainer;
+        attach: () => Promise<string>;
+    }>;
+    // (undocumented)
+    loadExisting(id: string): Promise<IContainer>;
+    // (undocumented)
+    supportsVersion(version: string): Promise<boolean>;
+}
+
+// @alpha
+export class SimpleLoaderMigrator implements IMigrator {
+    constructor(simpleLoader: ISimpleLoader, initialMigratable: IMigratableModel, initialMigrationTool: IMigrationTool, initialId: string, dataTransformationCallback?: DataTransformationCallback | undefined);
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
