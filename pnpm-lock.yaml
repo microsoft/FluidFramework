@@ -11533,7 +11533,7 @@ importers:
         specifier: ^17.0.3
         version: 17.0.3
       '@vitest/coverage-v8':
-        specifier: 2.1.4
+        specifier: ^2.1.4
         version: 2.1.4(vitest@2.1.4)
       c8:
         specifier: ^8.0.1
