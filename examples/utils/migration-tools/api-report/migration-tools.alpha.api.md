@@ -137,6 +137,23 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
     get type(): string;
 }
 
+// @alpha
+export class Migrator implements IMigrator {
+    constructor(simpleLoader: ISimpleLoader, initialMigratable: IMigratableModel, initialMigrationTool: IMigrationTool, initialId: string, dataTransformationCallback?: DataTransformationCallback | undefined);
+    // (undocumented)
+    get connected(): boolean;
+    // (undocumented)
+    get currentMigrationTool(): IMigrationTool;
+    // (undocumented)
+    get currentModel(): IMigratableModel;
+    // (undocumented)
+    get currentModelId(): string;
+    // (undocumented)
+    get events(): IEventProvider<IMigratorEvents>;
+    // (undocumented)
+    get migrationState(): MigrationState;
+}
+
 // @alpha (undocumented)
 export class SessionStorageSimpleLoader implements ISimpleLoader {
     constructor(codeLoader: ICodeDetailsLoader, logger?: ITelemetryBaseLogger | undefined);
@@ -165,23 +182,6 @@ export class SimpleLoader implements ISimpleLoader {
     loadExisting(id: string): Promise<IContainer>;
     // (undocumented)
     supportsVersion(version: string): Promise<boolean>;
-}
-
-// @alpha
-export class SimpleLoaderMigrator implements IMigrator {
-    constructor(simpleLoader: ISimpleLoader, initialMigratable: IMigratableModel, initialMigrationTool: IMigrationTool, initialId: string, dataTransformationCallback?: DataTransformationCallback | undefined);
-    // (undocumented)
-    get connected(): boolean;
-    // (undocumented)
-    get currentMigrationTool(): IMigrationTool;
-    // (undocumented)
-    get currentModel(): IMigratableModel;
-    // (undocumented)
-    get currentModelId(): string;
-    // (undocumented)
-    get events(): IEventProvider<IMigratorEvents>;
-    // (undocumented)
-    get migrationState(): MigrationState;
 }
 
 ```

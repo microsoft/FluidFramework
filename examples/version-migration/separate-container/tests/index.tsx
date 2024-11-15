@@ -8,8 +8,8 @@ import {
 	IMigratableModel,
 	IMigrationTool,
 	IVersionedModel,
+	Migrator,
 	SessionStorageSimpleLoader,
-	SimpleLoaderMigrator,
 } from "@fluid-example/migration-tools/internal";
 
 import { createElement } from "react";
@@ -96,7 +96,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		}
 	};
 
-	const migrator = new SimpleLoaderMigrator(
+	const migrator = new Migrator(
 		modelLoader,
 		model,
 		migrationTool,

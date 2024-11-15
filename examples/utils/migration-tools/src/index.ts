@@ -31,11 +31,11 @@ export {
 	MigrationToolFactory,
 } from "./migrationTool/index.js";
 export {
+	getModelAndMigrationToolFromContainer,
+	Migrator,
+} from "./migrator.js";
+export {
 	ISimpleLoader,
 	SessionStorageSimpleLoader,
 	SimpleLoader,
 } from "./simpleLoader/index.js";
-export {
-	getModelAndMigrationToolFromContainer,
-	SimpleLoaderMigrator,
-} from "./simpleLoaderMigrator.js";

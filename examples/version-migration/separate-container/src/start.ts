@@ -10,8 +10,8 @@ import type {
 } from "@fluid-example/migration-tools/internal";
 import {
 	getModelAndMigrationToolFromContainer,
+	Migrator,
 	SimpleLoader,
-	SimpleLoaderMigrator,
 } from "@fluid-example/migration-tools/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
@@ -115,7 +115,7 @@ async function start(): Promise<void> {
 	// import with newly created models.
 	// TODO: Consider just passing the ModelLoader (or even the model loader construction args?) and kind of wrapping it.
 	// Then this becomes something like a MigratingModelLoader.  Then the model can have a migrationTool but sort of hide it.
-	const migrator = new SimpleLoaderMigrator(
+	const migrator = new Migrator(
 		modelLoader,
 		model,
 		migrationTool,

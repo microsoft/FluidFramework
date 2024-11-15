@@ -66,7 +66,7 @@ interface MigratableParts {
  * to detect, observe, trigger, and execute migration as appropriate.
  * @alpha
  */
-export class SimpleLoaderMigrator implements IMigrator {
+export class Migrator implements IMigrator {
 	private _currentMigratable: MigratableParts;
 	public get currentModel(): IMigratableModel {
 		return this._currentMigratable.model;
