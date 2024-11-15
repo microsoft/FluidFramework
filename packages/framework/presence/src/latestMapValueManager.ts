@@ -296,7 +296,6 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	readonly local: ValueMap<Keys, T>;
 	/**
 	 * Iterable access to remote clients' map of values.
-	 * @remarks This is not yet implemented.
 	 */
 	clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
 	/**
@@ -470,13 +469,16 @@ export function LatestMap<
 				allowableUpdateLatency: 60,
 				forcedRefreshInterval: 0,
 			};
-	return (
+	const factory = (
 		key: RegistrationKey,
 		datastoreHandle: InternalTypes.StateDatastoreHandle<
 			RegistrationKey,
 			InternalTypes.MapValueState<T>
 		>,
-	) => ({
+	): {
+		value: typeof value;
+		manager: InternalTypes.StateValue<LatestMapValueManager<T, Keys>>;
+	} => ({
 		value,
 		manager: brandIVM<
 			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
@@ -491,4 +493,5 @@ export function LatestMap<
 			),
 		),
 	});
+	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });
 }

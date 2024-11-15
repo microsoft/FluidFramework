@@ -14,8 +14,10 @@ import {
 	IMergeTreeObliterateMsg,
 	IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
+	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
+import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 
 /**
  * Creates the op for annotating the markers with the provided properties
@@ -94,6 +96,36 @@ export function createObliterateRangeOp(start: number, end: number): IMergeTreeO
 		pos1: start,
 		pos2: end,
 		type: MergeTreeDeltaType.OBLITERATE,
+	};
+}
+
+/**
+ * Creates the op to obliterate a range
+ *
+ * @param start - The start of the range to obliterate.
+ * If a number is provided, the range will start before that index.
+ * @param end - The end of the range to obliterate.
+ * If a number is provided, the range will end after that index -1.
+ * This preserves the previous behavior of not expanding obliteration ranges at the endpoints
+ * for uses which predate the availability of endpoint expansion.
+ *
+ * @internal
+ */
+export function createObliterateRangeOpSided(
+	start: SequencePlace,
+	end: SequencePlace,
+): IMergeTreeObliterateSidedMsg {
+	const startPlace = normalizePlace(start);
+	// If a number is provided, default to after the previous index.
+	// This preserves the behavior of obliterate prior to the introduction of endpoint expansion.
+	const endPlace =
+		typeof end === "number"
+			? { pos: end - 1, side: Side.After } // default to inclusive bounds
+			: normalizePlace(end);
+	return {
+		type: MergeTreeDeltaType.OBLITERATE_SIDED,
+		pos1: { pos: startPlace.pos, before: startPlace.side === Side.Before },
+		pos2: { pos: endPlace.pos, before: endPlace.side === Side.Before },
 	};
 }
 

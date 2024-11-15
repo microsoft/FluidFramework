@@ -178,15 +178,6 @@ declare type current_as_old_for_ClassStatics_PureDataObject = requireAssignableT
 declare type current_as_old_for_ClassStatics_PureDataObjectFactory = requireAssignableTo<TypeOnly<typeof current.PureDataObjectFactory>, TypeOnly<typeof old.PureDataObjectFactory>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_createDataObjectKind": {"backCompat": false}
- */
-declare type current_as_old_for_Function_createDataObjectKind = requireAssignableTo<TypeOnly<typeof current.createDataObjectKind>, TypeOnly<typeof old.createDataObjectKind>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -256,4 +247,5 @@ declare type old_as_current_for_Interface_IDataObjectProps = requireAssignableTo
  * typeValidation.broken:
  * "Interface_IDataObjectProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IDataObjectProps = requireAssignableTo<TypeOnly<current.IDataObjectProps>, TypeOnly<old.IDataObjectProps>>

@@ -3,20 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
 	SchemaFactory,
-	type TreeFieldFromImplicitField,
+	type InsertableField,
+	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 
 import { hydrate, pretty } from "./utils.js";
 
-interface TestCase<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+interface TestCase<TSchema extends ImplicitFieldSchema> {
+	readonly name?: string;
+	readonly schema: TSchema;
+	readonly initialTree: InsertableTreeFieldFromImplicitField<TSchema>;
+}
+
+interface TestCaseErased {
 	name?: string;
-	schema: TSchema;
-	initialTree: TreeFieldFromImplicitField<TSchema>;
+	schema: ImplicitFieldSchema;
+	initialTree: InsertableField<UnsafeUnknownSchema>;
+}
+
+function test<T extends ImplicitFieldSchema>(t: TestCase<T>): TestCaseErased {
+	return t as TestCaseErased;
+}
+
+/**
+ * Map a generic function over an array, assuming that doing so is well defined.
+ * @remarks
+ * This is useful for processing arrays of generically parameterized values with differing values for their type parameter.
+ * If the type parameter got type erased when collecting the items into the array, this utility can be used to process the items as iff they each still had the type parameter.
+ */
+function unsafeMapErased<E, R>(data: readonly E[], f: <T>(t: never) => R): R[] {
+	return data.map((item) => f(item as never));
 }
 
 export function testObjectPrototype(proxy: object, prototype: object) {
@@ -39,15 +61,18 @@ export function testObjectPrototype(proxy: object, prototype: object) {
 	});
 }
 
-function testObjectLike(testCases: TestCase[]) {
+function testObjectLike(testCases: TestCaseErased[]) {
 	describe("Object-like", () => {
 		describe("satisfies 'deepEqual'", () => {
-			for (const { schema, initialTree, name } of testCases) {
-				it(name ?? pretty(initialTree).toString(), () => {
-					const proxy = hydrate(schema, initialTree);
-					assert.deepEqual(proxy, initialTree, "Proxy must satisfy 'deepEqual'.");
-				});
-			}
+			unsafeMapErased(
+				testCases,
+				<const TSchema extends ImplicitFieldSchema>(item: TestCase<TSchema>) => {
+					it(item.name ?? pretty(item.initialTree).toString(), () => {
+						const proxy = hydrate(item.schema, item.initialTree);
+						assert.deepEqual(proxy, item.initialTree, "Proxy must satisfy 'deepEqual'.");
+					});
+				},
+			);
 		});
 
 		describe("inherits from Object.prototype", () => {
@@ -59,60 +84,66 @@ function testObjectLike(testCases: TestCase[]) {
 				) as object;
 			}
 
-			for (const { schema, initialTree } of testCases) {
-				describe("instanceof Object", () => {
-					it(`${pretty(initialTree)} -> true`, () => {
-						const root = hydrate(schema, initialTree);
-						assert(root instanceof Object, "object must be instanceof Object");
-					});
-				});
-
-				describe("properties inherited from Object.prototype", () => {
-					for (const [key, descriptor] of Object.entries(
-						Object.getOwnPropertyDescriptors(Object.prototype),
-					)) {
-						it(`Object.getOwnPropertyDescriptor(${pretty(initialTree)}, ${key}) -> ${pretty(
-							descriptor,
-						)}`, () => {
+			unsafeMapErased(
+				testCases,
+				<const TSchema extends ImplicitFieldSchema>({
+					initialTree,
+					schema,
+				}: TestCase<TSchema>) => {
+					describe("instanceof Object", () => {
+						it(`${pretty(initialTree)} -> true`, () => {
 							const root = hydrate(schema, initialTree);
-							assert.deepEqual(
-								Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
-								descriptor,
-								`Proxy must expose Object.prototype.${key}`,
-							);
+							assert(root instanceof Object, "object must be instanceof Object");
 						});
-					}
-				});
-
-				describe("methods inherited from Object.prototype", () => {
-					it(`${pretty(initialTree)}.isPrototypeOf(Object.create(root)) -> true`, () => {
-						const root = hydrate(schema, initialTree);
-						const asObject = root as object;
-						// eslint-disable-next-line no-prototype-builtins -- compatibility test
-						assert.equal(asObject.isPrototypeOf(Object.create(asObject)), true);
 					});
 
-					it(`${pretty(initialTree)}.isPrototypeOf(root) -> false`, () => {
-						const root = hydrate(schema, initialTree);
-						const asObject = root as object;
-						// eslint-disable-next-line no-prototype-builtins -- compatibility test
-						assert.equal(asObject.isPrototypeOf(asObject), false);
+					describe("properties inherited from Object.prototype", () => {
+						for (const [key, descriptor] of Object.entries(
+							Object.getOwnPropertyDescriptors(Object.prototype),
+						)) {
+							it(`Object.getOwnPropertyDescriptor(${pretty(initialTree)}, ${key}) -> ${pretty(
+								descriptor,
+							)}`, () => {
+								const root = hydrate(schema, initialTree);
+								assert.deepEqual(
+									Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
+									descriptor,
+									`Proxy must expose Object.prototype.${key}`,
+								);
+							});
+						}
 					});
-				});
 
-				describe(`${pretty(initialTree)}.propertyIsEnumerable`, () => {
-					for (const key of Object.getOwnPropertyNames(initialTree)) {
-						const expected = Object.prototype.propertyIsEnumerable.call(initialTree, key);
-
-						it(`${key} -> ${expected}`, () => {
+					describe("methods inherited from Object.prototype", () => {
+						it(`${pretty(initialTree)}.isPrototypeOf(Object.create(root)) -> true`, () => {
 							const root = hydrate(schema, initialTree);
 							const asObject = root as object;
 							// eslint-disable-next-line no-prototype-builtins -- compatibility test
-							assert.equal(asObject.propertyIsEnumerable(key), expected);
+							assert.equal(asObject.isPrototypeOf(Object.create(asObject)), true);
 						});
-					}
-				});
-			}
+
+						it(`${pretty(initialTree)}.isPrototypeOf(root) -> false`, () => {
+							const root = hydrate(schema, initialTree);
+							const asObject = root as object;
+							// eslint-disable-next-line no-prototype-builtins -- compatibility test
+							assert.equal(asObject.isPrototypeOf(asObject), false);
+						});
+					});
+
+					describe(`${pretty(initialTree)}.propertyIsEnumerable`, () => {
+						for (const key of Object.getOwnPropertyNames(initialTree)) {
+							const expected = Object.prototype.propertyIsEnumerable.call(initialTree, key);
+
+							it(`${key} -> ${expected}`, () => {
+								const root = hydrate(schema, initialTree);
+								const asObject = root as object;
+								// eslint-disable-next-line no-prototype-builtins -- compatibility test
+								assert.equal(asObject.propertyIsEnumerable(key), expected);
+							});
+						}
+					});
+				},
+			);
 		});
 
 		/**
@@ -120,16 +151,23 @@ function testObjectLike(testCases: TestCase[]) {
 		 * The results are asserted to be equal with nodes's assert.deepEqual.
 		 */
 		function test1(fn: (subject: object) => unknown) {
-			for (const { schema, initialTree, name } of testCases) {
-				const pojo = structuredClone(initialTree) as object;
+			unsafeMapErased(
+				testCases,
+				<const TSchema extends ImplicitFieldSchema>({
+					initialTree,
+					schema,
+					name,
+				}: TestCase<TSchema>) => {
+					const pojo = structuredClone(initialTree) as object;
 
-				it(name ?? `${pretty(pojo)} -> ${pretty(fn(pojo))}`, () => {
-					const expected = fn(pojo);
-					const node = hydrate(schema, initialTree);
-					const actual = fn(node as object);
-					assert.deepEqual(actual, expected);
-				});
-			}
+					it(name ?? `${pretty(pojo)} -> ${pretty(fn(pojo))}`, () => {
+						const expected = fn(pojo);
+						const node = hydrate(schema, initialTree);
+						const actual = fn(node as object);
+						assert.deepEqual(actual, expected);
+					});
+				},
+			);
 		}
 
 		describe("Object.keys", () => {
@@ -155,10 +193,10 @@ function testObjectLike(testCases: TestCase[]) {
 			test1((subject) => {
 				try {
 					return Object.prototype.toLocaleString.call(subject);
-				} catch (e: unknown) {
-					assert(e instanceof Error);
+				} catch (error: unknown) {
+					assert(error instanceof Error);
 					// toLocaleString errors if there is a field named toString.
-					return e.message;
+					return error.message;
 				}
 			});
 		});
@@ -197,10 +235,10 @@ function testObjectLike(testCases: TestCase[]) {
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					return subject.toString();
-				} catch (e: unknown) {
-					assert(e instanceof Error);
+				} catch (error: unknown) {
+					assert(error instanceof Error);
 					// toString errors if there is a field named toString.
-					return e.message;
+					return error.message;
 				}
 			});
 		});
@@ -210,10 +248,10 @@ function testObjectLike(testCases: TestCase[]) {
 			test1((subject) => {
 				try {
 					return subject.toLocaleString();
-				} catch (e: unknown) {
-					assert(e instanceof Error);
+				} catch (error: unknown) {
+					assert(error instanceof Error);
 					// toLocaleString errors if there is a field named toString.
-					return e.message;
+					return error.message;
 				}
 			});
 		});
@@ -225,15 +263,15 @@ function testObjectLike(testCases: TestCase[]) {
 	});
 }
 
-const tcs: TestCase[] = [
-	{
+const tcs: TestCaseErased[] = [
+	test({
 		schema: (() => {
 			const _ = new SchemaFactory("testA");
 			return _.object("empty", {});
 		})(),
 		initialTree: {},
-	},
-	{
+	}),
+	test({
 		schema: (() => {
 			const _ = new SchemaFactory("testB");
 			return _.object("primitives", {
@@ -247,8 +285,8 @@ const tcs: TestCase[] = [
 			number: Math.E,
 			string: "",
 		},
-	},
-	{
+	}),
+	test({
 		name: "Empty tree, optional fields",
 		schema: (() => {
 			const _ = new SchemaFactory("testC");
@@ -259,8 +297,8 @@ const tcs: TestCase[] = [
 			});
 		})(),
 		initialTree: {},
-	},
-	{
+	}),
+	test({
 		schema: (() => {
 			const _ = new SchemaFactory("testD");
 			return _.object("optional (defined)", {
@@ -274,8 +312,8 @@ const tcs: TestCase[] = [
 			number: 0,
 			string: "",
 		},
-	},
-	{
+	}),
+	test({
 		schema: (() => {
 			const _ = new SchemaFactory("testE");
 
@@ -286,9 +324,9 @@ const tcs: TestCase[] = [
 			});
 		})(),
 		initialTree: { nested: {} },
-	},
+	}),
 	// Case with explicit stored keys
-	{
+	test({
 		schema: (() => {
 			const schemaFactoryInner = new SchemaFactory("testE");
 			return schemaFactoryInner.object("object", {
@@ -305,9 +343,9 @@ const tcs: TestCase[] = [
 			bar: "hello world",
 			baz: null,
 		},
-	},
+	}),
 	// Case with omitted optional property
-	{
+	test({
 		schema: (() => {
 			const schemaFactoryInner = new SchemaFactory("test-inner");
 			return schemaFactoryInner.object("object", {
@@ -317,29 +355,29 @@ const tcs: TestCase[] = [
 		initialTree: {
 			// `foo` property omitted - property should be implicitly treated as `undefined`.
 		},
-	},
-	{
+	}),
+	test({
 		schema: (() => {
 			const _ = new SchemaFactory("testF");
 			return _.array(_.string);
 		})(),
 		initialTree: [],
-	},
-	{
+	}),
+	test({
 		schema: (() => {
 			const _ = new SchemaFactory("testG");
 			return _.array(_.string);
 		})(),
 		initialTree: ["A"],
-	},
-	{
+	}),
+	test({
 		schema: (() => {
 			const _ = new SchemaFactory("testH");
 			return _.array(_.string);
 		})(),
 		initialTree: ["A", "B"],
-	},
-	{
+	}),
+	test({
 		name: "Special Keys",
 		schema: (() => {
 			const _ = new SchemaFactory("testI");
@@ -360,8 +398,8 @@ const tcs: TestCase[] = [
 			constructor: 5,
 			setting: 6,
 		},
-	},
-	{
+	}),
+	test({
 		name: "toString key",
 		schema: (() => {
 			const _ = new SchemaFactory("testI");
@@ -372,7 +410,7 @@ const tcs: TestCase[] = [
 		initialTree: {
 			toString: 1,
 		},
-	},
+	}),
 ];
 
 testObjectLike(tcs);

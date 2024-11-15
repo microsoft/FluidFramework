@@ -3,8 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import type { NodeKind, TreeChangeEvents, TreeNode, WithType } from "../core/index.js";
+import {
+	getKernel,
+	isTreeNode,
+	type NodeKind,
+	type TreeChangeEvents,
+	type TreeNode,
+	type Unhydrated,
+	type WithType,
+} from "../core/index.js";
 import { treeNodeApi } from "./treeNodeApi.js";
+import { createFromCursor } from "./create.js";
+import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
 
 /**
  * Data included for {@link TreeChangeEventsBeta.nodeChanged}.
@@ -82,7 +92,7 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
  * Extensions to {@link Tree} which are not yet stable.
  * @sealed @beta
  */
-export const TreeBeta = {
+export const TreeBeta: {
 	/**
 	 * Register an event listener on the given node.
 	 * @param node - The node whose events should be subscribed to.
@@ -95,7 +105,63 @@ export const TreeBeta = {
 		node: TNode,
 		eventName: K,
 		listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>,
+	): () => void;
+
+	/**
+	 * Clones the persisted data associated with a node.
+	 *
+	 * @param node - The node to clone.
+	 * @returns A new unhydrated node with the same persisted data as the original node.
+	 * @remarks
+	 * Some key things to note:
+	 *
+	 * - Local state, such as properties added to customized schema classes, will not be cloned. However, they will be
+	 * initialized to their default state just as if the node had been created via its constructor.
+	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
+	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
+	 */
+	clone<const TSchema extends ImplicitFieldSchema>(
+		node: TreeFieldFromImplicitField<TSchema>,
+	): TreeFieldFromImplicitField<TSchema>;
+
+	// TODO: support more clone options
+	// /**
+	//  * Like {@link TreeBeta.create}, except deeply clones existing nodes.
+	//  * @remarks
+	//  * This only clones the persisted data associated with a node.
+	//  * Local state, such as properties added to customized schema classes, will not be cloned:
+	//  * they will be initialized however they end up after running the constructor, just like if a remote client had inserted the same nodes.
+	//  */
+	// clone<const TSchema extends ImplicitFieldSchema>(
+	// 	original: TreeFieldFromImplicitField<TSchema>,
+	// 	options?: {
+	// 		/**
+	// 		 * If set, all identifier's in the cloned tree (See {@link SchemaFactory.identifier}) will be replaced with new ones allocated using the default identifier allocation schema.
+	// 		 * Otherwise any identifiers will be preserved as is.
+	// 		 */
+	// 		replaceIdentifiers?: true;
+	// 	},
+	// ): TreeFieldFromImplicitField<TSchema>;
+} = {
+	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
+		node: TNode,
+		eventName: K,
+		listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>,
 	): () => void {
 		return treeNodeApi.on(node, eventName, listener);
 	},
-} as const;
+	clone<const TSchema extends ImplicitFieldSchema>(
+		node: TreeFieldFromImplicitField<TSchema>,
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+		/** The only non-TreeNode cases are {@link TreeLeafValue} and `undefined` (for an empty optional field) which can be returned as is. */
+		if (!isTreeNode(node)) {
+			return node;
+		}
+
+		const kernel = getKernel(node);
+		const cursor = kernel.getOrCreateInnerNode().borrowCursor();
+		return createFromCursor(kernel.schema, cursor) as Unhydrated<
+			TreeFieldFromImplicitField<TSchema>
+		>;
+	},
+};

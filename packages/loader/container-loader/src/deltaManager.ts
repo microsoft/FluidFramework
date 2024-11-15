@@ -5,8 +5,8 @@
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	IDeltaManager,
 	IDeltaManagerEvents,
+	IDeltaManagerFull,
 	IDeltaQueue,
 	type IDeltaSender,
 	type ReadOnlyInfo,
@@ -151,9 +151,7 @@ function logIfFalse(
  */
 export class DeltaManager<TConnectionManager extends IConnectionManager>
 	extends EventEmitterWithErrorHandling<IDeltaManagerInternalEvents>
-	implements
-		IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		IEventProvider<IDeltaManagerInternalEvents>
+	implements IDeltaManagerFull, IEventProvider<IDeltaManagerInternalEvents>
 {
 	public readonly connectionManager: TConnectionManager;
 
@@ -1029,15 +1027,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				...extractSafePropertiesFromMessage(message),
 				messageType: message.type,
 			});
-		}
-
-		// TODO: AB#12052: Stop parsing message.contents here, let the downstream handlers do it
-		if (
-			typeof message.contents === "string" &&
-			message.contents !== "" &&
-			message.type !== MessageType.ClientLeave
-		) {
-			message.contents = JSON.parse(message.contents);
 		}
 
 		// Validate client sequence number has no gap. Decrement the noOpCount by gap

@@ -37,8 +37,8 @@ export interface IPresence {
 
 // @alpha @sealed
 export interface ISessionClient<SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
-    currentConnectionId(): ClientConnectionId;
-    // (undocumented)
+    getConnectionId(): ClientConnectionId;
+    getConnectionStatus(): SessionClientStatus;
     readonly sessionId: SpecificSessionClientId;
 }
 
@@ -143,7 +143,7 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
 }
 
 // @alpha
-export function Notifications<T extends InternalUtilityTypes.NotificationEvents<T>, Key extends string = string>(initialSubscriptions: NotificationSubscriptions<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<T>>;
+export function Notifications<T extends InternalUtilityTypes.NotificationEvents<T>, Key extends string = string>(initialSubscriptions: Partial<NotificationSubscriptions<T>>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<T>>;
 
 // @alpha @sealed
 export interface NotificationsManager<T extends InternalUtilityTypes.NotificationEvents<T>> {
@@ -165,7 +165,7 @@ export interface NotificationSubscribable<E extends InternalUtilityTypes.Notific
 
 // @alpha @sealed
 export type NotificationSubscriptions<E extends InternalUtilityTypes.NotificationEvents<E>> = {
-    [K in string & keyof InternalUtilityTypes.NotificationEvents<E>]: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonSerializableParameters<E[K]>) => void;
+    [K in string & keyof InternalUtilityTypes.NotificationEvents<E>]: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void;
 };
 
 // @alpha @sealed (undocumented)
@@ -187,23 +187,21 @@ export interface PresenceNotificationsSchema {
 }
 
 // @alpha @sealed
-export type PresenceStates<TSchema extends PresenceStatesSchema, TManagerRestrictions = unknown> = PresenceStatesEntries<TSchema, TManagerRestrictions> & PresenceStatesMethods<TSchema, TManagerRestrictions>;
+export interface PresenceStates<TSchema extends PresenceStatesSchema, TManagerConstraints = unknown> {
+    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is PresenceStates<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
+    readonly props: PresenceStatesEntries<TSchema>;
+}
 
 // @alpha @sealed
-export type PresenceStatesEntries<TSchema extends PresenceStatesSchema, TManagerRestrictions> = {
+export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
     /**
     * Registered `Value Manager`s
     */
-    readonly [Key in Exclude<keyof TSchema, keyof PresenceStatesMethods<TSchema, TManagerRestrictions>>]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager> ? TManager : never;
+    readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager> ? TManager : never;
 };
 
 // @alpha
 export type PresenceStatesEntry<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
-
-// @alpha @sealed
-export interface PresenceStatesMethods<TSchema extends PresenceStatesSchema, TManagerRestrictions> {
-    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerRestrictions>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is PresenceStates<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>>;
-}
 
 // @alpha
 export interface PresenceStatesSchema {
@@ -213,6 +211,15 @@ export interface PresenceStatesSchema {
 
 // @alpha
 export type PresenceWorkspaceAddress = `${string}:${string}`;
+
+// @alpha
+export const SessionClientStatus: {
+    readonly Connected: "Connected";
+    readonly Disconnected: "Disconnected";
+};
+
+// @alpha
+export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof SessionClientStatus];
 
 // @alpha @sealed
 export interface ValueMap<K extends string | number, V> {

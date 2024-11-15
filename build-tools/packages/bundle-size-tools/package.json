@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/bundle-size-tools",
-	"version": "0.47.0",
+	"version": "0.52.0",
 	"description": "Utility for analyzing bundle size regressions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -21,14 +21,14 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:compile": "concurrently npm:tsc npm:build:copy",
+		"build": "fluid-build --task build",
+		"build:compile": "fluid-build --task compile",
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
 		"build:docs": "api-extractor run --local",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist \"*.tsbuildinfo\" _api-extractor-temp",
+		"clean": "rimraf --glob dist \"*.tsbuildinfo\" _api-extractor-temp \"*.build.log\"",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix",
@@ -45,18 +45,18 @@
 		"msgpack-lite": "^0.1.26",
 		"pako": "^2.1.0",
 		"typescript": "~5.4.5",
-		"webpack": "^5.94.0"
+		"webpack": "^5.95.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.44.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
-		"@microsoft/api-extractor": "^7.45.1",
-		"@types/msgpack-lite": "^0.1.8",
-		"@types/node": "^18.18.6",
-		"@types/pako": "^2.0.0",
-		"concurrently": "^8.2.1",
+		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.49.0",
+		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@microsoft/api-extractor": "^7.47.11",
+		"@types/msgpack-lite": "^0.1.11",
+		"@types/node": "^18.19.59",
+		"@types/pako": "^2.0.3",
+		"concurrently": "^8.2.2",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.57.0",
 		"rimraf": "^4.4.1"

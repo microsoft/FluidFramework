@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { type AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
@@ -225,7 +225,7 @@ function init(state: UndoRedoFuzzTestState) {
 	state.unsubscribe = [];
 	for (const client of state.clients) {
 		const checkout = viewFromState(state, client).checkout;
-		const unsubscribe = checkout.events.on("commitApplied", (commit, getRevertible) => {
+		const unsubscribe = checkout.events.on("changed", (commit, getRevertible) => {
 			if (getRevertible !== undefined) {
 				if (commit.kind === CommitKind.Undo) {
 					redoStack.push(getRevertible());

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { FieldKind, NodeKind, type JsonTreeSchema } from "../../../simple-tree/index.js";
-import { getJsonValidator } from "../jsonSchemaUtilities.js";
+import { getJsonValidator } from "./jsonSchemaUtilities.js";
 import type {
 	SimpleNodeSchema,
 	SimpleTreeSchema,
@@ -18,6 +18,7 @@ import { ValueSchema } from "../../../core/index.js";
 describe("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
 			]),
@@ -50,6 +51,7 @@ describe("simpleSchemaToJsonSchema", () => {
 	// Ensure the code throws if a handle is encountered.
 	it("Leaf node (Fluid Handle)", async () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.handle", { leafKind: ValueSchema.FluidHandle, kind: NodeKind.Leaf }],
 			]),
@@ -61,6 +63,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Array schema", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.array",
@@ -105,6 +108,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Map schema", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				["test.map", { kind: NodeKind.Map, allowedTypes: new Set<string>(["test.string"]) }],
 				["test.string", { leafKind: ValueSchema.String, kind: NodeKind.Leaf }],
@@ -158,6 +162,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Object schema", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
@@ -167,12 +172,19 @@ describe("simpleSchemaToJsonSchema", () => {
 							"foo": {
 								kind: FieldKind.Optional,
 								allowedTypes: new Set<string>(["test.number"]),
-								description: "A number representing the concept of Foo.",
+								metadata: { description: "A number representing the concept of Foo." },
 							},
 							"bar": {
 								kind: FieldKind.Required,
 								allowedTypes: new Set<string>(["test.string"]),
-								description: "A string representing the concept of Bar.",
+								metadata: { description: "A string representing the concept of Bar." },
+							},
+							"id": {
+								kind: FieldKind.Identifier,
+								allowedTypes: new Set<string>(["test.string"]),
+								metadata: {
+									description: "Unique identifier for the test object.",
+								},
 							},
 						},
 					},
@@ -198,6 +210,10 @@ describe("simpleSchemaToJsonSchema", () => {
 						bar: {
 							$ref: "#/$defs/test.string",
 							description: "A string representing the concept of Bar.",
+						},
+						id: {
+							$ref: "#/$defs/test.string",
+							description: "Unique identifier for the test object.",
 						},
 					},
 					required: ["bar"],
@@ -254,6 +270,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Object schema including an identifier field", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
@@ -297,6 +314,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Object schema including a union field", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
@@ -347,6 +365,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 	it("Recursive object schema", () => {
 		const input: SimpleTreeSchema = {
+			kind: FieldKind.Required,
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.recursive-object",

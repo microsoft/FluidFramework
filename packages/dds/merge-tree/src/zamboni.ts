@@ -35,6 +35,9 @@ export function zamboniSegments(
 
 	for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
 		let segmentToScour = mergeTree.segmentsToScour.peek()?.value;
+
+		segmentToScour?.segment?.propertyManager?.updateMsn(mergeTree.collabWindow.minSeq);
+
 		if (!segmentToScour || segmentToScour.maxSeq > mergeTree.collabWindow.minSeq) {
 			break;
 		}
@@ -135,8 +138,9 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 	// when possible.
 	let prevSegment: ISegment | undefined;
 	for (let k = 0; k < node.childCount; k++) {
-		const childNode = node.children[k];
-		if (!childNode.isLeaf() || !childNode.segmentGroups.empty) {
+		// TODO Non null asserting, why is this not null?
+		const childNode = node.children[k]!;
+		if (!childNode.isLeaf() || childNode.segmentGroups?.empty === false) {
 			holdNodes.push(childNode);
 			prevSegment = undefined;
 			continue;

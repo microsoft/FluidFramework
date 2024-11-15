@@ -48,12 +48,12 @@
 		"@types/debug": "^4.1.5",
 		"@types/lru-cache": "^5.1.0",
 		"@types/node": "^18.19.39",
-		"@types/sinon": "^9.0.9",
+		"@types/sinon": "^17.0.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^9.2.3",
+		"sinon": "^18.0.1",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
@@ -65,6 +65,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_RdkafkaConsumer": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

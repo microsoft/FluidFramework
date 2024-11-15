@@ -53,6 +53,8 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	IInboundSignalMessage,
+	type IPendingMessagesState,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -222,12 +224,6 @@ export abstract class FluidDataStoreContext
 	public get containerRuntime(): IContainerRuntimeBase {
 		return this._containerRuntime;
 	}
-
-	// back-compat, to be removed in 2.0
-	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		return this.parentContext.ensureNoDataModelChanges(callback);
-	}
-
 	public get isLoaded(): boolean {
 		return this.loaded;
 	}
@@ -313,7 +309,7 @@ export abstract class FluidDataStoreContext
 	 * Returns the count of pending messages that are stored until the data store is realized.
 	 */
 	public get pendingCount(): number {
-		return this.pending?.length ?? 0;
+		return this.pendingMessagesState?.pendingCount ?? 0;
 	}
 
 	protected registry: IFluidDataStoreRegistry | undefined;
@@ -321,7 +317,11 @@ export abstract class FluidDataStoreContext
 	protected detachedRuntimeCreation = false;
 	protected channel: IFluidDataStoreChannel | undefined;
 	private loaded = false;
-	protected pending: ISequencedDocumentMessage[] | undefined = [];
+	/** Tracks the messages for this data store that are sent while it's not loaded */
+	private pendingMessagesState: IPendingMessagesState | undefined = {
+		messageCollections: [],
+		pendingCount: 0,
+	};
 	protected channelP: Promise<IFluidDataStoreChannel> | undefined;
 	protected _baseSnapshot: ISnapshotTree | undefined;
 	protected _attachState: AttachState;
@@ -561,25 +561,61 @@ export abstract class FluidDataStoreContext
 		this.channel!.setConnectionState(connected, clientId);
 	}
 
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		const safeTelemetryProps = extractSafePropertiesFromMessage(message);
-		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
+	/**
+	 * back-compat ADO 21575: This is temporary and will be removed once the compat requirement across Runtime and
+	 * Datastore boundary is satisfied.
+	 * Process the messages to maintain backwards compatibility. The `processMessages` function is added to
+	 * IFluidDataStoreChannel in 2.5.0. For channels before that, call `process` for each message.
+	 */
+	private processMessagesCompat(
+		channel: IFluidDataStoreChannel,
+		messageCollection: IRuntimeMessageCollection,
+	) {
+		if (channel.processMessages !== undefined) {
+			channel.processMessages(messageCollection);
+		} else {
+			const { envelope, messagesContent, local } = messageCollection;
+			for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
+				channel.process(
+					{ ...envelope, contents, clientSequenceNumber },
+					local,
+					localOpMetadata,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Process messages for this data store. The messages here are contiguous messages for this data store in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent, local } = messageCollection;
+		const safeTelemetryProps = extractSafePropertiesFromMessage(envelope);
+		// Tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
 		// "verifyNotClosed" which logs tombstone errors.
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
 
-		this.summarizerNode.recordChange(message);
+		this.summarizerNode.recordChange(envelope as ISequencedDocumentMessage);
 
 		if (this.loaded) {
-			return this.channel?.process(message, local, localOpMetadata);
+			assert(this.channel !== undefined, 0xa68 /* Channel is not loaded */);
+			this.processMessagesCompat(this.channel, messageCollection);
 		} else {
 			assert(!local, 0x142 /* "local store channel is not loaded" */);
-			assert(this.pending !== undefined, 0x23d /* "pending is undefined" */);
-			this.pending.push(message);
-			this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
+			assert(
+				this.pendingMessagesState !== undefined,
+				0xa69 /* pending messages queue is undefined */,
+			);
+			this.pendingMessagesState.messageCollections.push({
+				...messageCollection,
+				messagesContent: Array.from(messagesContent),
+			});
+			this.pendingMessagesState.pendingCount += messagesContent.length;
+			this.thresholdOpsCounter.sendIfMultiple(
+				"StorePendingOps",
+				this.pendingMessagesState.pendingCount,
+			);
 		}
 	}
 
@@ -788,20 +824,21 @@ export abstract class FluidDataStoreContext
 	}
 
 	protected processPendingOps(channel: IFluidDataStoreChannel) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const pending = this.pending!;
+		const baseSequenceNumber = this.baseSnapshotSequenceNumber ?? -1;
 
-		// Apply all pending ops
-		for (const op of pending) {
+		assert(
+			this.pendingMessagesState !== undefined,
+			0xa6a /* pending messages queue is undefined */,
+		);
+		for (const messageCollection of this.pendingMessagesState.messageCollections) {
 			// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
-			const seqNumber = this.baseSnapshotSequenceNumber ?? -1;
-			if (op.sequenceNumber > seqNumber) {
-				channel.process(op, false, undefined /* localOpMetadata */);
+			if (messageCollection.envelope.sequenceNumber > baseSequenceNumber) {
+				this.processMessagesCompat(channel, messageCollection);
 			}
 		}
-		this.pending = undefined;
 
-		this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
+		this.thresholdOpsCounter.send("ProcessPendingOps", this.pendingMessagesState.pendingCount);
+		this.pendingMessagesState = undefined;
 	}
 
 	protected completeBindingRuntime(channel: IFluidDataStoreChannel) {
@@ -1033,9 +1070,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		} else {
 			this._baseSnapshot = props.snapshot;
 			this.isSnapshotInISnapshotFormat = false;
-		}
-		if (this._baseSnapshot !== undefined) {
-			this.summarizerNode.updateBaseSummaryState(this._baseSnapshot);
 		}
 	}
 

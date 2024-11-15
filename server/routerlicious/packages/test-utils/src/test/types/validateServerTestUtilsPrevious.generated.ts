@@ -249,6 +249,7 @@ declare function get_old_ClassDeclaration_TestContext():
 declare function use_current_ClassDeclaration_TestContext(
     use: TypeOnly<current.TestContext>): void;
 use_current_ClassDeclaration_TestContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestContext());
 
 /*

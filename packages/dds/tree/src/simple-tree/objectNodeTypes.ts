@@ -50,10 +50,17 @@ export interface ObjectNodeSchemaInternalData {
 	 * Lookup the property keys from the stored keys.
 	 */
 	readonly storedKeyToPropertyKey: ReadonlyMap<FieldKey, string>;
+
+	/**
+	 * Stored keys which hold identifiers.
+	 */
+	readonly identifierFieldKeys: readonly FieldKey[];
 }
 
 export const ObjectNodeSchema = {
-	// instanceof-based narrowing support for Javascript and TypeScript 5.3 or newer.
+	/**
+	 * instanceof-based narrowing support for ObjectNodeSchema in Javascript and TypeScript 5.3 or newer.
+	 */
 	[Symbol.hasInstance](value: TreeNodeSchema): value is ObjectNodeSchema {
 		return isObjectNodeSchema(value);
 	},

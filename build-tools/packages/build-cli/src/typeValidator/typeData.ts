@@ -44,16 +44,19 @@ export function toTypeString(
 		// does the type take generics that don't have defaults?
 		// eslint-disable-next-line unicorn/no-lonely-if -- logic is clearer when grouped this way.
 		if (
-			node.getTypeParameters().length > 0 &&
-			node.getTypeParameters().some((tp) => tp.getDefault() === undefined)
+			node
+				.getTypeParameters()
+				.some((typeParameter) => typeParameter.getDefault() === undefined)
 		) {
-			// it's really hard to build the right type for a generic,
-			// so for now we'll just pass any, as it will always work
-			// even though it may defeat the utility of a type or related test.
+			// In general there is no single correct value to test for the type parameters,
+			// so for now we'll just pass `never`, as it will always be valid.
+			// This may result in a type test with very little utility since most APIs aren't intended to be used with "never",
+			// and doing so is unlikely to test most of the actual use-cases of the generic type.
+			// `Never` is used instead of `any` since some contravariant generics constrain the input to `never`, and `any` is not assignable to `never`.
 			typeParams = `<${node
 				.getTypeParameters()
-				.filter((tp) => tp.getDefault() === undefined)
-				.map(() => "any")
+				.filter((typeParameter) => typeParameter.getDefault() === undefined)
+				.map(() => "never")
 				.join(",")}>`;
 		}
 	}

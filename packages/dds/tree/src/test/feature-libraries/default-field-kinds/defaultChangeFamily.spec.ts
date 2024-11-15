@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type DeltaRoot,
@@ -121,7 +121,6 @@ function initializeEditableForest(data?: JsonableTree): {
 			testIdCompressor,
 		);
 	}
-	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: DeltaRoot[] = [];
 	const detachedFieldIndex = makeDetachedFieldIndex(
@@ -129,13 +128,11 @@ function initializeEditableForest(data?: JsonableTree): {
 		testRevisionTagCodec,
 		testIdCompressor,
 	);
-	const builder = new DefaultEditBuilder(family, (change) => {
-		const taggedChange = { revision: currentRevision, change };
+	const builder = new DefaultEditBuilder(family, mintRevisionTag, (taggedChange) => {
 		changes.push(taggedChange);
 		const delta = intoDelta(taggedChange);
 		deltas.push(delta);
-		applyDelta(delta, currentRevision, forest, detachedFieldIndex);
-		currentRevision = mintRevisionTag();
+		applyDelta(delta, taggedChange.revision, forest, detachedFieldIndex);
 	});
 	return {
 		forest,

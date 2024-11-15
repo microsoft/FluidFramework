@@ -1,5 +1,58 @@
 # @fluidframework/merge-tree
 
+## 2.5.0
+
+### Minor Changes
+
+-   Compilation no longer fails when building with TypeScript's libCheck option ([#22923](https://github.com/microsoft/FluidFramework/pull/22923)) [a1b4cdd45e](https://github.com/microsoft/FluidFramework/commit/a1b4cdd45ee9812e2598ab8d2854333d26a06eb4)
+
+    When compiling code using Fluid Framework with TypeScript's `libCheck` (meaning without [skipLibCheck](https://www.typescriptlang.org/tsconfig/#skipLibCheck)), two compile errors can be encountered:
+
+    ```
+    > tsc
+
+    node_modules/@fluidframework/merge-tree/lib/client.d.ts:124:18 - error TS2368: Type parameter name cannot be 'undefined'.
+
+    124     walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
+                         ~~~~~~~~~
+
+    node_modules/@fluidframework/tree/lib/util/utils.d.ts:5:29 - error TS7016: Could not find a declaration file for module '@ungap/structured-clone'. 'node_modules/@ungap/structured-clone/esm/index.js' implicitly has an 'any' type.
+      Try `npm i --save-dev @types/ungap__structured-clone` if it exists or add a new declaration (.d.ts) file containing `declare module '@ungap/structured-clone';`
+
+    5 import structuredClone from "@ungap/structured-clone";
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~
+    ```
+
+    The first error impacts projects using TypeScript 5.5 or greater and either of the `fluid-framework` or `@fluidframework/merge-tree` packages.
+    The second error impacts projects using the `noImplicitAny` tsconfig setting and the `fluid-framework` or `@fluidframework/tree` packages.
+
+    Both errors have been fixed.
+
+    This should allow `libCheck` to be reenabled in any impacted projects.
+
+## 2.4.0
+
+### Minor Changes
+
+-   Several MergeTree `Client` Legacy APIs are now deprecated ([#22629](https://github.com/microsoft/FluidFramework/pull/22629)) [0b59ae89e0](https://github.com/microsoft/FluidFramework/commit/0b59ae89e0aefefad0ccef198adf99929bc4d783)
+
+    To reduce exposure of the `Client` class in the merge-tree package, several types have been deprecated. These types directly or indirectly expose the merge-tree `Client` class.
+
+    Most of these types are not meant to be used directly, and direct use is not supported:
+
+    -   AttributionPolicy
+    -   IClientEvents
+    -   IMergeTreeAttributionOptions
+    -   SharedSegmentSequence
+    -   SharedStringClass
+
+    Some of the deprecations are class constructors. In those cases, we plan to replace the class with an interface which has an equivalent API. Direct instantiation of these classes is not currently supported or necessary for any supported scenario, so the change to an interface should not impact usage. This applies to the following types:
+
+    -   SequenceInterval
+    -   SequenceEvent
+    -   SequenceDeltaEvent
+    -   SequenceMaintenanceEvent
+
 ## 2.3.0
 
 Dependency updates only.

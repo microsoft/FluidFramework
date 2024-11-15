@@ -97,7 +97,7 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 	});
 
 	const items: JsonFieldSchema =
-		allowedTypes.length === 1 ? allowedTypes[0] ?? oob() : { anyOf: allowedTypes };
+		allowedTypes.length === 1 ? (allowedTypes[0] ?? oob()) : { anyOf: allowedTypes };
 
 	return {
 		type: "array",
@@ -144,14 +144,14 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 
 		const output: Mutable<JsonFieldSchema> =
 			allowedTypes.length === 1
-				? allowedTypes[0] ?? oob()
+				? (allowedTypes[0] ?? oob())
 				: {
 						anyOf: allowedTypes,
 					};
 
 		// Don't include "description" property at all if it's not present in the input.
-		if (value.description !== undefined) {
-			output.description = value.description;
+		if (value.metadata?.description !== undefined) {
+			output.description = value.metadata.description;
 		}
 
 		properties[key] = output;
@@ -180,7 +180,7 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 		patternProperties: {
 			"^.*$":
 				allowedTypes.length === 1
-					? allowedTypes[0] ?? oob()
+					? (allowedTypes[0] ?? oob())
 					: {
 							anyOf: allowedTypes,
 						},

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { Unenforced } from "../../feature-libraries/index.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { InsertableObjectFromSchemaRecord } from "../objectNode.js";
 
@@ -22,7 +21,7 @@ import type {
 	WithType,
 	TreeNode,
 } from "../core/index.js";
-import type { FieldSchemaUnsafe } from "../typesUnsafe.js";
+import type { FieldSchemaUnsafe, Unenforced } from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
@@ -141,7 +140,7 @@ export type ValidateRecursiveSchema<
 				? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
 				: unknown;
 		}[T["kind"]],
-		// ImplicitlyConstructable: recursive types are not implicitly constructable.
+		// ImplicitlyConstructable: recursive types are currently not implicitly constructable.
 		false,
 		// Info: What's passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
 		{

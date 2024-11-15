@@ -5,15 +5,15 @@
 
 import { existsSync } from "node:fs";
 import * as path from "node:path";
-import chalk from "chalk";
 import registerDebug from "debug";
+import chalk from "picocolors";
 
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
 import { Package, Packages } from "../common/npmPackage";
 import { ExecAsyncResult, isSameFileOrDir, lookUpDirSync } from "../common/utils";
+import type { BuildContext } from "./buildContext";
 import { BuildGraph } from "./buildGraph";
-import type { IFluidBuildDirs } from "./fluidBuildConfig";
 import { FluidRepo } from "./fluidRepo";
 import { getFluidBuildConfig } from "./fluidUtils";
 import { NpmDepChecker } from "./npmDepChecker";
@@ -32,17 +32,8 @@ export interface IPackageMatchedOptions {
 }
 
 export class FluidRepoBuild extends FluidRepo {
-	public static create(resolvedRoot: string) {
-		// Default to just resolveRoot if no config is found
-		const packageManifest = getFluidBuildConfig(resolvedRoot) ?? {
-			repoPackages: {
-				root: "",
-			},
-		};
-		return new FluidRepoBuild(resolvedRoot, packageManifest.repoPackages);
-	}
-	private constructor(resolvedRoot: string, repoPackages?: IFluidBuildDirs) {
-		super(resolvedRoot, repoPackages);
+	public constructor(protected context: BuildContext) {
+		super(context.repoRoot, context.fluidBuildConfig.repoPackages);
 	}
 
 	public async clean() {
@@ -145,6 +136,7 @@ export class FluidRepoBuild extends FluidRepo {
 		return new BuildGraph(
 			this.createPackageMap(),
 			this.getReleaseGroupPackages(),
+			this.context,
 			buildTargetNames,
 			getFluidBuildConfig(this.resolvedRoot)?.tasks,
 			(pkg: Package) => {

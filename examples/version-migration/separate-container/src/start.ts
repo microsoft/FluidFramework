@@ -7,9 +7,7 @@ import type {
 	IMigratableModel,
 	IMigrationTool,
 	IVersionedModel,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluid-example/migration-tools/internal";
-// eslint-disable-next-line import/no-internal-modules
 import { MigratableModelLoader, Migrator } from "@fluid-example/migration-tools/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
@@ -18,7 +16,8 @@ import {
 	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/internal";
 import { createElement } from "react";
-import { render, unmountComponentAtNode } from "react-dom";
+// eslint-disable-next-line import/no-internal-modules
+import { createRoot, type Root } from "react-dom/client";
 
 import { inventoryListDataTransformationCallback } from "./dataTransform.js";
 import { DemoCodeLoader } from "./demoCodeLoader.js";
@@ -41,25 +40,27 @@ const isIInventoryListAppModel = (
 
 const getUrlForContainerId = (containerId: string): string => `/#${containerId}`;
 
+let appRoot: Root | undefined;
+let debugRoot: Root | undefined;
+
 const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): void => {
-	const appDiv = document.querySelector("#app") as HTMLDivElement;
-	unmountComponentAtNode(appDiv);
 	// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 	// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 	// view code loader to pull in the view dynamically based on the version we discover.
 	if (isIInventoryListAppModel(model)) {
-		render(createElement(InventoryListAppView, { model, migrationTool }), appDiv);
+		const appDiv = document.querySelector("#app") as HTMLDivElement;
+		appRoot ??= createRoot(appDiv);
+		appRoot.render(createElement(InventoryListAppView, { model, migrationTool }));
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
-		unmountComponentAtNode(debugDiv);
-		render(
+		debugRoot ??= createRoot(debugDiv);
+		debugRoot.render(
 			createElement(DebugView, {
 				model,
 				migrationTool,
 				getUrlForContainerId,
 			}),
-			debugDiv,
 		);
 	} else {
 		throw new Error(`Don't know how to render version ${model.version}`);
