@@ -3,12 +3,12 @@
   "configurations": {
     "ff-doc-site": {
       "appLocation": ".",
-      "outputLocation": "build",
+      "outputLocation": "./build",
       "appBuildCommand": "npm run build",
       "run": "npm run serve",
       "appDevserverUrl": "http://localhost:3000",
       "swaConfigLocation": ".",
-      "apiLocation": "api",
+      "apiLocation": "./api",
       "appName": "ff-doc-site",
       "resourceGroup": "website"
     }
