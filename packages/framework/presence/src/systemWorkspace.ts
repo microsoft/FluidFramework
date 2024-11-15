@@ -138,32 +138,32 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	): void {
 		const postUpdateActions: (() => void)[] = [];
 		const audienceMembers = this.audience.getMembers();
-		const announcedAttendees = new Set<ClientSessionId>();
+		const announcedAttendees = new Set<SessionClient>();
 		const connectedAttendees = new Set<SessionClient>();
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
 			const clientSessionId = value.value;
-			const { attendee, isNew } = this.ensureAttendee(
+			const { attendee, isJoining } = this.ensureAttendee(
 				clientSessionId,
 				clientConnectionId,
 				/* order */ value.rev,
 			);
 
-			// Check new attendee to see if they're currently connected
 			const isAttendeeConnected =
+				// Attendee is connected if they are present in audience
 				audienceMembers.has(clientConnectionId) ||
+				// Attendee is connected if they are the sender of the update signal
 				senderConnectionId === clientConnectionId ||
+				// Attendee is connected if they were already marked as connected
 				connectedAttendees.has(attendee);
 
 			if (isAttendeeConnected) {
 				// If attendee is connected, update their connection ID and status.
 				connectedAttendees.add(attendee);
 				attendee.setConnectionId(clientConnectionId);
-				if (isNew && !announcedAttendees.has(clientSessionId)) {
-					// If the attendee is both new and currently connected, emit an attendeeJoined event.
-					postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
-					announcedAttendees.add(clientSessionId);
+				if (isJoining) {
+					announcedAttendees.add(attendee);
 				}
 			} else {
 				// If the attendee is not connected, update their connection status.
@@ -177,6 +177,10 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			} else {
 				assert(knownSessionId.value === value.value, 0xa5a /* Mismatched SessionId */);
 			}
+		}
+
+		for (const announcedAttendee of announcedAttendees) {
+			postUpdateActions.push(() => this.events.emit("attendeeJoined", announcedAttendee));
 		}
 
 		// TODO: reorganize processUpdate and caller to process actions after all updates are processed.
@@ -242,29 +246,31 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		clientSessionId: ClientSessionId,
 		clientConnectionId: ClientConnectionId,
 		order: number,
-	): { attendee: SessionClient; isNew: boolean } {
+	): { attendee: SessionClient; isJoining: boolean } {
 		let attendee = this.attendees.get(clientSessionId);
-		let isNew = false;
+		let isJoining = false;
 
 		if (attendee === undefined) {
 			// New attendee. Create SessionClient and add session ID based
 			// entry to map.
 			attendee = new SessionClient(clientSessionId, clientConnectionId);
 			this.attendees.set(clientSessionId, attendee);
-			isNew = true;
+			isJoining = true;
 		} else if (order > attendee.order) {
 			// The given association is newer than the one we have.
 			// Update the order and current connection ID.
 			attendee.order = order;
+
+			// Known attendee is joining the session if they are currently disconnected
 			if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected) {
-				isNew = true;
+				isJoining = true;
 			}
 			attendee.setConnectionId(clientConnectionId);
 		}
 		// Always update entry for the connection ID. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
 
-		return { attendee, isNew };
+		return { attendee, isJoining };
 	}
 }
 
