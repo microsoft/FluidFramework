@@ -184,7 +184,6 @@ declare type current_as_old_for_Interface_IConnectionDetails = requireAssignable
  * typeValidation.broken:
  * "Interface_IContainer": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IContainer = requireAssignableTo<TypeOnly<old.IContainer>, TypeOnly<current.IContainer>>
 
 /*

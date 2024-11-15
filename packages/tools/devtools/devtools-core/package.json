@@ -170,12 +170,10 @@
 	"typeValidation": {
 		"broken": {
 			"Interface_ContainerDevtoolsProps": {
-				"backCompat": false,
-				"forwardCompat": false
+				"backCompat": false
 			},
 			"Interface_FluidDevtoolsProps": {
-				"backCompat": false,
-				"forwardCompat": false
+				"backCompat": false
 			}
 		},
 		"entrypoint": "alpha"

@@ -723,7 +723,7 @@ export class Container
 	 * Get the package info for the code details that were used to load the container.
 	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined
 	 */
-	public getPackageInfo(): IContainerPackageInfo {
+	public getPackageInfo?(): IContainerPackageInfo | undefined {
 		return getPackageName(this._loadedCodeDetails);
 	}
 

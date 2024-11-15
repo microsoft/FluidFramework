@@ -40,7 +40,6 @@ declare type current_as_old_for_Function_initializeDevtools = requireAssignableT
  * typeValidation.broken:
  * "Interface_ContainerDevtoolsProps": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ContainerDevtoolsProps = requireAssignableTo<TypeOnly<old.ContainerDevtoolsProps>, TypeOnly<current.ContainerDevtoolsProps>>
 
 /*
@@ -60,7 +59,6 @@ declare type current_as_old_for_Interface_ContainerDevtoolsProps = requireAssign
  * typeValidation.broken:
  * "Interface_FluidDevtoolsProps": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_FluidDevtoolsProps = requireAssignableTo<TypeOnly<old.FluidDevtoolsProps>, TypeOnly<current.FluidDevtoolsProps>>
 
 /*
