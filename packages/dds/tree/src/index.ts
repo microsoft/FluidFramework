@@ -241,5 +241,5 @@ export type {
 
 export {
 	createEmitter,
-	EventEmitter,
-} from "@fluidframework/core-utils/internal";
+	CustomEventEmitter,
+} from "@fluid-internal/client-utils";

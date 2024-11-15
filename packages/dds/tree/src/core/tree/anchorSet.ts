@@ -5,7 +5,8 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert, createEmitter } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import {

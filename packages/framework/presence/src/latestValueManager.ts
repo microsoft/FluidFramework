@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createEmitter } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 import type { ValueManager } from "./internalTypes.js";
 import { brandedObjectEntries } from "./internalTypes.js";

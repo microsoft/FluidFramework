@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, createEmitter } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 import {
 	AllowedUpdateType,

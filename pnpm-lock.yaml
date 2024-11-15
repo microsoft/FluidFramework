@@ -7465,10 +7465,6 @@ importers:
         version: 5.4.5
 
   packages/common/core-utils:
-    dependencies:
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../core-interfaces
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.16.4
@@ -11451,6 +11447,9 @@ importers:
 
   packages/framework/presence:
     dependencies:
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../common/client-utils
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions

@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 
-import { EventEmitter, createEmitter } from "@fluidframework/core-utils/internal";
+import { CustomEventEmitter, createEmitter } from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;
@@ -15,7 +15,7 @@ interface TestEvents {
 	compute: (input: string) => string;
 }
 
-describe("EventEmitter", () => {
+describe("CustomEventEmitter", () => {
 	it("emits events", () => {
 		const emitter = createEmitter<TestEvents>();
 		const log: string[] = [];
@@ -256,7 +256,7 @@ describe("EventEmitter", () => {
 
 /**
  *
- * The below classes correspond to the examples given in {@link EventEmitter} to ensure that they compile.
+ * The below classes correspond to the examples given in {@link CustomEventEmitter} to ensure that they compile.
  *
  * Provides an API for subscribing to and listening to events.
  *
@@ -273,7 +273,7 @@ interface MyEvents {
 /**
  * @example Extending this class
  */
-export class MyInheritanceClass extends EventEmitter<MyEvents> {
+export class MyInheritanceClass extends CustomEventEmitter<MyEvents> {
 	private load(): number[] {
 		this.emit("loaded");
 		const results: number[] = this.emitAndCollect("computed");

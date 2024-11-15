@@ -83,7 +83,7 @@ function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) 
  * ```
  * @internal
  */
-export class EventEmitter<TListeners extends Listeners<TListeners>>
+export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 	implements Listenable<TListeners>, HasListeners<TListeners>
 {
 	protected readonly listeners = new Map<
@@ -170,7 +170,7 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
  * @internal
  */
 class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
-	extends EventEmitter<TListeners>
+	extends CustomEventEmitter<TListeners>
 	implements IEmitter<TListeners>
 {
 	public constructor(noListeners?: NoListenersCallback<TListeners>) {
@@ -196,7 +196,7 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  * Create a {@link @fluidframework/core-interfaces#Listenable} that can be instructed to emit events via the {@link @fluidframework/core-interfaces#IEmitter} interface.
  *
  * A class can delegate handling {@link @fluidframework/core-interfaces#Listenable} to the returned value while using it to emit the events.
- * See also {@link EventEmitter} which be used as a base class to implement {@link @fluidframework/core-interfaces#Listenable} via extension.
+ * See also {@link CustomEventEmitter} which be used as a base class to implement {@link @fluidframework/core-interfaces#Listenable} via extension.
  * @example Forwarding events to the emitter
  * ```typescript
  * interface MyEvents {

@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, createEmitter } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 import {
 	type Anchor,

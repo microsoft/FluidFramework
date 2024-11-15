@@ -5,5 +5,5 @@
 
 export {
 	createEmitter,
-	EventEmitter,
+	CustomEventEmitter,
 } from "./emitter.js";

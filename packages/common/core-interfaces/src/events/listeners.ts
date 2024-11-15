@@ -42,7 +42,7 @@ export type Listeners<T extends object> = {
  *   error: (errorCode: number) => void;
  * }>
  * ```
- * {@link createEmitter} can help implement this interface via delegation.
+ * {@link @fluid-internal/client-utils#createEmitter} can help implement this interface via delegation.
  *
  * @sealed
  * @public

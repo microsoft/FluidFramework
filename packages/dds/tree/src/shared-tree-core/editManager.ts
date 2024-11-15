@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, createEmitter } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
+import { createEmitter } from "@fluid-internal/client-utils";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import {

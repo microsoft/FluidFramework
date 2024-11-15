@@ -35,7 +35,7 @@
 			},
 			"Core-Utils": {
 				"packages": ["@fluidframework/core-utils"],
-				"deps": ["Core-Interfaces"]
+				"deps": []
 			},
 			"Client-Utils": {
 				"packages": ["@fluid-internal/client-utils"],

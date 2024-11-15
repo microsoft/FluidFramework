@@ -17,7 +17,3 @@ export { PromiseTimer, setLongTimeout, Timer } from "./timer.js";
 export { unreachableCase } from "./unreachable.js";
 export { isObject, isPromiseLike } from "./typesGuards.js";
 export { oob } from "./oob.js";
-export {
-	createEmitter,
-	EventEmitter,
-} from "./events/index.js";

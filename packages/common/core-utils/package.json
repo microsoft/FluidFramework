@@ -116,9 +116,6 @@
 		],
 		"temp-directory": "nyc/.nyc_output"
 	},
-	"dependencies": {
-		"@fluidframework/core-interfaces": "workspace:~"
-	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.16.4",
 		"@biomejs/biome": "~1.9.3",

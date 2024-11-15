@@ -5,7 +5,7 @@
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import { createEmitter } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { compareStrings } from "../../util/index.js";
 
