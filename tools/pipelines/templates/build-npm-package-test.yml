@@ -357,11 +357,17 @@ extends:
                   targetType: inline
                   script: |
                     sizeBefore=$(du -sh . | awk '{print $1}');
-                    echo "Size before: $(sizeBefore)";
-                    rm -rf */**/node_modules
-                    mv ./node_modules $(Agent.TempDirectory)
+                    echo "Size before: $sizeBefore";
+
+                    if [ -d "./node_modules" ]; then
+                      mv ./node_modules "$(Agent.TempDirectory)"
+                    else
+                      echo "node_modules directory not found."
+                    fi
+
+                    find . -type d -name 'node_modules' -exec rm -rf {} +
                     sizeAfter=$(du -sh . | awk '{print $1}');
-                    echo "Size after: $(sizeAfter)";
+                    echo "Size after: $sizeAfter";
                   workingDirectory: ${{ parameters.buildDirectory }}
 
 
