@@ -13,10 +13,7 @@ import {
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
-import {
-	acquirePresenceViaDataObject,
-	ExperimentalPresenceManager,
-} from "@fluidframework/presence/alpha";
+import { acquirePresenceViaDataObject, PresenceManager } from "@fluidframework/presence/alpha";
 // eslint-disable-next-line import/no-internal-modules
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
@@ -81,7 +78,7 @@ const containerSchema = {
 		map2: SharedMap,
 		// A Presence Manager object temporarily needs to be placed within container schema
 		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
-		presence: ExperimentalPresenceManager,
+		presence: PresenceManager,
 	},
 } satisfies ContainerSchema;
 type DiceRollerContainerSchema = typeof containerSchema;

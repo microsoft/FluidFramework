@@ -82,10 +82,9 @@ export declare class ExperimentalPresenceDO {
  *
  * @alpha
  */
-export const ExperimentalPresenceManager =
-	new PresenceManagerFactory() as unknown as SharedObjectKind<
-		IFluidLoadable & ExperimentalPresenceDO
-	>;
+export const PresenceManager = new PresenceManagerFactory() as unknown as SharedObjectKind<
+	IFluidLoadable & ExperimentalPresenceDO
+>;
 
 /**
  * Acquire IPresence from a DataStore based Presence Manager
@@ -114,5 +113,5 @@ export function acquirePresenceViaDataObject(
 		return fluidLoadable.presenceManager();
 	}
 
-	throw new Error("Incompatible loadable; make sure to use ExperimentalPresenceManager");
+	throw new Error("Incompatible loadable; make sure to use PresenceManager");
 }

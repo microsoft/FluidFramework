@@ -83,11 +83,11 @@ Notifications value managers are special case where no data is retained during a
 While this package is developing as experimental and other Fluid Framework internals are being updated to accommodate it, a temporary Shared Object must be added within container to gain access.
 
 ```typescript
-import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
+import { acquirePresenceViaDataObject, PresenceManager } from "@fluidframework/presence/alpha";
 
 const containerSchema = {
 	initialObjects: {
-        presence: ExperimentalPresenceManager
+        presence: PresenceManager
     }
 } satisfies ContainerSchema;
 

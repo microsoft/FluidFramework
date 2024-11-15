@@ -22,9 +22,6 @@ export type ClientSessionId = SessionId & {
 export class ExperimentalPresenceDO {
 }
 
-// @alpha
-export const ExperimentalPresenceManager: SharedObjectKind<IFluidLoadable & ExperimentalPresenceDO>;
-
 // @alpha @sealed
 export interface IPresence {
     readonly events: ISubscribable<PresenceEvents>;
@@ -176,6 +173,9 @@ export interface PresenceEvents {
     attendeeJoined: (attendee: ISessionClient) => void;
     workspaceActivated: (workspaceAddress: PresenceWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
+
+// @alpha
+export const PresenceManager: SharedObjectKind<IFluidLoadable & ExperimentalPresenceDO>;
 
 // @alpha @sealed
 export type PresenceNotifications<TSchema extends PresenceNotificationsSchema> = PresenceStates<TSchema, NotificationsManager<any>>;

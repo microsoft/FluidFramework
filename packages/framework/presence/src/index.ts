@@ -50,7 +50,7 @@ export { acquirePresence } from "./experimentalAccess.js";
 export {
 	acquirePresenceViaDataObject,
 	type ExperimentalPresenceDO,
-	ExperimentalPresenceManager,
+	PresenceManager,
 } from "./datastorePresenceManagerFactory.js";
 
 export type { LatestValueControls } from "./latestValueControls.js";
