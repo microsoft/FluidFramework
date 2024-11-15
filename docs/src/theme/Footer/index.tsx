@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { useColorMode } from "@docusaurus/theme-common";
 import Link from "@docusaurus/Link";
+import { useColorMode } from "@docusaurus/theme-common";
 import GitHubIcon from "@theme/Icon/Socials/GitHub";
 import XIcon from "@theme/Icon/Socials/X";
 import clsx from "clsx";
