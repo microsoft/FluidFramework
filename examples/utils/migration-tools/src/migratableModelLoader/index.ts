@@ -10,5 +10,4 @@ export {
 } from "./interfaces.js";
 export { MigratableModelLoader } from "./migratableModelLoader.js";
 export { MigratableSessionStorageModelLoader } from "./migratableSessionStorageModelLoader.js";
-export { MigratableTinyliciousModelLoader } from "./migratableTinyliciousModelLoader.js";
 export { migrationToolEntryPointPiece } from "./migrationToolEntryPointPiece.js";

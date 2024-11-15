@@ -13,6 +13,7 @@ import type { IRequest } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type { ISimpleLoader } from "./interfaces.js";
+
 /**
  * Get a promise that will resolve once the container has advanced to at least the given sequence number
  * @param container - the container to observe

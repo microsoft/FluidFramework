@@ -4,4 +4,5 @@
  */
 
 export type { ISimpleLoader } from "./interfaces.js";
+export { SessionStorageSimpleLoader } from "./sessionStorageSimpleLoader.js";
 export { SimpleLoader, waitForAtLeastSequenceNumber } from "./simpleLoader.js";

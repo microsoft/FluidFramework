@@ -167,19 +167,6 @@ export class MigratableSessionStorageModelLoader<ModelType> implements IMigratab
     supportsVersion(version: string): Promise<boolean>;
 }
 
-// @alpha (undocumented)
-export class MigratableTinyliciousModelLoader<ModelType> implements IMigratableModelLoader<ModelType> {
-    constructor(codeLoader: ICodeDetailsLoader);
-    // (undocumented)
-    createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExisting(id: string): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    loadExistingToSequenceNumber(id: string, sequenceNumber: number): Promise<IAttachedMigratableModel<ModelType>>;
-    // (undocumented)
-    supportsVersion(version: string): Promise<boolean>;
-}
-
 // @alpha
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
@@ -196,21 +183,18 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
     get type(): string;
 }
 
-// @alpha
-export class Migrator implements IMigrator {
-    constructor(modelLoader: IMigratableModelLoader<IMigratableModel>, initialMigratable: IMigratableModel, initialMigrationTool: IMigrationTool, initialId: string, dataTransformationCallback?: DataTransformationCallback | undefined);
+// @alpha (undocumented)
+export class SessionStorageSimpleLoader implements ISimpleLoader {
+    constructor(codeLoader: ICodeDetailsLoader, logger?: ITelemetryBaseLogger | undefined);
     // (undocumented)
-    get connected(): boolean;
+    createDetached(version: string): Promise<{
+        container: IContainer;
+        attach: () => Promise<string>;
+    }>;
     // (undocumented)
-    get currentMigrationTool(): IMigrationTool;
+    loadExisting(id: string): Promise<IContainer>;
     // (undocumented)
-    get currentModel(): IMigratableModel;
-    // (undocumented)
-    get currentModelId(): string;
-    // (undocumented)
-    get events(): IEventProvider<IMigratorEvents>;
-    // (undocumented)
-    get migrationState(): MigrationState;
+    supportsVersion(version: string): Promise<boolean>;
 }
 
 // @alpha (undocumented)

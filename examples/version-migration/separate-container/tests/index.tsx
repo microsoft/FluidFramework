@@ -4,11 +4,12 @@
  */
 
 import {
+	getModelAndMigrationToolFromContainer,
 	IMigratableModel,
 	IMigrationTool,
 	IVersionedModel,
-	MigratableSessionStorageModelLoader,
-	Migrator,
+	SessionStorageSimpleLoader,
+	SimpleLoaderMigrator,
 } from "@fluid-example/migration-tools/internal";
 
 import { createElement } from "react";
@@ -46,27 +47,27 @@ window["migrators"] = [];
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	const searchParams = new URLSearchParams(location.search);
 	const testMode = searchParams.get("testMode") !== null;
-	const modelLoader = new MigratableSessionStorageModelLoader<
-		IInventoryListAppModel & IMigratableModel
-	>(new DemoCodeLoader(testMode));
+	const modelLoader = new SessionStorageSimpleLoader(new DemoCodeLoader(testMode));
 	let id: string;
 	let model: IMigratableModel;
 	let migrationTool: IMigrationTool;
 
 	if (location.hash.length === 0) {
-		// Normally our code loader is expected to match up with the version passed here.
-		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
-		// the version doesn't actually matter.
-		const createResponse = await modelLoader.createDetached("one");
-		model = createResponse.model;
-		migrationTool = createResponse.migrationTool;
-		// Should be the same as the uuid we generated above.
-		id = await createResponse.attach();
+		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
+		// Normally we would create with the most-recent version.
+		const { container, attach } = await modelLoader.createDetached("one");
+		const modelAndMigrationTool =
+			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
+		model = modelAndMigrationTool.model;
+		migrationTool = modelAndMigrationTool.migrationTool;
+		id = await attach();
 	} else {
-		id = location.hash.substring(1);
-		const loadResponse = await modelLoader.loadExisting(id);
-		model = loadResponse.model;
-		migrationTool = loadResponse.migrationTool;
+		id = location.hash.slice(1);
+		const container = await modelLoader.loadExisting(id);
+		const modelAndMigrationTool =
+			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
+		model = modelAndMigrationTool.model;
+		migrationTool = modelAndMigrationTool.migrationTool;
 	}
 
 	const appDiv = document.createElement("div");
@@ -95,7 +96,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		}
 	};
 
-	const migrator = new Migrator(
+	const migrator = new SimpleLoaderMigrator(
 		modelLoader,
 		model,
 		migrationTool,

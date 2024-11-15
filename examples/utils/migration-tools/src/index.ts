@@ -32,12 +32,14 @@ export {
 	IMigratableModelLoader,
 	MigratableModelLoader,
 	MigratableSessionStorageModelLoader,
-	MigratableTinyliciousModelLoader,
 	migrationToolEntryPointPiece,
 } from "./migratableModelLoader/index.js";
 export { MigrationToolFactory } from "./migrationTool.js";
-export { Migrator } from "./migrator.js";
-export { ISimpleLoader, SimpleLoader } from "./simpleLoader/index.js";
+export {
+	ISimpleLoader,
+	SessionStorageSimpleLoader,
+	SimpleLoader,
+} from "./simpleLoader/index.js";
 export {
 	getModelAndMigrationToolFromContainer,
 	SimpleLoaderMigrator,
