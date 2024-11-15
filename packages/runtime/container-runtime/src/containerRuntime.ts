@@ -1099,7 +1099,6 @@ export class ContainerRuntime
 			metadata,
 			electedSummarizerData,
 			chunks ?? [],
-			recentBatchInfo,
 			aliases ?? [],
 			{
 				summaryOptions,
@@ -1125,6 +1124,7 @@ export class ContainerRuntime
 			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
+			recentBatchInfo,
 		);
 
 		runtime.blobManager.trackPendingStashedUploads().then(
@@ -1481,7 +1481,6 @@ export class ContainerRuntime
 		private readonly metadata: IContainerRuntimeMetadata | undefined,
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
-		recentBatchInfo: [number, string][] | undefined,
 		dataStoreAliasMap: [string, string][],
 		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
@@ -1504,6 +1503,7 @@ export class ContainerRuntime
 			// the runtime configuration overrides
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
+		recentBatchInfo?: [number, string][],
 	) {
 		super();
 
