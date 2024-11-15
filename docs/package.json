@@ -27,7 +27,7 @@
 		"clean:doc-models": "rimraf --glob .doc-models",
 		"clean:docusaurus": "docusaurus clear",
 		"clean:test": "rimraf --glob test-results",
-		"clean:versions-json": "rimraf --glob \"./versions.json\"",
+		"clean:versions-json": "rimraf --glob ./versions.json",
 		"download-doc-models": "node ./infra/download-doc-models.mjs",
 		"eslint": "eslint src test --format stylish",
 		"eslint:fix": "eslint src test --format stylish --fix",
