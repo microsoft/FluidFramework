@@ -174,12 +174,20 @@ stages:
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:build'
+            customCommand: 'run build'
+
+        # Run the tests
+        - task: Npm@1
+          displayName: Run tests
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run test'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
           inputs:
-            BuildDropPath: $(Build.SourcesDirectory)/docs/public
+            BuildDropPath: $(Build.SourcesDirectory)/docs/build
             PackageName: 'fluidframework-docs'
             PackageVersion: '$(Build.BuildId)'
 
@@ -253,6 +261,9 @@ stages:
             artifactName: .gdn
 # END Secure development tasks
 
+# TODO: this redundantly builds the website.
+# This pipeline should be updated to publish a usable build artifact in the `build` stage,
+# and let subsequent stages download and work off of that.
 - stage: link_check
   displayName: 'Website Link Check'
   dependsOn: [] # run in parallel
@@ -282,18 +293,18 @@ stages:
               pnpm i --frozen-lockfile
 
         - task: Npm@1
-          displayName: npm run build
+          displayName: Build
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:build'
+            customCommand: 'run build'
 
         - task: Npm@1
-          displayName: npm run ci:linkcheck
+          displayName: Validate links
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:linkcheck'
+            customCommand: 'run ci:check-links'
 
 - stage: check_branch_version
   displayName: 'Check Version Deployment Condition'
