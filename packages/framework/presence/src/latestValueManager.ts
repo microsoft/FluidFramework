@@ -17,10 +17,10 @@ import { brandIVM } from "./valueManager.js";
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
-import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
-import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
-import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
+} from "@fluidframework/presence/internal/core-interfaces";
+import type { ISubscribable } from "@fluidframework/presence/internal/events";
+import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
+import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 
 /**
  * @sealed
@@ -66,7 +66,6 @@ export interface LatestValueManager<T> {
 
 	/**
 	 * Iterable access to remote clients' values.
-	 * @remarks This is not yet implemented.
 	 */
 	clientValues(): IterableIterator<LatestValueClientData<T>>;
 	/**

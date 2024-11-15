@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IAudience } from "@fluidframework/container-definitions";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
@@ -59,14 +60,9 @@ class SessionClient implements ISessionClient {
 		return this.connectionStatus;
 	}
 
-	public setConnectionId(
-		connectionId: ClientConnectionId,
-		updateStatus: boolean = true,
-	): void {
+	public setConnectionId(connectionId: ClientConnectionId): void {
 		this.connectionId = connectionId;
-		if (updateStatus) {
-			this.connectionStatus = SessionClientStatus.Connected;
-		}
+		this.connectionStatus = SessionClientStatus.Connected;
 	}
 
 	public setDisconnected(): void {
@@ -113,6 +109,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		private readonly events: IEmitter<
 			Pick<PresenceEvents, "attendeeJoined" | "attendeeDisconnected">
 		>,
+		private readonly audience: IAudience,
 	) {
 		this.selfAttendee = new SessionClient(clientSessionId);
 		this.attendees.set(clientSessionId, this.selfAttendee);
@@ -136,8 +133,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				};
 			};
 		},
+		senderConnectionId: ClientConnectionId,
 	): void {
 		const postUpdateActions: (() => void)[] = [];
+		const audienceMembers = this.audience.getMembers();
+		const connectedAttendees = new Set<SessionClient>();
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
@@ -147,9 +147,26 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				clientConnectionId,
 				/* order */ value.rev,
 			);
-			if (isNew) {
-				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
+
+			// Check new attendee against audience to see if they're currently connected
+			const isAttendeeConnected = audienceMembers.has(clientConnectionId);
+
+			if (isAttendeeConnected) {
+				connectedAttendees.add(attendee);
+				if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected) {
+					attendee.setConnectionId(clientConnectionId);
+				}
+				if (isNew) {
+					// If the attendee is both new and in audience (i.e. currently connected), emit an attendeeJoined event.
+					postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
+				}
 			}
+
+			// If the attendee is not in the audience, they are considered disconnected.
+			if (!connectedAttendees.has(attendee)) {
+				attendee.setDisconnected();
+			}
+
 			const knownSessionId: InternalTypes.ValueRequiredState<ClientSessionId> | undefined =
 				this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
@@ -158,6 +175,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				assert(knownSessionId.value === value.value, 0xa5a /* Mismatched SessionId */);
 			}
 		}
+
 		// TODO: reorganize processUpdate and caller to process actions after all updates are processed.
 		for (const action of postUpdateActions) {
 			action();
@@ -184,7 +202,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		// If the last known connectionID is different from the connection ID being removed, the attendee has reconnected,
 		// therefore we should not change the attendee connection status or emit a disconnect event.
 		const attendeeReconnected = attendee.getConnectionId() !== clientConnectionId;
-		if (!attendeeReconnected) {
+		const connected = attendee.getConnectionStatus() === SessionClientStatus.Connected;
+		if (!attendeeReconnected && connected) {
 			attendee.setDisconnected();
 			this.events.emit("attendeeDisconnected", attendee);
 		}
@@ -223,9 +242,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	): { attendee: SessionClient; isNew: boolean } {
 		let attendee = this.attendees.get(clientSessionId);
 		let isNew = false;
-		// TODO #22616: Check for a current connection to determine best status.
-		// For now, always leave existing state as was last determined and
-		// assume new client is connected.
+
 		if (attendee === undefined) {
 			// New attendee. Create SessionClient and add session ID based
 			// entry to map.
@@ -236,10 +253,12 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			// The given association is newer than the one we have.
 			// Update the order and current connection ID.
 			attendee.order = order;
-			attendee.setConnectionId(clientConnectionId, /* updateStatus */ false);
+			attendee.setConnectionId(clientConnectionId);
+			isNew = true;
 		}
 		// Always update entry for the connection ID. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
+
 		return { attendee, isNew };
 	}
 }
@@ -253,6 +272,7 @@ export function createSystemWorkspace(
 	clientSessionId: ClientSessionId,
 	datastore: SystemWorkspaceDatastore,
 	events: IEmitter<Pick<PresenceEvents, "attendeeJoined">>,
+	audience: IAudience,
 ): {
 	workspace: SystemWorkspace;
 	statesEntry: {
@@ -260,7 +280,7 @@ export function createSystemWorkspace(
 		public: PresenceStates<PresenceStatesSchema>;
 	};
 } {
-	const workspace = new SystemWorkspaceImpl(clientSessionId, datastore, events);
+	const workspace = new SystemWorkspaceImpl(clientSessionId, datastore, events, audience);
 	return {
 		workspace,
 		statesEntry: {

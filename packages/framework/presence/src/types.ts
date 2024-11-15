@@ -5,7 +5,7 @@
 
 import type { NotificationsManager } from "./notificationsManager.js";
 
-import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
+import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
 
 /**
  * Unique address within a session.
