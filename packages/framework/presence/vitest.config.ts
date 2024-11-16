@@ -7,7 +7,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
 	test: {
-		include: ["src/test/*.vitest.?(c|m)[jt]s?(x)"],
+		include: ["lib/test/*.vitest.?(c|m)[jt]s?(x)"],
 		reporters: [["junit", { suiteName: "build-infrastructure" }], "default"],
 		outputFile: {
 			junit: "nyc/vitest-junit-report.xml",
