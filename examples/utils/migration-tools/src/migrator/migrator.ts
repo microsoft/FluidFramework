@@ -26,7 +26,7 @@ import type {
  *
  * Other strategies to obtain the wrapping model could also work fine here - for example a standalone model code
  * loader that separately fetches model code and wraps the container from the outside.
- * @alpha
+ * @internal
  */
 export const getModelAndMigrationToolFromContainer = async <ModelType>(
 	container: IContainer,
