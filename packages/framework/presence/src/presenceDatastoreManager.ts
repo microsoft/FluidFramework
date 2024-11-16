@@ -239,9 +239,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					mergedData[valueManagerKey][clientSessionId] = mergeValueDirectory(
 						mergedData[valueManagerKey][clientSessionId],
 						value,
-						0, // TODO: what value should be passed here?
+						0, // local values do not need a time shift
 					);
-					console.log(clientSessionId, value);
 				}
 			}
 
@@ -279,6 +278,13 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			return;
 		}
 
+			// Check for connectivity before sending updates.
+			if (!this.runtime.connected) {
+				// Clear the queued data since we're disconnected. We don't want messages
+				// to queue infinitely while disconnected.
+				this.queuedData = undefined;
+				return;
+			}
 		const clientConnectionId = this.runtime.clientId;
 		assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
 		const currentClientToSessionValueState =
