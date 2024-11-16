@@ -44,24 +44,6 @@ With the exported and transformed data in hand, we can create a new container us
 
 As clients observe the migration complete, they load the new container and swap it in for the old one. This includes loading in the approporate new container code. Once complete, the client can begin collaborating on the new container.
 
-## Other concepts
-
-This example also explores other concepts that are new but not core to the migration process.
-
-### Container model
-
-In many other examples, we use a "root/default data object" concept (Spaces is a good example, pretty much all of the /examples/data-objects examples as well). The root data object exposes the API that the container wants to expose to the app (host). However, accessing this API is indirect, as the app must first retrieve this data object from the IContainer using `container.getEntryPoint()`.
-
-The container model concept introduced in this example serves a similar purpose of exposing an API for the app, but does so by wrapping the IContainer rather than living inside it as a data object. This removes a layer of indirection for the app, who can load this model directly (see next section). The app can then start using the API surface immediately without the extra step of requesting the entry point.
-
-When the container API surface has been externalized from the container, this can also open up new options for how the data might be represented and organized. There's no longer a need to craft a data object that holds references to all the container's contents if it's not required for the scenario. In this example, the model code knows how to access both the inventory list as well as the migration tool, but these two objects remain completely separate from each other in the data schema.
-
-Lastly, this also allows the model to leverage the IContainer members in its functionality.  TODO: add an example of what this can do.
-
-### Model loading
-
-As mentioned above, the `ModelLoader` is able to load directly to a container model. To do this, it wraps a `Loader` to load containers, and expects the container code to conform to an expected pattern for its entrypoint.  With the container and the correct entrypoint contents, it can directly return an expected model that encapsulates all of the capabilities of the container.
-
 <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=TRUE) -->
 
 <!-- prettier-ignore-start -->
