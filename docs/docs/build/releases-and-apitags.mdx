@@ -49,7 +49,7 @@ For packages that are part of the `@fluidframework` scope and the `fluid-framewo
     -   For example, SharedMap is now a Legacy API and should be imported as follows:
 
         ```typescript
-        import { SharedMap } from "fluid-framework/legacy"
+        import { SharedMap } from "fluid-framework/legacy";
         ```
 
     -   For JavaScript users, such APIs can be identified via the `@legacy` tag included in their documentation.
@@ -57,7 +57,7 @@ For packages that are part of the `@fluidframework` scope and the `fluid-framewo
     These may change at any time without notice.
     For cases in which such a type must be referenced, the contents should never be inspected.
     -   For JavaScript users, such APIs can be identified via the `@system` tag included in their documentation.
--   **Internal APIs** - These APIs are *strictly* for internal system use and should not be used.
+-   **Internal APIs** - These APIs are _strictly_ for internal system use and should not be used.
     These may change at any time without notice.
     -   Do not import any APIs from the `/internal` import path.
     -   For JavaScript users, such APIs can be identified via the `@internal` tag included in their documentation.

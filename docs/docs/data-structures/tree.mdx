@@ -90,7 +90,7 @@ As an example, consider an app that provides a digital board with groups of stic
 
 ![A screenshot of a sticky note board app](/images/sticky-note-board-app.png)
 
-The full sample is at: [Shared Tree Demo](https://github.com/microsoft/FluidExamples/tree/main/brainstorm). *The code snippets in this article are simplified versions of the code in the sample.*
+The full sample is at: [Shared Tree Demo](https://github.com/microsoft/FluidExamples/tree/main/brainstorm). _The code snippets in this article are simplified versions of the code in the sample._
 
 #### Object schema
 
@@ -102,31 +102,35 @@ Use the `object()` method to create a schema for a note. Note the following abou
 -   The `votes` property is an array node, whose members are all strings. It is defined with an inline call of the `array()` method.
 
 ```typescript
-const noteSchema = sf.object('Note', {
-    id: sf.string,
-    text: sf.string,
-    author: sf.string,
-    lastChanged: sf.number,
-    votes: sf.array(sf.string),
+const noteSchema = sf.object("Note", {
+	id: sf.string,
+	text: sf.string,
+	author: sf.string,
+	lastChanged: sf.number,
+	votes: sf.array(sf.string),
 });
 ```
 
 Create a TypeScript datatype by extending the notional type object.
 
 ```typescript
-class Note extends noteSchema { /* members of the class defined here */ };
+class Note extends noteSchema {
+	/* members of the class defined here */
+}
 ```
 
 You can also make the call of the `object()` method inline as in the following:
 
 ```typescript
-class Note extends sf.object('Note', {
-    id: sf.string,
-    text: sf.string,
-    author: sf.string,
-    lastChanged: sf.number,
-    votes: sf.array(sf.string),
-}) { /* members of the class defined here */  };
+class Note extends sf.object("Note", {
+	id: sf.string,
+	text: sf.string,
+	author: sf.string,
+	lastChanged: sf.number,
+	votes: sf.array(sf.string),
+}) {
+	/* members of the class defined here */
+}
 ```
 
 For the remainder of this article, we use the inline style.
@@ -152,7 +156,7 @@ public setColor(newColor: string) {
 
 :::note
 
-Do *not* override the constructor of types that you derive from objects returned by the `object()`, `array()`, and `map()` methods of `SchemaFactory`. Doing so has unexpected effects and is not supported.
+Do _not_ override the constructor of types that you derive from objects returned by the `object()`, `array()`, and `map()` methods of `SchemaFactory`. Doing so has unexpected effects and is not supported.
 
 :::
 
@@ -171,10 +175,10 @@ class Group extends sf.object('Group', {
 The app is going to need the type that is returned from `sf.array(Note)` in multiple places, including outside the context of `SchemaFactory`, so we create a TypeScript type for it as follows. Note that we include a method for adding a new note to the array of notes. The implementation is omitted, but it would wrap the constructor for the `Note` class and one or more methods in the [Array node APIs](#array-node-apis).
 
 ```typescript
-class Notes extends sf.array('Notes', Note) {
-    public newNote(author: string) {
-        // implementation omitted.
-    }
+class Notes extends sf.array("Notes", Note) {
+	public newNote(author: string) {
+		// implementation omitted.
+	}
 }
 ```
 
@@ -193,22 +197,22 @@ class Group extends sf.object('Group', {
 As you can see from the screenshot, the top level of the root of the app's data can have two kinds of children: notes in groups and notes that are outside of any group. So, the children are defined as `Items` which is an array with two types of items. This is done by passing an array of schema types to the `array()` method. Methods for adding a new group to the app and a new note that is outside of any group are included.
 
 ```typescript
-class Items extends sf.array('Items', [Group, Note]) {
-    public newNote(author: string) {
-        // implementation omitted.
-    }
+class Items extends sf.array("Items", [Group, Note]) {
+	public newNote(author: string) {
+		// implementation omitted.
+	}
 
-    public newGroup(name: string): Group {
-        // implementation omitted.
-    }
+	public newGroup(name: string): Group {
+		// implementation omitted.
+	}
 }
 ```
 
 The root of the schema must itself have a type which is defined as follows:
 
 ```typescript
-class App extends sf.object('App', {
-    items: Items,
+class App extends sf.object("App", {
+	items: Items,
 }) {}
 ```
 
@@ -216,8 +220,8 @@ The final step is to create a configuration object that will be used when a `Sha
 
 ```typescript
 export const appTreeConfiguration = new TreeViewConfiguration({
-    // root node schema
-    schema: App
+	// root node schema
+	schema: App,
 });
 ```
 
@@ -263,9 +267,9 @@ To create a `TreeView` object, create a container with an initial object of type
 
 ```typescript
 const containerSchema: ContainerSchema = {
-    initialObjects: {
-        appData: SharedTree,
-    },
+	initialObjects: {
+		appData: SharedTree,
+	},
 };
 
 const { container, services } = await client.createContainer(containerSchema, "2");
@@ -306,7 +310,7 @@ Leaf nodes are read and written exactly the way JavaScript primitive types are b
 myNewsPaperTree.articles[1].headline = "Man bites dog";
 ```
 
-The following examples show how to read from a leaf node. *Note that the datatype of `pointsForDetroitTigers` is `number`, not `sf.number`.* This is a general principle: the value returned from a leaf node, other than a `FluidHandle` node, is the underlying JavaScript primitive type.
+The following examples show how to read from a leaf node. _Note that the datatype of `pointsForDetroitTigers` is `number`, not `sf.number`._ This is a general principle: the value returned from a leaf node, other than a `FluidHandle` node, is the underlying JavaScript primitive type.
 
 ```typescript
 const pointsForDetroitTigers: number = seasonTree.tigersTeam.game1.points;
@@ -400,7 +404,7 @@ Returns an Iterator that contains the key/value pairs in the map node. The pairs
 map(callback: ()=>[]): IterableIterator<[string, T]>
 ```
 
-Returns an array, *not a map node or array node*, that is the result of applying the callback parameter to each member of the original map node. It is just like [Array.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map).
+Returns an array, _not a map node or array node_, that is the result of applying the callback parameter to each member of the original map node. It is just like [Array.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map).
 
 ##### Map node write APIs
 
@@ -424,7 +428,7 @@ The `delete()` method removes the item with the specified key. If one client set
 ##### Map node properties
 
 ```typescript
-size: number
+size: number;
 ```
 
 The total number of entries in the map node.
@@ -549,7 +553,6 @@ on<K extends keyof TreeChangeEvents>(
 	): () => void;
 ```
 
-
 `Tree.on` assigns the specified `listener` function to the specified `eventName` for the specified `node`.
 The `node` can be any node of the tree.
 The `eventName` can be either "treeChanged" or "nodeChanged".
@@ -579,7 +582,7 @@ Returns `true` if `someNode` is of type `nodeType`. Note that `T` is a type that
 
 ```typescript
 if (Tree.is(myNode, Note)) {
-   // Code here that processes Note nodes.
+	// Code here that processes Note nodes.
 }
 ```
 
@@ -607,12 +610,11 @@ You can also pass a `TreeView` object to `runTransaction()`.
 
 ```typescript
 Tree.runTransaction(myTreeView, (treeView) => {
-    // Make multiple changes to the tree.
-})
+	// Make multiple changes to the tree.
+});
 ```
 
 There are example transactions here: [Shared Tree Demo](https://github.com/microsoft/FluidExamples/tree/main/brainstorm).
-
 
 ### Node information
 
@@ -632,8 +634,8 @@ Returns the parent node of `node`. The following snippet continues the sticky no
 const parent = Tree.parent(note);
 
 if (Tree.is(parent, Notes) || Tree.is(parent, Items)) {
-    const index = parent.indexOf(note);
-    parent.removeAt(index);
+	const index = parent.indexOf(note);
+	parent.removeAt(index);
 }
 ```
 
