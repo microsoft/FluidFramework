@@ -26,7 +26,8 @@ describe("Presence", () => {
 		describe("batching", () => {
 			// IMPORTANT: All tests in this suite have an extra signal for each workspace that is initialized in the test.
 			// This is a bug. See AB#24392. This means that when looking at snapshots from these tests, the "real" snapshots
-			// start at 2, not 1. The
+			// start at 2, not 1, for most tests. Some tests may have additional incorrect leading signals. Such examples
+			// are noted inline.
 			let runtime: MockRuntimeSignalSnapshotter;
 			let logger: EventAndErrorTrackingLogger;
 			const initialTime = 1000;
