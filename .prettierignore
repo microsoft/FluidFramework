@@ -85,6 +85,8 @@ docs/.doc-models
 docs/.docusaurus
 docs/build
 docs/versions.json
+docs/docs/api/*
+docs/versioned_docs/*/api/*
 
 # Formatting gets clobbered by swa
 docs/swa-cli.config.json
