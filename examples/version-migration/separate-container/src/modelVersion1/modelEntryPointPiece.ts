@@ -8,7 +8,7 @@
 import type { IEntryPointPiece } from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
 
@@ -17,25 +17,13 @@ import { InventoryListInstantiationFactory } from "./inventoryList.js";
 
 const modelEntryPointPieceName = "getModel";
 
-const inventoryListId = "default-inventory-list";
+const inventoryListAlias = "default-inventory-list";
 
-const createModel = async (
+async function getDataStoreEntryPoint(
 	runtime: IContainerRuntime,
-	container: IContainer,
-): Promise<IInventoryListAppModel> => {
-	return new InventoryListAppModel(
-		await getDataStoreEntryPoint<IInventoryList>(runtime, inventoryListId),
-		container,
-	);
-};
-
-async function getDataStoreEntryPoint<T>(
-	containerRuntime: IContainerRuntime,
 	alias: string,
-): Promise<T> {
-	const entryPointHandle = (await containerRuntime.getAliasedDataStoreEntryPoint(alias)) as
-		| IFluidHandle<T>
-		| undefined;
+): Promise<FluidObject> {
+	const entryPointHandle = await runtime.getAliasedDataStoreEntryPoint(alias);
 
 	if (entryPointHandle === undefined) {
 		throw new Error(`Default dataStore [${alias}] must exist`);
@@ -44,6 +32,16 @@ async function getDataStoreEntryPoint<T>(
 	return entryPointHandle.get();
 }
 
+const createPiece = async (
+	runtime: IContainerRuntime,
+): Promise<(container: IContainer) => Promise<IInventoryListAppModel>> => {
+	return async (container: IContainer) =>
+		new InventoryListAppModel(
+			(await getDataStoreEntryPoint(runtime, inventoryListAlias)) as IInventoryList,
+			container,
+		);
+};
+
 export const modelEntryPointPiece: IEntryPointPiece = {
 	name: modelEntryPointPieceName,
 	registryEntries: [InventoryListInstantiationFactory.registryEntry],
@@ -51,12 +49,8 @@ export const modelEntryPointPiece: IEntryPointPiece = {
 		const inventoryList = await runtime.createDataStore(
 			InventoryListInstantiationFactory.type,
 		);
-		await inventoryList.trySetAlias(inventoryListId);
+		await inventoryList.trySetAlias(inventoryListAlias);
 	},
 	onLoad: async (runtime: IContainerRuntime): Promise<void> => {},
-	createPiece: async (
-		runtime: IContainerRuntime,
-	): Promise<(container: IContainer) => Promise<IInventoryListAppModel>> => {
-		return async (container: IContainer) => createModel(runtime, container);
-	},
+	createPiece,
 };

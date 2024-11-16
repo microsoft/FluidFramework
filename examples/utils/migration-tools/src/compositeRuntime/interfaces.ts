@@ -15,5 +15,6 @@ export interface IEntryPointPiece {
 	readonly onCreate: (runtime: IContainerRuntime) => Promise<void>;
 	readonly onLoad: (runtime: IContainerRuntime) => Promise<void>;
 	// TODO: Maybe FluidObject instead of unknown, to keep in the same style of getEntryPoint()?
+	// TODO: Could this return unknown, instead of Promise<unknown>?
 	readonly createPiece: (runtime: IContainerRuntime) => Promise<unknown>;
 }
