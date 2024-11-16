@@ -17,13 +17,13 @@ import { InventoryListInstantiationFactory } from "./inventoryList.js";
 
 const modelEntryPointPieceName = "getModel";
 
-const inventoryListId = "default-inventory-list";
+const inventoryListAlias = "default-inventory-list";
 
 async function getDataStoreEntryPoint(
-	containerRuntime: IContainerRuntime,
+	runtime: IContainerRuntime,
 	alias: string,
 ): Promise<FluidObject> {
-	const entryPointHandle = await containerRuntime.getAliasedDataStoreEntryPoint(alias);
+	const entryPointHandle = await runtime.getAliasedDataStoreEntryPoint(alias);
 
 	if (entryPointHandle === undefined) {
 		throw new Error(`Default dataStore [${alias}] must exist`);
@@ -37,7 +37,7 @@ const createPiece = async (
 ): Promise<(container: IContainer) => Promise<IInventoryListAppModel>> => {
 	return async (container: IContainer) =>
 		new InventoryListAppModel(
-			(await getDataStoreEntryPoint(runtime, inventoryListId)) as IInventoryList,
+			(await getDataStoreEntryPoint(runtime, inventoryListAlias)) as IInventoryList,
 			container,
 		);
 };
@@ -49,7 +49,7 @@ export const modelEntryPointPiece: IEntryPointPiece = {
 		const inventoryList = await runtime.createDataStore(
 			InventoryListInstantiationFactory.type,
 		);
-		await inventoryList.trySetAlias(inventoryListId);
+		await inventoryList.trySetAlias(inventoryListAlias);
 	},
 	onLoad: async (runtime: IContainerRuntime): Promise<void> => {},
 	createPiece,
