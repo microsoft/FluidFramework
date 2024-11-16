@@ -11,7 +11,7 @@ Your data model must implement `IMigratableModel` to be migrated using the migra
 This includes:
 1. A `version` string to identify the model version.
 1. Methods to export and import data, and to detect if the model supports a given data format
-    1. `importData: (initialData: ImportType) => Promise<void>`
+	1. `importData: (initialData: ImportType) => Promise<void>`
 	1. `exportData: () => Promise<ExportType>`
 	1. `supportsDataFormat: (initialData: unknown) => initialData is ImportType`
 1. A `dispose` method to clean up the container - most likely calling `IContainer.dispose`.
