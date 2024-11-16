@@ -57,7 +57,7 @@ In `@fluidframework/eslint-config-fluid`, update the version of `@fluid-internal
 
 ### 4. Add New Rule to the Appropriate Config
 
-Depending on the scope of the rule, add it to one of the following configurations (NOTE: `recommended` extends thre `minimal-deprecated.js`):
+Depending on the scope of the rule, add it to one of the following configurations (NOTE: `recommended` extends `minimal-deprecated.js`):
    - `minimal-deprecated.js`
    - `recommended.js`
    - `strict.js`
