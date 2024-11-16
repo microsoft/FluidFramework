@@ -162,26 +162,13 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				return;
 			}
 
-			const clientConnectionId = this.runtime.clientId;
-			assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
-			const currentClientToSessionValueState =
-				this.datastore["system:presence"].clientToSessionId[clientConnectionId];
-
 			const updates: GeneralDatastoreMessageContent[InternalWorkspaceAddress] = {};
 			for (const [key, value] of Object.entries(states)) {
 				updates[key] = { [this.clientSessionId]: value };
 			}
-			this.localUpdate(
+
+			this.enqueueMessage(
 				{
-					// Always send current connection mapping for some resiliency against
-					// lost signals. This ensures that client session id found in `updates`
-					// (which is this client's client session id) is always represented in
-					// system workspace of recipient clients.
-					"system:presence": {
-						clientToSessionId: {
-							[clientConnectionId]: { ...currentClientToSessionValueState },
-						},
-					},
 					[internalWorkspaceAddress]: updates,
 				},
 				options,
@@ -205,11 +192,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	/**
 	 * The combined contents of all queued updates. Will be undefined when no messages are queued.
 	 */
-	private queuedData:
-		| {
-				[WorkspaceAddress: string]: ValueElementMap<PresenceStatesSchema>;
-		  }
-		| undefined;
+	private queuedData: GeneralDatastoreMessageContent | undefined;
 
 	/**
 	 * The time at which the presence data must be sent. When presence updates are submitted, this value is calculated
@@ -220,7 +203,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	 */
 	private sendMessageDeadline: number = 0;
 
-	private localUpdate(data: DatastoreMessageContent, options: LocalUpdateOptions): void {
+	private enqueueMessage(
+		data: GeneralDatastoreMessageContent,
+		options: LocalUpdateOptions,
+	): void {
 		const allowableUpdateLatency = options.allowableUpdateLatency ?? 0;
 		const forceBroadcast = options.forceBroadcast;
 
@@ -293,12 +279,27 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			return;
 		}
 
+		const clientConnectionId = this.runtime.clientId;
+		assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
+		const currentClientToSessionValueState =
+			this.datastore["system:presence"].clientToSessionId[clientConnectionId];
+
 		const newMessage = {
 			sendTimestamp: Date.now(),
 			avgLatency: this.averageLatency,
 			// isComplete: false,
-			// TODO: fix typing
-			data: this.queuedData as DatastoreMessageContent,
+			data: {
+				// Always send current connection mapping for some resiliency against
+				// lost signals. This ensures that client session id found in `updates`
+				// (which is this client's client session id) is always represented in
+				// system workspace of recipient clients.
+				"system:presence": {
+					clientToSessionId: {
+						[clientConnectionId]: { ...currentClientToSessionValueState },
+					},
+				},
+				...this.queuedData,
+			},
 		} satisfies DatastoreUpdateMessage["content"];
 
 		this.runtime.submitSignal(datastoreUpdateMessageType, newMessage);
