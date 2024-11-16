@@ -29,16 +29,14 @@ export const rootDatastoreEntryPointPiece: IEntryPointPiece = {
 		await rootDatastore.trySetAlias(rootDatastoreAlias);
 	},
 	onLoad: async (runtime: IContainerRuntime): Promise<void> => {},
-	createPiece: async (runtime: IContainerRuntime): Promise<MyRootDatastore> => {
+	createPiece: async (runtime: IContainerRuntime): Promise<FluidObject> => {
 		const entryPointHandle = await containerRuntime.getAliasedDataStoreEntryPoint(rootDatastoreAlias);
 
 		if (entryPointHandle === undefined) {
 			throw new Error(`Default dataStore [${rootDatastoreAlias}] must exist`);
 		}
 
-		// Entry points are typed as FluidObject and must be cast.  Here we know it's a MyRootDatastore since
-		// we created it just above.  Type validation can be added here if desired.
-		return entryPointHandle.get() as Promise<MyRootDatastore>;
+		return entryPointHandle.get();
 	},
 };
 ```
@@ -62,7 +60,7 @@ public async instantiateRuntime(
 ### Accessing the composite entryPoint from the app
 
 ```ts
-// Again entry points are typed as FluidObject and must be cast.  Type validation can be added here if desired.
+// Entry points are typed as FluidObject and must be cast.  Type validation can be added here if desired.
 const { rootDatastore, migrationTool } = (await container.getEntryPoint()) as {
 	rootDatastore: MyRootDatastore;
 	migrationTool: IMigrationTool;

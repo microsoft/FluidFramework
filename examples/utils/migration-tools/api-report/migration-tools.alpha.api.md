@@ -13,7 +13,7 @@ export class CompositeEntryPoint {
     // (undocumented)
     readonly onLoad: (runtime: IContainerRuntime) => Promise<void>;
     // (undocumented)
-    readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<Record<string, unknown>>;
+    readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<Record<string, FluidObject>>;
     // (undocumented)
     get registryEntries(): NamedFluidDataStoreRegistryEntries;
 }
@@ -30,7 +30,7 @@ export interface IAcceptedMigrationDetails {
 // @alpha (undocumented)
 export interface IEntryPointPiece {
     // (undocumented)
-    readonly createPiece: (runtime: IContainerRuntime) => Promise<unknown>;
+    readonly createPiece: (runtime: IContainerRuntime) => Promise<FluidObject>;
     // (undocumented)
     readonly name: string;
     // (undocumented)

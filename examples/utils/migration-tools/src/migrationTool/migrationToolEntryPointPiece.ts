@@ -4,11 +4,10 @@
  */
 
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 import type { IEntryPointPiece } from "../compositeRuntime/index.js";
 
-import type { IMigrationTool } from "./interfaces.js";
 import { MigrationToolFactory } from "./migrationTool.js";
 
 const migrationToolEntryPointPieceName = "migrationTool";
@@ -18,13 +17,11 @@ const migrationToolFactory = new MigrationToolFactory();
 
 const migrationToolId = "migration-tool";
 
-async function getDataStoreEntryPoint<T>(
+async function getDataStoreEntryPoint(
 	containerRuntime: IContainerRuntime,
 	alias: string,
-): Promise<T> {
-	const entryPointHandle = (await containerRuntime.getAliasedDataStoreEntryPoint(alias)) as
-		| IFluidHandle<T>
-		| undefined;
+): Promise<FluidObject> {
+	const entryPointHandle = await containerRuntime.getAliasedDataStoreEntryPoint(alias);
 
 	if (entryPointHandle === undefined) {
 		throw new Error(`Default dataStore [${alias}] must exist`);
@@ -49,7 +46,7 @@ export const migrationToolEntryPointPiece: IEntryPointPiece = {
 		// summarizer client.
 		await getDataStoreEntryPoint(runtime, migrationToolId);
 	},
-	createPiece: async (runtime: IContainerRuntime): Promise<IMigrationTool> => {
+	createPiece: async (runtime: IContainerRuntime): Promise<FluidObject> => {
 		return getDataStoreEntryPoint(runtime, migrationToolId);
 	},
 };

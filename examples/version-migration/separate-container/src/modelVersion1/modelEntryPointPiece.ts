@@ -10,7 +10,7 @@ import type { IContainer } from "@fluidframework/container-definitions/internal"
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+import type { IInventoryList } from "../modelInterfaces.js";
 
 import { InventoryListAppModel } from "./appModel.js";
 import { InventoryListInstantiationFactory } from "./inventoryList.js";
@@ -34,7 +34,7 @@ async function getDataStoreEntryPoint(
 
 const createPiece = async (
 	runtime: IContainerRuntime,
-): Promise<(container: IContainer) => Promise<IInventoryListAppModel>> => {
+): Promise<(container: IContainer) => Promise<FluidObject>> => {
 	return async (container: IContainer) =>
 		new InventoryListAppModel(
 			(await getDataStoreEntryPoint(runtime, inventoryListAlias)) as IInventoryList,

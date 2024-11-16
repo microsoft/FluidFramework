@@ -9,6 +9,7 @@ import {
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import type {
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
@@ -52,8 +53,8 @@ export class CompositeEntryPoint {
 
 	public readonly provideEntryPoint = async (
 		runtime: IContainerRuntime,
-	): Promise<Record<string, unknown>> => {
-		const entryPoint: Record<string, unknown> = {};
+	): Promise<Record<string, FluidObject>> => {
+		const entryPoint: Record<string, FluidObject> = {};
 		for (const entryPointPiece of this._entryPointPieces) {
 			entryPoint[entryPointPiece.name] = await entryPointPiece.createPiece(runtime);
 		}
