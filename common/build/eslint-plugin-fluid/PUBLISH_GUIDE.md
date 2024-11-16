@@ -69,7 +69,7 @@ Depending on the scope of the rule, add it to one of the following configuration
 3. **Fix Violations in the Repo**:
    - Install the local version of `eslint-config-fluid` across relevant release groups.
    - Run the linter to identify and fix any violations.
-   - To simplify integration, add the following to the `pnpmOverrides` section of `package.json`:
+   - To simplify integration, add the following to the `pnpmOverrides` section of the relevant `package.json` files:
      ```json
      {
        "pnpmOverrides": {
