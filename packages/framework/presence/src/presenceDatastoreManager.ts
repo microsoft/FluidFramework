@@ -278,13 +278,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			return;
 		}
 
-			// Check for connectivity before sending updates.
-			if (!this.runtime.connected) {
-				// Clear the queued data since we're disconnected. We don't want messages
-				// to queue infinitely while disconnected.
-				this.queuedData = undefined;
-				return;
-			}
+		// Check for connectivity before sending updates.
+		if (!this.runtime.connected) {
+			// Clear the queued data since we're disconnected. We don't want messages
+			// to queue infinitely while disconnected.
+			this.queuedData = undefined;
+			return;
+		}
+
 		const clientConnectionId = this.runtime.clientId;
 		assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
 		const currentClientToSessionValueState =

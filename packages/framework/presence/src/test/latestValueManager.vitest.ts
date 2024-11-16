@@ -5,14 +5,7 @@
 
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
-import {
-	describe,
-	it,
-	afterAll,
-	afterEach,
-	beforeAll,
-	beforeEach,
-} from "vitest";
+import { describe, it, afterAll, afterEach, beforeAll, beforeEach } from "vitest";
 
 import { Latest, Notifications, type PresenceNotifications } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
