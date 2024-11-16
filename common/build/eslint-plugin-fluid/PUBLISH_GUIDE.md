@@ -35,7 +35,7 @@ This guide outlines the steps required to add new ESLint rules, update dependenc
 3. **Update Changelog**: Record the new rule in the `CHANGELOG.md` file of the `@fluid-internal/eslint-plugin-fluid` package. This provides visibility into what was added for future reference.
 
 4. **Version Bump**: Update the package version following [Fluid Semantic Versioning](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/dev/wiki/sync/breaking-vs-non-breaking-changes) guidelines. Typically:
-   - **Patch** version for fixes
+   - **Patch** version for fixes (backward-compatible)
    - **Minor** version for new rules (backward-compatible)
    - **Major** version for breaking changes
 
