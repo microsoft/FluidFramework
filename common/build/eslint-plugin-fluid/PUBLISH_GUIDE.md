@@ -64,7 +64,7 @@ Depending on the scope of the rule, add it to one of the following configuration
 
 1. **Update Changelog**: Record the change in `eslint-config-fluid`'s `CHANGELOG.md`.
 
-2. **Version Bump**: Update the version of `eslint-config-fluid`.
+2. **Version Bump**: Update the version of `eslint-config-fluid` in its `package.json`.
 
 3. **Fix Violations in the Repo**:
    - Install the local version of `eslint-config-fluid` across relevant release groups.
