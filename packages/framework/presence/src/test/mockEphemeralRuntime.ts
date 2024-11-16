@@ -162,16 +162,15 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	public getQuorum: () => ReturnType<IEphemeralRuntime["getQuorum"]>;
 
-	public readonly submittedSignals: Parameters<IEphemeralRuntime["submitSignal"]>[] = [];
-
-	public submitSignal(...args: Parameters<IEphemeralRuntime["submitSignal"]>): void {
-		this.submittedSignals.push(args);
+	public submitSignal: IEphemeralRuntime["submitSignal"] = (
+		...args: Parameters<IEphemeralRuntime["submitSignal"]>
+	) => {
 		if (this.signalsExpected.length === 0) {
 			throw new Error(`Unexpected signal: ${JSON.stringify(args)}`);
 		}
 		const expected = this.signalsExpected.shift();
 		assert.deepStrictEqual(args, expected, "Unexpected signal");
-	}
+	};
 
 	// #endregion
 }
