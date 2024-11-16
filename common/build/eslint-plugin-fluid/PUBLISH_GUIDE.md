@@ -73,7 +73,7 @@ Depending on the scope of the rule, add it to one of the following configuration
      ```json
      {
        "pnpmOverrides": {
-         "@fluidframework/eslint-config-fluid": "file:<relative-path-to-config-directory>"
+         "@fluidframework/eslint-config-fluid": "file:<relative-path-to-eslint-config-fluid-package>"
        }
      }
      ```
