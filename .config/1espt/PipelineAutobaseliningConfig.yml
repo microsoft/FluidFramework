@@ -488,3 +488,18 @@ pipelines:
           lastModifiedDate: 2024-11-16
         binskim:
           lastModifiedDate: 2024-11-16
+  136:
+    usedNonDefaultBranch: true
+    retail:
+      binary:
+        credscan:
+          lastModifiedDate: 2024-11-16
+        binskim:
+          lastModifiedDate: 2024-11-16
+      source:
+        credscan:
+          lastModifiedDate: 2024-11-16
+        eslint:
+          lastModifiedDate: 2024-11-16
+        armory:
+          lastModifiedDate: 2024-11-16
