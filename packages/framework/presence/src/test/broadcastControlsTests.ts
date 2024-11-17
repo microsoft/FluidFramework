@@ -57,10 +57,21 @@ export function addControlsTests(
 
 		it("can be reset to system default", () => {
 			// Setup
-			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const controlsProvider = createControls(presence, undefined);
+			// First read value of system default from init without any settings
+			let presence = createPresenceManager(new MockEphemeralRuntime());
+			let controlsProvider = createControls(presence, undefined);
 			const systemDefault = controlsProvider.controls.allowableUpdateLatencyMs;
-			controlsProvider.controls.allowableUpdateLatencyMs = 200;
+			assert.notEqual(
+				testDefaultAllowableUpdateLatencyMs,
+				systemDefault,
+				"test internal error: Test value matches system default value",
+			);
+
+			// Recreate controls with custom settings specified
+			presence = createPresenceManager(new MockEphemeralRuntime());
+			controlsProvider = createControls(presence, {
+				allowableUpdateLatencyMs: testDefaultAllowableUpdateLatencyMs,
+			});
 
 			// Act
 			controlsProvider.controls.allowableUpdateLatencyMs = undefined;

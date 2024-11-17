@@ -14,9 +14,12 @@ export interface BroadcastControls {
 	 * Maximum time in milliseconds that a local value update is allowed
 	 * to remain pending before it must be broadcast.
 	 *
-	 * @remarks There is no guarantee of broadcast within time allowed
+	 * @remarks
+	 * There is no guarantee of broadcast within time allowed
 	 * as other conditions such as disconnect or service throttling may
 	 * cause a delay.
+	 *
+	 * Setting to `undefined` will restore to a system default.
 	 */
 	allowableUpdateLatencyMs: number | undefined;
 
