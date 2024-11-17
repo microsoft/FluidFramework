@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
 	test: {
-		include: ["lib/test/*.vitest.?(c|m)[jt]s?(x)"],
+		include: ["{src,lib}/test/*.vitest.?(c|m)[jt]s?(x)"],
 		reporters: [["junit", { suiteName: "build-infrastructure" }], "default"],
 		outputFile: {
 			junit: "nyc/vitest-junit-report.xml",
@@ -27,5 +28,8 @@ export default defineConfig({
 			// See src/test/snapshotEphemeralRuntime.ts for an example.
 			compareKeys: null,
 		},
+		resolveSnapshotPath: (testPath, snapExtension) =>
+			// Store the snapshots for both the TS and ESM tests in the src/test/__snapshots__ folder.
+			path.join("src", "test", "__snapshots__", path.basename(testPath)) + snapExtension,
 	},
 });
