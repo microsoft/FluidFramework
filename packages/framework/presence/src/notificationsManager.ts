@@ -8,6 +8,7 @@ import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
+import type { JsonTypeWith } from "@fluidframework/presence/internal/core-interfaces";
 import type { Events, ISubscribable } from "@fluidframework/presence/internal/events";
 import { createEmitter } from "@fluidframework/presence/internal/events";
 import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
@@ -147,17 +148,27 @@ class NotificationsManagerImpl<
 		broadcast: (name, ...args) => {
 			this.datastore.localUpdate(
 				this.key,
-				// @ts-expect-error TODO
-				{ rev: 0, timestamp: 0, value: { name, args: [...args] }, ignoreUnmonitored: true },
-				{ forceBroadcast: true },
+				{
+					rev: 0,
+					timestamp: 0,
+					value: { name, args: [...(args as JsonTypeWith<never>[])] },
+					ignoreUnmonitored: true,
+				},
+				// This is a notification, so we want to send it immediately.
+				{ allowableUpdateLatencyMs: 0 },
 			);
 		},
 		unicast: (name, targetClient, ...args) => {
 			this.datastore.localUpdate(
 				this.key,
-				// @ts-expect-error TODO
-				{ rev: 0, timestamp: 0, value: { name, args: [...args] }, ignoreUnmonitored: true },
-				{ targetClient },
+				{
+					rev: 0,
+					timestamp: 0,
+					value: { name, args: [...(args as JsonTypeWith<never>[])] },
+					ignoreUnmonitored: true,
+				},
+				// This is a notification, so we want to send it immediately.
+				{ allowableUpdateLatencyMs: 0, targetClientId: targetClient.getConnectionId() },
 			);
 		},
 	};

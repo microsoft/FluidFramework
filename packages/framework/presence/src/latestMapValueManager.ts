@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
+import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { ValueManager } from "./internalTypes.js";
-import type { LatestValueControls } from "./latestValueControls.js";
-import { LatestValueControl } from "./latestValueControls.js";
 import type {
 	LatestValueClientData,
 	LatestValueData,
 	LatestValueMetadata,
 } from "./latestValueTypes.js";
 import type { ClientSessionId, ISessionClient, SpecificSessionClient } from "./presence.js";
-import type { LocalUpdateOptions } from "./presenceStates.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
@@ -190,10 +189,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 	private countDefined: number;
 	public constructor(
 		private readonly value: InternalTypes.MapValueState<T>,
-		private readonly localUpdate: (
-			updates: InternalTypes.MapValueState<T>,
-			options: LocalUpdateOptions,
-		) => void,
+		private readonly localUpdate: (updates: InternalTypes.MapValueState<T>) => void,
 	) {
 		// All initial items are expected to be defined.
 		// TODO assert all defined and/or update type.
@@ -211,7 +207,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 			item.value = value;
 		}
 		const update = { rev: this.value.rev, items: { [key]: item } };
-		this.localUpdate(update, { forceBroadcast: false });
+		this.localUpdate(update);
 	}
 
 	public clear(): void {
@@ -289,7 +285,7 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	/**
 	 * Controls for management of sending updates.
 	 */
-	readonly controls: LatestValueControls;
+	readonly controls: BroadcastControls;
 
 	/**
 	 * Current value map for this client.
@@ -318,7 +314,7 @@ class LatestMapValueManagerImpl<
 		Required<ValueManager<T, InternalTypes.MapValueState<T>>>
 {
 	public readonly events = createEmitter<LatestMapValueManagerEvents<T, Keys>>();
-	public readonly controls: LatestValueControl;
+	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
 		private readonly key: RegistrationKey,
@@ -327,14 +323,16 @@ class LatestMapValueManagerImpl<
 			InternalTypes.MapValueState<T>
 		>,
 		public readonly value: InternalTypes.MapValueState<T>,
-		controlSettings: LatestValueControls,
+		controlSettings: BroadcastControlSettings | undefined,
 	) {
-		this.controls = new LatestValueControl(controlSettings);
+		this.controls = new OptionalBroadcastControl(controlSettings);
 
 		this.local = new ValueMapImpl<T, Keys>(
 			value,
-			(updates: InternalTypes.MapValueState<T>, options: LocalUpdateOptions) => {
-				datastore.localUpdate(key, updates, options);
+			(updates: InternalTypes.MapValueState<T>) => {
+				datastore.localUpdate(key, updates, {
+					allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
+				});
 			},
 		);
 	}
@@ -450,7 +448,7 @@ export function LatestMap<
 	initialValues?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	},
-	controls?: LatestValueControls,
+	controls?: BroadcastControlSettings,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T>,
@@ -464,12 +462,6 @@ export function LatestMap<
 			value.items[key] = { rev: 0, timestamp, value: initialValues[key as Keys] };
 		}
 	}
-	const controlSettings = controls
-		? { ...controls }
-		: {
-				allowableUpdateLatency: 60,
-				forcedRefreshInterval: 0,
-			};
 	const factory = (
 		key: RegistrationKey,
 		datastoreHandle: InternalTypes.StateDatastoreHandle<
@@ -490,7 +482,7 @@ export function LatestMap<
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
-				controlSettings,
+				controls,
 			),
 		),
 	});

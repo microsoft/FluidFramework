@@ -8,11 +8,12 @@ import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControls.js";
 import { brandedObjectEntries, type IEphemeralRuntime } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
 	ClientUpdateEntry,
-	LocalUpdateOptions,
+	RuntimeLocalUpdateOptions,
 	PresenceStatesInternal,
 	ValueElementMap,
 } from "./presenceStates.js";
@@ -30,7 +31,7 @@ import type {
 
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
-interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
+interface PresenceWorkspaceEntry<TSchema extends PresenceStatesSchema> {
 	public: PresenceStates<TSchema>;
 	internal: PresenceStatesInternal;
 }
@@ -91,6 +92,7 @@ export interface PresenceDatastoreManager {
 	getWorkspace<TSchema extends PresenceStatesSchema>(
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
+		controls?: BroadcastControlSettings,
 	): PresenceStates<TSchema>;
 	processSignal(message: IExtensionMessage, local: boolean): void;
 }
@@ -104,7 +106,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
 
-	private readonly workspaces = new Map<string, PresenceStatesEntry<PresenceStatesSchema>>();
+	private readonly workspaces = new Map<
+		string,
+		PresenceWorkspaceEntry<PresenceStatesSchema>
+	>();
 
 	private readonly timer = new TimerManager();
 
@@ -114,7 +119,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly lookupClient: (clientId: ClientSessionId) => ISessionClient,
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
-		systemWorkspace: PresenceStatesEntry<PresenceStatesSchema>,
+		systemWorkspace: PresenceWorkspaceEntry<PresenceStatesSchema>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
@@ -142,10 +147,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	public getWorkspace<TSchema extends PresenceStatesSchema>(
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
+		controls?: BroadcastControlSettings,
 	): PresenceStates<TSchema> {
 		const existing = this.workspaces.get(internalWorkspaceAddress);
 		if (existing) {
-			return existing.internal.ensureContent(requestedContent);
+			return existing.internal.ensureContent(requestedContent, controls);
 		}
 
 		let workspaceDatastore = this.datastore[internalWorkspaceAddress];
@@ -155,7 +161,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		const localUpdate = (
 			states: { [key: string]: ClientUpdateEntry },
-			options: LocalUpdateOptions,
+			options: RuntimeLocalUpdateOptions,
 		): void => {
 			// Check for connectivity before sending updates.
 			if (!this.runtime.connected) {
@@ -173,6 +179,19 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				},
 				options,
 			);
+
+			// 	this.localUpdate({
+			// 		// Always send current connection mapping for some resiliency against
+			// 		// lost signals. This ensures that client session id found in `updates`
+			// 		// (which is this client's client session id) is always represented in
+			// 		// system workspace of recipient clients.
+			// 		"system:presence": {
+			// 			clientToSessionId: {
+			// 				[clientConnectionId]: { ...currentClientToSessionValueState },
+			// 			},
+			// 		},
+			// 		[internalWorkspaceAddress]: updates,
+			// 	});
 		};
 
 		const entry = createPresenceStates(
@@ -183,6 +202,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			},
 			workspaceDatastore,
 			requestedContent,
+			controls,
 		);
 
 		this.workspaces.set(internalWorkspaceAddress, entry);
@@ -205,13 +225,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 	private enqueueMessage(
 		data: GeneralDatastoreMessageContent,
-		options: LocalUpdateOptions,
+		options: RuntimeLocalUpdateOptions,
 	): void {
-		const allowableUpdateLatency = options.allowableUpdateLatency ?? 0;
-		const forceBroadcast = options.forceBroadcast;
+		const allowableUpdateLatencyMs = options.allowableUpdateLatencyMs ?? 0;
 
 		const now = Date.now();
-		const updateDeadline = now + allowableUpdateLatency;
+		const updateDeadline = now + allowableUpdateLatencyMs;
 		if (this.queuedData === undefined) {
 			// No queued message, so set the deadline based on the current message's allowable latency
 			this.sendMessageDeadline = updateDeadline;
@@ -255,14 +274,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// If the timer has not expired, we can short-circuit because the timer will fire
 			// and cover this update. In other words, queuing this will be fast enough to
 			// meet its deadline, because a timer is already scheduled to fire before its deadline.
-			if (!this.timer.hasExpired() && !forceBroadcast) {
+			if (!this.timer.hasExpired()) {
 				return;
 			}
 		}
 
 		// Note that timeoutInMs === allowableUpdateLatency, but the calculation is done this way for clarity.
 		const timeoutInMs = updateDeadline - now;
-		if (timeoutInMs > 0 && !forceBroadcast) {
+		if (timeoutInMs > 0) {
 			// Schedule the queued messages to be sent at the updateDeadline
 			this.timer.setTimeout(this.sendQueuedMessage.bind(this), timeoutInMs);
 		} else {
@@ -308,9 +327,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				...this.queuedData,
 			},
 		} satisfies DatastoreUpdateMessage["content"];
-
 		this.runtime.submitSignal(datastoreUpdateMessageType, newMessage);
-		this.queuedData = undefined;
 	}
 
 	private broadcastAllKnownState(): void {

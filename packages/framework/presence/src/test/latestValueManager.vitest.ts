@@ -64,7 +64,7 @@ describe("Presence", () => {
 			it("sends signal immediately when allowable latency is 0", async () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatency: 0, forcedRefreshInterval: 0 }),
+					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
 				}); // SIGNAL #1 DUE TO AB#24392
 
 				const { count } = stateWorkspace.props;
@@ -78,7 +78,7 @@ describe("Presence", () => {
 			it("batches signals sent within the allowableUpdateLatency", async () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
+					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				}); // SIGNAL #1 DUE TO AB#24392
 
 				const { count } = stateWorkspace.props;
@@ -119,11 +119,8 @@ describe("Presence", () => {
 			it("queued signal is sent immediately with immediate update message", async () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
-					immediateUpdate: Latest(
-						{ num: 0 },
-						{ allowableUpdateLatency: 0, forcedRefreshInterval: 0 },
-					),
+					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+					immediateUpdate: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
 				}); // SIGNAL #1 DUE TO AB#24392
 
 				const { count, immediateUpdate } = stateWorkspace.props;
@@ -144,11 +141,8 @@ describe("Presence", () => {
 			it("batches signals with different allowed latencies", async () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
-					note: Latest(
-						{ message: "" },
-						{ allowableUpdateLatency: 50, forcedRefreshInterval: 0 },
-					),
+					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
 				}); // SIGNAL #1 DUE TO AB#24392
 
 				const { count, note } = stateWorkspace.props;
@@ -172,13 +166,10 @@ describe("Presence", () => {
 			it("batches signals from multiple workspaces", async () => {
 				// Configure two state workspaces
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
+					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				}); // SIGNAL #1 DUE TO AB#24392
 				const stateWorkspace2 = presence.getStates("name:testStateWorkspace2", {
-					note: Latest(
-						{ message: "" },
-						{ allowableUpdateLatency: 50, forcedRefreshInterval: 0 },
-					),
+					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
 				}); // SIGNAL #2 DUE TO AB#24392
 
 				const { count } = stateWorkspace.props;
@@ -245,7 +236,7 @@ describe("Presence", () => {
 			it("notification signals cause queued messages to be sent immediately", async () => {
 				// Configure a state workspaces
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatency: 100, forcedRefreshInterval: 0 }),
+					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				}); // SIGNAL #1 DUE TO AB#24392
 
 				// eslint-disable-next-line @typescript-eslint/ban-types

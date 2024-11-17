@@ -7,7 +7,6 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
-import type { LocalUpdateOptions } from "./presenceStates.js";
 
 // type StateDatastoreSchemaNode<
 // 	TValue extends InternalTypes.ValueDirectoryOrState<any> = InternalTypes.ValueDirectoryOrState<unknown>,
@@ -27,16 +26,28 @@ import type { LocalUpdateOptions } from "./presenceStates.js";
 /**
  * @internal
  */
+export interface LocalStateUpdateOptions {
+	allowableUpdateLatencyMs: number | undefined;
+
+	/**
+	 * Special option allowed for unicast notifications.
+	 */
+	targetClientId?: ClientConnectionId;
+}
+
+/**
+ * @internal
+ */
 export interface StateDatastore<
 	TKey extends string,
-	TValue extends InternalTypes.ValueDirectoryOrState<any> | undefined,
+	TValue extends InternalTypes.ValueDirectoryOrState<any>,
 > {
 	localUpdate(
 		key: TKey,
 		value: TValue & {
 			ignoreUnmonitored?: true;
 		},
-		options: LocalUpdateOptions,
+		options: LocalStateUpdateOptions,
 	): void;
 	update(key: TKey, clientSessionId: ClientSessionId, value: TValue): void;
 	knownValues(key: TKey): {
@@ -56,7 +67,7 @@ export function handleFromDatastore<
 	// TSchema as `unknown` still provides some type safety.
 	// TSchema extends StateDatastoreSchema,
 	TKey extends string /* & keyof TSchema */,
-	TValue extends InternalTypes.ValueDirectoryOrState<unknown> | undefined,
+	TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
 >(
 	datastore: StateDatastore<TKey, TValue>,
 ): InternalTypes.StateDatastoreHandle<TKey, Exclude<TValue, undefined>> {

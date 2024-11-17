@@ -32,9 +32,9 @@ export type {
 	PresenceNotificationsSchema,
 	PresenceStates,
 	PresenceStatesEntries,
-	PresenceStatesEntry,
 	PresenceStatesSchema,
 	PresenceWorkspaceAddress,
+	PresenceWorkspaceEntry,
 } from "./types.js";
 
 export {
@@ -45,6 +45,11 @@ export {
 	SessionClientStatus,
 } from "./presence.js";
 
+export type {
+	BroadcastControls,
+	BroadcastControlSettings,
+} from "./broadcastControls.js";
+
 export { acquirePresence } from "./experimentalAccess.js";
 
 export {
@@ -53,7 +58,6 @@ export {
 	ExperimentalPresenceManager,
 } from "./datastorePresenceManagerFactory.js";
 
-export type { LatestValueControls } from "./latestValueControls.js";
 export {
 	LatestMap,
 	type LatestMapItemRemovedClientData,
