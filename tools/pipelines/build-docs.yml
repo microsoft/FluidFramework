@@ -151,7 +151,6 @@ stages:
             - template: templates/upload-json-steps.yml
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-                STORAGE_KEY: $(STORAGE_KEY)
                 uploadAsLatest: ${{ variables.isMain }}
 
     - job: build_site
