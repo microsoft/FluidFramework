@@ -198,9 +198,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 
 	private updateItem(key: K, value: InternalTypes.ValueOptionalState<T>["value"]): void {
 		this.value.rev += 1;
-		// Caller is required to ensure key exists.
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const item = this.value.items[key]!;
+		const item = this.value.items[key];
 		item.rev += 1;
 		item.timestamp = Date.now();
 		if (value === undefined) {
