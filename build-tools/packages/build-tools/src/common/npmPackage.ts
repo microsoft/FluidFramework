@@ -13,7 +13,7 @@ import {
 } from "@fluid-tools/build-infrastructure";
 import registerDebug from "debug";
 import detectIndent from "detect-indent";
-import {writeJson, writeJsonSync } from "fs-extra";
+import { writeJson, writeJsonSync } from "fs-extra";
 import chalk from "picocolors";
 import sortPackageJson from "sort-package-json";
 
