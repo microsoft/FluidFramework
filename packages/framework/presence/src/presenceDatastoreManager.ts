@@ -23,7 +23,7 @@ import type {
 	PresenceWorkspaceAddress,
 } from "./types.js";
 
-import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
 	public: PresenceStates<TSchema>;
@@ -267,7 +267,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// Direct to the appropriate Presence Workspace, if present.
 			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {
-				workspace.internal.processUpdate(received, timeModifier, remoteDatastore);
+				workspace.internal.processUpdate(
+					received,
+					timeModifier,
+					remoteDatastore,
+					message.clientId,
+				);
 			} else {
 				// All broadcast state is kept even if not currently registered, unless a value
 				// notes itself to be ignored.

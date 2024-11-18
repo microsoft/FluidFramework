@@ -4,7 +4,7 @@
  */
 
 import { AsyncPriorityQueue } from "async";
-import chalk from "chalk";
+import chalk from "picocolors";
 import * as semver from "semver";
 
 import * as assert from "assert";

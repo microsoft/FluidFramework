@@ -493,19 +493,6 @@ export interface IFluidParentContext
 	getAudience(): IAudience;
 
 	/**
-	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
-	 *
-	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 *
-	 * @param callback - the callback to be invoked
-	 *
-	 * @deprecated
-	 * // back-compat: to be removed in 2.0
-	 */
-	ensureNoDataModelChanges<T>(callback: () => T): T;
-
-	/**
 	 * Submits the message to be sent to other clients.
 	 * @param type - Type of the message.
 	 * @param content - Content of the message.

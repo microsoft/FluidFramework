@@ -419,6 +419,8 @@ module.exports = {
 				"tools/getkeys/package.json",
 				// this package has a irregular build pattern, so our clean script rule doesn't apply.
 				"tools/markdown-magic/package.json",
+				// Docs directory breaks cleaning down into multiple scripts.
+				"docs/package.json",
 			],
 			"npm-strange-package-name": [
 				"server/gitrest/package.json",
@@ -443,35 +445,6 @@ module.exports = {
 			"npm-private-packages": [
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
-			],
-			"npm-public-package-requirements": [
-				// Test packages published only for the purpose of running tests in CI.
-				"^azure/packages/test/",
-				"^packages/service-clients/end-to-end-tests/",
-				"^packages/test/test-service-load/",
-				"^packages/test/test-end-to-end-tests/",
-
-				// JS packages, which do not use api-extractor
-				"^common/build/",
-
-				// PropertyDDS packages, which are not production
-				"^experimental/PropertyDDS/",
-
-				// Tools packages that are not library packages
-				"^azure/packages/azure-local-service/",
-				"^packages/tools/fetch-tool/",
-				"^tools/test-tools/",
-
-				// TODO: add api-extractor infra and remove these overrides
-				"^build-tools/packages/",
-				"^tools/bundle-size-tools/",
-				"^server/historian/",
-				"^server/gitrest/",
-				"^server/routerlicious/",
-				"^examples/data-objects/table-document/",
-				"^experimental/framework/data-objects/",
-				"^tools/telemetry-generator/",
-				"^packages/tools/webpack-fluid-loader/",
 			],
 			"pnpm-npm-package-json-preinstall": [
 				// test packages
@@ -581,17 +554,8 @@ module.exports = {
 				// 	name: "api",
 				// 	body: "fluid-build . --task api",
 				// },
-				{
-					name: "build:docs",
-					body: "api-extractor run --local",
-				},
-				{
-					name: "ci:build:docs",
-					body: "api-extractor run",
-				},
 			],
-			// All of our public packages should be using api-extractor
-			requiredDevDependencies: ["@microsoft/api-extractor"],
+			requiredDevDependencies: [],
 		},
 	},
 

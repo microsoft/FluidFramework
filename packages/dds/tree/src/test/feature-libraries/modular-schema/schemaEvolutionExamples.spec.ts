@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type Adapters,
@@ -22,7 +22,7 @@ import {
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
-	getAllowedContentIncompatibilities,
+	getAllowedContentDiscrepancies,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -49,7 +49,7 @@ class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
 		if (allowsFieldSuperset(this.policy, this, this.rootFieldSchema, schema)) {
 			this.rootFieldSchemaData = schema;
-			this.events.emit("afterSchemaChange", this);
+			this._events.emit("afterSchemaChange", this);
 			return true;
 		}
 		return false;
@@ -64,7 +64,7 @@ class TestSchemaRepository extends TreeStoredSchemaRepository {
 		const original = this.nodeSchema.get(name);
 		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
 			this.nodeSchemaData.set(name, storedSchema);
-			this.events.emit("afterSchemaChange", this);
+			this._events.emit("afterSchemaChange", this);
 			return true;
 		}
 		return false;
@@ -212,7 +212,7 @@ describe("Schema Evolution Examples", () => {
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:
 			const compatNew = view2.checkCompatibility(stored);
-			const report = getAllowedContentIncompatibilities(viewCollection2, stored);
+			const report = Array.from(getAllowedContentDiscrepancies(viewCollection2, stored));
 			assert.deepEqual(report, []);
 			assertEnumEqual(Compatibility, compatNew.read, Compatibility.Compatible);
 			// It is now possible to write our date into the document.
