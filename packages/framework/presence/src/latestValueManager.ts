@@ -186,10 +186,10 @@ export function Latest<T extends object, Key extends string = string>(
 			InternalTypes.ValueRequiredState<T>
 		>,
 	): {
-		value: typeof value;
+		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestValueManager<T>>;
 	} => ({
-		value,
+		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
 			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
 		),
