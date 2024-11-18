@@ -5,7 +5,7 @@
 
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
-import { describe, it, afterAll, afterEach, beforeAll, beforeEach } from "vitest";
+import { describe, it, afterAll, afterEach, beforeAll, beforeEach, expect } from "vitest";
 
 import { Latest, Notifications, type PresenceNotifications } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
@@ -76,6 +76,8 @@ describe("Presence", () => {
 
 				// SIGNAL #2
 				count.local = { num: 84 };
+
+				expect(runtime.submittedSignals).toHaveLength(2);
 			});
 
 			it("batches signals sent within the allowableUpdateLatency", async () => {
@@ -133,9 +135,11 @@ describe("Presence", () => {
 
 				clock.tick(10); // Time is now 1110
 				immediateUpdate.local = { num: 56 };
-				// SIGNAL #2
+				// SIGNAL #1
 				// This should cause the queued signals to be merged with this immediately-sent
 				// signal with the value from the last signal (num=34).
+
+				expect(runtime.submittedSignals).toHaveLength(1);
 			});
 
 			it("batches signals with different allowed latencies", async () => {
@@ -163,6 +167,8 @@ describe("Presence", () => {
 
 				// It's necessary to tick the timer beyond the deadline so the timer will fire.
 				clock.tick(30); // Time is now 1080
+
+				expect(runtime.submittedSignals).toHaveLength(1);
 			});
 
 			it("batches signals from multiple workspaces", async () => {
@@ -193,6 +199,8 @@ describe("Presence", () => {
 
 				// It's necessary to tick the timer beyond the deadline so the timer will fire.
 				clock.tick(30); // Time is now 1090
+
+				expect(runtime.submittedSignals).toHaveLength(1);
 			});
 
 			// IMPORTANT: RESULTS NOT VALID! See TODOs inline.
@@ -235,6 +243,15 @@ describe("Presence", () => {
 				// TODO: This value is not in the snapshot - it seems that the old value (77) is broadcast
 				// again. Why?
 				testEvents.emit.broadcast("newId", 88);
+
+				expect(runtime.submittedSignals).toHaveLength(2);
+				// const signal = runtime.submittedSignals[0];
+				// expect(
+				// 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				// 	(signal?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
+				// 		"sessionId-2"
+				// 	].value.args,
+				// ).toEqual([88]);
 			});
 
 			// IMPORTANT: RESULTS NOT VALID! See TODOs inline.
@@ -281,9 +298,20 @@ describe("Presence", () => {
 				// along with the notification signal.
 
 				clock.tick(30); // Time is now 1080
+				// SIGNAL #2
 				// TODO: This value is not in the snapshot - it seems that the old value (99) is broadcast
 				// again. Why?
 				testEvents.emit.broadcast("newId", 111);
+
+				expect(runtime.submittedSignals).toHaveLength(2);
+
+				// const signal = runtime.submittedSignals[0];
+				// expect(
+				// 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				// 	(signal?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
+				// 		"sessionId-2"
+				// 	].value.args,
+				// ).toEqual([111]);
 			});
 		});
 	});
