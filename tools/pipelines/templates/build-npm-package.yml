@@ -360,7 +360,7 @@ extends:
                       export startTest=true
                       chmod +x $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh
                       # Join the array elements into a space-separated string
-                      TASK_TEST_STRING="${{ join(parameters.taskTest, ' ') }}"
+                      TASK_TEST_STRING=${{ convertToJson(parameters.taskTest) }}
                       BUILD_REASON="${{ variables['Build.Reason'] }}"
                       BUILD_DIR="${{ parameters.buildDirectory }}"
 
