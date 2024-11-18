@@ -300,5 +300,35 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(localChanges, 1);
 			unsubscribe();
 		});
+
+		it("does not emit changed events for rebases", () => {
+			const stringArraySchema = schema.array([schema.string]);
+			const stringArrayStoredSchema = toStoredSchema(stringArraySchema);
+			const stringArrayContent = {
+				schema: stringArrayStoredSchema,
+				initialTree: cursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
+			};
+			const checkout = checkoutWithContent(stringArrayContent);
+			const main = new SchematizingSimpleTreeView(checkout, new TreeViewConfiguration({ schema: stringArraySchema }), new MockNodeKeyManager());
+			const branch = main.fork();
+
+			let changes = 0;
+
+			const unsubscribe = branch.events.on("changed", (data) => {
+				changes++;
+			});
+
+			const mainRoot = main.root;
+			const branchRoot = branch.root;
+
+			branchRoot.removeAt(1);
+			assert.deepEqual([...branchRoot], ["a", "c"]);
+			mainRoot.insertAt(0, "a");
+			assert.deepEqual([...mainRoot], ["a", "a", "b", "c"]);
+			branch.rebaseOnto(main);
+			assert.deepEqual([...branchRoot], ["a", "a", "c"]);
+			assert.equal(changes, 1);
+			unsubscribe();
+		});
 	});
 });
