@@ -108,12 +108,6 @@ function createLocalSharedTree<TSchema extends ImplicitFieldSchema>(
 	return view;
 }
 
-enum SubtreeType {
-	Monomorphic,
-	Polymorphic,
-	DeepMonomorphic,
-}
-
 describe("SharedTree memory usage", () => {
 	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
 	// because they won't be out of scope when we garbage-collect between runs of the same test,
@@ -228,7 +222,10 @@ describe("SharedTree memory usage", () => {
 		).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 	}
 
-	function runBenchmarkMemoryForSubTree<TSchema extends ImplicitFieldSchema>(
+	/**
+	 * Define a suite of benchmarks for testing the memory use of variety of sizes of trees of the given schema in various forest implementations.
+	 */
+	function describeMemoryBenchmarksForSubtrees<TSchema extends ImplicitFieldSchema>(
 		title: string,
 		schema: TSchema,
 		generateContent: (numberOfNodes: number) => InsertableTreeFieldFromImplicitField<TSchema>,
@@ -269,7 +266,7 @@ describe("SharedTree memory usage", () => {
 	const numberOfNodesForTests = isInPerformanceTestingMode ? [1, 10, 100, 1000] : [10];
 	// TODO: needs .only to describe block when running in performance mode if you need to see the results. Check to see why it does not run without .only.
 	describe("Forest memory usage", () => {
-		runBenchmarkMemoryForSubTree(
+		describeMemoryBenchmarksForSubtrees(
 			"Array of monomorphic leaves",
 			MonomorphicArray,
 			(numberOfNodes: number) =>
@@ -277,7 +274,7 @@ describe("SharedTree memory usage", () => {
 			numberOfNodesForTests,
 		);
 
-		runBenchmarkMemoryForSubTree(
+		describeMemoryBenchmarksForSubtrees(
 			"Array of polymorphic leaves",
 			PolymorphicArray,
 			(numberOfNodes: number) =>
@@ -285,7 +282,7 @@ describe("SharedTree memory usage", () => {
 			numberOfNodesForTests,
 		);
 
-		runBenchmarkMemoryForSubTree(
+		describeMemoryBenchmarksForSubtrees(
 			"Array of deep monomorphic leaves",
 			DeepMonomorphicArray,
 			(numberOfNodes: number) =>
