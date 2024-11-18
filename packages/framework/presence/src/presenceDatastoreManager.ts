@@ -148,7 +148,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			return existing.internal.ensureContent(requestedContent, controls);
 		}
 
-		let workspaceDatastore = this.datastore[internalWorkspaceAddress];
+		let workspaceDatastore: ValueElementMap<PresenceStatesSchema> | undefined =
+			this.datastore[internalWorkspaceAddress];
 		if (workspaceDatastore === undefined) {
 			workspaceDatastore = this.datastore[internalWorkspaceAddress] = {};
 		}
@@ -165,7 +166,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			const clientConnectionId = this.runtime.clientId;
 			assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
 			const currentClientToSessionValueState =
-				this.datastore["system:presence"].clientToSessionId[clientConnectionId];
+				// When connected, `clientToSessionId` must always have current connection entry.
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.datastore["system:presence"].clientToSessionId[clientConnectionId]!;
 
 			const updates: GeneralDatastoreMessageContent[InternalWorkspaceAddress] = {};
 			for (const [key, value] of Object.entries(states)) {
