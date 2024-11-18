@@ -4,7 +4,6 @@
  */
 
 import type { IAudience } from "@fluidframework/container-definitions";
-import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
@@ -18,6 +17,8 @@ import type {
 import { SessionClientStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
 import type { PresenceStates, PresenceStatesSchema } from "./types.js";
+
+import type { IEmitter } from "@fluidframework/presence/internal/events";
 
 /**
  * The system workspace's datastore structure.
