@@ -138,6 +138,7 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)
             script: |
               echo test line
+              echo "shouldDeploy: $(shouldDeploy)"
 
         - task: TriggerBuild@4
           inputs:
