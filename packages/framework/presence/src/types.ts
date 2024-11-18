@@ -83,7 +83,7 @@ export interface PresenceStates<
 > {
 	/**
 	 * Registers a new `Value Manager` with the {@link PresenceStates}.
-	 * @param key - new unique key for the `Value Manager`
+	 * @param key - new unique key for the `Value Manager` within the workspace
 	 * @param manager - factory for creating a `Value Manager`
 	 */
 	add<
@@ -135,8 +135,8 @@ export interface PresenceNotificationsSchema {
  * @privateRemarks
  * This should be kept mostly in sync with {@link PresenceStates}. Notably the
  * return type of `add` is limited here and the `controls` property is omitted.
- * The `PresenceStatesImpl` class implements `PresenceStates` and so long as this
- * is proper subset.
+ * The `PresenceStatesImpl` class implements `PresenceStates` and therefore
+ * `PresenceNotifications`, so long as this is proper subset.
  *
  * @sealed
  * @alpha
@@ -144,7 +144,7 @@ export interface PresenceNotificationsSchema {
 export interface PresenceNotifications<TSchema extends PresenceNotificationsSchema> {
 	/**
 	 * Registers a new `Value Manager` with the {@link PresenceNotifications}.
-	 * @param key - new unique key for the `Value Manager`
+	 * @param key - new unique key for the `Value Manager` within the workspace
 	 * @param manager - factory for creating a `Value Manager`
 	 */
 	add<

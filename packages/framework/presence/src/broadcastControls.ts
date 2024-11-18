@@ -108,7 +108,7 @@ export class OptionalBroadcastControl
  * {@link BroadcastControls.allowableUpdateLatencyMs | allowableUpdateLatencyMs}.
  *
  * If {@link BroadcastControls.allowableUpdateLatencyMs | allowableUpdateLatencyMs}
- * is set to `undefined`, it will default will be restored.
+ * is set to `undefined`, the default will be restored.
  *
  * @internal
  */
