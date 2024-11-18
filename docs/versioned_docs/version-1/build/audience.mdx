@@ -3,17 +3,16 @@ title: User presence and audience
 sidebar_position: 8
 ---
 
-The audience is the collection of users connected to a container.  When your app creates a container using a service-specific client library, the app is provided with a service-specific audience object for that container as well. Your code can query the audience object for connected users and use that information to build rich and collaborative user presence features.
+The audience is the collection of users connected to a container. When your app creates a container using a service-specific client library, the app is provided with a service-specific audience object for that container as well. Your code can query the audience object for connected users and use that information to build rich and collaborative user presence features.
 
-This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence.  For anything service-specific, the [Tinylicious](/docs/testing/tinylicious) Fluid service is used.
+This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence. For anything service-specific, the [Tinylicious](/docs/testing/tinylicious) Fluid service is used.
 
 ## Working with the audience
 
-When creating a container, your app is also provided a container services object which holds the audience.  This audience is backed by that same container. The following is an example. Note that `client` is an object of a type that is provided by a service-specific client library.
+When creating a container, your app is also provided a container services object which holds the audience. This audience is backed by that same container. The following is an example. Note that `client` is an object of a type that is provided by a service-specific client library.
 
 ```js
-const { container, services } =
-    await client.createContainer(containerSchema);
+const { container, services } = await client.createContainer(containerSchema);
 const audience = services.audience;
 ```
 
@@ -23,12 +22,12 @@ Audience members exist as `IMember` objects:
 
 ```typescript
 export interface IMember {
-    id: string;
-    connections: IConnection[];
+	id: string;
+	connections: IConnection[];
 }
 ```
 
-An `IMember` represents a single user identity.  `IMember` holds a list of `IConnection` objects, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections. An audience member will always have at least one connection. Each user and each connection will both have a unique identifier.
+An `IMember` represents a single user identity. `IMember` holds a list of `IConnection` objects, which represent that audience member's active connections to the container. Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections. An audience member will always have at least one connection. Each user and each connection will both have a unique identifier.
 
 :::tip
 
@@ -38,12 +37,11 @@ Connections can be short-lived and are not reused. A client that disconnects fro
 
 ### Service-specific audience data
 
-
 The `ServiceAudience` class represents the base audience implementation, and individual Fluid services are expected to extend this class for their needs. Typically this is through extending `IMember` to provide richer user information and then extending `ServiceAudience` to use the `IMember` extension. For `TinyliciousAudience`, this is the only change, and it defines a `TinyliciousMember` to add a user name.
 
 ```typescript
 export interface TinyliciousMember extends IMember {
-    userName: string;
+	userName: string;
 }
 ```
 

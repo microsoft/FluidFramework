@@ -3,14 +3,14 @@ title: Container states and events
 sidebar_position: 3
 ---
 
-import { ApiLink } from "@site/src/components/shortLinks"
+import { ApiLink } from "@site/src/components/shortLinks";
 
 This article provides a detailed description of the lifecycle states of the containers and container events. It assumes that you are familiar with [Containers](./containers).
 
 :::note
 
 In this article the term "creating client" refers to the client on which a container is created.
-When it is important to emphasize that a client is *not* the creating client, it is called a "subsequent client".
+When it is important to emphasize that a client is _not_ the creating client, it is called a "subsequent client".
 It is helpful to remember that "client" does not refer to a device or anything that persists between sessions with your application.
 When a user closes your application, the client no longer exists: a new session is a new client.
 So, when the creating client is closed, there is no longer any creating client.
@@ -46,8 +46,10 @@ There are four types of states that a container can be in. Every container is in
 
 ### Publication status states
 
-Publication status refers to whether or not the container has been *initially* saved to the Fluid service, and whether it is still persisted there.
-Think of it as a mainly *service-relative* state because it is primarily about the container's state in the Fluid service and secondarily about its state on the creating client. The following diagram shows the possible publication states and the events that cause a state transition. Details are below the diagram.
+Publication status refers to whether or not the container has been _initially_ saved to the Fluid service, and whether it is still persisted there.
+Think of it as a mainly _service-relative_ state because it is primarily about the container's state in the Fluid service and secondarily about its state on the creating client.
+The following diagram shows the possible publication states and the events that cause a state transition.
+Details are below the diagram.
 
 {/* TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. */}
 ![A state diagram of the four possible publication states](./images/PublicationStates.svg)
@@ -104,7 +106,7 @@ For example, on the creating computer, you don't want to call `container.attach`
 ```typescript
 // Code that runs only on a creating client.
 if (container.attachState !== AttachState.Attached) {
-    await container.attach();
+	await container.attach();
 }
 ```
 
@@ -112,10 +114,11 @@ How you handle the **publishing** (`AttachState.Attaching`) state depends on the
 
 ```typescript
 // Code that runs only on a creating client.
-if ((container.attachState !== AttachState.Attached)
-    &&
-    (container.attachState !== AttachState.Attaching)) {
-    await container.attach();
+if (
+	container.attachState !== AttachState.Attached &&
+	container.attachState !== AttachState.Attaching
+) {
+	await container.attach();
 }
 ```
 
@@ -123,16 +126,20 @@ On the other hand, in scenarios where you want to block users from editing share
 
 ```typescript
 // Code that runs only on a creating client.
-if ((container.attachState === AttachState.Detached)
-    ||
-    (container.attachState === AttachState.Attaching)) {
-    // Disable editing.
+if (
+	container.attachState === AttachState.Detached ||
+	container.attachState === AttachState.Attaching
+) {
+	// Disable editing.
 }
 ```
 
 ### Synchronization status states
 
-Synchronization status refers to whether the container's data on the client is saved to the Fluid service. It is a *client-relative state*: the container may have a different synchronization state on different clients. The following diagram shows the possible Synchronization states and the events that cause a state transition. Details are below the diagram.
+Synchronization status refers to whether the container's data on the client is saved to the Fluid service.
+It is a _client-relative state_: the container may have a different synchronization state on different clients.
+The following diagram shows the possible Synchronization states and the events that cause a state transition.
+Details are below the diagram.
 
 {/* TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. */}
 ![A state diagram of the two possible Synchronization states](./images/SynchronizationStates.svg)
@@ -150,7 +157,8 @@ The dotted arrow represents a boolean guard condition. It means that the contain
 
 -   **saved**: A container is in **saved** state on a client when the container has been published and the service has acknowledged all data changes made on the client.
 
-When a new change is made to the data in a given client, the container moves to **dirty** state *in that client*. When all pending changes are acknowledged, it transitions to the **saved** state.
+When a new change is made to the data in a given client, the container moves to **dirty** state _in that client_.
+When all pending changes are acknowledged, it transitions to the **saved** state.
 
 Note that a container in the **saved** state is not necessarily perfectly synchronized with the service.
 There may be changes made on other clients that have been saved to the service but have not yet been relayed to this client.
@@ -159,20 +167,20 @@ But if the client is disconnected while in **saved** state, it remains **saved**
 
 Users can work with the container's data regardless of whether it is in **dirty** or **saved** state.
 But there are scenarios in which your code must be aware of the container's state. For this reason, the `FluidContainer` object has a boolean `isDirty` property to specify its state.
-The `container` object also supports *dirty* and *saved* events, so you can handle the transitions between states.
-The container emits the *saved* event to notify the caller that all the local changes have been acknowledged by the service.
+The `container` object also supports _dirty_ and _saved_ events, so you can handle the transitions between states.
+The container emits the _saved_ event to notify the caller that all the local changes have been acknowledged by the service.
 
 ```typescript {linenos=inline}
 container.on("saved", () => {
-    // All pending edits have been saved.
+	// All pending edits have been saved.
 });
 ```
 
-The container emits the *dirty* event to notify the caller that there are local changes that have not been acknowledged by the service yet.
+The container emits the _dirty_ event to notify the caller that there are local changes that have not been acknowledged by the service yet.
 
 ```typescript {linenos=inline}
 container.on("dirty", () => {
-    // The container has pending changes that need to be acknowledged by the service.
+	// The container has pending changes that need to be acknowledged by the service.
 });
 ```
 
@@ -193,7 +201,7 @@ function disconnectFromFluidService {
 
 When a user is highly active, the container on a client may shift between **dirty** and **saved** states rapidly and repeatedly.
 You usually do not want a handler to run every time the event is triggered, so take care to have your handler attached only in constrained circumstances.
-In the example above, using `container.once` ensures that the handler is removed after it runs once. When the container reconnects, the *saved* event will not have the handler attached to it.
+In the example above, using `container.once` ensures that the handler is removed after it runs once. When the container reconnects, the _saved_ event will not have the handler attached to it.
 
 See [Connection status states](#connection-status-states) for more about connection and disconnection.
 
@@ -201,7 +209,10 @@ See [Disposed](#disposed) for more about disposing the container object.
 
 ### Connection status states
 
-Connection status refers to whether the container is connected to the Fluid service. It is a *client-relative state*: the container may have a different connection state on different clients. The following diagram shows the possible Connection states and the events that cause a state transition. Details are below the diagram.
+Connection status refers to whether the container is connected to the Fluid service.
+It is a _client-relative state_: the container may have a different connection state on different clients.
+The following diagram shows the possible Connection states and the events that cause a state transition.
+Details are below the diagram.
 
 {/* TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. */}
 ![A state diagram of the four possible Connection states](./images/ConnectionStates.svg)
@@ -218,7 +229,7 @@ A container is **disconnected** if it is not in any of the other three Connectio
 
 Disconnection does not automatically block users from editing the shared data objects.
 Changes they make are stored locally and will be sent to the Fluid service when connection is reestablished.
-But these changes are *not* being synchronized with other clients while the current client is disconnected, and your application's user may not be aware of that.
+But these changes are _not_ being synchronized with other clients while the current client is disconnected, and your application's user may not be aware of that.
 So, you usually want to block editing if a disconnection continues for some time.
 For more information, see [Managing connection and disconnection](#managing-connection-and-disconnection).
 
@@ -229,8 +240,11 @@ For more information, see [Managing connection and disconnection](#managing-conn
 In this state, the client is attempting to connect to the Fluid service, but has not yet received an acknowledgement.
 A container moves into the **establishing connection** state in any of the following circumstances:
 
--   On the creating client, your code calls the `container.attach` method. For more information, see [Publishing a container](./containers#publishing-a-container). This method publishes the container *and* connects the client to the service.
--   Your code calls the client's `getContainer` method on a client that has not previously been connected. For more information, see [Connecting to a container](./containers#connecting-to-a-container).
+-   On the creating client, your code calls the `container.attach` method.
+    For more information, see [Publishing a container](./containers#publishing-a-container).
+    This method publishes the container _and_ connects the client to the service.
+-   Your code calls the client's `getContainer` method on a client that has not previously been connected.
+    For more information, see [Connecting to a container](./containers#connecting-to-a-container).
 -   The Fluid client runtime tries to reconnect following a disconnection caused by a network problem.
 -   Your code calls the `container.connect` method on a client that had become disconnected.
 
@@ -255,7 +269,6 @@ The container transitions to this state automatically when it is fully caught up
 
 There are scenarios in which you need to control the connection status of the container. To assist, the `container` object has the following APIs:
 
-
 -   A <ApiLink packageName="fluid-static" apiName="IFluidContainer" apiType="interface" headingId="connectionstate-propertysignature">container.connectionState</ApiLink> property of type `ConnectionState`. There are four possible values for the property:
 
     -   `Disconnected`
@@ -263,8 +276,8 @@ There are scenarios in which you need to control the connection status of the co
     -   `CatchingUp`: In most scenarios, your code should treat this state the same as it treats the connected state. See [Examples](#examples). An exception would be when it is important that users see the very latest changes from other clients before they are allowed to make their own edits. In that case, your code should treat **catching up** like it treats the **disconnected** state.
     -   `Connected`
 
--   A *disconnected* event, that fires if a network problem causes a disconnection or if the `container.disconnect` method is called.
--   A *connected* event, that fires if the Fluid client runtime is able to reconnect (and any needed catching up is complete) or if the `container.connect` method is called.
+-   A _disconnected_ event, that fires if a network problem causes a disconnection or if the `container.disconnect` method is called.
+-   A _connected_ event, that fires if the Fluid client runtime is able to reconnect (and any needed catching up is complete) or if the `container.connect` method is called.
 
 ##### Examples
 
@@ -272,31 +285,34 @@ Your code can disable the editing UI in your application when the container is d
 
 ```typescript
 container.on("disconnected", () => {
-    // Prevent user edits to disable data loss.
+	// Prevent user edits to disable data loss.
 });
 
 container.on("connected", () => {
-    // Enable editing if disabled.
+	// Enable editing if disabled.
 });
 ```
 
-Your code can reduce unnecessary network traffic by disconnecting when a user is idle. The following example assumes that there is a `user` object that emits *idle* and *active* events.
+Your code can reduce unnecessary network traffic by disconnecting when a user is idle.
+The following example assumes that there is a `user` object that emits _idle_ and _active_ events.
 
 ```typescript
 user.on("idle", () => {
-    // Disconnect the container when the user is idle.
-    container.disconnect();
+	// Disconnect the container when the user is idle.
+	container.disconnect();
 });
 
 user.on("active", () => {
-    // Connect the container when the user is active again.
-    container.connect();
+	// Connect the container when the user is active again.
+	container.connect();
 });
 ```
 
 ### Local Readiness state
 
-Local Readiness is a *client-relative state*: the container may have a different Local Readiness state on different clients. The following diagram shows the possible Local Readiness states and the events that cause a state transition. Details are below the diagram.
+Local Readiness is a _client-relative state_: the container may have a different Local Readiness state on different clients.
+The following diagram shows the possible Local Readiness states and the events that cause a state transition.
+Details are below the diagram.
 
 {/* TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. */}
 ![A state diagram of the two possible Local Readiness states](./images/LocalReadinessStates.svg)
@@ -311,12 +327,12 @@ A disposed `FluidContainer` remains disposed forever, but a new **ready** `Fluid
 #### Disposed
 
 In scenarios where a container is no longer needed on the current client, you can dispose it with a call of `container.dispose()`. Disposing removes any server connections, so the Connection status becomes **disconnected**.
-There is a *disposed* event on the container object that you can handle to add custom clean up logic, such as removing registered events.
+There is a _disposed_ event on the container object that you can handle to add custom clean up logic, such as removing registered events.
 The following shows the basic syntax:
 
 ```typescript
 container.on("disposed", () => {
-    // Handle event cleanup to prevent memory leaks.
+	// Handle event cleanup to prevent memory leaks.
 });
 ```
 
