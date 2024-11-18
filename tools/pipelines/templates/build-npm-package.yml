@@ -365,7 +365,7 @@ extends:
                       BUILD_DIR="${{ parameters.buildDirectory }}"
 
                       # Pass the string to the script
-                      $(Build.SourcesDirectory)/scripts/run_parallel_tests.sh "$TASK_TEST_STRING" "$BUILD_DIR" "$BUILD_REASON"
+                      $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh "$TASK_TEST_STRING" "$BUILD_DIR" "$BUILD_REASON"
                     displayName: Run Tests in Parallel
                     failOnStderr: true
                     condition: succeededOrFailed()
