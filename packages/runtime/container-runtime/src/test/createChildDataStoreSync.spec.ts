@@ -25,7 +25,7 @@ import {
 	LocalDetachedFluidDataStoreContext,
 } from "../dataStoreContext.js";
 
-describe("createChildDataStoreSync", () => {
+describe("createChildDataStore", () => {
 	const throwNYI = () => {
 		throw new Error("Method not implemented.");
 	};
@@ -114,7 +114,7 @@ describe("createChildDataStoreSync", () => {
 		const factory = createFactory();
 		const context = createContext([[factory.type, factory]]);
 		try {
-			context.createChildDataStoreSync(factory);
+			context.createChildDataStore(factory);
 			assert.fail("should fail");
 		} catch (e) {
 			assert(isFluidError(e));
@@ -127,7 +127,7 @@ describe("createChildDataStoreSync", () => {
 		const factory = createFactory();
 		const context = createContext();
 		try {
-			context.createChildDataStoreSync(factory);
+			context.createChildDataStore(factory);
 			assert.fail("should fail");
 		} catch (e) {
 			assert(isFluidError(e));
@@ -141,7 +141,7 @@ describe("createChildDataStoreSync", () => {
 		const context = createContext([[factory.type, Promise.resolve(factory)]]);
 
 		try {
-			context.createChildDataStoreSync(factory);
+			context.createChildDataStore(factory);
 			assert.fail("should fail");
 		} catch (e) {
 			assert(isFluidError(e));
@@ -155,7 +155,7 @@ describe("createChildDataStoreSync", () => {
 		const context = createContext([[factory.type, createFactory()]]);
 
 		try {
-			context.createChildDataStoreSync(factory);
+			context.createChildDataStore(factory);
 			assert.fail("should fail");
 		} catch (e) {
 			assert(isFluidError(e));
@@ -164,9 +164,9 @@ describe("createChildDataStoreSync", () => {
 		}
 	});
 
-	it("createChildDataStoreSync", async () => {
+	it("createChildDataStore", async () => {
 		const factory = createFactory(() => ({ runtime: new MockFluidDataStoreRuntime() }));
 		const context = createContext([[factory.type, factory]]);
-		context.createChildDataStoreSync(factory);
+		context.createChildDataStore(factory);
 	});
 });

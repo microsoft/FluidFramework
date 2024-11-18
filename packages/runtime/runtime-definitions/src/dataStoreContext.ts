@@ -600,7 +600,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	/**
 	 * This function creates a detached child data store synchronously.
 	 *
-	 * The `createChildDataStoreSync` method allows for the synchronous creation of a child data store. This is particularly
+	 * The `createChildDataStore` method allows for the synchronous creation of a child data store. This is particularly
 	 * useful in scenarios where immediate availability of the child data store is required, such as during the initialization
 	 * of a parent data store, or when creation is in response to synchronous user input.
 	 *
@@ -615,7 +615,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * @param childFactory - The factory of the data store to be created.
 	 * @returns The created data store channel.
 	 */
-	createChildDataStoreSync?<T extends IFluidDataStoreFactory>(
+	createChildDataStore?<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }

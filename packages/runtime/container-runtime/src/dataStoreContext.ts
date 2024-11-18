@@ -524,7 +524,7 @@ export abstract class FluidDataStoreContext
 		return factory;
 	}
 
-	createChildDataStoreSync<T extends IFluidDataStoreFactory>(
+	createChildDataStore<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>> {
 		const maybe = this.registry?.get(childFactory.type);

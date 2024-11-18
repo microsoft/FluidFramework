@@ -32,6 +32,9 @@ import { createLoader } from "../utils.js";
 const mapFactory = SharedMap.getFactory();
 const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
 
+/**
+ * This is the child datastore that will be created synchronously
+ */
 class ChildDataStore {
 	public static create(runtime: IFluidDataStoreRuntime) {
 		const root = SharedMap.create(runtime, "root");
@@ -46,25 +49,39 @@ class ChildDataStore {
 
 	private constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
-		public readonly sharedMap: ISharedMap,
+		private readonly sharedMap: SharedMap,
 	) {}
 
 	get ChildDataStore() {
 		return this;
 	}
+
+	public setProperty(key: string, value: string | number) {
+		this.sharedMap.set(key, value);
+	}
+
+	public getProperty(key: string): string | number | undefined {
+		return this.sharedMap.get(key);
+	}
+
 	get handle() {
 		return this.runtime.entryPoint;
 	}
 }
-
+/**
+ * This is the child datastore factory. It must implement
+ * createDataStore to support synchronous creation.
+ * instantiateDataStore will continue to be used after creation
+ * to load the datastore.
+ */
 class ChildDataStoreFactory implements IFluidDataStoreFactory {
 	static readonly instance = new ChildDataStoreFactory();
-
 	private constructor() {}
 
 	get IFluidDataStoreFactory() {
 		return this;
 	}
+
 	public readonly type = "ChildDataStore";
 
 	async instantiateDataStore(context, existing) {
@@ -94,6 +111,11 @@ class ChildDataStoreFactory implements IFluidDataStoreFactory {
 	}
 }
 
+/**
+ * This is the parent DataObject, which is also a datastore. It has a
+ * synchronous method to create child datastores, which could be called
+ * in response to synchronous user input, like a key press.
+ */
 class ParentDataObject extends DataObject {
 	get ParentDataObject() {
 		return this;
@@ -105,17 +127,15 @@ class ParentDataObject extends DataObject {
 
 	createChild(name: string): ChildDataStore {
 		assert(
-			this.context.createChildDataStoreSync !== undefined,
-			"this.context.createChildDataStoreSync",
+			this.context.createChildDataStore !== undefined,
+			"this.context.createChildDataStore",
 		);
 		// creates a detached context with a factory who's package path is the same
 		// as the current datastore, but with another copy of its own type.
-		const { entrypoint } = this.context.createChildDataStoreSync(
-			ChildDataStoreFactory.instance,
-		);
+		const { entrypoint } = this.context.createChildDataStore(ChildDataStoreFactory.instance);
 		const dir = this.root.createSubDirectory("children");
 		dir.set(name, entrypoint.handle);
-		entrypoint.sharedMap.set("childValue", name);
+		entrypoint.setProperty("childValue", name);
 
 		return entrypoint;
 	}
@@ -126,6 +146,10 @@ class ParentDataObject extends DataObject {
 	}
 }
 
+/**
+ * This is the parent DataObjects factory. It specifies the child data stores
+ * factory in a sub-registry. This is requires for synchronous creation of the child.
+ */
 const parentDataObjectFactory = new DataObjectFactory(
 	"ParentDataObject",
 	ParentDataObject,
@@ -133,9 +157,6 @@ const parentDataObjectFactory = new DataObjectFactory(
 	{},
 	[[ChildDataStoreFactory.instance.type, ChildDataStoreFactory.instance]],
 );
-
-// a simple datastore factory that is also a registry so that it can create instances of itself
-
 // a simple container runtime factory with a single datastore aliased as default.
 // the default datastore is also returned as the entrypoint
 const runtimeFactory: IRuntimeFactory = {
@@ -235,7 +256,7 @@ describe("Scenario Test", () => {
 				const child = (await childHandle.get()) as FluidObject<ChildDataStore>;
 				assert(child.ChildDataStore !== undefined, `${childKey} must be ChildDataStore`);
 				assert(
-					child.ChildDataStore.sharedMap.get("childValue") === childKey,
+					child.ChildDataStore.getProperty("childValue") === childKey,
 					"unexpected childValue",
 				);
 			}

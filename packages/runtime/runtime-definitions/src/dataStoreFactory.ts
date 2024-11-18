@@ -28,11 +28,11 @@ export interface IProvideFluidDataStoreFactory {
  *
  * Data stores are fundamental building blocks in the Fluid Framework. They are used
  * to store and manage state, handle operations, and provide APIs for interacting
- * with the data. Each data store is associated with a unique identifier (its `type` member)
+ * with the data. Each data store type is associated with a unique identifier (its `type` member)
  * and is typically provided to consumers through a data store registry.
  *
  * The factory plays a crucial role in the lifecycle of a data store. It is responsible
- * for creating new instances of data stores and loading existing ones. The factory
+ * for creating new instances of data store type and loading existing ones. The factory
  * ensures that the data store is correctly initialized and bound to its context.
  *
  * @legacy
@@ -40,7 +40,7 @@ export interface IProvideFluidDataStoreFactory {
  */
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 	/**
-	 * A string that uniquely identifies the type of data store created by this factory.
+	 * A string that uniquely identifies the type of data store type created by this factory.
 	 */
 	type: string;
 

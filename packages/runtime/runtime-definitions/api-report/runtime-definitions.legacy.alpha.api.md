@@ -150,7 +150,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
-    createChildDataStoreSync?<T extends IFluidDataStoreFactory>(childFactory: T): ReturnType<Exclude<T["createDataStore"], undefined>>;
+    createChildDataStore?<T extends IFluidDataStoreFactory>(childFactory: T): ReturnType<Exclude<T["createDataStore"], undefined>>;
     // @deprecated (undocumented)
     readonly createProps?: any;
     // @deprecated (undocumented)
