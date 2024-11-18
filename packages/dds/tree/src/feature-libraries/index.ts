@@ -76,6 +76,13 @@ export {
 	type FieldKindConfigurationEntry,
 	getAllowedContentDiscrepancies,
 	isRepoSuperset,
+	type AllowedTypeDiscrepancy,
+	type FieldKindDiscrepancy,
+	type ValueSchemaDiscrepancy,
+	type FieldDiscrepancy,
+	type NodeDiscrepancy,
+	type NodeKindDiscrepancy,
+	type NodeFieldsDiscrepancy,
 	isNeverTree,
 } from "./modular-schema/index.js";
 

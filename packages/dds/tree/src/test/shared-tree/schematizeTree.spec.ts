@@ -48,7 +48,6 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
-import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
 
 const builder = new SchemaFactory("test");
 const root = builder.number;

@@ -5,7 +5,7 @@
 
 import {
 	AdaptedViewSchema,
-	TreeNodeStoredSchema,
+	type TreeNodeStoredSchema,
 	type Adapters,
 	type FieldKindIdentifier,
 	type TreeFieldStoredSchema,
@@ -25,7 +25,7 @@ import {
 	type ImplicitFieldSchema,
 } from "../schemaTypes.js";
 import { toStoredSchema } from "../toStoredSchema.js";
-import type { FieldDiscrepancy } from "../../feature-libraries/modular-schema/discrepancies.js";
+import type { FieldDiscrepancy } from "../../feature-libraries/index.js";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
@@ -36,7 +36,7 @@ export class ViewSchema {
 	/**
 	 * Cached conversion of the view schema in the stored schema format.
 	 */
-	private viewSchemaAsStored: TreeStoredSchema;
+	private readonly viewSchemaAsStored: TreeStoredSchema;
 	/**
 	 * Normalized view schema (implicitly allowed view schema types are converted to their canonical form).
 	 */
@@ -78,7 +78,7 @@ export class ViewSchema {
 		// of this view schema as its stored schema.
 		let canUpgrade = true;
 
-		const updateCompatibilityFromFieldDiscrepancy = (discrepancy: FieldDiscrepancy) => {
+		const updateCompatibilityFromFieldDiscrepancy = (discrepancy: FieldDiscrepancy): void => {
 			switch (discrepancy.mismatch) {
 				case "allowedTypes": {
 					// Since we only track the symmetric difference between the allowed types in the view and
@@ -88,7 +88,7 @@ export class ViewSchema {
 						discrepancy.stored.length > 0 &&
 						discrepancy.stored.some(
 							(identifier) =>
-								!isNeverTree(this.policy, stored, stored.nodeSchema.get(identifier)!),
+								!isNeverTree(this.policy, stored, stored.nodeSchema.get(identifier)),
 						)
 					) {
 						// Stored schema has extra allowed types that the view schema does not.
@@ -103,7 +103,7 @@ export class ViewSchema {
 								!isNeverTree(
 									this.policy,
 									this.viewSchemaAsStored,
-									this.viewSchemaAsStored.nodeSchema.get(identifier)!,
+									this.viewSchemaAsStored.nodeSchema.get(identifier),
 								),
 						)
 					) {
@@ -368,11 +368,4 @@ function comparePosetElements<T>(a: T, b: T, realizer: Realizer<T>): PosetCompar
 		: hasGreaterThanResult
 			? PosetComparisonResult.Greater
 			: PosetComparisonResult.Equal;
-}
-
-function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
-	const comparison = comparePosetElements(a, b, realizer);
-	return (
-		comparison === PosetComparisonResult.Less || comparison === PosetComparisonResult.Equal
-	);
 }

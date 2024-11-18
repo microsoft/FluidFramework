@@ -4,7 +4,7 @@
  */
 
 import type { ICodecOptions } from "../../codec/index.js";
-import { type TreeStoredSchema } from "../../core/index.js";
+import type { TreeStoredSchema } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
@@ -59,7 +59,7 @@ export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompati
  * opening a document that used the `persisted` schema and provided `view` to {@link ViewableTree.viewWith}.
  *
  * @param persisted - Schema persisted for a document. Typically persisted alongside the data and assumed to describe that data.
- * @param view - Schema which would be used to view persisted content. Use {@link extractPersistedSchema} to convert the view schema into this format.
+ * @param view - Schema which would be used to view persisted content.
  * @param options - {@link ICodecOptions} used when parsing the provided schema.
  * @param canInitialize - Passed through to the return value unchanged and otherwise unused.
  * @returns The {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema.
@@ -75,7 +75,7 @@ export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompati
  * assert(
  * 	comparePersistedSchema(
  * 		require("./schema.json"),
- * 		extractPersistedSchema(MySchema),
+ * 		MySchema,
  * 		{ jsonValidator: typeboxValidator },
  * 		false,
  * 	).canUpgrade,

@@ -193,21 +193,21 @@ describe("SchematizingSimpleTreeView", () => {
 			age: factory.number,
 		}) {}
 
-		const configSpecific = new TreeViewConfiguration({
+		const personConfig = new TreeViewConfiguration({
 			schema: PersonSpecific,
 			allowUnknownOptionalFields: true,
 		});
-		const configGeneralized = new TreeViewConfiguration({
+		const personConfigGeneralied = new TreeViewConfiguration({
 			schema: PersonGeneralized,
 			allowUnknownOptionalFields: true,
 		});
 		const checkout = checkoutWithInitialTree(
-			configGeneralized,
+			personConfigGeneralied,
 			new PersonGeneralized({ name: "Alice", age: 42, address: "123 Main St" }),
 		);
 		const viewSpecific = new SchematizingSimpleTreeView(
 			checkout,
-			configSpecific,
+			personConfig,
 			new MockNodeKeyManager(),
 		);
 
@@ -226,7 +226,7 @@ describe("SchematizingSimpleTreeView", () => {
 		viewSpecific.dispose();
 		const viewGeneralized = new SchematizingSimpleTreeView(
 			checkout,
-			configGeneralized,
+			personConfigGeneralied,
 			new MockNodeKeyManager(),
 		);
 		assert.deepEqual(viewGeneralized.compatibility, {

@@ -77,4 +77,11 @@ export type {
 export {
 	getAllowedContentDiscrepancies,
 	isRepoSuperset,
+	type AllowedTypeDiscrepancy,
+	type FieldKindDiscrepancy,
+	type ValueSchemaDiscrepancy,
+	type FieldDiscrepancy,
+	type NodeDiscrepancy,
+	type NodeKindDiscrepancy,
+	type NodeFieldsDiscrepancy,
 } from "./discrepancies.js";

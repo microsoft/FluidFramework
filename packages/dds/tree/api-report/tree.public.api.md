@@ -212,6 +212,7 @@ export interface ITree extends ViewableTree, IFluidLoadable {
 
 // @public
 export interface ITreeConfigurationOptions {
+    readonly allowUnknownOptionalFields?: boolean;
     enableSchemaValidation?: boolean;
     readonly preventAmbiguity?: boolean;
 }
@@ -571,6 +572,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 // @public @sealed
 export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
     constructor(props: ITreeViewConfiguration<TSchema>);
+    readonly allowUnknownOptionalFields: boolean;
     readonly enableSchemaValidation: boolean;
     readonly preventAmbiguity: boolean;
     readonly schema: TSchema;
