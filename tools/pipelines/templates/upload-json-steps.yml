@@ -24,7 +24,7 @@ parameters:
     type: string
     default: none
 
-  steps:
+steps:
   - checkout: none
     clean: true
 
