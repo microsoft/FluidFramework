@@ -469,10 +469,10 @@ export function LatestMap<
 			InternalTypes.MapValueState<T>
 		>,
 	): {
-		value: typeof value;
+		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestMapValueManager<T, Keys>>;
 	} => ({
-		value,
+		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<
 			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
 			T,
