@@ -264,7 +264,7 @@ describe("SharedTree memory usage", () => {
 	}
 
 	const numberOfNodesForTests = isInPerformanceTestingMode ? [1, 10, 100, 1000] : [10];
-	// TODO: needs .only to describe block when running in performance mode if you need to see the results. Check to see why it does not run without .only.
+	// TODO: AB#24885 needs .only to describe block when running in performance mode if you need to see the results. Check to see why it does not run without .only.
 	describe("Forest memory usage", () => {
 		describeMemoryBenchmarksForSubtrees(
 			"Array of monomorphic leaves",
