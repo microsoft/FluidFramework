@@ -6,7 +6,12 @@
 export { GitRepo } from "./common/gitRepo";
 export { getFluidBuildConfig } from "./fluidBuild/config";
 export type { IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig";
-export { FluidRepoBuild } from "./fluidBuild/fluidRepoBuild";
+export {
+	/**
+	 * @deprecated Replace usage as soon as possible.
+	 */
+	FluidRepoBuild as FluidRepo,
+} from "./fluidBuild/fluidRepoBuild";
 export type { Logger } from "./common/logging";
 export {
 	/**
@@ -14,6 +19,9 @@ export {
 	 */
 	BuildPackage as Package,
 	MonoRepo,
+	/**
+	 * @deprecated Replace usage as soon as possible.
+	 */
 	type FluidBuildPackageJson as PackageJson,
 	updatePackageJsonFileAsync,
 	updatePackageJsonFile,
@@ -44,3 +52,9 @@ export type {
 	requireAssignableTo,
 	SkipUniqueSymbols,
 } from "./common/typeCompatibility";
+
+// re-export some stuff temporarily from build-infrastructure
+export {
+	type IPackage,
+	type ReleaseGroupName,
+} from "@fluid-tools/build-infrastructure";

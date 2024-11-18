@@ -12,6 +12,7 @@ import {
 	type IReleaseGroup,
 	type IWorkspace,
 	PackageBase,
+	type ReleaseGroupName,
 } from "@fluid-tools/build-infrastructure";
 import registerDebug from "debug";
 import detectIndent from "detect-indent";
@@ -95,7 +96,9 @@ export class BuildPackage extends PackageBase<FluidBuildPackageJson> {
 			isReleaseGroupRoot,
 		);
 		traceInit(`${this.nameColored}: Package loaded`);
-		this.monoRepo = new MonoRepo(releaseGroup);
+		this.monoRepo = isWorkspaceRoot
+			? new MonoRepo(releaseGroup, path.basename(packageJsonFilePath), releaseGroup, workspace)
+			: undefined;
 	}
 
 	public get matched() {
@@ -126,7 +129,7 @@ export class BuildPackage extends PackageBase<FluidBuildPackageJson> {
 
 	private _monoRepo: MonoRepo | undefined;
 
-	private set monoRepo(value: MonoRepo) {
+	private set monoRepo(value: MonoRepo | undefined) {
 		this._monoRepo = value;
 	}
 
@@ -237,15 +240,30 @@ export class MonoRepo {
 	public constructor(
 		public readonly kind: string,
 		public readonly repoPath: string,
-		private readonly releaseGroup: IReleaseGroup,
+		private readonly releaseGroupName: ReleaseGroupName,
+		private readonly workspace: IWorkspace,
 	) {}
 
 	public get name() {
-		return this.releaseGroup.name;
+		return this.workspace.name;
 	}
 
 	public get packages() {
-		return this.releaseGroup.packages;
+		return this.workspace.packages;
+	}
+
+	private _releaseGroup: IReleaseGroup | undefined;
+
+	public get releaseGroup() {
+		if (this._releaseGroup === undefined) {
+			this._releaseGroup = this.workspace.releaseGroups.get(this.releaseGroupName);
+			if (this._releaseGroup === undefined) {
+				throw new Error(
+					`Canot find release group "${this.releaseGroupName}" in workspace "${this.workspace.name}"`,
+				);
+			}
+		}
+		return this._releaseGroup;
 	}
 
 	public get version() {
