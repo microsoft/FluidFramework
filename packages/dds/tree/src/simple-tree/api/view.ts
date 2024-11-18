@@ -85,7 +85,6 @@ export class ViewSchema {
 					// stored schemas, it's sufficient to check if any extra allowed types still exist in the
 					// stored schema.
 					if (
-						discrepancy.stored.length > 0 &&
 						discrepancy.stored.some(
 							(identifier) =>
 								!isNeverTree(this.policy, stored, stored.nodeSchema.get(identifier)),
@@ -97,7 +96,6 @@ export class ViewSchema {
 					}
 
 					if (
-						discrepancy.view.length > 0 &&
 						discrepancy.view.some(
 							(identifier) =>
 								!isNeverTree(

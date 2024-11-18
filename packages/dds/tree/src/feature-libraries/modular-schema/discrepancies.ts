@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
+	type FieldKey,
 	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
