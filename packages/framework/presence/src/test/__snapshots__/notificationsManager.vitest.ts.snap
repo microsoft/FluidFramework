@@ -1,0 +1,73 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Presence > NotificationsManager > snapshot tests > notification signals are sent immediately > submitted signal 1`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1050,
+    "avgLatency": 10,
+    "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
+      "n:name:testNotificationWorkspace": {
+        "testEvents": {
+          "sessionId-2": {
+            "rev": 0,
+            "timestamp": 0,
+            "value": {
+              "name": "newId",
+              "args": [
+                77
+              ]
+            },
+            "ignoreUnmonitored": true
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > NotificationsManager > snapshot tests > notification signals are sent immediately > submitted signal 2`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1060,
+    "avgLatency": 10,
+    "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
+      "n:name:testNotificationWorkspace": {
+        "testEvents": {
+          "sessionId-2": {
+            "rev": 0,
+            "timestamp": 0,
+            "value": {
+              "name": "newId",
+              "args": [
+                88
+              ]
+            },
+            "ignoreUnmonitored": true
+          }
+        }
+      }
+    }
+  }
+]"
+`;
