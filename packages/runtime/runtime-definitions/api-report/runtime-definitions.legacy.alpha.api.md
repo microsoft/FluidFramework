@@ -150,6 +150,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
+    createChildDataStore?<T extends IFluidDataStoreFactory>(childFactory: T): ReturnType<Exclude<T["createDataStore"], undefined>>;
     // @deprecated (undocumented)
     readonly createProps?: any;
     // @deprecated (undocumented)
@@ -170,6 +171,9 @@ export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
 // @alpha
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
+    createDataStore?(context: IFluidDataStoreContext): {
+        readonly runtime: IFluidDataStoreChannel;
+    };
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     type: string;
 }
@@ -179,8 +183,7 @@ export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry;
 
 // @alpha
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
-    // (undocumented)
-    get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
+    get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> | FluidDataStoreRegistryEntry | undefined;
 }
 
 // @alpha
@@ -201,8 +204,6 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     deleteChildSummarizerNode(id: string): void;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // @deprecated
-    ensureNoDataModelChanges<T>(callback: () => T): T;
     // @deprecated (undocumented)
     readonly gcThrowOnTombstoneUsage: boolean;
     // @deprecated (undocumented)
@@ -377,10 +378,16 @@ export interface LocalAttributionKey {
 }
 
 // @alpha
-export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
+export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
 
 // @alpha
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+
+// @alpha
+export type NamedFluidDataStoreRegistryEntry2 = [
+string,
+Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
+];
 
 // @alpha
 export interface OpAttributionKey {

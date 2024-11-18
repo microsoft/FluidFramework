@@ -265,6 +265,7 @@ export type IMergeTreeDeltaOp =
 	| IMergeTreeInsertMsg
 	| IMergeTreeRemoveMsg
 	| IMergeTreeAnnotateMsg
+	| IMergeTreeAnnotateAdjustMsg
 	| IMergeTreeObliterateMsg
 	| IMergeTreeObliterateSidedMsg;
 

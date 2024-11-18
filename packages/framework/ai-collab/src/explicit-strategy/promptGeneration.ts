@@ -52,7 +52,7 @@ export function toDecoratedJson(
 				idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
 			assert(
 				!Object.prototype.hasOwnProperty.call(value, objectIdKey),
-				`Collision of object id property.`,
+				0xa7b /* Collision of object id property. */,
 			);
 			return {
 				[objectIdKey]: objId,
@@ -277,7 +277,7 @@ function getDef(defs: Record<string, JsonNodeSchema>, ref: string): JsonNodeSche
 	// strip the "#/$defs/" prefix
 	const strippedRef = ref.slice(8);
 	const nextDef = defs[strippedRef];
-	assert(nextDef !== undefined, "Ref not found.");
+	assert(nextDef !== undefined, 0xa7c /* Ref not found. */);
 	return nextDef;
 }
 
