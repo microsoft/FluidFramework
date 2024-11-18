@@ -128,7 +128,7 @@ stages:
   pool: Small
   dependsOn: ['check_branch_version']
   variables:
-    shouldDeploy: $[eq(dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'], 'true')]
+    shouldDeploy: $[dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy']]
   jobs:
     - job: testBash
       displayName: 'testbash'
