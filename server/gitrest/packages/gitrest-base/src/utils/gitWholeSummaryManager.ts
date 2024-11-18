@@ -53,6 +53,7 @@ export class GitWholeSummaryManager {
 		private readonly repoManager: IRepositoryManager,
 		private readonly lumberjackProperties: Record<string, any>,
 		private readonly externalStorageEnabled = true,
+		private cmkEncryptionScope?: string,
 		writeOptions?: Partial<ISummaryWriteFeatureFlags>,
 	) {
 		this.summaryWriteFeatureFlags = {
@@ -113,19 +114,20 @@ export class GitWholeSummaryManager {
 			lumberjackProperties,
 		);
 		try {
-			// Create blob container if initial summary and blobContainerPerDoc is enabled.
+			// when blobContainerPerDoc is enabled (timestamp conditions meets) and having cmkEncryptionScope,
+			// Pass cmkEncryptionScope to FRS filesystem (azurestorage at the bottom layer) and apply cmkEncryptionScope.
 			if (
-				isInitial &&
+				isInitial && this.cmkEncryptionScope &&
 				this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp &&
 				Date.now() > this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp
 			) {
 				const frsOptions: IFRSMakeDirectoryOptions = {
 					recursive: false,
-					scope: "cmk-scope",
+					cmkEncryptionScope: this.cmkEncryptionScope,
 				};
 				const summaryFolderPath = this.repoManager.path;
-				Lumberjack.warning(
-					`[Azfs-debug] Force created blob container, path: ${summaryFolderPath}`,
+				Lumberjack.info(
+					`Apply cmkEncryptionScope before initial summary upload.`,
 					lumberjackProperties,
 				);
 				await fileSystemManager.promises.mkdir(summaryFolderPath, frsOptions);

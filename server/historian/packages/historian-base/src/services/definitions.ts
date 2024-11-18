@@ -81,6 +81,13 @@ export interface ITenant {
 export interface ITenantCustomDataExternal extends ITenantCustomData {
 	externalStorageData?: IExternalStorage;
 	storageName?: string;
+	customerManagedKeySetting?: ICustomerManagedKeySetting;
+}
+
+export interface ICustomerManagedKeySetting {
+	identityType: string;
+	encryptionScopeName: string;
+	enabled: boolean;
 }
 
 export interface IExternalStorage {

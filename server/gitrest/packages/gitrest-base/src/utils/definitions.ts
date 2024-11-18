@@ -11,6 +11,7 @@ export enum Constants {
 	StorageRoutingIdHeader = "Storage-Routing-Id",
 	StorageNameHeader = "Storage-Name",
 	IsEphemeralContainer = "Is-Ephemeral-Container",
+	CmkEncryptionScope = "CMK-Encryption-Scope",
 }
 
 export interface IStorageDirectoryConfig {
@@ -114,14 +115,14 @@ export interface IRepoManagerParams {
 	fileSystemManagerParams?: IFileSystemManagerParams;
 	optimizeForInitialSummary?: boolean;
 	isEphemeralContainer?: boolean;
-	// This maybe the place to hookup cmk scope.
+	cmkEncryptionScope?: string;
 }
 
 export interface IFRSMakeDirectoryOptions extends MakeDirectoryOptions {
 	/**
 	 * FRS specific cmk encryption scope.
 	 */
-	scope: string;
+	cmkEncryptionScope: string;
 }
 
 export interface IRepositoryManagerFactory {

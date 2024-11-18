@@ -211,6 +211,7 @@ testFileSystems.forEach((fileSystem) => {
 					repoManager,
 					{ documentId, tenantId },
 					false /* externalStorageEnabled */,
+					undefined /* cmkEncryptionScope */,
 					{
 						enableLowIoWrite: testMode.enableLowIoWrite,
 						optimizeForInitialSummary: testMode.enableOptimizedInitialSummary,

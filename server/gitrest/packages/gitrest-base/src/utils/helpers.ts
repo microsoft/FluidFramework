@@ -77,6 +77,7 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 		request.get(Constants.StorageRoutingIdHeader),
 	);
 
+	const cmkEncryptionScope = request.get(Constants.CmkEncryptionScope);
 	const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
 
 	const isEphemeralContainer: boolean =
@@ -90,6 +91,7 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 			storageName,
 		},
 		isEphemeralContainer,
+		cmkEncryptionScope,
 	};
 }
 

@@ -65,6 +65,7 @@ export class RestGitService {
 		private readonly storageUrl?: string,
 		private readonly isEphemeralContainer?: boolean,
 		private readonly maxCacheableSummarySize?: number,
+		private readonly cmkEncryptionScope?: string,
 	) {
 		const defaultHeaders: RawAxiosRequestHeaders =
 			storageName !== undefined
@@ -84,6 +85,9 @@ export class RestGitService {
 			defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
 		}
 
+		if (cmkEncryptionScope) {
+			defaultHeaders[Constants.cmkEncryptionScope] = cmkEncryptionScope;
+		}
 		// We set the flag only for ephemeral containers
 		if (this.isEphemeralContainer) {
 			defaultHeaders[Constants.IsEphemeralContainer] = this.isEphemeralContainer;
@@ -104,6 +108,10 @@ export class RestGitService {
 
 		winston.info(restGitServiceCreationLog);
 		Lumberjack.info(restGitServiceCreationLog, this.lumberProperties);
+
+		// Todo: Debugging purposes, will be removed.
+		defaultHeaders[Constants.cmkEncryptionScope] = "cmk-test-scope";
+		Lumberjack.warning("[FrsCMK-Debug] Pass cmk scope", this.lumberProperties);
 
 		this.restWrapper = new BasicRestWrapper(
 			baseUrl,

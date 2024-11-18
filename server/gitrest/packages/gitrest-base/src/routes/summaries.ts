@@ -138,6 +138,7 @@ async function createSummary(
 	persistLatestFullEphemeralSummary = false,
 	enableLowIoWrite: "initial" | boolean = false,
 	optimizeForInitialSummary: boolean = false,
+	cmkEncryptionScope?: string,
 	enableContainerPerDocTimeStamp: number = 0,
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
 	const lumberjackProperties = {
@@ -150,6 +151,7 @@ async function createSummary(
 		repoManager,
 		lumberjackProperties,
 		externalWriterConfig?.enabled ?? false,
+		cmkEncryptionScope,
 		{
 			enableLowIoWrite,
 			optimizeForInitialSummary,
@@ -331,6 +333,7 @@ export function create(
 		// Todo: Add cmk encryption scope here.
 		const tenantId = repoManagerParams.storageRoutingId?.tenantId;
 		const documentId = repoManagerParams.storageRoutingId?.documentId;
+		const cmkEncryptionScope = repoManagerParams.cmkEncryptionScope;
 		// request.query type is { [string]: string } but it's actually { [string]: any }
 		// Account for possibilities of undefined, boolean, or string types. A number will be false.
 		const isInitialSummary: boolean | undefined =
@@ -398,6 +401,7 @@ export function create(
 					persistLatestFullEphemeralSummary,
 					enableLowIoWrite,
 					optimizeForInitialSummary,
+					cmkEncryptionScope,
 					enableContainerPerDocTimeStamp,
 				);
 			})().catch((error) => logAndThrowApiError(error, request, repoManagerParams));

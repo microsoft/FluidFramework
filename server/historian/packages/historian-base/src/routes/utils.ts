@@ -264,6 +264,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant);
 	const customData: ITenantCustomDataExternal = details.customData;
 	const writeToExternalStorage = !!customData?.externalStorageData;
+	const cmkEncryptionScope = customData?.customerManagedKeySetting?.encryptionScopeName;
 	const storageUrl = config.get("storageUrl") as string | undefined;
 	const ignoreEphemeralFlag: boolean = config.get("ignoreEphemeralFlag");
 	const maxCacheableSummarySize: number =
@@ -297,6 +298,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		storageUrl,
 		isEphemeral,
 		maxCacheableSummarySize,
+		cmkEncryptionScope,
 	);
 	return service;
 }
