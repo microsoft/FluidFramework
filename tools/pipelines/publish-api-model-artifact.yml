@@ -3,13 +3,13 @@
 
 # publish-api-model-artifact pipeline
 # This pipeline downloads the api-extractor artifacts from build pipelines and uploads them to the azure blob storage.
-# A check version stage is used to determine if the branch should be deployed.
-# If the release branch is the latest minor version of its major version series, it should be deployed.
-# After checking branch version, it triggers the deploy-website pipeline to build and deploy the Fluid Framework documentation website.
+# After the artifacts are uploaded, the pipeline triggers the deploy-website pipeline to deploy the website.
+# By default, artifacts are only published from the latest minor release branch of each major version series.
 
 name: $(Build.BuildId)
 
 parameters:
+  # override deployment condition to skip or force deployment
   - name: deployOverride
     displayName: Deployment Override (default = based on branch)
     type: string
@@ -18,6 +18,7 @@ parameters:
       - default
       - skip
       - force
+  # determines deployment token to be used for Azure Static Web Apps
   - name: deployEnvironment
     displayName: Static web app environment to deploy to
     type: string
@@ -25,6 +26,7 @@ parameters:
     values:
       - new
       - old
+  # determines whether to retain guardian assets
   - name: guardianAssetRetentionOverride
     displayName: Guardian Asset Retention Override (default = based on branch)
     type: string
@@ -33,6 +35,7 @@ parameters:
       - default
       - skip
       - force
+  # determines whether to publish guardian baseline files
   - name: publishGuardianBaselines
     displayName: Publish Guardian Baseline Files
     type: boolean
