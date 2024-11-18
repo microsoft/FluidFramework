@@ -131,9 +131,6 @@ stages:
       dependsOn: [] # run in parallel
       environment: 'fluid-docs-env'
       pool: Large
-      variables:
-        uploadAsLatestRelease: $[eq(stageDependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy', 'true')] ]
-        majorVersion: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetVersion.majorVersion'] ]
       strategy:
         runOnce:
           deploy:
@@ -142,8 +139,8 @@ stages:
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 uploadAsLatest: ${{ variables.isMain }}
-                uploadAsLatestRelease: $(uploadAsLatestRelease)
-                majorVersion: $(majorVersion)
+                uploadAsLatestRelease: $(SetShouldDeploy.uploadAsLatestRelease)
+                majorVersion: $(SetShouldDeploy.majorVersion)
 
 # Runs TriggerBuild@4 to trigger the deploy-website pipeline
 # this stage runs depending on the check_branch_version stage and deployOverride parameter
