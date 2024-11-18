@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
+	type FieldKey,
 	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -19,6 +20,8 @@ import {
 	type ValueSchema,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
+import type { FullSchemaPolicy } from "./fieldKind.js";
+import { isNeverField, isNeverTree } from "./isNeverTree.js";
 
 // TODO:
 // The comparisons in this file seem redundant with those in comparison.ts.
@@ -367,8 +370,16 @@ function* compareMaps<K, V1, V2>(
  * `isRepoSuperset` will determine that a can never be the superset of b. In contrast, `allowsRepoSuperset` will continue
  * validating internal fields.
  */
-export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema): boolean {
-	const discrepancies = getAllowedContentDiscrepancies(view, stored);
+export function isRepoSuperset(
+	policy: FullSchemaPolicy,
+	view: TreeStoredSchema,
+	stored: TreeStoredSchema,
+): boolean {
+	// normalize the stored schemas to eliminate the impact of NeverField
+	const normalizedView = normalizeStoredSchema(view, policy);
+	const normalizedStored = normalizeStoredSchema(stored, policy);
+
+	const discrepancies = getAllowedContentDiscrepancies(normalizedView, normalizedStored);
 
 	for (const discrepancy of discrepancies) {
 		switch (discrepancy.mismatch) {
@@ -526,4 +537,71 @@ function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
 
 function throwUnsupportedNodeType(type: string): never {
 	throw new TypeError(`Unsupported node stored schema type: ${type}`);
+}
+
+/**
+ * Returns a stored schema that allows an equivalent set of content, but with:
+ * - All never trees dropped from the schema
+ * - All never fields converted to explicit Forbidden fields
+ */
+function normalizeStoredSchema(
+	schema: TreeStoredSchema,
+	policy: FullSchemaPolicy,
+): TreeStoredSchema {
+	// TODO: Handling around normalizing fields seems weird and I'm not sure it's totally correct.
+	// Notably, seems like I should be checking multiplicity here a la what's done in isNeverField,
+	// but I'm not. Similar to problems one might have with explicit vs. implicit undefined.
+	if (isNeverField(policy, schema, schema.rootFieldSchema)) {
+		return {
+			rootFieldSchema: storedEmptyFieldSchema,
+			nodeSchema: new Map(),
+		};
+	}
+
+	const neverTrees = new Set<TreeNodeSchemaIdentifier>();
+	for (const [key, _nodeSchema] of schema.nodeSchema) {
+		if (isNeverTree(policy, schema, _nodeSchema)) {
+			neverTrees.add(key);
+		}
+	}
+
+	const normalizeFieldSchema = (field: TreeFieldStoredSchema): TreeFieldStoredSchema => {
+		const types = new Set(field.types);
+		for (const type of types) {
+			if (neverTrees.has(type)) {
+				types.delete(type);
+			}
+		}
+
+		return types.size === 0 ? storedEmptyFieldSchema : { kind: field.kind, types };
+	};
+
+	const nodeSchema = new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>();
+	for (const [key, value] of schema.nodeSchema) {
+		if (!neverTrees.has(key)) {
+			let normalized: TreeNodeStoredSchema;
+			if (value instanceof ObjectNodeStoredSchema) {
+				normalized = new ObjectNodeStoredSchema(
+					new Map<FieldKey, TreeFieldStoredSchema>(
+						Array.from(value.objectNodeFields, ([_key, field]) => [
+							_key,
+							normalizeFieldSchema(field),
+						]),
+					),
+				);
+			} else if (value instanceof MapNodeStoredSchema) {
+				normalized = new MapNodeStoredSchema(normalizeFieldSchema(value.mapFields));
+			} else if (value instanceof LeafNodeStoredSchema) {
+				normalized = value;
+			} else {
+				throw new TypeError("Unknown node schema type");
+			}
+			nodeSchema.set(key, normalized);
+		}
+	}
+
+	return {
+		rootFieldSchema: normalizeFieldSchema(schema.rootFieldSchema),
+		nodeSchema,
+	};
 }

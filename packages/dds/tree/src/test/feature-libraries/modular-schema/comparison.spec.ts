@@ -194,7 +194,7 @@ describe("Schema Comparison", () => {
 			isSuperset: boolean,
 		): void => {
 			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, view), isSuperset);
-			assert.equal(isRepoSuperset(view, stored), isSuperset);
+			assert.equal(isRepoSuperset(defaultSchemaPolicy, view, stored), isSuperset);
 		};
 
 		it("Same rootFieldSchema with different TreeNodeStoredSchemas", () => {
@@ -300,7 +300,7 @@ describe("Schema Comparison", () => {
 			});
 
 			testOrder(compareTwoRepo, repos);
-			assert.equal(isRepoSuperset(repos[1], repos[0]), true);
+			assert.equal(isRepoSuperset(defaultSchemaPolicy, repos[1], repos[0]), true);
 		});
 
 		it("Validate the ordering when the identifiers are different", () => {

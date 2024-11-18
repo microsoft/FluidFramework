@@ -29,7 +29,7 @@ import { fieldSchema } from "./comparison.spec.js";
 // This function can go away once the older codepath is removed, see comment on the top of `discrepancies.ts` for more information.
 function isRepoSuperset(superset: TreeStoredSchema, original: TreeStoredSchema): boolean {
 	const allowsSupersetResult = allowsRepoSuperset(defaultSchemaPolicy, original, superset);
-	const isRepoSupersetResult = isRepoSupersetOriginal(superset, original);
+	const isRepoSupersetResult = isRepoSupersetOriginal(defaultSchemaPolicy, superset, original);
 	assert.equal(
 		allowsSupersetResult,
 		isRepoSupersetResult,
@@ -158,17 +158,10 @@ describe("Schema Discrepancies", () => {
 			[],
 		);
 
-		/**
-		 * Below is an inconsistency between 'isRepoSuperset' and 'allowsRepoSuperset'. The 'isRepoSuperset' will
-		 * halt further validation if an inconsistency in `nodeKind` is found. However, the current logic of
-		 * 'allowsRepoSuperset' permits relaxing an object node to a map node, which allows for a union of all types
-		 * permitted on the object node's fields. It is unclear if this behavior is desired, as
-		 * 'getAllowedContentDiscrepancies' currently does not support it.
-		 *
-		 * TODO: If we decide to support this behavior, we will need better e2e tests for this scenario. Additionally,
-		 * we may need to adjust the encoding of map nodes and object nodes to ensure consistent encoding.
-		 */
-		assert.equal(isRepoSupersetOriginal(objectNodeSchema, mapNodeSchema), false);
+		assert.equal(
+			isRepoSupersetOriginal(defaultSchemaPolicy, objectNodeSchema, mapNodeSchema),
+			true,
+		);
 		assert.equal(
 			allowsRepoSuperset(defaultSchemaPolicy, objectNodeSchema, mapNodeSchema),
 			true,
@@ -551,6 +544,36 @@ describe("Schema Discrepancies", () => {
 			testTreeNodeIdentifier,
 			root1,
 		);
+
+		it("NeverTree", () => {
+			const root = storedEmptyFieldSchema;
+			const neverField = fieldSchema(FieldKinds.required, []);
+
+			// The never field will be converted to explict Forbidden fields when validating superset
+			const neverTree = createMapNodeSchema(neverField, testTreeNodeIdentifier, root);
+			const mapNodeSchema2 = createMapNodeSchema(
+				fieldSchema(FieldKinds.optional, [numberName]),
+				testTreeNodeIdentifier,
+				root,
+			);
+			validateStrictSuperset(mapNodeSchema2, neverTree);
+
+			// The never tree with "x" identifier will be dropped when validating superset
+			const neverTree2 = createObjectNodeSchema(
+				[
+					["x", neverField],
+					["y", fieldSchema(FieldKinds.required, [stringName])],
+				],
+				testTreeNodeIdentifier,
+				root,
+			);
+			const objectNodeSchema1 = createObjectNodeSchema(
+				[["y", fieldSchema(FieldKinds.optional, [stringName])]],
+				testTreeNodeIdentifier,
+				root,
+			);
+			validateStrictSuperset(objectNodeSchema1, neverTree2);
+		});
 
 		it("Relaxing a field kind to more general field kind", () => {
 			const mapNodeSchema2 = createMapNodeSchema(
