@@ -1,92 +1,94 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# build-build-tools pipeline
+# publish-api-model-artifact pipeline
+# This pipeline downloads the api-extractor artifacts from build pipelines and uploads them to the azure blob storage.
+# After the artifacts are uploaded, the pipeline triggers the deploy-website pipeline to deploy the website.
+# By default, artifacts are only published from the latest minor release branch of each major version series.
 
 name: $(Build.BuildId)
 
 parameters:
-- name: releaseBuildOverride
-  displayName: Release Build (default = not released)
-  type: string
-  default: none
-  values:
-    - none
-    - prerelease
-    - release
-- name: publishOverride
-  displayName: Publish Override (default = based on branch)
-  type: string
-  default: default
-  values:
-    - default
-    - skip
-    - force
-- name: interdependencyRange
-  displayName: Range to use for interdependencies (only affects releases) (default = ~)
-  type: string
-  default: "~"
-  # The " " value (a space) is a hacky workaround. ADO doesn't support empty string, but we ultimately use this value as
-  # an environment variable in a bash script (the 'update package versions' step), where it gets coerced back to the
-  # empty string.
-  values:
-    - "^"
-    - "~"
-    - " "
-- name: buildToolsVersionToInstall
-  displayName: Fluid build tools version (default = installs version in repo)
-  type: string
-  default: repo
+  # override deployment condition to skip or force deployment
+  - name: deployOverride
+    displayName: Deployment Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+  # determines deployment token to be used for Azure Static Web Apps
+  - name: deployEnvironment
+    displayName: Static web app environment to deploy to
+    type: string
+    default: new
+    values:
+      - new
+      - old
+  # determines whether to retain guardian assets
+  - name: guardianAssetRetentionOverride
+    displayName: Guardian Asset Retention Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+  # determines whether to publish guardian baseline files
+  - name: publishGuardianBaselines
+    displayName: Publish Guardian Baseline Files
+    type: boolean
+    default: false
+
+variables:
+  - group: doc-versions
+  - group: storage-vars
+  - name: repoToTrigger
+    value: microsoft/FluidFramework
+  - name: latestPipeline
+    value: ${{ or(
+      eq(variables['Build.SourceBranchName'], 'main'),
+      eq(variables['Build.SourceBranchName'], 'pl-test')
+      )}}
+  - name: n1Branch
+    value: ${{ join('/refs/heads/release/', variables['N1_BRANCH']) }}
+  - name: n1Pipeline
+    value: ${{ eq(variables['Build.SourceBranchName'], variables['N1_BRANCH']) }}
+  - name: releasePipeline
+    value: ${{ eq(variables['Build.SourceBranchName'], variables['RELEASE_BRANCH']) }}
+  - name: validRun
+    value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
+  - name: Packaging.EnableSBOMSigning
+    value: true
+  - name: isMain
+    value: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
+  - name: shouldRetainGuardianAssets
+    value: ${{ or(
+      eq(parameters.guardianAssetRetentionOverride, 'force'),
+      eq(parameters.guardianAssetRetentionOverride, 'default')
+      )}}
+  - name: deploymentToken
+    ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
+      value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
+    ${{ if eq( parameters['deployEnvironment'], 'old') }}:
+      value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
+  # skip injected CG detection as we manually trigger it in a parallel job
+  - name: skipComponentGovernanceDetection
+    value: true
+  - name: pnpmStorePath
+    value: $(Pipeline.Workspace)/.pnpm-store
 
 trigger:
   branches:
     include:
-    - main
-    - next
-    - lts
-  paths:
-    include:
-    - .prettierignore
-    - biome.json
-    - biome.jsonc
-    - build-tools
-    - common/build/build-common
-    - tools/pipelines/build-build-tools.yml
-    - tools/pipelines/templates/build-npm-package.yml
-    - tools/pipelines/templates/include-set-package-version.yml
-    - tools/pipelines/templates/include-vars.yml
-    - tools/pipelines/templates/include-install-pnpm.yml
-    - tools/pipelines/templates/include-publish-npm-package.yml
-    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
-    - tools/pipelines/templates/include-publish-npm-package-steps.yml
-    - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
-    - tools/pipelines/templates/upload-dev-manifest.yml
-    - scripts/*
-
-pr:
-  branches:
-    include:
-    - main
-    - next
-    - lts
-    - release/*
-  paths:
-    include:
-    - .prettierignore
-    - build-tools
-    - common/build/build-common
-    - tools/pipelines/build-build-tools.yml
-    - tools/pipelines/templates/build-npm-package.yml
-    - tools/pipelines/templates/include-set-package-version.yml
-    - tools/pipelines/templates/include-vars.yml
-    - tools/pipelines/templates/include-install-pnpm.yml
-    - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
-    - tools/pipelines/templates/upload-dev-manifest.yml
-    - scripts/*
+    - release/**
+pr: none
 
 stages:
+# Check release version of branch, and determine if the branch should be deployed
+# If the branch is the latest minor version of its major version series, it should be deployed
+# also, the artifact will be uploaded as latest-v*.tar.gz where * is the major version
 - stage: check_branch_version
   displayName: 'Check Version Deployment Condition'
   pool: Small
@@ -94,6 +96,10 @@ stages:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
       steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
         - template: /tools/pipelines/templates/include-install-build-tools.yml
           parameters:
             buildDirectory: $(Build.SourcesDirectory)
@@ -115,45 +121,57 @@ stages:
             targetType: 'inline'
             workingDirectory: $(Build.SourcesDirectory)
             script: |
-              echo "generated buildVersion: $(SetVersion.version)"
-              # Check if the version is the latest minor of its corresponding major version series, if not, return error and  skip deployment
-              flub check latestVersions
-              echo "Task shouldDeploy is set to: $(shouldDeploy)"
-        - bash: |
-            echo $(SetShouldDeploy.shouldDeploy)
+              # Check if the version is the latest minor of its corresponding major version series
+              # Sets variable shouldDeploy to true if the version is the latest minor and false otherwise
+              # Sets variable majorVersion to the major version extracted from $(SetVersion.version)
+              flub check latestVersions $(SetVersion.version) client
 
-- stage: testbash
-  displayName: 'testbash'
-  dependsOn: ['check_branch_version']
+    - deployment: upload_json
+      displayName: 'Combine api-extractor JSON'
+      dependsOn: [] # run in parallel
+      environment: 'fluid-docs-env'
+      pool: Large
+      variables:
+        uploadAsLatestRelease: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'] ]
+        majorVersion: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetVersion.majorVersion'] ]
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - template: templates/upload-json-steps.yml
+              parameters:
+                STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                uploadAsLatest: ${{ variables.isMain }}
+                uploadAsLatestRelease: $(uploadAsLatestRelease)
+                majorVersion: $(majorVersion)
+
+# Runs TriggerBuild@4 to trigger the deploy-website pipeline
+# this stage runs depending on the check_branch_version stage and deployOverride parameter
+# the trigger is configured such that deploy-website runs using main branch resources
+# this ensures that the generated website is up-to-date with the latest changes
+- stage: deploy docs
+  displayName: 'Deploy website'
   pool: Small
+  dependsOn: ['build', 'guardian', 'check_branch_version']
   jobs:
-    - job: testBash
-      displayName: 'testbash'
+    - job: deploy_site
+      displayName: 'Deploy website'
       variables:
         shouldDeploy: $[eq(stageDependencies.check_branch_version.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'], 'true')]
-        testVar: $[stageDependencies.check_branch_version.check_branch_version.outputs['SetShouldDeploy.shouldDeploy']]
       steps:
-        - task: Bash@3
-          name: test
-          displayName: 'test'
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
-            script: |
-              echo test line
-              echo "shouldDeploy: $(shouldDeploy)"
-              echo "testVar: $(testVar)"
-
+        - checkout: self
+          submodules: false
+          clean: true
         - task: TriggerBuild@4
           condition: eq(variables['shouldDeploy'], 'true')
           inputs:
             definitionIsInCurrentTeamProject: True
-            buildDefinition: 'build-docs'
+            buildDefinition: 'deploy-website'
             useSameSourceVersion: False
             useSameBranch: False
-            branchToUse: test/michaelzhen
+            branchToUse: main
+            templateParameters: 'deployOverride:${{ parameters.deployOverride }}, deployEnvironment:${{ parameters.deployEnvironment }}, guardianAssetRetentionOverride:${{ parameters.guardianAssetRetentionOverride }}, publishGuardianBaselines:${{ parameters.publishGuardianBaselines }}'
             storeInEnvironmentVariable: True
-            templateParameters: 'shouldDeploy:$(shouldDeploy), releaseBuildOverride:${{ parameters.releaseBuildOverride }}, publishOverride:${{ parameters.publishOverride }}, interdependencyRange:${{ parameters.interdependencyRange }}'
             authenticationMethod: 'OAuth Token'
             password: '$(System.AccessToken)'
-          displayName: Run build-docs pipeline
+          displayName: Run deploy-website pipeline
