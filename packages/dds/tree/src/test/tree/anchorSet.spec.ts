@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type Anchor,
@@ -416,8 +416,8 @@ describe("AnchorSet", () => {
 		// AnchorSet does not guarantee event ordering within a batch so use UnorderedTestLogger.
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
-		anchors.on("childrenChanging", log.logger("root childrenChange"));
-		anchors.on("treeChanging", log.logger("root treeChange"));
+		anchors.events.on("childrenChanging", log.logger("root childrenChange"));
+		anchors.events.on("treeChanging", log.logger("root treeChange"));
 
 		const detachMark: DeltaMark = {
 			count: 1,
@@ -436,10 +436,10 @@ describe("AnchorSet", () => {
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 
-		node0.on("childrenChanging", log.logger("childrenChanging"));
-		node0.on("childrenChanged", log.logger("childrenChanged"));
-		node0.on("subtreeChanging", log.logger("subtreeChange"));
-		node0.on("afterDestroy", log.logger("afterDestroy"));
+		node0.events.on("childrenChanging", log.logger("childrenChanging"));
+		node0.events.on("childrenChanged", log.logger("childrenChanged"));
+		node0.events.on("subtreeChanging", log.logger("subtreeChange"));
+		node0.events.on("afterDestroy", log.logger("afterDestroy"));
 
 		log.expect([]);
 
@@ -506,7 +506,7 @@ describe("AnchorSet", () => {
 
 		const expectedChangedFields = new Set<FieldKey>([fieldOne, fieldTwo, fieldThree]);
 		let listenerFired = false;
-		node0.on("childrenChangedAfterBatch", ({ changedFields }) => {
+		node0.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
 			// This is the main validation of this test
 			assert.deepEqual(changedFields, expectedChangedFields);
 			listenerFired = true;
@@ -653,7 +653,10 @@ describe("AnchorSet", () => {
 				)();
 			},
 		};
-		const unsubscribePathVisitor = node0.on("subtreeChanging", (n: AnchorNode) => pathVisitor);
+		const unsubscribePathVisitor = node0.events.on(
+			"subtreeChanging",
+			(n: AnchorNode) => pathVisitor,
+		);
 		announceTestDelta(insertAtFoo4, anchors, undefined, undefined, build);
 		log.expect([
 			["visitSubtreeChange.beforeAttach-src:Temp-0[0, 1]-dst:foo[4]", 1],

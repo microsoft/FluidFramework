@@ -224,7 +224,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
 		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
-		protected readonly overrides?: { minimumSequenceNumber?: number },
+		protected readonly overrides?: { minimumSequenceNumber?: number | undefined },
 	) {
 		super();
 		this.deltaManager = new MockDeltaManager(() => this.clientId);
@@ -571,7 +571,7 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
-	private lastProcessedMessage?: ISequencedDocumentMessage;
+	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
 	private processFirstMessage() {
 		assert(this.messages.length > 0, "The message queue should not be empty");
 
@@ -766,12 +766,11 @@ export class MockAudience
 		return this.audienceMembers.get(clientId);
 	}
 
-	public getSelf() {
+	public getSelf(): ISelf | undefined {
 		return this._currentClientId === undefined
 			? undefined
 			: {
 					clientId: this._currentClientId,
-					client: undefined,
 				};
 	}
 
@@ -818,10 +817,14 @@ export class MockFluidDataStoreRuntime
 			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", ""),
 		);
 		this.id = overrides?.id ?? uuid();
-		this.logger = createChildLogger({
-			logger: overrides?.logger,
+		const childLoggerProps: Parameters<typeof createChildLogger>[0] = {
 			namespace: "fluid:MockFluidDataStoreRuntime",
-		});
+		};
+		const logger = overrides?.logger;
+		if (logger !== undefined) {
+			childLoggerProps.logger = logger;
+		}
+		this.logger = createChildLogger(childLoggerProps);
 		this.idCompressor = overrides?.idCompressor;
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 

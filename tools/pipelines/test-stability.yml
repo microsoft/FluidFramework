@@ -11,7 +11,7 @@ pr: none
 parameters:
 - name: poolBuild
   type: object
-  default: Large
+  default: Large-eastus2
 
 - name: stageNames
   type: object

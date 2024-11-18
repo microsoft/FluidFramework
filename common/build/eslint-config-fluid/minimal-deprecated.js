@@ -101,6 +101,15 @@ module.exports = {
 		"@fluid-internal/fluid/no-member-release-tags": "error",
 
 		/**
+		 * Rule to enforce safe property access on index signature types.
+		 *
+		 * Reports issues when non-array index properties are accessed without handling
+		 * the possibility that they are absent.
+		 * Enabling `noUncheckedIndexedAccess` will disable these checks.
+		 */
+		"@fluid-internal/fluid/no-unchecked-record-access": "error",
+
+		/**
 		 * The @rushstack rules are documented in the package README:
 		 * {@link https://www.npmjs.com/package/@rushstack/eslint-plugin}
 		 */
@@ -254,45 +263,30 @@ module.exports = {
 
 		// #region FORMATTING RULES
 
-		// Disabled because it conflicts with formatter rules
+		// We use formatting tools like Biome or prettier to format code, so most formatting-related rules are superfluous
+		// and are disabled. Running fewer rules also improves lint performance.
+
+		// The rules below are also deprecated in more recent versions of eslint/plugins
 		"@typescript-eslint/brace-style": "off",
-		"@typescript-eslint/comma-spacing": "error",
-		"@typescript-eslint/func-call-spacing": "error",
-		"@typescript-eslint/keyword-spacing": "error",
-		"@typescript-eslint/member-delimiter-style": [
-			"error",
-			{
-				multiline: {
-					delimiter: "semi",
-					requireLast: true,
-				},
-				singleline: {
-					delimiter: "semi",
-					requireLast: true,
-				},
-				multilineDetection: "brackets",
-			},
-		],
-		"@typescript-eslint/object-curly-spacing": ["error", "always"],
-		"@typescript-eslint/semi": ["error", "always"],
-		"@typescript-eslint/space-before-function-paren": [
-			"error",
-			{
-				anonymous: "never",
-				asyncArrow: "always",
-				named: "never",
-			},
-		],
-		"@typescript-eslint/space-infix-ops": "error",
-		"@typescript-eslint/type-annotation-spacing": "error",
-		"array-bracket-spacing": "error",
-		"arrow-spacing": "error",
-		"block-spacing": "error",
-		"dot-location": ["error", "property"],
-		"jsx-quotes": "error",
-		"key-spacing": "error",
-		"space-unary-ops": "error",
-		"switch-colon-spacing": "error",
+		"@typescript-eslint/comma-spacing": "off",
+		"@typescript-eslint/func-call-spacing": "off",
+		"@typescript-eslint/keyword-spacing": "off",
+		"@typescript-eslint/member-delimiter-style": "off",
+		"@typescript-eslint/semi": "off",
+		"@typescript-eslint/space-before-function-paren": "off",
+		"@typescript-eslint/space-infix-ops": "off",
+		"@typescript-eslint/type-annotation-spacing": "off",
+
+		// The rules below are deprecated in our current version of eslint/plugins
+		"@typescript-eslint/object-curly-spacing": "off",
+		"array-bracket-spacing": "off",
+		"arrow-spacing": "off",
+		"block-spacing": "off",
+		"dot-location": "off",
+		"jsx-quotes": "off",
+		"key-spacing": "off",
+		"space-unary-ops": "off",
+		"switch-colon-spacing": "off",
 
 		// #endregion
 
@@ -432,7 +426,13 @@ module.exports = {
 		},
 		{
 			// Rules only for test files
-			files: ["*.spec.ts", "*.test.ts", "**/test/**"],
+			files: [
+				"*.spec.ts",
+				"*.test.ts",
+				"**/test/**",
+				// TODO: consider unifying code across the repo to use "test" and not "tests", then we can remove this.
+				"**/tests/**",
+			],
 			rules: {
 				"@typescript-eslint/no-invalid-this": "off",
 				"@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
@@ -452,6 +452,9 @@ module.exports = {
 						),
 					},
 				],
+
+				// Test code may leverage dev dependencies
+				"import/no-extraneous-dependencies": ["error", { devDependencies: true }],
 			},
 		},
 	],
