@@ -57,7 +57,7 @@ run_task_test() {
 
   echo "Executing: npm $command in $build_directory"
   pushd "$build_directory" > /dev/null
-  npm $command
+  npm run $command
   popd > /dev/null
 }
 
@@ -67,7 +67,7 @@ if [[ "${startTest}" == "true" ]]; then
   # Loop through the array of test steps and run each in parallel
   for task_test_step in "${TASK_TEST_ARRAY[@]}"; do
     TEST_COVERAGE=$(compute_test_coverage "$task_test_step")
-    run_task_test "$task_test_step" "$BUILD_DIRECTORY" "$TEST_COVERAGE" &
+    run_task_test "$task_test_step" "$BUILD_DIR" "$TEST_COVERAGE" &
   done
 
   # Wait for all parallel tasks to complete
