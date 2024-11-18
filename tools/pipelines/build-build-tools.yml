@@ -119,6 +119,8 @@ stages:
               # Check if the version is the latest minor of its corresponding major version series, if not, return error and  skip deployment
               flub check latestVersions
               echo "Task shouldDeploy is set to: $(shouldDeploy)"
+        - bash: |
+            echo $(SetShouldDeploy.shouldDeploy)
 
 - stage: testbash
   displayName: 'testbash'
