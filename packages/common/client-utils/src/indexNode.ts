@@ -26,3 +26,5 @@ export {
 	TypedEventEmitter,
 	type TypedEventTransform,
 } from "./typedEventEmitter.js";
+
+export { CustomEventEmitter } from "./events/index.js";
