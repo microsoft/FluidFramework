@@ -370,7 +370,7 @@ extends:
                           )
                         )
                       }}
-                      $(Build.SourcesDirectory)/scripts/run_parallel_tests.sh "${{ parameters.taskTest }}" "${{ parameters.buildDirectory }}" "variables['Build.Reason']"
+                      $(Build.SourcesDirectory)/scripts/run_parallel_tests.sh ${{ parameters.taskTest }} "${{ parameters.buildDirectory }}" "variables['Build.Reason']"
                     displayName: Run Tests in Parallel
                     failOnStderr: true
                     condition: succeededOrFailed()
