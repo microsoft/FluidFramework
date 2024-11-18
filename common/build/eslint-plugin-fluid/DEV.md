@@ -31,10 +31,11 @@ This guide outlines the steps required to add new ESLint rules, update dependenc
    │   │   └── rule-one.test.js
    │   └── rule-two/				<!-- Test suite for rule-two -->
    │       └── rule-two.test.js
+   ```
 
 3. **Update Changelog**: Record the new rule in the `CHANGELOG.md` file of the `@fluid-internal/eslint-plugin-fluid` package. This provides visibility into what was added for future reference.
 
-4. **Version Bump**: Update the version of `eslint-plugin-fluid` in its `package.json` following [Fluid Semantic Versioning](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/dev/wiki/sync/breaking-vs-non-breaking-changes) guidelines. Typically:
+4. **Version Bump**: Update the version of `eslint-plugin-fluid` in its `package.json` following the [semantic versioning guidelines](https://semver.org/):
    - **Patch** version for fixes (backward-compatible)
    - **Minor** version for new rules (backward-compatible)
    - **Major** version for breaking changes
@@ -43,7 +44,7 @@ This guide outlines the steps required to add new ESLint rules, update dependenc
 
 Once PR 1 is merged, publish the new version of `@fluid-internal/eslint-plugin-fluid` by following the steps:
 
-1. **Publish**: Follow the [guide](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/on-call/release/release) to publish the new version of `@fluid-internal/eslint-plugin-fluid`.
+1. **Publish**: Publish the new version of `@fluid-internal/eslint-plugin-fluid` following the internal engineering documentation (Publishing _must_ be done by Microsoft Fluid team).
 
 2. **Verify Release**: Confirm that the release was successful by checking the package version on the [NPM Registry](https://www.npmjs.com/package/@fluid-internal/eslint-plugin-fluid).
 
@@ -51,13 +52,9 @@ Once PR 1 is merged, publish the new version of `@fluid-internal/eslint-plugin-f
 
 In `@fluidframework/eslint-config-fluid`, update the version of `@fluid-internal/eslint-plugin-fluid` to the newly published version:
 
-1. **Bump Dependency**: Update the dependency in `package.json` to reference the latest version of `@fluid-internal/eslint-plugin-fluid`.
-
-2. **Open PR**: Submit a pull request for this update.
-
 ### 4. Add New Rule to the Appropriate Config
 
-Depending on the scope of the rule, add it to one of the following configurations (NOTE: `recommended` extends `minimal-deprecated.js`):
+Depending on the scope of the rule, add it to one of the following configurations (NOTE: `recommended.js` extends `minimal-deprecated.js`):
    - `minimal-deprecated.js`
    - `recommended.js`
    - `strict.js`
@@ -68,8 +65,8 @@ Depending on the scope of the rule, add it to one of the following configuration
 
 3. **Fix Violations in the Repo**:
    - Install the local version of `eslint-config-fluid` across relevant release groups.
-   - Run the linter to identify and fix any violations.
-   - To simplify integration, add the following to the `pnpmOverrides` section of the relevant `package.json` files:
+   - Run the linter to identify and fix any violations locally.
+   - To simplify integration, add the following to the `pnpmOverrides` section of the relevant `package.json` files (make sure *NOT* to check `pnpmOverrides` change in):
      ```json
      {
        "pnpmOverrides": {
@@ -80,7 +77,8 @@ Depending on the scope of the rule, add it to one of the following configuration
 
 ### 5. Publish New Version of `eslint-config-fluid`
 
-Once the PR is merged, publish the new version of `eslint-config-fluid` following the [guide](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/on-call/release/release).
-
+Once the PR is merged, publish the new version of `eslint-config-fluid` following the internal engineering documentation (Same as `eslint-plugin-fluid` package, `@fluidframework/eslint-config-fluid` _must_ be published by Microsoft Fluid team).
 
 ### 6. Update Dependencies on `eslint-config-fluid` Across the Repo (PR 3)
+
+Once the new version of `eslint-config-fluid` is published, ensure all packages consuming `eslint-config-fluid` in the repository are updated to use the latest version. This includes updating the dependency in the `package.json` files and running a full test suite to confirm compatibility and stability across the repo.
