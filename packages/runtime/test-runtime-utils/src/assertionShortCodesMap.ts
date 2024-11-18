@@ -1648,6 +1648,5 @@ export const shortCodeMap = {
 	"0xa7d": "Expected at least two types",
 	"0xa7e": "Expected at least two types",
 	"0xa7f": "Delta manager does not have inbound/outbound queues.",
-	"0xa80": "Invalid delta manager",
-	"0xa81": "must be a LocalDetachedFluidDataStoreContext"
+	"0xa80": "Invalid delta manager"
 };

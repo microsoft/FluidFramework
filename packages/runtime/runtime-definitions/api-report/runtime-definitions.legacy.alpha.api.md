@@ -150,7 +150,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
 export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
-    createChildDataStore?<T extends IFluidDataStoreFactory>(childFactory: T): ReturnType<Exclude<T["createDataStore"], undefined>>;
     // @deprecated (undocumented)
     readonly createProps?: any;
     // @deprecated (undocumented)
@@ -171,9 +170,6 @@ export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
 // @alpha
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
-    createDataStore?(context: IFluidDataStoreContext): {
-        readonly runtime: IFluidDataStoreChannel;
-    };
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     type: string;
 }
@@ -183,7 +179,8 @@ export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry;
 
 // @alpha
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
-    get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> | FluidDataStoreRegistryEntry | undefined;
+    // (undocumented)
+    get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
 }
 
 // @alpha
@@ -378,16 +375,10 @@ export interface LocalAttributionKey {
 }
 
 // @alpha
-export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
+export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
 
 // @alpha
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
-
-// @alpha
-export type NamedFluidDataStoreRegistryEntry2 = [
-string,
-Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
-];
 
 // @alpha
 export interface OpAttributionKey {

@@ -30,7 +30,6 @@ export type {
 	IProvideFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
-	NamedFluidDataStoreRegistryEntry2,
 } from "./dataStoreRegistry.js";
 export { IFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export type {
