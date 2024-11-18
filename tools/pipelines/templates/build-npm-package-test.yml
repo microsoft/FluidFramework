@@ -403,6 +403,11 @@ extends:
                   lfs: '${{ parameters.checkoutSubmodules }}'
                   submodules: '${{ parameters.checkoutSubmodules }}'
 
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: buildOutput
+                    targetPath: '${{ parameters.buildDirectory }}'
+
                 - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
                 - template: /tools/pipelines/templates/include-install.yml@self
@@ -410,11 +415,6 @@ extends:
                     packageManager: '${{ parameters.packageManager }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
-
-                - task: DownloadPipelineArtifact@2
-                  inputs:
-                    artifact: buildOutput
-                    targetPath: '${{ parameters.buildDirectory }}'
 
                 # Test
                 - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
