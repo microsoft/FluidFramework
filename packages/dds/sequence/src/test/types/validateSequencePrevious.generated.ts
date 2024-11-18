@@ -31,6 +31,7 @@ declare type old_as_current_for_Class_BaseSegment = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_BaseSegment": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_BaseSegment = requireAssignableTo<TypeOnly<current.BaseSegment>, TypeOnly<old.BaseSegment>>
 
 /*
@@ -49,6 +50,7 @@ declare type old_as_current_for_Class_Marker = requireAssignableTo<TypeOnly<old.
  * typeValidation.broken:
  * "Class_Marker": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_Marker = requireAssignableTo<TypeOnly<current.Marker>, TypeOnly<old.Marker>>
 
 /*
@@ -67,6 +69,7 @@ declare type old_as_current_for_Class_SequenceDeltaEvent = requireAssignableTo<T
  * typeValidation.broken:
  * "Class_SequenceDeltaEvent": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_SequenceDeltaEvent = requireAssignableTo<TypeOnly<current.SequenceDeltaEvent>, TypeOnly<old.SequenceDeltaEvent>>
 
 /*
@@ -85,6 +88,7 @@ declare type old_as_current_for_Class_SequenceEvent = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Class_SequenceEvent": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_SequenceEvent = requireAssignableTo<TypeOnly<current.SequenceEvent>, TypeOnly<old.SequenceEvent>>
 
 /*
@@ -103,6 +107,7 @@ declare type old_as_current_for_Class_SequenceInterval = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_SequenceInterval": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_SequenceInterval = requireAssignableTo<TypeOnly<current.SequenceInterval>, TypeOnly<old.SequenceInterval>>
 
 /*
@@ -121,6 +126,7 @@ declare type old_as_current_for_Class_SequenceMaintenanceEvent = requireAssignab
  * typeValidation.broken:
  * "Class_SequenceMaintenanceEvent": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_SequenceMaintenanceEvent = requireAssignableTo<TypeOnly<current.SequenceMaintenanceEvent>, TypeOnly<old.SequenceMaintenanceEvent>>
 
 /*
@@ -130,7 +136,8 @@ declare type current_as_old_for_Class_SequenceMaintenanceEvent = requireAssignab
  * typeValidation.broken:
  * "Class_SharedSegmentSequence": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_SharedSegmentSequence = requireAssignableTo<TypeOnly<old.SharedSegmentSequence<any>>, TypeOnly<current.SharedSegmentSequence<any>>>
+// @ts-expect-error compatibility expected to be broken
+declare type old_as_current_for_Class_SharedSegmentSequence = requireAssignableTo<TypeOnly<old.SharedSegmentSequence<never>>, TypeOnly<current.SharedSegmentSequence<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -139,7 +146,7 @@ declare type old_as_current_for_Class_SharedSegmentSequence = requireAssignableT
  * typeValidation.broken:
  * "Class_SharedSegmentSequence": {"backCompat": false}
  */
-declare type current_as_old_for_Class_SharedSegmentSequence = requireAssignableTo<TypeOnly<current.SharedSegmentSequence<any>>, TypeOnly<old.SharedSegmentSequence<any>>>
+declare type current_as_old_for_Class_SharedSegmentSequence = requireAssignableTo<TypeOnly<current.SharedSegmentSequence<never>>, TypeOnly<old.SharedSegmentSequence<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -148,6 +155,7 @@ declare type current_as_old_for_Class_SharedSegmentSequence = requireAssignableT
  * typeValidation.broken:
  * "Class_SharedStringClass": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_SharedStringClass = requireAssignableTo<TypeOnly<old.SharedStringClass>, TypeOnly<current.SharedStringClass>>
 
 /*
@@ -175,6 +183,7 @@ declare type old_as_current_for_Class_TextSegment = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_TextSegment": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_TextSegment = requireAssignableTo<TypeOnly<current.TextSegment>, TypeOnly<old.TextSegment>>
 
 /*
@@ -193,6 +202,7 @@ declare type old_as_current_for_Class_TrackingGroup = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Class_TrackingGroup": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_TrackingGroup = requireAssignableTo<TypeOnly<current.TrackingGroup>, TypeOnly<old.TrackingGroup>>
 
 /*
@@ -202,6 +212,7 @@ declare type current_as_old_for_Class_TrackingGroup = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "ClassStatics_BaseSegment": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_BaseSegment = requireAssignableTo<TypeOnly<typeof current.BaseSegment>, TypeOnly<typeof old.BaseSegment>>
 
 /*
@@ -211,6 +222,7 @@ declare type current_as_old_for_ClassStatics_BaseSegment = requireAssignableTo<T
  * typeValidation.broken:
  * "ClassStatics_Marker": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_Marker = requireAssignableTo<TypeOnly<typeof current.Marker>, TypeOnly<typeof old.Marker>>
 
 /*
@@ -278,6 +290,7 @@ declare type current_as_old_for_ClassStatics_SharedStringClass = requireAssignab
  * typeValidation.broken:
  * "ClassStatics_TextSegment": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_TextSegment = requireAssignableTo<TypeOnly<typeof current.TextSegment>, TypeOnly<typeof old.TextSegment>>
 
 /*
@@ -287,6 +300,7 @@ declare type current_as_old_for_ClassStatics_TextSegment = requireAssignableTo<T
  * typeValidation.broken:
  * "ClassStatics_TrackingGroup": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_TrackingGroup = requireAssignableTo<TypeOnly<typeof current.TrackingGroup>, TypeOnly<typeof old.TrackingGroup>>
 
 /*
@@ -440,7 +454,7 @@ declare type current_as_old_for_Interface_IInterval = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Interface_IIntervalCollection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IIntervalCollection = requireAssignableTo<TypeOnly<old.IIntervalCollection<any>>, TypeOnly<current.IIntervalCollection<any>>>
+declare type old_as_current_for_Interface_IIntervalCollection = requireAssignableTo<TypeOnly<old.IIntervalCollection<never>>, TypeOnly<current.IIntervalCollection<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -449,7 +463,7 @@ declare type old_as_current_for_Interface_IIntervalCollection = requireAssignabl
  * typeValidation.broken:
  * "Interface_IIntervalCollection": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IIntervalCollection = requireAssignableTo<TypeOnly<current.IIntervalCollection<any>>, TypeOnly<old.IIntervalCollection<any>>>
+declare type current_as_old_for_Interface_IIntervalCollection = requireAssignableTo<TypeOnly<current.IIntervalCollection<never>>, TypeOnly<old.IIntervalCollection<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -458,7 +472,7 @@ declare type current_as_old_for_Interface_IIntervalCollection = requireAssignabl
  * typeValidation.broken:
  * "Interface_IIntervalCollectionEvent": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IIntervalCollectionEvent = requireAssignableTo<TypeOnly<old.IIntervalCollectionEvent<any>>, TypeOnly<current.IIntervalCollectionEvent<any>>>
+declare type old_as_current_for_Interface_IIntervalCollectionEvent = requireAssignableTo<TypeOnly<old.IIntervalCollectionEvent<never>>, TypeOnly<current.IIntervalCollectionEvent<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -467,7 +481,7 @@ declare type old_as_current_for_Interface_IIntervalCollectionEvent = requireAssi
  * typeValidation.broken:
  * "Interface_IIntervalCollectionEvent": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IIntervalCollectionEvent = requireAssignableTo<TypeOnly<current.IIntervalCollectionEvent<any>>, TypeOnly<old.IIntervalCollectionEvent<any>>>
+declare type current_as_old_for_Interface_IIntervalCollectionEvent = requireAssignableTo<TypeOnly<current.IIntervalCollectionEvent<never>>, TypeOnly<old.IIntervalCollectionEvent<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -494,7 +508,7 @@ declare type current_as_old_for_Interface_InteriorSequencePlace = requireAssigna
  * typeValidation.broken:
  * "Interface_IntervalIndex": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IntervalIndex = requireAssignableTo<TypeOnly<old.IntervalIndex<any>>, TypeOnly<current.IntervalIndex<any>>>
+declare type old_as_current_for_Interface_IntervalIndex = requireAssignableTo<TypeOnly<old.IntervalIndex<never>>, TypeOnly<current.IntervalIndex<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -503,7 +517,7 @@ declare type old_as_current_for_Interface_IntervalIndex = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_IntervalIndex": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IntervalIndex = requireAssignableTo<TypeOnly<current.IntervalIndex<any>>, TypeOnly<old.IntervalIndex<any>>>
+declare type current_as_old_for_Interface_IntervalIndex = requireAssignableTo<TypeOnly<current.IntervalIndex<never>>, TypeOnly<old.IntervalIndex<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -512,7 +526,7 @@ declare type current_as_old_for_Interface_IntervalIndex = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_IOverlappingIntervalsIndex": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IOverlappingIntervalsIndex = requireAssignableTo<TypeOnly<old.IOverlappingIntervalsIndex<any>>, TypeOnly<current.IOverlappingIntervalsIndex<any>>>
+declare type old_as_current_for_Interface_IOverlappingIntervalsIndex = requireAssignableTo<TypeOnly<old.IOverlappingIntervalsIndex<never>>, TypeOnly<current.IOverlappingIntervalsIndex<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -521,7 +535,7 @@ declare type old_as_current_for_Interface_IOverlappingIntervalsIndex = requireAs
  * typeValidation.broken:
  * "Interface_IOverlappingIntervalsIndex": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IOverlappingIntervalsIndex = requireAssignableTo<TypeOnly<current.IOverlappingIntervalsIndex<any>>, TypeOnly<old.IOverlappingIntervalsIndex<any>>>
+declare type current_as_old_for_Interface_IOverlappingIntervalsIndex = requireAssignableTo<TypeOnly<current.IOverlappingIntervalsIndex<never>>, TypeOnly<old.IOverlappingIntervalsIndex<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -539,6 +553,7 @@ declare type old_as_current_for_Interface_ISegment = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Interface_ISegment": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISegment = requireAssignableTo<TypeOnly<current.ISegment>, TypeOnly<old.ISegment>>
 
 /*
@@ -557,6 +572,7 @@ declare type old_as_current_for_Interface_ISequenceDeltaRange = requireAssignabl
  * typeValidation.broken:
  * "Interface_ISequenceDeltaRange": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISequenceDeltaRange = requireAssignableTo<TypeOnly<current.ISequenceDeltaRange>, TypeOnly<old.ISequenceDeltaRange>>
 
 /*
@@ -575,6 +591,7 @@ declare type old_as_current_for_Interface_ISerializableInterval = requireAssigna
  * typeValidation.broken:
  * "Interface_ISerializableInterval": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISerializableInterval = requireAssignableTo<TypeOnly<current.ISerializableInterval>, TypeOnly<old.ISerializableInterval>>
 
 /*
@@ -602,7 +619,7 @@ declare type current_as_old_for_Interface_ISerializedInterval = requireAssignabl
  * typeValidation.broken:
  * "Interface_ISharedIntervalCollection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedIntervalCollection = requireAssignableTo<TypeOnly<old.ISharedIntervalCollection<any>>, TypeOnly<current.ISharedIntervalCollection<any>>>
+declare type old_as_current_for_Interface_ISharedIntervalCollection = requireAssignableTo<TypeOnly<old.ISharedIntervalCollection<never>>, TypeOnly<current.ISharedIntervalCollection<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -611,7 +628,7 @@ declare type old_as_current_for_Interface_ISharedIntervalCollection = requireAss
  * typeValidation.broken:
  * "Interface_ISharedIntervalCollection": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedIntervalCollection = requireAssignableTo<TypeOnly<current.ISharedIntervalCollection<any>>, TypeOnly<old.ISharedIntervalCollection<any>>>
+declare type current_as_old_for_Interface_ISharedIntervalCollection = requireAssignableTo<TypeOnly<current.ISharedIntervalCollection<never>>, TypeOnly<old.ISharedIntervalCollection<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -620,7 +637,8 @@ declare type current_as_old_for_Interface_ISharedIntervalCollection = requireAss
  * typeValidation.broken:
  * "Interface_ISharedSegmentSequence": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedSegmentSequence = requireAssignableTo<TypeOnly<old.ISharedSegmentSequence<any>>, TypeOnly<current.ISharedSegmentSequence<any>>>
+// @ts-expect-error compatibility expected to be broken
+declare type old_as_current_for_Interface_ISharedSegmentSequence = requireAssignableTo<TypeOnly<old.ISharedSegmentSequence<never>>, TypeOnly<current.ISharedSegmentSequence<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -629,7 +647,7 @@ declare type old_as_current_for_Interface_ISharedSegmentSequence = requireAssign
  * typeValidation.broken:
  * "Interface_ISharedSegmentSequence": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedSegmentSequence = requireAssignableTo<TypeOnly<current.ISharedSegmentSequence<any>>, TypeOnly<old.ISharedSegmentSequence<any>>>
+declare type current_as_old_for_Interface_ISharedSegmentSequence = requireAssignableTo<TypeOnly<current.ISharedSegmentSequence<never>>, TypeOnly<old.ISharedSegmentSequence<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -656,6 +674,7 @@ declare type current_as_old_for_Interface_ISharedSegmentSequenceEvents = require
  * typeValidation.broken:
  * "Interface_ISharedString": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ISharedString = requireAssignableTo<TypeOnly<old.ISharedString>, TypeOnly<current.ISharedString>>
 
 /*
@@ -683,7 +702,7 @@ declare type current_as_old_for_Interface_LocalReferencePosition = requireAssign
  * typeValidation.broken:
  * "Interface_MapLike": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_MapLike = requireAssignableTo<TypeOnly<old.MapLike<any>>, TypeOnly<current.MapLike<any>>>
+declare type old_as_current_for_Interface_MapLike = requireAssignableTo<TypeOnly<old.MapLike<never>>, TypeOnly<current.MapLike<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -692,7 +711,7 @@ declare type old_as_current_for_Interface_MapLike = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Interface_MapLike": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_MapLike = requireAssignableTo<TypeOnly<current.MapLike<any>>, TypeOnly<old.MapLike<any>>>
+declare type current_as_old_for_Interface_MapLike = requireAssignableTo<TypeOnly<current.MapLike<never>>, TypeOnly<old.MapLike<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -710,6 +729,7 @@ declare type old_as_current_for_Interface_ReferencePosition = requireAssignableT
  * typeValidation.broken:
  * "Interface_ReferencePosition": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ReferencePosition = requireAssignableTo<TypeOnly<current.ReferencePosition>, TypeOnly<old.ReferencePosition>>
 
 /*
@@ -764,6 +784,7 @@ declare type old_as_current_for_TypeAlias_IntervalRevertible = requireAssignable
  * typeValidation.broken:
  * "TypeAlias_IntervalRevertible": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IntervalRevertible = requireAssignableTo<TypeOnly<current.IntervalRevertible>, TypeOnly<old.IntervalRevertible>>
 
 /*
@@ -845,6 +866,7 @@ declare type current_as_old_for_TypeAlias_SequencePlace = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_SharedString": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_SharedString = requireAssignableTo<TypeOnly<old.SharedString>, TypeOnly<current.SharedString>>
 
 /*
@@ -872,6 +894,7 @@ declare type old_as_current_for_TypeAlias_SharedStringRevertible = requireAssign
  * typeValidation.broken:
  * "TypeAlias_SharedStringRevertible": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_SharedStringRevertible = requireAssignableTo<TypeOnly<current.SharedStringRevertible>, TypeOnly<old.SharedStringRevertible>>
 
 /*
@@ -890,6 +913,7 @@ declare type old_as_current_for_TypeAlias_SharedStringSegment = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_SharedStringSegment": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_SharedStringSegment = requireAssignableTo<TypeOnly<current.SharedStringSegment>, TypeOnly<old.SharedStringSegment>>
 
 /*

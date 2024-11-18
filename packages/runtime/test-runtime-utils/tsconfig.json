@@ -7,6 +7,8 @@
 		"outDir": "./lib",
 		"noImplicitOverride": true,
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false,
+		"exactOptionalPropertyTypes": true,
+		// Skip lib check to avoid exactOptionalPropertyTypes errors in dependencies (routerlicious-driver)
+		"skipLibCheck": true,
 	},
 }

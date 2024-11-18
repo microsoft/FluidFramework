@@ -1,5 +1,43 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [5.5.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.5.1)
+
+### Disabled rules
+
+The formatting-related rules below have been disabled in all configs because we use biome or prettier to enforce
+formatting conventions. In addition, most of these rules are now deprecated because linters are decreasing their focus
+on formatting-related rules in favor of dedicated formatting tools.
+
+#### typescript-eslint
+
+-   @typescript-eslint/comma-spacing
+-   @typescript-eslint/func-call-spacing
+-   @typescript-eslint/keyword-spacing
+-   @typescript-eslint/member-delimiter-style
+-   @typescript-eslint/object-curly-spacing
+-   @typescript-eslint/semi
+-   @typescript-eslint/space-before-function-paren
+-   @typescript-eslint/space-infix-ops
+-   @typescript-eslint/type-annotation-spacing
+
+#### eslint
+
+All rules below are deprecated. See <https://eslint.org/docs/latest/rules/#deprecated>
+
+-   array-bracket-spacing
+-   arrow-spacing
+-   block-spacing
+-   dot-location
+-   jsx-quotes
+-   key-spacing
+-   space-unary-ops
+-   switch-colon-spacing
+
+### Better test pattern support
+
+Update rule overrides for test code to better support patterns in the repo.
+Namely, adds the allowance to "\*\*/tests" directories.
+
 ## [5.4.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.4.0)
 
 ### New no-unchecked-record-access rule

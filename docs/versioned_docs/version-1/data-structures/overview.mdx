@@ -1,0 +1,76 @@
+---
+title: Types of distributed data structures
+sidebar_position: 1
+---
+
+The Fluid Framework provides developers with distributed data structures (DDSes) that automatically ensure that each
+connected client has access to the same state. The APIs provided by DDSes are designed to be familiar to programmers
+who've used common data structures before.
+
+:::note
+
+This article assumes that you are familiar with
+[Introducing distributed data structures](/docs/build/dds).
+
+:::
+
+A distributed data structure behaves like a local data structure. Your code can add data, remove data, update existing data,
+etc.
+However, a DDS is not a local object.
+A DDS can also be changed by other clients that expose the same parent container of the DDS.
+Because users can simultaneously change the same DDS, you need to consider which DDS to use for modeling your data.
+
+:::note[Meaning of "simultaneously"]
+
+Two or more clients are said to make a change _simultaneously_ if they each make a change before they have received the
+others' changes from the server.
+
+:::
+
+Choosing the correct data structure for your scenario can improve the performance and code structure of your application.
+
+DDSes vary from each other by three characteristics:
+
+-   **Basic data structure:** For example, key-value pair, a sequence, or a queue.
+-   **Client autonomy vs. Consensus:** An _optimistic_ DDS enables any client to unilaterally change a value and the new
+    value is relayed to all other clients, while a _consensus-based_ DDS will only allow a change if it is accepted by other clients via a
+    consensus process.
+-   **Merge policy:** The policy that determines how conflicting changes from clients are resolved.
+
+Below we've enumerated the data structures and described when they may be most useful.
+
+## SharedMap
+
+[SharedMap](./map) is a basic key-value data structure.
+It is optimistic and uses a last-writer-wins merge policy.
+Although the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
+
+### Common Problems
+
+-   Storing a lot of data in one key-value entry may cause performance or merge issues.
+    Each update will update the entire value rather than merging two updates.
+    Try splitting the data across multiple keys.
+-   Storing arrays, lists, or logs in a single key-value entry may lead to unexpected behavior because users can't collaboratively modify parts of one entry.
+
+## SharedString
+
+The [SharedString](./string) DDS is used for unstructured text data that can be collaboratively edited. It is optimistic.
+
+## Consensus data structures
+
+Consensus data structures have one or both of these characteristics:
+
+-   Only one client can perform a particular action on a particular data item, such as pull an item off of a queue.
+-   An action, such as changing a value, can occur only when all clients consent to it.
+
+These DDSes are **not** optimistic. Before a change to a consensus data structure is confirmed, the connected clients
+must acknowledge the change.
+
+-   TaskManager (experimental) -- Tracks queues of clients that want to exclusively run a task.
+
+### Consensus scenarios
+
+Typical scenarios require the connected clients to "agree" on some course of action.
+
+-   Import data from an external source. (Multiple clients doing this could lead to duplicate data.)
+-   Upgrade a data schema. (All clients agree to simultaneously make the change.)

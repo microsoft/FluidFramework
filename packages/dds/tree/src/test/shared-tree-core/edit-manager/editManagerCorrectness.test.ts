@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
@@ -749,7 +749,7 @@ function trackTrimmed(
 	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
 ): ReadonlySet<RevisionTag> {
 	const trimmedCommits = new Set<RevisionTag>();
-	branch.on("ancestryTrimmed", (trimmedRevisions) => {
+	branch.events.on("ancestryTrimmed", (trimmedRevisions) => {
 		trimmedRevisions.forEach((revision) => trimmedCommits.add(revision));
 	});
 	return trimmedCommits;

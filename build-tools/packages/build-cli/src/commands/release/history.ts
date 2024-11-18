@@ -4,7 +4,7 @@
  */
 
 import { Flags } from "@oclif/core";
-import chalk from "chalk";
+import chalk from "picocolors";
 import { table } from "table";
 
 import {
@@ -137,7 +137,7 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 			const bumpType = detectBumpType(displayPreviousVersion, ver.version);
 			const displayBumpType = highlight(`${bumpType}`);
 
-			const displayVersionSection = chalk.grey(
+			const displayVersionSection = chalk.gray(
 				`${highlight(ver.version)} <-- ${displayPreviousVersion}`,
 			);
 
