@@ -359,15 +359,17 @@ extends:
                   - script: |
                       export startTest=true
 
-                      # Convert the array into a space-separated string
-                      TASK_TEST_ARRAY=("${{ parameters.taskTest[@] }}")
+                      # Join the array elements into a space-separated string
+                      TASK_TEST_STRING="${{ join(parameters.taskTest, ' ') }}"
                       BUILD_REASON="${{ variables['Build.Reason'] }}"
+                      BUILD_DIR="${{ parameters.buildDirectory }}"
 
-                      # Call the script with the array and other parameters
-                      $(Build.SourcesDirectory)/scripts/run_parallel_tests.sh "${TASK_TEST_ARRAY[@]}" "${{ parameters.buildDirectory }}" "$BUILD_REASON"
+                      # Pass the string to the script
+                      $(Build.SourcesDirectory)/scripts/run_parallel_tests.sh "$TASK_TEST_STRING" "$BUILD_DIR" "$BUILD_REASON"
                     displayName: Run Tests in Parallel
                     failOnStderr: true
                     condition: succeededOrFailed()
+
 
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
