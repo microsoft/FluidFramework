@@ -7,7 +7,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import {
 	type Brand,

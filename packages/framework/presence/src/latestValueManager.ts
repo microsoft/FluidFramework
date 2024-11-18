@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { createEmitter } from "@fluid-internal/client-utils";
 
 import type { ValueManager } from "./internalTypes.js";

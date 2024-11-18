@@ -14,6 +14,7 @@ import type {
 
 /**
  * Subset of Map interface.
+ * @internal
  */
 interface MapGetSet<K, V> {
 	get(key: K): V | undefined;
@@ -26,6 +27,7 @@ interface MapGetSet<K, V> {
  * @param key - The key to lookup in the map
  * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
+ * @internal
  */
 function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V {
 	let value = map.get(key);
@@ -202,7 +204,7 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  * Create a {@link @fluidframework/core-interfaces#Listenable} that can be instructed to emit events via the {@link @fluidframework/core-interfaces#IEmitter} interface.
  *
  * A class can delegate handling {@link @fluidframework/core-interfaces#Listenable} to the returned value while using it to emit the events.
- * See also {@link CustomEventEmitter} which be used as a base class to implement {@link @fluidframework/core-interfaces#Listenable} via extension.
+ * See also CustomEventEmitter which be used as a base class to implement {@link @fluidframework/core-interfaces#Listenable} via extension.
  * @example Forwarding events to the emitter
  * ```typescript
  * interface MyEvents {
