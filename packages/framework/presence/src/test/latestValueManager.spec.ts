@@ -29,15 +29,17 @@ export function checkCompiles(): void {
 		camera: Latest({ x: 0, y: 0, z: 0 }),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
-	const map: typeof statesWorkspace = statesWorkspace;
+	const workspace: typeof statesWorkspace = statesWorkspace;
+	const props = workspace.props;
 
-	map.add("caret", Latest({ id: "", pos: 0 }));
+	workspace.add("caret", Latest({ id: "", pos: 0 }));
 
-	const fakeAdd = map.caret.local.pos + map.camera.local.z + map.cursor.local.x;
+	const fakeAdd =
+		workspace.props.caret.local.pos + props.camera.local.z + props.cursor.local.x;
 	console.log(fakeAdd);
 
 	// @ts-expect-error local may be set wholly, but partially it is readonly
-	map.caret.local.pos = 0;
+	workspace.props.caret.local.pos = 0;
 
 	function logClientValue<
 		T /* following extends should not be required: */ extends Record<string, unknown>,
@@ -46,7 +48,7 @@ export function checkCompiles(): void {
 	}
 
 	// Create new cursor state
-	const cursor = map.cursor;
+	const cursor = props.cursor;
 
 	// Update our cursor position
 	cursor.local = { x: 1, y: 2 };

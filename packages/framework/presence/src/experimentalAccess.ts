@@ -19,7 +19,7 @@ import type {
 	IContainerExtension,
 	IExtensionMessage,
 	IExtensionRuntime,
-} from "@fluid-experimental/presence/internal/container-definitions/internal";
+} from "@fluidframework/presence/internal/container-definitions/internal";
 
 function isContainerExtensionStore(
 	manager: ContainerExtensionStore | IContainerRuntimeBase | IContainerExperimental,

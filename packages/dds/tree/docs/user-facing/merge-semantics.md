@@ -358,7 +358,7 @@ By contrast, `SharedTree`'s move semantics ensure that Bob's edit will be visibl
 In choosing the merge semantics of the set of edits initially supported by `SharedTree`,
 we have strived to keep the preconditions of those edits minimal.
 At this time, with the exception of [schema changes](#schema-changes), which have more preconditions,
-all supported edits have the same single precondition:
+most supported edits have the same single precondition:
 the document schema must not have been concurrently changed.
 
 As illustrated [above](#preconditions),
@@ -428,7 +428,7 @@ A conditional postcondition is a postcondition of the form "If \<condition\> the
 (with any number of "else if" branches).
 For example, a remove edit that was designed not to affect concurrently moved nodes would be characterized as
 "If the node was concurrently moved then the node is unaffected, otherwise, the node is removed".
-After an edit with such a conditional postcondition is applied, it is not certain whether the targeted no will be removed or not.
+After an edit with such a conditional postcondition is applied, it is not certain whether the targeted node will be removed or not.
 
 None of `SharedTree`'s currently supported edits have conditional postconditions.
 This means that every edit, so long as its preconditions are met, is guaranteed to always have the same effect.
@@ -526,4 +526,8 @@ The merge semantics will be improved in the future to be less conservative.
 
 ## Merge Semantics by Node Kind
 
-TODO: add a separate document for each node kind and link to them from here.
+For specifics on the merge semantics of individual edits operations for each node type, 
+
+[Object Node](object-merge-semantics.md)
+[Map Node](map-merge-semantics.md)
+[Array Node](array-merge-semantics.md)

@@ -41,6 +41,7 @@ declare type current_as_old_for_Class_BaseSegment = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_Client": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_Client = requireAssignableTo<TypeOnly<old.Client>, TypeOnly<current.Client>>
 
 /*
@@ -125,6 +126,7 @@ declare type current_as_old_for_Class_MergeNode = requireAssignableTo<TypeOnly<c
  * typeValidation.broken:
  * "Class_PropertiesManager": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_PropertiesManager = requireAssignableTo<TypeOnly<old.PropertiesManager>, TypeOnly<current.PropertiesManager>>
 
 /*
@@ -134,6 +136,7 @@ declare type old_as_current_for_Class_PropertiesManager = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Class_PropertiesManager": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_PropertiesManager = requireAssignableTo<TypeOnly<current.PropertiesManager>, TypeOnly<old.PropertiesManager>>
 
 /*
@@ -276,6 +279,7 @@ declare type current_as_old_for_ClassStatics_MergeNode = requireAssignableTo<Typ
  * typeValidation.broken:
  * "ClassStatics_PropertiesManager": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_PropertiesManager = requireAssignableTo<TypeOnly<typeof current.PropertiesManager>, TypeOnly<typeof old.PropertiesManager>>
 
 /*
@@ -432,7 +436,7 @@ declare type current_as_old_for_Interface_AttributionPolicy = requireAssignableT
  * typeValidation.broken:
  * "Interface_IAttributionCollection": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IAttributionCollection = requireAssignableTo<TypeOnly<old.IAttributionCollection<any>>, TypeOnly<current.IAttributionCollection<any>>>
+declare type old_as_current_for_Interface_IAttributionCollection = requireAssignableTo<TypeOnly<old.IAttributionCollection<never>>, TypeOnly<current.IAttributionCollection<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -441,7 +445,7 @@ declare type old_as_current_for_Interface_IAttributionCollection = requireAssign
  * typeValidation.broken:
  * "Interface_IAttributionCollection": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IAttributionCollection = requireAssignableTo<TypeOnly<current.IAttributionCollection<any>>, TypeOnly<old.IAttributionCollection<any>>>
+declare type current_as_old_for_Interface_IAttributionCollection = requireAssignableTo<TypeOnly<current.IAttributionCollection<never>>, TypeOnly<old.IAttributionCollection<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -459,7 +463,7 @@ declare type current_as_old_for_Interface_IAttributionCollectionSerializer = req
  * typeValidation.broken:
  * "Interface_IAttributionCollectionSpec": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IAttributionCollectionSpec = requireAssignableTo<TypeOnly<old.IAttributionCollectionSpec<any>>, TypeOnly<current.IAttributionCollectionSpec<any>>>
+declare type old_as_current_for_Interface_IAttributionCollectionSpec = requireAssignableTo<TypeOnly<old.IAttributionCollectionSpec<never>>, TypeOnly<current.IAttributionCollectionSpec<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -468,7 +472,7 @@ declare type old_as_current_for_Interface_IAttributionCollectionSpec = requireAs
  * typeValidation.broken:
  * "Interface_IAttributionCollectionSpec": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IAttributionCollectionSpec = requireAssignableTo<TypeOnly<current.IAttributionCollectionSpec<any>>, TypeOnly<old.IAttributionCollectionSpec<any>>>
+declare type current_as_old_for_Interface_IAttributionCollectionSpec = requireAssignableTo<TypeOnly<current.IAttributionCollectionSpec<never>>, TypeOnly<old.IAttributionCollectionSpec<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -932,7 +936,7 @@ declare type current_as_old_for_Interface_ISegment = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Interface_ISegmentAction": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISegmentAction = requireAssignableTo<TypeOnly<old.ISegmentAction<any>>, TypeOnly<current.ISegmentAction<any>>>
+declare type old_as_current_for_Interface_ISegmentAction = requireAssignableTo<TypeOnly<old.ISegmentAction<never>>, TypeOnly<current.ISegmentAction<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -941,7 +945,7 @@ declare type old_as_current_for_Interface_ISegmentAction = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_ISegmentAction": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISegmentAction = requireAssignableTo<TypeOnly<current.ISegmentAction<any>>, TypeOnly<old.ISegmentAction<any>>>
+declare type current_as_old_for_Interface_ISegmentAction = requireAssignableTo<TypeOnly<current.ISegmentAction<never>>, TypeOnly<old.ISegmentAction<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -978,7 +982,7 @@ declare type current_as_old_for_Interface_LocalReferencePosition = requireAssign
  * typeValidation.broken:
  * "Interface_MapLike": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_MapLike = requireAssignableTo<TypeOnly<old.MapLike<any>>, TypeOnly<current.MapLike<any>>>
+declare type old_as_current_for_Interface_MapLike = requireAssignableTo<TypeOnly<old.MapLike<never>>, TypeOnly<current.MapLike<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -987,7 +991,7 @@ declare type old_as_current_for_Interface_MapLike = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Interface_MapLike": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_MapLike = requireAssignableTo<TypeOnly<current.MapLike<any>>, TypeOnly<old.MapLike<any>>>
+declare type current_as_old_for_Interface_MapLike = requireAssignableTo<TypeOnly<current.MapLike<never>>, TypeOnly<old.MapLike<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

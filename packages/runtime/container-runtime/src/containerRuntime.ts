@@ -19,6 +19,8 @@ import {
 	IRuntime,
 	LoaderHeader,
 	IDeltaManager,
+	IDeltaManagerFull,
+	isIDeltaManagerFull,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
@@ -1114,7 +1116,7 @@ export class ContainerRuntime
 			undefined, // summaryConfiguration
 		);
 
-		runtime.blobManager.trackPendingStashedUploads().then(
+		runtime.blobManager.stashedBlobsUploadP.then(
 			() => {
 				// make sure we didn't reconnect before the promise resolved
 				if (runtime.delayConnectClientId !== undefined && !runtime.disposed) {
@@ -1259,16 +1261,18 @@ export class ContainerRuntime
 	 * accesses such as sets "read-only" mode for the summarizer client. This is the default delta manager that should
 	 * be used unless the innerDeltaManager is required.
 	 */
-	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+		return this._deltaManager;
+	}
+
+	private readonly _deltaManager: IDeltaManagerFull;
+
 	/**
 	 * The delta manager provided by the container context. By default, using the default delta manager (proxy)
 	 * should be sufficient. This should be used only if necessary. For example, for validating and propagating connected
 	 * events which requires access to the actual real only info, this is needed.
 	 */
-	private readonly innerDeltaManager: IDeltaManager<
-		ISequencedDocumentMessage,
-		IDocumentMessage
-	>;
+	private readonly innerDeltaManager: IDeltaManagerFull;
 
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
@@ -1528,6 +1532,7 @@ export class ContainerRuntime
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		};
 
+		assert(isIDeltaManagerFull(deltaManager), 0xa80 /* Invalid delta manager */);
 		this.innerDeltaManager = deltaManager;
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
@@ -1644,7 +1649,7 @@ export class ContainerRuntime
 			this.logger,
 		);
 
-		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+		let outerDeltaManager: IDeltaManagerFull;
 		this.useDeltaManagerOpsProxy =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
@@ -1663,7 +1668,7 @@ export class ContainerRuntime
 			outerDeltaManager = pendingOpsDeltaManagerProxy;
 		}
 
-		this.deltaManager = outerDeltaManager;
+		this._deltaManager = outerDeltaManager;
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -2034,7 +2039,7 @@ export class ContainerRuntime
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 		});
 
-		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this, this.logger);
+		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.logger);
 		BindBatchTracker(this, this.logger);
 
 		this.entryPoint = new LazyPromise(async () => {
@@ -2239,8 +2244,8 @@ export class ContainerRuntime
 			});
 			// If the inbound deltas queue is paused or disconnected, we expect a reconnect and unpause
 			// as long as it's not a summarizer client.
-			if (this.deltaManager.inbound.paused) {
-				props.inboundPaused = this.deltaManager.inbound.paused; // reusing telemetry
+			if (this._deltaManager.inbound.paused) {
+				props.inboundPaused = this._deltaManager.inbound.paused; // reusing telemetry
 			}
 			const defP = new Deferred<boolean>();
 			this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
@@ -3946,7 +3951,7 @@ export class ContainerRuntime
 			) === true;
 
 		try {
-			await this.deltaManager.inbound.pause();
+			await this._deltaManager.inbound.pause();
 			if (shouldPauseInboundSignal) {
 				await this.deltaManager.inboundSignal.pause();
 			}
@@ -4211,7 +4216,7 @@ export class ContainerRuntime
 			this._summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
 
 			// Restart the delta manager
-			this.deltaManager.inbound.resume();
+			this._deltaManager.inbound.resume();
 			if (shouldPauseInboundSignal) {
 				this.deltaManager.inboundSignal.resume();
 			}

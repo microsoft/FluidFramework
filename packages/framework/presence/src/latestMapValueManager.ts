@@ -18,11 +18,11 @@ import { brandIVM } from "./valueManager.js";
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
-import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
-import { createEmitter } from "@fluid-experimental/presence/internal/events";
-import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
-import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
+} from "@fluidframework/presence/internal/core-interfaces";
+import type { ISubscribable } from "@fluidframework/presence/internal/events";
+import { createEmitter } from "@fluidframework/presence/internal/events";
+import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
+import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 
 /**
  * Collection of latest known values for a specific client.
@@ -296,7 +296,6 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	readonly local: ValueMap<Keys, T>;
 	/**
 	 * Iterable access to remote clients' map of values.
-	 * @remarks This is not yet implemented.
 	 */
 	clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
 	/**

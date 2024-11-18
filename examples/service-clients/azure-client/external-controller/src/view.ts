@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IPresence, LatestValueManager } from "@fluid-experimental/presence";
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+import type { IPresence, LatestValueManager } from "@fluidframework/presence/alpha";
 
 import { ICustomUserDetails } from "./app.js";
 import { IDiceRollerController } from "./controller.js";
@@ -168,14 +168,25 @@ function makePresenceView(
 	if (audience !== undefined) {
 		presenceConfig.presence.events.on("attendeeJoined", (attendee) => {
 			const name = audience.getMembers().get(attendee.getConnectionId())?.name;
-			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} with id ${attendee.sessionId} joined`;
+			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} 🔗 with id ${attendee.sessionId} joined`;
 			addLogEntry(logContentDiv, update);
+		});
+
+		presenceConfig.presence.events.on("attendeeDisconnected", (attendee) => {
+			// Filter for remote attendees
+			const self = audience.getMyself();
+			if (self && attendee !== presenceConfig.presence.getAttendee(self.currentConnection)) {
+				const name = audience.getMembers().get(attendee.getConnectionId())?.name;
+				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ⛓️‍💥 with id ${attendee.sessionId} left`;
+				addLogEntry(logContentDiv, update);
+			}
 		});
 	}
 	logDiv.append(logHeaderDiv, logContentDiv);
 
 	presenceConfig.lastRoll.events.on("updated", (update) => {
-		const updateText = `updated ${update.client.sessionId.slice(0, 8)}'s last rolls to ${JSON.stringify(update.value)}`;
+		const connected = update.client.getConnectionStatus() === "Connected" ? "🔗" : "⛓️‍💥";
+		const updateText = `updated ${update.client.sessionId.slice(0, 8)}'s ${connected} last rolls to ${JSON.stringify(update.value)}`;
 		addLogEntry(logContentDiv, updateText);
 
 		makeDiceValuesView(statesContentDiv, presenceConfig.lastRoll);
