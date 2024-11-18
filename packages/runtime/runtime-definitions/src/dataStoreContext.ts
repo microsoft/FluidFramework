@@ -598,7 +598,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
 	/**
-	 * This function creates a detached child data store synchronously.
+	 * Synchronously creates a detached child data store.
 	 *
 	 * The `createChildDataStoreSync` method allows for the synchronous creation of a detached child data store. This is particularly
 	 * useful in scenarios where immediate availability of the child data store is required, such as during the initialization
