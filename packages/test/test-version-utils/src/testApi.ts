@@ -28,7 +28,7 @@ import { SharedMatrix } from "@fluidframework/matrix/internal";
 import * as orderedCollection from "@fluidframework/ordered-collection/internal";
 import { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
 // eslint-disable-next-line import/no-internal-modules
-import * as presence from "@fluidframework/presence/alpha";
+import * as presence from "@fluidframework/presence/internal/datastorePresenceManagerFactory";
 import * as registerCollection from "@fluidframework/register-collection/internal";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import * as sequence from "@fluidframework/sequence/internal";

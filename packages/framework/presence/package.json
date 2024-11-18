@@ -42,6 +42,10 @@
 		"./internal/exposedUtilityTypes": {
 			"import": "./lib/exposedUtilityTypes.js",
 			"require": "./dist/exposedUtilityTypes.js"
+		},
+		"./internal/datastorePresenceManagerFactory": {
+			"import": "./lib/datastorePresenceManagerFactory.js",
+			"require": "./dist/datastorePresenceManagerFactory.js"
 		}
 	},
 	"files": [

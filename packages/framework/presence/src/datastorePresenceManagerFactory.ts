@@ -51,8 +51,10 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 
 /**
  * Factory class to create {@link IPresence} in own data store.
+ *
+ * @internal
  */
-class PresenceManagerFactory {
+export class PresenceManagerFactory {
 	public is(value: IFluidLoadable | ExperimentalPresenceDO): value is ExperimentalPresenceDO {
 		return value instanceof PresenceManagerDataObject;
 	}
