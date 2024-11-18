@@ -73,7 +73,7 @@ class SessionClient implements ISessionClient {
 
 	public setConnected(): void {
 		this.connectionStatus = SessionClientStatus.Connected;
-	};
+	}
 
 	public setDisconnected(): void {
 		this.connectionStatus = SessionClientStatus.Disconnected;
