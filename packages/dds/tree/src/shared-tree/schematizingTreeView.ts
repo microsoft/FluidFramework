@@ -105,14 +105,14 @@ export class SchematizingSimpleTreeView<
 		}
 		checkout.forest.anchors.slots.set(ViewSlot, this);
 
-		const policy = {
+		this.schemaPolicy = {
 			...defaultSchemaPolicy,
 			validateSchema: config.enableSchemaValidation,
+			allowUnknownOptionalFields: config.allowUnknownOptionalFields,
 		};
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.schemaPolicy = defaultSchemaPolicy;
 
-		this.viewSchema = new ViewSchema(policy, {}, this.rootFieldSchema);
+		this.viewSchema = new ViewSchema(this.schemaPolicy, {}, this.rootFieldSchema);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -382,10 +382,7 @@ export function requireSchema(
 
 	{
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
-		assert(
-			compatibility.canView && compatibility.canUpgrade,
-			0x8c3 /* requireSchema invoked with incompatible schema */,
-		);
+		assert(compatibility.canView, 0x8c3 /* requireSchema invoked with incompatible schema */);
 	}
 
 	const view = new CheckoutFlexTreeView(checkout, schemaPolicy, nodeKeyManager, onDispose);

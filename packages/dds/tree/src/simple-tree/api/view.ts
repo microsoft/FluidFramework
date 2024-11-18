@@ -17,7 +17,6 @@ import {
 	FieldKinds,
 	type FullSchemaPolicy,
 	getAllowedContentDiscrepancies,
-	isNeverField,
 	isNeverTree,
 } from "../../feature-libraries/index.js";
 import {
@@ -70,8 +69,6 @@ export class ViewSchema {
 		// TODO: support adapters
 		// const adapted = this.adaptRepo(stored);
 
-		// TODO: This does not handle never trees analogously to the previous codepath, but should before checkin.
-
 		// View schema allows a subset of documents that stored schema does, and the discrepancies are allowed by policy
 		// determined by the view schema (i.e. objects with extra optional fields in the stored schema have opted into allowing this.
 		// In the future, this would also include things like:
@@ -96,6 +93,7 @@ export class ViewSchema {
 					) {
 						// Stored schema has extra allowed types that the view schema does not.
 						canUpgrade = false;
+						canView = false;
 					}
 
 					if (
@@ -115,23 +113,24 @@ export class ViewSchema {
 					break;
 				}
 				case "fieldKind": {
-					const storedNormalized = isNeverField(this.policy, stored, discrepancy.stored)
-						? FieldKinds.forbidden.identifier
-						: discrepancy.stored.kind;
-
-					const viewNormalized = isNeverField(
-						this.policy,
-						this.viewSchemaAsStored,
+					const result = comparePosetElements(
+						discrepancy.stored,
 						discrepancy.view,
-					)
-						? FieldKinds.forbidden.identifier
-						: discrepancy.view.kind;
-
-					const result = comparePosetElements(storedNormalized, viewNormalized, fieldRealizer);
+						fieldRealizer,
+					);
 
 					if (result === PosetComparisonResult.Greater) {
 						// Stored schema is more relaxed than view schema.
 						canUpgrade = false;
+						if (
+							this.policy.allowUnknownOptionalFields &&
+							discrepancy.view === FieldKinds.forbidden.identifier
+						) {
+							// When the application has opted into it, we allow viewing documents which have additional
+							// optional fields in the stored schema that are not present in the view schema.
+						} else {
+							canView = false;
+						}
 					}
 
 					if (result === PosetComparisonResult.Less) {
@@ -220,12 +219,6 @@ export class ViewSchema {
 			// We could consider early exiting for many incompatibilities, but in practice that shouldn't be a common scenario
 			// (most of the time, well-formed apps will have either allowRead or allowUpgrade be true)
 		}
-
-		// TODO: AB#8121: Weaken this check to support viewing under additional circumstances.
-		// In the near term, this should support viewing documents with additional optional fields in their schema on object types.
-		// Longer-term (as demand arises), we could also add APIs to constructing view schema to allow for more flexibility
-		// (e.g. out-of-schema content handlers could allow support for viewing docs which have extra allowed types in a particular field)
-		canView &&= canUpgrade;
 
 		return {
 			canView,

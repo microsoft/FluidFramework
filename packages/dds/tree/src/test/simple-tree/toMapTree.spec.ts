@@ -1294,6 +1294,7 @@ describe("toMapTree", () => {
 				policy: {
 					fieldKinds,
 					validateSchema: true,
+					allowUnknownOptionalFields: false,
 				},
 			};
 		}

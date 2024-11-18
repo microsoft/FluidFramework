@@ -144,8 +144,6 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["rootChanged", 6]]);
 	});
 
-	// TODO: AB#8121: When adding support for additional optional fields, we may want a variant of this test which does the analogous flow using
-	// an intermediate state where canView is true but canUpgrade is false.
 	it("Schema becomes un-upgradeable then exact match again", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
@@ -178,6 +176,70 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["schemaChanged", 5]]);
 		assert.equal(view.root, 5);
 		view.dispose();
+	});
+
+	it("Open document whose stored schema has additional optional fields", () => {
+		// This sort of scenario might be reasonably encountered when an "older" version of an application opens
+		// up a document that has been created and/or edited by a "newer" version of an application (which has
+		// expanded the schema to include more information).
+		const factory = new SchemaFactory(undefined);
+		class PersonGeneralized extends factory.object("Person", {
+			name: factory.string,
+			age: factory.number,
+			address: factory.optional(factory.string),
+		}) {}
+		class PersonSpecific extends factory.object("Person", {
+			name: factory.string,
+			age: factory.number,
+		}) {}
+
+		const configSpecific = new TreeViewConfiguration({
+			schema: PersonSpecific,
+			allowUnknownOptionalFields: true,
+		});
+		const configGeneralized = new TreeViewConfiguration({
+			schema: PersonGeneralized,
+			allowUnknownOptionalFields: true,
+		});
+		const checkout = checkoutWithInitialTree(
+			configGeneralized,
+			new PersonGeneralized({ name: "Alice", age: 42, address: "123 Main St" }),
+		);
+		const viewSpecific = new SchematizingSimpleTreeView(
+			checkout,
+			configSpecific,
+			new MockNodeKeyManager(),
+		);
+
+		assert.deepEqual(viewSpecific.compatibility, {
+			canView: true,
+			canUpgrade: false,
+			isEquivalent: false,
+			canInitialize: false,
+		});
+
+		assert.equal(Object.keys(viewSpecific.root).length, 2);
+		assert.equal(Object.entries(viewSpecific.root).length, 2);
+		assert.equal(viewSpecific.root.name, "Alice");
+		assert.equal(viewSpecific.root.age, 42);
+
+		viewSpecific.dispose();
+		const viewGeneralized = new SchematizingSimpleTreeView(
+			checkout,
+			configGeneralized,
+			new MockNodeKeyManager(),
+		);
+		assert.deepEqual(viewGeneralized.compatibility, {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+			canInitialize: false,
+		});
+		assert.equal(Object.keys(viewGeneralized.root).length, 3);
+		assert.equal(Object.entries(viewGeneralized.root).length, 3);
+		assert.equal(viewGeneralized.root.name, "Alice");
+		assert.equal(viewGeneralized.root.age, 42);
+		assert.equal(viewGeneralized.root.address, "123 Main St");
 	});
 
 	it("Open upgradable document, then upgrade schema", () => {

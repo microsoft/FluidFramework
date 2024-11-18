@@ -91,6 +91,12 @@ export interface SchemaPolicy {
 	 * If true, new content inserted into the tree should be validated against the stored schema.
 	 */
 	readonly validateSchema: boolean;
+
+	/**
+	 * Whether to allow a document to be opened when the stored schema contains optional fields that are not known to
+	 * the view schema.
+	 */
+	readonly allowUnknownOptionalFields: boolean;
 }
 
 /**

@@ -1,10 +1,15 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { strict as assert } from "assert";
 import {
 	storedEmptyFieldSchema,
 	type Adapters,
 	type TreeStoredSchema,
 } from "../../core/index.js";
-import { defaultSchemaPolicy } from "../../feature-libraries/index.js";
+import { defaultSchemaPolicy, type FullSchemaPolicy } from "../../feature-libraries/index.js";
 import {
 	SchemaFactory,
 	toStoredSchema,
@@ -24,15 +29,16 @@ const factory = new SchemaFactory("");
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
 	expected: ReturnType<ViewSchema["checkCompatibility"]>,
+	policy: FullSchemaPolicy = defaultSchemaPolicy,
 ) {
-	const viewSchema = new ViewSchema(defaultSchemaPolicy, noAdapters, view);
+	const viewSchema = new ViewSchema(policy, noAdapters, view);
 	const compatibility = viewSchema.checkCompatibility(stored);
 	assert.deepEqual(compatibility, expected);
 }
 
 describe("viewSchema", () => {
 	describe(".checkCompatibility", () => {
-		it("normalizes never trees to forbidden", () => {
+		it("works with never trees", () => {
 			class NeverObject extends factory.objectRecursive("NeverObject", {
 				foo: factory.requiredRecursive([() => NeverObject]),
 			}) {}
@@ -40,12 +46,26 @@ describe("viewSchema", () => {
 			const neverField = factory.required([]);
 			expectCompatibility(
 				{ view: NeverObject, stored: emptySchema },
-				{ canView: true, canUpgrade: true, isEquivalent: true },
+				{ canView: false, canUpgrade: false, isEquivalent: false },
 			);
 
 			expectCompatibility(
 				{ view: neverField, stored: emptySchema },
-				{ canView: true, canUpgrade: true, isEquivalent: true },
+				{ canView: false, canUpgrade: false, isEquivalent: false },
+			);
+
+			// We could reasonably detect these cases as equivalent and update the test expectation here.
+			// Doing so would amount to normalizing optional fields to forbidden fields when they do not
+			// contain any constructible types.
+			// Until we have a use case for it, we can leave it as is (i.e. be stricter with compatibility
+			// in cases that realistic users probably won't encounter).
+			expectCompatibility(
+				{ view: factory.optional(NeverObject), stored: emptySchema },
+				{ canView: false, canUpgrade: true, isEquivalent: false },
+			);
+			expectCompatibility(
+				{ view: factory.optional([]), stored: emptySchema },
+				{ canView: false, canUpgrade: true, isEquivalent: false },
 			);
 		});
 
@@ -175,8 +195,7 @@ describe("viewSchema", () => {
 		});
 
 		describe("allows viewing but not upgrading when the view schema has opted into allowing the differences", () => {
-			// TODO:AB#8121: Enable this test
-			it.skip("due to additional optional fields in the stored schema", () => {
+			it("due to additional optional fields in the stored schema", () => {
 				class Point2D extends factory.object("Point", {
 					x: factory.number,
 					y: factory.number,
@@ -189,6 +208,7 @@ describe("viewSchema", () => {
 				expectCompatibility(
 					{ view: Point2D, stored: toStoredSchema(Point3D) },
 					{ canView: true, canUpgrade: false, isEquivalent: false },
+					{ ...defaultSchemaPolicy, allowUnknownOptionalFields: true },
 				);
 			});
 		});
@@ -269,10 +289,10 @@ describe("viewSchema", () => {
 					canUpgrade: false,
 					isEquivalent: false,
 				};
-				// TODO:AB#8121: This test should be updated with "...that the view schema did not declare as acceptable"
-				// potentially testing multiple variants (e.g. if we add APIs to allow apps to opt in to additional optional fields being OK at the
-				// schema repository level as well as at the object schema declaration level, we would want both cases here)
-				it("stored schema has additional optional fields", () => {
+
+				// Note: the decision to not allow is policy. See
+				// "allows viewing but not upgrading when the view schema has opted into allowing the differences" above.
+				it("stored schema has additional optional fields which view schema did not allow", () => {
 					class Point2D extends factory.object("Point", {
 						x: factory.number,
 						y: factory.number,
@@ -283,6 +303,21 @@ describe("viewSchema", () => {
 						z: factory.optional(factory.number),
 					}) {}
 					expectCompatibility({ view: Point2D, stored: toStoredSchema(Point3D) }, expected);
+				});
+
+				// This case demonstrates some need for care when allowing view schema to open documents with more flexible stored schema
+				it("stored schema has optional fields where view schema expects content", () => {
+					expectCompatibility(
+						{
+							view: factory.identifier,
+							stored: toStoredSchema(factory.optional(factory.string)),
+						},
+						expected,
+					);
+					expectCompatibility(
+						{ view: factory.number, stored: toStoredSchema(factory.optional(factory.number)) },
+						expected,
+					);
 				});
 
 				describe("stored schema has additional unadapted allowed types", () => {

@@ -26,6 +26,7 @@ import { brand } from "../../util/index.js";
 // Rather than both existing, one of which just returns boolean and the other which returns additional details, a simple comparison which returns everything needed should be used.
 
 /**
+ * Discriminated union (keyed on `mismatch`) of discrepancies between a view and stored schema.
  * @remarks
  *
  * 1. FieldDiscrepancy
@@ -61,6 +62,9 @@ export type Discrepancy = FieldDiscrepancy | NodeDiscrepancy;
 
 export type NodeDiscrepancy = NodeKindDiscrepancy | NodeFieldsDiscrepancy;
 
+/**
+ * A discrepancy in the declaration of a field.
+ */
 export type FieldDiscrepancy =
 	| AllowedTypeDiscrepancy
 	| FieldKindDiscrepancy
@@ -85,22 +89,28 @@ export interface FieldDiscrepancyLocation {
 	fieldKey: FieldKey | undefined;
 }
 
+/**
+ * A discrepancy in the allowed types of a field.
+ *
+ * @remarks
+ * This reports the symmetric different of allowed types in view/stored to enable more efficient checks for compatibility
+ */
 export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	mismatch: "allowedTypes";
 	/**
-	 * List of allowed type identifiers in viewed schema
+	 * List of allowed type identifiers in viewed schema which are not allowed in stored schema
 	 */
 	view: TreeNodeSchemaIdentifier[];
 	/**
-	 * List of allowed type identifiers in stored schema
+	 * List of allowed type identifiers in stored schema which are not allowed in view schema
 	 */
 	stored: TreeNodeSchemaIdentifier[];
 }
 
 export interface FieldKindDiscrepancy extends FieldDiscrepancyLocation {
 	mismatch: "fieldKind";
-	view: TreeFieldStoredSchema;
-	stored: TreeFieldStoredSchema;
+	view: FieldKindIdentifier;
+	stored: FieldKindIdentifier;
 }
 
 export interface ValueSchemaDiscrepancy {
@@ -139,19 +149,13 @@ function getNodeSchemaType(nodeSchema: TreeNodeStoredSchema): SchemaFactoryNodeK
 /**
  * Finds and reports discrepancies between a view schema and a stored schema.
  *
- * The workflow for finding schema incompatibilities:
- * 1. Compare the two root schemas to identify any `FieldDiscrepancy`.
+ * See documentation on {@link Discrepancy} for details of possible discrepancies.
+ * @remarks
+ * This function does not attempt to distinguish between equivalent representations of a node/field involving extraneous never trees.
+ * For example, a Forbidden field with allowed type set `[]` is equivalent to an optional field with allowed type set `[]`,
+ * as well as an optional field with an allowed type set containing only unconstructable types.
  *
- * 2. For each node schema in the `view`:
- * - Verify if the node schema exists in the stored. If it does, ensure that the `SchemaFactoryNodeKind` are
- * consistent. Otherwise this difference is treated as `NodeKindDiscrepancy`
- * - If a node schema with the same identifier exists in both view and stored, and their `SchemaFactoryNodeKind`
- * are consistent, perform a exhaustive validation to identify all `FieldDiscrepancy`.
- *
- * 3. For each node schema in the stored, verify if it exists in the view. The overlapping parts were already
- * addressed in the previous step.
- *
- * @returns the discrepancies between two TreeStoredSchema objects
+ * It is up to the caller to determine whether such discrepancies matter.
  */
 export function* getAllowedContentDiscrepancies(
 	view: TreeStoredSchema,
@@ -290,8 +294,8 @@ function* getFieldDiscrepancies(
 			identifier,
 			fieldKey,
 			mismatch: "fieldKind",
-			view,
-			stored,
+			view: view.kind,
+			stored: stored.kind,
 		} satisfies FieldKindDiscrepancy;
 	}
 }
@@ -325,8 +329,8 @@ function* trackObjectNodeDiscrepancies(
 					identifier,
 					fieldKey,
 					mismatch: "fieldKind",
-					view: result.value,
-					stored: storedEmptyFieldSchema,
+					view: result.value.kind,
+					stored: storedEmptyFieldSchema.kind,
 				} satisfies FieldKindDiscrepancy;
 				break;
 			}
@@ -340,8 +344,8 @@ function* trackObjectNodeDiscrepancies(
 					identifier,
 					fieldKey,
 					mismatch: "fieldKind",
-					view: storedEmptyFieldSchema,
-					stored: result.value,
+					view: storedEmptyFieldSchema.kind,
+					stored: result.value.kind,
 				} satisfies FieldKindDiscrepancy;
 				break;
 			}
@@ -437,7 +441,7 @@ function isFieldDiscrepancyCompatible(discrepancy: FieldDiscrepancy): boolean {
 			return discrepancy.stored.length === 0;
 		}
 		case "fieldKind": {
-			return posetLte(discrepancy.stored.kind, discrepancy.view.kind, fieldRealizer);
+			return posetLte(discrepancy.stored, discrepancy.view, fieldRealizer);
 		}
 		case "valueSchema": {
 			return false;
