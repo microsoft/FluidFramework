@@ -157,6 +157,7 @@ const parentDataObjectFactory = new DataObjectFactory(
 	{},
 	[[ChildDataStoreFactory.instance.type, ChildDataStoreFactory.instance]],
 );
+
 // a simple container runtime factory with a single datastore aliased as default.
 // the default datastore is also returned as the entrypoint
 const runtimeFactory: IRuntimeFactory = {

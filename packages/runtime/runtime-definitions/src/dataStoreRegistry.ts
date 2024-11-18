@@ -64,6 +64,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 	/**
 	 * Retrieves a data store registry entry by its identifier.
 	 *
+	 * @remarks
 	 * The `get` function plays a crucial role in the lifecycle of a data store by providing access to the registry entry
 	 * associated with a given identifier. This registry entry can then be used to create or load a data store.
 	 *
