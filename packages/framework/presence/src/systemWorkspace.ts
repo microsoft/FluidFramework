@@ -160,11 +160,16 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			);
 
 			const isAttendeeConnected =
-				// Attendee is connected if they are present in audience
+				// We generally use audience membership to determine an attendee's connection status.
+				// If an attendee's connection ID is present within audience, they are considered to be connected.
 				audienceMembers.has(clientConnectionId) ||
-				// Attendee is connected if they are the sender of the update signal
+				// A special override case we enforce is the attendee that sent the update; they are always considered connected regardless
+				// of audience membership. This is to handle the case where the sender is not in the audience.
 				senderConnectionId === clientConnectionId ||
-				// Attendee is connected if they were already marked as connected
+				// This last check ensures that if any of the past connection IDs for the attendee is marked as connected,
+				// the attendee is considered to be connected. If none are connected up to this point,
+				// we will set the attendee as disconnected. If any later connection is found to be connected,
+				// the status will be updated to connected.
 				connectedAttendees.has(attendee);
 
 			if (isAttendeeConnected) {
