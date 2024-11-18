@@ -8,7 +8,7 @@
 "section": feature
 ---
 
-### SharedString DDS annotateAdjustRange
+SharedString DDS annotateAdjustRange
 
 This update introduces a new feature to the `SharedString` DDS, allowing for the adjustment of properties over a specified range. The `annotateAdjustRange` method enables users to apply adjustments to properties within a given range, providing more flexibility and control over property modifications.
 
