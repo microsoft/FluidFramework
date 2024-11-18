@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import chalk from "chalk";
+import chalk from "picocolors";
 
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";

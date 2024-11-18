@@ -70,7 +70,25 @@ export const annotateRange: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
-) => client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
+	random: IRandom,
+) => {
+	// eslint-disable-next-line unicorn/prefer-ternary
+	if (random.bool()) {
+		return client.annotateRangeLocal(opStart, opEnd, {
+			[random.integer(1, 5)]: client.longClientId,
+		});
+	} else {
+		const max = random.pick([undefined, random.integer(-10, 100)]);
+		const min = random.pick([undefined, random.integer(-100, 10)]);
+		return client.annotateAdjustRangeLocal(opStart, opEnd, {
+			[random.integer(0, 2).toString()]: {
+				delta: random.integer(-5, 5),
+				min: (min ?? max ?? 0) > (max ?? 0) ? undefined : min,
+				max,
+			},
+		});
+	}
+};
 
 export const insertAtRefPos: TestOperation = (
 	client: TestClient,

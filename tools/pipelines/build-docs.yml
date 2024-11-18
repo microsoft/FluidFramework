@@ -100,7 +100,7 @@ stages:
     - job: debug_variables
       displayName: Show Variables
       dependsOn: [] # run in parallel
-      pool: Small
+      pool: Small-eastus2
       steps:
         - checkout: none
         - script: |
@@ -121,7 +121,7 @@ stages:
     - job: component_detection
       displayName: Component Detection
       dependsOn: [] # run in parallel
-      pool: Small
+      pool: Small-eastus2
       steps:
         - task: ComponentGovernanceComponentDetection@0
           displayName: Component Detection
@@ -135,7 +135,7 @@ stages:
       displayName: 'Combine api-extractor JSON'
       dependsOn: [] # run in parallel
       environment: 'fluid-docs-env'
-      pool: Large
+      pool: Large-eastus2
       strategy:
         runOnce:
           deploy:
@@ -148,7 +148,7 @@ stages:
     - job: build_site
       displayName: 'Build website'
       dependsOn: upload_json
-      pool: Large
+      pool: Large-eastus2
       steps:
         - checkout: self
           submodules: false
@@ -174,19 +174,27 @@ stages:
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:build'
+            customCommand: 'run build'
+
+        # Run the tests
+        - task: Npm@1
+          displayName: Run tests
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run test'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
           inputs:
-            BuildDropPath: $(Build.SourcesDirectory)/docs/public
+            BuildDropPath: $(Build.SourcesDirectory)/docs/build
             PackageName: 'fluidframework-docs'
             PackageVersion: '$(Build.BuildId)'
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish site build artifact'
           inputs:
-            targetPath: '$(Build.SourcesDirectory)/docs/public'
+            targetPath: '$(Build.SourcesDirectory)/docs/build'
             artifactName: 'fluidframework-docs'
             publishLocation: 'pipeline'
 
@@ -194,7 +202,7 @@ stages:
 - stage: guardian
   displayName: Guardian
   dependsOn: [] # run in parallel
-  pool: Large
+  pool: Large-eastus2
   jobs:
     - job: guardian_tasks
       displayName: Guardian tasks
@@ -253,10 +261,13 @@ stages:
             artifactName: .gdn
 # END Secure development tasks
 
+# TODO: this redundantly builds the website.
+# This pipeline should be updated to publish a usable build artifact in the `build` stage,
+# and let subsequent stages download and work off of that.
 - stage: link_check
   displayName: 'Website Link Check'
   dependsOn: [] # run in parallel
-  pool: Large
+  pool: Large-eastus2
   jobs:
     - job: link_check
       displayName: 'Website Link Check'
@@ -282,22 +293,22 @@ stages:
               pnpm i --frozen-lockfile
 
         - task: Npm@1
-          displayName: npm run build
+          displayName: Build
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:build'
+            customCommand: 'run build'
 
         - task: Npm@1
-          displayName: npm run ci:linkcheck
+          displayName: Validate links
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:linkcheck'
+            customCommand: 'run ci:check-links'
 
 - stage: check_branch_version
   displayName: 'Check Version Deployment Condition'
-  pool: Small
+  pool: Small-eastus2
   jobs:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
@@ -329,13 +340,15 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  pool: Small
+  pool: Small-eastus2
   dependsOn: ['build', 'guardian', 'check_branch_version']
+  variables:
+    deployOverrideVar: ${{ parameters.deployOverride }}
   condition: and(
-    not(eq(parameters.deployOverride, 'skip')),
+    not(eq(variables['deployOverrideVar'], 'skip')),
     or(
       eq(dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'], 'true'),
-      eq(parameters.deployOverride, 'force')
+      eq(variables['deployOverrideVar'], 'force')
     ))
   jobs:
     - job: deploy_site
@@ -346,11 +359,11 @@ stages:
           clean: true
 
         - task: DownloadPipelineArtifact@2
-          displayName: 'Copy fluidframework-docs to public folder'
+          displayName: 'Copy fluidframework-docs to "build" folder'
           inputs:
             source: current
             artifact: fluidframework-docs
-            path: '$(Build.SourcesDirectory)/docs/public'
+            path: '$(Build.SourcesDirectory)/docs/build'
 
         - task: AzureStaticWebApp@0
           displayName: 'Deploy website to ASWA'
@@ -358,7 +371,7 @@ stages:
             skip_app_build: true # site was built in previous stage
             skip_api_build: true # api is written in js, no build needed
             cwd: $(Build.SourcesDirectory)
-            app_location: 'docs/public'
+            app_location: 'docs/build'
             api_location: 'docs/api'
             output_location: ''
             azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'

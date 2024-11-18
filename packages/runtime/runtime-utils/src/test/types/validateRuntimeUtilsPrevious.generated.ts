@@ -22,7 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_FluidHandleBase": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_FluidHandleBase = requireAssignableTo<TypeOnly<old.FluidHandleBase<any>>, TypeOnly<current.FluidHandleBase<any>>>
+declare type old_as_current_for_Class_FluidHandleBase = requireAssignableTo<TypeOnly<old.FluidHandleBase<never>>, TypeOnly<current.FluidHandleBase<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -31,7 +31,7 @@ declare type old_as_current_for_Class_FluidHandleBase = requireAssignableTo<Type
  * typeValidation.broken:
  * "Class_FluidHandleBase": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FluidHandleBase = requireAssignableTo<TypeOnly<current.FluidHandleBase<any>>, TypeOnly<old.FluidHandleBase<any>>>
+declare type current_as_old_for_Class_FluidHandleBase = requireAssignableTo<TypeOnly<current.FluidHandleBase<never>>, TypeOnly<old.FluidHandleBase<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

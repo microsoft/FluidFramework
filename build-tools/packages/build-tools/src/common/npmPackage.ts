@@ -13,8 +13,10 @@ import {
 } from "@fluid-tools/build-infrastructure";
 import registerDebug from "debug";
 import detectIndent from "detect-indent";
-import { writeJson, writeJsonSync } from "fs-extra";
-import { sortPackageJson } from "sort-package-json";
+import {writeJson, writeJsonSync } from "fs-extra";
+import chalk from "picocolors";
+import sortPackageJson from "sort-package-json";
+
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
 import { type IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
@@ -96,6 +98,27 @@ export interface FluidBuildPackageJson extends BasePackageJson {
 }
 
 export class BuildPackage extends PackageBase<FluidBuildPackageJson> {
+	private static packageCount: number = 0;
+	private static readonly chalkColor = [
+		chalk.red,
+		chalk.green,
+		chalk.yellow,
+		chalk.blue,
+		chalk.magenta,
+		chalk.cyan,
+		chalk.white,
+		chalk.gray,
+		chalk.redBright,
+		chalk.greenBright,
+		chalk.yellowBright,
+		chalk.blueBright,
+		chalk.magentaBright,
+		chalk.cyanBright,
+		chalk.whiteBright,
+	];
+
+	private _packageJson: PackageJson;
+	private readonly packageId = Package.packageCount++;
 	private _matched: boolean = false;
 
 	/**

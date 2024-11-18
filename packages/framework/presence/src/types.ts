@@ -5,7 +5,7 @@
 
 import type { NotificationsManager } from "./notificationsManager.js";
 
-import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
+import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
 
 /**
  * Unique address within a session.
@@ -55,47 +55,16 @@ export interface PresenceStatesSchema {
  * @sealed
  * @alpha
  */
-export type PresenceStatesEntries<
-	TSchema extends PresenceStatesSchema,
-	TManagerRestrictions,
-> = {
+export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
 	/**
 	 * Registered `Value Manager`s
 	 */
-	readonly [Key in Exclude<
-		keyof TSchema,
-		keyof PresenceStatesMethods<TSchema, TManagerRestrictions>
-	>]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager>
+	readonly [Key in keyof TSchema]: ReturnType<
+		TSchema[Key]
+	>["manager"] extends InternalTypes.StateValue<infer TManager>
 		? TManager
 		: never;
 };
-
-/**
- * Provides methods for managing `Value Manager`s in {@link PresenceStates}.
- *
- * @sealed
- * @alpha
- */
-export interface PresenceStatesMethods<
-	TSchema extends PresenceStatesSchema,
-	TManagerRestrictions,
-> {
-	/**
-	 * Registers a new `Value Manager` with the {@link PresenceStates}.
-	 * @param key - new unique key for the `Value Manager`
-	 * @param manager - factory for creating a `Value Manager`
-	 */
-	add<
-		TKey extends string,
-		TValue extends InternalTypes.ValueDirectoryOrState<any>,
-		TManager extends TManagerRestrictions,
-	>(
-		key: TKey,
-		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
-	): asserts this is PresenceStates<
-		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>
-	>;
-}
 
 /**
  * `PresenceStates` maintains a registry of `Value Manager`s that all share and provide access to
@@ -107,11 +76,32 @@ export interface PresenceStatesMethods<
  * @sealed
  * @alpha
  */
-export type PresenceStates<
+export interface PresenceStates<
 	TSchema extends PresenceStatesSchema,
-	TManagerRestrictions = unknown,
-> = PresenceStatesEntries<TSchema, TManagerRestrictions> &
-	PresenceStatesMethods<TSchema, TManagerRestrictions>;
+	TManagerConstraints = unknown,
+> {
+	/**
+	 * Registers a new `Value Manager` with the {@link PresenceStates}.
+	 * @param key - new unique key for the `Value Manager`
+	 * @param manager - factory for creating a `Value Manager`
+	 */
+	add<
+		TKey extends string,
+		TValue extends InternalTypes.ValueDirectoryOrState<any>,
+		TManager extends TManagerConstraints,
+	>(
+		key: TKey,
+		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
+	): asserts this is PresenceStates<
+		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>,
+		TManagerConstraints
+	>;
+
+	/**
+	 * Registry of `Value Manager`s.
+	 */
+	readonly props: PresenceStatesEntries<TSchema>;
+}
 
 // #endregion PresenceStates
 
