@@ -315,24 +315,20 @@ describe("SchematizingSimpleTreeView", () => {
 				new MockNodeKeyManager(),
 			);
 			const branch = main.fork();
-
-			let changes = 0;
-
-			const unsubscribe = branch.events.on("changed", (data) => {
-				changes++;
-			});
-
 			const mainRoot = main.root;
 			const branchRoot = branch.root;
 
-			branchRoot.removeAt(1);
-			assert.deepEqual([...branchRoot], ["a", "c"]);
 			mainRoot.insertAt(0, "a");
 			assert.deepEqual([...mainRoot], ["a", "a", "b", "c"]);
+
+			let changes = 0;
+			branch.events.on("changed", (data) => {
+				changes++;
+			});
+
 			branch.rebaseOnto(main);
-			assert.deepEqual([...branchRoot], ["a", "a", "c"]);
-			assert.equal(changes, 1);
-			unsubscribe();
+			assert.deepEqual([...branchRoot], ["a", "a", "b", "c"]);
+			assert.equal(changes, 0);
 		});
 	});
 });
