@@ -5,12 +5,16 @@
 
 export { GitRepo } from "./common/gitRepo";
 export { getFluidBuildConfig } from "./fluidBuild/config";
-export { type IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig";
+export type { IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig";
 export { FluidRepoBuild } from "./fluidBuild/fluidRepoBuild";
 export type { Logger } from "./common/logging";
 export {
-	BuildPackage,
-	type PackageJson,
+	/**
+	 * @deprecated Replace usage as soon as possible.
+	 */
+	BuildPackage as Package,
+	MonoRepo,
+	type FluidBuildPackageJson as PackageJson,
 	updatePackageJsonFileAsync,
 	updatePackageJsonFile,
 } from "./common/npmPackage";

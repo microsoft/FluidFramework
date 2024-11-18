@@ -8,7 +8,7 @@ import chalk from "picocolors";
 import * as semver from "semver";
 
 import * as assert from "assert";
-import type { IFluidRepoLayout } from "@fluid-tools/build-infrastructure";
+import type { BuildProjectLayout } from "@fluid-tools/build-infrastructure";
 import registerDebug from "debug";
 import type { SimpleGit } from "simple-git";
 import { defaultLogger } from "../common/logging";
@@ -69,7 +69,7 @@ class BuildGraphContext implements BuildContext {
 	public readonly taskStats = new TaskStats();
 	public readonly failedTaskLines: string[] = [];
 	public readonly fluidBuildConfig: IFluidBuildConfig;
-	public readonly fluidRepoLayout: IFluidRepoLayout;
+	public readonly buildProjectLayout: BuildProjectLayout;
 	public readonly repoRoot: string;
 	public readonly gitRepo: SimpleGit;
 	public readonly gitRoot: string;
@@ -79,7 +79,7 @@ class BuildGraphContext implements BuildContext {
 		public readonly workerPool?: WorkerPool,
 	) {
 		this.fluidBuildConfig = buildContext.fluidBuildConfig;
-		this.fluidRepoLayout = buildContext.fluidRepoLayout;
+		this.buildProjectLayout = buildContext.buildProjectLayout;
 		this.repoRoot = buildContext.repoRoot;
 		this.gitRepo = buildContext.gitRepo;
 		this.gitRoot = buildContext.gitRoot;

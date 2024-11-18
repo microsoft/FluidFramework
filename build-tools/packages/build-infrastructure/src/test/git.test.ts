@@ -13,8 +13,8 @@ import { readJson, writeJson } from "fs-extra/esm";
 import { describe, it } from "mocha";
 import { CleanOptions, simpleGit } from "simple-git";
 
+import { loadBuildProject } from "../buildProject.js";
 import { NotInGitRepository } from "../errors.js";
-import { loadFluidRepo } from "../fluidRepo.js";
 import { findGitRootSync, getChangedSinceRef, getFiles, getRemote } from "../git.js";
 import type { PackageJson } from "../types.js";
 
@@ -52,7 +52,7 @@ describe("getRemote", () => {
 
 describe("getChangedSinceRef: local", () => {
 	const git = simpleGit(process.cwd());
-	const repo = loadFluidRepo(testRepoRoot);
+	const repo = loadBuildProject(testRepoRoot);
 
 	beforeEach(async () => {
 		// create a file

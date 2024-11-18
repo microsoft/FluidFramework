@@ -8,7 +8,7 @@ import path from "node:path";
 import mm from "micromatch";
 
 import { getChangedSinceRef, getRemote } from "./git.js";
-import { type IFluidRepo, IPackage } from "./types.js";
+import { type IBuildProject, IPackage } from "./types.js";
 
 export const defaultSelectionKinds = ["dir", "all"] as const;
 
@@ -74,7 +74,7 @@ export interface PackageSelectionCriteria {
 }
 
 /**
- * A pre-defined PackageSelectionCriteria that selects all packages.
+ * A pre-defined {@link PackageSelectionCriteria} that selects all packages.
  */
 export const AllPackagesSelectionCriteria: PackageSelectionCriteria = {
 	workspaces: ["*"],
@@ -86,7 +86,7 @@ export const AllPackagesSelectionCriteria: PackageSelectionCriteria = {
 } as const;
 
 /**
- * An empty PackageSelectionCriteria that selects no packages.
+ * An empty {@link PackageSelectionCriteria} that selects no packages.
  */
 export const EmptySelectionCriteria: PackageSelectionCriteria = {
 	workspaces: [],
@@ -118,26 +118,26 @@ export interface PackageFilterOptions {
 }
 
 /**
- * Selects packages from a FluidRepo based on the selection criteria.
+ * Selects packages from a BuildProject based on the selection criteria.
  *
- * @param fluidRepo - The Fluid repo.
+ * @param buildProject - The BuildProject to select from.
  * @param selection - The selection criteria to use to select packages.
  * @returns A `Set` containing the selected packages.
  */
 const selectPackagesFromRepo = async <P extends IPackage>(
-	fluidRepo: IFluidRepo<P>,
+	buildProject: IBuildProject<P>,
 	selection: PackageSelectionCriteria,
 ): Promise<Set<P>> => {
 	const selected: Set<P> = new Set();
 
 	if (selection.changedSinceBranch !== undefined) {
-		const git = await fluidRepo.getGitRepository();
-		const remote = await getRemote(git, fluidRepo.upstreamRemotePartialUrl);
+		const git = await buildProject.getGitRepository();
+		const remote = await getRemote(git, buildProject.upstreamRemotePartialUrl);
 		if (remote === undefined) {
-			throw new Error(`Can't find a remote with ${fluidRepo.upstreamRemotePartialUrl}`);
+			throw new Error(`Can't find a remote with ${buildProject.upstreamRemotePartialUrl}`);
 		}
 		const { packages } = await getChangedSinceRef(
-			fluidRepo,
+			buildProject,
 			selection.changedSinceBranch,
 			remote,
 		);
@@ -148,10 +148,10 @@ const selectPackagesFromRepo = async <P extends IPackage>(
 		const selectedAbsolutePath = path.join(
 			selection.directory === "."
 				? process.cwd()
-				: path.resolve(fluidRepo.root, selection.directory),
+				: path.resolve(buildProject.root, selection.directory),
 		);
 
-		const dirPackage = [...fluidRepo.packages.values()].find(
+		const dirPackage = [...buildProject.packages.values()].find(
 			(p) => p.directory === selectedAbsolutePath,
 		);
 		if (dirPackage === undefined) {
@@ -162,7 +162,7 @@ const selectPackagesFromRepo = async <P extends IPackage>(
 	}
 
 	// Select workspace and workspace root packages
-	for (const workspace of fluidRepo.workspaces.values()) {
+	for (const workspace of buildProject.workspaces.values()) {
 		if (selection.workspaces.length > 0 && mm.isMatch(workspace.name, selection.workspaces)) {
 			addAllToSet(
 				selected,
@@ -182,7 +182,7 @@ const selectPackagesFromRepo = async <P extends IPackage>(
 	}
 
 	// Select release group and release group root packages
-	for (const releaseGroup of fluidRepo.releaseGroups.values()) {
+	for (const releaseGroup of buildProject.releaseGroups.values()) {
 		if (
 			selection.releaseGroups.length > 0 &&
 			mm.isMatch(releaseGroup.name, selection.releaseGroups)
@@ -208,21 +208,21 @@ const selectPackagesFromRepo = async <P extends IPackage>(
 };
 
 /**
- * Selects packages from the Fluid repo based on the selection criteria. The selected packages will be filtered by the
+ * Selects packages from the BuildProject based on the selection criteria. The selected packages will be filtered by the
  * filter criteria if provided.
  *
- * @param fluidRepo - The Fluid repo.
+ * @param buildProject - The BuildProject.
  * @param selection - The selection criteria to use to select packages.
  * @param filter - An optional filter criteria to filter selected packages by.
  * @returns An object containing the selected packages and the filtered packages.
  */
 export async function selectAndFilterPackages<P extends IPackage>(
-	fluidRepo: IFluidRepo<P>,
+	buildProject: IBuildProject<P>,
 	selection: PackageSelectionCriteria,
 	filter?: PackageFilterOptions,
 ): Promise<{ selected: P[]; filtered: P[] }> {
 	// Select the packages from the repo
-	const selected = [...(await selectPackagesFromRepo<P>(fluidRepo, selection))];
+	const selected = [...(await selectPackagesFromRepo<P>(buildProject, selection))];
 
 	// Filter resulting list if needed
 	const filtered = filter === undefined ? selected : await filterPackages(selected, filter);

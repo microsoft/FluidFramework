@@ -15,6 +15,11 @@
  */
 
 export {
+	BuildProject,
+	getAllDependencies,
+	loadBuildProject,
+} from "./buildProject.js";
+export {
 	type ReleaseGroupDefinition,
 	type WorkspaceDefinition,
 	type IFluidBuildDir,
@@ -25,11 +30,6 @@ export {
 	getBuildProjectConfig,
 } from "./config.js";
 export { NotInGitRepository } from "./errors.js";
-export {
-	BuildProject,
-	getAllDependencies,
-	loadBuildProject,
-} from "./buildProject.js";
 export {
 	getFiles,
 	findGitRootSync,

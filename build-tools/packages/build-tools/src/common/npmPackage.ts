@@ -9,12 +9,13 @@ import * as path from "node:path";
 import {
 	type PackageJson as BasePackageJson,
 	type IPackage,
+	type IReleaseGroup,
+	type IWorkspace,
 	PackageBase,
 } from "@fluid-tools/build-infrastructure";
 import registerDebug from "debug";
 import detectIndent from "detect-indent";
 import { writeJson, writeJsonSync } from "fs-extra";
-import chalk from "picocolors";
 import sortPackageJson from "sort-package-json";
 
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
@@ -60,65 +61,11 @@ export type PackageJson = SetRequired<
 	"name" | "scripts" | "version"
 >;
 
-// /**
-//  * Information about a package dependency.
-//  *
-//  * @deprecated Use the types in build-infrastructure instead.
-//  */
-// interface PackageDependency {
-// 	name: PackageName;
-// 	version: string;
-// 	depClass: "prod" | "dev" | "peer";
-// }
-
-// export interface IFluidBuildPackage extends IPackage<IFluidBuildPackageJson> {
-// 	matched?: boolean;
-
-// 	// /**
-// 	//  * The MonoRepo class is roughly equivalent to a workspace.
-// 	//  *
-// 	//  * @deprecated Do not use. Use the Workspace-related classes and interfaces instead.
-// 	//  */
-// 	// readonly monoRepo?: MonoRepo;
-
-// 	cleanNodeModules(): Promise<ExecAsyncResult>;
-// 	getLockFilePath(): string | undefined;
-// 	install(): Promise<ExecAsyncResult>;
-
-// 	/**
-// 	 * The deprected "group" of the package.
-// 	 *
-// 	 * @deprecated Do not use.
-// 	 */
-// 	// group: string;
-// }
-
 export interface FluidBuildPackageJson extends BasePackageJson {
 	fluidBuild?: IFluidBuildConfig;
 }
 
 export class BuildPackage extends PackageBase<FluidBuildPackageJson> {
-	private static packageCount: number = 0;
-	private static readonly chalkColor = [
-		chalk.red,
-		chalk.green,
-		chalk.yellow,
-		chalk.blue,
-		chalk.magenta,
-		chalk.cyan,
-		chalk.white,
-		chalk.gray,
-		chalk.redBright,
-		chalk.greenBright,
-		chalk.yellowBright,
-		chalk.blueBright,
-		chalk.magentaBright,
-		chalk.cyanBright,
-		chalk.whiteBright,
-	];
-
-	private _packageJson: PackageJson;
-	private readonly packageId = Package.packageCount++;
 	private _matched: boolean = false;
 
 	/**
@@ -148,6 +95,7 @@ export class BuildPackage extends PackageBase<FluidBuildPackageJson> {
 			isReleaseGroupRoot,
 		);
 		traceInit(`${this.nameColored}: Package loaded`);
+		this.monoRepo = new MonoRepo(releaseGroup);
 	}
 
 	public get matched() {
@@ -176,8 +124,17 @@ export class BuildPackage extends PackageBase<FluidBuildPackageJson> {
 		return rimrafWithErrorAsync(path.join(this.directory, "node_modules"), this.nameColored);
 	}
 
-	public get group(): string {
-		return this.releaseGroup;
+	private _monoRepo: MonoRepo | undefined;
+
+	private set monoRepo(value: MonoRepo) {
+		this._monoRepo = value;
+	}
+
+	/**
+	 * @deprecated Replace usage as soon as possible.
+	 */
+	public get monoRepo(): MonoRepo | undefined {
+		return this._monoRepo;
 	}
 }
 
@@ -274,4 +231,24 @@ async function readPackageJsonAndIndentAsync(
 		const pkgJson: PackageJson = JSON.parse(contents);
 		return [pkgJson, indentation];
 	});
+}
+
+export class MonoRepo {
+	public constructor(
+		public readonly kind: string,
+		public readonly repoPath: string,
+		private readonly releaseGroup: IReleaseGroup,
+	) {}
+
+	public get name() {
+		return this.releaseGroup.name;
+	}
+
+	public get packages() {
+		return this.releaseGroup.packages;
+	}
+
+	public get version() {
+		return this.releaseGroup.version;
+	}
 }

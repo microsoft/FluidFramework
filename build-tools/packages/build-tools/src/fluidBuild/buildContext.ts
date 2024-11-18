@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidRepoLayout } from "@fluid-tools/build-infrastructure";
+import type { BuildProjectLayout } from "@fluid-tools/build-infrastructure";
 import type { SimpleGit } from "simple-git";
 import type { IFluidBuildConfig } from "./fluidBuildConfig";
 
@@ -17,7 +17,7 @@ export interface BuildContext {
 	 */
 	readonly fluidBuildConfig: IFluidBuildConfig;
 
-	readonly fluidRepoLayout: IFluidRepoLayout;
+	readonly buildProjectLayout: BuildProjectLayout;
 
 	/**
 	 * The absolute path to the root of the Fluid repo.

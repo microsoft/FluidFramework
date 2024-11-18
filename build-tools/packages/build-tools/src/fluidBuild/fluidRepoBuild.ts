@@ -7,12 +7,12 @@ import { existsSync } from "node:fs";
 import * as path from "node:path";
 
 import {
-	FluidRepoBase,
+	BuildProject,
 	type IPackage,
 	type IWorkspace,
 	type ReleaseGroupName,
 	findGitRootSync,
-	getFluidRepoLayout,
+	getBuildProjectConfig,
 } from "@fluid-tools/build-infrastructure";
 import registerDebug from "debug";
 import chalk from "picocolors";
@@ -41,18 +41,18 @@ export interface IPackageMatchedOptions {
 	releaseGroups: string[];
 }
 
-export class FluidRepoBuild extends FluidRepoBase<BuildPackage> {
+export class FluidRepoBuild extends BuildProject<BuildPackage> {
 	protected context: BuildContext;
 
 	public constructor(searchPath: string) {
 		super(searchPath);
 		const { config: fluidBuildConfig } = getFluidBuildConfig(searchPath);
-		const { config: fluidRepoLayout } = getFluidRepoLayout(searchPath);
+		const { config: buildProjectConfig } = getBuildProjectConfig(searchPath);
 
 		const gitRoot = findGitRootSync(searchPath);
 		this.context = {
 			fluidBuildConfig,
-			fluidRepoLayout,
+			buildProjectLayout: buildProjectConfig,
 			repoRoot: this.root,
 			gitRepo: simpleGit(gitRoot),
 			gitRoot,

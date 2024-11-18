@@ -14,44 +14,10 @@ import { SimpleGit } from 'simple-git';
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 // @public
-<<<<<<< HEAD
 export const AllPackagesSelectionCriteria: PackageSelectionCriteria;
 
 // @public
-export function createPackageManager(name: PackageManagerName): IPackageManager;
-
-// @public
-export const EmptySelectionCriteria: PackageSelectionCriteria;
-
-// @public
-export interface FilterablePackage {
-    // (undocumented)
-    name: string;
-    // (undocumented)
-    private?: boolean | undefined;
-}
-
-// @public
-export function filterPackages<T extends FilterablePackage>(packages: T[], filters: PackageFilterOptions): Promise<T[]>;
-
-// @public
-export function findGitRootSync(cwd?: string): string;
-
-// @public
-export interface FluidPackageJsonFields {
-    pnpm?: {
-        overrides?: Record<string, string>;
-    };
-}
-
-// @public
-export const FLUIDREPO_CONFIG_VERSION = 1;
-
-// @public
-export class FluidRepoBase<P extends IPackage> implements IFluidRepo<P> {
-=======
 export class BuildProject<P extends IPackage> implements IBuildProject<P> {
->>>>>>> main
     constructor(searchPath: string,
     upstreamRemotePartialUrl?: string | undefined);
     protected readonly configFilePath: string;
@@ -86,6 +52,23 @@ export interface BuildProjectLayout {
 export function createPackageManager(name: PackageManagerName): IPackageManager;
 
 // @public
+export const EmptySelectionCriteria: PackageSelectionCriteria;
+
+// @public
+export interface FilterablePackage {
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    private?: boolean | undefined;
+}
+
+// @public
+export function filterPackages<T extends FilterablePackage>(packages: T[], filters: PackageFilterOptions): Promise<T[]>;
+
+// @public
+export function findGitRootSync(cwd?: string): string;
+
+// @public
 export interface FluidPackageJsonFields {
     pnpm?: {
         overrides?: Record<string, string>;
@@ -100,8 +83,13 @@ export function getAllDependencies(repo: IBuildProject, packages: IPackage[]): {
 };
 
 // @public
-<<<<<<< HEAD
-export function getChangedSinceRef<P extends IPackage>(fluidRepo: IFluidRepo<P>, ref: string, remote?: string): Promise<{
+export function getBuildProjectConfig(searchPath: string, noCache?: boolean): {
+    config: BuildProjectLayout;
+    configFilePath: string;
+};
+
+// @public
+export function getChangedSinceRef<P extends IPackage>(buildProject: IBuildProject<P>, ref: string, remote?: string): Promise<{
     files: string[];
     dirs: string[];
     workspaces: IWorkspace[];
@@ -113,17 +101,6 @@ export function getChangedSinceRef<P extends IPackage>(fluidRepo: IFluidRepo<P>,
 export function getFiles(git: SimpleGit, directory: string): Promise<string[]>;
 
 // @public
-export function getFluidRepoLayout(searchPath: string, noCache?: boolean): {
-    config: IFluidRepoLayout;
-=======
-export function getBuildProjectConfig(searchPath: string, noCache?: boolean): {
-    config: BuildProjectLayout;
->>>>>>> main
-    configFilePath: string;
-};
-
-// @public
-<<<<<<< HEAD
 export function getMergeBaseRemote(git: SimpleGit, branch: string, remote?: string, localRef?: string): Promise<string>;
 
 // @public
@@ -131,7 +108,8 @@ export function getRemote(git: SimpleGit, partialUrl: string | undefined): Promi
 
 // @public
 export type GlobString = string;
-=======
+
+// @public
 export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable {
     configuration: BuildProjectLayout;
     getGitRepository(): Promise<Readonly<SimpleGit>>;
@@ -143,7 +121,6 @@ export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable
     upstreamRemotePartialUrl?: string;
     workspaces: Map<WorkspaceName, IWorkspace>;
 }
->>>>>>> main
 
 // @public @deprecated
 export interface IFluidBuildDir {
@@ -317,20 +294,19 @@ export interface Reloadable {
 }
 
 // @public
-<<<<<<< HEAD
-export function selectAndFilterPackages<P extends IPackage>(fluidRepo: IFluidRepo<P>, selection: PackageSelectionCriteria, filter?: PackageFilterOptions): Promise<{
+export function selectAndFilterPackages<P extends IPackage>(buildProject: IBuildProject<P>, selection: PackageSelectionCriteria, filter?: PackageFilterOptions): Promise<{
     selected: P[];
     filtered: P[];
 }>;
+
+// @public
+export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;
 
 // @public
 export function updatePackageJsonFile<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => void): void;
 
 // @public
 export function updatePackageJsonFileAsync<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => Promise<void>): Promise<void>;
-=======
-export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;
->>>>>>> main
 
 // @public
 export interface WorkspaceDefinition {
