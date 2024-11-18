@@ -80,7 +80,63 @@ describe("Presence", () => {
 				expect(runtime.submittedSignals).toHaveLength(2);
 			});
 
-			it("batches signals sent within the allowableUpdateLatency", async () => {
+			it.skip("sets timer for default allowableUpdateLatency", async () => {
+				// Configure a state workspace
+				presence.getStates("name:testStateWorkspace", {
+					count: Latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
+				}); // will be queued; deadline is now 1070
+
+				// SIGNAL #1
+				// The deadline timer will fire at time 1070 and send a single
+				// signal with the value from the last signal (num=0).
+
+				clock.tick(100); // Time is now 1110
+
+				expect(runtime.submittedSignals).toHaveLength(1);
+			});
+
+			it("batches signals sent within default allowableUpdateLatency", async () => {
+				// Configure a state workspace
+				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+					count: Latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
+				}); // will be queued; deadline is now 1070 -- TODO: The deadline is not getting set - why?
+
+				const { count } = stateWorkspace.props;
+
+				// clock.tick(10); // Time is now 1020
+				count.local = { num: 12 }; // will be queued; deadline remains 1070
+
+				clock.tick(10); // Time is now 1030
+				count.local = { num: 34 }; // will be queued; deadline remains 1070
+
+				clock.tick(40); // Time is now 1070
+				count.local = { num: 22 }; // will be queued; deadline remains 1070
+
+				// SIGNAL #1
+				// The deadline timer will fire at time 1070 and send a single
+				// signal with the value from the last signal (num=22).
+
+				// It's necessary to tick the timer beyond the deadline so the timer will fire.
+				clock.tick(30); // Time is now 1080
+
+				clock.tick(10); // Time is now 1090
+				count.local = { num: 56 }; // will be queued; deadline is set to 1150
+
+				clock.tick(40); // Time is now 1130
+				count.local = { num: 78 }; // will be queued; deadline remains 1150
+
+				clock.tick(10); // Time is now 1140
+				count.local = { num: 90 }; // will be queued; deadline remains 1150
+
+				// SIGNAL #2
+				// The deadline timer will fire at time 1150 and send a single
+				// signal with the value from the last signal (num=90).
+
+				// It's necessary to tick the timer beyond the deadline so the timer will fire.
+				clock.tick(30); // Time is now 1180
+			});
+
+			it("batches signals sent within a specified allowableUpdateLatency", async () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),

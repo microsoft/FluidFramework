@@ -43,7 +43,7 @@ exports[`Presence > LatestValueManager > batching > batches signals from multipl
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 1`] = `
+exports[`Presence > LatestValueManager > batching > batches signals sent within a specified allowableUpdateLatency > submitted signal 1`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -75,7 +75,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > batches signals sent within the allowableUpdateLatency > submitted signal 2`] = `
+exports[`Presence > LatestValueManager > batching > batches signals sent within a specified allowableUpdateLatency > submitted signal 2`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -96,6 +96,70 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
           "sessionId-2": {
             "rev": 5,
             "timestamp": 1220,
+            "value": {
+              "num": 90
+            }
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > LatestValueManager > batching > batches signals sent within default allowableUpdateLatency > submitted signal 1`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1070,
+    "avgLatency": 10,
+    "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
+      "s:name:testStateWorkspace": {
+        "count": {
+          "sessionId-2": {
+            "rev": 3,
+            "timestamp": 1060,
+            "value": {
+              "num": 22
+            }
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > LatestValueManager > batching > batches signals sent within default allowableUpdateLatency > submitted signal 2`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1160,
+    "avgLatency": 10,
+    "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
+      "s:name:testStateWorkspace": {
+        "count": {
+          "sessionId-2": {
+            "rev": 6,
+            "timestamp": 1150,
             "value": {
               "num": 90
             }
