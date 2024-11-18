@@ -124,7 +124,12 @@ variables:
 # move the release/* trigger after separating the deploy step to another pipeline
 # no PR triggers
 
-trigger: none
+trigger:
+  branches:
+    include:
+    - test/michaelzhen
+    - test/michaelzhen-1.0
+    - main
 pr: none
 
 stages:

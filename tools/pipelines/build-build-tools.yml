@@ -145,6 +145,7 @@ stages:
               echo "testVar: $(testVar)"
 
         - task: TriggerBuild@4
+          condition: eq(variables['shouldDeploy'], 'true')
           inputs:
             definitionIsInCurrentTeamProject: True
             buildDefinition: 'build-docs'
