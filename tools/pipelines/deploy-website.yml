@@ -9,6 +9,15 @@
 name: $(Build.BuildId)
 
 parameters:
+  # override deployment condition to skip or force deployment
+  - name: deployOverride
+    displayName: Deployment Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
   # determines deployment token to be used for Azure Static Web Apps
   - name: deployEnvironment
     displayName: Static web app environment to deploy to
@@ -53,7 +62,10 @@ variables:
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
 
-trigger: none
+trigger:
+  branches:
+    include:
+    - main
 pr: none
 
 stages:
@@ -256,6 +268,14 @@ stages:
   displayName: 'Deploy website'
   pool: Small
   dependsOn: ['build', 'guardian']
+  variables:
+    deployOverrideVar: ${{ parameters.deployOverride }}
+  condition: and(
+    not(eq(variables['deployOverrideVar'], 'skip')),
+    or(
+      eq(variables['deployOverrideVar'], 'default'),
+      eq(variables['deployOverrideVar'], 'force')
+    ))
   jobs:
     - job: deploy_site
       displayName: 'Deploy website'
