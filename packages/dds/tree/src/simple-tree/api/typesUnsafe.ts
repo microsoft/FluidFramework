@@ -23,7 +23,7 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaCore,
 } from "../core/index.js";
-import type { TreeArrayNodeBase } from "../arrayNode.js";
+import type { TreeArrayNode } from "../arrayNode.js";
 import type { FlexListToUnion, LazyItem } from "../flexList.js";
 
 /*
@@ -86,8 +86,7 @@ export type TreeNodeSchemaUnsafe<
 export interface TreeNodeSchemaClassUnsafe<
 	out Name extends string,
 	out Kind extends NodeKind,
-	// TODO: maybe this can be more specific (exclude leaves)
-	out TNode extends Unenforced<TreeNode | TreeLeafValue>,
+	out TNode extends Unenforced<TreeNode>,
 	in TInsertable,
 	out ImplicitlyConstructable extends boolean,
 	out Info,
@@ -239,7 +238,8 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> =
  * @system @sealed @public
  */
 export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
-	extends TreeArrayNodeBase<
+	extends TreeArrayNode<
+		TAllowedTypes,
 		TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
 		InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>
 	> {}

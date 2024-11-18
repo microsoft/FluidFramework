@@ -1,9 +1,45 @@
-# @fluid-experimental/presence
+# @fluidframework/presence
 
 A set of session-focused utilities for lightweight data sharing and messaging.
 
 A session is a period of time when one or more clients are connected to a Fluid service. Session data and messages may be exchanged among clients, but will disappear once the no clients remain. (More specifically once no clients remain that have acquired the session `IPresence` interface.) Once fully implemented, no client will require container write permissions to use Presence features.
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
+
+## Installation
+
+To get started, install the package by running the following command:
+
+```bash
+npm i @fluidframework/presence
+```
+
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/presence` like normal.
+
+To access the `alpha` APIs, import via `@fluidframework/presence/alpha`.
+
+## API Documentation
+
+API documentation for **@fluidframework/presence** is available at <https://fluidframework.com/docs/apis/presence>.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 ## Concepts
 
 ### Attendees
@@ -44,10 +80,10 @@ Notifications value managers are special case where no data is retained during a
 
 ## Onboarding
 
-While this package is developing as experimental and other Fluid Framework internals are being updated to accommodate it, a temporary Shared Object must be added within container to gain access.
+While this package is developing and other Fluid Framework internals are being updated to accommodate it, a temporary Shared Object must be added within container to gain access.
 
 ```typescript
-import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluid-experimental/presence";
+import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
 
 const containerSchema = {
 	initialObjects: {
@@ -88,42 +124,14 @@ presence.getStates("app:v1states", { myState2: Latest({x: true})});
 
 ### Notifications
 
-Notifications API is mostly unimplemented. All messages are always broadcast even if `unicast` API is used and all are emitted as `unattendedNotification` event rather than the appropriate custom event.
+Notifications API is partially implemented. All messages are always broadcast even if `unicast` API is used. Type inferences are not working even with a fully specified `initialSubscriptions` value provided to `Notifications` and schema type must be specified explicitly.
 
 Notifications are fundamentally unreliable at this time as there are no built-in acknowledgements nor retained state. To prevent most common loss of notifications, always check for connection before sending.
 
-
-### Experimental
-
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-**IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
-
-**Do not use in production scenarios.**
-
-## Using Fluid Framework libraries
-
-When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
-While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
-library consumers should always prefer `^`.
-
-If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
-
-## Installation
-
-To get started, install the package by running the following command:
-
-```bash
-npm i @fluid-experimental/presence
-```
-
-## API Documentation
-
-API documentation for **@fluid-experimental/presence** is available at <https://fluidframework.com/docs/apis/presence>.
 
 ## Minimum Client Requirements
 

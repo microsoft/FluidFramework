@@ -14,7 +14,7 @@ import type {
 	PresenceWorkspaceAddress,
 } from "./types.js";
 
-import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
+import type { ISubscribable } from "@fluidframework/presence/internal/events";
 
 /**
  * A Fluid client session identifier.
@@ -24,7 +24,7 @@ import type { ISubscribable } from "@fluid-experimental/presence/internal/events
  * duration of the session. If a client disconnects and reconnects, it will
  * retain its identifier. Prefer use of {@link ISessionClient} as a way to
  * identify clients in a session. {@link ISessionClient.sessionId} will provide
- * the session id.
+ * the session ID.
  *
  * @alpha
  */
@@ -36,12 +36,26 @@ export type ClientSessionId = SessionId & { readonly ClientSessionId: "ClientSes
  * @alpha
  */
 export const SessionClientStatus = {
+	/**
+	 * The session client is connected to the Fluid service.
+	 */
 	Connected: "Connected",
+
+	/**
+	 * The session client is not connected to the Fluid service.
+	 */
 	Disconnected: "Disconnected",
 } as const;
 
 /**
- * Type for the connection status of the {@link ISessionClient}.
+ * Represents the connection status of an {@link ISessionClient}.
+ *
+ * This type can be either `'Connected'` or `'Disconnected'`, indicating whether
+ * the session client is currently connected to the Fluid service.
+ *
+ * When `'Disconnected'`:
+ * - State changes are kept locally and communicated to others upon reconnect.
+ * - Notification requests are discarded (silently).
  *
  * @alpha
  */
@@ -56,8 +70,8 @@ export type SessionClientStatus =
  *
  * `ISessionClient` should be used as key to distinguish between different
  * clients as they join, rejoin, and disconnect from a session. While a
- * client's {@link ClientConnectionId} may change over time `ISessionClient`
- * will be fixed.
+ * client's {@link ClientConnectionId} from {@link ISessionClient.getConnectionStatus}
+ * may change over time, `ISessionClient` will be fixed.
  *
  * @privateRemarks
  * As this is evolved, pay attention to how this relates to Audience, Service
@@ -69,32 +83,35 @@ export type SessionClientStatus =
 export interface ISessionClient<
 	SpecificSessionClientId extends ClientSessionId = ClientSessionId,
 > {
+	/**
+	 * The session ID of the client that is stable over all connections.
+	 */
 	readonly sessionId: SpecificSessionClientId;
 
 	/**
-	 * Get current client connection id.
+	 * Get current client connection ID.
 	 *
-	 * @returns Current client connection id.
+	 * @returns Current client connection ID.
 	 *
 	 * @remarks
-	 * Connection id will change on reconnect.
+	 * Connection ID will change on reconnect.
 	 *
-	 * If {@link ISessionClient.getStatus} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection id.
+	 * If {@link ISessionClient.getConnectionStatus} is {@link (SessionClientStatus:variable).Disconnected}, this will represent the last known connection ID.
 	 */
-	connectionId(): ClientConnectionId;
+	getConnectionId(): ClientConnectionId;
 
 	/**
-	 * Get status of session client.
+	 * Get connection status of session client.
 	 *
-	 * @returns Status of session client.
+	 * @returns Connection status of session client.
 	 *
 	 */
-	getStatus(): SessionClientStatus;
+	getConnectionStatus(): SessionClientStatus;
 }
 
 /**
  * Utility type limiting to a specific session client. (A session client with
- * a specific session id - not just any session id.)
+ * a specific session ID - not just any session ID.)
  *
  * @internal
  */
@@ -162,7 +179,7 @@ export interface IPresence {
 	/**
 	 * Lookup a specific attendee in the session.
 	 *
-	 * @param clientId - Client connection or session id
+	 * @param clientId - Client connection or session ID
 	 */
 	getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
 
