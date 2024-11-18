@@ -105,13 +105,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
-
+	private readonly timer = new TimerManager();
 	private readonly workspaces = new Map<
 		string,
 		PresenceWorkspaceEntry<PresenceStatesSchema>
 	>();
-
-	private readonly timer = new TimerManager();
 
 	public constructor(
 		private readonly clientSessionId: ClientSessionId,

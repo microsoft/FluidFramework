@@ -130,7 +130,7 @@ Notifications are fundamentally unreliable at this time as there are no built-in
 
 ### Throttling
 
-Throttling is not yet implemented. `BroadcastControls` exists in the API to provide control over throttling of value updates, but is not yet implemented. It is recommends that `BroadcastControls.allowableUpdateMLatencyMs` use is considered and specified to light up once support is added.
+Throttling is not yet implemented. `BroadcastControls` exists in the API to provide control over throttling of value updates, but throttling is not yet implemented. It is recommended that `BroadcastControls.allowableUpdateLatencyMs` use is considered and specified to light up once support is added.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 

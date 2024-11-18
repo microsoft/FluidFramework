@@ -230,6 +230,11 @@ export function mergeUntrackedDatastore(
 }
 
 /**
+ * The default allowable update latency for PresenceStates workspaces in milliseconds.
+ */
+const defaultAllowableUpdateLatencyMs = 60;
+
+/**
  * Produces the value type of a schema element or set of elements.
  */
 type SchemaElementValueType<
@@ -257,7 +262,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		initialContent: TSchema,
 		controlsSettings: BroadcastControlSettings | undefined,
 	) {
-		this.controls = new RequiredBroadcastControl(/* allowableUpdateLatencyMs */ 60);
+		this.controls = new RequiredBroadcastControl(defaultAllowableUpdateLatencyMs);
 		if (controlsSettings?.allowableUpdateLatencyMs !== undefined) {
 			this.controls.allowableUpdateLatencyMs = controlsSettings.allowableUpdateLatencyMs;
 		}

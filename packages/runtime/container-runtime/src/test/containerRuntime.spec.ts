@@ -30,6 +30,7 @@ import {
 	type IVersion,
 	type FetchSource,
 	type IDocumentAttributes,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	ISummaryTreeWithStats,
@@ -85,6 +86,7 @@ import {
 import {
 	ISummaryCancellationToken,
 	neverCancelledSummaryToken,
+	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
 
@@ -198,6 +200,7 @@ describe("Runtime", () => {
 			logger = new MockLogger(),
 			mockStorage = defaultMockStorage,
 			loadedFromVersion,
+			baseSnapshot,
 		} = params;
 
 		const mockContext = {
@@ -225,6 +228,7 @@ describe("Runtime", () => {
 			clientId,
 			connected: true,
 			storage: mockStorage as IDocumentStorageService,
+			baseSnapshot,
 		} satisfies Partial<IContainerContext>;
 
 		// Update the delta manager's last message which is used for validation during summarization.
@@ -2140,6 +2144,79 @@ describe("Runtime", () => {
 						"Expected duplicate batch detection to match Offline Load enablement",
 					);
 				});
+			});
+
+			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
+				// Duplicate Batch Detection requires OfflineLoad enabled
+				const settings_enableOfflineLoad = { "Fluid.Container.enableOfflineLoad": true };
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({
+						settings: settings_enableOfflineLoad,
+					}) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Add batchId1 to DuplicateBatchDetected via ContainerRuntime.process,
+				// and get its serialized representation from summarizing
+				containerRuntime.process(
+					{
+						sequenceNumber: 123,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						metadata: { batchId: "batchId1" },
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					false,
+				);
+				const { summary } = await containerRuntime.summarize({ fullTree: true });
+				const blob = summary.tree[recentBatchInfoBlobName];
+				assert(blob.type === SummaryType.Blob, "Expected blob");
+				assert.equal(blob.content, '[[123,"batchId1"]]', "Expected single batchId mapping");
+
+				// Load a new ContainerRuntime with the serialized DuplicateBatchDetector state.
+				const mockStorage = {
+					// Hardcode readblob fn to return the blob contents put in the summary
+					readBlob: async (_id) => stringToBuffer(blob.content as string, "utf8"),
+				};
+				const containerRuntime2 = await ContainerRuntime.loadRuntime({
+					context: getMockContext({
+						settings: settings_enableOfflineLoad,
+						baseSnapshot: {
+							trees: {},
+							blobs: { [recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage" },
+						},
+						mockStorage,
+					}) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Process an op with a duplicate batchId to what was loaded with
+				assert.throws(
+					() => {
+						containerRuntime2.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						);
+					},
+					(e: any) => e.message === "Duplicate batch - The same batch was sequenced twice",
+					"Expected duplicate batch detected after loading with recentBatchInfo",
+				);
 			});
 		});
 
