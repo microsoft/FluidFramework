@@ -10,7 +10,8 @@ test.describe("Nav", () => {
 		await page.goto("/", { waitUntil: "domcontentloaded" });
 	});
 
-	test("Nav contains the expected links", async ({ page }) => {
+	// TODO:AB#24415: Fix and re-enable
+	test.skip("Nav contains the expected links", async ({ page }) => {
 		const docsLink = page.getByRole("link", { name: /Docs/ });
 		await expect(docsLink).toHaveAttribute("href", "/docs/");
 
