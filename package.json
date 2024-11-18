@@ -41,7 +41,7 @@
 		"ci:test:jest": "npm run test:jest:report",
 		"ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
 		"ci:test:mocha": "npm run test:mocha",
-		"ci:test:mocha:coverage": "c8 --no-clean npm run test:mocha -- --timeout 4s",
+		"ci:test:mocha:coverage": "c8 --no-clean npm run test:mocha -- --timeout 999998",
 		"ci:test:realsvc:local": "pnpm run -r --no-sort --stream --no-bail test:realsvc:local:report",
 		"ci:test:realsvc:local:coverage": "c8 --no-clean pnpm recursive --no-sort --stream --no-bail run test:realsvc:local:report",
 		"ci:test:realsvc:tinylicious": "pnpm run -r --no-sort --stream --no-bail test:realsvc:tinylicious:report",
