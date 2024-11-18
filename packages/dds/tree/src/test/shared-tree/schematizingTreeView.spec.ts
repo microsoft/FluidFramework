@@ -309,7 +309,11 @@ describe("SchematizingSimpleTreeView", () => {
 				initialTree: cursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
 			};
 			const checkout = checkoutWithContent(stringArrayContent);
-			const main = new SchematizingSimpleTreeView(checkout, new TreeViewConfiguration({ schema: stringArraySchema }), new MockNodeKeyManager());
+			const main = new SchematizingSimpleTreeView(
+				checkout,
+				new TreeViewConfiguration({ schema: stringArraySchema }),
+				new MockNodeKeyManager(),
+			);
 			const branch = main.fork();
 
 			let changes = 0;
