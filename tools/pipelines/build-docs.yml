@@ -131,7 +131,7 @@ stages:
 - stage: test_deploy
   variables:
     shouldDeployVar: ${{ parameters.shouldDeploy }}
-  condition: eq(variables['shouldDeployVar']  # Only run if shouldDeploy is true
+  condition: eq(variables['shouldDeployVar'], 'true')  # Only run if shouldDeploy is true
   jobs:
   - job: DeployJob
     steps:
