@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+
 import type { ValueManager } from "./internalTypes.js";
 import type { LatestValueControls } from "./latestValueControls.js";
 import { LatestValueControl } from "./latestValueControls.js";
@@ -20,7 +22,6 @@ import type {
 	JsonSerializable,
 } from "@fluidframework/presence/internal/core-interfaces";
 import type { ISubscribable } from "@fluidframework/presence/internal/events";
-import { createEmitter } from "@fluidframework/presence/internal/events";
 import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
 import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 

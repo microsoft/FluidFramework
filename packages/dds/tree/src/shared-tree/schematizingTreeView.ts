@@ -12,12 +12,12 @@ import {
 	Compatibility,
 	type SchemaPolicy,
 } from "../core/index.js";
-import {
-	type HasListeners,
-	type IEmitter,
-	type Listenable,
-	createEmitter,
-} from "../events/index.js";
+import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 import {
 	type NodeKeyManager,
 	defaultSchemaPolicy,

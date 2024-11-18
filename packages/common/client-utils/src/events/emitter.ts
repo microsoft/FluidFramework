@@ -11,7 +11,6 @@ import type {
 	NoListenersCallback,
 	IEmitter,
 } from "@fluidframework/core-interfaces/internal";
-// import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Subset of Map interface.
@@ -200,10 +199,10 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
 }
 
 /**
- * Create a {@link Listenable} that can be instructed to emit events via the {@link IEmitter} interface.
+ * Create a {@link @fluidframework/core-interfaces#Listenable} that can be instructed to emit events via the {@link @fluidframework/core-interfaces#IEmitter} interface.
  *
- * A class can delegate handling {@link Listenable} to the returned value while using it to emit the events.
- * See also {@link CustomEventEmitter} which be used as a base class to implement {@link Listenable} via extension.
+ * A class can delegate handling {@link @fluidframework/core-interfaces#Listenable} to the returned value while using it to emit the events.
+ * See also {@link CustomEventEmitter} which be used as a base class to implement {@link @fluidframework/core-interfaces#Listenable} via extension.
  * @example Forwarding events to the emitter
  * ```typescript
  * interface MyEvents {

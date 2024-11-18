@@ -21,7 +21,8 @@ import {
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import { createEmitter, type Listenable } from "../events/index.js";
+import type { Listenable } from "@fluidframework/core-interfaces";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 import { TransactionStack } from "./transactionStack.js";
 import { fail } from "../util/index.js";

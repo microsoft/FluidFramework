@@ -4,6 +4,8 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import type { Listenable } from "@fluidframework/core-interfaces";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 import {
 	type Anchor,
@@ -28,7 +30,6 @@ import {
 	mapCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { createEmitter, type Listenable } from "../../events/index.js";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";

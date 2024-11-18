@@ -7,12 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	EventEmitter,
-	createEmitter,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../events/emitter.js";
-import type { Listenable } from "../../events/index.js";
+import { CustomEventEmitter, createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
 
 interface TestEvents {
 	open: () => void;
@@ -293,7 +289,7 @@ interface MyEvents {
 	computed: () => number;
 }
 
-class MyInheritanceClass extends EventEmitter<MyEvents> {
+class MyInheritanceClass extends CustomEventEmitter<MyEvents> {
 	private load() {
 		this.emit("loaded");
 		const results: number[] = this.emitAndCollect("computed");
