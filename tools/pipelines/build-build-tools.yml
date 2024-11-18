@@ -132,7 +132,7 @@ stages:
       environment: 'fluid-docs-env'
       pool: Large
       variables:
-        uploadAsLatestRelease: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'] ]
+        uploadAsLatestRelease: $[eq(stageDependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy', 'true')] ]
         majorVersion: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetVersion.majorVersion'] ]
       strategy:
         runOnce:
