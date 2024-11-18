@@ -11,7 +11,7 @@ BUILD_REASON="$3"
 
 IFS=' ' read -r -a TASK_TEST_ARRAY <<< "$TASK_TEST_STRING"
 
-echo "Tests to run: $TASK_TEST_ARRAY"
+echo "Tests to run: ${TASK_TEST_ARRAY[*]}"
 echo "Build Directory: $BUILD_DIR"
 echo "Build Reason: $BUILD_REASON"
 
@@ -66,6 +66,7 @@ if [[ "${startTest}" == "true" ]]; then
 
   # Loop through the array of test steps and run each in parallel
   for task_test_step in "${TASK_TEST_ARRAY[@]}"; do
+    TEST_COVERAGE=$(compute_test_coverage "$task_test_step")
     run_task_test "$task_test_step" "$BUILD_DIRECTORY" "$TEST_COVERAGE" &
   done
 
