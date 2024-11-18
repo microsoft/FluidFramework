@@ -319,24 +319,6 @@ extends:
                       fi
                     fi
 
-              - script: |
-                  export startTest=true
-                  chmod +x $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh
-                  # Join the array elements into a space-separated string
-                  TASK_TESTS=$(echo '${{ convertToJson(parameters.taskTest) }}' | jq -r '.[]' | tr '\n' ' ')
-                  BUILD_REASON="${{ variables['Build.Reason'] }}"
-                  BUILD_DIR="${{ parameters.buildDirectory }}"
-
-                  echo "Build directory: $BUILD_DIR"
-                  echo "Build reason: $BUILD_REASON"
-                  echo "Running tests: $TASK_TESTS"
-
-                  # Pass the string to the script
-                  $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh "$TASK_TESTS" "$BUILD_DIR" "$BUILD_REASON"
-                displayName: Run Tests in Parallel
-                failOnStderr: true
-                condition: succeededOrFailed()
-
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
               - template: /tools/pipelines/templates/include-install.yml@self

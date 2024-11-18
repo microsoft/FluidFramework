@@ -57,7 +57,7 @@ run_task_test() {
 
   echo "Executing: npm $command in $build_directory"
   pushd "$build_directory" > /dev/null
-  npm run $command
+  npm $command
   popd > /dev/null
 }
 
