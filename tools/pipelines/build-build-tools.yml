@@ -142,7 +142,6 @@ stages:
             script: |
               echo test line
               echo "shouldDeploy: $(shouldDeploy)"
-              echo $[dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy']]
 
         - task: TriggerBuild@4
           inputs:
