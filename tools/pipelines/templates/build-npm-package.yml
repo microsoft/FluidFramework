@@ -358,18 +358,6 @@ extends:
 
                   - script: |
                       export startTest=true
-                      TEST_COVERAGE=${{
-                        and(
-                          parameters.testCoverage,
-                          or(
-                            ne(variables['Build.Reason'], 'PullRequest'),
-                            and(
-                              not(contains(parameters.taskTest, 'realsvc:tinylicious')),
-                              not(contains(parameters.taskTest, 'stress:tinylicious'))
-                            )
-                          )
-                        )
-                      }}
                       $(Build.SourcesDirectory)/scripts/run_parallel_tests.sh ${{ parameters.taskTest }} "${{ parameters.buildDirectory }}" "variables['Build.Reason']"
                     displayName: Run Tests in Parallel
                     failOnStderr: true
