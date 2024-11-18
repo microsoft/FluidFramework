@@ -5,9 +5,16 @@ set -eux -o pipefail
 # This script is used in the "npm run test" step in our CI build pipelines.
 # It runs the specified test steps in parallel.
 
-TASK_TEST_STEPS=("${!1}")
-BUILD_DIRECTORY=${2:-"."}
-BUILD_REASON=${3:-"IndividualCI"}
+TASK_TEST_ARRAY=("$@")  # Capture all script arguments
+BUILD_DIR="${TASK_TEST_ARRAY[-2]}"  # Extract the second-to-last argument (build directory)
+BUILD_REASON="${TASK_TEST_ARRAY[-1]}"  # Extract the last argument (build reason)
+
+unset 'TASK_TEST_ARRAY[-1]'
+unset 'TASK_TEST_ARRAY[-1]'
+
+echo "Tests to run: ${TASK_TEST_ARRAY[@]}"
+echo "Build Directory: $BUILD_DIR"
+echo "Build Reason: $BUILD_REASON"
 
 # Check if the taskTestSteps array is empty
 if [[ ${#TASK_TEST_STEPS[@]} -eq 0 ]]; then
