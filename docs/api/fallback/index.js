@@ -7,7 +7,7 @@ const routes = require("./routes.js");
 
 /**
  * Handles incoming HTTP requests and redirects them based on configured {@link routes}.
- * If no route is configured, return a 404 status.
+ * If no route is configured, will redirect to `/404`.
  *
  * @remarks Azure will only call this for URLs without matching static files.
  */

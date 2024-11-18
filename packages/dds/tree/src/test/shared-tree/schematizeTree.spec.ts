@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	AllowedUpdateType,
@@ -101,7 +101,7 @@ describe("schematizeTree", () => {
 					let previousSchema: TreeStoredSchema = new TreeStoredSchemaRepository(storedSchema);
 					expectSchema(storedSchema, previousSchema);
 
-					storedSchema.on("afterSchemaChange", () => {
+					storedSchema.events.on("afterSchemaChange", () => {
 						previousSchema = new TreeStoredSchemaRepository(storedSchema);
 					});
 
@@ -121,7 +121,7 @@ describe("schematizeTree", () => {
 					const storedSchema = new TreeStoredSchemaRepository();
 					const log: string[] = [];
 
-					storedSchema.on("afterSchemaChange", () => {
+					storedSchema.events.on("afterSchemaChange", () => {
 						log.push("schema");
 					});
 					initializeContent(makeSchemaRepository(storedSchema), content.schema, () =>

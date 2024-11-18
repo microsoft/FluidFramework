@@ -1,8 +1,18 @@
 # @fluid-experimental/presence
 
+## 2.5.0
+
+### Minor Changes
+
+ISessionClient now exposes connectivity information
+
+    1. `ISessionClient` has a new method, `getConnectionStatus()`, with two possible states: `Connected` and `Disconnected`. ([#22833](https://github.com/microsoft/FluidFramework/pull/22833))
+    2. `ISessionClient`'s `connectionId()` member has been renamed to `getConnectionId()` for consistency. ([#22973](https://github.com/microsoft/FluidFramework/issues/22973))
+    3. `IPresence` event `attendeeDisconnected` is now implemented. ([#22833](https://github.com/microsoft/FluidFramework/pull/22833))
+
 ## 2.4.0
 
-Dependency updates only.
+Various implementation improvements.
 
 ## 2.3.0
 

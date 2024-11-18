@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	MockHandle,
@@ -1630,7 +1630,7 @@ describe("toMapTree", () => {
 });
 
 describe("deepCopyMapTree", () => {
-	/** Used by `generateMapTree` to give unique types and values to each MapTree */
+	// Used by `generateMapTree` to give unique types and values to each MapTree
 	let mapTreeGeneration = 0;
 	function generateMapTree(depth: number): ExclusiveMapTree {
 		const generation = mapTreeGeneration++;

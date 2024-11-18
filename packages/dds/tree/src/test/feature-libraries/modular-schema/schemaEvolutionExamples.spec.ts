@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type Adapters,
@@ -48,7 +48,7 @@ class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
 		if (allowsFieldSuperset(this.policy, this, this.rootFieldSchema, schema)) {
 			this.rootFieldSchemaData = schema;
-			this.events.emit("afterSchemaChange", this);
+			this._events.emit("afterSchemaChange", this);
 			return true;
 		}
 		return false;
@@ -63,7 +63,7 @@ class TestSchemaRepository extends TreeStoredSchemaRepository {
 		const original = this.nodeSchema.get(name);
 		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
 			this.nodeSchemaData.set(name, storedSchema);
-			this.events.emit("afterSchemaChange", this);
+			this._events.emit("afterSchemaChange", this);
 			return true;
 		}
 		return false;

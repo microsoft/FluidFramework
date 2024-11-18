@@ -15,7 +15,12 @@ import {
 	type IEvent,
 } from "@fluidframework/core-interfaces";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	isPromiseLike,
+	LazyPromise,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -55,6 +60,7 @@ import {
 	IInboundSignalMessage,
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
+	type IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -65,6 +71,7 @@ import {
 	LoggingError,
 	MonitoringContext,
 	ThresholdCounter,
+	UsageError,
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	generateStack,
@@ -224,12 +231,6 @@ export abstract class FluidDataStoreContext
 	public get containerRuntime(): IContainerRuntimeBase {
 		return this._containerRuntime;
 	}
-
-	// back-compat, to be removed in 2.0
-	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		return this.parentContext.ensureNoDataModelChanges(callback);
-	}
-
 	public get isLoaded(): boolean {
 		return this.loaded;
 	}
@@ -523,6 +524,43 @@ export abstract class FluidDataStoreContext
 		return factory;
 	}
 
+	createChildDataStore<T extends IFluidDataStoreFactory>(
+		childFactory: T,
+	): ReturnType<Exclude<T["createDataStore"], undefined>> {
+		const maybe = this.registry?.get(childFactory.type);
+
+		const isUndefined = maybe === undefined;
+		const isPromise = isPromiseLike(maybe);
+		const diffInstance = isPromise || maybe?.IFluidDataStoreFactory !== childFactory;
+
+		if (isUndefined || isPromise || diffInstance) {
+			throw new UsageError(
+				"The provided factory instance must be synchronously available as a child of this datastore",
+				{ isUndefined, isPromise, diffInstance },
+			);
+		}
+		if (childFactory?.createDataStore === undefined) {
+			throw new UsageError("createDataStore must exist on the provided factory", {
+				noCreateDataStore: true,
+			});
+		}
+
+		const context = this._containerRuntime.createDetachedDataStore([
+			...this.packagePath,
+			childFactory.type,
+		]);
+		assert(
+			context instanceof LocalDetachedFluidDataStoreContext,
+			"must be a LocalDetachedFluidDataStoreContext",
+		);
+
+		const created = childFactory.createDataStore(context) as ReturnType<
+			Exclude<T["createDataStore"], undefined>
+		>;
+		context.unsafe_AttachRuntimeSync(created.runtime);
+		return created;
+	}
+
 	private async realizeCore(existing: boolean) {
 		const details = await this.getInitialSnapshotDetails();
 		// Base snapshot is the baseline where pending ops are applied to.
@@ -605,11 +643,14 @@ export abstract class FluidDataStoreContext
 		this.summarizerNode.recordChange(envelope as ISequencedDocumentMessage);
 
 		if (this.loaded) {
-			assert(this.channel !== undefined, "Channel is not loaded");
+			assert(this.channel !== undefined, 0xa68 /* Channel is not loaded */);
 			this.processMessagesCompat(this.channel, messageCollection);
 		} else {
 			assert(!local, 0x142 /* "local store channel is not loaded" */);
-			assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
+			assert(
+				this.pendingMessagesState !== undefined,
+				0xa69 /* pending messages queue is undefined */,
+			);
 			this.pendingMessagesState.messageCollections.push({
 				...messageCollection,
 				messagesContent: Array.from(messagesContent),
@@ -829,7 +870,10 @@ export abstract class FluidDataStoreContext
 	protected processPendingOps(channel: IFluidDataStoreChannel) {
 		const baseSequenceNumber = this.baseSnapshotSequenceNumber ?? -1;
 
-		assert(this.pendingMessagesState !== undefined, "pending messages queue is undefined");
+		assert(
+			this.pendingMessagesState !== undefined,
+			0xa6a /* pending messages queue is undefined */,
+		);
 		for (const messageCollection of this.pendingMessagesState.messageCollections) {
 			// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
 			if (messageCollection.envelope.sequenceNumber > baseSequenceNumber) {
@@ -1426,6 +1470,24 @@ export class LocalDetachedFluidDataStoreContext
 			});
 
 		return this.channelToDataStoreFn(await this.channelP);
+	}
+
+	/**
+	 * This method provides a synchronous path for binding a runtime to the context.
+	 *
+	 * Due to its synchronous nature, it is unable to validate that the runtime
+	 * represents a datastore which is instantiable by remote clients. This could
+	 * happen if the runtime's package path does not return a factory when looked up
+	 * in the container runtime's registry, or if the runtime's entrypoint is not
+	 * properly initialized. As both of these validation's are asynchronous to preform.
+	 *
+	 * If used incorrectly, this function can result in permanent data corruption.
+	 */
+	public unsafe_AttachRuntimeSync(channel: IFluidDataStoreChannel) {
+		this.channelP = Promise.resolve(channel);
+		this.processPendingOps(channel);
+		this.completeBindingRuntime(channel);
+		return this.channelToDataStoreFn(channel);
 	}
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {

@@ -7,7 +7,6 @@ import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import {
 	type IMigratableModel,
 	instantiateMigratableRuntime,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluid-example/migration-tools/internal";
 import type {
 	IContainer,

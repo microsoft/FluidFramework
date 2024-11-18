@@ -76,7 +76,7 @@ declare type current_as_old_for_Class_Trace = requireAssignableTo<TypeOnly<curre
  * typeValidation.broken:
  * "Class_TypedEventEmitter": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_TypedEventEmitter = requireAssignableTo<TypeOnly<old.TypedEventEmitter<any>>, TypeOnly<current.TypedEventEmitter<any>>>
+declare type old_as_current_for_Class_TypedEventEmitter = requireAssignableTo<TypeOnly<old.TypedEventEmitter<never>>, TypeOnly<current.TypedEventEmitter<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -85,7 +85,7 @@ declare type old_as_current_for_Class_TypedEventEmitter = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Class_TypedEventEmitter": {"backCompat": false}
  */
-declare type current_as_old_for_Class_TypedEventEmitter = requireAssignableTo<TypeOnly<current.TypedEventEmitter<any>>, TypeOnly<old.TypedEventEmitter<any>>>
+declare type current_as_old_for_Class_TypedEventEmitter = requireAssignableTo<TypeOnly<current.TypedEventEmitter<never>>, TypeOnly<old.TypedEventEmitter<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -247,7 +247,7 @@ declare type current_as_old_for_TypeAlias_IsomorphicPerformance = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_TypedEventTransform": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TypedEventTransform = requireAssignableTo<TypeOnly<old.TypedEventTransform<any,any>>, TypeOnly<current.TypedEventTransform<any,any>>>
+declare type old_as_current_for_TypeAlias_TypedEventTransform = requireAssignableTo<TypeOnly<old.TypedEventTransform<never,never>>, TypeOnly<current.TypedEventTransform<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -256,7 +256,7 @@ declare type old_as_current_for_TypeAlias_TypedEventTransform = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_TypedEventTransform": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TypedEventTransform = requireAssignableTo<TypeOnly<current.TypedEventTransform<any,any>>, TypeOnly<old.TypedEventTransform<any,any>>>
+declare type current_as_old_for_TypeAlias_TypedEventTransform = requireAssignableTo<TypeOnly<current.TypedEventTransform<never,never>>, TypeOnly<old.TypedEventTransform<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

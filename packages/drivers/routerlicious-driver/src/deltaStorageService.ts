@@ -91,7 +91,13 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 				this.snapshotOps = undefined;
 			}
 
-			const ops = await this.deltaStorageService.get(this.tenantId, this.id, from, to);
+			const ops = await this.deltaStorageService.get(
+				this.tenantId,
+				this.id,
+				from,
+				to,
+				fetchReason,
+			);
 			validateMessages("storage", ops.messages, from, this.logger, false /* strict */);
 			opsFromStorage += ops.messages.length;
 			return ops;
@@ -144,6 +150,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 		id: string,
 		from: number, // inclusive
 		to: number, // exclusive
+		fetchReason?: string,
 	): Promise<IDeltasFetchResult> {
 		const ops = await PerformanceEvent.timedExecAsync(
 			this.logger,
@@ -158,6 +165,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 				const response = await restWrapper.get<ISequencedDocumentMessage[]>(url, {
 					from: from - 1,
 					to,
+					fetchReason: fetchReason ?? "",
 				});
 				event.end({
 					length: response.content.length,

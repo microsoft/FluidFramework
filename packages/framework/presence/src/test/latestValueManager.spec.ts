@@ -3,9 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import type { LatestValueClientData } from "../index.js";
-import { Latest } from "../index.js";
-import type { IPresence } from "../presence.js";
+import { addControlsTests } from "./broadcastControlsTests.js";
+
+import type {
+	BroadcastControlSettings,
+	IPresence,
+	LatestValueClientData,
+} from "@fluidframework/presence/alpha";
+import { Latest } from "@fluidframework/presence/alpha";
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function createLatestManager(
+	presence: IPresence,
+	valueControlSettings?: BroadcastControlSettings,
+) {
+	const states = presence.getStates("name:testWorkspaceA", {
+		camera: Latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
+	});
+	return states.props.camera;
+}
 
 describe("Presence", () => {
 	describe("LatestValueManager", () => {
@@ -13,6 +29,8 @@ describe("Presence", () => {
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
+
+		addControlsTests(createLatestManager);
 	});
 });
 
@@ -29,15 +47,17 @@ export function checkCompiles(): void {
 		camera: Latest({ x: 0, y: 0, z: 0 }),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
-	const map: typeof statesWorkspace = statesWorkspace;
+	const workspace: typeof statesWorkspace = statesWorkspace;
+	const props = workspace.props;
 
-	map.add("caret", Latest({ id: "", pos: 0 }));
+	workspace.add("caret", Latest({ id: "", pos: 0 }));
 
-	const fakeAdd = map.caret.local.pos + map.camera.local.z + map.cursor.local.x;
+	const fakeAdd =
+		workspace.props.caret.local.pos + props.camera.local.z + props.cursor.local.x;
 	console.log(fakeAdd);
 
 	// @ts-expect-error local may be set wholly, but partially it is readonly
-	map.caret.local.pos = 0;
+	workspace.props.caret.local.pos = 0;
 
 	function logClientValue<
 		T /* following extends should not be required: */ extends Record<string, unknown>,
@@ -46,7 +66,7 @@ export function checkCompiles(): void {
 	}
 
 	// Create new cursor state
-	const cursor = map.cursor;
+	const cursor = props.cursor;
 
 	// Update our cursor position
 	cursor.local = { x: 1, y: 2 };
