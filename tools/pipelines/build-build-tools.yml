@@ -126,7 +126,7 @@ stages:
   displayName: 'testbash'
   dependsOn: ['check_branch_version']
   variables:
-    shouldDeploy: $[eq(dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'], 'true')]
+    shouldDeploy: $[dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy']]
   pool: Small
   jobs:
     - job: testBash
@@ -141,7 +141,6 @@ stages:
             script: |
               echo test line
               echo "shouldDeploy: $(shouldDeploy)"
-              echo $[dependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy']]
 
         - task: TriggerBuild@4
           inputs:
