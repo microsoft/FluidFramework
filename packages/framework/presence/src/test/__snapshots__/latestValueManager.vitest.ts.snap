@@ -16,17 +16,6 @@ exports[`Presence > LatestValueManager > batching > batches signals from multipl
           }
         }
       },
-      "s:name:testStateWorkspace2": {
-        "note": {
-          "sessionId-2": {
-            "rev": 2,
-            "timestamp": 1060,
-            "value": {
-              "message": "final message"
-            }
-          }
-        }
-      },
       "s:name:testStateWorkspace": {
         "count": {
           "sessionId-2": {
@@ -34,6 +23,17 @@ exports[`Presence > LatestValueManager > batching > batches signals from multipl
             "timestamp": 1050,
             "value": {
               "num": 34
+            }
+          }
+        }
+      },
+      "s:name:testStateWorkspace2": {
+        "note": {
+          "sessionId-2": {
+            "rev": 2,
+            "timestamp": 1060,
+            "value": {
+              "message": "final message"
             }
           }
         }
@@ -47,7 +47,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1120,
+    "sendTimestamp": 1110,
     "avgLatency": 10,
     "data": {
       "system:presence": {
@@ -175,7 +175,7 @@ exports[`Presence > LatestValueManager > batching > batches signals with differe
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1070,
+    "sendTimestamp": 1060,
     "avgLatency": 10,
     "data": {
       "system:presence": {
@@ -188,21 +188,21 @@ exports[`Presence > LatestValueManager > batching > batches signals with differe
         }
       },
       "s:name:testStateWorkspace": {
-        "note": {
-          "sessionId-2": {
-            "rev": 2,
-            "timestamp": 1060,
-            "value": {
-              "message": "final message"
-            }
-          }
-        },
         "count": {
           "sessionId-2": {
             "rev": 2,
             "timestamp": 1050,
             "value": {
               "num": 34
+            }
+          }
+        },
+        "note": {
+          "sessionId-2": {
+            "rev": 1,
+            "timestamp": 1020,
+            "value": {
+              "message": "will be queued"
             }
           }
         }
@@ -382,7 +382,48 @@ exports[`Presence > LatestValueManager > batching > queued signal is sent immedi
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1110,
+    "sendTimestamp": 1010,
+    "avgLatency": 10,
+    "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
+      "s:name:testStateWorkspace": {
+        "count": {
+          "sessionId-2": {
+            "rev": 0,
+            "timestamp": 1010,
+            "value": {
+              "num": 0
+            }
+          }
+        },
+        "immediateUpdate": {
+          "sessionId-2": {
+            "rev": 0,
+            "timestamp": 1010,
+            "value": {
+              "num": 0
+            }
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > LatestValueManager > batching > queued signal is sent immediately with immediate update message > submitted signal 2`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1120,
     "avgLatency": 10,
     "data": {
       "system:presence": {
@@ -423,7 +464,7 @@ exports[`Presence > LatestValueManager > batching > sends signal immediately whe
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1020,
+    "sendTimestamp": 1010,
     "avgLatency": 10,
     "data": {
       "system:presence": {
@@ -438,10 +479,10 @@ exports[`Presence > LatestValueManager > batching > sends signal immediately whe
       "s:name:testStateWorkspace": {
         "count": {
           "sessionId-2": {
-            "rev": 1,
-            "timestamp": 1020,
+            "rev": 0,
+            "timestamp": 1010,
             "value": {
-              "num": 42
+              "num": 0
             }
           }
         }
@@ -470,10 +511,74 @@ exports[`Presence > LatestValueManager > batching > sends signal immediately whe
       "s:name:testStateWorkspace": {
         "count": {
           "sessionId-2": {
+            "rev": 1,
+            "timestamp": 1020,
+            "value": {
+              "num": 42
+            }
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 3`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1020,
+    "avgLatency": 10,
+    "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
+      "s:name:testStateWorkspace": {
+        "count": {
+          "sessionId-2": {
             "rev": 2,
             "timestamp": 1020,
             "value": {
               "num": 84
+            }
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > LatestValueManager > batching > sets timer for default allowableUpdateLatency > submitted signal 1`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1070,
+    "avgLatency": 10,
+    "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
+      "s:name:testStateWorkspace": {
+        "count": {
+          "sessionId-2": {
+            "rev": 0,
+            "timestamp": 1010,
+            "value": {
+              "num": 0
             }
           }
         }

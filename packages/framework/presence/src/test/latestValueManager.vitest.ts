@@ -65,22 +65,22 @@ describe("Presence", () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
-				}); // where does broadcast of initial state go?
+				}); // SIGNAL #1 - intial data is sent immediately
 
 				const { count } = stateWorkspace.props;
 
 				clock.tick(10); // Time is now 1020
 
-				// SIGNAL #1
+				// SIGNAL #2
 				count.local = { num: 42 };
 
-				// SIGNAL #2
+				// SIGNAL #3
 				count.local = { num: 84 };
 
-				expect(runtime.submittedSignals).toHaveLength(2);
+				expect(runtime.submittedSignals).toHaveLength(3);
 			});
 
-			it.skip("sets timer for default allowableUpdateLatency", async () => {
+			it("sets timer for default allowableUpdateLatency", async () => {
 				// Configure a state workspace
 				presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
@@ -179,7 +179,8 @@ describe("Presence", () => {
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 					immediateUpdate: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
-				}); // where does broadcast of initial state go?
+				}); // SIGNAL #1 - not queued because it contains a value manager with a latency of 0,
+				// so the initial data will be sent immediately
 
 				const { count, immediateUpdate } = stateWorkspace.props;
 
@@ -191,11 +192,14 @@ describe("Presence", () => {
 
 				clock.tick(10); // Time is now 1110
 				immediateUpdate.local = { num: 56 };
-				// SIGNAL #1
+				// SIGNAL #2
 				// This should cause the queued signals to be merged with this immediately-sent
 				// signal with the value from the last signal (num=34).
 
-				expect(runtime.submittedSignals).toHaveLength(1);
+				// It's necessary to tick the timer beyond the deadline so the timer will fire.
+				clock.tick(10); // Time is now 1250
+
+				expect(runtime.submittedSignals).toHaveLength(2);
 			});
 
 			it("batches signals with different allowed latencies", async () => {
@@ -203,22 +207,22 @@ describe("Presence", () => {
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
-				}); // where does broadcast of initial state go?
+				}); // will be queued, deadline is set to 1060
 
 				const { count, note } = stateWorkspace.props;
 
 				clock.tick(10); // Time is now 1020
-				note.local = { message: "will be queued" }; // will be queued, deadline is set to 1070
-				count.local = { num: 12 }; // will be queued; deadline remains 1070
+				note.local = { message: "will be queued" }; // will be queued, deadline remains 1060
+				count.local = { num: 12 }; // will be queued; deadline remains 1060
 
 				clock.tick(30); // Time is now 1050
-				count.local = { num: 34 }; // will be queued; deadline remains 1070
+				count.local = { num: 34 }; // will be queued; deadline remains 1060
 
 				clock.tick(10); // Time is now 1060
-				note.local = { message: "final message" }; // will be queued; deadline remains 1070
+				note.local = { message: "final message" }; // will be queued; deadline remains 1060
 
 				// SIGNAL #1
-				// At time 1070, the deadline timer will fire and send a single signal with the value
+				// At time 1060, the deadline timer will fire and send a single signal with the value
 				// from the last signal (num=34, message="final message").
 
 				// It's necessary to tick the timer beyond the deadline so the timer will fire.
@@ -231,26 +235,26 @@ describe("Presence", () => {
 				// Configure two state workspaces
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
-				}); // where does broadcast of initial state go?
+				}); // will be queued, deadline is 1110
 				const stateWorkspace2 = presence.getStates("name:testStateWorkspace2", {
 					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
-				}); // where does broadcast of initial state go?
+				}); // will be queued, deadline is 1060
 
 				const { count } = stateWorkspace.props;
 				const { note } = stateWorkspace2.props;
 
 				clock.tick(10); // Time is now 1020
-				note.local = { message: "will be queued" }; // will be queued, deadline is set to 1070
-				count.local = { num: 12 }; // will be queued; deadline remains 1070
+				note.local = { message: "will be queued" }; // will be queued, deadline is set to 1060
+				count.local = { num: 12 }; // will be queued; deadline remains 1060
 
 				clock.tick(30); // Time is now 1050
-				count.local = { num: 34 }; // will be queued; deadline remains 1070
+				count.local = { num: 34 }; // will be queued; deadline remains 1060
 
 				clock.tick(10); // Time is now 1060
-				note.local = { message: "final message" }; // will be queued; deadline remains 1070
+				note.local = { message: "final message" }; // will be queued; deadline remains 1060
 
 				// SIGNAL #1
-				// The deadline timer will fire at time 1070 and send a single
+				// The deadline timer will fire at time 1060 and send a single
 				// signal with the values from the last workspace updates (num=34, message="final message").
 
 				// It's necessary to tick the timer beyond the deadline so the timer will fire.
@@ -278,11 +282,7 @@ describe("Presence", () => {
 						"testEvents"
 					>(
 						// A default handler is not required
-						{
-							newId: (client, newId) => {
-								// do nothing?
-							},
-						},
+						{},
 					),
 				);
 
