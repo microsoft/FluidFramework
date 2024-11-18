@@ -288,6 +288,11 @@ describe("Presence", () => {
 
 				const { testEvents } = notificationsWorkspace.props;
 
+				// Add a handler
+				testEvents.notifications.on("newId", (client, value) => {
+					// do nothing
+				});
+
 				clock.tick(10); // Time is now 1020
 
 				clock.tick(30); // Time is now 1050
@@ -361,13 +366,13 @@ describe("Presence", () => {
 
 				expect(runtime.submittedSignals).toHaveLength(2);
 
-				// const signal = runtime.submittedSignals[0];
-				// expect(
-				// 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				// 	(signal?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
-				// 		"sessionId-2"
-				// 	].value.args,
-				// ).toEqual([111]);
+				const signal = runtime.submittedSignals[0];
+				expect(
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(signal?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
+						"sessionId-2"
+					].value.args,
+				).toEqual([111]);
 			});
 		});
 	});

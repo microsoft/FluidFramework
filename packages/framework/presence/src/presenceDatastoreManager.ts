@@ -212,7 +212,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		data: GeneralDatastoreMessageContent,
 		options: RuntimeLocalUpdateOptions,
 	): void {
-		const allowableUpdateLatencyMs = options.allowableUpdateLatencyMs ?? 0;
+		const allowableUpdateLatencyMs = options.allowableUpdateLatencyMs;
 
 		const now = Date.now();
 		const updateDeadline = now + allowableUpdateLatencyMs;
@@ -240,8 +240,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				)) {
 					// TODO: Should any values be ignored here? E.g. values with ignoreUnmonitored?
 					mergedData[valueManagerKey] ??= {};
+					const oldData = mergedData[valueManagerKey][clientSessionId];
 					mergedData[valueManagerKey][clientSessionId] = mergeValueDirectory(
-						mergedData[valueManagerKey][clientSessionId],
+						oldData,
 						value,
 						0, // local values do not need a time shift
 					);

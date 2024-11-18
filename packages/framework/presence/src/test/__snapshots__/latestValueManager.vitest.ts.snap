@@ -232,7 +232,7 @@ exports[`Presence > LatestValueManager > batching > notification signals are sen
         "testEvents": {
           "sessionId-2": {
             "rev": 0,
-            "timestamp": 0,
+            "timestamp": 1050,
             "value": {
               "name": "newId",
               "args": [
@@ -268,7 +268,7 @@ exports[`Presence > LatestValueManager > batching > notification signals are sen
         "testEvents": {
           "sessionId-2": {
             "rev": 0,
-            "timestamp": 0,
+            "timestamp": 1050,
             "value": {
               "name": "newId",
               "args": [
@@ -315,7 +315,7 @@ exports[`Presence > LatestValueManager > batching > notification signals cause q
         "testEvents": {
           "sessionId-2": {
             "rev": 0,
-            "timestamp": 0,
+            "timestamp": 1050,
             "value": {
               "name": "newId",
               "args": [
@@ -362,7 +362,7 @@ exports[`Presence > LatestValueManager > batching > notification signals cause q
         "testEvents": {
           "sessionId-2": {
             "rev": 0,
-            "timestamp": 0,
+            "timestamp": 1050,
             "value": {
               "name": "newId",
               "args": [
