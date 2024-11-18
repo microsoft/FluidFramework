@@ -179,19 +179,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				},
 				options,
 			);
-
-			// 	this.localUpdate({
-			// 		// Always send current connection mapping for some resiliency against
-			// 		// lost signals. This ensures that client session id found in `updates`
-			// 		// (which is this client's client session id) is always represented in
-			// 		// system workspace of recipient clients.
-			// 		"system:presence": {
-			// 			clientToSessionId: {
-			// 				[clientConnectionId]: { ...currentClientToSessionValueState },
-			// 			},
-			// 		},
-			// 		[internalWorkspaceAddress]: updates,
-			// 	});
 		};
 
 		const entry = createPresenceStates(

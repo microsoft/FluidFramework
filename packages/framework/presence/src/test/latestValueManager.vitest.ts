@@ -11,7 +11,7 @@ import { Latest, Notifications, type PresenceNotifications } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockRuntimeSignalSnapshotter } from "./snapshotEphemeralRuntime.js";
-import { generateBasicClientJoin, prepareConnectedPresence } from "./testUtils.js";
+import { prepareConnectedPresence } from "./testUtils.js";
 
 describe("Presence", () => {
 	describe("LatestValueManager", () => {
@@ -65,21 +65,24 @@ describe("Presence", () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
-				}); // SIGNAL #1 DUE TO AB#24392
+				}); // where does broadcast of initial state go?
 
 				const { count } = stateWorkspace.props;
 
 				clock.tick(10); // Time is now 1020
 
-				// SIGNAL #2
+				// SIGNAL #1
 				count.local = { num: 42 };
+
+				// SIGNAL #2
+				count.local = { num: 84 };
 			});
 
 			it("batches signals sent within the allowableUpdateLatency", async () => {
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
-				}); // SIGNAL #1 DUE TO AB#24392
+				}); // where does broadcast of initial state go?
 
 				const { count } = stateWorkspace.props;
 
@@ -89,17 +92,12 @@ describe("Presence", () => {
 				clock.tick(80); // Time is now 1100
 				count.local = { num: 34 }; // will be queued; deadline remains 1120
 
-				clock.tick(30); // Time is now 1130
-				const expectedClientJoin = generateBasicClientJoin(clock.now, {
-					clientSessionId: "sessionId-3",
-					clientConnectionId: "client3",
-					updateProviders: ["client2"],
-					averageLatency: 10,
-				});
-				presence.processSignal("", expectedClientJoin, true);
-				// SIGNAL #2
-				// The deadline has now passed, so the timer will fire and send a single
+				// SIGNAL #1
+				// The deadline timer will fire at time 1120 and send a single
 				// signal with the value from the last signal (num=34).
+
+				// It's necessary to tick the timer beyond the deadline so the timer will fire.
+				clock.tick(30); // Time is now 1130
 
 				clock.tick(10); // Time is now 1140
 				count.local = { num: 56 }; // will be queued; deadline is set to 1240
@@ -110,10 +108,12 @@ describe("Presence", () => {
 				clock.tick(40); // Time is now 1220
 				count.local = { num: 90 }; // will be queued; deadline remains 1240
 
-				clock.tick(30); // Time is now 1250
-				// SIGNAL #3
-				// The deadline has now passed, so the timer will fire and send a single
+				// SIGNAL #2
+				// The deadline timer will fire at time 1240 and send a single
 				// signal with the value from the last signal (num=90).
+
+				// It's necessary to tick the timer beyond the deadline so the timer will fire.
+				clock.tick(30); // Time is now 1250
 			});
 
 			it("queued signal is sent immediately with immediate update message", async () => {
@@ -121,7 +121,7 @@ describe("Presence", () => {
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 					immediateUpdate: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
-				}); // SIGNAL #1 DUE TO AB#24392
+				}); // where does broadcast of initial state go?
 
 				const { count, immediateUpdate } = stateWorkspace.props;
 
@@ -143,7 +143,7 @@ describe("Presence", () => {
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
-				}); // SIGNAL #1 DUE TO AB#24392
+				}); // where does broadcast of initial state go?
 
 				const { count, note } = stateWorkspace.props;
 
@@ -157,20 +157,22 @@ describe("Presence", () => {
 				clock.tick(10); // Time is now 1060
 				note.local = { message: "final message" }; // will be queued; deadline remains 1070
 
+				// SIGNAL #1
+				// At time 1070, the deadline timer will fire and send a single signal with the value
+				// from the last signal (num=34, message="final message").
+
+				// It's necessary to tick the timer beyond the deadline so the timer will fire.
 				clock.tick(30); // Time is now 1080
-				// SIGNAL #2
-				// The deadline has now passed, so the timer will fire and send a single
-				// signal with the value from the last signal (num=34, message="final message").
 			});
 
 			it("batches signals from multiple workspaces", async () => {
 				// Configure two state workspaces
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
-				}); // SIGNAL #1 DUE TO AB#24392
+				}); // where does broadcast of initial state go?
 				const stateWorkspace2 = presence.getStates("name:testStateWorkspace2", {
 					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
-				}); // SIGNAL #2 DUE TO AB#24392
+				}); // where does broadcast of initial state go?
 
 				const { count } = stateWorkspace.props;
 				const { note } = stateWorkspace2.props;
@@ -185,14 +187,15 @@ describe("Presence", () => {
 				clock.tick(10); // Time is now 1060
 				note.local = { message: "final message" }; // will be queued; deadline remains 1070
 
-				// Messages are auto-sent at time 1070, the deadline
-
-				clock.tick(30); // Time is now 1090
-				// SIGNAL #3
-				// The deadline has now passed, so the timer will fire at time 1070 and send a single
+				// SIGNAL #1
+				// The deadline timer will fire at time 1070 and send a single
 				// signal with the values from the last workspace updates (num=34, message="final message").
+
+				// It's necessary to tick the timer beyond the deadline so the timer will fire.
+				clock.tick(30); // Time is now 1090
 			});
 
+			// IMPORTANT: RESULTS NOT VALID! See TODOs inline.
 			it("notification signals are sent immediately", async () => {
 				// Configure a notifications workspaces
 				// eslint-disable-next-line @typescript-eslint/ban-types
@@ -224,20 +227,22 @@ describe("Presence", () => {
 				clock.tick(10); // Time is now 1020
 
 				clock.tick(30); // Time is now 1050
-				testEvents.emit.broadcast("newId", 77);
 				// SIGNAL #1
+				testEvents.emit.broadcast("newId", 77);
 
-				clock.tick(10);
-				testEvents.emit.broadcast("newId", 99);
+				clock.tick(10); // Time is now 1060
 				// SIGNAL #2
+				// TODO: This value is not in the snapshot - it seems that the old value (77) is broadcast
+				// again. Why?
+				testEvents.emit.broadcast("newId", 88);
 			});
 
-			// TODO: RESULTS NOT VALID!!!
+			// IMPORTANT: RESULTS NOT VALID! See TODOs inline.
 			it("notification signals cause queued messages to be sent immediately", async () => {
 				// Configure a state workspaces
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
-				}); // SIGNAL #1 DUE TO AB#24392
+				}); // where does broadcast of initial state go?
 
 				// eslint-disable-next-line @typescript-eslint/ban-types
 				const notificationsWorkspace: PresenceNotifications<{}> = presence.getNotifications(
@@ -271,11 +276,14 @@ describe("Presence", () => {
 
 				clock.tick(30); // Time is now 1050
 				testEvents.emit.broadcast("newId", 99);
-				// SIGNAL #2
-				// The deadline has now passed, so the timer will fire and send a
-				// signal with the value from the last signal (num=12)
-				// There should also be a signal for the notification, which is NOT
-				// being sent
+				// SIGNAL #1
+				// The notification will cause an immediate broadcast of the queued signal
+				// along with the notification signal.
+
+				clock.tick(30); // Time is now 1080
+				// TODO: This value is not in the snapshot - it seems that the old value (99) is broadcast
+				// again. Why?
+				testEvents.emit.broadcast("newId", 111);
 			});
 		});
 	});
