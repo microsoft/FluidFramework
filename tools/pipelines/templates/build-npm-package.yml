@@ -323,11 +323,10 @@ extends:
                   export startTest=true
                   chmod +x $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh
                   # Join the array elements into a space-separated string
-                  TASK_TESTS=${{ join(parameters.taskTest, ' ') }}
+                  TASK_TESTS=$(echo '${{ convertToJson(parameters.taskTest) }}' | jq -r '.[]' | tr '\n' ' ')
                   BUILD_REASON="${{ variables['Build.Reason'] }}"
                   BUILD_DIR="${{ parameters.buildDirectory }}"
 
-                  echo "Passing tests: $TASK_TEST_STRING"
                   echo "Build directory: $BUILD_DIR"
                   echo "Build reason: $BUILD_REASON"
                   echo "Running tests: $TASK_TESTS"
@@ -379,17 +378,16 @@ extends:
                       export startTest=true
                       chmod +x $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh
                       # Join the array elements into a space-separated string
-                      TASK_TESTS=${{ join(parameters.taskTest, ' ') }}
+                      TASK_TESTS=$(echo '${{ convertToJson(parameters.taskTest) }}' | jq -r '.[]' | tr '\n' ' ')
                       BUILD_REASON="${{ variables['Build.Reason'] }}"
                       BUILD_DIR="${{ parameters.buildDirectory }}"
 
-                      echo "Passing tests: $TASK_TEST_STRING"
                       echo "Build directory: $BUILD_DIR"
                       echo "Build reason: $BUILD_REASON"
                       echo "Running tests: $TASK_TESTS"
 
                       # Pass the string to the script
-                      $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh $TASK_TEST "$BUILD_DIR" "$BUILD_REASON"
+                      $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh "$TASK_TESTS" "$BUILD_DIR" "$BUILD_REASON"
                     displayName: Run Tests in Parallel
                     failOnStderr: true
                     condition: succeededOrFailed()
