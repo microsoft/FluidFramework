@@ -5,6 +5,8 @@
 
 import type { IPresence } from "../presence.js";
 
+import { addControlsTests } from "./broadcastControlsTests.js";
+
 import type {
 	JsonDeserialized,
 	JsonSerializable,
@@ -17,6 +19,10 @@ describe("Presence", () => {
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
+
+		addControlsTests((presence, controlSettings) => {
+			return presence.getStates("name:testWorkspaceA", {}, controlSettings);
+		});
 	});
 });
 

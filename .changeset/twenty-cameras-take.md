@@ -22,3 +22,11 @@ To update existing code, access your presence states from the `props` property i
 - presenceStatesWorkspace.myMap.local.get("key1");
 + presenceStatesWorkspace.props.myMap.local.get("key1");
 ```
+
+#### `BroadcastControls` replace `LatestValueControls` ([#23120](https://github.com/microsoft/FluidFramework/pull/23120))
+
+`BroadcastControls` maybe specified on `PresenceStates` thru new `controls` property as defaults for all value managers.
+
+`allowableUpdateLatencyMs` was renamed from `allowableUpdateLatency` to clarify units are milliseconds. Specifying this value currently has no effect, but use is recommended to light up as implementation comes online.
+
+Unsupported `forcedRefreshInterval` has been removed until implementation is closer.
