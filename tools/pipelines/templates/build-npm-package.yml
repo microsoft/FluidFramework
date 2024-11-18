@@ -364,6 +364,10 @@ extends:
                       BUILD_REASON="${{ variables['Build.Reason'] }}"
                       BUILD_DIR="${{ parameters.buildDirectory }}"
 
+                      echo "Passing tests: $TASK_TEST_STRING"
+                      echo "Build directory: $BUILD_DIR"
+                      echo "Build reason: $BUILD_REASON"
+
                       # Pass the string to the script
                       $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh "$TASK_TEST_STRING" "$BUILD_DIR" "$BUILD_REASON"
                     displayName: Run Tests in Parallel

@@ -5,19 +5,18 @@ set -eux -o pipefail
 # This script is used in the "npm run test" step in our CI build pipelines.
 # It runs the specified test steps in parallel.
 
-TASK_TEST_ARRAY=("$@")  # Capture all script arguments
-BUILD_DIR="${TASK_TEST_ARRAY[-2]}"  # Extract the second-to-last argument (build directory)
-BUILD_REASON="${TASK_TEST_ARRAY[-1]}"  # Extract the last argument (build reason)
+TASK_TEST_STRING="$1"
+BUILD_DIR="$2"
+BUILD_REASON="$3"
 
-unset 'TASK_TEST_ARRAY[-1]'
-unset 'TASK_TEST_ARRAY[-1]'
+IFS=' ' read -r -a TASK_TEST_ARRAY <<< "$TASK_TEST_STRING"
 
-echo "Tests to run: ${TASK_TEST_ARRAY[@]}"
+echo "Tests to run: $TASK_TEST_ARRAY"
 echo "Build Directory: $BUILD_DIR"
 echo "Build Reason: $BUILD_REASON"
 
 # Check if the taskTestSteps array is empty
-if [[ ${#TASK_TEST_STEPS[@]} -eq 0 ]]; then
+if [[ ${#TASK_TEST_ARRAY[@]} -eq 0 ]]; then
   echo "Error: At least one taskTestStep is required."
   exit 1
 fi
@@ -66,7 +65,7 @@ if [[ "${startTest}" == "true" ]]; then
   echo "Starting tests in parallel..."
 
   # Loop through the array of test steps and run each in parallel
-  for task_test_step in "${TASK_TEST_STEPS[@]}"; do
+  for task_test_step in "${TASK_TEST_ARRAY[@]}"; do
     run_task_test "$task_test_step" "$BUILD_DIRECTORY" "$TEST_COVERAGE" &
   done
 
