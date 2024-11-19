@@ -10,6 +10,7 @@ import {
 	IContainer,
 	IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	IPresence,
 	Latest,
@@ -66,12 +67,44 @@ describeCompat("Presence", "NoCompat", (getTestObjectProvider, apis) => {
 
 		it("can set and get states", () => {
 			const testStatesSchema = {
-				lastRoll: Latest({}),
+				latest: Latest({}),
 			};
 			const testStates = presence.getStates("name:test-states", testStatesSchema);
-			testStates.props.lastRoll.local = { test: 1 };
+			testStates.props.latest.local = { test: 1 };
 
-			assert.deepEqual(testStates.props.lastRoll.local, { test: 1 });
+			assert.deepEqual(testStates.props.latest.local, { test: 1 });
 		});
+	});
+
+	describe("Multiple clients", () => {
+		let container1: IContainer;
+		let container2: IContainer;
+		let container3: IContainer;
+		let presence1: IPresence;
+		let presence2: IPresence;
+		let presence3: IPresence;
+
+		beforeEach("create containers and presence", async function () {
+			container1 = await createContainer();
+			container2 = await loadContainer();
+			container3 = await loadContainer();
+
+			presence1 = await getPresence(container1);
+			presence2 = await getPresence(container2);
+			presence3 = await getPresence(container3);
+
+			// need to be connected to send signals
+			if (container1.connectionState !== ConnectionState.Connected) {
+				await new Promise((resolve) => container1.once("connected", resolve));
+			}
+			if (container2.connectionState !== ConnectionState.Connected) {
+				await new Promise((resolve) => container2.once("connected", resolve));
+			}
+			if (container3.connectionState !== ConnectionState.Connected) {
+				await new Promise((resolve) => container2.once("connected", resolve));
+			}
+		});
+
+		it("can set and get states", () => {});
 	});
 });
