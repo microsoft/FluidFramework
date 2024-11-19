@@ -77,8 +77,8 @@ export class DocumentLambda implements IPartitionLambda {
 					}`,
 			);
 			// update reprocessRange to avoid reprocessing the same message again
-			if (this.isOffsetWithinReprocessRange(message.offset)) {
-				this.updateReprocessRange(message.offset);
+			if (this.reprocessingOffset) {
+				this.updateReprocessRange(this.reprocessingOffset);
 			}
 			return undefined;
 		}
@@ -87,8 +87,8 @@ export class DocumentLambda implements IPartitionLambda {
 		this.contextManager.setTail(message, this.reprocessingOffset);
 
 		// update reprocessRange to avoid reprocessing the same message again
-		if (this.isOffsetWithinReprocessRange(message.offset)) {
-			this.updateReprocessRange(message.offset);
+		if (this.reprocessingOffset) {
+			this.updateReprocessRange(this.reprocessingOffset);
 		}
 
 		return undefined;
@@ -136,8 +136,8 @@ export class DocumentLambda implements IPartitionLambda {
 			offset >= this.reprocessRange.startOffset && offset <= this.reprocessRange.endOffset;
 	}
 
-	private updateReprocessRange(processedOffset: number) {
-		this.reprocessRange.startOffset = processedOffset + 1;
+	private updateReprocessRange(reprocessedOffset: number) {
+		this.reprocessRange.startOffset = reprocessedOffset + 1;
 		if (this.reprocessRange.endOffset && this.reprocessRange.endOffset < this.reprocessRange.startOffset) {
 			// reset since all messages in the reprocess range have been processed
 			this.reprocessRange = { startOffset: undefined, endOffset: undefined };
