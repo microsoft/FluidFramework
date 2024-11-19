@@ -27,8 +27,6 @@ import * as matrix from "@fluidframework/matrix/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import * as orderedCollection from "@fluidframework/ordered-collection/internal";
 import { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
-// eslint-disable-next-line import/no-internal-modules
-import * as presence from "@fluidframework/presence/internal/datastorePresenceManagerFactory";
 import * as registerCollection from "@fluidframework/register-collection/internal";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import * as sequence from "@fluidframework/sequence/internal";
@@ -83,7 +81,6 @@ const packageList = [
 	"@fluidframework/odsp-driver",
 	"@fluidframework/routerlicious-driver",
 	"@fluidframework/agent-scheduler",
-	"@fluidframework/presence",
 ];
 
 /**
@@ -188,7 +185,6 @@ export const DataRuntimeApi = {
 		sequence,
 		sequenceDeprecated,
 		agentScheduler,
-		presence,
 	},
 };
 
@@ -266,7 +262,6 @@ async function loadDataRuntime(
 			registerCollection,
 			sequenceDeprecated,
 			agentScheduler,
-			presence,
 		] = await Promise.all([
 			loadPackage(modulePath, "@fluidframework/aqueduct"),
 			loadPackage(modulePath, "@fluidframework/datastore"),
@@ -285,7 +280,6 @@ async function loadDataRuntime(
 					: "@fluidframework/sequence",
 			),
 			loadPackage(modulePath, "@fluidframework/agent-scheduler"),
-			loadPackage(modulePath, "@fluidframework/presence"),
 		]);
 		const { FluidDataStoreRuntime } = datastore;
 		const { SharedCell } = cell;
@@ -326,7 +320,6 @@ async function loadDataRuntime(
 				registerCollection,
 				sequenceDeprecated,
 				agentScheduler,
-				presence,
 			},
 		};
 		dataRuntimeCache.set(version, dataRuntime);
