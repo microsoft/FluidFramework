@@ -53,7 +53,7 @@ export class GitWholeSummaryManager {
 		private readonly repoManager: IRepositoryManager,
 		private readonly lumberjackProperties: Record<string, any>,
 		private readonly externalStorageEnabled = true,
-		private cmkEncryptionScope?: string,
+		private readonly cmkEncryptionScope?: string,
 		writeOptions?: Partial<ISummaryWriteFeatureFlags>,
 	) {
 		this.summaryWriteFeatureFlags = {
@@ -117,7 +117,8 @@ export class GitWholeSummaryManager {
 			// when blobContainerPerDoc is enabled (timestamp conditions meets) and having cmkEncryptionScope,
 			// Pass cmkEncryptionScope to FRS filesystem (azurestorage at the bottom layer) and apply cmkEncryptionScope.
 			if (
-				isInitial && this.cmkEncryptionScope &&
+				isInitial &&
+				this.cmkEncryptionScope &&
 				this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp &&
 				Date.now() > this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp
 			) {

@@ -85,8 +85,8 @@ export class RestGitService {
 			defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
 		}
 
-		if (cmkEncryptionScope) {
-			defaultHeaders[Constants.cmkEncryptionScope] = cmkEncryptionScope;
+		if (this.cmkEncryptionScope) {
+			defaultHeaders[Constants.cmkEncryptionScope] = this.cmkEncryptionScope;
 		}
 		// We set the flag only for ephemeral containers
 		if (this.isEphemeralContainer) {
