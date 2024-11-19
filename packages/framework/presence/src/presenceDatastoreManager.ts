@@ -238,18 +238,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private queuedData: GeneralDatastoreMessageContent | undefined;
 
 	/**
-	 * The time at which the presence data must be sent. When presence updates are submitted, this value is calculated
-	 * based on the allowable latency for the update. A timer will fire at this time, sending any queued message
-	 * immediately. Note that if updates come in with allowable latencies that require sending before this deadline, those
-	 * messages will be sent immediately. Therefore this value can be considered the time of the next scheduled presence
-	 * update.
-	 */
-	private get sendMessageDeadline(): number {
-		// Rather than tracking a deadline independently, just use the timer time
-		return this.timer.hasExpired() ? 0 : this.timer.startTime + this.timer.delay;
-	}
-
-	/**
 	 * Enqueues a new message to be sent. The message may be queued or may be sent immediately depending on the state of
 	 * the send timer, other messages in the queue, the configured allowed latency, etc.
 	 */
@@ -268,7 +256,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		if (
 			// If the deadline for this message is later than the overall send deadline, then
 			// we may be able to exit early if a timer will take care of sending it.
-			thisMessageDeadline >= this.sendMessageDeadline &&
+			thisMessageDeadline >= this.timer.expireTime &&
 			// If the timer has not expired, we can short-circuit because the timer will fire
 			// and cover this update. In other words, queuing this will be fast enough to
 			// meet its deadline, because a timer is already scheduled to fire before its deadline.
