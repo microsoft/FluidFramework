@@ -57,8 +57,6 @@ Notifications value managers are special case where no data is retained during a
 
 ## Onboarding
 
-** Needs update**
-
 While this package is developing as experimental and other Fluid Framework internals are being updated to accommodate it, a temporary Shared Object must be added within container to gain access.
 
 ```typescript
@@ -108,6 +106,10 @@ would be compatible with both of the prior schemas as "myState2" is a different 
 
 ### Notifications
 
-Notifications API is mostly unimplemented. All messages are always broadcast even if `unicast` API is used and all are emitted as `unattendedNotification` event rather than the appropriate custom event.
+Notifications API is partially implemented. All messages are always broadcast even if `unicast` API is used. Type inferences are not working even with a fully specified `initialSubscriptions` value provided to `Notifications` and schema type must be specified explicitly.
 
 Notifications are fundamentally unreliable at this time as there are no built-in acknowledgements nor retained state. To prevent most common loss of notifications, always check for connection before sending.
+
+### Throttling
+
+Throttling is not yet implemented. `BroadcastControls` exists in the API to provide control over throttling of value updates, but throttling is not yet implemented. It is recommended that `BroadcastControls.allowableUpdateLatencyMs` use is considered and specified to light up once support is added.
