@@ -43,7 +43,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	protected readonly runtime: IFluidDataStoreRuntime;
 
 	/**
-	 * This context is used to talk up to the ContainerRuntime
+	 * This context is used to talk up to the IContainerRuntime
 	 */
 	protected readonly context: IFluidDataStoreContext;
 

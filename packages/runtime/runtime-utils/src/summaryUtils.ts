@@ -147,31 +147,56 @@ export function addSummarizeResultToSummary(
 }
 
 /**
+ * An object who's properties are used to initialize a {@link SummaryTreeBuilder}
+ * @legacy
+ * @alpha
+ */
+export interface SummaryTreeBuilderParams {
+	/**
+	 * This value will become the {@link @fluidframework/driver-definitions#ISummaryTree.groupId}
+	 * of the {@link @fluidframework/driver-definitions#ISummaryTree} built by the {@link SummaryTreeBuilder}.
+	 */
+	groupId?: string;
+}
+/**
+ * A helper class for building summary trees.
+ * @remarks Uses the builder pattern.
  * @legacy
  * @alpha
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private attachmentCounter: number = 0;
+	private readonly groupId?: string;
 
 	public get summary(): ISummaryTree {
-		return {
+		const summary: ISummaryTree = {
 			type: SummaryType.Tree,
 			tree: { ...this.summaryTree },
 		};
+		if (this.groupId !== undefined) {
+			summary.groupId = this.groupId;
+		}
+		return summary;
 	}
 
 	public get stats(): Readonly<ISummaryStats> {
 		return { ...this.summaryStats };
 	}
 
-	constructor() {
+	constructor(params?: { groupId?: string }) {
 		this.summaryStats = mergeStats();
 		this.summaryStats.treeNodeCount++;
+		this.groupId = params?.groupId;
 	}
 
 	private readonly summaryTree: { [path: string]: SummaryObject } = {};
 	private summaryStats: ISummaryStats;
 
+	/**
+	 * Add a blob to the summary tree. This blob will be stored at the given key in the summary tree.
+	 * @param key - The key to store the blob at in the current summary tree being generated. Should not contain any "/" characters.
+	 * @param content - The content of the blob to be added to the summary tree.
+	 */
 	public addBlob(key: string, content: string | Uint8Array): void {
 		// Prevent cloning by directly referencing underlying private properties
 		addBlobToSummary(
@@ -187,6 +212,16 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 		);
 	}
 
+	/**
+	 * Adds an {@link @fluidframework/driver-definitions#ISummaryHandle} that references a subtree, blob, or attachment in a previous summary.
+	 *
+	 * @remarks
+	 * There are special limitations to both the key and handle parameters: We use encodeURIComponent and decodeURIComponent to encode and decode the key and handle parameters after they are added to the summary tree. This means that the key and handle parameters must be valid URI components. If they are not, the encoding and decoding will fail and the summary will not be generated correctly.
+	 *
+	 * @param key - The key to store the handle at in the current summary tree being generated. Should not contain any "/" characters.
+	 * @param handleType - the type of {@link @fluidframework/driver-definitions#SummaryObject} besides a SummaryHandle, i.e. {@link @fluidframework/driver-definitions#SummaryType.Tree}, {@link @fluidframework/driver-definitions#SummaryType.Blob}, {@link @fluidframework/driver-definitions#SummaryType.Attachment}
+	 * @param handle - The path pointing to the part of the previous summary being used to duplicate the data. Use {@link @fluidframework/driver-definitions#ISummaryHandle.handle} to help generate proper handle strings. Should not contain any "/" characters.
+	 */
 	public addHandle(
 		key: string,
 		handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
@@ -200,15 +235,32 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 		this.summaryStats.handleNodeCount++;
 	}
 
+	/**
+	 * Adds a child and updates the stats accordingly.
+	 * @param key - The key to store the handle at in the current summary tree being generated. Should not contain any "/" characters.
+	 * The key should be unique within the current summary tree, and not transform when encodeURIComponent is called.
+	 * @param summarizeResult - Similar to {@link @fluidframework/runtime-definitions#ISummaryTreeWithStats}. The provided summary can be either a {@link @fluidframework/driver-definitions#ISummaryHandle} or {@link @fluidframework/driver-definitions#ISummaryTree}.
+	 */
 	public addWithStats(key: string, summarizeResult: ISummarizeResult): void {
 		this.summaryTree[key] = summarizeResult.summary;
 		this.summaryStats = mergeStats(this.summaryStats, summarizeResult.stats);
 	}
 
+	/**
+	 * Adds an {@link @fluidframework/driver-definitions#ISummaryAttachment} to the summary. This blob needs to already be uploaded to storage.
+	 * @param id - The id of the uploaded attachment to be added to the summary tree.
+	 */
 	public addAttachment(id: string) {
 		this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
 	}
 
+	/**
+	 * Gives you the in-memory summary tree with stats built by the SummaryTreeBuilder.
+	 *
+	 * @remarks
+	 * Use this once you're done building the summary tree, the stats should automatically be generated.
+	 * @returns The summary tree and stats built by the SummaryTreeBuilder.
+	 */
 	public getSummaryTree(): ISummaryTreeWithStats {
 		return { summary: this.summary, stats: this.stats };
 	}

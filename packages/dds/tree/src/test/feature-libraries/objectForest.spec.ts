@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -13,7 +13,7 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { singleJsonCursor } from "../../domains/index.js";
+import { singleJsonCursor } from "../json/index.js";
 import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */

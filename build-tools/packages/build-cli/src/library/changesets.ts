@@ -6,13 +6,14 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { VersionBumpType } from "@fluid-tools/version-tools";
-import { Logger, type ReleaseNotesSectionName } from "@fluidframework/build-tools";
+import { Logger } from "@fluidframework/build-tools";
 import { compareAsc, formatISO, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
 import issueParser from "issue-parser";
 const { test: hasFrontMatter } = matter;
 
+import type { ReleaseNotesSectionName } from "../config.js";
 import { ReleasePackage } from "../releaseGroups.js";
 import { Repository } from "./git.js";
 

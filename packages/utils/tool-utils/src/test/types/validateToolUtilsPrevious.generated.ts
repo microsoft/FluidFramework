@@ -20,9 +20,72 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Class_OdspTokenManager": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_OdspTokenManager = requireAssignableTo<TypeOnly<old.OdspTokenManager>, TypeOnly<current.OdspTokenManager>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_OdspTokenManager": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_OdspTokenManager = requireAssignableTo<TypeOnly<current.OdspTokenManager>, TypeOnly<old.OdspTokenManager>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_OdspTokenManager": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_OdspTokenManager = requireAssignableTo<TypeOnly<typeof current.OdspTokenManager>, TypeOnly<typeof old.OdspTokenManager>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getNormalizedSnapshot": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getNormalizedSnapshot = requireAssignableTo<TypeOnly<typeof current.getNormalizedSnapshot>, TypeOnly<typeof old.getNormalizedSnapshot>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_loadRC": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_loadRC = requireAssignableTo<TypeOnly<typeof current.loadRC>, TypeOnly<typeof old.loadRC>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_lockRC": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_lockRC = requireAssignableTo<TypeOnly<typeof current.lockRC>, TypeOnly<typeof old.lockRC>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_saveRC": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_saveRC = requireAssignableTo<TypeOnly<typeof current.saveRC>, TypeOnly<typeof old.saveRC>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_IAsyncCache": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IAsyncCache = requireAssignableTo<TypeOnly<old.IAsyncCache<any,any>>, TypeOnly<current.IAsyncCache<any,any>>>
+declare type old_as_current_for_Interface_IAsyncCache = requireAssignableTo<TypeOnly<old.IAsyncCache<never,never>>, TypeOnly<current.IAsyncCache<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -31,7 +94,7 @@ declare type old_as_current_for_Interface_IAsyncCache = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_IAsyncCache": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IAsyncCache = requireAssignableTo<TypeOnly<current.IAsyncCache<any,any>>, TypeOnly<old.IAsyncCache<any,any>>>
+declare type current_as_old_for_Interface_IAsyncCache = requireAssignableTo<TypeOnly<current.IAsyncCache<never,never>>, TypeOnly<old.IAsyncCache<never,never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -106,33 +169,6 @@ declare type old_as_current_for_TypeAlias_OdspTokenConfig = requireAssignableTo<
 declare type current_as_old_for_TypeAlias_OdspTokenConfig = requireAssignableTo<TypeOnly<current.OdspTokenConfig>, TypeOnly<old.OdspTokenConfig>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_OdspTokenManager": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_OdspTokenManager = requireAssignableTo<TypeOnly<old.OdspTokenManager>, TypeOnly<current.OdspTokenManager>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_OdspTokenManager": {"backCompat": false}
- */
-declare type current_as_old_for_Class_OdspTokenManager = requireAssignableTo<TypeOnly<current.OdspTokenManager>, TypeOnly<old.OdspTokenManager>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_OdspTokenManager": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_OdspTokenManager = requireAssignableTo<TypeOnly<typeof current.OdspTokenManager>, TypeOnly<typeof old.OdspTokenManager>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -155,42 +191,6 @@ declare type current_as_old_for_Variable_getMicrosoftConfiguration = requireAssi
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Function_getNormalizedSnapshot": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getNormalizedSnapshot = requireAssignableTo<TypeOnly<typeof current.getNormalizedSnapshot>, TypeOnly<typeof old.getNormalizedSnapshot>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_loadRC": {"backCompat": false}
- */
-declare type current_as_old_for_Function_loadRC = requireAssignableTo<TypeOnly<typeof current.loadRC>, TypeOnly<typeof old.loadRC>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_lockRC": {"backCompat": false}
- */
-declare type current_as_old_for_Function_lockRC = requireAssignableTo<TypeOnly<typeof current.lockRC>, TypeOnly<typeof old.lockRC>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Variable_odspTokensCache": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_odspTokensCache = requireAssignableTo<TypeOnly<typeof current.odspTokensCache>, TypeOnly<typeof old.odspTokensCache>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_saveRC": {"backCompat": false}
- */
-declare type current_as_old_for_Function_saveRC = requireAssignableTo<TypeOnly<typeof current.saveRC>, TypeOnly<typeof old.saveRC>>

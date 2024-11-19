@@ -97,6 +97,7 @@ export {
 	type DeltaDetachedNodeRename,
 	type DeltaFieldChanges,
 	type ExclusiveMapTree,
+	deepCopyMapTree,
 } from "./tree/index.js";
 
 export {
@@ -120,7 +121,7 @@ export {
 	type TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
-	type TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
+	type TreeStoredSchemaSubscription,
 	type MutableTreeStoredSchema,
 	type FieldKindIdentifier,
 	type FieldKindData,
@@ -157,6 +158,7 @@ export {
 
 export {
 	areEqualChangeAtomIds,
+	areEqualChangeAtomIdOpts,
 	makeChangeAtomId,
 	asChangeAtomId,
 	type ChangeRebaser,
@@ -204,4 +206,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export { type Revertible, RevertibleStatus } from "./revertible/index.js";
+export { type Revertible, RevertibleStatus, type RevertibleFactory } from "./revertible.js";

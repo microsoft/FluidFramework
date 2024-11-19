@@ -4,6 +4,9 @@
 
 ```ts
 
+// @public
+export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
+
 // @alpha
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
@@ -38,7 +41,7 @@ export class RequestParser implements IRequest {
     createSubRequest(startingPathIndex: number): IRequest;
     static getPathParts(url: string): readonly string[];
     // (undocumented)
-    get headers(): IRequestHeader | undefined;
+    readonly headers?: IRequestHeader;
     isLeaf(elements: number): boolean;
     get pathParts(): readonly string[];
     // (undocumented)
@@ -63,18 +66,15 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
 }
 
-// @alpha (undocumented)
+// @alpha
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
-    constructor();
-    // (undocumented)
+    constructor(params?: {
+        groupId?: string;
+    });
     addAttachment(id: string): void;
-    // (undocumented)
     addBlob(key: string, content: string | Uint8Array): void;
-    // (undocumented)
     addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
-    // (undocumented)
     addWithStats(key: string, summarizeResult: ISummarizeResult): void;
-    // (undocumented)
     getSummaryTree(): ISummaryTreeWithStats;
     // (undocumented)
     get stats(): Readonly<ISummaryStats>;

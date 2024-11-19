@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import {
 	type ChangesetLocalId,
@@ -75,16 +75,16 @@ export function testToDelta() {
 		});
 
 		it("insert", () => {
-			const changeset = Change.insert(0, 1);
+			const changeset = Change.insert(0, 1, tag);
 			const expected = {
-				local: [{ count: 1, attach: { minor: 0 } }],
+				local: [{ count: 1, attach: { major: tag, minor: 0 } }],
 			};
 			const actual = toDelta(changeset);
 			assert.deepStrictEqual(actual, expected);
 		});
 
 		it("revive => restore", () => {
-			const changeset = Change.revive(0, 1, { revision: tag, localId: brand(0) });
+			const changeset = Change.revive(0, 1, { revision: tag, localId: brand(0) }, tag2);
 			const actual = toDelta(changeset);
 			const expected: DeltaFieldChanges = {
 				local: [

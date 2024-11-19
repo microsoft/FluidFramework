@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	IThrottler,
@@ -13,6 +12,7 @@ import {
 	IRevokedTokenChecker,
 	IStorageNameRetriever,
 	IDocumentManager,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -33,10 +33,12 @@ export class HistorianRunner implements IRunner {
 		public readonly restTenantThrottlers: Map<string, IThrottler>,
 		public readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly documentManager: IDocumentManager,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly cache?: ICache,
-		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly denyList?: IDenyList,
+		private readonly ephemeralDocumentTTLSec?: number,
+		private readonly readinessCheck?: IReadinessCheck,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -50,10 +52,12 @@ export class HistorianRunner implements IRunner {
 			this.restTenantThrottlers,
 			this.restClusterThrottlers,
 			this.documentManager,
+			this.startupCheck,
 			this.cache,
-			this.asyncLocalStorage,
 			this.revokedTokenChecker,
 			this.denyList,
+			this.ephemeralDocumentTTLSec,
+			this.readinessCheck,
 		);
 		historian.set("port", this.port);
 
@@ -65,6 +69,9 @@ export class HistorianRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 

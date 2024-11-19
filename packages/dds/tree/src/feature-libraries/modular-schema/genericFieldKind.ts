@@ -103,22 +103,25 @@ function rebaseGenericChange(
 			break;
 		}
 
-		const newIndex = newEntry?.[0] ?? Infinity;
-		const baseIndex = baseEntry?.[0] ?? Infinity;
+		const newIndex = newEntry?.[0] ?? Number.POSITIVE_INFINITY;
+		const baseIndex = baseEntry?.[0] ?? Number.POSITIVE_INFINITY;
 		let newNodeChange: NodeId | undefined;
 		let baseNodeChange: NodeId | undefined;
 		let index: number;
 		if (newIndex === baseIndex) {
-			assert(newEntry !== undefined && baseEntry !== undefined, "Entries should be defined");
+			assert(
+				newEntry !== undefined && baseEntry !== undefined,
+				0xa0d /* Entries should be defined */,
+			);
 			index = newIndex;
 			newNodeChange = newEntry[1];
 			baseNodeChange = baseEntry[1];
 		} else if (newIndex < baseIndex) {
-			assert(newEntry !== undefined, "Entry should be defined");
+			assert(newEntry !== undefined, 0xa0e /* Entry should be defined */);
 			index = newIndex;
 			newNodeChange = newEntry[1];
 		} else {
-			assert(baseEntry !== undefined, "Entry should be defined");
+			assert(baseEntry !== undefined, 0xa0f /* Entry should be defined */);
 			index = baseIndex;
 			baseNodeChange = baseEntry[1];
 		}

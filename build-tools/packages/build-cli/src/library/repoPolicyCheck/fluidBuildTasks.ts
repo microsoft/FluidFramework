@@ -12,8 +12,8 @@ import {
 	PackageJson,
 	TscUtils,
 	getEsLintConfigFilePath,
+	getFluidBuildConfig,
 	getTaskDefinitions,
-	loadFluidBuildConfig,
 	normalizeGlobalTaskDefinitions,
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
@@ -21,6 +21,7 @@ import {
 import JSON5 from "json5";
 import * as semver from "semver";
 import { TsConfigJson } from "type-fest";
+import { getFlubConfig } from "../../config.js";
 import { Handler, readFile } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 
@@ -35,8 +36,7 @@ const getFluidBuildTasksTscIgnore = (root: string): Set<string> => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreTasksCache.get(rootDir);
 	if (ignore === undefined) {
-		const ignoreArray =
-			loadFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
+		const ignoreArray = getFlubConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreTasksCache.set(rootDir, ignore);
 	}
@@ -51,7 +51,8 @@ function getFluidPackageMap(root: string): Map<string, Package> {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
-		const repo = FluidRepo.create(rootDir);
+		const fluidBuildConfig = getFluidBuildConfig(rootDir);
+		const repo = new FluidRepo(rootDir, fluidBuildConfig.repoPackages);
 		const packageMap = repo.createPackageMap();
 		record = { repo, packageMap };
 		repoCache.set(rootDir, record);
@@ -105,27 +106,6 @@ function findScript(json: Readonly<PackageJson>, command: string): string | unde
 }
 
 /**
- * Find the script name for the tsc-multi command in a npm package.json
- *
- * @param json - the package.json content to search script in
- * @param config - the tsc-multi config to check for
- * @returns first script name found to match the command
- *
- * @remarks
- */
-function findTscMultiScript(json: PackageJson, config: string): string | undefined {
-	for (const [script, scriptCommands] of Object.entries(json.scripts)) {
-		if (scriptCommands === undefined) {
-			continue;
-		}
-
-		if (scriptCommands.startsWith("tsc-multi") && scriptCommands.includes(config)) {
-			return script;
-		}
-	}
-}
-
-/**
  * Find the script name for the fluid-tsc command in a package.json
  *
  * @param json - the package.json content to search script in
@@ -170,12 +150,9 @@ function findTscScript(json: Readonly<PackageJson>, project: string): string | u
 	if (project === "./tsconfig.json") {
 		addIfDefined(findScript(json, "tsc"));
 		addIfDefined(findFluidTscScript(json, undefined));
-		addIfDefined(findTscMultiScript(json, "tsc-multi.cjs.json"));
-		addIfDefined(findTscMultiScript(json, "tsc-multi.node16.cjs.json"));
 	}
 	addIfDefined(findScript(json, `tsc --project ${project}`));
 	addIfDefined(findFluidTscScript(json, project));
-	addIfDefined(findTscMultiScript(json, project));
 	if (tscScripts.length === 1) {
 		return tscScripts[0];
 	}
@@ -335,7 +312,7 @@ function hasTaskDependency(
 	taskName: string,
 	searchDeps: readonly string[],
 ): boolean {
-	const rootConfig = loadFluidBuildConfig(root);
+	const rootConfig = getFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
 	// Searched deps that are package specific (e.g. <packageName>#<taskName>)
@@ -454,7 +431,7 @@ function patchTaskDeps(
 			let tasks: Exclude<Exclude<PackageJson["fluidBuild"], undefined>["tasks"], undefined>;
 			if (json.fluidBuild === undefined) {
 				tasks = {};
-				json.fluidBuild = { tasks };
+				json.fluidBuild = { tasks, version: 1 };
 			} else if (json.fluidBuild.tasks === undefined) {
 				tasks = {};
 				json.fluidBuild.tasks = tasks;
@@ -714,7 +691,6 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const projectMap = new Map<string, string>();
-			// Note: this does not check tsc-multi commands which do very likely reuse project files
 			return buildDepsHandler(
 				file,
 				root,

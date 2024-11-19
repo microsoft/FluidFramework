@@ -34,7 +34,7 @@ export enum ContainerMessageType {
 
 // @alpha
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration, recentBatchInfo?: [number, string][]);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
@@ -67,7 +67,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     deleteChildSummarizerNode(id: string): void;
     deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[];
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)
@@ -194,12 +194,14 @@ export const disabledCompressionConfig: ICompressionRuntimeOptions;
 // @alpha
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
-// @alpha
+// @alpha @sealed
 export class DocumentsSchemaController {
     constructor(existing: boolean, snapshotSequenceNumber: number, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
     maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined;
     // (undocumented)
     onDisconnect(): void;
+    processDocumentSchemaMessages(contents: IDocumentSchemaChangeMessage[], local: boolean, sequenceNumber: number): boolean;
+    // @deprecated
     processDocumentSchemaOp(content: IDocumentSchemaChangeMessage, local: boolean, sequenceNumber: number): boolean;
     // (undocumented)
     sessionSchema: IDocumentSchemaCurrent;
@@ -709,6 +711,21 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     // (undocumented)
     readonly stage: "upload";
     readonly uploadDuration: number;
+}
+
+// @alpha
+export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
+
+// @alpha
+export interface LoadContainerRuntimeParams {
+    containerScope?: FluidObject;
+    context: IContainerContext;
+    existing: boolean;
+    provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    // @deprecated
+    requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+    runtimeOptions?: IContainerRuntimeOptions;
 }
 
 // @alpha @deprecated (undocumented)

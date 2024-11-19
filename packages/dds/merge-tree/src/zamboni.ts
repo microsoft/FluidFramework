@@ -35,6 +35,9 @@ export function zamboniSegments(
 
 	for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
 		let segmentToScour = mergeTree.segmentsToScour.peek()?.value;
+
+		segmentToScour?.segment?.propertyManager?.updateMsn(mergeTree.collabWindow.minSeq);
+
 		if (!segmentToScour || segmentToScour.maxSeq > mergeTree.collabWindow.minSeq) {
 			break;
 		}
@@ -57,8 +60,7 @@ export function zamboniSegments(
 				block.childCount = newChildCount;
 				block.children = childrenCopy;
 				for (let j = 0; j < newChildCount; j++) {
-					// Non null asserting here since its looping though childrenCopy.length so j at childrenCopy will always exist
-					block.assignChild(childrenCopy[j]!, j, false);
+					block.assignChild(childrenCopy[j], j, false);
 				}
 
 				if (underflow(block) && block.parent) {
@@ -107,8 +109,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 			}
 			const packedBlock = mergeTree.makeBlock(nodeCount);
 			for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
-				// TODO Non null asserting, why is this not null?
-				const nodeToPack = holdNodes[childrenPackedCount++]!;
+				const nodeToPack = holdNodes[childrenPackedCount++];
 				packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
 			}
 			packedBlock.parent = parent;
@@ -117,8 +118,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 		}
 		parent.children = packedBlocks;
 		for (let j = 0; j < childCount; j++) {
-			// TODO Non null asserting, why is this not null?
-			parent.assignChild(packedBlocks[j]!, j, false);
+			parent.assignChild(packedBlocks[j], j, false);
 		}
 		parent.childCount = childCount;
 	} else {
@@ -140,7 +140,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 	for (let k = 0; k < node.childCount; k++) {
 		// TODO Non null asserting, why is this not null?
 		const childNode = node.children[k]!;
-		if (!childNode.isLeaf() || !childNode.segmentGroups.empty) {
+		if (!childNode.isLeaf() || childNode.segmentGroups?.empty === false) {
 			holdNodes.push(childNode);
 			prevSegment = undefined;
 			continue;

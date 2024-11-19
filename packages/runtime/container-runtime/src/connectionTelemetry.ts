@@ -4,7 +4,7 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -124,7 +124,7 @@ class OpPerfTelemetry {
 		/**
 		 * DeltaManager instance to monitor.
 		 */
-		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		private readonly deltaManager: IDeltaManagerFull,
 		/**
 		 * Emitter of events for the container runtime.
 		 */
@@ -440,14 +440,34 @@ class OpPerfTelemetry {
 }
 export interface IPerfSignalReport {
 	/**
-	 * Identifier for the signal being submitted in order to
+	 * Identifier to track broadcast signals being submitted in order to
 	 * allow collection of data around the roundtrip of signal messages.
 	 */
-	signalSequenceNumber: number;
+	broadcastSignalSequenceNumber: number;
+
+	/**
+	 * Accumulates the total number of broadcast signals sent during the current signal latency measurement window.
+	 * This value represents the total number of signals sent since the latency measurement began and is used
+	 * logged in telemetry when the latency measurement completes.
+	 */
+	totalSignalsSentInLatencyWindow: number;
+
+	/**
+	 * Counts the number of broadcast signals sent since the last latency measurement was initiated.
+	 * This counter increments with each broadcast signal sent. When a new latency measurement starts,
+	 * this counter is added to `totalSignalsSentInLatencyWindow` and then reset to zero.
+	 */
+	signalsSentSinceLastLatencyMeasurement: number;
+
 	/**
 	 * Number of signals that were expected but not received.
 	 */
 	signalsLost: number;
+
+	/**
+	 * Number of signals received out of order/non-sequentially.
+	 */
+	signalsOutOfOrder: number;
 
 	/**
 	 * Timestamp before submitting the signal we will trace.
@@ -455,9 +475,19 @@ export interface IPerfSignalReport {
 	signalTimestamp: number;
 
 	/**
-	 * Expected Signal Sequence to be received.
+	 * Signal we will trace for roundtrip latency.
+	 */
+	roundTripSignalSequenceNumber: number | undefined;
+
+	/**
+	 * Next expected signal sequence number to be received.
 	 */
 	trackingSignalSequenceNumber: number | undefined;
+
+	/**
+	 * Inclusive lower bound of signal monitoring window.
+	 */
+	minimumTrackingSignalSequenceNumber: number | undefined;
 }
 
 /**
@@ -470,7 +500,7 @@ export interface IPerfSignalReport {
  */
 export function ReportOpPerfTelemetry(
 	clientId: string | undefined,
-	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+	deltaManager: IDeltaManagerFull,
 	containerRuntimeEvents: IEventProvider<IContainerRuntimeEvents>,
 	logger: ITelemetryLoggerExt,
 ): void {

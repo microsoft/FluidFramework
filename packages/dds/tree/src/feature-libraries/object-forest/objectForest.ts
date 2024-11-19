@@ -31,15 +31,15 @@ import {
 	type UpPath,
 	type Value,
 	aboveRootPlaceholder,
+	deepCopyMapTree,
 } from "../../core/index.js";
-import { createEmitter } from "../../events/index.js";
+import { createEmitter, type Listenable } from "../../events/index.js";
 import {
 	assertNonNegativeSafeInteger,
 	assertValidIndex,
 	assertValidRange,
 	brand,
 	fail,
-	mapIterable,
 } from "../../util/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
@@ -61,18 +61,6 @@ function getOrCreateField(mapTree: MutableMapTree, key: FieldKey): MutableMapTre
 	return newField;
 }
 
-function deepCopyMapTree(mapTree: MapTree): MutableMapTree {
-	return {
-		...mapTree,
-		fields: new Map(
-			mapIterable(mapTree.fields.entries(), ([key, field]) => [
-				key,
-				field.map(deepCopyMapTree),
-			]),
-		),
-	};
-}
-
 /**
  * Reference implementation of IEditableForest.
  *
@@ -85,7 +73,8 @@ export class ObjectForest implements IEditableForest {
 	// All cursors that are in the "Current" state. Must be empty when editing.
 	public readonly currentCursors: Set<Cursor> = new Set();
 
-	private readonly events = createEmitter<ForestEvents>();
+	readonly #events = createEmitter<ForestEvents>();
+	public readonly events: Listenable<ForestEvents> = this.#events;
 
 	readonly #roots: MutableMapTree;
 	public get roots(): MapTree {
@@ -108,13 +97,6 @@ export class ObjectForest implements IEditableForest {
 
 	public get isEmpty(): boolean {
 		return this.roots.fields.size === 0;
-	}
-
-	public on<K extends keyof ForestEvents>(
-		eventName: K,
-		listener: ForestEvents[K],
-	): () => void {
-		return this.events.on(eventName, listener);
 	}
 
 	public clone(_: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
@@ -145,14 +127,14 @@ export class ObjectForest implements IEditableForest {
 		 * This is required for each change since there may be app facing change event handlers which create cursors.
 		 */
 		const preEdit = (): void => {
-			this.events.emit("beforeChange");
+			this.#events.emit("beforeChange");
 			assert(
 				this.currentCursors.has(cursor),
 				0x995 /* missing visitor cursor while editing */,
 			);
 			if (this.currentCursors.size > 1) {
 				const unexpectedSources = [...this.currentCursors].flatMap((c) =>
-					c === cursor ? [] : c.source ?? null,
+					c === cursor ? [] : (c.source ?? null),
 				);
 
 				throw new Error(
@@ -180,7 +162,7 @@ export class ObjectForest implements IEditableForest {
 			public create(content: ProtoNodes, destination: FieldKey): void {
 				preEdit();
 				this.forest.add(content, destination);
-				this.forest.events.emit("afterRootFieldCreated", destination);
+				this.forest.#events.emit("afterRootFieldCreated", destination);
 			}
 			public attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				preEdit();

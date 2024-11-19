@@ -9,6 +9,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal
 import {
 	ContainerRuntime,
 	UnknownContainerRuntimeMessage,
+	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
@@ -598,11 +599,6 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 		const opsSendType = config.testConfig.opsSendType ?? "staggeredReadWrite";
 		const opsPerCycle = (config.testConfig.opRatePerMin * cycleMs) / 60000;
 		const opsGapMs = cycleMs / opsPerCycle;
-		const futureOpPeriod =
-			config.testConfig.futureOpRatePerMin === undefined ||
-			config.testConfig.futureOpRatePerMin <= 0
-				? undefined
-				: Math.floor(config.testConfig.opRatePerMin / config.testConfig.futureOpRatePerMin);
 		const opSizeinBytes =
 			typeof config.testConfig.content?.opSizeinBytes === "undefined"
 				? 0
@@ -643,7 +639,6 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 
 		let opsSent = 0;
 		let largeOpsSent = 0;
-		let futureOpsSent = 0;
 		let virtualDataStoresCreated = 0;
 		let virtualDataStoresLoaded = 0;
 
@@ -656,7 +651,6 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 					documentOpCount: dataModel.counter.value,
 					localOpCount: opsSent,
 					localLargeOpCount: largeOpsSent,
-					localFutureOpCount: futureOpsSent,
 					localVirtualDataStoresCreated: virtualDataStoresCreated,
 					virtualDataStoresLoaded,
 				},
@@ -784,20 +778,6 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 							error,
 						);
 					});
-			}
-
-			// [DEPRECATED] This flow is deprecated and is expected to be removed from FF soon.
-			if (futureOpPeriod !== undefined && opsSent % futureOpPeriod === 0) {
-				(
-					this.context.containerRuntime as unknown as {
-						submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
-					}
-				).submit({
-					type: "FUTURE_TYPE" as any,
-					contents: "Hello",
-					compatDetails: { behavior: "Ignore" }, // This op should be ignored when processed, even upon resubmit if that happens
-				});
-				futureOpsSent++;
 			}
 
 			dataModel.counter.increment(1);

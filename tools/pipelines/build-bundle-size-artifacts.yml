@@ -1,8 +1,8 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# bundle size stats pipeline
-# Should be run only as a CI to produce baseline bundle size stats
+# bundle size and code coverage stats pipeline
+# Should be run only as a CI to produce baseline bundle size stats and code coverage stats
 
 name: $(Build.BuildId)
 
@@ -19,19 +19,27 @@ extends:
   parameters:
     publish: false
     taskLint: false
-    taskTest: [] # no tests
+    taskTest:
+      - ci:test:mocha
+      - ci:test:jest
+      - ci:test:realsvc:local
+      - test:copyresults
+    testResultDirs:
+      - nyc/examples
+      - nyc/experimental
+      - nyc/packages
     taskPack: false
     taskBundleAnalysis: true
     taskPublishBundleSizeArtifacts: true
     taskBuildDocs: false
-    testCoverage: false
+    testCoverage: true
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     buildDirectory: .
-    tagName: bundle-artifacts
+    tagName: bundle-and-code-coverage-artifacts
     # This pipeline doesn't generate production artifacts but the build-npm-package template is too intertwined with
     # that scenario, which requires that the pipeline runs in the 1ES pool.
-    poolBuild: NewLarge-linux-1ES
+    poolBuild: Large-eastus2
     checkoutSubmodules: true
     releaseBuildOverride: none
     publishOverride: default

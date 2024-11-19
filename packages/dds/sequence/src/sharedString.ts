@@ -20,6 +20,7 @@ import {
 	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 
@@ -139,10 +140,10 @@ export type SharedStringSegment = TextSegment | Marker;
  * In addition to text, a Shared String can also contain markers. Markers can be
  * used to store metadata at positions within the text, like the details of an
  * image or Fluid object that should be rendered with the text.
- * @legacy
- * @alpha
+ * @internal
  */
 export class SharedStringClass
+	// eslint-disable-next-line import/no-deprecated
 	extends SharedSegmentSequence<SharedStringSegment>
 	implements ISharedString
 {
@@ -170,25 +171,19 @@ export class SharedStringClass
 		refType: ReferenceType,
 		props?: PropertySet,
 	): void {
-		const segment = new Marker(refType);
-		if (props) {
-			segment.addProperties(props);
-		}
-
 		const pos = this.posFromRelativePos(relativePos1);
-		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() =>
+			this.client.insertSegmentLocal(pos, Marker.make(refType, props)),
+		);
 	}
 
 	/**
 	 * {@inheritDoc ISharedString.insertMarker}
 	 */
 	public insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void {
-		const segment = new Marker(refType);
-		if (props) {
-			segment.addProperties(props);
-		}
-
-		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() =>
+			this.client.insertSegmentLocal(pos, Marker.make(refType, props)),
+		);
 	}
 
 	/**
@@ -199,25 +194,19 @@ export class SharedStringClass
 		text: string,
 		props?: PropertySet,
 	): void {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.addProperties(props);
-		}
-
 		const pos = this.posFromRelativePos(relativePos1);
-		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() =>
+			this.client.insertSegmentLocal(pos, TextSegment.make(text, props)),
+		);
 	}
 
 	/**
 	 * {@inheritDoc ISharedString.insertText}
 	 */
 	public insertText(pos: number, text: string, props?: PropertySet): void {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.addProperties(props);
-		}
-
-		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() =>
+			this.client.insertSegmentLocal(pos, TextSegment.make(text, props)),
+		);
 	}
 
 	/**

@@ -36,6 +36,7 @@ import { toUtf8 } from "@fluidframework/common-utils";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
+	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
@@ -50,6 +51,7 @@ export class DocumentStorage implements IDocumentStorage {
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
 		private readonly storageNameAssigner: IStorageNameAllocator,
+		private readonly ephemeralDocumentTTLSec: number = 60 * 60 * 24, // 24 hours in seconds
 	) {}
 
 	/**
@@ -145,12 +147,11 @@ export class DocumentStorage implements IDocumentStorage {
 
 		const storageNameAssignerEnabled = !!this.storageNameAssigner;
 		const lumberjackProperties = {
-			[BaseTelemetryProperties.tenantId]: tenantId,
-			[BaseTelemetryProperties.documentId]: documentId,
+			...getLumberBaseProperties(documentId, tenantId),
 			storageName,
 			enableWholeSummaryUpload: this.enableWholeSummaryUpload,
 			storageNameAssignerExists: storageNameAssignerEnabled,
-			isEphemeralContainer,
+			[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
 		};
 		if (storageNameAssignerEnabled && !storageName) {
 			// Using a warning instead of an error just in case there are some outliers that we don't know about.
@@ -290,7 +291,7 @@ export class DocumentStorage implements IDocumentStorage {
 			...document,
 		};
 		if (isEphemeralContainer) {
-			documentDbValue.ttl = 60 * 60 * 24; // 24 hours in seconds
+			documentDbValue.ttl = this.ephemeralDocumentTTLSec;
 		}
 
 		try {

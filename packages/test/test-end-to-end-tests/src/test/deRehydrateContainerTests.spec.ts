@@ -217,8 +217,8 @@ describeCompat(
 				[sharedCounterId, SharedCounter.getFactory()],
 			]);
 
-			// This dance is to ensure that we get reasonable version of ContainerRuntime.
-			// If we do not set IRuntimeFactory property, LocalCodeLoader will use ContainerRuntime from current version
+			// This dance is to ensure that we get reasonable version of IContainerRuntime.
+			// If we do not set IRuntimeFactory property, LocalCodeLoader will use IContainerRuntime from current version
 			// We only support limited (N/N-1) compatibility for container runtime and data stores, so that will not work.
 			// Use version supplied by test framework
 			const defaultFactory = createDataStoreFactory("default", factory);
@@ -730,6 +730,7 @@ describeCompat(
 				);
 			});
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Rehydrate container, don't load a data store and then load after container attachment. Make changes to " +
 					"dds from rehydrated container and check reflection of changes in other container",
@@ -787,6 +788,7 @@ describeCompat(
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Rehydrate container, create but don't load a data store. Attach rehydrated container and load " +
 					"container 2 from another loader. Then load the created dataStore from container 2, make changes to dds " +
@@ -916,6 +918,7 @@ describeCompat(
 				assert.strictEqual(dds2FromRC.id, dds2.id, "Both dds id should match");
 			});
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Container rehydration with not bounded dds handle stored in root of bound dataStore. The not bounded dds " +
 					"also stores handle not bounded data store",
@@ -972,6 +975,7 @@ describeCompat(
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Container rehydration with not bounded data store handle stored in root of bound dataStore. " +
 					"The not bounded data store also stores handle not bounded dds",
