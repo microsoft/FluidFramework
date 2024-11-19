@@ -39,10 +39,11 @@ module.exports = {
 			},
 		],
 
+		// All dependencies in this package are dev
 		"import/no-extraneous-dependencies": [
 			"error",
 			{
-				devDependencies: ["test/**"],
+				devDependencies: true,
 			},
 		],
 
@@ -67,13 +68,6 @@ module.exports = {
 			// Config files
 			files: ["docusaurus.config.ts", "playwright.config.ts", "infra/**/*"],
 			rules: {
-				// Dev dependencies and internal modules may be used in config files
-				"import/no-extraneous-dependencies": [
-					"error",
-					{
-						devDependencies: true,
-					},
-				],
 				"import/no-internal-modules": "off",
 			},
 		},
