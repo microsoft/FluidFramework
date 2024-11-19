@@ -142,8 +142,8 @@ stages:
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 uploadAsLatest: ${{ variables.isMain }}
-                uploadAsLatestRelease: $(uploadAsLatestReleaseVar)
-                majorVersion: $(majorVersionVar)
+                uploadAsLatestRelease: ${{ variables.uploadAsLatestReleaseVar }}
+                majorVersion: ${{ variables.majorVersionVar }}
 
 # Runs TriggerBuild@4 to trigger the deploy-website pipeline
 # this stage runs depending on the check_branch_version stage and deployOverride parameter
