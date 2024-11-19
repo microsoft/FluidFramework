@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.10.0",
+	"version": "2.11.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -261,6 +261,21 @@
 			},
 			"TypeAlias_SharedStringSegment": {
 				"backCompat": false
+			},
+			"Class_SharedSegmentSequence": {
+				"forwardCompat": false
+			},
+			"Class_SharedStringClass": {
+				"forwardCompat": false
+			},
+			"Interface_ISharedSegmentSequence": {
+				"forwardCompat": false
+			},
+			"Interface_ISharedString": {
+				"forwardCompat": false
+			},
+			"TypeAlias_SharedString": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"
