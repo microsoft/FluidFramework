@@ -123,7 +123,19 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 					return ApiItemUtilities.getUnscopedPackageName(apiItem);
 				}
 				default: {
-					return ApiItemUtilities.getQualifiedApiItemName(apiItem);
+					const qualifiedName = ApiItemUtilities.getQualifiedApiItemName(apiItem);
+					let fileName = qualifiedName;
+
+					// Docusaurus treats any document name starting with "_" as a "partial" document, which
+					// will not be included in the site output.
+					// To work around this, while (hopefully) preventing name collisions, we will prefix
+					// The filename with "u". E.g. `_foo.md` -> `u_foo.md`.
+					// This doesn't have any effect on displayed contents, strictly on the filename and any links to it.
+					if (qualifiedName.startsWith("_")) {
+						fileName = `u${qualifiedName}`;
+					}
+
+					return fileName;
 				}
 			}
 		},
@@ -169,7 +181,6 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 
 			// #endregion
 
-			// TODO: custom landing pages for API suites?
 			let fileContents;
 			try {
 				const documentBody = MarkdownRenderer.renderDocument(document, {
@@ -189,7 +200,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 				);
 			}
 
-			let filePath = path.join(outputDir, `${document.documentPath}.md`);
+			const filePath = path.join(outputDir, `${document.documentPath}.md`);
 
 			try {
 				await fs.ensureFile(filePath);
