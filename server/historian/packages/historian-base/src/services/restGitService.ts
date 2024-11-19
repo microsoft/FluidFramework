@@ -118,6 +118,8 @@ export class RestGitService {
 				getGlobalTelemetryContext().getProperties().correlationId ??
 				uuid() /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
+			"historian",
+			true,
 		);
 	}
 
