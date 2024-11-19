@@ -114,8 +114,9 @@ export class GitWholeSummaryManager {
 			lumberjackProperties,
 		);
 		try {
-			// when blobContainerPerDoc is enabled (timestamp conditions meets) and having cmkEncryptionScope,
-			// Pass cmkEncryptionScope to FRS filesystem (azurestorage at the bottom layer) and apply cmkEncryptionScope.
+			// When blobContainerPerDoc is enabled (timestamp conditions meets) and having truthy cmkEncryptionScope,
+			// pass cmkEncryptionScope to FRS storage (azurestorage for durable container) and apply cmkEncryptionScope.
+			// This only happens for the durable container's initial summary, since EC's cmkEncryptionScope is undefined.
 			if (
 				isInitial &&
 				this.cmkEncryptionScope &&
@@ -128,7 +129,7 @@ export class GitWholeSummaryManager {
 				};
 				const summaryFolderPath = this.repoManager.path;
 				Lumberjack.info(
-					`Apply cmkEncryptionScope before initial summary upload.`,
+					`Apply cmkEncryptionScope before durable container's initial summary upload.`,
 					lumberjackProperties,
 				);
 				await fileSystemManager.promises.mkdir(summaryFolderPath, frsOptions);
