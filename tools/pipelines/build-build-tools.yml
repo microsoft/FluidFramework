@@ -131,7 +131,7 @@ stages:
       dependsOn: check_branch_version
       variables:
         majorVersion: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion'] ]
-        uploadAsLatestRelease: $[ eq(dependencies.check_branch_version.outputs['SetShouldDeploy.isLatest'], 'true') ]
+        uploadAsLatestRelease: $[ eq(dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'], 'true') ]
       environment: 'fluid-docs-env'
       pool: Large
       strategy:
