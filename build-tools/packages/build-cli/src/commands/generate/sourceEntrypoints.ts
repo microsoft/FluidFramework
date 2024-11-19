@@ -44,8 +44,8 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 			exists: true,
 		}),
 		outDir: Flags.directory({
-			description: "Directory to emit entrypoint files.",
-			default: "./src/entrypoints/",
+			description: "directory that contains a file named `tsconfig.json`",
+			default: "./src/entrypoints/tsconfig.json",
 			exists: true,
 		}),
 		...BaseCommand.flags,
@@ -109,7 +109,7 @@ async function getTsConfigCompilerOptions(
 ): Promise<{ rootDir: string; tsconfigOutDir: string; emitDeclarationOnly: boolean }> {
 	const formatTsconfigPath = formatPath(tsconfigPath);
 
-	const tsConfigContent = await fs.readFile(`${formatTsconfigPath}tsconfig.json`, {
+	const tsConfigContent = await fs.readFile(formatTsconfigPath, {
 		encoding: "utf8",
 	});
 
@@ -207,8 +207,8 @@ function mapExportPathToApiTag(
 
 	const { exports } = packageJson;
 
-	if (typeof exports !== "object" || exports === null) {
-		throw new Error('no valid "exports" within package properties');
+	if (typeof exports !== "object" || exports === null || exports === undefined) {
+		throw new Error(`${packageJson.name}: No exports map found.`);
 	}
 
 	const condition = emitDeclarationOnly ? "types" : "default";
@@ -227,7 +227,7 @@ function mapExportPathToApiTag(
 		const resolvedExport = getExportPathFromPackage(packageJson, level, [condition], logger);
 
 		if (resolvedExport === undefined) {
-			throw new Error("export path not found");
+			throw new Error(`${packageJson.name}: No export map found.`);
 		}
 
 		mapKeyToOutput.set(level, {

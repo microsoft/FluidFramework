@@ -196,6 +196,17 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 /**
  * Tries to find the path to types for a given API level, falling back to another API level (typically public) if the
  * requested one is not found. The paths returned are relative to the package.
+ *
+ * @remarks
+ * This implementation loosely follows TypeScript's process for finding types as described at
+ * {@link https://www.typescriptlang.org/docs/handbook/modules/reference.html#packagejson-main-and-types}. If an export
+ * map is found, the `types` and `typings` field are ignored. If an export map is not found, then the `types`/`typings`
+ * fields will be used as a fallback _only_ for the public API level (which corresponds to the default export).
+ *
+ * Importantly, this code _does not_ implement falling back to the `main` field when `types` and `typings` are missing,
+ * nor does it look up types from DefinitelyTyped (i.e. \@types/* packages). This fallback logic is not needed for our
+ * packages because we always specify types explicitly in the types field, and types are always included in our packages
+ * (as opposed to a separate \@types package).
  */
 function getTypesPathWithFallback(
 	packageJson: PackageJson,
@@ -203,29 +214,44 @@ function getTypesPathWithFallback(
 	log: Logger,
 	fallbackEntrypoint?: ApiLevel,
 ): { typesPath: string; entrypointUsed: ApiLevel } {
-	let chosenEntrypoint: ApiLevel = entrypoint;
-	// First try the requested paths, but fall back to public otherwise if configured.
-	let typesPath: string | undefined = getExportPathFromPackage(
-		packageJson,
-		entrypoint,
-		["types"],
-		log,
-	);
+	let chosenEntrypoint = entrypoint;
 
-	if (typesPath === undefined) {
-		// Try the public types if configured to do so. If public types are found adjust the level accordingly.
+	// Helper function to get types from the types/typings fields.
+	const getTypesField = (): string | undefined => {
+		log.verbose(`${packageJson.name}: No export map found.`);
+		log.verbose(`${packageJson.name}: Using the types/typings field value.`);
+		return packageJson.types ?? packageJson.typings;
+	};
+
+	// Try to resolve typesPath for the current entrypoint.
+	let typesPath =
+		// eslint-disable-next-line unicorn/no-negated-condition
+		packageJson.exports !== undefined
+			? getExportPathFromPackage(packageJson, entrypoint, ["types"], log)
+			: entrypoint === ApiLevel.public
+				? getTypesField()
+				: undefined;
+
+	// Fallback logic if typesPath is still undefined.
+	if (typesPath === undefined && fallbackEntrypoint !== undefined) {
+		chosenEntrypoint = fallbackEntrypoint;
 		typesPath =
-			fallbackEntrypoint === undefined
-				? undefined
-				: getExportPathFromPackage(packageJson, fallbackEntrypoint, ["types"], log);
-		chosenEntrypoint = fallbackEntrypoint ?? entrypoint;
-		if (typesPath === undefined) {
-			throw new Error(
-				`${packageJson.name}: No type definitions found for "${chosenEntrypoint}" API level.`,
-			);
-		}
+			// eslint-disable-next-line unicorn/no-negated-condition
+			packageJson.exports !== undefined
+				? getExportPathFromPackage(packageJson, fallbackEntrypoint, ["types"], log)
+				: fallbackEntrypoint === ApiLevel.public
+					? getTypesField()
+					: undefined;
 	}
-	return { typesPath: typesPath, entrypointUsed: chosenEntrypoint };
+
+	// Throw an error if no typesPath could be determined.
+	if (typesPath === undefined) {
+		throw new Error(
+			`${packageJson.name}: No type definitions found for "${chosenEntrypoint}" API level.`,
+		);
+	}
+
+	return { typesPath, entrypointUsed: chosenEntrypoint };
 }
 
 /**
@@ -541,10 +567,13 @@ export function generateCompatibilityTestCases(
  * Returns the name of the type preprocessing type meta-function to use, or undefined if no type test should be generated.
  */
 function selectTypePreprocessor(typeData: TypeData): string | undefined {
-	if (typeData.tags.has("type-test-minimal")) {
+	if (typeData.tags.has("system")) {
+		return undefined;
+	}
+	if (typeData.tags.has("typeTestMinimal")) {
 		return "MinimalType";
 	}
-	if (typeData.tags.has("type-test-full")) {
+	if (typeData.tags.has("typeTestFull")) {
 		return "FullType";
 	}
 	return "TypeOnly";

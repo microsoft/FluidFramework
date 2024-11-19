@@ -31,6 +31,7 @@ import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
+ * @internal
  */
 export function isTreeNodeSchemaClass<
 	Name extends string,
@@ -366,6 +367,8 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
  *
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
+ *
+ * @internal
  */
 export function normalizeAllowedTypes(
 	types: ImplicitAllowedTypes,
@@ -473,9 +476,34 @@ function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
 }
 
 /**
- * Types allowed in a field.
+ * Types of {@link TreeNode|TreeNodes} or {@link TreeLeafValue|TreeLeafValues} allowed at a location in a tree.
  * @remarks
+ * Used by {@link TreeViewConfiguration} for the root and various kinds of {@link TreeNodeSchema} to specify their allowed child types.
+ *
+ * Use {@link SchemaFactory} to access leaf schema or declare new composite schema.
+ *
  * Implicitly treats a single type as an array of one type.
+ *
+ * Arrays of schema can be used to specify multiple types are allowed, which result in unions of those types in the Tree APIs.
+ *
+ * When saved into variables, avoid type-erasing the details, as doing so loses the compile time schema awareness of APIs derived from the types.
+ *
+ * When referring to types that are declared after the definition of the `ImplicitAllowedTypes`, the schema can be wrapped in a lambda to allow the forward reference.
+ * See {@link ValidateRecursiveSchema} for details on how to structure the `ImplicitAllowedTypes` instances when constructing recursive schema.
+ *
+ * @example Explicit use with strong typing
+ * ```typescript
+ * const sf = new SchemaFactory("myScope");
+ * const childTypes = [sf.number, sf.string] as const satisfies ImplicitAllowedTypes;
+ * const config = new TreeViewConfiguration({ schema: childTypes });
+ * ```
+ *
+ * @example Forward reference
+ * ```typescript
+ * const sf = new SchemaFactory("myScope");
+ * class A extends sf.array("example", [() => B]) {}
+ * class B extends sf.array("Inner", sf.number) {}
+ * ```
  * @public
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;

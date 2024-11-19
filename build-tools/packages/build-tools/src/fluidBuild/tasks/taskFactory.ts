@@ -12,6 +12,7 @@ import { BiomeTask } from "./leaf/biomeTasks";
 import { createDeclarativeTaskHandler } from "./leaf/declarativeTask";
 import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
+import { GenerateNode10EntrypointsTask } from "./leaf/generateNode10EntrypointsTask";
 import { GenerateSourceEntrypointsTask } from "./leaf/generateSourceEntrypointsTask";
 import { UnknownLeafTask } from "./leaf/leafTask";
 import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
@@ -52,6 +53,7 @@ const executableToLeafTask: {
 	"flub check layers": FlubCheckLayerTask,
 	"flub check policy": FlubCheckPolicyTask,
 	"flub generate entrypoints": GenerateEntrypointsTask,
+	"flub generate node10Entrypoints": GenerateNode10EntrypointsTask,
 	"flub generate sourceEntrypoints": GenerateSourceEntrypointsTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,

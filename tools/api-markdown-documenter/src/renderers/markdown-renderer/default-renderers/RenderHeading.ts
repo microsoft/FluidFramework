@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { HeadingNode } from "../../../documentation-domain/index.js";
+import { type HeadingNode } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
 import { renderNodes } from "../Render.js";
 import type { RenderContext } from "../RenderContext.js";
 import { renderNodeWithHtmlSyntax } from "../Utilities.js";
+import { escapeTextForMarkdown } from "./RenderPlainText.js";
 
 /**
  * Maximum heading level supported by most systems.
@@ -59,8 +60,10 @@ function renderHeadingWithMarkdownSyntax(
 		const headingPreamble = "#".repeat(headingLevel);
 		writer.write(`${headingPreamble} `);
 		renderNodes(headingNode.children, writer, context);
+
 		if (headingNode.id !== undefined) {
-			writer.write(` {#${headingNode.id}}`);
+			const escapedId = escapeTextForMarkdown(headingNode.id);
+			writer.write(` {#${escapedId}}`);
 		}
 	} else {
 		if (headingNode.id !== undefined) {
@@ -81,6 +84,6 @@ function renderHeadingWithMarkdownSyntax(
  */
 function renderAnchor(anchorId: string, writer: DocumentWriter): void {
 	writer.ensureNewLine(); // Ensure line break before tag
-	writer.write(`<a name="${anchorId}" />`);
+	writer.write(`<a id="${anchorId}"></a>`);
 	writer.ensureNewLine(); // Ensure line break after tag
 }

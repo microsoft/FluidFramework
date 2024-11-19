@@ -20,7 +20,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import assert from "assert";
+import assert from "node:assert";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";

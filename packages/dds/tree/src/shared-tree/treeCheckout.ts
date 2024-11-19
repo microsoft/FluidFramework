@@ -54,7 +54,11 @@ import {
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
-import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
+import {
+	SharedTreeBranch,
+	getChangeReplaceType,
+	type SharedTreeBranchChange,
+} from "../shared-tree-core/index.js";
 import { Breakable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
@@ -444,15 +448,15 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		private readonly breaker: Breakable = new Breakable("TreeCheckout"),
 	) {
 		// when a transaction is started, take a snapshot of the current state of removed roots
-		_branch.on("transactionStarted", () => {
+		_branch.events.on("transactionStarted", () => {
 			this.removedRootsSnapshots.push(this.removedRoots.clone());
 		});
 		// when a transaction is committed, the latest snapshot of removed roots can be discarded
-		_branch.on("transactionCommitted", () => {
+		_branch.events.on("transactionCommitted", () => {
 			this.removedRootsSnapshots.pop();
 		});
 		// after a transaction is rolled back, revert removed roots back to the latest snapshot
-		_branch.on("transactionRolledBack", () => {
+		_branch.events.on("transactionRolledBack", () => {
 			const snapshot = this.removedRootsSnapshots.pop();
 			assert(snapshot !== undefined, 0x9ae /* a snapshot for removed roots does not exist */);
 			this.removedRoots = snapshot;
@@ -462,7 +466,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
 		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
-		_branch.on("beforeChange", (event) => {
+		_branch.events.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
 				const revision =
 					event.type === "replace"
@@ -509,7 +513,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 			}
 		});
-		_branch.on("afterChange", (event) => {
+		_branch.events.on("afterChange", (event) => {
 			// The following logic allows revertibles to be generated for the change.
 			// Currently only appends (including merges) and transaction commits are supported.
 			if (!_branch.isTransacting()) {
@@ -581,7 +585,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						this.events.emit("changed", { isLocal: true, kind }, getRevertible);
 						withinEventContext = false;
 					}
-				} else if (event.type === "replace") {
+				} else if (this.isRemoteChangeEvent(event)) {
 					// TODO: figure out how to plumb through commit kind info for remote changes
 					this.events.emit("changed", { isLocal: false, kind: CommitKind.Default });
 				}
@@ -590,7 +594,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
 		// trimmed revisions.
-		_branch.on("ancestryTrimmed", (revisions) => {
+		_branch.events.on("ancestryTrimmed", (revisions) => {
 			this.withCombinedVisitor((visitor) => {
 				revisions.forEach((revision) => {
 					// get all the roots last created or used by the revision
@@ -653,7 +657,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public get rootEvents(): Listenable<AnchorSetRootEvents> {
-		return this.forest.anchors;
+		return this.forest.anchors.events;
 	}
 
 	public get editor(): ISharedTreeEditor {
@@ -869,6 +873,21 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 			rootFields.delete(field);
 		} while (cursor.nextField());
+	}
+
+	/**
+	 * `true` iff the given branch change event is due to a remote change
+	 */
+	private isRemoteChangeEvent(event: SharedTreeBranchChange<SharedTreeChange>): boolean {
+		return (
+			// remote changes are only ever applied to the main branch
+			!this.isBranch &&
+			// remote changes are applied to the main branch by rebasing it onto the trunk,
+			// no other rebases are allowed on the main branch so this means any replaces that are not
+			// transaction commits are remote changes
+			event.type === "replace" &&
+			getChangeReplaceType(event) !== "transactionCommit"
+		);
 	}
 }
 

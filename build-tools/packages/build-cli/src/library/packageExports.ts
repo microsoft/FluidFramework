@@ -251,23 +251,12 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
  * Finds the path to default/types of a package using the package's export map or types/typings field.
  * If the path is found, it is returned. Otherwise it returns undefined.
  *
- * This implementation uses resolve.exports to resolve the path to types for a level.
+ * This implementation uses resolve.exports to resolve the path for a level. Fallback to `default` if no condition is passed
  *
- * @param packageJson - The package.json object to check for types paths.
- * @param level - An API level to get types paths for.
- * @returns A package relative path to the types.
- *
- * @remarks
- *
- * This implementation loosely follows TypeScript's process for finding types as described at
- * {@link https://www.typescriptlang.org/docs/handbook/modules/reference.html#packagejson-main-and-types}. If an export
- * map is found, the `types` and `typings` field are ignored. If an export map is not found, then the `types`/`typings`
- * fields will be used as a fallback _only_ for the public API level (which corresponds to the default export).
- *
- * Importantly, this code _does not_ implement falling back to the `main` field when `types` and `typings` are missing,
- * nor does it look up types from DefinitelyTyped (i.e. \@types/* packages). This fallback logic is not needed for our
- * packages because we always specify types explicitly in the types field, and types are always included in our packages
- * (as opposed to a separate \@types package).
+ * @param packageJson - The package.json object to check for paths.
+ * @param level - An API level to get paths for.
+ * @param conditions - Export conditions to apply. Fallback to `default` if no condition is passed
+ * @returns A package relative path.
  */
 export function getExportPathFromPackage(
 	packageJson: PackageJson,
@@ -275,24 +264,6 @@ export function getExportPathFromPackage(
 	conditions: string[],
 	log: Logger,
 ): string | undefined {
-	if (packageJson.exports === undefined && conditions.length > 0) {
-		log.errorLog(
-			`${packageJson.name} is expected to contain an export map. No export map found.`,
-			{ exit: 0 },
-		);
-	}
-
-	if (packageJson.exports === undefined) {
-		log.verbose(`${packageJson.name}: No export map found.`);
-		// Use types/typings field only when the public API level is used and no exports field is found
-		if (level === ApiLevel.public) {
-			log.verbose(`${packageJson.name}: Using the types/typings field value.`);
-			return packageJson.types ?? packageJson.typings;
-		}
-		// No exports and a non-public API level, so return undefined.
-		return undefined;
-	}
-
 	// Package has an export map, so map the requested API level to an entrypoint and check the exports conditions.
 	const entrypoint = level === ApiLevel.public ? "." : `./${level}`;
 
