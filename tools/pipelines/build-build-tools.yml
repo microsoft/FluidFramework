@@ -129,9 +129,6 @@ stages:
     - deployment: upload_json
       displayName: 'Combine api-extractor JSON'
       dependsOn: check_branch_version
-      variables:
-        majorVersion: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion'] ]
-        uploadAsLatestRelease: $[ eq(dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'], 'true') ]
       environment: 'fluid-docs-env'
       pool: Large
       strategy:
@@ -142,8 +139,8 @@ stages:
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 uploadAsLatest: ${{ variables.isMain }}
-                uploadAsLatestRelease: $(uploadAsLatestRelease)
-                majorVersion: $(majorVersion)
+                uploadAsLatestRelease: $[ eq(dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'], 'true') ]
+                majorVersion: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion'] ]
 
 # Runs TriggerBuild@4 to trigger the deploy-website pipeline
 # this stage runs depending on the check_branch_version stage and deployOverride parameter
