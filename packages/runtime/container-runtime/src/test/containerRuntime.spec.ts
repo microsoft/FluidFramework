@@ -145,6 +145,22 @@ function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
 	);
 }
 
+function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime): void {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	(containerRuntime as any).channelCollection = {
+		setConnectionState: (_connected: boolean, _clientId?: string) => {},
+		// Pass data store op right back to ContainerRuntime
+		reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+			submitDataStoreOp(
+				containerRuntime,
+				envelope.address,
+				envelope.contents,
+				localOpMetadata,
+			);
+		},
+	} as ChannelCollection;
+}
+
 describe("Runtime", () => {
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -366,19 +382,7 @@ describe("Runtime", () => {
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 
-					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-					(containerRuntime as any).channelCollection = {
-						setConnectionState: (_connected: boolean, _clientId?: string) => {},
-						// Pass data store op right back to ContainerRuntime
-						reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-							submitDataStoreOp(
-								containerRuntime,
-								envelope.address,
-								envelope.contents,
-								localOpMetadata,
-							);
-						},
-					} as ChannelCollection;
+					defineResubmitAndSetConnectionState(containerRuntime);
 
 					changeConnectionState(containerRuntime, false, mockClientId);
 
@@ -611,19 +615,7 @@ describe("Runtime", () => {
 					});
 
 					it("Resubmitting batch preserves original batches", async () => {
-						// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-						(containerRuntime as any).channelCollection = {
-							setConnectionState: (_connected: boolean, _clientId?: string) => {},
-							// Pass data store op right back to ContainerRuntime
-							reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-								submitDataStoreOp(
-									containerRuntime,
-									envelope.address,
-									envelope.contents,
-									localOpMetadata,
-								);
-							},
-						} as ChannelCollection;
+						defineResubmitAndSetConnectionState(containerRuntime);
 
 						changeConnectionState(containerRuntime, false, fakeClientId);
 
@@ -2844,19 +2836,7 @@ describe("Runtime", () => {
 			it("ignores signals sent before disconnect and resets stats on reconnect", () => {
 				// Define resubmit and setConnectionState on channel collection
 				// This is needed to submit test data store ops
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				(containerRuntime as any).channelCollection = {
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
-					// Pass data store op right back to ContainerRuntime
-					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-						submitDataStoreOp(
-							containerRuntime,
-							envelope.address,
-							envelope.contents,
-							localOpMetadata,
-						);
-					},
-				} as ChannelCollection;
+				defineResubmitAndSetConnectionState(containerRuntime);
 
 				sendSignals(4);
 
@@ -2912,30 +2892,21 @@ describe("Runtime", () => {
 				// SETUP - define resubmit and setConnectionState on channel collection.
 				// This is needed to submit test data store ops. Once defined, submit a test data store op
 				// so that message is queued in PendingStateManager and reconnect count is increased.
+				defineResubmitAndSetConnectionState(containerRuntime);
 				// Send and process an initial signal to prime the system.
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				(containerRuntime as any).channelCollection = {
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
-					// Pass data store op right back to ContainerRuntime
-					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-						submitDataStoreOp(
-							containerRuntime,
-							envelope.address,
-							envelope.contents,
-							localOpMetadata,
-						);
-					},
-				} as ChannelCollection;
 				submitDataStoreOp(containerRuntime, "1", "test");
-				sendSignals(1);
+				sendSignals(1); // 1st signal (#1)
 				processSubmittedSignals(1);
 
 				// ACT - Disconnect client and send signals while disconnected.
 				// Reconnect client and continue sending signals.
 				changeConnectionState(containerRuntime, false, mockClientId);
+				// Send and drop 150 signals (#2 to #151)
 				sendSignals(150);
 				dropSignals(150);
 				changeConnectionState(containerRuntime, true, mockClientId);
+				// Send and process 100 signals (#152 to #251)
+				// This should include tracked latency signal (#251)
 				sendSignals(100);
 				processSubmittedSignals(100);
 
