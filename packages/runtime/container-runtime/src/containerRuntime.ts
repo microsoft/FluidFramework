@@ -2669,20 +2669,21 @@ export class ContainerRuntime
 
 		this._connected = connected;
 
-		if (!connected) {
-			this._signalTracking.signalsLost = 0;
-			this._signalTracking.signalsOutOfOrder = 0;
-			this._signalTracking.signalTimestamp = 0;
-			this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-			this._signalTracking.totalSignalsSentInLatencyWindow = 0;
-			this._signalTracking.roundTripSignalSequenceNumber = undefined;
-			this._signalTracking.trackingSignalSequenceNumber = undefined;
-			this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
-		} else {
+		if (connected) {
 			assert(
 				this.attachState === AttachState.Attached,
 				0x3cd /* Connection is possible only if container exists in storage */,
 			);
+			if (changeOfState) {
+				this._signalTracking.signalsLost = 0;
+				this._signalTracking.signalsOutOfOrder = 0;
+				this._signalTracking.signalTimestamp = 0;
+				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
+				this._signalTracking.totalSignalsSentInLatencyWindow = 0;
+				this._signalTracking.roundTripSignalSequenceNumber = undefined;
+				this._signalTracking.trackingSignalSequenceNumber = undefined;
+				this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
+			}
 		}
 
 		// Fail while disconnected
@@ -3227,16 +3228,7 @@ export class ContainerRuntime
 		};
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
-		if (
-			message.clientId === this.clientId &&
-			// jason-ha: This `connected` check seems incorrect. Signals that come through
-			// here must have been received while connected to service and there is no need
-			// to avoid processing when connection has dropped. Because container runtime's
-			// `connected` (and `_connected`) state also reflects some ops state, it may
-			//  easily be false when newly connected and signal tracking may very well
-			// complain lost signals (that were simply skipped per this check).
-			this.connected
-		) {
+		if (message.clientId === this.clientId) {
 			this.processSignalForTelemetry(envelope);
 		}
 
