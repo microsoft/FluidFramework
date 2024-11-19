@@ -49,9 +49,6 @@ export function createAzureClient(
 	const r11sEndpointName =
 		r11sEndpointNameIndex === -1 ? undefined : args[r11sEndpointNameIndex + 1];
 
-	console.log("DRIVER:", driver);
-	console.log("R11S Endpoint Name:", r11sEndpointName);
-
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure
 		? (process.env.azure__fluid__relay__service__tenantId as string)
