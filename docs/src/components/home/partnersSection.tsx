@@ -28,37 +28,67 @@ export function PartnersSection(): JSX.Element {
 			<div className="ffcom-partners-section-contents">
 				<div className="ffcom-partners-section-contents-inner">
 					<PartnerEntry
-						icon={<img src="https://storage.fluidframework.com/static/images/website/partner-logos/autodesk-logo.png" title="Autodesk" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/autodesk-logo.png"
+								title="Autodesk"
+							/>
+						}
 						title="Autodesk"
 						// bodyText={TODO}
 						learnMoreHref={autodeskLink}
 					/>
 					<PartnerEntry
-						icon={<img src="https://storage.fluidframework.com/static/images/website/partner-logos/hexagon-logo.png" title="Hexagon" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/hexagon-logo.png"
+								title="Hexagon"
+							/>
+						}
 						title="Hexagon"
 						// bodyText={TODO}
 						learnMoreHref={hexagonLink}
 					/>
 					<PartnerEntry
-						icon={<img src="https://storage.fluidframework.com/static/images/website/partner-logos/loop-logo.svg" title="Microsoft Loop" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/loop-logo.svg"
+								title="Microsoft Loop"
+							/>
+						}
 						title="Microsoft Loop"
 						// bodyText={TODO}
 						learnMoreHref={loopLink}
 					/>
 					<PartnerEntry
-						icon={<img src="https://storage.fluidframework.com/static/images/website/partner-logos/teams-logo.png" title="Microsoft Teams" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/teams-logo.png"
+								title="Microsoft Teams"
+							/>
+						}
 						title="Microsoft Teams"
 						// bodyText={TODO}
 						learnMoreHref={teamsLink}
 					/>
 					<PartnerEntry
-						icon={<img src="https://storage.fluidframework.com/static/images/website/partner-logos/power-apps-logo.png" title="Power Apps" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/power-apps-logo.png"
+								title="Power Apps"
+							/>
+						}
 						title="Power Apps"
 						// bodyText={TODO}
 						learnMoreHref={powerAppsLink}
 					/>
 					<PartnerEntry
-						icon={<img src="https://storage.fluidframework.com/static/images/website/partner-logos/whiteboard-logo.png" title="Whiteboard" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/whiteboard-logo.png"
+								title="Whiteboard"
+							/>
+						}
 						title="Whiteboard"
 						// bodyText={TODO}
 						learnMoreHref={whiteboardLink}

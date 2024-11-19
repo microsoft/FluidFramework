@@ -13,8 +13,10 @@ import { PageSection } from "./pageSection";
 
 import "@site/src/css/home/serviceSection.css";
 
-const servicesDiagramImageSource = "https://storage.fluidframework.com/static/images/website/home/services-diagram.png";
-const servicesSectionBackgroundImageSource = "https://storage.fluidframework.com/static/images/website/home/services-section-background.png";
+const servicesDiagramImageSource =
+	"https://storage.fluidframework.com/static/images/website/home/services-diagram.png";
+const servicesSectionBackgroundImageSource =
+	"https://storage.fluidframework.com/static/images/website/home/services-section-background.png";
 
 const afrCardDescription =
 	"Azure Fluid Relay is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share.";

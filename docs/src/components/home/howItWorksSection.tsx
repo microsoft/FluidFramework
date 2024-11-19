@@ -13,7 +13,8 @@ import { PageSection } from "./pageSection";
 
 import "@site/src/css/home/howItWorksSection.css";
 
-const servicesSectionBackgroundImageSource = "https://storage.fluidframework.com/static/images/website/home/how-it-works-section-background.png";
+const servicesSectionBackgroundImageSource =
+	"https://storage.fluidframework.com/static/images/website/home/how-it-works-section-background.png";
 
 const code = `import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
