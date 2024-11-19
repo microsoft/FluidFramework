@@ -275,6 +275,13 @@ export function getExportPathFromPackage(
 	conditions: string[],
 	log: Logger,
 ): string | undefined {
+	if (packageJson.exports === undefined && conditions.length > 0) {
+		log.errorLog(
+			`${packageJson.name} is expected to contain an export map. No export map found.`,
+			{ exit: 0 },
+		);
+	}
+
 	if (packageJson.exports === undefined) {
 		log.verbose(`${packageJson.name}: No export map found.`);
 		// Use types/typings field only when the public API level is used and no exports field is found
@@ -291,7 +298,7 @@ export function getExportPathFromPackage(
 
 	// resolve.exports sets some conditions by default, so the ones we supply supplement the defaults. For clarity the
 	// applied conditions are noted in comments.
-	let typesPath: string | undefined;
+	let exportsPath: string | undefined;
 	try {
 		// First try to resolve with the "import" condition, assuming the package is either ESM-only or dual-format.
 		// conditions: ["default", "types", "import", "node"]
@@ -300,17 +307,17 @@ export function getExportPathFromPackage(
 		// resolve.exports returns a `Exports.Output | void` type, though the documentation isn't clear under what
 		// conditions `void` would be the return type vs. just throwing an exception. Since the types say exports could be
 		// undefined or an empty array (Exports.Output is an array type), check for those conditions.
-		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
+		exportsPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
 		// Catch and ignore any exceptions here; we'll retry with the require condition.
 		log.verbose(
-			`${packageJson.name}: No types found for ${entrypoint} using "import" condition.`,
+			`${packageJson.name}: No ${conditions} found for ${entrypoint} using "import" condition.`,
 		);
 	}
 
 	// Found the types using the import condition, so return early.
-	if (typesPath !== undefined) {
-		return typesPath;
+	if (exportsPath !== undefined) {
+		return exportsPath;
 	}
 
 	try {
@@ -322,13 +329,13 @@ export function getExportPathFromPackage(
 			conditions,
 			require: true,
 		});
-		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
+		exportsPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
 		// Catch and ignore any exceptions here; we'll retry with the require condition.
 		log.verbose(
-			`${packageJson.name}: No types found for ${entrypoint} using "require" condition.`,
+			`${packageJson.name}: No ${conditions} found for ${entrypoint} using "require" condition.`,
 		);
 	}
 
-	return typesPath;
+	return exportsPath;
 }

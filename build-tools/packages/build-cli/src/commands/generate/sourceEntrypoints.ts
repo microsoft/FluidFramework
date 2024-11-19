@@ -19,7 +19,10 @@ import {
 } from "../../library/package.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
-import { type ExportData, getExportPathFromPackage } from "../../library/packageExports.js";
+import type { ExportData } from "../../library/packageExports.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
+import { getExportPathFromPackage } from "../../library/packageExports.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
 import { getApiExports, getPackageDocumentationText } from "../../library/typescriptApi.js";
@@ -69,21 +72,11 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 		);
 
 		/**
-		 * Example of `mapApiTagToSourcePath` for a package where rootDir is ./src/entrypoints/
-		 * [["./src/entrypoints/beta.ts", "beta"],
-		 * ["./src/entrypoints/alpha.ts", "alpha"],
-		 * ["./src/entrypoints/public.ts", "public"],
-		 * ["./src/entrypoints/legacy.ts", "legacy"]]
-		 */
-		const mapApiTagToSourcePath: Map<string, ApiTag> = await mapSourcePathToApiTag(rootDir);
-
-		/**
 		 * Example of `mapSourceToExportPath` for a package
 		 * [[beta, `{ relPath: "./src/entrypoints/beta.js", conditions: [], isTypeOnly: false }`],
 		 * [public, `{ relPath: "./src/entrypoints/public.js", conditions: [], isTypeOnly: false }`]]
 		 */
 		const mapSourceToExportPath: Map<ApiTag, ExportData> = getOutputConfiguration(
-			mapApiTagToSourcePath,
 			mapApiTagToExportPath,
 			rootDir,
 			tsconfigOutDir,
@@ -91,11 +84,7 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 		);
 
 		if (mapSourceToExportPath.size === 0) {
-			throw new Error(
-				`There are no package exports matching requested output entrypoints:\n\t${[
-					...mapApiTagToSourcePath.keys(),
-				].join("\n\t")}`,
-			);
+			throw new Error(`There are no package exports matching requested output entrypoints`);
 		}
 
 		// generate source entrypoints under `${outDir}`
@@ -177,28 +166,25 @@ async function mapSourcePathToApiTag(rootDir: string): Promise<Map<string, ApiTa
  * Resolves a mapping of `ApiTag` levels to their modified export paths.
  */
 function getOutputConfiguration(
-	mapApiTagToSourcePath: ReadonlyMap<string, ApiTag>,
 	mapApiTagToExportPath: Map<ApiTag, ExportData>,
 	rootDir: string,
 	tsconfigOutDir: string,
 	logger: CommandLogger,
 ): Map<ApiTag, ExportData> {
 	const result = new Map<ApiTag, ExportData>();
-	for (const [sourcePath, apiTag] of mapApiTagToSourcePath) {
-		// Check if apiTag exists in mapApiTagToOutputPath
-		const exportPath = mapApiTagToExportPath.get(apiTag);
-		if (exportPath) {
-			// Modify the exportPath
-			const modifiedExportPath = exportPath.relPath
-				.replace(tsconfigOutDir, rootDir)
-				.replace(/\.js$|\.d\.ts$/, ".ts");
+	for (const [apiTag, exportData] of mapApiTagToExportPath) {
+		const modifiedExportPath = exportData.relPath
+			.replace(tsconfigOutDir, rootDir)
+			.replace(/\.js$|\.d\.ts$/, ".ts");
 
-			if (result.has(apiTag)) {
-				logger?.warning(`${modifiedExportPath} found in exports multiple times.`);
-			} else if (sourcePath === modifiedExportPath) {
-				result.set(apiTag, { ...exportPath, relPath: modifiedExportPath });
-			}
+		if (modifiedExportPath === exportData.relPath) {
+			throw new Error(`Failed to replace ${tsconfigOutDir} with ${rootDir}.`);
 		}
+
+		if (result.has(apiTag)) {
+			logger?.warning(`${modifiedExportPath} found in exports multiple times.`);
+		}
+		result.set(apiTag, { ...exportData, relPath: modifiedExportPath });
 	}
 
 	return result;
