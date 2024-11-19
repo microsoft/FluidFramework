@@ -45,7 +45,7 @@ describe("Presence", () => {
 				// Set up the presence connection
 				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 
-				// Restore the submiSignal function
+				// Restore the submitSignal function
 				runtime.submitSignal = submitSignalOriginal;
 			});
 
