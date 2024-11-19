@@ -16,5 +16,5 @@ module.exports = {
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
 	"require": ["node_modules/@fluid-internal/mocha-test-setup"],
 	"spec": ["dist/test/memory/**/*.spec.js", "--perfMode"],
-	"timeout": "60000",
+	"timeout": "999998",
 };

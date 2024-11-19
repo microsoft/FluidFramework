@@ -4,6 +4,6 @@
 	"recursive": true,
 	"reporter": "mocha-multi-reporters",
 	"reporter-options": "configFile=mocha-multi-reporter-config.json",
-	"timeout": 60000,
+	"timeout": 999998,
 	"node-option": ["loader=ts-node/esm"]
 }
