@@ -61,5 +61,5 @@ class ParentDataObject extends DataObject {
 }
 ```
 
-For a complete example see the follow test:
+For a complete example see the following test:
 https://github.com/microsoft/FluidFramework/blob/main/packages/test/local-server-tests/src/test/synchronousDataStoreCreation.spec.ts
