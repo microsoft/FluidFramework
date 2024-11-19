@@ -8,6 +8,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { CommitMetadata, RevertibleFactory } from "../../core/index.js";
 import type { Listenable } from "../../events/index.js";
+import type { TreeAlpha } from "../../shared-tree/index.js";
 
 import {
 	type ImplicitFieldSchema,
@@ -28,6 +29,7 @@ import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+
 /**
  * A tree from which a {@link TreeView} can be created.
  *
@@ -182,6 +184,13 @@ export interface ITreeConfigurationOptions {
 	/**
 	 * Opt in to viewing documents which have optional fields in the document schema which are not present in the view schema.
 	 *
+	 * @defaultValue `false`
+	 * @remarks
+	 * The advantage of enabling this option is that it allows an application ecosystem with staged rollout to more quickly
+	 * upgrade documents to include schema for new optional features.
+	 *
+	 * However, it does come with trade-offs that applications should weigh carefully when it comes to interactions between
+	 * code and documents.
 	 * When opening such documents, the API presented on `view.root` is still determined by the view schema.
 	 * This can have implications on the behavior of edits or code which uses portions of the view schema,
 	 * since this may inadvertently drop data which is present in those optional fields in the document schema.
@@ -202,14 +211,7 @@ export interface ITreeConfigurationOptions {
 	 * ```
 	 *
 	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
-	 * import/export APIs TODO: Reference these specifically after merging main
-	 *
-	 * The advantage of enabling this option is that it may allow an application ecosystem with staged rollout to more quickly
-	 * upgrade documents to include schema for new optional features.
-	 * @defaultValue `false`
-	 * @remarks
-	 * touch on implications for view schema APIs and data import/export, other options
-	 *
+	 * import/export APIs (see {@link TreeAlpha.exportVerbose}, {@link TreeAlpha.importVerbose}) with persistent keys.
 	 *
 	 * @privateRemarks
 	 * We could consider exposing this sort of option on a per-object-node basis, e.g. as an additional parameter passed to the schema declaration
