@@ -195,6 +195,11 @@ export class ChunkedForest implements IEditableForest {
 					newContentSource !== oldContentDestination,
 					0x7b0 /* Replace detached source field and detached destination field must be different */,
 				);
+				// TODO: optimize this to: perform in-place replace in uniform chunks when possible.
+				// This should result in 3 cases:
+				// 1. In-place update of uniform chunk. No allocations, no ref count changes, no new TreeChunks.
+				// 2. Uniform chunk is shared: copy it (and parent path as needed), and update the copy.
+				// 3. Fallback to detach then attach (Which will copy parents and convert to basic chunks as needed).
 				this.detachEdit(range, oldContentDestination);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
 			},
