@@ -38,21 +38,12 @@ In this example, we demonstrate how to support creating a child datastore synchr
  * in response to synchronous user input, like a key press.
  */
 class ParentDataObject extends DataObject {
-	get ParentDataObject() {
-		return this;
-	}
-	protected override async initializingFirstTime(): Promise<void> {
-		// create synchronously during initialization
-		this.createChild("parentCreation");
-	}
-
 	createChild(name: string): ChildDataStore {
 		assert(
 			this.context.createChildDataStore !== undefined,
 			"this.context.createChildDataStore",
 		);
-		// creates a detached context with a factory who's package path is the same
-		// as the current datastore, but with another copy of its own type.
+
 		const { entrypoint } = this.context.createChildDataStore(
 			ChildDataStoreFactory.instance,
 		);
