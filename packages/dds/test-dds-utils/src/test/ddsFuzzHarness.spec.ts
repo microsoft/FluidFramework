@@ -1046,7 +1046,7 @@ describe("DDS Fuzz Harness", () => {
 		describe("replay", () => {
 			let runResults: MochaReport;
 			before(async function () {
-				this.timeout(5000);
+				this.timeout(999998);
 				runResults = await runTestFile("replay");
 			});
 

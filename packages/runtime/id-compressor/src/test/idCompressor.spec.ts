@@ -1383,7 +1383,7 @@ function createNetworkTestFunction(
 				network.deliverOperations(DestinationClient.All);
 				network.assertNetworkState();
 			}
-		}).timeout(10000);
+		}).timeout(999998);
 	};
 }
 

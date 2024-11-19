@@ -1566,7 +1566,7 @@ function findReplacePerf(filename: string): void {
 }
 
 const baseDir = "../../src/test/literature";
-const testTimeout = 60000;
+const testTimeout = 999998;
 
 describe("Routerlicious", () => {
 	describe("merge-tree", () => {

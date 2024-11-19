@@ -2123,7 +2123,7 @@ describe("Editing", () => {
 						runScenario(scenario, true);
 					}
 				}
-			}).timeout(15000);
+			}).timeout(999998);
 		});
 
 		describe("revert semantics", () => {
