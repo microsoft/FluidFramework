@@ -15,10 +15,7 @@ import {
 	LocalResolver,
 	LocalSessionStorageDbFactory,
 } from "@fluidframework/local-driver/internal";
-import {
-	type ILocalDeltaConnectionServer,
-	LocalDeltaConnectionServer,
-} from "@fluidframework/server-local-server";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { v4 as uuid } from "uuid";
 
 import type { ISimpleLoader } from "./interfaces.js";
@@ -26,14 +23,8 @@ import { SimpleLoader } from "./simpleLoader.js";
 
 const urlResolver = new LocalResolver();
 
-const deltaConnectionServerMap = new Map<string, ILocalDeltaConnectionServer>();
-const getDocumentServiceFactory = (documentId: string): IDocumentServiceFactory => {
-	let deltaConnection = deltaConnectionServerMap.get(documentId);
-	if (deltaConnection === undefined) {
-		deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-		deltaConnectionServerMap.set(documentId, deltaConnection);
-	}
-
+const deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
+const getDocumentServiceFactory = (): IDocumentServiceFactory => {
 	return new LocalDocumentServiceFactory(deltaConnection);
 };
 
@@ -56,7 +47,7 @@ export class SessionStorageSimpleLoader implements ISimpleLoader {
 		const documentId = uuid();
 		const loader = new SimpleLoader({
 			urlResolver,
-			documentServiceFactory: getDocumentServiceFactory(documentId),
+			documentServiceFactory: getDocumentServiceFactory(),
 			codeLoader: this.codeLoader,
 			logger: this.logger,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
@@ -67,7 +58,7 @@ export class SessionStorageSimpleLoader implements ISimpleLoader {
 		const documentId = id;
 		const loader = new SimpleLoader({
 			urlResolver,
-			documentServiceFactory: getDocumentServiceFactory(documentId),
+			documentServiceFactory: getDocumentServiceFactory(),
 			codeLoader: this.codeLoader,
 			logger: this.logger,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
