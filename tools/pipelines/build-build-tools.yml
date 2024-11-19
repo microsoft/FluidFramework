@@ -126,20 +126,24 @@ stages:
               # Sets variable majorVersion to the major version extracted from $(SetVersion.version)
               flub check latestVersions $(SetVersion.version) client
 
-    - job: upload_json
+    - deployment: upload_json
       displayName: 'Combine api-extractor JSON'
       dependsOn: check_branch_version
-      pool: Large
       variables:
-        uploadAsLatestRelease: $[eq(dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'], 'true')]
-        majorVersion: $[dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion']]
-      steps:
-        - template: templates/upload-json-steps.yml
-          parameters:
-            STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-            uploadAsLatest: ${{ variables.isMain }}
-            uploadAsLatestRelease: $(uploadAsLatestRelease)
-            majorVersion: $(majorVersion)
+        majorVersion: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion'] ]
+        uploadAsLatestRelease: $[ eq(dependencies.check_branch_version.outputs['SetShouldDeploy.isLatest'], 'true') ]
+      environment: 'fluid-docs-env'
+      pool: Large
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - template: templates/upload-json-steps.yml
+              parameters:
+                STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                uploadAsLatest: ${{ variables.isMain }}
+                uploadAsLatestRelease: $(uploadAsLatestRelease)
+                majorVersion: $(majorVersion)
 
 # Runs TriggerBuild@4 to trigger the deploy-website pipeline
 # this stage runs depending on the check_branch_version stage and deployOverride parameter
