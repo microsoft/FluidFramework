@@ -14,6 +14,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	IPresence,
 	Latest,
+	ISessionClient,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/alpha";
 // eslint-disable-next-line import/no-internal-modules
@@ -22,10 +23,52 @@ import {
 	createTestContainerRuntimeFactory,
 	type ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	timeoutPromise as timeoutPromiseUnnamed,
+	TimeoutWithError,
+	TimeoutWithValue,
 } from "@fluidframework/test-utils/internal";
 
 interface IPresenceManagerDataObject {
 	presenceManager(): IPresence;
+}
+
+async function timeoutPromise<T = void>(
+	executor: (controller: {
+		resolve: (value: T | PromiseLike<T>) => void;
+		reject: (reason?: any) => void;
+	}) => void,
+	timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
+): Promise<T> {
+	return timeoutPromiseUnnamed(
+		(resolve, reject) => executor({ resolve, reject }),
+		timeoutOptions,
+	);
+}
+async function waitForAttendeeEvent(
+	event: "attendeeDisconnected" | "attendeeJoined",
+	...presences: IPresence[]
+) {
+	return Promise.all(
+		presences.map(async (presence, index) =>
+			timeoutPromise<ISessionClient>(
+				({ resolve }) => presence.events.on(event, (attendee) => resolve(attendee)),
+				{
+					durationMs: 2000,
+					errorMsg: `Signaller[${index}] Timeout`,
+				},
+			),
+		),
+	);
+}
+
+function verifyAttendee(actual: ISessionClient, expected: ISessionClient) {
+	assert.equal(actual.getConnectionId(), expected.getConnectionId(), "ConnectionId mismatch");
+	assert.equal(
+		actual.getConnectionStatus(),
+		expected.getConnectionStatus(),
+		"ConnectionStatus mismatch",
+	);
+	assert.equal(actual.sessionId, expected.sessionId, "SessionId mismatch");
 }
 
 describeCompat("Presence", "NoCompat", (getTestObjectProvider, apis) => {
@@ -57,7 +100,7 @@ describeCompat("Presence", "NoCompat", (getTestObjectProvider, apis) => {
 		provider = getTestObjectProvider();
 	});
 
-	describe("Single client", () => {
+	describe("with single client", () => {
 		let presence: IPresence;
 
 		beforeEach("createPresence", async function () {
@@ -76,7 +119,7 @@ describeCompat("Presence", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 	});
 
-	describe("Multiple clients", () => {
+	describe("with multiple clients", () => {
 		let container1: IContainer;
 		let container2: IContainer;
 		let container3: IContainer;
@@ -84,7 +127,7 @@ describeCompat("Presence", "NoCompat", (getTestObjectProvider, apis) => {
 		let presence2: IPresence;
 		let presence3: IPresence;
 
-		beforeEach("create containers and presence", async function () {
+		beforeEach("create containers and presences", async function () {
 			container1 = await createContainer();
 			container2 = await loadContainer();
 			container3 = await loadContainer();
@@ -105,6 +148,22 @@ describeCompat("Presence", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 		});
 
-		it("can set and get states", () => {});
+		it("announces 'attendeeDisconnected' when remote client disconnects", async () => {
+			// SETUP
+			const disconnectedAttendee = presence3.getMyself();
+
+			// ACT - disconnect client 3
+			container3.disconnect();
+
+			// VERIFY - client 1 and 2 receive 'attendeeDisconnected' event with correct attendee
+			const disconnectedAttendees = await waitForAttendeeEvent(
+				"attendeeDisconnected",
+				presence1,
+				presence2,
+			);
+			assert.equal(disconnectedAttendees.length, 2);
+			verifyAttendee(disconnectedAttendees[0], disconnectedAttendee);
+			verifyAttendee(disconnectedAttendees[1], disconnectedAttendee);
+		});
 	});
 });
