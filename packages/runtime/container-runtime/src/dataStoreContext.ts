@@ -15,12 +15,7 @@ import {
 	type IEvent,
 } from "@fluidframework/core-interfaces";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import {
-	assert,
-	isPromiseLike,
-	LazyPromise,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -530,13 +525,12 @@ export abstract class FluidDataStoreContext
 		const maybe = this.registry?.getSync?.(childFactory.type);
 
 		const isUndefined = maybe === undefined;
-		const isPromise = isPromiseLike(maybe);
-		const diffInstance = isPromise || maybe?.IFluidDataStoreFactory !== childFactory;
+		const diffInstance = maybe?.IFluidDataStoreFactory !== childFactory;
 
-		if (isUndefined || isPromise || diffInstance) {
+		if (isUndefined || diffInstance) {
 			throw new UsageError(
 				"The provided factory instance must be synchronously available as a child of this datastore",
-				{ isUndefined, isPromise, diffInstance },
+				{ isUndefined, diffInstance },
 			);
 		}
 		if (childFactory?.createDataStore === undefined) {
