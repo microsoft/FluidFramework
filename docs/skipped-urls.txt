@@ -33,9 +33,3 @@ https://foo-my.sharepoint.com*
 
 # Docusaurus infra
 http://localhost:3000/assets/css/styles.*.css
-
-# TODO:AB#23443: Docusaurus ignores doc files whose names begin with "_".
-# See https://docusaurus.io/docs/create-doc
-# We need to update our API docs build configuration to not emit files starting with "_"s.
-http://localhost:3000/docs/api/fluid-framework/internaltypes/_inlinetrick-typealias
-http://localhost:3000/docs/api/tree/internaltypes/_inlinetrick-typealias
