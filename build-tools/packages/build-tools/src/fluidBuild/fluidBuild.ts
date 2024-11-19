@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import chalk from "chalk";
+import chalk from "picocolors";
 
-import { commonOptions } from "../common/commonOptions";
-import { getResolvedFluidRoot } from "../common/fluidUtils";
+import { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
 import { BuildGraph, BuildResult } from "./buildGraph";
+import { commonOptions } from "./commonOptions";
 import { FluidRepoBuild } from "./fluidRepoBuild";
+import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils";
 import { options, parseOptions } from "./options";
 
 const { log, errorLog: error, warning: warn } = defaultLogger;
@@ -23,8 +24,12 @@ async function main() {
 
 	log(`Build Root: ${resolvedRoot}`);
 
-	// Load the package
-	const repo = FluidRepoBuild.create(resolvedRoot);
+	// Load the packages
+	const repo = new FluidRepoBuild({
+		repoRoot: resolvedRoot,
+		gitRepo: new GitRepo(resolvedRoot),
+		fluidBuildConfig: getFluidBuildConfig(resolvedRoot),
+	});
 	timer.time("Package scan completed");
 
 	// Set matched package based on options filter
@@ -134,14 +139,12 @@ async function main() {
 		log(`Other switches with no explicit build script, not building.`);
 	}
 
+	const totalTime = timer.getTotalTime();
 	const timeInMinutes =
-		timer.getTotalTime() > 60000
-			? ` (${Math.floor(timer.getTotalTime() / 60000)}m ${(
-					(timer.getTotalTime() % 60000) /
-					1000
-				).toFixed(3)}s)`
+		totalTime > 60000
+			? ` (${Math.floor(totalTime / 60000)}m ${((totalTime % 60000) / 1000).toFixed(3)}s)`
 			: "";
-	log(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s${timeInMinutes}`);
+	log(`Total time: ${(totalTime / 1000).toFixed(3)}s${timeInMinutes}`);
 
 	if (failureSummary !== "") {
 		log(`\n${failureSummary}`);

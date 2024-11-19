@@ -49,6 +49,8 @@ import {
 	// // eslint-disable-next-line unused-imports/no-unused-imports
 	// InternalTypes,
 } from "@fluidframework/tree";
+// TODO: this is supposed to be available from /alpha
+import type { FixRecursiveArraySchema } from "@fluidframework/tree/internal";
 
 // Due to limitation of the TypeScript compiler, errors like the following can be produced when exporting types from another package:
 // error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
@@ -95,8 +97,12 @@ export class RecursiveMap extends schema.mapRecursive("RM", [() => RecursiveMap]
 	type _check = ValidateRecursiveSchema<typeof RecursiveMap>;
 }
 
-// TODO: export once ` error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file is fixed.
-class RecursiveArray extends schema.arrayRecursive("RA", [() => RecursiveArray]) {}
+/**
+ * Workaround to avoid
+ * `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
+ */
+export declare const _RecursiveArrayWorkaround: FixRecursiveArraySchema<typeof RecursiveArray>;
+export class RecursiveArray extends schema.arrayRecursive("RA", [() => RecursiveArray]) {}
 {
 	type _check = ValidateRecursiveSchema<typeof RecursiveArray>;
 }

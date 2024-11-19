@@ -48,12 +48,11 @@ export {
 	sortVersions,
 } from "./package.js";
 export { difference } from "./sets.js";
-export { getIndent, indentString } from "./text.js";
+export { getIndent, indentString, readLines } from "./text.js";
 export { getApiExports } from "./typescriptApi.js";
 export { createPullRequest, getCommitInfo, pullRequestExists } from "./github.js";
 export {
 	getRanges,
-	PackageVersionList,
 	ReleaseRanges,
 	ReleaseReport,
 	ReportKind,

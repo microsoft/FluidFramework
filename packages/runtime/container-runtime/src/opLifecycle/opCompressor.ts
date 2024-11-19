@@ -47,13 +47,9 @@ export class OpCompressor {
 
 		const messages: BatchMessage[] = [];
 		messages.push({
-			// Non null asserting here because of the length assert above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			...batch.messages[0]!,
+			...batch.messages[0],
 			contents: JSON.stringify({ packedContents: compressedContent }),
-			// Non null asserting here because of the length assert above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			metadata: batch.messages[0]!.metadata,
+			metadata: batch.messages[0].metadata,
 			compression: CompressionAlgorithms.lz4,
 		});
 

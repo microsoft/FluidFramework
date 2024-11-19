@@ -382,7 +382,10 @@ function makeModularChangeCodec(
 		});
 		const getChunk = (index: number): TreeChunk => {
 			assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
-			return chunkFieldSingle(chunks[index] ?? oob(), defaultChunkPolicy);
+			return chunkFieldSingle(chunks[index] ?? oob(), {
+				policy: defaultChunkPolicy,
+				idCompressor: context.idCompressor,
+			});
 		};
 
 		const map: ModularChangeset["builds"] = newTupleBTree();

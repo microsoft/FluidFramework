@@ -5,10 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	CheckoutFlexTreeView,
 	type TransactionConstraint,
 	Tree,
+	TreeAlpha,
 	type rollback,
 } from "../../shared-tree/index.js";
 import {
@@ -17,8 +20,17 @@ import {
 	type ValidateRecursiveSchema,
 	type TreeView,
 	type InsertableTypedNode,
+	type TreeNodeSchema,
+	type NodeFromSchema,
+	asTreeViewAlpha,
+	type TreeViewAlpha,
 } from "../../simple-tree/index.js";
-import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
+import {
+	TestTreeProviderLite,
+	createTestUndoRedoStacks,
+	getView,
+	validateUsageError,
+} from "../utils.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
@@ -90,11 +102,11 @@ describe("treeApi", () => {
 				try {
 					run(view, (root) => {
 						root.content = 43;
-						throw Error("Oh no");
+						throw new Error("Oh no");
 					});
-				} catch (e) {
-					assert(e instanceof Error);
-					assert.equal(e.message, "Oh no");
+				} catch (error) {
+					assert(error instanceof Error);
+					assert.equal(error.message, "Oh no");
 				}
 				assert.equal(view.root.content, 42);
 			});
@@ -218,13 +230,14 @@ describe("treeApi", () => {
 			// TODO: Either enable when afterBatch is implemented, or delete if no longer relevant
 			it.skip("emits change events", () => {
 				const view = getTestObjectView();
-				let event = false;
-				view.events.on("rootChanged", () => (event = true));
+				let eventCount = 0;
+				view.events.on("rootChanged", () => (eventCount += 1));
 				view.root.content = 44;
+				assert.equal(eventCount, 1);
 				Tree.runTransaction(view, (root) => {
 					root.content = 43;
 				});
-				assert.equal(event, true);
+				assert.equal(eventCount, 2);
 			});
 
 			it.skip("emits change events on rollback", () => {
@@ -233,9 +246,54 @@ describe("treeApi", () => {
 				view.events.on("rootChanged", () => (eventCount += 1));
 				Tree.runTransaction(view, (r) => {
 					r.content = 43;
+					assert.equal(eventCount, 1);
 					return Tree.runTransaction.rollback;
 				});
 				assert.equal(eventCount, 2);
+			});
+
+			describe("unhydrated", () => {
+				it("transaction on unhydrated throws", () => {
+					assert.throws(
+						() => {
+							Tree.runTransaction(new ChildObject({}), (r) => {});
+						},
+						validateUsageError(/Transactions cannot be run on Unhydrated nodes/),
+					);
+				});
+
+				it("transaction on view modifies unhydrated - not rolled back", () => {
+					const view = getTestObjectView();
+					const node = new TestObject({ content: 5 });
+					Tree.runTransaction(view, (root) => {
+						node.content = 6;
+						return Tree.runTransaction.rollback;
+					});
+					// Changes to other tree, and unhydrated nodes are not rolled back.
+					assert.equal(node.content, 6);
+				});
+			});
+		});
+
+		describe("schema", () => {
+			it("leaf", () => {
+				assert.equal(Tree.schema(null), schemaFactory.null);
+				assert.equal(Tree.schema(0), schemaFactory.number);
+				assert.equal(Tree.schema(false), schemaFactory.boolean);
+				assert.equal(Tree.schema(""), schemaFactory.string);
+				assert.equal(Tree.schema(new MockHandle(0)), schemaFactory.handle);
+
+				// Inferring the node type from the node in Tree.schema can incorrectly over-narrow.
+				// Ensure this does not happen:
+				const schema = Tree.schema(0);
+				type _check1 = requireAssignableTo<2, NodeFromSchema<typeof schema>>;
+			});
+
+			it("node", () => {
+				class Test extends schemaFactory.object("Test", {}) {}
+
+				const schema: TreeNodeSchema = Tree.schema(new Test({}));
+				assert.equal(schema, Test);
 			});
 		});
 
@@ -345,5 +403,34 @@ describe("treeApi", () => {
 		assert.equal(Tree.contains(level3, level1), false);
 		assert.equal(Tree.contains(level3, level2), false);
 		assert.equal(Tree.contains(level2, level1), false);
+	});
+
+	it("context", () => {
+		const schemaFactory = new SchemaFactory(undefined);
+		class Array extends schemaFactory.array("array", schemaFactory.number) {}
+		const view = getView(
+			new TreeViewConfiguration({ schema: Array, enableSchemaValidation: true }),
+		);
+		view.initialize([1, 2, 3]);
+
+		// Hydrated
+		const array = view.root;
+		const context = TreeAlpha.branch(array);
+		assert(context !== undefined);
+
+		// Unhydrated
+		assert.equal(TreeAlpha.branch(new Array([1, 2, 3])), undefined);
+	});
+
+	it("can cast to alpha", () => {
+		const schemaFactory = new SchemaFactory(undefined);
+		const view = getView(
+			new TreeViewConfiguration({ schema: schemaFactory.null, enableSchemaValidation: true }),
+		);
+		view.initialize(null);
+		assert.equal(
+			asTreeViewAlpha(view) satisfies TreeViewAlpha<typeof schemaFactory.null>,
+			view,
+		);
 	});
 });

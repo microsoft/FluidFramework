@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { type AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
@@ -37,6 +37,7 @@ import {
 import { checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	createAnchors,
+	createOnCreate,
 	deterministicIdCompressorFactory,
 	failureDirectory,
 	populatedInitialState,
@@ -76,7 +77,7 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert sequenced commits last-to-first",
-			factory: new SharedTreeTestFactory(() => {}),
+			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -167,7 +168,7 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert unsequenced commits first-to-last",
-			factory: new SharedTreeTestFactory(() => {}),
+			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -214,7 +215,7 @@ describe("Fuzz - revert", () => {
 });
 
 function init(state: UndoRedoFuzzTestState) {
-	const tree = viewFromState(state, state.clients[0], populatedInitialState).checkout;
+	const tree = viewFromState(state, state.clients[0]).checkout;
 	state.initialTreeState = toJsonableTree(tree);
 	state.containerRuntimeFactory.processAllMessages();
 	const undoStack: Revertible[] = [];
@@ -224,7 +225,7 @@ function init(state: UndoRedoFuzzTestState) {
 	state.unsubscribe = [];
 	for (const client of state.clients) {
 		const checkout = viewFromState(state, client).checkout;
-		const unsubscribe = checkout.events.on("commitApplied", (commit, getRevertible) => {
+		const unsubscribe = checkout.events.on("changed", (commit, getRevertible) => {
 			if (getRevertible !== undefined) {
 				if (commit.kind === CommitKind.Undo) {
 					redoStack.push(getRevertible());

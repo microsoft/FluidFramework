@@ -142,24 +142,6 @@ declare type old_as_current_for_Interface_IDeltaHandler = requireAssignableTo<Ty
 declare type current_as_old_for_Interface_IDeltaHandler = requireAssignableTo<TypeOnly<current.IDeltaHandler>, TypeOnly<old.IDeltaHandler>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IDeltaManagerErased": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_IDeltaManagerErased = requireAssignableTo<TypeOnly<old.IDeltaManagerErased>, TypeOnly<current.IDeltaManagerErased>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IDeltaManagerErased": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_IDeltaManagerErased = requireAssignableTo<TypeOnly<current.IDeltaManagerErased>, TypeOnly<old.IDeltaManagerErased>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -193,7 +175,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreRuntimeEvents = require
  * typeValidation.broken:
  * "Interface_Internal_InterfaceOfJsonableTypesWith": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_Internal_InterfaceOfJsonableTypesWith = requireAssignableTo<TypeOnly<old.Internal_InterfaceOfJsonableTypesWith<any>>, TypeOnly<current.Internal_InterfaceOfJsonableTypesWith<any>>>
+declare type old_as_current_for_Interface_Internal_InterfaceOfJsonableTypesWith = requireAssignableTo<TypeOnly<old.Internal_InterfaceOfJsonableTypesWith<never>>, TypeOnly<current.Internal_InterfaceOfJsonableTypesWith<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -202,7 +184,25 @@ declare type old_as_current_for_Interface_Internal_InterfaceOfJsonableTypesWith 
  * typeValidation.broken:
  * "Interface_Internal_InterfaceOfJsonableTypesWith": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_Internal_InterfaceOfJsonableTypesWith = requireAssignableTo<TypeOnly<current.Internal_InterfaceOfJsonableTypesWith<any>>, TypeOnly<old.Internal_InterfaceOfJsonableTypesWith<any>>>
+declare type current_as_old_for_Interface_Internal_InterfaceOfJsonableTypesWith = requireAssignableTo<TypeOnly<current.Internal_InterfaceOfJsonableTypesWith<never>>, TypeOnly<old.Internal_InterfaceOfJsonableTypesWith<never>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IDeltaManagerErased": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_IDeltaManagerErased = requireAssignableTo<TypeOnly<old.IDeltaManagerErased>, TypeOnly<current.IDeltaManagerErased>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IDeltaManagerErased": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_IDeltaManagerErased = requireAssignableTo<TypeOnly<current.IDeltaManagerErased>, TypeOnly<old.IDeltaManagerErased>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -211,7 +211,7 @@ declare type current_as_old_for_Interface_Internal_InterfaceOfJsonableTypesWith 
  * typeValidation.broken:
  * "TypeAlias_Jsonable": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_Jsonable = requireAssignableTo<TypeOnly<old.Jsonable<any>>, TypeOnly<current.Jsonable<any>>>
+declare type old_as_current_for_TypeAlias_Jsonable = requireAssignableTo<TypeOnly<old.Jsonable<never>>, TypeOnly<current.Jsonable<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -220,7 +220,7 @@ declare type old_as_current_for_TypeAlias_Jsonable = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "TypeAlias_Jsonable": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_Jsonable = requireAssignableTo<TypeOnly<current.Jsonable<any>>, TypeOnly<old.Jsonable<any>>>
+declare type current_as_old_for_TypeAlias_Jsonable = requireAssignableTo<TypeOnly<current.Jsonable<never>>, TypeOnly<old.Jsonable<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -229,7 +229,7 @@ declare type current_as_old_for_TypeAlias_Jsonable = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "TypeAlias_JsonableTypeWith": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_JsonableTypeWith = requireAssignableTo<TypeOnly<old.JsonableTypeWith<any>>, TypeOnly<current.JsonableTypeWith<any>>>
+declare type old_as_current_for_TypeAlias_JsonableTypeWith = requireAssignableTo<TypeOnly<old.JsonableTypeWith<never>>, TypeOnly<current.JsonableTypeWith<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -238,7 +238,7 @@ declare type old_as_current_for_TypeAlias_JsonableTypeWith = requireAssignableTo
  * typeValidation.broken:
  * "TypeAlias_JsonableTypeWith": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_JsonableTypeWith = requireAssignableTo<TypeOnly<current.JsonableTypeWith<any>>, TypeOnly<old.JsonableTypeWith<any>>>
+declare type current_as_old_for_TypeAlias_JsonableTypeWith = requireAssignableTo<TypeOnly<current.JsonableTypeWith<never>>, TypeOnly<old.JsonableTypeWith<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -247,7 +247,7 @@ declare type current_as_old_for_TypeAlias_JsonableTypeWith = requireAssignableTo
  * typeValidation.broken:
  * "TypeAlias_Serializable": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_Serializable = requireAssignableTo<TypeOnly<old.Serializable<any>>, TypeOnly<current.Serializable<any>>>
+declare type old_as_current_for_TypeAlias_Serializable = requireAssignableTo<TypeOnly<old.Serializable<never>>, TypeOnly<current.Serializable<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -256,4 +256,4 @@ declare type old_as_current_for_TypeAlias_Serializable = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_Serializable": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_Serializable = requireAssignableTo<TypeOnly<current.Serializable<any>>, TypeOnly<old.Serializable<any>>>
+declare type current_as_old_for_TypeAlias_Serializable = requireAssignableTo<TypeOnly<current.Serializable<never>>, TypeOnly<old.Serializable<never>>>

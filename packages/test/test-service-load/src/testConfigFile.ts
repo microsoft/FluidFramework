@@ -77,7 +77,6 @@ export interface TestConfiguration {
 	totalSignalsSendCount?: number;
 	readWriteCycleMs: number;
 	signalsPerMin?: number;
-	futureOpRatePerMin?: number;
 	faultInjectionMs?: {
 		min: number;
 		max: number;

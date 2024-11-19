@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -26,6 +26,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
@@ -820,7 +821,7 @@ describeCompat(
 		let container: IContainer;
 		let dataObject: ITestFluidObject;
 		let sharedDir: ISharedDirectory;
-		let containerRuntime: ContainerRuntime;
+		let containerRuntime: IContainerRuntime;
 		let clearEventCount: number;
 		let changedEventData: IDirectoryValueChanged[];
 		let subDirCreatedEventData: string[];
@@ -845,7 +846,7 @@ describeCompat(
 			container = await provider.makeTestContainer(configWithFeatureGates);
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
-			containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			clearEventCount = 0;
 			changedEventData = [];
 			subDirCreatedEventData = [];
@@ -1304,18 +1305,18 @@ describeCompat(
 		}
 
 		async function pauseAllContainers() {
-			await container1.deltaManager.inbound.pause();
-			await container2.deltaManager.inbound.pause();
-			await container3.deltaManager.inbound.pause();
+			await toIDeltaManagerFull(container1.deltaManager).inbound.pause();
+			await toIDeltaManagerFull(container2.deltaManager).inbound.pause();
+			await toIDeltaManagerFull(container3.deltaManager).inbound.pause();
 
-			await container1.deltaManager.outbound.pause();
-			await container2.deltaManager.outbound.pause();
-			await container3.deltaManager.outbound.pause();
+			await toIDeltaManagerFull(container1.deltaManager).outbound.pause();
+			await toIDeltaManagerFull(container2.deltaManager).outbound.pause();
+			await toIDeltaManagerFull(container3.deltaManager).outbound.pause();
 		}
 
 		function resumeContainer(c: IContainer) {
-			c.deltaManager.inbound.resume();
-			c.deltaManager.outbound.resume();
+			toIDeltaManagerFull(c.deltaManager).inbound.resume();
+			toIDeltaManagerFull(c.deltaManager).outbound.resume();
 		}
 
 		/**

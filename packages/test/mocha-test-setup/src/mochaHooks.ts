@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import * as mochaModule from "mocha";
 
 import { pkgName } from "./packageVersion.js";
@@ -15,7 +15,7 @@ import { pkgName } from "./packageVersion.js";
 // as this will incur a perf impact when errors are
 // thrown and will take more storage in any logging sink
 // https://v8.dev/docs/stack-trace-api
-Error.stackTraceLimit = Infinity;
+Error.stackTraceLimit = Number.POSITIVE_INFINITY;
 
 const testVariant = process.env.FLUID_TEST_VARIANT;
 const propsDict =
@@ -37,7 +37,13 @@ class TestLogger implements ITelemetryBufferedLogger {
 		event.testName = this.testName ?? currentTestName;
 		event.testVariant = testVariant;
 		event.hostName = pkgName;
-		this.parentLogger.send({ ...event, ...propsDict });
+		this.parentLogger.send({
+			...event,
+			// If there's an override for the hostName in FLUID_LOGGER_PROPS,
+			// display that in the telemetry instead of the package name.
+			hostName: propsDict?.hostName ?? pkgName,
+			details: JSON.stringify(propsDict),
+		});
 	}
 	async flush() {
 		return this.parentLogger.flush();

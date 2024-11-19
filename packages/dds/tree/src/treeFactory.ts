@@ -56,7 +56,8 @@ export class TreeFactory implements IChannelFactory<ITree> {
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
- * @internal
+ * @legacy
+ * @alpha
  */
 export const SharedTree = configuredSharedTree({});
 
@@ -80,6 +81,7 @@ export const SharedTree = configuredSharedTree({});
  * });
  * ```
  * @privateRemarks
+ * This should be legacy, but has to be internal due to limitations of API tagging preventing it from being both alpha and alpha+legacy.
  * TODO:
  * Expose Ajv validator for better error message quality somehow.
  * Maybe as part of a test utils or dev-tool package?

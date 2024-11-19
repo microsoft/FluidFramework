@@ -2,17 +2,27 @@
 # Licensed under the MIT License.
 
 # upload-json-steps pipeline
+# This pipeline downloads the api-extractor artifacts from build pipelines and publishes the combined JSON files as a pipeline artifact.
+# The combined JSON files are also uploaded to the azure blob storage in the format `latest-v*.tar.gz`. Where * is the major version number.
 
 parameters:
 - name: STORAGE_ACCOUNT
   type: string
 
-- name: STORAGE_KEY
-  type: string
-
+# Determines if artifact should be published as latest.tar.gz (for main branch)
 - name: uploadAsLatest
   type: boolean
   default: false
+
+# Determines if artifact should be published as latest-v*.tar.gz (for release branches)
+- name: uploadAsLatestRelease
+  type: boolean
+  default: false
+
+# Major version to upload as latest-v*.tar.gz
+- name: majorVersion
+  type: string
+  default: none
 
 steps:
 - checkout: none
@@ -93,7 +103,7 @@ steps:
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
-      az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n $(Build.SourceVersion).tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --verbose
+      az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n $(Build.SourceVersion).tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --verbose
 
 - ${{ if eq(parameters.uploadAsLatest, true) }}:
   - task: AzureCLI@2
@@ -104,4 +114,15 @@ steps:
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |
-        az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --overwrite --verbose
+        az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --overwrite --verbose
+
+- ${{ if eq(parameters.uploadAsLatestRelease, true) }}:
+  - task: AzureCLI@2
+    displayName: 'Upload JSON as latest-v*.tar.gz'
+    continueOnError: true
+    inputs:
+      azureSubscription: 'fluid-docs'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v${{ parameters.majorVersion }}.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --overwrite --verbose

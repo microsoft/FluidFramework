@@ -3,19 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { RestrictiveReadonlyRecord } from "../util/index.js";
+import type { RestrictiveStringRecord } from "../util/index.js";
 import type {
 	TreeObjectNode,
 	InsertableObjectFromSchemaRecord,
 	SimpleKeyMap,
 } from "./objectNode.js";
-import {
-	type ImplicitFieldSchema,
-	type TreeNodeSchemaClass,
-	NodeKind,
-	type FieldSchema,
-	type TreeNodeSchema,
-} from "./schemaTypes.js";
+import type { ImplicitFieldSchema, FieldSchema } from "./schemaTypes.js";
+import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/index.js";
+import type { FieldKey } from "../core/index.js";
 
 /**
  * A schema for {@link TreeObjectNode}s.
@@ -24,10 +20,8 @@ import {
  */
 export interface ObjectNodeSchema<
 	TName extends string = string,
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<
-		string,
-		ImplicitFieldSchema
-	>,
+	T extends
+		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
 > extends TreeNodeSchemaClass<
 		TName,
@@ -37,6 +31,9 @@ export interface ObjectNodeSchema<
 		ImplicitlyConstructable,
 		T
 	> {
+	/**
+	 * From property keys to the associated schema.
+	 */
 	readonly fields: ReadonlyMap<string, FieldSchema>;
 }
 
@@ -48,10 +45,22 @@ export interface ObjectNodeSchemaInternalData {
 	 * {@inheritdoc SimpleKeyMap}
 	 */
 	readonly flexKeyMap: SimpleKeyMap;
+
+	/**
+	 * Lookup the property keys from the stored keys.
+	 */
+	readonly storedKeyToPropertyKey: ReadonlyMap<FieldKey, string>;
+
+	/**
+	 * Stored keys which hold identifiers.
+	 */
+	readonly identifierFieldKeys: readonly FieldKey[];
 }
 
 export const ObjectNodeSchema = {
-	// instanceof-based narrowing support for Javascript and TypeScript 5.3 or newer.
+	/**
+	 * instanceof-based narrowing support for ObjectNodeSchema in Javascript and TypeScript 5.3 or newer.
+	 */
 	[Symbol.hasInstance](value: TreeNodeSchema): value is ObjectNodeSchema {
 		return isObjectNodeSchema(value);
 	},

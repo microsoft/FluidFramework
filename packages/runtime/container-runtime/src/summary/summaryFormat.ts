@@ -208,6 +208,7 @@ export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): 
 export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
+export const recentBatchInfoBlobName = ".recentBatchInfo";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const idCompressorBlobName = ".idCompressor";
 export const blobHeadersBlobName = blobNameForBlobHeaders;
@@ -281,9 +282,7 @@ export async function getFluidDataStoreAttributes(
 ): Promise<ReadFluidDataStoreAttributes> {
 	const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
 		storage,
-		// TODO why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		snapshot.blobs[dataStoreAttributesBlobName]!,
+		snapshot.blobs[dataStoreAttributesBlobName],
 	);
 	// Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
 	// For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.

@@ -51,7 +51,6 @@ import {
 } from "./gcDefinitions.js";
 import {
 	cloneGCData,
-	compatBehaviorAllowsGCMessageType,
 	concatGarbageCollectionData,
 	dataStoreNodePathOnly,
 	getGCDataFromSnapshot,
@@ -789,9 +788,7 @@ export class GarbageCollector implements IGarbageCollector {
 				if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
 					gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
 				} else {
-					// Non null asserting here because we are checking if it is undefined above.
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					gcDataSuperSet.gcNodes[sourceNodeId]!.push(...outboundRoutes);
+					gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
 				}
 				newOutboundRoutesSinceLastRun.push(...outboundRoutes);
 			},
@@ -864,50 +861,44 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Process a GC message.
-	 * @param message - The GC message from the container runtime.
-	 * @param messageTimestampMs - The timestamp of the message.
+	 * Process GC messages.
+	 * @param messageContents - The contents of the messages.
+	 * @param messageTimestampMs - The timestamp of the messages.
 	 * @param local - Whether it was send by this client.
 	 */
-	public processMessage(
-		message: ContainerRuntimeGCMessage,
+	public processMessages(
+		messageContents: GarbageCollectionMessage[],
 		messageTimestampMs: number,
 		local: boolean,
 	) {
-		const gcMessageType = message.contents.type;
-		switch (gcMessageType) {
-			case GarbageCollectionMessageType.Sweep: {
-				// Delete the nodes whose ids are present in the contents.
-				this.deleteSweepReadyNodes(message.contents.deletedNodeIds);
-				break;
-			}
-			case GarbageCollectionMessageType.TombstoneLoaded: {
-				// Mark the node as referenced to ensure it isn't Swept
-				const tombstonedNodePath = message.contents.nodePath;
-				this.addedOutboundReference(
-					"/",
-					tombstonedNodePath,
-					messageTimestampMs,
-					true /* autorecovery */,
-				);
+		for (const gcMessage of messageContents) {
+			const gcMessageType = gcMessage.type;
+			switch (gcMessageType) {
+				case GarbageCollectionMessageType.Sweep: {
+					// Delete the nodes whose ids are present in the contents.
+					this.deleteSweepReadyNodes(gcMessage.deletedNodeIds);
+					break;
+				}
+				case GarbageCollectionMessageType.TombstoneLoaded: {
+					// Mark the node as referenced to ensure it isn't Swept
+					const tombstonedNodePath = gcMessage.nodePath;
+					this.addedOutboundReference(
+						"/",
+						tombstonedNodePath,
+						messageTimestampMs,
+						true /* autorecovery */,
+					);
 
-				// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
-				// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
-				this.summaryStateTracker.autoRecovery.requestFullGCOnNextRun();
-
-				break;
-			}
-			default: {
-				if (
-					!compatBehaviorAllowsGCMessageType(gcMessageType, message.compatDetails?.behavior)
-				) {
-					const error = DataProcessingError.create(
+					// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
+					// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
+					this.summaryStateTracker.autoRecovery.requestFullGCOnNextRun();
+					break;
+				}
+				default:
+					throw DataProcessingError.create(
 						`Garbage collection message of unknown type ${gcMessageType}`,
 						"processMessage",
 					);
-					throw error;
-				}
-				break;
 			}
 		}
 	}
@@ -1036,7 +1027,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 *
 	 * Submit a GC op indicating that the Tombstone with the given path has been loaded.
 	 * Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
-	 * before runnint GC next.
+	 * before running GC next.
 	 */
 	private triggerAutoRecovery(nodePath: string) {
 		// If sweep isn't enabled, auto-recovery isn't needed since its purpose is to prevent this object from being

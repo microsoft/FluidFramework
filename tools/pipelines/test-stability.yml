@@ -11,7 +11,7 @@ pr: none
 parameters:
 - name: poolBuild
   type: object
-  default: Large
+  default: Large-eastus2
 
 - name: stageNames
   type: object
@@ -142,6 +142,9 @@ variables:
   value: 1
 - name: pnpmStorePath
   value: $(Pipeline.Workspace)/.pnpm-store
+# This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+- name: DisableCodeQL
+  value: true
 
 stages:
   - ${{ each stageName in parameters.stageNames }}:

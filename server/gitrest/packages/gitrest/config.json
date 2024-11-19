@@ -45,6 +45,7 @@
 			"name": "redisFs",
 			"maxFileSizeBytes": 0
 		},
+		"ephemeralDocumentTTLSec": 86400,
 		"persistLatestFullSummary": false,
 		"persistLatestFullEphemeralSummary": false,
 		"repoPerDocEnabled": false,

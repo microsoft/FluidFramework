@@ -9,10 +9,6 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		"@typescript-eslint/no-non-null-assertion": "off",
-		"@typescript-eslint/strict-boolean-expressions": "off",
-		"no-bitwise": "off",
-		"prefer-rest-params": "off",
-		"unicorn/no-useless-undefined": "off", // Remove once this has been disabled in shared config
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 };

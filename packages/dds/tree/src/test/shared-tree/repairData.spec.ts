@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { rootFieldKey } from "../../core/index.js";
 import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
@@ -219,7 +219,7 @@ describe("Repair Data", () => {
 			);
 
 			// create a fork before the creation of the repair data
-			const _ = view2.checkout.fork();
+			const _ = view2.checkout.branch();
 
 			// get an anchor on the peer to the node we're removing
 			const anchorAOnTree2 = TestAnchor.fromValue(view2.checkout.forest, "A");

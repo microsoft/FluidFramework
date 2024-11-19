@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import chalk from "chalk";
+import chalk from "picocolors";
 
-import { commonOptions } from "./commonOptions";
+import { commonOptions } from "../fluidBuild/commonOptions";
 
 /**
  * A function that logs an Error or error message.
