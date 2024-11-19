@@ -47,7 +47,7 @@ window["migrators"] = [];
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	const searchParams = new URLSearchParams(location.search);
 	const testMode = searchParams.get("testMode") !== null;
-	const modelLoader = new SessionStorageSimpleLoader(new DemoCodeLoader(testMode));
+	const loader = new SessionStorageSimpleLoader(new DemoCodeLoader(testMode));
 	let id: string;
 	let model: IMigratableModel;
 	let migrationTool: IMigrationTool;
@@ -55,7 +55,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	if (location.hash.length === 0) {
 		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
 		// Normally we would create with the most-recent version.
-		const { container, attach } = await modelLoader.createDetached("one");
+		const { container, attach } = await loader.createDetached("one");
 		const modelAndMigrationTool =
 			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
 		model = modelAndMigrationTool.model;
@@ -63,7 +63,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		id = await attach();
 	} else {
 		id = location.hash.slice(1);
-		const container = await modelLoader.loadExisting(id);
+		const container = await loader.loadExisting(id);
 		const modelAndMigrationTool =
 			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
 		model = modelAndMigrationTool.model;
@@ -97,7 +97,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	};
 
 	const migrator = new Migrator(
-		modelLoader,
+		loader,
 		model,
 		migrationTool,
 		id,

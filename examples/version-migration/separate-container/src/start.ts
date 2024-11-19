@@ -129,17 +129,17 @@ async function start(): Promise<void> {
 		renderModel(model, migrationTool);
 		updateTabForId(migrator.currentModelId);
 	});
-	// If the ModelLoader doesn't know how to load the model required for migration, it emits "migrationNotSupported".
-	// For example, this might be hit if another client has a newer ModelLoader and proposes a version our
-	// ModelLoader doesn't know about.
-	// However, this will never be hit in this demo since we have a finite set of models to support.  If the model
-	// code loader pulls in the appropriate model dynamically, this might also never be hit since all clients
-	// are theoretically referencing the same model library.
+	// If the loader doesn't know how to load the container code required for migration, it emits "migrationNotSupported".
+	// For example, this might be hit if another client has a newer loader and proposes a version our
+	// loader doesn't know about.
+	// However, this will never be hit in this demo since we have a finite set of container codes to support.  If the
+	// code loader pulls in the appropriate code dynamically, this might also never be hit since all clients
+	// are theoretically referencing the same code library.
 	migrator.events.on("migrationNotSupported", (version: string) => {
-		// To move forward, we would need to acquire a model loader capable of loading the given model, retry the
-		// load, and set up a new Migrator with the new model loader.
+		// To move forward, we would need to acquire a loader capable of loading the given code, retry the
+		// load, and set up a new Migrator with the new loader.
 		console.error(
-			`Tried to migrate to version ${version} which is not supported by the current ModelLoader`,
+			`Tried to migrate to version ${version} which is not supported by the current loader`,
 		);
 	});
 
