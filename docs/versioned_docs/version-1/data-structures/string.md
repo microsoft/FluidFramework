@@ -24,32 +24,31 @@ matching the length of the text content they contain.
 Marker segments are never split or merged, and always have a length of 1.
 
 ```typescript
-    //   content: hi
-    // positions: 01
+//   content: hi
+// positions: 01
 
-    sharedString.insertMarker(
-      2,
-      ReferenceType.Simple,
-      // Arbitrary bag of properties to associate to the marker. If the marker is annotated by a future operation,
-      // those annotated properties will be merged with the initial set.
-      { type: "pg" }
-    );
-    sharedString.insertText(3, "world");
-    //   content: hi<pg marker>world
-    // positions: 01    2      34567
+sharedString.insertMarker(
+	2,
+	ReferenceType.Simple,
+	// Arbitrary bag of properties to associate to the marker. If the marker is annotated by a future operation,
+	// those annotated properties will be merged with the initial set.
+	{ type: "pg" },
+);
+sharedString.insertText(3, "world");
+//   content: hi<pg marker>world
+// positions: 01    2      34567
 
-    // Since markers don't directly correspond to text, they aren't included in direct text queries
-    sharedString.getText(); // returns "hiworld"
+// Since markers don't directly correspond to text, they aren't included in direct text queries
+sharedString.getText(); // returns "hiworld"
 
-    // Instead, rich text models involving markers likely want to read from the SharedString using `walkSegments`:
-    sharedString.walkSegments((segment) => {
-      if (Marker.is(segment)) {
-        // Handle markers (e.g. dereference and insert image data, interpret marker properties, etc.)
-      } else {
-        // Handle text segments (e.g. append to the current text accumulator with `segment.text`, apply any formatting on `segment.props`)
-      }
-    });
-
+// Instead, rich text models involving markers likely want to read from the SharedString using `walkSegments`:
+sharedString.walkSegments((segment) => {
+	if (Marker.is(segment)) {
+		// Handle markers (e.g. dereference and insert image data, interpret marker properties, etc.)
+	} else {
+		// Handle text segments (e.g. append to the current text accumulator with `segment.text`, apply any formatting on `segment.props`)
+	}
+});
 ```
 
 <!-- It might be worth adding a section about Tile markers and their use: setting ReferenceType.Tile and putting a label on [reservedTileLabelsKey] allows

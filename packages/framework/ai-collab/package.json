@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/ai-collab",
-	"version": "2.10.0",
+	"version": "2.11.0",
 	"description": "Experimental package to simplify integrating AI into Fluid-based applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -128,7 +128,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/test-runtime-utils": "workspace:^",
+		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",

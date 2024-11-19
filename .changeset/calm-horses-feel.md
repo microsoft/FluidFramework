@@ -7,5 +7,5 @@
 "section": other
 ---
 
-Move events library out of SharedTree to a new location - @fluidframework/core-interfaces and @fluid-internal/client-utils
 
+Relocate the events library from SharedTree by moving its types and interfaces to `@fluidframework/core-interfaces` and its implementation to `@fluid-internal/client-utils`.
