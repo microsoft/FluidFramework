@@ -61,16 +61,6 @@ async function waitForAttendeeEvent(
 	);
 }
 
-function verifyAttendee(actual: ISessionClient, expected: ISessionClient) {
-	assert.equal(actual.getConnectionId(), expected.getConnectionId(), "ConnectionId mismatch");
-	assert.equal(
-		actual.getConnectionStatus(),
-		expected.getConnectionStatus(),
-		"ConnectionStatus mismatch",
-	);
-	assert.equal(actual.sessionId, expected.sessionId, "SessionId mismatch");
-}
-
 describeCompat("Presence", "NoCompat", (getTestObjectProvider, apis) => {
 	const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(
 		apis.containerRuntime.ContainerRuntime,
@@ -140,6 +130,11 @@ describeCompat("Presence", "NoCompat", (getTestObjectProvider, apis) => {
 				}
 			});
 
+			it("initializes session client status as 'Connected'", async function () {
+				// VERIFY
+				assert.equal(presence.getMyself().getConnectionStatus(), "Connected");
+			});
+
 			it("updates session client status when disconnected", async function () {
 				// ACT
 				container.disconnect();
@@ -191,8 +186,24 @@ describeCompat("Presence", "NoCompat", (getTestObjectProvider, apis) => {
 					presence2,
 				);
 				assert.equal(disconnectedAttendees.length, 2);
-				verifyAttendee(disconnectedAttendees[0], disconnectedAttendee);
-				verifyAttendee(disconnectedAttendees[1], disconnectedAttendee);
+
+				for (const attendee of disconnectedAttendees) {
+					assert.equal(
+						attendee.sessionId,
+						disconnectedAttendee.sessionId,
+						"Session ID mismatch",
+					);
+					assert.equal(
+						attendee.getConnectionId(),
+						disconnectedAttendee.getConnectionId(),
+						"Connection ID mismatch",
+					);
+					assert.equal(
+						attendee.getConnectionStatus(),
+						"Disconnected",
+						"Connection status mismatch",
+					);
+				}
 			});
 		});
 	});
