@@ -8,7 +8,6 @@ import {
 	type IContainer,
 } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
@@ -23,10 +22,7 @@ import { SimpleLoader } from "./simpleLoader.js";
 
 const urlResolver = new LocalResolver();
 
-const deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-const getDocumentServiceFactory = (): IDocumentServiceFactory => {
-	return new LocalDocumentServiceFactory(deltaConnection);
-};
+const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 
 /**
  * @alpha
@@ -47,7 +43,7 @@ export class SessionStorageSimpleLoader implements ISimpleLoader {
 		const documentId = uuid();
 		const loader = new SimpleLoader({
 			urlResolver,
-			documentServiceFactory: getDocumentServiceFactory(),
+			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader: this.codeLoader,
 			logger: this.logger,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
@@ -58,7 +54,7 @@ export class SessionStorageSimpleLoader implements ISimpleLoader {
 		const documentId = id;
 		const loader = new SimpleLoader({
 			urlResolver,
-			documentServiceFactory: getDocumentServiceFactory(),
+			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader: this.codeLoader,
 			logger: this.logger,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
