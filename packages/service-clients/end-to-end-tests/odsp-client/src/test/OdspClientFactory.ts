@@ -132,6 +132,16 @@ export function createOdspClient(
 		throw new Error("client id is missing");
 	}
 
+	const args = process.argv.slice(2);
+
+	const driverIndex = args.indexOf("--driver");
+	const odspEndpointNameIndex = args.indexOf("--odspEndpointName");
+
+	// Get values associated with the flags
+	const driverType = driverIndex === -1 ? undefined : args[driverIndex + 1];
+	const driverEndpointName =
+		odspEndpointNameIndex === -1 ? undefined : args[odspEndpointNameIndex + 1];
+
 	const credentials: IOdspCredentials = {
 		clientId,
 		...creds,
@@ -143,6 +153,7 @@ export function createOdspClient(
 		driveId,
 		filePath: "",
 	};
+
 	const getLogger = (): ITelemetryBaseLogger | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {
@@ -158,8 +169,8 @@ export function createOdspClient(
 		logger: getLogger(),
 		properties: {
 			all: {
-				driverType: "odsp",
-				driverEndpointName: "odsp",
+				driverType,
+				driverEndpointName,
 			},
 		},
 	});
