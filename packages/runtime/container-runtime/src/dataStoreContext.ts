@@ -503,7 +503,7 @@ export abstract class FluidDataStoreContext
 				this.rejectDeferredRealize("No registry for package", lastPkg, packages);
 			}
 			lastPkg = pkg;
-			entry = await registry.get(pkg);
+			entry = registry.getSync?.(pkg) ?? (await registry.get(pkg));
 			if (!entry) {
 				this.rejectDeferredRealize(
 					"Registry does not contain entry for the package",
@@ -527,7 +527,7 @@ export abstract class FluidDataStoreContext
 	createChildDataStore<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>> {
-		const maybe = this.registry?.get(childFactory.type);
+		const maybe = this.registry?.getSync?.(childFactory.type);
 
 		const isUndefined = maybe === undefined;
 		const isPromise = isPromiseLike(maybe);
