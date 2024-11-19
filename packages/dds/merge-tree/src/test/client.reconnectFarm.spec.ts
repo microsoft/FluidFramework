@@ -96,7 +96,7 @@ function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): 
 				testOpts.resultsFilePostfix += extraSeed;
 			}
 
-			const clients: TestClient[] = [new TestClient()];
+			const clients: TestClient[] = [new TestClient({ mergeTreeEnableAnnotateAdjust: true })];
 			for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 
 			let seq = 0;

@@ -216,19 +216,45 @@ export class SchemaFactory<
 	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
 
 	/**
-	 * Construct a SchemaFactory with a given scope.
+	 * Construct a SchemaFactory with a given {@link SchemaFactory.scope|scope}.
 	 * @remarks
-	 * There are no restrictions on mixing schema from different schema factories:
-	 * this is encouraged when a single schema references schema from different libraries.
-	 * If each library exporting schema picks its own globally unique scope for its SchemaFactory,
-	 * then all schema an application might depend on, directly or transitively,
-	 * will end up with a unique fully qualified name which is required to refer to it in persisted data and errors.
-	 *
-	 * @param scope - Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
-	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
-	 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
+	 * There are no restrictions on mixing schema from different schema factories.
+	 * Typically each library will create one or more SchemaFactories and use them to define its schema.
 	 */
-	public constructor(public readonly scope: TScope) {}
+	public constructor(
+		/**
+		 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
+		 *
+		 * @remarks
+		 * Generally each independently developed library
+		 * (possibly a package, but could also be part of a package or multiple packages developed together)
+		 * should get its own unique `scope`.
+		 * Then each schema in the library get a name which is unique within the library.
+		 * The scope and name are joined (with a period) to form the {@link TreeNodeSchemaCore.identifier|schema identifier}.
+		 * Following this pattern allows a single application to depend on multiple libraries which define their own schema, and use them together in a single tree without risk of collisions.
+		 * If a library logically contains sub-libraries with their own schema, they can be given a scope nested inside the parent scope, such as "ParentScope.ChildScope".
+		 *
+		 * To avoid collisions between the scopes of libraries
+		 * it is recommended that the libraries use {@link https://en.wikipedia.org/wiki/Reverse_domain_name_notation | Reverse domain name notation} or a UUIDv4 for their scope.
+		 * If this pattern is followed, application can safely use third party libraries without risk of the schema in them colliding.
+		 *
+		 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
+		 *
+		 * @example
+		 * Fluid Framework follows this pattern, placing the schema for the built in leaf types in the `com.fluidframework.leaf` scope.
+		 * If Fluid Framework publishes more schema in the future, they would be under some other `com.fluidframework` scope.
+		 * This ensures that any schema defined by any other library will not conflict with Fluid Framework's schema
+		 * as long as the library uses the recommended patterns for how to scope its schema..
+		 *
+		 * @example
+		 * A library could generate a random UUIDv4, like `242c4397-49ed-47e6-8dd0-d5c3bc31778b` and use that as the scope.
+		 * Note: do not use this UUID: a new one must be randomly generated when needed to ensure collision resistance.
+		 * ```typescript
+		 * const factory = new SchemaFactory("242c4397-49ed-47e6-8dd0-d5c3bc31778b");
+		 * ```
+		 */
+		public readonly scope: TScope,
+	) {}
 
 	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
 		return (
@@ -778,6 +804,8 @@ export class SchemaFactory<
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
+			// Setting this (implicitlyConstructable) to true seems to work ok currently, but not for other node kinds.
+			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			false,
 		);
 
@@ -785,24 +813,29 @@ export class SchemaFactory<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
 			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			{
-				/**
-				 * Iterator for the iterable of content for this node.
-				 * @privateRemarks
-				 * Wrapping the constructor parameter for recursive arrays and maps in an inlined object type avoids (for unknown reasons)
-				 * the following compile error when declaring the recursive schema:
-				 * `Function implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.`
-				 * To benefit from this without impacting the API, the definition of `Iterable` has been inlined as such an object.
-				 *
-				 * If this workaround is kept, ideally this comment would be deduplicated with the other instance of it.
-				 * Unfortunately attempts to do this failed to avoid the compile error this was introduced to solve.
-				 */
-				[Symbol.iterator](): Iterator<
-					[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
-				>;
-			},
-			// Ideally this would be included, but doing so breaks recursive types.
-			// | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+			| {
+					/**
+					 * Iterator for the iterable of content for this node.
+					 * @privateRemarks
+					 * Wrapping the constructor parameter for recursive arrays and maps in an inlined object type avoids (for unknown reasons)
+					 * the following compile error when declaring the recursive schema:
+					 * `Function implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.`
+					 * To benefit from this without impacting the API, the definition of `Iterable` has been inlined as such an object.
+					 *
+					 * If this workaround is kept, ideally this comment would be deduplicated with the other instance of it.
+					 * Unfortunately attempts to do this failed to avoid the compile error this was introduced to solve.
+					 */
+					[Symbol.iterator](): Iterator<
+						[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
+					>;
+			  }
+			// Ideally this would be
+			// RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+			// but doing so breaks recursive types.
+			// Instead we do a less nice version:
+			| {
+					readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
+			  },
 			false,
 			T,
 			undefined
