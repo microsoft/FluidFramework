@@ -3,7 +3,7 @@ title: Frequently Asked Questions
 sidebar_position: 7
 ---
 
-import Browsers from '@site/src/pages/browsers.mdx';
+import Browsers from "@site/src/pages/browsers.mdx";
 
 The following are short, sometimes superficial, answers to some of the most commonly asked questions about the Fluid
 Framework.
@@ -21,7 +21,7 @@ The Fluid Framework was designed with performance and ease of development as top
 
 ### What is a DDS?
 
-DDS is short for *distributed data structure*. DDSes are the foundation of the Fluid Framework. They are designed such
+DDS is short for _distributed data structure_. DDSes are the foundation of the Fluid Framework. They are designed such
 that the Fluid runtime is able to keep them in sync across clients while each client operates on the DDSes in largely
 the same way they would operate on local data. The data source for a Fluid solution can represent numerous DDSes.
 
@@ -44,7 +44,7 @@ sessions later and for efficiencies when saving to persistent storage.
 
 **Persistent storage** is a record of ops (and summary ops) saved outside of the Fluid service. This could be a
 database, blob storage, or a file. Using persistent storage allows a Fluid solution to persist across sessions.
-For example, current Microsoft 365 Fluid experiences save ops in *.fluid* files in SharePoint and OneDrive.
+For example, current Microsoft 365 Fluid experiences save ops in _.fluid_ files in SharePoint and OneDrive.
 It is important to note that these files share many of the properties of a normal file such as permissions and a
 location in a file structure, but because these experiences rely on the Fluid service, downloading the files and
 working locally is not supported.
@@ -194,7 +194,9 @@ Because Fluid is very client-centric, deployment is very simple.
 
 ### How does Fluid Framework deal with conflict resolution?
 
-Conflict resolution is built into the DDSes, and the strategies vary between DDSes.  For example the SharedMap uses a last-write-wins approach, whereas SharedString attempts to apply all changes while preserving user intention.  The strategies used by each DDS are detailed on their respective documentation pages.
+Conflict resolution is built into the DDSes, and the strategies vary between DDSes.
+For example the SharedMap uses a last-write-wins approach, whereas SharedString attempts to apply all changes while preserving user intention.
+The strategies used by each DDS are detailed on their respective documentation pages.
 
 ### Can we create custom strategies to handle update collisions to the distributed data structure?
 
