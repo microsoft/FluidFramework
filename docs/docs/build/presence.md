@@ -7,9 +7,9 @@ author: pranshu
 
 ## Overview
 
-We are introducting a new way to power your ephemral experiences wth Fluid. Introducing the new Presence APIs (currently in alpha) that provide session-focused utilities for lightweight data sharing and messaging.
+We are introducting a new way to power your ephemeral experiences wth Fluid. Introducing the new Presence APIs (currently in alpha) that provide session-focused utilities for lightweight data sharing and messaging.
 
-Collaborative features typically rely on each user maintaining their own temporary state, which is subsequently shared with others. For example, in applications featuring multiplayer cursors, the cursor position of each user signifies their state. This state can be further utilized for various purposes such as indicating typing activity or displaying a user's current selection. This concept is referred to as Presence.
+Collaborative features typically rely on each user maintaining their own temporary state, which is subsequently shared with others. For example, in applications featuring multiplayer cursors, the cursor position of each user signifies their state. This state can be further utilized for various purposes such as indicating typing activity or displaying a user's current selection. This concept is referred to as *presence*.
 
 By leveraging this shared state, applications can provide a seamless and interactive collaborative experience, ensuring that users are always aware of each other's actions and selections in real-time.
 
@@ -82,7 +82,7 @@ const presence = await acquirePresenceViaDataObject(container.initialObjects.pre
 
 ### States Reliability
 
-The current implementation relies on Fluid Framework's Signal infrastructure instead of Ops. This has advantages, but comes with some risk of unreliable messaging. The most common known case of unreliable signals occurs during reconnection periods and current implementation attempts to account for that. Be aware that all clients are not guaranteed to arrive at eventual consistency. Please [file a new issue](https://github.com/microsoft/FluidFramework/issues/new?assignees=&labels=bug&projects=&template=bug_report.md&title=Presence:%20States:%20) if one is not found under [Presence States issues](https://github.com/microsoft/FluidFramework/issues?q=is%3Aissue+%22Presence%3A+States%3A%22).
+The current implementation relies on Fluid Framework's signal infrastructure instead of ops. This has advantages, but comes with some risk of unreliable messaging. The most common known case of unreliable signals occurs during reconnection periods and the current implementation attempts to account for that. Be aware that all clients are not guaranteed to arrive at eventual consistency. Please [file a new issue](https://github.com/microsoft/FluidFramework/issues/new?assignees=&labels=bug&projects=&template=bug_report.md&title=Presence:%20States:%20) if one is not found under [Presence States issues](https://github.com/microsoft/FluidFramework/issues?q=is%3Aissue+%22Presence%3A+States%3A%22).
 
 ### Compatibility and Versioning
 
