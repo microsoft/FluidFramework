@@ -72,12 +72,6 @@ const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): voi
 };
 
 async function start(): Promise<void> {
-	// If we assumed the container code could consistently present a model to us, we could bake that assumption
-	// in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
-	// (unknown) container version.  So the ModelLoader would be replaced by e.g. container.getEntryPoint() or
-	// container.getEntryPoint().model if we knew that was the model.
-	// TODO: This is really loading an IInventoryListAppModel & IMigratableModel (we know this because of what the
-	// DemoCodeLoader supports).  Should we just use that more-specific type in the typing here?
 	const loader = new SimpleLoader({
 		urlResolver: new InsecureTinyliciousUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(
@@ -113,8 +107,6 @@ async function start(): Promise<void> {
 	// the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
 	// It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
 	// import with newly created models.
-	// TODO: Consider just passing the ModelLoader (or even the model loader construction args?) and kind of wrapping it.
-	// Then this becomes something like a MigratingModelLoader.  Then the model can have a migrationTool but sort of hide it.
 	const migrator = new Migrator(
 		loader,
 		model,
