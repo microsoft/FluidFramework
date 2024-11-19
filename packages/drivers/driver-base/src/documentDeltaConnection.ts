@@ -25,7 +25,11 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
+import {
+	UsageError,
+	createGenericNetworkError,
+	type DriverErrorTelemetryProps,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
@@ -441,7 +445,7 @@ export class DocumentDeltaConnection
 		this.removeTrackedListeners();
 
 		// Clear the connection/socket before letting the deltaManager/connection manager know about the disconnect.
-		this.disconnectCore();
+		this.disconnectCore(err);
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
@@ -451,7 +455,7 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket.
 	 * @param reason - reason for disconnect
 	 */
-	protected disconnectCore() {
+	protected disconnectCore(err: IAnyDriverError) {
 		this.socket.disconnect();
 	}
 
@@ -789,13 +793,17 @@ export class DocumentDeltaConnection
 		return createGenericNetworkError(
 			`socket.io (${handler}): ${this.getErrorMessage(error)}`,
 			{ canRetry },
-			{
-				driverVersion,
-				details: JSON.stringify({
-					...this.getConnectionDetailsProps(),
-				}),
-				scenarioName: handler,
-			},
+			this.getAdditionalErrorProps(handler),
 		);
+	}
+
+	protected getAdditionalErrorProps(handler: string): DriverErrorTelemetryProps {
+		return {
+			driverVersion,
+			details: JSON.stringify({
+				...this.getConnectionDetailsProps(),
+			}),
+			scenarioName: handler,
+		};
 	}
 }

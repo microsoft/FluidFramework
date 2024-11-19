@@ -38,7 +38,7 @@ describe("HeadingNode -> Html", () => {
 		// As a policy, if we have a heading nested deeper than that, we transform the content to bold text with an
 		// anchor tag above it.
 		const input = HeadingNode.createFromPlainText("Foo", "foo-id");
-		const expected = h(undefined, [h("a", { name: "foo-id" }), h("b", "Foo")]);
+		const expected = h(undefined, [h("a", { id: "foo-id" }), h("b", "Foo")]);
 		assertTransformation(input, expected, { startingHeadingLevel: 7 });
 	});
 });

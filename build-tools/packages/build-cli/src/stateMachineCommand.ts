@@ -4,8 +4,8 @@
  */
 
 import { Command, Flags } from "@oclif/core";
-import chalk from "chalk";
 import { Machine } from "jssm";
+import chalk from "picocolors";
 
 import { testModeFlag } from "./flags.js";
 import { StateHandler } from "./handlers/index.js";

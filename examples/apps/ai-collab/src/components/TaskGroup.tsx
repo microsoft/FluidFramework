@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type Difference, SharedTreeBranchManager } from "@fluid-experimental/ai-collab";
-import { type TreeBranch, type TreeBranchFork } from "@fluidframework/tree/alpha";
+import { type Difference, SharedTreeBranchManager } from "@fluidframework/ai-collab/alpha";
+import {
+	type BranchableTree,
+	type TreeBranchFork,
+	type TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -48,7 +52,7 @@ export function TaskGroup(props: {
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 	const [llmBranchData, setLlmBranchData] = useState<{
 		differences: Difference[];
-		originalBranch: TreeBranch;
+		originalBranch: BranchableTree;
 		forkBranch: TreeBranchFork;
 		forkView: TreeView<typeof SharedTreeAppState>;
 		newBranchTargetNode: SharedTreeTaskGroup;
@@ -60,6 +64,7 @@ export function TaskGroup(props: {
 		<Card
 			sx={{
 				p: 7,
+				width: "90%",
 				background: "rgba(255, 255, 255, 0.5)",
 				borderRadius: "16px",
 				boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
@@ -193,7 +198,8 @@ export function TaskGroup(props: {
 									);
 									const { originalBranch, forkBranch, forkView, newBranchTargetNode } =
 										branchManager.checkoutNewMergedBranchV2(
-											props.treeView,
+											// TODO: Remove cast when TreeViewAlpha becomes public
+											props.treeView as TreeViewAlpha<typeof SharedTreeAppState>,
 											TREE_CONFIGURATION,
 											["taskGroups", indexOfTaskGroup],
 										);
@@ -291,7 +297,7 @@ export function TaskGroup(props: {
 			</Stack>
 
 			{/* Render Task Card list */}
-			<Stack spacing={2} sx={{ alignItems: "center" }}>
+			<Stack direction="row" spacing={{ xs: 1, sm: 2 }} useFlexGap sx={{ flexWrap: "wrap" }}>
 				{props.sharedTreeTaskGroup.tasks.map((task) => {
 					const taskDiffs: Difference[] = [];
 					for (const diff of props.branchDifferences ?? []) {
@@ -323,7 +329,7 @@ export function TaskGroup(props: {
 				Engineers
 			</Typography>
 
-			<Stack spacing={1}>
+			<Stack direction="row" spacing={{ xs: 1, sm: 2 }} sx={{ flexWrap: "wrap" }}>
 				{props.sharedTreeTaskGroup.engineers.map((engineer) => {
 					const engineerCapacity = props.sharedTreeTaskGroup.tasks
 						.filter((task) => task.assignee === engineer.name)
@@ -332,7 +338,7 @@ export function TaskGroup(props: {
 					const capacityColor = engineerCapacity > engineer.maxCapacity ? "red" : "green";
 
 					return (
-						<Card sx={{ p: 2, width: 600 }} key={engineer.name}>
+						<Card sx={{ p: 2, width: 400 }} key={engineer.name}>
 							<Box mb={2}>
 								<Typography variant="h1" fontSize={24}>
 									{engineer.name}

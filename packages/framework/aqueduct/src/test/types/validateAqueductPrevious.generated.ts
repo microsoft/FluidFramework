@@ -76,7 +76,7 @@ declare type current_as_old_for_Class_DataObject = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Class_DataObjectFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<old.DataObjectFactory<any>>, TypeOnly<current.DataObjectFactory<any>>>
+declare type old_as_current_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<old.DataObjectFactory<never>>, TypeOnly<current.DataObjectFactory<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -85,7 +85,7 @@ declare type old_as_current_for_Class_DataObjectFactory = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Class_DataObjectFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<current.DataObjectFactory<any>>, TypeOnly<old.DataObjectFactory<any>>>
+declare type current_as_old_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<current.DataObjectFactory<never>>, TypeOnly<old.DataObjectFactory<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -112,7 +112,7 @@ declare type current_as_old_for_Class_PureDataObject = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Class_PureDataObjectFactory": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<old.PureDataObjectFactory<any>>, TypeOnly<current.PureDataObjectFactory<any>>>
+declare type old_as_current_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<old.PureDataObjectFactory<never>>, TypeOnly<current.PureDataObjectFactory<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -121,7 +121,7 @@ declare type old_as_current_for_Class_PureDataObjectFactory = requireAssignableT
  * typeValidation.broken:
  * "Class_PureDataObjectFactory": {"backCompat": false}
  */
-declare type current_as_old_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<current.PureDataObjectFactory<any>>, TypeOnly<old.PureDataObjectFactory<any>>>
+declare type current_as_old_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<current.PureDataObjectFactory<never>>, TypeOnly<old.PureDataObjectFactory<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -247,4 +247,5 @@ declare type old_as_current_for_Interface_IDataObjectProps = requireAssignableTo
  * typeValidation.broken:
  * "Interface_IDataObjectProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IDataObjectProps = requireAssignableTo<TypeOnly<current.IDataObjectProps>, TypeOnly<old.IDataObjectProps>>

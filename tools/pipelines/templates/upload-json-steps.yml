@@ -9,20 +9,19 @@ parameters:
   - name: STORAGE_ACCOUNT
     type: string
 
-  # Determines if artifact should be published as latest.tar.gz (for main branch)
-  - name: uploadAsLatest
-    type: boolean
-    default: false
+- name: uploadAsLatest
+  type: boolean
+  default: false
 
-  # Determines if artifact should be published as latest-v*.tar.gz (for release branches)
-  - name: uploadAsLatestRelease
-    type: boolean
-    default: false
+# Determines if artifact should be published as latest-v*.tar.gz (for release branches)
+- name: uploadAsLatestRelease
+  type: boolean
+  default: false
 
-  # Major version to upload as latest-v*.tar.gz
-  - name: majorVersion
-    type: string
-    default: none
+# Major version to upload as latest-v*.tar.gz
+- name: majorVersion
+  type: string
+  default: none
 
 steps:
   - checkout: none
@@ -103,26 +102,15 @@ steps:
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |
-        az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n $(Build.SourceVersion).tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --verbose
+        az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --overwrite --verbose
 
-  - ${{ if eq(parameters.uploadAsLatest, true) }}:
-    - task: AzureCLI@2
-      displayName: 'Upload JSON as latest.tar.gz'
-      continueOnError: true
-      inputs:
-        azureSubscription: 'fluid-docs'
-        scriptType: bash
-        scriptLocation: inlineScript
-        inlineScript: |
-          az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --overwrite --verbose
-
-  - ${{ if eq(parameters.uploadAsLatestRelease, true) }}:
-    - task: AzureCLI@2
-      displayName: 'Upload JSON as latest-v*.tar.gz'
-      continueOnError: true
-      inputs:
-        azureSubscription: 'fluid-docs'
-        scriptType: bash
-        scriptLocation: inlineScript
-        inlineScript: |
-          az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v${{ parameters.majorVersion }}.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --overwrite --verbose
+- ${{ if eq(parameters.uploadAsLatestRelease, true) }}:
+  - task: AzureCLI@2
+    displayName: 'Upload JSON as latest-v*.tar.gz'
+    continueOnError: true
+    inputs:
+      azureSubscription: 'fluid-docs'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v${{ parameters.majorVersion }}.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --overwrite --verbose

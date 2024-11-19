@@ -9,8 +9,8 @@ import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Package } from "@fluidframework/build-tools";
 import { Flags, ux } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
-import chalk from "chalk";
 import { humanId } from "human-id";
+import chalk from "picocolors";
 import prompts from "prompts";
 
 import { releaseGroupFlag } from "../../flags.js";
@@ -236,7 +236,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				.map((pkg) => {
 					const changed = changedPackages.some((cp) => cp.name === pkg.name);
 					return {
-						title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
+						title: changed ? `${pkg.name} ${chalk.red(chalk.bold("(changed)"))}` : pkg.name,
 						value: pkg,
 						selected: changed,
 					};
@@ -251,7 +251,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			}
 			const changed = changedPackages.some((cp) => cp.name === pkg.name);
 			packageChoices.push({
-				title: changed ? `${pkg.name} ${chalk.red.bold("(changed)")}` : pkg.name,
+				title: changed ? `${pkg.name} ${chalk.red(chalk.bold("(changed)"))}` : pkg.name,
 				value: pkg,
 				selected: changed,
 			});
