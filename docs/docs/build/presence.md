@@ -1,8 +1,6 @@
 ---
 title: Presence
-aliases:
-    - "/docs/build/presence/"
-author: pranshu
+sidebar_postition: 10
 ---
 
 ## Overview
