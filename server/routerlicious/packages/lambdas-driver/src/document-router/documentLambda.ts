@@ -34,7 +34,7 @@ export class DocumentLambda implements IPartitionLambda {
 	private activityCheckTimer: NodeJS.Timeout | undefined;
 
 	private reprocessRange: { startOffset: number | undefined; endOffset: number | undefined } = { startOffset: undefined, endOffset: undefined };
-	private offsetToReprocess: number | undefined;
+	private reprocessingOffset: number | undefined;
 
 	constructor(
 		private readonly factory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
@@ -68,10 +68,8 @@ export class DocumentLambda implements IPartitionLambda {
 	 * {@inheritDoc IPartitionLambda.handler}
 	 */
 	public handler(message: IQueuedMessage): undefined {
-		if (this.isOffsetWithinReprocessRange(message.offset)) {
-			this.offsetToReprocess = message.offset;
-		}
-		if (!this.contextManager.setHead(message, this.offsetToReprocess)) {
+		this.reprocessingOffset = this.isOffsetWithinReprocessRange(message.offset) ? message.offset : undefined;
+		if (!this.contextManager.setHead(message, this.reprocessingOffset)) {
 			this.context.log?.warn(
 				"Unexpected head offset. " +
 					`head offset: ${this.contextManager.getHeadOffset()}, message offset: ${
@@ -86,7 +84,7 @@ export class DocumentLambda implements IPartitionLambda {
 		}
 
 		this.handlerCore(message);
-		this.contextManager.setTail(message, this.offsetToReprocess);
+		this.contextManager.setTail(message, this.reprocessingOffset);
 
 		// update reprocessRange to avoid reprocessing the same message again
 		if (this.isOffsetWithinReprocessRange(message.offset)) {
@@ -176,7 +174,7 @@ export class DocumentLambda implements IPartitionLambda {
 		} else {
 			// SetHead assumes it will always receive increasing offsets (except reprocessing during pause/resume). So we need to split the creation case
 			// from the update case.
-			if (!document.context.setHead(message, this.offsetToReprocess)) {
+			if (!document.context.setHead(message, this.reprocessingOffset)) {
 				return; // if head not updated, it means it doesnt need to be processed, return early
 			}
 		}
