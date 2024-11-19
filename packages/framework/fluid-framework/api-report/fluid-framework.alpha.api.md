@@ -894,7 +894,7 @@ export interface Revertible {
 
 // @alpha @sealed
 export interface RevertibleAlpha extends Revertible {
-    clone: (branch?: TreeBranch) => RevertibleAlpha;
+    clone: (branch: TreeBranch) => RevertibleAlpha;
 }
 
 // @alpha @sealed

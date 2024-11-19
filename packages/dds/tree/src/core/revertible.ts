@@ -53,7 +53,7 @@ export interface RevertibleAlpha extends Revertible {
 	 * and they can be reverted independently. When no branch is provided, the cloned revertible will operate on the same branch as
 	 * the original, allowing multiple attempts to revert the same change.
 	 */
-	clone: (branch?: TreeBranch) => RevertibleAlpha;
+	clone: (branch: TreeBranch) => RevertibleAlpha;
 }
 
 /**

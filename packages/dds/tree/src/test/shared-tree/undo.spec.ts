@@ -660,7 +660,7 @@ describe("Undo and redo", () => {
 		view.root.child.propertyOne = 256; // 128 -> 256
 
 		const undoOriginalPropertyOne = undoStack.pop();
-		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone();
+		const clonedUndoOriginalPropertyOne = undoOriginalPropertyOne?.clone(view);
 
 		undoOriginalPropertyOne?.revert();
 

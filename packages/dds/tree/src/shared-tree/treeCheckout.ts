@@ -637,7 +637,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					revertible.dispose();
 				}
 			},
-			clone: (forkedBranch?: TreeBranch) => {
+			clone: (forkedBranch: TreeBranch) => {
 				if (forkedBranch === undefined) {
 					return this.createRevertible(revision, kind, checkout, onRevertibleDisposed);
 				}
