@@ -11,10 +11,10 @@ import React from "react";
 
 import { PageSection } from "./pageSection";
 
-import ServicesDiagram from "@site/static/assets/home/services-diagram.png";
-import ServiceSectionBG from "@site/static/assets/home/services-section-background.png";
-
 import "@site/src/css/home/serviceSection.css";
+
+const servicesDiagramImageSource = "https://storage.fluidframework.com/static/images/website/home/services-diagram.png";
+const servicesSectionBackgroundImageSource = "https://storage.fluidframework.com/static/images/website/home/services-section-background.png";
 
 const afrCardDescription =
 	"Azure Fluid Relay is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share.";
@@ -27,7 +27,7 @@ const speCardDescription =
  */
 export function ServiceSection(): JSX.Element {
 	const backgroundStyle: React.CSSProperties = {
-		background: `linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2)), url(${ServiceSectionBG})`,
+		background: `linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2)), url(${servicesSectionBackgroundImageSource})`,
 		backgroundPosition: "center",
 		backgroundRepeat: "no-repeat",
 		backgroundSize: "cover",
@@ -36,7 +36,7 @@ export function ServiceSection(): JSX.Element {
 		<PageSection title="Fluid Framework in the Cloud" backgroundStyle={backgroundStyle}>
 			<div className="ffcom-service-content-container">
 				<img
-					src={ServicesDiagram}
+					src={servicesDiagramImageSource}
 					alt="Fluid architecture diagram"
 					style={{ width: "100%" }}
 				/>
