@@ -237,24 +237,24 @@ describe("Presence", () => {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				}); // will be queued, deadline is 1110
 				const stateWorkspace2 = presence.getStates("name:testStateWorkspace2", {
-					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
-				}); // will be queued, deadline is 1060
+					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 60 }),
+				}); // will be queued, deadline is 1070
 
 				const { count } = stateWorkspace.props;
 				const { note } = stateWorkspace2.props;
 
 				clock.tick(10); // Time is now 1020
-				note.local = { message: "will be queued" }; // will be queued, deadline is set to 1060
-				count.local = { num: 12 }; // will be queued; deadline remains 1060
+				note.local = { message: "will be queued" }; // will be queued, deadline is 1080
+				count.local = { num: 12 }; // will be queued; deadline remains 1080
 
 				clock.tick(30); // Time is now 1050
-				count.local = { num: 34 }; // will be queued; deadline remains 1060
+				count.local = { num: 34 }; // will be queued; deadline remains 1080
 
 				clock.tick(10); // Time is now 1060
-				note.local = { message: "final message" }; // will be queued; deadline remains 1060
+				note.local = { message: "final message" }; // will be queued; deadline remains 1080
 
 				// SIGNAL #1
-				// The deadline timer will fire at time 1060 and send a single
+				// The deadline timer will fire at time 1080 and send a single
 				// signal with the values from the last workspace updates (num=34, message="final message").
 
 				// It's necessary to tick the timer beyond the deadline so the timer will fire.

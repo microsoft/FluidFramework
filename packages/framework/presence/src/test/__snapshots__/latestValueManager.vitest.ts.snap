@@ -268,11 +268,11 @@ exports[`Presence > LatestValueManager > batching > notification signals are sen
         "testEvents": {
           "sessionId-2": {
             "rev": 0,
-            "timestamp": 1050,
+            "timestamp": 1060,
             "value": {
               "name": "newId",
               "args": [
-                77
+                88
               ]
             },
             "ignoreUnmonitored": true
@@ -347,26 +347,15 @@ exports[`Presence > LatestValueManager > batching > notification signals cause q
           }
         }
       },
-      "s:name:testStateWorkspace": {
-        "count": {
-          "sessionId-2": {
-            "rev": 1,
-            "timestamp": 1020,
-            "value": {
-              "num": 12
-            }
-          }
-        }
-      },
       "n:name:testNotificationWorkspace": {
         "testEvents": {
           "sessionId-2": {
             "rev": 0,
-            "timestamp": 1050,
+            "timestamp": 1080,
             "value": {
               "name": "newId",
               "args": [
-                99
+                111
               ]
             },
             "ignoreUnmonitored": true
@@ -423,7 +412,7 @@ exports[`Presence > LatestValueManager > batching > queued signal is sent immedi
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1120,
+    "sendTimestamp": 1110,
     "avgLatency": 10,
     "data": {
       "system:presence": {

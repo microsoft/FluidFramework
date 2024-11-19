@@ -270,13 +270,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		if (timeoutInMs > 0) {
 			// Schedule the queued messages to be sent at the updateDeadline
 			this.timer.setTimeout(this.sendQueuedMessage.bind(this), timeoutInMs);
+			this.sendMessageDeadline = updateDeadline;
 		} else {
 			this.sendQueuedMessage();
 		}
 	}
 
 	/**
-	 * Send any queued signal immediate. Does nothing if no message is queued.
+	 * Send any queued signal immediately. Does nothing if no message is queued.
 	 */
 	private sendQueuedMessage(): void {
 		if (this.queuedData === undefined) {
@@ -313,6 +314,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				...this.queuedData,
 			},
 		} satisfies DatastoreUpdateMessage["content"];
+		this.queuedData = undefined;
+		this.timer.clearTimeout();
 		this.runtime.submitSignal(datastoreUpdateMessageType, newMessage);
 	}
 
@@ -502,6 +505,7 @@ class TimerManager {
 		if (this.timeoutId !== undefined) {
 			clearTimeout(this.timeoutId);
 			this.timeoutId = undefined;
+			this.expired = true;
 		}
 	}
 
