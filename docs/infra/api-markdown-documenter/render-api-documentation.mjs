@@ -128,9 +128,11 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 
 					// Docusaurus treats any document name starting with "_" as a "partial" document, which
 					// will not be included in the site output.
+					// See: <https://docusaurus.io/docs/create-doc>
 					// To work around this, while (hopefully) preventing name collisions, we will prefix
 					// The filename with "u". E.g. `_foo.md` -> `u_foo.md`.
-					// This doesn't have any effect on displayed contents, strictly on the filename and any links to it.
+					// This doesn't affect displayed contents, strictly changes the resulting filenames and any
+					// links to them.
 					if (qualifiedName.startsWith("_")) {
 						fileName = `u${qualifiedName}`;
 					}
