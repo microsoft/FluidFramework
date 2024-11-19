@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -184,58 +184,31 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			rebaseLogger,
 		);
 		this.editManager.localBranch.events.on("transactionStarted", () => {
-			this.commitEnricher.startNewTransaction();
+			this.commitEnricher.startTransaction();
 		});
 		this.editManager.localBranch.events.on("transactionAborted", () => {
-			this.commitEnricher.abortCurrentTransaction();
+			this.commitEnricher.abortTransaction();
 		});
 		this.editManager.localBranch.events.on("transactionCommitted", () => {
-			this.commitEnricher.commitCurrentTransaction();
+			this.commitEnricher.commitTransaction();
 		});
 		this.editManager.localBranch.events.on("beforeChange", (change) => {
-			// Ensure that any previously prepared commits that have not been sent are purged.
-			this.commitEnricher.purgePreparedCommits();
-			if (this.detachedRevision !== undefined) {
-				// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
-			} else if (change.type === "append") {
-				if (this.getLocalBranch().isTransacting()) {
-					for (const newCommit of change.newCommits) {
-						this.commitEnricher.ingestTransactionCommit(newCommit);
-					}
-				} else {
-					for (const newCommit of change.newCommits) {
-						this.commitEnricher.prepareCommit(newCommit, false);
-					}
-				}
-			} else if (
-				change.type === "replace" &&
-				getChangeReplaceType(change) === "transactionCommit" &&
-				!this.getLocalBranch().isTransacting()
-			) {
-				assert(
-					change.newCommits.length === 1,
-					0x983 /* Unexpected number of commits when committing transaction */,
-				);
-				this.commitEnricher.prepareCommit(change.newCommits[0] ?? oob(), true);
-			}
+			this.commitEnricher.processChange(change, this.detachedRevision === undefined);
 		});
 		this.editManager.localBranch.events.on("afterChange", (change) => {
-			if (this.getLocalBranch().isTransacting()) {
-				// We do not submit ops for changes that are part of a transaction.
-				return;
-			}
-			if (
-				change.type === "append" ||
-				(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
-			) {
-				if (this.detachedRevision !== undefined) {
-					for (const newCommit of change.newCommits) {
-						this.submitCommit(newCommit, this.schemaAndPolicy);
-					}
-				} else {
-					for (const newCommit of change.newCommits) {
-						const prepared = this.commitEnricher.getPreparedCommit(newCommit);
-						this.submitCommit(prepared, this.schemaAndPolicy);
+			// We do not submit ops for changes that are part of a transaction.
+			if (!this.getLocalBranch().isTransacting()) {
+				if (
+					change.type === "append" ||
+					(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
+				) {
+					for (const commit of change.newCommits) {
+						this.submitCommit(
+							this.detachedRevision !== undefined
+								? commit
+								: this.commitEnricher.enrich(commit),
+							this.schemaAndPolicy,
+						);
 					}
 				}
 			}

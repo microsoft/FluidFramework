@@ -617,36 +617,6 @@ describe("SharedTreeCore", () => {
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(machine.sequencingLog.length, 2);
 		});
-
-		it("does not leak enriched commits that are not sent", () => {
-			const enricher = new MockChangeEnricher<ModularChangeset>();
-			const machine = new MockResubmitMachine();
-			const tree = createTree([], machine, enricher);
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			});
-			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-			tree.connect({
-				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
-				objectStorage: new MockStorage(),
-			});
-			assert.equal(tree.preparedCommitsCount, 0);
-
-			// Temporarily make commit application fail
-			const disableFailure = tree.getLocalBranch().events.on("beforeChange", () => {
-				throw new Error("Invalid commit");
-			});
-			assert.throws(() => changeTree(tree));
-			disableFailure();
-
-			// The invalid commit has been prepared but not sent
-			assert.equal(tree.preparedCommitsCount, 1);
-
-			// Making a valid change should purge the invalid commit
-			changeTree(tree);
-			assert.equal(tree.preparedCommitsCount, 0);
-		});
 	});
 
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {
