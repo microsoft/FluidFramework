@@ -213,10 +213,13 @@ export class BasicRestWrapper extends RestWrapper {
 					if (this.enableTelemetry) {
 						const endTime = performance.now();
 						httpMetric.setProperty("durationInMs", endTime - startTime);
-						httpMetric.setProperty(HttpProperties.status, error?.response?.status ?? "STATUS_UNAVAILABLE");
-						if (error?.response?.status === statusCode)	{
+						httpMetric.setProperty(
+							HttpProperties.status,
+							error?.response?.status ?? "STATUS_UNAVAILABLE",
+						);
+						if (error?.response?.status === statusCode) {
 							httpMetric.success("Request successful");
-						}	else {
+						} else {
 							httpMetric.error("Request failed");
 						}
 					}
@@ -306,10 +309,10 @@ export class BasicRestWrapper extends RestWrapper {
 					}
 				})
 				.finally(() => {
-						const endTime = performance.now();
-						httpMetric.setProperty("durationInMs", endTime - startTime);
-						httpMetric.success("HttpRequest completed");
-						Lumberjack.log(httpMetric);
+					const endTime = performance.now();
+					httpMetric.setProperty("durationInMs", endTime - startTime);
+					httpMetric.success("HttpRequest completed");
+					Lumberjack.log(httpMetric);
 				});
 		});
 	}
