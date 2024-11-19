@@ -31,14 +31,7 @@ for (const testOpts of testMatrix) {
 		const isEphemeral: boolean = testOpts.options.isEphemeral;
 
 		beforeEach("createAzureClient", () => {
-			client = createAzureClient(
-				"test-user-id-1",
-				"test-user-name-1",
-				undefined,
-				undefined,
-				undefined,
-				{ all: { isEphemeral } },
-			);
+			client = createAzureClient("test-user-id-1", "test-user-name-1");
 			schema = {
 				initialObjects: {
 					map1: SharedMap,

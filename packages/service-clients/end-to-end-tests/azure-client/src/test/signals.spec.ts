@@ -87,9 +87,7 @@ for (const testOpts of testMatrix) {
 			client: AzureClient;
 			containerId: string;
 		}> => {
-			const client = createAzureClient(user.id, user.name, undefined, config, scopes, {
-				all: { isEphemeral },
-			});
+			const client = createAzureClient(user.id, user.name, undefined, config, scopes);
 			const schema: ContainerSchema = {
 				initialObjects: {
 					signaler: SignalerTestDataObject,

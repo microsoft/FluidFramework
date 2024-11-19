@@ -45,9 +45,7 @@ for (const testOpts of testMatrix) {
 		const isEphemeral: boolean = testOpts.options.isEphemeral;
 
 		beforeEach("createAzureClient", () => {
-			client = createAzureClient(undefined, undefined, undefined, undefined, undefined, {
-				all: { isEphemeral },
-			});
+			client = createAzureClient();
 			schema = {
 				initialObjects: {
 					map1: SharedMap,
@@ -235,14 +233,7 @@ for (const testOpts of testMatrix) {
 
 		beforeEach("createAzureClient", () => {
 			mockLogger = new MockLogger();
-			client = createAzureClient(
-				undefined,
-				undefined,
-				mockLogger,
-				configProvider({}),
-				undefined,
-				{ all: { isEphemeral } },
-			);
+			client = createAzureClient(undefined, undefined, mockLogger, configProvider({}));
 			schema = {
 				initialObjects: {
 					map1: SharedMap,
