@@ -33,9 +33,7 @@ describe("Presence", () => {
 			beforeEach(() => {
 				logger = new EventAndErrorTrackingLogger();
 				runtime = new MockRuntimeSignalSnapshotter(logger);
-
-				// We are configuring the runtime to be in a connected state, so ensure it looks connected
-				runtime.connected = true;
+				runtime.snapshotSignals = true;
 
 				// Note that while the initialTime is set to 1000, the prepareConnectedPresence call advances
 				// it to 1010 so all tests start at that time.
@@ -265,6 +263,7 @@ describe("Presence", () => {
 
 			// IMPORTANT: RESULTS NOT VALID! See TODOs inline.
 			it("notification signals are sent immediately", async () => {
+				runtime.snapshotSignals = false;
 				// Configure a notifications workspaces
 				// eslint-disable-next-line @typescript-eslint/ban-types
 				const notificationsWorkspace: PresenceNotifications<{}> = presence.getNotifications(
@@ -307,10 +306,32 @@ describe("Presence", () => {
 
 				expect(runtime.submittedSignals).toHaveLength(2);
 
-				const signal = runtime.submittedSignals[1];
+				const signal1 = runtime.submittedSignals[0];
 				expect(
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					(signal?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
+					(signal1?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
+						"sessionId-2"
+					].value,
+				).toMatchInlineSnapshot(`
+					{
+					  "args": [
+					    77,
+					  ],
+					  "name": "newId",
+					}
+				`);
+
+				expect(
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(signal1?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
+						"sessionId-2"
+					].value.args,
+				).toEqual([77]);
+
+				const signal2 = runtime.submittedSignals[1];
+				expect(
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(signal2?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
 						"sessionId-2"
 					].value.args,
 				).toEqual([88]);
