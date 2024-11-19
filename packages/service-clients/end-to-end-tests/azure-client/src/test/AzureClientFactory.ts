@@ -21,7 +21,6 @@ import {
 	MockLogger,
 	createChildLogger,
 	createMultiSinkLogger,
-	type ITelemetryLoggerPropertyBags,
 } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { default as Axios, AxiosResponse, type AxiosRequestConfig } from "axios";
@@ -39,7 +38,6 @@ export function createAzureClient(
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 	scopes?: ScopeType[],
-	properties?: ITelemetryLoggerPropertyBags,
 ): AzureClient {
 	const args = process.argv.slice(2);
 
@@ -97,7 +95,6 @@ export function createAzureClient(
 		logger: getLogger(),
 		properties: {
 			all: {
-				...properties?.all,
 				driverType: useAzure ? r11sEndpointName : driver,
 				driverEndpointName: driver,
 			},
