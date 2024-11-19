@@ -1,7 +1,7 @@
 ---
 title: Presence
 aliases:
-  - "/docs/build/presence/"
+    - "/docs/build/presence/"
 author: pranshu
 ---
 
@@ -9,15 +9,15 @@ author: pranshu
 
 We are introducting a new way to power your ephemeral experiences wth Fluid. Introducing the new Presence APIs (currently in alpha) that provide session-focused utilities for lightweight data sharing and messaging.
 
-Collaborative features typically rely on each user maintaining their own temporary state, which is subsequently shared with others. For example, in applications featuring multiplayer cursors, the cursor position of each user signifies their state. This state can be further utilized for various purposes such as indicating typing activity or displaying a user's current selection. This concept is referred to as *presence*.
+Collaborative features typically rely on each user maintaining their own temporary state, which is subsequently shared with others. For example, in applications featuring multiplayer cursors, the cursor position of each user signifies their state. This state can be further utilized for various purposes such as indicating typing activity or displaying a user's current selection. This concept is referred to as _presence_.
 
 By leveraging this shared state, applications can provide a seamless and interactive collaborative experience, ensuring that users are always aware of each other's actions and selections in real-time.
 
 The key scenarios that the new Presence APIs are suitable for includes:
-- User presence
-- Collaborative cursors
-- Notifications
 
+-   User presence
+-   Collaborative cursors
+-   Notifications
 
 ## Concepts
 
@@ -43,7 +43,6 @@ A states workspace, `PresenceStates`, allows sharing of simple data across atten
 
 A notifications workspace, `PresenceNotifications`, is similar to states workspace, but is dedicated to notification use-cases via `NotificationsManager`.
 
-
 ### Value Managers
 
 #### LatestValueManager
@@ -58,7 +57,6 @@ Latest map value manager retains the most recent atomic value each attendee has 
 
 Notifications value managers are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications value managers may be mixed into a `PresenceStates` workspace for convenience. They are the only type of value managers permitted in a `PresenceNotifications` workspace. Use `Notifications` to add one to `PresenceNotifications` or `PresenceStates` workspace.
 
-
 ## Onboarding
 
 ** Needs update**
@@ -66,17 +64,19 @@ Notifications value managers are special case where no data is retained during a
 While this package is developing as experimental and other Fluid Framework internals are being updated to accommodate it, a temporary Shared Object must be added within container to gain access.
 
 ```typescript
-import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
+import {
+	acquirePresenceViaDataObject,
+	ExperimentalPresenceManager,
+} from "@fluidframework/presence/alpha";
 
 const containerSchema = {
 	initialObjects: {
-        presence: ExperimentalPresenceManager
-    }
+		presence: ExperimentalPresenceManager,
+	},
 } satisfies ContainerSchema;
 
 const presence = await acquirePresenceViaDataObject(container.initialObjects.presence);
 ```
-
 
 ## Limitations
 
@@ -91,19 +91,22 @@ Current API does not provide a mechanism to validate that state and notification
 Example:
 
 ```typescript
-presence.getStates("app:v1states", { myState: Latest({x: 0})});
+presence.getStates("app:v1states", { myState: Latest({ x: 0 }) });
 ```
- is incompatible with
+
+is incompatible with
+
 ```typescript
-presence.getStates("app:v1states", { myState: Latest({x: "text"})});
+presence.getStates("app:v1states", { myState: Latest({ x: "text" }) });
 ```
+
 as "app:v1states"+"myState" have different value type expectations: `{x: number}` versus `{x: string}`.
 
 ```typescript
-presence.getStates("app:v1states", { myState2: Latest({x: true})});
+presence.getStates("app:v1states", { myState2: Latest({ x: true }) });
 ```
- would be compatible with both of the prior schemas as "myState2" is a different name. Though in this situation none of the different clients would be able to observe each other.
 
+would be compatible with both of the prior schemas as "myState2" is a different name. Though in this situation none of the different clients would be able to observe each other.
 
 ### Notifications
 
