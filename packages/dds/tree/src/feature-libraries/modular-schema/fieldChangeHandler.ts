@@ -16,7 +16,11 @@ import type {
 import type { IdAllocator, Invariant } from "../../util/index.js";
 import type { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
-import type { CrossFieldManager } from "./crossFieldQueries.js";
+import type {
+	ComposeNodeManager,
+	InvertNodeManager,
+	RebaseNodeManager,
+} from "./crossFieldQueries.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
@@ -105,7 +109,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		change2: TChangeset,
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
+		nodeManager: ComposeNodeManager,
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
@@ -117,7 +121,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		change: TChangeset,
 		isRollback: boolean,
 		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
+		nodeManager: InvertNodeManager,
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
@@ -130,7 +134,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		over: TChangeset,
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
+		nodeManager: RebaseNodeManager,
 		revisionMetadata: RebaseRevisionMetadata,
 	): TChangeset;
 

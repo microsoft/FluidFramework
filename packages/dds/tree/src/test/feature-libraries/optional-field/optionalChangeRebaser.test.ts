@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { describeStress } from "@fluid-private/stochastic-test-utils";
-import type { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
@@ -63,6 +62,12 @@ import { TestNodeId } from "../../testNodeId.js";
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import {
+	failComposeManager,
+	failInvertManager,
+	failRebaseManager,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../modular-schema/nodeQueryUtils.js";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -95,13 +100,6 @@ const OptionalChange = {
 	buildChildChange(childChange: NodeId) {
 		return optionalFieldEditor.buildChildChange(0, childChange);
 	},
-};
-
-const failCrossFieldManager: CrossFieldManager = {
-	get: () => assert.fail("Should not query CrossFieldManager"),
-	set: () => assert.fail("Should not modify CrossFieldManager"),
-	onMoveIn: () => assert.fail("Should not modify CrossFieldManager"),
-	moveKey: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
 function toDelta(
@@ -158,7 +156,7 @@ function invert(
 		change.change,
 		isRollback,
 		idAllocatorFromMaxId(),
-		failCrossFieldManager,
+		failInvertManager,
 		defaultRevisionMetadataFromChanges([change]),
 	);
 	verifyContextChain(change, makeAnonChange(inverted));
@@ -186,7 +184,7 @@ function rebase(
 		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), undefined, [
 			base.revision,
 		]);
-	const moveEffects = failCrossFieldManager;
+	const moveEffects = failRebaseManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	const rebased = optionalChangeRebaser.rebase(
 		change,
@@ -239,7 +237,7 @@ function compose(
 	composeChild: NodeChangeComposer = TestNodeId.composeChild,
 ): OptionalChangeset {
 	verifyContextChain(change1, change2);
-	const moveEffects = failCrossFieldManager;
+	const moveEffects = failComposeManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change1.change, change2.change));
 	return optionalChangeRebaser.compose(
 		change1.change,

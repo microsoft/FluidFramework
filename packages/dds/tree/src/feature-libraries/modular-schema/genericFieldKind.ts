@@ -14,7 +14,6 @@ import {
 } from "../../core/index.js";
 import { type IdAllocator, fail } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type {
 	FieldChangeHandler,
 	NodeChangeComposer,
@@ -28,6 +27,7 @@ import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+import type { ComposeNodeManager } from "./crossFieldQueries.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -194,23 +194,14 @@ export function convertGenericChange<TChange>(
 	}
 
 	return perIndex.reduce((a, b) =>
-		target.rebaser.compose(
-			a,
-			b,
-			composeChild,
-			genId,
-			invalidCrossFieldManager,
-			revisionMetadata,
-		),
+		target.rebaser.compose(a, b, composeChild, genId, invalidComposeManager, revisionMetadata),
 	);
 }
 
 const invalidFunc = (): never => fail("Should not be called when converting generic changes");
-const invalidCrossFieldManager: CrossFieldManager = {
-	set: invalidFunc,
-	get: invalidFunc,
-	onMoveIn: invalidFunc,
-	moveKey: invalidFunc,
+const invalidComposeManager: ComposeNodeManager = {
+	getChangesForBaseDetach: invalidFunc,
+	composeBaseAttach: invalidFunc,
 };
 
 function* relevantRemovedRoots(

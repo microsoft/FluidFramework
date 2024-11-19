@@ -13,10 +13,7 @@ import {
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
-import type {
-	CrossFieldManager,
-	FieldChangeHandler,
-} from "../../../feature-libraries/index.js";
+import type { FieldChangeHandler } from "../../../feature-libraries/index.js";
 import {
 	type NodeId,
 	rebaseRevisionMetadataFromInfo,
@@ -34,6 +31,12 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../optional-field/optionalFieldUtils.js";
 import { TestNodeId } from "../../testNodeId.js";
+import {
+	failComposeManager,
+	failInvertManager,
+	failRebaseManager,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../modular-schema/nodeQueryUtils.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -43,13 +46,6 @@ const arbitraryChildChange: NodeId = { localId: brand(3) };
 
 const nodeChange1: NodeId = { localId: brand(1) };
 const nodeChange2: NodeId = { localId: brand(2) };
-
-const failCrossFieldManager: CrossFieldManager = {
-	get: () => assert.fail("Should not query CrossFieldManager"),
-	set: () => assert.fail("Should not modify CrossFieldManager"),
-	onMoveIn: () => assert.fail("Should not modify CrossFieldManager"),
-	moveKey: () => assert.fail("Should not modify CrossFieldManager"),
-};
 
 const childComposer1_2 = (
 	change1: NodeId | undefined,
@@ -130,7 +126,7 @@ describe("defaultFieldKinds", () => {
 					change2.change,
 					simpleChildComposer,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failComposeManager,
 					defaultRevisionMetadataFromChanges([change1, change2]),
 				);
 
@@ -152,7 +148,7 @@ describe("defaultFieldKinds", () => {
 					taggedChildChange1.change,
 					simpleChildComposer,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failComposeManager,
 					defaultRevisionMetadataFromChanges([change1, taggedChildChange1]),
 				);
 				assertEqual(actual, expected);
@@ -164,7 +160,7 @@ describe("defaultFieldKinds", () => {
 					change1.change,
 					simpleChildComposer,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failComposeManager,
 					defaultRevisionMetadataFromChanges([change1]),
 				);
 				const expected2 = Change.atOnce(
@@ -182,7 +178,7 @@ describe("defaultFieldKinds", () => {
 						childChange2,
 						childComposer1_2,
 						fakeIdAllocator,
-						failCrossFieldManager,
+						failComposeManager,
 						defaultRevisionMetadataFromChanges([]),
 					),
 					childChange3,
@@ -196,7 +192,7 @@ describe("defaultFieldKinds", () => {
 				taggedChange.change,
 				true,
 				idAllocatorFromMaxId(),
-				failCrossFieldManager,
+				failInvertManager,
 				defaultRevisionMetadataFromChanges([taggedChange]),
 			);
 
@@ -215,7 +211,7 @@ describe("defaultFieldKinds", () => {
 					change1WithChildChange,
 					TestNodeId.rebaseChild,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failRebaseManager,
 					rebaseRevisionMetadataFromInfo([], undefined, []),
 				),
 				change2.change,
@@ -238,7 +234,7 @@ describe("defaultFieldKinds", () => {
 					baseChange,
 					childRebaser,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failRebaseManager,
 					rebaseRevisionMetadataFromInfo([], undefined, []),
 				),
 				childChange3,

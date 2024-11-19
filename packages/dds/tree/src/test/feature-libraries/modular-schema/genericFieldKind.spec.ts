@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 import {
 	type GenericChangeset,
-	type CrossFieldManager,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries/index.js";
 import type { DeltaFieldChanges } from "../../../core/index.js";
@@ -32,13 +31,12 @@ import { TestChange } from "../../testChange.js";
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
+import { failComposeManager, failInvertManager, failRebaseManager } from "./nodeQueryUtils.js";
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 const nodeId3: NodeId = { localId: brand(3) };
 const nodeId4: NodeId = { localId: brand(4) };
-
-const unexpectedDelegate = () => assert.fail("Unexpected call");
 
 const revisionMetadata: RebaseRevisionMetadata = {
 	getRevisionToRebase: () => assert.fail("Unexpected revision info query"),
@@ -46,13 +44,6 @@ const revisionMetadata: RebaseRevisionMetadata = {
 	getIndex: () => assert.fail("Unexpected revision index query"),
 	tryGetInfo: () => assert.fail("Unexpected revision info query"),
 	hasRollback: () => assert.fail("Unexpected revision info query"),
-};
-
-const crossFieldManager: CrossFieldManager = {
-	get: unexpectedDelegate,
-	set: unexpectedDelegate,
-	onMoveIn: unexpectedDelegate,
-	moveKey: unexpectedDelegate,
 };
 
 describe("GenericField", () => {
@@ -78,7 +69,7 @@ describe("GenericField", () => {
 				changeB,
 				TestNodeId.composeChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failComposeManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -103,7 +94,7 @@ describe("GenericField", () => {
 				changeB,
 				TestNodeId.composeChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failComposeManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -129,7 +120,7 @@ describe("GenericField", () => {
 				changeB,
 				TestNodeId.rebaseChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failRebaseManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -153,7 +144,7 @@ describe("GenericField", () => {
 				changeB,
 				TestNodeId.rebaseChild,
 				fakeIdAllocator,
-				crossFieldManager,
+				failRebaseManager,
 				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
@@ -173,7 +164,7 @@ describe("GenericField", () => {
 			forward,
 			true,
 			idAllocatorFromMaxId(),
-			crossFieldManager,
+			failInvertManager,
 			defaultRevisionMetadataFromChanges([]),
 		);
 		assert.deepEqual(actual, expected);

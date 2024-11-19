@@ -37,6 +37,9 @@ export interface ModularChangeset extends HasFieldChanges {
 	 */
 	readonly nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
 
+	// XXX: Should we merge builds and destroys into this?
+	readonly rootNodes: RootRange[];
+
 	/**
 	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node.
 	 */
@@ -60,6 +63,13 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly builds?: ChangeAtomIdBTree<TreeChunk>;
 	readonly destroys?: ChangeAtomIdBTree<number>;
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
+}
+
+export interface RootRange {
+	idBefore: ChangeAtomId | undefined;
+	idTransient: ChangeAtomId | undefined;
+	idAfter: ChangeAtomId | undefined;
+	count: number;
 }
 
 export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;

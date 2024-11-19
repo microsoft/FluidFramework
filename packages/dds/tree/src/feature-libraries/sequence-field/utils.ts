@@ -909,8 +909,8 @@ function addRevision(effect: MarkEffect, revision: RevisionTag): void {
 	effect.revision = revision;
 }
 
-export function getEndpoint(effect: MoveMarkEffect): ChangeAtomId {
-	return effect.finalEndpoint ?? { revision: effect.revision, localId: effect.id };
+export function getDetachId(effect: MoveMarkEffect): ChangeAtomId {
+	return { revision: effect.revision, localId: effect.id };
 }
 
 export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {

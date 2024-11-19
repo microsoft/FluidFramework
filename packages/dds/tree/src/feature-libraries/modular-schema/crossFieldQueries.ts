@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import type { ChangeAtomId, RevisionTag } from "../../core/index.js";
 import {
 	type RangeMap,
 	type RangeQueryResult,
@@ -16,32 +16,21 @@ import type { NodeId } from "./modularChangeTypes.js";
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;
 
-export function addCrossFieldQuery(
-	set: CrossFieldQuerySet,
-	revision: RevisionTag | undefined,
-	id: ChangesetLocalId,
-	count: number,
-): void {
-	setInCrossFieldMap(set, revision, id, count, true);
-}
-
 export function setInCrossFieldMap<T>(
 	map: CrossFieldMap<T>,
-	revision: RevisionTag | undefined,
-	id: ChangesetLocalId,
+	{ revision, localId }: ChangeAtomId,
 	count: number,
 	value: T,
 ): void {
-	setInRangeMap(getOrAddInMap(map, revision, []), id, count, value);
+	setInRangeMap(getOrAddInMap(map, revision, []), localId, count, value);
 }
 
 export function getFirstFromCrossFieldMap<T>(
 	map: CrossFieldMap<T>,
-	revision: RevisionTag | undefined,
-	id: ChangesetLocalId,
+	{ revision, localId }: ChangeAtomId,
 	count: number,
 ): RangeQueryResult<T> {
-	return getFromRangeMap(map.get(revision) ?? [], id, count);
+	return getFromRangeMap(map.get(revision) ?? [], localId, count);
 }
 
 /**
@@ -51,51 +40,39 @@ export enum CrossFieldTarget {
 	Destination,
 }
 
-/**
- * Used by {@link FieldChangeHandler} implementations for exchanging information across other fields
- * while rebasing, composing, or inverting a change.
- */
-export interface CrossFieldManager<T = unknown> {
-	/**
-	 * Returns the first data range associated with the key of `target`, `revision`, between `id` and `id + count`.
-	 * Calling this records a dependency for the current field on this key if `addDependency` is true.
-	 */
-	get(
-		target: CrossFieldTarget,
-		revision: RevisionTag | undefined,
-		id: ChangesetLocalId,
-		count: number,
-		addDependency: boolean,
-	): RangeQueryResult<T>;
+export interface InvertNodeManager {
+	invertDetach(detachId: ChangeAtomId, count: number, nodeChanges: NodeId | undefined): void;
+	invertAttach(attachId: ChangeAtomId, count: number): RangeQueryResult<DetachedNodeEntry>;
+}
 
-	/**
-	 * Sets the range of keys to `newValue`.
-	 * If `invalidateDependents` is true, all fields which took a dependency on this key will be considered invalidated
-	 * and will be given a chance to address the new data in `amendCompose`, or a second pass of `rebase` or `invert` as appropriate.
-	 */
-	set(
-		target: CrossFieldTarget,
-		revision: RevisionTag | undefined,
-		id: ChangesetLocalId,
+export interface ComposeNodeManager {
+	getChangesForBaseDetach(baseDetachId: ChangeAtomId, count: number): RangeQueryResult<NodeId>;
+
+	composeBaseAttach(
+		baseAttachId: ChangeAtomId,
+		newDetachId: ChangeAtomId | undefined,
 		count: number,
-		newValue: T,
-		invalidateDependents: boolean,
+		newChanges: NodeId,
 	): void;
+}
 
-	/**
-	 * This must be called whenever a new node is moved into this field as part of the current rebase, compose, or invert.
-	 * Calling this for a node which was already in the field is tolerated.
-	 */
-	onMoveIn(id: NodeId): void;
-
-	/**
-	 * This must be called whenever a new cross field key is moved into this field as part of the current rebase or compose.
-	 * Calling this for a key which was already in the field is tolerated.
-	 */
-	moveKey(
-		target: CrossFieldTarget,
-		revision: RevisionTag | undefined,
-		id: ChangesetLocalId,
+export interface RebaseNodeManager<T = unknown> {
+	// XXX: We need to know if a new detach is now happening in this field
+	getNewChangesForBaseAttach(
+		baseAttachId: ChangeAtomId,
 		count: number,
+	): RangeQueryResult<DetachedNodeEntry<T>>;
+
+	// XXX: We need to know if a detach is no longer happening with in field
+	rebaseOverDetach(
+		baseDetachId: ChangeAtomId,
+		count: number,
+		nodeChange: NodeId | undefined,
+		fieldData: T | undefined,
 	): void;
+}
+
+export interface DetachedNodeEntry<T = unknown> {
+	nodeChange?: NodeId;
+	fieldData?: T;
 }

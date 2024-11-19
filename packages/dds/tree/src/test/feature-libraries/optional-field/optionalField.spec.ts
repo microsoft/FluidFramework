@@ -13,7 +13,6 @@ import {
 	makeDetachedNodeId,
 } from "../../../core/index.js";
 import type {
-	CrossFieldManager,
 	NodeId,
 	RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries/index.js";
@@ -42,6 +41,12 @@ import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { testReplaceRevisions } from "./replaceRevisions.test.js";
+import {
+	failComposeManager,
+	failInvertManager,
+	failRebaseManager,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../modular-schema/nodeQueryUtils.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -54,15 +59,6 @@ const nodeId2: NodeId = { localId: brand(2) };
 
 const nodeChange1 = TestNodeId.create(nodeId1, TestChange.mint([], 1));
 const nodeChange2 = TestNodeId.create(nodeId2, TestChange.mint([], 2));
-
-const failCrossFieldManager: CrossFieldManager = {
-	get: () => assert.fail("Should query CrossFieldManager"),
-	set: () => assert.fail("Should not modify CrossFieldManager"),
-	onMoveIn: () => assert.fail("Should not modify CrossFieldManager"),
-	moveKey: () => assert.fail("Should not modify CrossFieldManager"),
-};
-
-const failingDelegate = (): never => assert.fail("Should not be called");
 
 const tag = mintRevisionTag();
 const change1 = tagChangeInline(
@@ -128,7 +124,7 @@ describe("optionalField", () => {
 					change2.change,
 					TestNodeId.composeChild,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failComposeManager,
 					defaultRevisionMetadataFromChanges([change1, change2]),
 				);
 
@@ -168,7 +164,7 @@ describe("optionalField", () => {
 					changeB.change,
 					TestNodeId.composeChild,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failComposeManager,
 					defaultRevisionMetadataFromChanges([changeA, changeB]),
 				);
 
@@ -198,7 +194,7 @@ describe("optionalField", () => {
 						return fst ?? snd ?? fail("At least one node should be defined");
 					},
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failComposeManager,
 					defaultRevisionMetadataFromChanges([changeA, changeB]),
 				);
 
@@ -228,7 +224,7 @@ describe("optionalField", () => {
 						return fst ?? snd ?? fail("At least one node should be defined");
 					},
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failComposeManager,
 					defaultRevisionMetadataFromChanges([changeA, changeB]),
 				);
 
@@ -252,7 +248,7 @@ describe("optionalField", () => {
 				withChild,
 				TestNodeId.composeChild,
 				fakeIdAllocator,
-				failCrossFieldManager,
+				failComposeManager,
 				defaultRevisionMetadataFromChanges([]),
 			);
 
@@ -279,7 +275,7 @@ describe("optionalField", () => {
 				change4.change,
 				TestNodeId.composeChild,
 				fakeIdAllocator,
-				failCrossFieldManager,
+				failComposeManager,
 				defaultRevisionMetadataFromChanges([change1, change4]),
 			);
 
@@ -301,7 +297,7 @@ describe("optionalField", () => {
 				changeB.change,
 				TestNodeId.composeChild,
 				fakeIdAllocator,
-				failCrossFieldManager,
+				failComposeManager,
 				defaultRevisionMetadataFromChanges([changeA, changeB]),
 			);
 
@@ -321,7 +317,7 @@ describe("optionalField", () => {
 					change.change,
 					false,
 					idAllocatorFromMaxId(),
-					failCrossFieldManager,
+					failInvertManager,
 					defaultRevisionMetadataFromChanges([change]),
 				);
 			}
@@ -330,7 +326,7 @@ describe("optionalField", () => {
 					change.change,
 					true,
 					idAllocatorFromMaxId(),
-					failCrossFieldManager,
+					failInvertManager,
 					defaultRevisionMetadataFromChanges([change]),
 				);
 			}
@@ -413,7 +409,7 @@ describe("optionalField", () => {
 						change1.change,
 						TestNodeId.rebaseChild,
 						fakeIdAllocator,
-						failCrossFieldManager,
+						failRebaseManager,
 						rebaseRevisionMetadataFromInfo(
 							defaultRevInfosFromChanges([change1]),
 							change2PreChange1.revision,
@@ -437,7 +433,7 @@ describe("optionalField", () => {
 						baseChange,
 						TestNodeId.rebaseChild,
 						fakeIdAllocator,
-						failCrossFieldManager,
+						failRebaseManager,
 						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([]), undefined, []),
 					),
 					expected,
@@ -460,7 +456,7 @@ describe("optionalField", () => {
 							return curr ?? base;
 						},
 						fakeIdAllocator,
-						failCrossFieldManager,
+						failRebaseManager,
 						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([]), undefined, []),
 					),
 					expected,
@@ -488,7 +484,7 @@ describe("optionalField", () => {
 							return curr ?? base;
 						},
 						fakeIdAllocator,
-						failCrossFieldManager,
+						failRebaseManager,
 						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([]), undefined, []),
 					),
 					expected,
@@ -507,7 +503,7 @@ describe("optionalField", () => {
 						deletion.change,
 						false,
 						idAllocatorFromMaxId(),
-						failCrossFieldManager,
+						failInvertManager,
 						defaultRevisionMetadataFromChanges([deletion]),
 					),
 					tag2,
@@ -528,7 +524,7 @@ describe("optionalField", () => {
 					deletion.change,
 					childRebaser,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failRebaseManager,
 					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([deletion]), undefined, [
 						deletion.revision,
 					]),
@@ -539,7 +535,7 @@ describe("optionalField", () => {
 					revive.change,
 					childRebaser,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failRebaseManager,
 					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([revive]), undefined, [
 						revive.revision,
 					]),
@@ -567,7 +563,7 @@ describe("optionalField", () => {
 					clear.change,
 					childRebaser,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failRebaseManager,
 					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([clear]), undefined, [
 						clear.revision,
 					]),
@@ -595,7 +591,7 @@ describe("optionalField", () => {
 					pin.change,
 					childRebaser,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failRebaseManager,
 					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([pin]), undefined, [
 						pin.revision,
 					]),
@@ -639,7 +635,7 @@ describe("optionalField", () => {
 					taggedBaseChange.change,
 					childRebaser,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failRebaseManager,
 					rebaseRevisionMetadataFromInfo(
 						defaultRevInfosFromChanges([taggedBaseChange]),
 						undefined,
@@ -732,7 +728,7 @@ describe("optionalField", () => {
 					clear.change,
 					(): NodeId => nodeId1,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failComposeManager,
 					defaultRevisionMetadataFromChanges(changes),
 				);
 				const actual = Array.from(
@@ -765,11 +761,13 @@ describe("optionalField", () => {
 					clear.change,
 					false,
 					idAllocatorFromMaxId(),
-					failCrossFieldManager,
+					failInvertManager,
 					defaultRevisionMetadataFromChanges([clear]),
 				);
 				const actual = Array.from(
-					optionalChangeHandler.relevantRemovedRoots(restore, failingDelegate),
+					optionalChangeHandler.relevantRemovedRoots(restore, () =>
+						assert.fail("Should not be called"),
+					),
 				);
 				const expected = [makeDetachedNodeId(clear.revision, 1)];
 				assert.deepEqual(actual, expected);
@@ -780,7 +778,7 @@ describe("optionalField", () => {
 					clear.change,
 					() => nodeId1,
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failRebaseManager,
 					rebaseRevisionMetadataFromInfo(
 						defaultRevInfosFromChanges([clear, hasChildChanges]),
 						undefined,
@@ -800,7 +798,7 @@ describe("optionalField", () => {
 					hasChildChanges.change,
 					(id1, id2): NodeId => id1 ?? id2 ?? fail("Expected child change"),
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failComposeManager,
 					defaultRevisionMetadataFromChanges(changes),
 				);
 
@@ -816,7 +814,7 @@ describe("optionalField", () => {
 					clear.change,
 					(id1, id2): NodeId => id1 ?? id2 ?? fail("Expected child change"),
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failComposeManager,
 					defaultRevisionMetadataFromChanges(changes),
 				);
 				const actual = Array.from(
@@ -830,7 +828,7 @@ describe("optionalField", () => {
 						clear.change,
 						false,
 						idAllocatorFromMaxId(),
-						failCrossFieldManager,
+						failInvertManager,
 						defaultRevisionMetadataFromChanges([clear]),
 					),
 					mintRevisionTag(),
@@ -841,7 +839,7 @@ describe("optionalField", () => {
 					hasChildChanges.change,
 					(id1, id2): NodeId => id1 ?? id2 ?? fail("Expected child change"),
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failComposeManager,
 					defaultRevisionMetadataFromChanges(changes),
 				);
 				const actual = Array.from(
@@ -856,7 +854,7 @@ describe("optionalField", () => {
 					clear.change,
 					(id1, id2): NodeId => id1 ?? id2 ?? fail("Expected child change"),
 					fakeIdAllocator,
-					failCrossFieldManager,
+					failRebaseManager,
 					rebaseRevisionMetadataFromInfo(
 						defaultRevInfosFromChanges([clear, hasChildChanges]),
 						undefined,

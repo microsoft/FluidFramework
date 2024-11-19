@@ -21,7 +21,7 @@ import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	getDetachedNodeId,
-	getEndpoint,
+	getDetachId,
 	getInputCellId,
 	isAttachAndDetachEffect,
 } from "./utils.js";
@@ -77,7 +77,7 @@ export function sequenceFieldToDelta(
 				0x820 /* AttachAndDetach mark should have defined output cell ID */,
 			);
 			const oldId = nodeIdFromChangeAtom(
-				isMoveIn(mark.attach) ? getEndpoint(mark.attach) : inputCellId,
+				isMoveIn(mark.attach) ? getDetachId(mark.attach) : inputCellId,
 			);
 			if (!areEqualChangeAtomIds(inputCellId, outputId)) {
 				rename.push({
@@ -98,7 +98,7 @@ export function sequenceFieldToDelta(
 			switch (type) {
 				case "MoveIn": {
 					local.push({
-						attach: nodeIdFromChangeAtom(getEndpoint(mark)),
+						attach: nodeIdFromChangeAtom(getDetachId(mark)),
 						count: mark.count,
 					});
 					break;

@@ -484,6 +484,7 @@ function makeModularChangeCodec(
 			const decoded: Mutable<ModularChangeset> = {
 				fieldChanges: new Map(),
 				nodeChanges: newTupleBTree(),
+				rootNodes: [], // XXX
 				nodeToParent: newTupleBTree(),
 				nodeAliases: newTupleBTree(),
 				crossFieldKeys: newCrossFieldKeyTable(),

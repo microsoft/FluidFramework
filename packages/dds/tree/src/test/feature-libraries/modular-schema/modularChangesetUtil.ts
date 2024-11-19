@@ -4,13 +4,14 @@
  */
 
 import type {
+	ChangeAtomId,
 	FieldKey,
 	FieldKindIdentifier,
 	RevisionInfo,
 	RevisionMetadataSource,
 } from "../../../core/index.js";
 import type {
-	CrossFieldManager,
+	ComposeNodeManager,
 	FieldChangeHandler,
 	FieldChangeMap,
 	ModularChangeFamily,
@@ -28,6 +29,7 @@ import type {
 import {
 	type IdAllocator,
 	type Mutable,
+	type RangeQueryResult,
 	brand,
 	fail,
 	idAllocatorFromMaxId,
@@ -75,6 +77,7 @@ function empty(): ModularChangeset {
 	return {
 		fieldChanges: new Map(),
 		nodeChanges: newTupleBTree(),
+		rootNodes: [],
 		nodeToParent: newTupleBTree(),
 		nodeAliases: newTupleBTree(),
 		crossFieldKeys: newCrossFieldKeyTable(),
@@ -131,6 +134,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 	const result: Mutable<ModularChangeset> = {
 		nodeChanges,
 		fieldChanges,
+		rootNodes: [], // XXX
 		nodeToParent,
 		crossFieldKeys,
 		nodeAliases: newTupleBTree(),
@@ -229,25 +233,28 @@ function addNodeToField(
 		fieldChangeset,
 		(node1, node2) => node1 ?? node2 ?? fail("Should not compose two undefined nodes"),
 		idAllocator,
-		dummyCrossFieldManager,
+		dummyComposeManager,
 		dummyRevisionMetadata,
 	);
 }
 
-const dummyCrossFieldManager: CrossFieldManager = {
-	get: (_target, _revision, _id, count, _addDependency) => ({
-		value: undefined,
-		length: count,
-	}),
-	set: () => fail("Not supported"),
-	onMoveIn: () => fail("Not supported"),
-	moveKey: () => fail("Not supported"),
+const unsupportedFunc = () => fail("Not supported");
+
+const dummyComposeManager: ComposeNodeManager = {
+	getChangesForBaseDetach(
+		_baseDetachId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<NodeId> {
+		return { value: undefined, length: count };
+	},
+
+	composeBaseAttach: unsupportedFunc,
 };
 
 const dummyRevisionMetadata: RevisionMetadataSource = {
-	getIndex: () => fail("Not supported"),
-	tryGetInfo: () => fail("Not supported"),
-	hasRollback: () => fail("Not supported"),
+	getIndex: unsupportedFunc,
+	tryGetInfo: unsupportedFunc,
+	hasRollback: unsupportedFunc,
 };
 
 export function removeAliases(changeset: ModularChangeset): ModularChangeset {

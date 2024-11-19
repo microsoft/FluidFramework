@@ -25,13 +25,11 @@ import {
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
-	addCrossFieldQuery,
-	type CrossFieldManager,
-	type CrossFieldQuerySet,
 	CrossFieldTarget,
+	setInCrossFieldMap,
+	type InvertNodeManager,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	setInCrossFieldMap,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -43,7 +41,6 @@ import {
 	type Changeset,
 	type HasMarkFields,
 	MarkListFactory,
-	type MoveId,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
 import {
@@ -64,10 +61,10 @@ import {
 	type IdAllocator,
 	type Mutable,
 	type RangeMap,
+	type RangeQueryResult,
 	brand,
 	fail,
 	fakeIdAllocator,
-	getFromRangeMap,
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
 	setInNestedMap,
@@ -88,6 +85,12 @@ import {
 	NoopMarkType,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
+import {
+	getFirstFromCrossFieldMap,
+	type ComposeNodeManager,
+	type DetachedNodeEntry,
+	type RebaseNodeManager,
+} from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 
 export function assertWrappedChangesetsEqual(
 	actual: WrappedChange,
@@ -332,11 +335,10 @@ function composePair(
 	metadata: RevisionMetadataSource,
 	idAllocator: IdAllocator,
 ): SF.Changeset {
-	const moveEffects = newCrossFieldTable();
+	const moveEffects = newComposeManager();
 	let composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 
 	if (moveEffects.isInvalidated) {
-		resetCrossFieldTable(moveEffects);
 		composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 	}
 	return composed;
@@ -368,7 +370,7 @@ export function rebase(
 
 	const childRebaser = config.childRebaser ?? TestNodeId.rebaseChild;
 
-	const moveEffects = newCrossFieldTable();
+	const moveEffects = newRebaseManager();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change.change, base.change));
 	let rebasedChange = SF.rebase(
 		change.change,
@@ -379,7 +381,6 @@ export function rebase(
 		metadata,
 	);
 	if (moveEffects.isInvalidated) {
-		moveEffects.reset();
 		rebasedChange = SF.rebase(
 			change.change,
 			base.change,
@@ -443,19 +444,13 @@ export function rebaseDeepTagged(
 	);
 }
 
-function resetCrossFieldTable(table: CrossFieldTable) {
-	table.isInvalidated = false;
-	table.srcQueries.clear();
-	table.dstQueries.clear();
-}
-
 export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
 	return ChangesetWrapper.invert(change, (c) => invert(c));
 }
 
 export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): SF.Changeset {
 	deepFreeze(change.change);
-	const table = newCrossFieldTable();
+	const table = newInvertManager();
 	let inverted = SF.invert(
 		change.change,
 		isRollback,
@@ -465,9 +460,6 @@ export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): S
 	);
 
 	if (table.isInvalidated) {
-		table.isInvalidated = false;
-		table.srcQueries.clear();
-		table.dstQueries.clear();
 		inverted = SF.invert(
 			change.change,
 			isRollback,
@@ -814,72 +806,85 @@ export function inlineRevision(change: Changeset, revision: RevisionTag): Change
 	);
 }
 
-interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
-	srcQueries: CrossFieldQuerySet;
-	dstQueries: CrossFieldQuerySet;
-	isInvalidated: boolean;
-	mapSrc: Map<RevisionTag | undefined, RangeMap<T>>;
-	mapDst: Map<RevisionTag | undefined, RangeMap<T>>;
-	reset: () => void;
-}
+function newInvertManager(): TestInvertManager {
+	const manager: TestInvertManager = {
+		...newTestNodeManager(),
 
-function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
-	const srcQueries: CrossFieldQuerySet = new Map();
-	const dstQueries: CrossFieldQuerySet = new Map();
-	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
-	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
-
-	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
-		target === CrossFieldTarget.Source ? mapSrc : mapDst;
-
-	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
-		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
-
-	const table = {
-		srcQueries,
-		dstQueries,
-		isInvalidated: false,
-		mapSrc,
-		mapDst,
-
-		get: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: MoveId,
+		invertDetach(
+			detachId: ChangeAtomId,
 			count: number,
-			addDependency: boolean,
-		) => {
-			if (addDependency) {
-				addCrossFieldQuery(getQueries(target), revision, id, count);
-			}
-			return getFromRangeMap(getMap(target).get(revision) ?? [], id, count);
-		},
-		set: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: MoveId,
-			count: number,
-			value: T,
-			invalidateDependents: boolean,
-		) => {
-			if (
-				invalidateDependents &&
-				getFromRangeMap(getQueries(target).get(revision) ?? [], id, count) !== undefined
-			) {
-				table.isInvalidated = true;
-			}
-			setInCrossFieldMap(getMap(target), revision, id, count, value);
+			nodeChanges: NodeId | undefined,
+		): void {
+			this.isInvalidated = true;
 		},
 
-		onMoveIn: () => {},
-		moveKey: () => {},
-
-		reset: () => {
-			table.isInvalidated = false;
-			table.srcQueries.clear();
-			table.dstQueries.clear();
+		invertAttach(attachId: ChangeAtomId, count: number): RangeQueryResult<DetachedNodeEntry> {
+			throw new Error("Function not implemented.");
 		},
 	};
 
-	return table;
+	return manager;
+}
+
+function newComposeManager(): TestComposeManager {
+	const manager: TestComposeManager = {
+		...newTestNodeManager(),
+
+		getChangesForBaseDetach(
+			baseDetachId: ChangeAtomId,
+			count: number,
+		): RangeQueryResult<NodeId> {
+			return getFirstFromCrossFieldMap(this.nodeChangeTable, baseDetachId, count);
+		},
+
+		composeBaseAttach(
+			baseAttachId: ChangeAtomId,
+			newDetachId: ChangeAtomId | undefined,
+			count: number,
+			newChanges: NodeId,
+		): void {
+			setInCrossFieldMap(this.nodeChangeTable, baseAttachId, count, newChanges);
+			this.isInvalidated = true;
+		},
+	};
+
+	return manager;
+}
+
+function newRebaseManager(): TestRebaseManager {
+	const manager: TestRebaseManager = {
+		...newTestNodeManager(),
+
+		getNewChangesForBaseAttach(
+			baseAttachId: ChangeAtomId,
+			count: number,
+		): RangeQueryResult<DetachedNodeEntry> {
+			throw new Error("Function not implemented.");
+		},
+
+		rebaseOverDetach(
+			baseDetachId: ChangeAtomId,
+			count: number,
+			nodeChange: NodeId | undefined,
+			fieldData: unknown,
+		): void {
+			this.isInvalidated = true;
+		},
+	};
+	return manager;
+}
+
+interface TestInvertManager extends InvertNodeManager, TestNodeManager {}
+
+interface TestComposeManager extends ComposeNodeManager, TestNodeManager {}
+
+interface TestRebaseManager extends RebaseNodeManager, TestNodeManager {}
+
+interface TestNodeManager {
+	isInvalidated: boolean;
+	nodeChangeTable: Map<RevisionTag | undefined, RangeMap<NodeId>>;
+}
+
+function newTestNodeManager(): TestNodeManager {
+	return { isInvalidated: false, nodeChangeTable: new Map() };
 }

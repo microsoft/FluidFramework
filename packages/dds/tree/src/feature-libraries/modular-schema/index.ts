@@ -11,8 +11,9 @@ export {
 } from "./comparison.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
-	addCrossFieldQuery,
-	type CrossFieldManager,
+	type InvertNodeManager,
+	type RebaseNodeManager,
+	type ComposeNodeManager,
 	type CrossFieldMap,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,

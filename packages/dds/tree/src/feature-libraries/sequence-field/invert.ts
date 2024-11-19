@@ -7,11 +7,7 @@ import { assert, unreachableCase, oob } from "@fluidframework/core-utils/interna
 
 import type { RevisionTag } from "../../core/index.js";
 import { type IdAllocator, type Mutable, fail } from "../../util/index.js";
-import {
-	type CrossFieldManager,
-	CrossFieldTarget,
-	type NodeId,
-} from "../modular-schema/index.js";
+import type { InvertNodeManager, NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
 import {
@@ -32,7 +28,7 @@ import {
 import {
 	extractMarkEffect,
 	getDetachOutputCellId,
-	getEndpoint,
+	getDetachId,
 	getInputCellId,
 	getOutputCellId,
 	isAttach,
@@ -55,15 +51,15 @@ export function invert(
 	change: Changeset,
 	isRollback: boolean,
 	genId: IdAllocator,
-	crossFieldManager: CrossFieldManager,
+	crossFieldManager: InvertNodeManager,
 ): Changeset {
-	return invertMarkList(change, isRollback, crossFieldManager as CrossFieldManager<NodeId>);
+	return invertMarkList(change, isRollback, crossFieldManager);
 }
 
 function invertMarkList(
 	markList: MarkList,
 	isRollback: boolean,
-	crossFieldManager: CrossFieldManager<NodeId>,
+	crossFieldManager: InvertNodeManager,
 ): MarkList {
 	const inverseMarkList = new MarkListFactory();
 
@@ -78,7 +74,7 @@ function invertMarkList(
 function invertMark(
 	mark: Mark,
 	isRollback: boolean,
-	crossFieldManager: CrossFieldManager<NodeId>,
+	crossFieldManager: InvertNodeManager,
 ): Mark[] {
 	if (!isImpactful(mark)) {
 		const inputId = getInputCellId(mark);
@@ -149,15 +145,8 @@ function invertMark(
 			if (mark.changes !== undefined) {
 				assert(mark.count === 1, 0x6ed /* Mark with changes can only target a single cell */);
 
-				const endpoint = getEndpoint(mark);
-				crossFieldManager.set(
-					CrossFieldTarget.Destination,
-					endpoint.revision,
-					endpoint.localId,
-					mark.count,
-					mark.changes,
-					true,
-				);
+				const endpoint = getDetachId(mark);
+				crossFieldManager.invertDetach(endpoint, mark.count, mark.changes);
 			}
 
 			const cellId = getDetachOutputCellId(mark) ?? {
@@ -287,24 +276,25 @@ function invertMark(
 function applyMovedChanges(
 	mark: CellMark<MoveOut>,
 	revision: RevisionTag | undefined,
-	manager: CrossFieldManager<NodeId>,
+	manager: InvertNodeManager,
 ): Mark[] {
 	// Although this is a source mark, we query the destination because this was a destination mark during the original invert pass.
-	const entry = manager.get(CrossFieldTarget.Destination, revision, mark.id, mark.count, true);
+	const entry = manager.invertAttach({ revision, localId: mark.id }, mark.count);
 
 	if (entry.length < mark.count) {
 		const [mark1, mark2] = splitMark(mark, entry.length);
 		const mark1WithChanges =
 			entry.value !== undefined
-				? withNodeChange<CellMark<MoveOut>, MoveOut>(mark1, entry.value)
+				? withNodeChange<CellMark<MoveOut>, MoveOut>(mark1, entry.value.nodeChange)
 				: mark1;
 
 		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager)];
 	}
 
-	if (entry.value !== undefined) {
-		manager.onMoveIn(entry.value);
-		return [withNodeChange<CellMark<MoveOut>, MoveOut>(mark, entry.value)];
+	if (entry.value?.nodeChange !== undefined) {
+		// XXX
+		// manager.onMoveIn(entry.value.nodeChange);
+		return [withNodeChange<CellMark<MoveOut>, MoveOut>(mark, entry.value.nodeChange)];
 	}
 
 	return [mark];
