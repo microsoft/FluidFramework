@@ -11,10 +11,8 @@ import React from "react";
 
 import { PageSection } from "./pageSection";
 
-import AzureLogo from "@site/static/assets/azure-logo.png";
 import ServicesDiagram from "@site/static/assets/home/services-diagram.png";
 import ServiceSectionBG from "@site/static/assets/home/services-section-background.png";
-import MicrosoftLogo from "@site/static/assets/microsoft-logo.png";
 
 import "@site/src/css/home/serviceSection.css";
 
@@ -44,14 +42,14 @@ export function ServiceSection(): JSX.Element {
 				/>
 				<div className="ffcom-services">
 					<ServiceSectionCard
-						logoSource={AzureLogo}
+						logoSource="https://storage.fluidframework.com/static/images/website/azure-logo.png"
 						logoAltText="Microsoft Azure logo"
 						title="Azure Fluid Relay"
 						description={afrCardDescription}
 						learnMoreHref="https://azure.microsoft.com/en-us/products/fluid-relay/#overview"
 					/>
 					<ServiceSectionCard
-						logoSource={MicrosoftLogo}
+						logoSource="https://storage.fluidframework.com/static/images/website/microsoft-logo.png"
 						logoAltText="Microsoft logo"
 						title="SharePoint Embedded"
 						description={speCardDescription}
