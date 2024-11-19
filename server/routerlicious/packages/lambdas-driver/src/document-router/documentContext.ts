@@ -60,6 +60,11 @@ export class DocumentContext extends EventEmitter implements IContext {
 	 * Updates the head offset for the context.
 	 */
 	public setHead(head: IQueuedMessage, allowBackToOffset?: number | undefined) {
+		// if allowBackToOffset is set and is lower than this.tailInternal, then dont reprocess
+		if (allowBackToOffset !== undefined && allowBackToOffset <= this.tailInternal.offset) {
+			console.log(`TEST!! DocumentContext setHead not updating head as allowBackToOffset ${allowBackToOffset} is already processes successfully. Last tailInternal offset: ${this.tailInternal.offset}`);
+			return false;
+		}
 		assert(
 			head.offset > this.head.offset || head.offset === allowBackToOffset,
 			`${head.offset} > ${this.head.offset} || ${head.offset} === ${allowBackToOffset}` +
@@ -77,6 +82,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		}
 
 		this.headInternal = head;
+		return true;
 	}
 
 	public checkpoint(message: IQueuedMessage, restartOnCheckpointFailure?: boolean) {

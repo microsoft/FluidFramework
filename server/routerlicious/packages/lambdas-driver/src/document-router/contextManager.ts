@@ -98,6 +98,11 @@ export class DocumentContextManager extends EventEmitter {
 	 * @returns True if the head was updated, false if it was not.
 	 */
 	public setHead(head: IQueuedMessage, allowBackToOffset?: number | undefined) {
+		// if allowBackToOffset is set and is lower than lastCheckpoint, then dont reprocess
+		if (allowBackToOffset !== undefined && allowBackToOffset <= this.lastCheckpoint.offset) {
+			console.log(`TEST!! DocumentContextManager setHead not updating head as allowBackToOffset ${allowBackToOffset} is already processed successfully and checkpointed. Last checkpoint offset: ${this.lastCheckpoint.offset}`);
+			return false;
+		}
 		if (head.offset > this.head.offset || head.offset === allowBackToOffset) {
 			if (head.offset <= this.head.offset) {
 				Lumberjack.info("Allowing the contextManager head to move to the specified offset", { allowBackToOffset, currentHeadOffset: this.head.offset });

@@ -84,19 +84,19 @@ export class DocumentLambda implements IPartitionLambda {
 						message.offset
 					}`,
 			);
+			// update reprocessRange to avoid reprocessing the same message again
+			if (this.isOffsetWithinReprocessRange(message.offset)) {
+				this.updateReprocessRange(message.offset);
+			}
 			return undefined;
 		}
 
 		this.handlerCore(message);
 		this.contextManager.setTail(message, this.offsetToReprocess);
 
-		// If the message is within the reprocess range, increment the start offset of the reprocess range
+		// update reprocessRange to avoid reprocessing the same message again
 		if (this.isOffsetWithinReprocessRange(message.offset)) {
-			this.reprocessRange.startOffset = message.offset + 1;
-			if (this.reprocessRange.endOffset && this.reprocessRange.endOffset < this.reprocessRange.startOffset) {
-				// reset since all messages in the reprocess range have been processed
-				this.reprocessRange = { startOffset: undefined, endOffset: undefined };
-			}
+			this.updateReprocessRange(message.offset);
 		}
 
 		return undefined;
@@ -144,6 +144,13 @@ export class DocumentLambda implements IPartitionLambda {
 			offset >= this.reprocessRange.startOffset && offset <= this.reprocessRange.endOffset;
 	}
 
+	private updateReprocessRange(processedOffset: number) {
+		this.reprocessRange.startOffset = processedOffset + 1;
+		if (this.reprocessRange.endOffset && this.reprocessRange.endOffset < this.reprocessRange.startOffset) {
+			// reset since all messages in the reprocess range have been processed
+			this.reprocessRange = { startOffset: undefined, endOffset: undefined };
+		}
+	}
 
 	private handlerCore(message: IQueuedMessage): void {
 		const boxcar = extractBoxcar(message);
@@ -175,7 +182,9 @@ export class DocumentLambda implements IPartitionLambda {
 		} else {
 			// SetHead assumes it will always receive increasing offsets (except reprocessing during pause/resume). So we need to split the creation case
 			// from the update case.
-			document.context.setHead(message, this.offsetToReprocess);
+			if (!document.context.setHead(message, this.offsetToReprocess)) {
+				return; // if head not updated, it means it doesnt need to be processed, return early
+			}
 		}
 
 		// Forward the message to the document queue and then resolve the promise to begin processing more messages
