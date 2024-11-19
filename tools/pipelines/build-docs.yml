@@ -162,7 +162,6 @@ stages:
 
     - job: build_site
       displayName: 'Build website'
-      dependsOn: upload_json
       pool: Large-eastus2
       steps:
         - checkout: self
