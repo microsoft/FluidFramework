@@ -65,6 +65,7 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 	/**
 	 * Synchronously creates a new runtime for a new data store from the provided context.
 	 *
+	 * @remarks
 	 * This method enables a synchronous creation path. Specifically, if this factory is registered
 	 * as a child factory in another data store's registry, and the registry synchronously provides
 	 * this factory, it becomes eligible for synchronous creation via the parent data store's context.
