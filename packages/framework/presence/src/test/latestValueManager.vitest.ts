@@ -306,13 +306,14 @@ describe("Presence", () => {
 				testEvents.emit.broadcast("newId", 88);
 
 				expect(runtime.submittedSignals).toHaveLength(2);
-				// const signal = runtime.submittedSignals[0];
-				// expect(
-				// 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				// 	(signal?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
-				// 		"sessionId-2"
-				// 	].value.args,
-				// ).toEqual([88]);
+
+				const signal = runtime.submittedSignals[1];
+				expect(
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(signal?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
+						"sessionId-2"
+					].value.args,
+				).toEqual([88]);
 			});
 
 			// IMPORTANT: RESULTS NOT VALID! See TODOs inline.
@@ -360,13 +361,11 @@ describe("Presence", () => {
 
 				clock.tick(30); // Time is now 1080
 				// SIGNAL #2
-				// TODO: This value is not in the snapshot - it seems that the old value (99) is broadcast
-				// again. Why?
 				testEvents.emit.broadcast("newId", 111);
 
 				expect(runtime.submittedSignals).toHaveLength(2);
 
-				const signal = runtime.submittedSignals[0];
+				const signal = runtime.submittedSignals[1];
 				expect(
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					(signal?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[

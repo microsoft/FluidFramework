@@ -97,6 +97,44 @@ export interface PresenceDatastoreManager {
 	processSignal(message: IExtensionMessage, local: boolean): void;
 }
 
+function mergeGeneralDatastoreMessageContent(
+	base: GeneralDatastoreMessageContent | undefined,
+	newData: GeneralDatastoreMessageContent,
+): GeneralDatastoreMessageContent {
+	// This function-local "datastore" will hold the merged message data
+	const queueDatastore = base ?? {};
+
+	// Merge the current data with the existing data, if any exists
+	// Iterate over the current message data; individual items are workspaces
+	for (const workspaceName of Object.keys(newData)) {
+		const workspaceData = newData[workspaceName];
+
+		// Initialize the merged data as the queued datastore entry for the workspace
+		// Since the key might not exist, create an empty object in that case. It will
+		// be set explicitly after the loop.
+		const mergedData = queueDatastore[workspaceName] ?? {};
+
+		// Iterate over each value manager and its data, merging it as needed
+		for (const valueManagerKey of Object.keys(workspaceData)) {
+			for (const [clientSessionId, value] of brandedObjectEntries(
+				workspaceData[valueManagerKey],
+			)) {
+				mergedData[valueManagerKey] ??= {};
+				const oldData = mergedData[valueManagerKey][clientSessionId];
+				mergedData[valueManagerKey][clientSessionId] = mergeValueDirectory(
+					oldData,
+					value,
+					0, // local values do not need a time shift
+				);
+			}
+		}
+
+		// Store the merged data in the function-local queue workspace. The whole contents of this
+		// datastore will be sent as the message data.
+		queueDatastore[workspaceName] = mergedData;
+	}
+	return queueDatastore;
+}
 /**
  * Manages singleton datastore for all Presence.
  */
@@ -206,71 +244,49 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	 * messages will be sent immediately. Therefore this value can be considered the time of the next scheduled presence
 	 * update.
 	 */
-	private sendMessageDeadline: number = 0;
+	private get sendMessageDeadline(): number {
+		// Rather than tracking a deadline independently, just use the timer time
+		return this.timer.hasExpired() ? 0 : this.timer.startTime + this.timer.delay;
+	}
 
+	/**
+	 * Enqueues a new message to be sent. The message may be queued or may be sent immediately depending on the state of
+	 * the send timer, other messages in the queue, the configured allowed latency, etc.
+	 */
 	private enqueueMessage(
 		data: GeneralDatastoreMessageContent,
 		options: RuntimeLocalUpdateOptions,
 	): void {
-		const allowableUpdateLatencyMs = options.allowableUpdateLatencyMs;
+		// Merging the message with any queued messages effectively queues the message.
+		// It is OK to queue all incoming messages as long as when we send, we send the queued data.
+		this.queuedData = mergeGeneralDatastoreMessageContent(this.queuedData, data);
 
+		const { allowableUpdateLatencyMs } = options;
 		const now = Date.now();
-		const updateDeadline = now + allowableUpdateLatencyMs;
-		if (this.queuedData === undefined) {
-			// No queued message, so set the deadline based on the current message's allowable latency
-			this.sendMessageDeadline = updateDeadline;
-		}
+		const thisMessageDeadline = now + allowableUpdateLatencyMs;
 
-		// This function-local "datastore" will hold the merged message data
-		const queueDatastore = this.queuedData ?? {};
-
-		// Iterate over the current message data; individual items are workspaces
-		for (const workspaceName of Object.keys(data)) {
-			const workspaceData = data[workspaceName];
-
-			// Initialize the merged data as the queued datastore entry for the workspace
-			// Since the key might not exist, create an empty object in that case. It will
-			// be set explicitly after the loop.
-			const mergedData = queueDatastore[workspaceName] ?? {};
-
-			// Iterate over each value manager and its data, merging it as needed
-			for (const valueManagerKey of Object.keys(workspaceData)) {
-				for (const [clientSessionId, value] of brandedObjectEntries(
-					workspaceData[valueManagerKey],
-				)) {
-					// TODO: Should any values be ignored here? E.g. values with ignoreUnmonitored?
-					mergedData[valueManagerKey] ??= {};
-					const oldData = mergedData[valueManagerKey][clientSessionId];
-					mergedData[valueManagerKey][clientSessionId] = mergeValueDirectory(
-						oldData,
-						value,
-						0, // local values do not need a time shift
-					);
-				}
-			}
-
-			// Store the merged data in the function-local queue workspace. The whole contents of this
-			// datstore will be sent as the message data.
-			queueDatastore[workspaceName] = mergedData;
-		}
-
-		if (updateDeadline >= this.sendMessageDeadline) {
-			// Queue the message
-			this.queuedData = queueDatastore;
+		if (
+			// If the deadline for this message is later than the overall send deadline, then
+			// we may be able to exit early if a timer will take care of sending it.
+			thisMessageDeadline >= this.sendMessageDeadline &&
 			// If the timer has not expired, we can short-circuit because the timer will fire
 			// and cover this update. In other words, queuing this will be fast enough to
 			// meet its deadline, because a timer is already scheduled to fire before its deadline.
-			if (!this.timer.hasExpired()) {
-				return;
-			}
+			!this.timer.hasExpired()
+		) {
+			return;
 		}
 
+		// Either we need to send this message immediately, or we need to schedule a timer
+		// to fire at the send deadline that will take care of it.
+
 		// Note that timeoutInMs === allowableUpdateLatency, but the calculation is done this way for clarity.
-		const timeoutInMs = updateDeadline - now;
-		if (timeoutInMs > 0) {
+		const timeoutInMs = thisMessageDeadline - now;
+		const scheduleForLater = timeoutInMs > 0;
+
+		if (scheduleForLater) {
 			// Schedule the queued messages to be sent at the updateDeadline
 			this.timer.setTimeout(this.sendQueuedMessage.bind(this), timeoutInMs);
-			this.sendMessageDeadline = updateDeadline;
 		} else {
 			this.sendQueuedMessage();
 		}
@@ -511,5 +527,12 @@ class TimerManager {
 
 	public hasExpired(): boolean {
 		return this.expired;
+	}
+
+	/**
+	 * The time when this timer will expire/trigger. If the timer has expired, returns 0.
+	 */
+	public get expireTime(): number {
+		return this.hasExpired() ? 0 : this.startTime + this.delay;
 	}
 }
