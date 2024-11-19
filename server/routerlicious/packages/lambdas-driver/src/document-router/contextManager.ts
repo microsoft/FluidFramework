@@ -73,7 +73,7 @@ export class DocumentContextManager extends EventEmitter {
 					lowestOffset = docContext.head.offset;
 				}
 			}
-			Lumberjack.info("Emitting pause from contextManager", {lowestOffset, offset, reason});
+			Lumberjack.info("Emitting pause from contextManager", { lowestOffset, offset, reason });
 			this.emit("pause", lowestOffset, offset, reason);
 		});
 		context.addListener("resume", () => {
@@ -99,12 +99,18 @@ export class DocumentContextManager extends EventEmitter {
 	public setHead(head: IQueuedMessage, allowBackToOffset?: number | undefined) {
 		// if allowBackToOffset is set and is lower than lastCheckpoint, then dont reprocess and return early
 		if (allowBackToOffset !== undefined && allowBackToOffset <= this.lastCheckpoint.offset) {
-			Lumberjack.info("Not updating contextManager head and returning early", { allowBackToOffset, lastCheckpointOffset: this.lastCheckpoint.offset });
+			Lumberjack.info("Not updating contextManager head and returning early", {
+				allowBackToOffset,
+				lastCheckpointOffset: this.lastCheckpoint.offset,
+			});
 			return false;
 		}
 		if (head.offset > this.head.offset || head.offset === allowBackToOffset) {
 			if (head.offset <= this.head.offset) {
-				Lumberjack.info("Allowing the contextManager head to move to the specified offset", { allowBackToOffset, currentHeadOffset: this.head.offset });
+				Lumberjack.info(
+					"Allowing the contextManager head to move to the specified offset",
+					{ allowBackToOffset, currentHeadOffset: this.head.offset },
+				);
 			}
 			this.head = head;
 			return true;
@@ -115,12 +121,16 @@ export class DocumentContextManager extends EventEmitter {
 
 	public setTail(tail: IQueuedMessage, allowBackToOffset?: number | undefined) {
 		assert(
-			(tail.offset > this.tail.offset || tail.offset === allowBackToOffset) && tail.offset <= this.head.offset,
+			(tail.offset > this.tail.offset || tail.offset === allowBackToOffset) &&
+				tail.offset <= this.head.offset,
 			`(${tail.offset} > ${this.tail.offset} || ${tail.offset} === ${allowBackToOffset}) && ${tail.offset} <= ${this.head.offset}`,
 		);
 
 		if (tail.offset <= this.tail.offset) {
-			Lumberjack.info("Allowing the contextManager tail to move to the specified offset.", { allowBackToOffset, currentTailOffset: this.tail.offset });
+			Lumberjack.info("Allowing the contextManager tail to move to the specified offset.", {
+				allowBackToOffset,
+				currentTailOffset: this.tail.offset,
+			});
 		}
 
 		this.tail = tail;

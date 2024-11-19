@@ -33,7 +33,10 @@ export class DocumentLambda implements IPartitionLambda {
 
 	private activityCheckTimer: NodeJS.Timeout | undefined;
 
-	private reprocessRange: { startOffset: number | undefined; endOffset: number | undefined } = { startOffset: undefined, endOffset: undefined };
+	private reprocessRange: { startOffset: number | undefined; endOffset: number | undefined } = {
+		startOffset: undefined,
+		endOffset: undefined,
+	};
 	private reprocessingOffset: number | undefined;
 
 	constructor(
@@ -48,13 +51,16 @@ export class DocumentLambda implements IPartitionLambda {
 			);
 			context.error(error, errorData);
 		});
-		this.contextManager.on("pause", (lowestOffset: number, pausedAtOffset: number, reason?: any) => {
-			// Emit pause at the lowest offset out of all document partitions
-			// This is important for ensuring that we don't miss any messages
-			// And maintain a range for offsets allowed to be reprocessed on resume, otherwise the contextManager expects offsets only in sequence
-			this.storeReprocessRange(lowestOffset, pausedAtOffset);
-			context.pause(lowestOffset, reason);
-		});
+		this.contextManager.on(
+			"pause",
+			(lowestOffset: number, pausedAtOffset: number, reason?: any) => {
+				// Emit pause at the lowest offset out of all document partitions
+				// This is important for ensuring that we don't miss any messages
+				// And maintain a range for offsets allowed to be reprocessed on resume, otherwise the contextManager expects offsets only in sequence
+				this.storeReprocessRange(lowestOffset, pausedAtOffset);
+				context.pause(lowestOffset, reason);
+			},
+		);
 		this.contextManager.on("resume", () => {
 			context.resume();
 		});
@@ -68,7 +74,9 @@ export class DocumentLambda implements IPartitionLambda {
 	 * {@inheritDoc IPartitionLambda.handler}
 	 */
 	public handler(message: IQueuedMessage): undefined {
-		this.reprocessingOffset = this.isOffsetWithinReprocessRange(message.offset) ? message.offset : undefined;
+		this.reprocessingOffset = this.isOffsetWithinReprocessRange(message.offset)
+			? message.offset
+			: undefined;
 		if (!this.contextManager.setHead(message, this.reprocessingOffset)) {
 			this.context.log?.warn(
 				"Unexpected head offset. " +
@@ -132,13 +140,20 @@ export class DocumentLambda implements IPartitionLambda {
 		if (this.reprocessRange === undefined) {
 			return false;
 		}
-		return this.reprocessRange.startOffset !== undefined && this.reprocessRange.endOffset !== undefined &&
-			offset >= this.reprocessRange.startOffset && offset <= this.reprocessRange.endOffset;
+		return (
+			this.reprocessRange.startOffset !== undefined &&
+			this.reprocessRange.endOffset !== undefined &&
+			offset >= this.reprocessRange.startOffset &&
+			offset <= this.reprocessRange.endOffset
+		);
 	}
 
 	private updateReprocessRange(reprocessedOffset: number) {
 		this.reprocessRange.startOffset = reprocessedOffset + 1;
-		if (this.reprocessRange.endOffset && this.reprocessRange.endOffset < this.reprocessRange.startOffset) {
+		if (
+			this.reprocessRange.endOffset &&
+			this.reprocessRange.endOffset < this.reprocessRange.startOffset
+		) {
 			// reset since all messages in the reprocess range have been processed
 			this.reprocessRange = { startOffset: undefined, endOffset: undefined };
 		}

@@ -62,7 +62,11 @@ export class DocumentContext extends EventEmitter implements IContext {
 	public setHead(head: IQueuedMessage, allowBackToOffset?: number | undefined) {
 		// if allowBackToOffset is set and is lower than this.tailInternal, then dont reprocess and return early
 		if (allowBackToOffset !== undefined && allowBackToOffset <= this.tailInternal.offset) {
-			Lumberjack.info("Not updating documentContext head and returning early", { allowBackToOffset, tailInternalOffset: this.tailInternal.offset, documentId: this.routingKey.documentId });
+			Lumberjack.info("Not updating documentContext head and returning early", {
+				allowBackToOffset,
+				tailInternalOffset: this.tailInternal.offset,
+				documentId: this.routingKey.documentId,
+			});
 			return false;
 		}
 		assert(
@@ -72,7 +76,11 @@ export class DocumentContext extends EventEmitter implements IContext {
 		);
 
 		if (head.offset <= this.head.offset) {
-			Lumberjack.info("Allowing the document context head to move to the specified offset", { allowBackToOffset, currentHeadOffset: this.head.offset, documentId: this.routingKey.documentId });
+			Lumberjack.info("Allowing the document context head to move to the specified offset", {
+				allowBackToOffset,
+				currentHeadOffset: this.head.offset,
+				documentId: this.routingKey.documentId,
+			});
 		}
 
 		// When moving back to a state where head and tail differ we set the tail to be the old head, as in the

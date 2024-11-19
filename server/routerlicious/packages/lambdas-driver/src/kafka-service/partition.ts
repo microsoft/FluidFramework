@@ -108,7 +108,10 @@ export class Partition extends EventEmitter {
 		}
 
 		if (this.paused) {
-			Lumberjack.info("Partition is paused, skipping pushing message to queue", { partitionId: this.id, messageOffset: rawMessage.offset });
+			Lumberjack.info("Partition is paused, skipping pushing message to queue", {
+				partitionId: this.id,
+				messageOffset: rawMessage.offset,
+			});
 			return;
 		}
 		this.q.push(rawMessage).catch((error) => {
@@ -175,7 +178,8 @@ export class Partition extends EventEmitter {
 
 		this.q.resume();
 
-		if (this.lambda?.resume) { // needed for documentLambdas
+		if (this.lambda?.resume) {
+			// needed for documentLambdas
 			this.lambda.resume();
 		}
 		Lumberjack.info(`Partition resumed`, { partitionId: this.id });
