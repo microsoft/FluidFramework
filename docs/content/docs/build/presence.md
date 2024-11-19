@@ -91,7 +91,7 @@ const presence = await acquirePresenceViaDataObject(container.initialObjects.pre
 
 ### States Reliability
 
-The current implementation relies on Fluid Framework's Signal infrastructure instead of Ops. This has advantages, but comes with some risk of unreliable messaging. The most common known case of unreliable signals occurs during reconnection periods and current implementation attempts to account for that. Be aware that all clients are not guaranteed to arrive at eventual consistency. Please [file a new issue](https://github.com/microsoft/FluidFramework/issues/new?assignees=&labels=bug&projects=&template=bug_report.md&title=Presence:%20States:%20) if one is not found under [Presence States issues](https://github.com/microsoft/FluidFramework/issues?q=is%3Aissue+%22Presence%3A+States%3A%22).
+The current implementation relies on Fluid Framework's signal infrastructure instead of ops. This has advantages, but comes with some risk of unreliable messaging. The most common known case of unreliable signals occurs during reconnection periods and the current implementation attempts to account for that. Be aware that all clients are not guaranteed to arrive at eventual consistency. Please [file a new issue](https://github.com/microsoft/FluidFramework/issues/new?assignees=&labels=bug&projects=&template=bug_report.md&title=Presence:%20States:%20) if one is not found under [Presence States issues](https://github.com/microsoft/FluidFramework/issues?q=is%3Aissue+%22Presence%3A+States%3A%22).
 
 ### Compatibility and Versioning
 
