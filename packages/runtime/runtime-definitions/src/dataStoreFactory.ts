@@ -45,6 +45,7 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 
 	/**
 	 * Asynchronously generates the runtime for the data store from the given context.
+	 * @remarks
 	 * Once created, the data store should be bound to the context.
 	 *
 	 * This method supports both creation and loading paths. It is important to differentiate
