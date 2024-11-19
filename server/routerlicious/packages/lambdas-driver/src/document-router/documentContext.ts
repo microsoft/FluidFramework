@@ -60,9 +60,9 @@ export class DocumentContext extends EventEmitter implements IContext {
 	 * Updates the head offset for the context.
 	 */
 	public setHead(head: IQueuedMessage, allowBackToOffset?: number | undefined) {
-		// if allowBackToOffset is set and is lower than this.tailInternal, then dont reprocess
+		// if allowBackToOffset is set and is lower than this.tailInternal, then dont reprocess and return early
 		if (allowBackToOffset !== undefined && allowBackToOffset <= this.tailInternal.offset) {
-			console.log(`TEST!! DocumentContext setHead not updating head as allowBackToOffset ${allowBackToOffset} is already processes successfully. Last tailInternal offset: ${this.tailInternal.offset}`);
+			Lumberjack.info("Not updating documentContext head and returning early", { allowBackToOffset, tailInternalOffset: this.tailInternal.offset, documentId: this.routingKey.documentId });
 			return false;
 		}
 		assert(
@@ -99,7 +99,6 @@ export class DocumentContext extends EventEmitter implements IContext {
 				`(${message.topic}, ${message.partition}, ${this.routingKey.tenantId}/${this.routingKey.documentId})`,
 		);
 
-		console.log("TEST!! DocumentContext checkpointing document queue message offset:", message.offset);
 		// Update the tail and broadcast the checkpoint
 		this.tailInternal = message;
 		this.emit("checkpoint", restartOnCheckpointFailure);

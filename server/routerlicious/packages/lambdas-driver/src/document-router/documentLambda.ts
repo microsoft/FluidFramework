@@ -49,19 +49,13 @@ export class DocumentLambda implements IPartitionLambda {
 			context.error(error, errorData);
 		});
 		this.contextManager.on("pause", (lowestOffset: number, pausedAtOffset: number, reason?: any) => {
-			console.log(
-				`TEST!! Listening for pause in documentLambda, lowestOffset ${lowestOffset}, pausedAtOffset ${pausedAtOffset}, reason: ${reason}`,
-			);
 			// Emit pause at the lowest offset out of all document partitions
 			// This is important for ensuring that we don't miss any messages
-			// And maintain a range for offsets allowed to be reprocessed on resume, otherwise the contextManager expected offsets only in sequence
+			// And maintain a range for offsets allowed to be reprocessed on resume, otherwise the contextManager expects offsets only in sequence
 			this.storeReprocessRange(lowestOffset, pausedAtOffset);
 			context.pause(lowestOffset, reason);
 		});
 		this.contextManager.on("resume", () => {
-			console.log(
-				`TEST!! Listening for resume in documentLambda`,
-			);
 			context.resume();
 		});
 		this.activityCheckTimer = setInterval(
@@ -262,7 +256,7 @@ export class DocumentLambda implements IPartitionLambda {
 	/**
 	 * Closes inactive documents
 	 */
-	private inactivityCheck() { // should not close the documents in paused state - TODO test.
+	private inactivityCheck() {
 		const now = Date.now();
 
 		const documentPartitions = Array.from(this.documents);

@@ -206,7 +206,7 @@ export class DocumentPartition {
 
 	public pause(offset: number) {
 		if (this.paused) {
-			Lumberjack.info(`TEST!! Doc partition already paused, returning early.`, { documentId: this.documentId, tenantId: this.tenantId });
+			Lumberjack.info("Doc partition already paused, returning early.", { documentId: this.documentId, tenantId: this.tenantId });
 			return;
 		}
 		this.paused = true;
@@ -217,17 +217,17 @@ export class DocumentPartition {
 		if (this.lambda?.pause) {
 			this.lambda.pause(offset);
 		}
-		Lumberjack.info(`TEST!! Doc partition paused`, { documentId: this.documentId, tenantId: this.tenantId });
+		Lumberjack.info("Doc partition paused", { documentId: this.documentId, tenantId: this.tenantId });
 	}
 
 	public resume() {
 		if (!this.paused) {
-			Lumberjack.info(`TEST!! Doc partition already resumed, returning early.`, { documentId: this.documentId, tenantId: this.tenantId });
+			Lumberjack.info("Doc partition already resumed, returning early.", { documentId: this.documentId, tenantId: this.tenantId });
 			return;
 		}
 		this.paused = false;
 
-		this.q.resume(); // Should resume from the failed offset
-		Lumberjack.info(`TEST!! Doc partition resumed`, { documentId: this.documentId, tenantId: this.tenantId });
+		this.q.resume();
+		Lumberjack.info("Doc partition resumed", { documentId: this.documentId, tenantId: this.tenantId });
 	}
 }

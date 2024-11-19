@@ -286,8 +286,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	// Session level properties
 	private serviceSummaryGenerated: boolean = false;
 
-	private readonly testingCircuitBreaker: boolean = false;
-
 	constructor(
 		private readonly context: IContext,
 		private readonly tenantId: string,
@@ -495,16 +493,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			}
 
 			this.lastInstruction = ticketedMessage.instruction;
-
-			// testing circuit breaker
-			console.log(`TEST!! processing message offset ${rawMessage.offset}, partition ${rawMessage.partition}`);
-			if (this.testingCircuitBreaker) {
-				setTimeout(() => {
-					this.context.resume();
-				}, 60000); // resume after 1 minute
-				this.context.pause(rawMessage.offset - 1, "error:testing circuit breaker"); // lastSuccessfulOffset needs to be more reliable
-				return;
-			}
 
 			switch (ticketedMessage.ticketType) {
 				case TicketType.Sequenced: {

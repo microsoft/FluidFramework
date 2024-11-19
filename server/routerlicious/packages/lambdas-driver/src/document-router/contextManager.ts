@@ -73,11 +73,10 @@ export class DocumentContextManager extends EventEmitter {
 					lowestOffset = docContext.head.offset;
 				}
 			}
-			console.log(`TEST!! Emitting pause from contextManager, lowestOffset: ${lowestOffset}, offset: ${offset}, reason: ${reason}`);
+			Lumberjack.info("Emitting pause from contextManager", {lowestOffset, offset, reason});
 			this.emit("pause", lowestOffset, offset, reason);
 		});
 		context.addListener("resume", () => {
-			console.log(`TEST!! Emitting resume from contextManager`);
 			this.emit("resume");
 		});
 		return context;
@@ -98,9 +97,9 @@ export class DocumentContextManager extends EventEmitter {
 	 * @returns True if the head was updated, false if it was not.
 	 */
 	public setHead(head: IQueuedMessage, allowBackToOffset?: number | undefined) {
-		// if allowBackToOffset is set and is lower than lastCheckpoint, then dont reprocess
+		// if allowBackToOffset is set and is lower than lastCheckpoint, then dont reprocess and return early
 		if (allowBackToOffset !== undefined && allowBackToOffset <= this.lastCheckpoint.offset) {
-			console.log(`TEST!! DocumentContextManager setHead not updating head as allowBackToOffset ${allowBackToOffset} is already processed successfully and checkpointed. Last checkpoint offset: ${this.lastCheckpoint.offset}`);
+			Lumberjack.info("Not updating contextManager head and returning early", { allowBackToOffset, lastCheckpointOffset: this.lastCheckpoint.offset });
 			return false;
 		}
 		if (head.offset > this.head.offset || head.offset === allowBackToOffset) {
@@ -160,7 +159,6 @@ export class DocumentContextManager extends EventEmitter {
 
 		// Checkpoint once the offset has changed
 		if (queuedMessage.offset !== this.lastCheckpoint.offset) {
-			console.log("TEST!! Checkpointing offset in kafka: ", queuedMessage.offset);
 			this.partitionContext.checkpoint(queuedMessage, restartOnCheckpointFailure);
 			this.lastCheckpoint = queuedMessage;
 		}
