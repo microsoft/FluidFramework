@@ -126,7 +126,6 @@ stages:
               # Sets variable majorVersion to the major version extracted from $(SetVersion.version)
               flub check latestVersions $(SetVersion.version) client
 
-stages:
 - stage: build
   displayName: 'Build website'
   jobs:
