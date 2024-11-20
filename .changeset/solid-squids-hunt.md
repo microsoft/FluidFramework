@@ -6,7 +6,7 @@
 "section": deprecation
 ---
 
-Deprecate the Loader class and provide alternatives. Also deprecated the IHostLoader interface.
+Deprecate the Loader class and IHostLoader interface
 
 Deprecate the Loader class and IHostLoader interface and provide standalone APIs so the Host does not need to
 create a Loader object. Instead it can directly use APIs like `resolveContainer`
