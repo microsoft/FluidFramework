@@ -10,7 +10,11 @@ import { describe, it, afterAll, afterEach, beforeAll, beforeEach, expect } from
 import { Notifications, type PresenceNotifications } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
-import { MockRuntimeSignalSnapshotter } from "./snapshotEphemeralRuntime.js";
+import {
+	getDataFromSignal,
+	getPresenceWorkspaceFromSignal,
+	MockRuntimeSignalSnapshotter,
+} from "./snapshotEphemeralRuntime.js";
 import { prepareConnectedPresence } from "./testUtils.js";
 
 describe("Presence", () => {
@@ -28,7 +32,7 @@ describe("Presence", () => {
 
 			beforeEach(() => {
 				logger = new EventAndErrorTrackingLogger();
-				runtime = new MockRuntimeSignalSnapshotter(logger);
+				runtime = new MockRuntimeSignalSnapshotter(logger, true);
 
 				// We are configuring the runtime to be in a connected state, so ensure it looks connected
 				runtime.connected = true;
@@ -91,23 +95,60 @@ describe("Presence", () => {
 
 				expect(runtime.submittedSignals).toHaveLength(2);
 
-				// Verify first signal set the newId to 77
-				let signal = runtime.submittedSignals[0];
 				expect(
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					(signal?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
-						"sessionId-2"
-					].value.args,
-				).toEqual([77]);
+					getPresenceWorkspaceFromSignal(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						runtime.submittedSignals[0]!,
+						"n:name:testNotificationWorkspace",
+					),
+				).toMatchInlineSnapshot(`
+					{
+					  "testEvents": {
+					    "sessionId-2": {
+					      "ignoreUnmonitored": true,
+					      "rev": 0,
+					      "timestamp": 0,
+					      "value": {
+					        "args": [
+					          77,
+					        ],
+					        "name": "newId",
+					      },
+					    },
+					  },
+					}
+				`);
+
+				// Verify first signal set the newId to 77
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				const value = getDataFromSignal(
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					runtime.submittedSignals[0]!,
+					"n:name:testNotificationWorkspace",
+					"testEvents",
+					"sessionId-2",
+					"value",
+				);
+
+				expect(value).toMatchInlineSnapshot(`
+					{
+					  "args": [
+					    77,
+					  ],
+					  "name": "newId",
+					}
+				`);
 
 				// Verify first signal set the newId to 88
-				signal = runtime.submittedSignals[1];
-				expect(
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					(signal?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
-						"sessionId-2"
-					].value.args,
-				).toEqual([88]);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				expect(getDataFromSignal(
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					runtime.submittedSignals[1]!,
+					"n:name:testNotificationWorkspace",
+					"testEvents",
+					"sessionId-2",
+					"value",
+				).args).toEqual([88]);
 			});
 		});
 	});
