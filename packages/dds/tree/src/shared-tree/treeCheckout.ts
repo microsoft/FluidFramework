@@ -54,7 +54,11 @@ import {
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
-import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
+import {
+	SharedTreeBranch,
+	getChangeReplaceType,
+	type SharedTreeBranchChange,
+} from "../shared-tree-core/index.js";
 import { Breakable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
@@ -552,7 +556,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						this.events.emit("changed", { isLocal: true, kind }, getRevertible);
 						withinEventContext = false;
 					}
-				} else if (event.type === "replace") {
+				} else if (this.isRemoteChangeEvent(event)) {
 					// TODO: figure out how to plumb through commit kind info for remote changes
 					this.events.emit("changed", { isLocal: false, kind: CommitKind.Default });
 				}
@@ -910,6 +914,21 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 			rootFields.delete(field);
 		} while (cursor.nextField());
+	}
+
+	/**
+	 * `true` iff the given branch change event is due to a remote change
+	 */
+	private isRemoteChangeEvent(event: SharedTreeBranchChange<SharedTreeChange>): boolean {
+		return (
+			// remote changes are only ever applied to the main branch
+			!this.isBranch &&
+			// remote changes are applied to the main branch by rebasing it onto the trunk,
+			// no other rebases are allowed on the main branch so this means any replaces that are not
+			// transaction commits are remote changes
+			event.type === "replace" &&
+			getChangeReplaceType(event) !== "transactionCommit"
+		);
 	}
 }
 

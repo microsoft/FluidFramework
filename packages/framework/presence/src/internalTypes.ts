@@ -9,18 +9,16 @@ import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitio
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 
-import type { IRuntimeInternal } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { IRuntimeInternal } from "@fluidframework/presence/internal/container-definitions/internal";
 
 /**
  * @internal
  */
-export interface ClientRecord<
-	TValue extends InternalTypes.ValueDirectoryOrState<unknown> | undefined,
-> {
+export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState<unknown>> {
 	// Caution: any particular item may or may not exist
 	// Typescript does not support absent keys without forcing type to also be undefined.
 	// See https://github.com/microsoft/TypeScript/issues/42810.
-	[ClientSessionId: ClientSessionId]: Exclude<TValue, undefined>;
+	[ClientSessionId: ClientSessionId]: TValue;
 }
 
 /**
@@ -43,7 +41,7 @@ export const brandedObjectEntries = Object.entries as <K extends string, T>(
  */
 export type IEphemeralRuntime = Pick<
 	(IContainerRuntime & IRuntimeInternal) | IFluidDataStoreRuntime,
-	"clientId" | "connected" | "getQuorum" | "off" | "on" | "submitSignal"
+	"clientId" | "connected" | "getAudience" | "getQuorum" | "off" | "on" | "submitSignal"
 > &
 	Partial<Pick<IFluidDataStoreRuntime, "logger">>;
 

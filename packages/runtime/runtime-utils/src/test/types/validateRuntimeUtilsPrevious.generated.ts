@@ -22,7 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_FluidHandleBase": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_FluidHandleBase = requireAssignableTo<TypeOnly<old.FluidHandleBase<any>>, TypeOnly<current.FluidHandleBase<any>>>
+declare type old_as_current_for_Class_FluidHandleBase = requireAssignableTo<TypeOnly<old.FluidHandleBase<never>>, TypeOnly<current.FluidHandleBase<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -31,7 +31,7 @@ declare type old_as_current_for_Class_FluidHandleBase = requireAssignableTo<Type
  * typeValidation.broken:
  * "Class_FluidHandleBase": {"backCompat": false}
  */
-declare type current_as_old_for_Class_FluidHandleBase = requireAssignableTo<TypeOnly<current.FluidHandleBase<any>>, TypeOnly<old.FluidHandleBase<any>>>
+declare type current_as_old_for_Class_FluidHandleBase = requireAssignableTo<TypeOnly<current.FluidHandleBase<never>>, TypeOnly<old.FluidHandleBase<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -122,6 +122,15 @@ declare type current_as_old_for_ClassStatics_RuntimeFactoryHelper = requireAssig
  * "ClassStatics_SummaryTreeBuilder": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_SummaryTreeBuilder = requireAssignableTo<TypeOnly<typeof current.SummaryTreeBuilder>, TypeOnly<typeof old.SummaryTreeBuilder>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_compareFluidHandles": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_compareFluidHandles = requireAssignableTo<TypeOnly<typeof current.compareFluidHandles>, TypeOnly<typeof old.compareFluidHandles>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

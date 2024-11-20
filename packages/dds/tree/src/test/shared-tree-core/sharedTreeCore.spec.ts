@@ -26,6 +26,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -294,9 +295,9 @@ describe("SharedTreeCore", () => {
 		});
 
 		const sf = new SchemaFactory("0x4a6 repro");
-		const TestNode = sf.objectRecursive("test node", {
+		class TestNode extends sf.objectRecursive("test node", {
 			child: sf.optionalRecursive([() => TestNode, sf.number]),
-		});
+		}) {}
 
 		const tree2 = await factory.load(
 			dataStoreRuntime2,
@@ -617,36 +618,26 @@ describe("SharedTreeCore", () => {
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(machine.sequencingLog.length, 2);
 		});
+	});
 
-		it("does not leak enriched commits that are not sent", () => {
-			const enricher = new MockChangeEnricher<ModularChangeset>();
-			const machine = new MockResubmitMachine();
-			const tree = createTree([], machine, enricher);
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			});
-			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-			tree.connect({
-				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
-				objectStorage: new MockStorage(),
-			});
-			assert.equal(tree.preparedCommitsCount, 0);
-
-			// Temporarily make commit application fail
-			const disableFailure = tree.getLocalBranch().events.on("beforeChange", () => {
-				throw new Error("Invalid commit");
-			});
-			assert.throws(() => changeTree(tree));
-			disableFailure();
-
-			// The invalid commit has been prepared but not sent
-			assert.equal(tree.preparedCommitsCount, 1);
-
-			// Making a valid change should purge the invalid commit
-			changeTree(tree);
-			assert.equal(tree.preparedCommitsCount, 0);
+	it("throws an error if attaching during a transaction", () => {
+		const tree = createTree([]);
+		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
 		});
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		tree.getLocalBranch().startTransaction();
+		assert.throws(
+			() => {
+				tree.connect({
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+					objectStorage: new MockStorage(),
+				});
+			},
+			(e: Error) =>
+				validateAssertionError(e, /Cannot attach while a transaction is in progress/),
+		);
 	});
 
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {

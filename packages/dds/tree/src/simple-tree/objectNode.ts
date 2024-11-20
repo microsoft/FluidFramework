@@ -47,7 +47,7 @@ import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
 
 /**
- * Helper used to produce types for object nodes.
+ * Generates the properties for an ObjectNode from its field schema object.
  * @system @public
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {

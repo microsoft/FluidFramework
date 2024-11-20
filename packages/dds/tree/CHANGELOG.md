@@ -1,5 +1,83 @@
 # @fluidframework/tree
 
+## 2.10.0
+
+### Minor Changes
+
+-   Fix typing bug in `adaptEnum` and `enumFromStrings` ([#23077](https://github.com/microsoft/FluidFramework/pull/23077)) [cfb68388cb](https://github.com/microsoft/FluidFramework/commit/cfb68388cb6b88a0ef670633b3afa46a82c99972)
+
+    When using the return value from [`adaptEnum`](https://fluidframework.com/docs/api/v2/tree#adaptenum-function) as a function, passing in a value who's type is a union no longer produced an incorrectly typed return value. This has been fixed.
+
+    Additionally [`enumFromStrings`](https://fluidframework.com/docs/api/v2/tree#enumfromstrings-function) has improved the typing of its schema, ensuring the returned object's members have sufficiently specific types.
+    Part of this improvement was fixing the `.schema` property to be a tuple over each of the schema where it was previously a tuple of a single combined schema due to a bug.
+
+    One side-effect of these fixes is that narrowing of the `value` field of a node typed from the `.schema` behaves slightly different, such that the node type is now a union instead of it being a single type with a `.value` that is a union.
+    This means that narrowing based on `.value` property narrows which node type you have, not just the value property.
+    This mainly matters when matching all cases like the switch statement below:
+
+    ```typescript
+    const Mode = enumFromStrings(schema, ["Fun", "Bonus"]);
+    type Mode = TreeNodeFromImplicitAllowedTypes<typeof Mode.schema>;
+    const node = new Mode.Bonus() as Mode;
+
+    switch (node.value) {
+    	case "Fun": {
+    		assert.fail();
+    	}
+    	case "Bonus": {
+    		// This one runs
+    		break;
+    	}
+    	default:
+    		// Before this change, "node.value" was never here, now "node" is never.
+    		unreachableCase(node);
+    }
+    ```
+
+-   SharedTree event listeners that implement `Listenable` now allow deregistration of event listeners via an `off()` function. ([#23046](https://github.com/microsoft/FluidFramework/pull/23046)) [c59225db03](https://github.com/microsoft/FluidFramework/commit/c59225db033a516ee20e459ae31567d97ce8776c)
+
+    The ability to deregister events via a callback returned by `on()` remains the same.
+    Both strategies will remain supported and consumers of SharedTree events may choose which method of deregistration they prefer in a given instance.
+
+    ```typescript
+    // The new behavior
+    function deregisterViaOff(view: TreeView<MySchema>): {
+    	const listener = () => { /* ... */ };
+    	view.events.on("commitApplied", listener); // Register
+    	view.events.off("commitApplied", listener); // Deregister
+    }
+
+    // The existing behavior (still supported)
+    function deregisterViaCallback(view: TreeView<MySchema>): {
+    	const off = view.events.on("commitApplied", () => { /* ... */ }); // Register
+    	off(); // Deregister
+    }
+    ```
+
+-   Allow constructing recursive maps from objects ([#23070](https://github.com/microsoft/FluidFramework/pull/23070)) [0185a08c6f](https://github.com/microsoft/FluidFramework/commit/0185a08c6f8bf6e922a6467f11da049503c4d215)
+
+    Previously only non-recursive maps could be constructed from objects.
+    Now all maps nodes can constructed from objects:
+
+    ```typescript
+    class MapRecursive extends sf.mapRecursive("Map", [() => MapRecursive]) {}
+    {
+    	type _check = ValidateRecursiveSchema<typeof MapRecursive>;
+    }
+    // New:
+    const fromObject = new MapRecursive({ x: new MapRecursive() });
+    // Existing:
+    const fromIterator = new MapRecursive([["x", new MapRecursive()]]);
+    const fromMap = new MapRecursive(new Map([["x", new MapRecursive()]]));
+    const fromNothing = new MapRecursive();
+    const fromUndefined = new MapRecursive(undefined);
+    ```
+
+-   Provide more comprehensive replacement to the `commitApplied` event ([#22977](https://github.com/microsoft/FluidFramework/pull/22977)) [e51c94da32](https://github.com/microsoft/FluidFramework/commit/e51c94da3248868de3c0c7fdce568cc425204155)
+
+    Adds a new `changed` event to the (currently alpha) `TreeBranchEvents` that replaces the `commitApplied` event on `TreeViewEvents`.
+    This new event is fired for both local and remote changes and maintains the existing functionality of `commitApplied` that is used for obtaining `Revertibles`.
+
 ## 2.5.0
 
 ### Minor Changes
