@@ -12,7 +12,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import type {
 	NamedFluidDataStoreRegistryEntries,
-	NamedFluidDataStoreRegistryEntry,
+	NamedFluidDataStoreRegistryEntry2,
 } from "@fluidframework/runtime-definitions/internal";
 
 import type { IEntryPointPiece } from "./interfaces.js";
@@ -32,7 +32,7 @@ export class CompositeEntryPoint {
 	};
 
 	public get registryEntries(): NamedFluidDataStoreRegistryEntries {
-		const registryEntries: NamedFluidDataStoreRegistryEntry[] = [];
+		const registryEntries: NamedFluidDataStoreRegistryEntry2[] = [];
 		for (const entryPointPiece of this._entryPointPieces) {
 			registryEntries.push(...entryPointPiece.registryEntries);
 		}
