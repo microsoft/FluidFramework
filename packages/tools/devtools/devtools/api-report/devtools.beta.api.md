@@ -4,7 +4,7 @@
 
 ```ts
 
-// @beta
+// @beta @sealed
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IFluidContainer;
 }
@@ -15,18 +15,18 @@ export type ContainerKey = string;
 // @beta
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
 
-// @beta
+// @beta @sealed
 export interface DevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
     logger?: IDevtoolsLogger;
 }
 
-// @beta
+// @beta @sealed
 export interface HasContainerKey {
     containerKey: ContainerKey;
 }
 
-// @beta
+// @beta @sealed
 export interface IDevtools extends IDisposable {
     closeContainerDevtools(id: string): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;

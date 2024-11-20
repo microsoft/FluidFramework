@@ -8,15 +8,17 @@
  *
  * @remarks Each Container registered with the Devtools must be assigned a unique `containerKey`.
  *
- * @example
+ * @example "Canvas Container"
  *
- * "Canvas Container"
  * @beta
  */
 export type ContainerKey = string;
 
 /**
  * Common interface for data associated with a particular Container registered with the Devtools.
+ *
+ * @sealed
+ * @system
  * @beta
  */
 export interface HasContainerKey {
