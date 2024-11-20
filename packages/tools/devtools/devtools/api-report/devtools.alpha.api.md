@@ -9,9 +9,11 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IFluidContainer;
 }
 
-export { ContainerKey }
+// @beta
+export type ContainerKey = string;
 
-export { createDevtoolsLogger }
+// @beta
+export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
 
 // @beta
 export interface DevtoolsProps {
@@ -19,7 +21,10 @@ export interface DevtoolsProps {
     logger?: IDevtoolsLogger;
 }
 
-export { HasContainerKey }
+// @beta
+export interface HasContainerKey {
+    containerKey: ContainerKey;
+}
 
 // @beta
 export interface IDevtools extends IDisposable {
@@ -27,11 +32,11 @@ export interface IDevtools extends IDisposable {
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
-export { IDevtoolsLogger }
+// @beta @sealed
+export interface IDevtoolsLogger extends ITelemetryBaseLogger {
+}
 
 // @beta
 export function initializeDevtools(props: DevtoolsProps): IDevtools;
-
-// (No @packageDocumentation comment for this package)
 
 ```

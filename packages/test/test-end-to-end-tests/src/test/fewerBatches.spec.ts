@@ -6,8 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainer, IRuntime } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
@@ -19,6 +18,7 @@ import {
 	FlushModeExperimental,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	toIDeltaManagerFull,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -87,9 +87,12 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		await waitForContainerConnection(localContainer);
 		await waitForContainerConnection(remoteContainer);
 
-		localContainer.deltaManager.outbound.on("op", (batch: IDocumentMessage[]) => {
-			capturedBatches.push(batch);
-		});
+		toIDeltaManagerFull(localContainer.deltaManager).outbound.on(
+			"op",
+			(batch: IDocumentMessage[]) => {
+				capturedBatches.push(batch);
+			},
+		);
 		await provider.ensureSynchronized();
 	};
 
@@ -239,7 +242,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		Promise.resolve()
 			.then(() => {
 				(localContainer.deltaManager as any).lastProcessedSequenceNumber += 1;
-				(dataObject1.context.containerRuntime as ContainerRuntime).process(op, false);
+				(dataObject1.context.containerRuntime as unknown as IRuntime).process(op, false);
 				dataObject1map.set("key2", "value2");
 			})
 			.catch(() => {});

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
@@ -11,8 +11,6 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import type {
 	EncodedRevisionTag,
 	GraphCommit,
-	RevisionTag,
-	TaggedChange,
 	ChangeEncodingContext,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
@@ -146,17 +144,13 @@ describe("message codec", () => {
 		);
 
 		const sessionId: SessionId = "sessionId" as SessionId;
-		it("Drops inverse and parent commit fields on encode", () => {
+		it("Drops parent commit fields on encode", () => {
 			const revision = testIdCompressor.generateCompressedId();
 			const message: DecodedMessage<TestChange> = {
 				sessionId,
 				commit: {
 					revision,
 					change: TestChange.mint([], 1),
-					rollback: "Extra field that should be dropped" as unknown as TaggedChange<
-						TestChange,
-						RevisionTag
-					>,
 					parent: "Extra field that should be dropped" as unknown as GraphCommit<TestChange>,
 				},
 			};

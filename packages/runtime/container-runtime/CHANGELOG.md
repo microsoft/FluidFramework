@@ -1,5 +1,103 @@
 # @fluidframework/container-runtime
 
+## 2.10.0
+
+### Minor Changes
+
+-   "Remove `IFluidParentContext.ensureNoDataModelChanges` and its implementations ([#22842](https://github.com/microsoft/FluidFramework/pull/22842)) [3aff19a462](https://github.com/microsoft/FluidFramework/commit/3aff19a4622a242e906286c14dfcfa6523175132)
+
+    -   `IFluidParentContext.ensureNoDataModelChanges` has been removed. [prior deprecation commit](https://github.com/microsoft/FluidFramework/commit/c9d156264bdfa211a3075bdf29cde442ecea234c)
+    -   `MockFluidDataStoreContext.ensureNoDataModelChanges` has also been removed.
+
+-   The inbound and outbound properties have been removed from IDeltaManager ([#22282](https://github.com/microsoft/FluidFramework/pull/22282)) [45a57693f2](https://github.com/microsoft/FluidFramework/commit/45a57693f291e0dc5e91af7f29a9b9c8f82dfad5)
+
+    The inbound and outbound properties were [deprecated in version 2.0.0-rc.2.0.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.0.0-rc.2.0.0.md#container-definitions-deprecate-ideltamanagerinbound-and-ideltamanageroutbound) and have been removed from `IDeltaManager`.
+
+    `IDeltaManager.inbound` contained functionality that could break core runtime features such as summarization and processing batches if used improperly. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    #### Alternatives
+
+    -   Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
+    -   Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
+    -   Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
+
+## 2.5.0
+
+### Minor Changes
+
+-   Signal telemetry events details ([#22804](https://github.com/microsoft/FluidFramework/pull/22804)) [e6566f6358](https://github.com/microsoft/FluidFramework/commit/e6566f6358551b5e579637de6c111d42281f7716)
+
+    Properties of `eventName`s beginning "fluid:telemetry:ContainerRuntime:Signal" are updated to use `details` for all event specific information. Additional per-event changes:
+
+    -   SignalLatency: shorten names now that data is packed into details. Renames:
+        -   `signalsSent` -> `sent`
+        -   `signalsLost` -> `lost`
+        -   `outOfOrderSignals` -> `outOfOrder`
+    -   SignalLost/SignalOutOfOrder: rename `trackingSequenceNumber` to `expectedSequenceNumber`
+    -   SignalOutOfOrder: rename `type` to `contentsType` and only emit it some of the time
+
+    > [!IMPORTANT]
+    > Reminder: the naming and structure of telemetry events are not considered a part of the public API and may change at any time.
+
+## 2.4.0
+
+### Minor Changes
+
+-   The `op.contents` member on ContainerRuntime's `batchBegin`/`batchEnd` event args is deprecated ([#22750](https://github.com/microsoft/FluidFramework/pull/22750)) [de6928b528](https://github.com/microsoft/FluidFramework/commit/de6928b528ceb115b12cdf7a4183077cbaa80a71)
+
+    The `batchBegin`/`batchEnd` events on ContainerRuntime indicate when a batch is beginning/finishing being processed.
+    The events include an argument of type `ISequencedDocumentMessage` which is the first or last message of the batch.
+
+    The `contents` property of the `op` argument should not be used when reasoning over the begin/end of a batch.
+    If you want to look at the `contents` of an op, wait for the `op` event.
+
+## 2.3.0
+
+### Minor Changes
+
+-   Restored old op processing behavior around batched ops to avoid potential regression ([#22508](https://github.com/microsoft/FluidFramework/pull/22508)) [709f085c580](https://github.com/microsoft/FluidFramework/commit/709f085c5802bb4ad80145911ca3b05e457e9d6e)
+
+    There's a theoretical risk of indeterminate behavior due to a recent change to how batches of ops are processed.
+    This fix reverses that change.
+
+    Pull Request #21785 updated the ContainerRuntime to hold onto the messages in an incoming batch until they've all arrived, and only then process the set of messages.
+
+    While the batch is being processed, the DeltaManager and ContainerRuntime's view of the latest sequence numbers will be
+    out of sync. This may have unintended side effects, so out of an abundance of caution we're reversing this behavior until
+    we can add the proper protections to ensure the system stays properly in sync.
+
+## 2.2.0
+
+### Minor Changes
+
+-   gcThrowOnTombstoneUsage and gcTombstoneEnforcementAllowed are deprecated ([#21992](https://github.com/microsoft/FluidFramework/pull/21992)) [b2bfed3a62](https://github.com/microsoft/FluidFramework/commit/b2bfed3a624d590d776c64a3317c60400b4b3e81)
+
+    These properties `gcThrowOnTombstoneUsage` and `gcTombstoneEnforcementAllowed` have been deprecated in
+    `IFluidParentContext` and `ContainerRuntime`. These were included in certain garbage collection (GC) telemetry to
+    identify whether the corresponding features have been enabled. These features are now enabled by default and this
+    information is added to the "GarbageCollectorLoaded" telemetry.
+
+    Also, the following Garbage collection runtime options and configs have been removed. They were added during GC feature
+    development to roll out and control functionalities. The corresponding features are on by default and can no longer be
+    disabled or controlled:
+
+    GC runtime options removed:
+
+    -   `gcDisableThrowOnTombstoneLoad`
+    -   `disableDataStoreSweep`
+
+    GC configs removed:
+
+    -   `"Fluid.GarbageCollection.DisableTombstone"`
+    -   `"Fluid.GarbageCollection.ThrowOnTombstoneUsage"`
+    -   `"Fluid.GarbageCollection.DisableDataStoreSweep"`
+
+-   InactiveResponseHeaderKey header is deprecated ([#22107](https://github.com/microsoft/FluidFramework/pull/22107)) [2e4e9b2cfc](https://github.com/microsoft/FluidFramework/commit/2e4e9b2cfcdd7f5d2aa460ab9dedabd6dc2b20ba)
+
+    The header `InactiveResponseHeaderKey` is deprecated and will be removed in the future. It was part of an experimental feature where loading an inactive data store would result in returning a 404 with this header set to true. This feature is no longer supported.
+
 ## 2.1.0
 
 Dependency updates only.

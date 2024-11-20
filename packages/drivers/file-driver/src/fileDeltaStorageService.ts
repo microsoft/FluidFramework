@@ -67,16 +67,12 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 		}
 
 		// Optimizations for multiple readers (replay tool)
-		// Non null asserting here because of the length check
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		if (this.lastOps.length > 0 && this.lastOps[0]!.sequenceNumber === readFrom + 1) {
+		if (this.lastOps.length > 0 && this.lastOps[0].sequenceNumber === readFrom + 1) {
 			return this.lastOps;
 		}
 		this.lastOps = this.messages.slice(readFrom, readTo);
 		assert(
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.lastOps[0]!.sequenceNumber === readFrom + 1,
+			this.lastOps[0].sequenceNumber === readFrom + 1,
 			0x091 /* "Retrieved ops' first sequence number has unexpected value!" */,
 		);
 		return this.lastOps;

@@ -30,7 +30,7 @@ import type {
 	RangeUpPath,
 	UpPath,
 } from "./pathTree.js";
-import { EmptyKey, type Value } from "./types.js";
+import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
 import type { PathVisitor } from "./visitPath.js";
 import type { AnnouncedVisitor } from "./visitorUtils.js";
@@ -38,7 +38,6 @@ import type { AnnouncedVisitor } from "./visitorUtils.js";
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
  * Associated with a ref count on the underlying {@link AnchorNode}.
- * @internal
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
@@ -49,7 +48,6 @@ const NeverAnchor: Anchor = brand(0);
 
 /**
  * Maps anchors (which must be ones this locator knows about) to paths.
- * @internal
  */
 export interface AnchorLocator {
 	/**
@@ -67,7 +65,6 @@ export interface AnchorLocator {
  * Stores arbitrary, user-defined data on an {@link Anchor}.
  * This data is preserved over the course of that anchor's lifetime.
  * @see {@link anchorSlot} for creation and an example use case.
- * @internal
  */
 export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">>, TContent>;
 
@@ -79,8 +76,6 @@ export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">
  * TODO:
  * - Include sub-deltas in events.
  * - Add more events.
- *
- * @internal
  */
 export interface AnchorEvents {
 	/**
@@ -132,7 +127,9 @@ export interface AnchorEvents {
 	 *
 	 * Compare to {@link AnchorEvents.childrenChanged} which is emitted in the middle of the batch/delta-visit.
 	 */
-	childrenChangedAfterBatch(anchor: AnchorNode): void;
+	childrenChangedAfterBatch(arg: {
+		changedFields: ReadonlySet<FieldKey>;
+	}): void;
 
 	/**
 	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
@@ -181,12 +178,7 @@ export interface AnchorEvents {
 	 * subtree changed, compared to {@link AnchorEvents.subtreeChanged} or {@link AnchorEvents.subtreeChanging} which
 	 * fire when something _may_ have changed or _may_ be about to change.
 	 */
-	subtreeChangedAfterBatch(anchor: AnchorNode): void;
-
-	/**
-	 * Value on this node is changing.
-	 */
-	valueChanging(anchor: AnchorNode, value: Value): void;
+	subtreeChangedAfterBatch(): void;
 }
 
 /**
@@ -198,8 +190,6 @@ export interface AnchorEvents {
  * - Design how events should be ordered.
  * - Include sub-deltas in events.
  * - Add more events.
- *
- * @internal
  */
 export interface AnchorSetRootEvents {
 	/**
@@ -215,9 +205,13 @@ export interface AnchorSetRootEvents {
 
 /**
  * Node in a tree of anchors.
- * @internal
  */
-export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents> {
+export interface AnchorNode extends UpPath<AnchorNode> {
+	/**
+	 * Events for this anchor node.
+	 */
+	readonly events: Listenable<AnchorEvents>;
+
 	/**
 	 * Allows access to data stored on the Anchor in "slots".
 	 * Use {@link anchorSlot} to create slots.
@@ -245,6 +239,13 @@ export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents>
 	child(key: FieldKey, index: number): UpPath<AnchorNode>;
 
 	/**
+	 * Gets the child AnchorNode if already exists.
+	 *
+	 * Does NOT add a ref, so the returned AnchorNode must be used with care.
+	 */
+	childIfAnchored(key: FieldKey, index: number): AnchorNode | undefined;
+
+	/**
 	 * Gets a child AnchorNode (creating it if needed), and an Anchor owning a ref to it.
 	 * Caller is responsible for freeing the returned Anchor, and must not use the AnchorNode after that.
 	 */
@@ -265,7 +266,6 @@ export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents>
  * 	anchor.slots.set(counterSlot, 1 + anchor.slots.get(counterSlot) ?? 0);
  * }
  * ```
- * @internal
  */
 export function anchorSlot<TContent>(): AnchorSlot<TContent> {
 	return brandedSlot<AnchorSlot<TContent>>();
@@ -281,10 +281,11 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent> {
  * API surface to a small subset.
  *
  * @sealed
- * @internal
  */
-export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator {
-	private readonly events = createEmitter<AnchorSetRootEvents>();
+export class AnchorSet implements AnchorLocator {
+	readonly #events = createEmitter<AnchorSetRootEvents>();
+	public readonly events: Listenable<AnchorSetRootEvents> = this.#events;
+
 	/**
 	 * Incrementing counter to give each anchor in this set a unique index for its identifier.
 	 * "0" is reserved for the `NeverAnchor`.
@@ -318,7 +319,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 	private activeVisitor?: DeltaVisitor;
 
 	public constructor() {
-		this.on("treeChanging", () => {
+		this.events.on("treeChanging", () => {
 			this.generationNumber += 1;
 		});
 	}
@@ -348,13 +349,6 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			}
 			node = stack.pop();
 		}
-	}
-
-	public on<K extends keyof AnchorSetRootEvents>(
-		eventName: K,
-		listener: AnchorSetRootEvents[K],
-	): () => void {
-		return this.events.on(eventName, listener);
 	}
 
 	/**
@@ -426,8 +420,10 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 
 	/**
 	 * Finds a path node if it already exists.
+	 *
+	 * Does not add a ref!
 	 */
-	private find(path: UpPath): PathNode | undefined {
+	public find(path: UpPath): PathNode | undefined {
 		if (path instanceof PathNode) {
 			if (path.anchorSet === this) {
 				return path;
@@ -435,7 +431,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		}
 		const parent = path.parent ?? this.root;
 		const parentPath = this.find(parent);
-		return parentPath?.tryGetChild(path.parentField, path.parentIndex);
+		return parentPath?.childIfAnchored(path.parentField, path.parentIndex);
 	}
 
 	/**
@@ -465,7 +461,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		while ((wrapWith = stack.pop()) !== undefined) {
 			if (path === undefined || path instanceof PathNode) {
 				// If path already has an anchor, get an anchor for it's child if there is one:
-				const child = (path ?? this.root).tryGetChild(
+				const child = (path ?? this.root).childIfAnchored(
 					wrapWith.parentField,
 					wrapWith.parentIndex,
 				);
@@ -725,7 +721,19 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
-			bufferedEvents: [] as { node: PathNode; event: keyof AnchorEvents }[],
+
+			/**
+			 * Events collected during the visit which get sent as a batch during "free".
+			 */
+			bufferedEvents: [] as {
+				node: PathNode;
+				event: keyof AnchorEvents;
+				/**
+				 * The key for the impacted field, if the event is associated with a key.
+				 * Some events, such as afterDestroy, do not involve a key, and thus leave this undefined.
+				 */
+				changedField?: FieldKey;
+			}[],
 
 			// 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
 			// subtreeChangedAfterBatch events.
@@ -767,22 +775,38 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 						continue;
 					}
 					emittedEvents?.push(event);
-					node.events.emit(event, node);
+					if (event === "childrenChangedAfterBatch") {
+						const fieldKeys: FieldKey[] = this.bufferedEvents
+							.filter((e) => e.node === node && e.event === event)
+							.map(
+								(e) =>
+									e.changedField ??
+									fail("childrenChangedAfterBatch events should have a changedField"),
+							);
+						node.events.emit(event, { changedFields: new Set(fieldKeys) });
+					} else {
+						node.events.emit(event);
+					}
 				}
 			},
 			notifyChildrenChanging(): void {
 				this.maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
-					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
+					() => this.anchorSet.#events.emit("childrenChanging", this.anchorSet),
 				);
 			},
 			notifyChildrenChanged(): void {
 				this.maybeWithNode(
 					(p) => {
+						assert(
+							this.parentField !== undefined,
+							0xa24 /* Must be in a field to modify its contents */,
+						);
 						p.events.emit("childrenChanged", p);
 						this.bufferedEvents.push({
 							node: p,
 							event: "childrenChangedAfterBatch",
+							changedField: this.parentField,
 						});
 					},
 					() => {},
@@ -1074,7 +1098,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				this.parentField = undefined;
 			},
 		};
-		this.events.emit("treeChanging", this);
+		this.#events.emit("treeChanging", this);
 		this.activeVisitor = visitor;
 		return visitor;
 	}
@@ -1185,17 +1209,14 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		super(1);
 	}
 
-	public on<K extends keyof AnchorEvents>(
-		eventName: K,
-		listener: AnchorEvents[K],
-	): () => void {
-		return this.events.on(eventName, listener);
-	}
-
 	public child(key: FieldKey, index: number): UpPath<AnchorNode> {
 		// Fast path: if child exists, return it.
 		return (
-			this.tryGetChild(key, index) ?? { parent: this, parentField: key, parentIndex: index }
+			this.childIfAnchored(key, index) ?? {
+				parent: this,
+				parentField: key,
+				parentIndex: index,
+			}
 		);
 	}
 
@@ -1256,8 +1277,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 			field = [];
 			this.children.set(key, field);
 		}
-		// TODO: should do more optimized search (ex: binary search).
-		let child = field.find((c) => c.parentIndex === index);
+		let child = binaryFind(field, index);
 		if (child === undefined) {
 			child = new PathNode(this.anchorSet, key, index, this);
 			field.push(child);
@@ -1269,16 +1289,11 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		return child;
 	}
 
-	/**
-	 * Gets a child if it exists.
-	 * Does NOT add a ref.
-	 */
-	public tryGetChild(key: FieldKey, index: number): PathNode | undefined {
+	public childIfAnchored(key: FieldKey, index: number): PathNode | undefined {
 		assert(this.status === Status.Alive, 0x40d /* PathNode must be alive */);
 		const field = this.children.get(key);
 
-		// TODO: should do more optimized search (ex: binary search or better) using index.
-		return field?.find((c) => c.parentIndex === index);
+		return field === undefined ? undefined : binaryFind(field, index);
 	}
 
 	/**
@@ -1327,4 +1342,47 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 			this.status = Status.Disposed;
 		}
 	}
+}
+
+/**
+ * Find a child PathNode by index using a binary search.
+ * @param sorted - array of PathNode's sorted by parentIndex.
+ * @param index - index being looked for.
+ * @returns child with the requested parentIndex, or undefined.
+ * @privateRemarks
+ * This function is very commonly used with small arrays (length 0 or one for all non sequence fields),
+ * and is currently a hot path due to how flex tree leaves to excessive cursor to anchor and anchor to cursor translations,
+ * both of which walk paths down the AnchorSet.
+ * Additionally current usages tends to fully populate the anchor tree leading the correct array index to be the requested parent index.
+ * This makes the performance of this performance both important in small cases and easy to overly tune to the current usage patterns.
+ * This lead to not implementing a general purpose reusable binary search.
+ * Once this function is not so heavily overused due to inefficient patterns in flex-tree,
+ * replacing it with a standard binary search is likely fine.
+ * Until then, care and benchmarking should be used when messing with this function.
+ */
+function binaryFind(sorted: readonly PathNode[], index: number): PathNode | undefined {
+	// Try guessing the list is not sparse as a starter:
+	const guess = sorted[index];
+	if (guess !== undefined && guess.parentIndex === index) {
+		return guess;
+	}
+
+	// inclusive
+	let min = 0;
+	// exclusive
+	let max = sorted.length;
+
+	while (min !== max) {
+		const mid = Math.floor((min + max) / 2);
+		const item = sorted[mid]!;
+		const found = item.parentIndex;
+		if (found === index) {
+			return item; // Found the target, return it.
+		} else if (found > index) {
+			max = mid; // Continue search on lower half.
+		} else {
+			min = mid + 1; // Continue search on left half.
+		}
+	}
+	return undefined; // If we reach here, target is not in array (or array was not sorted)
 }

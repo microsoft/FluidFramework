@@ -8,6 +8,7 @@ import { Flags } from "@oclif/core";
 
 import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 
+import { semverFlag } from "../../flags.js";
 import { BaseCommand } from "../../library/index.js";
 
 /**
@@ -62,7 +63,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			default: "none",
 			env: "PACKAGE_TYPES_FIELD",
 		}),
-		fileVersion: Flags.string({
+		fileVersion: semverFlag({
 			description:
 				"Will be used as the version instead of reading from package.json/lerna.json. Used for testing.",
 			hidden: true,
@@ -90,7 +91,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		let fileVersion = "";
 
 		if (flags.base === undefined) {
-			fileVersion = flags.fileVersion ?? this.getFileVersion();
+			fileVersion = flags.fileVersion?.version ?? this.getFileVersion();
 			if (!fileVersion) {
 				this.error("Missing version in lerna.json/package.json");
 			}
@@ -156,13 +157,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
 
 		if (flags.tag !== undefined) {
-			const isLatest = getIsLatest(
-				flags.tag,
-				version,
-				tags,
-				shouldIncludeInternalVersions,
-				true,
-			);
+			const isLatest = getIsLatest(flags.tag, version, tags, shouldIncludeInternalVersions);
 			this.log(`isLatest=${isLatest}`);
 			if (isRelease && isLatest === true) {
 				this.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);

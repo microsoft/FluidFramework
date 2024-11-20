@@ -12,6 +12,11 @@ export enum InternalErrorCode {
 	 * The cluster is under draining.
 	 */
 	ClusterDraining = "ClusterDraining",
+
+	/**
+	 * The token has been revoked.
+	 */
+	TokenRevoked = "TokenRevoked",
 }
 
 /**
@@ -199,7 +204,7 @@ export function createFluidServiceNetworkError(
 		message = errorData.message ?? "Unknown Error";
 		canRetry = errorData.canRetry;
 		isFatal = errorData.isFatal;
-		retryAfter = errorData.retryAfter;
+		retryAfter = errorData.retryAfterMs ?? errorData.retryAfter;
 		source = errorData.source;
 		internalErrorCode = errorData.internalErrorCode;
 	} else if (errorData && typeof errorData === "string") {

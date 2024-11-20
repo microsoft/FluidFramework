@@ -3,23 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { realpathSync } from "node:fs";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
-	type BrokenCompatTypes,
 	type Logger,
 	type Package,
 	type PackageJson,
-	type TestCaseTypeData,
-	type TypeData,
-	buildTestCase,
 	getTypeTestPreviousPackageDetails,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import * as changeCase from "change-case";
 import { readJson } from "fs-extra/esm";
-import * as resolve from "resolve.exports";
 import {
 	JSDoc,
 	ModuleKind,
@@ -38,6 +34,22 @@ import {
 	knownApiLevels,
 	unscopedPackageNameString,
 } from "../../library/index.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
+import { getTypesPathFromPackage } from "../../library/packageExports.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
+import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGeneration.js";
+// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import/no-internal-modules
+import type { TypeData } from "../../typeValidator/typeData.js";
+import {
+	type BrokenCompatTypes,
+	type PackageWithTypeTestSettings,
+	defaultTypeValidationConfig,
+	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../typeValidator/typeValidatorConfig.js";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand
@@ -45,9 +57,12 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	static readonly description = "Generates type tests for a package or group of packages.";
 
 	static readonly flags = {
-		level: Flags.custom<ApiLevel>({
-			description: "What API level to generate tests for.",
-			default: ApiLevel.internal,
+		entrypoint: Flags.custom<ApiLevel>({
+			// Temporary alias for back-compat
+			aliases: ["level"],
+			deprecateAliases: true,
+			description:
+				'What entrypoint to generate tests for. Use "public" for the default entrypoint. If this flag is provided it will override the typeValidation.entrypoint setting in the package\'s package.json.',
 			options: knownApiLevels,
 		})(),
 		outDir: Flags.directory({
@@ -60,7 +75,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		}),
 		publicFallback: Flags.boolean({
 			description:
-				"Use the public entrypoint as a fallback if the API at the requested level is not found.",
+				"Use the public entrypoint as a fallback if the requested entrypoint is not found.",
 			default: false,
 		}),
 		...PackageCommand.flags,
@@ -69,13 +84,23 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	protected defaultSelection = "dir" as PackageSelectionDefault;
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		const { level, outDir, outFile } = this.flags;
+		const { entrypoint: entrypointFlag, outDir, outFile } = this.flags;
+		const pkgJson: PackageWithTypeTestSettings = pkg.packageJson;
+		const entrypoint: ApiLevel =
+			entrypointFlag ??
+			pkgJson.typeValidation?.entrypoint ??
+			defaultTypeValidationConfig.entrypoint;
 		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
+
+		this.verbose(
+			`${pkg.nameColored}: Generating type tests for "${entrypoint}" entrypoint with "${fallbackLevel}" as a fallback.`,
+		);
 
 		// Do not check that file exists before opening:
 		// Doing so is a time of use vs time of check issue so opening the file could fail anyway.
 		// Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
-		const currentPackageJson = pkg.packageJson;
+		const currentPackageJson: PackageWithTypeTestSettings = pkg.packageJson;
+
 		const { name: previousPackageName, packageJsonPath: previousPackageJsonPath } =
 			getTypeTestPreviousPackageDetails(pkg);
 		const previousBasePath = path.dirname(previousPackageJsonPath);
@@ -83,21 +108,21 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const typeTestOutputFile = getTypeTestFilePath(pkg, outDir, outFile);
 		if (currentPackageJson.typeValidation?.disabled === true) {
 			this.info(
-				"Skipping type test generation because typeValidation.disabled is true in package.json",
+				`${pkg.nameColored}: Skipping type test generation because typeValidation.disabled is true in package.json`,
 			);
-			rmSync(
+			await rm(
 				typeTestOutputFile,
 				// force means to ignore the error if the file does not exist.
 				{ force: true },
 			);
-			this.verbose(`Deleted file: ${typeTestOutputFile}`);
+			this.verbose(`${pkg.nameColored}: Deleted file: ${typeTestOutputFile}`);
 
 			// Early exit; no error.
 			return;
 		}
 
 		ensureDevDependencyExists(currentPackageJson, previousPackageName);
-		this.verbose(`Reading package.json at ${previousPackageJsonPath}`);
+		this.verbose(`${pkg.nameColored}: Reading package.json at ${previousPackageJsonPath}`);
 		const previousPackageJson = (await readJson(previousPackageJsonPath)) as PackageJson;
 		// Set the name in the JSON to the calculated previous package name, since the name in the previous package.json is
 		// the same as current. This enables us to pass the package.json object to more general functions but ensure those
@@ -105,56 +130,33 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// statements into the type test file, we need to use the previous version name.
 		previousPackageJson.name = previousPackageName;
 
-		const { typesPath: currentTypesPathRelative, levelUsed: currentPackageLevel } =
-			getTypesPathWithFallback(currentPackageJson, level, this.logger, fallbackLevel);
-		const currentTypesPath = path.resolve(path.join(pkg.directory, currentTypesPathRelative));
-		this.verbose(
-			`Found ${currentPackageLevel} type definitions for ${currentPackageJson.name}: ${currentTypesPath}`,
-		);
-
-		const { typesPath: previousTypesPathRelative, levelUsed: previousPackageLevel } =
-			getTypesPathWithFallback(previousPackageJson, level, this.logger, fallbackLevel);
+		const { typesPath: previousTypesPathRelative, entrypointUsed: previousEntrypoint } =
+			getTypesPathWithFallback(previousPackageJson, entrypoint, this.logger, fallbackLevel);
 		const previousTypesPath = path.resolve(
 			path.join(previousBasePath, previousTypesPathRelative),
 		);
 		this.verbose(
-			`Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
+			`Found ${previousEntrypoint} type definitions for ${currentPackageJson.name}: ${previousTypesPath}`,
 		);
 
-		// For the current version, we load the package-local tsconfig and return index.ts as the source file. This ensures
-		// we don't need to build before running type test generation. It's tempting to load the .d.ts files and use the
-		// same code path as is used below for the previous version (loadTypesSourceFile()), but that approach requires that
-		// the local project be built.
-		//
-		// One drawback to this approach is that it will always enumerate the full (internal) API for the current version.
-		// There's no way to scope it to just alpha, beta, etc. for example. If that capability is eventually needed we can
-		// revisit this.
-		const currentFile = new Project({
-			skipFileDependencyResolution: true,
-			tsConfigFilePath: path.join(pkg.directory, "tsconfig.json"),
-		}).getSourceFileOrThrow("index.ts");
-		this.verbose(
-			`Loaded source file for current version (${pkg.version}): ${currentFile.getFilePath()}`,
-		);
 		const previousFile = loadTypesSourceFile(previousTypesPath);
 		this.verbose(
-			`Loaded source file for previous version (${
+			`${pkg.nameColored}: Loaded source file for previous version (${
 				previousPackageJson.version
 			}): ${previousFile.getFilePath()}`,
 		);
 
-		const currentTypeMap = typeDataFromFile(currentFile, this.logger);
-		const previousData = [...typeDataFromFile(previousFile, this.logger).values()];
-
-		// Sort previous data lexicographically. To use locale-specific sort change the sort function to
-		// (a, b) => a.name.localeCompare(b.name)
-		previousData.sort((a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0));
+		const typeMap = typeDataFromFile(previousFile, this.logger);
 
 		// Sort import statements to respect linting rules.
 		const buildToolsPackageName = "@fluidframework/build-tools";
 		const buildToolsImport = `import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "${buildToolsPackageName}";`;
+
+		// Public API levels are always imported from the primary entrypoint, but everything else is imported from the
+		// /internal entrypoint. This is consistent with our policy for code within the repo - all non-public APIs are
+		// imported from the /internal entrypoint for consistency
 		const previousImport = `import type * as old from "${previousPackageName}${
-			previousPackageLevel === ApiLevel.public ? "" : `/${previousPackageLevel}`
+			previousEntrypoint === ApiLevel.public ? "" : `/${ApiLevel.internal}`
 		}";`;
 		const imports =
 			buildToolsPackageName < previousPackageName
@@ -180,17 +182,14 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 `,
 		];
 
-		const testCases = generateCompatibilityTestCases(
-			previousData,
-			currentTypeMap,
-			currentPackageJson,
-			fileHeader,
+		const testCases = generateCompatibilityTestCases(typeMap, currentPackageJson, fileHeader);
+
+		await mkdir(outDir, { recursive: true });
+
+		await writeFile(typeTestOutputFile, testCases.join("\n"));
+		this.info(
+			`${pkg.nameColored}: Generated type test file: ${path.resolve(typeTestOutputFile)}`,
 		);
-
-		mkdirSync(outDir, { recursive: true });
-
-		writeFileSync(typeTestOutputFile, testCases.join("\n"));
-		this.info(`Generated type test file: ${path.resolve(typeTestOutputFile)}`);
 	}
 }
 
@@ -200,113 +199,28 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  */
 function getTypesPathWithFallback(
 	packageJson: PackageJson,
-	level: ApiLevel,
+	entrypoint: ApiLevel,
 	log: Logger,
-	fallbackLevel?: ApiLevel,
-): { typesPath: string; levelUsed: ApiLevel } {
-	let chosenLevel: ApiLevel = level;
+	fallbackEntrypoint?: ApiLevel,
+): { typesPath: string; entrypointUsed: ApiLevel } {
+	let chosenEntrypoint: ApiLevel = entrypoint;
 	// First try the requested paths, but fall back to public otherwise if configured.
-	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, level, log);
+	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, entrypoint, log);
 
 	if (typesPath === undefined) {
 		// Try the public types if configured to do so. If public types are found adjust the level accordingly.
 		typesPath =
-			fallbackLevel === undefined
+			fallbackEntrypoint === undefined
 				? undefined
-				: getTypesPathFromPackage(packageJson, fallbackLevel, log);
-		chosenLevel = fallbackLevel ?? level;
+				: getTypesPathFromPackage(packageJson, fallbackEntrypoint, log);
+		chosenEntrypoint = fallbackEntrypoint ?? entrypoint;
 		if (typesPath === undefined) {
 			throw new Error(
-				`No type definitions found for "${chosenLevel}" API level in ${packageJson.name}`,
+				`${packageJson.name}: No type definitions found for "${chosenEntrypoint}" API level.`,
 			);
 		}
 	}
-	return { typesPath: typesPath, levelUsed: chosenLevel };
-}
-
-/**
- * Finds the path to the types of a package using the package's export map or types/typings field.
- * If the path is found, it is returned. Otherwise it returns undefined.
- *
- * This implementation uses resolve.exports to resolve the path to types for a level.
- *
- * @param packageJson - The package.json object to check for types paths.
- * @param level - An API level to get types paths for.
- * @returns A package relative path to the types.
- *
- * @remarks
- *
- * This implementation loosely follows TypeScript's process for finding types as described at
- * {@link https://www.typescriptlang.org/docs/handbook/modules/reference.html#packagejson-main-and-types}. If an export
- * map is found, the `types` and `typings` field are ignored. If an export map is not found, then the `types`/`typings`
- * fields will be used as a fallback _only_ for the public API level (which corresponds to the default export).
- *
- * Importantly, this code _does not_ implement falling back to the `main` field when `types` and `typings` are missing,
- * nor does it look up types from DefinitelyTyped (i.e. \@types/* packages). This fallback logic is not needed for our
- * packages because we always specify types explicitly in the types field, and types are always included in our packages
- * (as opposed to a separate \@types package).
- */
-export function getTypesPathFromPackage(
-	packageJson: PackageJson,
-	level: ApiLevel,
-	log: Logger,
-): string | undefined {
-	if (packageJson.exports === undefined) {
-		log.verbose(`${packageJson.name}: No export map found.`);
-		// Use types/typings field only when the public API level is used and no exports field is found
-		if (level === ApiLevel.public) {
-			log.verbose(`${packageJson.name}: Using the types/typings field value.`);
-			return packageJson.types ?? packageJson.typings;
-		}
-		// No exports and a non-public API level, so return undefined.
-		return undefined;
-	}
-
-	// Package has an export map, so map the requested API level to an entrypoint and check the exports conditions.
-	const entrypoint = level === ApiLevel.public ? "." : `./${level}`;
-
-	// resolve.exports sets some conditions by default, so the ones we supply supplement the defaults. For clarity the
-	// applied conditions are noted in comments.
-	let typesPath: string | undefined;
-	try {
-		// First try to resolve with the "import" condition, assuming the package is either ESM-only or dual-format.
-		// conditions: ["default", "types", "import", "node"]
-		const exports = resolve.exports(packageJson, entrypoint, { conditions: ["types"] });
-
-		// resolve.exports returns a `Exports.Output | void` type, though the documentation isn't clear under what
-		// conditions `void` would be the return type vs. just throwing an exception. Since the types say exports could be
-		// undefined or an empty array (Exports.Output is an array type), check for those conditions.
-		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
-	} catch {
-		// Catch and ignore any exceptions here; we'll retry with the require condition.
-		log.verbose(
-			`${packageJson.name}: No types found for ${entrypoint} using "import" condition.`,
-		);
-	}
-
-	// Found the types using the import condition, so return early.
-	if (typesPath !== undefined) {
-		return typesPath;
-	}
-
-	try {
-		// If nothing is found when using the "import" condition, try the "require" condition. It may be possible to do this
-		// in a single call to resolve.exports, but the documentation is a little unclear. This seems a safe, if inelegant
-		// solution.
-		// conditions: ["default", "types", "require", "node"]
-		const exports = resolve.exports(packageJson, entrypoint, {
-			conditions: ["types"],
-			require: true,
-		});
-		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
-	} catch {
-		// Catch and ignore any exceptions here; we'll retry with the require condition.
-		log.verbose(
-			`${packageJson.name}: No types found for ${entrypoint} using "require" condition.`,
-		);
-	}
-
-	return typesPath;
+	return { typesPath: typesPath, entrypointUsed: chosenEntrypoint };
 }
 
 /**
@@ -519,63 +433,61 @@ export function loadTypesSourceFile(typesPath: string): SourceFile {
 			module: ModuleKind.Node16,
 		},
 	});
-	const sourceFile = project.addSourceFileAtPath(typesPath);
+
+	// The typesPath may be a symlink or junction, so resolve the real path
+	// before adding it to the project to ensure correct module resolutions.
+	const realTypesPath = realpathSync(typesPath);
+	const sourceFile = project.addSourceFileAtPath(realTypesPath);
 	return sourceFile;
 }
 
 /**
- * Generates compatibility test cases between the previous type definitions and the current type map.
- * This function constructs test cases to validate forward and backward compatibility of types.
- * @param previousData - array of type data from the previous file
- * @param currentTypeMap - map containing current type data
+ * Generates compatibility test cases using the provided type data to validate forward and backward compatibility of
+ * types. The type data is assumed to be from an _older_ version of the types. This function will construct test cases
+ * that import the types from both the old/previous version of a package and the current version and use them in place
+ * of one another. Failed test cases indicate type incompatibility between versions.
+ *
+ * @param typeMap - map containing type data to use to generate type tests
  * @param packageObject - package.json object containing type validation settings
  * @param testString - array to store generated test strings
  * @returns - string array representing generated compatibility test cases
  */
 export function generateCompatibilityTestCases(
-	previousData: TypeData[],
-	currentTypeMap: Map<string, TypeData>,
-	packageObject: PackageJson,
+	typeMap: Map<string, TypeData>,
+	packageObject: PackageWithTypeTestSettings,
 	testString: string[],
 ): string[] {
 	const broken: BrokenCompatTypes = packageObject.typeValidation?.broken ?? {};
-	for (const oldTypeData of previousData) {
-		const oldType: TestCaseTypeData = {
-			prefix: "old",
-			...oldTypeData,
-			removed: false,
-		};
-		const currentTypeData = currentTypeMap.get(oldTypeData.testCaseName);
-		// if the current package is missing a type, we will use the old type data.
-		// this can represent a breaking change which can be disable in the package.json.
-		// this can also happen for type changes, like type to interface, which can remain
-		// compatible.
-		const currentType: TestCaseTypeData =
-			currentTypeData === undefined
-				? {
-						prefix: "current",
-						...oldTypeData,
-						testCaseName: `Removed${oldTypeData.testCaseName}`,
-						removed: true,
-					}
-				: {
-						prefix: "current",
-						...currentTypeData,
-						removed: false,
-					};
 
-		// look for settings not under version, then fall back to version for back compat
-		const brokenData = broken?.[currentType.testCaseName];
+	// Convert Map entries to an array and sort by key. This is not strictly needed since Maps are iterated in insertion
+	// order, so the type tests should generate in the same order each time. However, explicitly sorting by the test case
+	// name is clearer.
+	const sortedEntries = [...typeMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+	for (const [testCaseName, typeData] of sortedEntries) {
+		const [oldType, currentType]: TestCaseTypeData[] = [
+			{
+				prefix: "old",
+				...typeData,
+				removed: false,
+			},
+			{
+				prefix: "current",
+				...typeData,
+				removed: false,
+			},
+		];
+		const brokenData = broken?.[testCaseName];
 
 		const typePreprocessor = selectTypePreprocessor(currentType);
 		if (typePreprocessor !== undefined) {
-			if (oldTypeData.tags.has("sealed")) {
+			if (typeData.tags.has("sealed")) {
 				// If the type was `@sealed` then only the code declaring it is allowed to create implementations.
 				// This means that the case of having the new (current) version of the type,
 				// but trying to implement it based on the old version should not occur and is not a supported usage.
 				// This means that adding members to sealed types, as well as making their members have more specific types is allowed as a non-breaking change.
 				// This check implements skipping generation of type tests which would flag such changes to sealed types as errors.
-			} else if (oldTypeData.useTypeof) {
+			} else if (typeData.useTypeof) {
 				// If the type was using typeof treat it like `@sealed`.
 				// This assumes adding members to existing variables (and class statics) is non-breaking.
 				// This is true in most cases, though there are some edge cases where this assumption is wrong
@@ -624,10 +536,13 @@ export function generateCompatibilityTestCases(
  * Returns the name of the type preprocessing type meta-function to use, or undefined if no type test should be generated.
  */
 function selectTypePreprocessor(typeData: TypeData): string | undefined {
-	if (typeData.tags.has("type-test-minimal")) {
+	if (typeData.tags.has("system")) {
+		return undefined;
+	}
+	if (typeData.tags.has("typeTestMinimal")) {
 		return "MinimalType";
 	}
-	if (typeData.tags.has("type-test-full")) {
+	if (typeData.tags.has("typeTestFull")) {
 		return "FullType";
 	}
 	return "TypeOnly";

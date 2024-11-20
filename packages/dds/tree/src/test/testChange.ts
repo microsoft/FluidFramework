@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { type IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import {
@@ -235,6 +235,7 @@ export const TestChange = {
 		[1, codec],
 		[2, codec],
 		[3, codec],
+		[4, codec],
 	]),
 };
 deepFreeze(TestChange);

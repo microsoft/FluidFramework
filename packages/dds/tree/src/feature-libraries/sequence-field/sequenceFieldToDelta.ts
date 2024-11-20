@@ -12,7 +12,7 @@ import {
 	type DeltaMark,
 	areEqualChangeAtomIds,
 } from "../../core/index.js";
-import { oob, type Mutable } from "../../util/index.js";
+import { getLast, hasSome, type Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 
 import { isMoveIn, isMoveOut } from "./moveEffectTable.js";
@@ -164,14 +164,20 @@ export function sequenceFieldToDelta(
 						local.push(deltaMark);
 					}
 					break;
+				case "Rename":
+					assert(
+						mark.cellId !== undefined,
+						0x9f9 /* Renames should only target empty cells */,
+					);
+					break;
 				default:
 					unreachableCase(type);
 			}
 		}
 	}
 	// Remove trailing no-op marks
-	while (local.length > 0) {
-		const lastMark = local[local.length - 1] ?? oob();
+	while (hasSome(local)) {
+		const lastMark = getLast(local);
 		if (
 			lastMark.attach !== undefined ||
 			lastMark.detach !== undefined ||

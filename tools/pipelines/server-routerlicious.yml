@@ -67,7 +67,6 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
-    - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
@@ -131,7 +130,7 @@ extends:
     packageManager: pnpm
     tagName: server
     isReleaseGroup: true
-    pool: NewLarge-linux-1ES
+    pool: Large-eastus2
     pack: true
     lint: true
     test: ci:test

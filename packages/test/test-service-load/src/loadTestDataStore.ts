@@ -15,7 +15,6 @@ import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
-	UnknownContainerRuntimeMessage,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
@@ -33,14 +32,14 @@ import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { ILoadTestConfig } from "./testConfigFile.js";
+import type { TestConfiguration } from "./testConfigFile.js";
 import { printStatus } from "./utils.js";
 import { VirtualDataStoreFactory, type VirtualDataStore } from "./virtualDataStore.js";
 
 export interface IRunConfig {
 	runId: number;
 	profileName: string;
-	testConfig: ILoadTestConfig;
+	testConfig: TestConfiguration;
 	verbose: boolean;
 	random: IRandom;
 	logger: ITelemetryLoggerExt;
@@ -70,7 +69,7 @@ const defaultBlobSize = 1024;
  * and provide common abstractions for workload scheduling
  * via task picking.
  */
-export class LoadTestDataStoreModel {
+class LoadTestDataStoreModel {
 	private static async waitForCatchupOrDispose(
 		runtime: IFluidDataStoreRuntime,
 	): Promise<void> {
@@ -593,11 +592,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const opsSendType = config.testConfig.opsSendType ?? "staggeredReadWrite";
 		const opsPerCycle = (config.testConfig.opRatePerMin * cycleMs) / 60000;
 		const opsGapMs = cycleMs / opsPerCycle;
-		const futureOpPeriod =
-			config.testConfig.futureOpRatePerMin === undefined ||
-			config.testConfig.futureOpRatePerMin <= 0
-				? undefined
-				: Math.floor(config.testConfig.opRatePerMin / config.testConfig.futureOpRatePerMin);
 		const opSizeinBytes =
 			typeof config.testConfig.content?.opSizeinBytes === "undefined"
 				? 0
@@ -638,7 +632,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
 		let opsSent = 0;
 		let largeOpsSent = 0;
-		let futureOpsSent = 0;
 		let virtualDataStoresCreated = 0;
 		let virtualDataStoresLoaded = 0;
 
@@ -651,7 +644,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					documentOpCount: dataModel.counter.value,
 					localOpCount: opsSent,
 					localLargeOpCount: largeOpsSent,
-					localFutureOpCount: futureOpsSent,
 					localVirtualDataStoresCreated: virtualDataStoresCreated,
 					virtualDataStoresLoaded,
 				},
@@ -779,20 +771,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 							error,
 						);
 					});
-			}
-
-			// [DEPRECATED] This flow is deprecated and is expected to be removed from FF soon.
-			if (futureOpPeriod !== undefined && opsSent % futureOpPeriod === 0) {
-				(
-					this.context.containerRuntime as unknown as {
-						submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
-					}
-				).submit({
-					type: "FUTURE_TYPE" as any,
-					contents: "Hello",
-					compatDetails: { behavior: "Ignore" }, // This op should be ignored when processed, even upon resubmit if that happens
-				});
-				futureOpsSent++;
 			}
 
 			dataModel.counter.increment(1);
@@ -947,7 +925,7 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 	{},
 );
 
-export const createFluidExport = (runtimeOptions: IContainerRuntimeOptions) =>
+export const createFluidExport = (runtimeOptions?: IContainerRuntimeOptions | undefined) =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
 		registryEntries: [

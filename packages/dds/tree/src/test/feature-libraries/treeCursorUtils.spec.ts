@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	CursorLocationType,
@@ -14,7 +14,6 @@ import {
 	compareFieldUpPaths,
 	compareUpPaths,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 import {
 	PrefixedPath,
 	prefixFieldPath,
@@ -28,6 +27,7 @@ import {
 import { adapter } from "../../feature-libraries/treeTextCursor.js";
 import { brand } from "../../util/index.js";
 import { expectEqualFieldPaths, expectEqualPaths } from "../utils.js";
+import { numberSchema } from "../../simple-tree/index.js";
 
 describe("treeCursorUtils", () => {
 	const root: UpPath = {
@@ -282,7 +282,9 @@ describe("treeCursorUtils", () => {
 		it("construction and paths", () => {
 			const cursor = stackTreeNodeCursor(adapter, {
 				type: brand<TreeNodeSchemaIdentifier>("foo"),
-				fields: { bar: [{ type: leaf.number.name, value: 5 }] },
+				fields: {
+					bar: [{ type: brand<TreeNodeSchemaIdentifier>(numberSchema.identifier), value: 5 }],
+				},
 			});
 			assert.equal(cursor.mode, CursorLocationType.Nodes);
 			assert.equal(cursor.getPath(), undefined);
@@ -314,8 +316,8 @@ describe("treeCursorUtils", () => {
 					type: brand<TreeNodeSchemaIdentifier>("dummy"),
 					fields: {
 						key: [
-							{ type: leaf.number.name, value: 5 },
-							{ type: leaf.number.name, value: 6 },
+							{ type: brand<TreeNodeSchemaIdentifier>(numberSchema.identifier), value: 5 },
+							{ type: brand<TreeNodeSchemaIdentifier>(numberSchema.identifier), value: 6 },
 						],
 					},
 				},

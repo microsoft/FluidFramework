@@ -170,9 +170,7 @@ export class PermutationVector extends Client {
 			0x027 /* "Trying to get handle of out-of-bounds position!" */,
 		);
 
-		// TODO Non null asserting, why is this not null?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.handleCache.getHandle(pos)!;
+		return this.handleCache.getHandle(pos);
 	}
 
 	public getAllocatedHandle(pos: number): Handle {

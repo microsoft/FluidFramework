@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import type { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
-import { assertValidIndex, oob } from "../../../util/index.js";
+import { assertValidIndex } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
 import type { TreeChunk } from "../chunk.js";
 import { emptyChunk } from "../emptyChunk.js";

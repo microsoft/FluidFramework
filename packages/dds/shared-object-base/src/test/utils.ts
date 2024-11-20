@@ -14,7 +14,7 @@ export class MockHandleContext implements IFluidHandleContext {
 		return this;
 	}
 
-	// In real scenarios, the handle context is ContainerFluidHandleContext which has a circular reference to ContainerRuntime.
+	// In real scenarios, the handle context is ContainerFluidHandleContext which has a circular reference to IContainerRuntime.
 	// This has caused trouble with traversing an object with handles, so include it in the mock as well.
 	public circular = this;
 

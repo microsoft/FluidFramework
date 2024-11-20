@@ -3,25 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
+	EmptyKey,
 	type FieldKey,
 	type UpPath,
 	moveToDetachedField,
 	rootFieldKey,
 } from "../core/index.js";
-import { jsonSchema, leaf } from "../domains/index.js";
+import { FieldKinds, isFlexTreeNode, type FlexTreeNode } from "../feature-libraries/index.js";
+import type { CheckoutFlexTreeView } from "../shared-tree/index.js";
+import { brand } from "../util/index.js";
 import {
-	FieldKinds,
-	FlexFieldSchema,
-	type InsertableFlexField,
-	type InsertableFlexNode,
-	SchemaBuilderBase,
-	type typeNameSymbol,
-} from "../feature-libraries/index.js";
-import type { FlexTreeView, TreeContent } from "../shared-tree/index.js";
-import { brand, type requireAssignableTo } from "../util/index.js";
+	cursorFromInsertable,
+	SchemaFactory,
+	type ValidateRecursiveSchema,
+} from "../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toStoredSchema } from "../simple-tree/toStoredSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -32,115 +36,112 @@ import { brand, type requireAssignableTo } from "../util/index.js";
  */
 export const localFieldKey: FieldKey = brand("foo");
 
-const deepBuilder = new SchemaBuilderBase(FieldKinds.required, {
-	scope: "scalable",
-	name: "sharedTree.bench: deep",
-	libraries: [jsonSchema],
-});
-
-// Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
-	foo: FlexFieldSchema.createUnsafe(FieldKinds.required, [
-		() => linkedListSchema,
-		leaf.number,
-	]),
-});
-
-const wideBuilder = new SchemaBuilderBase(FieldKinds.required, {
-	scope: "scalable",
-	name: "sharedTree.bench: wide",
-	libraries: [jsonSchema],
-});
-
-export const wideRootSchema = wideBuilder.object("WideRoot", {
-	foo: FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
-});
-
-export const wideSchema = wideBuilder.intoSchema(wideRootSchema);
-
-export const deepSchema = deepBuilder.intoSchema([linkedListSchema, leaf.number]);
+const sf = new SchemaFactory("scalable");
 
 /**
- * JS object like a deep tree.
- * Compatible with ContextuallyTypedNodeData
+ * Linked list used for performance testing deep trees.
+ * @remarks
+ * Simple-tree version of {@link deepSchema}.
  */
+export class LinkedList extends sf.objectRecursive("linkedList", {
+	foo: [() => LinkedList, sf.number],
+}) {}
+{
+	type _check = ValidateRecursiveSchema<typeof LinkedList>;
+}
+
+/**
+ * Array node used for testing the performance scalability of large arrays.
+ * @remarks
+ * Simple-tree version of {@link wideSchema}.
+ */
+export class WideRoot extends sf.array("WideRoot", sf.number) {}
+
 export interface JSDeepTree {
-	[typeNameSymbol]?: typeof linkedListSchema.name | undefined;
 	foo: JSDeepTree | number;
 }
 
-type JSDeepTree2 = InsertableFlexNode<typeof linkedListSchema>;
-type JSDeepTreeRoot2 = InsertableFlexField<typeof deepSchema.rootFieldSchema>;
-
-{
-	type _check = requireAssignableTo<JSDeepTree, JSDeepTree2>;
-	type _check2 = requireAssignableTo<JSDeepTree | number, JSDeepTreeRoot2>;
-}
-
-/**
- * JS object like a wide tree.
- * Compatible with ContextuallyTypedNodeData
- */
-export interface JSWideTree {
-	foo: number[];
-}
-
-type JSWideTreeRoot2 = InsertableFlexField<typeof wideSchema.rootFieldSchema>;
-
-{
-	type _check2 = requireAssignableTo<JSWideTree, JSWideTreeRoot2>;
-}
+export type JSWideTree = number[];
 
 export function makeJsDeepTree(depth: number, leafValue: number): JSDeepTree | number {
 	return depth === 0 ? leafValue : { foo: makeJsDeepTree(depth - 1, leafValue) };
 }
 
-export function makeDeepContent(
+export function makeDeepContentSimple(
 	depth: number,
 	leafValue: number = 1,
-): TreeContent<typeof deepSchema.rootFieldSchema> {
+): TreeSimpleContent {
 	// Implicit type conversion is needed here to make this compile.
-	const initialTree: JSDeepTreeRoot2 = makeJsDeepTree(depth, leafValue);
+	const initialTree = makeJsDeepTree(depth, leafValue);
 	return {
-		initialTree,
-		schema: deepSchema,
+		// Types do not allow implicitly constructing recursive types, so cast is required.
+		// TODO: Find a better alternative.
+		initialTree: cursorFromInsertable(LinkedList, initialTree as LinkedList),
+		schema: LinkedList,
+	};
+}
+
+export function makeDeepStoredContent(
+	depth: number,
+	leafValue: number = 1,
+): TreeStoredContent {
+	const content = makeDeepContentSimple(depth, leafValue);
+	return {
+		...content,
+		schema: toStoredSchema(content.schema),
 	};
 }
 
 /**
  *
  * @param numberOfNodes - number of nodes of the tree
- * @param endLeafValue - the value of the end leaf of the tree
+ * @param endLeafValue - the value of the end leaf of the tree. If not provided its index is used.
  * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
  */
-export function makeWideContentWithEndValue(
+export function makeWideContentWithEndValueSimple(
 	numberOfNodes: number,
-	endLeafValue: number,
-): TreeContent<typeof wideSchema.rootFieldSchema> {
+	endLeafValue?: number,
+): TreeSimpleContent {
 	// Implicit type conversion is needed here to make this compile.
-	const initialTree: JSWideTreeRoot2 = makeJsWideTreeWithEndValue(numberOfNodes, endLeafValue);
+	const initialTree = makeJsWideTreeWithEndValue(numberOfNodes, endLeafValue);
 	return {
-		initialTree,
-		schema: wideSchema,
+		initialTree: cursorFromInsertable(WideRoot, initialTree),
+		schema: WideRoot,
+	};
+}
+
+/**
+ * @param numberOfNodes - number of nodes of the tree
+ * @param endLeafValue - the value of the end leaf of the tree. If not provided its index is used.
+ * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
+ */
+export function makeWideStoredContentWithEndValue(
+	numberOfNodes: number,
+	endLeafValue?: number,
+): TreeStoredContent {
+	const content = makeWideContentWithEndValueSimple(numberOfNodes, endLeafValue);
+	return {
+		...content,
+		schema: toStoredSchema(content.schema),
 	};
 }
 
 /**
  *
  * @param numberOfNodes - number of nodes of the tree
- * @param endLeafValue - the value of the end leaf of the tree
+ * @param endLeafValue - the value of the end leaf of the tree. If not provided its index is used.
  * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
  */
 export function makeJsWideTreeWithEndValue(
 	numberOfNodes: number,
-	endLeafValue: number,
+	endLeafValue?: number,
 ): JSWideTree {
 	const numbers = [];
 	for (let index = 0; index < numberOfNodes - 1; index++) {
 		numbers.push(index);
 	}
-	numbers.push(endLeafValue);
-	return { foo: numbers };
+	numbers.push(endLeafValue ?? numberOfNodes - 1);
+	return numbers;
 }
 
 export function readDeepTreeAsJSObject(tree: JSDeepTree): { depth: number; value: number } {
@@ -158,18 +159,19 @@ export function readDeepTreeAsJSObject(tree: JSDeepTree): { depth: number; value
 	return { depth, value };
 }
 
-export function readWideTreeAsJSObject(tree: JSWideTree): { nodesCount: number; sum: number } {
+export function readWideTreeAsJSObject(nodes: JSWideTree): {
+	nodesCount: number;
+	sum: number;
+} {
 	let sum = 0;
 
-	const nodes = tree.foo;
-	assert(nodes !== undefined);
 	for (const node of nodes) {
 		sum += node;
 	}
 	return { nodesCount: nodes.length, sum };
 }
 
-export function readWideCursorTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
+export function readWideCursorTree(tree: CheckoutFlexTreeView): {
 	nodesCount: number;
 	sum: number;
 } {
@@ -187,7 +189,7 @@ export function readWideCursorTree(tree: FlexTreeView<typeof wideSchema.rootFiel
 	return { nodesCount, sum };
 }
 
-export function readDeepCursorTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
+export function readDeepCursorTree(tree: CheckoutFlexTreeView): {
 	depth: number;
 	value: number;
 } {
@@ -238,38 +240,42 @@ export function wideLeafPath(index: number): UpPath {
 			parentField: rootFieldKey,
 			parentIndex: 0,
 		},
-		parentField: localFieldKey,
+		parentField: EmptyKey,
 		parentIndex: index,
 	};
 	return path;
 }
 
-export function readWideFlexTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
+export function readWideFlexTree(tree: CheckoutFlexTreeView): {
 	nodesCount: number;
 	sum: number;
 } {
 	let sum = 0;
 	let nodesCount = 0;
 	const root = tree.flexTree;
-	const field = root.content.foo;
+	assert(root.is(FieldKinds.required));
+	const field = (root.content as FlexTreeNode).getBoxed(EmptyKey);
 	assert(field.length !== 0);
-	for (const currentNode of field) {
-		sum += currentNode;
+	assert(field.is(FieldKinds.sequence));
+	for (const currentNode of field.boxedIterator()) {
+		sum += currentNode.value as number;
 		nodesCount += 1;
 	}
 	return { nodesCount, sum };
 }
 
-export function readDeepFlexTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
+export function readDeepFlexTree(tree: CheckoutFlexTreeView): {
 	depth: number;
 	value: number;
 } {
 	let depth = 0;
-	let currentNode = tree.flexTree.content;
-	while (currentNode.is(linkedListSchema)) {
-		currentNode = currentNode.foo;
+	assert(tree.flexTree.is(FieldKinds.required));
+	let currentNode = tree.flexTree.content as FlexTreeNode | number;
+	while (isFlexTreeNode(currentNode)) {
+		const read = currentNode.getBoxed(brand("foo"));
+		assert(read.is(FieldKinds.required));
+		currentNode = read.content as FlexTreeNode;
 		depth++;
 	}
-	assert(currentNode.is(leaf.number));
-	return { depth, value: currentNode.value };
+	return { depth, value: currentNode };
 }

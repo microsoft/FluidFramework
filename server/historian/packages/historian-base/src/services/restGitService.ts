@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import type { RawAxiosRequestHeaders } from "axios";
 import * as git from "@fluidframework/gitresources";
 import {
@@ -19,10 +18,13 @@ import {
 	LatestSummaryId,
 } from "@fluidframework/server-services-client";
 import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
-import * as uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import * as winston from "winston";
-import { getCorrelationId } from "@fluidframework/server-services-utils";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	Lumberjack,
+	getGlobalTelemetryContext,
+} from "@fluidframework/server-services-telemetry";
 import { Constants, getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
 
@@ -59,7 +61,6 @@ export class RestGitService {
 		private readonly tenantId: string,
 		private readonly documentId: string,
 		private readonly cache?: ICache,
-		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		private readonly storageName?: string,
 		private readonly storageUrl?: string,
 		private readonly isEphemeralContainer?: boolean,
@@ -113,7 +114,10 @@ export class RestGitService {
 			undefined,
 			undefined,
 			undefined,
-			() => getCorrelationId(this.asyncLocalStorage) || uuid.v4(),
+			() =>
+				getGlobalTelemetryContext().getProperties().correlationId ??
+				uuid() /* getCorrelationId */,
+			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 		);
 	}
 

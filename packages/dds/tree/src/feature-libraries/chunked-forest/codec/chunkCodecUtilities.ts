@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type { TreeValue } from "../../../core/index.js";
-import { assertValidIndex, oob } from "../../../util/index.js";
+import { assertValidIndex } from "../../../util/index.js";
 import { type FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
 import type { TreeChunk } from "../chunk.js";
 

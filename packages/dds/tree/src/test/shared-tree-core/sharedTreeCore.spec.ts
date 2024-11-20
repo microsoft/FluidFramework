@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
@@ -26,6 +26,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -54,7 +55,7 @@ import { brand, disposeSymbol } from "../../util/index.js";
 import { SharedTreeTestFactory, StringArray, TestTreeProviderLite } from "../utils.js";
 
 import { TestSharedTreeCore } from "./utils.js";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 
 const enableSchemaValidation = true;
 
@@ -294,9 +295,9 @@ describe("SharedTreeCore", () => {
 		});
 
 		const sf = new SchemaFactory("0x4a6 repro");
-		const TestNode = sf.objectRecursive("test node", {
+		class TestNode extends sf.objectRecursive("test node", {
 			child: sf.optionalRecursive([() => TestNode, sf.number]),
-		});
+		}) {}
 
 		const tree2 = await factory.load(
 			dataStoreRuntime2,
@@ -308,10 +309,14 @@ describe("SharedTreeCore", () => {
 			factory.attributes,
 		);
 
-		const view1 = tree1.viewWith({ schema: TestNode, enableSchemaValidation });
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: TestNode, enableSchemaValidation }),
+		);
 		view1.initialize(new TestNode({}));
 		containerRuntimeFactory.processAllMessages();
-		const view2 = tree2.viewWith({ schema: TestNode, enableSchemaValidation });
+		const view2 = tree2.viewWith(
+			new TreeViewConfiguration({ schema: TestNode, enableSchemaValidation }),
+		);
 
 		view2.root = new TestNode({});
 		view1.root = new TestNode({});
@@ -334,16 +339,20 @@ describe("SharedTreeCore", () => {
 
 	it("Does not submit changes that were aborted in an outer transaction", async () => {
 		const provider = new TestTreeProviderLite(2);
-		const view1 = provider.trees[0].viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view1 = provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 		view1.initialize(["A", "B"]);
 		provider.processMessages();
-		const view2 = provider.trees[1].viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view2 = provider.trees[1].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 
 		const root1 = view1.root;
 		const root2 = view2.root;
@@ -374,16 +383,20 @@ describe("SharedTreeCore", () => {
 
 	it("Does not submit changes that were aborted in an inner transaction", async () => {
 		const provider = new TestTreeProviderLite(2);
-		const view1 = provider.trees[0].viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view1 = provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 		view1.initialize(["A", "B"]);
 		provider.processMessages();
-		const view2 = provider.trees[1].viewWith({
-			schema: StringArray,
-			enableSchemaValidation,
-		});
+		const view2 = provider.trees[1].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
 
 		const root1 = view1.root;
 		const root2 = view2.root;
@@ -605,36 +618,26 @@ describe("SharedTreeCore", () => {
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(machine.sequencingLog.length, 2);
 		});
+	});
 
-		it("does not leak enriched commits that are not sent", () => {
-			const enricher = new MockChangeEnricher<ModularChangeset>();
-			const machine = new MockResubmitMachine();
-			const tree = createTree([], machine, enricher);
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			});
-			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-			tree.connect({
-				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
-				objectStorage: new MockStorage(),
-			});
-			assert.equal(tree.preparedCommitsCount, 0);
-
-			// Temporarily make commit application fail
-			const disableFailure = tree.getLocalBranch().on("beforeChange", () => {
-				throw new Error("Invalid commit");
-			});
-			assert.throws(() => changeTree(tree));
-			disableFailure();
-
-			// The invalid commit has been prepared but not sent
-			assert.equal(tree.preparedCommitsCount, 1);
-
-			// Making a valid change should purge the invalid commit
-			changeTree(tree);
-			assert.equal(tree.preparedCommitsCount, 0);
+	it("throws an error if attaching during a transaction", () => {
+		const tree = createTree([]);
+		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
 		});
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		tree.getLocalBranch().startTransaction();
+		assert.throws(
+			() => {
+				tree.connect({
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+					objectStorage: new MockStorage(),
+				});
+			},
+			(e: Error) =>
+				validateAssertionError(e, /Cannot attach while a transaction is in progress/),
+		);
 	});
 
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {

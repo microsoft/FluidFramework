@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import * as path from "node:path";
 import { queue } from "async";
-import * as chalk from "chalk";
 import detectIndent from "detect-indent";
-import { readFileSync, readJsonSync, writeJson, writeJsonSync } from "fs-extra";
+import { readJsonSync, writeJson, writeJsonSync } from "fs-extra";
+import chalk from "picocolors";
 import sortPackageJson from "sort-package-json";
 
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
+import { type IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
 import { options } from "../fluidBuild/options";
-import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
 import { MonoRepo, PackageManager } from "./monoRepo";
 import {
 	ExecAsyncResult,
 	execWithErrorAsync,
-	existsSync,
 	isSameFileOrDir,
 	lookUpDirSync,
 	rimrafWithErrorAsync,
 } from "./utils";
 
+import { readFile } from "node:fs/promises";
 import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
@@ -39,12 +39,6 @@ export type FluidPackageJson = {
 	 * nyc config
 	 */
 	nyc?: any;
-
-	/**
-	 * type compatibility test configuration. This only takes effect when set in the package.json of a package. Setting
-	 * it at the root of the repo or release group has no effect.
-	 */
-	typeValidation?: ITypeValidationConfig;
 
 	/**
 	 * fluid-build config. Some properties only apply when set in the root or release group root package.json.
@@ -81,21 +75,21 @@ interface PackageDependency {
 export class Package {
 	private static packageCount: number = 0;
 	private static readonly chalkColor = [
-		chalk.default.red,
-		chalk.default.green,
-		chalk.default.yellow,
-		chalk.default.blue,
-		chalk.default.magenta,
-		chalk.default.cyan,
-		chalk.default.white,
-		chalk.default.grey,
-		chalk.default.redBright,
-		chalk.default.greenBright,
-		chalk.default.yellowBright,
-		chalk.default.blueBright,
-		chalk.default.magentaBright,
-		chalk.default.cyanBright,
-		chalk.default.whiteBright,
+		chalk.red,
+		chalk.green,
+		chalk.yellow,
+		chalk.blue,
+		chalk.magenta,
+		chalk.cyan,
+		chalk.white,
+		chalk.gray,
+		chalk.redBright,
+		chalk.greenBright,
+		chalk.yellowBright,
+		chalk.blueBright,
+		chalk.magentaBright,
+		chalk.cyanBright,
+		chalk.whiteBright,
 	];
 
 	private _packageJson: PackageJson;
@@ -227,7 +221,7 @@ export class Package {
 		const lockFileNames = ["pnpm-lock.yaml", "yarn.lock", "package-lock.json"];
 		for (const lockFileName of lockFileNames) {
 			const full = path.join(directory, lockFileName);
-			if (fs.existsSync(full)) {
+			if (existsSync(full)) {
 				return full;
 			}
 		}
@@ -236,7 +230,7 @@ export class Package {
 
 	public get installCommand(): string {
 		return this.packageManager === "pnpm"
-			? "pnpm i"
+			? "pnpm i --no-frozen-lockfile"
 			: this.packageManager === "yarn"
 				? "npm run install-strict"
 				: "npm i";
@@ -403,7 +397,7 @@ export class Packages {
 		}
 
 		const packages: Package[] = [];
-		const files = fs.readdirSync(dirFullPath, { withFileTypes: true });
+		const files = readdirSync(dirFullPath, { withFileTypes: true });
 		files.map((dirent) => {
 			if (dirent.isDirectory() && dirent.name !== "node_modules") {
 				const fullPath = path.join(dirFullPath, dirent.name);
@@ -585,7 +579,7 @@ export async function updatePackageJsonFileAsync(
 async function readPackageJsonAndIndentAsync(
 	pathToJson: string,
 ): Promise<[json: PackageJson, indent: string]> {
-	return fs.promises.readFile(pathToJson, { encoding: "utf8" }).then((contents) => {
+	return readFile(pathToJson, { encoding: "utf8" }).then((contents) => {
 		const indentation = detectIndent(contents).indent || "\t";
 		const pkgJson: PackageJson = JSON.parse(contents);
 		return [pkgJson, indentation];

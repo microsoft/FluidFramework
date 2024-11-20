@@ -20,6 +20,7 @@ export type {
 	IFluidDataStoreContext,
 	IFluidParentContext,
 	IFluidDataStoreContextDetached,
+	IPendingMessagesState,
 } from "./dataStoreContext.js";
 export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
@@ -29,6 +30,7 @@ export type {
 	IProvideFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
+	NamedFluidDataStoreRegistryEntry2,
 } from "./dataStoreRegistry.js";
 export { IFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export type {
@@ -47,7 +49,9 @@ export type {
 	IEnvelope,
 	IInboundSignalMessage,
 	InboundAttachMessage,
-	ISignalEnvelope,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
 } from "./protocol.js";
 export type {
 	CreateChildSummarizerNodeParam,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -74,7 +74,9 @@ describe("rebaseBranch", () => {
 	// Commit "1" is the common ancestor of the branch with head commit "3" and the branch with head commit "5".
 	// Commit "2" is in parentheses and is the target commit of the rebase operation.
 
-	it("fails if branches are disjoint", () => {
+	// Disabled because the corresponding assert was too expensive.
+	// See comments in `rebaseBranch` for more information.
+	it.skip("fails if branches are disjoint", () => {
 		// 1 ─ 2
 		// 3
 		const n1 = newCommit(1);

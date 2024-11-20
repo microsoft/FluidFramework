@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import { fail } from "../util/index.js";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
@@ -34,13 +35,28 @@ export class Conflict extends Merged {
 	}
 }
 
+export type ObjectTransform = (item: object) => object;
+
+export function assertStructuralEquality<T>(
+	actual: T,
+	expected: T,
+	transform: ObjectTransform = identityTransform,
+): void {
+	const diff = merge(actual, expected, transform);
+	assert(!hasConflict(diff), "Objects are not structurally equal");
+}
+
 // TODO: In theory we should also look at object fields on maps and arrays.
 /**
  * Utility function for comparing two objects.
  * Supports data that could be roundtrip through `JSON.stringify`/`JSON.parse`.
  * @returns An object that represents a merged view of the given objects.
  */
-export function merge<T>(lhs: T, rhs: T): Conflicted | Conflict | ConflictedMap | T {
+export function merge<T>(
+	lhs: T,
+	rhs: T,
+	transform: ObjectTransform = identityTransform,
+): Conflicted | Conflict | ConflictedMap | T {
 	if (hasConflict(lhs) || hasConflict(rhs)) {
 		fail("This function does not accept its output type as an input type");
 	}
@@ -65,39 +81,46 @@ export function merge<T>(lhs: T, rhs: T): Conflicted | Conflict | ConflictedMap 
 		return new Conflict(lhs, rhs);
 	}
 
+	const lhsT = transform(lhs);
+	const rhsT = transform(rhs);
+
 	// Special case IFluidHandles, comparing them only by their absolutePath
 	// Detect them using JavaScript feature detection pattern: they have a `IFluidHandle`
 	// field that is set to the parent object.
 	{
-		const aHandle = lhs as unknown as { IFluidHandle?: unknown; absolutePath?: string };
-		const bHandle = rhs as unknown as { IFluidHandle?: unknown; absolutePath?: string };
+		const aHandle = lhsT as unknown as { IFluidHandle?: unknown; absolutePath?: string };
+		const bHandle = rhsT as unknown as { IFluidHandle?: unknown; absolutePath?: string };
 		if (aHandle.IFluidHandle === aHandle) {
 			if (bHandle.IFluidHandle !== bHandle) {
-				return new Conflict(lhs, rhs);
+				return new Conflict(lhsT, rhsT);
 			}
-			return aHandle.absolutePath === bHandle.absolutePath ? lhs : new Conflict(lhs, rhs);
+			return aHandle.absolutePath === bHandle.absolutePath ? lhsT : new Conflict(lhsT, rhsT);
 		}
 	}
 
-	if (Array.isArray(lhs) !== Array.isArray(rhs)) {
-		return new Conflict(lhs, rhs);
+	if (Array.isArray(lhsT) !== Array.isArray(rhsT)) {
+		return new Conflict(lhsT, rhsT);
 	}
-	if (Array.isArray(lhs) && Array.isArray(rhs)) {
-		return mergeArrays(lhs, rhs);
-	}
-
-	if (lhs instanceof Map !== rhs instanceof Map) {
-		return new Conflict(lhs, rhs);
+	if (Array.isArray(lhsT) && Array.isArray(rhsT)) {
+		return mergeArrays(lhsT, rhsT, transform);
 	}
 
-	if (lhs instanceof Map && rhs instanceof Map) {
-		return mergeMaps(lhs, rhs);
+	if (lhsT instanceof Map !== rhsT instanceof Map) {
+		return new Conflict(lhsT, rhsT);
 	}
 
-	return mergeObjects(lhs, rhs);
+	if (lhsT instanceof Map && rhsT instanceof Map) {
+		return mergeMaps(lhsT, rhsT, transform);
+	}
+
+	return mergeObjects(lhsT, rhsT, transform);
 }
 
-function mergeObjects(lhs: object, rhs: object): object | Conflicted {
+function mergeObjects(
+	lhs: object,
+	rhs: object,
+	transform: ObjectTransform,
+): object | Conflicted {
 	// Fluid Serialization (like Json) only keeps enumerable properties, so we can ignore non-enumerable ones.
 	const lhsKeys = Object.keys(lhs);
 	const rhsKeys = Object.keys(rhs);
@@ -120,7 +143,7 @@ function mergeObjects(lhs: object, rhs: object): object | Conflicted {
 			if (aSelf === true && bSelf === true) {
 				selfKeys.push(key);
 			}
-			const d = merge(lhsObj[key], rhsObj[key]);
+			const d = merge(lhsObj[key], rhsObj[key], transform);
 			same = same && !hasConflict(d);
 			out[key] = d;
 		}
@@ -138,16 +161,20 @@ function mergeObjects(lhs: object, rhs: object): object | Conflicted {
 	return final;
 }
 
-function mergeArrays(lhs: unknown[], rhs: unknown[]): unknown[] | Conflicted {
+function mergeArrays(
+	lhs: unknown[],
+	rhs: unknown[],
+	transform: ObjectTransform,
+): unknown[] | Conflicted {
 	let same = true;
 	const out = [];
 	for (let i = 0; i < lhs.length; i += 1) {
-		const d = merge(lhs[i], rhs[i]);
+		const d = merge(lhs[i], rhs[i], transform);
 		same = same && !hasConflict(d);
 		out.push(d);
 	}
 	for (let i = lhs.length; i < rhs.length; i += 1) {
-		const d = merge(lhs[i], rhs[i]);
+		const d = merge(lhs[i], rhs[i], transform);
 		same = same && !hasConflict(d);
 		out.push(d);
 	}
@@ -157,6 +184,7 @@ function mergeArrays(lhs: unknown[], rhs: unknown[]): unknown[] | Conflicted {
 function mergeMaps(
 	lhs: Map<unknown, unknown>,
 	rhs: Map<unknown, unknown>,
+	transform: ObjectTransform,
 ): Map<unknown, unknown> {
 	// Fluid Serialization (like Json) only keeps enumerable properties, so we can ignore non-enumerable ones.
 	const lhsKeys = lhs.keys();
@@ -178,7 +206,7 @@ function mergeMaps(
 			if (aSelf === true && bSelf === true) {
 				selfKeys.push(key);
 			}
-			const d = merge(lhs.get(key), rhs.get(key));
+			const d = merge(lhs.get(key), rhs.get(key), transform);
 			same = same && !hasConflict(d);
 			out.set(key, d);
 		}
@@ -198,4 +226,8 @@ function mergeMaps(
 
 function hasConflict(a: unknown): boolean {
 	return a instanceof Merged || a instanceof ConflictedMap;
+}
+
+function identityTransform(item: object): object {
+	return item;
 }

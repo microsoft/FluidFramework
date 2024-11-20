@@ -34,6 +34,96 @@ declare type old_as_current_for_Class_BaseContainerRuntimeFactory = requireAssig
 declare type current_as_old_for_Class_BaseContainerRuntimeFactory = requireAssignableTo<TypeOnly<current.BaseContainerRuntimeFactory>, TypeOnly<old.BaseContainerRuntimeFactory>>
 
 /*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_ContainerRuntimeFactoryWithDefaultDataStore": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_ContainerRuntimeFactoryWithDefaultDataStore": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_DataObject": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_DataObject = requireAssignableTo<TypeOnly<old.DataObject>, TypeOnly<current.DataObject>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_DataObject": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_DataObject = requireAssignableTo<TypeOnly<current.DataObject>, TypeOnly<old.DataObject>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_DataObjectFactory": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<old.DataObjectFactory<never>>, TypeOnly<current.DataObjectFactory<never>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_DataObjectFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<current.DataObjectFactory<never>>, TypeOnly<old.DataObjectFactory<never>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_PureDataObject": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_PureDataObject = requireAssignableTo<TypeOnly<old.PureDataObject>, TypeOnly<current.PureDataObject>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_PureDataObject": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_PureDataObject = requireAssignableTo<TypeOnly<current.PureDataObject>, TypeOnly<old.PureDataObject>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_PureDataObjectFactory": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<old.PureDataObjectFactory<never>>, TypeOnly<current.PureDataObjectFactory<never>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_PureDataObjectFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<current.PureDataObjectFactory<never>>, TypeOnly<old.PureDataObjectFactory<never>>>
+
+/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -41,6 +131,51 @@ declare type current_as_old_for_Class_BaseContainerRuntimeFactory = requireAssig
  * "ClassStatics_BaseContainerRuntimeFactory": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_BaseContainerRuntimeFactory = requireAssignableTo<TypeOnly<typeof current.BaseContainerRuntimeFactory>, TypeOnly<typeof old.BaseContainerRuntimeFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_ContainerRuntimeFactoryWithDefaultDataStore": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<typeof current.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<typeof old.ContainerRuntimeFactoryWithDefaultDataStore>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_DataObject": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_DataObject = requireAssignableTo<TypeOnly<typeof current.DataObject>, TypeOnly<typeof old.DataObject>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_DataObjectFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_DataObjectFactory = requireAssignableTo<TypeOnly<typeof current.DataObjectFactory>, TypeOnly<typeof old.DataObjectFactory>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_PureDataObject": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_PureDataObject = requireAssignableTo<TypeOnly<typeof current.PureDataObject>, TypeOnly<typeof old.PureDataObject>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_PureDataObjectFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_PureDataObjectFactory = requireAssignableTo<TypeOnly<typeof current.PureDataObjectFactory>, TypeOnly<typeof old.PureDataObjectFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -65,33 +200,6 @@ declare type current_as_old_for_Interface_BaseContainerRuntimeFactoryProps = req
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_ContainerRuntimeFactoryWithDefaultDataStore": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_ContainerRuntimeFactoryWithDefaultDataStore": {"backCompat": false}
- */
-declare type current_as_old_for_Class_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_ContainerRuntimeFactoryWithDefaultDataStore": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_ContainerRuntimeFactoryWithDefaultDataStore = requireAssignableTo<TypeOnly<typeof current.ContainerRuntimeFactoryWithDefaultDataStore>, TypeOnly<typeof old.ContainerRuntimeFactoryWithDefaultDataStore>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps = requireAssignableTo<TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>, TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>>
@@ -104,60 +212,6 @@ declare type old_as_current_for_Interface_ContainerRuntimeFactoryWithDefaultData
  * "Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps = requireAssignableTo<TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>, TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_DataObject": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_DataObject = requireAssignableTo<TypeOnly<old.DataObject>, TypeOnly<current.DataObject>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_DataObject": {"backCompat": false}
- */
-declare type current_as_old_for_Class_DataObject = requireAssignableTo<TypeOnly<current.DataObject>, TypeOnly<old.DataObject>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_DataObject": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_DataObject = requireAssignableTo<TypeOnly<typeof current.DataObject>, TypeOnly<typeof old.DataObject>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_DataObjectFactory": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<old.DataObjectFactory<any>>, TypeOnly<current.DataObjectFactory<any>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_DataObjectFactory": {"backCompat": false}
- */
-declare type current_as_old_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<current.DataObjectFactory<any>>, TypeOnly<old.DataObjectFactory<any>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_DataObjectFactory": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_DataObjectFactory = requireAssignableTo<TypeOnly<typeof current.DataObjectFactory>, TypeOnly<typeof old.DataObjectFactory>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -194,66 +248,3 @@ declare type old_as_current_for_Interface_IDataObjectProps = requireAssignableTo
  * "Interface_IDataObjectProps": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IDataObjectProps = requireAssignableTo<TypeOnly<current.IDataObjectProps>, TypeOnly<old.IDataObjectProps>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_PureDataObject": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_PureDataObject = requireAssignableTo<TypeOnly<old.PureDataObject>, TypeOnly<current.PureDataObject>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_PureDataObject": {"backCompat": false}
- */
-declare type current_as_old_for_Class_PureDataObject = requireAssignableTo<TypeOnly<current.PureDataObject>, TypeOnly<old.PureDataObject>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_PureDataObject": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_PureDataObject = requireAssignableTo<TypeOnly<typeof current.PureDataObject>, TypeOnly<typeof old.PureDataObject>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_PureDataObjectFactory": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<old.PureDataObjectFactory<any>>, TypeOnly<current.PureDataObjectFactory<any>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_PureDataObjectFactory": {"backCompat": false}
- */
-declare type current_as_old_for_Class_PureDataObjectFactory = requireAssignableTo<TypeOnly<current.PureDataObjectFactory<any>>, TypeOnly<old.PureDataObjectFactory<any>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_PureDataObjectFactory": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_PureDataObjectFactory = requireAssignableTo<TypeOnly<typeof current.PureDataObjectFactory>, TypeOnly<typeof old.PureDataObjectFactory>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_createDataObjectKind": {"backCompat": false}
- */
-declare type current_as_old_for_Function_createDataObjectKind = requireAssignableTo<TypeOnly<typeof current.createDataObjectKind>, TypeOnly<typeof old.createDataObjectKind>>

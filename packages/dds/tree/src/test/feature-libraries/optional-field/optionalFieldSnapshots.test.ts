@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
+import path from "node:path";
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -16,7 +16,7 @@ import {
 import { brand } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { createSnapshotCompressor } from "../../snapshots/testTreeScenarios.js";
+import { createSnapshotCompressor } from "../../snapshots/snapshotTestScenarios.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { Change } from "./optionalFieldUtils.js";
 import { TestChange } from "../../testChange.js";

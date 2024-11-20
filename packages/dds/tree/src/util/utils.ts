@@ -48,22 +48,9 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 export const clone = structuredClone;
 
 /**
- * @internal
  */
 export function fail(message: string): never {
 	throw new Error(message);
-}
-
-/**
- * Use this function to assert that an array index is not out-of-bounds.
- * @example
- * ```ts
- * // We know that `numberArray` has four elements in it, so this is safe.
- * const n: number = numberArray[3] ?? oob();
- * ```
- */
-export function oob(): never {
-	return fail("Array index is out of bounds");
 }
 
 /**
@@ -93,6 +80,44 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
 }
 
 /**
+ * Returns the last element of an array, or `undefined` if the array has no elements.
+ * @param array - The array to get the last element from.
+ * @remarks
+ * If the type of the array has been narrowed by e.g. {@link hasSome | hasSome(array)} or {@link hasSingle | hasOne(array)} then the return type will be `T` rather than `T | undefined`.
+ */
+export function getLast<T>(array: readonly [T, ...T[]]): T;
+export function getLast<T>(array: { [index: number]: T; length: number }): T | undefined;
+export function getLast<T>(array: { [index: number]: T; length: number }): T | undefined {
+	return array[array.length - 1];
+}
+
+/**
+ * Returns true if and only if the given array has at least one element.
+ * @param array - The array to check.
+ * @remarks
+ * If `array` contains at least one element, its type will be narrowed and can benefit from improved typing from e.g. `array[0]` and {@link getLast | getLast(array)}.
+ * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options, since the return type of `array[0]` will be `T` rather than `T | undefined`.
+ */
+export function hasSome<T>(array: T[]): array is [T, ...T[]];
+export function hasSome<T>(array: readonly T[]): array is readonly [T, ...T[]];
+export function hasSome<T>(array: readonly T[]): array is [T, ...T[]] {
+	return array.length > 0;
+}
+
+/**
+ * Returns true if and only if the given array has exactly one element.
+ * @param array - The array to check.
+ * @remarks
+ * If `array` contains exactly one element, its type will be narrowed and can benefit from improved typing from e.g. `array[0]` and {@link getLast | getLast(array)}.
+ * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options, since the return type of `array[0]` will be `T` rather than `T | undefined`.
+ */
+export function hasSingle<T>(array: T[]): array is [T];
+export function hasSingle<T>(array: readonly T[]): array is readonly [T];
+export function hasSingle<T>(array: readonly T[]): array is [T] {
+	return array.length === 1;
+}
+
+/**
  * Compares two sets using callbacks.
  * Early returns on first false comparison.
  *
@@ -118,18 +143,26 @@ export function compareSets<T>({
 }): boolean {
 	for (const item of a.keys()) {
 		if (!b.has(item)) {
-			if (aExtra && !aExtra(item)) {
+			if (aExtra !== undefined) {
+				if (!aExtra(item)) {
+					return false;
+				}
+			} else {
 				return false;
 			}
 		} else {
-			if (same && !same(item)) {
+			if (same !== undefined && !same(item)) {
 				return false;
 			}
 		}
 	}
 	for (const item of b.keys()) {
 		if (!a.has(item)) {
-			if (bExtra && !bExtra(item)) {
+			if (bExtra !== undefined) {
+				if (!bExtra(item)) {
+					return false;
+				}
+			} else {
 				return false;
 			}
 		}
@@ -218,34 +251,52 @@ export function find<T>(iterable: Iterable<T>, predicate: (t: T) => boolean): T 
 }
 
 /**
+ * Counts the number of elements in the given iterable.
+ * @param iterable - the iterable to enumerate
+ * @returns the number of elements that were iterated after exhausting the iterable
+ */
+export function count(iterable: Iterable<unknown>): number {
+	let n = 0;
+	for (const _ of iterable) {
+		n += 1;
+	}
+	return n;
+}
+
+/**
  * Use for Json compatible data.
  *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @typeparam TExtra - Type permitted in addition to the normal JSON types.
+ * Commonly used for to allow {@link @fluidframework/core-interfaces#IFluidHandle} within the otherwise JSON compatible content.
+ *
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @internal
+ * @alpha
  */
-export type JsonCompatible =
+export type JsonCompatible<TExtra = never> =
 	| string
 	| number
 	| boolean
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
-	| JsonCompatible[]
-	| JsonCompatibleObject;
+	| JsonCompatible<TExtra>[]
+	| JsonCompatibleObject<TExtra>
+	| TExtra;
 
 /**
  * Use for Json object compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @internal
+ * @alpha
  */
-export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
+export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompatible<TExtra> };
 
 /**
  * Use for readonly view of Json compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
  */
 export type JsonCompatibleReadOnly =
@@ -259,8 +310,8 @@ export type JsonCompatibleReadOnly =
 
 /**
  * Use for readonly view of Json compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
+ * @remarks
+ * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
  */
 export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompatibleReadOnly };
@@ -398,7 +449,6 @@ export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 
 /**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
- * @internal
  */
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	if (set === undefined) {
@@ -415,7 +465,6 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 /**
  * Type with a name describing what it is.
  * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
- * @internal
  */
 export interface Named<TName> {
 	readonly name: TName;
@@ -423,7 +472,6 @@ export interface Named<TName> {
 
 /**
  * Order {@link Named} objects by their name.
- * @internal
  */
 export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
 	if (a.name < b.name) {
@@ -439,7 +487,6 @@ export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
  * Placeholder for `Symbol.dispose`.
  * @privateRemarks
  * TODO: replace this with `Symbol.dispose` when it is available or make it a valid polyfill.
- * @internal
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
@@ -451,7 +498,6 @@ export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder")
  * {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
  *
  * Once this is replaced with TypeScript's Disposable, core-utils/IDisposable can extend it, bringing the APIs into a reasonable alignment.
- * @internal
  */
 export interface IDisposable {
 	/**

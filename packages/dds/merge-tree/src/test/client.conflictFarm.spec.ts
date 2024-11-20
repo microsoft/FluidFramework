@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
+import { describeFuzz, makeRandom, StressMode } from "@fluid-private/stochastic-test-utils";
 
 import {
 	IConfigRange,
@@ -13,6 +13,7 @@ import {
 	doOverRange,
 	generateClientNames,
 	insertAtRefPos,
+	obliterateRange,
 	removeRange,
 	runMergeTreeOperationRunner,
 } from "./mergeTreeOperationRunner.js";
@@ -26,13 +27,14 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
 const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
 
 export const debugOptions: IConflictFarmConfig = {
-	minLength: { min: 1, max: 1 },
-	clients: { min: 3, max: 3 },
-	opsPerRoundRange: { min: 1, max: 100 },
-	rounds: 1000,
+	minLength: { min: 1, max: 512 },
+	clients: { min: 1, max: 8 },
+	opsPerRoundRange: { min: 1, max: 128 },
+	rounds: 8,
 	operations: allOperations,
 	incrementalLog: true,
-	growthFunc: (input: number) => input + 1,
+	growthFunc: (input: number) => input * 2,
+	// resultsFilePostfix: `conflict-farm-with-obliterate-2.3.0.json`,
 };
 
 export const defaultOptions: IConflictFarmConfig = {
@@ -67,39 +69,64 @@ const clientNames = generateClientNames();
 
 function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): void {
 	doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
-		it(`ConflictFarm_${minLength}`, async () => {
-			const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
-			const testOpts = { ...opts };
-			if (extraSeed) {
-				testOpts.resultsFilePostfix ??= "";
-				testOpts.resultsFilePostfix += extraSeed;
-			}
+		for (const { name, config } of [
+			{
+				name: "applyOpsDuringGeneration",
+				config: { ...opts, applyOpDuringGeneration: true },
+			},
+			{
+				name: "obliterate with number endpoints",
+				config: {
+					...opts,
+					operations: [...opts.operations, obliterateRange],
+				},
+			},
+			// TODO: AB#15630
+			// {
+			// 	name: "obliterate with sided endpoints",
+			// 	config: {
+			// 		...opts,
+			// 		operations: [...opts.operations, obliterateRange, obliterateRangeSided],
+			// 	},
+			// },
+		])
+			it(`${name}: ConflictFarm_${minLength}`, async () => {
+				const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
 
-			const clients: TestClient[] = [new TestClient()];
-			for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
+				const clients: TestClient[] = [
+					new TestClient({
+						mergeTreeEnableObliterate: true,
+						mergeTreeEnableSidedObliterate: true,
+						mergeTreeEnableAnnotateAdjust: true,
+					}),
+				];
+				for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 
-			let seq = 0;
-			while (clients.length < opts.clients.max) {
-				for (const c of clients) c.updateMinSeq(seq);
+				let seq = 0;
+				while (clients.length < config.clients.max) {
+					for (const c of clients) c.updateMinSeq(seq);
 
-				// Add double the number of clients each iteration
-				const targetClients = Math.max(opts.clients.min, opts.growthFunc(clients.length));
-				for (let cc = clients.length; cc < targetClients; cc++) {
-					const newClient = await TestClient.createFromClientSnapshot(
-						clients[0],
-						clientNames[cc],
+					// Add double the number of clients each iteration
+					const targetClients = Math.max(
+						config.clients.min,
+						config.growthFunc(clients.length),
 					);
-					clients.push(newClient);
-				}
+					for (let cc = clients.length; cc < targetClients; cc++) {
+						const newClient = await TestClient.createFromClientSnapshot(
+							clients[0],
+							clientNames[cc],
+						);
+						clients.push(newClient);
+					}
 
-				seq = runMergeTreeOperationRunner(random, seq, clients, minLength, opts);
-			}
-		}).timeout(30 * 10000);
+					seq = runMergeTreeOperationRunner(random, seq, clients, minLength, config);
+				}
+			}).timeout(30 * 10000);
 	});
 }
 
-describeFuzz("MergeTree.Client", ({ testCount, isStress }) => {
-	const opts = isStress ? stressOptions : defaultOptions;
+describeFuzz("MergeTree.Client", ({ testCount, stressMode }) => {
+	const opts = stressMode === StressMode.Short ? defaultOptions : stressOptions;
 	// defaultOptions;
 	// debugOptions;
 	// longOptions;

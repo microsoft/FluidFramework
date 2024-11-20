@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { oob } from "./utils.js";
+import { oob } from "@fluidframework/core-utils/internal";
 
 /**
  * A map keyed on integers allowing reading and writing contiguous ranges of integer keys.
@@ -20,8 +20,6 @@ export interface RangeEntry<T> {
 
 /**
  * The result of a query about a range of keys.
- *
- * @internal
  */
 export interface RangeQueryResult<T> {
 	/**

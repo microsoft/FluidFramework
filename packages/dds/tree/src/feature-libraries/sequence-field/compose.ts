@@ -34,6 +34,7 @@ import {
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
+	type Attach,
 	type CellMark,
 	type Changeset,
 	type Detach,
@@ -62,6 +63,7 @@ import {
 	isImpactfulCellRename,
 	isNewAttach,
 	isNoopMark,
+	isRename,
 	markEmptiesCells,
 	markFillsCells,
 	markHasCellEffect,
@@ -179,8 +181,36 @@ function composeMarksIgnoreChild(
 	newMark: Mark,
 	moveEffects: MoveEffectTable,
 ): Mark {
+	if (isNoopMark(baseMark)) {
+		return newMark;
+	} else if (isNoopMark(newMark)) {
+		return baseMark;
+	}
+
+	if (isRename(baseMark) && isRename(newMark)) {
+		return { ...baseMark, idOverride: newMark.idOverride };
+	} else if (isRename(baseMark)) {
+		assert(
+			isAttach(newMark) || isAttachAndDetachEffect(newMark),
+			0x9f1 /* Unexpected mark type */,
+		);
+		return { ...newMark, cellId: baseMark.cellId };
+	} else if (isRename(newMark)) {
+		assert(
+			isDetach(baseMark) || isAttachAndDetachEffect(baseMark),
+			0x9f2 /* Unexpected mark type */,
+		);
+		return isDetach(baseMark)
+			? { ...baseMark, idOverride: newMark.idOverride }
+			: { ...baseMark, detach: { ...baseMark.detach, idOverride: newMark.idOverride } };
+	}
+
 	if (isImpactfulCellRename(newMark)) {
 		const newAttachAndDetach = asAttachAndDetach(newMark);
+		assert(
+			newAttachAndDetach.cellId !== undefined,
+			0x9f3 /* Impactful cell rename must target empty cell */,
+		);
 		const newDetachRevision = newAttachAndDetach.detach.revision;
 		if (markEmptiesCells(baseMark)) {
 			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
@@ -241,31 +271,37 @@ function composeMarksIgnoreChild(
 		}
 
 		if (isImpactfulCellRename(baseMark)) {
+			assert(
+				baseMark.cellId !== undefined,
+				0x9f4 /* Impactful cell rename must target empty cell */,
+			);
 			const baseAttachAndDetach = asAttachAndDetach(baseMark);
 			const newOutputId = getOutputCellId(newAttachAndDetach);
+
+			const originalAttach = { ...baseAttachAndDetach.attach };
+			const finalDetach = { ...newAttachAndDetach.detach };
+
+			handleMovePivot(baseMark.count, originalAttach, finalDetach, moveEffects);
 
 			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
 				return { count: baseAttachAndDetach.count, cellId: baseAttachAndDetach.cellId };
 			}
 
 			// `newMark`'s attach portion cancels with `baseMark`'s detach portion.
-			const originalAttach = { ...baseAttachAndDetach.attach };
-			const finalDetach = { ...newAttachAndDetach.detach };
 			const detachRevision = finalDetach.revision;
 			if (detachRevision !== undefined) {
 				finalDetach.revision = detachRevision;
 			}
 
-			return normalizeCellRename({
-				type: "AttachAndDetach",
-				cellId: baseMark.cellId,
-				count: baseMark.count,
-				attach: originalAttach,
-				detach: finalDetach,
-			});
+			return normalizeCellRename(baseMark.cellId, baseMark.count, originalAttach, finalDetach);
 		}
 
-		return normalizeCellRename(newAttachAndDetach);
+		return normalizeCellRename(
+			newAttachAndDetach.cellId,
+			newAttachAndDetach.count,
+			newAttachAndDetach.attach,
+			newAttachAndDetach.detach,
+		);
 	}
 	if (isImpactfulCellRename(baseMark)) {
 		const baseAttachAndDetach = asAttachAndDetach(baseMark);
@@ -324,11 +360,6 @@ function composeMarksIgnoreChild(
 	}
 
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
-		if (isNoopMark(baseMark)) {
-			return newMark;
-		} else if (isNoopMark(newMark)) {
-			return baseMark;
-		}
 		return createNoopMark(newMark.count, undefined, getInputCellId(baseMark));
 	} else if (!markHasCellEffect(baseMark)) {
 		return newMark;
@@ -341,82 +372,81 @@ function composeMarksIgnoreChild(
 		const attach = extractMarkEffect(baseMark);
 		const detach = extractMarkEffect(newMark);
 
-		if (isMoveIn(attach) && isMoveOut(detach)) {
-			const finalSource = getEndpoint(attach);
-			const finalDest = getEndpoint(detach);
-
-			setEndpoint(
-				moveEffects,
-				CrossFieldTarget.Source,
-				finalSource,
-				baseMark.count,
-				finalDest,
-			);
-
-			const truncatedEndpoint1 = getTruncatedEndpointForInner(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				attach.revision,
-				attach.id,
-				baseMark.count,
-			);
-
-			if (truncatedEndpoint1 !== undefined) {
-				setTruncatedEndpoint(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					finalDest,
-					baseMark.count,
-					truncatedEndpoint1,
-				);
-			}
-
-			setEndpoint(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				finalDest,
-				baseMark.count,
-				finalSource,
-			);
-
-			const truncatedEndpoint2 = getTruncatedEndpointForInner(
-				moveEffects,
-				CrossFieldTarget.Source,
-				detach.revision,
-				detach.id,
-				baseMark.count,
-			);
-
-			if (truncatedEndpoint2 !== undefined) {
-				setTruncatedEndpoint(
-					moveEffects,
-					CrossFieldTarget.Source,
-					finalSource,
-					baseMark.count,
-					truncatedEndpoint2,
-				);
-			}
-
-			// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
-			// so we remove it as a normalization.
-			delete attach.finalEndpoint;
-			delete detach.finalEndpoint;
-		}
+		handleMovePivot(baseMark.count, attach, detach, moveEffects);
 
 		if (areEqualCellIds(getOutputCellId(newMark), baseMark.cellId)) {
 			// The output and input cell IDs are the same, so this mark has no effect.
 			return { count: baseMark.count, cellId: baseMark.cellId };
 		}
-		return normalizeCellRename({
-			type: "AttachAndDetach",
-			cellId: baseMark.cellId,
-			count: baseMark.count,
-			attach,
-			detach,
-		});
+		return normalizeCellRename(baseMark.cellId, baseMark.count, attach, detach);
 	} else {
 		const length = baseMark.count;
 		return createNoopMark(length, undefined);
+	}
+}
+
+/**
+ * Checks if `baseAttach` and `newDetach` are both moves, and if so updates their move endpoints as appropriate,
+ * and removes their `finalEndpoint` endpoint fields. Note that can mutate `baseAttach` and `newDetach`.
+ * If the effects are not both moves this function does nothing.
+ * @param count - The number of cells targeted
+ * @param baseAttach - The base attach effect at this location
+ * @param newDetach - The new detach effect at this location
+ */
+function handleMovePivot(
+	count: number,
+	baseAttach: Attach,
+	newDetach: Detach,
+	moveEffects: MoveEffectTable,
+): void {
+	if (isMoveIn(baseAttach) && isMoveOut(newDetach)) {
+		const finalSource = getEndpoint(baseAttach);
+		const finalDest = getEndpoint(newDetach);
+
+		setEndpoint(moveEffects, CrossFieldTarget.Source, finalSource, count, finalDest);
+
+		const truncatedEndpoint1 = getTruncatedEndpointForInner(
+			moveEffects,
+			CrossFieldTarget.Destination,
+			baseAttach.revision,
+			baseAttach.id,
+			count,
+		);
+
+		if (truncatedEndpoint1 !== undefined) {
+			setTruncatedEndpoint(
+				moveEffects,
+				CrossFieldTarget.Destination,
+				finalDest,
+				count,
+				truncatedEndpoint1,
+			);
+		}
+
+		setEndpoint(moveEffects, CrossFieldTarget.Destination, finalDest, count, finalSource);
+
+		const truncatedEndpoint2 = getTruncatedEndpointForInner(
+			moveEffects,
+			CrossFieldTarget.Source,
+			newDetach.revision,
+			newDetach.id,
+			count,
+		);
+
+		if (truncatedEndpoint2 !== undefined) {
+			setTruncatedEndpoint(
+				moveEffects,
+				CrossFieldTarget.Source,
+				finalSource,
+				count,
+				truncatedEndpoint2,
+			);
+		}
+
+		// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
+		// so we remove it as a normalization.
+		delete baseAttach.finalEndpoint;
+		delete newDetach.finalEndpoint;
 	}
 }
 
@@ -552,15 +582,18 @@ export class ComposeQueue {
 		}
 	}
 
-	private dequeueBase(length: number = Infinity): ComposeMarks {
+	private dequeueBase(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const baseMark = this.baseMarks.dequeueUpTo(length);
 		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
+		if (movedChanges !== undefined) {
+			this.moveEffects.onMoveIn(movedChanges);
+		}
 
 		const newMark = createNoopMark(baseMark.count, movedChanges, getOutputCellId(baseMark));
 		return { baseMark, newMark };
 	}
 
-	private dequeueNew(length: number = Infinity): ComposeMarks {
+	private dequeueNew(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const newMark = this.newMarks.dequeueUpTo(length);
 		const baseMark = createNoopMark(newMark.count, undefined, getInputCellId(newMark));
 

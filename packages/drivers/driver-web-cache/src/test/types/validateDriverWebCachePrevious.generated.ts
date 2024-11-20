@@ -43,6 +43,15 @@ declare type current_as_old_for_Class_FluidCache = requireAssignableTo<TypeOnly<
 declare type current_as_old_for_ClassStatics_FluidCache = requireAssignableTo<TypeOnly<typeof current.FluidCache>, TypeOnly<typeof old.FluidCache>>
 
 /*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_deleteFluidCacheIndexDbInstance": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_deleteFluidCacheIndexDbInstance = requireAssignableTo<TypeOnly<typeof current.deleteFluidCacheIndexDbInstance>, TypeOnly<typeof old.deleteFluidCacheIndexDbInstance>>
+
+/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -59,12 +68,3 @@ declare type old_as_current_for_Interface_FluidCacheConfig = requireAssignableTo
  * "Interface_FluidCacheConfig": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_FluidCacheConfig = requireAssignableTo<TypeOnly<current.FluidCacheConfig>, TypeOnly<old.FluidCacheConfig>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_deleteFluidCacheIndexDbInstance": {"backCompat": false}
- */
-declare type current_as_old_for_Function_deleteFluidCacheIndexDbInstance = requireAssignableTo<TypeOnly<typeof current.deleteFluidCacheIndexDbInstance>, TypeOnly<typeof old.deleteFluidCacheIndexDbInstance>>

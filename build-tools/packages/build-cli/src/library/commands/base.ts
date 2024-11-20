@@ -5,8 +5,8 @@
 
 import { Command, Flags, Interfaces } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
-import type { PrettyPrintableError } from "@oclif/core/lib/interfaces";
-import chalk from "chalk";
+import type { PrettyPrintableError } from "@oclif/core/errors";
+import chalk from "picocolors";
 
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { CommandLogger } from "../../logging.js";
@@ -46,9 +46,6 @@ export abstract class BaseCommand<T extends typeof Command>
 	 * The flags defined on the base class.
 	 */
 	static readonly baseFlags = {
-		root: rootPathFlag({
-			helpGroup: "GLOBAL",
-		}),
 		verbose: Flags.boolean({
 			char: "v",
 			description: "Enable verbose logging.",
@@ -63,6 +60,18 @@ export abstract class BaseCommand<T extends typeof Command>
 			exclusive: ["verbose"],
 			required: false,
 			default: false,
+		}),
+		root: Flags.custom({
+			description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
+			env: "_FLUID_ROOT_",
+			hidden: true,
+		})(),
+		flubConfig: Flags.file({
+			description: `A path to a flub config file. If this is not provided, it will look up the directory tree to find the closest config file.`,
+			required: false,
+			exists: true,
+			hidden: true,
+			helpGroup: "GLOBAL",
 		}),
 		timer: Flags.boolean({
 			default: false,
@@ -137,12 +146,9 @@ export abstract class BaseCommand<T extends typeof Command>
 	 */
 	async getContext(): Promise<Context> {
 		if (this._context === undefined) {
-			const resolvedRoot = await (this.flags.root ?? getResolvedFluidRoot());
+			const resolvedRoot = await getResolvedFluidRoot();
 			const gitRepo = new GitRepo(resolvedRoot);
 			const branch = await gitRepo.getCurrentBranchName();
-
-			this.verbose(`Repo: ${resolvedRoot}`);
-			this.verbose(`Branch: ${branch}`);
 
 			this._context = new Context(gitRepo, "microsoft/FluidFramework", branch);
 		}
@@ -273,7 +279,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	 */
 	public verbose(message: string | Error | undefined): void {
 		if (this.flags.verbose === true) {
-			const color = typeof message === "string" ? chalk.grey : chalk.red;
+			const color = typeof message === "string" ? chalk.gray : chalk.red;
 			this.log(color(`VERBOSE: ${message}`));
 		}
 	}

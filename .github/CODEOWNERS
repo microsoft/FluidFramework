@@ -34,6 +34,11 @@
 
 /.github/CODEOWNERS                            @microsoft/fluid-cr-api
 
+# Changes to these workflows require approval from the Release Approvers team
+# Will be re-enabled once workflows are stable. AB#14288
+# /.github/workflows/release-approval.yml @microsoft/FluidFramework-ReleaseApprovers
+# /.github/workflows/release-branches.yml @microsoft/FluidFramework-ReleaseApprovers
+
 # ID compressor source
 /packages/runtime/id-compressor/src            @microsoft/fluid-cr-id-compressor
 
@@ -50,10 +55,11 @@
 # Fluid Devtools source
 /packages/tools/devtools/**/src                @microsoft/fluid-cr-devtools
 
-# Non-internal API changes
+# API report changes
 /**/api-report/*.public.api.md                 @microsoft/fluid-cr-api
 /**/api-report/*.beta.api.md                   @microsoft/fluid-cr-api
-/**/api-report/*.alpha.api.md                  @microsoft/fluid-cr-api
+/**/api-report/*.legacy.*.api.md               @microsoft/fluid-cr-api
+/tools/**/api-report/*.api.md                  # Do not require API review for tools packages
 
 # Changesets and release notes
 /**/.changeset/*.md                            @microsoft/fluid-cr-docs

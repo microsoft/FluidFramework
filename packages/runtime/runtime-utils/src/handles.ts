@@ -39,10 +39,10 @@ export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 const enableBackwardsCompatibility = true;
 
 /**
- * Check if a value is an IFluidHandle.
+ * Check if a value is an {@link @fluidframework/core-interfaces#IFluidHandle}.
  * @remarks
  * Objects which have a field named `IFluidHandle` can in some cases produce a false positive.
- * @internal
+ * @public
  */
 export function isFluidHandle(value: unknown): value is IFluidHandle {
 	// `in` gives a type error on non-objects and null, so filter them out
@@ -62,6 +62,18 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 		return IFluidHandle in inner;
 	}
 	return false;
+}
+
+/**
+ * Compare two {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles}.
+ * @remarks
+ * Returns true iff both handles have the same internal `absolutePath`.
+ * @public
+ */
+export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean {
+	const aInternal = toFluidHandleInternal(a);
+	const bInternal = toFluidHandleInternal(b);
+	return aInternal.absolutePath === bInternal.absolutePath;
 }
 
 /**

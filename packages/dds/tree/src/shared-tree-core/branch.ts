@@ -11,7 +11,6 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
-	type CommitMetadata,
 	type GraphCommit,
 	type RevisionTag,
 	type TaggedChange,
@@ -19,14 +18,13 @@ import {
 	makeAnonChange,
 	mintCommit,
 	rebaseBranch,
-	tagChange,
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import { EventEmitter, type Listenable } from "../events/index.js";
+import { createEmitter, type Listenable } from "../events/index.js";
 
 import { TransactionStack } from "./transactionStack.js";
-import { fail, oob } from "../util/index.js";
+import { fail, getLast, hasSome } from "../util/index.js";
 
 /**
  * Describes a change to a `SharedTreeBranch`. Various operations can mutate the head of the branch;
@@ -46,13 +44,14 @@ import { fail, oob } from "../util/index.js";
 export type SharedTreeBranchChange<TChange> =
 	| {
 			type: "append";
+			kind: CommitKind;
 			change: TaggedChange<TChange>;
-			newCommits: readonly GraphCommit<TChange>[];
+			newCommits: readonly [GraphCommit<TChange>, ...GraphCommit<TChange>[]];
 	  }
 	| {
 			type: "remove";
 			change: TaggedChange<TChange> | undefined;
-			removedCommits: readonly GraphCommit<TChange>[];
+			removedCommits: readonly [GraphCommit<TChange>, ...GraphCommit<TChange>[]];
 	  }
 	| {
 			type: "replace";
@@ -83,11 +82,11 @@ export function getChangeReplaceType(
 	// B' is removed and replaced by B because both have the same revision.
 	assert(
 		change.removedCommits[0] !== undefined,
-		"This wont run due to the length check above",
+		0x9e4 /* This wont run due to the length check above */,
 	);
 	assert(
 		change.newCommits[0] !== undefined,
-		"This wont run because a replace operation always has new commits",
+		0x9e5 /* This wont run because a replace operation always has new commits */,
 	);
 	if (
 		change.removedCommits.length === 1 &&
@@ -115,11 +114,6 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	 * @param change - the change to this branch's state and commits
 	 */
 	afterChange(change: SharedTreeBranchChange<TChange>): void;
-
-	/**
-	 * {@inheritdoc TreeViewEvents.commitApplied}
-	 */
-	commitApplied(data: CommitMetadata): void;
 
 	/**
 	 * Fired when this branch forks
@@ -181,10 +175,9 @@ export interface BranchTrimmingEvents {
 /**
  * A branch of changes that can be applied to a SharedTree.
  */
-export class SharedTreeBranch<
-	TEditor extends ChangeFamilyEditor,
-	TChange,
-> extends EventEmitter<SharedTreeBranchEvents<TEditor, TChange>> {
+export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
+	readonly #events = createEmitter<SharedTreeBranchEvents<TEditor, TChange>>();
+	public readonly events: Listenable<SharedTreeBranchEvents<TEditor, TChange>> = this.#events;
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
 	/**
@@ -228,12 +221,11 @@ export class SharedTreeBranch<
 			keyof RebaseStatsWithDuration
 		>,
 	) {
-		super();
-		this.editor = this.changeFamily.buildEditor((change) =>
-			this.apply(change, mintRevisionTag()),
+		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
+			this.apply(change),
 		);
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
-			this.emit("ancestryTrimmed", commit);
+			this.#events.emit("ancestryTrimmed", commit);
 		});
 	}
 
@@ -248,42 +240,35 @@ export class SharedTreeBranch<
 
 	/**
 	 * Apply a change to this branch.
-	 * @param change - the change to apply
-	 * @param revision - the revision of the new head commit of the branch that contains `change`
-	 * @param changeKind - the kind of change to apply
+	 * @param taggedChange - the change to apply
+	 * @param kind - the kind of change to apply
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
 	public apply(
-		change: TChange,
-		revision: RevisionTag,
-		changeKind: CommitKind = CommitKind.Default,
+		taggedChange: TaggedChange<TChange>,
+		kind: CommitKind = CommitKind.Default,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
-		// TODO: This should not be necessary when receiving changes from other clients.
-		const changeWithRevision = this.changeFamily.rebaser.changeRevision(change, revision);
+		const revisionTag = taggedChange.revision;
+		assert(revisionTag !== undefined, 0xa49 /* Revision tag must be provided */);
 
 		const newHead = mintCommit(this.head, {
-			revision,
-			change: changeWithRevision,
+			revision: revisionTag,
+			change: taggedChange.change,
 		});
 
 		const changeEvent = {
 			type: "append",
-			change: tagChange(changeWithRevision, revision),
+			kind,
+			change: taggedChange,
 			newCommits: [newHead],
 		} as const;
 
-		this.emit("beforeChange", changeEvent);
+		this.#events.emit("beforeChange", changeEvent);
 		this.head = newHead;
-
-		// If this is not part of a transaction, emit a commitApplied event
-		if (!this.isTransacting()) {
-			this.emit("commitApplied", { isLocal: true, kind: changeKind });
-		}
-
-		this.emit("afterChange", changeEvent);
-		return [changeWithRevision, newHead];
+		this.#events.emit("afterChange", changeEvent);
+		return [taggedChange.change, newHead];
 	}
 
 	/**
@@ -303,7 +288,7 @@ export class SharedTreeBranch<
 		const onDisposeUnSubscribes: (() => void)[] = [];
 		const onForkUnSubscribe = onForkTransitive(this, (fork) => {
 			forks.add(fork);
-			onDisposeUnSubscribes.push(fork.on("dispose", () => forks.delete(fork)));
+			onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
 		});
 		this.transactions.push(this.head.revision, () => {
 			forks.forEach((fork) => fork.dispose());
@@ -311,7 +296,7 @@ export class SharedTreeBranch<
 			onForkUnSubscribe();
 		});
 		this.editor.enterTransaction();
-		this.emit("transactionStarted", this.transactions.size === 1);
+		this.#events.emit("transactionStarted", this.transactions.size === 1);
 	}
 
 	/**
@@ -328,8 +313,8 @@ export class SharedTreeBranch<
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
-		this.emit("transactionCommitted", this.transactions.size === 0);
-		if (commits.length === 0) {
+		this.#events.emit("transactionCommitted", this.transactions.size === 0);
+		if (!hasSome(commits)) {
 			return undefined;
 		}
 
@@ -349,15 +334,9 @@ export class SharedTreeBranch<
 			newCommits: [newHead],
 		} as const;
 
-		this.emit("beforeChange", changeEvent);
+		this.#events.emit("beforeChange", changeEvent);
 		this.head = newHead;
-
-		// If this transaction is not nested, emit a commitApplied event
-		if (!this.isTransacting()) {
-			this.emit("commitApplied", { isLocal: true, kind: CommitKind.Default });
-		}
-
-		this.emit("afterChange", changeEvent);
+		this.#events.emit("afterChange", changeEvent);
 		return [commits, newHead];
 	}
 
@@ -375,9 +354,9 @@ export class SharedTreeBranch<
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
-		this.emit("transactionAborted", this.transactions.size === 0);
-		if (commits.length === 0) {
-			this.emit("transactionRolledBack", this.transactions.size === 0);
+		this.#events.emit("transactionAborted", this.transactions.size === 0);
+		if (!hasSome(commits)) {
+			this.#events.emit("transactionRolledBack", this.transactions.size === 0);
 			return [undefined, []];
 		}
 
@@ -387,7 +366,7 @@ export class SharedTreeBranch<
 			const commit =
 				commits[i] ?? fail("This wont run because we are iterating through commits");
 			const inverse = this.changeFamily.rebaser.changeRevision(
-				this.changeFamily.rebaser.invert(commit, false),
+				this.changeFamily.rebaser.invert(commit, true, revision),
 				revision,
 				commit.revision,
 			);
@@ -403,10 +382,10 @@ export class SharedTreeBranch<
 			removedCommits: commits,
 		} as const;
 
-		this.emit("beforeChange", changeEvent);
+		this.#events.emit("beforeChange", changeEvent);
 		this.head = startCommit;
-		this.emit("afterChange", changeEvent);
-		this.emit("transactionRolledBack", this.transactions.size === 0);
+		this.#events.emit("afterChange", changeEvent);
+		this.#events.emit("transactionRolledBack", this.transactions.size === 0);
 		return [change, commits];
 	}
 
@@ -420,8 +399,13 @@ export class SharedTreeBranch<
 	private popTransaction(): [GraphCommit<TChange>, GraphCommit<TChange>[]] {
 		const { startRevision: startRevisionOriginal } = this.transactions.pop();
 		let startRevision = startRevisionOriginal;
-		while (this.initialTransactionRevToRebasedRev.has(startRevision)) {
-			startRevision = this.initialTransactionRevToRebasedRev.get(startRevision) ?? oob();
+
+		for (
+			let r: RevisionTag | undefined = startRevision;
+			r !== undefined;
+			r = this.initialTransactionRevToRebasedRev.get(startRevision)
+		) {
+			startRevision = r;
 		}
 
 		if (!this.isTransacting()) {
@@ -442,19 +426,19 @@ export class SharedTreeBranch<
 
 	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
-	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
-	 *
-	 * @remarks Forks created during a transaction will be disposed when the transaction ends.
+	 * @param commit - The commit to base the new branch off of. Defaults to the head of this branch.
+	 * @remarks Changes made to the new branch will not be applied to this branch until the new branch is {@link SharedTreeBranch.merge | merged} back in.
+	 * Forks created during a transaction will be disposed when the transaction ends.
 	 */
-	public fork(): SharedTreeBranch<TEditor, TChange> {
+	public fork(commit: GraphCommit<TChange> = this.head): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
-			this.head,
+			commit,
 			this.changeFamily,
 			this.mintRevisionTag,
 			this.branchTrimmer,
 		);
-		this.emit("fork", fork);
+		this.#events.emit("fork", fork);
 		return fork;
 	}
 
@@ -481,13 +465,13 @@ export class SharedTreeBranch<
 		// The net change to this branch is provided by the `rebaseBranch` API
 		const { newSourceHead, commits } = rebaseResult;
 		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
+		assert(hasSome(targetCommits), "Expected commit(s) for a non no-op rebase");
 
 		const newCommits = targetCommits.concat(sourceCommits);
+
 		if (this.isTransacting()) {
-			const firstCommit = targetCommits[0] ?? oob();
-			const lastCommit = targetCommits[targetCommits.length - 1] ?? oob();
-			const src = firstCommit.parent?.revision;
-			const dst = lastCommit.revision;
+			const src = targetCommits[0].parent?.revision;
+			const dst = getLast(targetCommits).revision;
 			if (src !== undefined && dst !== undefined) {
 				this.initialTransactionRevToRebasedRev.set(src, dst);
 			}
@@ -501,10 +485,10 @@ export class SharedTreeBranch<
 			removedCommits: deletedSourceCommits,
 			newCommits,
 		} as const;
-		this.emit("beforeChange", changeEvent);
-		this.head = newSourceHead;
 
-		this.emit("afterChange", changeEvent);
+		this.#events.emit("beforeChange", changeEvent);
+		this.head = newSourceHead;
+		this.#events.emit("afterChange", changeEvent);
 		return rebaseResult;
 	}
 
@@ -525,6 +509,10 @@ export class SharedTreeBranch<
 			0x597 /* Branch may not be merged while transaction is in progress */,
 		);
 
+		if (branch === this) {
+			return undefined;
+		}
+
 		// Rebase the given branch onto this branch
 		const rebaseResult = this.rebaseBranch(branch, this);
 		if (rebaseResult === undefined) {
@@ -533,19 +521,21 @@ export class SharedTreeBranch<
 
 		// Compute the net change to this branch
 		const sourceCommits = rebaseResult.commits.sourceCommits;
+		assert(hasSome(sourceCommits), "Expected source commits in non no-op merge");
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
 		const taggedChange = makeAnonChange(change);
 		const changeEvent = {
 			type: "append",
+			kind: CommitKind.Default,
 			get change(): TaggedChange<TChange> {
 				return taggedChange;
 			},
 			newCommits: sourceCommits,
 		} as const;
 
-		this.emit("beforeChange", changeEvent);
+		this.#events.emit("beforeChange", changeEvent);
 		this.head = rebaseResult.newSourceHead;
-		this.emit("afterChange", changeEvent);
+		this.#events.emit("afterChange", changeEvent);
 		return [change, sourceCommits];
 	}
 
@@ -599,7 +589,7 @@ export class SharedTreeBranch<
 		this.unsubscribeBranchTrimmer?.();
 
 		this.disposed = true;
-		this.emit("dispose");
+		this.#events.emit("dispose");
 	}
 
 	private assertNotDisposed(): void {
@@ -608,20 +598,22 @@ export class SharedTreeBranch<
 }
 
 /**
- * Registers an event listener that fires when the given forkable object forks.
+ * Registers an event listener that fires when the given branch forks.
  * The listener will also fire when any of those forks fork, and when those forks of forks fork, and so on.
- * @param forkable - an object that emits an event when it is forked
+ * @param branch - the branch that will be listened to for forks
  * @param onFork - the fork event listener
  * @returns a function which when called will deregister all registrations (including transitive) created by this function.
  * The deregister function has undefined behavior if called more than once.
  */
-export function onForkTransitive<T extends Listenable<{ fork: (t: T) => void }>>(
-	forkable: T,
+// Branches are invariant over TChange
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function onForkTransitive<T extends SharedTreeBranch<ChangeFamilyEditor, any>>(
+	branch: T,
 	onFork: (fork: T) => void,
 ): () => void {
 	const offs: (() => void)[] = [];
 	offs.push(
-		forkable.on("fork", (fork) => {
+		branch.events.on("fork", (fork: T) => {
 			offs.push(onForkTransitive(fork, onFork));
 			onFork(fork);
 		}),

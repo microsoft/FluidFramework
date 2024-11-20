@@ -4,13 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
-import chalk from "chalk";
 import { Machine } from "jssm";
+import chalk from "picocolors";
 
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
+import { getDefaultInterdependencyRange } from "../config.js";
 import {
 	difference,
 	getPreReleaseDependencies,
@@ -177,7 +178,7 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 		context,
 		rgRepo,
 		newVersion,
-		rgRepo instanceof MonoRepo ? rgRepo.interdependencyRange : undefined,
+		rgRepo instanceof MonoRepo ? getDefaultInterdependencyRange(rgRepo, context) : undefined,
 		log,
 	);
 

@@ -18,7 +18,8 @@ import {
 import Axios from "axios";
 import express from "express";
 import nconf from "nconf";
-import WebpackDevServer from "webpack-dev-server";
+import type Server from "webpack-dev-server";
+import type { Configuration, ExpressRequestHandler, Middleware } from "webpack-dev-server";
 
 import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
@@ -72,46 +73,26 @@ function getTestTenantCredentials(mode: "spo" | "spo-df"): {
 	};
 }
 
-/**
- * @returns A portion of a webpack config needed to add support for the
- * webpack-dev-server to use the webpack-fluid-loader.
- * @internal
- */
-export function devServerConfig(baseDir: string, env: RouteOptions) {
-	return {
-		devServer: {
-			static: {
-				directory: path.join(
-					baseDir,
-					"/node_modules/@fluid-example/webpack-fluid-loader/dist/",
-				),
-				publicPath: "/code",
-			},
-			devMiddleware: {
-				publicPath: "/dist",
-			},
-			onBeforeSetupMiddleware: (devServer) => before(devServer.app),
-			onAfterSetupMiddleware: (devServer) => after(devServer.app, devServer, baseDir, env),
-		},
-	};
-}
+const beforeMiddlewares: Middleware[] = [
+	{
+		path: "/",
+		middleware: ((req, res, next) => {
+			// For some reason, this middleware is matching for other paths that it shouldn't.
+			// E.g. matching for "/new", causing infinite redirect.
+			if (req.originalUrl === "/") {
+				res.redirect("/new");
+			} else {
+				next();
+			}
+		}) as ExpressRequestHandler,
+	},
+];
 
-/**
- * @internal
- */
-export const before = (app: express.Application) => {
-	app.get("/", (req, res) => res.redirect("/new"));
-};
-
-/**
- * @internal
- */
-export const after = (
-	app: express.Application,
-	webpackServer: WebpackDevServer,
+const makeAfterMiddlewares = (
+	webpackServer: Server,
 	baseDir: string,
 	env: Partial<RouteOptions>,
-) => {
+): Middleware[] => {
 	const options: RouteOptions = {
 		mode: "local",
 		...env,
@@ -162,10 +143,10 @@ export const after = (
 
 			options.tenantSecret =
 				options.mode === "docker"
-					? options.tenantSecret ??
+					? (options.tenantSecret ??
 						config.get("fluid:webpack:docker:tenantSecret") ??
-						"create-new-tenants-if-going-to-production"
-					: options.tenantSecret ?? config.get("fluid:webpack:tenantSecret");
+						"create-new-tenants-if-going-to-production")
+					: (options.tenantSecret ?? config.get("fluid:webpack:tenantSecret"));
 
 			if (options.mode === "r11s") {
 				options.discoveryEndpoint =
@@ -192,7 +173,7 @@ export const after = (
 		const clientConfig = getPublicClientConfig();
 
 		readyP = async (req: express.Request, res: express.Response) => {
-			if (req.url === "/favicon.ico") {
+			if (req.baseUrl === "/favicon.ico") {
 				// ignore these
 				return false;
 			}
@@ -219,52 +200,6 @@ export const after = (
 		};
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	app.get("/odspLogin", async (req, res) => {
-		if (options.mode !== "spo-df" && options.mode !== "spo") {
-			res.write("Mode must be spo or spo-df to login to ODSP.");
-			res.end();
-			return;
-		}
-
-		const { tokenConfig, server } = getTestTenantCredentials(options.mode);
-		const tokens = await tokenManager.getOdspTokens(
-			server,
-			getPublicClientConfig(),
-			tokenConfig,
-			undefined /* forceRefresh */,
-			true /* forceReauth */,
-		);
-		options.odspAccessToken = tokens.accessToken;
-		res.redirect(`${getThisOrigin(options)}/pushLogin`);
-	});
-
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	app.get("/pushLogin", async (req, res) => {
-		if (options.mode !== "spo-df" && options.mode !== "spo") {
-			res.write("Mode must be spo or spo-df to login to Push.");
-			res.end();
-			return;
-		}
-
-		const { tokenConfig, server } = getTestTenantCredentials(options.mode);
-		options.pushAccessToken = (
-			await tokenManager.getPushTokens(
-				server,
-				getPublicClientConfig(),
-				tokenConfig,
-				undefined /* forceRefresh */,
-				true /* forceReauth */,
-			)
-		).accessToken;
-		res.end("Tokens refreshed.");
-	});
-
-	app.get("/file*", (req, res) => {
-		const buffer = fs.readFileSync(req.params[0].substr(1));
-		res.end(buffer);
-	});
-
 	const isReady = async (req, res) => {
 		if (readyP !== undefined) {
 			let canContinue = false;
@@ -288,52 +223,153 @@ export const after = (
 		return true;
 	};
 
-	/**
-	 * For urls of format - http://localhost:8080/doc/<id>.
-	 * This is when user is trying to load an existing document. We try to load a Container with `id` as documentId.
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	app.get("/doc/:id*", async (req, res) => {
-		const ready = await isReady(req, res);
-		if (ready) {
-			fluid(req, res, baseDir, options);
-		}
-	});
+	const afterMiddlewares: Middleware[] = [
+		{
+			path: "/odspLogin",
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			middleware: async (req, res) => {
+				if (options.mode !== "spo-df" && options.mode !== "spo") {
+					res.write("Mode must be spo or spo-df to login to ODSP.");
+					res.end();
+					return;
+				}
 
-	// Ignore favicon.ico urls.
-	app.get("/favicon.ico", (req: express.Request, res) => res.end());
+				const { tokenConfig, server } = getTestTenantCredentials(options.mode);
+				const tokens = await tokenManager.getOdspTokens(
+					server,
+					getPublicClientConfig(),
+					tokenConfig,
+					undefined /* forceRefresh */,
+					true /* forceReauth */,
+				);
+				options.odspAccessToken = tokens.accessToken;
+				res.redirect(`${getThisOrigin(options)}/pushLogin`);
+			},
+		},
+		{
+			path: "/pushLogin",
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			middleware: async (req, res) => {
+				if (options.mode !== "spo-df" && options.mode !== "spo") {
+					res.write("Mode must be spo or spo-df to login to Push.");
+					res.end();
+					return;
+				}
 
-	/**
-	 * For urls of format - http://localhost:8080/<id>.
-	 * If the `id` is "new" or "manualAttach", the user is trying to create a new document.
-	 * For other `ids`, we treat this as the user trying to load an existing document. We redirect to
-	 * http://localhost:8080/doc/<id>.
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	app.get("/:id*", async (req: express.Request, res) => {
-		const documentId = req.params.id;
-		// For testing orderer, we use the path: http://localhost:8080/testorderer. This will use the local storage
-		// instead of using actual storage service to which the connection is made. This will enable testing
-		// orderer even if the blob storage services are down.
-		if (
-			documentId !== "new" &&
-			documentId !== "manualAttach" &&
-			documentId !== "testorderer"
-		) {
-			// The `id` is not for a new document. We assume the user is trying to load an existing document and
-			// redirect them to - http://localhost:8080/doc/<id>.
-			const reqUrl = req.url.replace(documentId, `doc/${documentId}`);
-			const newUrl = `${getThisOrigin(options)}${reqUrl}`;
-			res.redirect(newUrl);
-			return;
-		}
+				const { tokenConfig, server } = getTestTenantCredentials(options.mode);
+				options.pushAccessToken = (
+					await tokenManager.getPushTokens(
+						server,
+						getPublicClientConfig(),
+						tokenConfig,
+						undefined /* forceRefresh */,
+						true /* forceReauth */,
+					)
+				).accessToken;
+				res.end("Tokens refreshed.");
+			},
+		},
+		{
+			path: "/file*",
+			middleware: (req, res) => {
+				const buffer = fs.readFileSync(req.params[0].substr(1));
+				res.end(buffer);
+			},
+		},
+		{
+			/**
+			 * For urls of format - http://localhost:8080/doc/<id>.
+			 * This is when user is trying to load an existing document. We try to load a Container with `id` as documentId.
+			 */
+			path: "/doc/:id*",
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			middleware: async (req, res) => {
+				const ready = await isReady(req, res);
+				if (ready) {
+					fluid(req, res, baseDir, options);
+				}
+			},
+		},
+		{
+			// Ignore favicon.ico urls.
+			path: "/favicon.ico",
+			middleware: ((req: express.Request, res) => res.end()) as ExpressRequestHandler,
+		},
+		{
+			/**
+			 * For urls of format - http://localhost:8080/<id>.
+			 * If the `id` is "new" or "manualAttach", the user is trying to create a new document.
+			 * For other `ids`, we treat this as the user trying to load an existing document. We redirect to
+			 * http://localhost:8080/doc/<id>.
+			 */
+			path: "/:id*",
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			middleware: async (req: express.Request, res) => {
+				const documentId = req.params.id;
+				// For testing orderer, we use the path: http://localhost:8080/testorderer. This will use the local storage
+				// instead of using actual storage service to which the connection is made. This will enable testing
+				// orderer even if the blob storage services are down.
+				if (
+					documentId !== "new" &&
+					documentId !== "manualAttach" &&
+					documentId !== "testorderer"
+				) {
+					// The `id` is not for a new document. We assume the user is trying to load an existing document and
+					// redirect them to - http://localhost:8080/doc/<id>.
+					const reqUrl = req.baseUrl.replace(documentId, `doc/${documentId}`);
+					const newUrl = `${getThisOrigin(options)}${reqUrl}`;
+					res.redirect(newUrl);
+					return;
+				}
 
-		const ready = await isReady(req, res);
-		if (ready) {
-			fluid(req, res, baseDir, options);
-		}
-	});
+				const ready = await isReady(req, res);
+				if (ready) {
+					fluid(req, res, baseDir, options);
+				}
+			},
+		},
+	];
+
+	return afterMiddlewares;
 };
+
+/**
+ * @returns A portion of a webpack config needed to add support for the
+ * webpack-dev-server to use the webpack-fluid-loader.
+ * @internal
+ */
+export function devServerConfig(
+	baseDir: string,
+	env: RouteOptions,
+): { devServer: Configuration } {
+	return {
+		devServer: {
+			static: {
+				directory: path.join(
+					baseDir,
+					"/node_modules/@fluid-example/webpack-fluid-loader/dist/",
+				),
+				publicPath: "/code",
+			},
+			devMiddleware: {
+				publicPath: "/dist",
+			},
+			setupMiddlewares: (middlewares, devServer) => {
+				for (const beforeMiddleware of beforeMiddlewares) {
+					middlewares.unshift(beforeMiddleware);
+				}
+
+				const afterMiddlewares = makeAfterMiddlewares(devServer, baseDir, env);
+
+				for (const afterMiddleware of afterMiddlewares) {
+					middlewares.push(afterMiddleware);
+				}
+
+				return middlewares;
+			},
+		},
+	};
+}
 
 const fluid = (
 	req: express.Request,

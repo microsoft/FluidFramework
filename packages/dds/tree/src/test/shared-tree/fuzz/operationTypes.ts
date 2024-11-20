@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { FieldKey, JsonableTree } from "../../../core/index.js";
+import type { FieldKey } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -28,7 +29,7 @@ export interface Constraint {
 export interface NodeConstraint {
 	type: "nodeConstraint";
 	/** Undefined when it is the parent of a detached field. */
-	path: undefined | DownPath;
+	nodePath: DownPath | undefined;
 }
 export interface TransactionBoundary {
 	type: "transactionBoundary";
@@ -42,15 +43,44 @@ export interface UndoRedo {
 
 export interface SchemaChange {
 	type: "schemaChange";
-	operation: SchemaOp;
+	contents: SchemaOp;
 }
 
 export interface FieldEdit {
 	type: "fieldEdit";
 	/** The field being edited */
-	field: FieldDownPath;
+	parentNodePath: DownPath | undefined;
 	/** The edit performed on the field */
 	change: SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
+}
+
+export interface GUIDNodeValue {
+	guid: string;
+}
+
+export interface NodeObjectValue {
+	requiredChild: number;
+	arrayChildren: number[];
+}
+
+export type GeneratedFuzzValue =
+	| number
+	| string
+	| IFluidHandle
+	| GUIDNodeValue
+	| NodeObjectValue
+	| (number | string | IFluidHandle | GUIDNodeValue | NodeObjectValue)[];
+
+export enum GeneratedFuzzValueType {
+	Number,
+	String,
+	Handle,
+	GUIDNode,
+	NodeObject,
+}
+export interface GeneratedFuzzNode {
+	type: GeneratedFuzzValueType;
+	value: GeneratedFuzzValue;
 }
 
 export interface Insert {
@@ -59,7 +89,7 @@ export interface Insert {
 	 * Index to insert at within the field.
 	 */
 	index: number;
-	content: JsonableTree[];
+	content: GeneratedFuzzNode[];
 }
 
 export interface SetField {
@@ -68,7 +98,7 @@ export interface SetField {
 	 * @privateRemarks - Optional fields use {@link ClearField} to mean "remove the field's contents" rather than
 	 * a `SetField` with undefined value, hence why this property is required.
 	 */
-	value: JsonableTree;
+	value: GeneratedFuzzNode;
 }
 
 export interface SequenceFieldEdit {
@@ -116,7 +146,7 @@ export interface CrossFieldMove extends Move {
 	 * The field to move the content to.
 	 * May be the same as the source field.
 	 */
-	dstField: FieldDownPath;
+	dstParent: DownPath | undefined;
 }
 
 export interface SchemaOp {

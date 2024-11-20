@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -24,7 +24,7 @@ import {
 } from "../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { createSnapshotCompressor } from "../snapshots/testTreeScenarios.js";
+import { createSnapshotCompressor } from "../snapshots/snapshotTestScenarios.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();

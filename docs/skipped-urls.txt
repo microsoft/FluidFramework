@@ -9,18 +9,27 @@ https://twitter.com/intent/follow*
 https://twitter.com/intent/tweet*
 https://twitter.com/fluidframework
 https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/*
+# GitHub returns 429
+https://github.com/microsoft/FluidFramework/issues/*
+
+# denied by robots.txt
+https://aka.ms/*
+https://go.microsoft.com/fwlink/*
 
 # These URLs have false positives with their anchors. Linkcheck thinks the anchors are missing.
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort*
 https://github.com/npm/node-semver*
 
 # Any URL for the Github repo with a fragment that points to a line number in code.
-# No markdowwn anchor for the line will exist, but they're valid.
+# No markdown anchor for the line will exist, but they're valid.
 https://github.com/microsoft/FluidFramework/.*#L\d+$
 
 # Linkcheck consistently complains about "connection failed" with this one, seems like it takes too long to respond,
-# but as of 2024-07-03 it does work.
+# but as of 2024-11-12 it does work.
 https://www.iso.org/iso-8601-date-and-time-format.html
 
 # These are fake URLs used in API docs
 https://foo-my.sharepoint.com*
+
+# Docusaurus infra
+http://localhost:3000/assets/css/styles.*.css

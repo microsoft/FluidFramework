@@ -1,12 +1,12 @@
 # @fluidframework/container-loader
 
-
 **Topics covered below:**
 
 - [@fluidframework/container-loader](#fluidframeworkcontainer-loader)
   - [Using Fluid Framework libraries](#using-fluid-framework-libraries)
   - [Installation](#installation)
   - [Importing from this package](#importing-from-this-package)
+  - [API Documentation](#api-documentation)
   - [Fluid Loader](#fluid-loader)
   - [Expectations from host implementers](#expectations-from-host-implementers)
   - [Expectations from container runtime and data store implementers](#expectations-from-container-runtime-and-data-store-implementers)
@@ -27,7 +27,6 @@
     - [`forced`](#forced)
     - [`storageOnly`](#storageonly)
   - [Dirty events](#dirty-events)
-  - [API Documentation](#api-documentation)
   - [Minimum Client Requirements](#minimum-client-requirements)
     - [Supported Runtimes](#supported-runtimes)
     - [Supported Tools](#supported-tools)

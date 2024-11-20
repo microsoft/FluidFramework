@@ -20,6 +20,7 @@ export {
 export {
 	deleteFromNestedMap,
 	getOrAddInMap,
+	getOrAddInMapLazy,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
 	forEachInNestedMap,
@@ -51,6 +52,7 @@ export type {
 	requireFalse,
 	requireTrue,
 	requireAssignableTo,
+	areOnlyKeys,
 } from "./typeCheck.js";
 export { StackyIterator } from "./stackyIterator.js";
 export {
@@ -58,7 +60,6 @@ export {
 	clone,
 	compareSets,
 	fail,
-	oob,
 	getOrAddEmptyToMap,
 	getOrCreate,
 	isJsonObject,
@@ -89,20 +90,26 @@ export {
 	transformObjectMap,
 	compareStrings,
 	find,
+	count,
+	getLast,
+	hasSome,
+	hasSingle,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
 export type {
-	AllowOptional,
-	RequiredFields,
-	OptionalFields,
 	_RecursiveTrick,
-	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
-	Assume,
+	RestrictiveStringRecord,
 	_InlineTrick,
 	FlattenKeys,
+	IsUnion,
+	UnionToIntersection,
+	UnionToTuple,
+	PopUnion,
 } from "./typeUtils.js";
+
+export { unsafeArrayToTuple } from "./typeUtils.js";
 
 export {
 	type BrandedKey,

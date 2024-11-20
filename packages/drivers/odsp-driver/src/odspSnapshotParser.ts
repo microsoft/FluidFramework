@@ -28,8 +28,7 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): ISnapshotTree {
 		const entryPathBase = entry.path.slice(lastIndex + 1);
 
 		// ODSP snapshots are created breadth-first so we can assume we see tree nodes prior to their contents
-		// TODO Why are we non null asserting here?
-		const node = lookup[entryPathDir]!;
+		const node = lookup[entryPathDir];
 
 		// Add in either the blob or tree
 		if (entry.type === "tree") {
@@ -70,19 +69,16 @@ export function convertOdspSnapshotToSnapshotTreeAndBlobs(
 		}
 	}
 
-	// TODO Why are we non null asserting here?
-	const sequenceNumber = odspSnapshot?.trees[0]!.sequenceNumber;
+	const sequenceNumber = odspSnapshot?.trees[0].sequenceNumber;
 
 	const val: ISnapshot = {
 		blobContents: blobsWithBufferContent,
 		ops: odspSnapshot.ops?.map((op) => op.op) ?? [],
 		sequenceNumber,
-		// TODO Why are we non null asserting here?
-		snapshotTree: buildHierarchy(odspSnapshot.trees[0]!),
+		snapshotTree: buildHierarchy(odspSnapshot.trees[0]),
 		latestSequenceNumber:
 			odspSnapshot.ops && odspSnapshot.ops.length > 0
-				? // Non null asserting here because of the length check above
-					odspSnapshot.ops[odspSnapshot.ops.length - 1]!.sequenceNumber
+				? odspSnapshot.ops[odspSnapshot.ops.length - 1].sequenceNumber
 				: sequenceNumber,
 		snapshotFormatV: 1,
 	};

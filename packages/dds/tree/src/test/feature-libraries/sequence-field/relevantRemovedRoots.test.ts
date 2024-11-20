@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import type { ChangeAtomId, DeltaDetachedNodeId } from "../../../core/index.js";
 import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
@@ -89,17 +89,13 @@ export function testRelevantRemovedRoots() {
 				assert.deepEqual(array, [deltaId]);
 			});
 			it("a tree being transiently inserted", () => {
-				const input: SF.Changeset = [
-					Mark.attachAndDetach(Mark.insert(1, atomId), Mark.remove(1, atomId)),
-				];
+				const input: SF.Changeset = [Mark.remove(1, atomId, { cellId: atomId })];
 				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId]);
 			});
 			it("a tree being transiently inserted and moved out", () => {
-				const input: SF.Changeset = [
-					Mark.attachAndDetach(Mark.insert(1, atomId), Mark.moveOut(1, atomId)),
-				];
+				const input: SF.Changeset = [Mark.moveOut(1, atomId, { cellId: atomId })];
 				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId]);
@@ -177,9 +173,7 @@ export function testRelevantRemovedRoots() {
 			});
 			it("relevant roots from nested changes under a tree being transiently inserted", () => {
 				const input: SF.Changeset = [
-					Mark.attachAndDetach(Mark.insert(1, atomId), Mark.remove(1, atomId), {
-						changes: childChange,
-					}),
+					Mark.remove(1, atomId, { cellId: atomId, changes: childChange }),
 				];
 				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);
@@ -195,9 +189,7 @@ export function testRelevantRemovedRoots() {
 			});
 			it("relevant roots from nested changes under a tree being transiently inserted and moved out", () => {
 				const input: SF.Changeset = [
-					Mark.attachAndDetach(Mark.insert(1, atomId), Mark.moveOut(1, atomId), {
-						changes: childChange,
-					}),
+					Mark.moveOut(1, atomId, { cellId: atomId, changes: childChange }),
 				];
 				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);

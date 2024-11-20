@@ -57,7 +57,7 @@ export {
 	genericChangeHandler,
 	genericFieldKind,
 } from "./genericFieldKind.js";
-export type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
+export type { GenericChangeset } from "./genericFieldKindTypes.js";
 export {
 	ModularChangeFamily,
 	ModularEditBuilder,
@@ -74,4 +74,7 @@ export type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
-export { getAllowedContentIncompatibilities } from "./discrepancies.js";
+export {
+	getAllowedContentDiscrepancies,
+	isRepoSuperset,
+} from "./discrepancies.js";

@@ -42,6 +42,7 @@ import {
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
+	toIDeltaManagerFull,
 	createSummarizer,
 	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
@@ -711,35 +712,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				);
 			},
 		);
-
-		it("disableDatastoreSweep true - Tombstones the SweepReady data store state in the summary", async () => {
-			configProvider.set("Fluid.GarbageCollection.DisableDataStoreSweep", true);
-
-			const { unreferencedId, summarizer, summarizingContainer } =
-				await summarizationWithUnreferencedDataStoreAfterTime();
-			const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
-
-			// Summarize. If sweep was enabled, the gc op will be sent with the deleted data store id. The data store
-			// will be removed in the subsequent summary.
-			await ensureSynchronizedAndSummarize(summarizer);
-
-			// The datastore should NOT be swept here. If sweep was enabled, it would be deleted in this summary.
-			// We need to do fullTree because the GC data won't change (since it's not swept).
-			// But the validation depends on the GC subtree being present (not a handle).
-			const summary3 = await ensureSynchronizedAndSummarize(summarizer, {
-				reason: "end-to-end test",
-				fullTree: true,
-			});
-
-			// Validate that the data store's state is correct in the summary - it should have been tombstoned not deleted.
-			validateDataStoreStateInSummary(
-				summary3.summaryTree,
-				sweepReadyDataStoreNodePath,
-				false /* expectDelete */,
-				false /* expectGCStateHandle */,
-				true /* expectTombstoned */,
-			);
-		});
 	});
 
 	itExpects(
@@ -810,7 +782,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			// Pause the inbound queue so that GC ops are not processed in between failures. This will be resumed
 			// before the final attempt.
 			if (blockInboundGCOp) {
-				await containerRuntime.deltaManager.inbound.pause();
+				await toIDeltaManagerFull(containerRuntime.deltaManager).inbound.pause();
 			}
 
 			let summarizeFunc = containerRuntime.summarize;
@@ -826,7 +798,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				}
 				// If this is the last attempt, resume the inbound queue to let the GC ops (if any) through.
 				if (blockInboundGCOp) {
-					containerRuntime.deltaManager.inbound.resume();
+					toIDeltaManagerFull(containerRuntime.deltaManager).inbound.resume();
 				}
 				return results;
 			};

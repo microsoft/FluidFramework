@@ -60,18 +60,43 @@ trigger:
     - release/*
   paths:
     include:
+    - .dockerignore
+    - .gitattributes
+    - .gitignore
+    - .gitmodules
+    - .git-blame-ignore-revs
+    - .markdownlint.json
+    - .npmrc
+    - .nvmrc
     - .prettierignore
+    - .releaseGroup
+    - azure
     - biome.json
     - biome.jsonc
-    - packages
-    - azure
+    - BREAKING.md
+    - common/build/build-common
+    - ClientRequirements.md
+    - CODE_OF_CONDUCT.md
+    - CONTRIBUTING.md
+    - CredScanSuppressions.json
     - examples
     - experimental
-    - common/build/build-common
+    - fluidBuild.config.cjs
+    - layerInfo.json
     - lerna.json
+    - LICENSE
+    - NOTICE.md
+    - packages
+    - PACKAGES.md
     - package.json
+    - patches/*
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
+    - prettier.config.cjs
+    - README.md
+    - scripts/*
+    - SECURITY.md
+    - syncpack.config.cjs
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
@@ -86,7 +111,6 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
-    - scripts/*
 
 pr:
   branches:
@@ -97,17 +121,43 @@ pr:
     - release/*
   paths:
     include:
+    - .dockerignore
+    - .gitattributes
+    - .gitignore
+    - .gitmodules
+    - .git-blame-ignore-revs
+    - .markdownlint.json
+    - .npmrc
+    - .nvmrc
     - .prettierignore
-    - packages
+    - .releaseGroup
     - azure
+    - biome.json
+    - biome.jsonc
+    - BREAKING.md
+    - common/build/build-common
+    - ClientRequirements.md
+    - CODE_OF_CONDUCT.md
+    - CONTRIBUTING.md
+    - CredScanSuppressions.json
     - examples
     - experimental
-    - common/build/build-common
+    - fluidBuild.config.cjs
+    - layerInfo.json
     - lerna.json
+    - LICENSE
+    - NOTICE.md
+    - packages
+    - PACKAGES.md
     - package.json
+    - patches/*
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
-    - fluidBuild.config.cjs
+    - prettier.config.cjs
+    - README.md
+    - scripts/*
+    - SECURITY.md
+    - syncpack.config.cjs
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
@@ -119,7 +169,6 @@ pr:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
-    - scripts/*
 
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self
@@ -139,11 +188,12 @@ extends:
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
-    testCoverage: ${{ variables.testCoverage }}
+    testCoverage: ${{ eq(variables['System.TeamProject'], 'public' ) }} # disabling code coverage for internal project since we don't use it
+    reportCodeCoverageComparison: ${{ eq(variables['Build.Reason'], 'PullRequest') }}
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
-    poolBuild: NewLarge-linux-1ES
+    poolBuild: Large-eastus2
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false # Linting is captured by `ci:build` via fluid-build
@@ -176,6 +226,7 @@ extends:
       inputs:
         targetType: 'inline'
         script: |
+          set -eu -o pipefail
           echo Generating .env
           echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
 

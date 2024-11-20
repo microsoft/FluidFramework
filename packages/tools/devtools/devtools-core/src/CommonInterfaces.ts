@@ -4,7 +4,7 @@
  */
 
 /**
- * A key used to identify and differentiate Containers registered with the {@link IFluidDevtools}.
+ * A key used to identify and differentiate Containers registered with the {@link @fluidframework/devtools-core#IFluidDevtools}.
  *
  * @remarks Each Container registered with the Devtools must be assigned a unique `containerKey`.
  *

@@ -292,18 +292,17 @@ for (const compatibilityMode of ["1", "2"] as const) {
 				compatibilityMode,
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const { shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad } =
+			const { sweepEnabled, throwOnTombstoneLoad } =
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(container_defaultConfig as any).container._runtime.garbageCollector.configs;
 
 			const expectedConfigs = {
-				shouldRunSweep: "NO",
-				tombstoneAutorecoveryEnabled: false,
+				sweepEnabled: false,
 				throwOnTombstoneLoad: false,
 			};
 			assert.deepStrictEqual(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				{ shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad },
+				{ sweepEnabled, throwOnTombstoneLoad },
 				expectedConfigs,
 				"Expected GC to be disabled per compatibilityModeRuntimeOptions",
 			);

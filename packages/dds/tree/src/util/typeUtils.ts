@@ -10,59 +10,9 @@
 /**
  * Return a type thats equivalent to the input, but with different IntelliSense.
  * This tends to convert unions and intersections into objects.
- * @public
+ * @system @public
  */
 export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_InlineTrick];
-
-/**
- * Remove all fields which permit undefined from `T`.
- * @internal
- */
-export type RequiredFields<T> = [
-	{
-		[P in keyof T as undefined extends T[P] ? never : P]: T[P];
-	},
-][_InlineTrick];
-
-/**
- * Extract fields which permit undefined but can also hold other types.
- * @internal
- */
-export type OptionalFields<T> = [
-	{
-		[P in keyof T as undefined extends T[P]
-			? T[P] extends undefined
-				? never
-				: P
-			: never]?: T[P];
-	},
-][_InlineTrick];
-
-/**
- * Converts properties of an object which permit undefined into optional properties.
- * Removes fields which only allow undefined.
- *
- * @remarks
- * This version does not flatten the resulting type.
- * This version exists because some cases recursive types need to avoid this
- * flattening since it causes complication issues.
- *
- * See also `AllowOptional`.
- * @internal
- */
-// export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
-export type AllowOptionalNotFlattened<T> = [
-	RequiredFields<T> & OptionalFields<T>,
-][_InlineTrick];
-
-/**
- * Converts properties of an object which permit undefined into optional properties.
- * Removes fields which only allow undefined.
- * @internal
- */
-export type AllowOptional<T> = [
-	FlattenKeys<RequiredFields<T> & OptionalFields<T>>,
-][_InlineTrick];
 
 /**
  * Use for trick to "inline" generic types.
@@ -85,7 +35,7 @@ export type AllowOptional<T> = [
  *
  * This constant is defined to provide a way to find this documentation from types which use this pattern,
  * and to locate types which use this pattern in case they need updating for compiler changes.
- * @public
+ * @system @public
  */
 export type _InlineTrick = 0;
 
@@ -126,7 +76,6 @@ export type _InlineTrick = 0;
  *
  * This constant is defined to provide a way to find this documentation from types which use this pattern,
  * and to locate types which use this pattern in case they need updating for compiler changes.
- * @internal
  */
 export type _RecursiveTrick = never;
 
@@ -162,9 +111,15 @@ export type _RecursiveTrick = never;
  * Alternative to the built in Record type which does not permit unexpected members,
  * and is readonly.
  *
+ * @remarks
+ * This does not work correctly when `K` is more specific than `string` or `symbol`.
+ * For example `{a: 5}` is not assignable to `RestrictiveReadonlyRecord<"a",: number>`
+ *
  * @privateRemarks
  * `number` is not allowed as a key here since doing so causes the compiler to reject recursive schema.
  * The cause for this is unclear, but empirically it was the case when this comment was written.
+ *
+ * @deprecated Use a more robust / specific type instead. This type never worked as intended.
  * @public
  */
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -172,17 +127,100 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 };
 
 /**
- * Assume that `TInput` is a `TAssumeToBe`.
+ * Alternative to the built-in `Record<string, T>` type which is readonly and does not permit symbols.
+ * @remarks
+ * It would be nice if `keyof RestrictiveStringRecord<T>` returned string, but it does not: use `keyof RestrictiveStringRecord<T> & string` instead.
+ * @system @public
+ */
+export type RestrictiveStringRecord<T> = {
+	readonly [P in string]: T;
+} & {
+	readonly [P in symbol]?: never;
+};
+
+/**
+ * Returns `true` if T is a union and false if it is not.
+ * @typeparam T - Type to test if it is a union.
+ * @typeparam T2 - Do not specify: default value used as implementation detail.
+ * @system @alpha
+ */
+export type IsUnion<T, T2 = T> = T extends unknown
+	? [T2] extends [T]
+		? false
+		: true
+	: "error";
+
+/**
+ * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
+ * @privateRemarks
+ * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
+ * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
+ * @system @public
+ */
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
+	k: infer U,
+) => unknown
+	? U
+	: never;
+
+/**
+ * Gets the first item of a union type.
+ *
+ * @typeparam Union - The union to convert.
+ * @typeparam AsOverloadedFunction - Implementation detail: do not specify.
+ * @system @alpha
+ */
+export type PopUnion<
+	Union,
+	AsOverloadedFunction = UnionToIntersection<
+		Union extends unknown ? (f: Union) => void : never
+	>,
+> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
+
+/**
+ * Converts a union type to a tuple type.
+ *
+ * @typeparam T - The union to convert.
+ * @typeparam A - Implementation detail: do not specify.
+ * @typeparam First - Implementation detail: do not specify.
+ *
+ * @privateRemarks
+ * `A` is a tuple to prepend members of the union to.
+ *
+ * https://www.hacklewayne.com/typescript-convert-union-to-tuple-array-yes-but-how and https://catchts.com/union-array both explain the general approach this uses pretty well.
+ * This implementation is inspired to those, but slightly different in implementation.
+ * @alpha
+ */
+export type UnionToTuple<
+	Union,
+	A extends unknown[] = [],
+	First = PopUnion<Union>,
+> = IsUnion<Union> extends true
+	? UnionToTuple<Exclude<Union, First>, [First, ...A]>
+	: [Union, ...A];
+
+/**
+ * This is unsafe, meaning that the returned value might not match its type.
+ *
+ * For the result to match its type, T must be a union of the types of each item in `items` in the order that they occur.
+ * For this to be possible, there must be no duplicate or overlapping types.
+ * This is fragile and must be used with care.
  *
  * @remarks
- * This is useful in generic code when it is impractical (or messy)
- * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
- * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow compilation of the generic code.
- * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
- * it will behave like `TInput` was used directly.
+ * The main use-case for this is recovering lost information from {@link AllowedTypes} which is necessary to preserve when using them with {@link Input} APIs.
+ * Since {@link AllowedTypes} is actually order independent, it is somewhat safer when used to produce `AllowedTypes`.
  *
- * @internal
+ * @example
+ * ```typescript
+ * // Gives imprecise type (typeof A | typeof B)[]
+ * const schemaBad = [A, B];
+ * // Fixes the type to be [typeof A, typeof B]
+ * const schema = unsafeArrayToTuple(schemaBad);
+ *
+ * const config = new TreeViewConfiguration({ schema });
+ * ```
+ * @alpha
  */
-export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe]
-	? TInput
-	: TAssumeToBe;
+export function unsafeArrayToTuple<T>(items: T[]): UnionToTuple<T> {
+	return items as UnionToTuple<T>;
+}

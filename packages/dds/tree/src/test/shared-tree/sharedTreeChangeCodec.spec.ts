@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
@@ -35,6 +35,8 @@ import { brand } from "../../util/brand.js";
 import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+// eslint-disable-next-line import/no-internal-modules
+import { newTupleBTree } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
 
@@ -72,12 +74,12 @@ describe("sharedTreeChangeCodec", () => {
 		};
 		const changeA: SequenceField.Changeset = [];
 		const dummyModularChangeSet: ModularChangeset = {
-			nodeChanges: new Map(),
+			nodeChanges: newTupleBTree(),
 			fieldChanges: new Map([
 				[brand("fA"), { fieldKind: sequence.identifier, change: brand(changeA) }],
 			]),
-			nodeToParent: new Map(),
-			nodeAliases: new Map(),
+			nodeToParent: newTupleBTree(),
+			nodeAliases: newTupleBTree(),
 			crossFieldKeys: brand(new BTree()),
 		};
 		sharedTreeChangeCodec.encode(
