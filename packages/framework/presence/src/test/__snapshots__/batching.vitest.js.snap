@@ -453,7 +453,7 @@ exports[`Presence > batching > NotificationsManager > notification signals cause
         "testEvents": {
           "sessionId-2": {
             "rev": 0,
-            "timestamp": 1060,
+            "timestamp": 0,
             "value": {
               "name": "newId",
               "args": [
@@ -489,7 +489,7 @@ exports[`Presence > batching > NotificationsManager > notification signals cause
         "testEvents": {
           "sessionId-2": {
             "rev": 0,
-            "timestamp": 1090,
+            "timestamp": 0,
             "value": {
               "name": "newId",
               "args": [

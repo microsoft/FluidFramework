@@ -150,7 +150,7 @@ class NotificationsManagerImpl<
 				this.key,
 				{
 					rev: 0,
-					timestamp: Date.now(),
+					timestamp: 0,
 					value: { name, args: [...(args as JsonTypeWith<never>[])] },
 					ignoreUnmonitored: true,
 				},
@@ -163,7 +163,7 @@ class NotificationsManagerImpl<
 				this.key,
 				{
 					rev: 0,
-					timestamp: Date.now(),
+					timestamp: 0,
 					value: { name, args: [...(args as JsonTypeWith<never>[])] },
 					ignoreUnmonitored: true,
 				},
