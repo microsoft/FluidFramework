@@ -130,6 +130,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 			loader,
 			provider.driver.createCreateNewRequest(documentId),
 		);
+		loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -148,9 +149,11 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 			provider.urlResolver,
 			provider.logger,
 		);
-		return loader.resolve({
+		const container = await loader.resolve({
 			url: await provider.driver.createContainerUrl(documentId, containerUrl),
 		});
+		loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	describe("1 dataObject", () => {

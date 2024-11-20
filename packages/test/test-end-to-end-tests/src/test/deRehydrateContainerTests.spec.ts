@@ -237,6 +237,7 @@ describeCompat(
 				codeLoader,
 				logger: provider.logger,
 			});
+			loaderContainerTracker.add(testLoader);
 			return testLoader;
 		}
 

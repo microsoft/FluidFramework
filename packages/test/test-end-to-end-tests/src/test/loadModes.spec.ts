@@ -137,6 +137,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 			loader,
 			provider.driver.createCreateNewRequest(documentId),
 		);
+		loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -157,7 +158,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 			provider.logger,
 		);
 
-		return loadContainerPaused(
+		const container = await loadContainerPaused(
 			loaderProps,
 			{
 				url: await provider.driver.createContainerUrl(documentId, containerUrl),
@@ -165,6 +166,8 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 			},
 			loadToSequenceNumber,
 		);
+		loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	it("Can load a paused container", async () => {
