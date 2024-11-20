@@ -521,7 +521,7 @@ export async function createDetachedContainer(
  * @legacy
  * @alpha
  */
-export async function rehydrateDetachedContainerFromSnapshot(
+export async function rehydrateDetachedContainer(
 	rehydrateDetachedContainerProps: ILoaderRehydrateDetachedContainerProps,
 ): Promise<IContainer> {
 	const loader = new Loader(rehydrateDetachedContainerProps);
