@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	rehydrateDetachedContainerFromSnapshot,
+	rehydrateDetachedContainer,
 	resolveContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
@@ -430,8 +430,8 @@ async function attachContainer(
 			summaryList.appendChild(listItem);
 			rehydrateButton.onclick = async () => {
 				const snapshot = summaryList.value;
-				currentContainer = await rehydrateDetachedContainerFromSnapshot({
-					snapshot,
+				currentContainer = await rehydrateDetachedContainer({
+					serializedState: snapshot,
 					...loaderProps,
 				});
 				const newLeftDiv =

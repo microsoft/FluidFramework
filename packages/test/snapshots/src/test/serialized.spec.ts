@@ -10,7 +10,7 @@ import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { SharedCell, ISharedCell } from "@fluidframework/cell/internal";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
-	rehydrateDetachedContainerFromSnapshot,
+	rehydrateDetachedContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
@@ -60,8 +60,8 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			const snapshotTree = fs.readFileSync(filename, "utf8");
 
 			const loaderProps = createTestLoaderProps();
-			const container = await rehydrateDetachedContainerFromSnapshot({
-				snapshot: snapshotTree,
+			const container = await rehydrateDetachedContainer({
+				serializedState: snapshotTree,
 				...loaderProps,
 			});
 			loaderContainerTracker.addContainer(container);
@@ -103,14 +103,14 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			const snapshotTree = fs.readFileSync(filename, "utf8");
 
 			const loaderProps = createTestLoaderProps();
-			const container1 = await rehydrateDetachedContainerFromSnapshot({
-				snapshot: snapshotTree,
+			const container1 = await rehydrateDetachedContainer({
+				serializedState: snapshotTree,
 				...loaderProps,
 			});
 			loaderContainerTracker.addContainer(container1);
 			const snapshotTree2 = container1.serialize();
-			const container2 = await rehydrateDetachedContainerFromSnapshot({
-				snapshot: snapshotTree2,
+			const container2 = await rehydrateDetachedContainer({
+				serializedState: snapshotTree2,
 				...loaderProps,
 			});
 			loaderContainerTracker.addContainer(container2);
