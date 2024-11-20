@@ -166,7 +166,7 @@ stages:
           # condition: eq(variables['shouldDeploy'], 'true')
           inputs:
             definitionIsInCurrentTeamProject: True
-            buildDefinition: 'deploy-website'
+            buildDefinition: 'build-docs'
             useSameSourceVersion: False
             useSameBranch: False
             branchToUse: main
