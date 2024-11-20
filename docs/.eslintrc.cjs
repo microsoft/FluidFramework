@@ -87,6 +87,14 @@ module.exports = {
 			// TODO: extend prettier plugin, once prettier supports MDX v3.
 			// See <https://github.com/prettier/prettier/issues/12209>
 			extends: ["plugin:mdx/recommended"],
+			plugins: ["@docusaurus/eslint-plugin"],
+			rules: {
+				// See <https://docusaurus.io/docs/api/misc/@docusaurus/eslint-plugin/no-html-links>
+				"@docusaurus/no-html-links": "error",
+
+				// See <https://docusaurus.io/docs/api/misc/@docusaurus/eslint-plugin/prefer-docusaurus-heading>
+				"@docusaurus/prefer-docusaurus-heading": "error",
+			},
 		}
 	],
 };
