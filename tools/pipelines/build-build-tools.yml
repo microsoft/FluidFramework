@@ -152,7 +152,7 @@ stages:
 - stage: deploy
   displayName: 'Deploy website'
   pool: Small
-  dependsOn: ['build', 'check_branch_version']
+  dependsOn: ['check_branch_version', 'upload_json']
   jobs:
     - job: deploy_site
       displayName: 'Deploy website'
