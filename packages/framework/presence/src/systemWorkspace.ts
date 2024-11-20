@@ -42,12 +42,9 @@ class SessionClient implements ISessionClient {
 
 	public constructor(
 		public readonly sessionId: ClientSessionId,
-		private connectionId: ClientConnectionId | undefined = undefined,
+		public connectionId: ClientConnectionId | undefined = undefined,
 	) {
-		this.connectionStatus =
-			connectionId === undefined
-				? SessionClientStatus.Disconnected
-				: SessionClientStatus.Connected;
+		this.connectionStatus = SessionClientStatus.Disconnected;
 	}
 
 	public getConnectionId(): ClientConnectionId {
@@ -59,16 +56,6 @@ class SessionClient implements ISessionClient {
 
 	public getConnectionStatus(): SessionClientStatus {
 		return this.connectionStatus;
-	}
-
-	public setConnectionId(
-		connectionId: ClientConnectionId,
-		updateStatus: boolean = true,
-	): void {
-		this.connectionId = connectionId;
-		if (updateStatus) {
-			this.connectionStatus = SessionClientStatus.Connected;
-		}
 	}
 
 	public setConnected(): void {
@@ -148,7 +135,6 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		const postUpdateActions: (() => void)[] = [];
 		const audienceMembers = this.audience.getMembers();
 		const joiningAttendees = new Set<SessionClient>();
-		const connectedAttendees = new Set<SessionClient>();
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
@@ -158,30 +144,19 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				clientConnectionId,
 				/* order */ value.rev,
 			);
-
 			const isAttendeeConnected =
 				// We generally use audience membership to determine an attendee's connection status.
 				// If an attendee's connection ID is present within audience, they are considered to be connected.
 				audienceMembers.has(clientConnectionId) ||
 				// A special override case we enforce is the attendee that sent the update; they are always considered connected regardless
 				// of audience membership. This is to handle the case where the sender is not in the audience.
-				senderConnectionId === clientConnectionId ||
-				// This last check ensures that if any of the past connection IDs for the attendee is marked as connected,
-				// the attendee is considered to be connected. If none are connected up to this point,
-				// we will set the attendee as disconnected. If any later connection is found to be connected,
-				// the status will be updated to connected.
-				connectedAttendees.has(attendee);
+				senderConnectionId === clientConnectionId;
 
 			if (isAttendeeConnected) {
-				// If attendee is connected, update their connection ID and status.
-				connectedAttendees.add(attendee);
 				attendee.setConnected();
 				if (isJoining) {
 					joiningAttendees.add(attendee);
 				}
-			} else {
-				// If the attendee is not connected, update their connection status.
-				attendee.setDisconnected();
 			}
 
 			const knownSessionId: InternalTypes.ValueRequiredState<ClientSessionId> | undefined =
@@ -210,7 +185,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			value: this.selfAttendee.sessionId,
 		};
 
-		this.selfAttendee.setConnectionId(clientConnectionId);
+		this.selfAttendee.connectionId = clientConnectionId;
+		this.selfAttendee.setConnected();
 		this.attendees.set(clientConnectionId, this.selfAttendee);
 	}
 
@@ -278,7 +254,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected) {
 				isJoining = true;
 			}
-			attendee.setConnectionId(clientConnectionId, /* updateStatus */ false);
+			attendee.connectionId = clientConnectionId;
 		}
 		// Always update entry for the connection ID. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);
