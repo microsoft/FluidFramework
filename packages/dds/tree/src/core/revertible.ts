@@ -39,7 +39,7 @@ export interface Revertible {
 }
 
 /**
- * A {@link Revertible} with features that are net yet stable.
+ * A {@link Revertible} with features that are not yet stable.
  *
  * @sealed @alpha
  */
