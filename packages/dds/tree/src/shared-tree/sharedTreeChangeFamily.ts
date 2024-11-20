@@ -32,7 +32,7 @@ import {
 	type NestedSet,
 	addToNestedSet,
 	fail,
-	hasOne,
+	hasSingle,
 	nestedSetContains,
 } from "../util/index.js";
 
@@ -180,7 +180,7 @@ export class SharedTreeChangeFamily
 			return SharedTreeChangeFamily.emptyChange;
 		}
 		assert(
-			hasOne(change.change.changes) && hasOne(over.change.changes),
+			hasSingle(change.change.changes) && hasSingle(over.change.changes),
 			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 

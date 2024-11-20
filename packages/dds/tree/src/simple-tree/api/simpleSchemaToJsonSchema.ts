@@ -6,7 +6,7 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ValueSchema } from "../../core/index.js";
-import { getOrCreate, hasOne, type Mutable } from "../../util/index.js";
+import { getOrCreate, hasSingle, type Mutable } from "../../util/index.js";
 import type {
 	JsonArrayNodeSchema,
 	JsonFieldSchema,
@@ -42,7 +42,7 @@ export function toJsonSchema(schema: SimpleTreeSchema): JsonTreeSchema {
 		allowedTypes.push(createSchemaRef(allowedType));
 	}
 
-	return hasOne(allowedTypes)
+	return hasSingle(allowedTypes)
 		? {
 				...allowedTypes[0],
 				$defs: definitions,
@@ -96,7 +96,7 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 		allowedTypes.push(createSchemaRef(type));
 	});
 
-	const items: JsonFieldSchema = hasOne(allowedTypes)
+	const items: JsonFieldSchema = hasSingle(allowedTypes)
 		? allowedTypes[0]
 		: { anyOf: allowedTypes };
 
@@ -143,7 +143,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 			allowedTypes.push(createSchemaRef(allowedType));
 		}
 
-		const output: Mutable<JsonFieldSchema> = hasOne(allowedTypes)
+		const output: Mutable<JsonFieldSchema> = hasSingle(allowedTypes)
 			? allowedTypes[0]
 			: {
 					anyOf: allowedTypes,
@@ -178,7 +178,7 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 		type: "object",
 		_treeNodeSchemaKind: NodeKind.Map,
 		patternProperties: {
-			"^.*$": hasOne(allowedTypes)
+			"^.*$": hasSingle(allowedTypes)
 				? allowedTypes[0]
 				: {
 						anyOf: allowedTypes,

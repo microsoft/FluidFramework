@@ -21,7 +21,7 @@ import {
 	valueSchemaAllows,
 	type NodeKeyManager,
 } from "../feature-libraries/index.js";
-import { brand, fail, isReadonlyArray, find, hasSome, hasOne } from "../util/index.js";
+import { brand, fail, isReadonlyArray, find, hasSome, hasSingle } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
 import {
@@ -468,7 +468,7 @@ function getType(
 		hasSome(possibleTypes),
 		0x84e /* data is incompatible with all types allowed by the schema */,
 	);
-	if (!hasOne(possibleTypes)) {
+	if (!hasSingle(possibleTypes)) {
 		throw new UsageError(
 			`The provided data is compatible with more than one type allowed by the schema.
 The set of possible types is ${JSON.stringify([

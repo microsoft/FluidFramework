@@ -24,7 +24,7 @@ import type {
 	Major,
 } from "./detachedFieldIndexTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { hasOne } from "../../util/index.js";
+import { hasSingle } from "../../util/index.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
@@ -84,7 +84,7 @@ export function makeDetachedNodeToFieldCodec(
 				for (const [minor, detachedField] of innerMap) {
 					rootRanges.push([minor, detachedField.root]);
 				}
-				if (hasOne(rootRanges)) {
+				if (hasSingle(rootRanges)) {
 					const firstRootRange = rootRanges[0];
 					const rootsForRevision: EncodedRootsForRevision = [
 						encodedRevision,

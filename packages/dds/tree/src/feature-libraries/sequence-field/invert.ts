@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTag } from "../../core/index.js";
-import { type IdAllocator, type Mutable, fail, hasOne } from "../../util/index.js";
+import { type IdAllocator, type Mutable, fail, hasSingle } from "../../util/index.js";
 import {
 	type CrossFieldManager,
 	CrossFieldTarget,
@@ -257,7 +257,7 @@ function invertMark(
 			}
 
 			assert(
-				hasOne(detachInverses),
+				hasSingle(detachInverses),
 				0x80d /* Only expected MoveIn marks to be split when inverting */,
 			);
 

@@ -65,7 +65,7 @@ import {
 	disposeSymbol,
 	fail,
 	getLast,
-	hasOne,
+	hasSingle,
 	hasSome,
 } from "../util/index.js";
 
@@ -516,7 +516,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
 				assert(
-					hasOne(event.newCommits),
+					hasSingle(event.newCommits),
 					"Expected exactly one new commit for transaction commit event",
 				);
 				const firstCommit = event.newCommits[0];
