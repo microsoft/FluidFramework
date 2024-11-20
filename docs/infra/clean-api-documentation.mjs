@@ -32,7 +32,7 @@ const apiDocsPaths = [
 	path.relative(docsRootDirectory, config.local.apiDocs.outputPath),
 ];
 
-console.log(`Cleaning API generated API documentation under: [${apiDocsPaths.join(", ")}]...`);
+console.log(`Cleaning generated API documentation under: [${apiDocsPaths.join(", ")}]...`);
 try {
 	await Promise.all(apiDocsPaths.map(async (pathSpec) => cleanIgnored(pathSpec)));
 } catch (error) {
