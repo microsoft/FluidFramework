@@ -9,11 +9,7 @@ import {
 	AttachState,
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import {
-	createDetachedContainer,
-	resolveContainer,
-	waitContainerToCatchUp,
-} from "@fluidframework/container-loader/internal";
+import { waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -31,7 +27,7 @@ import type {
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-import { createLoader } from "../utils.js";
+import { createLoader } from "../utils";
 
 const mapFactory = SharedMap.getFactory();
 const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
@@ -196,15 +192,12 @@ describe("Scenario Test", () => {
 	it("Synchronously create child data store", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-		const loaderProps = createLoader({
+		const { loader, codeDetails, urlResolver } = createLoader({
 			deltaConnectionServer,
 			runtimeFactory,
 		});
 
-		const container = await createDetachedContainer({ ...loaderProps });
-		await container.attach(loaderProps.urlResolver.createCreateNewRequest("test"));
-		const url = await container.getAbsoluteUrl("");
-		assert(url !== undefined, "container must have url");
+		const container = await loader.createDetachedContainer(codeDetails);
 
 		{
 			const entrypoint: FluidObject<ParentDataObject> = await container.getEntryPoint();
@@ -241,7 +234,7 @@ describe("Scenario Test", () => {
 		container.dispose();
 
 		{
-			const container2 = await resolveContainer({ request: { url }, ...loaderProps });
+			const container2 = await loader.resolve({ url });
 			await waitContainerToCatchUp(container2);
 			const entrypoint: FluidObject<ParentDataObject> = await container2.getEntryPoint();
 
