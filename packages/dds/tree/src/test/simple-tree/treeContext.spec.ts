@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
-	type TreeBranchEvents,
 	type TreeView,
 	type TreeViewAlpha,
-	type TreeViewEvents,
 } from "../../simple-tree/index.js";
 
 import { getView } from "../utils.js";
@@ -36,11 +34,6 @@ describe("TreeBranch", () => {
 		const view = init([]);
 		const branch = view.fork();
 		type _check = requireAssignableTo<typeof branch, typeof view>;
-	}
-
-	{
-		// Test that TreeViewEvents "extends" TreeContextEvents (it can't actually extend it because TreeViewEvents is public but TreeContextEvents is not yet).
-		type _check = requireAssignableTo<TreeViewEvents, TreeBranchEvents>;
 	}
 
 	it("can downcast to a view", () => {

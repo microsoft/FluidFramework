@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { isPromiseLike } from "@fluidframework/core-utils/internal";
 import {
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreRegistry,
@@ -36,6 +37,15 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 	public async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
 		if (this.map.has(name)) {
 			return this.map.get(name);
+		}
+
+		return undefined;
+	}
+
+	public getSync(name: string): FluidDataStoreRegistryEntry | undefined {
+		const entry = this.map.get(name);
+		if (!isPromiseLike(entry)) {
+			return entry;
 		}
 
 		return undefined;

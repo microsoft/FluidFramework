@@ -6,7 +6,7 @@
 import { Command, Flags, Interfaces } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
 import type { PrettyPrintableError } from "@oclif/core/errors";
-import chalk from "chalk";
+import chalk from "picocolors";
 
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { CommandLogger } from "../../logging.js";
@@ -279,7 +279,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	 */
 	public verbose(message: string | Error | undefined): void {
 		if (this.flags.verbose === true) {
-			const color = typeof message === "string" ? chalk.grey : chalk.red;
+			const color = typeof message === "string" ? chalk.gray : chalk.red;
 			this.log(color(`VERBOSE: ${message}`));
 		}
 	}

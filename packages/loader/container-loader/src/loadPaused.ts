@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { LoaderHeader, type IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	isIDeltaManagerFull,
+	LoaderHeader,
+	type IContainer,
+} from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 
 import { resolveContainer, type ILoaderProps } from "./loader.js";
@@ -64,6 +69,10 @@ export async function loadContainerPaused(
 	const lastProcessedSequenceNumber = dm.initialSequenceNumber;
 
 	const pauseContainer = (): void => {
+		assert(
+			isIDeltaManagerFull(dm),
+			0xa7f /* Delta manager does not have inbound/outbound queues. */,
+		);
 		// eslint-disable-next-line no-void
 		void dm.inbound.pause();
 		// eslint-disable-next-line no-void
