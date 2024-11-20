@@ -263,7 +263,6 @@ describe("Presence", () => {
 		});
 
 		describe("NotificationsManager", () => {
-			// IMPORTANT: RESULTS NOT VALID! See TODOs inline.
 			it("notification signals are sent immediately", async () => {
 				runtime.snapshotSignals = false;
 				// Configure a notifications workspaces
@@ -288,11 +287,6 @@ describe("Presence", () => {
 				);
 
 				const { testEvents } = notificationsWorkspace.props;
-
-				// Add a handler
-				testEvents.notifications.on("newId", (client, value) => {
-					// do nothing
-				});
 
 				clock.tick(10); // Time is now 1020
 
