@@ -126,22 +126,7 @@ extends:
             verbosity: Verbose
             scanType: Register
             alertWarningLevel: High
-      - deployment: upload_json
-        displayName: 'Combine api-extractor JSON'
-        dependsOn: []
-        environment: 'fluid-docs-env'
-        templateContext:
-          type: releaseJob
-          isProduction: true
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-              - template: /tools/pipelines/templates/upload-json-steps.yml@self
-                parameters:
-                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-                  STORAGE_KEY: $(STORAGE_KEY)
-                  uploadAsLatest: ${{ variables.isMain }}
+
       - job: build_site
         displayName: 'Build website'
         dependsOn: upload_json
