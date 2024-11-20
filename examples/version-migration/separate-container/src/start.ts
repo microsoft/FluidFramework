@@ -49,12 +49,18 @@ const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): voi
 	// view code loader to pull in the view dynamically based on the version we discover.
 	if (isIInventoryListAppModel(model)) {
 		const appDiv = document.querySelector("#app") as HTMLDivElement;
-		appRoot ??= createRoot(appDiv);
+		if (appRoot !== undefined) {
+			appRoot.unmount();
+		}
+		appRoot = createRoot(appDiv);
 		appRoot.render(createElement(InventoryListAppView, { model, migrationTool }));
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
-		debugRoot ??= createRoot(debugDiv);
+		if (debugRoot !== undefined) {
+			debugRoot.unmount();
+		}
+		debugRoot = createRoot(debugDiv);
 		debugRoot.render(
 			createElement(DebugView, {
 				model,
