@@ -10,14 +10,14 @@ export {
 	ICodeDetailsLoader,
 	IDetachedBlobStorage,
 	IFluidModuleWithDetails,
-	ILoaderCreateDetachedContainerProps,
+	ICreateDetachedContainerProps,
 	ILoaderOptions,
 	ILoaderProps,
-	ILoaderRehydrateDetachedContainerProps,
-	ILoaderResolveContainerProps,
+	IRehydrateDetachedContainerProps,
+	IResolveContainerProps,
 	ILoaderServices,
 	Loader,
-	rehydrateDetachedContainerFromSnapshot,
+	rehydrateDetachedContainer,
 	resolveContainer,
 } from "./loader.js";
 export { loadContainerPaused } from "./loadPaused.js";

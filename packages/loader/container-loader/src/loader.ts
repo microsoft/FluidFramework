@@ -488,7 +488,7 @@ export class Loader implements IHostLoader {
  * @alpha
  */
 export async function resolveContainer(
-	loaderResolveContainerProps: ILoaderResolveContainerProps,
+	loaderResolveContainerProps: IResolveContainerProps,
 ): Promise<IContainer> {
 	const loader = new Loader(loaderResolveContainerProps);
 	return loader.resolve(
@@ -505,7 +505,7 @@ export async function resolveContainer(
  * @alpha
  */
 export async function createDetachedContainer(
-	createDetachedContainerProps: ILoaderCreateDetachedContainerProps,
+	createDetachedContainerProps: ICreateDetachedContainerProps,
 ): Promise<IContainer> {
 	const loader = new Loader(createDetachedContainerProps);
 	return loader.createDetachedContainer(
@@ -522,11 +522,11 @@ export async function createDetachedContainer(
  * @alpha
  */
 export async function rehydrateDetachedContainer(
-	rehydrateDetachedContainerProps: ILoaderRehydrateDetachedContainerProps,
+	rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps,
 ): Promise<IContainer> {
 	const loader = new Loader(rehydrateDetachedContainerProps);
 	return loader.rehydrateDetachedContainerFromSnapshot(
-		rehydrateDetachedContainerProps.snapshot,
+		rehydrateDetachedContainerProps.serializedState,
 		rehydrateDetachedContainerProps,
 	);
 }

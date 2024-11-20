@@ -13,7 +13,7 @@ import {
 import {
 	createDetachedContainer,
 	Loader,
-	type ILoaderCreateDetachedContainerProps,
+	type ICreateDetachedContainerProps,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
@@ -109,7 +109,7 @@ export async function createAndAttachContainerUsingLoaderProps(
 	loaderProps: ILoaderProps,
 	attachRequest: IRequest,
 ): Promise<IContainer> {
-	const props: ILoaderCreateDetachedContainerProps = { codeDetails: source, ...loaderProps };
+	const props: ICreateDetachedContainerProps = { codeDetails: source, ...loaderProps };
 	const container = await createDetachedContainer(props);
 	await container.attach(attachRequest);
 
