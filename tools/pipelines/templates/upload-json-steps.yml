@@ -17,7 +17,7 @@ parameters:
   # Determines if artifact should be published as latest-v*.tar.gz (for release branches)
   - name: uploadAsLatestRelease
     type: string
-    default: 'false'
+    default: false
 
   # Major version to upload as latest-v*.tar.gz
   - name: majorVersion
