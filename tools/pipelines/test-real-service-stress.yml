@@ -1,111 +1,154 @@
-# gc stress tests odsp
-- template: templates/include-test-real-service.yml
-parameters:
-  stageId: gc_stress_tests_odsp
-  stageDisplayName: GC stress tests - Odsp
-  poolBuild: Large-eastus2
-  testPackage: ${{ variables.testPackage }}
-  testWorkspace: ${{ variables.testWorkspace }}
-  artifactBuildId: $(resources.pipeline.client.runID)
-  timeoutInMinutes: 200
-  testCommand: start:odsp
-  skipTestResultPublishing: true
-  pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-  stageVariables:
-    - group: stress-odsp-lock
-  splitTestVariants:
-    - name: Tombstone Mode
-      flags: --workLoadPath gc --profile ci_tombstone
-    - name: Sweep Mode
-      flags: --workLoadPath gc --profile ci_sweep
-  env:
-    login__microsoft__clientId: $(login-microsoft-clientId)
-    login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
-    FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
-    FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
 
-# gc stress tests tinylicious
-- template: templates/include-test-real-service.yml
-parameters:
-  stageId: gc_stress_tests_tinylicious_tombstone
-  stageDisplayName: GC Stress tests - tinylicious tombstone
-  poolBuild: Large-eastus2
-  testPackage: ${{ variables.testPackage }}
-  testWorkspace: ${{ variables.testWorkspace }}
-  artifactBuildId: $(resources.pipeline.client.runID)
-  timeoutInMinutes: 200
-  testCommand: start:t9s:gc:ci:tombstone
-  skipTestResultPublishing: true
-  pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-  splitTestVariants:
-    - name: Tombstone Mode
-  env:
-    FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-    FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
-    # Disable colorization for tinylicious logs (not useful when printing to a file)
-    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
-    logger__morganFormat: tiny
+# test-real-service-stress pipeline
 
-- template: templates/include-test-real-service.yml
-parameters:
-  stageId: gc_stress_tests_tinylicious_sweep
-  stageDisplayName: GC Stress tests - tinylicious sweep
-  poolBuild: Large-eastus2
-  testPackage: ${{ variables.testPackage }}
-  testWorkspace: ${{ variables.testWorkspace }}
-  artifactBuildId: $(resources.pipeline.client.runID)
-  timeoutInMinutes: 200
-  testCommand: start:t9s:gc:ci:sweep
-  skipTestResultPublishing: true
-  pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-  splitTestVariants:
-    - name: Sweep Mode
-  env:
-    FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-    FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
-    # Disable colorization for tinylicious logs (not useful when printing to a file)
-    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
-    logger__morganFormat: tiny
+name: $(Build.BuildId)
 
-# summarizer stress tests odsp
-- template: templates/include-test-real-service.yml
-parameters:
-  stageId: summary_stress_tests_odsp
-  stageDisplayName: Summary stress tests - Odsp
-  poolBuild: Large-eastus2
-  testPackage: ${{ variables.testPackage }}
-  testWorkspace: ${{ variables.testWorkspace }}
-  artifactBuildId: $(resources.pipeline.client.runID)
-  timeoutInMinutes: 200
-  testCommand: start:odsp
-  skipTestResultPublishing: true
-  pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-  stageVariables:
-    - group: stress-odsp-lock
-  splitTestVariants:
-    - flags: --workLoadPath summary --profile ci
-  env:
-    login__microsoft__clientId: $(login-microsoft-clientId)
-    login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
-    FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
-    FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+trigger: none
+pr: none
+schedules:
+- cron: "0 14 * * *" # Run every day at 7 am PST
+  displayName: Garbage Collection Daily Test Run
+  branches:
+    include:
+    - test/gc-stress
+  always: true
 
-# summarizer stress tests tinylicious
-- template: templates/include-test-real-service.yml
-parameters:
-  stageId: summary_stress_tests_tinylicious
-  stageDisplayName: Summary stress tests - tinylicious
-  poolBuild: Large-eastus2
-  testPackage: ${{ variables.testPackage }}
-  testWorkspace: ${{ variables.testWorkspace }}
-  artifactBuildId: $(resources.pipeline.client.runID)
-  timeoutInMinutes: 200
-  testCommand: start:t9s:summary:ci
-  skipTestResultPublishing: true
-  pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-  env:
-    FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
-    FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
-    # Disable colorization for tinylicious logs (not useful when printing to a file)
-    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
-    logger__morganFormat: tiny
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    branch: test/gc-stress # Default branch for manual/scheduled triggers if none is selected
+    trigger:
+      branches:
+      - release/*
+      - main
+      - next
+      - lts
+      - test/gc-stress
+
+variables:
+- group: prague-key-vault
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+- name: absolutePathToTelemetryGenerator
+  value: $(Build.SourcesDirectory)/tools/telemetry-generator
+  readonly: true
+- name: testPackage
+  value: "@fluid-internal/test-service-load"
+  readonly: true
+
+lockBehavior: sequential
+stages:
+  # gc stress tests odsp
+  - template: templates/include-test-real-service.yml
+    parameters:
+      stageId: gc_stress_tests_odsp
+      stageDisplayName: GC stress tests - Odsp
+      poolBuild: Large-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      timeoutInMinutes: 200
+      testCommand: start:odsp
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      stageVariables:
+        - group: stress-odsp-lock
+      splitTestVariants:
+        - name: Tombstone Mode
+          flags: --workLoadPath gc --profile ci_tombstone
+        - name: Sweep Mode
+          flags: --workLoadPath gc --profile ci_sweep
+      env:
+        login__microsoft__clientId: $(login-microsoft-clientId)
+        login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+
+  # gc stress tests tinylicious
+  - template: templates/include-test-real-service.yml
+    parameters:
+      stageId: gc_stress_tests_tinylicious_tombstone
+      stageDisplayName: GC Stress tests - tinylicious tombstone
+      poolBuild: Large-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      timeoutInMinutes: 200
+      testCommand: start:t9s:gc:ci:tombstone
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      splitTestVariants:
+        - name: Tombstone Mode
+      env:
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        # Disable colorization for tinylicious logs (not useful when printing to a file)
+        logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+        logger__morganFormat: tiny
+
+  - template: templates/include-test-real-service.yml
+    parameters:
+      stageId: gc_stress_tests_tinylicious_sweep
+      stageDisplayName: GC Stress tests - tinylicious sweep
+      poolBuild: Large-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      timeoutInMinutes: 200
+      testCommand: start:t9s:gc:ci:sweep
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      splitTestVariants:
+        - name: Sweep Mode
+      env:
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        # Disable colorization for tinylicious logs (not useful when printing to a file)
+        logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+        logger__morganFormat: tiny
+
+  # summarizer stress tests odsp
+  - template: templates/include-test-real-service.yml
+    parameters:
+      stageId: summary_stress_tests_odsp
+      stageDisplayName: Summary stress tests - Odsp
+      poolBuild: Large-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      timeoutInMinutes: 200
+      testCommand: start:odsp
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      stageVariables:
+        - group: stress-odsp-lock
+      splitTestVariants:
+        - flags: --workLoadPath summary --profile ci
+      env:
+        login__microsoft__clientId: $(login-microsoft-clientId)
+        login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+
+  # summarizer stress tests tinylicious
+  - template: templates/include-test-real-service.yml
+    parameters:
+      stageId: summary_stress_tests_tinylicious
+      stageDisplayName: Summary stress tests - tinylicious
+      poolBuild: Large-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      timeoutInMinutes: 200
+      testCommand: start:t9s:summary:ci
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        # Disable colorization for tinylicious logs (not useful when printing to a file)
+        logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+        logger__morganFormat: tiny
