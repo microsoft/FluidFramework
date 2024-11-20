@@ -4,8 +4,8 @@
  */
 
 module.exports = {
-	"parserOptions": {
-		"ecmaVersion": "latest"
+	parserOptions: {
+		ecmaVersion: "latest",
 	},
 	overrides: [
 		// Rules for code
@@ -95,6 +95,6 @@ module.exports = {
 				// See <https://docusaurus.io/docs/api/misc/@docusaurus/eslint-plugin/prefer-docusaurus-heading>
 				"@docusaurus/prefer-docusaurus-heading": "error",
 			},
-		}
+		},
 	],
 };
