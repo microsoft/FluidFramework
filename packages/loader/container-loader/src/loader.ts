@@ -212,12 +212,12 @@ export interface IResolveContainerProps extends ILoaderProps {
 	/**
 	 * The request to resolve the container.
 	 */
-	request: IRequest;
+	readonly request: IRequest;
 
 	/**
 	 * Pending local state to be applied to the container.
 	 */
-	pendingLocalState?: string;
+	readonly pendingLocalState?: string;
 }
 
 /**
@@ -229,11 +229,17 @@ export interface ICreateDetachedContainerProps extends ILoaderProps {
 	/**
 	 * The code details for the container to be created.
 	 */
-	codeDetails: IFluidCodeDetails;
+	readonly codeDetails: IFluidCodeDetails;
 
-	canReconnect?: boolean;
+	/**
+	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
+	 */
+	readonly canReconnect?: boolean;
 
-	clientDetailsOverride?: IClientDetails;
+	/**
+	 * Client details provided in the override will be merged over the default client.
+	 */
+	readonly clientDetailsOverride?: IClientDetails;
 }
 
 /**
@@ -245,11 +251,17 @@ export interface IRehydrateDetachedContainerProps extends ILoaderProps {
 	/**
 	 * The serialized state returned by calling serialize on another container
 	 */
-	serializedState: string;
+	readonly serializedState: string;
 
-	canReconnect?: boolean;
+	/**
+	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
+	 */
+	readonly canReconnect?: boolean;
 
-	clientDetailsOverride?: IClientDetails;
+	/**
+	 * Client details provided in the override will be merged over the default client.
+	 */
+	readonly clientDetailsOverride?: IClientDetails;
 }
 
 /**

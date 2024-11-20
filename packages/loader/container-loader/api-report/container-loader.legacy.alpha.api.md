@@ -40,11 +40,9 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 // @alpha
 export interface ICreateDetachedContainerProps extends ILoaderProps {
-    // (undocumented)
-    canReconnect?: boolean;
-    // (undocumented)
-    clientDetailsOverride?: IClientDetails;
-    codeDetails: IFluidCodeDetails;
+    readonly canReconnect?: boolean;
+    readonly clientDetailsOverride?: IClientDetails;
+    readonly codeDetails: IFluidCodeDetails;
 }
 
 // @alpha @deprecated
@@ -120,17 +118,15 @@ export interface IQuorumSnapshot {
 
 // @alpha
 export interface IRehydrateDetachedContainerProps extends ILoaderProps {
-    // (undocumented)
-    canReconnect?: boolean;
-    // (undocumented)
-    clientDetailsOverride?: IClientDetails;
-    serializedState: string;
+    readonly canReconnect?: boolean;
+    readonly clientDetailsOverride?: IClientDetails;
+    readonly serializedState: string;
 }
 
 // @alpha
 export interface IResolveContainerProps extends ILoaderProps {
-    pendingLocalState?: string;
-    request: IRequest;
+    readonly pendingLocalState?: string;
+    readonly request: IRequest;
 }
 
 // @alpha (undocumented)
