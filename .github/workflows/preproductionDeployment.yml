@@ -31,14 +31,6 @@ jobs:
         with:
           node-version: '16' # Specify your Node.js version
 
-       - template: template: templates/include-install-pnpm.yml
-          parameters:
-            buildDirectory: $(Build.SourcesDirectory)/docs
-       - script: |
-          echo "pnpm is installed. Version:"
-          pnpm --version
-        displayName: 'Verify pnpm Installation'
-
       # Step 3: Install Dependencies
       - name: Install Dependencies
         run: |
