@@ -34,9 +34,7 @@ const apiDocsPaths = [
 
 console.log(`Cleaning API generated API documentation under: [${apiDocsPaths.join(", ")}]...`);
 try {
-	await Promise.all(
-		apiDocsPaths.map(async (pathSpec) => cleanIgnored(pathSpec)),
-	);
+	await Promise.all(apiDocsPaths.map(async (pathSpec) => cleanIgnored(pathSpec)));
 } catch (error) {
 	console.error("Error cleaning API docs:", error);
 	process.exit(1);

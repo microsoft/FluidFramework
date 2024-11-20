@@ -18,8 +18,5 @@ const git = simpleGit({ cwd: docsRootDirectory });
  * @param {string} pathSpec - The path to clean. Expressed relative to the root of the docs directory.
  */
 export async function cleanIgnored(pathSpec) {
-	await git.clean(
-		CleanOptions.FORCE + CleanOptions.IGNORED_ONLY,
-		[pathSpec],
-	);
+	await git.clean(CleanOptions.FORCE + CleanOptions.IGNORED_ONLY, [pathSpec]);
 }
