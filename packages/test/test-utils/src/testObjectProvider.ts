@@ -530,6 +530,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 			documentServiceFactory:
 				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
 		});
+		this._loaderContainerTracker.add(loader);
 		return loader;
 	}
 
@@ -555,7 +556,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
 		this.updateDocumentId(container.resolvedUrl);
-		this._loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -614,7 +614,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 			},
 			pendingLocalState,
 		);
-		this._loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -649,7 +648,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
 		this.updateDocumentId(container.resolvedUrl);
-		this._loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -864,6 +862,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 			documentServiceFactory:
 				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
 		});
+
+		this._loaderContainerTracker.add(loader);
 		return loader;
 	}
 
@@ -884,6 +884,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
 		});
 
+		this._loaderContainerTracker.add(loader);
 		return loader;
 	}
 
@@ -928,7 +929,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
 		this.updateDocumentId(container.resolvedUrl);
-		this._loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -946,7 +946,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		}
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
 		const container = await loader.createDetachedContainer(defaultCodeDetails);
-		this._loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -993,7 +992,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 			},
 			pendingLocalState,
 		);
-		this._loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
@@ -1032,7 +1030,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
 		this.updateDocumentId(container.resolvedUrl);
-		this._loaderContainerTracker.addContainer(container);
 		return container;
 	}
 
