@@ -117,7 +117,7 @@ function makeSideBySideDiv(divId: string) {
 /**
  * Create a loader with WebCodeLoader and return it.
  */
-async function createWebLoaderProps(
+async function createLoaderProps(
 	documentId: string,
 	fluidModule: IFluidModule,
 	options: RouteOptions,
