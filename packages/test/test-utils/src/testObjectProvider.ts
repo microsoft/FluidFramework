@@ -607,14 +607,13 @@ export class TestObjectProvider implements ITestObjectProvider {
 		headers?: IRequestHeader,
 		pendingLocalState?: string,
 	) {
-		const container = await loader.resolve(
+		return loader.resolve(
 			{
 				url: await this.driver.createContainerUrl(this.documentId),
 				headers,
 			},
 			pendingLocalState,
 		);
-		return container;
 	}
 
 	/**
@@ -945,8 +944,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 			);
 		}
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		const container = await loader.createDetachedContainer(defaultCodeDetails);
-		return container;
+		return loader.createDetachedContainer(defaultCodeDetails);
 	}
 
 	/**
@@ -974,8 +972,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	): Promise<IContainer> {
 		const driver = this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		const container = await this.resolveContainer(loader, requestHeader, driver, pendingState);
-		return container;
+		return this.resolveContainer(loader, requestHeader, driver, pendingState);
 	}
 
 	private async resolveContainer(
@@ -984,7 +981,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		driver?: ITestDriver,
 		pendingLocalState?: string,
 	) {
-		const container = await loader.resolve(
+		return loader.resolve(
 			{
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				url: await driver!.createContainerUrl(this.documentId),
@@ -992,7 +989,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 			},
 			pendingLocalState,
 		);
-		return container;
 	}
 
 	/**
