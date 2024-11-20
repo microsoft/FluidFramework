@@ -22,6 +22,7 @@ export interface ITimeoutContext {
 	/**
 	 * Checks if the timeout has been exceeded.
 	 * If exceeded, throws a 503 Timeout error
+	 * @param currentStage - Optional stage name to log with the timeout error.
 	 */
 	checkTimeout(currentStage?: string): void;
 }
