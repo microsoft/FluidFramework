@@ -42,6 +42,7 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../util/index.js";
+import { validateUsageError } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -286,22 +287,20 @@ describe("schemaTypes", () => {
 			}
 		});
 
-		it("Demo", () => {
+		it("bad union", () => {
 			const schemaFactory = new SchemaFactory("demo");
 			class A extends schema.object("A", { value: schemaFactory.number }) {}
 			class B extends schema.object("B", { value: schemaFactory.string }) {}
 
-			class ParentA extends schema.object("ParentA", { child: A }) {}
-			class ParentB extends schema.object("ParentB", { child: B }) {}
-
-			function getValue(node: ParentA | ParentB): number | string {
-				return node.child.value;
-			}
-
-			function setValue(node: ParentA | ParentB, v: number | string): void {
+			function setValue(node: A | B, v: number | string): void {
 				// TODO: This is not safe: this should not build
-				node.child.value = v;
+				// This limitation is due to an unsoundness in TypeScript's support for union property assignment.
+				// See https://github.com/microsoft/TypeScript/issues/33911#issuecomment-2489283581 for details.
+				// At the time of writing (TypeScript 5.6), this issue is still present despite the issue being closed as completed.
+				node.value = v;
 			}
+
+			assert.throws(() => setValue(new A({ value: 5 }), "x"), validateUsageError(/number/));
 		});
 
 		it("Objects", () => {
@@ -337,13 +336,6 @@ describe("schemaTypes", () => {
 			const a = new A({});
 			const b = new B({ a });
 			const b2 = new B({ a: {} });
-
-			// TODO: this should not compile!
-			// @ts-expect-error Unrecognized fields should error.
-			const a2 = new A({ thisDoesNotExist: 5 });
-
-			// @ts-expect-error Unrecognized fields error.
-			const b3 = new B({ a: {}, thisDoesNotExist: 5 });
 		});
 
 		it("Mixed Regression test", () => {
@@ -400,7 +392,7 @@ describe("schemaTypes", () => {
 
 			const allowed = [Note] as const;
 			type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
-			const test: X = [{}];
+			const test: X = {};
 
 			const allowed3 = [Note] as const;
 			type X3 = InsertableTreeNodeFromAllowedTypes<typeof allowed3>;
@@ -410,7 +402,7 @@ describe("schemaTypes", () => {
 			type X4 = InsertableTypedNode<typeof allowed4>;
 
 			type X5 = InsertableTreeFieldFromImplicitField<typeof allowed>;
-			const test2: X5 = [{}];
+			const test2: X5 = {};
 
 			type X6 = InsertableObjectFromSchemaRecord<typeof Canvas.info>;
 			type X7 = InsertableTreeFieldFromImplicitField<typeof Canvas.info.stuff>;
