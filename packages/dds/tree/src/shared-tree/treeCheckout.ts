@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	UsageError,
@@ -59,7 +59,15 @@ import {
 	getChangeReplaceType,
 	type SharedTreeBranchChange,
 } from "../shared-tree-core/index.js";
-import { Breakable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
+import {
+	Breakable,
+	TransactionResult,
+	disposeSymbol,
+	fail,
+	getLast,
+	hasOne,
+	hasSome,
+} from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -468,12 +476,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		_branch.events.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
-				const revision =
-					event.type === "replace"
-						? // Change events will always contain new commits
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							event.newCommits[event.newCommits.length - 1]!.revision
-						: event.change.revision;
+				let revision: RevisionTag | undefined;
+				if (event.type === "replace") {
+					assert(hasSome(event.newCommits), "Expected new commit for non no-op change event");
+					revision = getLast(event.newCommits).revision;
+				} else {
+					revision = event.change.revision;
+				}
 
 				// Conflicts due to schema will be empty and thus are not applied.
 				for (const change of event.change.change.changes) {
@@ -506,7 +515,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
-				const firstCommit = event.newCommits[0] ?? oob();
+				assert(
+					hasOne(event.newCommits),
+					"Expected exactly one new commit for transaction commit event",
+				);
+				const firstCommit = event.newCommits[0];
 				const transactionRevision = firstCommit.revision;
 				for (const transactionStep of event.removedCommits) {
 					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);

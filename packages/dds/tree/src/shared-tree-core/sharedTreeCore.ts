@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -43,6 +43,7 @@ import {
 	type WithBreakable,
 	throwIfBroken,
 	breakingClass,
+	hasOne,
 } from "../util/index.js";
 
 import { type SharedTreeBranch, getChangeReplaceType } from "./branch.js";
@@ -213,10 +214,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				!this.getLocalBranch().isTransacting()
 			) {
 				assert(
-					change.newCommits.length === 1,
+					hasOne(change.newCommits),
 					0x983 /* Unexpected number of commits when committing transaction */,
 				);
-				this.commitEnricher.prepareCommit(change.newCommits[0] ?? oob(), true);
+				this.commitEnricher.prepareCommit(change.newCommits[0], true);
 			}
 		});
 		this.editManager.localBranch.events.on("afterChange", (change) => {

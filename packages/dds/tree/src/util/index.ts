@@ -91,6 +91,9 @@ export {
 	compareStrings,
 	find,
 	count,
+	getLast,
+	hasSome,
+	hasOne,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
