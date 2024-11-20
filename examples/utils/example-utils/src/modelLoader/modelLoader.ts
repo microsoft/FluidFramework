@@ -63,8 +63,8 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	// for the latest/default version to use?
 	public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
 		const container = await createDetachedContainer({
-			codeDetails: { package: version },
 			...this.props,
+			codeDetails: { package: version },
 		});
 		const model = await this.getModelFromContainer(container);
 		// The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,
@@ -82,6 +82,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 
 	public async loadExisting(id: string): Promise<ModelType> {
 		const container = await resolveContainer({
+			...this.props,
 			request: {
 				url: id,
 				headers: {
@@ -94,7 +95,6 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 					},
 				},
 			},
-			...this.props,
 		});
 		const model = await this.getModelFromContainer(container);
 		return model;
