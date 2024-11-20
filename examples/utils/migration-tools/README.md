@@ -37,7 +37,7 @@ export const getModelEntryPointPiece: IEntryPointPiece = {
 		await rootDatastore.trySetAlias(rootDatastoreAlias);
 	},
 	onLoad: async (runtime: IContainerRuntime): Promise<void> => {},
-	createPiece: async (runtime: IContainerRuntime): Promise<MyRootDatastore> => {
+	createPiece: async (runtime: IContainerRuntime): Promise<(container: IContainer) => Promise<FluidObject>> => {
 		const entryPointHandle = await containerRuntime.getAliasedDataStoreEntryPoint(rootDatastoreAlias);
 
 		if (entryPointHandle === undefined) {
@@ -47,8 +47,9 @@ export const getModelEntryPointPiece: IEntryPointPiece = {
 		// Entry points are typed as FluidObject and must be cast.  Here we know it's a MyRootDatastore since
 		// we created it just above.  Type validation can be added here if desired.
 		const rootDatastore = entryPointHandle.get() as Promise<MyRootDatastore>;
-		// MigratableAppModel (defined by the container code author) must implement IMigratableAppModel.
-		// Note that we're returning a function of type (container: IContainer) => Promise<IMigratableModel>
+		// MigratableAppModel (defined by the container code author) must implement IMigratableModel.
+		// Note that we're returning a function of type (container: IContainer) => Promise<FluidObject>,
+		// where the FluidObject is expected to be an IMigratableModel.
 		return async (container: IContainer) => new MigratableAppModel(rootDatastore, container);
 	},
 };
