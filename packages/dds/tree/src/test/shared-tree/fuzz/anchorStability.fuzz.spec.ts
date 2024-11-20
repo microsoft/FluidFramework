@@ -18,6 +18,7 @@ import type { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
 
 import {
+	asSchematizingSimpleTreeView,
 	type EditGeneratorOpWeights,
 	type FuzzTestState,
 	makeOpGenerator,
@@ -97,7 +98,9 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
-			const tree = viewFromState(initialState, initialState.clients[0]).checkout;
+			const tree = asSchematizingSimpleTreeView(
+				viewFromState(initialState, initialState.clients[0]),
+			).checkout;
 			tree.transaction.start();
 			const initialJsonableTree = jsonableTreeFromForest(tree.forest);
 			initialState.initialJsonableTree = initialJsonableTree;
@@ -109,7 +112,9 @@ describe("Fuzz - anchor stability", () => {
 			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
 
 			// aborts any transactions that may still be in progress
-			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
+			const tree = asSchematizingSimpleTreeView(
+				viewFromState(finalState, finalState.clients[0]),
+			).checkout;
 			tree.transaction.abort();
 			assert(finalState.initialJsonableTree !== undefined);
 			validateTree(tree, finalState.initialJsonableTree);
@@ -175,7 +180,7 @@ describe("Fuzz - anchor stability", () => {
 				for (const client of initialState.clients) {
 					// This is a kludge to force the invocation of schematize for each client.
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					viewFromState(initialState, client).checkout;
+					asSchematizingSimpleTreeView(viewFromState(initialState, client)).checkout;
 					// synchronization here (instead of once after this loop) prevents the second client from having to rebase an initialize,
 					// which invalidates its view due to schema change.
 					initialState.containerRuntimeFactory.processAllMessages();
@@ -183,7 +188,8 @@ describe("Fuzz - anchor stability", () => {
 			}
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				const view = viewFromState(initialState, client).checkout as RevertibleSharedTreeView;
+				const view = asSchematizingSimpleTreeView(viewFromState(initialState, client))
+					.checkout as RevertibleSharedTreeView;
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
@@ -195,7 +201,11 @@ describe("Fuzz - anchor stability", () => {
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
 			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
 			for (const [i, client] of finalState.clients.entries()) {
-				validateAnchors(viewFromState(finalState, client).checkout, anchors[i], false);
+				validateAnchors(
+					asSchematizingSimpleTreeView(viewFromState(finalState, client)).checkout,
+					anchors[i],
+					false,
+				);
 			}
 		});
 

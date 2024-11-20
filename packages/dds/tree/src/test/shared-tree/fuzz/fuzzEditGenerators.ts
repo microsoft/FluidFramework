@@ -27,6 +27,7 @@ import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
 import {
 	Tree,
 	type ISharedTree,
+	type SchematizingSimpleTreeView,
 	type SharedTree,
 	type SharedTreeFactory,
 } from "../../../shared-tree/index.js";
@@ -60,17 +61,19 @@ import {
 	GeneratedFuzzValueType,
 	type NodeRange,
 } from "./operationTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
+
 import {
+	getOrCreateInnerNode,
+	type TreeViewAlpha,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNode,
 	type TreeNodeSchema,
+	asTreeViewAlpha,
+	type ImplicitFieldSchema,
 } from "../../../simple-tree/index.js";
 
-export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
+export type FuzzView = TreeViewAlpha<typeof fuzzFieldSchema> & {
 	/**
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
 	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
@@ -84,7 +87,7 @@ export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	currentSchema: FuzzNodeSchema;
 };
 
-export type FuzzTransactionView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
+export type FuzzTransactionView = TreeViewAlpha<typeof fuzzFieldSchema> & {
 	/**
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
 	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
@@ -116,6 +119,19 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	transactionViews?: Map<ISharedTree, FuzzTransactionView>;
 }
 
+/**
+ *
+ * @param view - TreeViewAlpha view you want to cast as a SchematizingSimpleTreeView
+ * @returns view as a SchematizingSimpleTreeView
+ *
+ * TODO: Once the two tree view apis merge, we will no longer need this function.
+ */
+export function asSchematizingSimpleTreeView<TSchema extends ImplicitFieldSchema>(
+	view: TreeViewAlpha<TSchema>,
+): SchematizingSimpleTreeView<TSchema> {
+	return view as SchematizingSimpleTreeView<TSchema>;
+}
+
 export function viewFromState(
 	state: FuzzTestState,
 	client: Client<SharedTreeFactory> = state.client,
@@ -129,7 +145,7 @@ export function viewFromState(
 				schema: treeSchema,
 			});
 
-			const treeView = tree.viewWith(config);
+			const treeView = asTreeViewAlpha(tree.viewWith(config));
 			treeView.events.on("schemaChanged", () => {
 				if (!treeView.compatibility.canView) {
 					treeView.dispose();
@@ -528,7 +544,10 @@ export const makeTransactionEditGenerator = (
 				boundary: "commit",
 			},
 			opWeights.commit,
-			(state) => viewFromState(state).checkout.transaction.inProgress(),
+			(state) =>
+				(
+					viewFromState(state) as unknown as SchematizingSimpleTreeView<typeof fuzzFieldSchema>
+				).checkout.transaction.inProgress(),
 		],
 		[
 			{
@@ -536,7 +555,8 @@ export const makeTransactionEditGenerator = (
 				boundary: "abort",
 			},
 			opWeights.abort,
-			(state) => viewFromState(state).checkout.transaction.inProgress(),
+			(state) =>
+				asSchematizingSimpleTreeView(viewFromState(state)).checkout.transaction.inProgress(),
 		],
 	]);
 };
@@ -642,7 +662,10 @@ export function makeOpGenerator(
 				[
 					() => makeConstraintEditGenerator(weights),
 					constraintWeight,
-					(state: FuzzTestState) => viewFromState(state).checkout.transaction.inProgress(),
+					(state: FuzzTestState) =>
+						asSchematizingSimpleTreeView(
+							viewFromState(state),
+						).checkout.transaction.inProgress(),
 				],
 			] as const
 		)

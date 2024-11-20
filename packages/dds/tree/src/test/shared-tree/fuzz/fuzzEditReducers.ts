@@ -14,7 +14,7 @@ import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
 import { Tree, type SharedTreeFactory } from "../../../shared-tree/index.js";
 import { fail } from "../../../util/index.js";
-import { validateFuzzTreeConsistency, viewCheckout } from "../../utils.js";
+import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
 	type FuzzTestState,
@@ -22,7 +22,7 @@ import {
 	type FuzzView,
 	getAllowableNodeTypes,
 	viewFromState,
-	simpleSchemaFromStoredSchema,
+	asSchematizingSimpleTreeView,
 } from "./fuzzEditGenerators.js";
 import {
 	createTreeViewSchema,
@@ -52,7 +52,7 @@ import {
 	type GUIDNodeValue,
 } from "./operationTypes.js";
 
-import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
+import { asTreeViewAlpha, getOrCreateInnerNode } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
@@ -78,7 +78,7 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 		applyTransactionBoundary(state, boundary);
 	},
 	undoRedo: (state, { operation }) => {
-		const view = viewFromState(state).checkout;
+		const view = asSchematizingSimpleTreeView(viewFromState(state)).checkout;
 		assert(isRevertibleSharedTreeView(view));
 		applyUndoRedoEdit(view.undoStack, view.redoStack, operation);
 	},
@@ -170,8 +170,8 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 	view.dispose();
 	state.transactionViews?.delete(state.client.channel);
 
-	const newView = state.client.channel.viewWith(
-		new TreeViewConfiguration({ schema: newSchema }),
+	const newView = asTreeViewAlpha(
+		state.client.channel.viewWith(new TreeViewConfiguration({ schema: newSchema })),
 	) as FuzzTransactionView;
 	newView.upgradeSchema();
 
@@ -196,7 +196,10 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 		assert(fieldEdit.change.type === "optional");
 		switch (fieldEdit.change.edit.type) {
 			case "set": {
-				tree.root = generateFuzzNode(fieldEdit.change.edit.value, tree.currentSchema);
+				asSchematizingSimpleTreeView(tree).root = generateFuzzNode(
+					fieldEdit.change.edit.value,
+					tree.currentSchema,
+				);
 				break;
 			}
 			case "clear": {
@@ -310,19 +313,16 @@ export function applyTransactionBoundary(
 			boundary === "start",
 			"Forked view should be present in the fuzz state unless a (non-nested) transaction is being started.",
 		);
-		const treeViewFork = viewFromState(state).checkout.branch();
-		const treeSchema = simpleSchemaFromStoredSchema(state.client.channel.storedSchema);
-		const treeView = viewCheckout(
-			treeViewFork,
-			new TreeViewConfiguration({ schema: treeSchema }),
-		);
-		view = treeView as FuzzTransactionView;
-		const nodeSchema = nodeSchemaFromTreeSchema(treeSchema);
-		view.currentSchema = nodeSchema ?? assert.fail("nodeSchema should not be undefined");
+		const treeView = viewFromState(state);
+		const treeSchema = treeView.currentSchema;
+		const treeViewFork = treeView.fork();
+
+		view = treeViewFork as FuzzTransactionView;
+		view.currentSchema = treeSchema ?? assert.fail("nodeSchema should not be undefined");
 		state.transactionViews.set(state.client.channel, view);
 	}
 
-	const { checkout } = view;
+	const { checkout } = asSchematizingSimpleTreeView(view);
 	switch (boundary) {
 		case "start": {
 			checkout.transaction.start();
@@ -343,7 +343,7 @@ export function applyTransactionBoundary(
 	if (!checkout.transaction.inProgress()) {
 		// Transaction is complete, so merge the changes into the root view and clean up the fork from the state.
 		state.transactionViews.delete(state.client.channel);
-		const rootView = viewFromState(state);
+		const rootView = asSchematizingSimpleTreeView(viewFromState(state));
 		rootView.checkout.merge(checkout);
 	}
 }
@@ -376,7 +376,7 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 				: undefined;
 
 			if (constraintNode !== undefined) {
-				tree.checkout.editor.addNodeExistsConstraint(
+				asSchematizingSimpleTreeView(tree).checkout.editor.addNodeExistsConstraint(
 					getOrCreateInnerNode(constraintNode).anchorNode,
 				);
 			}
