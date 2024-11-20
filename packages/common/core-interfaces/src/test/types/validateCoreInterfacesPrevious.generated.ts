@@ -121,7 +121,7 @@ declare type current_as_old_for_Interface_IEvent = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Interface_IEventProvider": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IEventProvider = requireAssignableTo<TypeOnly<current.IEventProvider<any>>, TypeOnly<old.IEventProvider<any>>>
+declare type current_as_old_for_Interface_IEventProvider = requireAssignableTo<TypeOnly<current.IEventProvider<never>>, TypeOnly<old.IEventProvider<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -157,7 +157,7 @@ declare type current_as_old_for_Interface_IFluidHandleContext = requireAssignabl
  * typeValidation.broken:
  * "Interface_IFluidHandleErased": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidHandleErased = requireAssignableTo<TypeOnly<current.IFluidHandleErased<any>>, TypeOnly<old.IFluidHandleErased<any>>>
+declare type current_as_old_for_Interface_IFluidHandleErased = requireAssignableTo<TypeOnly<current.IFluidHandleErased<never>>, TypeOnly<old.IFluidHandleErased<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -391,7 +391,7 @@ declare type current_as_old_for_Interface_IThrottlingWarning = requireAssignable
  * typeValidation.broken:
  * "Interface_Tagged": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_Tagged = requireAssignableTo<TypeOnly<old.Tagged<any>>, TypeOnly<current.Tagged<any>>>
+declare type old_as_current_for_Interface_Tagged = requireAssignableTo<TypeOnly<old.Tagged<never>>, TypeOnly<current.Tagged<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -400,7 +400,7 @@ declare type old_as_current_for_Interface_Tagged = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Interface_Tagged": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_Tagged = requireAssignableTo<TypeOnly<current.Tagged<any>>, TypeOnly<old.Tagged<any>>>
+declare type current_as_old_for_Interface_Tagged = requireAssignableTo<TypeOnly<current.Tagged<never>>, TypeOnly<old.Tagged<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -427,7 +427,7 @@ declare type current_as_old_for_TypeAlias_ConfigTypes = requireAssignableTo<Type
  * typeValidation.broken:
  * "TypeAlias_ExtendEventProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ExtendEventProvider = requireAssignableTo<TypeOnly<old.ExtendEventProvider<any,any,any>>, TypeOnly<current.ExtendEventProvider<any,any,any>>>
+declare type old_as_current_for_TypeAlias_ExtendEventProvider = requireAssignableTo<TypeOnly<old.ExtendEventProvider<never,never,never>>, TypeOnly<current.ExtendEventProvider<never,never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -436,7 +436,7 @@ declare type old_as_current_for_TypeAlias_ExtendEventProvider = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_ExtendEventProvider": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ExtendEventProvider = requireAssignableTo<TypeOnly<current.ExtendEventProvider<any,any,any>>, TypeOnly<old.ExtendEventProvider<any,any,any>>>
+declare type current_as_old_for_TypeAlias_ExtendEventProvider = requireAssignableTo<TypeOnly<current.ExtendEventProvider<never,never,never>>, TypeOnly<old.ExtendEventProvider<never,never,never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -481,7 +481,7 @@ declare type current_as_old_for_TypeAlias_FluidObject = requireAssignableTo<Type
  * typeValidation.broken:
  * "TypeAlias_FluidObjectKeys": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_FluidObjectKeys = requireAssignableTo<TypeOnly<old.FluidObjectKeys<any>>, TypeOnly<current.FluidObjectKeys<any>>>
+declare type old_as_current_for_TypeAlias_FluidObjectKeys = requireAssignableTo<TypeOnly<old.FluidObjectKeys<never>>, TypeOnly<current.FluidObjectKeys<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -490,7 +490,7 @@ declare type old_as_current_for_TypeAlias_FluidObjectKeys = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_FluidObjectKeys": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_FluidObjectKeys = requireAssignableTo<TypeOnly<current.FluidObjectKeys<any>>, TypeOnly<old.FluidObjectKeys<any>>>
+declare type current_as_old_for_TypeAlias_FluidObjectKeys = requireAssignableTo<TypeOnly<current.FluidObjectKeys<never>>, TypeOnly<old.FluidObjectKeys<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -499,7 +499,7 @@ declare type current_as_old_for_TypeAlias_FluidObjectKeys = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_FluidObjectProviderKeys": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_FluidObjectProviderKeys = requireAssignableTo<TypeOnly<old.FluidObjectProviderKeys<any>>, TypeOnly<current.FluidObjectProviderKeys<any>>>
+declare type old_as_current_for_TypeAlias_FluidObjectProviderKeys = requireAssignableTo<TypeOnly<old.FluidObjectProviderKeys<never>>, TypeOnly<current.FluidObjectProviderKeys<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -508,7 +508,7 @@ declare type old_as_current_for_TypeAlias_FluidObjectProviderKeys = requireAssig
  * typeValidation.broken:
  * "TypeAlias_FluidObjectProviderKeys": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_FluidObjectProviderKeys = requireAssignableTo<TypeOnly<current.FluidObjectProviderKeys<any>>, TypeOnly<old.FluidObjectProviderKeys<any>>>
+declare type current_as_old_for_TypeAlias_FluidObjectProviderKeys = requireAssignableTo<TypeOnly<current.FluidObjectProviderKeys<never>>, TypeOnly<old.FluidObjectProviderKeys<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -535,7 +535,7 @@ declare type current_as_old_for_TypeAlias_IEventThisPlaceHolder = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_IEventTransformer": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_IEventTransformer = requireAssignableTo<TypeOnly<old.IEventTransformer<any,any>>, TypeOnly<current.IEventTransformer<any,any>>>
+declare type old_as_current_for_TypeAlias_IEventTransformer = requireAssignableTo<TypeOnly<old.IEventTransformer<never,never>>, TypeOnly<current.IEventTransformer<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -544,7 +544,7 @@ declare type old_as_current_for_TypeAlias_IEventTransformer = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_IEventTransformer": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_IEventTransformer = requireAssignableTo<TypeOnly<current.IEventTransformer<any,any>>, TypeOnly<old.IEventTransformer<any,any>>>
+declare type current_as_old_for_TypeAlias_IEventTransformer = requireAssignableTo<TypeOnly<current.IEventTransformer<never,never>>, TypeOnly<old.IEventTransformer<never,never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -571,7 +571,7 @@ declare type current_as_old_for_TypeAlias_LogLevel = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "TypeAlias_ReplaceIEventThisPlaceHolder": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ReplaceIEventThisPlaceHolder = requireAssignableTo<TypeOnly<old.ReplaceIEventThisPlaceHolder<any,any>>, TypeOnly<current.ReplaceIEventThisPlaceHolder<any,any>>>
+declare type old_as_current_for_TypeAlias_ReplaceIEventThisPlaceHolder = requireAssignableTo<TypeOnly<old.ReplaceIEventThisPlaceHolder<never,never>>, TypeOnly<current.ReplaceIEventThisPlaceHolder<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -580,7 +580,7 @@ declare type old_as_current_for_TypeAlias_ReplaceIEventThisPlaceHolder = require
  * typeValidation.broken:
  * "TypeAlias_ReplaceIEventThisPlaceHolder": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ReplaceIEventThisPlaceHolder = requireAssignableTo<TypeOnly<current.ReplaceIEventThisPlaceHolder<any,any>>, TypeOnly<old.ReplaceIEventThisPlaceHolder<any,any>>>
+declare type current_as_old_for_TypeAlias_ReplaceIEventThisPlaceHolder = requireAssignableTo<TypeOnly<current.ReplaceIEventThisPlaceHolder<never,never>>, TypeOnly<old.ReplaceIEventThisPlaceHolder<never,never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -607,7 +607,7 @@ declare type current_as_old_for_TypeAlias_TelemetryBaseEventPropertyType = requi
  * typeValidation.broken:
  * "TypeAlias_TransformedEvent": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TransformedEvent = requireAssignableTo<TypeOnly<old.TransformedEvent<any,any,any>>, TypeOnly<current.TransformedEvent<any,any,any>>>
+declare type old_as_current_for_TypeAlias_TransformedEvent = requireAssignableTo<TypeOnly<old.TransformedEvent<never,never,never>>, TypeOnly<current.TransformedEvent<never,never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -616,7 +616,7 @@ declare type old_as_current_for_TypeAlias_TransformedEvent = requireAssignableTo
  * typeValidation.broken:
  * "TypeAlias_TransformedEvent": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TransformedEvent = requireAssignableTo<TypeOnly<current.TransformedEvent<any,any,any>>, TypeOnly<old.TransformedEvent<any,any,any>>>
+declare type current_as_old_for_TypeAlias_TransformedEvent = requireAssignableTo<TypeOnly<current.TransformedEvent<never,never,never>>, TypeOnly<old.TransformedEvent<never,never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
