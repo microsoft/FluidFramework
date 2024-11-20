@@ -286,6 +286,24 @@ describe("schemaTypes", () => {
 			}
 		});
 
+		it("Demo", () => {
+			const schemaFactory = new SchemaFactory("demo");
+			class A extends schema.object("A", { value: schemaFactory.number }) {}
+			class B extends schema.object("B", { value: schemaFactory.string }) {}
+
+			class ParentA extends schema.object("ParentA", { child: A }) {}
+			class ParentB extends schema.object("ParentB", { child: B }) {}
+
+			function getValue(node: ParentA | ParentB): number | string {
+				return node.child.value;
+			}
+
+			function setValue(node: ParentA | ParentB, v: number | string): void {
+				// TODO: This is not safe: this should not build
+				node.child.value = v;
+			}
+		});
+
 		it("Objects", () => {
 			const A = schema.object("A", {});
 			const B = schema.object("B", { a: A });
@@ -319,6 +337,13 @@ describe("schemaTypes", () => {
 			const a = new A({});
 			const b = new B({ a });
 			const b2 = new B({ a: {} });
+
+			// TODO: this should not compile!
+			// @ts-expect-error Unrecognized fields should error.
+			const a2 = new A({ thisDoesNotExist: 5 });
+
+			// @ts-expect-error Unrecognized fields error.
+			const b3 = new B({ a: {}, thisDoesNotExist: 5 });
 		});
 
 		it("Mixed Regression test", () => {
