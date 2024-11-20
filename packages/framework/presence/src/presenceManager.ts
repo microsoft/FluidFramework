@@ -11,6 +11,7 @@ import type {
 import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
 import type {
 	ClientSessionId,
@@ -115,8 +116,13 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 	public getStates<TSchema extends PresenceStatesSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
+		controls?: BroadcastControlSettings,
 	): PresenceStates<TSchema> {
-		return this.datastoreManager.getWorkspace(`s:${workspaceAddress}`, requestedContent);
+		return this.datastoreManager.getWorkspace(
+			`s:${workspaceAddress}`,
+			requestedContent,
+			controls,
+		);
 	}
 
 	public getNotifications<TSchema extends PresenceStatesSchema>(

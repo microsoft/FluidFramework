@@ -10,9 +10,9 @@ that are immediately and always available to all clients; or, for more complex s
 
 The most straightforward way to use Fluid is by defining **initial objects** that are created when the
 [Fluid container][] is created, and exist for the lifetime of the container. Initial objects serve as a base
-foundation for a Fluid *schema* -- a definition of the shape of the data.
+foundation for a Fluid _schema_ -- a definition of the shape of the data.
 
-Initial objects are always *connected* -- that is, they are connected to the Fluid service and are fully distributed.
+Initial objects are always _connected_ -- that is, they are connected to the Fluid service and are fully distributed.
 Your code can access initial objects via the `initialObjects` property on the `FluidContainer` object.
 
 Your code must define at least one `initialObject`. In many cases one or more initial objects is sufficient to build a Fluid application.
@@ -28,11 +28,11 @@ About this code note:
 
 ```typescript
 const schema = {
-    initialObjects: {
-        customMap: SharedMap,
-        "custom-cell": SharedCell,
-    }
-}
+	initialObjects: {
+		"customMap": SharedMap,
+		"custom-cell": SharedCell,
+	},
+};
 
 const { container, services } = await client.createContainer(schema);
 
@@ -75,7 +75,7 @@ const newMap = await container.create(SharedMap); // Create a new SharedMap
 :::tip
 Another way to think about `initialObjects` and dynamic objects is as follows:
 
-With `initialObjects`, you're telling Fluid both the type of the object *and* the key you'll use to later retrieve the
+With `initialObjects`, you're telling Fluid both the type of the object _and_ the key you'll use to later retrieve the
 object. This is statically defined, so Fluid can create the object for you and ensure it's always available via the key
 your code defined.
 
