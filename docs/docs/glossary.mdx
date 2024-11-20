@@ -3,6 +3,8 @@ title: Glossary
 sidebar_position: 8
 ---
 
+import { Heading } from "@theme/heading";
+
 ## Attached
 
 A Fluid container can be _attached_ or _detached_. An attached container is connected to a Fluid service and can be
@@ -34,7 +36,7 @@ A Fluid container can be _attached_ or _detached_. A detached container is not c
 be loaded by other clients. Newly created containers begin in a detached state, which allows developers to add initial
 data if needed before attaching the container. Also see [Attached](#attached).
 
-<h2 id="distributed-data-structures">Distributed data structures (DDSes)</h2>
+<Heading as="h2" id="distributed-data-structures">Distributed data structures (DDSes)</Heading>
 
 DDSes are the data structures Fluid Framework provides for storing collaborative data. As collaborators modify the data,
 the changes will be reflected to all other collaborators.
