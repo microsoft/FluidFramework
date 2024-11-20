@@ -58,7 +58,6 @@ declare type current_as_old_for_Class_SharedMapUndoRedoHandler = requireAssignab
  * typeValidation.broken:
  * "Class_SharedSegmentSequenceRevertible": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_SharedSegmentSequenceRevertible = requireAssignableTo<TypeOnly<old.SharedSegmentSequenceRevertible>, TypeOnly<current.SharedSegmentSequenceRevertible>>
 
 /*
