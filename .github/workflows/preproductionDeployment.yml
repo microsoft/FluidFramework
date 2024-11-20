@@ -49,11 +49,10 @@ jobs:
           azure_static_web_apps_api_token: ${{ env.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
           action: "upload"
-          ###### Repository/Build Configurations - Adjust these values as needed ######
           app_location: ${{ env.APP_LOCATION }}
           api_location: ${{ env.API_LOCATION }}
           app_artifact_location: ${{ env.APP_ARTIFACT_LOCATION }}
-          ###### End of Repository/Build Configurations ######
+          deployment_environment: "staging"
 
       # Step 5: Post Deployment Feedback (Optional)
       - name: Post Deployment URL as PR Comment
