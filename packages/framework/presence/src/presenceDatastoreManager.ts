@@ -135,6 +135,7 @@ function mergeGeneralDatastoreMessageContent(
 	}
 	return queueDatastore;
 }
+
 /**
  * Manages singleton datastore for all Presence.
  */
