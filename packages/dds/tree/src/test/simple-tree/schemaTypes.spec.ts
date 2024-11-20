@@ -287,7 +287,7 @@ describe("schemaTypes", () => {
 			}
 		});
 
-		it("bad union", () => {
+		it("unsound union properties", () => {
 			const schemaFactory = new SchemaFactory("demo");
 			class A extends schema.object("A", { value: schemaFactory.number }) {}
 			class B extends schema.object("B", { value: schemaFactory.string }) {}
