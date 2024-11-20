@@ -187,6 +187,7 @@ describe("DocumentService", () => {
 		);
 		assert.equal(
 			message.messages,
+			// Expected to be from 0 because in the get method we are subtracting 1 from the from value
 			"https://mock.url/deltaStorageUrl/from=0&to=10&fetchReason=testReason",
 		);
 	});
