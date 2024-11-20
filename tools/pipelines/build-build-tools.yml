@@ -149,7 +149,7 @@ stages:
 # this stage runs depending on the check_branch_version stage and deployOverride parameter
 # the trigger is configured such that deploy-website runs using main branch resources
 # this ensures that the generated website is up-to-date with the latest changes
-- stage: deploy docs
+- stage: deploy
   displayName: 'Deploy website'
   pool: Small
   dependsOn: ['build', 'guardian', 'check_branch_version']
