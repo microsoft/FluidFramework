@@ -13,7 +13,7 @@ import {
 } from "@fluid-example/migration-tools/internal";
 
 import { createElement } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 
 import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";
 import { DemoCodeLoader } from "../src/demoCodeLoader.js";
@@ -73,17 +73,25 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	const appDiv = document.createElement("div");
 	const debugDiv = document.createElement("div");
 
-	const appRoot = createRoot(appDiv);
-	const debugRoot = createRoot(debugDiv);
+	let appRoot: Root | undefined;
+	let debugRoot: Root | undefined;
 
 	const render = (model: IVersionedModel, migrationTool: IMigrationTool) => {
 		// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 		// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 		// view code loader to pull in the view dynamically based on the version we discover.
 		if (isIInventoryListAppModel(model)) {
+			if (appRoot !== undefined) {
+				appRoot.unmount();
+			}
+			appRoot = createRoot(appDiv);
 			appRoot.render(createElement(InventoryListAppView, { model, migrationTool }));
 
 			// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
+			if (debugRoot !== undefined) {
+				debugRoot.unmount();
+			}
+			debugRoot = createRoot(debugDiv);
 			debugRoot.render(
 				createElement(DebugView, {
 					model,
@@ -105,9 +113,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	);
 	migrator.events.on("migrated", () => {
 		model.dispose();
-		render(migrator.currentModel, migrationTool);
-		updateTabForId(migrator.currentModelId);
 		model = migrator.currentModel;
+		migrationTool = migrator.currentMigrationTool;
+		render(model, migrationTool);
+		updateTabForId(migrator.currentModelId);
 	});
 
 	// eslint-disable-next-line @typescript-eslint/dot-notation
