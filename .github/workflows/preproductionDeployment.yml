@@ -31,6 +31,13 @@ jobs:
         with:
           node-version: '16' # Specify your Node.js version
 
+       - template: tools/pipelines/templates/include-install-pnpm.yml
+
+       - script: |
+          echo "pnpm is installed. Version:"
+          pnpm --version
+        displayName: 'Verify pnpm Installation'
+
       # Step 3: Install Dependencies
       - name: Install Dependencies
         run: |
