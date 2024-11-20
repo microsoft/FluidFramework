@@ -517,7 +517,7 @@ export async function createDetachedContainer(
 /**
  * Creates a new container using the specified snapshot but in an unattached state. While unattached, all
  * updates will only be local until the user explicitly attaches the container to a service provider.
- * @param rehydrateDetachedContainerProps - Services and properties necessary for rehydrating detached container from a snapshot.
+ * @param rehydrateDetachedContainerProps - Services and properties necessary for rehydrating detached container from a previously serialized container's state.
  * @legacy
  * @alpha
  */
