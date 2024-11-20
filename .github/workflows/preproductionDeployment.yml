@@ -31,6 +31,9 @@ jobs:
         with:
           node-version: '16' # Specify your Node.js version
 
+      - name: Install pnpm
+        run: npm install -g pnpm
+
       # Step 3: Install Dependencies
       - name: Install Dependencies
         run: |
