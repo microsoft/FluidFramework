@@ -34,8 +34,9 @@ jobs:
       # Step 3: Install Dependencies
       - name: Install Dependencies
         run: |
-          npm install
-          npm run build # Modify if your build command is different
+          cd docs
+          pnpm i --frozen-lockfile
+          pnpm run build
 
       # Step 4: Deploy to Azure Static Web Apps (Preprod)
       - name: Deploy to Azure Static Web Apps (Preprod)
