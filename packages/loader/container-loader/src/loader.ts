@@ -241,7 +241,7 @@ export interface ICreateDetachedContainerProps extends ILoaderProps {
  * @alpha
  * @legacy
  */
-export interface ILoaderRehydrateDetachedContainerProps extends ILoaderProps {
+export interface IRehydrateDetachedContainerProps extends ILoaderProps {
 	/**
 	 * The serialized state returned by calling serialize on another container
 	 */
