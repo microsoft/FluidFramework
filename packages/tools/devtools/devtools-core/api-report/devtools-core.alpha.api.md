@@ -24,7 +24,7 @@ export interface FluidDevtoolsProps {
 
 // @beta @sealed
 export interface HasContainerKey {
-    containerKey: ContainerKey;
+    readonly containerKey: ContainerKey;
 }
 
 // @beta @sealed

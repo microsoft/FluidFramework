@@ -49,14 +49,14 @@ export interface DevtoolsProps {
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
 	 */
-	logger?: IDevtoolsLogger;
+	readonly logger?: IDevtoolsLogger;
 
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
 	 *
 	 * @remarks Additional Containers can be registered with the Devtools via {@link IDevtools.registerContainerDevtools}.
 	 */
-	initialContainers?: ContainerDevtoolsProps[];
+	readonly initialContainers?: ContainerDevtoolsProps[];
 
 	// TODO: Add ability for customers to specify custom data visualizer overrides
 }
@@ -71,7 +71,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
 	 * The Container to register with the Devtools.
 	 */
-	container: IFluidContainer;
+	readonly container: IFluidContainer;
 
 	// TODO: Add ability for customers to specify custom data visualizer overrides
 }

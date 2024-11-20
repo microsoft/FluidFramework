@@ -25,7 +25,7 @@ export interface HasContainerKey {
 	/**
 	 * {@inheritDoc ContainerKey}
 	 */
-	containerKey: ContainerKey;
+	readonly containerKey: ContainerKey;
 }
 
 /**
@@ -45,7 +45,7 @@ export interface HasFluidObjectId {
 	/**
 	 * The ID of the Fluid object (DDS) associated with data or a request.
 	 */
-	fluidObjectId: FluidObjectId;
+	readonly fluidObjectId: FluidObjectId;
 }
 
 /**

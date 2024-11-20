@@ -6,7 +6,7 @@
 
 // @beta @sealed
 export interface ContainerDevtoolsProps extends HasContainerKey {
-    container: IFluidContainer;
+    readonly container: IFluidContainer;
 }
 
 // @beta
@@ -17,13 +17,13 @@ export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoo
 
 // @beta @sealed
 export interface DevtoolsProps {
-    initialContainers?: ContainerDevtoolsProps[];
-    logger?: IDevtoolsLogger;
+    readonly initialContainers?: ContainerDevtoolsProps[];
+    readonly logger?: IDevtoolsLogger;
 }
 
 // @beta @sealed
 export interface HasContainerKey {
-    containerKey: ContainerKey;
+    readonly containerKey: ContainerKey;
 }
 
 // @beta @sealed

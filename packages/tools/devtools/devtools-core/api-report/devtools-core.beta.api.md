@@ -12,7 +12,7 @@ export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoo
 
 // @beta @sealed
 export interface HasContainerKey {
-    containerKey: ContainerKey;
+    readonly containerKey: ContainerKey;
 }
 
 // @beta @sealed

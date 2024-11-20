@@ -6,7 +6,7 @@
 "section": other
 ---
 
-Mark APIs as `@sealed` and `@system` as appropriate
+Mark APIs as `@sealed` and `@system` as appropriate, and make interface properties `readonly`
 
 APIs that were never intended for direct consumer use have been marked as `@system`.
 These are:
@@ -20,3 +20,5 @@ These are:
 - DevtoolsProps
 - HasContainerKey
 - IDevtools
+
+Additionally, interface properties have been marked as `readonly`.
