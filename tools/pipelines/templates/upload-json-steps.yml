@@ -31,40 +31,40 @@ steps:
   # Download the api-extractor outputs
   - template: download-api-extractor-artifact.yml
     parameters:
-      pipelineName: Build - build-common
-      branchName: refs/head/main
+      pipelineName: Build - common-definitions
+      branchName: refs/heads/main
   - template: download-api-extractor-artifact.yml
     parameters:
       pipelineName: Build - common-utils
-      branchName: refs/head/main
+      branchName: refs/heads/main
   - template: download-api-extractor-artifact.yml
     parameters:
       pipelineName: Build - container-definitions
-      branchName: refs/head/main
+      branchName: refs/heads/main
   - template: download-api-extractor-artifact.yml
     parameters:
       pipelineName: Build - core-interfaces
-      branchName: refs/head/main
+      branchName: refs/heads/main
   - template: download-api-extractor-artifact.yml
     parameters:
       pipelineName: Build - driver-definitions
-      branchName: refs/head/main
+      branchName: refs/heads/main
   - template: download-api-extractor-artifact.yml
     parameters:
       pipelineName: Build - protocol-definitions
-      branchName: refs/head/main
+      branchName: refs/heads/main
   - template: download-api-extractor-artifact.yml
     parameters:
       pipelineName: Build - azure
-      branchName: refs/head/main
+      branchName: refs/heads/main
   - template: download-api-extractor-artifact.yml
     parameters:
       pipelineName: Build - client packages
-      branchName: refs/head/main
+      branchName: refs/heads/main
   - template: download-api-extractor-artifact.yml
     parameters:
       pipelineName: server-routerlicious
-      branchName: refs/head/main
+      branchName: refs/heads/main
 
   # Copy and merge the api-extractor outputs to a central location
   - task: CopyFiles@2
