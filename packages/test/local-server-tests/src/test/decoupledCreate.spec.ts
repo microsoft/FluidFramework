@@ -122,7 +122,7 @@ describe("Scenario Test", () => {
 
 			// ensure and use the url we got from out of band create to load the container
 			assert(request !== undefined);
-			const container2 = await resolveContainer({ request, ...loaderProps2 });
+			const container2 = await resolveContainer({ ...loaderProps2, request });
 
 			// ensure the newly loaded container has the data we expect.
 			const entryPoint: FluidObject<ITestFluidObject> = await container2.getEntryPoint();

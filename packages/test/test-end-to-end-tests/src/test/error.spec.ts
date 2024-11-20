@@ -45,6 +45,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 		});
 		fileName = uuid();
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+		loaderContainerTracker.addContainer(container);
 		await container.attach(provider.driver.createCreateNewRequest(fileName));
 		assert(container.resolvedUrl);
 		containerUrl = container.resolvedUrl;
@@ -65,7 +66,9 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 				new LocalCodeLoader([[provider.defaultCodeDetails, new TestFluidObjectFactory([])]]),
 		});
 		const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
-		return loader.resolve({ url: requestUrl });
+		const container = await loader.resolve({ url: requestUrl });
+		loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	itExpects(

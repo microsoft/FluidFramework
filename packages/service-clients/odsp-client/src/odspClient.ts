@@ -126,11 +126,11 @@ export class OdspClient {
 		const loaderProps = this.getLoaderProps(containerSchema);
 
 		const container = await createDetachedContainer({
+			...loaderProps,
 			codeDetails: {
 				package: "no-dynamic-package",
 				config: {},
 			},
-			...loaderProps,
 		});
 
 		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
@@ -154,7 +154,7 @@ export class OdspClient {
 			itemId: id,
 			dataStorePath: "",
 		});
-		const container = await resolveContainer({ request: { url }, ...loaderProps });
+		const container = await resolveContainer({ ...loaderProps, request: { url } });
 
 		const fluidContainer = createFluidContainer({
 			container,

@@ -130,8 +130,8 @@ describe("PropertyDDS", () => {
 			urlResolver,
 		);
 		const containerUsingPops = await resolveContainer({
-			request: { url: documentLoadUrl },
 			...loaderProps,
+			request: { url: documentLoadUrl },
 		});
 		opProcessingController.addContainer(containerUsingPops);
 		return containerUsingPops;

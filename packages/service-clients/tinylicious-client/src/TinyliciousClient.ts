@@ -94,11 +94,11 @@ export class TinyliciousClient {
 		// regardless of the proposal), but the Container will only give us a NullRuntime if there's
 		// no proposal.  So we'll use a fake proposal.
 		const container = await createDetachedContainer({
+			...loaderProps,
 			codeDetails: {
 				package: "no-dynamic-package",
 				config: {},
 			},
-			...loaderProps,
 		});
 
 		const rootDataObject = await this.getContainerEntryPoint(container);
@@ -144,7 +144,7 @@ export class TinyliciousClient {
 		services: TinyliciousContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
-		const container = await resolveContainer({ request: { url: id }, ...loaderProps });
+		const container = await resolveContainer({ ...loaderProps, request: { url: id } });
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,

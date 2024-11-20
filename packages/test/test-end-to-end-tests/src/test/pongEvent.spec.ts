@@ -38,6 +38,7 @@ describe("Pong", () => {
 				documentServiceFactory: provider.documentServiceFactory,
 				codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
 			});
+			loaderContainerTracker.add(loader);
 		});
 
 		afterEach(() => {

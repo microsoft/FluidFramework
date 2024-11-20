@@ -116,7 +116,7 @@ export async function initialize(
 		configProvider: configProvider(configurations),
 	};
 
-	const container: IContainer = await createDetachedContainer({ codeDetails, ...loaderProps });
+	const container: IContainer = await createDetachedContainer({ ...loaderProps, codeDetails });
 	if ((testConfig.detachedBlobCount ?? 0) > 0) {
 		assert(
 			testDriver.type === "odsp",

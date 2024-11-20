@@ -96,8 +96,8 @@ describe("LocalTestServer", () => {
 			urlResolver,
 		);
 		const containerUsingPops = await resolveContainer({
-			request: { url: documentLoadUrl },
 			...loaderProps,
+			request: { url: documentLoadUrl },
 		});
 		loaderContainerTracker.addContainer(containerUsingPops);
 		return containerUsingPops;

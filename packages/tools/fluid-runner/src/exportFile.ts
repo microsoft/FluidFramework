@@ -137,13 +137,13 @@ export async function createContainerAndExecute(
 		};
 
 		const container = await resolveContainer({
+			...loaderProps,
 			request: {
 				url: "/fakeUrl/",
 				headers: {
 					[LoaderHeader.loadMode]: { opsBeforeReturn: "cached" },
 				},
 			},
-			...loaderProps,
 		});
 
 		return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {

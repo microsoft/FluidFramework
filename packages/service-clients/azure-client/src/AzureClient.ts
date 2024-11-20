@@ -140,11 +140,11 @@ export class AzureClient {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 
 		const container = await createDetachedContainer({
+			...loaderProps,
 			codeDetails: {
 				package: "no-dynamic-package",
 				config: {},
 			},
-			...loaderProps,
 		});
 
 		const fluidContainer = await this.createFluidContainer<TContainerSchema>(
@@ -181,7 +181,7 @@ export class AzureClient {
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 
-		const container = await resolveContainer({ request: { url: url.href }, ...loaderProps });
+		const container = await resolveContainer({ ...loaderProps, request: { url: url.href } });
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,

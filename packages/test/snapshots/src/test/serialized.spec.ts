@@ -61,8 +61,8 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 
 			const loaderProps = createTestLoaderProps();
 			const container = await rehydrateDetachedContainer({
-				serializedState: snapshotTree,
 				...loaderProps,
+				serializedState: snapshotTree,
 			});
 			loaderContainerTracker.addContainer(container);
 
@@ -104,14 +104,14 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 
 			const loaderProps = createTestLoaderProps();
 			const container1 = await rehydrateDetachedContainer({
-				serializedState: snapshotTree,
 				...loaderProps,
+				serializedState: snapshotTree,
 			});
 			loaderContainerTracker.addContainer(container1);
 			const snapshotTree2 = container1.serialize();
 			const container2 = await rehydrateDetachedContainer({
-				serializedState: snapshotTree2,
 				...loaderProps,
+				serializedState: snapshotTree2,
 			});
 			loaderContainerTracker.addContainer(container2);
 

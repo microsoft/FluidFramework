@@ -228,8 +228,8 @@ describeCompat(
 						provider.urlResolver,
 					);
 					const validationContainer = await resolveContainer({
-						request: { url: containerUrl },
 						...validationLoaderProps,
+						request: { url: containerUrl },
 					});
 					const validationDataObject =
 						await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
@@ -293,13 +293,13 @@ describeCompat(
 						);
 					} else {
 						const storageOnlyContainer = await resolveContainer({
+							...storageOnlyLoaderProps,
 							request: {
 								url: containerUrl,
 								headers: {
 									[LoaderHeader.loadMode]: testConfig.loadOptions,
 								},
 							},
-							...storageOnlyLoaderProps,
 						});
 
 						const deltaManager = storageOnlyContainer.deltaManager;

@@ -122,8 +122,8 @@ describe("Ops on Reconnect", () => {
 	async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {
 		const loaderProps = createLoaderProps();
 		const container2 = await resolveContainer({
-			request: { url: documentLoadUrl },
 			...loaderProps,
+			request: { url: documentLoadUrl },
 		});
 		loaderContainerTracker.addContainer(container2);
 		await waitForContainerConnection(container2);

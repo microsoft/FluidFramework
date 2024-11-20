@@ -44,6 +44,7 @@ describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvi
 	before(async () => {
 		provider = getTestObjectProvider();
 		loader = createLoader();
+		loaderContainerTracker.add(loader);
 		const container = await loader.createDetachedContainer(codeDetails);
 
 		fileName = uuid();

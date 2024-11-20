@@ -90,8 +90,8 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 	// for the latest/default version to use?
 	public async createDetached(version: string): Promise<IDetachedMigratableModel<ModelType>> {
 		const container = await createDetachedContainer({
-			codeDetails: { package: version },
 			...this.loaderProps,
+			codeDetails: { package: version },
 		});
 		const { model, migrationTool } =
 			await this.getModelAndMigrationToolFromContainer(container);
@@ -110,6 +110,7 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 
 	private async loadContainer(id: string): Promise<IContainer> {
 		return resolveContainer({
+			...this.loaderProps,
 			request: {
 				url: id,
 				headers: {
@@ -122,7 +123,6 @@ export class MigratableModelLoader<ModelType> implements IMigratableModelLoader<
 					},
 				},
 			},
-			...this.loaderProps,
 		});
 	}
 

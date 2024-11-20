@@ -463,8 +463,8 @@ describe("Document Dirty", () => {
 			};
 
 			const containerUsingPops = await createDetachedContainer({
-				codeDetails,
 				...loaderProps,
+				codeDetails,
 			});
 			loaderContainerTracker.addContainer(containerUsingPops);
 			return containerUsingPops;

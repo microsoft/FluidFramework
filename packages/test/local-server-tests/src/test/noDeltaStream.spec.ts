@@ -72,10 +72,10 @@ describe("No Delta Stream", () => {
 		);
 
 		const container = await resolveContainer({
+			...loaderProps,
 			request: {
 				url: documentLoadUrl,
 			},
-			...loaderProps,
 		});
 		if (!storageOnly) {
 			loaderContainerTracker.addContainer(container);

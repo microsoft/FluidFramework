@@ -304,8 +304,8 @@ export async function start(
 		);
 		const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
 		const container2 = await resolveContainer({
-			request: { url: requestUrl2 },
 			...loaderProps2,
+			request: { url: requestUrl2 },
 		});
 
 		await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);

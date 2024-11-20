@@ -269,9 +269,9 @@ async function runnerProcess(
 			stashedOpP = undefined; // delete to avoid reuse
 
 			container = await resolveContainer({
+				...loaderProps,
 				request: { url, headers },
 				pendingLocalState: stashedOps,
-				...loaderProps,
 			});
 
 			container.connect();
