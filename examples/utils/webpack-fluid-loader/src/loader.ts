@@ -201,7 +201,7 @@ export async function start(
 	const odspPersistantCache = new OdspPersistentCache();
 
 	// Create the loader that is used to load the Container.
-	const loaderProps1 = await createWebLoaderProps(
+	const loaderProps1 = await createLoaderProps(
 		documentId,
 		fluidModule,
 		options,
@@ -213,7 +213,7 @@ export async function start(
 	let container1: IContainer;
 	if (autoAttach || manualAttach) {
 		// For new documents, create a detached container which will be attached later.
-		container1 = await createDetachedContainer({ codeDetails, ...loaderProps1 });
+		container1 = await createDetachedContainer({ ...loaderProps1, codeDetails });
 	} else {
 		// For existing documents, we try to load the container with the given documentId.
 		const documentUrl = `${window.location.origin}/${documentId}`;
@@ -242,11 +242,11 @@ export async function start(
 		// This is just to replicate what apps do while loading which is to load the container in paused state and not load
 		// delta stream within the critical load flow.
 		container1 = await resolveContainer({
+			...loaderProps1,
 			request: {
 				url: documentUrl,
 				headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
 			},
-			...loaderProps1,
 		});
 		container1.connect();
 	}
@@ -289,7 +289,7 @@ export async function start(
 	// For side by side mode, we need to create a second container and Fluid object.
 	if (rightDiv !== undefined) {
 		// Create a new loader that is used to load the second container.
-		const loaderProps2 = await createWebLoaderProps(
+		const loaderProps2 = await createLoaderProps(
 			documentId,
 			fluidModule,
 			options,
@@ -431,8 +431,8 @@ async function attachContainer(
 			rehydrateButton.onclick = async () => {
 				const snapshot = summaryList.value;
 				currentContainer = await rehydrateDetachedContainer({
-					serializedState: snapshot,
 					...loaderProps,
+					serializedState: snapshot,
 				});
 				const newLeftDiv =
 					rightDiv !== undefined ? makeSideBySideDiv(uuid()) : document.createElement("div");
