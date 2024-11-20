@@ -82,7 +82,8 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
 /**
  * Returns the last element of an array, or `undefined` if the array has no elements.
  * @param array - The array to get the last element from.
- * If the type of the array has been narrowed by e.g. {@link hasSome | hasElements(array)} then the return type is known to be defined.
+ * @remarks
+ * If the type of the array has been narrowed by e.g. {@link hasSome | hasSome(array)} or {@link hasOne | hasOne(array)} then the return type will be `T` rather than `T | undefined`.
  */
 export function getLast<T>(array: readonly [T, ...T[]]): T;
 export function getLast<T>(array: { [index: number]: T; length: number }): T | undefined;
@@ -93,7 +94,9 @@ export function getLast<T>(array: { [index: number]: T; length: number }): T | u
 /**
  * Returns true if and only if the given array has at least one element.
  * @param array - The array to check.
+ * @remarks
  * If `array` contains at least one element, its type will be narrowed and can benefit from improved typing from e.g. `array[0]` and {@link getLast | getLast(array)}.
+ * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options, since the return type of `array[0]` will be `T` rather than `T | undefined`.
  */
 export function hasSome<T>(array: T[]): array is [T, ...T[]];
 export function hasSome<T>(array: readonly T[]): array is readonly [T, ...T[]];
@@ -104,7 +107,9 @@ export function hasSome<T>(array: readonly T[]): array is [T, ...T[]] {
 /**
  * Returns true if and only if the given array has exactly one element.
  * @param array - The array to check.
+ * @remarks
  * If `array` contains exactly one element, its type will be narrowed and can benefit from improved typing from e.g. `array[0]` and {@link getLast | getLast(array)}.
+ * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options, since the return type of `array[0]` will be `T` rather than `T | undefined`.
  */
 export function hasOne<T>(array: T[]): array is [T];
 export function hasOne<T>(array: readonly T[]): array is readonly [T];
