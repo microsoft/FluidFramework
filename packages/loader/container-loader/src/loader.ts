@@ -225,7 +225,7 @@ export interface ILoaderResolveContainerProps extends ILoaderProps {
  * @alpha
  * @legacy
  */
-export interface ILoaderCreateDetachedContainerProps extends ILoaderProps {
+export interface ICreateDetachedContainerProps extends ILoaderProps {
 	/**
 	 * The code details for the container to be created.
 	 */
