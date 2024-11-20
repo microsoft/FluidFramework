@@ -85,7 +85,7 @@ declare type current_as_old_for_Interface_ISharedMatrix = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_ISharedMatrixEvents": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedMatrixEvents = requireAssignableTo<TypeOnly<old.ISharedMatrixEvents<any>>, TypeOnly<current.ISharedMatrixEvents<any>>>
+declare type old_as_current_for_Interface_ISharedMatrixEvents = requireAssignableTo<TypeOnly<old.ISharedMatrixEvents<never>>, TypeOnly<current.ISharedMatrixEvents<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -94,7 +94,7 @@ declare type old_as_current_for_Interface_ISharedMatrixEvents = requireAssignabl
  * typeValidation.broken:
  * "Interface_ISharedMatrixEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedMatrixEvents = requireAssignableTo<TypeOnly<current.ISharedMatrixEvents<any>>, TypeOnly<old.ISharedMatrixEvents<any>>>
+declare type current_as_old_for_Interface_ISharedMatrixEvents = requireAssignableTo<TypeOnly<current.ISharedMatrixEvents<never>>, TypeOnly<old.ISharedMatrixEvents<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -121,7 +121,7 @@ declare type current_as_old_for_Interface_IUndoConsumer = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_MatrixItem": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_MatrixItem = requireAssignableTo<TypeOnly<old.MatrixItem<any>>, TypeOnly<current.MatrixItem<any>>>
+declare type old_as_current_for_TypeAlias_MatrixItem = requireAssignableTo<TypeOnly<old.MatrixItem<never>>, TypeOnly<current.MatrixItem<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -130,7 +130,7 @@ declare type old_as_current_for_TypeAlias_MatrixItem = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "TypeAlias_MatrixItem": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_MatrixItem = requireAssignableTo<TypeOnly<current.MatrixItem<any>>, TypeOnly<old.MatrixItem<any>>>
+declare type current_as_old_for_TypeAlias_MatrixItem = requireAssignableTo<TypeOnly<current.MatrixItem<never>>, TypeOnly<old.MatrixItem<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

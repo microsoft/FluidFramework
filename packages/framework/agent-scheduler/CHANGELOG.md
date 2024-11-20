@@ -1,5 +1,9 @@
 # @fluidframework/agent-scheduler
 
+## 2.10.0
+
+Dependency updates only.
+
 ## 2.5.0
 
 Dependency updates only.
