@@ -163,7 +163,7 @@ stages:
           submodules: false
           clean: true
         - task: TriggerBuild@4
-          condition: eq(variables['shouldDeploy'], 'true')
+          # condition: eq(variables['shouldDeploy'], 'true')
           inputs:
             definitionIsInCurrentTeamProject: True
             buildDefinition: 'deploy-website'
