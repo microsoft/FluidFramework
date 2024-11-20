@@ -31,7 +31,7 @@ steps:
   # Download the api-extractor outputs
   - template: download-api-extractor-artifact.yml
     parameters:
-      pipelineName: Build - common-definitions
+      pipelineName: Build - build-common
       branchName: refs/head/main
   - template: download-api-extractor-artifact.yml
     parameters:
