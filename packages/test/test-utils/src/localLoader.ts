@@ -103,7 +103,6 @@ export async function createAndAttachContainer(
  * @param attachRequest - The request to create new from.
  * @internal
  */
-
 export async function createAndAttachContainerUsingLoaderProps(
 	source: IFluidCodeDetails,
 	loaderProps: ILoaderProps,
