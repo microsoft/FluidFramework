@@ -49,7 +49,7 @@ variables:
   - name: shouldRetainGuardianAssets
     value: ${{ or(
       eq(parameters.guardianAssetRetentionOverride, 'force'),
-      and(eq(parameters.guardianAssetRetentionOverride, 'default'))
+      eq(parameters.guardianAssetRetentionOverride, 'default')
       )}}
   - name: deploymentToken
     ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
