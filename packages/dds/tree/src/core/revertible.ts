@@ -49,9 +49,8 @@ export interface RevertibleAlpha extends Revertible {
 	 *
 	 * @param branch - A target branch to apply the revertible to.
 	 * The target branch must contain the same commit that this revertible is meant to revert, otherwise will throw an error.
-	 * @returns A cloned revertible. The clone is independent from the original revertible - disposing one will not affect the other,
-	 * and they can be reverted independently. When no branch is provided, the cloned revertible will operate on the same branch as
-	 * the original, allowing multiple attempts to revert the same change.
+	 * @returns A cloned revertible is independent of the original, meaning disposing of one will not affect the other,
+	 * provided they do not belong to the same branch. Both revertibles can be reverted independently.
 	 */
 	clone: (branch: TreeBranch) => RevertibleAlpha;
 }
