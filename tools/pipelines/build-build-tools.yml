@@ -169,7 +169,7 @@ stages:
             buildDefinition: 'build-docs'
             useSameSourceVersion: False
             useSameBranch: False
-            branchToUse: main
+            branchToUse: test/michaelzhen-1.0
             templateParameters: 'deployOverride:${{ parameters.deployOverride }}, deployEnvironment:${{ parameters.deployEnvironment }}, guardianAssetRetentionOverride:${{ parameters.guardianAssetRetentionOverride }}, publishGuardianBaselines:${{ parameters.publishGuardianBaselines }}'
             storeInEnvironmentVariable: True
             authenticationMethod: 'OAuth Token'
