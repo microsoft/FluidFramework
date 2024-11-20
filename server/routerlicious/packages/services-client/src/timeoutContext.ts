@@ -23,7 +23,7 @@ export interface ITimeoutContext {
 	 * Checks if the timeout has been exceeded.
 	 * If exceeded, throws a 503 Timeout error
 	 */
-	checkTimeout(): void;
+	checkTimeout(currentStage?: string): void;
 }
 
 /**
@@ -37,7 +37,7 @@ class NullTimeoutContext implements ITimeoutContext {
 	async bindTimeoutAsync<T>(maxDurationMs: number, callback: () => Promise<T>): Promise<T> {
 		return callback();
 	}
-	checkTimeout(): void {}
+	checkTimeout(currentStage?: string): void {}
 }
 const nullTimeoutContext = new NullTimeoutContext();
 

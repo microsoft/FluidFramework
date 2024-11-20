@@ -215,7 +215,7 @@ export class DocumentStorage implements IDocumentStorage {
 		}
 
 		// Storage is known to take too long sometimes. Check timeout before continuing.
-		getGlobalTimeoutContext().checkTimeout();
+		getGlobalTimeoutContext().checkTimeout("initialSummaryUpload");
 
 		const deli: IDeliState = {
 			clients: undefined,

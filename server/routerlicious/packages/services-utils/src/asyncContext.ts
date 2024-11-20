@@ -114,7 +114,7 @@ export class AsyncLocalStorageTimeoutContext implements ITimeoutContext {
 		});
 	}
 
-	public checkTimeout(): void {
+	public checkTimeout(currentStage?: string): void {
 		const timeoutInfo = this.contextProvider.getContext();
 		if (!timeoutInfo) {
 			return;
@@ -123,7 +123,7 @@ export class AsyncLocalStorageTimeoutContext implements ITimeoutContext {
 			const error = new NetworkError(503, "Timeout");
 			Lumberjack.error(
 				"[TimeoutContext]: Timeout max duration exceeded.",
-				{ startTime: timeoutInfo.startTime, maxDurationMs: timeoutInfo.maxDurationMs },
+				{ startTime: timeoutInfo.startTime, maxDurationMs: timeoutInfo.maxDurationMs, currentStage },
 				error,
 			);
 			throw error;
