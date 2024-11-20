@@ -12,7 +12,6 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"build": "concurrently npm:build:site npm:build:test",
-		"prebuild:api-documentation": "npm run clean:api-documentation",
 		"build:api-documentation": "npm run download-doc-models && npm run generate-api-documentation",
 		"prebuild:docusaurus": "npm run generate-versions",
 		"build:docusaurus": "docusaurus build",
@@ -23,7 +22,7 @@
 		"check-links": "linkcheck http://localhost:3000 --skip-file skipped-urls.txt",
 		"ci:check-links": "start-server-and-test \"npm run serve -- --no-open\" 3000 check-links",
 		"clean": "concurrently \"npm:clean:*\"",
-		"clean:api-documentation": "rimraf --glob \"docs/api/**/*.md\" \"versioned_docs/*/api/**/*.md\"",
+		"clean:api-documentation": "node ./infra/clean-api-documentation.mjs",
 		"clean:doc-models": "rimraf --glob .doc-models",
 		"clean:docusaurus": "docusaurus clear",
 		"clean:test": "rimraf --glob test-results",
@@ -95,6 +94,7 @@
 		"react": "^18.0.0",
 		"react-dom": "^18.0.0",
 		"rimraf": "^5.0.10",
+		"simple-git": "^3.27.0",
 		"start-server-and-test": "^2.0.8",
 		"typescript": "~5.5.2"
 	},

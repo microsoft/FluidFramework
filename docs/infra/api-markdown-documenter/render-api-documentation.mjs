@@ -18,6 +18,7 @@ import chalk from "chalk";
 import fs from "fs-extra";
 import path from "path";
 
+import { cleanIgnored } from "../clean-ignored.mjs";
 import { admonitionNodeType } from "./admonition-node.mjs";
 import { layoutContent } from "./api-documentation-layout.mjs";
 import {
@@ -60,12 +61,8 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 	logProgress("Removing existing generated API docs...");
 	await fs.ensureDir(outputDir);
 
-	// TODO:AB#24394: Add logic to clean existing API docs output directory while respecting our .gitignore config.
-	// Most of the files in the `api` directories are generated and git-ignored, but not all of them.
-	// We need to clean up all of the git-ignored files, but not the user-created files.
-	// Currently we work around this by running the `clean:api-documentation` script before running the script that
-	// builds the API documentation, but ideally that shouldn't be required.
-	// await fs.emptyDir(outputDir);
+	// Clean existing generated API documentation files, skipping any manually authored files under the same parent directory.
+	await cleanIgnored(outputDir);
 
 	// Process API reports
 	logProgress("Loading API model...");

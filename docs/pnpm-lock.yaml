@@ -113,6 +113,9 @@ importers:
       rimraf:
         specifier: ^5.0.10
         version: 5.0.10
+      simple-git:
+        specifier: ^3.27.0
+        version: 3.27.0
       start-server-and-test:
         specifier: ^2.0.8
         version: 2.0.8
