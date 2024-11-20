@@ -245,7 +245,7 @@ export interface ILoaderRehydrateDetachedContainerProps extends ILoaderProps {
 	/**
 	 * The serialized state returned by calling serialize on another container
 	 */
-	snapshot: string;
+	serializedState: string;
 
 	canReconnect?: boolean;
 
