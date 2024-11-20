@@ -10,7 +10,6 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 
-import type { AxiosRequestConfig } from "../axios.cjs";
 import { DefaultTokenProvider } from "../defaultTokenProvider.js";
 import { DeltaStorageService } from "../deltaStorageService.js";
 import { R11sDocumentDeltaConnection } from "../documentDeltaConnection.js";
@@ -20,17 +19,24 @@ import type { IR11sResponse } from "../restWrapper.js";
 import { RestWrapper } from "../restWrapperBase.js";
 
 class MockRestWrapper extends RestWrapper {
-	protected async request<T>(
-		options: AxiosRequestConfig,
-		statusCode: number,
-		addNetworkCallProps?: boolean,
-	): Promise<IR11sResponse<T>> {
+	protected async request<T>(): Promise<IR11sResponse<T>> {
 		throw new Error("Method not implemented.");
 	}
 	public async get(url: string, headers?: Record<string, string>): Promise<any> {
-		return {
-			url,
+		const headerElements = headers
+			? Object.entries(headers)
+					.map(([key, value]) => `${key}=${value}`)
+					.join("&")
+			: "";
+		const modifiedUrl = `${url}/${headerElements}`;
+		/* Usually the response would be the ops from the server but here we are sending
+	the modified url to check what information is being sent with the link. */
+		const response = {
+			content: modifiedUrl,
+			propsToLog: {},
+			requestUrl: `${modifiedUrl}${"/requestUrl"}`,
 		};
+		return response;
 	}
 }
 
@@ -166,22 +172,6 @@ describe("DocumentService", () => {
 	it("DocumentDeltaStorageService sends fetchReason along with fetchMessages", async () => {
 		// Create fake restWrapperBase
 		const restWrapperBase = new MockRestWrapper();
-		stub(restWrapperBase, "get").callsFake(async (url, headers) => {
-			const headerElements = headers
-				? Object.entries(headers)
-						.map(([key, value]) => `${key}=${value}`)
-						.join("&")
-				: "";
-			const modifiedUrl = `${url}/${headerElements}`;
-			/* Usually the response would be the ops from the server but here we are sending
-			the modified url to check what information is being sent with the link. */
-			const response = {
-				content: modifiedUrl,
-				propsToLog: {},
-				requestUrl: `${modifiedUrl}${"/requestUrl"}`,
-			};
-			return response;
-		});
 		const testLogger = new MockLogger();
 		const documentDeltaStorageService = new DeltaStorageService(
 			"https://mock.url/deltaStorageUrl",
