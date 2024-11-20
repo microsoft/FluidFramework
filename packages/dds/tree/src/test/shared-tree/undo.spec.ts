@@ -170,7 +170,7 @@ const testCases: {
 
 /**
  * Schema definitions for forkable revertible test suites.
- * Should be removed once #24414 is implemented.
+ * TODO: Should be removed once #24414 is implemented.
  */
 function createInitializedView() {
 	const factory = new SchemaFactory("shared-tree-test");
