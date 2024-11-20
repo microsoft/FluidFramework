@@ -208,7 +208,7 @@ export interface ILoaderProps {
  * @alpha
  * @legacy
  */
-export interface ILoaderResolveContainerProps extends ILoaderProps {
+export interface IResolveContainerProps extends ILoaderProps {
 	/**
 	 * The request to resolve the container.
 	 */
