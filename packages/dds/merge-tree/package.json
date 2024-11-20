@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.10.0",
+	"version": "2.10.1",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -243,7 +243,6 @@
 			"Interface_SegmentGroup": {
 				"backCompat": false
 			},
-
 			"TypeAlias_MergeTreeDeltaRevertible": {
 				"backCompat": false
 			},

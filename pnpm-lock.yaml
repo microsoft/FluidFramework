@@ -10548,7 +10548,7 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/id-compressor
       '@fluidframework/test-runtime-utils':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.47.8
