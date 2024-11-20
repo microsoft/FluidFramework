@@ -74,6 +74,7 @@ import type {
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { TreeNodeValid } from "../treeNodeValid.js";
 import { isLazy } from "../flexList.js";
+import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -332,7 +333,8 @@ export class SchemaFactory<
 		object & InsertableObjectFromSchemaRecord<T>,
 		true,
 		T
-	> {
+	> &
+		ObjectNodeSchema {
 		return objectSchema(this.scoped(name), fields, true);
 	}
 
@@ -726,6 +728,7 @@ export class SchemaFactory<
 	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
 	 * which otherwise gets reported at sometimes incorrect source locations that vary based on incremental builds.
 	 */
+	// TODO
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public objectRecursive<
 		const Name extends TName,
@@ -742,7 +745,8 @@ export class SchemaFactory<
 			object & InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
 			T
-		>;
+		> &
+			ObjectNodeSchema;
 	}
 
 	/**

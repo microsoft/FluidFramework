@@ -8,10 +8,13 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	FieldKind,
 	SchemaFactory,
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type NodeBuilderData,
+	type ObjectNodeSchema,
+	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
 import type {
 	InsertableObjectFromSchemaRecord,
@@ -411,6 +414,35 @@ describeHydration(
 				type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
 				const test: X = [{}];
 			}
+		});
+
+		it("schema fields access", () => {
+			class Note extends schemaFactory.object("Note", {
+				a: [() => schemaFactory.number, schemaFactory.string],
+			}) {}
+			// Checks that fields map is exposed on returned type.
+			assert.equal(Note.fields.size, 1);
+			const f = Note.fields.get("a");
+			assert(f !== undefined);
+			assert.equal(f.kind, FieldKind.Required);
+			// Check that allowed types got normalized correctly into set:
+			assert.deepEqual(
+				f.allowedTypeSet,
+				new Set([schemaFactory.string, schemaFactory.number]),
+			);
+
+			const _s: ObjectNodeSchema = Note;
+			const _s2: TreeNodeSchema = Note;
+		});
+
+		it("schema fields access - recursive", () => {
+			class Note extends schemaFactory.objectRecursive("Note", {
+				a: schemaFactory.number,
+			}) {}
+			// Checks that fields map is exposed on returned type.
+			assert.equal(Note.fields.size, 1);
+
+			const _s: ObjectNodeSchema = Note;
 		});
 
 		describe("shadowing", () => {

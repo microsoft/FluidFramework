@@ -23,7 +23,7 @@ import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
+import { isObjectNodeSchema, type ObjectNodeSchemaInternal } from "../objectNodeTypes.js";
 import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
@@ -276,7 +276,7 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 	const maps: TreeNodeSchema[] = [];
 	const arrays: TreeNodeSchema[] = [];
 
-	const objects: ObjectNodeSchema[] = [];
+	const objects: ObjectNodeSchemaInternal[] = [];
 	// Map from key to schema using that key
 	const allObjectKeys: Map<string, Set<TreeNodeSchema>> = new Map();
 
