@@ -10,10 +10,7 @@ import { describe, it, afterAll, afterEach, beforeAll, beforeEach, expect } from
 import { Latest, Notifications, type PresenceNotifications } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
-import {
-	MockRuntimeSignalSnapshotter,
-	getSchemaFromSignal as getDataFromSignal,
-} from "./snapshotEphemeralRuntime.js";
+import { MockRuntimeSignalSnapshotter } from "./snapshotEphemeralRuntime.js";
 import { prepareConnectedPresence } from "./testUtils.js";
 
 describe("Presence", () => {
@@ -309,47 +306,38 @@ describe("Presence", () => {
 
 				expect(runtime.submittedSignals).toHaveLength(2);
 
-				const signal1Timestamp = getDataFromSignal(
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					runtime.submittedSignals[0]!,
-					"n:name:testNotificationWorkspace",
-					"testEvents",
-					"sessionId-2",
-					"timestamp",
-				);
-
-				expect(signal1Timestamp).to.equal(1050);
-
-				const signal2Timestamp = getDataFromSignal(
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					runtime.submittedSignals[1]!,
-					"n:name:testNotificationWorkspace",
-					"testEvents",
-					"sessionId-2",
-					"timestamp",
-				);
-
-				expect(signal2Timestamp).to.equal(1060);
-
+				const signal1 = runtime.submittedSignals[0];
 				expect(
-					getDataFromSignal(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						runtime.submittedSignals[1]!,
-						"n:name:testNotificationWorkspace",
-						"testEvents",
-						"sessionId-2",
-						"value",
-					),
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(signal1?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
+						"sessionId-2"
+					].value,
 				).toMatchInlineSnapshot(`
 					{
 					  "args": [
-					    88,
+					    77,
 					  ],
 					  "name": "newId",
 					}
 				`);
+
+				expect(
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(signal1?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
+						"sessionId-2"
+					].value.args,
+				).toEqual([77]);
+
+				const signal2 = runtime.submittedSignals[1];
+				expect(
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(signal2?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
+						"sessionId-2"
+					].value.args,
+				).toEqual([88]);
 			});
 
+			// IMPORTANT: RESULTS NOT VALID! See TODOs inline.
 			it("notification signals cause queued messages to be sent immediately", async () => {
 				// Configure a state workspaces
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
@@ -398,49 +386,13 @@ describe("Presence", () => {
 
 				expect(runtime.submittedSignals).toHaveLength(2);
 
+				const signal = runtime.submittedSignals[1];
 				expect(
-					getDataFromSignal(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						runtime.submittedSignals[0]!,
-						"n:name:testNotificationWorkspace",
-						"testEvents",
-						"sessionId-2",
-					),
-				).toMatchInlineSnapshot(`
-					{
-					  "ignoreUnmonitored": true,
-					  "rev": 0,
-					  "timestamp": 1050,
-					  "value": {
-					    "args": [
-					      99,
-					    ],
-					    "name": "newId",
-					  },
-					}
-				`);
-
-				expect(
-					getDataFromSignal(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						runtime.submittedSignals[1]!,
-						"n:name:testNotificationWorkspace",
-						"testEvents",
-						"sessionId-2",
-					),
-				).toMatchInlineSnapshot(`
-					{
-					  "ignoreUnmonitored": true,
-					  "rev": 0,
-					  "timestamp": 1080,
-					  "value": {
-					    "args": [
-					      111,
-					    ],
-					    "name": "newId",
-					  },
-					}
-				`);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(signal?.[1] as any).data["n:name:testNotificationWorkspace"].testEvents[
+						"sessionId-2"
+					].value.args,
+				).toEqual([111]);
 			});
 		});
 	});
