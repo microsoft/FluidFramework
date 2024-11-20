@@ -182,7 +182,6 @@ The following npm scripts are supported in this directory:
 | Script | Description |
 |--------|-------------|
 | `build` | Build everything: the API documentation, the website, the tests, etc. |
-| `prebuild:api-documentation` | Temporary workaround for AB#24394. Cleans up existing generated API documentation before generating new content. |
 | `build:api-documentation` | Download API model artifacts and generate API documentation. |
 | `prebuild:docusaurus` | Runs pre-site build metadata generation. |
 | `build:docusaurus` | Build the website with Docusaurus. |
