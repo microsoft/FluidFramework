@@ -49,29 +49,26 @@ export class BranchCommitEnricher<TChange> {
 	 * @param change - The change to process.
 	 * @param isAttached - Whether or not the SharedTree is attached to the service.
 	 */
-	public processChange(change: SharedTreeBranchChange<TChange>, isAttached: boolean): void {
-		// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
-		if (isAttached) {
-			if (this.#transactionEnricher.isTransacting()) {
-				if (change.type === "append") {
-					for (const commit of change.newCommits) {
-						// We do not submit ops for changes that are part of a transaction.
-						// But we need to enrich the commits that will be sent if the transaction is committed.
-						this.#transactionEnricher.addTransactionStep(commit);
-					}
+	public processChange(change: SharedTreeBranchChange<TChange>): void {
+		if (this.#transactionEnricher.isTransacting()) {
+			if (change.type === "append") {
+				for (const commit of change.newCommits) {
+					// We do not submit ops for changes that are part of a transaction.
+					// But we need to enrich the commits that will be sent if the transaction is committed.
+					this.#transactionEnricher.addTransactionStep(commit);
 				}
-			} else {
-				if (
-					change.type === "append" ||
-					(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
-				) {
-					for (const newCommit of change.newCommits) {
-						const newChange =
-							this.#getOuterTransactionChange?.(newCommit.revision) ??
-							this.#enricher.updateChangeEnrichments(newCommit.change, newCommit.revision);
+			}
+		} else {
+			if (
+				change.type === "append" ||
+				(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
+			) {
+				for (const newCommit of change.newCommits) {
+					const newChange =
+						this.#getOuterTransactionChange?.(newCommit.revision) ??
+						this.#enricher.updateChangeEnrichments(newCommit.change, newCommit.revision);
 
-						this.#preparedCommits.set(newCommit, replaceChange(newCommit, newChange));
-					}
+					this.#preparedCommits.set(newCommit, replaceChange(newCommit, newChange));
 				}
 			}
 		}

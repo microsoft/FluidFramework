@@ -26,6 +26,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -617,6 +618,26 @@ describe("SharedTreeCore", () => {
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(machine.sequencingLog.length, 2);
 		});
+	});
+
+	it("throws an error if attaching during a transaction", () => {
+		const tree = createTree([]);
+		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
+		});
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		tree.getLocalBranch().startTransaction();
+		assert.throws(
+			() => {
+				tree.connect({
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+					objectStorage: new MockStorage(),
+				});
+			},
+			(e: Error) =>
+				validateAssertionError(e, /Cannot attach while a transaction is in progress/),
+		);
 	});
 
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {

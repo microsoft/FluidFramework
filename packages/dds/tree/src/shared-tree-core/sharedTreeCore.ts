@@ -56,7 +56,7 @@ import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./chang
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -184,16 +184,28 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			rebaseLogger,
 		);
 		this.editManager.localBranch.events.on("transactionStarted", () => {
-			this.commitEnricher.startTransaction();
+			if (this.detachedRevision === undefined) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.startTransaction();
+			}
 		});
 		this.editManager.localBranch.events.on("transactionAborted", () => {
-			this.commitEnricher.abortTransaction();
+			if (this.detachedRevision === undefined) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.abortTransaction();
+			}
 		});
 		this.editManager.localBranch.events.on("transactionCommitted", () => {
-			this.commitEnricher.commitTransaction();
+			if (this.detachedRevision === undefined) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.commitTransaction();
+			}
 		});
 		this.editManager.localBranch.events.on("beforeChange", (change) => {
-			this.commitEnricher.processChange(change, this.detachedRevision === undefined);
+			if (this.detachedRevision === undefined) {
+				// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
+				this.commitEnricher.processChange(change);
+			}
 		});
 		this.editManager.localBranch.events.on("afterChange", (change) => {
 			// We do not submit ops for changes that are part of a transaction.
@@ -404,6 +416,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	protected onDisconnect(): void {}
 
 	protected override didAttach(): void {
+		if (this.getLocalBranch().isTransacting()) {
+			// Attaching during a transaction is not currently supported.
+			// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
+			throw new UsageError(
+				"Cannot attach while a transaction is in progress. Commit or abort the transaction before attaching.",
+			);
+		}
 		if (this.detachedRevision !== undefined) {
 			this.detachedRevision = undefined;
 		}
