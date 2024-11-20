@@ -16,8 +16,8 @@ parameters:
 
   # Determines if artifact should be published as latest-v*.tar.gz (for release branches)
   - name: uploadAsLatestRelease
-    type: boolean
-    default: false
+    type: string
+    default: 'false'
 
   # Major version to upload as latest-v*.tar.gz
   - name: majorVersion
@@ -116,7 +116,7 @@ steps:
         inlineScript: |
           az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --overwrite --verbose
 
-  - ${{ if eq(parameters.uploadAsLatestRelease, true) }}:
+  - ${{ if eq(parameters.uploadAsLatestRelease, 'true') }}:
     - task: AzureCLI@2
       displayName: 'Upload JSON as latest-v*.tar.gz'
       continueOnError: true
