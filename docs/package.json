@@ -61,6 +61,7 @@
 	"devDependencies": {
 		"@azure/static-web-apps-cli": "^2.0.1",
 		"@docusaurus/core": "^3.6.2",
+		"@docusaurus/eslint-plugin": "^3.6.2",
 		"@docusaurus/module-type-aliases": "^3.6.2",
 		"@docusaurus/plugin-content-docs": "^3.6.2",
 		"@docusaurus/preset-classic": "^3.6.2",
