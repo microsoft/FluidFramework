@@ -36,7 +36,7 @@ import { resolveContainer, type ILoaderProps } from "./loader.js";
  *    network connectivity issues / ability to cancel (IContainer.disconnect) or close container (IContainer.close)
  *    This flow needs to fetch ops (potentially connecting to delta connection), and any retriable errors on this path result in infinite retry.
  *    If you need to cancel that process, consider supplying AbortSignal parameter.
- * @param loaderProps - loader props to use to load container.
+ * @param loaderProps - The loader props to use to load the container.
  * @param request - request identifying container instance / load parameters. LoaderHeader.loadMode headers are ignored (see above)
  * @param loadToSequenceNumber - optional sequence number. If provided, ops are processed up to this sequence number.
  * @param signal - optional abort signal that can be used to cancel waiting for the ops.
