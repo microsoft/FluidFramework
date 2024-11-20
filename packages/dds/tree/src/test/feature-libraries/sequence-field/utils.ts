@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "assert";
+import { strict } from "node:assert";
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
@@ -90,6 +90,7 @@ import {
 	type ComposeNodeManager,
 	type DetachedNodeEntry,
 	type RebaseNodeManager,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 
 export function assertWrappedChangesetsEqual(
@@ -444,11 +445,18 @@ export function rebaseDeepTagged(
 	);
 }
 
-export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
-	return ChangesetWrapper.invert(change, (c) => invert(c));
+export function invertDeep(
+	change: TaggedChange<WrappedChange>,
+	revision: RevisionTag | undefined,
+): WrappedChange {
+	return ChangesetWrapper.invert(change, (c) => invert(c, revision), revision);
 }
 
-export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): SF.Changeset {
+export function invert(
+	change: TaggedChange<SF.Changeset>,
+	revision: RevisionTag | undefined,
+	isRollback = true,
+): SF.Changeset {
 	deepFreeze(change.change);
 	const table = newInvertManager();
 	let inverted = SF.invert(
@@ -456,6 +464,7 @@ export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): S
 		isRollback,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
+		revision,
 		table,
 	);
 
@@ -465,6 +474,7 @@ export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): S
 			isRollback,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
+			revision,
 			table,
 		);
 	}

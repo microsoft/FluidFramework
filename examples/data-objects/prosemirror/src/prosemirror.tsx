@@ -32,26 +32,27 @@ import {
 import { EditorView } from "prosemirror-view";
 import React, { useEffect, useRef } from "react";
 
-import { nodeTypeKey } from "./fluidBridge.js";
+import { nodeTypeKey, stackTypeBegin, stackTypeEnd, stackTypeKey } from "./fluidBridge.js";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager.js";
 
 function insertMarkers(
 	text: SharedString,
 	treeRangeLabel: string,
-	beginMarkerPos: number,
-	endMarkerPos: number,
+	position: number,
 	nodeType: string,
 ) {
 	const endMarkerProps = {};
 	endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	endMarkerProps[nodeTypeKey] = nodeType;
+	endMarkerProps[stackTypeKey] = stackTypeEnd;
 
 	const beginMarkerProps = {};
 	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	beginMarkerProps[nodeTypeKey] = nodeType;
+	beginMarkerProps[stackTypeKey] = stackTypeBegin;
 
-	text.insertMarker(endMarkerPos, ReferenceType.Simple, endMarkerProps);
-	text.insertMarker(beginMarkerPos, ReferenceType.Simple, beginMarkerProps);
+	text.insertMarker(position, ReferenceType.Simple, beginMarkerProps);
+	text.insertMarker(position + 1, ReferenceType.Simple, endMarkerProps);
 }
 
 /**
@@ -105,7 +106,7 @@ export class ProseMirror
 			this.root = SharedMap.create(this.runtime, "root");
 			const text = SharedString.create(this.runtime);
 
-			insertMarkers(text, "prosemirror", 0, 1, "paragraph");
+			insertMarkers(text, "prosemirror", 0, "paragraph");
 			text.insertText(1, "Hello, world!");
 
 			this.root.set("text", text.handle);

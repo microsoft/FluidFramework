@@ -10,8 +10,6 @@ import { CrossFieldTarget } from "../modular-schema/index.js";
 import type { MoveMarkEffect } from "./helperTypes.js";
 import type { CellMark, Mark, MarkEffect, MoveIn, MoveOut } from "./types.js";
 import { isAttachAndDetachEffect, splitMark } from "./utils.js";
-import type { RangeQueryResult } from "../../util/rangeMap.js";
-import type { DetachedNodeEntry } from "../modular-schema/crossFieldQueries.js";
 import type { ChangeAtomId } from "../../core/index.js";
 
 export type MoveMark = CellMark<MoveMarkEffect>;

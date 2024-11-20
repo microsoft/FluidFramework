@@ -9,27 +9,31 @@ import { fail } from "../../util/index.js";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
 import type { NodeFromSchema } from "../schemaTypes.js";
-import type { NodeKind, TreeNodeSchemaClass, TreeNode } from "../core/index.js";
 import type {
-	InsertableObjectFromSchemaRecord,
-	ObjectFromSchemaRecord,
-} from "../objectNode.js";
+	InternalTreeNode,
+	NodeKind,
+	TreeNode,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+} from "../core/index.js";
+import type { UnionToTuple } from "../../util/index.js";
 
-/**
- * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
- * @internal
+/*
+ * This file does two things:
+ *
+ * 1. Provides tools for making schema for cases like enums.
+ *
+ * 2. Demonstrates the kinds of schema utilities apps can write.
+ * Nothing in here needs access to package internal APIs.
  */
-// Using {} instead of interface {} or Record<string, never> for empty object here produces better IntelliSense in the generated types than `Record<string, never>` recommended by the linter.
-// Making this a type instead of an interface prevents it from showing up in IntelliSense, and also avoids breaking the typing somehow.
-// eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/consistent-type-definitions
-export type EmptyObject = {};
 
 /**
  * Create a schema for a node with no state.
  * @remarks
  * This is commonly used in unions when the only information needed is which kind of node the value is.
  * Enums are a common example of this pattern.
- * @internal
+ * @see {@link adaptEnum}
+ * @alpha
  */
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -38,7 +42,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	name: TName,
 ) {
 	class SingletonSchema extends factory.object(name, {}) {
-		public constructor(data?: EmptyObject) {
+		public constructor(data?: InternalTreeNode | Record<string, never>) {
 			super(data ?? {});
 		}
 		public get value(): TName {
@@ -46,9 +50,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 		}
 	}
 
-	type NodeType = object &
-		TreeNode &
-		ObjectFromSchemaRecord<EmptyObject> & { readonly value: TName };
+	type SingletonNodeType = TreeNode & { readonly value: TName };
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 	// for the private brand field of TreeNode.
@@ -58,11 +60,12 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	const toReturn: TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, TName>,
 		NodeKind.Object,
-		NodeType,
-		object & InsertableObjectFromSchemaRecord<EmptyObject>,
-		true
-	> &
-		(new () => NodeType) = SingletonSchema;
+		SingletonNodeType,
+		Record<string, never>,
+		true,
+		Record<string, never>,
+		undefined
+	> = SingletonSchema;
 
 	return toReturn;
 }
@@ -70,34 +73,48 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 /**
  * Converts an enum into a collection of schema which can be used in a union.
  * @remarks
- * Currently only supports `string` enums.
+ * The string value of the enum is used as the name of the schema: callers must ensure that it is stable and unique.
+ * Numeric enums values have the value implicitly converted into a string.
+ * Consider making a dedicated schema factory with a nested scope to avoid the enum members colliding with other schema.
  * @example
  * ```typescript
+ * const schemaFactory = new SchemaFactory("com.myApp");
+ * // An enum for use in the tree. Must have string keys.
  * enum Mode {
  * 	a = "A",
  * 	b = "B",
  * }
- * const ModeNodes = adaptEnum(schema, Mode);
- * type ModeNodes = NodeFromSchema<(typeof ModeNodes)[keyof typeof ModeNodes]>;
- * const nodeFromString: ModeNodes = ModeNodes(Mode.a);
- * const nodeFromSchema: ModeNodes = new ModeNodes.a();
- * const nameFromNode: Mode = nodeFromSchema.value;
+ * // Define the schema for each member of the enum using a nested scope to group them together.
+ * const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+ * // Defined the types of the nodes which correspond to this the schema.
+ * type ModeNodes = TreeNodeFromImplicitAllowedTypes<(typeof ModeNodes.schema)>;
+ * // An example schema which has an enum as a child.
  * class Parent extends schemaFactory.object("Parent", {
- * 	mode: typedObjectValues(ModeNodes),
+ * 	// adaptEnum's return value has a ".schema" property can be use as an `AllowedTypes` array allowing any of the members of the enum.
+ * 	mode: ModeNodes.schema,
  * }) {}
+ *
+ * // Example usage of enum based nodes, showing what type to use and that `.value` can be used to read out the enum value.
+ * function getValue(node: ModeNodes): Mode {
+ * 	return node.value;
+ * }
+ *
+ * // Example constructing a tree containing an enum node from an enum value.
+ * // The syntax `new ModeNodes.a()` is also supported.
+ * function setValue(node: Parent): void {
+ * 	node.mode = ModeNodes(Mode.a);
+ * }
  * ```
  * @privateRemarks
- * TODO:
- * Extends this to support numeric enums.
- * Maybe require an explicit nested scope to group them under, or at least a warning about collisions.
- * Maybe just provide `SchemaFactory.nested` to east creating nested scopes?
- * @internal
+ * Maybe provide `SchemaFactory.nested` to ease creating nested scopes?
+ * @see {@link enumFromStrings} for a similar function that works on arrays of strings instead of an enum.
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(
-	factory: SchemaFactory<TScope>,
-	members: TEnum,
-) {
+export function adaptEnum<
+	TScope extends string,
+	const TEnum extends Record<string, string | number>,
+>(factory: SchemaFactory<TScope>, members: TEnum) {
 	type Values = TEnum[keyof TEnum];
 	const values = Object.values(members) as Values[];
 	const inverse = new Map(Object.entries(members).map(([key, value]) => [value, key])) as Map<
@@ -114,33 +131,39 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 			typeof singletonSchema<TScope, TEnum[Property]>
 		>;
 	};
+
+	type SchemaArray = UnionToTuple<TOut[keyof TEnum]>;
+	const schemaArray: TreeNodeSchema[] = [];
+
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends Values>(value: TValue) => {
-		return new out[inverse.get(value) ?? fail("missing enum value")]({}) as NodeFromSchema<
-			ReturnType<typeof singletonSchema<TScope, TValue>>
-		>;
+		return new out[
+			inverse.get(value) ?? fail("missing enum value")
+			// "extends unknown" is required here to handle when TValue is an union: each member of the union should be processed independently.
+		]() as TValue extends unknown
+			? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>>
+			: never;
 	};
-	const out = factoryOut as typeof factoryOut & TOut;
+	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
 	for (const [key, value] of Object.entries(members)) {
+		const schema = singletonSchema(factory, value);
+		schemaArray.push(schema);
 		Object.defineProperty(out, key, {
 			enumerable: true,
 			configurable: false,
 			writable: false,
-			value: singletonSchema(factory, value),
+			value: schema,
 		});
 	}
 
-	return out;
-}
+	Object.defineProperty(out, "schema", {
+		enumerable: true,
+		configurable: false,
+		writable: false,
+		value: schemaArray,
+	});
 
-/**
- * `Object.values`, but with more specific types.
- * @internal
- */
-export function typedObjectValues<TKey extends string, TValues>(
-	object: Record<TKey, TValues>,
-): TValues[] {
-	return Object.values(object);
+	return out;
 }
 
 /**
@@ -152,48 +175,78 @@ export function typedObjectValues<TKey extends string, TValues>(
  * The produced nodes use the provided strings as their `name`, and don't store any data beyond that.
  * @example
  * ```typescript
+ * const schemaFactory = new SchemaFactory("com.myApp");
  * const Mode = enumFromStrings(schemaFactory, ["Fun", "Cool"]);
- * type Mode = NodeFromSchema<(typeof Mode)[keyof typeof Mode]>;
+ * type Mode = TreeNodeFromImplicitAllowedTypes<typeof Mode.schema>;
  * const nodeFromString: Mode = Mode("Fun");
  * const nodeFromSchema: Mode = new Mode.Fun();
- * const nameFromNode = nodeFromSchema.value;
  *
- * class Parent extends schemaFactory.object("Parent", { mode: typedObjectValues(Mode) }) {}
+ * // Schema nodes have a strongly typed `.value` property.
+ * const nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
+ *
+ * class Parent extends schemaFactory.object("Parent", { mode: Mode.schema }) {}
  * ```
- * @internal
+ * @see {@link adaptEnum} for a similar function that works on enums instead of arrays of strings.
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export function enumFromStrings<TScope extends string, const Members extends string>(
-	factory: SchemaFactory<TScope>,
-	members: readonly Members[],
-) {
+export function enumFromStrings<
+	TScope extends string,
+	const Members extends readonly string[],
+>(factory: SchemaFactory<TScope>, members: Members) {
 	const names = new Set(members);
 	if (names.size !== members.length) {
 		throw new UsageError("All members of enums must have distinct names");
 	}
 
-	type TOut = Record<Members, ReturnType<typeof singletonSchema<TScope, Members>>>;
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	const factoryOut = <TValue extends Members>(value: TValue) => {
-		return new out[value]({}) as NodeFromSchema<
-			ReturnType<typeof singletonSchema<TScope, TValue>>
+	type MembersUnion = Members[number];
+
+	// Get all keys of the Members tuple which are numeric strings as union of numbers:
+	type Indexes = Extract<keyof Members, `${number}`> extends `${infer N extends number}`
+		? N
+		: never;
+
+	type TOut = {
+		[Index in Indexes as Members[Index]]: ReturnType<
+			typeof singletonSchema<TScope, Members[Index] & string>
 		>;
 	};
-	const out = factoryOut as typeof factoryOut & TOut;
+
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	const factoryOut = <TValue extends MembersUnion>(value: TValue) => {
+		// "extends unknown" is required here to handle when TValue is an union: each member of the union should be processed independently.
+		return new recordOut[value]() as TValue extends unknown
+			? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>>
+			: never;
+	};
+
+	type SchemaArray = UnionToTuple<MembersUnion extends unknown ? TOut[MembersUnion] : never>;
+	const schemaArray: TreeNodeSchema[] = [];
+
+	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
+	const recordOut = out as Record<MembersUnion, new () => unknown>;
 	for (const name of members) {
+		const schema = singletonSchema(factory, name);
+		schemaArray.push(schema);
 		Object.defineProperty(out, name, {
 			enumerable: true,
 			configurable: false,
 			writable: false,
-			value: singletonSchema(factory, name),
+			value: schema,
 		});
 	}
+
+	Object.defineProperty(out, "schema", {
+		enumerable: true,
+		configurable: false,
+		writable: false,
+		value: schemaArray,
+	});
 
 	return out;
 }
 
-// TODO: Why does this one generate an invalid d.ts file if exported?
-// Tracked by https://github.com/microsoft/TypeScript/issues/58688
+// TODO: This generates an invalid d.ts file if exported due to a bug https://github.com/microsoft/TypeScript/issues/58688.
 // TODO: replace enumFromStrings above with this simpler implementation when the TypeScript bug is resolved.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function _enumFromStrings2<TScope extends string, const Members extends readonly string[]>(

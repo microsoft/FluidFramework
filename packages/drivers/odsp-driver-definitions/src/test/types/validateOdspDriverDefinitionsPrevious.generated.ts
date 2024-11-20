@@ -52,15 +52,6 @@ declare type old_as_current_for_Enum_SharingLinkScope = requireAssignableTo<Type
 declare type current_as_old_for_Enum_SharingLinkScope = requireAssignableTo<TypeOnly<current.SharingLinkScope>, TypeOnly<old.SharingLinkScope>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_getKeyForCacheEntry": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getKeyForCacheEntry = requireAssignableTo<TypeOnly<typeof current.getKeyForCacheEntry>, TypeOnly<typeof old.getKeyForCacheEntry>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -479,42 +470,6 @@ declare type current_as_old_for_TypeAlias_IdentityType = requireAssignableTo<Typ
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_InstrumentedStorageTokenFetcher": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_InstrumentedStorageTokenFetcher = requireAssignableTo<TypeOnly<old.InstrumentedStorageTokenFetcher>, TypeOnly<current.InstrumentedStorageTokenFetcher>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_InstrumentedStorageTokenFetcher": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_InstrumentedStorageTokenFetcher = requireAssignableTo<TypeOnly<current.InstrumentedStorageTokenFetcher>, TypeOnly<old.InstrumentedStorageTokenFetcher>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_InstrumentedTokenFetcher": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_InstrumentedTokenFetcher = requireAssignableTo<TypeOnly<old.InstrumentedTokenFetcher>, TypeOnly<current.InstrumentedTokenFetcher>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_InstrumentedTokenFetcher": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_InstrumentedTokenFetcher = requireAssignableTo<TypeOnly<current.InstrumentedTokenFetcher>, TypeOnly<old.InstrumentedTokenFetcher>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "TypeAlias_OdspError": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_OdspError = requireAssignableTo<TypeOnly<old.OdspError>, TypeOnly<current.OdspError>>
@@ -553,7 +508,7 @@ declare type current_as_old_for_TypeAlias_OdspErrorTypes = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_TokenFetcher": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TokenFetcher = requireAssignableTo<TypeOnly<old.TokenFetcher<any>>, TypeOnly<current.TokenFetcher<any>>>
+declare type old_as_current_for_TypeAlias_TokenFetcher = requireAssignableTo<TypeOnly<old.TokenFetcher<never>>, TypeOnly<current.TokenFetcher<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -562,34 +517,7 @@ declare type old_as_current_for_TypeAlias_TokenFetcher = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_TokenFetcher": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TokenFetcher = requireAssignableTo<TypeOnly<current.TokenFetcher<any>>, TypeOnly<old.TokenFetcher<any>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_authHeaderFromTokenResponse": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_authHeaderFromTokenResponse = requireAssignableTo<TypeOnly<typeof current.authHeaderFromTokenResponse>, TypeOnly<typeof old.authHeaderFromTokenResponse>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_isTokenFromCache": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_isTokenFromCache = requireAssignableTo<TypeOnly<typeof current.isTokenFromCache>, TypeOnly<typeof old.isTokenFromCache>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_maximumCacheDurationMs": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_maximumCacheDurationMs = requireAssignableTo<TypeOnly<typeof current.maximumCacheDurationMs>, TypeOnly<typeof old.maximumCacheDurationMs>>
+declare type current_as_old_for_TypeAlias_TokenFetcher = requireAssignableTo<TypeOnly<current.TokenFetcher<never>>, TypeOnly<old.TokenFetcher<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -599,30 +527,3 @@ declare type current_as_old_for_Variable_maximumCacheDurationMs = requireAssigna
  * "Variable_OdspErrorTypes": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_OdspErrorTypes = requireAssignableTo<TypeOnly<typeof current.OdspErrorTypes>, TypeOnly<typeof old.OdspErrorTypes>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_snapshotKey": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_snapshotKey = requireAssignableTo<TypeOnly<typeof current.snapshotKey>, TypeOnly<typeof old.snapshotKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_snapshotWithLoadingGroupIdKey": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_snapshotWithLoadingGroupIdKey = requireAssignableTo<TypeOnly<typeof current.snapshotWithLoadingGroupIdKey>, TypeOnly<typeof old.snapshotWithLoadingGroupIdKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_tokenFromResponse": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_tokenFromResponse = requireAssignableTo<TypeOnly<typeof current.tokenFromResponse>, TypeOnly<typeof old.tokenFromResponse>>

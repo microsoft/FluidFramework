@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	AllowedUpdateType,
@@ -18,7 +18,6 @@ import {
 import { singleJsonCursor } from "../json/index.js";
 import {
 	FieldKinds,
-	ViewSchema,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
 } from "../../feature-libraries/index.js";
@@ -40,9 +39,15 @@ import {
 } from "../../shared-tree/schematizeTree.js";
 import { checkoutWithContent, validateViewConsistency } from "../utils.js";
 import type { Listenable } from "../../events/index.js";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	ViewSchema,
+	type ImplicitFieldSchema,
+	type TreeView,
+	type TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
 
 const builder = new SchemaFactory("test");
@@ -97,7 +102,7 @@ describe("schematizeTree", () => {
 					let previousSchema: TreeStoredSchema = new TreeStoredSchemaRepository(storedSchema);
 					expectSchema(storedSchema, previousSchema);
 
-					storedSchema.on("afterSchemaChange", () => {
+					storedSchema.events.on("afterSchemaChange", () => {
 						previousSchema = new TreeStoredSchemaRepository(storedSchema);
 					});
 
@@ -117,7 +122,7 @@ describe("schematizeTree", () => {
 					const storedSchema = new TreeStoredSchemaRepository();
 					const log: string[] = [];
 
-					storedSchema.on("afterSchemaChange", () => {
+					storedSchema.events.on("afterSchemaChange", () => {
 						log.push("schema");
 					});
 					initializeContent(makeSchemaRepository(storedSchema), content.schema, () =>
@@ -149,7 +154,7 @@ describe("schematizeTree", () => {
 			forest: { isEmpty } as IForestSubscription,
 			editor: undefined as unknown as ISharedTreeEditor,
 			transaction: undefined as unknown as ITransaction,
-			fork(): ITreeCheckoutFork {
+			branch(): ITreeCheckoutFork {
 				throw new Error("Function not implemented.");
 			},
 			merge(view: ITreeCheckoutFork): void {
@@ -167,6 +172,11 @@ describe("schematizeTree", () => {
 				throw new Error("Function not implemented.");
 			},
 			locate(anchor: Anchor): AnchorNode | undefined {
+				throw new Error("Function not implemented.");
+			},
+			viewWith<TRoot extends ImplicitFieldSchema>(
+				config: TreeViewConfiguration<TRoot>,
+			): TreeView<TRoot> {
 				throw new Error("Function not implemented.");
 			},
 		};

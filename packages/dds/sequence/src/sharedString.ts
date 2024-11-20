@@ -20,6 +20,7 @@ import {
 	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 
@@ -139,10 +140,10 @@ export type SharedStringSegment = TextSegment | Marker;
  * In addition to text, a Shared String can also contain markers. Markers can be
  * used to store metadata at positions within the text, like the details of an
  * image or Fluid object that should be rendered with the text.
- * @legacy
- * @alpha
+ * @internal
  */
 export class SharedStringClass
+	// eslint-disable-next-line import/no-deprecated
 	extends SharedSegmentSequence<SharedStringSegment>
 	implements ISharedString
 {

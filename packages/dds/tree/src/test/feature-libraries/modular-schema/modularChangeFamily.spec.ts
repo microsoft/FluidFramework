@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
@@ -50,6 +50,7 @@ import {
 	Multiplicity,
 	replaceAtomRevisions,
 	type FieldUpPath,
+	type RevisionInfo,
 } from "../../../core/index.js";
 import {
 	type Mutable,
@@ -187,6 +188,7 @@ const family = new ModularChangeFamily(fieldKinds, codec);
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
+const tag4: RevisionTag = mintRevisionTag();
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
@@ -214,18 +216,21 @@ const rootChange1a = removeAliases(
 			field: pathA,
 			fieldKind: singleNodeField.identifier,
 			change: brand(undefined),
+			revision: tag1,
 		},
 		{
 			type: "field",
 			field: pathA0A,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange1a),
+			revision: tag1,
 		},
 		{
 			type: "field",
 			field: pathB,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange2),
+			revision: tag1,
 		},
 	]),
 );
@@ -237,12 +242,14 @@ const rootChange1aGeneric: ModularChangeset = removeAliases(
 			field: pathA0A,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange1a),
+			revision: tag1,
 		},
 		{
 			type: "field",
 			field: pathB,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange2),
+			revision: tag1,
 		},
 	]),
 );
@@ -254,18 +261,21 @@ const rootChange1b: ModularChangeset = removeAliases(
 			field: pathA,
 			fieldKind: singleNodeField.identifier,
 			change: brand(undefined),
+			revision: tag1,
 		},
 		{
 			type: "field",
 			field: pathA0A,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange1b),
+			revision: tag1,
 		},
 		{
 			type: "field",
 			field: pathA0B,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange1a),
+			revision: tag1,
 		},
 	]),
 );
@@ -277,12 +287,14 @@ const rootChange1bGeneric: ModularChangeset = removeAliases(
 			field: pathA0A,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange1b),
+			revision: tag1,
 		},
 		{
 			type: "field",
 			field: pathA0B,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange1a),
+			revision: tag1,
 		},
 	]),
 );
@@ -345,18 +357,21 @@ const rootChange2: ModularChangeset = removeAliases(
 			field: pathA,
 			fieldKind: singleNodeField.identifier,
 			change: brand(undefined),
+			revision: tag2,
 		},
 		{
 			type: "field",
 			field: pathA0A,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange2),
+			revision: tag2,
 		},
 		{
 			type: "field",
 			field: pathA0B,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange1a),
+			revision: tag2,
 		},
 	]),
 );
@@ -368,12 +383,14 @@ const rootChange2Generic: ModularChangeset = removeAliases(
 			field: pathA0A,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange2),
+			revision: tag2,
 		},
 		{
 			type: "field",
 			field: pathA0B,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange1a),
+			revision: tag2,
 		},
 	]),
 );
@@ -385,19 +402,21 @@ const rootChange3: ModularChangeset = removeAliases(
 			field: pathA,
 			fieldKind: singleNodeField.identifier,
 			change: brand(undefined),
+			revision: tag3,
 		},
 		{
 			type: "field",
 			field: pathA0A,
 			fieldKind: valueField.identifier,
 			change: brand(valueChange1a),
+			revision: tag3,
 		},
 	]),
 );
 
 const rootChange4: ModularChangeset = removeAliases(
 	family.compose([
-		tagChangeInline(rootChange3, tag1),
+		tagChangeInline(rootChange3, tag4),
 		makeAnonChange(buildExistsConstraint(pathA0)),
 	]),
 );
@@ -412,6 +431,7 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
 				field: pathA,
 				fieldKind: singleNodeField.identifier,
 				change: brand(undefined),
+				revision: dummyRevisionTag,
 			},
 		]),
 		dummyRevisionTag,
@@ -471,20 +491,27 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose specific ○ specific", () => {
-			const expectedCompose = Change.build(
-				{ family, maxId: rootChange2.maxId },
-				Change.field(
-					fieldA,
-					singleNodeField.identifier,
-					singleNodeField.changeHandler.createEmpty(),
-					Change.node(
-						0,
-						Change.field(fieldA, valueField.identifier, composedValues),
-						Change.field(fieldB, valueField.identifier, valueChange1a),
+			const expectedRevision: RevisionInfo[] = [{ revision: tag1 }, { revision: tag2 }];
+			const expectedCompose = {
+				...tagChangeInline(
+					Change.build(
+						{ family, maxId: rootChange2.maxId },
+						Change.field(
+							fieldA,
+							singleNodeField.identifier,
+							singleNodeField.changeHandler.createEmpty(),
+							Change.node(
+								0,
+								Change.field(fieldA, valueField.identifier, composedValues),
+								Change.field(fieldB, valueField.identifier, valueChange1a),
+							),
+						),
+						Change.field(fieldB, valueField.identifier, valueChange2),
 					),
-				),
-				Change.field(fieldB, valueField.identifier, valueChange2),
-			);
+					tag1,
+				).change,
+				revisions: expectedRevision,
+			};
 
 			const composed = removeAliases(
 				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2)]),
@@ -494,20 +521,27 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose specific ○ generic", () => {
-			const expectedCompose = Change.build(
-				{ family, maxId: rootChange2Generic.maxId },
-				Change.field(
-					fieldA,
-					singleNodeField.identifier,
-					singleNodeField.changeHandler.createEmpty(),
-					Change.node(
-						0,
-						Change.field(fieldA, valueField.identifier, composedValues),
-						Change.field(fieldB, valueField.identifier, valueChange1a),
+			const expectedRevision: RevisionInfo[] = [{ revision: tag1 }, { revision: tag2 }];
+			const expectedCompose = {
+				...tagChangeInline(
+					Change.build(
+						{ family, maxId: rootChange2Generic.maxId },
+						Change.field(
+							fieldA,
+							singleNodeField.identifier,
+							singleNodeField.changeHandler.createEmpty(),
+							Change.node(
+								0,
+								Change.field(fieldA, valueField.identifier, composedValues),
+								Change.field(fieldB, valueField.identifier, valueChange1a),
+							),
+						),
+						Change.field(fieldB, valueField.identifier, valueChange2),
 					),
-				),
-				Change.field(fieldB, valueField.identifier, valueChange2),
-			);
+					tag1,
+				).change,
+				revisions: expectedRevision,
+			};
 
 			const composed = removeAliases(
 				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2Generic)]),
@@ -517,21 +551,28 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose generic ○ specific", () => {
-			const expectedCompose = Change.build(
-				{ family, maxId: rootChange2.maxId },
-				Change.field(
-					fieldA,
-					singleNodeField.identifier,
-					singleNodeField.changeHandler.createEmpty(),
-					Change.nodeWithId(
-						0,
-						{ localId: brand(1) },
-						Change.field(fieldA, valueField.identifier, composedValues),
-						Change.field(fieldB, valueField.identifier, valueChange1a),
+			const expectedRevision: RevisionInfo[] = [{ revision: tag1 }, { revision: tag2 }];
+			const expectedCompose = {
+				...tagChangeInline(
+					Change.build(
+						{ family, maxId: rootChange2.maxId },
+						Change.field(
+							fieldA,
+							singleNodeField.identifier,
+							singleNodeField.changeHandler.createEmpty(),
+							Change.nodeWithId(
+								0,
+								{ localId: brand(1) },
+								Change.field(fieldA, valueField.identifier, composedValues),
+								Change.field(fieldB, valueField.identifier, valueChange1a),
+							),
+						),
+						Change.field(fieldB, valueField.identifier, valueChange2),
 					),
-				),
-				Change.field(fieldB, valueField.identifier, valueChange2),
-			);
+					tag1,
+				).change,
+				revisions: expectedRevision,
+			};
 
 			const composed = removeAliases(
 				family.compose([makeAnonChange(rootChange1aGeneric), makeAnonChange(rootChange2)]),
@@ -541,21 +582,28 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose generic ○ generic", () => {
-			const expectedCompose = Change.build(
-				{ family, maxId: rootChange2Generic.maxId },
-				Change.field(
-					fieldA,
-					genericFieldKind.identifier,
-					genericFieldKind.changeHandler.createEmpty(),
-					Change.nodeWithId(
-						0,
-						{ localId: brand(1) },
-						Change.field(fieldA, valueField.identifier, composedValues),
-						Change.field(fieldB, valueField.identifier, valueChange1a),
+			const expectedRevision: RevisionInfo[] = [{ revision: tag1 }, { revision: tag2 }];
+			const expectedCompose = {
+				...tagChangeInline(
+					Change.build(
+						{ family, maxId: rootChange2Generic.maxId },
+						Change.field(
+							fieldA,
+							genericFieldKind.identifier,
+							genericFieldKind.changeHandler.createEmpty(),
+							Change.nodeWithId(
+								0,
+								{ localId: brand(1) },
+								Change.field(fieldA, valueField.identifier, composedValues),
+								Change.field(fieldB, valueField.identifier, valueChange1a),
+							),
+						),
+						Change.field(fieldB, valueField.identifier, valueChange2),
 					),
-				),
-				Change.field(fieldB, valueField.identifier, valueChange2),
-			);
+					tag1,
+				).change,
+				revisions: expectedRevision,
+			};
 
 			const composed = removeAliases(
 				family.compose([
@@ -575,6 +623,7 @@ describe("ModularChangeFamily", () => {
 						field: pathA,
 						fieldKind: valueField.identifier,
 						change: brand(valueChange1a),
+						revision: tag1,
 					},
 				]),
 				tag1,
@@ -587,12 +636,14 @@ describe("ModularChangeFamily", () => {
 						field: pathB,
 						fieldKind: singleNodeField.identifier,
 						change: brand(undefined),
+						revision: tag2,
 					},
 					{
 						type: "field",
 						field: pathB0A,
 						fieldKind: valueField.identifier,
 						change: brand(valueChange2),
+						revision: tag2,
 					},
 				]),
 				tag2,
@@ -840,47 +891,67 @@ describe("ModularChangeFamily", () => {
 		const valueInverse2: ValueChangeset = { old: 2, new: 1 };
 
 		it("specific", () => {
-			const expectedInverse = buildChangeset([
-				{
-					type: "field",
-					field: pathA,
-					fieldKind: singleNodeField.identifier,
-					change: brand(undefined),
-				},
-				{
-					type: "field",
-					field: pathA0A,
-					fieldKind: valueField.identifier,
-					change: brand(valueInverse1),
-				},
-				{
-					type: "field",
-					field: pathB,
-					fieldKind: valueField.identifier,
-					change: brand(valueInverse2),
-				},
-			]);
+			const revisionForInvert = mintRevisionTag();
+			const expectedInverse: ModularChangeset = {
+				...buildChangeset([
+					{
+						type: "field",
+						field: pathA,
+						fieldKind: singleNodeField.identifier,
+						change: brand(undefined),
+						revision: tag1,
+					},
+					{
+						type: "field",
+						field: pathA0A,
+						fieldKind: valueField.identifier,
+						change: brand(valueInverse1),
+						revision: tag1,
+					},
+					{
+						type: "field",
+						field: pathB,
+						fieldKind: valueField.identifier,
+						change: brand(valueInverse2),
+						revision: tag1,
+					},
+				]),
+				revisions: [{ revision: revisionForInvert }],
+			};
 
-			assertEqual(family.invert(makeAnonChange(rootChange1a), false), expectedInverse);
+			assertEqual(
+				family.invert(makeAnonChange(rootChange1a), false, revisionForInvert),
+				expectedInverse,
+			);
 		});
 
 		it("generic", () => {
-			const expectedInverse = Change.build(
-				{ family, maxId: rootChange1aGeneric.maxId },
-				Change.field(
-					fieldA,
-					genericFieldKind.identifier,
-					genericFieldKind.changeHandler.createEmpty(),
-					Change.nodeWithId(
-						0,
-						{ localId: brand(1) },
-						Change.field(fieldA, valueField.identifier, valueInverse1),
+			const revisionForInvert = mintRevisionTag();
+			const expectedInverse: ModularChangeset = {
+				...tagChangeInline(
+					Change.build(
+						{ family, maxId: rootChange1aGeneric.maxId },
+						Change.field(
+							fieldA,
+							genericFieldKind.identifier,
+							genericFieldKind.changeHandler.createEmpty(),
+							Change.nodeWithId(
+								0,
+								{ localId: brand(1) },
+								Change.field(fieldA, valueField.identifier, valueInverse1),
+							),
+						),
+						Change.field(fieldB, valueField.identifier, valueInverse2),
 					),
-				),
-				Change.field(fieldB, valueField.identifier, valueInverse2),
-			);
+					tag1,
+				).change,
+				revisions: [{ revision: revisionForInvert }],
+			};
 
-			assertEqual(family.invert(makeAnonChange(rootChange1aGeneric), false), expectedInverse);
+			assertEqual(
+				family.invert(makeAnonChange(rootChange1aGeneric), false, revisionForInvert),
+				expectedInverse,
+			);
 		});
 
 		it("build => destroy but only for rollback", () => {
@@ -894,6 +965,13 @@ describe("ModularChangeFamily", () => {
 				},
 				tag1,
 			);
+			deepFreeze(change1);
+			const revisionForInvert = mintRevisionTag();
+			const actualRollback = family.invert(change1, true, revisionForInvert);
+			const actualUndo = family.invert(change1, false, revisionForInvert);
+
+			actualRollback.crossFieldKeys.unfreeze();
+			actualUndo.crossFieldKeys.unfreeze();
 
 			const expectedRollback: ModularChangeset = {
 				...Change.empty(),
@@ -901,15 +979,13 @@ describe("ModularChangeFamily", () => {
 					[[tag1 as RevisionTag | undefined, brand(0)], 1],
 					[[tag2, brand(1)], 1],
 				]),
+				revisions: [{ revision: revisionForInvert, rollbackOf: tag1 }],
 			};
-			const expectedUndo: ModularChangeset = Change.empty();
+			const expectedUndo: ModularChangeset = tagChangeInline(
+				Change.empty(),
+				revisionForInvert,
+			).change;
 
-			deepFreeze(change1);
-			const actualRollback = family.invert(change1, true);
-			const actualUndo = family.invert(change1, false);
-
-			actualRollback.crossFieldKeys.unfreeze();
-			actualUndo.crossFieldKeys.unfreeze();
 			assertEqual(actualRollback, expectedRollback);
 			assertEqual(actualUndo, expectedUndo);
 		});
@@ -922,7 +998,11 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assertEqual(rebased, rebasedChange);
+			const tagForCompare = mintRevisionTag();
+			assertEqual(
+				tagChangeInline(rebased, tagForCompare),
+				tagChangeInline(rebasedChange, tagForCompare),
+			);
 		});
 
 		it("rebase specific ↷ generic", () => {
@@ -931,7 +1011,11 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assertEqual(rebased, rebasedChange);
+			const tagForCompare = mintRevisionTag();
+			assertEqual(
+				tagChangeInline(rebased, tagForCompare),
+				tagChangeInline(rebasedChange, tagForCompare),
+			);
 		});
 
 		it("rebase generic ↷ specific", () => {
@@ -940,7 +1024,11 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assertEqual(rebased, genericChangeRebasedOverSpecific);
+			const tagForCompare = mintRevisionTag();
+			assertEqual(
+				tagChangeInline(rebased, tagForCompare),
+				tagChangeInline(genericChangeRebasedOverSpecific, tagForCompare),
+			);
 		});
 
 		it("rebase generic ↷ generic", () => {
@@ -949,7 +1037,11 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assertEqual(rebased, rebasedChangeGeneric);
+			const tagForCompare = mintRevisionTag();
+			assertEqual(
+				tagChangeInline(rebased, tagForCompare),
+				tagChangeInline(rebasedChangeGeneric, tagForCompare),
+			);
 		});
 	});
 
@@ -1392,20 +1484,24 @@ describe("ModularChangeFamily", () => {
 			{ parent: path, field: fieldB },
 			valueField.identifier,
 			brand(valueChange1a),
+			tag1,
 		);
 		const changes = getChanges();
 
-		const expectedChange: ModularChangeset = Change.build(
-			{ family, maxId: 0 },
-			Change.field(
-				fieldA,
-				genericFieldKind.identifier,
-				genericFieldKind.changeHandler.createEmpty(),
-				Change.node(0, Change.field(fieldB, valueField.identifier, valueChange1a)),
+		const expectedChange = tagChangeInline(
+			Change.build(
+				{ family, maxId: 0 },
+				Change.field(
+					fieldA,
+					genericFieldKind.identifier,
+					genericFieldKind.changeHandler.createEmpty(),
+					Change.node(0, Change.field(fieldB, valueField.identifier, valueChange1a)),
+				),
 			),
+			tag1,
 		);
 
-		assertEqual(changes, [expectedChange]);
+		assertEqual(changes, [expectedChange.change]);
 	});
 });
 
@@ -1539,7 +1635,7 @@ function buildChangeset(edits: EditDescription[]): ModularChangeset {
 
 function buildExistsConstraint(path: UpPath): ModularChangeset {
 	const edits: ModularChangeset[] = [];
-	const editor = family.buildEditor((change) => edits.push(change));
-	editor.addNodeExistsConstraint(path);
+	const editor = family.buildEditor((taggedChange) => edits.push(taggedChange.change));
+	editor.addNodeExistsConstraint(path, mintRevisionTag());
 	return edits[0];
 }

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { describeStress } from "@fluid-private/stochastic-test-utils";
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import {
+	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
 	type DeltaFieldChanges,
@@ -86,15 +87,15 @@ const OptionalChange = {
 		value: string,
 		wasEmpty: boolean,
 		ids: {
-			fill: ChangesetLocalId;
-			detach: ChangesetLocalId;
+			fill: ChangeAtomId;
+			detach: ChangeAtomId;
 		},
 	) {
 		return optionalFieldEditor.set(wasEmpty, ids);
 	},
 
-	clear(wasEmpty: boolean, id: ChangesetLocalId) {
-		return optionalFieldEditor.clear(wasEmpty, id);
+	clear(wasEmpty: boolean, detachId: ChangeAtomId) {
+		return optionalFieldEditor.clear(wasEmpty, detachId);
 	},
 
 	buildChildChange(childChange: NodeId) {
@@ -150,12 +151,15 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 
 function invert(
 	change: TaggedChange<OptionalChangeset>,
+	revision: RevisionTag | undefined,
 	isRollback: boolean,
 ): OptionalChangeset {
 	const inverted = optionalChangeRebaser.invert(
 		change.change,
 		isRollback,
 		idAllocatorFromMaxId(),
+
+		revision,
 		failInvertManager,
 		defaultRevisionMetadataFromChanges([change]),
 	);
@@ -165,9 +169,10 @@ function invert(
 
 function invertWrapped(
 	change: TaggedChange<WrappedChangeset>,
+	revision: RevisionTag,
 	isRollback: boolean,
 ): WrappedChangeset {
-	return ChangesetWrapper.invert(change, invert, isRollback);
+	return ChangesetWrapper.invert(change, invert, revision, isRollback);
 }
 
 function rebase(
@@ -311,7 +316,11 @@ const generateChildStates: ChildStateGenerator<string | undefined, WrappedChange
 		tagFromIntention: (intention: number) => RevisionTag,
 		mintIntention: () => number,
 	): Iterable<OptionalFieldTestState> {
-		const mintId = mintIntention as () => ChangesetLocalId;
+		const mintId: () => ChangeAtomId = () => {
+			return {
+				localId: mintIntention() as ChangesetLocalId,
+			};
+		};
 		const edits = getSequentialEdits(state);
 		if (state.content !== undefined) {
 			const changeChildIntention = mintIntention();
@@ -417,6 +426,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, WrappedChange
 						state.mostRecentEdit.changeset.change.fieldChange,
 						state.mostRecentEdit.changeset.revision,
 					),
+					tagFromIntention(undoIntention),
 					false,
 				),
 				nodes: invertedNodeChanges,
@@ -449,7 +459,11 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
 				const title = `(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`;
 				it(title, () => {
-					const inv = tagRollbackInverse(invertWrapped(change2, true), tag1, change2.revision);
+					const inv = tagRollbackInverse(
+						invertWrapped(change2, tag1, true),
+						tag1,
+						change2.revision,
+					);
 					const r1 = rebaseWrappedTagged(change1, change2);
 					const r2 = rebaseWrappedTagged(r1, inv);
 					assert.deepEqual(r2.change, change1.change);
@@ -469,7 +483,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
 				const title = `${name1} ↷ [${name2}, undo(${name2})] => ${name1}`;
 				it(title, () => {
-					const inv = tagWrappedChangeInline(invertWrapped(change2, false), tag1);
+					const inv = tagWrappedChangeInline(invertWrapped(change2, tag1, false), tag1);
 					const r1 = rebaseWrappedTagged(change1, change2);
 					const r2 = rebaseWrappedTagged(r1, inv);
 					assert.deepEqual(r2.change, change1.change);
@@ -492,7 +506,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
 				it(title, () => {
 					const inverse2 = tagRollbackInverse(
-						invertWrapped(change2, true),
+						invertWrapped(change2, tag1, true),
 						tag1,
 						change2.revision,
 					);
@@ -508,7 +522,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	describe("A ○ A⁻¹ === ε", () => {
 		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
-				const inv = invertWrapped(change, true);
+				const inv = invertWrapped(change, tag1, true);
 				const actual = composeWrapped(change, tagRollbackInverse(inv, tag1, change.revision));
 				const delta = toDeltaWrapped(makeAnonChange(actual));
 				assert.equal(isDeltaVisible(delta), false);
@@ -519,7 +533,11 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	describe("A⁻¹ ○ A === ε", () => {
 		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
-				const inv = tagRollbackInverse(invertWrapped(change, true), tag1, change.revision);
+				const inv = tagRollbackInverse(
+					invertWrapped(change, tag1, true),
+					tag1,
+					change.revision,
+				);
 				const actual = composeWrapped(inv, change);
 				const delta = toDeltaWrapped(makeAnonChange(actual));
 				assert.equal(isDeltaVisible(delta), false);
@@ -538,7 +556,7 @@ export function testRebaserAxioms() {
 			runSingleEditRebaseAxiomSuite({ content: "A" });
 		});
 
-		describeStress("Exhaustive", ({ isStress }) => {
+		describeStress("Exhaustive", ({ stressMode }) => {
 			runExhaustiveComposeRebaseSuite(
 				[{ content: undefined }, { content: "A" }],
 				generateChildStates,
@@ -555,8 +573,8 @@ export function testRebaserAxioms() {
 				},
 				{
 					numberOfEditsToRebase: 3,
-					numberOfEditsToRebaseOver: isStress ? 5 : 3,
-					numberOfEditsToVerifyAssociativity: isStress ? 6 : 3,
+					numberOfEditsToRebaseOver: stressMode !== StressMode.Short ? 5 : 3,
+					numberOfEditsToVerifyAssociativity: stressMode !== StressMode.Short ? 6 : 3,
 				},
 			);
 		});

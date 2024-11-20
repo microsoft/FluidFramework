@@ -3,24 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
+// TODO: import and unit test other things from "proxies" file.
+
+import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import {
+	type booleanSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeFromSchema,
+	type NodeKind,
 	SchemaFactory,
 	TreeArrayNode,
+	type TreeNodeSchema,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-
-// TODO: import and unit test other things from "proxies" file.
-// // eslint-disable-next-line import/no-internal-modules
+import type { requireAssignableTo } from "../../util/index.js";
+import { getView } from "../utils.js";
 
 import { hydrate, pretty } from "./utils.js";
-import { getView } from "../utils.js";
-import { MockNodeKeyManager } from "../../feature-libraries/index.js";
-import type { requireAssignableTo } from "../../util/index.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
@@ -388,6 +391,12 @@ describe("ArrayNode Proxy", () => {
 
 		it("booleans", () => {
 			const root = hydrate(schema, initialTree);
+			const a = root.booleans;
+			type T = InsertableTreeNodeFromImplicitAllowedTypes<
+				TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>
+			>;
+
+			type T2 = InsertableTreeNodeFromImplicitAllowedTypes<typeof booleanSchema>;
 			root.booleans.insertAtStart(true);
 			root.booleans.insertAt(1, false);
 			root.booleans.insertAtEnd(true);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import {
 	type ChangeAtomId,
@@ -11,6 +11,7 @@ import {
 	type TaggedChange,
 	makeAnonChange,
 	makeDetachedNodeId,
+	tagChange,
 } from "../../../core/index.js";
 import type {
 	NodeId,
@@ -72,7 +73,10 @@ const change1 = tagChangeInline(
 
 const change2Tag = mintRevisionTag();
 const change2: TaggedChange<OptionalChangeset> = tagChangeInline(
-	optionalFieldEditor.set(false, { fill: brand(42), detach: brand(2) }),
+	optionalFieldEditor.set(false, {
+		fill: { localId: brand(42) },
+		detach: { localId: brand(2) },
+	}),
 	change2Tag,
 );
 
@@ -85,7 +89,10 @@ const revertChange2: TaggedChange<OptionalChangeset> = tagChangeInline(
  * Represents what change2 would have been had it been concurrent with change1.
  */
 const change2PreChange1: TaggedChange<OptionalChangeset> = tagChangeInline(
-	optionalFieldEditor.set(true, { fill: brand(42), detach: brand(2) }),
+	optionalFieldEditor.set(true, {
+		fill: { localId: brand(42) },
+		detach: { localId: brand(2) },
+	}),
 	change2Tag,
 );
 
@@ -105,8 +112,8 @@ describe("optionalField", () => {
 	describe("editor", () => {
 		it("can be created", () => {
 			const actual: OptionalChangeset = optionalFieldEditor.set(true, {
-				fill: brand(42),
-				detach: brand(43),
+				fill: { localId: brand(42) },
+				detach: { localId: brand(43) },
 			});
 			const expected = Change.atOnce(
 				Change.reserve("self", brand(43)),
@@ -317,6 +324,7 @@ describe("optionalField", () => {
 					change.change,
 					false,
 					idAllocatorFromMaxId(),
+					mintRevisionTag(),
 					failInvertManager,
 					defaultRevisionMetadataFromChanges([change]),
 				);
@@ -326,6 +334,8 @@ describe("optionalField", () => {
 					change.change,
 					true,
 					idAllocatorFromMaxId(),
+
+					mintRevisionTag(),
 					failInvertManager,
 					defaultRevisionMetadataFromChanges([change]),
 				);
@@ -497,17 +507,20 @@ describe("optionalField", () => {
 				const tag1 = mintRevisionTag();
 				const tag2 = mintRevisionTag();
 				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
-				const deletion = tagChangeInline(optionalFieldEditor.clear(false, brand(1)), tag1);
-				const revive = tagChangeInline(
+				const deletion = tagChange(
+					optionalFieldEditor.clear(false, { localId: brand(1), revision: tag1 }),
+					tag1,
+				);
+				const revive = tagChange(
 					optionalChangeRebaser.invert(
 						deletion.change,
 						false,
 						idAllocatorFromMaxId(),
+						tag2,
 						failInvertManager,
 						defaultRevisionMetadataFromChanges([deletion]),
 					),
 					tag2,
-					tag1,
 				);
 
 				const childRebaser = (
@@ -547,7 +560,10 @@ describe("optionalField", () => {
 			it("can rebase a child change over a reserved detach on empty field", () => {
 				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
 				deepFreeze(changeToRebase);
-				const clear = tagChangeInline(optionalFieldEditor.clear(true, brand(42)), tag);
+				const clear = tagChange(
+					optionalFieldEditor.clear(true, { localId: brand(42), revision: tag }),
+					tag,
+				);
 
 				const childRebaser = (
 					nodeChange: NodeId | undefined,
@@ -696,17 +712,23 @@ describe("optionalField", () => {
 	});
 
 	describe("relevantRemovedRoots", () => {
-		const fill = tagChangeInline(
-			optionalFieldEditor.set(true, { detach: brand(1), fill: brand(2) }),
-			mintRevisionTag(),
+		const tag1 = mintRevisionTag();
+		const fill = tagChange(
+			optionalFieldEditor.set(true, {
+				detach: { localId: brand(1), revision: tag1 },
+				fill: { localId: brand(2), revision: tag1 },
+			}),
+			tag1,
 		);
-		const clear = tagChangeInline(
-			optionalFieldEditor.clear(false, brand(1)),
-			mintRevisionTag(),
+		const tag2 = mintRevisionTag();
+		const clear = tagChange(
+			optionalFieldEditor.clear(false, { localId: brand(1), revision: tag2 }),
+			tag2,
 		);
-		const hasChildChanges = tagChangeInline(
-			optionalFieldEditor.buildChildChange(0, nodeId1),
-			mintRevisionTag(),
+		const childChangeTag = mintRevisionTag();
+		const hasChildChanges = tagChange(
+			optionalFieldEditor.buildChildChange(0, { ...nodeId1, revision: childChangeTag }),
+			childChangeTag,
 		);
 		const relevantNestedTree = { minor: 4242 };
 		const noTreesDelegate: RelevantRemovedRootsFromChild = () => [];
@@ -761,6 +783,7 @@ describe("optionalField", () => {
 					clear.change,
 					false,
 					idAllocatorFromMaxId(),
+					mintRevisionTag(),
 					failInvertManager,
 					defaultRevisionMetadataFromChanges([clear]),
 				);
@@ -828,6 +851,7 @@ describe("optionalField", () => {
 						clear.change,
 						false,
 						idAllocatorFromMaxId(),
+						mintRevisionTag(),
 						failInvertManager,
 						defaultRevisionMetadataFromChanges([clear]),
 					),

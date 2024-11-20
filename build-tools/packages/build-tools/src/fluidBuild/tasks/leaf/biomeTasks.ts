@@ -4,8 +4,6 @@
  */
 
 import { BiomeConfigReader } from "../../../common/biomeConfig";
-import { GitRepo } from "../../../common/gitRepo";
-import { getResolvedFluidRoot } from "../../fluidUtils";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
 /**
@@ -19,15 +17,6 @@ import { LeafWithFileStatDoneFileTask } from "./leafTask";
  * Internally the task uses git itself to enumerate files, and files that aren't enumerated are not considered.
  */
 export class BiomeTask extends LeafWithFileStatDoneFileTask {
-	// performance note: having individual tasks each acquire repo root and GitRepo
-	// is quite inefficient. recommend passing such common things in a context object
-	// to task constructors.
-	private readonly repoRoot = getResolvedFluidRoot(true);
-	private readonly gitRepo = this.repoRoot.then((repoRoot) => new GitRepo(repoRoot));
-	private readonly biomeConfig = this.gitRepo.then((gitRepo) =>
-		BiomeConfigReader.create(this.node.pkg.directory, gitRepo),
-	);
-
 	/**
 	 * Use hashes instead of modified times in donefile.
 	 */
@@ -35,18 +24,31 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 		return true;
 	}
 
+	private _configReader: BiomeConfigReader | undefined;
+
+	private async getBiomeConfigReader(): Promise<BiomeConfigReader> {
+		if (this._configReader === undefined) {
+			this._configReader = await BiomeConfigReader.create(
+				this.node.pkg.directory,
+				this.context.gitRepo,
+			);
+		}
+		return this._configReader;
+	}
+
 	/**
 	 * Includes all files in the the task's package directory that Biome would format and any Biome config files that
 	 * apply to the directory. Files ignored by git are excluded.
 	 */
 	protected async getInputFiles(): Promise<string[]> {
-		const biomeConfig = await this.biomeConfig;
+		const biomeConfig = await this.getBiomeConfigReader();
 		// Absolute paths to files that would be formatted by biome.
 		const { formattedFiles, allConfigs } = biomeConfig;
 		return [...new Set([...allConfigs, ...formattedFiles])];
 	}
 
 	protected async getOutputFiles(): Promise<string[]> {
-		return (await this.biomeConfig).formattedFiles;
+		const biomeConfig = await this.getBiomeConfigReader();
+		return biomeConfig.formattedFiles;
 	}
 }

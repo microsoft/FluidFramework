@@ -1,6 +1,6 @@
 {
-	"name": "root",
-	"version": "0.47.0",
+	"name": "build-tools-release-group-root",
+	"version": "0.52.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,28 +11,29 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "pnpm run generate:packageList && fluid-build --task build",
+		"build": "fluid-build --task build",
 		"build:compile": "fluid-build --task compile",
 		"build:docs": "fluid-build --task build:docs",
 		"build:fast": "fluid-build --worker",
 		"changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v --context lerna.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
+		"checks": "fluid-build --task checks",
 		"ci:build": "npm run build",
 		"ci:eslint": "fluid-build --task eslint",
 		"ci:test": "npm run test:mocha",
 		"ci:test:coverage": "npm run test:coverage",
-		"clean": "pnpm run -r --no-sort --stream clean && npm run clean:docs && npm run clean:nyc",
+		"clean": "fluid-build --task clean",
 		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\"",
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"commit": "git-cz",
 		"format": "npm run format:biome",
 		"format:biome": "biome check --write .",
 		"generate:packageList": "concurrently \"npm:generate:packageList:*\"",
-		"generate:packageList:internal-build": "flub list --no-private -g build-tools --feed internal-build --outFile feeds/internal-build.txt",
-		"generate:packageList:internal-dev": "flub list --no-private -g build-tools --feed internal-dev --outFile feeds/internal-dev.txt",
-		"generate:packageList:internal-test": "flub list --no-private -g build-tools --feed internal-test --outFile feeds/internal-test.txt",
-		"generate:packageList:public": "flub list --no-private -g build-tools --feed public --outFile feeds/public.txt",
+		"generate:packageList:internal-build": "flub list build-tools --no-private --feed internal-build --outFile feeds/internal-build.txt",
+		"generate:packageList:internal-dev": "flub list build-tools --no-private --feed internal-dev --outFile feeds/internal-dev.txt",
+		"generate:packageList:internal-test": "flub list build-tools --no-private --feed internal-test --outFile feeds/internal-test.txt",
+		"generate:packageList:public": "flub list build-tools --no-private --feed public --outFile feeds/public.txt",
 		"preinstall": "node ../scripts/only-pnpm.cjs",
 		"install:commitlint": "npm install --global @commitlint/config-conventional",
 		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run check:format && npm run ci:eslint",
@@ -69,25 +70,25 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
-		"@commitlint/cli": "^17.6.6",
-		"@commitlint/config-conventional": "^17.6.6",
-		"@commitlint/cz-commitlint": "^17.5.0",
-		"@fluid-tools/build-cli": "~0.44.0",
+		"@biomejs/biome": "~1.9.3",
+		"@commitlint/cli": "^17.8.1",
+		"@commitlint/config-conventional": "^17.8.1",
+		"@commitlint/cz-commitlint": "^17.8.1",
+		"@fluid-tools/build-cli": "~0.49.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "~0.44.0",
-		"@microsoft/api-documenter": "^7.22.24",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@fluidframework/build-tools": "~0.49.0",
+		"@microsoft/api-documenter": "^7.25.21",
+		"@microsoft/api-extractor": "^7.47.11",
 		"c8": "^7.14.0",
-		"commitizen": "^4.3.0",
-		"concurrently": "^8.2.1",
+		"commitizen": "^4.3.1",
+		"concurrently": "^8.2.2",
 		"conventional-changelog-cli": "^2.2.2",
 		"conventional-changelog-conventionalcommits": "^5.0.0",
 		"copyfiles": "^2.4.1",
 		"cz-conventional-changelog": "^3.3.0",
-		"cz-customizable": "^7.0.0",
+		"cz-customizable": "^7.2.1",
 		"eslint": "~8.57.0",
-		"inquirer": "^8.2.5",
+		"inquirer": "^8.2.6",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.6",
@@ -99,6 +100,36 @@
 	},
 	"dependenciesComments": {
 		"@fluidframework/build-tools": "Provides fluid-build which is used by the `build:fast` script. To allow this to work when the workspace version of build-tools has not been built yet, a prepackaged version is depended on. If this self-dependency becomes problematic, the `build` script can be used which does not require it."
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build": {
+				"dependsOn": [
+					"^build",
+					"generate:packageList",
+					"syncpack:deps",
+					"syncpack:versions"
+				],
+				"script": false
+			},
+			"checks": {
+				"dependsOn": [
+					"check:format",
+					"generate:packageList",
+					"syncpack:deps",
+					"syncpack:versions"
+				],
+				"script": false
+			},
+			"clean": {
+				"dependsOn": [
+					"^clean",
+					"clean:docs",
+					"clean:nyc"
+				],
+				"script": false
+			}
+		}
 	},
 	"pnpm": {
 		"peerDependencyComments": [
@@ -124,9 +155,6 @@
 			"sharp": "^0.33.2",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0"
-		},
-		"patchedDependencies": {
-			"jssm@5.98.2": "patches/jssm@5.98.2.patch"
 		},
 		"updateConfig": {
 			"ignoreDependencies": [

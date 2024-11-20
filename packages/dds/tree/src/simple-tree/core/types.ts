@@ -32,11 +32,6 @@ export type Unhydrated<T> = T;
 /**
  * A collection of events that can be emitted by a {@link TreeNode}.
  *
- * @remarks
- * Currently, events can be subscribed to for {@link Unhydrated} nodes, however no events will be triggered for the nodes until after they are hydrated.
- * This is considered a known issue, and should be fixed in future versions.
- * Do not rely on the fact that editing unhydrated nodes does not trigger their events.
- *
  * @privateRemarks
  * TODO: add a way to subscribe to a specific field (for nodeChanged and treeChanged).
  * Probably have object node and map node specific APIs for this.

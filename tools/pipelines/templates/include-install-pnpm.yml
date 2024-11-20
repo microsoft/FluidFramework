@@ -36,14 +36,15 @@ steps:
 
 - task: Bash@3
   displayName: Install and configure pnpm
+  # The previous task (cache restoration) can timeout, which is classified as canceled, but since it's just cache
+  # restoration, we want to continue even if it timed out.
+  condition: or(succeeded(), canceled())
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
-    # The previous task (cache restoration) can timeout, which is classified as canceled, but since it's just cache
-    # restoration, we want to continue even if it timed out.
-    condition: or(succeeded(), canceled())
     # workspace-concurrency 0 means use use the CPU core count. This is better than the default (4) for larger agents.
     script: |
+      set -eu -o pipefail
       echo "Using node $(node --version)"
       sudo corepack enable
       echo "Using pnpm $(pnpm -v)"

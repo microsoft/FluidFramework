@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/version-tools",
-	"version": "0.47.0",
+	"version": "0.52.0",
 	"description": "Versioning tools for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,6 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "commonjs",
 	"exports": {
 		".": {
 			"default": {
@@ -30,9 +31,9 @@
 		"/oclif.manifest.json"
 	],
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "fluid-build --task build",
 		"build:commonjs": "npm run tsc && npm run build:test",
-		"build:compile": "npm run build:commonjs && npm run build:readme",
+		"build:compile": "fluid-build --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:manifest": "oclif manifest",
 		"build:readme": "oclif readme --version 0.0.0",
@@ -76,41 +77,38 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@oclif/core": "^4.0.14",
-		"@oclif/plugin-autocomplete": "^3.1.9",
-		"@oclif/plugin-commands": "^4.0.9",
-		"@oclif/plugin-help": "^6.2.7",
-		"@oclif/plugin-not-found": "^3.2.13",
-		"chalk": "^2.4.2",
-		"semver": "^7.5.4",
-		"table": "^6.8.1"
+		"@oclif/core": "^4.0.30",
+		"@oclif/plugin-autocomplete": "^3.2.7",
+		"@oclif/plugin-commands": "^4.1.5",
+		"@oclif/plugin-help": "^6.2.16",
+		"@oclif/plugin-not-found": "^3.2.24",
+		"semver": "^7.6.3",
+		"table": "^6.8.2"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.44.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
-		"@microsoft/api-extractor": "^7.45.1",
-		"@oclif/test": "^3.2.12",
-		"@types/chai": "^4.3.5",
-		"@types/mocha": "^9.1.1",
-		"@types/node": "^18.18.6",
-		"@types/semver": "^7.5.0",
+		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.49.0",
+		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@microsoft/api-extractor": "^7.47.11",
+		"@oclif/test": "^4.1.0",
+		"@types/chai": "^4.3.20",
+		"@types/mocha": "^10.0.9",
+		"@types/node": "^18.19.59",
+		"@types/semver": "^7.5.8",
 		"c8": "^7.14.0",
-		"chai": "^4.3.7",
-		"concurrently": "^8.2.1",
+		"chai": "^4.5.0",
+		"concurrently": "^8.2.2",
 		"eslint": "~8.57.0",
-		"eslint-config-oclif": "^5.2.0",
-		"eslint-config-oclif-typescript": "^3.1.8",
+		"eslint-config-oclif": "^5.2.1",
+		"eslint-config-oclif-typescript": "^3.1.12",
 		"eslint-config-prettier": "~9.1.0",
-		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.1.0",
+		"mocha": "^10.7.3",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.29.4",
-		"oclif": "^4.14.9",
+		"oclif": "^4.15.16",
 		"rimraf": "^4.4.1",
-		"ts-node": "^10.9.1",
-		"tslib": "^2.6.0",
+		"ts-node": "^10.9.2",
+		"tslib": "^2.8.0",
 		"typescript": "~5.4.5"
 	},
 	"engines": {

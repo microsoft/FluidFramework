@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ObliterateInfo } from "../mergeTreeNodes.js";
+import type { ISegmentLeaf, ObliterateInfo } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
 import { TestClient } from "./testClient.js";
@@ -48,7 +48,6 @@ describe("obliterate", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			insertText({
@@ -81,7 +80,6 @@ describe("obliterate", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 2,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			assert.equal(client.getText(), "");
@@ -104,7 +102,6 @@ describe("obliterate", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 2,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			assert.equal(client.getText(), "h");
@@ -116,11 +113,10 @@ describe("obliterate", () => {
 			obliterateRange({
 				mergeTree: client.mergeTree,
 				start: 5,
-				end: "hello world".length,
+				end: client.getLength(),
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			insertText({
@@ -143,7 +139,6 @@ describe("obliterate", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			insertText({
@@ -162,7 +157,7 @@ describe("obliterate", () => {
 
 	describe("local obliterate with concurrent inserts", () => {
 		it("removes range when pending local obliterate op", () => {
-			client.obliterateRangeLocal(0, "hello world".length);
+			client.obliterateRangeLocal(0, client.getLength());
 			insertText({
 				mergeTree: client.mergeTree,
 				pos: 1,
@@ -184,8 +179,8 @@ describe("obliterate", () => {
 
 			const obliterateStart = 0;
 			const obliterateEnd = client.getLength();
-			const startSeg = client.getContainingSegment(obliterateStart);
-			const endSeg = client.getContainingSegment(obliterateEnd);
+			const startSeg = client.getContainingSegment<ISegmentLeaf>(obliterateStart);
+			const endSeg = client.getContainingSegment<ISegmentLeaf>(obliterateEnd);
 			obliterateRange({
 				mergeTree: client.mergeTree,
 				start: obliterateStart,
@@ -193,7 +188,6 @@ describe("obliterate", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			insertText({

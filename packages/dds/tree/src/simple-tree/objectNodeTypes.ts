@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { RestrictiveReadonlyRecord } from "../util/index.js";
+import type { RestrictiveStringRecord } from "../util/index.js";
 import type {
 	TreeObjectNode,
 	InsertableObjectFromSchemaRecord,
@@ -20,10 +20,8 @@ import type { FieldKey } from "../core/index.js";
  */
 export interface ObjectNodeSchema<
 	TName extends string = string,
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<
-		string,
-		ImplicitFieldSchema
-	>,
+	T extends
+		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
 > extends TreeNodeSchemaClass<
 		TName,
@@ -52,10 +50,17 @@ export interface ObjectNodeSchemaInternalData {
 	 * Lookup the property keys from the stored keys.
 	 */
 	readonly storedKeyToPropertyKey: ReadonlyMap<FieldKey, string>;
+
+	/**
+	 * Stored keys which hold identifiers.
+	 */
+	readonly identifierFieldKeys: readonly FieldKey[];
 }
 
 export const ObjectNodeSchema = {
-	// instanceof-based narrowing support for Javascript and TypeScript 5.3 or newer.
+	/**
+	 * instanceof-based narrowing support for ObjectNodeSchema in Javascript and TypeScript 5.3 or newer.
+	 */
 	[Symbol.hasInstance](value: TreeNodeSchema): value is ObjectNodeSchema {
 		return isObjectNodeSchema(value);
 	},

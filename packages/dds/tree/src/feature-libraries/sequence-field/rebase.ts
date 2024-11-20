@@ -9,7 +9,6 @@ import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../co
 import type { IdAllocator, Mutable } from "../../util/index.js";
 import {
 	type RebaseNodeManager,
-	CrossFieldTarget,
 	type NodeChangeRebaser,
 	NodeAttachState,
 	type NodeId,

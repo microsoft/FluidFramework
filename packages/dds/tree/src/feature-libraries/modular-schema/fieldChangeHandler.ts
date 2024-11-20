@@ -121,6 +121,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		change: TChangeset,
 		isRollback: boolean,
 		genId: IdAllocator,
+		revision: RevisionTag | undefined,
 		nodeManager: InvertNodeManager,
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;

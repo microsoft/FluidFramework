@@ -18,7 +18,7 @@ import {
 
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { ISegment, type ISegmentLeaf } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
 import {
 	JsonSegmentSpecs,
@@ -193,7 +193,7 @@ export class SnapshotLegacy {
 
 	extractSync(): ISegment[] {
 		const collabWindow = this.mergeTree.collabWindow;
-		this.seq = collabWindow.minSeq;
+		const seq = (this.seq = collabWindow.minSeq);
 		this.header = {
 			segmentsTotalLength: this.mergeTree.getLength(
 				this.mergeTree.collabWindow.minSeq,
@@ -205,9 +205,9 @@ export class SnapshotLegacy {
 		let originalSegments = 0;
 
 		const segs: ISegment[] = [];
-		let prev: ISegment | undefined;
+		let prev: ISegmentLeaf | undefined;
 		const extractSegment = (
-			segment: ISegment,
+			segment: ISegmentLeaf,
 			pos: number,
 			refSeq: number,
 			clientId: number,
@@ -216,29 +216,26 @@ export class SnapshotLegacy {
 		): boolean => {
 			if (
 				segment.seq !== UnassignedSequenceNumber &&
-				segment.seq! <= this.seq! &&
+				segment.seq! <= seq &&
 				(segment.removedSeq === undefined ||
 					segment.removedSeq === UnassignedSequenceNumber ||
-					segment.removedSeq > this.seq!)
+					segment.removedSeq > seq)
 			) {
 				originalSegments += 1;
-				if (prev?.canAppend(segment) && matchProperties(prev.properties, segment.properties)) {
-					prev = prev.clone();
+				const properties =
+					segment.propertyManager?.getAtSeq(segment.properties, seq) ?? segment.properties;
+				if (prev?.canAppend(segment) && matchProperties(prev.properties, properties)) {
 					prev.append(segment.clone());
 				} else {
-					if (prev) {
-						segs.push(prev);
-					}
-					prev = segment;
+					prev = segment.clone();
+					prev.properties = properties;
+					segs.push(prev);
 				}
 			}
 			return true;
 		};
 
 		this.mergeTree.mapRange(extractSegment, this.seq, NonCollabClient, undefined);
-		if (prev) {
-			segs.push(prev);
-		}
 
 		this.segments = [];
 		let totalLength: number = 0;
@@ -246,7 +243,6 @@ export class SnapshotLegacy {
 			totalLength += segment.cachedLength;
 			if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 				segment.properties = undefined;
-				segment.propertyManager = undefined;
 			}
 			this.segments!.push(segment);
 		});

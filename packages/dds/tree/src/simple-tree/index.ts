@@ -20,10 +20,15 @@ export {
 	type InternalTreeNode,
 	isTreeNode,
 	tryDisposeTreeNode,
+	HydratedContext,
+	SimpleContextSlot,
+	getOrCreateInnerNode,
+	getKernel,
 } from "./core/index.js";
 export {
 	type ITree,
 	type TreeView,
+	type ViewableTree,
 	type TreeViewEvents,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
@@ -36,8 +41,6 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
-	typedObjectValues,
-	type EmptyObject,
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
@@ -48,7 +51,14 @@ export {
 	type NodeChangedData,
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type SimpleNodeSchemaBase,
 	type SimpleTreeSchema,
+	type SimpleNodeSchema,
+	type SimpleFieldSchema,
+	type SimpleLeafNodeSchema,
+	type SimpleMapNodeSchema,
+	type SimpleArrayNodeSchema,
+	type SimpleObjectNodeSchema,
 	type JsonSchemaId,
 	type JsonSchemaType,
 	type JsonObjectNodeSchema,
@@ -64,6 +74,46 @@ export {
 	type JsonLeafSchemaType,
 	getJsonSchema,
 	getSimpleSchema,
+	type VerboseTreeNode,
+	type EncodeOptions,
+	type ParseOptions,
+	type VerboseTree,
+	extractPersistedSchema,
+	comparePersistedSchema,
+	type ConciseTree,
+	comparePersistedSchemaInternal,
+	ViewSchema,
+	type Unenforced,
+	type FieldHasDefaultUnsafe,
+	type ObjectFromSchemaRecordUnsafe,
+	type TreeObjectNodeUnsafe,
+	type TreeFieldFromImplicitFieldUnsafe,
+	type TreeNodeFromImplicitAllowedTypesUnsafe,
+	type FieldSchemaUnsafe,
+	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	type TreeArrayNodeUnsafe,
+	type TreeMapNodeUnsafe,
+	type InsertableObjectFromSchemaRecordUnsafe,
+	type InsertableTreeFieldFromImplicitFieldUnsafe,
+	type InsertableTypedNodeUnsafe,
+	type NodeBuilderDataUnsafe,
+	type NodeFromSchemaUnsafe,
+	type ReadonlyMapInlined,
+	type TreeNodeSchemaClassUnsafe,
+	type TreeNodeSchemaUnsafe,
+	type AllowedTypesUnsafe,
+	type TreeNodeSchemaNonClassUnsafe,
+	type InsertableTreeNodeFromAllowedTypesUnsafe,
+	type TreeViewAlpha,
+	type TreeBranch,
+	type TreeBranchEvents,
+	tryGetSchema,
+	applySchemaToParserOptions,
+	cursorFromVerbose,
+	verboseFromCursor,
+	conciseFromCursor,
+	createFromCursor,
+	asTreeViewAlpha,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -83,37 +133,28 @@ export {
 	type DefaultProvider,
 	type FieldProps,
 	normalizeFieldSchema,
+	areFieldSchemaEqual,
+	areImplicitFieldSchemaEqual,
 	type ApplyKind,
 	type FieldSchemaMetadata,
+	type InsertableField,
+	type Insertable,
+	type UnsafeUnknownSchema,
+	normalizeAllowedTypes,
+	type ApplyKindInput,
+	type InsertableTreeNodeFromAllowedTypes,
+	type Input,
+	type ReadableField,
+	type ReadSchema,
 } from "./schemaTypes.js";
-export { getOrCreateInnerNode } from "./proxyBinding.js";
-export { toFlexSchema } from "./toFlexSchema.js";
-export type {
-	FieldHasDefaultUnsafe,
-	ObjectFromSchemaRecordUnsafe,
-	TreeObjectNodeUnsafe,
-	TreeFieldFromImplicitFieldUnsafe,
-	TreeNodeFromImplicitAllowedTypesUnsafe,
-	FieldSchemaUnsafe,
-	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	TreeArrayNodeUnsafe,
-	TreeMapNodeUnsafe,
-	InsertableObjectFromSchemaRecordUnsafe,
-	InsertableTreeFieldFromImplicitFieldUnsafe,
-	InsertableTypedNodeUnsafe,
-	NodeBuilderDataUnsafe,
-	NodeFromSchemaUnsafe,
-	ReadonlyMapInlined,
-} from "./typesUnsafe.js";
 export {
 	getTreeNodeForField,
 	prepareContentForHydration,
 } from "./proxies.js";
-
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
-	type TreeArrayNodeBase,
+	type ReadonlyArrayNode,
 } from "./arrayNode.js";
 export {
 	type FieldHasDefault,
@@ -123,8 +164,13 @@ export {
 	setField,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
-export { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-export { toStoredSchema, getStoredSchema, getFlexSchema } from "./toFlexSchema.js";
+export {
+	mapTreeFromNodeData,
+	type InsertableContent,
+	type FactoryContent,
+	type FactoryContentObject,
+} from "./toMapTree.js";
+export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,
@@ -132,3 +178,4 @@ export {
 	handleSchema,
 	nullSchema,
 } from "./leafNodeSchema.js";
+export type { LazyItem, FlexList, FlexListToUnion, ExtractItemType } from "./flexList.js";

@@ -29,12 +29,17 @@ export function transformApiModel(
 		];
 	}
 
+	// Filter out packages not wanted per user config
+	const filteredPackages = apiModel.packages.filter(
+		(apiPackage) => !config.skipPackage(apiPackage),
+	);
+
 	// Render packages table
 	const packagesTableSection = createTableWithHeading(
 		{
 			headingTitle: "Packages",
 			itemKind: ApiItemKind.Package,
-			items: apiModel.packages,
+			items: filteredPackages,
 		},
 		config,
 	);

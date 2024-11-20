@@ -8,11 +8,23 @@
  */
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.js";
 import type { IPresence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
+
+import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
+
+function assertSignalMessageIsValid(
+	message: IInboundSignalMessage | IExtensionMessage,
+): asserts message is IExtensionMessage {
+	assert(message.clientId !== null, 0xa58 /* Signal must have a client ID */);
+	// The other difference between messages is that `content` for
+	// IExtensionMessage is JsonDeserialized and we are fine assuming that.
+}
 
 /**
  * Simple FluidObject holding Presence Manager.
@@ -26,7 +38,12 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 		if (!this._presenceManager) {
 			// TODO: investigate if ContainerExtensionStore (path-based address routing for
 			// Signals) is readily detectable here and use that presence manager directly.
-			this._presenceManager = createPresenceManager(this.runtime);
+			const manager = createPresenceManager(this.runtime);
+			this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+				assertSignalMessageIsValid(message);
+				manager.processSignal("", message, local);
+			});
+			this._presenceManager = manager;
 		}
 		return this._presenceManager;
 	}
@@ -41,7 +58,7 @@ class PresenceManagerFactory {
 	}
 
 	public readonly factory = new BasicDataStoreFactory(
-		"@fluid-experimental/presence",
+		"@fluidframework/presence",
 		PresenceManagerDataObject,
 	);
 }

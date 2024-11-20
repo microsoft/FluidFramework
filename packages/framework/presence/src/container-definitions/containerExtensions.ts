@@ -6,7 +6,7 @@
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
+} from "@fluidframework/presence/internal/core-interfaces";
 
 /**
  * While connected, the id of a client within a session.
@@ -113,16 +113,16 @@ export interface IExtensionRuntime {
  * @param runtime - Runtime for extension to work against
  * @param context - Custom context for extension.
  * @returns Record providing:
- * `extension` instance (type `T`) that is provided to caller of
+ * `interface` instance (type `T`) that is provided to caller of
  * {@link ContainerExtensionStore.acquireExtension} and
- * `interface` store/runtime uses to interact with extension.
+ * `extension` store/runtime uses to interact with extension.
  *
  * @internal
  */
 export type ContainerExtensionFactory<T, TContext extends unknown[]> = new (
 	runtime: IExtensionRuntime,
 	...context: TContext
-) => { readonly extension: T; readonly interface: IContainerExtension<TContext> };
+) => { readonly interface: T; readonly extension: IContainerExtension<TContext> };
 
 /**
  * Unique identifier for extension

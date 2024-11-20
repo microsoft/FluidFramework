@@ -16,7 +16,7 @@ const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
  * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
  * for details on the task and dependency definition format.
  *
- * @type {import("@fluidframework/build-tools").IFluidBuildConfig}
+ * @type {import("@fluidframework/build-tools").IFluidBuildConfig & import("@fluid-tools/build-cli").FlubConfig}
  */
 module.exports = {
 	version: 1,
@@ -106,11 +106,11 @@ module.exports = {
 		"build:docs": ["tsc", "build:esnext"],
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
-			dependsOn: ["build:manifest"],
+			dependsOn: ["compile"],
 			script: true,
 		},
 		"build:manifest": {
-			dependsOn: ["tsc"],
+			dependsOn: ["compile"],
 			script: true,
 		},
 		"depcruise": [],
@@ -157,6 +157,71 @@ module.exports = {
 			script: false,
 		},
 	},
+
+	multiCommandExecutables: ["oclif", "syncpack"],
+	declarativeTasks: {
+		"jssm-viz": {
+			inputGlobs: ["src/**/*.fsl"],
+			outputGlobs: ["src/**/*.fsl.svg"],
+		},
+		"oclif manifest": {
+			inputGlobs: ["package.json", "src/**"],
+			outputGlobs: ["oclif.manifest.json"],
+		},
+		"oclif readme": {
+			inputGlobs: ["package.json", "src/**"],
+			outputGlobs: ["README.md", "docs/**"],
+		},
+		"syncpack lint-semver-ranges": {
+			inputGlobs: [
+				"syncpack.config.cjs",
+				"package.json",
+
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			outputGlobs: [
+				"package.json",
+
+				// release group packages
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			gitignore: ["input", "output"],
+		},
+		"syncpack list-mismatches": {
+			inputGlobs: [
+				"syncpack.config.cjs",
+				"package.json",
+
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			outputGlobs: [
+				"package.json",
+
+				// release group packages
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			gitignore: ["input", "output"],
+		},
+	},
+
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
 	repoPackages: {
 		// Release groups
@@ -167,19 +232,15 @@ module.exports = {
 		},
 		"build-tools": {
 			directory: "build-tools",
-			defaultInterdependencyRange: "workspace:~",
 		},
 		"server": {
 			directory: "server/routerlicious",
-			defaultInterdependencyRange: "workspace:~",
 		},
 		"gitrest": {
 			directory: "server/gitrest",
-			defaultInterdependencyRange: "^",
 		},
 		"historian": {
 			directory: "server/historian",
-			defaultInterdependencyRange: "^",
 		},
 
 		// Independent packages
@@ -209,6 +270,9 @@ module.exports = {
 
 			// This file is a test file.
 			"tools/markdown-magic/test/package.json",
+
+			// Not a real package
+			"docs/api/",
 
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
@@ -249,8 +313,6 @@ module.exports = {
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
 				"build-tools/packages/build-cli/test/helpers/init.js",
-				"build-tools/packages/readme-command/bin/dev.js",
-				"build-tools/packages/readme-command/bin/run.js",
 				"build-tools/packages/version-tools/bin/dev.js",
 				"build-tools/packages/version-tools/bin/run.js",
 				"common/build/build-common/gen_version.js",
@@ -262,6 +324,7 @@ module.exports = {
 				"docs/api/fallback/index.js",
 				"docs/build-redirects.js",
 				"docs/download-apis.js",
+				"docs/local-api-rollup.js",
 				"docs/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
@@ -269,7 +332,6 @@ module.exports = {
 				"packages/test/mocha-test-setup/mocharc-common.js",
 				"packages/test/test-service-load/scripts/usePrereleaseDeps.js",
 				"packages/tools/devtools/devtools-browser-extension/test-setup.js",
-				"scripts/report-parser.js",
 				"tools/changelog-generator-wrapper/src/getDependencyReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/getReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/index.js",
@@ -357,6 +419,8 @@ module.exports = {
 				"tools/getkeys/package.json",
 				// this package has a irregular build pattern, so our clean script rule doesn't apply.
 				"tools/markdown-magic/package.json",
+				// Docs directory breaks cleaning down into multiple scripts.
+				"docs/package.json",
 			],
 			"npm-strange-package-name": [
 				"server/gitrest/package.json",
@@ -374,34 +438,17 @@ module.exports = {
 				"package.json",
 			],
 			"npm-package-json-script-dep": [],
-			"npm-public-package-requirements": [
-				// Test packages published only for the purpose of running tests in CI.
-				"^azure/packages/test/",
-				"^packages/service-clients/end-to-end-tests/",
-				"^packages/test/test-service-load/",
-				"^packages/test/test-end-to-end-tests/",
-
-				// JS packages, which do not use api-extractor
-				"^common/build/",
-
-				// PropertyDDS packages, which are not production
-				"^experimental/PropertyDDS/",
-
-				// Tools packages that are not library packages
-				"^azure/packages/azure-local-service/",
-				"^packages/tools/fetch-tool/",
-				"^tools/test-tools/",
-
-				// TODO: add api-extractor infra and remove these overrides
-				"^build-tools/packages/",
-				"^tools/bundle-size-tools/",
-				"^server/historian/",
-				"^server/gitrest/",
-				"^server/routerlicious/",
-				"^examples/data-objects/table-document/",
-				"^experimental/framework/data-objects/",
-				"^tools/telemetry-generator/",
-				"^packages/tools/webpack-fluid-loader/",
+			"npm-package-license": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+			],
+			"npm-private-packages": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+			],
+			"pnpm-npm-package-json-preinstall": [
+				// test packages
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 		},
 		packageNames: {
@@ -464,7 +511,6 @@ module.exports = {
 				["nyc", "nyc"],
 				["oclif", "oclif"],
 				["prettier", "prettier"],
-				["renamer", "renamer"],
 				["rimraf", "rimraf"],
 				["tinylicious", "tinylicious"],
 				["ts2esm", "ts2esm"],
@@ -508,17 +554,8 @@ module.exports = {
 				// 	name: "api",
 				// 	body: "fluid-build . --task api",
 				// },
-				{
-					name: "build:docs",
-					body: "api-extractor run --local",
-				},
-				{
-					name: "ci:build:docs",
-					body: "api-extractor run",
-				},
 			],
-			// All of our public packages should be using api-extractor
-			requiredDevDependencies: ["@microsoft/api-extractor"],
+			requiredDevDependencies: [],
 		},
 	},
 
@@ -534,6 +571,18 @@ module.exports = {
 		},
 	},
 
+	// `flub bump` config. These settings influence `flub bump` behavior for a release group. These settings can be
+	// overridden usig explicit CLI flags like `--interdependencyRange`.
+	bump: {
+		defaultInterdependencyRange: {
+			"client": "workspace:~",
+			"build-tools": "workspace:~",
+			"server": "workspace:~",
+			"gitrest": "^",
+			"historian": "^",
+		},
+	},
+
 	// This defines the branch release types for type tests. It applies only to the client release group. Settings for
 	// other release groups is in their root fluid-build config.
 	branchReleaseTypes: {
@@ -546,10 +595,18 @@ module.exports = {
 	releaseNotes: {
 		sections: {
 			feature: { heading: "✨ New Features" },
-			tree: { heading: "🌳 SharedTree DDS changes" },
+			tree: { heading: "🌳 SharedTree DDS Changes" },
 			fix: { heading: "🐛 Bug Fixes" },
 			deprecation: { heading: "⚠️ Deprecations" },
+			legacy: { heading: "Legacy API Changes" },
 			other: { heading: "Other Changes" },
+		},
+	},
+
+	// This setting influence `flub release report` behavior. This defines the legacy compat range for release group or independent packages.
+	releaseReport: {
+		legacyCompatInterval: {
+			"client": 10,
 		},
 	},
 };

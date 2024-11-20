@@ -21,6 +21,7 @@ import {
 	type NodeRangeQueryFunc,
 } from "./moveEffectTable.js";
 import {
+	type Attach,
 	type CellMark,
 	type Changeset,
 	type Detach,
@@ -211,13 +212,16 @@ function composeMarksIgnoreChild(
 			const baseAttachAndDetach = asAttachAndDetach(baseMark);
 			const newOutputId = getOutputCellId(newAttachAndDetach);
 
+			const originalAttach = { ...baseAttachAndDetach.attach };
+			const finalDetach = { ...newAttachAndDetach.detach };
+
+			handleMovePivot(baseMark.count, originalAttach, finalDetach);
+
 			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
 				return { count: baseAttachAndDetach.count, cellId: baseAttachAndDetach.cellId };
 			}
 
 			// `newMark`'s attach portion cancels with `baseMark`'s detach portion.
-			const originalAttach = { ...baseAttachAndDetach.attach };
-			const finalDetach = { ...newAttachAndDetach.detach };
 			const detachRevision = finalDetach.revision;
 			if (detachRevision !== undefined) {
 				finalDetach.revision = detachRevision;
@@ -266,12 +270,7 @@ function composeMarksIgnoreChild(
 		const attach = extractMarkEffect(baseMark);
 		const detach = extractMarkEffect(newMark);
 
-		if (isMoveIn(attach) && isMoveOut(detach)) {
-			// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
-			// so we remove it as a normalization.
-			delete attach.finalEndpoint;
-			delete detach.finalEndpoint;
-		}
+		handleMovePivot(baseMark.count, attach, detach);
 
 		if (areEqualCellIds(getOutputCellId(newMark), baseMark.cellId)) {
 			// The output and input cell IDs are the same, so this mark has no effect.
@@ -281,6 +280,23 @@ function composeMarksIgnoreChild(
 	} else {
 		const length = baseMark.count;
 		return createNoopMark(length, undefined);
+	}
+}
+
+/**
+ * Checks if `baseAttach` and `newDetach` are both moves, and if so updates their move endpoints as appropriate,
+ * and removes their `finalEndpoint` endpoint fields. Note that can mutate `baseAttach` and `newDetach`.
+ * If the effects are not both moves this function does nothing.
+ * @param count - The number of cells targeted
+ * @param baseAttach - The base attach effect at this location
+ * @param newDetach - The new detach effect at this location
+ */
+function handleMovePivot(count: number, baseAttach: Attach, newDetach: Detach): void {
+	if (isMoveIn(baseAttach) && isMoveOut(newDetach)) {
+		// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
+		// so we remove it as a normalization.
+		delete baseAttach.finalEndpoint;
+		delete newDetach.finalEndpoint;
 	}
 }
 
@@ -424,7 +440,7 @@ export class ComposeQueue {
 		}
 	}
 
-	private dequeueBase(length: number = Infinity): ComposeMarks {
+	private dequeueBase(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const baseMark = this.baseMarks.dequeueUpTo(length);
 		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
 		if (movedChanges !== undefined) {
@@ -436,7 +452,7 @@ export class ComposeQueue {
 		return { baseMark, newMark };
 	}
 
-	private dequeueNew(length: number = Infinity): ComposeMarks {
+	private dequeueNew(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const newMark = this.newMarks.dequeueUpTo(length);
 		const baseMark = createNoopMark(newMark.count, undefined, getInputCellId(newMark));
 

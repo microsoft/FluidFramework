@@ -533,7 +533,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.indexOfField =
 			fieldInfo === undefined
 				? fieldMap.size
-				: fieldInfo.indexOfParentField ?? fail("children should have parents");
+				: (fieldInfo.indexOfParentField ?? fail("children should have parents"));
 		this.fieldKey = key;
 		this.mode = CursorLocationType.Fields;
 	}

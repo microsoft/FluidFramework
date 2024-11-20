@@ -6,7 +6,7 @@
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
+} from "@fluidframework/presence/internal/core-interfaces";
 
 /**
  * Collection of value types that are not intended to be used/imported
@@ -108,13 +108,13 @@ export namespace InternalTypes {
 		TKey extends string,
 		TValue extends ValueDirectoryOrState<any>,
 		TManager,
-	> = (
+	> = { instanceBase: new (...args: any[]) => any } & ((
 		key: TKey,
 		datastoreHandle: StateDatastoreHandle<TKey, TValue>,
 	) => {
-		value?: TValue;
+		initialData?: { value: TValue; allowableUpdateLatencyMs: number | undefined };
 		manager: StateValue<TManager>;
-	};
+	});
 
 	/**
 	 * @system

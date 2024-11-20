@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type AsyncGenerator,
@@ -21,12 +21,9 @@ import type {
 	FieldKey,
 	FieldUpPath,
 	UpPath,
+	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
-import {
-	type DownPath,
-	toDownPath,
-	treeSchemaFromStoredSchema,
-} from "../../../feature-libraries/index.js";
+import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
 import {
 	Tree,
 	type ISharedTree,
@@ -65,13 +62,12 @@ import {
 } from "./operationTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-
-// eslint-disable-next-line import/no-internal-modules
-import { getOrCreateInnerNode } from "../../../simple-tree/proxyBinding.js";
+import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNode,
+	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
@@ -151,39 +147,40 @@ export function viewFromState(
 		}) as unknown as FuzzView);
 	return view;
 }
-function filterFuzzNodeSchemas<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>(
-	nodeSchemas: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
+function filterFuzzNodeSchemas(
+	nodeSchemas: Iterable<TreeNodeSchemaIdentifier>,
 	prefix: string,
 	omitInitialNodeSchemas: string[],
-): FlexTreeNodeSchema[] {
-	const values: FlexTreeNodeSchema[] = [];
+): TreeNodeSchemaIdentifier[] {
+	const values: TreeNodeSchemaIdentifier[] = [];
 
-	nodeSchemas.forEach((value, key) => {
+	for (const key of nodeSchemas) {
 		if (
 			typeof key === "string" &&
 			key.startsWith(prefix) &&
 			!omitInitialNodeSchemas.some((InitialNodeSchema) => key.includes(InitialNodeSchema))
 		) {
-			values.push(value);
+			values.push(key);
 		}
-	});
+	}
 
 	return values;
 }
-export function simpleSchemaFromStoredSchema(storedSchema: TreeStoredSchemaRepository) {
+export function simpleSchemaFromStoredSchema(
+	storedSchema: TreeStoredSchemaRepository,
+): typeof fuzzFieldSchema {
 	const schemaFactory = new SchemaFactory("treeFuzz");
-	const treeSchema = treeSchemaFromStoredSchema(storedSchema);
-	const nodeSchemas = filterFuzzNodeSchemas(treeSchema.nodeSchema, "treeFuzz", [
+	const nodeSchemas = filterFuzzNodeSchemas(storedSchema.nodeSchema.keys(), "treeFuzz", [
 		"treeFuzz.FuzzNumberNode",
 		"treeFuzz.FuzzStringNode",
 		"treeFuzz.node",
 		"treeFuzz.FuzzHandleNode",
 		"treeFuzz.arrayChildren",
 	]);
-	const fuzzNodeSchemas = [];
+	const fuzzNodeSchemas: TreeNodeSchema[] = [];
 	for (const nodeSchema of nodeSchemas) {
 		class GUIDNodeSchema extends schemaFactory.object(
-			nodeSchema.name.substring("treeFuzz.".length),
+			nodeSchema.substring("treeFuzz.".length),
 			{
 				value: schemaFactory.number,
 			},
