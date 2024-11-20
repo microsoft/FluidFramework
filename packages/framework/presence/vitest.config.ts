@@ -18,7 +18,7 @@ export default defineConfig({
 			all: true,
 			include: ["lib/**/*.*ts", "lib/**/*.*js"],
 			reporter: ["cobertura", "html", "text"],
-			reportsDirectory: "./nyc/report",
+			reportsDirectory: "./nyc/report/vitest",
 		},
 		snapshotFormat: {
 			// Disable sorting -- this setting doesn't work. It has no effect, despite the documentation indicates it does.
