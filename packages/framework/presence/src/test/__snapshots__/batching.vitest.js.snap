@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Presence > LatestValueManager > batching > batches signals from multiple workspaces > submitted signal 1`] = `
+exports[`Presence > batching > LatestValueManager > batches signals from multiple workspaces > submitted signal 1`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -43,7 +43,7 @@ exports[`Presence > LatestValueManager > batching > batches signals from multipl
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > batches signals sent within a specified allowableUpdateLatency > submitted signal 1`] = `
+exports[`Presence > batching > LatestValueManager > batches signals sent within a specified allowableUpdateLatency > submitted signal 1`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -75,7 +75,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > batches signals sent within a specified allowableUpdateLatency > submitted signal 2`] = `
+exports[`Presence > batching > LatestValueManager > batches signals sent within a specified allowableUpdateLatency > submitted signal 2`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -107,7 +107,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > batches signals sent within default allowableUpdateLatency > submitted signal 1`] = `
+exports[`Presence > batching > LatestValueManager > batches signals sent within default allowableUpdateLatency > submitted signal 1`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -139,11 +139,11 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > batches signals sent within default allowableUpdateLatency > submitted signal 2`] = `
+exports[`Presence > batching > LatestValueManager > batches signals sent within default allowableUpdateLatency > submitted signal 2`] = `
 "[
   "Pres:DatastoreUpdate",
   {
-    "sendTimestamp": 1160,
+    "sendTimestamp": 1150,
     "avgLatency": 10,
     "data": {
       "system:presence": {
@@ -159,7 +159,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
         "count": {
           "sessionId-2": {
             "rev": 6,
-            "timestamp": 1150,
+            "timestamp": 1140,
             "value": {
               "num": 90
             }
@@ -171,7 +171,7 @@ exports[`Presence > LatestValueManager > batching > batches signals sent within 
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > batches signals with different allowed latencies > submitted signal 1`] = `
+exports[`Presence > batching > LatestValueManager > batches signals with different allowed latencies > submitted signal 1`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -212,90 +212,7 @@ exports[`Presence > LatestValueManager > batching > batches signals with differe
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > notification signals cause queued messages to be sent immediately > submitted signal 1`] = `
-"[
-  "Pres:DatastoreUpdate",
-  {
-    "sendTimestamp": 1050,
-    "avgLatency": 10,
-    "data": {
-      "system:presence": {
-        "clientToSessionId": {
-          "client2": {
-            "rev": 0,
-            "timestamp": 1000,
-            "value": "sessionId-2"
-          }
-        }
-      },
-      "s:name:testStateWorkspace": {
-        "count": {
-          "sessionId-2": {
-            "rev": 1,
-            "timestamp": 1020,
-            "value": {
-              "num": 12
-            }
-          }
-        }
-      },
-      "n:name:testNotificationWorkspace": {
-        "testEvents": {
-          "sessionId-2": {
-            "rev": 0,
-            "timestamp": 1050,
-            "value": {
-              "name": "newId",
-              "args": [
-                99
-              ]
-            },
-            "ignoreUnmonitored": true
-          }
-        }
-      }
-    }
-  }
-]"
-`;
-
-exports[`Presence > LatestValueManager > batching > notification signals cause queued messages to be sent immediately > submitted signal 2`] = `
-"[
-  "Pres:DatastoreUpdate",
-  {
-    "sendTimestamp": 1080,
-    "avgLatency": 10,
-    "data": {
-      "system:presence": {
-        "clientToSessionId": {
-          "client2": {
-            "rev": 0,
-            "timestamp": 1000,
-            "value": "sessionId-2"
-          }
-        }
-      },
-      "n:name:testNotificationWorkspace": {
-        "testEvents": {
-          "sessionId-2": {
-            "rev": 0,
-            "timestamp": 1080,
-            "value": {
-              "name": "newId",
-              "args": [
-                111
-              ]
-            },
-            "ignoreUnmonitored": true
-          }
-        }
-      }
-    }
-  }
-]"
-`;
-
-exports[`Presence > LatestValueManager > batching > queued signal is sent immediately with immediate update message > submitted signal 1`] = `
+exports[`Presence > batching > LatestValueManager > queued signal is sent immediately with immediate update message > submitted signal 1`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -336,7 +253,7 @@ exports[`Presence > LatestValueManager > batching > queued signal is sent immedi
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > queued signal is sent immediately with immediate update message > submitted signal 2`] = `
+exports[`Presence > batching > LatestValueManager > queued signal is sent immediately with immediate update message > submitted signal 2`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -377,7 +294,7 @@ exports[`Presence > LatestValueManager > batching > queued signal is sent immedi
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 1`] = `
+exports[`Presence > batching > LatestValueManager > sends signal immediately when allowable latency is 0 > submitted signal 1`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -409,7 +326,7 @@ exports[`Presence > LatestValueManager > batching > sends signal immediately whe
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 2`] = `
+exports[`Presence > batching > LatestValueManager > sends signal immediately when allowable latency is 0 > submitted signal 2`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -441,7 +358,7 @@ exports[`Presence > LatestValueManager > batching > sends signal immediately whe
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > sends signal immediately when allowable latency is 0 > submitted signal 3`] = `
+exports[`Presence > batching > LatestValueManager > sends signal immediately when allowable latency is 0 > submitted signal 3`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -473,7 +390,7 @@ exports[`Presence > LatestValueManager > batching > sends signal immediately whe
 ]"
 `;
 
-exports[`Presence > LatestValueManager > batching > sets timer for default allowableUpdateLatency > submitted signal 1`] = `
+exports[`Presence > batching > LatestValueManager > sets timer for default allowableUpdateLatency > submitted signal 1`] = `
 "[
   "Pres:DatastoreUpdate",
   {
@@ -497,6 +414,89 @@ exports[`Presence > LatestValueManager > batching > sets timer for default allow
             "value": {
               "num": 0
             }
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > batching > NotificationsManager > notification signals cause queued messages to be sent immediately > submitted signal 1`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1060,
+    "avgLatency": 10,
+    "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
+      "s:name:testStateWorkspace": {
+        "count": {
+          "sessionId-2": {
+            "rev": 3,
+            "timestamp": 1040,
+            "value": {
+              "num": 56
+            }
+          }
+        }
+      },
+      "n:name:testNotificationWorkspace": {
+        "testEvents": {
+          "sessionId-2": {
+            "rev": 0,
+            "timestamp": 1060,
+            "value": {
+              "name": "newId",
+              "args": [
+                99
+              ]
+            },
+            "ignoreUnmonitored": true
+          }
+        }
+      }
+    }
+  }
+]"
+`;
+
+exports[`Presence > batching > NotificationsManager > notification signals cause queued messages to be sent immediately > submitted signal 2`] = `
+"[
+  "Pres:DatastoreUpdate",
+  {
+    "sendTimestamp": 1090,
+    "avgLatency": 10,
+    "data": {
+      "system:presence": {
+        "clientToSessionId": {
+          "client2": {
+            "rev": 0,
+            "timestamp": 1000,
+            "value": "sessionId-2"
+          }
+        }
+      },
+      "n:name:testNotificationWorkspace": {
+        "testEvents": {
+          "sessionId-2": {
+            "rev": 0,
+            "timestamp": 1090,
+            "value": {
+              "name": "newId",
+              "args": [
+                111
+              ]
+            },
+            "ignoreUnmonitored": true
           }
         }
       }
