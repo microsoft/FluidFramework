@@ -25,23 +25,24 @@ jobs:
         with:
           submodules: true
 
-      # Step 2: Set up Node.js (Adjust version as needed)
+      # Step 2: Set up Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18.18'
 
+      # Step 3: Install pnpm
       - name: Install pnpm
         run: npm install -g pnpm
 
-      # Step 3: Install Dependencies
-      - name: Install Dependencies
+      # Step 4: Use pnpm for workspace setup and build
+      - name: Install and Build with pnpm
         run: |
           cd docs
-          pnpm i --frozen-lockfile
+          pnpm install --frozen-lockfile
           pnpm run build
 
-      # Step 4: Deploy to Azure Static Web Apps (Preprod)
+      # Step 5: Deploy to Azure Static Web Apps (Preprod)
       - name: Deploy to Azure Static Web Apps (Preprod)
         id: deploy
         uses: Azure/static-web-apps-deploy@v1
@@ -54,7 +55,7 @@ jobs:
           app_artifact_location: ${{ env.APP_ARTIFACT_LOCATION }}
           deployment_environment: "staging"
 
-      # Step 5: Post Deployment Feedback (Optional)
+      # Step 6: Post Deployment Feedback (Optional)
       - name: Post Deployment URL as PR Comment
         if: success()
         uses: actions/github-script@v6
