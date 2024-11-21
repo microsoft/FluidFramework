@@ -18,7 +18,7 @@ permissions:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    name: Build and Deploy to Preprod SWA
+    name: Build and Deploy to Preview Environment
     steps:
       # Step 1: Checkout the repository
       - uses: actions/checkout@v4
@@ -53,11 +53,5 @@ jobs:
           app_location: ${{ env.APP_LOCATION }}
           api_location: ${{ env.API_LOCATION }}
           app_artifact_location: ${{ env.APP_ARTIFACT_LOCATION }}
-          deployment_environment: "staging"
+          deployment_environment: "preview"
           skip_app_build: true
-
-      - name: Set Custom Domain for Preprod
-        run: |
-          az staticwebapp hostname set --name preProdEnvironment \
-            --hostname "fluidframework-staging-pr${{ github.event.pull_request.number }}.azurestaticapps.net" \
-            --token ${{ secrets.AZURE_STATIC_WEB_APPS_PREPROD_API_TOKEN }}
