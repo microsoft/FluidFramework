@@ -126,6 +126,59 @@ stages:
               # Sets variable majorVersion to the major version extracted from $(SetVersion.version)
               flub check latestVersions $(SetVersion.version) client
 
+    - job: check_parameter_values
+      dependsOn: check_branch_version
+      displayName: 'Check Version Deployment Condition'
+      variables:
+        uploadAsLatestRelease: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'] ]
+        majorVersion: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.majorVersion'] ]
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+        - task: Bash@3
+          displayName: "Print Parameter Value"
+          inputs:
+            targetType: inline
+            script: |
+              echo "uploadAsLatestRelease value: $(uploadAsLatestRelease)"
+              echo "majorVersion value: $(majorVersion)"
+
+    - job: check_parameter_values2
+      displayName: 'Check Version Deployment Condition2'
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+        - task: Bash@3
+          displayName: "Print Parameter Value"
+          inputs:
+            targetType: inline
+            script: |
+              echo "uploadAsLatestRelease value: $(SetShouldDeploy.shouldDeploy)"
+              echo "majorVersion value: $(SetShouldDeply.majorVersion)"
+
+
+
+    - job: check_parameter_values3
+      dependsOn: check_branch_version
+      displayName: 'Check Version Deployment Condition3'
+      variables:
+        uploadAsLatestRelease: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'] ]
+        majorVersion: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion'] ]
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+        - task: Bash@3
+          displayName: "Print Parameter Value"
+          inputs:
+            targetType: inline
+            script: |
+              echo "uploadAsLatestRelease value: $(uploadAsLatestRelease)"
+              echo "majorVersion value: $(majorVersion)"
+
+
     - deployment: upload_json
       displayName: 'Combine api-extractor JSON'
       dependsOn: check_branch_version
@@ -133,7 +186,7 @@ stages:
       pool: Large
       variables:
         uploadAsLatestRelease: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'] ]
-        majorVersion: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetVersion.majorVersion'] ]
+        majorVersion: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.majorVersion'] ]
       strategy:
         runOnce:
           deploy:
