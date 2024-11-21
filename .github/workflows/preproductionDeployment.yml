@@ -59,11 +59,11 @@ jobs:
       # Step 6: Post Deployment Feedback (Optional)
       - name: Post Deployment URL as PR Comment
         if: success()
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const url = '${{ steps.deploy.outputs.preview_url }}';
-            github.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
