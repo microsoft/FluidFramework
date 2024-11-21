@@ -206,7 +206,6 @@ export interface ILoaderProps {
 /**
  * Other props which are used to load a container on top of the basic loader props.
  * @alpha
- * @legacy
  */
 export interface IResolveContainerProps extends ILoaderProps {
 	/**
@@ -223,7 +222,6 @@ export interface IResolveContainerProps extends ILoaderProps {
 /**
  * Other props which are used to create a detached container on top of the basic loader props.
  * @alpha
- * @legacy
  */
 export interface ICreateDetachedContainerProps extends ILoaderProps {
 	/**
@@ -245,7 +243,6 @@ export interface ICreateDetachedContainerProps extends ILoaderProps {
 /**
  * Other props which are used to rehydrate a detached container on top of the basic loader props.
  * @alpha
- * @legacy
  */
 export interface IRehydrateDetachedContainerProps extends ILoaderProps {
 	/**
@@ -269,7 +266,7 @@ export interface IRehydrateDetachedContainerProps extends ILoaderProps {
  * @legacy
  * @alpha
  * @deprecated Deprecated as the {@link @fluidframework/container-loader#Loader} class is deprecated. Use the standalone apis instead to load or create and load containers namely
- * {@link @fluidframework/container-loader#rehydrateDetachedContainer}, {@link @fluidframework/container-loader#createDetachedContainer} and {@link @fluidframework/container-loader#resolveContainer}.
+ * rehydrateDetachedContainer, createDetachedContainer and resolveContainer in the fluidframework/container-loader package.
  */
 export interface ILoaderServices {
 	/**
@@ -346,7 +343,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
  * @legacy
  * @alpha
  * @deprecated Use the standalone apis instead to load or create and load containers namely
- * {@link @fluidframework/container-loader#rehydrateDetachedContainer}, {@link @fluidframework/container-loader#createDetachedContainer} and {@link @fluidframework/container-loader#resolveContainer}.
+ * rehydrateDetachedContainer, createDetachedContainer and resolveContainer in the fluidframework/container-loader package.
  */
 // eslint-disable-next-line import/no-deprecated
 export class Loader implements IHostLoader {
@@ -498,7 +495,6 @@ export class Loader implements IHostLoader {
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#ILoader.resolve}
- * @legacy
  * @alpha
  */
 export async function resolveContainer(
@@ -515,7 +511,6 @@ export async function resolveContainer(
  * Creates a new container using the specified code details but in an unattached state. While unattached, all
  * updates will only be local until the user explicitly attaches the container to a service provider.
  * @param createDetachedContainerProps - Services and properties necessary for creating detached container.
- * @legacy
  * @alpha
  */
 export async function createDetachedContainer(
@@ -532,7 +527,6 @@ export async function createDetachedContainer(
  * Creates a new container using the specified snapshot but in an unattached state. While unattached, all
  * updates will only be local until the user explicitly attaches the container to a service provider.
  * @param rehydrateDetachedContainerProps - Services and properties necessary for rehydrating detached container from a previously serialized container's state.
- * @legacy
  * @alpha
  */
 export async function rehydrateDetachedContainer(

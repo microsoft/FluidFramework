@@ -12,9 +12,6 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
-// @alpha
-export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
-
 // @alpha (undocumented)
 export interface IBaseProtocolHandler {
     // (undocumented)
@@ -36,13 +33,6 @@ export interface IBaseProtocolHandler {
 // @alpha @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
-}
-
-// @alpha
-export interface ICreateDetachedContainerProps extends ILoaderProps {
-    readonly canReconnect?: boolean;
-    readonly clientDetailsOverride?: IClientDetails;
-    readonly codeDetails: IFluidCodeDetails;
 }
 
 // @alpha @deprecated
@@ -116,19 +106,6 @@ export interface IQuorumSnapshot {
     values: QuorumProposalsSnapshot["values"];
 }
 
-// @alpha
-export interface IRehydrateDetachedContainerProps extends ILoaderProps {
-    readonly canReconnect?: boolean;
-    readonly clientDetailsOverride?: IClientDetails;
-    readonly serializedState: string;
-}
-
-// @alpha
-export interface IResolveContainerProps extends ILoaderProps {
-    readonly pendingLocalState?: string;
-    readonly request: IRequest;
-}
-
 // @alpha (undocumented)
 export interface IScribeProtocolState {
     // (undocumented)
@@ -173,12 +150,6 @@ export type QuorumProposalsSnapshot = {
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];
 };
-
-// @alpha
-export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps): Promise<IContainer>;
-
-// @alpha
-export function resolveContainer(loaderResolveContainerProps: IResolveContainerProps): Promise<IContainer>;
 
 // @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;

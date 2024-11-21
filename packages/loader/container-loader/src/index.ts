@@ -7,18 +7,18 @@ export { ConnectionState } from "./connectionState.js";
 export { IContainerExperimental, waitContainerToCatchUp } from "./container.js";
 export {
 	createDetachedContainer,
-	ICodeDetailsLoader,
-	IDetachedBlobStorage,
-	IFluidModuleWithDetails,
-	ICreateDetachedContainerProps,
-	ILoaderOptions,
-	ILoaderProps,
-	IRehydrateDetachedContainerProps,
-	IResolveContainerProps,
-	ILoaderServices,
-	Loader,
 	rehydrateDetachedContainer,
 	resolveContainer,
+	ICodeDetailsLoader,
+	ICreateDetachedContainerProps,
+	IDetachedBlobStorage,
+	IFluidModuleWithDetails,
+	ILoaderOptions,
+	ILoaderProps,
+	ILoaderServices,
+	IRehydrateDetachedContainerProps,
+	IResolveContainerProps,
+	Loader,
 } from "./loader.js";
 export { loadContainerPaused } from "./loadPaused.js";
 export {
