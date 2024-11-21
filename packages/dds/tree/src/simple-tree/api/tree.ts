@@ -6,7 +6,11 @@
 import type { IFluidLoadable, IDisposable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { CommitMetadata, RevertibleFactory } from "../../core/index.js";
+import type {
+	CommitMetadata,
+	RevertibleAlphaFactory,
+	RevertibleFactory,
+} from "../../core/index.js";
 import type { Listenable } from "../../events/index.js";
 
 import {
@@ -629,7 +633,7 @@ export interface TreeBranchEvents {
 	 * @param getRevertible - a function that allows users to get a revertible for the change. If not provided,
 	 * this change is not revertible.
 	 */
-	changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+	changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
 
 	/**
 	 * Fired when:
@@ -644,7 +648,7 @@ export interface TreeBranchEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
-	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+	commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 /**
