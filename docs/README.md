@@ -189,6 +189,23 @@ E.g., <https://storage.fluidframework.com/static/images/website/brainstorm-examp
 Images may only be uploaded by Microsoft Fluid team members.
 If you do not have the appropriate permissions, but would like to contribute to our documentation, please reach out to us [here](https://github.com/microsoft/FluidFramework/issues/new/choose).
 
+##### YouTube Videos
+
+To meet our privacy requirements, it is important that we avoid embedding content that will collect cookies.
+To ensure this, please never embed YouTube videos using their standard embed format.
+Instead, be sure to leverage `https://www.youtube-nocookie.com/`.
+
+To make this easy, we have a `YoutubeVideo` component under `@site/src/components/youtubeVideo` that can be used to embed a specified video ID using the correct settings.
+Example:
+
+```mdx
+import { YoutubeVideo } from "@site/src/components/youtubeVideo";
+
+...
+
+<YoutubeVideo videoId="foo" className="my-styling" />
+```
+
 ## Scripts
 
 The following npm scripts are supported in this directory:
