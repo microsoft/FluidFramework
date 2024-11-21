@@ -9,9 +9,4 @@ const packageDir = `${__dirname}/../..`;
 const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common");
 const config = getFluidTestMochaConfig(packageDir);
 
-const args = process.argv.slice(2);
-
-const driverIndex = args.indexOf("--driver");
-const endpointIndex = args.indexOf("--r11sEndpointName");
-
 module.exports = config;
