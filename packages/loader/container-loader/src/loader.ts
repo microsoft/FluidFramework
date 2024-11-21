@@ -216,7 +216,7 @@ export interface ILoadExistingContainerProps extends ILoaderProps {
 	/**
 	 * Pending local state to be applied to the container.
 	 */
-	readonly pendingLocalState?: string;
+	readonly pendingLocalState?: string | undefined;
 }
 
 /**
@@ -232,12 +232,12 @@ export interface ICreateDetachedContainerProps extends ILoaderProps {
 	/**
 	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
 	 */
-	readonly canReconnect?: boolean;
+	readonly canReconnect?: boolean | undefined;
 
 	/**
 	 * Client details provided in the override will be merged over the default client.
 	 */
-	readonly clientDetailsOverride?: IClientDetails;
+	readonly clientDetailsOverride?: IClientDetails | undefined;
 }
 
 /**
@@ -253,12 +253,12 @@ export interface IRehydrateDetachedContainerProps extends ILoaderProps {
 	/**
 	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
 	 */
-	readonly canReconnect?: boolean;
+	readonly canReconnect?: boolean | undefined;
 
 	/**
 	 * Client details provided in the override will be merged over the default client.
 	 */
-	readonly clientDetailsOverride?: IClientDetails;
+	readonly clientDetailsOverride?: IClientDetails | undefined;
 }
 
 /**
