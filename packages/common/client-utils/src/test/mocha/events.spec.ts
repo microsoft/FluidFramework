@@ -252,6 +252,33 @@ describe("CustomEventEmitter", () => {
 		emitter.emit("open");
 		assert.deepEqual(log, ["A1", "B", "A2"]);
 	});
+
+	it("errors on multiple registrations of the same listener", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count = 0;
+		const listener = (): number => (count += 1);
+		emitter.on("open", listener);
+		assert.throws(
+			() => emitter.on("open", listener),
+			(e: Error) => validateAssertionError(e, /register.*twice.*open/),
+		);
+		// If error is caught, the listener should still fire once for the first registration
+		emitter.emit("open");
+		assert.strictEqual(count, 1);
+	});
+
+	it("includes symbol description in the error message on multiple registrations of the same listener", () => {
+		// This test ensures that symbol types are registered, error on double registration, and include the description of the symbol in the error message.
+		const eventSymbol = Symbol("TestEvent");
+		const emitter = createEmitter<{ [eventSymbol]: () => void }>();
+		const listener = (): void => {};
+		emitter.on(eventSymbol, listener);
+		emitter.emit(eventSymbol);
+		assert.throws(
+			() => emitter.on(eventSymbol, listener),
+			(e: Error) => validateAssertionError(e, /register.*twice.*TestEvent/),
+		);
+	});
 });
 
 /**
@@ -328,4 +355,32 @@ export class MyExposingClass {
 	public triggerLoad(): void {
 		this.load();
 	}
+}
+
+/**
+ * Validates that an error thrown by assert() function has the expected message.
+ *
+ * @param error - The error object thrown by `assert()` function.
+ * @param expectedErrorMessage - The message that the error object should match.
+ * @returns `true` if the message in the error object that was passed in matches the expected
+ * message. Otherwise it throws an error.
+ *
+ * @remarks
+ * Similar to {@link @fluidframework/test-runtime-utils#validateAssertionError}.
+ * 
+ * @internal
+ */
+function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean {
+	const actualMsg = error.message;
+	if (
+		typeof expectedErrorMsg === "string"
+			? actualMsg !== expectedErrorMsg
+			: !expectedErrorMsg.test(actualMsg)
+	) {
+		// This throws an Error instead of an AssertionError because AssertionError would require a dependency on the
+		// node assert library, which we don't want to do for this library because it's used in the browser.
+		const message = `Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`;
+		throw new Error(message);
+	}
+	return true;
 }
