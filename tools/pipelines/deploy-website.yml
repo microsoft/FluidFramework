@@ -47,10 +47,7 @@ variables:
   - name: repoToTrigger
     value: microsoft/FluidFramework
   - name: shouldRetainGuardianAssets
-    value: ${{ or(
-      eq(parameters.guardianAssetRetentionOverride, 'force'),
-      eq(parameters.guardianAssetRetentionOverride, 'default')
-      )}}
+    value: ${{ eq(parameters.guardianAssetRetentionOverride, 'default') }}
   - name: deploymentToken
     ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
       value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
