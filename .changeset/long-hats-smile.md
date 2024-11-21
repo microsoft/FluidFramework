@@ -13,7 +13,7 @@ These are:
 
 - HasContainerKey
 
-And APIs that were not intended to be extended by consumers have been marked as `@sealed`.
+APIs that were not intended to be extended by consumers have been marked as `@sealed`.
 These are:
 
 - ContainerDevtoolsProps
