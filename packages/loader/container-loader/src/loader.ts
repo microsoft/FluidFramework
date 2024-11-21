@@ -204,7 +204,7 @@ export interface ILoaderProps {
 }
 
 /**
- * Other props which are used to load a container on top of the basic loader props.
+ * Props used to resolve and load a container.
  * @alpha
  */
 export interface IResolveContainerProps extends ILoaderProps {
