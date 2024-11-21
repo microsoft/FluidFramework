@@ -58,6 +58,6 @@ jobs:
 
       - name: Set Custom Domain for Preprod
         run: |
-          az staticwebapp hostname set --name <your-static-web-app-name> \
+          az staticwebapp hostname set --name preProdEnvironment \
             --hostname "fluidframework-staging-pr${{ github.event.pull_request.number }}.azurestaticapps.net" \
             --token ${{ secrets.AZURE_STATIC_WEB_APPS_PREPROD_API_TOKEN }}
