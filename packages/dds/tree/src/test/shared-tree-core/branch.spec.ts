@@ -529,6 +529,31 @@ describe("Branches", () => {
 		assertDisposed(() => fork.merge(branch));
 	});
 
+	it("can remove commits", () => {
+		const branch = create();
+		const originalHead = branch.getHead();
+		const tag1 = change(branch);
+		const tag2 = change(branch);
+		assertHistory(branch, tag1, tag2);
+		branch.removeAfter(originalHead);
+		assert.equal(branch.getHead(), originalHead);
+	});
+
+	it("emit correct change events after a remove", () => {
+		let removeEventCount = 0;
+		const branch = create(({ type }) => {
+			if (type === "remove") {
+				removeEventCount += 1;
+			}
+		});
+		const originalHead = branch.getHead();
+		change(branch);
+		change(branch);
+		assert.equal(removeEventCount, 0);
+		branch.removeAfter(originalHead);
+		assert.equal(removeEventCount, 2);
+	});
+
 	it("can squash commits", () => {
 		const branch = create();
 		const originalHead = branch.getHead();
@@ -540,24 +565,17 @@ describe("Branches", () => {
 	});
 
 	it("emit correct change events during and after squashing", () => {
-		// Create a branch and count the change events emitted
-		let changeEventCount = 0;
 		let replaceEventCount = 0;
 		const branch = create(({ type }) => {
-			if (type === "append") {
-				changeEventCount += 1;
-			} else if (type === "replace") {
+			if (type === "replace") {
 				replaceEventCount += 1;
 			}
 		});
 		const originalHead = branch.getHead();
 		change(branch);
-		assert.equal(changeEventCount, 2);
 		change(branch);
-		assert.equal(changeEventCount, 4);
 		assert.equal(replaceEventCount, 0);
 		branch.squashAfter(originalHead);
-		assert.equal(changeEventCount, 4);
 		assert.equal(replaceEventCount, 2);
 	});
 
