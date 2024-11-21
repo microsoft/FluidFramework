@@ -19,7 +19,7 @@ export function Banner(): React.ReactElement {
 		<div className="ffcom-banner">
 			<div className="ffcom-banner-inner">
 				<TitleBox />
-				<YoutubeVideo videoId={videoEmbedId} className="ffcom-video-container"/>
+				<YoutubeVideo videoId={videoEmbedId} className="ffcom-video-container" />
 			</div>
 		</div>
 	);

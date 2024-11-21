@@ -23,7 +23,7 @@ export interface YoutubeVideoProps {
 /**
  * Renders a YouTube video, utilizing `youtube-nocookie.com` to ensure our privacy requirements are being met (i.e., no cookies).
  */
-export function YoutubeVideo({className, videoId}: YoutubeVideoProps): React.Element {
+export function YoutubeVideo({ className, videoId }: YoutubeVideoProps): React.Element {
 	const videoSourceUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
 	return (
 		<div className={className}>
