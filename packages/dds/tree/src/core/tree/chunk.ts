@@ -11,7 +11,7 @@ import {
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
 	rootFieldKey,
-} from "../../core/index.js";
+} from "../index.js";
 import type { ReferenceCounted } from "../../util/index.js";
 
 /**

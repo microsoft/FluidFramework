@@ -27,12 +27,13 @@ import {
 	detachedFieldAsKey,
 	mapCursorField,
 	rootFieldKey,
+	type ChunkedCursor,
+	type TreeChunk,
 } from "../../core/index.js";
 import { createEmitter, type Listenable } from "../../events/index.js";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
-import type { ChunkedCursor, TreeChunk } from "./chunk.js";
 import { type IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 

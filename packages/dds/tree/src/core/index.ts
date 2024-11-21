@@ -98,6 +98,11 @@ export {
 	type DeltaFieldChanges,
 	type ExclusiveMapTree,
 	deepCopyMapTree,
+	type TreeChunk,
+	dummyRoot,
+	cursorChunk,
+	tryGetChunk,
+	type ChunkedCursor,
 } from "./tree/index.js";
 
 export {
