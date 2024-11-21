@@ -318,26 +318,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 			return undefined;
 		}
 
-		// Squash the changes and make the squash commit the new head of this branch
-		const squashedChange = this.changeFamily.rebaser.compose(commits);
-		const revision = this.mintRevisionTag();
-
-		const newHead = mintCommit(startCommit, {
-			revision,
-			change: this.changeFamily.rebaser.changeRevision(squashedChange, revision),
-		});
-
-		const changeEvent = {
-			type: "replace",
-			change: undefined,
-			removedCommits: commits,
-			newCommits: [newHead],
-		} as const;
-
-		this.#events.emit("beforeChange", changeEvent);
-		this.head = newHead;
-		this.#events.emit("afterChange", changeEvent);
-		return [commits, newHead];
+		return [this.squash(startCommit), this.head];
 	}
 
 	/**
@@ -490,6 +471,41 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		this.head = newSourceHead;
 		this.#events.emit("afterChange", changeEvent);
 		return rebaseResult;
+	}
+
+	/**
+	 * Replace a range of commits on this branch with a single commit composed of equivalent changes.
+	 * @param startCommit - All commits after (but not including) this commit, up to and including the branch's head, will be squashed.
+	 * @remarks The commits after startCommit will be removed from this branch, and the squash commit will become the new head of this branch.
+	 * The change event emitted by this operation will have a `change` property that is undefined, since no net change occurred.
+	 */
+	public squash(startCommit: GraphCommit<TChange>): GraphCommit<TChange>[] {
+		if (startCommit === this.head) {
+			return [];
+		}
+
+		const removedCommits: GraphCommit<TChange>[] = [];
+		const ancestor = findAncestor([this.head, removedCommits], (c) => c === startCommit);
+		assert(ancestor === startCommit, "New head must be in the branch's ancestry");
+
+		const squashedChange = this.changeFamily.rebaser.compose(removedCommits);
+		const revision = this.mintRevisionTag();
+		const newHead = mintCommit(startCommit, {
+			revision,
+			change: this.changeFamily.rebaser.changeRevision(squashedChange, revision),
+		});
+
+		const changeEvent = {
+			type: "replace",
+			change: undefined,
+			removedCommits,
+			newCommits: [newHead],
+		} as const;
+
+		this.#events.emit("beforeChange", changeEvent);
+		this.head = newHead;
+		this.#events.emit("afterChange", changeEvent);
+		return removedCommits;
 	}
 
 	/**

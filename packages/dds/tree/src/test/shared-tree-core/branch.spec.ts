@@ -529,6 +529,61 @@ describe("Branches", () => {
 		assertDisposed(() => fork.merge(branch));
 	});
 
+	it("can squash commits", () => {
+		const branch = create();
+		const originalHead = branch.getHead();
+		const tag1 = change(branch);
+		const tag2 = change(branch);
+		assertHistory(branch, tag1, tag2);
+		branch.squash(originalHead);
+		assert.equal(branch.getHead().parent?.revision, originalHead.revision);
+	});
+
+	it("emit correct change events during and after squashing", () => {
+		// Create a branch and count the change events emitted
+		let changeEventCount = 0;
+		let replaceEventCount = 0;
+		const branch = create(({ type }) => {
+			if (type === "append") {
+				changeEventCount += 1;
+			} else if (type === "replace") {
+				replaceEventCount += 1;
+			}
+		});
+		const originalHead = branch.getHead();
+		change(branch);
+		assert.equal(changeEventCount, 2);
+		change(branch);
+		assert.equal(changeEventCount, 4);
+		assert.equal(replaceEventCount, 0);
+		branch.squash(originalHead);
+		assert.equal(changeEventCount, 4);
+		assert.equal(replaceEventCount, 2);
+	});
+
+	it("do not emit a change event after squashing no commits", () => {
+		let changeEventCount = 0;
+		const branch = create(() => {
+			changeEventCount += 1;
+		});
+		branch.squash(branch.getHead());
+		assert.equal(changeEventCount, 0);
+	});
+
+	it("emit a change event after squashing only a single commit", () => {
+		// TODO: It might be nice to _not_ emit an event in this case (and not actually replace the head)
+		// as an optimization, but parts of the system rely on the current behavior for now.
+		let changeEventCount = 0;
+		const branch = create(() => {
+			changeEventCount += 1;
+		});
+		const originalHead = branch.getHead();
+		change(branch);
+		changeEventCount = 0;
+		branch.squash(originalHead);
+		assert.equal(changeEventCount, 2);
+	});
+
 	it("correctly report whether they are in the middle of a transaction", () => {
 		// Create a branch and test `isTransacting()` during two transactions, one nested within the other
 		const branch = create();
