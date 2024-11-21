@@ -255,7 +255,6 @@ describe("CustomEventEmitter", () => {
 });
 
 /**
- *
  * The below classes correspond to the examples given in {@link CustomEventEmitter} to ensure that they compile.
  *
  * Provides an API for subscribing to and listening to events.
@@ -265,13 +264,16 @@ describe("CustomEventEmitter", () => {
  * Note: These are for testing only and should not be re-exported.
  */
 
+/**
+ * A set of events with their handlers.
+ */
 interface MyEvents {
 	loaded: () => void;
 	computed: () => number;
 }
 
 /**
- * @example Extending this class
+ * Example of extending {@link CustomEventEmitter}.
  */
 export class MyInheritanceClass extends CustomEventEmitter<MyEvents> {
 	private load(): number[] {
@@ -286,7 +288,7 @@ export class MyInheritanceClass extends CustomEventEmitter<MyEvents> {
 }
 
 /**
- * @example Composing over this class
+ * Example of composing over {@link CustomEventEmitter}.
  */
 export class MyCompositionClass implements Listenable<MyEvents> {
 	private readonly events = createEmitter<MyEvents>();
@@ -311,7 +313,7 @@ export class MyCompositionClass implements Listenable<MyEvents> {
 }
 
 /**
- * @example Exposing this class as a property
+ * Example of exposing {@link CustomEventEmitter} as a property
  */
 export class MyExposingClass {
 	private readonly _events = createEmitter<MyEvents>();

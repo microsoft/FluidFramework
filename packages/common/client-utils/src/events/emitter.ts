@@ -13,7 +13,7 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 
 /**
- * Subset of Map interface.
+ * Subset of Map interface including only the `get` and `set` methods.
  * @internal
  */
 interface MapGetSet<K, V> {
@@ -41,7 +41,7 @@ function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) 
 /**
  * Provides an API for subscribing to and listening to events.
  *
- * @remarks Classes wishing to emit events may either extend this class, compose over it, or expose it as a property of type {@link @fluidframework/core-interface#Listenable}.
+ * @remarks Classes wishing to emit events may either extend this class, compose over it, or expose it as a property of type {@link @fluidframework/core-interfaces#Listenable}.
  *
  * @example Extending this class
  *
