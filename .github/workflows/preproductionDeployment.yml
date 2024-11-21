@@ -62,7 +62,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const url = '${{ steps.deploy.outputs.preview_url }}';
+            const url = '${{ steps.deploy.outputs.deployment_url }}';
             console.log(url);
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
