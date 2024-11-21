@@ -318,7 +318,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 			return undefined;
 		}
 
-		return [this.squashAfter(startCommit), this.head];
+		const squashedCommits = this.squashAfter(startCommit);
+		return [squashedCommits, this.head];
 	}
 
 	/**
@@ -445,7 +446,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 	/**
 	 * Remove a range of commits from this branch.
-	 * @param commit - All commits after (but not including) this commit, up to and including the branch's head, will be removed.
+	 * @param commit - All commits after (but not including) this commit will be removed.
 	 * @returns The net change to this branch and the commits that were removed from this branch.
 	 */
 	public removeAfter(
@@ -489,9 +490,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 	/**
 	 * Replace a range of commits on this branch with a single commit composed of equivalent changes.
-	 * @param commit - All commits after (but not including) this commit, up to and including the branch's head, will be squashed.
+	 * @param commit - All commits after (but not including) this commit will be squashed.
 	 * @returns The commits that were squashed and removed from this branch.
-	 * @remarks The commits after startCommit will be removed from this branch, and the squash commit will become the new head of this branch.
+	 * @remarks The commits after `commit` will be removed from this branch, and the squash commit will become the new head of this branch.
 	 * The change event emitted by this operation will have a `change` property that is undefined, since no net change occurred.
 	 */
 	public squashAfter(commit: GraphCommit<TChange>): GraphCommit<TChange>[] {
