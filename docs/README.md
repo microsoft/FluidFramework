@@ -154,6 +154,8 @@ E.g.,
 # Foo \{#bar}
 ```
 
+See the following Docusaurus issue for more context: <https://github.com/facebook/docusaurus/issues/9155>.
+
 ### Mermaid
 
 Docusaurus has built-in support for [mermaid](https://mermaid.js.org/) diagrams.
