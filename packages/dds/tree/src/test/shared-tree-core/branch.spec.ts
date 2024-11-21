@@ -535,7 +535,7 @@ describe("Branches", () => {
 		const tag1 = change(branch);
 		const tag2 = change(branch);
 		assertHistory(branch, tag1, tag2);
-		branch.squash(originalHead);
+		branch.squashAfter(originalHead);
 		assert.equal(branch.getHead().parent?.revision, originalHead.revision);
 	});
 
@@ -556,7 +556,7 @@ describe("Branches", () => {
 		change(branch);
 		assert.equal(changeEventCount, 4);
 		assert.equal(replaceEventCount, 0);
-		branch.squash(originalHead);
+		branch.squashAfter(originalHead);
 		assert.equal(changeEventCount, 4);
 		assert.equal(replaceEventCount, 2);
 	});
@@ -566,7 +566,7 @@ describe("Branches", () => {
 		const branch = create(() => {
 			changeEventCount += 1;
 		});
-		branch.squash(branch.getHead());
+		branch.squashAfter(branch.getHead());
 		assert.equal(changeEventCount, 0);
 	});
 
@@ -580,7 +580,7 @@ describe("Branches", () => {
 		const originalHead = branch.getHead();
 		change(branch);
 		changeEventCount = 0;
-		branch.squash(originalHead);
+		branch.squashAfter(originalHead);
 		assert.equal(changeEventCount, 2);
 	});
 

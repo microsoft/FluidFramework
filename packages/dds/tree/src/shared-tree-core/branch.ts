@@ -318,7 +318,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 			return undefined;
 		}
 
-		return [this.squash(startCommit), this.head];
+		return [this.squashAfter(startCommit), this.head];
 	}
 
 	/**
@@ -475,22 +475,23 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 	/**
 	 * Replace a range of commits on this branch with a single commit composed of equivalent changes.
-	 * @param startCommit - All commits after (but not including) this commit, up to and including the branch's head, will be squashed.
+	 * @param commit - All commits after (but not including) this commit, up to and including the branch's head, will be squashed.
+	 * @returns The commits that were squashed and removed from this branch.
 	 * @remarks The commits after startCommit will be removed from this branch, and the squash commit will become the new head of this branch.
 	 * The change event emitted by this operation will have a `change` property that is undefined, since no net change occurred.
 	 */
-	public squash(startCommit: GraphCommit<TChange>): GraphCommit<TChange>[] {
-		if (startCommit === this.head) {
+	public squashAfter(commit: GraphCommit<TChange>): GraphCommit<TChange>[] {
+		if (commit === this.head) {
 			return [];
 		}
 
 		const removedCommits: GraphCommit<TChange>[] = [];
-		const ancestor = findAncestor([this.head, removedCommits], (c) => c === startCommit);
-		assert(ancestor === startCommit, "New head must be in the branch's ancestry");
+		const ancestor = findAncestor([this.head, removedCommits], (c) => c === commit);
+		assert(ancestor === commit, "New head must be in the branch's ancestry");
 
 		const squashedChange = this.changeFamily.rebaser.compose(removedCommits);
 		const revision = this.mintRevisionTag();
-		const newHead = mintCommit(startCommit, {
+		const newHead = mintCommit(commit, {
 			revision,
 			change: this.changeFamily.rebaser.changeRevision(squashedChange, revision),
 		});
