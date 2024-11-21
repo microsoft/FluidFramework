@@ -36,7 +36,7 @@ export function createOdspCreateContainerRequest(
 	const createNewRequest: IRequest = {
 		url: `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(
 			filePath,
-		)}${shareLinkRequestParams ? `&${shareLinkRequestParams}` : ""}&containerPackageName=${getContainerPackageName(containerPackageInfo)}`,
+		)}${containerPackageInfo ? `&containerPackageName=${getContainerPackageName(containerPackageInfo)}` : ""}${shareLinkRequestParams ? `&${shareLinkRequestParams}` : ""}`,
 		headers: {
 			[DriverHeader.createNew]: {
 				fileName,
