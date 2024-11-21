@@ -137,6 +137,23 @@ The replacement syntax to use in `.mdx` files would be:
 
 (just like you would do in a JSX context!)
 
+#### Custom Heading IDs
+
+In GitHub-flavored Markdown, you can assign a custom anchor ID to a heading by appending `{#<id>}` to the heading text.
+E.g.,
+
+```markdown
+# Foo {#bar}
+```
+
+Because curly braces are interpreted specially by JSX, this syntax doesn't work as is in `.mdx` documents.
+Instead, you'll need to escape the opening brace to prevent MDX from attempting to process the syntax as JSX.
+E.g.,
+
+```markdown
+# Foo \{#bar}
+```
+
 ### Mermaid
 
 Docusaurus has built-in support for [mermaid](https://mermaid.js.org/) diagrams.
