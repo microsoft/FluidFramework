@@ -4,18 +4,14 @@
  */
 
 export {
+	DataTransformationCallback,
 	IImportExportModel,
 	IMigratableModel,
-	IVersionedModel,
-} from "./migratableModel.js";
-export {
-	IAcceptedMigrationDetails,
-	IMigrationTool,
-	IMigrationToolEvents,
-	MigrationState,
-} from "./migrationTool.js";
-export {
-	DataTransformationCallback,
 	IMigrator,
 	IMigratorEvents,
+	IVersionedModel,
+} from "./interfaces.js";
+export {
+	getModelAndMigrationToolFromContainer,
+	Migrator,
 } from "./migrator.js";

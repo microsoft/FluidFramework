@@ -29,6 +29,8 @@ export {
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
 	type RevertibleFactory,
+	type RevertibleAlphaFactory,
+	type RevertibleAlpha,
 } from "./core/index.js";
 export { type Brand } from "./util/index.js";
 
