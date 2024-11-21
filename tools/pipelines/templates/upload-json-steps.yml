@@ -84,7 +84,7 @@ steps:
       inlineScript: |
         az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --overwrite --verbose
 
-- ${{ if eq(parameters.uploadAsLatestRelease, true) }}:
+- ${{ if eq(parameters.uploadAsLatestRelease, 'true') }}:
   - task: AzureCLI@2
     displayName: 'Upload JSON as latest-v*.tar.gz'
     continueOnError: true
