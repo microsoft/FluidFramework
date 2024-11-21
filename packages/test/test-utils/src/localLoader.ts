@@ -108,7 +108,7 @@ export async function createAndAttachContainerUsingLoaderProps(
 	loaderProps: ILoaderProps,
 	attachRequest: IRequest,
 ): Promise<IContainer> {
-	const props: ICreateDetachedContainerProps = { codeDetails: source, ...loaderProps };
+	const props: ICreateDetachedContainerProps = { ...loaderProps, codeDetails: source };
 	const container = await createDetachedContainer(props);
 	await container.attach(attachRequest);
 

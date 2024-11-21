@@ -104,7 +104,7 @@ describe("Scenario Test", () => {
 			documentServiceFactory,
 		});
 
-		const container = await createDetachedContainer({ codeDetails, ...loaderProps });
+		const container = await createDetachedContainer({ ...loaderProps, codeDetails });
 
 		{
 			// put a bit of data in the detached container so we can validate later
