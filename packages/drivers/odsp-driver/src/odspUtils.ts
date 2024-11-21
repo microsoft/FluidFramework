@@ -569,9 +569,7 @@ const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
  * @param dataStorePath - The relative data store path URL.
  * For requesting a driver URL, this value should always be '/'. If an empty string is passed, then dataStorePath
  * will be extracted from the resolved url if present.
- * @param packageInfoSource - Information of the package connected to the URL
- * @param context - Context for given resolved URl
- * @param appName - Name of the application that of the URL
+ * @param containerPackageName - Name of the package to be included in the URL.
  * @returns The provided base URL appended with odsp-specific locator information
  */
 export function appendNavParam(

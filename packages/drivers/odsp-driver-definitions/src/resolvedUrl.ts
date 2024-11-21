@@ -144,7 +144,13 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 
 	isClpCompliantApp?: boolean;
 
+	/**
+	 * Context for given resolved URl
+	 */
 	context?: string;
 
+	/**
+	 * Name of the application that owns the URl
+	 */
 	appName?: string;
 }
