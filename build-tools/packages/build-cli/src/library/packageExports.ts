@@ -262,7 +262,7 @@ export function getExportPathFromPackage(
 	packageJson: PackageJson,
 	level: ApiLevel,
 	conditions: string[],
-	log: Logger,
+	log?: Logger,
 ): string | undefined {
 	// Package has an export map, so map the requested API level to an entrypoint and check the exports conditions.
 	const entrypoint = level === ApiLevel.public ? "." : `./${level}`;
@@ -281,7 +281,7 @@ export function getExportPathFromPackage(
 		exportsPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
 		// Catch and ignore any exceptions here; we'll retry with the require condition.
-		log.verbose(
+		log?.verbose(
 			`${packageJson.name}: No ${conditions} found for ${entrypoint} using "import" condition.`,
 		);
 	}
@@ -303,7 +303,7 @@ export function getExportPathFromPackage(
 		exportsPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
 		// Catch and ignore any exceptions here; we'll retry with the require condition.
-		log.verbose(
+		log?.verbose(
 			`${packageJson.name}: No ${conditions} found for ${entrypoint} using "require" condition.`,
 		);
 	}

@@ -8,6 +8,7 @@ import { Flags } from "@oclif/core";
 import JSON5 from "json5";
 import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
+import type { TsConfigJson } from "type-fest";
 
 import type { PackageJson } from "@fluidframework/build-tools";
 
@@ -44,7 +45,7 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 			exists: true,
 		}),
 		outDir: Flags.directory({
-			description: "directory that contains a file named `tsconfig.json`",
+			description: "Directory that contains a file named `tsconfig.json`",
 			default: "./src/entrypoints/tsconfig.json",
 			exists: true,
 		}),
@@ -57,27 +58,10 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 		const packageJson = await readPackageJson();
 
 		// Read `rootDir` for tsconfig under `./src/entrypoints` or `outDir`
-		const { rootDir, tsconfigOutDir, emitDeclarationOnly } =
-			await getTsConfigCompilerOptions(outDir);
+		const { rootDir, tsconfigOutDir } = await getTsConfigCompilerOptions(outDir);
 
-		/**
-		 * Example of `mapApiTagToExportPath` for a package where `emitDeclarationOnly` is false and it's an ESM package
-		 * [[beta, `{ relPath: "./lib/entrypoints/beta.js", conditions: [], isTypeOnly: false }`],
-		 * [public, `{ relPath: "./lib/entrypoints/public.js", conditions: [], isTypeOnly: false }`]]
-		 */
-		const mapApiTagToExportPath: Map<ApiTag, ExportData> = mapExportPathToApiTag(
-			packageJson,
-			emitDeclarationOnly,
-			this.logger,
-		);
-
-		/**
-		 * Example of `mapSourceToExportPath` for a package
-		 * [[beta, `{ relPath: "./src/entrypoints/beta.js", conditions: [], isTypeOnly: false }`],
-		 * [public, `{ relPath: "./src/entrypoints/public.js", conditions: [], isTypeOnly: false }`]]
-		 */
 		const mapSourceToExportPath: Map<ApiTag, ExportData> = getOutputConfiguration(
-			mapApiTagToExportPath,
+			packageJson,
 			rootDir,
 			tsconfigOutDir,
 			this.logger,
@@ -98,15 +82,15 @@ function formatPath(outDir: string): string {
 }
 
 /**
- * Retrieves `rootDir`, `outDir` and `emitDeclarationOnly` settings from a `tsconfig.json` file.
+ * Retrieves `rootDir` and `outDir` settings from a `tsconfig.json` file.
  *
  * @param tsconfigPath - Path to the TypeScript config file.
- * @returns An object with `rootDir`, `outDir` and `emitDeclarationOnly` values.
+ * @returns An object with `rootDir`, `outDir` values.
  * @throws If `rootDir` and `outDir` is not defined in the config file.
  */
 async function getTsConfigCompilerOptions(
 	tsconfigPath: string,
-): Promise<{ rootDir: string; tsconfigOutDir: string; emitDeclarationOnly: boolean }> {
+): Promise<{ rootDir: string; tsconfigOutDir: string }> {
 	const formatTsconfigPath = formatPath(tsconfigPath);
 
 	const tsConfigContent = await fs.readFile(formatTsconfigPath, {
@@ -117,60 +101,44 @@ async function getTsConfigCompilerOptions(
 		throw new Error(`tsconfig.json not found in ${formatTsconfigPath}`);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const tsconfig = JSON5.parse(tsConfigContent);
+	const tsconfig: TsConfigJson = JSON5.parse(tsConfigContent);
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const { compilerOptions } = tsconfig;
 
 	if (compilerOptions === undefined) {
-		throw new Error(`No compilerOptions defined in ${formatTsconfigPath}tsconfig.json`);
+		throw new Error(`No compilerOptions defined in ${formatTsconfigPath}`);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const { rootDir, outDir, emitDeclarationOnly } = compilerOptions;
+	const { rootDir, outDir } = compilerOptions;
 
 	if (rootDir === undefined) {
-		throw new Error(`No rootDir defined in ${formatTsconfigPath}tsconfig.json`);
+		throw new Error(`No rootDir defined in ${formatTsconfigPath}`);
 	}
 
 	if (outDir === undefined) {
-		throw new Error(`No outDir defined in ${formatTsconfigPath}tsconfig.json`);
+		throw new Error(`No outDir defined in ${formatTsconfigPath}`);
 	}
 
 	return {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		rootDir: formatPath(rootDir),
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		tsconfigOutDir: formatPath(outDir),
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		emitDeclarationOnly: emitDeclarationOnly ?? false,
 	};
-}
-
-/**
- * Returns a map of source paths to `ApiTag` levels.
- */
-async function mapSourcePathToApiTag(rootDir: string): Promise<Map<string, ApiTag>> {
-	const outFileSuffix = ".ts";
-
-	return new Map([
-		[`${rootDir}${ApiLevel.alpha}${outFileSuffix}`, ApiTag.alpha],
-		[`${rootDir}${ApiLevel.beta}${outFileSuffix}`, ApiTag.beta],
-		[`${rootDir}${ApiLevel.public}${outFileSuffix}`, ApiTag.public],
-		[`${rootDir}${ApiLevel.legacy}${outFileSuffix}`, ApiTag.legacy],
-	]);
 }
 
 /**
  * Resolves a mapping of `ApiTag` levels to their modified export paths.
  */
 function getOutputConfiguration(
-	mapApiTagToExportPath: Map<ApiTag, ExportData>,
+	packageJson: PackageJson,
 	rootDir: string,
 	tsconfigOutDir: string,
-	logger: CommandLogger,
+	logger?: CommandLogger,
 ): Map<ApiTag, ExportData> {
+	const mapApiTagToExportPath: Map<ApiTag, ExportData> = mapExportPathToApiTag(
+		packageJson,
+		logger,
+	);
+
 	const result = new Map<ApiTag, ExportData>();
 	for (const [apiTag, exportData] of mapApiTagToExportPath) {
 		const modifiedExportPath = exportData.relPath
@@ -190,18 +158,19 @@ function getOutputConfiguration(
 	return result;
 }
 
+const defaultExportCondition = "default";
+const typesExportCondition = "types";
+
 /**
  * Read package "exports" to determine which "default"/ "types" paths to return along with `ApiTag`.
  *
  * @param packageJson - json content of package.json
- * @param emitDeclarationOnly - If true, "types" exports are considered.
  * @param logger - optional Logger
  * @returns Map with API tags or levels with export path data
  */
 function mapExportPathToApiTag(
 	packageJson: PackageJson,
-	emitDeclarationOnly: boolean,
-	logger: CommandLogger,
+	logger?: CommandLogger,
 ): Map<ApiTag, ExportData> {
 	const mapKeyToOutput = new Map<ApiTag, ExportData>();
 
@@ -211,10 +180,10 @@ function mapExportPathToApiTag(
 		throw new Error(`${packageJson.name}: No exports map found.`);
 	}
 
-	const condition = emitDeclarationOnly ? "types" : "default";
-
 	for (const [exportPath] of Object.entries(exports)) {
 		const level = exportPath === "." ? ApiLevel.public : exportPath.replace("./", "");
+		const isTypeOnly = false; // fix this
+		const conditions = [defaultExportCondition, typesExportCondition];
 
 		if (!isKnownApiLevel(level)) {
 			throw new Error(`${exportPath} is not a known API tag`);
@@ -224,7 +193,12 @@ function mapExportPathToApiTag(
 			continue;
 		}
 
-		const resolvedExport = getExportPathFromPackage(packageJson, level, [condition], logger);
+		const resolvedExport = getExportPathFromPackage(
+			packageJson,
+			level,
+			conditions,
+			logger,
+		);
 
 		if (resolvedExport === undefined) {
 			throw new Error(`${packageJson.name}: No export map found.`);
@@ -233,7 +207,7 @@ function mapExportPathToApiTag(
 		mapKeyToOutput.set(level, {
 			relPath: resolvedExport,
 			conditions: [],
-			isTypeOnly: emitDeclarationOnly,
+			isTypeOnly,
 		});
 	}
 
@@ -393,4 +367,51 @@ async function generateSourceEntrypoints(
 	}
 
 	await Promise.all(fileSavePromises);
+}
+
+/**
+ * Reads command line argument values that are simple value following option like:
+ * --optionName value
+ *
+ * @param commandLine - command line to extract from
+ * @param argQuery - record of arguments to read (keys) with default values
+ * @returns record of argument values extracted or given default value
+ */
+function readArgValues<TQuery extends Readonly<Record<string, string>>>(
+	commandLine: string,
+	argQuery: string,
+): TQuery {
+	const values: Record<string, string> = {};
+	const args = commandLine.split(" ");
+	for (const [argName, defaultValue] of Object.entries(argQuery)) {
+		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
+		values[argName] =
+			0 < indexOfArgValue && indexOfArgValue < args.length
+				? args[indexOfArgValue]
+				: defaultValue;
+	}
+	return values as TQuery;
+}
+
+export function getSourceGenerateEntrypointsOutput(
+	packageJson: PackageJson,
+	outDir: string,
+	commandLine: string,
+): IterableIterator<ExportData> {
+	// Determine select output from flub generate entrypoints.
+	// Fluid packages use two import levels: internal and public.
+	// internal is built from tsc and public is generated. It is likely exported
+	// as . (root), but what matters is matching command implementation and
+	// output for public. So, match required logic bits of normal command.
+	// If it were possible, it would be better to use the command code
+	// more directly.
+	const args = readArgValues(commandLine, outDir);
+
+	const mapSourceToExportPath: Map<ApiTag, ExportData> = getOutputConfiguration(
+		packageJson,
+		args.rootDir,
+		args.tsconfigOutDir,
+	);
+
+	return mapSourceToExportPath.values();
 }
