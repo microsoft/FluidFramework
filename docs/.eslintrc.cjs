@@ -69,6 +69,8 @@ module.exports = {
 			files: ["docusaurus.config.ts", "playwright.config.ts", "infra/**/*"],
 			rules: {
 				"import/no-internal-modules": "off",
+				"import/no-nodejs-modules": "off",
+				"unicorn/no-process-exit": "off",
 			},
 		},
 	],

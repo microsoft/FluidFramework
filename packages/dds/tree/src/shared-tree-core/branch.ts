@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -25,7 +25,7 @@ import type { Listenable } from "@fluidframework/core-interfaces";
 import { createEmitter } from "@fluid-internal/client-utils";
 
 import { TransactionStack } from "./transactionStack.js";
-import { fail } from "../util/index.js";
+import { fail, getLast, hasSome } from "../util/index.js";
 
 /**
  * Describes a change to a `SharedTreeBranch`. Various operations can mutate the head of the branch;
@@ -47,12 +47,12 @@ export type SharedTreeBranchChange<TChange> =
 			type: "append";
 			kind: CommitKind;
 			change: TaggedChange<TChange>;
-			newCommits: readonly GraphCommit<TChange>[];
+			newCommits: readonly [GraphCommit<TChange>, ...GraphCommit<TChange>[]];
 	  }
 	| {
 			type: "remove";
 			change: TaggedChange<TChange> | undefined;
-			removedCommits: readonly GraphCommit<TChange>[];
+			removedCommits: readonly [GraphCommit<TChange>, ...GraphCommit<TChange>[]];
 	  }
 	| {
 			type: "replace";
@@ -315,7 +315,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		this.editor.exitTransaction();
 
 		this.#events.emit("transactionCommitted", this.transactions.size === 0);
-		if (commits.length === 0) {
+		if (!hasSome(commits)) {
 			return undefined;
 		}
 
@@ -356,7 +356,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		this.editor.exitTransaction();
 
 		this.#events.emit("transactionAborted", this.transactions.size === 0);
-		if (commits.length === 0) {
+		if (!hasSome(commits)) {
 			this.#events.emit("transactionRolledBack", this.transactions.size === 0);
 			return [undefined, []];
 		}
@@ -400,8 +400,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	private popTransaction(): [GraphCommit<TChange>, GraphCommit<TChange>[]] {
 		const { startRevision: startRevisionOriginal } = this.transactions.pop();
 		let startRevision = startRevisionOriginal;
-		while (this.initialTransactionRevToRebasedRev.has(startRevision)) {
-			startRevision = this.initialTransactionRevToRebasedRev.get(startRevision) ?? oob();
+
+		for (
+			let r: RevisionTag | undefined = startRevision;
+			r !== undefined;
+			r = this.initialTransactionRevToRebasedRev.get(startRevision)
+		) {
+			startRevision = r;
 		}
 
 		if (!this.isTransacting()) {
@@ -461,13 +466,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		// The net change to this branch is provided by the `rebaseBranch` API
 		const { newSourceHead, commits } = rebaseResult;
 		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
+		assert(hasSome(targetCommits), "Expected commit(s) for a non no-op rebase");
 
 		const newCommits = targetCommits.concat(sourceCommits);
+
 		if (this.isTransacting()) {
-			const firstCommit = targetCommits[0] ?? oob();
-			const lastCommit = targetCommits[targetCommits.length - 1] ?? oob();
-			const src = firstCommit.parent?.revision;
-			const dst = lastCommit.revision;
+			const src = targetCommits[0].parent?.revision;
+			const dst = getLast(targetCommits).revision;
 			if (src !== undefined && dst !== undefined) {
 				this.initialTransactionRevToRebasedRev.set(src, dst);
 			}
@@ -517,6 +522,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 		// Compute the net change to this branch
 		const sourceCommits = rebaseResult.commits.sourceCommits;
+		assert(hasSome(sourceCommits), "Expected source commits in non no-op merge");
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
 		const taggedChange = makeAnonChange(change);
 		const changeEvent = {

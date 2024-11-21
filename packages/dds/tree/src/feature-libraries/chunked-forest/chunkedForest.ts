@@ -30,7 +30,14 @@ import {
 	mapCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
+import {
+	assertValidRange,
+	brand,
+	fail,
+	getLast,
+	getOrAddEmptyToMap,
+	hasSome,
+} from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
 import type { ChunkedCursor, TreeChunk } from "./chunk.js";
@@ -101,8 +108,8 @@ export class ChunkedForest implements IEditableForest {
 			mutableChunkStack: [] as StackNode[],
 			mutableChunk: this.roots as BasicChunk | undefined,
 			getParent(): StackNode {
-				assert(this.mutableChunkStack.length > 0, 0x532 /* invalid access to root's parent */);
-				return this.mutableChunkStack[this.mutableChunkStack.length - 1] ?? oob();
+				assert(hasSome(this.mutableChunkStack), 0x532 /* invalid access to root's parent */);
+				return getLast(this.mutableChunkStack);
 			},
 			free(): void {
 				this.mutableChunk = undefined;

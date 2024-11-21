@@ -67,7 +67,6 @@ import {
 	type IEditableForest,
 	type IForestSubscription,
 	type JsonableTree,
-	type Revertible,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -91,7 +90,8 @@ import {
 	type TreeStoredSchemaSubscription,
 	type ITreeCursorSynchronous,
 	CursorLocationType,
-	type RevertibleFactory,
+	type RevertibleAlpha,
+	type RevertibleAlphaFactory,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -454,7 +454,7 @@ export function spyOnMethod(
 }
 
 /**
- * @returns `true` iff the given delta has a visible impact on the document tree.
+ * Determines whether or not the given delta has a visible impact on the document tree.
  */
 export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
 	for (const mark of delta.local ?? []) {
@@ -1053,14 +1053,14 @@ export function rootFromDeltaFieldMap(
 export function createTestUndoRedoStacks(
 	events: Listenable<TreeBranchEvents | CheckoutEvents>,
 ): {
-	undoStack: Revertible[];
-	redoStack: Revertible[];
+	undoStack: RevertibleAlpha[];
+	redoStack: RevertibleAlpha[];
 	unsubscribe: () => void;
 } {
-	const undoStack: Revertible[] = [];
-	const redoStack: Revertible[] = [];
+	const undoStack: RevertibleAlpha[] = [];
+	const redoStack: RevertibleAlpha[] = [];
 
-	function onDispose(disposed: Revertible): void {
+	function onDispose(disposed: RevertibleAlpha): void {
 		const redoIndex = redoStack.indexOf(disposed);
 		if (redoIndex !== -1) {
 			redoStack.splice(redoIndex, 1);
@@ -1072,7 +1072,7 @@ export function createTestUndoRedoStacks(
 		}
 	}
 
-	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactory): void {
+	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void {
 		if (getRevertible !== undefined) {
 			const revertible = getRevertible(onDispose);
 			if (commit.kind === CommitKind.Undo) {

@@ -367,7 +367,7 @@ export class MyExposingClass {
  *
  * @remarks
  * Similar to {@link @fluidframework/test-runtime-utils#validateAssertionError}.
- * 
+ *
  * @internal
  */
 function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean {

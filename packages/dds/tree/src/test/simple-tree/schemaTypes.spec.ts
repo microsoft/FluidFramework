@@ -42,6 +42,7 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../util/index.js";
+import { validateUsageError } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -286,6 +287,22 @@ describe("schemaTypes", () => {
 			}
 		});
 
+		it("unsound union properties", () => {
+			const schemaFactory = new SchemaFactory("demo");
+			class A extends schema.object("A", { value: schemaFactory.number }) {}
+			class B extends schema.object("B", { value: schemaFactory.string }) {}
+
+			function setValue(node: A | B, v: number | string): void {
+				// TODO: This is not safe: this should not build
+				// This limitation is due to an unsoundness in TypeScript's support for union property assignment.
+				// See https://github.com/microsoft/TypeScript/issues/33911#issuecomment-2489283581 for details.
+				// At the time of writing (TypeScript 5.6), this issue is still present despite the issue being closed as completed.
+				node.value = v;
+			}
+
+			assert.throws(() => setValue(new A({ value: 5 }), "x"), validateUsageError(/number/));
+		});
+
 		it("Objects", () => {
 			const A = schema.object("A", {});
 			const B = schema.object("B", { a: A });
@@ -375,7 +392,7 @@ describe("schemaTypes", () => {
 
 			const allowed = [Note] as const;
 			type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
-			const test: X = [{}];
+			const test: X = {};
 
 			const allowed3 = [Note] as const;
 			type X3 = InsertableTreeNodeFromAllowedTypes<typeof allowed3>;
@@ -385,7 +402,7 @@ describe("schemaTypes", () => {
 			type X4 = InsertableTypedNode<typeof allowed4>;
 
 			type X5 = InsertableTreeFieldFromImplicitField<typeof allowed>;
-			const test2: X5 = [{}];
+			const test2: X5 = {};
 
 			type X6 = InsertableObjectFromSchemaRecord<typeof Canvas.info>;
 			type X7 = InsertableTreeFieldFromImplicitField<typeof Canvas.info.stuff>;
