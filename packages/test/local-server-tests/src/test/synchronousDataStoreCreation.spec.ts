@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	resolveContainer,
+	loadExistingContainer,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
@@ -238,7 +238,7 @@ describe("Scenario Test", () => {
 		container.dispose();
 
 		{
-			const container2 = await resolveContainer({ ...loaderProps, request: { url } });
+			const container2 = await loadExistingContainer({ ...loaderProps, request: { url } });
 			await waitContainerToCatchUp(container2);
 			const entrypoint: FluidObject<ParentDataObject> = await container2.getEntryPoint();
 

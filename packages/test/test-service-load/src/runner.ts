@@ -13,7 +13,7 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	IContainerExperimental,
-	resolveContainer,
+	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
@@ -268,7 +268,7 @@ async function runnerProcess(
 			const stashedOps = stashedOpP ? await stashedOpP : undefined;
 			stashedOpP = undefined; // delete to avoid reuse
 
-			container = await resolveContainer({
+			container = await loadExistingContainer({
 				...loaderProps,
 				request: { url, headers },
 				pendingLocalState: stashedOps,

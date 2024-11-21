@@ -9,7 +9,7 @@
 Deprecate the Loader class and IHostLoader interface
 
 Deprecate the Loader class and IHostLoader interface and provide standalone APIs so the Host does not need to
-create a Loader object. Instead it can directly use APIs like `resolveContainer`
+create a Loader object. Instead it can directly use APIs like `loadExistingContainer`
 , `createDetachedContainer` and `rehydrateDetachedContainerFromSnapshot` in the `@fluidframework/container-loader` package
 to achieve the functionalities earlier provided by the Loader class.
 

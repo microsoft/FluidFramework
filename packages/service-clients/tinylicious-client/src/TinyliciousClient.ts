@@ -10,7 +10,7 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	resolveContainer,
+	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
@@ -144,7 +144,7 @@ export class TinyliciousClient {
 		services: TinyliciousContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
-		const container = await resolveContainer({ ...loaderProps, request: { url: id } });
+		const container = await loadExistingContainer({ ...loaderProps, request: { url: id } });
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,

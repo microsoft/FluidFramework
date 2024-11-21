@@ -14,7 +14,7 @@ import {
 import {
 	createDetachedContainer,
 	rehydrateDetachedContainer,
-	resolveContainer,
+	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
@@ -241,7 +241,7 @@ export async function start(
 		}
 		// This is just to replicate what apps do while loading which is to load the container in paused state and not load
 		// delta stream within the critical load flow.
-		container1 = await resolveContainer({
+		container1 = await loadExistingContainer({
 			...loaderProps1,
 			request: {
 				url: documentUrl,
@@ -303,7 +303,7 @@ export async function start(
 			0x31b /* container1.resolvedUrl is undefined */,
 		);
 		const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
-		const container2 = await resolveContainer({
+		const container2 = await loadExistingContainer({
 			...loaderProps2,
 			request: { url: requestUrl2 },
 		});

@@ -10,7 +10,7 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	resolveContainer,
+	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
@@ -154,7 +154,7 @@ export class OdspClient {
 			itemId: id,
 			dataStorePath: "",
 		});
-		const container = await resolveContainer({ ...loaderProps, request: { url } });
+		const container = await loadExistingContainer({ ...loaderProps, request: { url } });
 
 		const fluidContainer = createFluidContainer({
 			container,

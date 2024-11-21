@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { resolveContainer } from "@fluidframework/container-loader/internal";
+import { loadExistingContainer } from "@fluidframework/container-loader/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils/internal";
 import {
@@ -71,7 +71,7 @@ describe("No Delta Stream", () => {
 			new LocalResolver(),
 		);
 
-		const container = await resolveContainer({
+		const container = await loadExistingContainer({
 			...loaderProps,
 			request: {
 				url: documentLoadUrl,

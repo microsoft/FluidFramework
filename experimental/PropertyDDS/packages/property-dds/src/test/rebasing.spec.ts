@@ -23,7 +23,7 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
-	resolveContainer,
+	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
@@ -129,7 +129,7 @@ describe("PropertyDDS", () => {
 			deltaConnectionServer,
 			urlResolver,
 		);
-		const containerUsingPops = await resolveContainer({
+		const containerUsingPops = await loadExistingContainer({
 			...loaderProps,
 			request: { url: documentLoadUrl },
 		});

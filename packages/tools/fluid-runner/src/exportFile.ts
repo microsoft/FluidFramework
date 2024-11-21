@@ -7,7 +7,7 @@ import * as fs from "fs";
 
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
-	resolveContainer,
+	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
@@ -136,7 +136,7 @@ export async function createContainerAndExecute(
 			logger,
 		};
 
-		const container = await resolveContainer({
+		const container = await loadExistingContainer({
 			...loaderProps,
 			request: {
 				url: "/fakeUrl/",

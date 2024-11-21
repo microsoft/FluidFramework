@@ -9,7 +9,7 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	resolveContainer,
+	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import {
@@ -121,7 +121,7 @@ describe("Ops on Reconnect", () => {
 
 	async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {
 		const loaderProps = createLoaderProps();
-		const container2 = await resolveContainer({
+		const container2 = await loadExistingContainer({
 			...loaderProps,
 			request: { url: documentLoadUrl },
 		});

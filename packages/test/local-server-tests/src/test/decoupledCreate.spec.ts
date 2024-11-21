@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import {
 	createDetachedContainer,
-	resolveContainer,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
@@ -122,7 +122,7 @@ describe("Scenario Test", () => {
 
 			// ensure and use the url we got from out of band create to load the container
 			assert(request !== undefined);
-			const container2 = await resolveContainer({ ...loaderProps2, request });
+			const container2 = await loadExistingContainer({ ...loaderProps2, request });
 
 			// ensure the newly loaded container has the data we expect.
 			const entryPoint: FluidObject<ITestFluidObject> = await container2.getEntryPoint();

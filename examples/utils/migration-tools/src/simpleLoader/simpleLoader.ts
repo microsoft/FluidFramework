@@ -7,7 +7,7 @@ import { type IContainer, LoaderHeader } from "@fluidframework/container-definit
 import {
 	createDetachedContainer,
 	ILoaderProps,
-	resolveContainer,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -96,7 +96,7 @@ export class SimpleLoader implements ISimpleLoader {
 	}
 
 	public async loadExisting(id: string): Promise<IContainer> {
-		return resolveContainer({
+		return loadExistingContainer({
 			...this.loaderProps,
 			request: {
 				url: id,

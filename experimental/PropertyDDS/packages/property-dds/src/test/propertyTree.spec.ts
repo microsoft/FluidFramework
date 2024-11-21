@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	Loader as ContainerLoader,
-	resolveContainer,
+	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
@@ -377,7 +377,7 @@ function executePerPropertyTreeType(
 			urlResolver,
 		);
 
-		const containerUsingPops = await resolveContainer({
+		const containerUsingPops = await loadExistingContainer({
 			...loaderProps,
 			request: { url: documentLoadUrl },
 		});

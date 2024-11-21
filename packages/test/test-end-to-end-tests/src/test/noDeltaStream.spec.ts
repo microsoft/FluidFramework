@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	loadContainerPaused,
-	resolveContainer,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import {
 	DefaultSummaryConfiguration,
@@ -227,7 +227,7 @@ describeCompat(
 						provider.documentServiceFactory,
 						provider.urlResolver,
 					);
-					const validationContainer = await resolveContainer({
+					const validationContainer = await loadExistingContainer({
 						...validationLoaderProps,
 						request: { url: containerUrl },
 					});
@@ -292,7 +292,7 @@ describeCompat(
 							"deltaManager.lastSequenceNumber === loadedSeqNum",
 						);
 					} else {
-						const storageOnlyContainer = await resolveContainer({
+						const storageOnlyContainer = await loadExistingContainer({
 							...storageOnlyLoaderProps,
 							request: {
 								url: containerUrl,

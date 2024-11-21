@@ -8,7 +8,7 @@ import {
 	createDetachedContainer,
 	ILoaderProps,
 	loadContainerPaused,
-	resolveContainer,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
@@ -81,7 +81,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	}
 
 	public async loadExisting(id: string): Promise<ModelType> {
-		const container = await resolveContainer({
+		const container = await loadExistingContainer({
 			...this.props,
 			request: {
 				url: id,

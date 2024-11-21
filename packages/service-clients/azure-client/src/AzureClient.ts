@@ -12,7 +12,7 @@ import {
 import {
 	createDetachedContainer,
 	loadContainerPaused,
-	resolveContainer,
+	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
@@ -181,7 +181,10 @@ export class AzureClient {
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 
-		const container = await resolveContainer({ ...loaderProps, request: { url: url.href } });
+		const container = await loadExistingContainer({
+			...loaderProps,
+			request: { url: url.href },
+		});
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,

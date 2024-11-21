@@ -204,10 +204,10 @@ export interface ILoaderProps {
 }
 
 /**
- * Props used to resolve and load a container.
+ * Props used to load a container.
  * @alpha
  */
-export interface IResolveContainerProps extends ILoaderProps {
+export interface ILoadExistingContainerProps extends ILoaderProps {
 	/**
 	 * The request to resolve the container.
 	 */
@@ -266,7 +266,7 @@ export interface IRehydrateDetachedContainerProps extends ILoaderProps {
  * @legacy
  * @alpha
  * @deprecated Deprecated as the {@link @fluidframework/container-loader#Loader} class is deprecated. Use the standalone APIs instead to load or create and load containers namely
- * rehydrateDetachedContainer, createDetachedContainer and resolveContainer in the fluidframework/container-loader package.
+ * rehydrateDetachedContainer, createDetachedContainer and loadExistingContainer in the fluidframework/container-loader package.
  */
 export interface ILoaderServices {
 	/**
@@ -343,7 +343,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
  * @legacy
  * @alpha
  * @deprecated Use the standalone APIs instead to load or create and load containers namely
- * rehydrateDetachedContainer, createDetachedContainer and resolveContainer in the fluidframework/container-loader package.
+ * rehydrateDetachedContainer, createDetachedContainer and loadExistingContainer in the fluidframework/container-loader package.
  */
 // eslint-disable-next-line import/no-deprecated
 export class Loader implements IHostLoader {
@@ -497,13 +497,13 @@ export class Loader implements IHostLoader {
  * {@inheritDoc @fluidframework/container-definitions#ILoader.resolve}
  * @alpha
  */
-export async function resolveContainer(
-	loaderResolveContainerProps: IResolveContainerProps,
+export async function loadExistingContainer(
+	loadExistingContainerProps: ILoadExistingContainerProps,
 ): Promise<IContainer> {
-	const loader = new Loader(loaderResolveContainerProps);
+	const loader = new Loader(loadExistingContainerProps);
 	return loader.resolve(
-		loaderResolveContainerProps.request,
-		loaderResolveContainerProps.pendingLocalState,
+		loadExistingContainerProps.request,
+		loadExistingContainerProps.pendingLocalState,
 	);
 }
 

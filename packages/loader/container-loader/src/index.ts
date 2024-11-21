@@ -7,8 +7,8 @@ export { ConnectionState } from "./connectionState.js";
 export { IContainerExperimental, waitContainerToCatchUp } from "./container.js";
 export {
 	createDetachedContainer,
+	loadExistingContainer,
 	rehydrateDetachedContainer,
-	resolveContainer,
 	ICodeDetailsLoader,
 	ICreateDetachedContainerProps,
 	IDetachedBlobStorage,
@@ -16,8 +16,8 @@ export {
 	ILoaderOptions,
 	ILoaderProps,
 	ILoaderServices,
+	ILoadExistingContainerProps,
 	IRehydrateDetachedContainerProps,
-	IResolveContainerProps,
 	Loader,
 } from "./loader.js";
 export { loadContainerPaused } from "./loadPaused.js";
