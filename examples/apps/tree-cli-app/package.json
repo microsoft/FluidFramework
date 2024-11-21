@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/tree-cli-app",
-	"version": "2.10.0",
+	"version": "2.11.0",
 	"private": true,
 	"description": "SharedTree CLI app demo",
 	"homepage": "https://fluidframework.com",
@@ -54,5 +54,10 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

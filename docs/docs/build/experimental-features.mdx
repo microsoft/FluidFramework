@@ -33,7 +33,7 @@ The following is an example of how to enable experimental features with `AzureCl
 
     ```typescript
     const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-      getRawConfig: (name: string): ConfigTypes => settings[name]
+    	getRawConfig: (name: string): ConfigTypes => settings[name],
     });
     ```
 
@@ -41,8 +41,8 @@ The following is an example of how to enable experimental features with `AzureCl
 
     ```typescript
     const featureGates = {
-      "Fluid.ContainerRuntime.ExampleFeature1": true,
-      "Fluid.ContainerRuntime.ExampleFeature2": ["exampleConfig1", "exampleConfig2"],
+    	"Fluid.ContainerRuntime.ExampleFeature1": true,
+    	"Fluid.ContainerRuntime.ExampleFeature2": ["exampleConfig1", "exampleConfig2"],
     };
     ```
 
@@ -50,8 +50,8 @@ The following is an example of how to enable experimental features with `AzureCl
 
     ```typescript
     const azureClient = new AzureClient({
-      connection: connectionProps,
-      logger: myLogger,
-      configProvider: configProvider(featureGates),
+    	connection: connectionProps,
+    	logger: myLogger,
+    	configProvider: configProvider(featureGates),
     });
     ```

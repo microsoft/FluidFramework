@@ -3,8 +3,7 @@ title: Containers
 sidebar_position: 2
 ---
 
-import { ApiLink, PackageLink } from "@site/src/components/shortLinks"
-
+import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
 
 The container is the primary unit of encapsulation in the Fluid Framework.
 It enables a group of clients to access the same set of shared objects and co-author changes on those objects.
@@ -20,7 +19,7 @@ This article explains:
 :::note
 
 In this article the term "creating client" refers to the client on which a container is created.
-When it is important to emphasize that a client is *not* the creating client, it is called a "subsequent client".
+When it is important to emphasize that a client is _not_ the creating client, it is called a "subsequent client".
 It is helpful to remember that "client" does not refer to a device or anything that persists between sessions with your application.
 When a user closes your application, the client no longer exists: a new session is a new client.
 So, when the creating client is closed, there is no longer any creating client.
@@ -30,7 +29,6 @@ The device is a subsequent client in all future sessions.
 
 ## Creating & connecting
 
-
 Your code creates containers using APIs provided by a service-specific client library.
 Each service-specific client library implements a common API for manipulating containers.
 For example, the [Tinylicious library](/docs/testing/tinylicious) provides <PackageLink packageName="tinylicious-client">these APIs</PackageLink> for the Tinylicious Fluid service.
@@ -39,7 +37,7 @@ These common APIs enable your code to specify what shared objects should live in
 ### Container schema
 
 Your code must define a schema that represents the structure of the data within the container.
-Only the data *values* are persisted in the Fluid service. The structure and data types are stored as a schema object on each client.
+Only the data _values_ are persisted in the Fluid service. The structure and data types are stored as a schema object on each client.
 A schema can specify:
 
 -   Some initial shared objects that are created as soon as the container is created, and are immediately and always available to all connected clients.
@@ -51,11 +49,11 @@ This example schema defines two initial objects, `layout` and `text`, and declar
 
 ```typescript
 const schema = {
-    initialObjects: {
-        layout: SharedMap,
-        text: SharedString
-    },
-    dynamicObjectTypes: [ SharedCell, SharedString ],
+	initialObjects: {
+		layout: SharedMap,
+		text: SharedString,
+	},
+	dynamicObjectTypes: [SharedCell, SharedString],
 };
 ```
 
@@ -65,13 +63,12 @@ Containers are created by passing the schema to the service-specific client's `c
 
 ```typescript {linenos=inline,hl_lines=[7,8]}
 const schema = {
-    initialObjects: {
-        layout: SharedMap,
-    },
+	initialObjects: {
+		layout: SharedMap,
+	},
 };
 
-const { container, services } =
-    await client.createContainer(schema);
+const { container, services } = await client.createContainer(schema);
 ```
 
 Notes:
@@ -100,13 +97,12 @@ Note that once published, a container cannot be unpublished. (But it can be dele
 
 ```typescript {linenos=inline,hl_lines=[10]}
 const schema = {
-    initialObjects: {
-        layout: SharedMap,
-    },
+	initialObjects: {
+		layout: SharedMap,
+	},
 };
 
-const { container, services } =
-    await client.createContainer(schema);
+const { container, services } = await client.createContainer(schema);
 
 const containerId = await container.attach();
 ```
@@ -134,7 +130,7 @@ const { container, services } =
 
 :::tip
 
-This section provides only basic information about the *most important* states that a container can be in. Details about *all* container states, including state diagrams, state management, editing management, and container event handling are in [Container states and events](./container-states-events).
+This section provides only basic information about the _most important_ states that a container can be in. Details about _all_ container states, including state diagrams, state management, editing management, and container event handling are in [Container states and events](./container-states-events).
 
 :::
 
@@ -185,13 +181,13 @@ The drawback of this approach is that when creating a container, the service con
 
 Multiple Fluid containers can be loaded from an application or on a web page at the same time. There are two primary scenarios where an application would use multiple containers.
 
-First, if your application loads two different experiences that have different underlying data structures. *Experience 1* may require a `SharedMap` and *Experience 2* may require a `SharedString`. To minimize the memory footprint of your application, your code can create two different container schemas and load only the schema that is needed. In this case your app has the capability of loading two different containers (two different schemas) but only loads one for a given user.
+First, if your application loads two different experiences that have different underlying data structures. _Experience 1_ may require a `SharedMap` and _Experience 2_ may require a `SharedString`. To minimize the memory footprint of your application, your code can create two different container schemas and load only the schema that is needed. In this case your app has the capability of loading two different containers (two different schemas) but only loads one for a given user.
 
 A more complex scenario involves loading two containers at once. Containers serve as a permissions boundary, so if you have cases where multiple users with different permissions are collaborating together, you may use multiple containers to ensure users have access only to what they should.
 For example, consider an education application where multiple teachers collaborate with students. The students and teachers may have a shared view while the teachers may also have an additional private view on the side. In this scenario the students would be loading one container and the teachers would be loading two.
 
 ## Container services
 
-When you create or connect to a container with `createContainer` or `getContainer`, the Fluid service will also return a service-specific *services* object.
+When you create or connect to a container with `createContainer` or `getContainer`, the Fluid service will also return a service-specific _services_ object.
 This object contains references to useful services you can use to build richer applications.
 An example of a container service is the [Audience](./audience), which provides user information for clients that are connected to the container. See [Working with the audience](./audience#working-with-the-audience) for more information.

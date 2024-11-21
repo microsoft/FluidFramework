@@ -57,9 +57,8 @@ const config: Config = {
 	// For GitHub pages deployment, it is often '/<projectName>/'
 	baseUrl: "/",
 
-	// Reports many false positives for API documentation
-	onBrokenAnchors: "ignore",
-	onBrokenLinks: "warn", // TODO:AB#23443: Set to "throw" once violations have been fixed.
+	onBrokenAnchors: "throw",
+	onBrokenLinks: "throw",
 	onBrokenMarkdownLinks: "throw",
 	onDuplicateRoutes: "throw",
 
