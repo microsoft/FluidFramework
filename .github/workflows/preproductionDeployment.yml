@@ -55,3 +55,9 @@ jobs:
           app_artifact_location: ${{ env.APP_ARTIFACT_LOCATION }}
           deployment_environment: "staging"
           skip_app_build: true
+
+      - name: Set Custom Domain for Preprod
+        run: |
+          az staticwebapp hostname set --name <your-static-web-app-name> \
+            --hostname "fluidframework-staging-pr${{ github.event.pull_request.number }}.azurestaticapps.net" \
+            --token ${{ secrets.AZURE_STATIC_WEB_APPS_PREPROD_API_TOKEN }}
