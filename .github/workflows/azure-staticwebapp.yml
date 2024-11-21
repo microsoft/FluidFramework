@@ -1,0 +1,66 @@
+name: Preproduction Deployment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [ "main" ] # Adjust if your default branch is different
+
+env:
+  APP_LOCATION: "/" # Location of your client code
+  API_LOCATION: "api" # Location of your API source code (optional)
+  APP_ARTIFACT_LOCATION: "build" # Location where the build artifacts are generated
+  AZURE_STATIC_WEB_APPS_API_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_PREPROD_API_TOKEN }} # Preprod SWA deployment token
+
+permissions:
+  contents: read
+  pull-requests: write # Needed for posting comments on PRs
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    name: Build and Deploy to Preprod SWA
+    steps:
+      # Step 1: Checkout the repository
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      # Step 2: Set up Node.js (Adjust version as needed)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16' # Specify your Node.js version
+
+      # Step 3: Install Dependencies
+      - name: Install Dependencies
+        run: |
+          npm install
+          npm run build # Modify if your build command is different
+
+      # Step 4: Deploy to Azure Static Web Apps (Preprod)
+      - name: Deploy to Azure Static Web Apps (Preprod)
+        id: deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ env.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
+          action: "upload"
+          ###### Repository/Build Configurations - Adjust these values as needed ######
+          app_location: ${{ env.APP_LOCATION }}
+          api_location: ${{ env.API_LOCATION }}
+          app_artifact_location: ${{ env.APP_ARTIFACT_LOCATION }}
+          ###### End of Repository/Build Configurations ######
+
+      # Step 5: Post Deployment Feedback (Optional)
+      - name: Post Deployment URL as PR Comment
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const url = '${{ steps.deploy.outputs.preview_url }}';
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **Pre-production Deployment Successful** 🚀\n\nYou can view the changes here: ${url}`
+            });

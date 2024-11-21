@@ -1,0 +1,70 @@
+name: Azure Static Web Apps CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+
+jobs:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: Build and Deploy Job
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+          lfs: false
+      # Step to install pnpm
+      - name: Install pnpm
+        run: npm install -g pnpm@8
+
+      # Install dependencies using pnpm
+      - name: Install dependencies
+        working-directory: packages/tools/devtools/devtools-example
+        run: pnpm install
+
+      # Build the project using pnpm
+      - name: Build the project
+        working-directory: packages/tools/devtools/devtools-example
+        run: pnpm run build
+      # Set up environment variables for Oryx
+      - name: Set up environment variables for Oryx
+        run: |
+          echo 'export ENABLE_DYNAMIC_INSTALL=true' >> $GITHUB_ENV
+          echo 'export ENABLE_NODE_MONOREPO=true' >> $GITHUB_ENV
+          echo 'export NODE_VERSION=16' >> $GITHUB_ENV
+          echo 'LOG_LEVEL=debug' >> $GITHUB_ENV
+
+      - name: Build And Deploy
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_HAPPY_PEBBLE_0AB98D51E }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          action: "upload"
+          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
+          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
+          app_location: "packages/tools/devtools/devtools-example" # App source code path
+          api_location: "" # Api source code path - optional
+          build_timeout_in_minutes: 90
+          output_location: '' # Built app content directory - optional
+          skip_app_build: true
+          skip_api_build: true
+          ###### End of Repository/Build Configurations ######
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_HAPPY_PEBBLE_0AB98D51E }}
+          action: "close"

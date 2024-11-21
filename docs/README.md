@@ -137,6 +137,25 @@ The replacement syntax to use in `.mdx` files would be:
 
 (just like you would do in a JSX context!)
 
+#### Custom Heading IDs
+
+In GitHub-flavored Markdown, you can assign a custom anchor ID to a heading by appending `{#<id>}` to the heading text.
+E.g.,
+
+```markdown
+# Foo {#bar}
+```
+
+Because curly braces are interpreted specially by JSX, this syntax doesn't work as is in `.mdx` documents.
+Instead, you'll need to escape the opening brace to prevent MDX from attempting to process the syntax as JSX.
+E.g.,
+
+```markdown
+# Foo \{#bar}
+```
+
+See the following Docusaurus issue for more context: <https://github.com/facebook/docusaurus/issues/9155>.
+
 ### Mermaid
 
 Docusaurus has built-in support for [mermaid](https://mermaid.js.org/) diagrams.
@@ -182,7 +201,6 @@ The following npm scripts are supported in this directory:
 | Script | Description |
 |--------|-------------|
 | `build` | Build everything: the API documentation, the website, the tests, etc. |
-| `prebuild:api-documentation` | Temporary workaround for AB#24394. Cleans up existing generated API documentation before generating new content. |
 | `build:api-documentation` | Download API model artifacts and generate API documentation. |
 | `prebuild:docusaurus` | Runs pre-site build metadata generation. |
 | `build:docusaurus` | Build the website with Docusaurus. |
