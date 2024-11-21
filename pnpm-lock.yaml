@@ -3528,13 +3528,25 @@ importers:
         version: 6.0.1
 
   examples/data-objects/smde:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
+      '@fluid-example/webpack-fluid-loader':
+        specifier: workspace:~
+        version: link:../../utils/webpack-fluid-loader
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.51.0
+        version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -3556,6 +3568,9 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.4.0
+        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
@@ -3571,28 +3586,6 @@ importers:
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      simplemde:
-        specifier: ^1.11.2
-        version: 1.11.2
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.9.3
-        version: 1.9.4
-      '@fluid-example/webpack-fluid-loader':
-        specifier: workspace:~
-        version: link:../../utils/webpack-fluid-loader
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.51.0
-        version: 0.51.0(@types/node@18.19.54)
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.11
@@ -3608,9 +3601,15 @@ importers:
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      simplemde:
+        specifier: ^1.11.2
+        version: 1.11.2
       style-loader:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.95.0)
@@ -26938,11 +26937,10 @@ packages:
     resolution: {integrity: sha512-2Tl6n0v+GJRsC9K3MLCdLaMOmvWL0uukajNJseorZJsslaxZyZMgENocPU8R0DyoTAiKsyqiemSOZo7kjGV0LQ==}
     dependencies:
       typo-js: 1.2.4
-    dev: false
+    dev: true
 
   /codemirror@5.65.18:
     resolution: {integrity: sha512-Gaz4gHnkbHMGgahNt3CA5HBk5lLQBqmD/pBgeB4kQU6OedZmqMBjlRF0LSrp2tJ4wlLNPm2FfaUd1pDy0mdlpA==}
-    dev: false
 
   /collect-v8-coverage@1.0.2:
     resolution: {integrity: sha512-lHl4d5/ONEbLlJvaJNtsF/Lz+WvB07u2ycqTYbdrq7UypDXailES4valYb2eWiJFxZlVmpGekfqoxQhzyFdT4Q==}
@@ -32890,7 +32888,7 @@ packages:
     resolution: {integrity: sha512-PRsaiG84bK+AMvxziE/lCFss8juXjNaWzVbN5tXAm4XjeaS9NAHhop+PjQxz2A9h8Q4M/xGmzP8vqNwy6JeK0A==}
     engines: {node: '>= 12'}
     hasBin: true
-    dev: false
+    dev: true
 
   /marked@9.1.6:
     resolution: {integrity: sha512-jcByLnIFkd5gSXZmjNvS1TlmRhCXZjIzHYlaGkPlLIekG55JDR2Z4va9tZwCiP+/RDERiNhMOFu01xd6O5ct1Q==}
@@ -37154,7 +37152,7 @@ packages:
       codemirror: 5.65.18
       codemirror-spell-checker: 1.1.2
       marked: 4.3.0
-    dev: false
+    dev: true
 
   /sinon-chrome@3.0.1:
     resolution: {integrity: sha512-NTEFhyuiWEMnRmIqldUiA2DhKn2EqnZxyEk5Ez5rBXj+Nl54aJ0MEmF4wjltrxecxd8zlNLxyE0HyLabev9JsQ==}
@@ -38838,7 +38836,7 @@ packages:
 
   /typo-js@1.2.4:
     resolution: {integrity: sha512-Oy/k+tFle5NAA3J/yrrYGfvEnPVrDZ8s8/WCwjUE75k331QyKIsFss7byQ/PzBmXLY6h1moRnZbnaxWBe3I3CA==}
-    dev: false
+    dev: true
 
   /uglify-js@3.19.3:
     resolution: {integrity: sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ==}
