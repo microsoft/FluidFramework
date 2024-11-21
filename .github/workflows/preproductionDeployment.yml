@@ -13,7 +13,7 @@ env:
 
 permissions:
   contents: read
-  pull-requests: write # Needed for posting comments on PRs
+  pull-requests: write
 
 jobs:
   build_and_deploy:
@@ -54,6 +54,7 @@ jobs:
           api_location: ${{ env.API_LOCATION }}
           app_artifact_location: ${{ env.APP_ARTIFACT_LOCATION }}
           deployment_environment: "staging"
+          skip_app_build: true
 
       # Step 6: Post Deployment Feedback (Optional)
       - name: Post Deployment URL as PR Comment
