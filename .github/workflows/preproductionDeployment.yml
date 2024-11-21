@@ -55,18 +55,3 @@ jobs:
           app_artifact_location: ${{ env.APP_ARTIFACT_LOCATION }}
           deployment_environment: "staging"
           skip_app_build: true
-
-      # Step 6: Post Deployment Feedback (Optional)
-      - name: Post Deployment URL as PR Comment
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const url = '${{ steps.deploy.outputs.deployment_url }}';
-            console.log(url);
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `✅ **Pre-production Deployment Successful** 🚀\n\nYou can view the changes here: ${url}`
-            });
