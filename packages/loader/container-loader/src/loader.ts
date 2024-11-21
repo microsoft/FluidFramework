@@ -265,7 +265,7 @@ export interface IRehydrateDetachedContainerProps extends ILoaderProps {
  * Services and properties used by and exposed by the loader
  * @legacy
  * @alpha
- * @deprecated Deprecated as the {@link @fluidframework/container-loader#Loader} class is deprecated. Use the standalone apis instead to load or create and load containers namely
+ * @deprecated Deprecated as the {@link @fluidframework/container-loader#Loader} class is deprecated. Use the standalone APIs instead to load or create and load containers namely
  * rehydrateDetachedContainer, createDetachedContainer and resolveContainer in the fluidframework/container-loader package.
  */
 export interface ILoaderServices {
@@ -342,7 +342,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
  * Manages Fluid resource loading
  * @legacy
  * @alpha
- * @deprecated Use the standalone apis instead to load or create and load containers namely
+ * @deprecated Use the standalone APIs instead to load or create and load containers namely
  * rehydrateDetachedContainer, createDetachedContainer and resolveContainer in the fluidframework/container-loader package.
  */
 // eslint-disable-next-line import/no-deprecated
