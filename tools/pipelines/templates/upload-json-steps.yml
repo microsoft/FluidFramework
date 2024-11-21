@@ -16,7 +16,7 @@ parameters:
 
 # Determines if artifact should be published as latest-v*.tar.gz (for release branches)
 - name: uploadAsLatestRelease
-  type: boolean
+  type: string
   default: false
 
 # Major version to upload as latest-v*.tar.gz
@@ -31,39 +31,7 @@ steps:
 # Download the api-extractor outputs
 - template: download-api-extractor-artifact.yml
   parameters:
-    pipelineName: Build - common-definitions
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-api-extractor-artifact.yml
-  parameters:
-    pipelineName: Build - common-utils
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-api-extractor-artifact.yml
-  parameters:
-    pipelineName: Build - container-definitions
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-api-extractor-artifact.yml
-  parameters:
-    pipelineName: Build - core-interfaces
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-api-extractor-artifact.yml
-  parameters:
-    pipelineName: Build - driver-definitions
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-api-extractor-artifact.yml
-  parameters:
-    pipelineName: Build - protocol-definitions
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-api-extractor-artifact.yml
-  parameters:
-    pipelineName: Build - azure
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-api-extractor-artifact.yml
-  parameters:
     pipelineName: Build - client packages
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-api-extractor-artifact.yml
-  parameters:
-    pipelineName: server-routerlicious
     branchName: ${{ variables['Build.SourceBranch'] }}
 
 # Copy and merge the api-extractor outputs to a central location
