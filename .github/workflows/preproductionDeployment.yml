@@ -63,6 +63,7 @@ jobs:
         with:
           script: |
             const url = '${{ steps.deploy.outputs.preview_url }}';
+            console.log(url);
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
