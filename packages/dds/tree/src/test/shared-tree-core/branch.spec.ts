@@ -589,8 +589,8 @@ describe("Branches", () => {
 	});
 
 	it("emit a change event after squashing only a single commit", () => {
-		// TODO: It might be nice to _not_ emit an event in this case (and not actually replace the head)
-		// as an optimization, but parts of the system rely on the current behavior for now.
+		// TODO#25379: It might be nice to _not_ emit an event in this case (and not actually replace the head)
+		// as an optimization, but code affecting op submission and transactions relies on the current behavior for now.
 		let changeEventCount = 0;
 		const branch = create(() => {
 			changeEventCount += 1;
