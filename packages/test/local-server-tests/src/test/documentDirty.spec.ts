@@ -27,7 +27,7 @@ import {
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createAndAttachContainerUsingLoaderProps,
+	createAndAttachContainerUsingProps,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -138,7 +138,7 @@ describe("Document Dirty", () => {
 				codeLoader,
 			};
 
-			const containerUsingProps = await createAndAttachContainerUsingLoaderProps(
+			const containerUsingProps = await createAndAttachContainerUsingProps(
 				codeDetails,
 				loaderProps,
 				urlResolver.createCreateNewRequest(documentId),

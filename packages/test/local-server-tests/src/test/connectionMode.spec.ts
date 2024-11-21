@@ -24,7 +24,7 @@ import {
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createAndAttachContainerUsingLoaderProps,
+	createAndAttachContainerUsingProps,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -86,7 +86,7 @@ describe("Logging Last Connection Mode ", () => {
 			logger,
 		};
 
-		const container1 = await createAndAttachContainerUsingLoaderProps(
+		const container1 = await createAndAttachContainerUsingProps(
 			codeDetails,
 			loaderProps,
 			urlResolver.createCreateNewRequest(documentId),

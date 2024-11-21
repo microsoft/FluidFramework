@@ -28,7 +28,7 @@ import {
 	ITestFluidObject,
 	LoaderContainerTracker,
 	TestFluidObjectFactory,
-	createAndAttachContainerUsingLoaderProps,
+	createAndAttachContainerUsingProps,
 	createLoaderProps,
 } from "@fluidframework/test-utils/internal";
 
@@ -80,7 +80,7 @@ describe("LocalTestServer", () => {
 			deltaConnectionServer,
 			urlResolver,
 		);
-		const containerUsingPops = await createAndAttachContainerUsingLoaderProps(
+		const containerUsingPops = await createAndAttachContainerUsingProps(
 			codeDetails,
 			loaderProps,
 			urlResolver.createCreateNewRequest(documentId),

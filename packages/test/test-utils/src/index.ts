@@ -19,7 +19,7 @@ export {
 	createAndAttachContainer,
 	createLoader,
 	createLoaderProps,
-	createAndAttachContainerUsingLoaderProps,
+	createAndAttachContainerUsingProps,
 } from "./localLoader.js";
 export { retryWithEventualValue } from "./retry.js";
 export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs.js";

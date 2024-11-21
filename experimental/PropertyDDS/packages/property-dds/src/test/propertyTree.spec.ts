@@ -40,7 +40,7 @@ import {
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
-	createAndAttachContainerUsingLoaderProps,
+	createAndAttachContainerUsingProps,
 	createLoaderProps,
 	createSummarizer,
 	summarizeNow,
@@ -361,7 +361,7 @@ function executePerPropertyTreeType(
 			urlResolver,
 		);
 
-		const containerUsingProps = await createAndAttachContainerUsingLoaderProps(
+		const containerUsingProps = await createAndAttachContainerUsingProps(
 			codeDetails,
 			loaderProps,
 			urlResolver.createCreateNewRequest(documentId),

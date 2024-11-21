@@ -35,7 +35,7 @@ import {
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createAndAttachContainerUsingLoaderProps,
+	createAndAttachContainerUsingProps,
 	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -96,7 +96,7 @@ describe("Ops on Reconnect", () => {
 		runtimeOptions?: IContainerRuntimeOptions,
 	): Promise<IContainer> {
 		const loaderProps = createLoaderProps(runtimeOptions);
-		const container: IContainer = await createAndAttachContainerUsingLoaderProps(
+		const container: IContainer = await createAndAttachContainerUsingProps(
 			codeDetails,
 			loaderProps,
 			urlResolver.createCreateNewRequest(documentId),

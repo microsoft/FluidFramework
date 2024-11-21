@@ -25,7 +25,7 @@ import {
 	LoaderContainerTracker,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
-	createAndAttachContainerUsingLoaderProps,
+	createAndAttachContainerUsingProps,
 	createLoader,
 	createLoaderProps,
 } from "@fluidframework/test-utils/internal";
@@ -54,7 +54,7 @@ describe("No Delta Stream", () => {
 			new LocalResolver(),
 		);
 
-		const container = await createAndAttachContainerUsingLoaderProps(
+		const container = await createAndAttachContainerUsingProps(
 			codeDetails,
 			loaderProps,
 			createLocalResolverCreateNewRequest(documentId),

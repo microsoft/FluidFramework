@@ -83,6 +83,7 @@ export function createLoaderProps(
  * @param attachRequest - The request to create new from.
  * @legacy
  * @alpha
+ * @deprecated - use createAndAttachContainerUsingProps function instead
  */
 
 export async function createAndAttachContainer(
@@ -103,7 +104,7 @@ export async function createAndAttachContainer(
  * @param attachRequest - The request to create new from.
  * @internal
  */
-export async function createAndAttachContainerUsingLoaderProps(
+export async function createAndAttachContainerUsingProps(
 	source: IFluidCodeDetails,
 	loaderProps: ILoaderProps,
 	attachRequest: IRequest,
