@@ -7,7 +7,6 @@ import type { Listeners } from "./listeners.js";
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
- * @sealed
  * @internal
  */
 export interface IEmitter<TListeners extends Listeners<TListeners>> {
@@ -62,4 +61,13 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
 	 * This can be used to know when its safe to cleanup data-structures which only exist to fire events for their listeners.
 	 */
 	hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
+}
+
+/**
+ * Subset of Map interface including only the `get` and `set` methods.
+ * @internal
+ */
+export interface MapGetSet<K, V> {
+	get(key: K): V | undefined;
+	set(key: K, value: V): void;
 }

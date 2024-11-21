@@ -50,11 +50,12 @@ export type { ISignalEnvelope } from "./messages.js";
 export type { ErasedType } from "./erasedType.js";
 
 export type {
-	IEmitter,
-	NoListenersCallback,
 	HasListeners,
+	IEmitter,
+	IsListener,
 	Listeners,
 	Listenable,
+	MapGetSet,
+	NoListenersCallback,
 	Off,
-	IsListener,
 } from "./events/index.js";

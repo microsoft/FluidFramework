@@ -4,22 +4,14 @@
  */
 
 import type {
+	HasListeners,
+	IEmitter,
 	Listenable,
 	Listeners,
-	Off,
-	HasListeners,
+	MapGetSet,
 	NoListenersCallback,
-	IEmitter,
+	Off,
 } from "@fluidframework/core-interfaces/internal";
-
-/**
- * Subset of Map interface including only the `get` and `set` methods.
- * @internal
- */
-interface MapGetSet<K, V> {
-	get(key: K): V | undefined;
-	set(key: K, value: V): void;
-}
 
 /**
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.

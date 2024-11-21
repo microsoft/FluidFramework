@@ -4,14 +4,15 @@
  */
 
 export type {
-	IEmitter,
-	NoListenersCallback,
 	HasListeners,
+	IEmitter,
+	MapGetSet,
+	NoListenersCallback,
 } from "./emitter.js";
 
 export type {
+	IsListener,
 	Listeners,
 	Listenable,
 	Off,
-	IsListener,
 } from "./listeners.js";
