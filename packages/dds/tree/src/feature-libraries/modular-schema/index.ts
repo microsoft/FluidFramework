@@ -77,4 +77,5 @@ export type {
 export {
 	getAllowedContentDiscrepancies,
 	isRepoSuperset,
+	normalizeStoredSchema,
 } from "./discrepancies.js";

@@ -10,6 +10,7 @@ import {
 	ObjectNodeStoredSchema,
 	storedEmptyFieldSchema,
 	ValueSchema,
+	type FieldKindIdentifier,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
@@ -21,6 +22,7 @@ import {
 	allowsRepoSuperset,
 	isRepoSuperset as isRepoSupersetOriginal,
 	type FlexFieldKind,
+	normalizeStoredSchema,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { fieldSchema } from "./comparison.spec.js";
@@ -59,32 +61,77 @@ const stringName = brand<TreeNodeSchemaIdentifier>("string");
 const numberName = brand<TreeNodeSchemaIdentifier>("number");
 const testTreeNodeIdentifier = brand<TreeNodeSchemaIdentifier>("tree");
 
-describe("Schema Discrepancies", () => {
-	const createObjectNodeSchema = (
-		fields: [string, TreeFieldStoredSchema][],
-		treeName: string,
-		root: TreeFieldStoredSchema,
-	): TreeStoredSchema => {
-		const objectNodeSchema = new ObjectNodeStoredSchema(
-			new Map(fields.map(([key, schema]) => [brand(key), schema])),
-		);
-		return {
-			rootFieldSchema: root,
-			nodeSchema: new Map([[brand<TreeNodeSchemaIdentifier>(treeName), objectNodeSchema]]),
-		};
-	};
-
-	const createMapNodeSchema = (
-		field: TreeFieldStoredSchema,
-		treeName: string,
-		root: TreeFieldStoredSchema,
-	): TreeStoredSchema => ({
+const createObjectNodeSchema = (
+	fields: [string, TreeFieldStoredSchema][],
+	treeName: string,
+	root: TreeFieldStoredSchema,
+): TreeStoredSchema => {
+	const objectNodeSchema = new ObjectNodeStoredSchema(
+		new Map(fields.map(([key, schema]) => [brand(key), schema])),
+	);
+	return {
 		rootFieldSchema: root,
-		nodeSchema: new Map([
-			[brand<TreeNodeSchemaIdentifier>(treeName), new MapNodeStoredSchema(field)],
-		]),
+		nodeSchema: new Map([[brand<TreeNodeSchemaIdentifier>(treeName), objectNodeSchema]]),
+	};
+};
+
+const createMapNodeSchema = (
+	field: TreeFieldStoredSchema,
+	treeName: string,
+	root: TreeFieldStoredSchema,
+): TreeStoredSchema => ({
+	rootFieldSchema: root,
+	nodeSchema: new Map([
+		[brand<TreeNodeSchemaIdentifier>(treeName), new MapNodeStoredSchema(field)],
+	]),
+});
+
+describe("NormalizeStoredSchema", () => {
+	const root = storedEmptyFieldSchema;
+	const neverField = fieldSchema(FieldKinds.required, []);
+
+	it("Convert never fields to explicit forbidden fields", () => {
+		const neverTree = createMapNodeSchema(neverField, testTreeNodeIdentifier, root);
+		const normalizedTree1 = normalizeStoredSchema(neverTree, defaultSchemaPolicy);
+		assert.equal(
+			normalizedTree1.rootFieldSchema.kind,
+			brand<FieldKindIdentifier>("Forbidden"),
+		);
 	});
 
+	it("Drop the never trees from the stored schema", () => {
+		const neverTree2 = createObjectNodeSchema(
+			[["x", neverField]],
+			testTreeNodeIdentifier,
+			root,
+		);
+
+		const neverTree3 = createObjectNodeSchema(
+			[
+				["x", neverField],
+				["y", fieldSchema(FieldKinds.required, [numberName])],
+			],
+			testTreeNodeIdentifier,
+			root,
+		);
+
+		const normalizedTree2 = normalizeStoredSchema(neverTree2, defaultSchemaPolicy);
+		assert.equal(
+			normalizedTree2.rootFieldSchema.kind,
+			brand<FieldKindIdentifier>("Forbidden"),
+		);
+		assert.equal(normalizedTree2.nodeSchema.size, 0);
+
+		const normalizedTree3 = normalizeStoredSchema(neverTree3, defaultSchemaPolicy);
+		assert.equal(
+			normalizedTree3.rootFieldSchema.kind,
+			brand<FieldKindIdentifier>("Forbidden"),
+		);
+		assert.equal(normalizedTree3.nodeSchema.size, 0);
+	});
+});
+
+describe("Schema Discrepancies", () => {
 	const createLeafNodeSchema = (
 		leafValue: ValueSchema,
 		treeName: string,

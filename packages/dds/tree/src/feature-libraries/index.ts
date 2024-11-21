@@ -77,6 +77,7 @@ export {
 	getAllowedContentDiscrepancies,
 	isRepoSuperset,
 	isNeverTree,
+	normalizeStoredSchema,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";

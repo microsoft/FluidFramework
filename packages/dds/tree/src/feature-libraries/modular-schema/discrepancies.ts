@@ -544,7 +544,7 @@ function throwUnsupportedNodeType(type: string): never {
  * - All never trees dropped from the schema
  * - All never fields converted to explicit Forbidden fields
  */
-function normalizeStoredSchema(
+export function normalizeStoredSchema(
 	schema: TreeStoredSchema,
 	policy: FullSchemaPolicy,
 ): TreeStoredSchema {
