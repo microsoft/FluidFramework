@@ -5,7 +5,7 @@
 
 module.exports = {
 	parserOptions: {
-		ecmaVersion: "latest",
+		ecmaVersion: "2022",
 	},
 	overrides: [
 		// Rules for code
