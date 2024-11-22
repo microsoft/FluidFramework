@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	UsageError,
@@ -24,7 +30,6 @@ import {
 	type IEditableForest,
 	type IForestSubscription,
 	type JsonableTree,
-	type Revertible,
 	RevertibleStatus,
 	type RevisionTag,
 	type RevisionTagCodec,
@@ -37,14 +42,9 @@ import {
 	rootFieldKey,
 	tagChange,
 	visitDelta,
-	type RevertibleFactory,
+	type RevertibleAlphaFactory,
+	type RevertibleAlpha,
 } from "../core/index.js";
-import {
-	type HasListeners,
-	type IEmitter,
-	type Listenable,
-	createEmitter,
-} from "../events/index.js";
 import {
 	type FieldBatchCodec,
 	type TreeCompressionStrategy,
@@ -54,8 +54,20 @@ import {
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
-import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
-import { Breakable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
+import {
+	SharedTreeBranch,
+	getChangeReplaceType,
+	type SharedTreeBranchChange,
+} from "../shared-tree-core/index.js";
+import {
+	Breakable,
+	TransactionResult,
+	disposeSymbol,
+	fail,
+	getLast,
+	hasSingle,
+	hasSome,
+} from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -68,8 +80,9 @@ import type {
 	TreeViewConfiguration,
 	UnsafeUnknownSchema,
 	ViewableTree,
+	TreeBranch,
 } from "../simple-tree/index.js";
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -92,7 +105,7 @@ export interface CheckoutEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
 	 * this change is not revertible.
 	 */
-	changed(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+	changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 /**
@@ -397,7 +410,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	/**
 	 * Set of revertibles maintained for automatic disposal
 	 */
-	private readonly revertibles = new Set<DisposableRevertible>();
+	private readonly revertibles = new Set<RevertibleAlpha>();
 
 	/**
 	 * Each branch's head commit corresponds to a revertible commit.
@@ -464,12 +477,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		_branch.events.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
-				const revision =
-					event.type === "replace"
-						? // Change events will always contain new commits
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							event.newCommits[event.newCommits.length - 1]!.revision
-						: event.change.revision;
+				let revision: RevisionTag | undefined;
+				if (event.type === "replace") {
+					assert(hasSome(event.newCommits), "Expected new commit for non no-op change event");
+					revision = getLast(event.newCommits).revision;
+				} else {
+					revision = event.change.revision;
+				}
 
 				// Conflicts due to schema will be empty and thus are not applied.
 				for (const change of event.change.change.changes) {
@@ -502,7 +516,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
-				const firstCommit = event.newCommits[0] ?? oob();
+				assert(
+					hasSingle(event.newCommits),
+					"Expected exactly one new commit for transaction commit event",
+				);
+				const firstCommit = event.newCommits[0];
 				const transactionRevision = firstCommit.revision;
 				for (const transactionStep of event.removedCommits) {
 					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
@@ -525,7 +543,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 						const getRevertible = hasSchemaChange(change)
 							? undefined
-							: (onRevertibleDisposed?: (revertible: Revertible) => void) => {
+							: (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => {
 									if (!withinEventContext) {
 										throw new UsageError(
 											"Cannot get a revertible outside of the context of a changed event.",
@@ -536,42 +554,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 											"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
 										);
 									}
-									const revertibleCommits = this.revertibleCommitBranches;
-									const revertible: DisposableRevertible = {
-										get status(): RevertibleStatus {
-											const revertibleCommit = revertibleCommits.get(revision);
-											return revertibleCommit === undefined
-												? RevertibleStatus.Disposed
-												: RevertibleStatus.Valid;
-										},
-										revert: (release: boolean = true) => {
-											if (revertible.status === RevertibleStatus.Disposed) {
-												throw new UsageError(
-													"Unable to revert a revertible that has been disposed.",
-												);
-											}
-
-											const revertMetrics = this.revertRevertible(revision, kind);
-											this.logger?.sendTelemetryEvent({
-												eventName: TreeCheckout.revertTelemetryEventName,
-												...revertMetrics,
-											});
-
-											if (release) {
-												revertible.dispose();
-											}
-										},
-										dispose: () => {
-											if (revertible.status === RevertibleStatus.Disposed) {
-												throw new UsageError(
-													"Unable to dispose a revertible that has already been disposed.",
-												);
-											}
-											this.disposeRevertible(revertible, revision);
-											onRevertibleDisposed?.(revertible);
-										},
-									};
-
+									const revertible = this.createRevertible(
+										revision,
+										kind,
+										this,
+										onRevertibleDisposed,
+									);
 									this.revertibleCommitBranches.set(revision, _branch.fork(commit));
 									this.revertibles.add(revertible);
 									return revertible;
@@ -581,7 +569,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						this.events.emit("changed", { isLocal: true, kind }, getRevertible);
 						withinEventContext = false;
 					}
-				} else if (event.type === "replace") {
+				} else if (this.isRemoteChangeEvent(event)) {
 					// TODO: figure out how to plumb through commit kind info for remote changes
 					this.events.emit("changed", { isLocal: false, kind: CommitKind.Default });
 				}
@@ -624,6 +612,76 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			}
 			assert(false, 0x911 /* Invalid operation on a disposed TreeCheckout */);
 		}
+	}
+
+	/**
+	 * Creates a {@link RevertibleAlpha} object that can undo a specific change in the tree's history.
+	 * Revision must exist in the given {@link TreeCheckout}'s branch.
+	 *
+	 * @param revision - The revision tag identifying the change to be made revertible.
+	 * @param kind - The {@link CommitKind} that produced this revertible (e.g., Default, Undo, Redo).
+	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to.
+	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed.
+	 * @returns - {@link RevertibleAlpha}
+	 */
+	private createRevertible(
+		revision: RevisionTag,
+		kind: CommitKind,
+		checkout: TreeCheckout,
+		onRevertibleDisposed: ((revertible: RevertibleAlpha) => void) | undefined,
+	): RevertibleAlpha {
+		const commitBranches = checkout.revertibleCommitBranches;
+
+		const revertible: RevertibleAlpha = {
+			get status(): RevertibleStatus {
+				const revertibleCommit = commitBranches.get(revision);
+				return revertibleCommit === undefined
+					? RevertibleStatus.Disposed
+					: RevertibleStatus.Valid;
+			},
+			revert: (release: boolean = true) => {
+				if (revertible.status === RevertibleStatus.Disposed) {
+					throw new UsageError("Unable to revert a revertible that has been disposed.");
+				}
+
+				const revertMetrics = checkout.revertRevertible(revision, kind);
+				checkout.logger?.sendTelemetryEvent({
+					eventName: TreeCheckout.revertTelemetryEventName,
+					...revertMetrics,
+				});
+
+				if (release) {
+					revertible.dispose();
+				}
+			},
+			clone: (forkedBranch: TreeBranch) => {
+				if (forkedBranch === undefined) {
+					return this.createRevertible(revision, kind, checkout, onRevertibleDisposed);
+				}
+
+				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
+				const forkedCheckout = getCheckout(forkedBranch);
+				const revertibleBranch = this.revertibleCommitBranches.get(revision);
+				assert(
+					revertibleBranch !== undefined,
+					"change to revert does not exist on the given forked branch",
+				);
+				forkedCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+
+				return this.createRevertible(revision, kind, forkedCheckout, onRevertibleDisposed);
+			},
+			dispose: () => {
+				if (revertible.status === RevertibleStatus.Disposed) {
+					throw new UsageError(
+						"Unable to dispose a revertible that has already been disposed.",
+					);
+				}
+				checkout.disposeRevertible(revertible, revision);
+				onRevertibleDisposed?.(revertible);
+			},
+		};
+
+		return revertible;
 	}
 
 	// For the new TreeViewAlpha API
@@ -792,7 +850,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
-	private disposeRevertible(revertible: DisposableRevertible, revision: RevisionTag): void {
+	private disposeRevertible(revertible: RevertibleAlpha, revision: RevisionTag): void {
 		this.revertibleCommitBranches.get(revision)?.dispose();
 		this.revertibleCommitBranches.delete(revision);
 		this.revertibles.delete(revertible);
@@ -870,6 +928,21 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			rootFields.delete(field);
 		} while (cursor.nextField());
 	}
+
+	/**
+	 * `true` iff the given branch change event is due to a remote change
+	 */
+	private isRemoteChangeEvent(event: SharedTreeBranchChange<SharedTreeChange>): boolean {
+		return (
+			// remote changes are only ever applied to the main branch
+			!this.isBranch &&
+			// remote changes are applied to the main branch by rebasing it onto the trunk,
+			// no other rebases are allowed on the main branch so this means any replaces that are not
+			// transaction commits are remote changes
+			event.type === "replace" &&
+			getChangeReplaceType(event) !== "transactionCommit"
+		);
+	}
 }
 
 /**
@@ -889,8 +962,4 @@ export function runSynchronous(
 	return result === TransactionResult.Abort
 		? view.transaction.abort()
 		: view.transaction.commit();
-}
-
-interface DisposableRevertible extends Revertible {
-	dispose: () => void;
 }
