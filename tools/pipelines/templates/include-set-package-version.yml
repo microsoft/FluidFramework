@@ -14,7 +14,7 @@ parameters:
   default: false
 - name: buildToolsVersionToInstall
   type: string
-  default: latest
+  default: "^0.5.0"
 
 # Set version
 steps:
