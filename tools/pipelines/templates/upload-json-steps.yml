@@ -18,9 +18,6 @@ parameters:
 - name: uploadAsLatestRelease
   type: string
   default: false
-  values:
-    - true
-    - false
 
 # Major version to upload as latest-v*.tar.gz
 - name: majorVersion
