@@ -307,7 +307,7 @@ async function fetchLatestSnapshotCore(
 			isSummarizer: odspResolvedUrl.summarizer,
 			redeemFallbackEnabled: enableRedeemFallback,
 			details: {
-				...(internalFarmType && { internalFarmType }),
+				internalFarmType,
 			},
 		};
 		if (snapshotOptions !== undefined) {

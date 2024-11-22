@@ -200,7 +200,7 @@ export async function createNewEmptyFluidFile(
 			{
 				eventName: "createNewEmptyFile",
 				details: {
-					...(internalFarmType && { internalFarmType }),
+					internalFarmType,
 				},
 			},
 			async (event) => {
