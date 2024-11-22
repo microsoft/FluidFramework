@@ -520,6 +520,7 @@ export class GarbageCollector implements IGarbageCollector {
 				await this.telemetryTracker.logPendingEvents(logger);
 				// Update the state of summary state tracker from this run's stats.
 				this.summaryStateTracker.updateStateFromGCRunStats(gcStats);
+				this.summaryStateTracker.autoRecovery.fullGCCompleted();
 				this.newReferencesSinceLastRun.clear();
 				this.completedRuns++;
 
