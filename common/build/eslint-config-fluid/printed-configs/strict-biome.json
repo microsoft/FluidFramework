@@ -109,7 +109,7 @@
         "@typescript-eslint/consistent-type-exports": [
             "off",
             {
-                "fixMixedExportsWithInlineTypeSpecifier": false
+                "fixMixedExportsWithInlineTypeSpecifier": true
             }
         ],
         "@typescript-eslint/consistent-type-imports": [

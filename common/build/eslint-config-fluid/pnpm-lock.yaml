@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@fluid-internal/eslint-plugin-fluid':
-        specifier: ^0.1.2
-        version: 0.1.2(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^0.1.3
+        version: 0.1.3(eslint@8.55.0)(typescript@5.1.6)
       '@microsoft/tsdoc':
         specifier: ^0.14.2
         version: 0.14.2
@@ -168,8 +168,8 @@ packages:
     resolution: {integrity: sha512-qQfo2mxH5yVom1kacMtZZJFVdW+E70mqHMJvVg6WTLo+VBuQJ4TojZlfWBjK0ve5BdEeNAVxOsl/nvNMpJOaJA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
-  /@fluid-internal/eslint-plugin-fluid@0.1.2(eslint@8.55.0)(typescript@5.1.6):
-    resolution: {integrity: sha512-E7LF4ukpCoyZcxpDUQz0edXsKllbh4m8NAdiug6sSI1KIIQFwtq5vvW3kQ0Op5xA9w10T6crfcvmuAzdP84UGg==}
+  /@fluid-internal/eslint-plugin-fluid@0.1.3(eslint@8.55.0)(typescript@5.1.6):
+    resolution: {integrity: sha512-l3MPEQ34lYP9QOIQ9vx9ncyvkYqR7ci7ZixxD4RdOmGBnAFOqipBjn5Je9AJfztQ3jWgcT3jiV+AVT3rBjc2Yw==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@typescript-eslint/parser': 6.21.0(eslint@8.55.0)(typescript@5.1.6)
@@ -501,7 +501,7 @@ packages:
       '@typescript-eslint/types': 6.21.0
       '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.1.6)
       '@typescript-eslint/visitor-keys': 6.21.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
       eslint: 8.55.0
       typescript: 5.1.6
     transitivePeerDependencies:
@@ -620,11 +620,11 @@ packages:
     dependencies:
       '@typescript-eslint/types': 6.21.0
       '@typescript-eslint/visitor-keys': 6.21.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7
       globby: 11.1.0
       is-glob: 4.0.3
       minimatch: 9.0.3
-      semver: 7.5.4
+      semver: 7.6.3
       ts-api-utils: 1.0.3(typescript@5.1.6)
       typescript: 5.1.6
     transitivePeerDependencies:
