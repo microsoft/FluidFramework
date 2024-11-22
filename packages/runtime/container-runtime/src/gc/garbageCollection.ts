@@ -857,6 +857,8 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
 	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+		//* TODO: Move autoRecovery API out of SST
+		this.summaryStateTracker.autoRecovery.onSummaryAck();
 		return this.summaryStateTracker.refreshLatestSummary(result);
 	}
 

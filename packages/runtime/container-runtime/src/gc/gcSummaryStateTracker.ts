@@ -262,7 +262,6 @@ export class GCSummaryStateTracker {
 		this.latestSummaryData = this.pendingSummaryData;
 		this.pendingSummaryData = undefined;
 		this.updatedDSCountSinceLastSummary = 0;
-		this.autoRecovery.onSummaryAck();
 	}
 
 	/**
