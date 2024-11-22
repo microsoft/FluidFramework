@@ -8,6 +8,7 @@ import type { Server } from "node:http";
 import { delay } from "@fluidframework/core-utils/internal";
 import cors from "cors";
 import express from "express";
+import fetch, { Response } from "node-fetch";
 
 import { initializeCustomerService } from "../src/mock-customer-service/index.js";
 import { customerServicePort } from "../src/mock-customer-service-interface/index.js";
@@ -114,17 +115,25 @@ describe("mock-customer-service", () => {
 	/**
 	 * Express server instance backing our mock external data service.
 	 */
-	let externalDataService: Server;
+	let externalDataService: Server | undefined;
 
 	/**
 	 * Express server instance backing our mock customer service.
 	 */
-	let customerService: Server;
+	let customerService: Server | undefined;
+
+	/**
+	 * Datastore mapping of external resource id to its subscribers.
+	 *
+	 * @defaultValue A new new map will be initialized.
+	 */
+	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
 
 	beforeEach(async () => {
+		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
-			webhookCollection: new Map<string, MockWebhook<ITaskData>>(),
+			webhookCollection,
 		});
 		customerService = await initializeCustomerService({
 			port: customerServicePort,
@@ -132,18 +141,19 @@ describe("mock-customer-service", () => {
 			externalDataServiceWebhookUnregistrationUrl: `http://localhost:${externalDataServicePort}/unregister-webhook`,
 			fluidServiceUrl: `http://localhost:${localServicePort}`,
 		});
-		// Something about shutting down the servers after each test and then starting new ones on the same ports before
-		// running the next test is causing issues where the second test to run gets an "other side closed" message when
-		// it tries to issue its first request to the services. This does not happen on Node18 but does on Node20.
-		// I couldn't figure out why, but letting the JS turn end here before the test runs seems to fix it.
-		await new Promise<void>((resolve) => {
-			setImmediate(resolve);
-		});
 	});
 
+	/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 	afterEach(async () => {
-		await closeServer(externalDataService);
-		await closeServer(customerService);
+		const _externalDataService = externalDataService!;
+		const _customerService = customerService!;
+
+		externalDataService = undefined;
+		customerService = undefined;
+
+		await closeServer(_externalDataService);
+		await closeServer(_customerService);
 	});
 
 	// We have omitted `@types/supertest` due to cross-package build issue.
@@ -208,6 +218,7 @@ describe("mock-customer-service", () => {
 			await closeServer(localService);
 		}
 	});
+	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 
 	it("register-session-url: Complete data flow", async () => {
 		// Set up mock local Fluid service, which will be registered as webhook listener

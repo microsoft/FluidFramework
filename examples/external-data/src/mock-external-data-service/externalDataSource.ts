@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
+import { Response } from "node-fetch";
 
 import { ITaskData, ITaskListData } from "../model-interface/index.js";
 
