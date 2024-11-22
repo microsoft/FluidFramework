@@ -16,6 +16,16 @@ import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
 export const FLUIDBUILD_CONFIG_VERSION = 1;
 
 /**
+ * The default fluid-build config if one is not found.
+ */
+export const DEFAULT_FLUIDBUILD_CONFIG: IFluidBuildConfig = {
+	version: FLUIDBUILD_CONFIG_VERSION,
+	repoPackages: {
+		root: "",
+	},
+};
+
+/**
  * Top-most configuration for repo build settings.
  */
 export interface IFluidBuildConfig {

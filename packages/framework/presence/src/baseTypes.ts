@@ -10,7 +10,7 @@
  * Each client connection is given a unique identifier for the duration of the
  * connection. If a client disconnects and reconnects, it will be given a new
  * identifier. Prefer use of {@link ISessionClient} as a way to identify clients
- * in a session. {@link ISessionClient.currentConnectionId} will provide the current
+ * in a session. {@link ISessionClient.getConnectionId} will provide the current
  * connection identifier for a logical session client.
  *
  * @privateRemarks

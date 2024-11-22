@@ -1,5 +1,13 @@
 # @fluid-experimental/oldest-client-observer
 
+## 2.10.0
+
+Dependency updates only.
+
+## 2.5.0
+
+Dependency updates only.
+
 ## 2.4.0
 
 Dependency updates only.

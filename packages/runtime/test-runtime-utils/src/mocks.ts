@@ -58,6 +58,7 @@ import {
 	IFluidDataStoreChannel,
 	VisibilityState,
 	type ITelemetryContext,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -108,12 +109,19 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.setConnectionState(connected);
 	}
 
+	/**
+	 * @deprecated - This has been replaced by processMessages
+	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
 		this.handler?.process(message, local, localOpMetadata);
+	}
+
+	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		this.handler?.processMessages?.(messageCollection);
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
@@ -216,7 +224,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
 		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
-		protected readonly overrides?: { minimumSequenceNumber?: number },
+		protected readonly overrides?: { minimumSequenceNumber?: number | undefined },
 	) {
 		super();
 		this.deltaManager = new MockDeltaManager(() => this.clientId);
@@ -563,7 +571,7 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
-	private lastProcessedMessage?: ISequencedDocumentMessage;
+	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
 	private processFirstMessage() {
 		assert(this.messages.length > 0, "The message queue should not be empty");
 
@@ -758,12 +766,11 @@ export class MockAudience
 		return this.audienceMembers.get(clientId);
 	}
 
-	public getSelf() {
+	public getSelf(): ISelf | undefined {
 		return this._currentClientId === undefined
 			? undefined
 			: {
 					clientId: this._currentClientId,
-					client: undefined,
 				};
 	}
 
@@ -810,10 +817,14 @@ export class MockFluidDataStoreRuntime
 			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", ""),
 		);
 		this.id = overrides?.id ?? uuid();
-		this.logger = createChildLogger({
-			logger: overrides?.logger,
+		const childLoggerProps: Parameters<typeof createChildLogger>[0] = {
 			namespace: "fluid:MockFluidDataStoreRuntime",
-		});
+		};
+		const logger = overrides?.logger;
+		if (logger !== undefined) {
+			childLoggerProps.logger = logger;
+		}
+		this.logger = createChildLogger(childLoggerProps);
 		this.idCompressor = overrides?.idCompressor;
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
@@ -990,6 +1001,9 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
+	/**
+	 * @deprecated - This has been replaced by processMessages
+	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -998,6 +1012,20 @@ export class MockFluidDataStoreRuntime
 		this.deltaConnections.forEach((dc) => {
 			dc.process(message, local, localOpMetadata);
 		});
+	}
+
+	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		for (const {
+			contents,
+			localOpMetadata,
+			clientSequenceNumber,
+		} of messageCollection.messagesContent) {
+			this.process(
+				{ ...messageCollection.envelope, contents, clientSequenceNumber },
+				messageCollection.local,
+				localOpMetadata,
+			);
+		}
 	}
 
 	public processSignal(message: any, local: boolean) {

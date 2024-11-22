@@ -10,8 +10,7 @@ import {
 	type DifferenceChange,
 	type DifferenceMove,
 	SharedTreeBranchManager,
-} from "@fluid-experimental/ai-collab";
-import { type TreeView } from "@fluidframework/tree";
+} from "@fluidframework/ai-collab/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -30,6 +29,7 @@ import {
 	Tooltip,
 	Typography,
 } from "@mui/material";
+import { type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
 import React, { useState, type ReactNode, type SetStateAction } from "react";
 
@@ -127,8 +127,9 @@ export function TaskCard(props: {
 			sx={{
 				p: 4,
 				position: "relative",
-				width: "100%",
 				backgroundColor: cardColor,
+				width: "400px",
+				height: "245px",
 			}}
 			key={`${task.title}`}
 		>
@@ -288,46 +289,43 @@ export function TaskCard(props: {
 				</Popover>
 			)}
 
-			<Stack direction="row" sx={{ width: "100%" }} spacing={2}>
-				<Stack sx={{ flexGrow: 1, direction: "row" }}>
-					<Stack direction="row">
-						<TextField
-							id="input-description-label-id"
-							label="Description"
-							value={task.description}
-							onChange={(e) => (props.sharedTreeTask.description = e.target.value)}
-							sx={{ height: "100%", width: "100%" }}
-							slotProps={{
-								input: {
-									multiline: true,
-									sx: {
-										alignItems: "flex-start",
-										backgroundColor:
-											fieldDifferences.changes.description === undefined ? "white" : "#a4dbfc",
-									},
-								},
-								inputLabel: {
-									sx: { fontWeight: "bold" },
-								},
-							}}
-						/>
-						{fieldDifferences.changes.description !== undefined && (
-							<IconButton
-								onClick={(event) => {
-									setDiffOldValue(
-										fieldDifferences.changes.description
-											?.oldValue as SetStateAction<ReactNode>,
-									);
-									setDiffOldValuePopoverAnchor(event.currentTarget);
-								}}
-							>
-								<Icon icon="clarity:info-standard-line" width={20} height={20} />
-							</IconButton>
-						)}
-					</Stack>
-				</Stack>
+			<Stack direction="row" sx={{ mb: 2 }}>
+				<TextField
+					id="input-description-label-id"
+					label="Description"
+					value={task.description}
+					onChange={(e) => (props.sharedTreeTask.description = e.target.value)}
+					sx={{ height: "100%", width: "100%" }}
+					slotProps={{
+						input: {
+							multiline: true,
+							sx: {
+								alignItems: "flex-start",
+								backgroundColor:
+									fieldDifferences.changes.description === undefined ? "white" : "#a4dbfc",
+							},
+						},
+						inputLabel: {
+							sx: { fontWeight: "bold" },
+						},
+					}}
+				/>
+				{fieldDifferences.changes.description !== undefined && (
+					<IconButton
+						onClick={(event) => {
+							setDiffOldValue(
+								fieldDifferences.changes.description?.oldValue as SetStateAction<ReactNode>,
+							);
+							setDiffOldValuePopoverAnchor(event.currentTarget);
+						}}
+					>
+						<Icon icon="clarity:info-standard-line" width={20} height={20} />
+					</IconButton>
+				)}
+			</Stack>
 
-				<Stack spacing={1} minWidth={180}>
+			<Stack direction="row" spacing={2} width="100%">
+				<Stack spacing={2} width="50%">
 					<Stack direction="row" spacing={1} alignItems="center">
 						<FormControl fullWidth>
 							<InputLabel id="select-priority-label-id">
@@ -414,7 +412,9 @@ export function TaskCard(props: {
 							</Select>
 						</FormControl>
 					</Stack>
+				</Stack>
 
+				<Stack spacing={2} width="50%">
 					<Stack direction="row" spacing={1} alignItems="center">
 						<FormControl fullWidth>
 							<InputLabel id="select-assignee-label-id">

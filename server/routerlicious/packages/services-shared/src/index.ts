@@ -37,3 +37,4 @@ export {
 export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";
 export { createHealthCheckEndpoints } from "./healthCheckEndpoints";
+export { StartupCheck } from "./startupChecker";

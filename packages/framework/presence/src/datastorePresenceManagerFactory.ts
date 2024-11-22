@@ -16,7 +16,7 @@ import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.j
 import type { IPresence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
 
-import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 function assertSignalMessageIsValid(
 	message: IInboundSignalMessage | IExtensionMessage,
@@ -58,7 +58,7 @@ class PresenceManagerFactory {
 	}
 
 	public readonly factory = new BasicDataStoreFactory(
-		"@fluid-experimental/presence",
+		"@fluidframework/presence",
 		PresenceManagerDataObject,
 	);
 }

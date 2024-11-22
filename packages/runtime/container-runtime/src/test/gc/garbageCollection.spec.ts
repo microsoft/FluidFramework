@@ -507,7 +507,11 @@ describe("Garbage Collection Tests", () => {
 			const autoRecoveryTimestampMs = Date.now();
 			// Plumb the message to processMessage fn to trigger autorecovery
 			// Autorecovery: addedOutboundReference should be called with the tombstoned node, which should transition to "Active" state
-			gc.processMessage(gcTombstoneLoadedMessage, autoRecoveryTimestampMs, true /* local */);
+			gc.processMessages(
+				[gcTombstoneLoadedMessage.contents],
+				autoRecoveryTimestampMs,
+				true /* local */,
+			);
 			assert.deepEqual(
 				spies.gc.addedOutboundReference.args[0],
 				["/", nodes[0], autoRecoveryTimestampMs, /* autorecovery: */ true],
@@ -2206,15 +2210,24 @@ describe("Garbage Collection Tests", () => {
 			);
 		});
 
-		it("process remote op with unrecognized type", async () => {
-			const containerRuntimeGCMessage: ContainerRuntimeGCMessage = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
-			};
+		it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
 			assert.throws(
 				() =>
-					garbageCollector.processMessage(
-						containerRuntimeGCMessage,
+					garbageCollector.processMessages(
+						[gcMessageFromFuture as unknown as GarbageCollectionMessage],
+						Date.now(),
+						false /* local */,
+					),
+				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+				"Garbage collection message of unknown type FROM_THE_FUTURE",
+			);
+		});
+
+		it("process remote op with unrecognized type and no compat behavior", async () => {
+			assert.throws(
+				() =>
+					garbageCollector.processMessages(
+						[gcMessageFromFuture as unknown as GarbageCollectionMessage],
 						Date.now(),
 						false /* local */,
 					),

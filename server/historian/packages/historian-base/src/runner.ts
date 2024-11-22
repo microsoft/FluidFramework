@@ -33,6 +33,7 @@ export class HistorianRunner implements IRunner {
 		public readonly restTenantThrottlers: Map<string, IThrottler>,
 		public readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly documentManager: IDocumentManager,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly cache?: ICache,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly denyList?: IDenyList,
@@ -51,6 +52,7 @@ export class HistorianRunner implements IRunner {
 			this.restTenantThrottlers,
 			this.restClusterThrottlers,
 			this.documentManager,
+			this.startupCheck,
 			this.cache,
 			this.revokedTokenChecker,
 			this.denyList,
@@ -67,6 +69,9 @@ export class HistorianRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 

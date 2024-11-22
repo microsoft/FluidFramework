@@ -40,7 +40,7 @@ stages:
   jobs:
   - job: upload_run_telemetry
     displayName: Upload stage telemetry to Kusto
-    pool: Small
+    pool: Small-eastus2
     variables:
     - group: ado-feeds
 
@@ -60,6 +60,8 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
+          set -eu -o pipefail
+
           echo "Creating output folder '$WORK_FOLDER'"
           mkdir -p $WORK_FOLDER
 
@@ -78,6 +80,8 @@ stages:
         targetType: 'inline'
         workingDirectory: $(absolutePathToTelemetryGenerator)
         script: |
+          set -eu -o pipefail
+
           echo "Listing files in '$WORK_FOLDER'"
           ls -laR $WORK_FOLDER;
 
@@ -94,6 +98,7 @@ stages:
         inputs:
           targetType: 'inline'
           script: |
+            set -eu -o pipefail
             echo "Fetching test pass rate data and saving into JSON files"
             node "$(Build.SourcesDirectory)/scripts/get-test-pass-rate.mjs"
 
@@ -108,6 +113,7 @@ stages:
           targetType: 'inline'
           workingDirectory: $(absolutePathToTelemetryGenerator)
           script: |
+            set -eu -o pipefail
             echo "Listing files in '$WORK_FOLDER'"
             ls -laR $WORK_FOLDER;
 

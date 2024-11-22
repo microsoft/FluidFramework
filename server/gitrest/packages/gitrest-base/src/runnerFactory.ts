@@ -31,6 +31,7 @@ export class GitrestResources implements core.IResources {
 		public readonly port: string | number,
 		public readonly fileSystemManagerFactories: IFileSystemManagerFactories,
 		public readonly repositoryManagerFactory: IRepositoryManagerFactory,
+		public readonly startupCheck: core.IReadinessCheck,
 		public readonly enableOptimizedInitialSummary?: boolean,
 		public readonly readinessCheck?: core.IReadinessCheck,
 	) {
@@ -58,12 +59,14 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			config,
 			fileSystemManagerFactories,
 		);
+		const startupCheck = new services.StartupCheck();
 
 		return new GitrestResources(
 			config,
 			port,
 			fileSystemManagerFactories,
 			repositoryManagerFactory,
+			startupCheck,
 			undefined,
 			customizations?.readinessCheck,
 		);
@@ -175,6 +178,7 @@ export class GitrestRunnerFactory implements core.IRunnerFactory<GitrestResource
 			resources.port,
 			resources.fileSystemManagerFactories,
 			resources.repositoryManagerFactory,
+			resources.startupCheck,
 			resources.readinessCheck,
 		);
 	}

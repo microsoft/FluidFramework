@@ -194,7 +194,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		return {
 			field:
 				this.indexStack.length === 1
-					? prefix?.rootFieldOverride ?? this.getFieldKey()
+					? (prefix?.rootFieldOverride ?? this.getFieldKey())
 					: this.getFieldKey(),
 			parent: this.getOffsetPath(1, prefix),
 		};
@@ -427,7 +427,7 @@ export function prefixFieldPath(
 		return path;
 	}
 	return {
-		field: path.parent === undefined ? prefix.rootFieldOverride ?? path.field : path.field,
+		field: path.parent === undefined ? (prefix.rootFieldOverride ?? path.field) : path.field,
 		parent: prefixPath(prefix, path.parent),
 	};
 }

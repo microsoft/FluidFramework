@@ -30,7 +30,7 @@ import {
 	type Summarizable,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 /**
  * A `SharedTreeCore` with
@@ -85,9 +85,5 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 
 	public override getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
 		return super.getLocalBranch();
-	}
-
-	public get preparedCommitsCount(): number {
-		return this.commitEnricher.preparedCommitsCount;
 	}
 }

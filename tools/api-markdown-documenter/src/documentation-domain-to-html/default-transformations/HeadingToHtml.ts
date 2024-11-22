@@ -50,7 +50,7 @@ export function headingToHtml(headingNode: HeadingNode, context: TransformationC
 	} else {
 		const transformedChildren: HastElement[] = [];
 		if (headingNode.id !== undefined) {
-			transformedChildren.push(h("a", { name: headingNode.id }));
+			transformedChildren.push(h("a", { id: headingNode.id }));
 		}
 		transformedChildren.push(
 			transformChildrenUnderTag({ name: "b" }, headingNode.children, context),

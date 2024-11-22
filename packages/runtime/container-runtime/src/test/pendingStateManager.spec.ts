@@ -163,6 +163,7 @@ describe("Pending State Manager", () => {
 		const processFullBatch = (
 			messages: Partial<ISequencedDocumentMessage>[],
 			batchStartCsn: number,
+			groupedBatch: boolean,
 			emptyBatchSequenceNumber?: number,
 			resubmittedBatchId?: string,
 		) =>
@@ -179,6 +180,7 @@ describe("Pending State Manager", () => {
 						batchId: resubmittedBatchId,
 					},
 					length: messages.length,
+					groupedBatch,
 				},
 				true /* local */,
 			);
@@ -208,7 +210,7 @@ describe("Pending State Manager", () => {
 			];
 
 			submitBatch(messages);
-			processFullBatch(messages, 0 /* batchStartCsn */);
+			processFullBatch(messages, 0 /* batchStartCsn */, true /* groupedBatch */);
 		});
 
 		it("Ungrouped batch is processed correctly", () => {
@@ -286,6 +288,7 @@ describe("Pending State Manager", () => {
 			processFullBatch(
 				[],
 				1 /* batchStartCsn */,
+				true /* groupedBatch */,
 				3 /* emptyBatchSequenceNumber */,
 				"batchId" /* resubmittedBatchId */,
 			);
@@ -311,6 +314,7 @@ describe("Pending State Manager", () => {
 								type: "otherType",
 							})),
 							0 /* batchStartCsn */,
+							false /* groupedBatch */,
 						),
 					(closeError: any) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
@@ -349,6 +353,7 @@ describe("Pending State Manager", () => {
 								contents: undefined,
 							})),
 							0 /* batchStartCsn */,
+							false /* groupedBatch */,
 						),
 					(closeError: any) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
@@ -387,6 +392,7 @@ describe("Pending State Manager", () => {
 								contents: { prop1: true },
 							})),
 							0 /* batchStartCsn */,
+							false /* groupedBatch */,
 						),
 					(closeError: any) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
@@ -429,7 +435,7 @@ describe("Pending State Manager", () => {
 				);
 
 				assert.throws(
-					() => processFullBatch([message], 0 /* batchStartCsn */),
+					() => processFullBatch([message], 0 /* batchStartCsn */, false /* groupedBatch */),
 					(closeError: any) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
@@ -473,7 +479,7 @@ describe("Pending State Manager", () => {
 			);
 
 			assert.throws(
-				() => processFullBatch([message], 0 /* batchStartCsn */),
+				() => processFullBatch([message], 0 /* batchStartCsn */, false /* groupedBatch */),
 				(closeError: any) => closeError.errorType === ContainerErrorTypes.dataProcessingError,
 			);
 			mockLogger.assertMatch(
@@ -512,6 +518,7 @@ describe("Pending State Manager", () => {
 					contents: { prop1: true },
 				})),
 				0 /* batchStartCsn */,
+				false /* groupedBatch */,
 			);
 		});
 
@@ -525,7 +532,7 @@ describe("Pending State Manager", () => {
 					sequenceNumber: i + 1, // starting with sequence number 1 so first assert does not filter any op
 				}));
 				submitBatch(messages);
-				processFullBatch(messages, 0 /* batchStartCsn */);
+				processFullBatch(messages, 0 /* batchStartCsn */, false /* groupedBatch */);
 				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
 				assert.strictEqual(pendingState.length, 10);
 				pendingState = pendingStateManager.getLocalState(5).pendingStates;
@@ -627,6 +634,7 @@ describe("Pending State Manager", () => {
 							keyMessage: inboundMessage,
 						},
 						length: 1,
+						groupedBatch: false,
 					},
 					true /* local */,
 				);

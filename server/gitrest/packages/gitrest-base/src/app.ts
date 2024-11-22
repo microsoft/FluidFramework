@@ -38,6 +38,7 @@ export function create(
 	store: nconf.Provider,
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	repositoryManagerFactory: IRepositoryManagerFactory,
+	startupCheck: IReadinessCheck,
 	readinessCheck?: IReadinessCheck,
 ) {
 	// Express app configuration
@@ -96,7 +97,11 @@ export function create(
 	app.use(apiRoutes.repository.contents);
 	app.use(apiRoutes.summaries);
 
-	const healthCheckEndpoints = createHealthCheckEndpoints("gitrest", readinessCheck);
+	const healthCheckEndpoints = createHealthCheckEndpoints(
+		"gitrest",
+		startupCheck,
+		readinessCheck,
+	);
 	app.use("/healthz", healthCheckEndpoints);
 
 	// catch 404 and forward to error handler
