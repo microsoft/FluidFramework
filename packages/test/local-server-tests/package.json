@@ -55,7 +55,6 @@
 		],
 		"temp-directory": "nyc/.nyc_output"
 	},
-	"dependencies": {},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-experimental/tree": "workspace:~",
