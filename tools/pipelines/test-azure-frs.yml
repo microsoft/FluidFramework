@@ -49,7 +49,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small
+        poolBuild: Small-eastus2
         testPackage: "@fluidframework/azure-client"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:azure

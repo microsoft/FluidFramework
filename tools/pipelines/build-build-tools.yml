@@ -73,7 +73,7 @@ extends:
     taskLint: true
     taskTest: test
     buildNumberInPatch: true
-    poolBuild: Large
+    poolBuild: Large-eastus2
     cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: false

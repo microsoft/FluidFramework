@@ -118,7 +118,7 @@ stages:
     - job: debug_variables
       displayName: Show Variables
       dependsOn: [] # run in parallel
-      pool: Small
+      pool: Small-eastus2
       steps:
         - checkout: none
         - script: |
@@ -138,7 +138,7 @@ stages:
     - job: component_detection
       displayName: Component Detection
       dependsOn: [] # run in parallel
-      pool: Small
+      pool: Small-eastus2
       steps:
         - task: ComponentGovernanceComponentDetection@0
           displayName: Component Detection
@@ -152,7 +152,7 @@ stages:
       displayName: 'Combine api-extractor JSON'
       dependsOn: [] # run in parallel
       environment: 'fluid-docs-env'
-      pool: Small
+      pool: Small-eastus2
       strategy:
         runOnce:
           deploy:
@@ -166,7 +166,7 @@ stages:
     - job: build_site
       displayName: 'Build website'
       dependsOn: upload_json
-      pool: Large
+      pool: Large-eastus2
       steps:
         - checkout: self
           submodules: false
@@ -295,7 +295,7 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  pool: Small
+  pool: Small-eastus2
   dependsOn: ['build', 'guardian']
   jobs:
     - job: deploy_site

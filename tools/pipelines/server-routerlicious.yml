@@ -33,7 +33,7 @@ parameters:
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
-  default: latest
+  default: "^0.5.0"
 
 trigger:
   branches:
@@ -90,7 +90,7 @@ extends:
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
     tagName: server
-    pool: Large
+    pool: Large-eastus2
     pack: true
     lint: true
     test: ci:test
