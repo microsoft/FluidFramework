@@ -78,7 +78,6 @@ type GcWithPrivates = IGarbageCollector & {
 		{
 			latestSummaryGCVersion: GCVersion;
 			latestSummaryData: IGCSummaryTrackingData | undefined;
-			fullGCModeForAutoRecovery: boolean;
 		}
 	>;
 	readonly telemetryTracker: GCTelemetryTracker;
@@ -441,13 +440,14 @@ describe("Garbage Collection Tests", () => {
 			);
 			corruptedGCData.gcNodes["/"] = [nodes[1]];
 
-			// getGCData set up to sometimes return the corrupted data
+			// getGCData set up to return the corrupted data unless fullGC is true
 			gc = createGarbageCollector({
 				createParams: { gcOptions: { enableGCSweep: true } }, // Required to run AutoRecovery
 				getGCData: async (fullGC?: boolean) => {
 					return fullGC ? defaultGCData : corruptedGCData;
 				},
 			});
+
 			// These spies will let us monitor how each of these functions are called (or not) during runSweepPhase.
 			// The original behavior of the function is preserved, but we can check how it was called.
 			const spies = {
@@ -527,22 +527,32 @@ describe("Garbage Collection Tests", () => {
 			// Simulate a successful GC/Summary.
 			// GC Data corruption should be fixed (nodes[0] should be referenced again) and autorecovery fullGC state should be reset
 			spies.gc.runGC.resetHistory();
+			// BUG FIX: Start with a spurious summary ack arriving before GC runs. It should not yet reset the autoRecovery state.
+			await gc.refreshLatestSummary({
+				isSummaryTracked: true,
+				isSummaryNewer: false,
+			});
+			assert(
+				gc.summaryStateTracker.autoRecovery.useFullGC(),
+				"autoRecovery.useFullGC should still be true after spurious summary ack (haven't run GC yet)",
+			);
 			await gc.collectGarbage({});
 			assert(
 				spies.gc.runGC.calledWith(/* fullGC: */ true),
 				"runGC should be called with fullGC true",
 			);
+			// This matters in case GC runs but the summary fails. We'll need to run with fullGC again next time.
 			assert(
-				gc.summaryStateTracker.fullGCModeForAutoRecovery,
-				"fullGCModeForAutoRecovery should NOT have been reset to false yet",
+				gc.summaryStateTracker.autoRecovery.useFullGC(),
+				"autoRecovery.useFullGC should still be true after GC run but before summary ack",
 			);
-			await gc.summaryStateTracker.refreshLatestSummary({
+			await gc.refreshLatestSummary({
 				isSummaryTracked: true,
 				isSummaryNewer: false,
 			});
 			assert(
-				!gc.summaryStateTracker.fullGCModeForAutoRecovery,
-				"fullGCModeForAutoRecovery should have been reset to false now",
+				!gc.summaryStateTracker.autoRecovery.useFullGC(),
+				"autoRecovery.useFullGC should have been reset to false now",
 			);
 
 			// Lastly, confirm that the node was successfully restored

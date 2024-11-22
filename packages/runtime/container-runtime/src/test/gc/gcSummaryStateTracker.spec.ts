@@ -34,12 +34,12 @@ describe("GCSummaryStateTracker tests", () => {
 			gcVersionInBaseSnapshot: 1,
 			gcVersionInEffect: 1,
 		}) as any;
-		assert.equal(tracker.autoRecovery.fullGCRequested(), false, "Should be false by default");
+		assert.equal(tracker.autoRecovery.useFullGC(), false, "Should be false by default");
 
 		tracker.autoRecovery.requestFullGCOnNextRun();
 
 		assert.equal(
-			tracker.autoRecovery.fullGCRequested(),
+			tracker.autoRecovery.useFullGC(),
 			true,
 			"Should be true after requesting full GC",
 		);
@@ -47,11 +47,7 @@ describe("GCSummaryStateTracker tests", () => {
 		// After the first summary succeeds (refreshLatestSummary called), the state should be reset.
 		await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
 
-		assert.equal(
-			tracker.autoRecovery.fullGCRequested(),
-			false,
-			"Should be false after Summary Ack",
-		);
+		assert.equal(tracker.autoRecovery.useFullGC(), false, "Should be false after Summary Ack");
 	});
 
 	/**
