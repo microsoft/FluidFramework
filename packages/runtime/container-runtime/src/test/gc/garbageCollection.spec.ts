@@ -336,7 +336,7 @@ describe("Garbage Collection Tests", () => {
 		const autoRecovery: {
 			useFullGC: () => boolean;
 			requestFullGCOnNextRun: () => void;
-			onFullGCCompleted: () => void;
+			onCompletedGCRun: () => void;
 			onSummaryAck: () => void;
 		} = createGarbageCollector().autoRecovery as any;
 
@@ -348,7 +348,7 @@ describe("Garbage Collection Tests", () => {
 		autoRecovery.onSummaryAck();
 		assert.equal(autoRecovery.useFullGC(), true, "Expect true still after early Summary Ack");
 
-		autoRecovery.onFullGCCompleted();
+		autoRecovery.onCompletedGCRun();
 		assert.equal(autoRecovery.useFullGC(), true, "Expect true still after full GC alone");
 
 		autoRecovery.onSummaryAck();

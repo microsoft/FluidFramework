@@ -352,14 +352,14 @@ export class GarbageCollector implements IGarbageCollector {
 		//
 		// Transitions:
 		// - autoRecovery.requestFullGCOnNextRun :: [anything] --> "requested"
-		// - autoRecovery.onFullGCCompleted      :: "requested" --> "ran"
+		// - autoRecovery.onCompletedGCRun       :: "requested" --> "ran"
 		// - autoRecovery.onSummaryAck           :: "ran" --> undefined
 		let state: "requested" | "ran" | undefined;
 		return {
 			requestFullGCOnNextRun: () => {
 				state = "requested";
 			},
-			onFullGCCompleted: () => {
+			onCompletedGCRun: () => {
 				if (state === "requested") {
 					state = "ran";
 				}
@@ -556,7 +556,7 @@ export class GarbageCollector implements IGarbageCollector {
 				await this.telemetryTracker.logPendingEvents(logger);
 				// Update the state of summary state tracker from this run's stats.
 				this.summaryStateTracker.updateStateFromGCRunStats(gcStats);
-				this.autoRecovery.onFullGCCompleted();
+				this.autoRecovery.onCompletedGCRun();
 				this.newReferencesSinceLastRun.clear();
 				this.completedRuns++;
 
