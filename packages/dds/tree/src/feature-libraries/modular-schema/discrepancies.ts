@@ -462,13 +462,13 @@ function isFieldDiscrepancyCompatible(discrepancy: FieldDiscrepancy): boolean {
  *
  * The linear extension is represented as a lookup from each poset element to its index in the linear extension.
  */
-type LinearExtension<T> = Map<T, number>;
+export type LinearExtension<T> = Map<T, number>;
 
 /**
  * A realizer for a partially-ordered set. See:
  * https://en.wikipedia.org/wiki/Order_dimension
  */
-type Realizer<T> = LinearExtension<T>[];
+export type Realizer<T> = LinearExtension<T>[];
 
 /**
  * @privateRemarks
@@ -502,7 +502,7 @@ const FieldKindIdentifiers = {
  * identifier
  * ```
  */
-const fieldRealizer: Realizer<FieldKindIdentifier> = [
+export const fieldRealizer: Realizer<FieldKindIdentifier> = [
 	[
 		FieldKindIdentifiers.forbidden,
 		FieldKindIdentifiers.identifier,
@@ -519,7 +519,7 @@ const fieldRealizer: Realizer<FieldKindIdentifier> = [
 	],
 ].map((extension) => new Map(extension.map((identifier, index) => [identifier, index])));
 
-const PosetComparisonResult = {
+export const PosetComparisonResult = {
 	Less: "<",
 	Greater: ">",
 	Equal: "=",
@@ -528,7 +528,11 @@ const PosetComparisonResult = {
 type PosetComparisonResult =
 	(typeof PosetComparisonResult)[keyof typeof PosetComparisonResult];
 
-function comparePosetElements<T>(a: T, b: T, realizer: Realizer<T>): PosetComparisonResult {
+export function comparePosetElements<T>(
+	a: T,
+	b: T,
+	realizer: Realizer<T>,
+): PosetComparisonResult {
 	let hasLessThanResult = false;
 	let hasGreaterThanResult = false;
 	for (const extension of realizer) {
@@ -551,7 +555,7 @@ function comparePosetElements<T>(a: T, b: T, realizer: Realizer<T>): PosetCompar
 			: PosetComparisonResult.Equal;
 }
 
-function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
+export function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
 	const comparison = comparePosetElements(a, b, realizer);
 	return (
 		comparison === PosetComparisonResult.Less || comparison === PosetComparisonResult.Equal

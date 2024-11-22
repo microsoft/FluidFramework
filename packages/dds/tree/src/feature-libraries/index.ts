@@ -84,6 +84,12 @@ export {
 	type NodeKindDiscrepancy,
 	type NodeFieldsDiscrepancy,
 	isNeverTree,
+	type LinearExtension,
+	type Realizer,
+	fieldRealizer,
+	PosetComparisonResult,
+	comparePosetElements,
+	posetLte,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";

@@ -7,7 +7,6 @@ import {
 	AdaptedViewSchema,
 	type TreeNodeStoredSchema,
 	type Adapters,
-	type FieldKindIdentifier,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
@@ -19,6 +18,9 @@ import {
 	type FieldDiscrepancy,
 	getAllowedContentDiscrepancies,
 	isNeverTree,
+	PosetComparisonResult,
+	fieldRealizer,
+	comparePosetElements,
 } from "../../feature-libraries/index.js";
 import {
 	normalizeFieldSchema,
@@ -26,7 +28,7 @@ import {
 	type ImplicitFieldSchema,
 } from "../schemaTypes.js";
 import { toStoredSchema } from "../toStoredSchema.js";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
@@ -287,85 +289,4 @@ export class ViewSchema {
 		// TODO: support adapters like missing field adapters.
 		return original;
 	}
-}
-
-/**
- * A linear extension of a partially-ordered set of `T`s. See:
- * https://en.wikipedia.org/wiki/Linear_extension
- *
- * The linear extension is represented as a lookup from each poset element to its index in the linear extension.
- */
-type LinearExtension<T> = Map<T, number>;
-
-/**
- * A realizer for a partially-ordered set. See:
- * https://en.wikipedia.org/wiki/Order_dimension
- */
-type Realizer<T> = LinearExtension<T>[];
-
-/**
- * A realizer for the partial order of field kind relaxability.
- *
- * It seems extremely likely that this partial order will remain dimension 2 over time (i.e. the set of allowed relaxations can be visualized
- * with a [dominance drawing](https://en.wikipedia.org/wiki/Dominance_drawing)), so this strategy allows efficient comarison between field kinds
- * without excessive casework.
- *
- * Hasse diagram for the partial order is shown below (lower fields can be relaxed to higher fields):
- * ```
- * sequence
- *    |
- * optional
- *    |    \
- * required forbidden
- *    |
- * identifier
- * ```
- */
-const fieldRealizer: Realizer<FieldKindIdentifier> = [
-	[
-		FieldKinds.forbidden,
-		FieldKinds.identifier,
-		FieldKinds.required,
-		FieldKinds.optional,
-		FieldKinds.sequence,
-	],
-	[
-		FieldKinds.identifier,
-		FieldKinds.required,
-		FieldKinds.forbidden,
-		FieldKinds.optional,
-		FieldKinds.sequence,
-	],
-].map((extension) => new Map(extension.map((kind, index) => [kind.identifier, index])));
-
-const PosetComparisonResult = {
-	Less: "<",
-	Greater: ">",
-	Equal: "=",
-	Incomparable: "||",
-} as const;
-type PosetComparisonResult =
-	(typeof PosetComparisonResult)[keyof typeof PosetComparisonResult];
-
-function comparePosetElements<T>(a: T, b: T, realizer: Realizer<T>): PosetComparisonResult {
-	let hasLessThanResult = false;
-	let hasGreaterThanResult = false;
-	for (const extension of realizer) {
-		const aIndex = extension.get(a);
-		const bIndex = extension.get(b);
-		assert(aIndex !== undefined && bIndex !== undefined, "Invalid realizer");
-		if (aIndex < bIndex) {
-			hasLessThanResult = true;
-		} else if (aIndex > bIndex) {
-			hasGreaterThanResult = true;
-		}
-	}
-
-	return hasLessThanResult
-		? hasGreaterThanResult
-			? PosetComparisonResult.Incomparable
-			: PosetComparisonResult.Less
-		: hasGreaterThanResult
-			? PosetComparisonResult.Greater
-			: PosetComparisonResult.Equal;
 }
