@@ -6,7 +6,7 @@
 parameters:
 - name: poolBuild
   type: object
-  default: Small
+  default: Small-eastus2
 
 - name: testPackage
   type: string

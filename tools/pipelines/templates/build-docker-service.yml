@@ -60,7 +60,7 @@ parameters:
 
 - name: pool
   type: string
-  default: Small
+  default: Small-eastus2
 
 - name: buildToolsVersionToInstall
   type: string

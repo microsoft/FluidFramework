@@ -90,7 +90,7 @@ extends:
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
     tagName: server
-    pool: Large
+    pool: Large-eastus2
     pack: true
     lint: true
     test: ci:test

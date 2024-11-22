@@ -89,7 +89,7 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: .
     tagName: client
-    poolBuild: Large
+    poolBuild: Large-eastus2
     cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: true
@@ -120,4 +120,3 @@ extends:
           node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json
-

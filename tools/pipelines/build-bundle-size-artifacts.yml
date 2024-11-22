@@ -44,7 +44,7 @@ extends:
     taskBuildDocs: false
     buildDirectory: .
     tagName: bundle-artifacts
-    poolBuild: Large
+    poolBuild: Large-eastus2
     checkoutSubmodules: true
     releaseBuildOverride: none
     publishOverride: default

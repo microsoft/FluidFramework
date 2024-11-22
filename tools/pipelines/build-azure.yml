@@ -80,7 +80,7 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: azure
     tagName: azure
-    poolBuild: Large
+    poolBuild: Large-eastus2
     cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: false
