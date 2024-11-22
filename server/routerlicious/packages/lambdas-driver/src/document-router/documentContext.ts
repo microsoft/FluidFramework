@@ -60,7 +60,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 	 * Updates the head offset for the context.
 	 */
 	public setHead(head: IQueuedMessage, allowBackToOffset?: number | undefined) {
-		// if allowBackToOffset is set and is lower than this.tailInternal, then dont reprocess and return early
+		// if allowBackToOffset is set and is lower than this.tailInternal, then don't reprocess and return early
 		if (allowBackToOffset !== undefined && allowBackToOffset <= this.tailInternal.offset) {
 			Lumberjack.info("Not updating documentContext head and returning early", {
 				allowBackToOffset,
@@ -71,8 +71,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		}
 		assert(
 			head.offset > this.head.offset || head.offset === allowBackToOffset,
-			`${head.offset} > ${this.head.offset} || ${head.offset} === ${allowBackToOffset}` +
-				`(${head.topic}, ${head.partition}, ${this.routingKey.tenantId}/${this.routingKey.documentId})`,
+			`Head offset ${head.offset} must be greater than the current head offset ${this.head.offset} or equal to the resume offset ${allowBackToOffset}. Topic ${head.topic}, partition ${head.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
 		);
 
 		if (head.offset <= this.head.offset) {
@@ -103,8 +102,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 
 		assert(
 			offset > this.tail.offset && offset <= this.head.offset,
-			`${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset} ` +
-				`(${message.topic}, ${message.partition}, ${this.routingKey.tenantId}/${this.routingKey.documentId})`,
+			`Checkpoint offset ${offset} must be greater than the current tail offset ${this.tail.offset} and less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
 		);
 
 		// Update the tail and broadcast the checkpoint

@@ -123,7 +123,7 @@ export class DocumentContextManager extends EventEmitter {
 		assert(
 			(tail.offset > this.tail.offset || tail.offset === allowBackToOffset) &&
 				tail.offset <= this.head.offset,
-			`(${tail.offset} > ${this.tail.offset} || ${tail.offset} === ${allowBackToOffset}) && ${tail.offset} <= ${this.head.offset}`,
+			`Tail offset ${tail.offset} must be greater than the current tail offset ${this.tail.offset} or equal to the resume offset ${allowBackToOffset}, and less than or equal to the head offset ${this.head.offset}.`,
 		);
 
 		if (tail.offset <= this.tail.offset) {

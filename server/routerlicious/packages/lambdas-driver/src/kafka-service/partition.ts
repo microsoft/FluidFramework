@@ -153,7 +153,10 @@ export class Partition extends EventEmitter {
 
 	public pause(offset: number): void {
 		if (this.paused) {
-			Lumberjack.info(`Partition already paused, returning early.`, { partitionId: this.id });
+			Lumberjack.warning(`Partition already paused, returning early.`, {
+				partitionId: this.id,
+				offset,
+			});
 			return;
 		}
 		this.paused = true;
@@ -164,12 +167,12 @@ export class Partition extends EventEmitter {
 		if (this.lambda?.pause) {
 			this.lambda.pause(offset);
 		}
-		Lumberjack.info(`Partition paused`, { partitionId: this.id });
+		Lumberjack.info(`Partition paused`, { partitionId: this.id, offset });
 	}
 
 	public resume(): void {
 		if (!this.paused) {
-			Lumberjack.info(`Partition already resumed, returning early.`, {
+			Lumberjack.warning(`Partition already resumed, returning early.`, {
 				partitionId: this.id,
 			});
 			return;

@@ -206,9 +206,9 @@ export class DocumentPartition {
 
 	public pause(offset: number) {
 		if (this.paused) {
-			Lumberjack.info("Doc partition already paused, returning early.", {
-				documentId: this.documentId,
-				tenantId: this.tenantId,
+			Lumberjack.warning("Doc partition already paused, returning early.", {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+				offset,
 			});
 			return;
 		}
@@ -221,25 +221,27 @@ export class DocumentPartition {
 			this.lambda.pause(offset);
 		}
 		Lumberjack.info("Doc partition paused", {
-			documentId: this.documentId,
-			tenantId: this.tenantId,
+			...getLumberBaseProperties(this.documentId, this.tenantId),
+			offset,
 		});
 	}
 
 	public resume() {
 		if (!this.paused) {
-			Lumberjack.info("Doc partition already resumed, returning early.", {
-				documentId: this.documentId,
-				tenantId: this.tenantId,
+			Lumberjack.warning("Doc partition already resumed, returning early.", {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
 			});
 			return;
 		}
 		this.paused = false;
 
 		this.q.resume();
+
+		if (this.lambda?.resume) {
+			this.lambda.resume();
+		}
 		Lumberjack.info("Doc partition resumed", {
-			documentId: this.documentId,
-			tenantId: this.tenantId,
+			...getLumberBaseProperties(this.documentId, this.tenantId),
 		});
 	}
 }

@@ -85,7 +85,7 @@ export class DocumentLambda implements IPartitionLambda {
 					}`,
 			);
 			// update reprocessRange to avoid reprocessing the same message again
-			if (this.reprocessingOffset) {
+			if (this.reprocessingOffset !== undefined) {
 				this.updateReprocessRange(this.reprocessingOffset);
 			}
 			return undefined;
@@ -95,7 +95,7 @@ export class DocumentLambda implements IPartitionLambda {
 		this.contextManager.setTail(message, this.reprocessingOffset);
 
 		// update reprocessRange to avoid reprocessing the same message again
-		if (this.reprocessingOffset) {
+		if (this.reprocessingOffset !== undefined) {
 			this.updateReprocessRange(this.reprocessingOffset);
 		}
 
@@ -137,9 +137,6 @@ export class DocumentLambda implements IPartitionLambda {
 	}
 
 	private isOffsetWithinReprocessRange(offset: number) {
-		if (this.reprocessRange === undefined) {
-			return false;
-		}
 		return (
 			this.reprocessRange.startOffset !== undefined &&
 			this.reprocessRange.endOffset !== undefined &&
