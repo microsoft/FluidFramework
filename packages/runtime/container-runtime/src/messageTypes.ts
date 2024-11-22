@@ -59,29 +59,6 @@ export enum ContainerMessageType {
 }
 
 /**
- * How should an older client handle an unrecognized remote op type?
- *
- * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
- * @internal
- */
-export type CompatModeBehavior =
-	/** Ignore the op. It won't be persisted if this client summarizes */
-	| "Ignore"
-	/** Fail processing immediately. (The container will close) */
-	| "FailToProcess";
-
-/**
- * All the info an older client would need to know how to handle an unrecognized remote op type
- *
- * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
- * @internal
- */
-export interface IContainerRuntimeMessageCompatDetails {
-	/** How should an older client handle an unrecognized remote op type? */
-	behavior: CompatModeBehavior;
-}
-
-/**
  * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime.
  * Message type are differentiated via a `type` string and contain different contents depending on their type.
  *

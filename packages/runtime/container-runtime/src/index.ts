@@ -26,7 +26,6 @@ export {
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
-	CompatModeBehavior,
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 export { IBlobManagerLoadInfo } from "./blobManager/index.js";
