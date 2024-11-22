@@ -35,7 +35,9 @@ describe("Menu Accessibility Check", () => {
 		};
 	});
 	const MenuWrapper: React.FC = () => {
-		const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
+		const [menuSelection, setMenuSelection] = React.useState<MenuSelection>({
+			type: "homeMenuSelection",
+		});
 
 		return (
 			<MessageRelayContext.Provider value={mockMessageRelay}>
