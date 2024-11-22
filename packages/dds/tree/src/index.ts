@@ -35,9 +35,21 @@ export {
 export { type Brand } from "./util/index.js";
 
 export type {
+	/**
+	 * @deprecated Import from core-interfaces
+	 */
 	Listeners,
+	/**
+	 * @deprecated Import from core-interfaces
+	 */
 	IsListener,
+	/**
+	 * @deprecated Import from core-interfaces
+	 */
 	Listenable,
+	/**
+	 * @deprecated Import from core-interfaces
+	 */
 	Off,
 } from "@fluidframework/core-interfaces";
 
