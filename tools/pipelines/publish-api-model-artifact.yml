@@ -91,7 +91,7 @@ stages:
 # also, the artifact will be uploaded as latest-v*.tar.gz where * is the major version
 - stage: check_branch_version
   displayName: 'Check Version Deployment Condition'
-  pool: Small
+  pool: Small-eastus2
   jobs:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
@@ -130,7 +130,7 @@ stages:
       displayName: 'Combine api-extractor JSON'
       dependsOn: check_branch_version
       environment: 'fluid-docs-env'
-      pool: Large
+      pool: Large-eastus2
       variables:
         uploadAsLatestRelease: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'] ]
         majorVersion: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion'] ]
@@ -151,7 +151,7 @@ stages:
 # this ensures that the generated website is up-to-date with the latest changes
 - stage: deploy
   displayName: 'Deploy website'
-  pool: Small
+  pool: Small-eastus2
   dependsOn: ['check_branch_version']
   jobs:
     - job: deploy_site
