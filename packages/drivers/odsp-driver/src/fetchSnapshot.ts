@@ -47,7 +47,7 @@ import { EpochTracker } from "./epochTracker.js";
 import { getQueryString } from "./getQueryString.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
-import { checkForInternalFarmType } from "./odspUrlHelper.js";
+import { checkForKnownServerFarmType } from "./odspUrlHelper.js";
 import {
 	IOdspResponse,
 	fetchAndParseAsJSONHelper,
@@ -298,7 +298,7 @@ async function fetchLatestSnapshotCore(
 	return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
 		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
 		const eventName = fetchSnapshotForLoadingGroup ? "TreesLatestForGroup" : "TreesLatest";
-		const internalFarmType = checkForInternalFarmType(odspResolvedUrl.siteUrl);
+		const internalFarmType = checkForKnownServerFarmType(odspResolvedUrl.siteUrl);
 
 		const perfEvent = {
 			eventName,

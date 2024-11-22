@@ -32,7 +32,7 @@ import {
 } from "./../contracts.js";
 import { EpochTracker, FetchType } from "./../epochTracker.js";
 import { getHeadersWithAuth } from "./../getUrlAndHeadersWithAuth.js";
-import { checkForInternalFarmType } from "./../odspUrlHelper.js";
+import { checkForKnownServerFarmType } from "./../odspUrlHelper.js";
 import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./../odspUtils.js";
 import { runWithRetry } from "./../retryUtils.js";
 
@@ -223,7 +223,7 @@ export async function createNewFluidContainerCore<T>(args: {
 		fetchType,
 		validateResponseCallback,
 	} = args;
-	const internalFarmType = checkForInternalFarmType(initialUrl);
+	const internalFarmType = checkForKnownServerFarmType(initialUrl);
 
 	return getWithRetryForTokenRefresh(async (options) => {
 		return PerformanceEvent.timedExecAsync(

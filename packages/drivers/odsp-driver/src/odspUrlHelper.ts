@@ -132,7 +132,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
  * @param urlOnSite - The URL of the site or a resource on the site
  * @returns undefined if the URL doesn't match known SPDF/MSIT patterns, "SPDF" if it's SPDF, "MSIT" if it's MSIT
  */
-export function checkForInternalFarmType(urlOnSite: string): "SPDF" | "MSIT" | undefined {
+export function checkForKnownServerFarmType(urlOnSite: string): "SPDF" | "MSIT" | undefined {
 	const domain = new URL(urlOnSite).hostname.toLowerCase();
 	if (domain.endsWith(".sharepoint-df.com")) {
 		return "SPDF";
