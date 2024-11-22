@@ -773,7 +773,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		const { pendingRename } = this.odspResolvedUrl;
 		if (
 			pendingRename !== undefined &&
-			this.config.getBoolean("Fluid.Driver.Odsp.disablePendingRename") !== false
+			this.config.getBoolean("Fluid.Driver.Odsp.disablePendingRename") !== true
 		) {
 			// This is a temporary file, so we need to rename it to remove the .tmp extension
 			// This should only happen for the initial summary upload for a new file

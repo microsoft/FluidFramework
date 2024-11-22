@@ -260,7 +260,7 @@ export async function renameEmptyFluidFile(
 		const method = "PATCH";
 		const authHeader = await getAuthHeader(
 			{ ...options, request: { url, method } },
-			"CreateNewFile",
+			"renameFile",
 		);
 
 		return PerformanceEvent.timedExecAsync(
@@ -290,7 +290,6 @@ export async function renameEmptyFluidFile(
 				const content = fetchResponse.content;
 				if (!content?.id) {
 					throw new NonRetryableError(
-						// pre-0.58 error message: ODSP CreateFile call returned no item ID
 						"ODSP RenameFile call returned no item ID (for empty file)",
 						OdspErrorTypes.incorrectServerResponse,
 						{ driverVersion },
