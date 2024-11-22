@@ -100,6 +100,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	 */
 	private readonly attendees = new Map<ClientConnectionId | ClientSessionId, SessionClient>();
 
+	private readonly staleConnectionClients = new Set<SessionClient>();
+
 	public constructor(
 		clientSessionId: ClientSessionId,
 		private readonly datastore: SystemWorkspaceDatastore,
@@ -110,6 +112,15 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	) {
 		this.selfAttendee = new SessionClient(clientSessionId);
 		this.attendees.set(clientSessionId, this.selfAttendee);
+
+		// Set a timeout to check for stale connections after 30 seconds
+		setTimeout(() => {
+			for (const client of this.staleConnectionClients) {
+				// Mark the client as disconnected and remove from the stale connection set
+				client.setDisconnected();
+				this.staleConnectionClients.delete(client);
+			}
+		}, 30000);
 	}
 
 	public ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
@@ -143,20 +154,15 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				clientSessionId,
 				clientConnectionId,
 				/* order */ value.rev,
+				// If the attendee is present in audience OR if the attendee update is from the sending remote client itself,
+				// then the attendee is considered connected.
+				/* isConnected */ senderConnectionId === clientConnectionId ||
+					audienceMembers.has(clientConnectionId),
 			);
-			const isAttendeeConnected =
-				// We generally use audience membership to determine an attendee's connection status.
-				// If an attendee's connection ID is present within audience, they are considered to be connected.
-				audienceMembers.has(clientConnectionId) ||
-				// A special override case we enforce is the attendee that sent the update; they are always considered connected regardless
-				// of audience membership. This is to handle the case where the sender is not in the audience.
-				senderConnectionId === clientConnectionId;
 
-			if (isAttendeeConnected) {
-				attendee.setConnected();
-				if (isJoining) {
-					joiningAttendees.add(attendee);
-				}
+			// If the attendee is joining the session, add them to the list of joining attendees to be announced later.
+			if (isJoining) {
+				joiningAttendees.add(attendee);
 			}
 
 			const knownSessionId: InternalTypes.ValueRequiredState<ClientSessionId> | undefined =
@@ -203,6 +209,13 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		if (!attendeeReconnected && connected) {
 			attendee.setDisconnected();
 			this.events.emit("attendeeDisconnected", attendee);
+
+			// If local disconnect, mark the connection status of all attendees as stale.
+			if (attendee === this.selfAttendee) {
+				for (const staleConnecionClient of this.attendees.values()) {
+					this.staleConnectionClients.add(staleConnecionClient);
+				}
+			}
 		}
 	}
 
@@ -236,6 +249,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		clientSessionId: ClientSessionId,
 		clientConnectionId: ClientConnectionId,
 		order: number,
+		isConnected: boolean,
 	): { attendee: SessionClient; isJoining: boolean } {
 		let attendee = this.attendees.get(clientSessionId);
 		let isJoining = false;
@@ -245,13 +259,17 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			// entry to map.
 			attendee = new SessionClient(clientSessionId, clientConnectionId);
 			this.attendees.set(clientSessionId, attendee);
-			isJoining = true;
+			if (isConnected) {
+				attendee.setConnected();
+				isJoining = true;
+			}
 		} else if (order > attendee.order) {
 			// The given association is newer than the one we have.
 			// Update the order and current connection ID.
 			attendee.order = order;
 			// Known attendee is joining the session if they are currently disconnected
-			if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected) {
+			if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected && isConnected) {
+				attendee.setConnected();
 				isJoining = true;
 			}
 			attendee.connectionId = clientConnectionId;
