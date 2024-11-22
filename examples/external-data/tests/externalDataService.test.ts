@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import type { Server } from "node:http";
 
 import { delay } from "@fluidframework/core-utils/internal";
 import cors from "cors";
 import express from "express";
-import fetch from "node-fetch";
 import request from "supertest";
 
 import {
@@ -34,7 +34,7 @@ describe("mock-external-data-service", () => {
 	/**
 	 * External data source backing our service.
 	 */
-	let externalDataSource: ExternalDataSource | undefined;
+	let externalDataSource: ExternalDataSource;
 
 	/**
 	 * Express server instance backing our service.
@@ -44,7 +44,7 @@ describe("mock-external-data-service", () => {
 	 * These tests spin up their own Express server instance so we can directly test against it
 	 * (using supertest), rather than leaning on network calls.
 	 */
-	let externalDataService: Server | undefined;
+	let externalDataService: Server;
 
 	/**
 	 * Datastore mapping of external resource id to its subscribers.
@@ -63,41 +63,33 @@ describe("mock-external-data-service", () => {
 		});
 	});
 
-	/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 	afterEach(async () => {
-		externalDataSource = undefined;
-
-		const _externalDataService = externalDataService!;
-		externalDataService = undefined;
-
-		await closeServer(_externalDataService);
+		await closeServer(externalDataService);
 	});
 
 	async function getCurrentExternalData(): Promise<ITaskData> {
-		const fetchResponse = await externalDataSource!.fetchData(externalTaskListId);
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		const responseBody = JSON.parse(fetchResponse.body.toString()) as Record<
+		const fetchResponse = await externalDataSource.fetchData(externalTaskListId);
+		const responseBody = (await fetchResponse.json()) as Record<
 			string | number | symbol,
 			unknown
 		>;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		return assertValidTaskData((responseBody as any).taskList);
+		return assertValidTaskData(responseBody.taskList);
 	}
 
-	// We have omitted `@types/supertest` due to cross-package build issue.
-	// So for these tests we have to live with `any`.
-	/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 	it("fetch-tasks: Ensure server yields the data we expect", async () => {
 		const expectedData = await getCurrentExternalData();
-		await request(externalDataService!)
+		await request(externalDataService)
 			.get(`/fetch-tasks/${externalTaskListId}`)
-			.expect(200, { taskList: expectedData });
+			// Not sure why supertest's expect() fails the object comparison here, so we'll just do it manually.
+			.expect((response: Response) => {
+				assert.equal(response.status, 200);
+				assert.deepEqual(response.body, { taskList: expectedData });
+			});
 	});
 
 	// TODO: figure out a way to mock the webhookCollection or instantiate in the tests so that this test passes
 	it("set-tasks: Ensure external data is updated with provided data", async () => {
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/set-tasks/${externalTaskListId}`)
 			.send({ taskList: newData })
 			.expect(200);
@@ -108,7 +100,7 @@ describe("mock-external-data-service", () => {
 
 	it("set-tasks: Ensure server rejects update with no data", async () => {
 		const oldData = await getCurrentExternalData();
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/set-tasks/${externalTaskListId}`)
 			.send()
 			.expect(400);
@@ -119,7 +111,7 @@ describe("mock-external-data-service", () => {
 
 	it("set-tasks: Ensure server rejects update with malformed data", async () => {
 		const oldData = await getCurrentExternalData();
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/set-tasks/${externalTaskListId}`)
 			.send({ tasks: "42:Determine meaning of life:37" })
 			.expect(400);
@@ -129,7 +121,7 @@ describe("mock-external-data-service", () => {
 	});
 
 	it("register-for-webhook: Registering valid URI succeeds", async () => {
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/register-for-webhook`)
 			.send({ url: "https://www.fluidframework.com", externalTaskListId })
 			.expect(200);
@@ -137,17 +129,17 @@ describe("mock-external-data-service", () => {
 
 	it("register-for-webhook: Registering invalid URI fails", async () => {
 		// missing url
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/register-for-webhook`)
 			.send({ externalTaskListId })
 			.expect(400);
 		// invalid uri
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/register-for-webhook`)
 			.send({ url: "I am not a URI", externalTaskListId })
 			.expect(400);
 		// invalid data type
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/register-for-webhook`)
 			.send({ url: 123, externalTaskListId })
 			.expect(400);
@@ -155,43 +147,43 @@ describe("mock-external-data-service", () => {
 
 	it("register-for-webhook: Registering missing/invalid externalTaskListId fails", async () => {
 		// missing externalTaskListId
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/register-for-webhook`)
 			.send({ url: "https://www.fluidframework.com" })
 			.expect(400);
 		// invalid data type
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/register-for-webhook`)
 			.send({ url: "https://www.fluidframework.com", externalTaskListId: 123 })
 			.expect(400);
 	});
 
 	it("unregister-webhook: Unregistering from an existing webhook with a valid URI succeeds", async () => {
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/register-for-webhook`)
 			.send({ url: "https://www.fluidframework.com", externalTaskListId })
 			.expect(200);
 
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/unregister-webhook`)
 			.send({ url: "https://www.fluidframework.com", externalTaskListId })
 			.expect(200);
 	});
 
 	it("unregister-webhook: Unregistering from an webhook that doesn't exist fails", async () => {
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/unregister-webhook`)
 			.send({ url: "https://www.thefirstSubscriber.com", externalTaskListId })
 			.expect(400);
 	});
 
 	it("unregister-webhook: Unregistering from an webhook that exists but the provided subscriber is not subscribed to succeeds", async () => {
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/register-for-webhook`)
 			.send({ url: "https://www.thefirstSubscriber.com", externalTaskListId })
 			.expect(200);
 
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/unregister-webhook`)
 			.send({ url: "https://www.theSecondSubscriber.com", externalTaskListId })
 			.expect(200);
@@ -199,14 +191,14 @@ describe("mock-external-data-service", () => {
 
 	it("unregister-webhook: Invalid request with missing/invalid url fails", async () => {
 		// invalid url
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/unregister-webhook`)
 			.send({ url: "not a url", externalTaskListId })
 			.expect(400);
 		// missing url
-		await request(externalDataService!).post(`/unregister-webhook`).send({}).expect(400);
+		await request(externalDataService).post(`/unregister-webhook`).send({}).expect(400);
 		// invalid data type
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/unregister-webhook`)
 			.send({ url: 123, externalTaskListId })
 			.expect(400);
@@ -214,23 +206,20 @@ describe("mock-external-data-service", () => {
 
 	it("unregister-webhook: Invalid request with missing/invalid externalTaskListId fails", async () => {
 		// missing externalTaskListId
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/unregister-webhook`)
 			.send({ url: "https://www.thefirstSubscriber.com" })
 			.expect(400);
 		// invalid externalTaskListId data type
-		await request(externalDataService!)
+		await request(externalDataService)
 			.post(`/unregister-webhook`)
 			.send({ url: "https://www.thefirstSubscriber.com", externalTaskListId: 123 })
 			.expect(400);
 	});
-
-	/* eslint-enable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
-	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 });
 
 describe("mock-external-data-service: webhook", () => {
-	let externalDataService: Server | undefined;
+	let externalDataService: Server;
 	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
 
 	beforeEach(async () => {
@@ -241,13 +230,8 @@ describe("mock-external-data-service: webhook", () => {
 		});
 	});
 
-	/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 	afterEach(async () => {
-		const _externalDataService = externalDataService!;
-		externalDataService = undefined;
-
-		await closeServer(_externalDataService);
+		await closeServer(externalDataService);
 	});
 
 	it("register-for-webhook", async () => {
@@ -320,6 +304,4 @@ describe("mock-external-data-service: webhook", () => {
 			await closeServer(localService);
 		}
 	});
-
-	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 });
