@@ -60,17 +60,23 @@ interface ICreateDocumentResponseBody {
 	/**
 	 * The id of the created document.
 	 */
-	id: string;
+	readonly id: string;
 	/**
 	 * The access token for the created document.
-	 * TODO: This is getting generated multiple times. We should generate it once and reuse it.
+	 * When this is provided, the client should use this token to connect to the document.
+	 * Otherwise, if not provided, the client will need to generate a new token using the provided document id.
+	 * @privateRemarks TODO: This is getting generated multiple times. We should generate it once and reuse it.
 	 */
-	token?: string;
+	readonly token?: string;
 	/**
 	 * The session information for the created document.
+	 * When this is provided, the client should use this session information to connect to the document in the correct location.
+	 * Otherwise, if not provided, the client will need to discover the correct location using the getSession API or continue using the
+	 * original location used when creating the document.
 	 */
-	session?: ISession;
+	readonly session?: ISession;
 }
+
 async function generateCreateDocumentResponseBody(
 	request: Request,
 	tenantManager: ITenantManager,
@@ -85,12 +91,8 @@ async function generateCreateDocumentResponseBody(
 		messageBrokerId?: string;
 	},
 ): Promise<ICreateDocumentResponseBody> {
-	const responseBody: ICreateDocumentResponseBody = {
-		id: documentId,
-		token: undefined,
-		session: undefined,
-	};
 	const authorizationHeader = request.header("Authorization");
+	let newDocumentAccessToken: string | undefined;
 	if (generateToken && authorizationHeader !== undefined) {
 		// Generate creation token given a jwt from header
 		const tokenRegex = /Basic (.+)/;
@@ -100,8 +102,9 @@ async function generateCreateDocumentResponseBody(
 			throw new NetworkError(400, "Authorization header is missing or malformed");
 		}
 		const tenantKey = await tenantManager.getKey(tenantId);
-		responseBody.token = getCreationToken(token, tenantKey, documentId);
+		newDocumentAccessToken = getCreationToken(token, tenantKey, documentId);
 	}
+	let newDocumentSession: ISession | undefined;
 	if (enableDiscovery) {
 		// Session information
 		const session: ISession = {
@@ -116,9 +119,13 @@ async function generateCreateDocumentResponseBody(
 		if (sessionInfo.messageBrokerId) {
 			session.messageBrokerId = sessionInfo.messageBrokerId;
 		}
-		responseBody.session = session;
+		newDocumentSession = session;
 	}
-	return responseBody;
+	return {
+		id: documentId,
+		token: newDocumentAccessToken,
+		session: newDocumentSession,
+	};
 }
 
 export function create(

@@ -29,10 +29,10 @@ export interface IPlugin {
 /**
  * @internal
  */
-export async function createDocumentRouter<T>(
+export async function createDocumentRouter<TConfig>(
 	config: nconf.Provider,
 	customizations?: Record<string, any>,
-): Promise<IPartitionLambdaFactory<T>> {
+): Promise<IPartitionLambdaFactory<TConfig>> {
 	const pluginConfig = config.get("documentLambda") as string | object;
 	const plugin = // eslint-disable-next-line @typescript-eslint/no-require-imports
 		(typeof pluginConfig === "object" ? pluginConfig : require(pluginConfig)) as IPlugin;
@@ -40,5 +40,5 @@ export async function createDocumentRouter<T>(
 	// Factory used to create document lambda processors
 	const factory = await plugin.create(config, customizations);
 
-	return new DocumentLambdaFactory<T>(factory, DefaultServiceConfiguration.documentLambda);
+	return new DocumentLambdaFactory<TConfig>(factory, DefaultServiceConfiguration.documentLambda);
 }

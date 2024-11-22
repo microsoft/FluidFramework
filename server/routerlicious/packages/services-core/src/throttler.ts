@@ -96,6 +96,7 @@ export interface IThrottlerHelper {
 
 	/**
 	 * Retrieve most recent throttle status for given id.
+	 * @returns Throttle status if found, otherwise undefined if given id is not already tracked for throttling.
 	 */
 	getThrottleStatus(id: string): Promise<IThrottlerResponse | undefined>;
 }
