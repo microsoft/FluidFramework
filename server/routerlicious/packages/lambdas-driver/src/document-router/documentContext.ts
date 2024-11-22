@@ -27,6 +27,8 @@ export class DocumentContext extends EventEmitter implements IContext {
 	private closed = false;
 	private contextError = undefined;
 
+	public headUpdatedAfterResume = false; // used to track whether the head has been updated after a resume event, so that we allow moving out of order only once during resume.
+
 	constructor(
 		private readonly routingKey: IRoutingKey,
 		head: IQueuedMessage,
@@ -59,10 +61,10 @@ export class DocumentContext extends EventEmitter implements IContext {
 	/**
 	 * Updates the head offset for the context.
 	 */
-	public setHead(head: IQueuedMessage, allowBackToOffset?: number | undefined) {
+	public setHead(head: IQueuedMessage, resumeBackToOffset?: number | undefined) {
 		assert(
-			head.offset > this.head.offset || head.offset === allowBackToOffset,
-			`Head offset ${head.offset} must be greater than the current head offset ${this.head.offset} or equal to the resume offset ${allowBackToOffset}. Topic ${head.topic}, partition ${head.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
+			head.offset > this.head.offset || head.offset === resumeBackToOffset,
+			`Head offset ${head.offset} must be greater than the current head offset ${this.head.offset} or equal to the resume offset ${resumeBackToOffset}. Topic ${head.topic}, partition ${head.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
 		);
 
 		// If head is moving backwards
@@ -79,8 +81,19 @@ export class DocumentContext extends EventEmitter implements IContext {
 				);
 				return false;
 			}
+			if (this.headUpdatedAfterResume) {
+				Lumberjack.warning(
+					"DocumentContext head is moving backwards again after a previous move backwards. This is unexpected.",
+					{
+						resumeBackToOffset,
+						currentHeadOffset: this.head.offset,
+						documentId: this.routingKey.documentId,
+					},
+				);
+				return false;
+			}
 			Lumberjack.info("Allowing the document context head to move to the specified offset", {
-				allowBackToOffset,
+				resumeBackToOffset,
 				currentHeadOffset: this.head.offset,
 				documentId: this.routingKey.documentId,
 			});
@@ -90,6 +103,15 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// constructor, to make tail represent the inclusive top end of the checkpoint range.
 		if (!this.hasPendingWork()) {
 			this.tailInternal = this.getLatestTail();
+		}
+
+		if (!this.headUpdatedAfterResume && resumeBackToOffset !== undefined) {
+			Lumberjack.info("Setting headUpdatedAfterResume to true", {
+				resumeBackToOffset,
+				currentHeadOffset: this.head.offset,
+				documentId: this.routingKey.documentId,
+			});
+			this.headUpdatedAfterResume = true;
 		}
 
 		this.headInternal = head;
@@ -131,6 +153,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 	}
 
 	public pause(offset: number, reason?: any) {
+		this.headUpdatedAfterResume = false; // reset this flag when we pause
 		this.emit("pause", offset, reason);
 	}
 
