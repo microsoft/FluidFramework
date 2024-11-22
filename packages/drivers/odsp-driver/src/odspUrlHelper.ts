@@ -126,3 +126,20 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	}
 }
+
+/**
+ * Inspect the ODSP siteUrl to guess if this document is in SPDF or MSIT, to aid livesite investigations
+ * @returns undefined if the URL doesn't match known SPDF/MSIT patterns, "SPDF" if it's SPDF, "MSIT" if it's MSIT
+ */
+export function checkForInternalFarmType(siteUrl: string): "SPDF" | "MSIT" | undefined {
+	const domain = new URL(siteUrl).hostname.toLowerCase();
+	if (domain.endsWith(".sharepoint-df.com")) {
+		return "SPDF";
+	} else if (
+		domain === "microsoft.sharepoint.com" ||
+		domain === "microsoft-my.sharepoint.com"
+	) {
+		return "MSIT";
+	}
+	return undefined;
+}
