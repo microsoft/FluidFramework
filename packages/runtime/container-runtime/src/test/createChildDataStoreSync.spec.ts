@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
-import { LazyPromise } from "@fluidframework/core-utils/internal";
+import { isPromiseLike, LazyPromise } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IFluidDataStoreChannel,
@@ -46,9 +46,12 @@ describe("createChildDataStore", () => {
 		get IFluidDataStoreRegistry() {
 			return this;
 		},
-		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		get(name) {
+		async get(name) {
 			return new Map(namedEntries).get(name);
+		},
+		getSync(name) {
+			const entry = new Map(namedEntries).get(name);
+			return isPromiseLike(entry) ? undefined : entry;
 		},
 	});
 
@@ -133,20 +136,6 @@ describe("createChildDataStore", () => {
 			assert(isFluidError(e));
 			assert(e.errorType === FluidErrorTypes.usageError);
 			assert(e.getTelemetryProperties().isUndefined === true);
-		}
-	});
-
-	it("Child factory is a promise", async () => {
-		const factory = createFactory();
-		const context = createContext([[factory.type, Promise.resolve(factory)]]);
-
-		try {
-			context.createChildDataStore(factory);
-			assert.fail("should fail");
-		} catch (e) {
-			assert(isFluidError(e));
-			assert(e.errorType === FluidErrorTypes.usageError);
-			assert(e.getTelemetryProperties().isPromise === true);
 		}
 	});
 

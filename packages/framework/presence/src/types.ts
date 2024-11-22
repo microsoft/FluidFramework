@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { BroadcastControls } from "./broadcastControls.js";
 import type { NotificationsManager } from "./notificationsManager.js";
 
 import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
@@ -25,18 +26,18 @@ import type { InternalTypes } from "@fluidframework/presence/internal/exposedInt
  */
 export type PresenceWorkspaceAddress = `${string}:${string}`;
 
-// #region PresenceStates
-
 /**
- * Single entry in {@link PresenceStatesSchema}.
+ * Single entry in {@link PresenceStatesSchema} or  {@link PresenceNotificationsSchema}.
  *
  * @alpha
  */
-export type PresenceStatesEntry<
+export type PresenceWorkspaceEntry<
 	TKey extends string,
 	TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
 	TManager = unknown,
 > = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
+
+// #region PresenceStates
 
 /**
  * Schema for a {@link PresenceStates} workspace.
@@ -46,7 +47,7 @@ export type PresenceStatesEntry<
  * @alpha
  */
 export interface PresenceStatesSchema {
-	[key: string]: PresenceStatesEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
+	[key: string]: PresenceWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
 /**
@@ -82,7 +83,7 @@ export interface PresenceStates<
 > {
 	/**
 	 * Registers a new `Value Manager` with the {@link PresenceStates}.
-	 * @param key - new unique key for the `Value Manager`
+	 * @param key - new unique key for the `Value Manager` within the workspace
 	 * @param manager - factory for creating a `Value Manager`
 	 */
 	add<
@@ -101,6 +102,11 @@ export interface PresenceStates<
 	 * Registry of `Value Manager`s.
 	 */
 	readonly props: PresenceStatesEntries<TSchema>;
+
+	/**
+	 * Default controls for management of broadcast updates.
+	 */
+	readonly controls: BroadcastControls;
 }
 
 // #endregion PresenceStates
@@ -126,10 +132,36 @@ export interface PresenceNotificationsSchema {
  * `PresenceNotifications` maintains a registry of {@link NotificationsManager}s
  * that facilitate messages across client members in a session.
  *
+ * @privateRemarks
+ * This should be kept mostly in sync with {@link PresenceStates}. Notably the
+ * return type of `add` is limited here and the `controls` property is omitted.
+ * The `PresenceStatesImpl` class implements `PresenceStates` and therefore
+ * `PresenceNotifications`, so long as this is proper subset.
+ *
  * @sealed
  * @alpha
  */
-export type PresenceNotifications<TSchema extends PresenceNotificationsSchema> =
-	PresenceStates<TSchema, NotificationsManager<any>>;
+export interface PresenceNotifications<TSchema extends PresenceNotificationsSchema> {
+	/**
+	 * Registers a new `Value Manager` with the {@link PresenceNotifications}.
+	 * @param key - new unique key for the `Value Manager` within the workspace
+	 * @param manager - factory for creating a `Value Manager`
+	 */
+	add<
+		TKey extends string,
+		TValue extends InternalTypes.ValueDirectoryOrState<any>,
+		TManager extends NotificationsManager<any>,
+	>(
+		key: TKey,
+		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
+	): asserts this is PresenceNotifications<
+		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>
+	>;
+
+	/**
+	 * Registry of `Value Manager`s.
+	 */
+	readonly props: PresenceStatesEntries<TSchema>;
+}
 
 // #endregion PresenceNotifications

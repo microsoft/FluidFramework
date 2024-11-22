@@ -5,7 +5,7 @@ sidebar_position: 9
 sidebar_label: Release Notes
 ---
 
-import { ApiLink } from "@site/src/components/shortLinks"
+import { ApiLink } from "@site/src/components/shortLinks";
 
 # 1.3.0
 
@@ -27,7 +27,6 @@ We are now surfacing errors on FluidContainer "disposed" event, so the applicati
 
 ## @fluidframework/azure-client
 
-
 -   Fix <ApiLink packageName="azure-client" apiName="AzureClient" apiType="class" /> issue where the second user could not connect in `local` mode
 
 # 1.0.0
@@ -38,8 +37,22 @@ We are now surfacing errors on FluidContainer "disposed" event, so the applicati
 
 We've added two new methods to AzureClient that will enable developers to recover data from corrupted containers. The Fluid Framework automatically generates and saves snapshots of the operation stream that we use to load the latest container. `getContainerVersions` will allow developers to access previous versions of the container. `copyContainer` allows developers to generate a new detached container from another container.
 
-- <ApiLink packageName="azure-client" apiName="AzureClient" apiType="class" headingId="getcontainerversions-method">`getContainerVersions(id, options)`</ApiLink>
-- <ApiLink packageName="azure-client" apiName="AzureClient" apiType="class" headingId="copycontainer-method">`copyContainer(id, containerSchema)`</ApiLink>
+-   <ApiLink
+    	packageName="azure-client"
+    	apiName="AzureClient"
+    	apiType="class"
+    	headingId="getcontainerversions-method"
+    >
+    	`getContainerVersions(id, options)`
+    </ApiLink>
+-   <ApiLink
+    	packageName="azure-client"
+    	apiName="AzureClient"
+    	apiType="class"
+    	headingId="copycontainer-method"
+    >
+    	`copyContainer(id, containerSchema)`
+    </ApiLink>
 
 In an situation where a container will fail to load these two methods can be used together to load a document from a previous state in time.
 
@@ -67,13 +80,13 @@ The AzureClient connection config has been updated to have distinct types to dif
 ```js
 // Previous Remote Syntax
 const connection = {
-  tenantId = "AZURE_TENANT_ID",
+  tenantId: "AZURE_TENANT_ID",
   //...
 }
 // Previous Local Syntax
 import { LOCAL_MODE_TENANT_ID } from "@fluidframework/azure-client";
 const connection = {
-  tenantId = LOCAL_MODE_TENANT_ID,
+  tenantId: LOCAL_MODE_TENANT_ID,
   //...
 }
 ```
@@ -100,7 +113,7 @@ The AzureClient connection config has been changed to have a single endpoint ins
 
 If you're using the Public Preview of Azure Fluid Relay, use the following region dependent url as your new single endpoint url:
 
--   West US 2 ->  `https://us.fluidrelay.azure.com`
+-   West US 2 -> `https://us.fluidrelay.azure.com`
 -   West Europe -> `https://eu.fluidrelay.azure.com`
 -   Southeast Asia -> `https://global.fluidrelay.azure.com`
 

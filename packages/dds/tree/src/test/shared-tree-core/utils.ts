@@ -86,8 +86,4 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 	public override getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
 		return super.getLocalBranch();
 	}
-
-	public get preparedCommitsCount(): number {
-		return this.commitEnricher.preparedCommitsCount;
-	}
 }

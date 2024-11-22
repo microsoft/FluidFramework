@@ -1,5 +1,5 @@
 ---
-title: 'Tutorial: DiceRoller application'
+title: "Tutorial: DiceRoller application"
 sidebar_position: 3
 ---
 
@@ -7,14 +7,16 @@ import { MockDiceRollerSample } from "@site/src/components/mockDiceRoller";
 
 In this walkthrough, you'll learn about using the Fluid Framework by examining the DiceRoller application at https://github.com/microsoft/FluidHelloWorld. To get started, go through the [Quick Start](./quick-start) guide.
 
-<MockDiceRollerSample style={{
-  display: "flex",
-  flexDirection: "row",
-  justifyContent: "space-evenly",
-  flexWrap: "wrap",
-  gap: "10px",
-}} />
-<br/>
+<MockDiceRollerSample
+	style={{
+		display: "flex",
+		flexDirection: "row",
+		justifyContent: "space-evenly",
+		flexWrap: "wrap",
+		gap: "10px",
+	}}
+/>
+<br />
 
 In the DiceRoller app, users are shown a die with a button to roll it. When the die is rolled, the Fluid Framework syncs the data across clients so everyone sees the same result. To do this, complete the following steps:
 
@@ -29,7 +31,7 @@ All of the work in this demo will be done in the [app.js](https://github.com/mic
 
 Start by creating a new instance of the Tinylicious client. Tinylicious is the Fluid Framework's local testing server, and a client is responsible for creating and loading containers.
 
-The app creates Fluid containers using a schema that defines a set of *initial objects* that will be available in the container. Learn more about initial objects in [Data modeling](../build/data-modeling).
+The app creates Fluid containers using a schema that defines a set of _initial objects_ that will be available in the container. Learn more about initial objects in [Data modeling](../build/data-modeling).
 
 Lastly, `root` defines the HTML element that the Dice will render on.
 
@@ -71,7 +73,7 @@ const createNewDice = async () => {
 	dice.initialize(new Dice({ value: 1 }));
 	const id = await container.attach();
 	renderDiceRoller(dice.root, root);
-}
+};
 ```
 
 ### Loading an existing container
@@ -83,7 +85,7 @@ const loadExistingDice = async (id) => {
 	const { container } = await client.getContainer(id, containerSchema, "2");
 	const dice = container.initialObjects.diceTree.viewWith(treeViewConfiguration);
 	renderDiceRoller(dice.root, root);
-}
+};
 ```
 
 ### Switching between loading and creating
@@ -117,7 +119,6 @@ This example uses standard HTML/DOM methods to render a view.
 
 The `renderDiceRoller` function runs only when the container is created or loaded. It appends the `diceTemplate` to the passed in HTML element, and creates a working dice roller with a random dice value each time the "Roll" button is clicked on a client.
 
-
 ```js
 const diceTemplate = document.createElement("template");
 
@@ -131,15 +132,15 @@ diceTemplate.innerHTML = `
     <div class="dice"></div>
     <button class="roll"> Roll </button>
   </div>
-`
+`;
 const renderDiceRoller = (dice, elem) => {
 	elem.appendChild(template.content.cloneNode(true));
 
 	const rollButton = elem.querySelector(".roll");
 	const diceElem = elem.querySelector(".dice");
 
-    /* REMAINDER OF THE FUNCTION IS DESCRIBED BELOW */
-}
+	/* REMAINDER OF THE FUNCTION IS DESCRIBED BELOW */
+};
 ```
 
 ## Connect the view to Fluid data
@@ -148,14 +149,14 @@ Let's go through the rest of the `renderDiceRoller` function line-by-line.
 
 ### Create the Roll button handler
 
-The next line of the `renderDiceRoller` function assigns a handler to the click event of the "Roll" button. Instead of updating the local state directly, the button updates the number stored in the `value` property of the  `dice` object. Because `dice` is the root object of Fluid `SharedTree`, changes will be distributed to all clients. Any changes to `dice` will cause a `afterChanged` event to be emitted, and an event handler, defined below, can trigger an update of the view.
+The next line of the `renderDiceRoller` function assigns a handler to the click event of the "Roll" button. Instead of updating the local state directly, the button updates the number stored in the `value` property of the `dice` object. Because `dice` is the root object of Fluid `SharedTree`, changes will be distributed to all clients. Any changes to `dice` will cause a `afterChanged` event to be emitted, and an event handler, defined below, can trigger an update of the view.
 
 This pattern is common in Fluid because it enables the view to behave the same way for both local and remote changes.
 
 ```js
-  rollButton.onclick = () => {
-		dice.value = Math.floor(Math.random() * 6) + 1;
-	}
+rollButton.onclick = () => {
+	dice.value = Math.floor(Math.random() * 6) + 1;
+};
 ```
 
 ### Relying on Fluid data
@@ -165,15 +166,15 @@ The next line creates the function that will rerender the local view with the la
 -   When the container is created or loaded.
 -   When the dice value changes on any client.
 
-Note that the current value is retrieved from the `SharedMap` each time `updateDice` is called. It is *not* read from the `textContent` of the local `dice` HTML element.
+Note that the current value is retrieved from the `SharedMap` each time `updateDice` is called. It is _not_ read from the `textContent` of the local `dice` HTML element.
 
 ```js
-  const updateDice = () => {
-		const diceValue = dice.value;
-		// Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-		diceElem.textContent = String.fromCodePoint(0x267f + diceValue);
-		diceElem.style.color = `hsl(${diceValue * 60}, 70%, 30%)`;
-	}
+const updateDice = () => {
+	const diceValue = dice.value;
+	// Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
+	diceElem.textContent = String.fromCodePoint(0x267f + diceValue);
+	diceElem.style.color = `hsl(${diceValue * 60}, 70%, 30%)`;
+};
 ```
 
 ### Update on creation or load of container
@@ -181,15 +182,15 @@ Note that the current value is retrieved from the `SharedMap` each time `updateD
 The next line ensures that the dice is rendered as soon as `renderDiceRoller` is called, which is when the container is created or loaded.
 
 ```js
-  updateDice();
+updateDice();
 ```
 
 ### Handling remote changes
 
-To keep the data up to date as it changes, an event handler must be set on the `dice` object to call `updateDice` each time that the `afterChanged` event is sent. Use the built-in `Tree` object to subscribe to the event. Note that the `afterChanged` event fires whenever the `dice` object changes on *any* client; that is, when the "Roll" button is clicked on any client.
+To keep the data up to date as it changes, an event handler must be set on the `dice` object to call `updateDice` each time that the `afterChanged` event is sent. Use the built-in `Tree` object to subscribe to the event. Note that the `afterChanged` event fires whenever the `dice` object changes on _any_ client; that is, when the "Roll" button is clicked on any client.
 
 ```js
-    Tree.on(dice, "afterChange", updateDice);
+Tree.on(dice, "afterChange", updateDice);
 ```
 
 ## Run the app
