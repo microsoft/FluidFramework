@@ -2181,7 +2181,7 @@ describe("Garbage Collection Tests", () => {
 	});
 
 	it("process remote op with unrecognized type", async () => {
-		let garbageCollector: IGarbageCollector;
+		const garbageCollector = createGarbageCollector();
 		const gcMessageFromFuture: Record<string, unknown> = {
 			type: "FUTURE_MESSAGE",
 			hello: "HELLO",
