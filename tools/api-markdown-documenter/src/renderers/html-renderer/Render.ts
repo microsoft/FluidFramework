@@ -7,11 +7,11 @@ import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { format } from "hast-util-format";
 import { toHtml as toHtmlString } from "hast-util-to-html";
 
+import type { DocumentNode } from "../../documentation-domain/index.js";
 import {
 	documentToHtml,
 	type TransformationConfig,
 } from "../../documentation-domain-to-html/index.js";
-import type { DocumentNode } from "../../documentation-domain/index.js";
 
 /**
  * Configuration for rendering HTML.
