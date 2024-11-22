@@ -338,6 +338,45 @@ export class GarbageCollector implements IGarbageCollector {
 		});
 	}
 
+	/** API for ensuring the correct auto-recovery mitigations */
+	private readonly autoRecovery = (() => {
+		/**
+		 * This uses a hidden state machine for forcing fullGC as part of autorecovery,
+		 * to regenerate the GC data for each node.
+		 *
+		 * Once fullGC has been requested, we need to wait until GC has run and the summary has been acked before clearing the state.
+		 *
+		 * States:
+		 * - undefined: No need to run fullGC now.
+		 * - "requested": FullGC requested, but GC has not yet run. Keep using fullGC until back to undefined.
+		 * - "ran": FullGC ran, but the following summary has not yet been acked. Keep using fullGC until back to undefined.
+		 *
+		 * Transitions:
+		 * - autoRecovery.requestFullGCOnNextRun :: anything TO "requested"
+		 * - autoRecovery.fullGCCompleted :: "requested" TO "ran"
+		 * - autoRecovery.onSummaryAck :: "ran" TO undefined
+		 */
+		let state: "requested" | "ran" | undefined;
+		return {
+			requestFullGCOnNextRun: () => {
+				state = "requested";
+			},
+			onFullGCCompleted: () => {
+				if (state === "requested") {
+					state = "ran";
+				}
+			},
+			onSummaryAck: () => {
+				if (state === "ran") {
+					state = undefined;
+				}
+			},
+			useFullGC: () => {
+				return state !== undefined;
+			},
+		};
+	})();
+
 	/**
 	 * Called during container initialization. Initializes the tombstone and deleted nodes state from the base snapshot.
 	 * Also, initializes the GC state including unreferenced nodes tracking if a current reference timestamp exists.
@@ -460,8 +499,7 @@ export class GarbageCollector implements IGarbageCollector {
 		telemetryContext?: ITelemetryContext,
 	): Promise<IGCStats | undefined> {
 		const fullGC =
-			options.fullGC ??
-			(this.configs.runFullGC === true || this.summaryStateTracker.autoRecovery.useFullGC());
+			options.fullGC ?? (this.configs.runFullGC === true || this.autoRecovery.useFullGC());
 
 		// Add the options that are used to run GC to the telemetry context.
 		telemetryContext?.setMultiple("fluid_GC", "Options", {
@@ -520,7 +558,7 @@ export class GarbageCollector implements IGarbageCollector {
 				await this.telemetryTracker.logPendingEvents(logger);
 				// Update the state of summary state tracker from this run's stats.
 				this.summaryStateTracker.updateStateFromGCRunStats(gcStats);
-				this.summaryStateTracker.autoRecovery.fullGCCompleted();
+				this.autoRecovery.onFullGCCompleted();
 				this.newReferencesSinceLastRun.clear();
 				this.completedRuns++;
 
@@ -857,8 +895,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
 	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
-		//* TODO: Move autoRecovery API out of SST
-		this.summaryStateTracker.autoRecovery.onSummaryAck();
+		this.autoRecovery.onSummaryAck();
 		return this.summaryStateTracker.refreshLatestSummary(result);
 	}
 
@@ -893,7 +930,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 					// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
 					// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
-					this.summaryStateTracker.autoRecovery.requestFullGCOnNextRun();
+					this.autoRecovery.requestFullGCOnNextRun();
 					break;
 				}
 				default:

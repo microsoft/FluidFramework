@@ -80,6 +80,9 @@ type GcWithPrivates = IGarbageCollector & {
 			latestSummaryData: IGCSummaryTrackingData | undefined;
 		}
 	>;
+	readonly autoRecovery: {
+		useFullGC: () => boolean;
+	};
 	readonly telemetryTracker: GCTelemetryTracker;
 	readonly mc: MonitoringContext;
 	readonly sessionExpiryTimer: Omit<Timer, "defaultTimeout"> & { defaultTimeout: number };
@@ -329,6 +332,29 @@ describe("Garbage Collection Tests", () => {
 		});
 	});
 
+	it("Private Autorecovery API", () => {
+		const autoRecovery: {
+			useFullGC: () => boolean;
+			requestFullGCOnNextRun: () => void;
+			onFullGCCompleted: () => void;
+			onSummaryAck: () => void;
+		} = createGarbageCollector().autoRecovery as any;
+
+		assert.equal(autoRecovery.useFullGC(), false, "Expect false by default");
+
+		autoRecovery.requestFullGCOnNextRun();
+		assert.equal(autoRecovery.useFullGC(), true, "Expect true after requesting full GC");
+
+		autoRecovery.onSummaryAck();
+		assert.equal(autoRecovery.useFullGC(), true, "Expect true still after early Summary Ack");
+
+		autoRecovery.onFullGCCompleted();
+		assert.equal(autoRecovery.useFullGC(), true, "Expect true still after full GC alone");
+
+		autoRecovery.onSummaryAck();
+		assert.equal(autoRecovery.useFullGC(), false, "Expect false after post-GC Summary Ack");
+	});
+
 	describe("Tombstone and Sweep", () => {
 		it("Tombstone then Delete", async () => {
 			// Simple starting reference graph - root and two nodes
@@ -533,7 +559,7 @@ describe("Garbage Collection Tests", () => {
 				isSummaryNewer: false,
 			});
 			assert(
-				gc.summaryStateTracker.autoRecovery.useFullGC(),
+				gc.autoRecovery.useFullGC(),
 				"autoRecovery.useFullGC should still be true after spurious summary ack (haven't run GC yet)",
 			);
 			await gc.collectGarbage({});
@@ -543,7 +569,7 @@ describe("Garbage Collection Tests", () => {
 			);
 			// This matters in case GC runs but the summary fails. We'll need to run with fullGC again next time.
 			assert(
-				gc.summaryStateTracker.autoRecovery.useFullGC(),
+				gc.autoRecovery.useFullGC(),
 				"autoRecovery.useFullGC should still be true after GC run but before summary ack",
 			);
 			await gc.refreshLatestSummary({
@@ -551,7 +577,7 @@ describe("Garbage Collection Tests", () => {
 				isSummaryNewer: false,
 			});
 			assert(
-				!gc.summaryStateTracker.autoRecovery.useFullGC(),
+				!gc.autoRecovery.useFullGC(),
 				"autoRecovery.useFullGC should have been reset to false now",
 			);
 
