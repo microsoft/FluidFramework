@@ -37,7 +37,6 @@ import {
 	IDocumentRepository,
 	ICheckpointRepository,
 	CheckpointService,
-	IDeltaService,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ILocalOrdererSetup } from "./interfaces";
@@ -368,7 +367,7 @@ export class LocalOrderer implements IOrderer {
 			this.tenantId,
 			this.documentId,
 			this.gitManager,
-			null as unknown as IDeltaService /* deltaService */,
+			undefined /* deltaService */,
 			scribeMessagesCollection,
 			false /* enableWholeSummaryUpload */,
 			latestSummary.messages,
@@ -387,7 +386,7 @@ export class LocalOrderer implements IOrderer {
 			this.documentId,
 			documentRepository,
 			scribeMessagesCollection,
-			null as unknown as IDeltaService /* deltaService */,
+			undefined /* deltaService */,
 			false /* getDeltasViaAlfred */,
 			false /* verifyLastOpPersistence */,
 			checkpointService,

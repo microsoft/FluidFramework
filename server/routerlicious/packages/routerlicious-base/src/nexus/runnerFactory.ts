@@ -395,10 +395,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
 			| number
 			| undefined;
-		const opsCollection = await databaseManager.getDeltaCollection(
-			null as unknown as string,
-			null as unknown as string,
-		);
+		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameAllocator = storagePerDocEnabled
 			? customizations?.storageNameAllocator ?? new StorageNameAllocator(tenantManager)

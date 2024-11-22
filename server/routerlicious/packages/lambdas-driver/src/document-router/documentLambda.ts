@@ -22,6 +22,7 @@ import {
 	ITicketedSignalMessage,
 	RawOperationType,
 	IRawOperationMessage,
+	isCompleteBoxcarMessage,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { DocumentContextManager } from "./contextManager";
@@ -88,8 +89,9 @@ export class DocumentLambda implements IPartitionLambda {
 
 	private handlerCore(message: IQueuedMessage): void {
 		const boxcar = extractBoxcar(message);
-		if (!boxcar.documentId || !boxcar.tenantId) {
-			return;
+		if (!isCompleteBoxcarMessage(boxcar)) {
+			// If the boxcar is not complete, it cannot be routed correctly.
+			return undefined;
 		}
 
 		// Stash the parsed value for down stream lambdas

@@ -152,7 +152,7 @@ export class GitManager implements IGitManager {
     // (undocumented)
     getRawUrl(sha: string): string;
     // (undocumented)
-    getRef(ref: string): Promise<resources.IRef>;
+    getRef(ref: string): Promise<resources.IRef | null>;
     // (undocumented)
     getSummary(sha: string): Promise<IWholeFlatSummary>;
     getTree(root: string, recursive?: boolean): Promise<resources.ITree>;
@@ -306,7 +306,7 @@ export interface IGitManager {
     // (undocumented)
     getRawUrl(sha: string): string;
     // (undocumented)
-    getRef(ref: string): Promise<resources.IRef>;
+    getRef(ref: string): Promise<resources.IRef | null>;
     // (undocumented)
     getSummary(sha: string): Promise<IWholeFlatSummary>;
     // (undocumented)
@@ -344,7 +344,7 @@ export interface IGitService {
     // (undocumented)
     getContent(path: string, ref: string): Promise<any>;
     // (undocumented)
-    getRef(ref: string): Promise<resources.IRef>;
+    getRef(ref: string): Promise<resources.IRef | null>;
     // (undocumented)
     getRefs(): Promise<resources.IRef[]>;
     // (undocumented)

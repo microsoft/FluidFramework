@@ -315,10 +315,10 @@ export class DocumentStorage implements IDocumentStorage {
 		}
 	}
 
-	public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
+	public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit | null> {
 		const versions = await this.getVersions(tenantId, documentId, 1);
 		if (!versions.length) {
-			return null as unknown as ICommit;
+			return null;
 		}
 
 		const latest = versions[0];
@@ -360,7 +360,7 @@ export class DocumentStorage implements IDocumentStorage {
 				cache: {
 					blobs: [],
 					commits: [],
-					refs: { [documentId]: null as unknown as string },
+					refs: {},
 					trees: [],
 				},
 				code: null as unknown as string,

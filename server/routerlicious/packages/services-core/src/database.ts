@@ -31,16 +31,16 @@ export interface IDatabaseManager {
 	 * Retrieves the delta collection
 	 */
 	getDeltaCollection(
-		tenantId: string,
-		documentId: string,
+		tenantId: string | undefined,
+		documentId: string | undefined,
 	): Promise<ICollection<ISequencedOperationMessage>>;
 
 	/**
 	 * Scribe deltas collection
 	 */
 	getScribeDeltaCollection(
-		tenantId: string,
-		documentId: string,
+		tenantId: string | undefined,
+		documentId: string | undefined,
 	): Promise<ICollection<ISequencedOperationMessage>>;
 }
 

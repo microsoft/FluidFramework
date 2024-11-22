@@ -60,7 +60,8 @@ export class Collection<T> implements ICollection<T> {
 		return readStream(this.db.createValueStream());
 	}
 
-	public findOne(query: any): Promise<T> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	public findOne(query: any): Promise<T | null> {
 		return this.findOneInternal(query);
 	}
 
@@ -141,9 +142,12 @@ export class Collection<T> implements ICollection<T> {
 		return value;
 	}
 
-	private async findOneInternal(query: any): Promise<T> {
+	private async findOneInternal(query: any): Promise<T | null> {
 		const values = await this.findInternal(query);
-		return values.length > 0 ? values[0] : (null as unknown as T);
+		if (values.length <= 0) {
+			return null;
+		}
+		return values[0];
 	}
 
 	// Generate an insertion key for a value based on index structure.

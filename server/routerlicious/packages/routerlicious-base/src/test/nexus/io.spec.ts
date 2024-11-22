@@ -142,10 +142,7 @@ describe("Routerlicious", () => {
 						testDocumentRepository,
 						testTenantManager,
 						false,
-						await databaseManager.getDeltaCollection(
-							null as unknown as string,
-							null as unknown as string,
-						),
+						await databaseManager.getDeltaCollection(undefined, undefined),
 						undefined,
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(
@@ -1114,10 +1111,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						testDocumentRepository,
 						testTenantManager,
 						false,
-						await databaseManager.getDeltaCollection(
-							null as unknown as string,
-							null as unknown as string,
-						),
+						await databaseManager.getDeltaCollection(undefined, undefined),
 						undefined,
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(

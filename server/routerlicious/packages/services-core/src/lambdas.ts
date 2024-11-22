@@ -166,6 +166,16 @@ export interface IPartitionLambdaConfig {
 }
 
 /**
+ * Whether the boxcar message includes the optional Routing Key fields.
+ * @internal
+ */
+export function isCompleteBoxcarMessage(
+	boxcar: IBoxcarMessage,
+): boxcar is Required<IBoxcarMessage> {
+	return boxcar.documentId !== undefined && boxcar.tenantId !== undefined;
+}
+
+/**
  * @internal
  */
 export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
@@ -182,8 +192,8 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
 	if (!parsedMessage) {
 		return {
 			contents: [],
-			documentId: null as unknown as string,
-			tenantId: null as unknown as string,
+			documentId: undefined,
+			tenantId: undefined,
 			type: BoxcarType,
 		};
 	}

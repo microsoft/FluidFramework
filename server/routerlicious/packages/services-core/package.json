@@ -85,6 +85,12 @@
 			},
 			"ClassDeclaration_TokenRevocationError": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IBoxcarMessage": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IWebServer": {
+				"backCompat": false
 			}
 		}
 	}

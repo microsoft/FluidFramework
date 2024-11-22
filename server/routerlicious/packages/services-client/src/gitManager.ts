@@ -173,10 +173,11 @@ export class GitManager implements IGitManager {
 		return this.historian.getSummary(sha);
 	}
 
-	public async getRef(ref: string): Promise<resources.IRef> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	public async getRef(ref: string): Promise<resources.IRef | null> {
 		return this.historian.getRef(`heads/${ref}`).catch((error) => {
 			if (error === 400 || error === 404) {
-				return null as unknown as resources.IRef;
+				return null;
 			} else {
 				throw error;
 			}

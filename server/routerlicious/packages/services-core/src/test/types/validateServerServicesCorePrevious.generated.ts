@@ -334,6 +334,7 @@ declare function get_current_InterfaceDeclaration_IBoxcarMessage():
 declare function use_old_InterfaceDeclaration_IBoxcarMessage(
     use: TypeOnly<old.IBoxcarMessage>): void;
 use_old_InterfaceDeclaration_IBoxcarMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IBoxcarMessage());
 
 /*
@@ -2834,6 +2835,7 @@ declare function get_current_InterfaceDeclaration_IWebServer():
 declare function use_old_InterfaceDeclaration_IWebServer(
     use: TypeOnly<old.IWebServer>): void;
 use_old_InterfaceDeclaration_IWebServer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IWebServer());
 
 /*

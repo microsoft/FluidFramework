@@ -38,15 +38,15 @@ export class MongoDatabaseManager implements IDatabaseManager {
 	}
 
 	public async getDeltaCollection(
-		tenantId: string,
-		documentId: string,
+		tenantId: string | undefined,
+		documentId: string | undefined,
 	): Promise<ICollection<ISequencedOperationMessage>> {
 		return this.getCollection<ISequencedOperationMessage>(this.deltasCollectionName);
 	}
 
 	public async getScribeDeltaCollection(
-		tenantId: string,
-		documentId: string,
+		tenantId: string | undefined,
+		documentId: string | undefined,
 	): Promise<ICollection<ISequencedOperationMessage>> {
 		return this.getCollection<ISequencedOperationMessage>(this.scribeDeltasCollectionName);
 	}

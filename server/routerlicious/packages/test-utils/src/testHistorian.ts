@@ -176,7 +176,7 @@ export class TestHistorian implements IHistorian {
 		let commit = await this.commits.findOne({ _id: sha });
 		if (!commit) {
 			const ref = await this.getRef(`refs/heads/${sha}`);
-			if (ref !== undefined) {
+			if (ref !== undefined && ref !== null) {
 				commit = await this.commits.findOne({ _id: ref.object.sha });
 			}
 		}
@@ -222,11 +222,11 @@ export class TestHistorian implements IHistorian {
 		throw new Error("Not Supported");
 	}
 
-	public async getRef(ref: string): Promise<IRef> {
+	public async getRef(ref: string): Promise<IRef | null> {
 		const _id = ref.startsWith("refs/") ? ref.substr(5) : ref;
 		const val = await this.refs.findOne({ _id });
 		if (!val) {
-			return null as unknown as IRef;
+			return null;
 		}
 		return {
 			ref: val.ref ?? val.value?.ref,
@@ -242,7 +242,11 @@ export class TestHistorian implements IHistorian {
 	public async createRef(params: ICreateRefParams): Promise<IRef> {
 		const _id = params.ref.startsWith("refs/") ? params.ref.substr(5) : params.ref;
 		await this.refs.insertOne({ _id, ...params, value: params });
-		return this.getRef(params.ref);
+		const newRefFromStorage = await this.getRef(params.ref);
+		if (newRefFromStorage === null) {
+			throw new Error("Newly created ref not found in storage.");
+		}
+		return newRefFromStorage;
 	}
 
 	public async updateRef(ref: string, params: IPatchRefParams): Promise<IRef> {
@@ -250,7 +254,11 @@ export class TestHistorian implements IHistorian {
 		await (params.force
 			? this.refs.upsert({ _id }, { sha: params.sha, ref }, {})
 			: this.refs.update({ _id }, { sha: params.sha, ref }, {}));
-		return this.getRef(ref);
+		const newRefFromStorage = await this.getRef(ref);
+		if (newRefFromStorage === null) {
+			throw new Error("Newly created ref not found in storage.");
+		}
+		return newRefFromStorage;
 	}
 
 	public async deleteRef(ref: string): Promise<void> {

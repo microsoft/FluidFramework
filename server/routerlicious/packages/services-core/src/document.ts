@@ -42,7 +42,7 @@ export interface IDocumentStorage {
 
 	getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails>;
 
-	getLatestVersion(tenantId: string, documentId: string): Promise<ICommit>;
+	getLatestVersion(tenantId: string, documentId: string): Promise<ICommit | null>;
 
 	getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]>;
 

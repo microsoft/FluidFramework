@@ -71,6 +71,9 @@ export class TinyliciousRunner implements IRunner {
 
 		this.server = this.serverFactory.create(alfred);
 		const httpServer = this.server.httpServer;
+		if (!this.server.webSocketServer) {
+			throw new Error("WebSocket server is not initialized");
+		}
 
 		configureWebSocketServices(
 			this.server.webSocketServer /* webSocketServer */,

@@ -93,6 +93,10 @@ export class NexusRunner implements IRunner {
 				"usage:signalUsageCountingEnabled",
 			);
 
+			if (!this.server.webSocketServer) {
+				throw new Error("WebSocket server is not initialized");
+			}
+
 			// Register all the socket.io stuff
 			configureWebSocketServices(
 				this.server.webSocketServer,

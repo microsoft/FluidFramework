@@ -52,7 +52,7 @@ export class HttpServer implements core.IHttpServer {
 export class WebServer implements core.IWebServer {
 	constructor(
 		public httpServer: HttpServer,
-		public webSocketServer: core.IWebSocketServer,
+		public webSocketServer: core.IWebSocketServer | undefined,
 	) {}
 
 	/**
@@ -132,7 +132,7 @@ export class BasicWebServerFactory implements core.IWebServerFactory {
 		const server = createAndConfigureHttpServer(requestListener, this.httpServerConfig);
 		const httpServer = new HttpServer(server);
 
-		return new WebServer(httpServer, null as unknown as core.IWebSocketServer);
+		return new WebServer(httpServer, undefined);
 	}
 }
 
@@ -186,7 +186,7 @@ class NullHttpServer implements core.IHttpServer {
 }
 class NullWebServer implements core.IWebServer {
 	public readonly httpServer: NullHttpServer = new NullHttpServer();
-	public webSocketServer: core.IWebSocketServer = null as unknown as core.IWebSocketServer;
+	public webSocketServer: core.IWebSocketServer | undefined = undefined;
 
 	/**
 	 * Closes the web server
@@ -225,7 +225,7 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 		}
 		const httpServer = this.initializeWorkerThread(requestListener);
 
-		return new WebServer(new HttpServer(httpServer), null as unknown as core.IWebSocketServer);
+		return new WebServer(new HttpServer(httpServer), undefined);
 	}
 
 	protected initializePrimaryThread(): void {
@@ -397,7 +397,7 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 			setupMaster(server, {
 				loadBalancingMethod: "least-connection", // either "random", "round-robin" or "least-connection"
 			});
-			return new WebServer(new HttpServer(server), null as unknown as core.IWebSocketServer);
+			return new WebServer(new HttpServer(server), undefined);
 		}
 		// Create a worker thread HTTP server and attach socket.io server to it.
 		const httpServer = this.initializeWorkerThread(requestListener);

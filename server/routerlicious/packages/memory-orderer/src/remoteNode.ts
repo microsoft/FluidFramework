@@ -116,7 +116,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 		const socket =
 			details !== undefined && details.expiration >= Date.now()
 				? await Socket.connect<INodeMessage>(details.address, id)
-				: (null as unknown as Socket<INodeMessage>);
+				: undefined;
 		const node = new RemoteNode(id, socket);
 
 		return node;
@@ -142,11 +142,11 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 
 	private constructor(
 		private readonly _id: string,
-		private readonly socket: Socket<INodeMessage>,
+		private readonly socket: Socket<INodeMessage> | undefined,
 	) {
 		super();
 
-		this.socket.on("message", (message) => {
+		this.socket?.on("message", (message) => {
 			switch (message.type) {
 				case "op":
 					this.route(message.payload as IOpMessage);
@@ -197,7 +197,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 	}
 
 	public send(cid: number, type: string, payload: any) {
-		this.socket.send({
+		this.socket?.send({
 			cid,
 			payload,
 			type: type as any,

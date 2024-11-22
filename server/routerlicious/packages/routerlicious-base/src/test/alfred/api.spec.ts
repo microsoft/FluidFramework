@@ -121,8 +121,8 @@ describe("Routerlicious", () => {
 			)}`;
 			const defaultProducer = new TestProducer(new TestKafka());
 			const deltasCollection = await defaultDbManager.getDeltaCollection(
-				null as unknown as string,
-				null as unknown as string,
+				undefined,
+				undefined,
 			);
 			const defaultDeltaService = new DeltaService(deltasCollection, defaultTenantManager);
 			const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
