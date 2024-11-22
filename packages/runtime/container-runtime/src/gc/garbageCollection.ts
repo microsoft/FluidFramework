@@ -340,22 +340,20 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/** API for ensuring the correct auto-recovery mitigations */
 	private readonly autoRecovery = (() => {
-		/**
-		 * This uses a hidden state machine for forcing fullGC as part of autorecovery,
-		 * to regenerate the GC data for each node.
-		 *
-		 * Once fullGC has been requested, we need to wait until GC has run and the summary has been acked before clearing the state.
-		 *
-		 * States:
-		 * - undefined: No need to run fullGC now.
-		 * - "requested": FullGC requested, but GC has not yet run. Keep using fullGC until back to undefined.
-		 * - "ran": FullGC ran, but the following summary has not yet been acked. Keep using fullGC until back to undefined.
-		 *
-		 * Transitions:
-		 * - autoRecovery.requestFullGCOnNextRun :: anything TO "requested"
-		 * - autoRecovery.fullGCCompleted :: "requested" TO "ran"
-		 * - autoRecovery.onSummaryAck :: "ran" TO undefined
-		 */
+		// This uses a hidden state machine for forcing fullGC as part of autorecovery,
+		// to regenerate the GC data for each node.
+		//
+		// Once fullGC has been requested, we need to wait until GC has run and the summary has been acked before clearing the state.
+		//
+		// States:
+		// - undefined: No need to run fullGC now.
+		// - "requested": FullGC requested, but GC has not yet run. Keep using fullGC until back to undefined.
+		// - "ran": FullGC ran, but the following summary has not yet been acked. Keep using fullGC until back to undefined.
+		//
+		// Transitions:
+		// - autoRecovery.requestFullGCOnNextRun :: [anything] --> "requested"
+		// - autoRecovery.onFullGCCompleted      :: "requested" --> "ran"
+		// - autoRecovery.onSummaryAck           :: "ran" --> undefined
 		let state: "requested" | "ran" | undefined;
 		return {
 			requestFullGCOnNextRun: () => {
