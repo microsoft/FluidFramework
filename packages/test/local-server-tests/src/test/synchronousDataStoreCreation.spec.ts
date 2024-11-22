@@ -130,8 +130,6 @@ class ParentDataObject extends DataObject {
 			this.context.createChildDataStore !== undefined,
 			"this.context.createChildDataStore",
 		);
-		// creates a detached context with a factory who's package path is the same
-		// as the current datastore, but with another copy of its own type.
 		const { entrypoint } = this.context.createChildDataStore(ChildDataStoreFactory.instance);
 		const dir = this.root.createSubDirectory("children");
 		dir.set(name, entrypoint.handle);

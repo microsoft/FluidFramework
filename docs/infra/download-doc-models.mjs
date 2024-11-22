@@ -23,7 +23,7 @@ const versions = ["1", "2"];
 const artifactUrlBase = "https://storage.fluidframework.com/api-extractor-json/latest";
 const artifacts = {
 	1: `${artifactUrlBase}-v1.tar.gz`,
-	2: `${artifactUrlBase}.tar.gz`,
+	2: `${artifactUrlBase}-v2.tar.gz`,
 };
 
 const docModelsDirectory = path.resolve(dirname, "..", ".doc-models");

@@ -14,7 +14,7 @@ your other telemetry, and route the event data in whatever way you need.
 The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can
 be implemented and passed into the service client's constructor via the `props` parameter.
 
-All Fluid service clients (for example, [AzureClient][]) and [TinyliciousClient][])) allow passing a `logger?: ITelemetryBaseLogger`
+All Fluid service clients (for example, [AzureClient][] and [TinyliciousClient][]) allow passing a `logger?: ITelemetryBaseLogger`
 into the service client props. Both `createContainer()` and `getContainer()` methods will then create an instance of the `logger`.
 
 `TinyliciousClientProps` interface definition takes an optional parameter `logger`.
@@ -155,7 +155,7 @@ The Fluid Framework sends events in the following categories:
 
 ### EventName
 
-This property contains a unique name for the event. The name may be namespaced, delimitted by a colon ':'.
+This property contains a unique name for the event. The name may be namespaced, delimited by a colon ':'.
 Additionally, some event names (not the namespaces) contain underscores '\_', as a free-form subdivision of
 events into different related cases. Once common example is `foo_start`, `foo_end` and `foo_cancel` for
 performance events.
@@ -263,6 +263,7 @@ async function start(): Promise<void> {
       const id = await container.attach();
       location.hash = id;
   }
+}
 ```
 
 Now, whenever a telemetry event is encountered, the custom `send()` method gets called and will print out the entire
@@ -270,8 +271,7 @@ event object.
 
 <img
 	src="https://storage.fluidframework.com/static/images/consoleLogger_telemetry_in_action.png"
-	alt="The
-  ConsoleLogger sends telemetry events to the browser console for display."
+	alt="The ConsoleLogger sends telemetry events to the browser console for display."
 />
 
 :::warning
@@ -297,7 +297,7 @@ localStorage.debug = "fluid:*";
 You'll also need to enable the `Verbose` logging level in the console. The dropdown that controls that is just above it,
 to the right of the Filter input box (it might say "Default Levels").
 
-![A screenshot of how to enable the Verbose logging level in the console](/images/verbose-log-level.png)
+![A screenshot of how to enable the Verbose logging level in the console](https://storage.fluidframework.com/static/images/verbose-log-level.png)
 
 It's not recommended to set `localStorage.debug` in code; your users will see a very spammy console window if you do.
 
