@@ -29,6 +29,7 @@ import {
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
 import type { TreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
+import { SchemaFactoryAlpha } from "../schemaFactoryAlpha.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -182,24 +183,26 @@ describe("SchematizingSimpleTreeView", () => {
 		// This sort of scenario might be reasonably encountered when an "older" version of an application opens
 		// up a document that has been created and/or edited by a "newer" version of an application (which has
 		// expanded the schema to include more information).
-		const factory = new SchemaFactory(undefined);
+		const factory = new SchemaFactoryAlpha(undefined);
 		class PersonGeneralized extends factory.object("Person", {
 			name: factory.string,
 			age: factory.number,
 			address: factory.optional(factory.string),
 		}) {}
-		class PersonSpecific extends factory.object("Person", {
-			name: factory.string,
-			age: factory.number,
-		}) {}
+		class PersonSpecific extends factory.object(
+			"Person",
+			{
+				name: factory.string,
+				age: factory.number,
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
 
 		const personConfig = new TreeViewConfiguration({
 			schema: PersonSpecific,
-			allowUnknownOptionalFields: true,
 		});
 		const personConfigGeneralied = new TreeViewConfiguration({
 			schema: PersonGeneralized,
-			allowUnknownOptionalFields: true,
 		});
 		const checkout = checkoutWithInitialTree(
 			personConfigGeneralied,

@@ -73,7 +73,10 @@ export function isNodeInSchema(
 			uncheckedFieldsFromNode.delete(fieldKey);
 		}
 		// The node has fields that we did not check as part of looking at every field defined in the node's schema
-		if (uncheckedFieldsFromNode.size !== 0) {
+		if (
+			uncheckedFieldsFromNode.size !== 0 &&
+			!schemaAndPolicy.policy.allowUnknownOptionalFields(node.type)
+		) {
 			return SchemaValidationErrors.ObjectNode_FieldNotInSchema;
 		}
 	} else if (schema instanceof MapNodeStoredSchema) {

@@ -53,7 +53,9 @@ import {
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
+	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
+
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
  * exists and error if creating a second.
@@ -111,12 +113,12 @@ export class SchematizingSimpleTreeView<
 		}
 		checkout.forest.anchors.slots.set(ViewSlot, this);
 
+		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 		this.schemaPolicy = {
 			...defaultSchemaPolicy,
 			validateSchema: config.enableSchemaValidation,
-			allowUnknownOptionalFields: config.allowUnknownOptionalFields,
+			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(this.rootFieldSchema),
 		};
-		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
 		this.viewSchema = new ViewSchema(this.schemaPolicy, {}, this.rootFieldSchema);
 		// This must be initialized before `update` can be called.
@@ -161,10 +163,7 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 				{
 					schema: this.checkout.storedSchema,
-					policy: {
-						...defaultSchemaPolicy,
-						validateSchema: this.config.enableSchemaValidation,
-					},
+					policy: this.schemaPolicy,
 				},
 			);
 

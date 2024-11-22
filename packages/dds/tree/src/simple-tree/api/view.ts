@@ -16,6 +16,7 @@ import { fail } from "../../util/index.js";
 import {
 	FieldKinds,
 	type FullSchemaPolicy,
+	type FieldDiscrepancy,
 	getAllowedContentDiscrepancies,
 	isNeverTree,
 } from "../../feature-libraries/index.js";
@@ -25,7 +26,6 @@ import {
 	type ImplicitFieldSchema,
 } from "../schemaTypes.js";
 import { toStoredSchema } from "../toStoredSchema.js";
-import type { FieldDiscrepancy } from "../../feature-libraries/index.js";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
@@ -41,6 +41,7 @@ export class ViewSchema {
 	 * Normalized view schema (implicitly allowed view schema types are converted to their canonical form).
 	 */
 	public readonly schema: FieldSchema;
+
 	/**
 	 * @param viewSchema - Schema for the root field of this view.
 	 */
@@ -121,8 +122,9 @@ export class ViewSchema {
 						// Stored schema is more relaxed than view schema.
 						canUpgrade = false;
 						if (
-							this.policy.allowUnknownOptionalFields &&
-							discrepancy.view === FieldKinds.forbidden.identifier
+							discrepancy.view === FieldKinds.forbidden.identifier &&
+							discrepancy.identifier !== undefined &&
+							this.policy.allowUnknownOptionalFields(discrepancy.identifier)
 						) {
 							// When the application has opted into it, we allow viewing documents which have additional
 							// optional fields in the stored schema that are not present in the view schema.

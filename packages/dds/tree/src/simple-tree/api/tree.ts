@@ -8,6 +8,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { CommitMetadata, RevertibleFactory } from "../../core/index.js";
 import type { Listenable } from "../../events/index.js";
+
+// This is referenced by doc comments.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 import type { TreeAlpha } from "../../shared-tree/index.js";
 
 import {
@@ -180,63 +183,11 @@ export interface ITreeConfigurationOptions {
 	 * The above examples exist in executable form in this files tests, and should be updated there then copied back here.
 	 */
 	readonly preventAmbiguity?: boolean;
-
-	/**
-	 * Opt in to viewing documents which have optional fields in the document schema which are not present in the view schema.
-	 *
-	 * @defaultValue `false`
-	 * @remarks
-	 * The advantage of enabling this option is that it allows an application ecosystem with staged rollout to more quickly
-	 * upgrade documents to include schema for new optional features.
-	 *
-	 * However, it does come with trade-offs that applications should weigh carefully when it comes to interactions between
-	 * code and documents.
-	 * When opening such documents, the API presented on `view.root` is still determined by the view schema.
-	 * This can have implications on the behavior of edits or code which uses portions of the view schema,
-	 * since this may inadvertently drop data which is present in those optional fields in the document schema.
-	 *
-	 * Consider the following example:
-	 *
-	 * ```typescript
-	 * const sf = new SchemaFactory("com.example");
-	 * class PersonView extends sf.object("Person", { name: sf.string }) {}
-	 * class PersonStored extends sf.object("Person", { name: sf.string, nickname: sf.optional(sf.string) }) {}
-	 *
-	 * // Say we have a document which uses `PersonStored` in its schema, and application code constructs
-	 * // a tree view using `PersonView`. If the application for some reason had implemented a function like this:
-	 * function clonePerson(a: PersonView): PersonView {
-	 * 	return new PersonView({ name: a.name });
-	 * }
-	 * // Then the alleged clone wouldn't actually clone the entire person, it would drop the nickname.
-	 * ```
-	 *
-	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
-	 * import/export APIs (see {@link TreeAlpha.exportVerbose}, {@link TreeAlpha.importVerbose}) with persistent keys.
-	 *
-	 * @privateRemarks
-	 * We could consider exposing this sort of option on a per-object-node basis, e.g. as an additional parameter passed to the schema declaration
-	 * which is plumbed through to the view schema but not stored schema. This API would look and function similarly to `FieldProps`.
-	 *
-	 * Implementation-wise, operations which operate on an entire node (such as moving it within a field or across fields) will not encounter the
-	 * problem of dropping data as lower layers of `SharedTree` (rebaser, encoding, etc.) are view schema agnostic.
-	 * Writing code which leverages this such as
-	 *
-	 * ```typescript
-	 * const someElement = mySchemaArray[0];
-	 * mySchemaArray.removeAt(0);
-	 * mySchemaArray.insertAtEnd(someElement);
-	 * ```
-	 *
-	 * does not currently work, but if we support move-like patterns in the future, it would be good to update the public remarks above to highlight
-	 * this fact.
-	 */
-	readonly allowUnknownOptionalFields?: boolean;
 }
 
 const defaultTreeConfigurationOptions: Required<ITreeConfigurationOptions> = {
 	enableSchemaValidation: false,
 	preventAmbiguity: false,
-	allowUnknownOptionalFields: false,
 };
 
 /**
@@ -278,11 +229,6 @@ export class TreeViewConfiguration<
 	public readonly preventAmbiguity: boolean;
 
 	/**
-	 * {@inheritDoc ITreeConfigurationOptions.allowUnknownOptionalFields}
-	 */
-	public readonly allowUnknownOptionalFields: boolean;
-
-	/**
 	 * @param props - Property bag of configuration options.
 	 */
 	public constructor(props: ITreeViewConfiguration<TSchema>) {
@@ -290,7 +236,6 @@ export class TreeViewConfiguration<
 		this.schema = config.schema;
 		this.enableSchemaValidation = config.enableSchemaValidation;
 		this.preventAmbiguity = config.preventAmbiguity;
-		this.allowUnknownOptionalFields = config.allowUnknownOptionalFields;
 
 		// Ambiguity errors are lower priority to report than invalid schema errors, so collect these in an array and report them all at once.
 		const ambiguityErrors: string[] = [];

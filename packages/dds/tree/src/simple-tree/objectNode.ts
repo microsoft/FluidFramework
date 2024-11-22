@@ -6,7 +6,7 @@
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { FieldKey } from "../core/index.js";
+import type { FieldKey, SchemaPolicy } from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexTreeField,
@@ -42,9 +42,14 @@ import {
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
-import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
+import {
+	isObjectNodeSchema,
+	type ObjectNodeSchema,
+	type ObjectNodeSchemaInternalData,
+} from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
+import { walkFieldSchema } from "./walkFieldSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -323,6 +328,7 @@ export function objectSchema<
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
+	allowUnknownOptionalFields: boolean,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable> & ObjectNodeSchemaInternalData {
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
@@ -361,6 +367,7 @@ export function objectSchema<
 			]),
 		);
 		public static readonly identifierFieldKeys: readonly FieldKey[] = identifierFieldKeys;
+		public static readonly allowUnknownOptionalFields: boolean = allowUnknownOptionalFields;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -501,4 +508,30 @@ function assertUniqueKeys<
 		}
 		derivedStoredKeys.add(storedKey);
 	}
+}
+
+/**
+ * Creates a policy for allowing unknown optional fields on an object node which delegates to the policy defined
+ * on the object node's internal schema data.
+ */
+export function createUnknownOptionalFieldPolicy(
+	schema: ImplicitFieldSchema,
+): SchemaPolicy["allowUnknownOptionalFields"] {
+	const identifierToObjectSchema = new Map<
+		string,
+		ObjectNodeSchema & ObjectNodeSchemaInternalData
+	>();
+
+	walkFieldSchema(schema, {
+		node: (nodeSchema: TreeNodeSchema) => {
+			if (isObjectNodeSchema(nodeSchema)) {
+				identifierToObjectSchema.set(nodeSchema.identifier, nodeSchema);
+			}
+		},
+	});
+
+	return (identifier) => {
+		const nodeSchema = identifierToObjectSchema.get(identifier);
+		return nodeSchema?.allowUnknownOptionalFields ?? false;
+	};
 }

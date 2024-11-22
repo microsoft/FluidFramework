@@ -11,12 +11,13 @@ import {
 } from "../../core/index.js";
 import { defaultSchemaPolicy, type FullSchemaPolicy } from "../../feature-libraries/index.js";
 import {
-	SchemaFactory,
 	toStoredSchema,
 	ViewSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 } from "../../simple-tree/index.js";
+import { createUnknownOptionalFieldPolicy } from "../../simple-tree/index.js";
+import { SchemaFactoryAlpha } from "../schemaFactoryAlpha.js";
 
 const noAdapters: Adapters = {};
 const emptySchema: TreeStoredSchema = {
@@ -24,12 +25,15 @@ const emptySchema: TreeStoredSchema = {
 	rootFieldSchema: storedEmptyFieldSchema,
 };
 
-const factory = new SchemaFactory("");
+const factory = new SchemaFactoryAlpha("");
 
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
 	expected: ReturnType<ViewSchema["checkCompatibility"]>,
-	policy: FullSchemaPolicy = defaultSchemaPolicy,
+	policy: FullSchemaPolicy = {
+		...defaultSchemaPolicy,
+		allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(view),
+	},
 ) {
 	const viewSchema = new ViewSchema(policy, noAdapters, view);
 	const compatibility = viewSchema.checkCompatibility(stored);
@@ -196,10 +200,14 @@ describe("viewSchema", () => {
 
 		describe("allows viewing but not upgrading when the view schema has opted into allowing the differences", () => {
 			it("due to additional optional fields in the stored schema", () => {
-				class Point2D extends factory.object("Point", {
-					x: factory.number,
-					y: factory.number,
-				}) {}
+				class Point2D extends factory.object(
+					"Point",
+					{
+						x: factory.number,
+						y: factory.number,
+					},
+					{ allowUnknownOptionalFields: true },
+				) {}
 				class Point3D extends factory.object("Point", {
 					x: factory.number,
 					y: factory.number,
@@ -208,7 +216,6 @@ describe("viewSchema", () => {
 				expectCompatibility(
 					{ view: Point2D, stored: toStoredSchema(Point3D) },
 					{ canView: true, canUpgrade: false, isEquivalent: false },
-					{ ...defaultSchemaPolicy, allowUnknownOptionalFields: true },
 				);
 			});
 		});

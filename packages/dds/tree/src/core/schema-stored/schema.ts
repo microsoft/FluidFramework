@@ -93,10 +93,14 @@ export interface SchemaPolicy {
 	readonly validateSchema: boolean;
 
 	/**
-	 * Whether to allow a document to be opened when the stored schema contains optional fields that are not known to
-	 * the view schema.
+	 * Whether to allow a document to be opened when a particular stored schema (identified by `identifier`)
+	 * contains optional fields that are not known to the view schema.
+	 *
+	 * @privateRemarks
+	 * Plumbing this in via `SchemaPolicy` avoids needing to walk the view schema representation repeatedly in places
+	 * that need it (schema validation, view vs stored compatibility checks).
 	 */
-	readonly allowUnknownOptionalFields: boolean;
+	allowUnknownOptionalFields(identifier: TreeNodeSchemaIdentifier): boolean;
 }
 
 /**

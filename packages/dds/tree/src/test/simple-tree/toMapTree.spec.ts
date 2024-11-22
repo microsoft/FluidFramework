@@ -1294,7 +1294,8 @@ describe("toMapTree", () => {
 				policy: {
 					fieldKinds,
 					validateSchema: true,
-					allowUnknownOptionalFields: false,
+					// TODO: Unit test leveraging this policy in this file
+					allowUnknownOptionalFields: () => false,
 				},
 			};
 		}
