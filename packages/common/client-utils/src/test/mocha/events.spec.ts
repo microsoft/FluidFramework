@@ -5,14 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 
-import {
-	EventEmitter,
-	createEmitter,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../events/emitter.js";
-import type { Listenable } from "../../events/index.js";
+import { CustomEventEmitter, createEmitter } from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;
@@ -20,7 +15,7 @@ interface TestEvents {
 	compute: (input: string) => string;
 }
 
-describe("EventEmitter", () => {
+describe("CustomEventEmitter", () => {
 	it("emits events", () => {
 		const emitter = createEmitter<TestEvents>();
 		const log: string[] = [];
@@ -31,8 +26,8 @@ describe("EventEmitter", () => {
 
 	it("emits events and collects their results", () => {
 		const emitter = createEmitter<TestEvents>();
-		const listener1 = (arg: string) => arg.toUpperCase();
-		const listener2 = (arg: string) => arg.toLowerCase();
+		const listener1 = (arg: string): string => arg.toUpperCase();
+		const listener2 = (arg: string): string => arg.toLowerCase();
 		emitter.on("compute", listener1);
 		emitter.on("compute", listener2);
 		const results = emitter.emitAndCollect("compute", "hello");
@@ -85,7 +80,7 @@ describe("EventEmitter", () => {
 	it("deregisters events via off", () => {
 		const emitter = createEmitter<TestEvents>();
 		let error = false;
-		const listener = (e: boolean) => (error = e);
+		const listener = (e: boolean): boolean => (error = e);
 		emitter.on("close", listener);
 		emitter.off("close", listener);
 		emitter.emit("close", true);
@@ -112,8 +107,8 @@ describe("EventEmitter", () => {
 		const emitter = createEmitter<TestEvents>();
 		let opened = false;
 		let closed = false;
-		const listenerOpen = () => (opened = true);
-		const listenerClosed = () => (closed = true);
+		const listenerOpen = (): boolean => (opened = true);
+		const listenerClosed = (): boolean => (closed = true);
 		emitter.on("open", listenerOpen);
 		emitter.on("close", listenerClosed);
 		emitter.off("open", listenerOpen);
@@ -129,7 +124,7 @@ describe("EventEmitter", () => {
 	it("correctly handles multiple registrations for the same event", () => {
 		const emitter = createEmitter<TestEvents>();
 		let count: number;
-		const listener = () => (count += 1);
+		const listener = (): number => (count += 1);
 		const off1 = emitter.on("open", listener);
 		const off2 = emitter.on("open", () => listener());
 
@@ -148,37 +143,10 @@ describe("EventEmitter", () => {
 		assert.strictEqual(count, 0);
 	});
 
-	it("errors on multiple registrations of the same listener", () => {
-		const emitter = createEmitter<TestEvents>();
-		let count = 0;
-		const listener = () => (count += 1);
-		emitter.on("open", listener);
-		assert.throws(
-			() => emitter.on("open", listener),
-			(e: Error) => validateAssertionError(e, /register.*twice.*open/),
-		);
-		// If error is caught, the listener should still fire once for the first registration
-		emitter.emit("open");
-		assert.strictEqual(count, 1);
-	});
-
-	it("includes symbol description in the error message on multiple registrations of the same listener", () => {
-		// This test ensures that symbol types are registered, error on double registration, and include the description of the symbol in the error message.
-		const eventSymbol = Symbol("TestEvent");
-		const emitter = createEmitter<{ [eventSymbol]: () => void }>();
-		const listener = () => {};
-		emitter.on(eventSymbol, listener);
-		emitter.emit(eventSymbol);
-		assert.throws(
-			() => emitter.on(eventSymbol, listener),
-			(e: Error) => validateAssertionError(e, /register.*twice.*TestEvent/),
-		);
-	});
-
 	it("allows repeat deregistrations", () => {
 		const emitter = createEmitter<TestEvents>();
 		const deregister = emitter.on("open", () => {});
-		const listenerB = () => {};
+		const listenerB = (): void => {};
 		emitter.on("open", listenerB);
 		deregister();
 		deregister();
@@ -284,28 +252,82 @@ describe("EventEmitter", () => {
 		emitter.emit("open");
 		assert.deepEqual(log, ["A1", "B", "A2"]);
 	});
+
+	it("errors on multiple registrations of the same listener", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count = 0;
+		const listener = (): number => (count += 1);
+		emitter.on("open", listener);
+		assert.throws(
+			() => emitter.on("open", listener),
+			(e: Error) => validateAssertionError(e, /register.*twice.*open/),
+		);
+		// If error is caught, the listener should still fire once for the first registration
+		emitter.emit("open");
+		assert.strictEqual(count, 1);
+	});
+
+	it("includes symbol description in the error message on multiple registrations of the same listener", () => {
+		// This test ensures that symbol types are registered, error on double registration, and include the description of the symbol in the error message.
+		const eventSymbol = Symbol("TestEvent");
+		const emitter = createEmitter<{ [eventSymbol]: () => void }>();
+		const listener = (): void => {};
+		emitter.on(eventSymbol, listener);
+		emitter.emit(eventSymbol);
+		assert.throws(
+			() => emitter.on(eventSymbol, listener),
+			(e: Error) => validateAssertionError(e, /register.*twice.*TestEvent/),
+		);
+	});
 });
 
-// The below classes correspond to the examples given in the doc comment of `EventEmitter` to ensure that they compile
+/**
+ * The below classes correspond to the examples given in {@link CustomEventEmitter} to ensure that they compile.
+ *
+ * Provides an API for subscribing to and listening to events.
+ *
+ * @remarks Classes wishing to emit events may either extend this class, compose over it, or expose it as a property of type {@link @fluidframework/core-interfaces#Listenable}.
+ *
+ * Note: These are for testing only and should not be re-exported.
+ */
 
+/**
+ * A set of events with their handlers.
+ */
 interface MyEvents {
 	loaded: () => void;
 	computed: () => number;
 }
 
-class MyInheritanceClass extends EventEmitter<MyEvents> {
-	private load() {
+/**
+ * Example of extending {@link CustomEventEmitter}.
+ */
+export class MyInheritanceClass extends CustomEventEmitter<MyEvents> {
+	private load(): number[] {
 		this.emit("loaded");
 		const results: number[] = this.emitAndCollect("computed");
+		return results;
+	}
+
+	public triggerLoad(): void {
+		this.load();
 	}
 }
 
-class MyCompositionClass implements Listenable<MyEvents> {
+/**
+ * Example of composing over {@link CustomEventEmitter}.
+ */
+export class MyCompositionClass implements Listenable<MyEvents> {
 	private readonly events = createEmitter<MyEvents>();
 
-	private load() {
+	private load(): number[] {
 		this.events.emit("loaded");
 		const results: number[] = this.events.emitAndCollect("computed");
+		return results;
+	}
+
+	public triggerLoad(): void {
+		this.load();
 	}
 
 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
@@ -317,13 +339,48 @@ class MyCompositionClass implements Listenable<MyEvents> {
 	}
 }
 
-class MyExposingClass {
+/**
+ * Example of exposing {@link CustomEventEmitter} as a property
+ */
+export class MyExposingClass {
 	private readonly _events = createEmitter<MyEvents>();
 
 	public readonly events: Listenable<MyEvents> = this._events;
 
-	private load() {
+	private load(): number[] {
 		this._events.emit("loaded");
 		const results: number[] = this._events.emitAndCollect("computed");
+		return results;
 	}
+	public triggerLoad(): void {
+		this.load();
+	}
+}
+
+/**
+ * Validates that an error thrown by assert() function has the expected message.
+ *
+ * @param error - The error object thrown by `assert()` function.
+ * @param expectedErrorMessage - The message that the error object should match.
+ * @returns `true` if the message in the error object that was passed in matches the expected
+ * message. Otherwise it throws an error.
+ *
+ * @remarks
+ * Similar to {@link @fluidframework/test-runtime-utils#validateAssertionError}.
+ *
+ * @internal
+ */
+function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean {
+	const actualMsg = error.message;
+	if (
+		typeof expectedErrorMsg === "string"
+			? actualMsg !== expectedErrorMsg
+			: !expectedErrorMsg.test(actualMsg)
+	) {
+		// This throws an Error instead of an AssertionError because AssertionError would require a dependency on the
+		// node assert library, which we don't want to do for this library because it's used in the browser.
+		const message = `Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`;
+		throw new Error(message);
+	}
+	return true;
 }

@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+
+import type { MigrationState } from "../migrationTool/index.js";
+
+// #region IMigratableModel
+
 /**
  * A model with a detectable version.
  *
@@ -23,12 +29,6 @@ export interface IVersionedModel {
  */
 export interface IImportExportModel<ImportType, ExportType> {
 	/**
-	 * Permit format checking in a generic manner - without knowing the type of our data or the type of the model,
-	 * we can still check whether the model supports that data.
-	 */
-	supportsDataFormat: (initialData: unknown) => initialData is ImportType;
-
-	/**
 	 * importData must be called after initialization but before modifying or attaching the model (i.e. can only
 	 * be called on an unaltered, detached model).
 	 */
@@ -38,6 +38,12 @@ export interface IImportExportModel<ImportType, ExportType> {
 	 * Export the data from the model.  Can be passed into importData() for a new container to replicate the data.
 	 */
 	exportData: () => Promise<ExportType>;
+
+	/**
+	 * Permit format checking in a generic manner - without knowing the type of our data or the type of the model,
+	 * we can still check whether the model supports that data.
+	 */
+	supportsDataFormat: (initialData: unknown) => initialData is ImportType;
 }
 
 // TODO: Is there a better way to express the unknown format here?  I think I'd prefer to put the burden of calling
@@ -69,4 +75,49 @@ export interface IMigratableModel
 	 * and needs to clean that model up after the export is done.
 	 */
 	dispose(): void;
+}
+
+// #region IMigrator
+
+/**
+ * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import
+ * to the new model.  The modelVersion is also provided to inform the appropriate transformation to perform.
+ * It is async to permit network calls or lazy-loading the transform logic within the function.
+ * @alpha
+ */
+export type DataTransformationCallback = (
+	exportedData: unknown,
+	modelVersion: string,
+) => Promise<unknown>;
+
+/**
+ * @alpha
+ */
+export interface IMigratorEvents extends IEvent {
+	(event: "migrated" | "migrating", listener: () => void);
+	(event: "migrationNotSupported", listener: (version: string) => void);
+}
+
+/**
+ * @alpha
+ */
+export interface IMigrator {
+	readonly events: IEventProvider<IMigratorEvents>;
+
+	/**
+	 * The currently monitored migratable model.  As the Migrator completes a migration, it will swap in the new
+	 * migrated model and emit a "migrated" event.
+	 */
+	readonly currentModel: IMigratableModel;
+
+	/**
+	 * The container id of the current model.
+	 */
+	readonly currentModelId: string;
+
+	/**
+	 * The migration state of the current model.  Note that since we swap out for the new model as soon as migration
+	 * completes, we'll only ever see this as collaborating or migrating, never migrated.
+	 */
+	readonly migrationState: MigrationState;
 }

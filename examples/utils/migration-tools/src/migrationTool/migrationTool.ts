@@ -32,7 +32,7 @@ import type {
 	IMigrationTool,
 	IMigrationToolEvents,
 	MigrationState,
-} from "./interfaces/index.js";
+} from "./interfaces.js";
 
 const consensusRegisterCollectionId = "consensus-register-collection";
 const pactMapId = "pact-map";
@@ -101,9 +101,6 @@ class MigrationTool implements IMigrationTool {
 			});
 			this.pactMap.on("pending", (key: string) => {
 				if (key === newVersionKey) {
-					// TODO: Here take some action to prevent collaboration - the host might not provide a Migrator,
-					// and we need to ensure we still don't break expectations in that case.  Note that during this
-					// event firing the pactMap has not yet sent its accept op though.
 					this._events.emit("stopping");
 				}
 			});
@@ -111,8 +108,6 @@ class MigrationTool implements IMigrationTool {
 			this.pactMap.on("accepted", (key: string) => {
 				if (key === newVersionKey) {
 					this._events.emit("migrating");
-					// TODO: Here we should stop submitting new summaries since it will complicate loading from the
-					// accepted sequence number
 				}
 			});
 
