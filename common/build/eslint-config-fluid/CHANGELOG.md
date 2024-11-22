@@ -1,5 +1,13 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [5.6.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.6.0)
+
+### New config for use with Biome linter
+
+A new strict-biome config is available that disables all rules that Biome's recommended config includes.
+This config is intended to be used in projects that use both eslint and Biome for linting.
+This config is considered experimental.
+
 ## [5.5.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.5.1)
 
 ### Disabled rules

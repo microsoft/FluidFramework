@@ -24,6 +24,12 @@ In particular, use of this config is encouraged for libraries with public facing
 
 Imported via `@fluidframework/eslint-config-fluid/strict`.
 
+### Strict-Biome
+
+A version of the "strict" config that disables rules that are supported by Biome's "recommended" lint config.
+This config is intended to be used in projects that use both eslint and Biome for linting.
+This config is considered experimental.
+
 ## Changing the lint config
 
 If you want to change the shared lint config (that is, this package), you need to do the following:
