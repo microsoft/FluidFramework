@@ -267,7 +267,7 @@ describe("Create New Utils Tests", () => {
 			),
 		);
 
-		// Update the webUrl to the version that has the nav parameter that was upposed to be added
+		// Update the webUrl to the version that has the nav parameter that was supposed to be added
 		mockSharingLinkData.webUrl =
 			"https://mock.url/?nav=cz0lMkZzaXRlVXJsJmQ9ZHJpdmVJZCZmPW1vY2tJdGVtSWQmYz0lMkYmZmx1aWQ9MQ%3D%3D";
 
@@ -468,7 +468,7 @@ describe("Create New Utils Tests", () => {
 		);
 
 		// 's=%2FsiteUrl&d=driveId&f=mockItemId&c=%2F&fluid=1&a=mockAppName&p=mockContainerPackageName&x=mockContext'
-		// Update the webUrl to the version that has the nav parameter that was upposed to be added
+		// Update the webUrl to the version that has the nav parameter that was supposed to be added
 		mockSharingLinkData.webUrl =
 			"https://mock.url/?nav=cz0lMkZzaXRlVXJsJmQ9ZHJpdmVJZCZmPW1vY2tJdGVtSWQmYz0lMkYmZmx1aWQ9MSZhPW1vY2tBcHBOYW1lJnA9bW9ja0NvbnRhaW5lclBhY2thZ2VOYW1lJng9bW9ja0NvbnRleHQ%3D";
 
