@@ -41,10 +41,12 @@ export type {
 	 */
 	Listeners,
 	/**
+	 * Moved to the `@fluidframework/core-interfaces` package.
 	 * @deprecated Moved to the `@fluidframework/core-interfaces` package.
 	 */
 	IsListener,
 	/**
+	 * Moved to the `@fluidframework/core-interfaces` package.
 	 * @deprecated Moved to the `@fluidframework/core-interfaces` package.
 	 */
 	Listenable,

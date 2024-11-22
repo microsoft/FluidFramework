@@ -1,4 +1,4 @@
- ---
+---
 "@fluidframework/core-interfaces": minor
 "@fluidframework/tree": minor
 ---
