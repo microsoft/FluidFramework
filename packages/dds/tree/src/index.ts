@@ -36,19 +36,21 @@ export { type Brand } from "./util/index.js";
 
 export type {
 	/**
-	 * @deprecated Import from core-interfaces
+	 * Moved to the `@fluidframework/core-interfaces` package.
+	 * @deprecated Moved to the `@fluidframework/core-interfaces` package.
 	 */
 	Listeners,
 	/**
-	 * @deprecated Import from core-interfaces
+	 * @deprecated Moved to the `@fluidframework/core-interfaces` package.
 	 */
 	IsListener,
 	/**
-	 * @deprecated Import from core-interfaces
+	 * @deprecated Moved to the `@fluidframework/core-interfaces` package.
 	 */
 	Listenable,
 	/**
-	 * @deprecated Import from core-interfaces
+	 * Moved to the `@fluidframework/core-interfaces` package.
+	 * @deprecated Moved to the `@fluidframework/core-interfaces` package.
 	 */
 	Off,
 } from "@fluidframework/core-interfaces";
