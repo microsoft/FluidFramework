@@ -4,7 +4,8 @@
  */
 
 /**
- * Primary entry-point to the Fluid Devtools.
+ * Used in conjunction with the Fluid Framework Developer Tools browser extension to allow visualization of
+ * and interaction with Fluid data.
  *
  * To initialize the Devtools alongside your application's {@link @fluidframework/fluid-static#IFluidContainer}, call
  * {@link initializeDevtools}.
@@ -12,8 +13,10 @@
  * The Devtools will automatically dispose of themselves upon Window unload, but if you would like to close them
  * earlier, call {@link IDevtools.dispose}.
  *
- * To enable visualization of Telemetry data, you may create a {@link @fluidframework/devtools-core#DevtoolsLogger} and
+ * To enable visualization of Telemetry data, you may create a {@link DevtoolsLogger} and
  * provide it during Devtools initialization.
+ *
+ * For more details and examples, see the {@link https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools | package README}.
  *
  * @packageDocumentation
  */

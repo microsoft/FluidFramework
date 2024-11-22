@@ -33,7 +33,6 @@ function mapExportPathToApiTag(
 
 	for (const [exportPath] of Object.entries(exports)) {
 		const level = exportPath === "." ? ApiLevel.public : exportPath.replace("./", "");
-		const isTypeOnly = false; // TODO: fix this
 		const conditions = [defaultExportCondition, typesExportCondition];
 
 		if (!isKnownApiLevel(level)) {
@@ -46,6 +45,8 @@ function mapExportPathToApiTag(
 
 		const resolvedExport = getExportPathFromPackage(packageJson, level, conditions, logger);
 
+		const isTypeOnly = resolvedExport?.includes(".d.ts") === true;
+
 		if (resolvedExport === undefined) {
 			throw new Error(`${packageJson.name}: No export map found.`);
 		}
@@ -56,8 +57,6 @@ function mapExportPathToApiTag(
 			isTypeOnly,
 		});
 	}
-
-	console.log(mapKeyToOutput);
 
 	return mapKeyToOutput;
 }

@@ -165,6 +165,7 @@ For more details about leveraging Mermaid diagrams in Docusaurus, see [here](htt
 When adding image assets for use in the website, please follow the instructions outlined [here](https://github.com/microsoft/FluidFramework/wiki/Uploading-images-for-the-website-to-Azure-blob-storage).
 Namely, avoid adding binary files like images to the GitHub repo.
 Instead, upload them to our Azure blob storage, and reference by URL.
+E.g., <https://storage.fluidframework.com/static/images/website/brainstorm-example.png>
 
 Images may only be uploaded by Microsoft Fluid team members.
 If you do not have the appropriate permissions, but would like to contribute to our documentation, please reach out to us [here](https://github.com/microsoft/FluidFramework/issues/new/choose).
