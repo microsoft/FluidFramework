@@ -9,3 +9,7 @@ export {
 	GenerateEntrypointsCommand,
 	getGenerateEntrypointsOutput,
 } from "./generateEntrypoints.js";
+export {
+	// getGenerateSourceEntrypointsOutput,
+	getGenerateSourceEntrypointsTscOutput,
+} from "./generateSourceEntrypoints.js";

@@ -10,9 +10,8 @@ import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
 import type { TsConfigJson } from "type-fest";
 
-import type { PackageJson } from "@fluidframework/build-tools";
-
-import { ApiLevel, ApiTag, BaseCommand, isKnownApiLevel } from "../../library/index.js";
+import { getOutputConfiguration } from "../../library/commands/generateSourceEntrypoints.js";
+import { ApiTag, BaseCommand } from "../../library/index.js";
 import {
 	readPackageJson,
 	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
@@ -21,9 +20,6 @@ import {
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
 import type { ExportData } from "../../library/packageExports.js";
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import/no-internal-modules
-import { getExportPathFromPackage } from "../../library/packageExports.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
 import { getApiExports, getPackageDocumentationText } from "../../library/typescriptApi.js";
@@ -123,97 +119,6 @@ async function getTsConfigCompilerOptions(
 		rootDir: formatPath(rootDir),
 		tsconfigOutDir: formatPath(outDir),
 	};
-}
-
-/**
- * Resolves a mapping of `ApiTag` levels to their modified export paths.
- */
-function getOutputConfiguration(
-	packageJson: PackageJson,
-	rootDir: string,
-	tsconfigOutDir: string,
-	logger?: CommandLogger,
-): Map<ApiTag, ExportData> {
-	const mapApiTagToExportPath: Map<ApiTag, ExportData> = mapExportPathToApiTag(
-		packageJson,
-		logger,
-	);
-
-	const result = new Map<ApiTag, ExportData>();
-	for (const [apiTag, exportData] of mapApiTagToExportPath) {
-		const modifiedExportPath = exportData.relPath
-			.replace(tsconfigOutDir, rootDir)
-			.replace(/\.js$|\.d\.ts$/, ".ts");
-
-		if (modifiedExportPath === exportData.relPath) {
-			throw new Error(`Failed to replace ${tsconfigOutDir} with ${rootDir}.`);
-		}
-
-		if (result.has(apiTag)) {
-			logger?.warning(`${modifiedExportPath} found in exports multiple times.`);
-		}
-		result.set(apiTag, { ...exportData, relPath: modifiedExportPath });
-	}
-
-	return result;
-}
-
-const defaultExportCondition = "default";
-const typesExportCondition = "types";
-
-/**
- * Read package "exports" to determine which "default"/ "types" paths to return along with `ApiTag`.
- *
- * @param packageJson - json content of package.json
- * @param logger - optional Logger
- * @returns Map with API tags or levels with export path data
- */
-function mapExportPathToApiTag(
-	packageJson: PackageJson,
-	logger?: CommandLogger,
-): Map<ApiTag, ExportData> {
-	const mapKeyToOutput = new Map<ApiTag, ExportData>();
-
-	const { exports } = packageJson;
-
-	if (typeof exports !== "object" || exports === null || exports === undefined) {
-		throw new Error(`${packageJson.name}: No exports map found.`);
-	}
-
-	for (const [exportPath] of Object.entries(exports)) {
-		const level = exportPath === "." ? ApiLevel.public : exportPath.replace("./", "");
-		const isTypeOnly = false; // fix this
-		const conditions = [defaultExportCondition, typesExportCondition];
-
-		if (!isKnownApiLevel(level)) {
-			throw new Error(`${exportPath} is not a known API tag`);
-		}
-
-		if (level === ApiLevel.internal) {
-			continue;
-		}
-
-		const resolvedExport = getExportPathFromPackage(
-			packageJson,
-			level,
-			conditions,
-			logger,
-		);
-
-		if (resolvedExport === undefined) {
-			throw new Error(`${packageJson.name}: No export map found.`);
-		}
-
-		mapKeyToOutput.set(level, {
-			relPath: resolvedExport,
-			conditions: [],
-			isTypeOnly,
-		});
-	}
-
-	console.log(mapKeyToOutput);
-
-	return mapKeyToOutput;
 }
 
 function sourceContext(node: Node): string {
@@ -367,51 +272,4 @@ async function generateSourceEntrypoints(
 	}
 
 	await Promise.all(fileSavePromises);
-}
-
-/**
- * Reads command line argument values that are simple value following option like:
- * --optionName value
- *
- * @param commandLine - command line to extract from
- * @param argQuery - record of arguments to read (keys) with default values
- * @returns record of argument values extracted or given default value
- */
-function readArgValues<TQuery extends Readonly<Record<string, string>>>(
-	commandLine: string,
-	argQuery: string,
-): TQuery {
-	const values: Record<string, string> = {};
-	const args = commandLine.split(" ");
-	for (const [argName, defaultValue] of Object.entries(argQuery)) {
-		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
-		values[argName] =
-			0 < indexOfArgValue && indexOfArgValue < args.length
-				? args[indexOfArgValue]
-				: defaultValue;
-	}
-	return values as TQuery;
-}
-
-export function getSourceGenerateEntrypointsOutput(
-	packageJson: PackageJson,
-	outDir: string,
-	commandLine: string,
-): IterableIterator<ExportData> {
-	// Determine select output from flub generate entrypoints.
-	// Fluid packages use two import levels: internal and public.
-	// internal is built from tsc and public is generated. It is likely exported
-	// as . (root), but what matters is matching command implementation and
-	// output for public. So, match required logic bits of normal command.
-	// If it were possible, it would be better to use the command code
-	// more directly.
-	const args = readArgValues(commandLine, outDir);
-
-	const mapSourceToExportPath: Map<ApiTag, ExportData> = getOutputConfiguration(
-		packageJson,
-		args.rootDir,
-		args.tsconfigOutDir,
-	);
-
-	return mapSourceToExportPath.values();
 }
