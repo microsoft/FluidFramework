@@ -461,8 +461,7 @@ export class GarbageCollector implements IGarbageCollector {
 	): Promise<IGCStats | undefined> {
 		const fullGC =
 			options.fullGC ??
-			(this.configs.runFullGC === true ||
-				this.summaryStateTracker.autoRecovery.fullGCRequested());
+			(this.configs.runFullGC === true || this.summaryStateTracker.autoRecovery.useFullGC());
 
 		// Add the options that are used to run GC to the telemetry context.
 		telemetryContext?.setMultiple("fluid_GC", "Options", {

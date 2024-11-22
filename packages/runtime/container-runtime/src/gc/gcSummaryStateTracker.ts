@@ -51,16 +51,43 @@ export class GCSummaryStateTracker {
 	public updatedDSCountSinceLastSummary: number = 0;
 
 	/** API for ensuring the correct auto-recovery mitigations */
-	public autoRecovery = {
-		requestFullGCOnNextRun: () => {
-			this.fullGCModeForAutoRecovery = true;
-		},
-		fullGCRequested: () => {
-			return this.fullGCModeForAutoRecovery;
-		},
-	};
-	/** If true, the next GC run will do fullGC mode to regenerate the GC data for each node */
-	private fullGCModeForAutoRecovery: boolean = false;
+	public autoRecovery = (() => {
+		/**
+		 * This uses a hidden state machine for forcing fullGC as part of autorecovery,
+		 * to regenerate the GC data for each node.
+		 *
+		 * Once fullGC has been requested, we need to wait until GC has run and the summary has been acked before clearing the state.
+		 *
+		 * States:
+		 * - undefined: No need to run fullGC now.
+		 * - "requested": FullGC requested, but GC has not yet run. Keep using fullGC until back to undefined.
+		 * - "ran": FullGC ran, but the following summary has not yet been acked. Keep using fullGC until back to undefined.
+		 *
+		 * Transitions:
+		 * - autoRecovery.requestFullGCOnNextRun :: anything TO "requested"
+		 * - autoRecovery.fullGCCompleted :: "requested" TO "ran"
+		 * - autoRecovery.onSummaryAck :: "ran" TO undefined
+		 */
+		let state: "requested" | "ran" | undefined;
+		return {
+			requestFullGCOnNextRun: () => {
+				state = "requested";
+			},
+			fullGCCompleted: () => {
+				if (state === "requested") {
+					state = "ran";
+				}
+			},
+			onSummaryAck: () => {
+				if (state === "ran") {
+					state = undefined;
+				}
+			},
+			useFullGC: () => {
+				return state !== undefined;
+			},
+		};
+	})();
 
 	constructor(
 		// Tells whether GC should run or not.
@@ -235,7 +262,7 @@ export class GCSummaryStateTracker {
 		this.latestSummaryData = this.pendingSummaryData;
 		this.pendingSummaryData = undefined;
 		this.updatedDSCountSinceLastSummary = 0;
-		this.fullGCModeForAutoRecovery = false;
+		this.autoRecovery.onSummaryAck();
 	}
 
 	/**
