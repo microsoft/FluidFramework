@@ -52,7 +52,7 @@ export class SchemaSummarizer implements Summarizable {
 		collabWindow: CollabWindow,
 	) {
 		this.codec = makeSchemaCodec(options);
-		this.schema.on("afterSchemaChange", () => {
+		this.schema.events.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes
 			// We are assuming that schema changes from remote ops are valid, as we are in a summarization context.
 			this.schemaIndexLastChangedSeq = collabWindow.getCurrentSeq();

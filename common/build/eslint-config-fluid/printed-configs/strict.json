@@ -47,6 +47,9 @@
         "@fluid-internal/fluid/no-member-release-tags": [
             "error"
         ],
+        "@fluid-internal/fluid/no-unchecked-record-access": [
+            "error"
+        ],
         "@rushstack/no-new-null": [
             "error"
         ],
@@ -163,18 +166,7 @@
             0
         ],
         "@typescript-eslint/member-delimiter-style": [
-            "off",
-            {
-                "multiline": {
-                    "delimiter": "semi",
-                    "requireLast": true
-                },
-                "singleline": {
-                    "delimiter": "semi",
-                    "requireLast": true
-                },
-                "multilineDetection": "brackets"
-            }
+            "off"
         ],
         "@typescript-eslint/member-ordering": [
             "off"
@@ -359,8 +351,12 @@
             "off"
         ],
         "@typescript-eslint/object-curly-spacing": [
+<<<<<<< HEAD
             "off",
             "always"
+=======
+            "off"
+>>>>>>> main
         ],
         "@typescript-eslint/prefer-as-const": [
             "off"
@@ -528,8 +524,12 @@
             "off"
         ],
         "dot-location": [
+<<<<<<< HEAD
             "off",
             "property"
+=======
+            "off"
+>>>>>>> main
         ],
         "dot-notation": [
             "off"
@@ -647,13 +647,7 @@
             1
         ],
         "import/no-extraneous-dependencies": [
-            "error",
-            {
-                "devDependencies": [
-                    "**/*.spec.ts",
-                    "src/test/**"
-                ]
-            }
+            "error"
         ],
         "import/no-internal-modules": [
             "error",

@@ -29,15 +29,17 @@ export {
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
 	type RevertibleFactory,
+	type RevertibleAlphaFactory,
+	type RevertibleAlpha,
 } from "./core/index.js";
 export { type Brand } from "./util/index.js";
 
-export {
-	type Listeners,
-	type IsListener,
-	type Listenable,
-	type Off,
-} from "./events/index.js";
+export type {
+	Listeners,
+	IsListener,
+	Listenable,
+	Off,
+} from "@fluidframework/core-interfaces";
 
 export {
 	TreeStatus,
@@ -58,7 +60,7 @@ export {
 	rollback,
 	type ForestOptions,
 	getBranch,
-	type TreeBranch,
+	type BranchableTree,
 	type TreeBranchFork,
 	independentInitializedView,
 	type ViewContent,
@@ -170,9 +172,27 @@ export {
 	getJsonSchema,
 	type LazyItem,
 	type Unenforced,
+	type SimpleNodeSchemaBase,
+	type SimpleTreeSchema,
+	type SimpleNodeSchema,
+	type SimpleFieldSchema,
+	type SimpleLeafNodeSchema,
+	type SimpleMapNodeSchema,
+	type SimpleArrayNodeSchema,
+	type SimpleObjectNodeSchema,
+	normalizeAllowedTypes,
+	getSimpleSchema,
+	numberSchema,
+	stringSchema,
+	booleanSchema,
+	handleSchema,
+	nullSchema,
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
+	type TreeBranch,
+	type TreeBranchEvents,
+	asTreeViewAlpha,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

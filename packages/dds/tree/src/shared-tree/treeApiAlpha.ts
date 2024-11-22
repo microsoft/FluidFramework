@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -36,6 +37,7 @@ import {
 	type EncodeOptions,
 	extractPersistedSchema,
 	TreeViewConfiguration,
+	type TreeBranch,
 } from "../simple-tree/index.js";
 import { fail, type JsonCompatible } from "../util/index.js";
 import { noopValidator, type FluidClientVersion, type ICodecOptions } from "../codec/index.js";
@@ -51,12 +53,24 @@ import {
 	type FieldBatchEncodingContext,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
+import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 
 /**
  * Extensions to {@link Tree} and {@link TreeBeta} which are not yet stable.
  * @sealed @alpha
  */
 export const TreeAlpha: {
+	/**
+	 * Retrieve the {@link TreeBranch | branch}, if any, for the given node.
+	 * @param node - The node to query
+	 * @remarks If the node has already been inserted into the tree, this will return the branch associated with that node's {@link TreeView | view}.
+	 * Otherwise, it will return `undefined` (because the node has not yet been inserted and is therefore not part of a branch or view).
+	 *
+	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
+	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.
+	 */
+	branch(node: TreeNode): TreeBranch | undefined;
+
 	/**
 	 * Construct tree content that is compatible with the field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
@@ -225,6 +239,19 @@ export const TreeAlpha: {
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 } = {
+	branch(node: TreeNode): TreeBranch | undefined {
+		const kernel = getKernel(node);
+		if (!kernel.isHydrated()) {
+			return undefined;
+		}
+		const view = kernel.anchorNode.anchorSet.slots.get(ViewSlot);
+		assert(
+			view instanceof SchematizingSimpleTreeView,
+			0xa5c /* Unexpected view implementation */,
+		);
+		return view;
+	},
+
 	create: createFromInsertable,
 
 	importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(

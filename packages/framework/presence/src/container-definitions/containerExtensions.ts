@@ -6,7 +6,7 @@
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
+} from "@fluidframework/presence/internal/core-interfaces";
 
 /**
  * While connected, the id of a client within a session.

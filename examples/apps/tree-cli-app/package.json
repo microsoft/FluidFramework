@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/tree-cli-app",
-	"version": "2.5.0",
+	"version": "2.11.0",
 	"private": true,
 	"description": "SharedTree CLI app demo",
 	"homepage": "https://fluidframework.com",
@@ -43,7 +43,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluidframework/build-tools": "^0.49.0",
+		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
@@ -54,5 +54,10 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

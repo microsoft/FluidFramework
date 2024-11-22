@@ -20,7 +20,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small
+  default: Small-eastus2
 
 # The supported values are: short, normal, long
 - name: stressMode
@@ -36,7 +36,7 @@ parameters:
 stages:
   - stage: CheckAffectedPaths
     displayName: Determine changed packages
-    pool: Small
+    pool: Small-eastus2
     jobs:
     - job: Job
       displayName: Check for DDS package changes
