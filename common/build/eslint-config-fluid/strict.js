@@ -20,7 +20,7 @@ module.exports = {
 		es2024: false,
 		node: true,
 	},
-	extends: ["./recommended.js", "biome"],
+	extends: ["./recommended.js"],
 	rules: {
 		/**
 		 * Require jsdoc/tsdoc comments on public/exported API items.
