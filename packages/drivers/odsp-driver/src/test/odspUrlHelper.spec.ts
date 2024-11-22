@@ -5,7 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { hasOdcOrigin, isOdcUrl, isSpoUrl } from "../odspUrlHelper.js";
+import {
+	checkForInternalFarmType,
+	hasOdcOrigin,
+	isOdcUrl,
+	isSpoUrl,
+} from "../odspUrlHelper.js";
 
 describe("odspUrlHelper", () => {
 	describe("hasOdcOrigin", () => {
@@ -173,6 +178,52 @@ describe("odspUrlHelper", () => {
 					new URL("https://foo.onedrive.com/v2x1/drives('ABC123')/items('ABC123!123')"),
 				),
 				false,
+			);
+		});
+	});
+
+	describe("checkForInternalFarmType", () => {
+		it("SPDF", () => {
+			assert.equal(
+				checkForInternalFarmType("https://microsoft.sharepoint-df.com/path?query=string"),
+				"SPDF",
+			);
+			assert.equal(
+				checkForInternalFarmType("https://foo.sharepoint-df.com/path?query=string"),
+				"SPDF",
+			);
+			assert.equal(
+				checkForInternalFarmType("https://sharepoint-df.com/path?query=string"),
+				"SPDF",
+			);
+			assert.equal(
+				checkForInternalFarmType("https://foo.not-sharepoint-df.com/path?query=string"),
+				undefined,
+			);
+		});
+		it("MSIT", () => {
+			assert.equal(
+				checkForInternalFarmType("https://microsoft.sharepoint.com/path?query=string"),
+				"MSIT",
+			);
+			assert.equal(
+				checkForInternalFarmType("https://microsoft-my.sharepoint.com/path?query=string"),
+				"MSIT",
+			);
+			assert.equal(
+				checkForInternalFarmType("https://microsoft-my.not.sharepoint.com/path?query=string"),
+				undefined,
+			);
+			assert.equal(
+				checkForInternalFarmType("https://microsoft.foo.com/path?query=string"),
+				undefined,
+			);
+		});
+		it("other", () => {
+			assert.equal(checkForInternalFarmType("https://foo.com/path?query=string"), undefined);
+			assert.throws(
+				() => checkForInternalFarmType("NOT A URL"),
+				"expected it to throw with invalid input",
 			);
 		});
 	});
