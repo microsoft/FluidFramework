@@ -135,9 +135,6 @@ export interface PresenceStatesInternal {
 	): void;
 }
 
-/**
- * Type guard for ValueDirectories.
- */
 function isValueDirectory<
 	T,
 	TValueState extends
