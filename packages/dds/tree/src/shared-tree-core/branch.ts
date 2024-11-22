@@ -459,6 +459,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		const removedCommits: GraphCommit<TChange>[] = [];
 		const inverses: TaggedChange<TChange>[] = [];
 		findAncestor([this.head, removedCommits], (c) => {
+			// TODO: Pull this side effect out if/when more diverse ancestry walking helpers are available
 			if (c !== commit) {
 				const revision = this.mintRevisionTag();
 				const inverse = this.changeFamily.rebaser.changeRevision(
