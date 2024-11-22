@@ -56,7 +56,8 @@ export class DocumentLambda implements IPartitionLambda {
 			(lowestOffset: number, pausedAtOffset: number, reason?: any) => {
 				// Emit pause at the lowest offset out of all document partitions
 				// This is important for ensuring that we don't miss any messages
-				// And maintain a range for offsets allowed to be reprocessed on resume, otherwise the contextManager expects offsets only in sequence
+				// And store the reprocessRange so that we can allow contextManager to move back to it when it resumes
+				// It will move back to the first offset which was not checkpointed from this range
 				this.storeReprocessRange(lowestOffset, pausedAtOffset);
 				context.pause(lowestOffset, reason);
 			},

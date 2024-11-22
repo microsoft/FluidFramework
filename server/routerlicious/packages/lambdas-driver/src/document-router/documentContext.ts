@@ -60,21 +60,25 @@ export class DocumentContext extends EventEmitter implements IContext {
 	 * Updates the head offset for the context.
 	 */
 	public setHead(head: IQueuedMessage, allowBackToOffset?: number | undefined) {
-		// if allowBackToOffset is set and is lower than this.tailInternal, then don't reprocess and return early
-		if (allowBackToOffset !== undefined && allowBackToOffset <= this.tailInternal.offset) {
-			Lumberjack.info("Not updating documentContext head and returning early", {
-				allowBackToOffset,
-				tailInternalOffset: this.tailInternal.offset,
-				documentId: this.routingKey.documentId,
-			});
-			return false;
-		}
 		assert(
 			head.offset > this.head.offset || head.offset === allowBackToOffset,
 			`Head offset ${head.offset} must be greater than the current head offset ${this.head.offset} or equal to the resume offset ${allowBackToOffset}. Topic ${head.topic}, partition ${head.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
 		);
 
+		// If head is moving backwards
 		if (head.offset <= this.head.offset) {
+			if (head.offset <= this.tailInternal.offset) {
+				Lumberjack.info(
+					"Not updating documentContext head since new head's offset is <= last checkpoint offset (tailInternal), returning early",
+					{
+						newHeadOffset: head.offset,
+						currentHeadOffset: this.head.offset,
+						tailInternalOffset: this.tailInternal.offset,
+						documentId: this.routingKey.documentId,
+					},
+				);
+				return false;
+			}
 			Lumberjack.info("Allowing the document context head to move to the specified offset", {
 				allowBackToOffset,
 				currentHeadOffset: this.head.offset,
