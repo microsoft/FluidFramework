@@ -6,6 +6,9 @@
 /**
  * `true` iff the given type is an acceptable shape for a {@link Listeners | event} listener
  * @public
+ *
+ * @remarks
+ * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces`.
  */
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
@@ -25,6 +28,9 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
  * ```
  *
  * @public
+ *
+ * @remarks
+ * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces`.
  */
 export type Listeners<T extends object> = {
 	[P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
@@ -45,6 +51,9 @@ export type Listeners<T extends object> = {
  * {@link createEmitter} can help implement this interface via delegation.
  *
  * @sealed @public
+ *
+ * @remarks
+ * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces`.
  */
 export interface Listenable<TListeners extends object> {
 	/**
@@ -67,6 +76,8 @@ export interface Listenable<TListeners extends object> {
 	 * @remarks If `listener` is not currently registered, this method will have no effect.
 	 *
 	 * Listeners may also be deregistered by calling the {@link Off | deregistration function} returned when they are {@link Listenable.on | registered}.
+	 * @remarks
+	 * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces`.
 	 */
 	off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
 }
