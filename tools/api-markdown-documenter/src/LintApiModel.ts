@@ -4,6 +4,7 @@
  */
 
 import { fail, strict as assert } from "node:assert";
+
 import {
 	ApiDocumentedItem,
 	type ApiItem,
@@ -20,9 +21,10 @@ import {
 	DocNodeContainer,
 	DocNodeKind,
 } from "@microsoft/tsdoc";
+
+import type { ConfigurationBase } from "./ConfigurationBase.js";
 import { defaultConsoleLogger } from "./Logging.js";
 import { resolveSymbolicReference } from "./utilities/index.js";
-import type { ConfigurationBase } from "./ConfigurationBase.js";
 
 /**
  * {@link lintApiModel} configuration.
