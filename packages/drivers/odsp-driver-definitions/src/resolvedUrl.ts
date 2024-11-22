@@ -145,12 +145,13 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	isClpCompliantApp?: boolean;
 
 	/**
-	 * Context for given resolved URl
+	 * Context for given resolved URL
 	 */
 	context?: string;
 
 	/**
-	 * Name of the application that owns the URl
+	 * Name of the application that owns the URL. This hint is used by link handling logic which determines which
+	 *  app to redirect to when user navigates directly to the link.
 	 */
 	appName?: string;
 }
