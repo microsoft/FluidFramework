@@ -530,7 +530,9 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 
 // @public
-export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+export { IsListener }
+export { IsListener as IsListener_base }
 
 // @public
 export interface ITelemetryBaseProperties {
@@ -561,15 +563,19 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public @sealed
-export interface Listenable<TListeners extends object> {
+interface Listenable<TListeners extends object> {
     off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
+export { Listenable }
+export { Listenable as Listenable_base }
 
 // @public
-export type Listeners<T extends object> = {
+type Listeners<T extends object> = {
     [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
 };
+export { Listeners }
+export { Listeners as Listeners_base }
 
 // @public @sealed
 export interface MakeNominal {
@@ -625,7 +631,9 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<I
 };
 
 // @public
-export type Off = () => void;
+type Off = () => void;
+export { Off }
+export { Off as off_base }
 
 // @public @sealed
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends ReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {
