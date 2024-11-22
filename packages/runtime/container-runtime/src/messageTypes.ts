@@ -95,16 +95,6 @@ interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TCont
 	contents: TContents;
 }
 
-/**
- * Additional details expected for any recently added message.
- * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
- * @internal
- */
-export interface RecentlyAddedContainerRuntimeMessageDetails {
-	/** Info describing how to handle this op in case the type is unrecognized (default: fail to process) */
-	compatDetails: IContainerRuntimeMessageCompatDetails;
-}
-
 export type ContainerRuntimeDataStoreOpMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.FluidDataStoreOp,
 	IEnvelope
@@ -150,8 +140,7 @@ export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage
  * Represents an unrecognized TypedContainerRuntimeMessage, e.g. a message from a future version of the container runtime.
  * @internal
  */
-export interface UnknownContainerRuntimeMessage
-	extends Partial<RecentlyAddedContainerRuntimeMessageDetails> {
+export interface UnknownContainerRuntimeMessage {
 	/** Invalid type of the op, within the ContainerRuntime's domain. This value should never exist at runtime.
 	 * This is useful for type narrowing but should never be used as an actual message type at runtime.
 	 * Actual value will not be "__unknown...", but the type `Exclude<string, ContainerMessageType>` is not supported.
@@ -215,9 +204,3 @@ export type InboundSequencedContainerRuntimeMessage = Omit<
 	"type" | "contents"
 > &
 	InboundContainerRuntimeMessage;
-
-/** A [loose] InboundSequencedContainerRuntimeMessage that is recent and may contain compat details.
- * It exists solely to to provide access to those details.
- */
-export type InboundSequencedRecentlyAddedContainerRuntimeMessage = ISequencedDocumentMessage &
-	Partial<RecentlyAddedContainerRuntimeMessageDetails>;
