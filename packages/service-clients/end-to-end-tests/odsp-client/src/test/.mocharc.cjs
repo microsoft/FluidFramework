@@ -5,8 +5,8 @@
 
 "use strict";
 
-const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
-
-const packageDir = __dirname;
+const packageDir = `${__dirname}/../..`;
+const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common");
 const config = getFluidTestMochaConfig(packageDir);
+
 module.exports = config;
