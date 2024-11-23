@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "node:assert";
+import assert from "node:assert";
 import { type BigIntStats, type Stats, existsSync, lstatSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+
 import isEqual from "lodash.isequal";
 import * as tsTypes from "typescript";
 
 import { TscUtil, getTscUtils } from "../../tscUtils";
-import { getInstalledPackageVersion } from "../taskUtils";
+import { diffObjects, getInstalledPackageVersion } from "../taskUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 interface ITsBuildInfo {
@@ -258,13 +259,49 @@ export class TscTask extends LeafTask {
 			path.resolve,
 		);
 
-		if (!isEqual(configOptions, tsBuildInfoOptions)) {
-			this.traceTrigger(`ts option changed ${configFileFullPath}`);
-			this.traceTrigger("Config:");
-			this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
-			this.traceTrigger("BuildInfo:");
-			this.traceTrigger(JSON.stringify(tsBuildInfoOptions, undefined, 2));
-			return false;
+		// The following code checks that the cached buildInfo options -- that is, the tsconfig options used to build
+		// originally -- match the current tsconfig. If they don't match, then the cache is outdated and a rebuild is
+		// needed.
+		//
+		// However, there are some tsconfig settings that don't seem to be cached in the tsbuildinfo. This makes any builds
+		// including these settings always fail this check. We special-case the properties in this set -- any differences in
+		// those fields are ignored.
+		//
+		// IMPORTANT: This is a somewhat unsafe action. Technically speaking, we don't know for sure the incremental build
+		// status when there is ANY difference between these settings. Thus the safest thing to do is to assume a rebuild is
+		// needed, Projects using these ignored settings may exhibit strange incremental build behavior.
+		//
+		// For that reason, this behavior can be disabled completely using the _FLUID_BUILD_DISABLE_IGNORE_TSC_OPTIONS_
+		// environment variable. If that variable is set to any non-empty value, the list of ignored s=options will not be
+		// checked.
+		const tsConfigOptionsIgnored: Set<string> =
+			(process.env._FLUID_BUILD_DISABLE_IGNORE_TSC_OPTIONS_ ?? "" !== "")
+				? new Set()
+				: new Set(["allowJs", "checkJs"]);
+
+		const diffResults = diffObjects(configOptions, tsBuildInfoOptions);
+		if (diffResults.length > 0) {
+			// Track whether the diff is "real"; that is, the diff is in properties that are not ignored. By default,
+			// assume that it is.
+			let diffIsReal = true;
+
+			// We only need to check the different properties if the number of differences is <= the ignored options;
+			// any properties over that count will be a non-ignored difference.
+			if (diffResults.length <= tsConfigOptionsIgnored.size) {
+				// The diff is "real" if any different property is not ignored
+				diffIsReal = diffResults.some(
+					(diffResult) => !tsConfigOptionsIgnored.has(diffResult.path),
+				);
+			}
+
+			if (diffIsReal) {
+				this.traceTrigger(`ts option changed ${configFileFullPath}`);
+				this.traceTrigger("Config:");
+				this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
+				this.traceTrigger("BuildInfo:");
+				this.traceTrigger(JSON.stringify(tsBuildInfoOptions, undefined, 2));
+				return false;
+			}
 		}
 		return true;
 	}
