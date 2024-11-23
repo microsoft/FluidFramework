@@ -3,14 +3,64 @@
  * Licensed under the MIT License.
  */
 
+import * as fs from "node:fs";
 import type { PackageJson } from "@fluidframework/build-tools";
+import JSON5 from "json5";
+import type { TsConfigJson } from "type-fest";
 import type { CommandLogger } from "../../logging.js";
 import { ApiLevel, isKnownApiLevel } from "../apiLevel.js";
 import type { ApiTag } from "../apiTag.js";
 import { type ExportData, getExportPathFromPackage } from "../packageExports.js";
 
+export const optionDefaults = {
+	outDir: "src/entrypoints/tsconfig.json",
+} as const;
+
 const defaultExportCondition = "default";
 const typesExportCondition = "types";
+
+/**
+ * Retrieves `rootDir` and `outDir` settings from a `tsconfig.json` file.
+ *
+ * @param tsconfigPath - Path to the TypeScript config file.
+ * @returns An object with `rootDir`, `outDir` values.
+ * @throws If `rootDir` and `outDir` is not defined in the config file.
+ */
+export function getTsConfigCompilerOptions(tsconfigPath: string): {
+	rootDir: string;
+	tsconfigOutDir: string;
+} {
+	const tsConfigContent = fs.readFileSync(tsconfigPath, {
+		encoding: "utf8",
+	});
+
+	if (tsConfigContent === undefined) {
+		throw new Error(`tsconfig.json not found in ${tsconfigPath}`);
+	}
+
+	const tsconfig: TsConfigJson = JSON5.parse(tsConfigContent);
+
+	const { compilerOptions } = tsconfig;
+
+	if (compilerOptions === undefined) {
+		throw new Error(`No compilerOptions defined in ${tsconfigPath}`);
+	}
+
+	const { rootDir, outDir } = compilerOptions;
+
+	if (rootDir === undefined) {
+		throw new Error(`No rootDir defined in ${tsconfigPath}`);
+	}
+
+	if (outDir === undefined) {
+		throw new Error(`No outDir defined in ${tsconfigPath}`);
+	}
+
+	return {
+		rootDir,
+		tsconfigOutDir: outDir,
+	};
+}
 
 /**
  * Read package "exports" to determine which "default"/ "types" paths to return along with `ApiTag`.
@@ -45,8 +95,6 @@ function mapExportPathToApiTag(
 
 		const resolvedExport = getExportPathFromPackage(packageJson, level, conditions, logger);
 
-		const isTypeOnly = resolvedExport?.includes(".d.ts") === true;
-
 		if (resolvedExport === undefined) {
 			throw new Error(`${packageJson.name}: No export map found.`);
 		}
@@ -54,7 +102,7 @@ function mapExportPathToApiTag(
 		mapKeyToOutput.set(level, {
 			relPath: resolvedExport,
 			conditions: [],
-			isTypeOnly,
+			isTypeOnly: resolvedExport?.includes(".d.ts") === true,
 		});
 	}
 
@@ -62,12 +110,19 @@ function mapExportPathToApiTag(
 }
 
 /**
+ * Normalizes a relative path by removing parent directory (`..`) references
+ */
+function normalizePath(dir: string): string {
+	const parts = dir.split("/").filter((part) => part !== ".." && part !== "");
+	return `/${parts.join("/")}`;
+}
+
+/**
  * Resolves a mapping of `ApiTag` levels to their modified export paths.
  */
 export function getOutputConfiguration(
 	packageJson: PackageJson,
-	rootDir: string,
-	tsconfigOutDir: string,
+	options: Readonly<Record<keyof typeof optionDefaults, string>>,
 	logger?: CommandLogger,
 ): Map<ApiTag, ExportData> {
 	const mapApiTagToExportPath: Map<ApiTag, ExportData> = mapExportPathToApiTag(
@@ -75,15 +130,13 @@ export function getOutputConfiguration(
 		logger,
 	);
 
+	const { rootDir, tsconfigOutDir } = getTsConfigCompilerOptions(options.outDir);
+
 	const result = new Map<ApiTag, ExportData>();
 	for (const [apiTag, exportData] of mapApiTagToExportPath) {
 		const modifiedExportPath = exportData.relPath
-			.replace(tsconfigOutDir, rootDir)
+			.replace(normalizePath(tsconfigOutDir), normalizePath(rootDir))
 			.replace(/\.js$|\.d\.ts$/, ".ts");
-
-		if (modifiedExportPath === exportData.relPath) {
-			throw new Error(`Failed to replace ${tsconfigOutDir} with ${rootDir}.`);
-		}
 
 		if (result.has(apiTag)) {
 			logger?.warning(`${modifiedExportPath} found in exports multiple times.`);
@@ -102,49 +155,31 @@ export function getOutputConfiguration(
  * @param argQuery - record of arguments to read (keys) with default values
  * @returns record of argument values extracted or given default value
  */
-// function readArgValues<TQuery extends Readonly<Record<string, string>>>(
-// 	commandLine: string,
-// 	argQuery: string,
-// ): TQuery {
-// 	const values: Record<string, string> = {};
-// 	const args = commandLine.split(" ");
-// 	for (const [argName, defaultValue] of Object.entries(argQuery)) {
-// 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
-// 		values[argName] =
-// 			0 < indexOfArgValue && indexOfArgValue < args.length
-// 				? args[indexOfArgValue]
-// 				: defaultValue;
-// 	}
-// 	return values as TQuery;
-// }
+function readArgValues<TQuery extends Readonly<Record<string, string>>>(
+	commandLine: string,
+	argQuery: TQuery,
+): TQuery {
+	const values: Record<string, string> = {};
+	const args = commandLine.split(" ");
+	for (const [argName, defaultValue] of Object.entries(argQuery)) {
+		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
+		values[argName] =
+			0 < indexOfArgValue && indexOfArgValue < args.length
+				? args[indexOfArgValue]
+				: defaultValue;
+	}
+	return values as TQuery;
+}
 
-// export function getGenerateSourceEntrypointsOutput(
-// 	packageJson: PackageJson,
-// 	commandLine: string,
-// ): IterableIterator<ExportData> {
-// 	const outDirIndex = process.argv.indexOf("--outDir");
-// 	const outDir = process.argv[outDirIndex + 1] ?? "./src/entrypoints/";
-
-// 	const args = readArgValues(commandLine, outDir);
-
-// 	const mapSourceToExportPath: Map<ApiTag, ExportData> = getOutputConfiguration(
-// 		packageJson,
-// 		args.rootDir,
-// 		args.tsconfigOutDir,
-// 	);
-
-// 	return mapSourceToExportPath.values();
-// }
-
-export function getGenerateSourceEntrypointsTscOutput(
+export function getGenerateSourceEntrypointsOutput(
 	packageJson: PackageJson,
-	rootDir: string,
-	outDir: string,
+	commandLine: string,
 ): IterableIterator<ExportData> {
+	const args = readArgValues(commandLine, optionDefaults);
+
 	const mapSourceToExportPath: Map<ApiTag, ExportData> = getOutputConfiguration(
 		packageJson,
-		rootDir,
-		outDir,
+		args,
 	);
 
 	return mapSourceToExportPath.values();

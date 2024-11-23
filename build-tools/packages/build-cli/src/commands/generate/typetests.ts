@@ -214,37 +214,28 @@ function getTypesPathWithFallback(
 	log: Logger,
 	fallbackEntrypoint?: ApiLevel,
 ): { typesPath: string; entrypointUsed: ApiLevel } {
-	let chosenEntrypoint = entrypoint;
-
-	// Helper function to get types from the types/typings fields.
-	const getTypesField = (): string | undefined => {
-		log.verbose(`${packageJson.name}: No export map found.`);
-		log.verbose(`${packageJson.name}: Using the types/typings field value.`);
-		return packageJson.types ?? packageJson.typings;
+	const getTypesPath = (level: ApiLevel): string | undefined => {
+		if (packageJson.exports === undefined) {
+			if (level === ApiLevel.public) {
+				log.verbose(
+					`${packageJson.name}: No export map found. Using the types/typings field value.`,
+				);
+				return packageJson.types ?? packageJson.typings;
+			}
+			return undefined;
+		}
+		return getExportPathFromPackage(packageJson, level, ["types"], log);
 	};
 
-	// Try to resolve typesPath for the current entrypoint.
-	let typesPath =
-		// eslint-disable-next-line unicorn/no-negated-condition
-		packageJson.exports !== undefined
-			? getExportPathFromPackage(packageJson, entrypoint, ["types"], log)
-			: entrypoint === ApiLevel.public
-				? getTypesField()
-				: undefined;
+	let chosenEntrypoint: ApiLevel = entrypoint;
 
-	// Fallback logic if typesPath is still undefined.
+	let typesPath = getTypesPath(entrypoint);
+
 	if (typesPath === undefined && fallbackEntrypoint !== undefined) {
+		typesPath = getTypesPath(fallbackEntrypoint);
 		chosenEntrypoint = fallbackEntrypoint;
-		typesPath =
-			// eslint-disable-next-line unicorn/no-negated-condition
-			packageJson.exports !== undefined
-				? getExportPathFromPackage(packageJson, fallbackEntrypoint, ["types"], log)
-				: fallbackEntrypoint === ApiLevel.public
-					? getTypesField()
-					: undefined;
 	}
 
-	// Throw an error if no typesPath could be determined.
 	if (typesPath === undefined) {
 		throw new Error(
 			`${packageJson.name}: No type definitions found for "${chosenEntrypoint}" API level.`,

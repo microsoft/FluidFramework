@@ -14,8 +14,7 @@ import type { TsConfigJson } from "type-fest";
 
 import {
 	getGenerateEntrypointsOutput,
-	// getGenerateSourceEntrypointsOutput,
-	getGenerateSourceEntrypointsTscOutput,
+	getGenerateSourceEntrypointsOutput,
 } from "../commands/index.js";
 
 type PackageName = string;
@@ -59,18 +58,16 @@ function flubOutput(
 	commandLine: string,
 ): { files: AbsoluteFilePath[]; type: ModuleType | undefined } | undefined {
 	if (
-		!commandLine.startsWith("flub generate entrypoints")
-		// || !commandLine.startsWith("flub generate sourceEntrypoints")
+		!commandLine.startsWith("flub generate entrypoints") ||
+		!commandLine.startsWith("flub generate sourceEntrypoints")
 	) {
 		// ignored - not recognized as build command
 		return undefined;
 	}
 
-	// const outputs = commandLine.startsWith("flub generate entrypoints")
-	// 	? getGenerateEntrypointsOutput(pkg.packageJson, commandLine)
-	// 	: getGenerateSourceEntrypointsOutput(pkg.packageJson, commandLine);
-
-	const outputs = getGenerateEntrypointsOutput(pkg.packageJson, commandLine);
+	const outputs = commandLine.startsWith("flub generate sourceEntrypoints")
+		? getGenerateSourceEntrypointsOutput(pkg.packageJson, commandLine)
+		: getGenerateEntrypointsOutput(pkg.packageJson, commandLine);
 
 	const files: AbsoluteFilePath[] = [];
 	let type: ModuleType | undefined;
@@ -189,8 +186,6 @@ function tscOutput(
 
 	const rootDir = options.rootDir ?? ".";
 	const outDir = options.outDir ?? ".";
-
-	const output = getGenerateSourceEntrypointsTscOutput(pkg.packageJson, rootDir, outDir);
 
 	const inputRegex = /(?:\.d)?(\.[cm]?ts)$/;
 	const files = fileNames.map((relSrcPath) => {

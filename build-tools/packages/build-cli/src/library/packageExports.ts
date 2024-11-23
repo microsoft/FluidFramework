@@ -248,10 +248,9 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 }
 
 /**
- * Finds the path to default/types of a package using the package's export map or types/typings field.
- * If the path is found, it is returned. Otherwise it returns undefined.
- *
- * This implementation uses resolve.exports to resolve the path for a level. Fallback to `default` if no condition is passed
+ * Finds the path of an API level from a package's export map.
+ * The function uses the specified conditions to locate the appropriate path.
+ * If no conditions are provided, it defaults to using the `default` condition.
  *
  * @param packageJson - The package.json object to check for paths.
  * @param level - An API level to get paths for.
