@@ -10,7 +10,12 @@ import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { BiomeTask } from "./leaf/biomeTasks";
 import { createDeclarativeTaskHandler } from "./leaf/declarativeTask";
-import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
+import {
+	FlubCheckBuildVersionTask,
+	FlubCheckLayerTask,
+	FlubCheckPolicyTask,
+	FlubListTask,
+} from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
 import { UnknownLeafTask } from "./leaf/leafTask";
 import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
@@ -48,6 +53,7 @@ const executableToLeafTask: {
 	"gen-version": GenVerTask,
 	"gf": GoodFence,
 	"api-extractor": ApiExtractorTask,
+	"flub check buildVersion": FlubCheckBuildVersionTask,
 	"flub check layers": FlubCheckLayerTask,
 	"flub check policy": FlubCheckPolicyTask,
 	"flub generate entrypoints": GenerateEntrypointsTask,

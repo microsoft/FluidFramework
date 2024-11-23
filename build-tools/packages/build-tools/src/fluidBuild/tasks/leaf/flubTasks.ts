@@ -7,8 +7,9 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { GitRepo } from "../../../common/gitRepo";
+import type { GitIgnoreSetting } from "../../fluidBuildConfig";
 import { sha256 } from "../../hash";
-import { LeafWithDoneFileTask } from "./leafTask";
+import { LeafWithDoneFileTask, LeafWithGlobInputOutputDoneFileTask } from "./leafTask";
 
 export class FlubListTask extends LeafWithDoneFileTask {
 	private getReleaseGroup() {
@@ -81,4 +82,36 @@ export class FlubCheckPolicyTask extends LeafWithDoneFileTask {
 			modifications: modificationHash,
 		});
 	}
+}
+
+export class FlubCheckBuildVersionTask extends LeafWithGlobInputOutputDoneFileTask {
+	protected override get useHashes(): boolean {
+		return true;
+	}
+
+	protected get gitIgnore(): GitIgnoreSetting {
+		return ["input", "output"];
+	}
+
+	protected override async getInputGlobs(): Promise<string[]> {
+		return this._inputGlobs;
+	}
+
+	protected override async getOutputGlobs(): Promise<string[]> {
+		return this._outputGlobs;
+	}
+
+	private _inputGlobs = [
+		"package.json",
+
+		// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+		// have packages at today. Once we can upgrade to a later version of
+		// globby things might be faster.
+		"{azure,examples,experimental,packages}/*/*/package.json",
+		"{azure,examples,experimental,packages}/*/*/*/package.json",
+		"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+		"tools/markdown-magic/package.json",
+	];
+
+	private _outputGlobs = ["package.json"];
 }
