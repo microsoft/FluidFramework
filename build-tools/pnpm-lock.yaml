@@ -567,9 +567,6 @@ importers:
       lodash.isequal:
         specifier: ^4.5.0
         version: 4.5.0
-      microdiff:
-        specifier: ^1.4.0
-        version: 1.4.0
       multimatch:
         specifier: ^5.0.0
         version: 5.0.0
@@ -1093,7 +1090,7 @@ packages:
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
       resolve-from: 5.0.0
-      ts-node: 10.9.2(@types/node@18.19.60)(typescript@5.4.5)
+      ts-node: 10.9.2(@types/node@20.5.1)(typescript@5.4.5)
       typescript: 5.4.5
     transitivePeerDependencies:
       - '@swc/core'
@@ -5034,7 +5031,7 @@ packages:
     dependencies:
       '@types/node': 20.5.1
       cosmiconfig: 8.3.6(typescript@5.4.5)
-      ts-node: 10.9.2(@types/node@18.19.60)(typescript@5.4.5)
+      ts-node: 10.9.2(@types/node@20.5.1)(typescript@5.4.5)
       typescript: 5.4.5
     dev: true
 
@@ -9095,10 +9092,6 @@ packages:
     resolution: {integrity: sha512-jz+Cfrg9GWOZbQAnDQ4hlVnQky+341Yk5ru8bZSe6sIDTCIg8n9i/u7hSQGSVOF3C7lH6mGtqjkiT9G4wFLL0w==}
     dev: true
 
-  /microdiff@1.4.0:
-    resolution: {integrity: sha512-OBKBOa1VBznvLPb/3ljeJaENVe0fO0lnWl77lR4vhPlQD71UpjEoRV5P0KdQkcjbFlBu1Oy2mEUBMU3wxcBAGg==}
-    dev: false
-
   /micromark-core-commonmark@2.0.1:
     resolution: {integrity: sha512-CUQyKr1e///ZODyD1U3xit6zXwy1a8q2a1S1HKtIlmgvurrEpaw/Y9y6KSIbF8P59cn/NjzHyO+Q2fAyYLQrAA==}
     dependencies:
@@ -11947,6 +11940,39 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 18.19.60
+      acorn: 8.10.0
+      acorn-walk: 8.2.0
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 5.4.5
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
+    dev: true
+
+  /ts-node@10.9.2(@types/node@20.5.1)(typescript@5.4.5):
+    resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
+    hasBin: true
+    peerDependencies:
+      '@swc/core': '>=1.2.50'
+      '@swc/wasm': '>=1.2.50'
+      '@types/node': '*'
+      typescript: '>=2.7'
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
+      '@swc/wasm':
+        optional: true
+      '@types/node':
+        optional: true
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.9
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.3
+      '@types/node': 20.5.1
       acorn: 8.10.0
       acorn-walk: 8.2.0
       arg: 4.1.3

@@ -54,7 +54,6 @@
 		"json5": "^2.2.3",
 		"lodash": "^4.17.21",
 		"lodash.isequal": "^4.5.0",
-		"microdiff": "^1.4.0",
 		"multimatch": "^5.0.0",
 		"picocolors": "^1.1.1",
 		"picomatch": "^2.3.1",
