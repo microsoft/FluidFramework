@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import fs from "node:fs/promises";
 import { Flags } from "@oclif/core";
-import JSON5 from "json5";
 import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
-import type { TsConfigJson } from "type-fest";
 
-import { getOutputConfiguration } from "../../library/commands/generateSourceEntrypoints.js";
+import {
+	getOutputConfiguration,
+	getTsConfigCompilerOptions,
+	optionDefaults,
+} from "../../library/commands/generateSourceEntrypoints.js";
 import { ApiTag, BaseCommand } from "../../library/index.js";
 import {
 	readPackageJson,
@@ -40,9 +41,9 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 			default: "./src/index.ts",
 			exists: true,
 		}),
-		outDir: Flags.directory({
+		outDir: Flags.string({
 			description: "Directory that contains a file named `tsconfig.json`",
-			default: "./src/entrypoints/tsconfig.json",
+			default: optionDefaults.outDir,
 			exists: true,
 		}),
 		...BaseCommand.flags,
@@ -53,7 +54,6 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 
 		const packageJson = await readPackageJson();
 
-		// Read `rootDir` for tsconfig under `./src/entrypoints` or `outDir`
 		const { rootDir, tsconfigOutDir } = await getTsConfigCompilerOptions(outDir);
 
 		const mapSourceToExportPath: Map<ApiTag, ExportData> = getOutputConfiguration(
@@ -70,55 +70,6 @@ export default class GenerateSourceEntrypointsCommand extends BaseCommand<
 		// generate source entrypoints under `${outDir}`
 		return generateSourceEntrypoints(mainEntrypoint, mapSourceToExportPath, this.logger);
 	}
-}
-
-// Formats the given output directory path to ensure it starts with `./` and ends with `/`.
-function formatPath(outDir: string): string {
-	return `./${outDir.replace(/^\.\/|\/$/g, "")}/`;
-}
-
-/**
- * Retrieves `rootDir` and `outDir` settings from a `tsconfig.json` file.
- *
- * @param tsconfigPath - Path to the TypeScript config file.
- * @returns An object with `rootDir`, `outDir` values.
- * @throws If `rootDir` and `outDir` is not defined in the config file.
- */
-async function getTsConfigCompilerOptions(
-	tsconfigPath: string,
-): Promise<{ rootDir: string; tsconfigOutDir: string }> {
-	const formatTsconfigPath = formatPath(tsconfigPath);
-
-	const tsConfigContent = await fs.readFile(formatTsconfigPath, {
-		encoding: "utf8",
-	});
-
-	if (tsConfigContent === undefined) {
-		throw new Error(`tsconfig.json not found in ${formatTsconfigPath}`);
-	}
-
-	const tsconfig: TsConfigJson = JSON5.parse(tsConfigContent);
-
-	const { compilerOptions } = tsconfig;
-
-	if (compilerOptions === undefined) {
-		throw new Error(`No compilerOptions defined in ${formatTsconfigPath}`);
-	}
-
-	const { rootDir, outDir } = compilerOptions;
-
-	if (rootDir === undefined) {
-		throw new Error(`No rootDir defined in ${formatTsconfigPath}`);
-	}
-
-	if (outDir === undefined) {
-		throw new Error(`No outDir defined in ${formatTsconfigPath}`);
-	}
-
-	return {
-		rootDir: formatPath(rootDir),
-		tsconfigOutDir: formatPath(outDir),
-	};
 }
 
 function sourceContext(node: Node): string {

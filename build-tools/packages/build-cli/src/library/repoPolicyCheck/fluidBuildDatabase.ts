@@ -14,9 +14,9 @@ import type { TsConfigJson } from "type-fest";
 
 import {
 	getGenerateEntrypointsOutput,
-	// getGenerateSourceEntrypointsOutput,
-	getGenerateSourceEntrypointsTscOutput,
+	getGenerateSourceEntrypointsOutput,
 } from "../commands/index.js";
+import type { ExportData } from "../packageExports.js";
 
 type PackageName = string;
 type Script = string;
@@ -59,18 +59,55 @@ function flubOutput(
 	commandLine: string,
 ): { files: AbsoluteFilePath[]; type: ModuleType | undefined } | undefined {
 	if (
-		!commandLine.startsWith("flub generate entrypoints")
-		// || !commandLine.startsWith("flub generate sourceEntrypoints")
+		!commandLine.startsWith("flub generate entrypoints") ||
+		!commandLine.startsWith("flub generate sourceEntrypoints")
 	) {
 		// ignored - not recognized as build command
 		return undefined;
 	}
 
-	// const outputs = commandLine.startsWith("flub generate entrypoints")
-	// 	? getGenerateEntrypointsOutput(pkg.packageJson, commandLine)
-	// 	: getGenerateSourceEntrypointsOutput(pkg.packageJson, commandLine);
+	let outputs: IterableIterator<ExportData>;
 
-	const outputs = getGenerateEntrypointsOutput(pkg.packageJson, commandLine);
+	if (commandLine.startsWith("flub generate sourceEntrypoints")) {
+		const packageDir = pkg.directory;
+
+		const tscUtils = TscUtils.getTscUtils(packageDir);
+
+		const parsedCommand = tscUtils.parseCommandLine(commandLine);
+		if (!parsedCommand) {
+			throw new Error(`Error parsing ${pkg.name} tsc command line: ${commandLine}`);
+		}
+		const configFile = tscUtils.findConfigFile(packageDir, parsedCommand);
+		const configJson = tscUtils.readConfigFile(configFile) as TsConfigJson;
+		if (configJson === undefined) {
+			throw new Error(`Failed to load config file '${configFile}'`);
+		}
+
+		// Fix up relative path from the command line based on the package directory
+		const commandOptions = tscUtils.convertOptionPaths(
+			parsedCommand.options,
+			packageDir,
+			(base: string, subpath: string) => path.resolve(base, subpath),
+		);
+
+		// Parse the config file relative to the config file directory
+		const configDir = path.parse(configFile).dir;
+		const ts = tscUtils.tsLib;
+		const { fileNames, options } = ts.parseJsonConfigFileContent(
+			configJson,
+			ts.sys,
+			configDir,
+			commandOptions,
+			configFile,
+		);
+
+		const rootDir = options.rootDir ?? ".";
+		const outDir = options.outDir ?? ".";
+
+		outputs = getGenerateSourceEntrypointsOutput(pkg.packageJson, rootDir, outDir);
+	} else {
+		outputs = getGenerateEntrypointsOutput(pkg.packageJson, commandLine);
+	}
 
 	const files: AbsoluteFilePath[] = [];
 	let type: ModuleType | undefined;
@@ -189,8 +226,6 @@ function tscOutput(
 
 	const rootDir = options.rootDir ?? ".";
 	const outDir = options.outDir ?? ".";
-
-	const output = getGenerateSourceEntrypointsTscOutput(pkg.packageJson, rootDir, outDir);
 
 	const inputRegex = /(?:\.d)?(\.[cm]?ts)$/;
 	const files = fileNames.map((relSrcPath) => {
