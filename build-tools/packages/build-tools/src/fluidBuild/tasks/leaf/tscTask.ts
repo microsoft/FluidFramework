@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "node:assert";
+import assert from "node:assert";
 import { type BigIntStats, type Stats, existsSync, lstatSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+
 import isEqual from "lodash.isequal";
 import * as tsTypes from "typescript";
 
 import { TscUtil, getTscUtils } from "../../tscUtils";
-import { getInstalledPackageVersion } from "../taskUtils";
+import { diffObjects, getInstalledPackageVersion } from "../taskUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 interface ITsBuildInfo {
@@ -258,14 +259,45 @@ export class TscTask extends LeafTask {
 			path.resolve,
 		);
 
-		const allowedTsConfigOptsToDiffer = new Set(["allowJs", "checkJs"]);
-		if (!isEqual(configOptions, tsBuildInfoOptions)) {
-			const diff = diffObjects(configOptions, tsBuildInfoOptions);
+		// The following code checks that the cached buildInfo options -- that is, the tsconfig options used to build
+		// originally -- match the current tsconfig. If they don't match, then the cache is outdated and a rebuild is
+		// needed.
+		//
+		// However, there are some tsconfig settings that don't seem to be cached in the tsbuildinfo. This makes any builds
+		// including these settings always fail this check. We special-case the properties in this set -- any differences in
+		// those fields are ignored.
+		//
+		// IMPORTANT: This is a somewhat unsafe action. Technically speaking, we don't know for sure the incremental build
+		// status when there is ANY difference between these settings. Thus the safest thing to do is to assume a rebuild is
+		// needed, Projects using these ignored settings may exhibit strange incremental build behavior.
+		//
+		// For that reason, this behavior can be disabled completely using the _FLUID_BUILD_DISABLE_IGNORE_TSC_OPTIONS_
+		// environment variable. If that variable is set to any non-empty value, the list of ignored s=options will not be
+		// checked.
+		const tsConfigOptionsIgnored: Set<string> =
+			(process.env._FLUID_BUILD_DISABLE_IGNORE_TSC_OPTIONS_ ?? "" !== "")
+				? new Set()
+				: new Set(["allowJs", "checkJs"]);
+
+		const diffResults = diffObjects(configOptions, tsBuildInfoOptions);
+		if (diffResults.length > 0) {
+			// Track whether the diff is "real"; that is, the diff is in properties that are not ignored. By default,
+			// assume that it is.
 			let diffIsReal = true;
-			if (Object.keys(diff).length <= 2) {
+
+			// We only need to check the different properties if the number of differences is <= the ignored options;
+			// any properties over that count will be a non-ignored difference.
+			if (diffResults.length <= tsConfigOptionsIgnored.size) {
+				// Assume the diff is not real - we'll now check the individual changed properties
 				diffIsReal = false;
-				for (const key of Object.keys(diff)) {
-					if (!allowedTsConfigOptsToDiffer.has(key)) {
+				for (const result of diffResults) {
+					// Diff results might be numbers in the case of arrays, but we're not expecting
+					if (
+						typeof result.path[0] === "number" ||
+						!tsConfigOptionsIgnored.has(result.path[0])
+					) {
+						// We found at least one changed non-ignored property, so we know that this diff is "real" and can beak out
+						// early.
 						diffIsReal = true;
 						break;
 					}
@@ -526,45 +558,4 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	}
 	protected abstract get configFileFullPaths(): string[];
 	protected abstract getToolVersion(): Promise<string>;
-}
-
-type DiffResult = {
-	[key: string]: {
-		type: "added" | "removed" | "changed";
-		oldValue?: any;
-		newValue?: any;
-		value?: any;
-	};
-};
-
-function diffObjects(obj1: any, obj2: any): DiffResult {
-	const diffs: DiffResult = {};
-
-	function findDiffs(o1: any, o2: any, path: string) {
-		for (const key in o1) {
-			if (Object.prototype.hasOwnProperty.call(o1, key)) {
-				const newPath = path ? `${path}.${key}` : key;
-				if (!Object.prototype.hasOwnProperty.call(o2, key)) {
-					diffs[newPath] = { type: "removed", value: o1[key] };
-				} else if (typeof o1[key] === "object" && typeof o2[key] === "object") {
-					findDiffs(o1[key], o2[key], newPath);
-				} else if (o1[key] !== o2[key]) {
-					diffs[newPath] = { type: "changed", oldValue: o1[key], newValue: o2[key] };
-				}
-			}
-		}
-
-		for (const key in o2) {
-			if (
-				Object.prototype.hasOwnProperty.call(o2, key) &&
-				!Object.prototype.hasOwnProperty.call(o1, key)
-			) {
-				const newPath = path ? `${path}.${key}` : key;
-				diffs[newPath] = { type: "added", value: o2[key] };
-			}
-		}
-	}
-
-	findDiffs(obj1, obj2, "");
-	return diffs;
 }
