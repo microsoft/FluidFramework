@@ -258,13 +258,28 @@ export class TscTask extends LeafTask {
 			path.resolve,
 		);
 
+		const allowedTsConfigOptsToDiffer = new Set(["allowJs", "checkJs"]);
 		if (!isEqual(configOptions, tsBuildInfoOptions)) {
-			this.traceTrigger(`ts option changed ${configFileFullPath}`);
-			this.traceTrigger("Config:");
-			this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
-			this.traceTrigger("BuildInfo:");
-			this.traceTrigger(JSON.stringify(tsBuildInfoOptions, undefined, 2));
-			return false;
+			const diff = diffObjects(configOptions, tsBuildInfoOptions);
+			let diffIsReal = true;
+			if(Object.keys(diff).length <= 2) {
+				diffIsReal = false;
+				for(const key of Object.keys(diff)) {
+					if(!allowedTsConfigOptsToDiffer.has(key)) {
+						diffIsReal = true;
+						break;
+					}
+				}
+			}
+
+			if(diffIsReal) {
+				this.traceTrigger(`ts option changed ${configFileFullPath}`);
+				this.traceTrigger("Config:");
+				this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
+				this.traceTrigger("BuildInfo:");
+				this.traceTrigger(JSON.stringify(tsBuildInfoOptions, undefined, 2));
+				return false;
+			}
 		}
 		return true;
 	}
@@ -511,4 +526,45 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	}
 	protected abstract get configFileFullPaths(): string[];
 	protected abstract getToolVersion(): Promise<string>;
+}
+
+type DiffResult = {
+	[key: string]: {
+		type: "added" | "removed" | "changed";
+		oldValue?: any;
+		newValue?: any;
+		value?: any;
+	};
+};
+
+function diffObjects(obj1: any, obj2: any): DiffResult {
+	const diffs: DiffResult = {};
+
+	function findDiffs(o1: any, o2: any, path: string) {
+		for (const key in o1) {
+			if (Object.prototype.hasOwnProperty.call(o1, key)) {
+				const newPath = path ? `${path}.${key}` : key;
+				if (!Object.prototype.hasOwnProperty.call(o2, key)) {
+					diffs[newPath] = { type: "removed", value: o1[key] };
+				} else if (typeof o1[key] === "object" && typeof o2[key] === "object") {
+					findDiffs(o1[key], o2[key], newPath);
+				} else if (o1[key] !== o2[key]) {
+					diffs[newPath] = { type: "changed", oldValue: o1[key], newValue: o2[key] };
+				}
+			}
+		}
+
+		for (const key in o2) {
+			if (
+				Object.prototype.hasOwnProperty.call(o2, key) &&
+				!Object.prototype.hasOwnProperty.call(o1, key)
+			) {
+				const newPath = path ? `${path}.${key}` : key;
+				diffs[newPath] = { type: "added", value: o2[key] };
+			}
+		}
+	}
+
+	findDiffs(obj1, obj2, "");
+	return diffs;
 }
