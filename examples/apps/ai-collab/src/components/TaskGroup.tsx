@@ -95,9 +95,17 @@ export function TaskGroup(props: {
 
 		return () => {
 			unsubscribeFromChangedEvent();
-			// Clean up existing stacks
-			for (const revertible of undoStack) revertible.dispose();
-			for (const revertible of redoStack) revertible.dispose();
+			const disposeStack = (stack: Revertible[]): void => {
+				for (const revertible of stack) {
+					try {
+						revertible.dispose();
+					} catch (error) {
+						console.error("Failed to dispose Revertible", error);
+					}
+				}
+			};
+			disposeStack(undoStack);
+			disposeStack(redoStack);
 		};
 	}, [props.treeView.events, undoStack, redoStack]);
 
