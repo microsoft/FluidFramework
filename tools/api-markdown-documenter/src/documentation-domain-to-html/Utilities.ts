@@ -9,9 +9,11 @@
  */
 import type { Element as HastElement } from "hast";
 import { h } from "hastscript";
+
 import type { DocumentationNode } from "../index.js";
-import type { TransformationContext } from "./TransformationContext.js";
+
 import { documentationNodesToHtml } from "./ToHtml.js";
+import type { TransformationContext } from "./TransformationContext.js";
 
 /**
  * An HTML tag and its (optional) attributes.

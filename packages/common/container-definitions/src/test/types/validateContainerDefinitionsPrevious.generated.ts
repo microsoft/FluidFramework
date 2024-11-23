@@ -193,7 +193,6 @@ declare type old_as_current_for_Interface_IContainer = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IContainer": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainer = requireAssignableTo<TypeOnly<current.IContainer>, TypeOnly<old.IContainer>>
 
 /*
@@ -212,7 +211,6 @@ declare type old_as_current_for_Interface_IContainerContext = requireAssignableT
  * typeValidation.broken:
  * "Interface_IContainerContext": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerContext = requireAssignableTo<TypeOnly<current.IContainerContext>, TypeOnly<old.IContainerContext>>
 
 /*
@@ -258,7 +256,6 @@ declare type current_as_old_for_Interface_IContainerLoadMode = requireAssignable
  * typeValidation.broken:
  * "Interface_IDeltaManager": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IDeltaManager = requireAssignableTo<TypeOnly<current.IDeltaManager<never,never>>, TypeOnly<old.IDeltaManager<never,never>>>
 
 /*

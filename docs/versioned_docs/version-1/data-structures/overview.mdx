@@ -22,7 +22,7 @@ Because users can simultaneously change the same DDS, you need to consider which
 
 :::note[Meaning of "simultaneously"]
 
-Two or more clients are said to make a change *simultaneously* if they each make a change before they have received the
+Two or more clients are said to make a change _simultaneously_ if they each make a change before they have received the
 others' changes from the server.
 
 :::
@@ -32,9 +32,9 @@ Choosing the correct data structure for your scenario can improve the performanc
 DDSes vary from each other by three characteristics:
 
 -   **Basic data structure:** For example, key-value pair, a sequence, or a queue.
--   **Client autonomy vs. Consensus:** An *optimistic* DDS enables any client to unilaterally change a value and the new
-  value is relayed to all other clients, while a *consensus-based* DDS will only allow a change if it is accepted by other clients via a
-  consensus process.
+-   **Client autonomy vs. Consensus:** An _optimistic_ DDS enables any client to unilaterally change a value and the new
+    value is relayed to all other clients, while a _consensus-based_ DDS will only allow a change if it is accepted by other clients via a
+    consensus process.
 -   **Merge policy:** The policy that determines how conflicting changes from clients are resolved.
 
 Below we've enumerated the data structures and described when they may be most useful.
@@ -48,8 +48,8 @@ Although the value of a pair can be a complex object, the value of any given pai
 ### Common Problems
 
 -   Storing a lot of data in one key-value entry may cause performance or merge issues.
-  Each update will update the entire value rather than merging two updates.
-  Try splitting the data across multiple keys.
+    Each update will update the entire value rather than merging two updates.
+    Try splitting the data across multiple keys.
 -   Storing arrays, lists, or logs in a single key-value entry may lead to unexpected behavior because users can't collaboratively modify parts of one entry.
 
 ## SharedString

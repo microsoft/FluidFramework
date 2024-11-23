@@ -15,6 +15,7 @@ import {
 	ParagraphNode,
 	SectionNode,
 } from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 describe("HierarchicalSection HTML rendering tests", () => {
