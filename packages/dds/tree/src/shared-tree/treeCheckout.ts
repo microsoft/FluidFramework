@@ -44,6 +44,8 @@ import {
 	visitDelta,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
+	type GraphCommit,
+	findAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -56,7 +58,9 @@ import {
 } from "../feature-libraries/index.js";
 import {
 	SharedTreeBranch,
+	TransactionStack,
 	getChangeReplaceType,
+	onForkTransitive,
 	type SharedTreeBranchChange,
 } from "../shared-tree-core/index.js";
 import {
@@ -106,6 +110,31 @@ export interface CheckoutEvents {
 	 * this change is not revertible.
 	 */
 	changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+
+	/**
+	 * Fired after a new transaction is started.
+	 */
+	transactionStarted(): void;
+
+	/**
+	 * Fired after the current transaction is aborted.
+	 */
+	transactionAborted(): void;
+
+	/**
+	 * Fired after the current transaction is committed.
+	 */
+	transactionCommitted(): void;
+
+	/**
+	 * Fired when a new branch is created from this checkout.
+	 */
+	fork(branch: ITreeCheckout): void;
+
+	/**
+	 * Fired when the checkout is disposed.
+	 */
+	dispose(): void;
 }
 
 /**
@@ -289,10 +318,7 @@ export function createTreeCheckout(
 		);
 	const events = args?.events ?? createEmitter();
 
-	const transaction = new Transaction(branch);
-
 	return new TreeCheckout(
-		transaction,
 		branch,
 		false,
 		changeFamily,
@@ -353,26 +379,21 @@ export interface ITransaction {
 }
 
 class Transaction implements ITransaction {
-	public constructor(
-		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	) {}
+	public constructor(private readonly checkout: TreeCheckout) {}
 
 	public start(): void {
-		this.branch.startTransaction();
-		this.branch.editor.enterTransaction();
+		this.checkout.startTransaction();
 	}
 	public commit(): TransactionResult.Commit {
-		this.branch.commitTransaction();
-		this.branch.editor.exitTransaction();
+		this.checkout.commitTransaction();
 		return TransactionResult.Commit;
 	}
 	public abort(): TransactionResult.Abort {
-		this.branch.abortTransaction();
-		this.branch.editor.exitTransaction();
+		this.checkout.abortTransaction();
 		return TransactionResult.Abort;
 	}
 	public inProgress(): boolean {
-		return this.branch.isTransacting();
+		return this.checkout.isTransacting();
 	}
 }
 
@@ -407,6 +428,32 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
+	public readonly transaction: ITransaction;
+	private readonly transactions = new TransactionStack();
+	/**
+	 * After pushing a starting revision to the transaction stack, this branch might be rebased
+	 * over commits which are children of that starting revision. When the transaction is committed,
+	 * those rebased-over commits should not be included in the transaction's squash commit, even though
+	 * they exist between the starting revision and the final commit within the transaction.
+	 *
+	 * Whenever `rebaseOnto` is called during a transaction, this map is augmented with an entry from the
+	 * original merge-base to the new merge-base.
+	 *
+	 * This state need only be retained for the lifetime of the transaction.
+	 *
+	 * TODO: This strategy might need to be revisited when adding better support for async transactions.
+	 * Since:
+	 *
+	 * 1. Transactionality is guaranteed primarily by squashing at commit time
+	 * 2. Branches may be rebased with an ongoing transaction
+	 *
+	 * a rebase operation might invalidate only a portion of a transaction's commits, thus defeating the
+	 * purpose of transactionality.
+	 *
+	 * AB#6483 and children items track this work.
+	 */
+	private readonly initialTransactionRevToRebasedRev = new Map<RevisionTag, RevisionTag>();
+
 	/**
 	 * Set of revertibles maintained for automatic disposal
 	 */
@@ -434,7 +481,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public static readonly revertTelemetryEventName = "RevertRevertible";
 
 	public constructor(
-		public readonly transaction: ITransaction,
 		private readonly _branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		/** True if and only if this checkout is for a forked branch and not the "main branch" of the tree. */
 		public readonly isBranch: boolean,
@@ -456,21 +502,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		private readonly logger?: ITelemetryLoggerExt,
 		private readonly breaker: Breakable = new Breakable("TreeCheckout"),
 	) {
-		// when a transaction is started, take a snapshot of the current state of removed roots
-		_branch.events.on("transactionStarted", () => {
-			this.removedRootsSnapshots.push(this.removedRoots.clone());
-		});
-		// when a transaction is committed, the latest snapshot of removed roots can be discarded
-		_branch.events.on("transactionCommitted", () => {
-			this.removedRootsSnapshots.pop();
-		});
-		// after a transaction is rolled back, revert removed roots back to the latest snapshot
-		_branch.events.on("transactionRolledBack", () => {
-			const snapshot = this.removedRootsSnapshots.pop();
-			assert(snapshot !== undefined, 0x9ae /* a snapshot for removed roots does not exist */);
-			this.removedRoots = snapshot;
-		});
-
+		this.transaction = new Transaction(this);
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
 		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
@@ -530,7 +562,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		_branch.events.on("afterChange", (event) => {
 			// The following logic allows revertibles to be generated for the change.
 			// Currently only appends (including merges) and transaction commits are supported.
-			if (!_branch.isTransacting()) {
+			if (!this.isTransacting()) {
 				if (
 					event.type === "append" ||
 					(event.type === "replace" && getChangeReplaceType(event) === "transactionCommit")
@@ -724,6 +756,88 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		return this.forest.anchors.locate(anchor);
 	}
 
+	// #region Transactions
+
+	public isTransacting(): boolean {
+		return this.transactions.size !== 0;
+	}
+
+	public startTransaction(): void {
+		this.checkNotDisposed();
+
+		const forks = new Set<TreeCheckout>();
+		const onDisposeUnSubscribes: (() => void)[] = [];
+		const onForkUnSubscribe = onForkTransitive(this, (fork) => {
+			forks.add(fork);
+			onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
+		});
+		this.transactions.push(this._branch.getHead().revision, () => {
+			forks.forEach((fork) => fork.dispose());
+			onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+			onForkUnSubscribe();
+		});
+		this._branch.editor.enterTransaction();
+		// When a transaction is started, take a snapshot of the current state of removed roots
+		this.events.emit("transactionStarted");
+		this.removedRootsSnapshots.push(this.removedRoots.clone());
+	}
+
+	public abortTransaction(): void {
+		this.checkNotDisposed();
+		const [startCommit] = this.popTransaction();
+		this._branch.editor.exitTransaction();
+		this.events.emit("transactionAborted");
+		this._branch.removeAfter(startCommit);
+		// After a transaction is rolled back, revert removed roots back to the latest snapshot
+		const snapshot = this.removedRootsSnapshots.pop();
+		assert(snapshot !== undefined, 0x9ae /* a snapshot for removed roots does not exist */);
+		this.removedRoots = snapshot;
+	}
+
+	public commitTransaction(): void {
+		this.checkNotDisposed();
+		const [startCommit, commits] = this.popTransaction();
+		this._branch.editor.exitTransaction();
+		// When a transaction is committed, the latest snapshot of removed roots can be discarded
+		this.events.emit("transactionCommitted");
+		this.removedRootsSnapshots.pop();
+		if (!hasSome(commits)) {
+			return undefined;
+		}
+
+		this._branch.squashAfter(startCommit);
+	}
+
+	private popTransaction(): [GraphCommit<SharedTreeChange>, GraphCommit<SharedTreeChange>[]] {
+		const { startRevision: startRevisionOriginal } = this.transactions.pop();
+		let startRevision = startRevisionOriginal;
+
+		for (
+			let r: RevisionTag | undefined = startRevision;
+			r !== undefined;
+			r = this.initialTransactionRevToRebasedRev.get(startRevision)
+		) {
+			startRevision = r;
+		}
+
+		if (!this.isTransacting()) {
+			this.initialTransactionRevToRebasedRev.clear();
+		}
+
+		const commits: GraphCommit<SharedTreeChange>[] = [];
+		const startCommit = findAncestor(
+			[this._branch.getHead(), commits],
+			(c) => c.revision === startRevision,
+		);
+		assert(
+			startCommit !== undefined,
+			0x593 /* Expected branch to be ahead of transaction start revision */,
+		);
+		return [startCommit, commits];
+	}
+
+	// #endregion Transactions
+
 	public branch(): TreeCheckout {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
@@ -732,9 +846,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const branch = this._branch.fork();
 		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
-		const transaction = new Transaction(branch);
-		return new TreeCheckout(
-			transaction,
+		const checkout = new TreeCheckout(
 			branch,
 			true,
 			this.changeFamily,
@@ -748,6 +860,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.logger,
 			this.breaker,
 		);
+		this.events.emit("fork", checkout);
+		return checkout;
 	}
 
 	public rebase(checkout: TreeCheckout): void {
@@ -758,14 +872,25 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The source of the branch rebase has been disposed and cannot be rebased.",
 		);
 		assert(
-			!checkout.transaction.inProgress(),
+			!checkout.isTransacting(),
 			0x9af /* A view cannot be rebased while it has a pending transaction */,
 		);
 		assert(
 			checkout.isBranch,
 			0xa5d /* The main branch cannot be rebased onto another branch. */,
 		);
-		checkout._branch.rebaseOnto(this._branch);
+
+		const result = checkout._branch.rebaseOnto(this._branch);
+		if (result !== undefined && this.isTransacting()) {
+			const { targetCommits } = result.commits;
+			// If `targetCommits` were empty, then `result` would be undefined and we couldn't reach here
+			assert(hasSome(targetCommits), "Expected target commits to be non-empty");
+			const src = targetCommits[0].parent?.revision;
+			const dst = getLast(targetCommits).revision;
+			if (src !== undefined && dst !== undefined) {
+				this.initialTransactionRevToRebasedRev.set(src, dst);
+			}
+		}
 	}
 
 	public rebaseOnto(checkout: ITreeCheckout): void {
@@ -785,7 +910,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The source of the branch merge has been disposed and cannot be merged.",
 		);
 		assert(
-			!this.transaction.inProgress(),
+			!this.isTransacting(),
 			0x9b0 /* Views cannot be merged into a view while it has a pending transaction */,
 		);
 		while (checkout.transaction.inProgress()) {
@@ -812,11 +937,15 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The branch has already been disposed and cannot be disposed again.",
 		);
 		this.disposed = true;
+		while (this.isTransacting()) {
+			this.abortTransaction();
+		}
 		this.purgeRevertibles();
 		this._branch.dispose();
 		for (const view of this.views) {
 			view.dispose();
 		}
+		this.events.emit("dispose");
 	}
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
@@ -857,7 +986,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
-		if (this._branch.isTransacting()) {
+		if (this.isTransacting()) {
 			throw new UsageError("Undo is not yet supported during transactions.");
 		}
 
