@@ -6,47 +6,47 @@
 import path from "node:path";
 
 import type { PackageJson } from "@fluidframework/build-tools";
-import chai from "chai";
-import assertArrays from "chai-arrays";
+import { runCommand } from "@oclif/test";
+import { expect } from "chai";
 import { readJsonSync, writeJson } from "fs-extra/esm";
 
-import { getTestDataPath, initializeCommandTestFunction } from "../../init.js";
-
-const test = initializeCommandTestFunction(import.meta.url);
-chai.use(assertArrays);
+import { getTestDataPath } from "../../init.js";
 
 describe("flub check dependencyRanges", () => {
 	const examplePackagePath = path.join(getTestDataPath(), "example-package", "package.json");
 	const originalJson = readJsonSync(examplePackagePath) as PackageJson;
 
-	// after(async () => {
-	// 	await writeJson(examplePackagePath, originalJson, { spaces: "\t" });
-	// });
+	afterEach(async () => {
+		// restore the original JSON
+		await writeJson(examplePackagePath, originalJson, { spaces: "\t" });
+	});
 
-	// describe("no invalid ranges", () => {
-	test
-		.stdout()
-		.command(["check:dependencyRanges", "--dir", path.dirname(examplePackagePath)])
-		.finally(async () => {
-			await writeJson(examplePackagePath, originalJson, { spaces: "\t" });
-		})
-		.end(`succeeds when no invalid ranges`);
-	// });
+	it("succeeds when no invalid ranges", async () => {
+		const { error, stdout } = await runCommand(
+			["check:dependencyRanges", "--dir", path.dirname(examplePackagePath)],
+			{
+				root: import.meta.url,
+			},
+		);
 
-	describe("no invalid ranges", () => {
-		test
-			.do(async () => {
-				const newJson = JSON.parse(JSON.stringify(originalJson)) as PackageJson;
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				newJson.dependencies!["@fluid-internal/mocha-test-setup"] = "^2.0.0-internal.8.0.0";
-				await writeJson(examplePackagePath, newJson, { spaces: "\t" });
-			})
-			.finally(async () => {
-				await writeJson(examplePackagePath, originalJson, { spaces: "\t" });
-			})
-			.stdout()
-			.command(["check:dependencyRanges", "--dir", path.dirname(examplePackagePath)])
-			.exit(100)
-			.end(`fails with invalid ranges`);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(error?.oclif?.exit).to.be.undefined;
+		expect(stdout).to.include("Done. 1 Packages. 0 Errors");
+	});
+
+	it("fails with invalid ranges", async () => {
+		const newJson = JSON.parse(JSON.stringify(originalJson)) as PackageJson;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		newJson.dependencies!["@fluid-internal/mocha-test-setup"] = "^2.0.0-internal.8.0.0";
+		await writeJson(examplePackagePath, newJson, { spaces: "\t" });
+
+		const { error } = await runCommand(
+			["check:dependencyRanges", "--dir", path.dirname(examplePackagePath)],
+			{
+				root: import.meta.url,
+			},
+		);
+
+		expect(error?.oclif?.exit).to.equal(100);
 	});
 });

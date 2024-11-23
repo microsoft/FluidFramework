@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { Package } from "@fluidframework/build-tools";
 import { StringBuilder } from "@rushstack/node-core-library";
 
-import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
 
