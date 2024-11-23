@@ -39,6 +39,7 @@ export class DocumentContextManager extends EventEmitter {
 	private closed = false;
 
 	private headUpdatedAfterResume = false; // used to track whether the head has been updated after a resume event, so that we allow moving out of order only once during resume.
+	private tailUpdatedAfterResume = false; // used to track whether the tail has been updated after a resume event, so that we allow moving out of order only once during resume.
 
 	constructor(private readonly partitionContext: IContext) {
 		super();
@@ -76,6 +77,7 @@ export class DocumentContextManager extends EventEmitter {
 				}
 			}
 			this.headUpdatedAfterResume = false; // reset this flag when we pause
+			this.tailUpdatedAfterResume = false; // reset this flag when we pause
 			Lumberjack.info("Emitting pause from contextManager", { lowestOffset, offset, reason });
 			this.emit("pause", lowestOffset, offset, reason);
 		});
@@ -142,9 +144,10 @@ export class DocumentContextManager extends EventEmitter {
 
 	public setTail(tail: IQueuedMessage, resumeBackToOffset?: number | undefined) {
 		assert(
-			(tail.offset > this.tail.offset || tail.offset === resumeBackToOffset) &&
+			(tail.offset > this.tail.offset ||
+				(tail.offset === resumeBackToOffset && !this.tailUpdatedAfterResume)) &&
 				tail.offset <= this.head.offset,
-			`Tail offset ${tail.offset} must be greater than the current tail offset ${this.tail.offset} or equal to the resume offset ${resumeBackToOffset}, and less than or equal to the head offset ${this.head.offset}.`,
+			`Tail offset ${tail.offset} must be greater than the current tail offset ${this.tail.offset} or equal to the resume offset ${resumeBackToOffset} if not yet resumed (tailUpdatedAfterResume: ${this.tailUpdatedAfterResume}), and less than or equal to the head offset ${this.head.offset}.`,
 		);
 
 		if (tail.offset <= this.tail.offset) {
@@ -152,6 +155,14 @@ export class DocumentContextManager extends EventEmitter {
 				resumeBackToOffset,
 				currentTailOffset: this.tail.offset,
 			});
+		}
+
+		if (!this.tailUpdatedAfterResume && resumeBackToOffset !== undefined) {
+			Lumberjack.info("Setting tailUpdatedAfterResume to true", {
+				resumeBackToOffset,
+				currentTailOffset: this.tail.offset,
+			});
+			this.tailUpdatedAfterResume = true;
 		}
 
 		this.tail = tail;
