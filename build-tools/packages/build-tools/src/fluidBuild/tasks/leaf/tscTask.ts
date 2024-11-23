@@ -262,17 +262,17 @@ export class TscTask extends LeafTask {
 		if (!isEqual(configOptions, tsBuildInfoOptions)) {
 			const diff = diffObjects(configOptions, tsBuildInfoOptions);
 			let diffIsReal = true;
-			if(Object.keys(diff).length <= 2) {
+			if (Object.keys(diff).length <= 2) {
 				diffIsReal = false;
-				for(const key of Object.keys(diff)) {
-					if(!allowedTsConfigOptsToDiffer.has(key)) {
+				for (const key of Object.keys(diff)) {
+					if (!allowedTsConfigOptsToDiffer.has(key)) {
 						diffIsReal = true;
 						break;
 					}
 				}
 			}
 
-			if(diffIsReal) {
+			if (diffIsReal) {
 				this.traceTrigger(`ts option changed ${configFileFullPath}`);
 				this.traceTrigger("Config:");
 				this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
