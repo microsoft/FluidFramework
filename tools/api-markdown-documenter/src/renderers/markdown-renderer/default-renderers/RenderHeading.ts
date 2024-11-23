@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type HeadingNode } from "../../../documentation-domain/index.js";
+import type { HeadingNode } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
 import { renderNodes } from "../Render.js";
 import type { RenderContext } from "../RenderContext.js";
 import { renderNodeWithHtmlSyntax } from "../Utilities.js";
+
 import { escapeTextForMarkdown } from "./RenderPlainText.js";
 
 /**
