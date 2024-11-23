@@ -80,8 +80,6 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		const [context] = await Promise.all([this.getContext(), this.initMachineHooks()]);
 		const { argv, flags, logger, machine } = this;
 
-		const repo = await context.getGitRepository();
-
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const rgOrPackageName = flags.releaseGroup ?? flags.package!;
 		assert(
@@ -118,7 +116,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 
 		const branchPolicyCheckDefault = getRunPolicyCheckDefault(
 			releaseGroup,
-			repo.originalBranchName,
+			gitRepo.originalBranchName,
 		);
 
 		this.handler = new FluidReleaseStateHandler(machine, logger);

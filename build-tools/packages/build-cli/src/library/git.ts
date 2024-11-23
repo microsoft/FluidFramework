@@ -43,9 +43,25 @@ function getVersionFromTag(tag: string): string | undefined {
 	return ver.version;
 }
 
+/**
+ * Context object with metadata about the local Git repository. This is used by CLI commands that need access to
+ * relevant metadata that can't be queried from Git itself, such as the `upstreamRemotePartialUrl`.
+ */
 export interface GitContext {
+	/**
+	 * A string that is a substring of the full URL to the upstream remote repository. If a remote is found that
+	 * partically matches this string, it will be considered the upstream remote.
+	 */
 	upstreamRemotePartialUrl: Readonly<string>;
+
+	/**
+	 * The branch name when the Git context was initialized.
+	 */
 	originalBranchName: Readonly<string>;
+
+	/**
+	 * New branches created since this context was initialized.
+	 */
 	newBranches: string[];
 }
 
@@ -378,7 +394,7 @@ export class Repository implements GitContext {
 		if (await this.getShaForBranch(branchName)) {
 			throw new Error(`Branch '${branchName}' already exists. Failed to create.`);
 		}
-		await this.createBranch(branchName);
+		await this.gitClient.checkoutLocalBranch(branchName);
 	}
 
 	public async getCurrentSha(): Promise<string> {
