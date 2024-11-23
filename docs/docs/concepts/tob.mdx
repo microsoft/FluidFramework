@@ -24,15 +24,14 @@ no new changes to the data structures, all clients reach an identical state in a
 Fluid guarantees eventual consistency via total order broadcast. That is, when a DDS is changed locally by a client,
 that change -- that is, the operation -- is first sent to the Fluid service, which does three things:
 
-*   Assigns a monotonically increasing sequence number to the operation; this is the "total order" part of total order
-  broadcast.
-*   Broadcasts the operation to all other connected clients; this is the "broadcast" part of total order broadcast.
-*   Stores the operation's data (see [data persistence](#data-persistence)).
+-   Assigns a monotonically increasing sequence number to the operation; this is the "total order" part of total order
+    broadcast.
+-   Broadcasts the operation to all other connected clients; this is the "broadcast" part of total order broadcast.
+-   Stores the operation's data (see [data persistence](#data-persistence)).
 
 This means that each client receives every operation relayed from the server with enough information to apply them in
 the correct order. The clients can then apply the operations to their local state -- which means that each client will
 eventually be consistent with the client that originated the change.
-
 
 ## Operations
 

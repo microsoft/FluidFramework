@@ -9,6 +9,7 @@
  */
 import type { Element as HastElement, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
+
 import type { HeadingNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformChildrenUnderTag } from "../Utilities.js";

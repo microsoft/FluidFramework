@@ -4,7 +4,8 @@
  */
 
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { createEmitter, type Listenable, type Off } from "../../events/index.js";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable, Off } from "@fluidframework/core-interfaces";
 import type { TreeNode, Unhydrated } from "./types.js";
 import {
 	anchorSlot,

@@ -38,13 +38,9 @@ A `TreeView` provides the interface for reading and editing data on the `SharedT
 This is done by calling `viewWith` on the `SharedTree` with your tree configuration.
 
 ```typescript
-const treeConfiguration = new TreeViewConfiguration(
-	{ schema: TodoList }
-)
+const treeConfiguration = new TreeViewConfiguration({ schema: TodoList });
 
-const appData = container.initialObjects.appData.viewWith(
-	treeConfiguration
-);
+const appData = container.initialObjects.appData.viewWith(treeConfiguration);
 ```
 
 The tree configuration takes in a schema for the root of the tree which will need to be defined by your application.
@@ -59,7 +55,7 @@ The data also behaves like JS objects which makes it easy to use in external lib
 To define a schema, first create a `SchemaFactory` with a unique string to use as the namespace.
 
 ```typescript
-const schemaFactory = new SchemaFactory("some-schema-id-prob-a-uuid")
+const schemaFactory = new SchemaFactory("some-schema-id-prob-a-uuid");
 ```
 
 `SchemaFactory` provides some methods for specifying collection types including `object()`, `array()`, and `map()`; and five primitive data types for specifying leaf nodes: `boolean`, `string`, `number`, `null`, and `handle`.
@@ -97,15 +93,17 @@ This can only be done once after the tree is created and the data you initialize
 This is how we would initialize our todo list:
 
 ```typescript
-appData.initialize(new TodoList({
-	title: "todo list",
-	items: [
-		new TodoItem({
-			description: "first item",
-			isComplete: true,
-		}),
-	]
-}));
+appData.initialize(
+	new TodoList({
+		title: "todo list",
+		items: [
+			new TodoItem({
+				description: "first item",
+				isComplete: true,
+			}),
+		],
+	}),
+);
 ```
 
 ## Reading Data From Your Tree
@@ -145,6 +143,7 @@ useEffect(() => {
 ```
 
 `nodeChanged` fires whenever one or more properties of the specified node change while `treeChanged` also fires whenever any node in its subtree changes.
+
 <ApiLink packageName="tree" apiName="TreeChangeEvents" apiType="interface">the API</ApiLink> docs for more details.
 
 ## Editing Tree Data
@@ -153,10 +152,13 @@ There are built-in editing methods for each of the provided schema types.
 For example, if your data is in an array, you can add a new todo item at index 3 like this:
 
 ```typescript
-appData.root.items.insertAt(3, new TodoItem({
-	description: "new item",
-	isComplete: false,
-}),);
+appData.root.items.insertAt(
+	3,
+	new TodoItem({
+		description: "new item",
+		isComplete: false,
+	}),
+);
 ```
 
 The schema types can also be edited using the assignment operator like this:
@@ -212,27 +214,30 @@ Here is a simple example of how to do so using the provided APIs:
 
 ```typescript
 const undoStack = [];
-const redoStack = []
+const redoStack = [];
 
 useEffect(() => {
-	const unsubscribe = appData.events.on("commitApplied", (commit: CommitMetadata, getRevertible?: RevertibleFactory) => {
-		if (getRevertible === undefined) {
-			return;
-		}
-		const revertible = getRevertible();
-		if (commit.kind === CommitKind.Undo) {
-			redoStack.push(revertible);
-		} else {
-			if (commit.kind === CommitKind.Default) {
-				// clear redo stack
-				for (const redo of redoStack) {
-					redo.dispose();
-				}
-				redoStack.length = 0;
+	const unsubscribe = appData.events.on(
+		"commitApplied",
+		(commit: CommitMetadata, getRevertible?: RevertibleFactory) => {
+			if (getRevertible === undefined) {
+				return;
 			}
-			undoStack.push(revertible);
-		}
-	});
+			const revertible = getRevertible();
+			if (commit.kind === CommitKind.Undo) {
+				redoStack.push(revertible);
+			} else {
+				if (commit.kind === CommitKind.Default) {
+					// clear redo stack
+					for (const redo of redoStack) {
+						redo.dispose();
+					}
+					redoStack.length = 0;
+				}
+				undoStack.push(revertible);
+			}
+		},
+	);
 	return unsubscribe;
 }, []);
 ```

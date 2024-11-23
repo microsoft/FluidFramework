@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type ConfigurationBase } from "../../../ConfigurationBase.js";
+import type { ConfigurationBase } from "../../../ConfigurationBase.js";
 import { defaultConsoleLogger } from "../../../Logging.js";
-import { type Renderers } from "./RenderOptions.js";
+
+import type { Renderers } from "./RenderOptions.js";
 
 /**
  * Configuration for Markdown rendering of generated documentation contents.
