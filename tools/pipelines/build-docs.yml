@@ -91,7 +91,7 @@ stages:
 # also, the artifact will be uploaded as latest-v*.tar.gz where * is the major version
 - stage: check_branch_version
   displayName: 'Check Version Deployment Condition'
-  pool: Small
+  pool: Small-eastus2
   jobs:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
@@ -322,7 +322,7 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  pool: Small
+  pool: Small-eastus2
   dependsOn: ['build', 'guardian']
   variables:
     deployOverrideVar: ${{ parameters.deployOverride }}

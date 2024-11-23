@@ -66,7 +66,7 @@ variables:
   - name: shouldRetainGuardianAssets
     value: ${{ or(
       eq(parameters.guardianAssetRetentionOverride, 'force'),
-      and(eq(parameters.guardianAssetRetentionOverride, 'default'))
+      eq(parameters.guardianAssetRetentionOverride, 'default')
       )}}
   - name: deploymentToken
     ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
@@ -91,7 +91,7 @@ stages:
 # also, the artifact will be uploaded as latest-v*.tar.gz where * is the major version
 - stage: check_branch_version
   displayName: 'Check Version Deployment Condition'
-  pool: Small
+  pool: Small-eastus2
   jobs:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
@@ -128,12 +128,12 @@ stages:
 
     - deployment: upload_json
       displayName: 'Combine api-extractor JSON'
-      dependsOn: [] # run in parallel
+      dependsOn: check_branch_version
       environment: 'fluid-docs-env'
-      pool: Large
+      pool: Large-eastus2
       variables:
-        uploadAsLatestRelease: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetShouldDeploy.shouldDeploy'] ]
-        majorVersion: $[ stageDependencies.check_branch_version.outputs['check_branch_version.SetVersion.majorVersion'] ]
+        uploadAsLatestRelease: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'] ]
+        majorVersion: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion'] ]
       strategy:
         runOnce:
           deploy:
@@ -149,10 +149,10 @@ stages:
 # this stage runs depending on the check_branch_version stage and deployOverride parameter
 # the trigger is configured such that deploy-website runs using main branch resources
 # this ensures that the generated website is up-to-date with the latest changes
-- stage: deploy docs
+- stage: deploy
   displayName: 'Deploy website'
-  pool: Small
-  dependsOn: ['build', 'guardian', 'check_branch_version']
+  pool: Small-eastus2
+  dependsOn: ['check_branch_version']
   jobs:
     - job: deploy_site
       displayName: 'Deploy website'

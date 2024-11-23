@@ -21,10 +21,11 @@ import {
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import { createEmitter, type Listenable } from "../events/index.js";
+import type { Listenable } from "@fluidframework/core-interfaces";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 import { TransactionStack } from "./transactionStack.js";
-import { fail, getLast, hasSome } from "../util/index.js";
+import { getLast, hasSome } from "../util/index.js";
 
 /**
  * Describes a change to a `SharedTreeBranch`. Various operations can mutate the head of the branch;
@@ -318,26 +319,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 			return undefined;
 		}
 
-		// Squash the changes and make the squash commit the new head of this branch
-		const squashedChange = this.changeFamily.rebaser.compose(commits);
-		const revision = this.mintRevisionTag();
-
-		const newHead = mintCommit(startCommit, {
-			revision,
-			change: this.changeFamily.rebaser.changeRevision(squashedChange, revision),
-		});
-
-		const changeEvent = {
-			type: "replace",
-			change: undefined,
-			removedCommits: commits,
-			newCommits: [newHead],
-		} as const;
-
-		this.#events.emit("beforeChange", changeEvent);
-		this.head = newHead;
-		this.#events.emit("afterChange", changeEvent);
-		return [commits, newHead];
+		const squashedCommits = this.squashAfter(startCommit);
+		return [squashedCommits, this.head];
 	}
 
 	/**
@@ -351,42 +334,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		abortedCommits: GraphCommit<TChange>[],
 	] {
 		this.assertNotDisposed();
-		const [startCommit, commits] = this.popTransaction();
+		const [startCommit] = this.popTransaction();
 		this.editor.exitTransaction();
-
 		this.#events.emit("transactionAborted", this.transactions.size === 0);
-		if (!hasSome(commits)) {
-			this.#events.emit("transactionRolledBack", this.transactions.size === 0);
-			return [undefined, []];
-		}
-
-		const inverses: TaggedChange<TChange>[] = [];
-		for (let i = commits.length - 1; i >= 0; i--) {
-			const revision = this.mintRevisionTag();
-			const commit =
-				commits[i] ?? fail("This wont run because we are iterating through commits");
-			const inverse = this.changeFamily.rebaser.changeRevision(
-				this.changeFamily.rebaser.invert(commit, true, revision),
-				revision,
-				commit.revision,
-			);
-
-			inverses.push(tagRollbackInverse(inverse, revision, commit.revision));
-		}
-		const change =
-			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
-
-		const changeEvent = {
-			type: "remove",
-			change: change === undefined ? undefined : makeAnonChange(change),
-			removedCommits: commits,
-		} as const;
-
-		this.#events.emit("beforeChange", changeEvent);
-		this.head = startCommit;
-		this.#events.emit("afterChange", changeEvent);
+		const [taggedChange, removedCommits] = this.removeAfter(startCommit);
 		this.#events.emit("transactionRolledBack", this.transactions.size === 0);
-		return [change, commits];
+		return [taggedChange?.change, removedCommits];
 	}
 
 	/**
@@ -490,6 +443,87 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		this.head = newSourceHead;
 		this.#events.emit("afterChange", changeEvent);
 		return rebaseResult;
+	}
+
+	/**
+	 * Remove a range of commits from this branch.
+	 * @param commit - All commits after (but not including) this commit will be removed.
+	 * @returns The net change to this branch and the commits that were removed from this branch.
+	 */
+	public removeAfter(
+		commit: GraphCommit<TChange>,
+	): [change: TaggedChange<TChange> | undefined, removedCommits: GraphCommit<TChange>[]] {
+		if (commit === this.head) {
+			return [undefined, []];
+		}
+
+		const removedCommits: GraphCommit<TChange>[] = [];
+		const inverses: TaggedChange<TChange>[] = [];
+		findAncestor([this.head, removedCommits], (c) => {
+			// TODO: Pull this side effect out if/when more diverse ancestry walking helpers are available
+			if (c !== commit) {
+				const revision = this.mintRevisionTag();
+				const inverse = this.changeFamily.rebaser.changeRevision(
+					this.changeFamily.rebaser.invert(c, true, revision),
+					revision,
+					c.revision,
+				);
+
+				inverses.push(tagRollbackInverse(inverse, revision, c.revision));
+				return false;
+			}
+
+			return true;
+		});
+		assert(hasSome(removedCommits), "Commit must be in the branch's ancestry");
+
+		const change = makeAnonChange(this.changeFamily.rebaser.compose(inverses));
+		const changeEvent = {
+			type: "remove",
+			change,
+			removedCommits,
+		} as const;
+
+		this.#events.emit("beforeChange", changeEvent);
+		this.head = commit;
+		this.#events.emit("afterChange", changeEvent);
+		return [change, removedCommits];
+	}
+
+	/**
+	 * Replace a range of commits on this branch with a single commit composed of equivalent changes.
+	 * @param commit - All commits after (but not including) this commit will be squashed.
+	 * @returns The commits that were squashed and removed from this branch.
+	 * @remarks The commits after `commit` will be removed from this branch, and the squash commit will become the new head of this branch.
+	 * The change event emitted by this operation will have a `change` property that is undefined, since no net change occurred.
+	 */
+	public squashAfter(commit: GraphCommit<TChange>): GraphCommit<TChange>[] {
+		if (commit === this.head) {
+			return [];
+		}
+
+		const removedCommits: GraphCommit<TChange>[] = [];
+		findAncestor([this.head, removedCommits], (c) => c === commit);
+		assert(hasSome(removedCommits), "Commit must be in the branch's ancestry");
+
+		const squashedChange = this.changeFamily.rebaser.compose(removedCommits);
+		const revision = this.mintRevisionTag();
+		const newHead = mintCommit(commit, {
+			revision,
+			change: this.changeFamily.rebaser.changeRevision(squashedChange, revision),
+		});
+
+		const changeEvent = {
+			type: "replace",
+			change: undefined,
+			removedCommits,
+			newCommits: [newHead],
+		} as const;
+
+		this.#events.emit("beforeChange", changeEvent);
+		this.head = newHead;
+		this.#events.emit("afterChange", changeEvent);
+		return removedCommits;
 	}
 
 	/**
