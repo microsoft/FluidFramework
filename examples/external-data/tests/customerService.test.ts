@@ -160,7 +160,7 @@ describe("mock-customer-service", () => {
 		// it tries to issue its first request to the services. This does not happen on Node18 but does on Node20.
 		// I couldn't figure out why, but letting the JS turn end here before the test runs seems to fix it.
 		await new Promise<void>((resolve) => {
-			setImmediate(resolve);
+			setTimeout(resolve, 0);
 		});
 	});
 
