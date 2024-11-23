@@ -74,7 +74,7 @@ export {
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
-	getAllowedContentIncompatibilities,
+	getAllowedContentDiscrepancies,
 	isRepoSuperset,
 	isNeverTree,
 } from "./modular-schema/index.js";

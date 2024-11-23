@@ -310,7 +310,7 @@ declare type current_as_old_for_Interface_IOdspCache = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IOdspResponse": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IOdspResponse = requireAssignableTo<TypeOnly<old.IOdspResponse<any>>, TypeOnly<current.IOdspResponse<any>>>
+declare type old_as_current_for_Interface_IOdspResponse = requireAssignableTo<TypeOnly<old.IOdspResponse<never>>, TypeOnly<current.IOdspResponse<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -319,7 +319,7 @@ declare type old_as_current_for_Interface_IOdspResponse = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_IOdspResponse": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IOdspResponse = requireAssignableTo<TypeOnly<current.IOdspResponse<any>>, TypeOnly<old.IOdspResponse<any>>>
+declare type current_as_old_for_Interface_IOdspResponse = requireAssignableTo<TypeOnly<current.IOdspResponse<never>>, TypeOnly<old.IOdspResponse<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -427,6 +427,7 @@ declare type old_as_current_for_TypeAlias_FetchType = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "TypeAlias_FetchType": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_FetchType = requireAssignableTo<TypeOnly<current.FetchType>, TypeOnly<old.FetchType>>
 
 /*
@@ -445,6 +446,7 @@ declare type old_as_current_for_TypeAlias_FetchTypeInternal = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_FetchTypeInternal": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_FetchTypeInternal = requireAssignableTo<TypeOnly<current.FetchTypeInternal>, TypeOnly<old.FetchTypeInternal>>
 
 /*

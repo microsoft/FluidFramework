@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -337,7 +337,7 @@ describe("Branches", () => {
 	it("emit a fork event after forking", () => {
 		let fork: DefaultBranch | undefined;
 		const branch = create();
-		branch.on("fork", (f) => (fork = f));
+		branch.events.on("fork", (f) => (fork = f));
 		// The fork event should return the new branch, just as the fork method does
 		assert.equal(branch.fork(), fork);
 		assert.equal(branch.fork(), fork);
@@ -346,7 +346,7 @@ describe("Branches", () => {
 	it("emit a dispose event after disposing", () => {
 		const branch = create();
 		let disposed = false;
-		branch.on("dispose", () => (disposed = true));
+		branch.events.on("dispose", () => (disposed = true));
 		branch.dispose();
 		assert.equal(disposed, true);
 	});
@@ -358,7 +358,7 @@ describe("Branches", () => {
 		it(`emit a transactionStarted event after a new transaction scope is opened ${withCommitsTitle}`, () => {
 			const branch = create();
 			const log: boolean[] = [];
-			branch.on("transactionStarted", (isOuterTransaction) => {
+			branch.events.on("transactionStarted", (isOuterTransaction) => {
 				log.push(isOuterTransaction);
 			});
 			branch.startTransaction();
@@ -385,7 +385,7 @@ describe("Branches", () => {
 		it(`emit a transactionAborted event after a transaction scope is aborted ${withCommitsTitle}`, () => {
 			const branch = create();
 			const log: boolean[] = [];
-			branch.on("transactionAborted", (isOuterTransaction) => {
+			branch.events.on("transactionAborted", (isOuterTransaction) => {
 				log.push(isOuterTransaction);
 			});
 			branch.startTransaction();
@@ -414,7 +414,7 @@ describe("Branches", () => {
 		it(`emit a transactionCommitted event after a new transaction scope is committed ${withCommitsTitle}`, () => {
 			const branch = create();
 			const log: boolean[] = [];
-			branch.on("transactionCommitted", (isOuterTransaction) => {
+			branch.events.on("transactionCommitted", (isOuterTransaction) => {
 				log.push(isOuterTransaction);
 			});
 			branch.startTransaction();
@@ -443,7 +443,7 @@ describe("Branches", () => {
 		it(`emit a transactionRolledBack event after a transaction scope is rolled back ${withCommitsTitle}`, () => {
 			const branch = create();
 			const log: boolean[] = [];
-			branch.on("transactionRolledBack", (isOuterTransaction) => {
+			branch.events.on("transactionRolledBack", (isOuterTransaction) => {
 				log.push(isOuterTransaction);
 			});
 			branch.startTransaction();
@@ -527,6 +527,79 @@ describe("Branches", () => {
 		assertDisposed(() => branch.abortTransaction());
 		assertDisposed(() => branch.abortTransaction());
 		assertDisposed(() => fork.merge(branch));
+	});
+
+	it("can remove commits", () => {
+		const branch = create();
+		const originalHead = branch.getHead();
+		const tag1 = change(branch);
+		const tag2 = change(branch);
+		assertHistory(branch, tag1, tag2);
+		branch.removeAfter(originalHead);
+		assert.equal(branch.getHead(), originalHead);
+	});
+
+	it("emit correct change events after a remove", () => {
+		let removeEventCount = 0;
+		const branch = create(({ type }) => {
+			if (type === "remove") {
+				removeEventCount += 1;
+			}
+		});
+		const originalHead = branch.getHead();
+		change(branch);
+		change(branch);
+		assert.equal(removeEventCount, 0);
+		branch.removeAfter(originalHead);
+		assert.equal(removeEventCount, 2);
+	});
+
+	it("can squash commits", () => {
+		const branch = create();
+		const originalHead = branch.getHead();
+		const tag1 = change(branch);
+		const tag2 = change(branch);
+		assertHistory(branch, tag1, tag2);
+		branch.squashAfter(originalHead);
+		assert.equal(branch.getHead().parent?.revision, originalHead.revision);
+	});
+
+	it("emit correct change events during and after squashing", () => {
+		let replaceEventCount = 0;
+		const branch = create(({ type }) => {
+			if (type === "replace") {
+				replaceEventCount += 1;
+			}
+		});
+		const originalHead = branch.getHead();
+		change(branch);
+		change(branch);
+		assert.equal(replaceEventCount, 0);
+		branch.squashAfter(originalHead);
+		assert.equal(replaceEventCount, 2);
+	});
+
+	it("do not emit a change event after squashing no commits", () => {
+		let changeEventCount = 0;
+		const branch = create(() => {
+			changeEventCount += 1;
+		});
+		branch.squashAfter(branch.getHead());
+		assert.equal(changeEventCount, 0);
+	});
+
+	it("emit a change event after squashing only a single commit", () => {
+		// TODO#25379: It might be nice to _not_ emit an event in this case (and not actually replace the head)
+		// as an optimization, but code affecting op submission and transactions relies on the current behavior for now.
+		let changeEventCount = 0;
+		const branch = create(() => {
+			changeEventCount += 1;
+		});
+		const originalHead = branch.getHead();
+		change(branch);
+		changeEventCount = 0;
+		branch.squashAfter(originalHead);
+		assert.equal(changeEventCount, 2);
 	});
 
 	it("correctly report whether they are in the middle of a transaction", () => {
@@ -686,11 +759,9 @@ describe("Branches", () => {
 		it("registers listener on forks created inside of the listener", () => {
 			const branch = create();
 			let forkCount = 0;
-			onForkTransitive(branch, () => {
-				forkCount += 1;
-				assert(branch.hasListeners("fork"));
-				if (forkCount <= 1) {
-					branch.fork();
+			onForkTransitive(branch, (f) => {
+				if (forkCount++ === 0) {
+					f.fork();
 				}
 			});
 			branch.fork();
@@ -709,12 +780,12 @@ describe("Branches", () => {
 
 		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
 		let head = branch.getHead();
-		branch.on("beforeChange", (c) => {
+		branch.events.on("beforeChange", (c) => {
 			// Check that the branch head never changes in the "before" event; it should only change after the "after" event.
 			assert.equal(branch.getHead(), head);
 			onChange?.(c);
 		});
-		branch.on("afterChange", (c) => {
+		branch.events.on("afterChange", (c) => {
 			head = branch.getHead();
 			onChange?.(c);
 		});

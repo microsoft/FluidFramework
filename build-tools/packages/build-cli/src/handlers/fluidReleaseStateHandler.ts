@@ -5,8 +5,8 @@
 
 import { ReleaseVersion, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
 import { Command } from "@oclif/core";
-import chalk from "chalk";
 import { Machine } from "jssm";
+import chalk from "picocolors";
 
 import { InstructionalPromptWriter } from "../instructionalPromptWriter.js";
 import { Context } from "../library/index.js";

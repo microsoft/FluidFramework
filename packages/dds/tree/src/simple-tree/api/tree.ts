@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidLoadable, IDisposable } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { CommitMetadata, RevertibleFactory } from "../../core/index.js";
-import type { Listenable } from "../../events/index.js";
+import type {
+	CommitMetadata,
+	RevertibleAlphaFactory,
+	RevertibleFactory,
+} from "../../core/index.js";
 
 import {
 	type ImplicitFieldSchema,
@@ -522,10 +525,12 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
 > extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">,
-		Omit<TreeBranch, "events"> {
+		TreeBranch {
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
+
+	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 
 	initialize(content: InsertableField<TSchema>): void;
 
@@ -620,6 +625,16 @@ export interface TreeBranchEvents {
 	schemaChanged(): void;
 
 	/**
+	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
+	 * can use to filter on changes they care about (e.g. local vs. remote changes).
+	 *
+	 * @param data - information about the change
+	 * @param getRevertible - a function that allows users to get a revertible for the change. If not provided,
+	 * this change is not revertible.
+	 */
+	changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+
+	/**
 	 * Fired when:
 	 * - a local commit is applied outside of a transaction
 	 * - a local transaction is committed
@@ -632,7 +647,7 @@ export interface TreeBranchEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
-	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
+	commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 /**

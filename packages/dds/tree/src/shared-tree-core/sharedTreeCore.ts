@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -56,7 +56,7 @@ import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./chang
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -183,59 +183,44 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			this.mintRevisionTag,
 			rebaseLogger,
 		);
-		this.editManager.localBranch.on("transactionStarted", () => {
-			this.commitEnricher.startNewTransaction();
-		});
-		this.editManager.localBranch.on("transactionAborted", () => {
-			this.commitEnricher.abortCurrentTransaction();
-		});
-		this.editManager.localBranch.on("transactionCommitted", () => {
-			this.commitEnricher.commitCurrentTransaction();
-		});
-		this.editManager.localBranch.on("beforeChange", (change) => {
-			// Ensure that any previously prepared commits that have not been sent are purged.
-			this.commitEnricher.purgePreparedCommits();
-			if (this.detachedRevision !== undefined) {
-				// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
-			} else if (change.type === "append") {
-				if (this.getLocalBranch().isTransacting()) {
-					for (const newCommit of change.newCommits) {
-						this.commitEnricher.ingestTransactionCommit(newCommit);
-					}
-				} else {
-					for (const newCommit of change.newCommits) {
-						this.commitEnricher.prepareCommit(newCommit, false);
-					}
-				}
-			} else if (
-				change.type === "replace" &&
-				getChangeReplaceType(change) === "transactionCommit" &&
-				!this.getLocalBranch().isTransacting()
-			) {
-				assert(
-					change.newCommits.length === 1,
-					0x983 /* Unexpected number of commits when committing transaction */,
-				);
-				this.commitEnricher.prepareCommit(change.newCommits[0] ?? oob(), true);
+		this.editManager.localBranch.events.on("transactionStarted", () => {
+			if (this.detachedRevision === undefined) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.startTransaction();
 			}
 		});
-		this.editManager.localBranch.on("afterChange", (change) => {
-			if (this.getLocalBranch().isTransacting()) {
-				// We do not submit ops for changes that are part of a transaction.
-				return;
+		this.editManager.localBranch.events.on("transactionAborted", () => {
+			if (this.detachedRevision === undefined) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.abortTransaction();
 			}
-			if (
-				change.type === "append" ||
-				(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
-			) {
-				if (this.detachedRevision !== undefined) {
-					for (const newCommit of change.newCommits) {
-						this.submitCommit(newCommit, this.schemaAndPolicy);
-					}
-				} else {
-					for (const newCommit of change.newCommits) {
-						const prepared = this.commitEnricher.getPreparedCommit(newCommit);
-						this.submitCommit(prepared, this.schemaAndPolicy);
+		});
+		this.editManager.localBranch.events.on("transactionCommitted", () => {
+			if (this.detachedRevision === undefined) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.commitTransaction();
+			}
+		});
+		this.editManager.localBranch.events.on("beforeChange", (change) => {
+			if (this.detachedRevision === undefined) {
+				// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
+				this.commitEnricher.processChange(change);
+			}
+		});
+		this.editManager.localBranch.events.on("afterChange", (change) => {
+			// We do not submit ops for changes that are part of a transaction.
+			if (!this.getLocalBranch().isTransacting()) {
+				if (
+					change.type === "append" ||
+					(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
+				) {
+					for (const commit of change.newCommits) {
+						this.submitCommit(
+							this.detachedRevision !== undefined
+								? commit
+								: this.commitEnricher.enrich(commit),
+							this.schemaAndPolicy,
+						);
 					}
 				}
 			}
@@ -431,6 +416,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	protected onDisconnect(): void {}
 
 	protected override didAttach(): void {
+		if (this.getLocalBranch().isTransacting()) {
+			// Attaching during a transaction is not currently supported.
+			// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
+			throw new UsageError(
+				"Cannot attach while a transaction is in progress. Commit or abort the transaction before attaching.",
+			);
+		}
 		if (this.detachedRevision !== undefined) {
 			this.detachedRevision = undefined;
 		}

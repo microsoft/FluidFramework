@@ -8,10 +8,12 @@ import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
 	ClientUpdateEntry,
+	RuntimeLocalUpdateOptions,
 	PresenceStatesInternal,
 	ValueElementMap,
 } from "./presenceStates.js";
@@ -23,9 +25,9 @@ import type {
 	PresenceWorkspaceAddress,
 } from "./types.js";
 
-import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
-interface PresenceStatesEntry<TSchema extends PresenceStatesSchema> {
+interface PresenceWorkspaceEntry<TSchema extends PresenceStatesSchema> {
 	public: PresenceStates<TSchema>;
 	internal: PresenceStatesInternal;
 }
@@ -86,6 +88,7 @@ export interface PresenceDatastoreManager {
 	getWorkspace<TSchema extends PresenceStatesSchema>(
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
+		controls?: BroadcastControlSettings,
 	): PresenceStates<TSchema>;
 	processSignal(message: IExtensionMessage, local: boolean): void;
 }
@@ -99,7 +102,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
 
-	private readonly workspaces = new Map<string, PresenceStatesEntry<PresenceStatesSchema>>();
+	private readonly workspaces = new Map<
+		string,
+		PresenceWorkspaceEntry<PresenceStatesSchema>
+	>();
 
 	public constructor(
 		private readonly clientSessionId: ClientSessionId,
@@ -107,7 +113,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly lookupClient: (clientId: ClientSessionId) => ISessionClient,
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
-		systemWorkspace: PresenceStatesEntry<PresenceStatesSchema>,
+		systemWorkspace: PresenceWorkspaceEntry<PresenceStatesSchema>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
@@ -135,10 +141,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	public getWorkspace<TSchema extends PresenceStatesSchema>(
 		internalWorkspaceAddress: InternalWorkspaceAddress,
 		requestedContent: TSchema,
+		controls?: BroadcastControlSettings,
 	): PresenceStates<TSchema> {
 		const existing = this.workspaces.get(internalWorkspaceAddress);
 		if (existing) {
-			return existing.internal.ensureContent(requestedContent);
+			return existing.internal.ensureContent(requestedContent, controls);
 		}
 
 		let workspaceDatastore = this.datastore[internalWorkspaceAddress];
@@ -148,7 +155,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		const localUpdate = (
 			states: { [key: string]: ClientUpdateEntry },
-			forceBroadcast: boolean,
+			options: RuntimeLocalUpdateOptions,
 		): void => {
 			// Check for connectivity before sending updates.
 			if (!this.runtime.connected) {
@@ -164,21 +171,18 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			for (const [key, value] of Object.entries(states)) {
 				updates[key] = { [this.clientSessionId]: value };
 			}
-			this.localUpdate(
-				{
-					// Always send current connection mapping for some resiliency against
-					// lost signals. This ensures that client session id found in `updates`
-					// (which is this client's client session id) is always represented in
-					// system workspace of recipient clients.
-					"system:presence": {
-						clientToSessionId: {
-							[clientConnectionId]: { ...currentClientToSessionValueState },
-						},
+			this.localUpdate({
+				// Always send current connection mapping for some resiliency against
+				// lost signals. This ensures that client session id found in `updates`
+				// (which is this client's client session id) is always represented in
+				// system workspace of recipient clients.
+				"system:presence": {
+					clientToSessionId: {
+						[clientConnectionId]: { ...currentClientToSessionValueState },
 					},
-					[internalWorkspaceAddress]: updates,
 				},
-				forceBroadcast,
-			);
+				[internalWorkspaceAddress]: updates,
+			});
 		};
 
 		const entry = createPresenceStates(
@@ -189,13 +193,14 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			},
 			workspaceDatastore,
 			requestedContent,
+			controls,
 		);
 
 		this.workspaces.set(internalWorkspaceAddress, entry);
 		return entry.public;
 	}
 
-	private localUpdate(data: DatastoreMessageContent, _forceBroadcast: boolean): void {
+	private localUpdate(data: DatastoreMessageContent): void {
 		const content = {
 			sendTimestamp: Date.now(),
 			avgLatency: this.averageLatency,
@@ -267,7 +272,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// Direct to the appropriate Presence Workspace, if present.
 			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {
-				workspace.internal.processUpdate(received, timeModifier, remoteDatastore);
+				workspace.internal.processUpdate(
+					received,
+					timeModifier,
+					remoteDatastore,
+					message.clientId,
+				);
 			} else {
 				// All broadcast state is kept even if not currently registered, unless a value
 				// notes itself to be ignored.

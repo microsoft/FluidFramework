@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -12,12 +18,6 @@ import {
 	Compatibility,
 	type SchemaPolicy,
 } from "../core/index.js";
-import {
-	type HasListeners,
-	type IEmitter,
-	type Listenable,
-	createEmitter,
-} from "../events/index.js";
 import {
 	type NodeKeyManager,
 	defaultSchemaPolicy,
@@ -47,6 +47,7 @@ import {
 	type ReadSchema,
 	type UnsafeUnknownSchema,
 	type TreeBranch,
+	type TreeBranchEvents,
 } from "../simple-tree/index.js";
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
@@ -84,9 +85,9 @@ export class SchematizingSimpleTreeView<
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
 	private readonly schemaPolicy: SchemaPolicy;
-	public readonly events: Listenable<TreeViewEvents> &
-		IEmitter<TreeViewEvents> &
-		HasListeners<TreeViewEvents> = createEmitter();
+	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
+		IEmitter<TreeViewEvents & TreeBranchEvents> &
+		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
 	private readonly viewSchema: ViewSchema;
 
@@ -133,9 +134,10 @@ export class SchematizingSimpleTreeView<
 		this.update();
 
 		this.unregisterCallbacks.add(
-			this.checkout.events.on("commitApplied", (data, getRevertible) =>
-				this.events.emit("commitApplied", data, getRevertible),
-			),
+			this.checkout.events.on("changed", (data, getRevertible) => {
+				this.events.emit("changed", data, getRevertible);
+				this.events.emit("commitApplied", data, getRevertible);
+			}),
 		);
 	}
 
@@ -295,7 +297,7 @@ export class SchematizingSimpleTreeView<
 				new HydratedContext(this.rootFieldSchema.allowedTypeSet, view.context),
 			);
 
-			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
 				unregister();
 				this.unregisterCallbacks.delete(unregister);
 				view[disposeSymbol]();
@@ -305,7 +307,7 @@ export class SchematizingSimpleTreeView<
 			this.view = undefined;
 			this.checkout.forest.anchors.slots.delete(SimpleContextSlot);
 
-			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
 				unregister();
 				this.unregisterCallbacks.delete(unregister);
 				this.update();
@@ -407,7 +409,7 @@ export class SchematizingSimpleTreeView<
  * @remarks Currently, all contexts are also {@link SchematizingSimpleTreeView}s.
  * Other checkout implementations (e.g. not associated with a view) may be supported in the future.
  */
-function getCheckout(context: TreeBranch): TreeCheckout {
+export function getCheckout(context: TreeBranch): TreeCheckout {
 	if (context instanceof SchematizingSimpleTreeView) {
 		return context.checkout;
 	}

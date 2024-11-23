@@ -63,7 +63,10 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 					this.log(
 						`Version ${versionInput.version} is the latest version for major version ${majorVersion}`,
 					);
-					this.log(`##vso[task.setvariable variable=shouldDeploy;isOutput=true]true`);
+					this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
+					this.log(
+						`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`,
+					);
 					return;
 				}
 
@@ -71,7 +74,8 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 				this.log(
 					`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v.version}`,
 				);
-				this.log(`##vso[task.setvariable variable=shouldDeploy;isOutput=true]false`);
+				this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+				this.log(`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`);
 				return;
 			}
 		}
@@ -80,6 +84,9 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 		this.log(
 			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
 		);
-		this.log(`##vso[task.setvariable variable=shouldDeploy;isOutput=true]false`);
+		this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+		this.log(
+			`##vso[task.setvariable variable=majorVersion;isoutput=true]${inputMajorVersion}`,
+		);
 	}
 }

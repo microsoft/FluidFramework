@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { confirm } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
-import chalk from "chalk";
+import chalk from "picocolors";
 import * as semver from "semver";
 
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";

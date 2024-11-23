@@ -4,7 +4,7 @@
  */
 
 import { Flags } from "@oclif/core";
-import chalk from "chalk";
+import chalk from "picocolors";
 
 import { BaseCommand } from "../../library/index.js";
 
@@ -100,7 +100,7 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 
 		const revs = rawRevs.split(/\r?\n/);
 
-		const [b1Log, b2Log] = [chalk.bold.blue(branch1), chalk.bold.blue(branch2)];
+		const [b1Log, b2Log] = [chalk.bold(chalk.blue(branch1)), chalk.bold(chalk.blue(branch2))];
 
 		this.logHr();
 		this.log(
