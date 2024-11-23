@@ -714,7 +714,6 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 	 * @returns An array of absolute paths to all files that match the globs.
 	 */
 	private async getFiles(mode: GitIgnoreSettingValue): Promise<string[]> {
-		// const { inputGlobs, outputGlobs, gitignore: gitignoreSetting } = this.taskDefinition;
 		const globs = mode === "input" ? await this.getInputGlobs() : await this.getOutputGlobs();
 		const excludeGitIgnoredFiles: boolean = this.gitIgnore.includes(mode);
 

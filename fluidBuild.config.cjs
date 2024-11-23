@@ -160,7 +160,8 @@ module.exports = {
 
 	multiCommandExecutables: ["oclif", "syncpack"],
 	declarativeTasks: {
-		"flub check buildVersion": {
+		// fluid-build lowercases the executable name, so we need to use buildversion instead of buildVersion.
+		"flub check buildversion": {
 			inputGlobs: [
 				"package.json",
 
