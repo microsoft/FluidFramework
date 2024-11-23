@@ -18,7 +18,7 @@ import {
 	IConfigProviderBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { ISignalEnvelope, type IErrorBase } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -73,6 +73,7 @@ import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
+	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
 import {
@@ -1120,6 +1121,100 @@ describe("Runtime", () => {
 			);
 		});
 
+		describe("Unrecognized types not supported", () => {
+			let containerRuntime: ContainerRuntime;
+			beforeEach(async () => {
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					requestHandler: undefined,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+			});
+
+			/** Overwrites channelCollection property and exposes private submit function with modified typing */
+			function patchContainerRuntime(): Omit<ContainerRuntime, "submit"> & {
+				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+			} {
+				const patched = containerRuntime as unknown as Omit<
+					ContainerRuntime,
+					"submit" | "channelCollection"
+				> & {
+					submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+					channelCollection: Partial<ChannelCollection>;
+				};
+
+				patched.channelCollection = {
+					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					// Pass data store op right back to ContainerRuntime
+					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+						submitDataStoreOp(
+							containerRuntime,
+							envelope.address,
+							envelope.contents,
+							localOpMetadata,
+						);
+					},
+				} satisfies Partial<ChannelCollection>;
+
+				return patched;
+			}
+
+			it("Op with unrecognized type is ignored by resubmit", async () => {
+				const patchedContainerRuntime = patchContainerRuntime();
+
+				changeConnectionState(patchedContainerRuntime, false, mockClientId);
+
+				submitDataStoreOp(patchedContainerRuntime, "1", "test");
+				submitDataStoreOp(patchedContainerRuntime, "2", "test");
+				patchedContainerRuntime.submit({
+					type: "FUTURE_TYPE" as any,
+					contents: "3",
+				});
+				submitDataStoreOp(patchedContainerRuntime, "4", "test");
+
+				assert.strictEqual(
+					submittedOps.length,
+					0,
+					"no messages should be sent while disconnected",
+				);
+
+				// Connect, which will trigger resubmit
+				assert.throws(
+					() => changeConnectionState(patchedContainerRuntime, true, mockClientId),
+					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+					"Ops with unrecognized type and 'Ignore' compat behavior should fail to resubmit",
+				);
+			});
+
+			it("process remote op with unrecognized type", async () => {
+				const futureRuntimeMessage: Record<string, unknown> = {
+					type: "FROM_THE_FUTURE",
+					contents: "Hello",
+				};
+
+				const packedOp: Omit<
+					ISequencedDocumentMessage,
+					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
+				> = {
+					contents: JSON.stringify(futureRuntimeMessage),
+					type: MessageType.Operation,
+					sequenceNumber: 123,
+					clientId: "someClientId",
+					minimumSequenceNumber: 0,
+				};
+				assert.throws(
+					() =>
+						containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */),
+					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+					"Ops with unrecognized type should fail to process",
+				);
+			});
+		});
 		describe("Supports mixin classes", () => {
 			it("new loadRuntime method works", async () => {
 				const makeMixin = <T>(

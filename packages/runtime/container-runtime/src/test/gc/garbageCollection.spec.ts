@@ -2194,7 +2194,7 @@ describe("Garbage Collection Tests", () => {
 					false /* local */,
 				),
 			(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-			"Garbage collection message of unknown type FROM_THE_FUTURE",
+			"Garbage collection message of unknown type FUTURE_MESSAGE",
 		);
 	});
 });
