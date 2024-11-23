@@ -288,20 +288,10 @@ export class TscTask extends LeafTask {
 			// We only need to check the different properties if the number of differences is <= the ignored options;
 			// any properties over that count will be a non-ignored difference.
 			if (diffResults.length <= tsConfigOptionsIgnored.size) {
-				// Assume the diff is not real - we'll now check the individual changed properties
-				diffIsReal = false;
-				for (const result of diffResults) {
-					// Diff results might be numbers in the case of arrays, but we're not expecting
-					if (
-						typeof result.path[0] === "number" ||
-						!tsConfigOptionsIgnored.has(result.path[0])
-					) {
-						// We found at least one changed non-ignored property, so we know that this diff is "real" and can beak out
-						// early.
-						diffIsReal = true;
-						break;
-					}
-				}
+				// The diff is "real" if any different property is not ignored
+				diffIsReal = diffResults.some(
+					(diffResult) => !tsConfigOptionsIgnored.has(diffResult.path),
+				);
 			}
 
 			if (diffIsReal) {
