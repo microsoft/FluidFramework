@@ -1,5 +1,50 @@
 # @fluidframework/runtime-definitions
 
+## 2.10.0
+
+### Minor Changes
+
+-   Changes to the batchBegin and batchEnd events on ContainerRuntime ([#22791](https://github.com/microsoft/FluidFramework/pull/22791)) [d252af539a](https://github.com/microsoft/FluidFramework/commit/d252af539afc2b44d05db35cb94b4351b75d9432)
+
+    The 'batchBegin'/'batchEnd' events on ContainerRuntime indicate when a batch is beginning or finishing being processed. The `contents` property on the event argument `op` is not useful or relevant when reasoning over incoming changes at the batch level. Accordingly, it has been removed from the `op` event argument.
+
+-   "Remove `IFluidParentContext.ensureNoDataModelChanges` and its implementations ([#22842](https://github.com/microsoft/FluidFramework/pull/22842)) [3aff19a462](https://github.com/microsoft/FluidFramework/commit/3aff19a4622a242e906286c14dfcfa6523175132)
+
+    -   `IFluidParentContext.ensureNoDataModelChanges` has been removed. [prior deprecation commit](https://github.com/microsoft/FluidFramework/commit/c9d156264bdfa211a3075bdf29cde442ecea234c)
+    -   `MockFluidDataStoreContext.ensureNoDataModelChanges` has also been removed.
+
+-   The inbound and outbound properties have been removed from IDeltaManager ([#22282](https://github.com/microsoft/FluidFramework/pull/22282)) [45a57693f2](https://github.com/microsoft/FluidFramework/commit/45a57693f291e0dc5e91af7f29a9b9c8f82dfad5)
+
+    The inbound and outbound properties were [deprecated in version 2.0.0-rc.2.0.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.0.0-rc.2.0.0.md#container-definitions-deprecate-ideltamanagerinbound-and-ideltamanageroutbound) and have been removed from `IDeltaManager`.
+
+    `IDeltaManager.inbound` contained functionality that could break core runtime features such as summarization and processing batches if used improperly. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    #### Alternatives
+
+    -   Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
+    -   Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
+    -   Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
+
+## 2.5.0
+
+### Minor Changes
+
+-   The op event on IFluidDataStoreRuntimeEvents and IContainerRuntimeBaseEvents is emitted at a different time ([#22840](https://github.com/microsoft/FluidFramework/pull/22840)) [2e5b969d3a](https://github.com/microsoft/FluidFramework/commit/2e5b969d3a28b05da1502d521b725cee66e36a15)
+
+    Previously, in versions 2.4 and below, the `op` event was emitted immediately after an op was processed and before the next op was processed.
+
+    In versions 2.5.0 and beyond, the `op` event will be emitted after an op is processed, but it may not be immediate. In addition, other ops in a
+    batch may be processed before the op event is emitted for a particular op.
+
+-   The process function on IFluidDataStoreChannel, IDeltaHandler, MockFluidDataStoreRuntime and MockDeltaConnection is now deprecated ([#22840](https://github.com/microsoft/FluidFramework/pull/22840)) [2e5b969d3a](https://github.com/microsoft/FluidFramework/commit/2e5b969d3a28b05da1502d521b725cee66e36a15)
+
+    The process function on IFluidDataStoreChannel, IDeltaHandler, MockFluidDataStoreRuntime and MockDeltaConnection is now
+    deprecated. It has been replaced with a new function `processMessages`, which will be called to process multiple messages instead of a single one on the channel. This is part of a feature called "Op bunching", where contiguous ops of a given type and to a given data store / DDS are bunched and sent together for processing.
+
+    Implementations of `IFluidDataStoreChannel` and `IDeltaHandler` must now also implement `processMessages`. For reference implementations, see `FluidDataStoreRuntime::processMessages` and `SharedObjectCore::attachDeltaHandler`.
+
 ## 2.4.0
 
 Dependency updates only.

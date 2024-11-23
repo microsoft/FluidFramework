@@ -15,6 +15,7 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
+	IFluidAccessTokenGenerator,
 } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
@@ -37,7 +38,6 @@ import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from 
 import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import type { StartupCheck } from "@fluidframework/server-services-shared";
 
 export function create(
 	config: Provider,
@@ -51,13 +51,14 @@ export function create(
 	producer: IProducer,
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
-	startupCheck: StartupCheck,
+	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	enableClientIPLogging?: boolean,
 	readinessCheck?: IReadinessCheck,
+	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -175,6 +176,7 @@ export function create(
 		collaborationSessionEventEmitter,
 		clusterDrainingChecker,
 		readinessCheck,
+		fluidAccessTokenGenerator,
 	);
 
 	app.use(routes.api);

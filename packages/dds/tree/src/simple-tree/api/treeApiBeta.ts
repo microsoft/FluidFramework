@@ -12,10 +12,9 @@ import {
 	type Unhydrated,
 	type WithType,
 } from "../core/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
 import { treeNodeApi } from "./treeNodeApi.js";
-import { createFromCursor, cursorFromInsertable } from "./create.js";
-import type { ITreeCursorSynchronous } from "../../core/index.js";
+import { createFromCursor } from "./create.js";
+import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
 
 /**
  * Data included for {@link TreeChangeEventsBeta.nodeChanged}.
@@ -109,18 +108,40 @@ export const TreeBeta: {
 	): () => void;
 
 	/**
-	 * Clones the persisted data associated with a node. Some key things to note:
+	 * Clones the persisted data associated with a node.
+	 *
+	 * @param node - The node to clone.
+	 * @returns A new unhydrated node with the same persisted data as the original node.
+	 * @remarks
+	 * Some key things to note:
+	 *
 	 * - Local state, such as properties added to customized schema classes, will not be cloned. However, they will be
 	 * initialized to their default state just as if the node had been created via its constructor.
 	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
-	 *
-	 * @param node - The node to clone.
-	 * @returns A new unhydrated node with the same persisted data as the original node.
 	 */
-	clone<TSchema extends ImplicitFieldSchema>(
+	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
 	): TreeFieldFromImplicitField<TSchema>;
+
+	// TODO: support more clone options
+	// /**
+	//  * Like {@link TreeBeta.create}, except deeply clones existing nodes.
+	//  * @remarks
+	//  * This only clones the persisted data associated with a node.
+	//  * Local state, such as properties added to customized schema classes, will not be cloned:
+	//  * they will be initialized however they end up after running the constructor, just like if a remote client had inserted the same nodes.
+	//  */
+	// clone<const TSchema extends ImplicitFieldSchema>(
+	// 	original: TreeFieldFromImplicitField<TSchema>,
+	// 	options?: {
+	// 		/**
+	// 		 * If set, all identifier's in the cloned tree (See {@link SchemaFactory.identifier}) will be replaced with new ones allocated using the default identifier allocation schema.
+	// 		 * Otherwise any identifiers will be preserved as is.
+	// 		 */
+	// 		replaceIdentifiers?: true;
+	// 	},
+	// ): TreeFieldFromImplicitField<TSchema>;
 } = {
 	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
 		node: TNode,
@@ -129,35 +150,18 @@ export const TreeBeta: {
 	): () => void {
 		return treeNodeApi.on(node, eventName, listener);
 	},
-	clone<TSchema extends ImplicitFieldSchema>(
+	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-		/* The only non-TreeNode cases are {@link Value} (for an empty optional field) which can be returned as is. */
+		/** The only non-TreeNode cases are {@link TreeLeafValue} and `undefined` (for an empty optional field) which can be returned as is. */
 		if (!isTreeNode(node)) {
 			return node;
 		}
 
 		const kernel = getKernel(node);
-		/*
-		 * For unhydrated nodes, we can create a cursor by calling `cursorFromInsertable` because the node
-		 * hasn't been inserted yet. We can then create a new node from the cursor.
-		 */
-		if (!kernel.isHydrated()) {
-			return createFromCursor(
-				kernel.schema,
-				cursorFromInsertable(kernel.schema, node),
-			) as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-		}
-
-		// For hydrated nodes, create a new cursor in the forest and then create a new node from the cursor.
-		const forest = kernel.context.flexContext.checkout.forest;
-		const cursor = forest.allocateCursor("tree.clone");
-		forest.moveCursorToPath(kernel.anchorNode, cursor);
-		const clonedNode = createFromCursor(
-			kernel.schema,
-			cursor as ITreeCursorSynchronous,
-		) as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-		cursor.free();
-		return clonedNode;
+		const cursor = kernel.getOrCreateInnerNode().borrowCursor();
+		return createFromCursor(kernel.schema, cursor) as Unhydrated<
+			TreeFieldFromImplicitField<TSchema>
+		>;
 	},
 };

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type FieldKindIdentifier,
@@ -508,7 +508,7 @@ function intoSimpleObject(obj: unknown): unknown {
 	if (typeof obj !== "object" || obj === null) {
 		return obj;
 	}
-	if (obj instanceof Array) {
+	if (Array.isArray(obj)) {
 		return Array.from(obj, intoSimpleObject);
 	}
 	if (obj instanceof Map) {

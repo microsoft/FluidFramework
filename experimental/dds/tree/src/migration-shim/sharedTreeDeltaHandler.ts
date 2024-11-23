@@ -6,6 +6,7 @@
 import { assert } from '@fluidframework/core-utils/internal';
 import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions/internal';
 import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import type { IRuntimeMessageCollection } from '@fluidframework/runtime-definitions/internal';
 
 import { type IOpContents, type IShimDeltaHandler } from './types.js';
 import { attributesMatch, isStampedOp } from './utils.js';
@@ -60,6 +61,13 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 			return;
 		}
 		return this.handler.process(message, local, localOpMetadata);
+	}
+
+	public processMessages(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent, local } = messagesCollection;
+		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
+			this.process({ ...envelope, contents, clientSequenceNumber }, local, localOpMetadata);
+		}
 	}
 
 	// No idea whether any of the below 4 methods work as expected
