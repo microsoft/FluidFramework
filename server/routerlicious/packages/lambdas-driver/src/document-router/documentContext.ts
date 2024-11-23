@@ -63,8 +63,9 @@ export class DocumentContext extends EventEmitter implements IContext {
 	 */
 	public setHead(head: IQueuedMessage, resumeBackToOffset?: number | undefined) {
 		assert(
-			head.offset > this.head.offset || head.offset === resumeBackToOffset,
-			`Head offset ${head.offset} must be greater than the current head offset ${this.head.offset} or equal to the resume offset ${resumeBackToOffset}. Topic ${head.topic}, partition ${head.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
+			head.offset > this.head.offset ||
+				(head.offset === resumeBackToOffset && !this.headUpdatedAfterResume),
+			`Head offset ${head.offset} must be greater than the current head offset ${this.head.offset} or equal to the resume offset ${resumeBackToOffset} if not yet resumed (headUpdatedAfterResume: ${this.headUpdatedAfterResume}). Topic ${head.topic}, partition ${head.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
 		);
 
 		// If head is moving backwards
@@ -76,17 +77,6 @@ export class DocumentContext extends EventEmitter implements IContext {
 						newHeadOffset: head.offset,
 						currentHeadOffset: this.head.offset,
 						tailInternalOffset: this.tailInternal.offset,
-						documentId: this.routingKey.documentId,
-					},
-				);
-				return false;
-			}
-			if (this.headUpdatedAfterResume) {
-				Lumberjack.warning(
-					"DocumentContext head is moving backwards again after a previous move backwards. This is unexpected.",
-					{
-						resumeBackToOffset,
-						currentHeadOffset: this.head.offset,
 						documentId: this.routingKey.documentId,
 					},
 				);
