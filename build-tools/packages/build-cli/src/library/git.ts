@@ -328,7 +328,7 @@ export class Repository implements GitContext {
 	 * repo to determine releases and dates.
 	 *
 	 * @param releaseGroupOrPackage - The release group or independent package to get versions for.
-	 * @returns An array of {@link ReleaseDetails} containing the version and date for each version.
+	 * @returns An array of {@link VersionDetails} containing the version and date for each version.
 	 */
 	public async getAllVersions(
 		releaseGroupOrPackage: string,
@@ -372,11 +372,11 @@ export class Repository implements GitContext {
 	}
 
 	/**
-	 * Create a branch with name. throw an error if the branch already exists.
+	 * Create a branch with the specified name. Throw an error if the branch already exists.
 	 */
 	public async createBranch(branchName: string): Promise<void> {
 		if (await this.getShaForBranch(branchName)) {
-			throw new Error(`${branchName} already exists. Failed to create.`);
+			throw new Error(`Branch '${branchName}' already exists. Failed to create.`);
 		}
 		await this.createBranch(branchName);
 	}
@@ -416,7 +416,7 @@ export class Repository implements GitContext {
  * synchronously using `child_process.execFileSync`. If the current directory is not part of a Git repository, it throws
  * an error.
  *
- * @param cwd - The directory of a Git repository.
+ * @param cwd - The directory from which we should try to get the current Git branch.
  * @returns The name of the current branch.
  * @throws Error If `cwd` is not part of a Git repository.
  */
