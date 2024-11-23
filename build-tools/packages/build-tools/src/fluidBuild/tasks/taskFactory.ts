@@ -34,28 +34,28 @@ import { type TaskHandler, isConstructorFunction } from "./taskHandlers";
 const executableToLeafTask: {
 	[key: string]: TaskHandler;
 } = {
-	"api-extractor": ApiExtractorTask,
-	"biome check": BiomeTask,
-	"biome format": BiomeTask,
-	"copyfiles": CopyfilesTask,
-	"depcruise": DepCruiseTask,
-	"echo": EchoTask,
+	"ts2esm": Ts2EsmTask,
+	"tsc": TscTask,
+	"fluid-tsc": TscTask,
+	"tslint": TsLintTask,
 	"eslint": EsLintTask,
+	"webpack": WebpackTask,
+	"parallel-webpack": WebpackTask,
+	"lessc": LesscTask,
+	"copyfiles": CopyfilesTask,
+	"echo": EchoTask,
+	"prettier": PrettierTask,
+	"gen-version": GenVerTask,
+	"gf": GoodFence,
+	"api-extractor": ApiExtractorTask,
 	"flub check layers": FlubCheckLayerTask,
 	"flub check policy": FlubCheckPolicyTask,
 	"flub generate entrypoints": GenerateEntrypointsTask,
 	"flub generate typetests": TypeValidationTask,
-	"fluid-tsc": TscTask,
 	"fluid-type-test-generator": TypeValidationTask,
-	"gen-version": GenVerTask,
-	"gf": GoodFence,
-	"lessc": LesscTask,
-	"parallel-webpack": WebpackTask,
-	"prettier": PrettierTask,
-	"ts2esm": Ts2EsmTask,
-	"tsc": TscTask,
-	"tslint": TsLintTask,
-	"webpack": WebpackTask,
+	"depcruise": DepCruiseTask,
+	"biome check": BiomeTask,
+	"biome format": BiomeTask,
 
 	// flub list does not require a -g flag - the third argument is the release group. Rather than add custom handling for
 	// that, we just add mappings for all three.
@@ -187,7 +187,6 @@ export class TaskFactory {
 		const executable = getExecutableFromCommand(
 			command,
 			context.fluidBuildConfig?.multiCommandExecutables ?? [],
-			// TODO: Is the toLowerCase necessary here? Commands are usually case-sensitive
 		).toLowerCase();
 
 		// Will return a task-specific handler or the UnknownLeafTask

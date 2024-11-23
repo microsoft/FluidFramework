@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import globby from "globby";
+
 import type { BuildContext } from "../../buildContext";
 import type { BuildPackage } from "../../buildGraph";
 import {
 	type DeclarativeTask,
-	type GitIgnoreSetting,
+	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
 } from "../../fluidBuildConfig";
 import type { TaskHandlerFunction } from "../taskHandlers";
-import { LeafTask, LeafWithGlobInputOutputDoneFileTask } from "./leafTask";
+import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
-class DeclarativeTaskHandler extends LeafWithGlobInputOutputDoneFileTask {
+class DeclarativeTaskHandler extends LeafWithFileStatDoneFileTask {
 	constructor(
 		node: BuildPackage,
 		command: string,
@@ -27,20 +29,37 @@ class DeclarativeTaskHandler extends LeafWithGlobInputOutputDoneFileTask {
 	/**
 	 * Use hashes instead of modified times in donefile.
 	 */
-	protected override get useHashes(): boolean {
+	protected get useHashes(): boolean {
 		return true;
 	}
 
-	protected override get gitIgnore(): GitIgnoreSetting {
-		return this.taskDefinition.gitignore ?? gitignoreDefaultValue;
+	/**
+	 * Gets all the input or output files for the task based on the globs configured for that task.
+	 *
+	 * @param mode - Whether to use the input or output globs.
+	 * @returns An array of absolute paths to all files that match the globs.
+	 */
+	private async getFiles(mode: GitIgnoreSettingValue): Promise<string[]> {
+		const { inputGlobs, outputGlobs, gitignore: gitignoreSetting } = this.taskDefinition;
+		const globs = mode === "input" ? inputGlobs : outputGlobs;
+		const gitignoreSettingRealized = gitignoreSetting ?? gitignoreDefaultValue;
+		const excludeGitIgnoredFiles: boolean = gitignoreSettingRealized.includes(mode);
+
+		const files = await globby(globs, {
+			cwd: this.node.pkg.directory,
+			// file paths returned from getInputFiles and getOutputFiles should always be absolute
+			absolute: true,
+			gitignore: excludeGitIgnoredFiles,
+		});
+		return files;
 	}
 
-	protected async getInputGlobs(): Promise<string[]> {
-		return this.taskDefinition.inputGlobs;
+	protected async getInputFiles(): Promise<string[]> {
+		return this.getFiles("input");
 	}
 
-	protected async getOutputGlobs(): Promise<string[]> {
-		return this.taskDefinition.outputGlobs;
+	protected async getOutputFiles(): Promise<string[]> {
+		return this.getFiles("output");
 	}
 }
 
