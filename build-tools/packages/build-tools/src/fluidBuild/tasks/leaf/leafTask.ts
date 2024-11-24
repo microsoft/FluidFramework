@@ -21,6 +21,7 @@ import { Task, TaskExec } from "../task";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
+const traceTaskTriggerDebug = registerDebug("fluid-build:task:trigger:debug");
 const traceTaskCheck = registerDebug("fluid-build:task:check");
 const traceTaskInitDep = registerDebug("fluid-build:task:init:dep");
 const traceTaskInitWeight = registerDebug("fluid-build:task:init:weight");
@@ -426,6 +427,11 @@ export abstract class LeafTask extends Task {
 	protected traceTrigger(reason: string) {
 		const msg = `${this.nameColored}: [${reason}]`;
 		traceTaskTrigger(msg);
+	}
+
+	protected traceTriggerDebug(reason: string) {
+		const msg = `${this.nameColored}: [${reason}]`;
+		traceTaskTriggerDebug(msg);
 	}
 
 	protected traceError(msg: string) {

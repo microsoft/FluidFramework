@@ -289,17 +289,24 @@ export class TscTask extends LeafTask {
 			// any properties over that count will be a non-ignored difference.
 			if (diffResults.length <= tsConfigOptionsIgnored.size) {
 				// The diff is "real" if any different property is not ignored
-				diffIsReal = diffResults.some(
-					(diffResult) => !tsConfigOptionsIgnored.has(diffResult.path),
-				);
+				diffIsReal = diffResults.some((diffResult) => {
+					const isIgnoredOption = tsConfigOptionsIgnored.has(diffResult.path);
+					if (isIgnoredOption) {
+						this.traceTrigger(`ignoring tsbuildinfo property: ${diffResult.path}`);
+					}
+					return !isIgnoredOption;
+				});
 			}
 
 			if (diffIsReal) {
-				this.traceTrigger(`ts option changed ${configFileFullPath}`);
-				this.traceTrigger("Config:");
-				this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
-				this.traceTrigger("BuildInfo:");
-				this.traceTrigger(JSON.stringify(tsBuildInfoOptions, undefined, 2));
+				this.traceTrigger(`ts options changed ${configFileFullPath}`);
+				this.traceTrigger("Diff:");
+				this.traceTrigger(JSON.stringify(diffResults, undefined, 2));
+
+				this.traceTriggerDebug("Config:");
+				this.traceTriggerDebug(JSON.stringify(configOptions, undefined, 2));
+				this.traceTriggerDebug("BuildInfo:");
+				this.traceTriggerDebug(JSON.stringify(tsBuildInfoOptions, undefined, 2));
 				return false;
 			}
 		}
