@@ -272,7 +272,7 @@ export class TscTask extends LeafTask {
 		// needed, Projects using these ignored settings may exhibit strange incremental build behavior.
 		//
 		// For that reason, this behavior can be disabled completely using the _FLUID_BUILD_DISABLE_IGNORE_TSC_OPTIONS_
-		// environment variable. If that variable is set to any non-empty value, the list of ignored s=options will not be
+		// environment variable. If that variable is set to any non-empty value, the list of ignored options will not be
 		// checked.
 		const tsConfigOptionsIgnored: Set<string> =
 			(process.env._FLUID_BUILD_DISABLE_IGNORE_TSC_OPTIONS_ ?? "" !== "")
