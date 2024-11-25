@@ -15,6 +15,7 @@ module.exports = {
 				allow: [
 					"@fluidframework/odsp-client/beta",
 					"@fluidframework/tree/alpha",
+					"@fluidframework/presence/alpha",
 
 					// NextJS requires reaching to its internal modules
 					"next/**",

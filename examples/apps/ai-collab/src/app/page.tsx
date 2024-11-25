@@ -5,7 +5,6 @@
 
 "use client";
 
-// eslint-disable-next-line import/no-internal-modules
 import { acquirePresenceViaDataObject } from "@fluidframework/presence/alpha";
 import {
 	Box,

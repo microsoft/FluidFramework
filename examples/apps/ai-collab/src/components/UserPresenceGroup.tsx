@@ -9,10 +9,8 @@ import { Avatar, Badge, styled } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 
-// eslint-disable-next-line import/no-internal-modules
-import type { UserPresence } from "../app/presence";
-// eslint-disable-next-line import/no-internal-modules
-import { getProfilePhoto } from "../infra/authHelper";
+import type { UserPresence } from "@/app/presence";
+import { getProfilePhoto } from "@/infra/authHelper";
 
 interface UserPresenceProps {
 	userPresenceGroup: UserPresence;
@@ -21,17 +19,10 @@ interface UserPresenceProps {
 const UserPresenceGroup: React.FC<UserPresenceProps> = ({
 	userPresenceGroup,
 }): JSX.Element => {
+	const photoUrlsMap = new Map<string, string>();
 	const isFirstRender = useRef(true);
-	const [photoUrls, setPhotoUrls] = useState<string[]>([]);
-
-	const fetchAllPhotos = (): string[] => {
-		const allPhotos: string[] = [];
-		// eslint-disable-next-line unicorn/no-array-for-each
-		userPresenceGroup.props.onlineUsers.local.forEach((user) => {
-			allPhotos.push(user.value.photo);
-		});
-		return allPhotos;
-	};
+	const [photoUrls, setPhotoUrls] = useState<Array<string>>([]);
+	const currentUserId: `id-${string}` = `id-${uuid()}`;
 
 	/**
 	 * fetch the user's photo if it's spe client, for the tinylicious client, it will use the default photo.
@@ -45,7 +36,7 @@ const UserPresenceGroup: React.FC<UserPresenceProps> = ({
 		if (tenantId !== undefined && clientId !== undefined) {
 			photoUrl = await getProfilePhoto();
 		}
-		userPresenceGroup.props.onlineUsers.local.set(`id-${uuid()}`, {
+		userPresenceGroup.props.onlineUsers.local.set(currentUserId, {
 			value: { photo: photoUrl },
 		});
 
@@ -57,18 +48,30 @@ const UserPresenceGroup: React.FC<UserPresenceProps> = ({
 			updateUserPresenceGroup().catch((error) => console.error(error));
 		}
 
-		const handleUpdate = (): void => {
-			setPhotoUrls(fetchAllPhotos());
+		userPresenceGroup.props.onlineUsers.events.on("itemUpdated", (update) => {
+			photoUrlsMap.set(update.key, update.value.value.photo);
+			setPhotoUrls(Array.from(photoUrlsMap.values()));
+			console.log(photoUrls);
+		});
+		userPresenceGroup.props.onlineUsers.events.on("itemRemoved", (update) => {
+			photoUrlsMap.delete(update.key);
+			setPhotoUrls(Array.from(photoUrlsMap.values()));
+		});
+	}, [photoUrls, setPhotoUrls]);
+
+	// Detect when the page is closed
+	useEffect(() => {
+		const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
+			userPresenceGroup.props.onlineUsers.local.delete(currentUserId);
 		};
 
-		userPresenceGroup.props.onlineUsers.events.on("updated", handleUpdate);
-	}, [
-		userPresenceGroup.props.onlineUsers.events,
-		photoUrls,
-		fetchAllPhotos,
-		setPhotoUrls,
-		updateUserPresenceGroup,
-	]);
+		window.addEventListener("beforeunload", handleBeforeUnload);
+
+		// Cleanup event listener on unmount
+		return () => {
+			window.removeEventListener("beforeunload", handleBeforeUnload);
+		};
+	}, []);
 
 	const StyledBadge = styled(Badge)(({ theme }) => ({
 		"& .MuiBadge-badge": {
