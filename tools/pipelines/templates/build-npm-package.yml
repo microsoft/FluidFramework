@@ -123,6 +123,9 @@ stages:
           lfs: ${{ parameters.checkoutSubmodules }}
           submodules: ${{ parameters.checkoutSubmodules }}
 
+        - script: |
+          ss --tcp --udp --all --processes && netstat -avpn4 && ps -A
+
         - task: Bash@3
           displayName: Parameters
           inputs:
@@ -221,6 +224,9 @@ stages:
             tagName: ${{ parameters.tagName }}
 
         # Build
+        - script: |
+          ss --tcp --udp --all --processes && netstat -avpn4 && ps -A
+
         - ${{ if ne(parameters.taskBuild, 'false') }}:
           - task: Npm@1
             displayName: npm run ${{ parameters.taskBuild }}
@@ -240,6 +246,9 @@ stages:
 
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
+          - script: |
+            ss --tcp --udp --all --processes && netstat -avpn4 && ps -A
+
           # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
           - ${{ parameters.additionalTests }}
 
