@@ -4211,9 +4211,6 @@ importers:
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.8
-      stream-http:
-        specifier: ^3.2.0
-        version: 3.2.0
       supertest:
         specifier: ^3.4.2
         version: 3.4.2
@@ -4238,9 +4235,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.95.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/service-clients/azure-client/external-controller:
     dependencies:
@@ -26320,10 +26314,6 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /builtin-status-codes@3.0.0:
-    resolution: {integrity: sha512-HpGFw18DgFWlncDfjTa2rcQ4W88O1mC8e8yZ2AvQY5KDaktSTwo+KRf6nHK6FRI5FyRyb/5T6+TSxfP7QyGsmQ==}
-    dev: true
-
   /busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
     engines: {node: '>=10.16.0'}
@@ -37585,15 +37575,6 @@ packages:
     resolution: {integrity: sha512-rT00SPnTVyRsaSz5zgSPma/aHSOic5U1prhYdRy5HS2kTZviFpmDgzilbtsJsxiroqACmayynDN/9VzIbX5DOw==}
     dependencies:
       duplexer: 0.1.2
-
-  /stream-http@3.2.0:
-    resolution: {integrity: sha512-Oq1bLqisTyK3TSCXpPbT4sdeYNdmyZJv1LxpEm2vu1ZhK89kSE5YXwZc3cWk0MagGaKriBh9mCFbVGtO+vY29A==}
-    dependencies:
-      builtin-status-codes: 3.0.0
-      inherits: 2.0.4
-      readable-stream: 3.6.2
-      xtend: 4.0.2
-    dev: true
 
   /stream-to-pull-stream@1.7.3:
     resolution: {integrity: sha512-6sNyqJpr5dIOQdgNy/xcDWwDuzAsAwVzhzrWlAPAQ7Lkjx/rv0wgvxEyKwTq6FmNd5rjTrELt/CLmaSw7crMGg==}
