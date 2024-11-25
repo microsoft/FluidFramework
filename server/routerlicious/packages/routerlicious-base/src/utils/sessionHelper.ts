@@ -294,7 +294,7 @@ export async function getSession(
 	while (!document && docReadRetryCount < maxAttempts) {
 		// Add a delay for retries, not for the initial doc read
 		if (docReadRetryCount > 0) {
-			await delay(500);
+			await delay(500*docReadRetryCount);
 		}
 		document = await documentRepository.readOne({ tenantId, documentId });
 		docReadRetryCount++;
