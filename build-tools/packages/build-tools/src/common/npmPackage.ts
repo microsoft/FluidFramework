@@ -8,6 +8,7 @@ import { readFile } from "node:fs/promises";
 import * as path from "node:path";
 import {
 	type PackageJson as BasePackageJson,
+	type IBuildProject,
 	type IPackage,
 	type IReleaseGroup,
 	type IWorkspace,
@@ -236,13 +237,47 @@ async function readPackageJsonAndIndentAsync(
 	});
 }
 
-export class MonoRepo {
+/**
+ * @deprecated Replace usage with IWorkspace as soon as possible.
+ */
+export class MonoRepo implements IWorkspace {
 	public constructor(
 		public readonly kind: string,
 		public readonly repoPath: string,
 		private readonly releaseGroupName: ReleaseGroupName,
 		private readonly workspace: IWorkspace,
 	) {}
+	public get directory(): string {
+		return this.workspace.directory;
+	}
+
+	public get rootPackage(): IPackage {
+		return this.workspace.rootPackage;
+	}
+
+	public get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup> {
+		return this.workspace.releaseGroups;
+	}
+
+	public get buildProject(): IBuildProject<IPackage> {
+		return this.workspace.buildProject;
+	}
+
+	toString(): string {
+		return this.workspace.toString();
+	}
+
+	checkInstall(): Promise<true | string[]> {
+		return this.workspace.checkInstall();
+	}
+
+	install(updateLockfile: boolean): Promise<boolean> {
+		return this.workspace.install(updateLockfile);
+	}
+
+	reload(): void {
+		return this.workspace.reload();
+	}
 
 	public get name() {
 		return this.workspace.name;

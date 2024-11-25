@@ -57,4 +57,9 @@ export type {
 export {
 	type IPackage,
 	type ReleaseGroupName,
+	type PackageName,
+	/**
+	 * @deprecated Replace as soon as possible with IReleaseGroup directly.
+	 */
+	// type IReleaseGroup as MonoRepo,
 } from "@fluid-tools/build-infrastructure";
