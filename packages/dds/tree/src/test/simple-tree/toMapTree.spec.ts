@@ -26,6 +26,7 @@ import {
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 } from "../../core/index.js";
 import {
 	booleanSchema,
@@ -35,6 +36,7 @@ import {
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
+	toStoredSchema,
 	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
 import {
@@ -1400,6 +1402,40 @@ describe("toMapTree", () => {
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
+					);
+				});
+
+				it("uses policy to determine whether additional optional fields are allowed", () => {
+					const factory = new SchemaFactory(undefined);
+					class Person extends factory.object("Person", { name: factory.string }) {}
+
+					const schema: TreeStoredSchema = toStoredSchema(Person);
+
+					// 'age' is an additional field that is not declared in the object schema.
+					// Schema validation should defer to the policy to determine whether this is allowed.
+					const content = { name: "Alice", age: 42 };
+
+					mapTreeFromNodeData(content, Person, new MockNodeKeyManager(), {
+						schema,
+						policy: {
+							fieldKinds: new Map(),
+							validateSchema: true,
+							allowUnknownOptionalFields: (identifier) => identifier === Person.identifier,
+						},
+					});
+
+					assert.throws(
+						() => {
+							mapTreeFromNodeData(content, Person, new MockNodeKeyManager(), {
+								schema,
+								policy: {
+									fieldKinds: new Map(),
+									validateSchema: true,
+									allowUnknownOptionalFields: () => false,
+								},
+							});
+						},
+						validateUsageError(/Tree does not conform to schema/),
 					);
 				});
 			});
