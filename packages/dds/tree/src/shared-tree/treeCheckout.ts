@@ -798,8 +798,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.checkNotDisposed();
 		const [startCommit, commits] = this.popTransaction();
 		this._branch.editor.exitTransaction();
-		// When a transaction is committed, the latest snapshot of removed roots can be discarded
 		this.events.emit("transactionCommitted");
+		// When a transaction is committed, the latest snapshot of removed roots can be discarded
 		this.removedRootsSnapshots.pop();
 		if (!hasSome(commits)) {
 			return undefined;
@@ -886,10 +886,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			// If `targetCommits` were empty, then `result` would be undefined and we couldn't reach here
 			assert(hasSome(targetCommits), "Expected target commits to be non-empty");
 			const src = targetCommits[0].parent?.revision;
+			assert(src !== undefined, "Expected parent to be defined");
 			const dst = getLast(targetCommits).revision;
-			if (src !== undefined && dst !== undefined) {
-				this.initialTransactionRevToRebasedRev.set(src, dst);
-			}
+			this.initialTransactionRevToRebasedRev.set(src, dst);
 		}
 	}
 
