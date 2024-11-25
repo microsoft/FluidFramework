@@ -13,7 +13,7 @@ import {
 	ITokenRevocationManager,
 	IRevokeTokenOptions,
 	IRevokedTokenChecker,
-	IClusterDrainingChecker
+	IClusterDrainingChecker,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -194,8 +194,8 @@ export function create(
 			const tenantInfo = getDocumentUrlsfromNetworkInfo(tenantId, networkInfo.isPrivateLink);
 			// If enforcing server generated document id, ignore id parameter
 			const id = enforceServerGeneratedDocumentId
-			? uuid()
-			: (request.body.id as string) || uuid();
+				? uuid()
+				: (request.body.id as string) || uuid();
 
 			// Summary information
 			const summary = request.body.enableAnyBinaryBlobOnFirstSummary
@@ -357,7 +357,10 @@ export function create(
 			const tenantId = getParam(request.params, "tenantId");
 			const clientIPAddress = request.ip ? request.ip : "";
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
-			const documentUrls = getDocumentUrlsfromNetworkInfo(tenantId, networkInfo.isPrivateLink);
+			const documentUrls = getDocumentUrlsfromNetworkInfo(
+				tenantId,
+				networkInfo.isPrivateLink,
+			);
 
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			const getSessionMetric: Lumber<LumberEventName.GetSession> = Lumberjack.newLumberMetric(

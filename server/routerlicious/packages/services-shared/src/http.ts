@@ -57,17 +57,26 @@ export function validatePrivateLink(tenantManager: ITenantManager): RequestHandl
 				next();
 			} else {
 				return handleResponse(
-					Promise.reject(new NetworkError(400, `This req private network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`)),
+					Promise.reject(
+						new NetworkError(
+							400,
+							`This req private network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
+						),
+					),
 					res,
 				);
 			}
-			}
-			else {
-				if (privateLinkEnable) {
-					return handleResponse(
-						Promise.reject(new NetworkError(400, `This req public network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`)),
-						res,
-					);
+		} else {
+			if (privateLinkEnable) {
+				return handleResponse(
+					Promise.reject(
+						new NetworkError(
+							400,
+							`This req public network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
+						),
+					),
+					res,
+				);
 			}
 		}
 		next();
