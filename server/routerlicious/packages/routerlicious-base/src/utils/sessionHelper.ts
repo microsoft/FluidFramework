@@ -13,7 +13,6 @@ import {
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { StageTrace } from "./trace";
-import { delay } from "@fluidframework/common-utils";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
 
@@ -292,19 +291,24 @@ export async function getSession(
 	let document: IDocument;
 	try {
 		// Retry document existence check to avoid document DB race condition
-		document = await runWithRetry(
-			async () => documentRepository.readOne({ tenantId, documentId }).then((result) => {
-				if (result === null) {
-					throw new NetworkError(404, "Document is deleted and cannot be accessed", true /* canRetry */);
-				}
-			}),
+		document = (await runWithRetry(
+			async () =>
+				documentRepository.readOne({ tenantId, documentId }).then((result) => {
+					if (result === null) {
+						throw new NetworkError(
+							404,
+							"Document is deleted and cannot be accessed",
+							true /* canRetry */,
+						);
+					}
+				}),
 			"getDocumentForSession",
 			3, // maxRetries
 			500, // retryAfterMs
 			baseLumberjackProperties, // telemetry props
 			undefined,
 			(error) => shouldRetryNetworkError(error),
-		) as IDocument;
+		)) as IDocument;
 	} catch (error) {
 		// Add a stage stamp before throwing the error
 		connectionTrace?.stampStage("DocumentDoesNotExist");
