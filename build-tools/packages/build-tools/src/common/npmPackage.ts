@@ -237,9 +237,6 @@ async function readPackageJsonAndIndentAsync(
 	});
 }
 
-/**
- * @deprecated Replace usage with IWorkspace as soon as possible.
- */
 export class MonoRepo implements IWorkspace {
 	public constructor(
 		public readonly kind: string,
