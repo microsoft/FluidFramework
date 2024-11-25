@@ -411,7 +411,7 @@ extends:
                   parameters:
                     packageManager: '${{ parameters.packageManager }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
-                    packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+                    packageManagerInstallCommand: 'pnpm install --no-frozen-lockfile'
 
                 # Test
                 - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
