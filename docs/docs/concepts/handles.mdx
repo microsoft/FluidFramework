@@ -3,8 +3,7 @@ title: Handles
 sidebar_position: 5
 ---
 
-import { GlossaryLink } from "@site/src/components/shortLinks"
-
+import { GlossaryLink } from "@site/src/components/shortLinks";
 
 A Fluid handle is an object that holds a reference to a collaborative object, such as a <GlossaryLink term="Data object">DataObject</GlossaryLink> or a <GlossaryLink term="distributed data structures">distributed data structure</GlossaryLink> (DDS).
 
@@ -14,20 +13,17 @@ This section covers how to consume and use Fluid handles.
 ## Why use Fluid handles?
 
 -   Shared objects, such as Data Objects or DDSes, cannot be stored directly in another DDS. There are two primary
-  reasons for this:
-
-  1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
-     a DDS.
-  2. Frequently the same shared object (not merely a copy) has to be available in different DDSes. The only
-     way to make this possible is to store *references* (which is what a handle is) to the collaborative objects in
-     the DDSes.
+    reasons for this:
+    1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in a DDS.
+    2. Frequently the same shared object (not merely a copy) has to be available in different DDSes.
+       The only way to make this possible is to store _references_ (which is what a handle is) to the collaborative objects in the DDSes.
 
 -   Handles encapsulate where the underlying object instance exists within the Fluid runtime and how to retrieve it.
-  This reduces the complexity from the caller by abstracting away the need to know how to make a `request` to the
-  Fluid runtime to retrieve the object.
+    This reduces the complexity from the caller by abstracting away the need to know how to make a `request` to the
+    Fluid runtime to retrieve the object.
 
 -   Handles enable the underlying Fluid runtime to build a dependency hierarchy. This will enable us to add garbage
-  collection to the runtime in a future version.
+    collection to the runtime in a future version.
 
 ## Basic Scenario
 
@@ -69,5 +65,5 @@ myMap2.set("my-text", myText.handle);
 const text = await myMap.get("my-text").get();
 const text2 = await myMap2.get("my-text").get();
 
-console.log(text === text2) // true
+console.log(text === text2); // true
 ```

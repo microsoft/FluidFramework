@@ -3,8 +3,8 @@ title: Architecture
 sidebar_position: 1
 ---
 
-The Fluid Framework can be broken into three broad parts: The *Fluid loader*, *Fluid containers*, and the *Fluid
-service*. While each of these is covered in more detail elsewhere, we'll use this space to explain the areas at a high
+The Fluid Framework can be broken into three broad parts: The _Fluid loader_, _Fluid containers_, and the _Fluid
+service_. While each of these is covered in more detail elsewhere, we'll use this space to explain the areas at a high
 level, identify the important lower level concepts, and discuss some of our key design decisions.
 
 ## Introduction
@@ -56,9 +56,10 @@ objects and distributed data structures.
 If you want to load a Fluid container on your app or website, you'll load the container with the Fluid loader. If you
 want to create a new collaborative experience using the Fluid Framework, you'll create a Fluid container.
 
-A Fluid container includes state and app logic. It's a serverless app model with data persistence. It has at least one
-*shared object*, which encapsulates app logic. Shared objects can have state, which is managed by *distributed data
-structures* (DDSes).
+A Fluid container includes state and app logic.
+It's a serverless app model with data persistence.
+It has at least one _shared object_, which encapsulates app logic.
+Shared objects can have state, which is managed by _distributed data structures_ (DDSes).
 
 DDSes are used to distribute state to clients. Instead of centralizing merge logic in the
 server, the server passes changes (aka operations or ops) to clients and the clients perform the merge.

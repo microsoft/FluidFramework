@@ -39,7 +39,8 @@ import {
 import { getLinkForApiItem } from "../ApiItemTransformUtilities.js";
 import { transformTsdocSection } from "../TsdocNodeTransforms.js";
 import { getTsdocNodeTransformationOptions } from "../Utilities.js";
-import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
+
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
 
 /**

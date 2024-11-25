@@ -10,6 +10,7 @@
 import { h } from "hastscript";
 
 import { OrderedListNode } from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 describe("OrderedListNode HTML rendering tests", () => {
