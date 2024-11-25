@@ -23,6 +23,7 @@ module.exports = {
 					// Path aliases
 					"@/actions/**",
 					"@/types/**",
+					"@/infra/**",
 					"@/components/**",
 					"@/app/**",
 

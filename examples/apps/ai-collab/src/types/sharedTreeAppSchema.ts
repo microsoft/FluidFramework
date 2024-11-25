@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
+<<<<<<< HEAD
 import {
 	SchemaFactory,
 	Tree,
 	TreeViewConfiguration,
 	type TreeNode,
 } from "@fluidframework/tree";
+=======
+import { ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+>>>>>>> fix lint
 import { SharedTree } from "fluid-framework";
 
 // The string passed to the SchemaFactory should be unique
