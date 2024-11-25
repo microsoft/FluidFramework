@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { StageTrace } from "./trace";
+import { delay } from "@fluidframework/common-utils";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
 
@@ -287,7 +288,17 @@ export async function getSession(
 ): Promise<ISession> {
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	const document: IDocument = await documentRepository.readOne({ tenantId, documentId });
+	let document: IDocument;
+	let docReadRetryCount = 0;
+	const maxAttempts = 3;
+	while (!document && docReadRetryCount < maxAttempts) {
+		// Add a delay for retries, not for the initial doc read
+		if (docReadRetryCount > 0) {
+			await delay(500);
+		}
+		document = await documentRepository.readOne({ tenantId, documentId });
+		docReadRetryCount++;
+	}
 	if (!document || document.scheduledDeletionTime !== undefined) {
 		connectionTrace?.stampStage("DocumentDoesNotExist");
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
