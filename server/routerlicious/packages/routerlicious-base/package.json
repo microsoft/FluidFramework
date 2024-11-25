@@ -74,7 +74,6 @@
 		"cors": "^2.8.4",
 		"express": "^4.21.1",
 		"ioredis": "^5.2.3",
-		"ipaddr.js": "^2.2.0",
 		"json-stringify-safe": "^5.0.1",
 		"jsonwebtoken": "^9.0.0",
 		"lodash": "^4.17.21",

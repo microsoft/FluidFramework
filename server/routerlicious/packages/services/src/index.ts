@@ -50,7 +50,9 @@ export {
 	SocketIoNodeClusterWebServerFactory,
 	SocketIoWebServerFactory,
 	validateRequestParams,
+	validatePrivateLink,
 	WebServer,
 	WholeSummaryReadGitManager,
 	WholeSummaryWriteGitManager,
+	getNetworkInformationFromIP,
 } from "@fluidframework/server-services-shared";

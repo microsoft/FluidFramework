@@ -3,7 +3,7 @@
 import { IPv6, IPv4 } from "ipaddr.js";
 
 export class NetworkInformation {
-	public isPrivateLink: boolean;
+	public isPrivateLink!: boolean;
 	public privateLinkId?: string;
 	public privateIpAddress?: string;
 }
@@ -56,7 +56,7 @@ export function getNetworkInformationFromIP(clientIp: string): NetworkInformatio
 		}
 
 		// The embedded IPv4 address is big-endian.
-		const embeddedIpV4 = [];
+		const embeddedIpV4: number[] = [];
 		for (
 			let i = PrivateLinkIpStructure.privateAddressMostSignificantByte - 1;
 			embeddedIpV4.length < 4;

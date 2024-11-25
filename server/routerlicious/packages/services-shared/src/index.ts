@@ -11,6 +11,7 @@ export {
 	handleResponse,
 	IsEphemeralContainer,
 	validateRequestParams,
+	validatePrivateLink,
 } from "./http";
 export {
 	ISocketIoRedisConnection,
@@ -38,3 +39,4 @@ export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";
 export { createHealthCheckEndpoints } from "./healthCheckEndpoints";
 export { StartupCheck } from "./startupChecker";
+export { getNetworkInformationFromIP } from "./ipUtils";

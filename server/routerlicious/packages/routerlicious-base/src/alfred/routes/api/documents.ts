@@ -13,8 +13,7 @@ import {
 	ITokenRevocationManager,
 	IRevokeTokenOptions,
 	IRevokedTokenChecker,
-	IClusterDrainingChecker,
-	type ITenantConfig,
+	IClusterDrainingChecker
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -30,6 +29,8 @@ import {
 	getBooleanParam,
 	validateRequestParams,
 	handleResponse,
+	validatePrivateLink,
+	getNetworkInformationFromIP,
 } from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
@@ -49,7 +50,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
-import { Constants, getSession, StageTrace, getNetworkInformationFromIP } from "../../../utils";
+import { Constants, getSession, StageTrace } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
 import type { RequestHandler } from "express-serve-static-core";
 
@@ -161,6 +162,7 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
+		validatePrivateLink(tenantManager),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
@@ -184,45 +186,16 @@ export function create(
 		async (request, response, next) => {
 			Lumberjack.info(`Here is the request.heads ${JSON.stringify(request.headers)}.`);
 			const clientIPAddress = request.ip ? request.ip : "";
-			const result = getNetworkInformationFromIP(clientIPAddress);
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			// Tenant and document
 			const tenantId = getParam(request.params, "tenantId");
-			const id = enforceServerGeneratedDocumentId
-				? uuid()
-				: (request.body.id as string) || uuid();
 			Lumberjack.info(`This is the clientIPAddress: ${clientIPAddress}.`);
-			Lumberjack.info(`Here is the result ${JSON.stringify(result)}.`);
-			if (result.isPrivateLink) {
-				// Validate access from private network
-				// TODO: Add the method to fetch the linkid from the tenant.
-				const accountLinkID = "822100996";
-				Lumberjack.info(`Come to step 1`);
-				if (accountLinkID === result.privateLinkId) {
-					Lumberjack.info(
-						`Come to private link Endpoint: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
-					);
-				} else {
-					response
-						.status(403)
-						.send(
-							`This req private network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
-						);
-				}
-			} else {
-				Lumberjack.info(`Come to step 2`);
-				// Validate access from public network
-				// TODO: Add the method to fetch the linkid from the tenant.
-				// const accountLinkID = "822100996";
-				// if (accountLinkID) {
-				// 	response
-				// 		.status(403)
-				// 		.send(
-				// 			"This request is coming from public network with private linkid, it won't work.",
-				// 		);
-				// } else {
-				// }
-			}
-			const documentUrls = await getDocumentUrlsfromTenant(tenantId, result.isPrivateLink);
+			Lumberjack.info(`Here is the result ${JSON.stringify(networkInfo)}.`);
+			const tenantInfo = getDocumentUrlsfromNetworkInfo(tenantId, networkInfo.isPrivateLink);
+			// If enforcing server generated document id, ignore id parameter
+			const id = enforceServerGeneratedDocumentId
+			? uuid()
+			: (request.body.id as string) || uuid();
 
 			// Summary information
 			const summary = request.body.enableAnyBinaryBlobOnFirstSummary
@@ -254,9 +227,9 @@ export function create(
 				summary,
 				sequenceNumber,
 				crypto.randomBytes(4).toString("hex"),
-				documentUrls.documentOrdererUrl,
-				documentUrls.documentHistorianUrl,
-				documentUrls.documentDeltaStreamUrl,
+				tenantInfo.documentOrdererUrl,
+				tenantInfo.documentHistorianUrl,
+				tenantInfo.documentDeltaStreamUrl,
 				values,
 				enableDiscovery,
 				isEphemeral,
@@ -280,9 +253,9 @@ export function create(
 				if (enableDiscovery) {
 					// Session information
 					const session: ISession = {
-						ordererUrl: documentUrls.documentOrdererUrl,
-						historianUrl: documentUrls.documentHistorianUrl,
-						deltaStreamUrl: documentUrls.documentDeltaStreamUrl,
+						ordererUrl: tenantInfo.documentOrdererUrl,
+						historianUrl: tenantInfo.documentHistorianUrl,
+						deltaStreamUrl: tenantInfo.documentDeltaStreamUrl,
 						// Indicate to consumer that session was newly created.
 						isSessionAlive: false,
 						isSessionActive: false,
@@ -333,18 +306,15 @@ export function create(
 		};
 	}
 
-	async function getDocumentUrlsfromTenant(
+	function getDocumentUrlsfromNetworkInfo(
 		tenantId: string,
 		isPrivateLink?: boolean | false,
-	): Promise<{
+	): {
 		documentOrdererUrl: string;
 		documentHistorianUrl: string;
 		documentDeltaStreamUrl: string;
-	}> {
-		const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
-		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
-		Lumberjack.info(`Come to step 3 ${JSON.stringify(tenantInfo)}`);
-		if (privateLinkEnable && isPrivateLink) {
+	} {
+		if (isPrivateLink) {
 			return {
 				documentOrdererUrl: externalOrdererUrl.replace("https://", `https://${tenantId}.`),
 				documentHistorianUrl: externalHistorianUrl.replace(
@@ -369,6 +339,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
+		validatePrivateLink(tenantManager),
 		throttle(
 			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
 			winston,
@@ -384,7 +355,9 @@ export function create(
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
-			const documentUrls = await getDocumentUrlsfromTenant(tenantId, true);
+			const clientIPAddress = request.ip ? request.ip : "";
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+			const documentUrls = getDocumentUrlsfromNetworkInfo(tenantId, networkInfo.isPrivateLink);
 
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			const getSessionMetric: Lumber<LumberEventName.GetSession> = Lumberjack.newLumberMetric(

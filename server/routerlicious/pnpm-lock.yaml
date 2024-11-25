@@ -847,9 +847,6 @@ importers:
       ioredis:
         specifier: ^5.2.3
         version: 5.3.2
-      ipaddr.js:
-        specifier: ^2.2.0
-        version: 2.2.0
       json-stringify-safe:
         specifier: ^5.0.1
         version: 5.0.1
@@ -1553,6 +1550,9 @@ importers:
       ioredis:
         specifier: ^5.2.3
         version: 5.3.2
+      ipaddr.js:
+        specifier: ^2.2.0
+        version: 2.2.0
       lodash:
         specifier: ^4.17.21
         version: 4.17.21

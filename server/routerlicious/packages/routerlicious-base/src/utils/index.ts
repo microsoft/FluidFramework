@@ -9,4 +9,3 @@ export { catch404, handleError } from "./middleware";
 export { getIdFromRequest, getTenantIdFromRequest } from "./params";
 export { getSession } from "./sessionHelper";
 export { StageTrace } from "./trace";
-export { getNetworkInformationFromIP } from "./ipUtils";
