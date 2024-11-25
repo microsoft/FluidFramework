@@ -10,6 +10,7 @@ This is necessary because during CI, jest tests from all packages that have them
 so ports may not be re-used.
 
 `assign-test-ports` will use port 9000 as the default initial port in its mapping from packages to test ports.
+The number of ports it will use depends on the number of packages in the pnpm workspace from which it is invoked.
 If an integer number is passed to it as the first command line argument, it will use that as the initial port instead.
 
 ## getTestPort.ts
