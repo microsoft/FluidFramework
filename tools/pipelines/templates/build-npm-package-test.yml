@@ -398,10 +398,7 @@ extends:
                   readonly: true
               steps:
                 # Setup
-                - checkout: self
-                  clean: true
-                  lfs: '${{ parameters.checkoutSubmodules }}'
-                  submodules: '${{ parameters.checkoutSubmodules }}'
+                - checkout: none
 
                 - task: DownloadPipelineArtifact@2
                   inputs:
