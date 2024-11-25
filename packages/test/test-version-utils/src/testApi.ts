@@ -5,18 +5,26 @@
 
 /* eslint-disable import/order */
 // Driver API
+import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { DriverApi } from "@fluid-private/test-drivers";
 
 // Loader API
+import * as agentScheduler from "@fluidframework/agent-scheduler/internal";
+import {
+	BaseContainerRuntimeFactory,
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
+import * as cell from "@fluidframework/cell/internal";
+import { SharedCell } from "@fluidframework/cell/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 
 // ContainerRuntime API
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 
 // Data Runtime API
-import * as agentScheduler from "@fluidframework/agent-scheduler/internal";
-import * as cell from "@fluidframework/cell/internal";
-import { SharedCell } from "@fluidframework/cell/internal";
 import * as counter from "@fluidframework/counter/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import * as datastore from "@fluidframework/datastore/internal";
@@ -34,15 +42,6 @@ import { SharedString } from "@fluidframework/sequence/internal";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
 
 // ContainerRuntime and Data Runtime API
-import {
-	BaseContainerRuntimeFactory,
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct/internal";
-import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
-import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
-
 import * as semver from "semver";
 
 // TypeScript generates incorrect imports in the d.ts file if this is not included.

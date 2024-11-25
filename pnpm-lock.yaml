@@ -14226,9 +14226,6 @@ importers:
       '@fluidframework/ordered-collection':
         specifier: workspace:~
         version: link:../../dds/ordered-collection
-      '@fluidframework/presence':
-        specifier: workspace:~
-        version: link:../../framework/presence
       '@fluidframework/register-collection':
         specifier: workspace:~
         version: link:../../dds/register-collection
@@ -14755,9 +14752,6 @@ importers:
       '@fluidframework/ordered-collection':
         specifier: workspace:~
         version: link:../../dds/ordered-collection
-      '@fluidframework/presence':
-        specifier: workspace:~
-        version: link:../../framework/presence
       '@fluidframework/register-collection':
         specifier: workspace:~
         version: link:../../dds/register-collection
