@@ -1,3 +1,12 @@
 #!/usr/bin/env node
 const mod = require("../dist/assignTestPorts.js");
-mod.writePortMapFile();
+
+// We used to hardcode port 8081 as the initial one
+// but as of 2024-11-25 port 8084 is used by something in the build agent image.
+// If a package that has jest tests ends up assigned that port,
+// jest will fail to start.
+// So try to use a port range where nothing will be listening.
+const initialPortString = process.argv[2] ?? "9000";
+
+const initialPort = Number.parseInt(initialPortString, 10);
+mod.writePortMapFile(initialPort);

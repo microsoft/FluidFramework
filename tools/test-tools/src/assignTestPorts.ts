@@ -40,15 +40,12 @@ export function getPackageInfo(): PackageInfo[] {
 	}
 }
 
-export function writePortMapFile(): void {
+export function writePortMapFile(initialPort: number): void {
 	const info: PackageInfo[] = getPackageInfo();
 
 	// Assign a unique port to each package
 	const portMap: { [pkgName: string]: number } = {};
-	// Port 8084 is used by something in the build agent image.
-	// If a package that has jest tests ends up assigned that port, jest will fail to start.
-	// So try to use a port range where nothing will be listening.
-	let port = Number.parseInt(process.env.TEST_TOOLS_INITIAL_PORT ?? "9000", 10);
+	let port = initialPort;
 	for (const pkg of info) {
 		if (pkg.name === undefined) {
 			console.error("missing name in package info");
