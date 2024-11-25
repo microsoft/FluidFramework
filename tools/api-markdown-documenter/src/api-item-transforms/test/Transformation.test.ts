@@ -38,12 +38,12 @@ import {
 } from "../../documentation-domain/index.js";
 import { getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
 import { apiItemToSections } from "../TransformApiItem.js";
+import { transformApiModel } from "../TransformApiModel.js";
 import {
 	type ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "../configuration/index.js";
 import { betaWarningSpan, wrapInSection } from "../helpers/index.js";
-import { transformApiModel } from "../TransformApiModel.js";
 
 /**
  * Sample "default" configuration.

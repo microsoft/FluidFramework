@@ -28,7 +28,10 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
+import type {
+	IFluidDataStoreFactory,
+	IProvideFluidDataStoreFactory,
+} from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import type {
 	IGarbageCollectionData,
@@ -593,6 +596,28 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * and its children with the GC details from the previous summary.
 	 */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
+
+	/**
+	 * Synchronously creates a detached child data store.
+	 *
+	 * The `createChildDataStore` method allows for the synchronous creation of a detached child data store. This is particularly
+	 * useful in scenarios where immediate availability of the child data store is required, such as during the initialization
+	 * of a parent data store, or when creation is in response to synchronous user input.
+	 *
+	 * In order for this function to succeed:
+	 * 1. The parent data store's factory must also be an `IFluidDataStoreRegistry`.
+	 * 2. The parent data store's registry must include the same instance as the provided child factory.
+	 * 3. The parent data store's registry must synchronously provide the child factory via the `getSync` method.
+	 * 4. The child factory must implement the `createDataStore` method.
+	 *
+	 * These invariants ensure that the child data store can also be created by a remote client running the same code as this client.
+	 *
+	 * @param childFactory - The factory of the data store to be created.
+	 * @returns The created data store channel.
+	 */
+	createChildDataStore?<T extends IFluidDataStoreFactory>(
+		childFactory: T,
+	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }
 
 /**

@@ -5,6 +5,12 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -26,12 +32,7 @@ import {
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
-import {
-	type HasListeners,
-	type IEmitter,
-	type Listenable,
-	createEmitter,
-} from "../events/index.js";
+
 import {
 	DetachedFieldIndexSummarizer,
 	ForestSummarizer,
@@ -310,6 +311,25 @@ export class SharedTree
 				breaker: this.breaker,
 			},
 		);
+
+		this.checkout.events.on("transactionStarted", () => {
+			if (this.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.startTransaction();
+			}
+		});
+		this.checkout.events.on("transactionAborted", () => {
+			if (this.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.abortTransaction();
+			}
+		});
+		this.checkout.events.on("transactionCommitted", () => {
+			if (this.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.commitTransaction();
+			}
+		});
 	}
 
 	@throwIfBroken
@@ -348,6 +368,40 @@ export class SharedTree
 		await super.loadCore(services);
 		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
 		this._events.emit("afterBatch");
+	}
+
+	protected override submitCommit(
+		...args: Parameters<
+			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["submitCommit"]
+		>
+	): void {
+		// We do not submit ops for changes that are part of a transaction.
+		if (!this.checkout.isTransacting()) {
+			super.submitCommit(...args);
+		}
+	}
+
+	protected override didAttach(): void {
+		if (this.checkout.isTransacting()) {
+			// Attaching during a transaction is not currently supported.
+			// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
+			throw new UsageError(
+				"Cannot attach while a transaction is in progress. Commit or abort the transaction before attaching.",
+			);
+		}
+		super.didAttach();
+	}
+
+	protected override applyStashedOp(
+		...args: Parameters<
+			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
+		>
+	): void {
+		assert(
+			!this.checkout.isTransacting(),
+			0x674 /* Unexpected transaction is open while applying stashed ops */,
+		);
+		super.applyStashedOp(...args);
 	}
 }
 

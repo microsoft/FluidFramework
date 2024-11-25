@@ -9,13 +9,14 @@ import { fileURLToPath } from "node:url";
 import { ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
+import type { DocumentNode } from "../documentation-domain/index.js";
 import { type MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "../renderers/index.js";
+
 import {
 	endToEndTests,
 	type ApiModelTestOptions,
 	type EndToEndTestConfig,
 } from "./EndToEndTests.js";
-import type { DocumentNode } from "../documentation-domain/index.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
 
