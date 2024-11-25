@@ -9,6 +9,7 @@ import {
 	runWithRetry,
 	IDocumentRepository,
 	IClusterDrainingChecker,
+	shouldRetryNetworkError,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { StageTrace } from "./trace";
@@ -289,16 +290,28 @@ export async function getSession(
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
 	let document: IDocument;
-	let docReadRetryCount = 0;
-	const maxAttempts = 3;
-	while (!document && docReadRetryCount < maxAttempts) {
-		// Add a delay for retries, not for the initial doc read
-		if (docReadRetryCount > 0) {
-			await delay(500*docReadRetryCount);
-		}
-		document = await documentRepository.readOne({ tenantId, documentId });
-		docReadRetryCount++;
+	try {
+		// Retry document existence check to avoid document DB race condition
+		document = await runWithRetry(
+			async () => documentRepository.readOne({ tenantId, documentId }).then((result) => {
+				if (result === null) {
+					throw new NetworkError(404, "Document is deleted and cannot be accessed", true /* canRetry */);
+				}
+			}),
+			"getDocumentForSession",
+			3, // maxRetries
+			500, // retryAfterMs
+			baseLumberjackProperties, // telemetry props
+			undefined,
+			(error) => shouldRetryNetworkError(error),
+		) as IDocument;
+	} catch (error) {
+		// Add a stage stamp before throwing the error
+		connectionTrace?.stampStage("DocumentDoesNotExist");
+		throw error;
 	}
+
+	// Additional check to ensure that scheduledDeletionTime is not undefined
 	if (!document || document.scheduledDeletionTime !== undefined) {
 		connectionTrace?.stampStage("DocumentDoesNotExist");
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
