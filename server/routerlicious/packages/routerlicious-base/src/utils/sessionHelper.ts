@@ -303,7 +303,7 @@ export async function getSession(
 					}
 				}),
 			"getDocumentForSession",
-			3, // maxRetries
+			1, // maxRetries
 			500, // retryAfterMs
 			baseLumberjackProperties, // telemetry props
 			undefined,
