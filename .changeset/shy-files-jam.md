@@ -19,8 +19,6 @@ Note that a signal may be sent before the allowable latency if another signal is
 
 Notifications workspaces' signals are not queued; they effectively always have an `allowableUpdateLatencyMs` of 0. However, they may be batched with other signals that were queued earlier.
 
-The details of how signals are batched together is typically irrelevant to users of the Presence APIs, because the relevant value managers and the presence manager deal with these complexities.
-
 #### Example
 
 You can configure the batching and throttling behavior using the `allowableUpdateLatencyMs` property as in the following example:
