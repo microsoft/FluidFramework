@@ -10,7 +10,11 @@ import {
 	isNetworkError,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IRepositoryManager, type IFileSystemManager } from "./definitions";
+import {
+	IRepositoryManager,
+	type IFileSystemManager,
+	type IFRSMakeDirectoryOptions,
+} from "./definitions";
 import { GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 import {
 	Constants,
@@ -27,6 +31,7 @@ import { getSoftDeletedMarkerPath } from "./helpers";
 const DefaultSummaryWriteFeatureFlags: ISummaryWriteFeatureFlags = {
 	enableLowIoWrite: false,
 	optimizeForInitialSummary: false,
+	enableContainerPerDocTimeStamp: 0,
 };
 
 export { isChannelSummary, isContainerSummary } from "./wholeSummary";
@@ -48,6 +53,7 @@ export class GitWholeSummaryManager {
 		private readonly repoManager: IRepositoryManager,
 		private readonly lumberjackProperties: Record<string, any>,
 		private readonly externalStorageEnabled = true,
+		private readonly cmkEncryptionScope?: string,
 		writeOptions?: Partial<ISummaryWriteFeatureFlags>,
 	) {
 		this.summaryWriteFeatureFlags = {
@@ -92,6 +98,7 @@ export class GitWholeSummaryManager {
 	 * If the summary is a "channel" summary, the tree sha will be returned so that it can be referenced by a future "container" summary.
 	 */
 	public async writeSummary(
+		fileSystemManager: IFileSystemManager,
 		payload: IWholeSummaryPayload,
 		isInitial?: boolean,
 	): Promise<IWriteSummaryInfo> {
@@ -99,6 +106,7 @@ export class GitWholeSummaryManager {
 			...this.lumberjackProperties,
 			enableLowIoWrite: this.summaryWriteFeatureFlags.enableLowIoWrite,
 			optimizeForInitialSummary: this.summaryWriteFeatureFlags.optimizeForInitialSummary,
+			enableContainerPerDocTS: this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp,
 			isInitial,
 		};
 		const writeSummaryMetric = Lumberjack.newLumberMetric(
@@ -106,6 +114,26 @@ export class GitWholeSummaryManager {
 			lumberjackProperties,
 		);
 		try {
+			// When blobContainerPerDoc is enabled (timestamp conditions meets) and having truthy cmkEncryptionScope,
+			// pass cmkEncryptionScope to FRS storage (azurestorage for durable container) and apply cmkEncryptionScope.
+			// This only happens for the durable container's initial summary, since EC's cmkEncryptionScope is undefined.
+			if (
+				isInitial &&
+				this.cmkEncryptionScope &&
+				this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp &&
+				Date.now() > this.summaryWriteFeatureFlags.enableContainerPerDocTimeStamp
+			) {
+				const frsOptions: IFRSMakeDirectoryOptions = {
+					recursive: false,
+					cmkEncryptionScope: this.cmkEncryptionScope,
+				};
+				const summaryFolderPath = this.repoManager.path;
+				Lumberjack.info(
+					`Apply cmkEncryptionScope before durable container's initial summary upload.`,
+					lumberjackProperties,
+				);
+				await fileSystemManager.promises.mkdir(summaryFolderPath, frsOptions);
+			}
 			if (isChannelSummary(payload)) {
 				lumberjackProperties.summaryType = "channel";
 				writeSummaryMetric.setProperty("summaryType", "channel");

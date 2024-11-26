@@ -5,11 +5,13 @@
 
 import fsPromises from "fs/promises";
 import * as git from "@fluidframework/gitresources";
+import type { MakeDirectoryOptions } from "fs";
 
 export enum Constants {
 	StorageRoutingIdHeader = "Storage-Routing-Id",
 	StorageNameHeader = "Storage-Name",
 	IsEphemeralContainer = "Is-Ephemeral-Container",
+	CmkEncryptionScope = "CMK-Encryption-Scope",
 }
 
 export interface IStorageDirectoryConfig {
@@ -113,6 +115,14 @@ export interface IRepoManagerParams {
 	fileSystemManagerParams?: IFileSystemManagerParams;
 	optimizeForInitialSummary?: boolean;
 	isEphemeralContainer?: boolean;
+	cmkEncryptionScope?: string;
+}
+
+export interface IFRSMakeDirectoryOptions extends MakeDirectoryOptions {
+	/**
+	 * FRS specific cmk encryption scope.
+	 */
+	cmkEncryptionScope: string;
 }
 
 export interface IRepositoryManagerFactory {

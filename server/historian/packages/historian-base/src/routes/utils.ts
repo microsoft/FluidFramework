@@ -282,6 +282,10 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	if (isEphemeral) {
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
+	// The cmkEncryptionScope only needs to be passed into azure storage (durable container)'s case.
+	const cmkEncryptionScope = isEphemeral
+		? undefined
+		: customData?.customerManagedKeySetting?.encryptionScopeName;
 
 	const calculatedStorageName =
 		initialUpload && storageName
@@ -297,6 +301,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		storageUrl,
 		isEphemeral,
 		maxCacheableSummarySize,
+		cmkEncryptionScope,
 	);
 	return service;
 }
