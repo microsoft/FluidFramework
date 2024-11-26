@@ -4,11 +4,16 @@
  */
 
 // Get the test port from the global map and set it in env for this test
-const testTools = require("@fluid-private/test-tools");
+let mappedPort = 9000; // Defaul port test-tools would provide if no mapping exists
+// Only import test-tools if POLICY_CHECK is not set.
+// This allows us to run policy checks on the jest config files without having to build the repo.
+if (process.env.POLICY_CHECK === undefined) {
+	const testTools = require("@fluid-private/test-tools");
+	mappedPort = testTools.getTestPort(name);
+}
 const { name } = require("./package.json");
 
-mappedPort = testTools.getTestPort(name);
-process.env["PORT"] = mappedPort;
+process.env.PORT = mappedPort;
 
 module.exports = {
 	preset: "jest-puppeteer",
@@ -20,6 +25,10 @@ module.exports = {
 	transform: {
 		"^.+\\.ts?$": "ts-jest",
 	},
+	moduleNameMapper: {
+		// Remove explicit .js from local paths to allow jest to find the .ts* files
+		"^(\\.{1,2}/.*)\\.js$": "$1",
+	},
 	reporters: [
 		"default",
 		[
@@ -30,7 +39,4 @@ module.exports = {
 			},
 		],
 	],
-	// While we still have transitive dependencies on 'uuid<9.0.0', force the CJS entry point:
-	// See: https://stackoverflow.com/questions/73203367/jest-syntaxerror-unexpected-token-export-with-uuid-library
-	moduleNameMapper: { "^uuid$": "uuid" },
 };
