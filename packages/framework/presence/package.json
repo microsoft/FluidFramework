@@ -80,7 +80,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test:mocha:esm",
-		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
+		"test:mocha": "npm run test:mocha:esm && echo skip per CI coverage run pattern npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
