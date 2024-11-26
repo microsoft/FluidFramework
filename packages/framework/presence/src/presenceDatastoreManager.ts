@@ -9,7 +9,8 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
-import { brandedObjectEntries, type IEphemeralRuntime } from "./internalTypes.js";
+import { brandedObjectEntries } from "./internalTypes.js";
+import type { IEphemeralRuntime } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
 	ClientUpdateEntry,
