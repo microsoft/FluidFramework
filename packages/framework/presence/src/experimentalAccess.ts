@@ -7,19 +7,18 @@ import type { IContainerExperimental } from "@fluidframework/container-loader/in
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
-import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
-
-import type { IEphemeralRuntime } from "./internalTypes.js";
-import type { IPresence } from "./presence.js";
-import type { PresenceExtensionInterface } from "./presenceManager.js";
-import { createPresenceManager } from "./presenceManager.js";
-
 import type {
 	ContainerExtensionStore,
 	IContainerExtension,
 	IExtensionMessage,
 	IExtensionRuntime,
 } from "@fluidframework/presence/internal/container-definitions/internal";
+import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+
+import type { IEphemeralRuntime } from "./internalTypes.js";
+import type { IPresence } from "./presence.js";
+import type { PresenceExtensionInterface } from "./presenceManager.js";
+import { createPresenceManager } from "./presenceManager.js";
 
 function isContainerExtensionStore(
 	manager: ContainerExtensionStore | IContainerRuntimeBase | IContainerExperimental,

@@ -1,6 +1,8 @@
 {
 	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
-	"extends": "./tsconfig.json",
+	"extends": "./tsconfig.base.json",
+	"include": ["src/**/*"],
+	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"outDir": "./dist",
 	},

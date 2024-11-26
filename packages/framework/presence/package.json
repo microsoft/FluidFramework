@@ -54,7 +54,10 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm:externals": "tsc --project ./tsconfig.externals.json",
+		"build:esm:runtime": "tsc --project ./tsconfig.runtime.json",
+		"build:esm:types": "tsc --project ./tsconfig.types.json",
+		"build:esnext": "npm run build:esm:externals && npm run build:esm:types && npm run build:esm:runtime",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs && npm run build:test:esm:core-interfaces-no-exactOptionalPropertyTypes",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -76,7 +79,7 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
-		"test:coverage": "c8 npm test",
+		"test:coverage": "c8 npm run test:mocha:esm",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
@@ -89,14 +92,11 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.*ts",
 			"dist/test/**/*.*js",
 			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.*ts",
-			"dist/**/*.*js",
 			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
@@ -151,8 +151,14 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"build:esm:types": [
+				"build:esm:externals"
+			],
+			"build:esm:runtime": [
+				"build:esm:types"
+			],
 			"build:test:esm:core-interfaces-no-exactOptionalPropertyTypes": [
-				"build:esnext"
+				"build:esm:externals"
 			],
 			"check:exports:bundle-release-tags": [
 				"build:esnext"

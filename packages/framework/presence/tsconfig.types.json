@@ -1,0 +1,13 @@
+{
+	"extends": "./tsconfig.base.json",
+	"include": ["src/**/types.ts", "src/**/*Types.*ts", "src/presence.ts"],
+	"exclude": ["src/container-definitions/**/*", "src/core-interfaces/**/*", "src/test/**/*"],
+	"compilerOptions": {
+		"emitDeclarationOnly": true,
+	},
+	"references": [
+		{
+			"path": "./tsconfig.externals.json",
+		},
+	],
+}

@@ -5,7 +5,10 @@
 
 import assert from "node:assert";
 
-import type { BroadcastControls, BroadcastControlSettings } from "../broadcastControls.js";
+import type {
+	BroadcastControls,
+	BroadcastControlSettings,
+} from "../broadcastControlsTypes.js";
 import type { IPresence } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 

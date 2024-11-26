@@ -30,18 +30,10 @@ export type {
 	PresenceWorkspaceEntry,
 } from "./types.js";
 
-export {
-	type ClientSessionId,
-	type IPresence,
-	type ISessionClient,
-	type PresenceEvents,
-	SessionClientStatus,
-} from "./presence.js";
-
 export type {
 	BroadcastControls,
 	BroadcastControlSettings,
-} from "./broadcastControls.js";
+} from "./broadcastControlsTypes.js";
 
 export { acquirePresence } from "./experimentalAccess.js";
 
@@ -71,11 +63,25 @@ export type {
 	LatestValueMetadata,
 } from "./latestValueTypes.js";
 
-export {
-	type NotificationEmitter,
-	type NotificationListenable,
-	type NotificationSubscriptions,
-	Notifications,
-	type NotificationsManager,
-	type NotificationsManagerEvents,
-} from "./notificationsManager.js";
+export type {
+	NotificationEmitter,
+	NotificationListenable,
+	NotificationSubscriptions,
+	NotificationsManager,
+	NotificationsManagerEvents,
+} from "./notificationsManagerTypes.js";
+
+export { Notifications } from "./notificationsManager.js";
+
+export type {
+	IPresence,
+	PresenceEvents,
+} from "./presence.js";
+
+export type {
+	ClientSessionId,
+	ISessionClient,
+	SessionClientStatus,
+} from "./sessionClientTypes.js";
+
+export { SessionClientStatusEnum } from "./sessionClient.js";

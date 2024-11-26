@@ -1,5 +1,11 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-lint.entrypoint.json",
-	"mainEntryPointFilePath": "<projectFolder>/dist/alpha.d.ts"
+	"mainEntryPointFilePath": "<projectFolder>/dist/alpha.d.ts",
+	"projectFolder": "../",
+	"compiler": {
+		// Use the ESM tsconfig. Otherwise, there are many complaints like:
+		//  (TS1479) The current file is a CommonJS module whose imports will produce 'require' calls; however, the referenced file is an ECMAScript module and cannot be imported with 'require'. Consider writing a dynamic 'import("@fluidframework/presence/internal/exposedInternalTypes")' call instead.
+		"tsconfigFilePath": "../tsconfig.runtime.json"
+	}
 }

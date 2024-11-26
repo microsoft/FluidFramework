@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { BroadcastControls } from "./broadcastControls.js";
-import type { NotificationsManager } from "./notificationsManager.js";
-
 import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
+
+import type { BroadcastControls } from "./broadcastControlsTypes.js";
+import type { NotificationsManager } from "./notificationsManagerTypes.js";
 
 /**
  * Unique address within a session.

@@ -9,16 +9,23 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
-import type { ClientConnectionId } from "../baseTypes.js";
-import { SessionClientStatus, type ISessionClient } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
+	assertIdenticalTypes,
+	createInstanceOf,
 	generateBasicClientJoin,
 	prepareConnectedPresence,
 } from "./testUtils.js";
+
+import type {
+	ClientConnectionId,
+	ISessionClient,
+	SessionClientStatus,
+} from "@fluidframework/presence/alpha";
+import { SessionClientStatusEnum } from "@fluidframework/presence/alpha";
 
 describe("Presence", () => {
 	describe("PresenceManager", () => {
@@ -76,6 +83,14 @@ describe("Presence", () => {
 		});
 
 		describe("when connected", () => {
+			// Make sure the enum and the common type are in sync
+			assertIdenticalTypes(
+				createInstanceOf<
+					(typeof SessionClientStatusEnum)[keyof typeof SessionClientStatusEnum]
+				>(),
+				createInstanceOf<SessionClientStatus>(),
+			);
+
 			let presence: ReturnType<typeof createPresenceManager>;
 			const afterCleanUp: (() => void)[] = [];
 
@@ -161,7 +176,7 @@ describe("Presence", () => {
 						);
 						assert.equal(
 							newAttendee.getConnectionStatus(),
-							SessionClientStatus.Connected,
+							SessionClientStatusEnum.Connected,
 							"Attendee connection status is not Connected",
 						);
 					}
@@ -289,9 +304,9 @@ describe("Presence", () => {
 					});
 
 					for (const [status, setup] of [
-						[SessionClientStatus.Connected, () => {}] as const,
+						[SessionClientStatusEnum.Connected, () => {}] as const,
 						[
-							SessionClientStatus.Disconnected,
+							SessionClientStatusEnum.Disconnected,
 							() => runtime.removeMember(initialAttendeeConnectionId),
 						] as const,
 					]) {
@@ -370,7 +385,7 @@ describe("Presence", () => {
 							);
 							assert.equal(
 								disconnectedAttendee.getConnectionStatus(),
-								SessionClientStatus.Disconnected,
+								SessionClientStatusEnum.Disconnected,
 								"Disconnected attendee has wrong status",
 							);
 						});
