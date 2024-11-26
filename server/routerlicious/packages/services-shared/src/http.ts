@@ -54,7 +54,6 @@ export function validatePrivateLink(tenantManager: ITenantManager): RequestHandl
 		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
 		if (result.isPrivateLink) {
 			if (tenantInfo.customData.accountLinkID === result.privateLinkId) {
-				next();
 			} else {
 				return handleResponse(
 					Promise.reject(
