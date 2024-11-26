@@ -6,7 +6,7 @@
 "section": other
 ---
 
-Mark APIs as `@sealed` and `@system` as appropriate, and make interface properties `readonly`
+API clarifications for devtools packages
 
 APIs that were never intended for direct consumer use have been marked as `@system`.
 These are:
