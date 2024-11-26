@@ -557,9 +557,14 @@ export class SchemaFactory<
 	 *
 	 * {@label NAMED}
 	 */
-	public array<const Name extends TName, const T extends ImplicitAllowedTypes>(
+	public array<
+		const Name extends TName,
+		const T extends ImplicitAllowedTypes,
+		const TMetadata extends NodeSchemaMetadata,
+	>(
 		name: Name,
 		allowedTypes: T,
+		options?: NodeSchemaOptions<TMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
@@ -567,16 +572,23 @@ export class SchemaFactory<
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
 		T,
-		undefined
+		undefined,
+		TMetadata
 	>;
 
 	/**
+	 * {@link SchemaFactory.array} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
 	 */
-	public array<const T extends ImplicitAllowedTypes>(
+	public array<
+		const T extends ImplicitAllowedTypes,
+		const TMetadata extends NodeSchemaMetadata,
+	>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
+		options?: NodeSchemaOptions<TMetadata>,
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, string>,
 		NodeKind.Array,
@@ -589,7 +601,7 @@ export class SchemaFactory<
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Array", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
-				this.namedArray(fullName, nameOrAllowedTypes as T, false, true),
+				this.namedArray(fullName, nameOrAllowedTypes as T, false, true, options?.metadata),
 			) as TreeNodeSchemaClass<
 				ScopedSchemaName<TScope, string>,
 				NodeKind.Array,
@@ -597,7 +609,8 @@ export class SchemaFactory<
 				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 				true,
 				T,
-				undefined
+				undefined,
+				TMetadata
 			>;
 		}
 		const out: TreeNodeSchemaBoth<
@@ -607,8 +620,15 @@ export class SchemaFactory<
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			true,
 			T,
-			undefined
-		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
+			undefined,
+			TMetadata
+		> = this.namedArray(
+			nameOrAllowedTypes as TName,
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+		);
 		return out;
 	}
 
@@ -625,11 +645,13 @@ export class SchemaFactory<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
+		const TMetadata extends NodeSchemaMetadata,
 	>(
 		name: Name,
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
+		metadata: TMetadata | undefined,
 	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
@@ -637,9 +659,16 @@ export class SchemaFactory<
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
 		T,
-		undefined
+		undefined,
+		TMetadata
 	> {
-		return arraySchema(this.scoped(name), allowedTypes, implicitlyConstructable, customizable);
+		return arraySchema(
+			this.scoped(name),
+			allowedTypes,
+			implicitlyConstructable,
+			customizable,
+			metadata,
+		);
 	}
 
 	/**
@@ -788,12 +817,14 @@ export class SchemaFactory<
 	public arrayRecursive<
 		const Name extends TName,
 		const T extends Unenforced<ImplicitAllowedTypes>,
-	>(name: Name, allowedTypes: T) {
+		const TMetadata extends NodeSchemaMetadata,
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TMetadata>) {
 		const RecursiveArray = this.namedArray(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
 			false,
+			options?.metadata,
 		);
 
 		return RecursiveArray as TreeNodeSchemaClass<
@@ -816,7 +847,8 @@ export class SchemaFactory<
 			},
 			false,
 			T,
-			undefined
+			undefined,
+			TMetadata
 		>;
 	}
 
@@ -872,7 +904,8 @@ export class SchemaFactory<
 			  },
 			false,
 			T,
-			undefined
+			undefined,
+			TMetadata
 		>;
 	}
 }
