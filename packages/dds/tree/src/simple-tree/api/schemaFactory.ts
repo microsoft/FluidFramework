@@ -37,6 +37,8 @@ import {
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
+	type NodeSchemaMetadata,
+	type NodeSchemaOptions,
 } from "../schemaTypes.js";
 import { inPrototypeChain } from "../core/index.js";
 import type {
@@ -322,18 +324,22 @@ export class SchemaFactory<
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const TMetadata extends NodeSchemaMetadata,
 	>(
 		name: Name,
 		fields: T,
+		options?: NodeSchemaOptions<TMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 		object & InsertableObjectFromSchemaRecord<T>,
 		true,
-		T
+		T,
+		never,
+		TMetadata
 	> {
-		return objectSchema(this.scoped(name), fields, true);
+		return objectSchema(this.scoped(name), fields, true, options);
 	}
 
 	/**
@@ -730,18 +736,22 @@ export class SchemaFactory<
 	public objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
-	>(name: Name, t: T) {
+		const TMetadata extends NodeSchemaMetadata,
+	>(name: Name, t: T, options?: NodeSchemaOptions<TMetadata>) {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
+			options,
 		) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
 			TreeObjectNodeUnsafe<T, TScopedName>,
 			object & InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
-			T
+			T,
+			never,
+			TMetadata
 		>;
 	}
 

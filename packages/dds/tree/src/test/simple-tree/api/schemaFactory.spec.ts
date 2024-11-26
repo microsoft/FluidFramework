@@ -363,7 +363,22 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("Field Metadata", () => {
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Foo extends factory.object(
+				"Foo",
+				{ bar: factory.number },
+				{ metadata: { description: "An object", custom: { baz: true } } },
+			) {}
+
+			assert.deepEqual(Foo.metadata, {
+				description: "An object",
+				custom: { baz: true },
+			});
+		});
+
+		it("Field schema metadata", () => {
 			const schemaFactory = new SchemaFactory("com.example");
 			const barMetadata = {
 				description: "Bar",

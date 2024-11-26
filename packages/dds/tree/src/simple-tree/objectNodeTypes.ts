@@ -9,7 +9,7 @@ import type {
 	InsertableObjectFromSchemaRecord,
 	SimpleKeyMap,
 } from "./objectNode.js";
-import type { ImplicitFieldSchema, FieldSchema } from "./schemaTypes.js";
+import type { ImplicitFieldSchema, FieldSchema, NodeSchemaMetadata } from "./schemaTypes.js";
 import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 
@@ -18,24 +18,27 @@ import type { FieldKey } from "../core/index.js";
  * @privateRemarks
  * This is a candidate for being promoted to the public package API.
  */
-export interface ObjectNodeSchema<
+export type ObjectNodeSchema<
 	TName extends string = string,
 	T extends
 		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaClass<
-		TName,
-		NodeKind.Object,
-		TreeObjectNode<T, TName>,
-		object & InsertableObjectFromSchemaRecord<T>,
-		ImplicitlyConstructable,
-		T
-	> {
+	TMetadata extends NodeSchemaMetadata = NodeSchemaMetadata,
+> = TreeNodeSchemaClass<
+	TName,
+	NodeKind.Object,
+	TreeObjectNode<T, TName>,
+	object & InsertableObjectFromSchemaRecord<T>,
+	ImplicitlyConstructable,
+	T,
+	never,
+	TMetadata
+> & {
 	/**
 	 * From property keys to the associated schema.
 	 */
 	readonly fields: ReadonlyMap<string, FieldSchema>;
-}
+};
 
 /**
  * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.
