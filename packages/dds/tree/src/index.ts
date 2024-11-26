@@ -175,6 +175,8 @@ export {
 	type TreeBranch,
 	type TreeBranchEvents,
 	asTreeViewAlpha,
+	type NodeSchemaMetadata,
+	type NodeSchemaOptions,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

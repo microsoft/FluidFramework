@@ -18,6 +18,7 @@ import {
 	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeSchemaMetadata,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
@@ -1156,6 +1157,9 @@ export function arraySchema<
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
+		}
+		public static get metadata(): NodeSchemaMetadata | undefined {
+			return undefined; // TODO
 		}
 
 		// eslint-disable-next-line import/no-deprecated
