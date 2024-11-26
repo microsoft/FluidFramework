@@ -25,31 +25,6 @@ import { useLogger } from "../TelemetryUtils.js";
 
 import { Waiting } from "./index.js";
 
-/**
- * Props for {@link MenuSection}
- */
-export type MenuSectionProps = React.PropsWithChildren<{
-	/**
-	 * The text to display in header of the menu section.
-	 */
-	header: string;
-
-	/**
-	 * The icon to display in the header of the menu section.
-	 */
-	icon?: React.ReactElement;
-
-	/**
-	 * Callback function that runs when the header is clicked.
-	 */
-	onHeaderClick?(): void;
-
-	/**
-	 * If true, the section is focusable.
-	 */
-	focusable?: boolean;
-}>;
-
 const useMenuStyles = makeStyles({
 	root: {
 		...shorthands.gap("0px", "10px"),
@@ -78,20 +53,6 @@ const useMenuStyles = makeStyles({
 			color: tokens.colorNeutralForeground1Hover,
 			backgroundColor: tokens.colorNeutralBackground1Hover,
 		},
-	},
-});
-
-const useMenuSectionStyles = makeStyles({
-	root: {
-		display: "flex",
-		flexDirection: "column",
-	},
-	header: {
-		alignItems: "center",
-		display: "flex",
-		flexDirection: "row",
-		fontWeight: "bold",
-		cursor: "pointer",
 	},
 });
 
@@ -200,31 +161,148 @@ function RefreshButton(): React.ReactElement {
 }
 
 /**
+ * Props for {@link MenuSection}
+ */
+export type MenuSectionProps = React.PropsWithChildren<{
+	/**
+	 * Section header.
+	 */
+	header: React.ReactElement;
+}>;
+
+const useMenuSectionStyles = makeStyles({
+	root: {
+		display: "flex",
+		flexDirection: "column",
+	},
+});
+
+/**
  * Generic component for a section of the menu.
  */
 export function MenuSection(props: MenuSectionProps): React.ReactElement {
-	const { header, icon, children, onHeaderClick } = props;
-	const focusable = props.focusable === undefined ? false : true;
+	const { header, children } = props;
 
 	const styles = useMenuSectionStyles();
+
+	return (
+		<div className={styles.root}>
+			{header}
+			{children}
+		</div>
+	);
+}
+
+/**
+ * Props for {@link MenuSectionLabelHeader}
+ */
+export interface MenuSectionLabelHeaderProps {
+	/**
+	 * The text to display in header of the menu section.
+	 */
+	label: string;
+
+	/**
+	 * The icon to display in the header of the menu section.
+	 */
+	icon?: React.ReactElement;
+}
+
+const useMenuSectionLabelHeaderStyles = makeStyles({
+	root: {
+		alignItems: "center",
+		display: "flex",
+		flexDirection: "row",
+		fontWeight: "bold",
+	},
+});
+
+/**
+ * Simple menu section header with a label.
+ */
+export function MenuSectionLabelHeader(
+	props: MenuSectionLabelHeaderProps,
+): React.ReactElement {
+	const { label, icon } = props;
+	const styles = useMenuSectionLabelHeaderStyles();
+
+	return (
+		<div className={styles.root}>
+			{label}
+			{icon}
+		</div>
+	);
+}
+
+/**
+ * Props for {@link MenuSectionButtonHeader}
+ */
+export interface MenuSectionButtonHeaderProps extends MenuSectionLabelHeaderProps {
+	/**
+	 * Callback function that runs when the header is clicked.
+	 */
+	onClick?(): void;
+
+	/**
+	 * Button alt text.
+	 */
+	altText: string;
+
+	/**
+	 * Whether or not this selectable heading is the current selection.
+	 */
+	isActive: boolean;
+}
+
+const useMenuSectionButtonHeaderStyles = makeStyles({
+	root: {
+		alignItems: "center",
+		display: "flex",
+		flexDirection: "row",
+		fontWeight: "bold",
+		cursor: "pointer",
+		"&:hover": {
+			color: tokens.colorNeutralForeground1Hover,
+			backgroundColor: tokens.colorNeutralBackground1Hover,
+		},
+	},
+	active: {
+		color: tokens.colorNeutralForeground1Selected,
+		backgroundColor: tokens.colorNeutralBackground1Selected,
+	},
+	inactive: {
+		color: tokens.colorNeutralForeground1,
+		backgroundColor: tokens.colorNeutralBackground1,
+	},
+});
+
+/**
+ * Menu section header that behaves like a button.
+ */
+export function MenuSectionButtonHeader(
+	props: MenuSectionButtonHeaderProps,
+): React.ReactElement {
+	const { label, icon, onClick, altText, isActive } = props;
+	const styles = useMenuSectionButtonHeaderStyles();
+	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
+
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
-		if ((event.key === "Enter" || event.key === " ") && onHeaderClick) {
-			onHeaderClick();
+		if ((event.key === "Enter" || event.key === " ") && onClick) {
+			onClick();
 		}
 	};
 
 	return (
-		<div className={styles.root}>
-			<div
-				className={styles.header}
-				onClick={onHeaderClick}
-				onKeyDown={handleKeyDown}
-				tabIndex={focusable ? 0 : -1}
-			>
-				{header}
-				{icon}
-			</div>
-			{children}
+		<div
+			className={style}
+			onClick={onClick}
+			onKeyDown={handleKeyDown}
+			aria-label={altText}
+			tabIndex={0}
+			role="button"
+		>
+			{label}
+			{icon}
 		</div>
 	);
 }
@@ -293,16 +371,14 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
  */
 export interface MenuProps {
 	/**
-	 * The current menu selection (if any).
+	 * The current menu selection.
 	 */
-	currentSelection?: MenuSelection | undefined;
+	currentSelection: MenuSelection;
 
 	/**
 	 * Sets the menu selection to the specified value.
-	 *
-	 * @remarks Passing `undefined` clears the selection.
 	 */
-	setSelection(newSelection: MenuSelection | undefined): void;
+	setSelection(newSelection: MenuSelection): void;
 
 	/**
 	 * Set of features supported by the {@link @fluidframework/devtools-core#IFluidDevtools}
@@ -370,9 +446,8 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 
 	return (
 		<MenuSection
-			header="Containers"
+			header={<MenuSectionLabelHeader label="Containers" icon={<RefreshButton />} />}
 			key="container-selection-menu-section"
-			icon={<RefreshButton />}
 		>
 			{containerSectionInnerView}
 		</MenuSection>
@@ -432,10 +507,15 @@ export function Menu(props: MenuProps): React.ReactElement {
 
 	menuSections.push(
 		<MenuSection
-			header="Home"
+			header={
+				<MenuSectionButtonHeader
+					label="Home"
+					altText="Home"
+					onClick={onHomeClicked}
+					isActive={currentSelection.type === "homeMenuSelection"}
+				/>
+			}
 			key="home-menu-section"
-			onHeaderClick={onHomeClicked}
-			focusable={true}
 		/>,
 		<ContainersMenuSection
 			key="containers-menu-section"
@@ -452,7 +532,10 @@ export function Menu(props: MenuProps): React.ReactElement {
 	// Display the Telemetry menu section only if the corresponding Devtools instance supports telemetry messaging.
 	if (supportedFeatures.telemetry === true) {
 		menuSections.push(
-			<MenuSection header="Telemetry" key="telemetry-menu-section">
+			<MenuSection
+				header={<MenuSectionLabelHeader label="Telemetry" />}
+				key="telemetry-menu-section"
+			>
 				<MenuItem
 					isActive={currentSelection?.type === "telemetryMenuSelection"}
 					text="Events"
@@ -465,20 +548,30 @@ export function Menu(props: MenuProps): React.ReactElement {
 	if (supportedFeatures.opLatencyTelemetry === true) {
 		menuSections.push(
 			<MenuSection
-				header="Op Latency"
+				header={
+					<MenuSectionButtonHeader
+						label="Op Latency"
+						altText="Op Latency"
+						onClick={onOpLatencyClicked}
+						isActive={currentSelection?.type === "opLatencyMenuSelection"}
+					/>
+				}
 				key="op-latency-menu-section"
-				onHeaderClick={onOpLatencyClicked}
-				focusable={true}
 			/>,
 		);
 	}
 
 	menuSections.push(
 		<MenuSection
-			header="Settings"
+			header={
+				<MenuSectionButtonHeader
+					label="Settings"
+					altText="Settings"
+					onClick={onSettingsClicked}
+					isActive={currentSelection?.type === "settingsMenuSelection"}
+				/>
+			}
 			key="settings-menu-section"
-			onHeaderClick={onSettingsClicked}
-			focusable={true}
 		/>,
 	);
 

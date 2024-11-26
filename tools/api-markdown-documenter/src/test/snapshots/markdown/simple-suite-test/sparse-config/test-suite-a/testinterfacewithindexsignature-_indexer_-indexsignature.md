@@ -2,7 +2,7 @@
 
 Test index signature.
 
-### Signature {#_indexer_-signature}
+### Signature {#\_indexer\_-signature}
 
 ```typescript
 [foo: number]: {

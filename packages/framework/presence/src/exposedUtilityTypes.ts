@@ -7,7 +7,7 @@ import type {
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
+} from "@fluidframework/presence/internal/core-interfaces";
 
 /**
  * Collection of utility types that are not intended to be used/imported
@@ -32,7 +32,7 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type IsNotificationEvent<Event> = Event extends (...args: infer P) => void
+	export type IsNotificationListener<Event> = Event extends (...args: infer P) => void
 		? CoreInternalUtilityTypes.IfSameType<
 				P,
 				JsonSerializable<P> & JsonDeserialized<P>,
@@ -42,11 +42,11 @@ export namespace InternalUtilityTypes {
 		: false;
 
 	/**
-	 * Used to specify the kinds of notifications emitted by a {@link NotificationSubscribable}.
+	 * Used to specify the kinds of notifications emitted by a {@link NotificationListenable}.
 	 *
 	 * @remarks
 	 *
-	 * Any object type is a valid NotificationEvents, but only the notification-like
+	 * Any object type is a valid NotificationListeners, but only the notification-like
 	 * properties of that type will be included.
 	 *
 	 * @example
@@ -60,8 +60,8 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type NotificationEvents<E> = {
-		[P in string & keyof E as IsNotificationEvent<E[P]> extends true ? P : never]: E[P];
+	export type NotificationListeners<E> = {
+		[P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
 	};
 
 	/**
