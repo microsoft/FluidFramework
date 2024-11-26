@@ -5,7 +5,7 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { TreeIndexKey } from "../../feature-libraries/index.js";
-import type { ImplicitFieldSchema } from "../schemaTypes.js";
+import { FieldKind, type ImplicitFieldSchema } from "../schemaTypes.js";
 import type { TreeNode } from "../core/index.js";
 import { ObjectNodeSchema } from "../objectNodeTypes.js";
 import type { TreeView } from "./tree.js";
@@ -37,9 +37,11 @@ export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(
 	walkFieldSchema(view.schema, {
 		node: (schemus) => {
 			if (schemus instanceof ObjectNodeSchema) {
-				for (const fieldKey of schemus.fields.keys()) {
-					identifierFields.set(schemus.identifier, fieldKey);
-					break;
+				for (const [fieldKey, fieldSchema] of schemus.fields.entries()) {
+					if (fieldSchema.kind === FieldKind.Identifier) {
+						identifierFields.set(schemus.identifier, fieldKey);
+						break;
+					}
 				}
 			}
 		},

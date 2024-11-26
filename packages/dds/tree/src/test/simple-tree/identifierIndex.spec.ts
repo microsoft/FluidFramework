@@ -19,12 +19,18 @@ const parentId: FieldKey = brand("parentId");
 const childId: FieldKey = brand("childId");
 
 const schemaFactory = new SchemaFactory(undefined);
+
+class NonIndexableChild extends schemaFactory.object("NonIndexableChild", {
+	childKey: schemaFactory.string,
+}) {}
+
 class IndexableChild extends schemaFactory.object("IndexableChild", {
 	childKey: schemaFactory.identifier,
 }) {}
 class IndexableParent extends schemaFactory.object("IndexableParent", {
 	parentKey: schemaFactory.identifier,
 	child: schemaFactory.optional(IndexableChild),
+	nonIndexableChild: schemaFactory.optional(NonIndexableChild),
 }) {}
 
 function createView(child?: IndexableChild) {
@@ -48,6 +54,13 @@ describe("identifier indexes", () => {
 		const child = parent.child;
 		assert(child !== undefined);
 		assert.equal(index.get(childId), child);
+		assert.equal(index.size, 2);
+	});
+
+	it("do not index nodes without identifiers", () => {
+		const { parent, index } = init(new IndexableChild({ childKey: childId }));
+		parent.nonIndexableChild = new NonIndexableChild({ childKey: "test" });
+		assert.equal(index.get("test"), undefined);
 		assert.equal(index.size, 2);
 	});
 
