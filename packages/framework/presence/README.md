@@ -130,30 +130,36 @@ Notifications are fundamentally unreliable at this time as there are no built-in
 
 ### Throttling/batching
 
-Presence signals are batched together and throttled to prevent flooding the network with signals when presence values are rapidly updated.
-The presence infrastructure will not immediately send outgoing signals; rather, they will be batched with any other outgoing signals and queued until a later time.
+Presence updates are grouped together and throttled to prevent flooding the network with messages when presence values are rapidly updated. This means the presence infrastructure will not immediately broadcast updates but will broadcast after a configurable delay.
 
-A presence value manager such as `LatestValueManager` has an `allowableUpdateLatencyMs` value that can be configured; this value controls the longest time a signal will be queued.
-This value can be controlled dynamically at runtime, so adjustments can be made based on runtime data.
+ `allowableUpdateLatencyMs` configures how long a local update may be delayed under normal circumstances, enabling batching with other updates. The default `allowableUpdateLatencyMs` is **60 milliseconds** but may be 1) specified during configuration of a [States Workspace](#states-workspace) or [Value Manager](#value-managers) and/or 2) updated later using the `controls` member of Workspace or Value Manager. [States Workspace](#states-workspace) configuration applies when a Value Manager does not have its own setting.
 
-The default `allowableUpdateLatencyMs` is **60 milliseconds**.
+Notifications are never queued; they effectively always have an `allowableUpdateLatencyMs` of 0. However, they may be batched with other updates that were already queued.
 
-Note that a signal may be sent before the allowable latency if another signal is sent. Signals are combined as needed and sent immediately at the earliest deadline.
-
-Notifications workspaces' signals are not queued; they effectively always have an `allowableUpdateLatencyMs` of 0. However, they may be batched with other signals that were queued earlier.
-
-The details of how signals are batched together is typically irrelevant to users of the Presence APIs, because the relevant value managers and the presence manager deal with these complexities.
+Note that due to throttling, clients receiving updates may not see updates for all values set by another. For example, with `Latest*ValueManagers` only the value at the time of update broadcast is sent.
 
 #### Example
 
 You can configure the batching and throttling behavior using the `allowableUpdateLatencyMs` property as in the following example:
 
 ```ts
-// Configure a state workspace
-const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-	// This value manager has an allowable latency of 100ms, overriding the default value of 60ms.
-	count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
-});
+// Configure a states workspace
+const stateWorkspace = presence.getStates("app:v1states",
+	{
+		// This value manager has an allowable latency of 100ms.
+		position: Latest({ x: 0, y: 0 }, { allowableUpdateLatencyMs: 100 }),
+		// This value manager uses workspace default.
+		count: Latest({ num: 0 }),
+	},
+	// Specify default for all value managers in workspace to 200ms, overriding the default value of 60ms.
+	{ allowableUpdateLatencyMs: 200 }
+);
+
+// Temporarily set count update to send as soon as possible
+const countState = stateWorkspace.props.count;
+countState.controls.allowableUpdateLatencyMs = 0;
+countState.local = { num: 5000 };
+countState.controls.allowableUpdateLatencyMs = undefined; // Back to workspace default
 ```
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
