@@ -236,11 +236,13 @@ export function mapSchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
+	const TMetadata extends NodeSchemaMetadata,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	useMapPrototype: boolean,
+	metadata: TMetadata | undefined,
 ) {
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
 
@@ -284,9 +286,7 @@ export function mapSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static get metadata(): NodeSchemaMetadata | undefined {
-			return undefined; // TODO
-		}
+		public static readonly metadata = metadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -303,7 +303,8 @@ export function mapSchema<
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T,
-		undefined
+		undefined,
+		TMetadata
 	> = Schema;
 	return schemaErased;
 }
