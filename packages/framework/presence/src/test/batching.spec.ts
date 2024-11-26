@@ -657,14 +657,14 @@ describe("Presence", () => {
 				const { note } = stateWorkspace2.props;
 
 				clock.tick(10); // Time is now 1020
-				note.local = { message: "will be queued" }; // will be queued, deadline is 1080
-				count.local = { num: 12 }; // will be queued; deadline remains 1080
+				note.local = { message: "will be queued" }; // will be queued, deadline is 1070
+				count.local = { num: 12 }; // will be queued; deadline remains 1070
 
 				clock.tick(30); // Time is now 1050
-				count.local = { num: 34 }; // will be queued; deadline remains 1080
+				count.local = { num: 34 }; // will be queued; deadline remains 1070
 
 				clock.tick(10); // Time is now 1060
-				note.local = { message: "final message" }; // will be queued; deadline remains 1080
+				note.local = { message: "final message" }; // will be queued; deadline remains 1070
 
 				// SIGNAL #1
 				// The deadline timer will fire at time 1070 and send a single

@@ -285,6 +285,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	 * Send any queued signal immediately. Does nothing if no message is queued.
 	 */
 	private sendQueuedMessage(): void {
+		this.timer.clearTimeout();
+
 		if (this.queuedData === undefined) {
 			return;
 		}
@@ -319,7 +321,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				...this.queuedData,
 			},
 		} satisfies DatastoreUpdateMessage["content"];
-		this.timer.clearTimeout();
 		this.queuedData = undefined;
 		this.runtime.submitSignal(datastoreUpdateMessageType, newMessage);
 	}
