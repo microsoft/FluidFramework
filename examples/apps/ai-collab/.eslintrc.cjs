@@ -13,9 +13,8 @@ module.exports = {
 			"error",
 			{
 				allow: [
-					"@fluidframework/odsp-client/beta",
-					"@fluidframework/tree/alpha",
-					"@fluidframework/presence/alpha",
+					"@fluidframework/*/beta",
+					"@fluidframework/*/alpha",
 
 					// NextJS requires reaching to its internal modules
 					"next/**",
