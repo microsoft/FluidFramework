@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ValueSchema } from "../../core/index.js";
 import { getOrCreate, hasSingle, type Mutable } from "../../util/index.js";
@@ -100,11 +100,18 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 		? allowedTypes[0]
 		: { anyOf: allowedTypes };
 
-	return {
+	const output: Mutable<JsonArrayNodeSchema> = {
 		type: "array",
 		_treeNodeSchemaKind: NodeKind.Array,
 		items,
 	};
+
+	// Only include "description" property if it is present in the input.
+	if (schema.metadata?.description !== undefined) {
+		output.description = schema.metadata.description;
+	}
+
+	return output;
 }
 
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema {
@@ -137,9 +144,9 @@ function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema
 function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNodeSchema {
 	const properties: Record<string, JsonFieldSchema> = {};
 	const required: string[] = [];
-	for (const [key, value] of Object.entries(schema.fields)) {
+	for (const [key, fieldSchema] of Object.entries(schema.fields)) {
 		const allowedTypes: JsonSchemaRef[] = [];
-		for (const allowedType of value.allowedTypes) {
+		for (const allowedType of fieldSchema.allowedTypes) {
 			allowedTypes.push(createSchemaRef(allowedType));
 		}
 
@@ -149,24 +156,32 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 					anyOf: allowedTypes,
 				};
 
-		// Don't include "description" property at all if it's not present in the input.
-		if (value.metadata?.description !== undefined) {
-			output.description = value.metadata.description;
+		// Only include "description" property if it is present in the input.
+		if (fieldSchema.metadata?.description !== undefined) {
+			output.description = fieldSchema.metadata.description;
 		}
 
 		properties[key] = output;
 
-		if (value.kind === FieldKind.Required) {
+		if (fieldSchema.kind === FieldKind.Required) {
 			required.push(key);
 		}
 	}
-	return {
+
+	const transformedNode: Mutable<JsonObjectNodeSchema> = {
 		type: "object",
 		_treeNodeSchemaKind: NodeKind.Object,
 		properties,
 		required,
 		additionalProperties: false,
 	};
+
+	// Only include "description" property if it is present in the input.
+	if (schema.metadata?.description !== undefined) {
+		transformedNode.description = schema.metadata.description;
+	}
+
+	return transformedNode;
 }
 
 function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
@@ -174,17 +189,26 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 	schema.allowedTypes.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
-	return {
+
+	const output: Mutable<JsonMapNodeSchema> = {
 		type: "object",
 		_treeNodeSchemaKind: NodeKind.Map,
 		patternProperties: {
-			"^.*$": hasSingle(allowedTypes)
-				? allowedTypes[0]
-				: {
-						anyOf: allowedTypes,
-					},
+			"^.*$":
+				allowedTypes.length === 1
+					? (allowedTypes[0] ?? oob())
+					: {
+							anyOf: allowedTypes,
+						},
 		},
 	};
+
+	// Only include "description" property if it is present in the input.
+	if (schema.metadata?.description !== undefined) {
+		output.description = schema.metadata.description;
+	}
+
+	return output;
 }
 
 function createSchemaRef(schemaId: string): JsonSchemaRef {
