@@ -1063,11 +1063,13 @@ export function arraySchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
+	const TMetadata extends NodeSchemaMetadata,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
+	metadata: TMetadata | undefined,
 ) {
 	type Output = TreeNodeSchemaBoth<
 		TName,
@@ -1076,7 +1078,8 @@ export function arraySchema<
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
 		T,
-		undefined
+		undefined,
+		TMetadata
 	>;
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
@@ -1158,9 +1161,7 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static get metadata(): NodeSchemaMetadata | undefined {
-			return undefined; // TODO
-		}
+		public static readonly metadata: TMetadata | undefined = metadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

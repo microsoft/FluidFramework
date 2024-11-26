@@ -558,6 +558,19 @@ describe("schemaFactory", () => {
 			class NamedList extends factory.array("name", factory.number) {}
 			const namedInstance = new NamedList([5]);
 		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Foo extends factory.array("Foo", factory.number, {
+				metadata: { description: "An array of numbers", custom: { baz: true } },
+			}) {}
+
+			assert.deepEqual(Foo.metadata, {
+				description: "An array of numbers",
+				custom: { baz: true },
+			});
+		});
 	});
 
 	describe("Map", () => {
