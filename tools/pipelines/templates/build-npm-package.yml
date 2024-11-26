@@ -369,11 +369,46 @@ extends:
                       echo "Running tests: $TASK_TESTS"
 
                       # Pass the string to the script
-                      $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh "$TASK_TESTS" "$BUILD_DIR" "$BUILD_REASON"
-                    displayName: Run Tests in Parallel
+                      $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh "check:are-the-types-wrong webpack" "$BUILD_DIR" "$BUILD_REASON"
+                    displayName: types and webpack
                     failOnStderr: true
                     condition: succeededOrFailed()
 
+                  - script: |
+                      export startTest=true
+                      chmod +x $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh
+                      # Join the array elements into a space-separated string
+                      TASK_TESTS=$(echo '${{ convertToJson(parameters.taskTest) }}' | jq -r '.[]' | tr '\n' ' ')
+                      BUILD_REASON="${{ variables['Build.Reason'] }}"
+                      BUILD_DIR="${{ parameters.buildDirectory }}"
+
+                      echo "Build directory: $BUILD_DIR"
+                      echo "Build reason: $BUILD_REASON"
+                      echo "Running tests: $TASK_TESTS"
+
+                      # Pass the string to the script
+                      $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh "ci:test:realsvc:tinylicious ci:test:stress:tinylicious" "$BUILD_DIR" "$BUILD_REASON"
+                    displayName: Run Tests t9s
+                    failOnStderr: true
+                    condition: succeededOrFailed()
+
+                  - script: |
+                      export startTest=true
+                      chmod +x $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh
+                      # Join the array elements into a space-separated string
+                      TASK_TESTS=$(echo '${{ convertToJson(parameters.taskTest) }}' | jq -r '.[]' | tr '\n' ' ')
+                      BUILD_REASON="${{ variables['Build.Reason'] }}"
+                      BUILD_DIR="${{ parameters.buildDirectory }}"
+
+                      echo "Build directory: $BUILD_DIR"
+                      echo "Build reason: $BUILD_REASON"
+                      echo "Running tests: $TASK_TESTS"
+
+                      # Pass the string to the script
+                      $(Build.SourcesDirectory)/scripts/run-parallel-tests.sh "ci:test:mocha ci:test:jest ci:test:realsvc:local" "$BUILD_DIR" "$BUILD_REASON"
+                    displayName: Run Tests mocha jest local
+                    failOnStderr: true
+                    condition: succeededOrFailed()
 
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
