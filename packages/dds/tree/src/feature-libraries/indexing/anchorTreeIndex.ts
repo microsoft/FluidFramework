@@ -21,6 +21,7 @@ import {
 	type UpPath,
 	type ProtoNodes,
 	keyAsDetachedField,
+	compareUpPaths,
 } from "../../core/index.js";
 import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
 import { TreeStatus } from "../flex-tree/index.js";
@@ -320,7 +321,13 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 		);
 
 		if (keyFinder !== null) {
+			const expectedPath = nodeCursor.getPath();
 			const key = keyFinder(nodeCursor);
+			// TODO: determine perf impact of this check, alternative is not doing it in which case (if the key finder is not pure and functional),
+			// an error may be thrown further down the line if the structure of the nodes aren't expected or the contents of the index could be inaccurate
+			if (!compareUpPaths(nodeCursor.getPath(), expectedPath)) {
+				throw new Error("key finder should be pure and functional");
+			}
 			const anchor = nodeCursor.buildAnchor();
 			const anchorNode = this.forest.anchors.locate(anchor) ?? fail("expected anchor node");
 

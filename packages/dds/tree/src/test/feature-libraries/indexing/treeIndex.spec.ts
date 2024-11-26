@@ -244,6 +244,35 @@ describe("tree indexes", () => {
 		assertContents([parentId, parent, child]);
 	});
 
+	it("throw if given a key finder that does not return a cursor's path", () => {
+		const { view } = createView(new IndexableChild({ childKey: childId }));
+		const { forest } = view.checkout;
+
+		assert.throws(
+			() =>
+				new AnchorTreeIndex(
+					forest,
+					(schemaId) => {
+						if (schemaId === IndexableParent.identifier) {
+							// return a key finder that modifies the cursor
+							return (cursor) => {
+								cursor.firstField();
+								return "test";
+							};
+						}
+					},
+					() => 3,
+					(anchorNode: AnchorNode) => {
+						const simpleTree =
+							anchorNode.slots.get(proxySlot) ?? makeTreeNode(anchorNode, forest, view);
+						if (!isTreeValue(simpleTree)) {
+							return treeApi.status(simpleTree);
+						}
+					},
+				),
+		);
+	});
+
 	it("cannot be used once disposed", () => {
 		const { view } = createView(new IndexableChild({ childKey: childId }));
 		const { index } = createIndex(view);
