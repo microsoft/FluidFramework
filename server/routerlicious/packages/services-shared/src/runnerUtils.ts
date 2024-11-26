@@ -39,9 +39,6 @@ export async function closeRedisClientConnections(
 					}),
 			);
 		} catch (error) {
-			if (error instanceof Error && error.message === "Redis client not initialized") {
-				Lumberjack.error(error.message, undefined, error);
-			}
 			Lumberjack.error("Failed to add redis client to promise list", undefined, error);
 		}
 	}

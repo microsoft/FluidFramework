@@ -213,9 +213,11 @@ export async function deliCreate(
 		customizations?.clusterDrainingChecker,
 	);
 
-	deliLambdaFactory.on("dispose", async () => {
+	deliLambdaFactory.on("dispose", () => {
 		broadcasterLambda.close();
-		await publisher.close();
+		publisher.close().catch((error) => {
+			Lumberjack.error("Error closing publisher", undefined, error);
+		});
 	});
 
 	return deliLambdaFactory;

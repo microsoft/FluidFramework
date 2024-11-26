@@ -1,8 +1,5 @@
 ---
-"@fluidframework/server-lambdas": major
-"@fluidframework/server-routerlicious": major
-"@fluidframework/server-routerlicious-base": major
-"@fluidframework/server-services-shared": major
+"@fluidframework/server-services-shared": minor
 ---
 
 Created a utility function for Redis connection handling

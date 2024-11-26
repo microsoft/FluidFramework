@@ -1,10 +1,7 @@
 ---
-"@fluidframework/server-lambdas": major
-"@fluidframework/server-routerlicious": major
 "@fluidframework/server-routerlicious-base": major
-"@fluidframework/server-services-shared": major
 ---
 
 Added support for Redis graceful shutdown
 
-This PR adds a way to ensure that Redis connections are gracefully shut down when disposing service factory resources.
+This PR adds a way to ensure that Redis connections are gracefully shut down when disposing service factory resources.  There is a new required param, `redisClientConnectionManagers`, in the Nexus, Alfred, and Riddler RunnerFactories. This is scoped to r11s-base.
