@@ -23,6 +23,16 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./experimental": {
+			"import": {
+				"types": "./lib/experimentalEntrypoint.d.ts",
+				"default": "./lib/experimentalEntrypoint.js"
+			},
+			"require": {
+				"types": "./dist/experimentalEntrypoint.d.ts",
+				"default": "./dist/experimentalEntrypoint.js"
+			}
+		},
 		"./internal/container-definitions/internal": {
 			"import": "./lib/container-definitions/index.js",
 			"require": "./dist/container-definitions/index.js"
