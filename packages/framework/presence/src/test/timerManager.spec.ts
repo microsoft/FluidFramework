@@ -8,7 +8,7 @@ import assert from "node:assert";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers, spy } from "sinon";
 
-import { TimerManager } from "../presenceDatastoreManager.js";
+import { TimerManager } from "../timerManager.js";
 
 describe("TimerManager", () => {
 	const initialTime = 1000;
@@ -104,11 +104,13 @@ describe("TimerManager", () => {
 		const timer = new TimerManager();
 		const timer2 = new TimerManager();
 		const handler = spy(() => {});
+		const handler2 = spy(() => {});
 
 		timer.setTimeout(handler, 100);
-		timer2.setTimeout(handler, 50);
+		timer2.setTimeout(handler2, 50);
 		clock.tick(200);
 
-		assert.strictEqual(handler.callCount, 2);
+		assert.strictEqual(handler.callCount, 1);
+		assert.strictEqual(handler2.callCount, 1);
 	});
 });

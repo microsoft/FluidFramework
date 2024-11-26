@@ -33,7 +33,7 @@ describe("Presence", () => {
 			// it to 1010 so all tests start at that time.
 			clock.setSystemTime(initialTime);
 
-			// Set up the presence connection
+			// Set up the presence connection.
 			presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 		});
 
@@ -138,9 +138,10 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
+				// SIGNAL #1 - intial data is sent immediately
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
-				}); // SIGNAL #1 - intial data is sent immediately
+				});
 
 				const { count } = stateWorkspace.props;
 
@@ -196,8 +197,6 @@ describe("Presence", () => {
 				// signal with the value from the last signal (num=0).
 
 				clock.tick(100); // Time is now 1110
-
-				// expect(runtime.submittedSignals).toHaveLength(1);
 			});
 
 			it("batches signals sent within default allowableUpdateLatency", async () => {
@@ -482,11 +481,12 @@ describe("Presence", () => {
 				);
 
 				// Configure a state workspace
+				// SIGNAL #1 - this signal is not queued because it contains a value manager with a latency of 0,
+				// so the initial data will be sent immediately.
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 					immediateUpdate: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
-				}); // SIGNAL #1 - not queued because it contains a value manager with a latency of 0,
-				// so the initial data will be sent immediately
+				});
 
 				const { count, immediateUpdate } = stateWorkspace.props;
 
@@ -497,15 +497,11 @@ describe("Presence", () => {
 				count.local = { num: 34 }; // will be queued; deadline remains 1120
 
 				clock.tick(10); // Time is now 1110
-				immediateUpdate.local = { num: 56 };
+
 				// SIGNAL #2
-				// This should cause the queued signals to be merged with this immediately-sent
+				// The following update should cause the queued signals to be merged with this immediately-sent
 				// signal with the value from the last signal (num=34).
-
-				// It's necessary to tick the timer beyond the deadline so the timer will fire.
-				clock.tick(10); // Time is now 1250
-
-				// expect(runtime.submittedSignals).toHaveLength(2);
+				immediateUpdate.local = { num: 56 };
 			});
 
 			it("batches signals with different allowed latencies", async () => {
@@ -568,12 +564,10 @@ describe("Presence", () => {
 
 				// SIGNAL #1
 				// At time 1060, the deadline timer will fire and send a single signal with the value
-				// from the last signal (num=34, message="final message").
+				// from both workspaces (num=34, message="final message").
 
 				// It's necessary to tick the timer beyond the deadline so the timer will fire.
 				clock.tick(30); // Time is now 1080
-
-				// expect(runtime.submittedSignals).toHaveLength(1);
 			});
 
 			it("batches signals from multiple workspaces", async () => {
@@ -622,6 +616,7 @@ describe("Presence", () => {
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				}); // will be queued, deadline is 1110
+
 				const stateWorkspace2 = presence.getStates("name:testStateWorkspace2", {
 					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 60 }),
 				}); // will be queued, deadline is 1070
@@ -640,8 +635,8 @@ describe("Presence", () => {
 				note.local = { message: "final message" }; // will be queued; deadline remains 1080
 
 				// SIGNAL #1
-				// The deadline timer will fire at time 1080 and send a single
-				// signal with the values from the last workspace updates (num=34, message="final message").
+				// The deadline timer will fire at time 1070 and send a single
+				// signal with the values from the most recent workspace updates (num=34, message="final message").
 
 				// It's necessary to tick the timer beyond the deadline so the timer will fire.
 				clock.tick(30); // Time is now 1090
@@ -701,7 +696,7 @@ describe("Presence", () => {
 					],
 				);
 
-				// Configure a notifications workspaces
+				// Configure a notifications workspace
 				// eslint-disable-next-line @typescript-eslint/ban-types
 				const notificationsWorkspace: PresenceNotifications<{}> = presence.getNotifications(
 					"name:testNotificationWorkspace",
@@ -724,13 +719,13 @@ describe("Presence", () => {
 
 				const { testEvents } = notificationsWorkspace.props;
 
-				clock.tick(10); // Time is now 1020
+				clock.tick(40); // Time is now 1050
 
-				clock.tick(30); // Time is now 1050
 				// SIGNAL #1
 				testEvents.emit.broadcast("newId", 77);
 
 				clock.tick(10); // Time is now 1060
+
 				// SIGNAL #2
 				testEvents.emit.broadcast("newId", 88);
 			});
@@ -854,13 +849,16 @@ describe("Presence", () => {
 				count.local = { num: 56 }; // will be queued, deadline remains 1110
 
 				clock.tick(20); // Time is now 1060
-				testEvents.emit.broadcast("newId", 99);
+
 				// SIGNAL #1
-				// The notification will cause an immediate broadcast of the queued signal
+				// The notification below will cause an immediate broadcast of the queued signal
 				// along with the notification signal.
+				testEvents.emit.broadcast("newId", 99);
 
 				clock.tick(30); // Time is now 1090
+
 				// SIGNAL #2
+				// Immediate broadcast of the notification signal.
 				testEvents.emit.broadcast("newId", 111);
 			});
 		});
