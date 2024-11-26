@@ -33,6 +33,12 @@ export class DocumentLambda implements IPartitionLambda {
 
 	private activityCheckTimer: NodeJS.Timeout | undefined;
 
+	private reprocessRange: { startOffset: number | undefined; endOffset: number | undefined } = {
+		startOffset: undefined,
+		endOffset: undefined,
+	};
+	private reprocessingOffset: number | undefined;
+
 	constructor(
 		private readonly factory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
 		private readonly context: IContext,
@@ -45,6 +51,20 @@ export class DocumentLambda implements IPartitionLambda {
 			);
 			context.error(error, errorData);
 		});
+		this.contextManager.on(
+			"pause",
+			(lowestOffset: number, pausedAtOffset: number, reason?: any) => {
+				// Emit pause at the lowest offset out of all document partitions
+				// This is important for ensuring that we don't miss any messages
+				// And store the reprocessRange so that we can allow contextManager to move back to it when it resumes
+				// It will move back to the first offset which was not checkpointed from this range
+				this.storeReprocessRange(lowestOffset, pausedAtOffset);
+				context.pause(lowestOffset, reason);
+			},
+		);
+		this.contextManager.on("resume", () => {
+			context.resume();
+		});
 		this.activityCheckTimer = setInterval(
 			this.inactivityCheck.bind(this),
 			documentLambdaServerConfiguration.partitionActivityCheckInterval,
@@ -55,18 +75,30 @@ export class DocumentLambda implements IPartitionLambda {
 	 * {@inheritDoc IPartitionLambda.handler}
 	 */
 	public handler(message: IQueuedMessage): undefined {
-		if (!this.contextManager.setHead(message)) {
+		this.reprocessingOffset = this.isOffsetWithinReprocessRange(message.offset)
+			? message.offset
+			: undefined;
+		if (!this.contextManager.setHead(message, this.reprocessingOffset)) {
 			this.context.log?.warn(
 				"Unexpected head offset. " +
 					`head offset: ${this.contextManager.getHeadOffset()}, message offset: ${
 						message.offset
 					}`,
 			);
+			// update reprocessRange to avoid reprocessing the same message again
+			if (this.reprocessingOffset !== undefined) {
+				this.updateReprocessRange(this.reprocessingOffset);
+			}
 			return undefined;
 		}
 
 		this.handlerCore(message);
-		this.contextManager.setTail(message);
+		this.contextManager.setTail(message, this.reprocessingOffset);
+
+		// update reprocessRange to avoid reprocessing the same message again
+		if (this.reprocessingOffset !== undefined) {
+			this.updateReprocessRange(this.reprocessingOffset);
+		}
 
 		return undefined;
 	}
@@ -84,6 +116,45 @@ export class DocumentLambda implements IPartitionLambda {
 		}
 
 		this.documents.clear();
+	}
+
+	public pause(offset: number): void {
+		for (const [, partition] of this.documents) {
+			partition.pause(offset);
+		}
+	}
+
+	public resume(): void {
+		for (const [, partition] of this.documents) {
+			partition.resume();
+		}
+	}
+
+	private storeReprocessRange(lowestOffset: number, pausedAtoffset: number) {
+		this.reprocessRange = {
+			startOffset: lowestOffset,
+			endOffset: pausedAtoffset,
+		};
+	}
+
+	private isOffsetWithinReprocessRange(offset: number) {
+		return (
+			this.reprocessRange.startOffset !== undefined &&
+			this.reprocessRange.endOffset !== undefined &&
+			offset >= this.reprocessRange.startOffset &&
+			offset <= this.reprocessRange.endOffset
+		);
+	}
+
+	private updateReprocessRange(reprocessedOffset: number) {
+		this.reprocessRange.startOffset = reprocessedOffset + 1;
+		if (
+			this.reprocessRange.endOffset &&
+			this.reprocessRange.endOffset < this.reprocessRange.startOffset
+		) {
+			// reset since all messages in the reprocess range have been processed
+			this.reprocessRange = { startOffset: undefined, endOffset: undefined };
+		}
 	}
 
 	private handlerCore(message: IQueuedMessage): void {
@@ -114,9 +185,11 @@ export class DocumentLambda implements IPartitionLambda {
 			);
 			this.documents.set(routingKey, document);
 		} else {
-			// SetHead assumes it will always receive increasing offsets. So we need to split the creation case
+			// SetHead assumes it will always receive increasing offsets (except reprocessing during pause/resume). So we need to split the creation case
 			// from the update case.
-			document.context.setHead(message);
+			if (!document.context.setHead(message, this.reprocessingOffset)) {
+				return; // if head not updated, it means it doesnt need to be processed, return early
+			}
 		}
 
 		// Forward the message to the document queue and then resolve the promise to begin processing more messages
