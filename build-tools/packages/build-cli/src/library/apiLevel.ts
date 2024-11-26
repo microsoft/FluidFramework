@@ -12,7 +12,7 @@ export const ApiLevel = {
 	alpha: "alpha",
 	internal: "internal",
 	legacy: "legacy",
-	legacyAlpha: "legacyAlpha",
+	legacyAlpha: "legacy-alpha",
 } as const;
 export type ApiLevel = (typeof ApiLevel)[keyof typeof ApiLevel];
 

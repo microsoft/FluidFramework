@@ -406,7 +406,7 @@ async function generateEntrypoints(
 		beta: [],
 		internal: [],
 		legacy: [],
-		legacyAlpha: [],
+		"legacy-alpha": [],
 		public: [...unknownExports],
 	};
 
@@ -473,14 +473,14 @@ async function generateEntrypoints(
 		writeExports("legacy", [
 			...namedExportMap.public,
 			...namedExportMap.legacy,
-			...(supportLegacyAlpha ? [] : namedExportMap.legacyAlpha),
+			...(supportLegacyAlpha ? [] : namedExportMap["legacy-alpha"]),
 		]),
-		writeExports("legacyAlpha", [
+		writeExports(ApiLevel.legacyAlpha, [
 			...namedExportMap.public,
 			...namedExportMap.beta,
 			...namedExportMap.alpha,
 			...namedExportMap.legacy,
-			...namedExportMap.legacyAlpha,
+			...namedExportMap["legacy-alpha"],
 		]),
 	]);
 }

@@ -6,21 +6,15 @@
 import type { ExportDeclaration, ExportedDeclarations, JSDoc, SourceFile } from "ts-morph";
 import { Node, SyntaxKind } from "ts-morph";
 
-import type { ApiLevel } from "./apiLevel.js";
-import type { ApiTag } from "./apiTag.js";
+import { ApiLevel } from "./apiLevel.js";
+import { ApiTag } from "./apiTag.js";
 import { isKnownApiTag } from "./apiTag.js";
 
 interface ExportRecord {
 	name: string;
 	isTypeOnly: boolean;
 }
-interface ExportRecords {
-	public: ExportRecord[];
-	legacy: ExportRecord[];
-	legacyAlpha: ExportRecord[];
-	beta: ExportRecord[];
-	alpha: ExportRecord[];
-	internal: ExportRecord[];
+interface ExportRecords extends Record<ApiLevel, ExportRecord[]> {
 	/**
 	 * Entries here represent exports with unrecognized tags.
 	 * These may be errors or just concerns depending on context.
@@ -103,8 +97,8 @@ function getNodeApiLevel(node: Node): ApiLevel | undefined {
 	if (apiTags === undefined) {
 		return undefined;
 	}
-	if (apiTags.includes("legacy")) {
-		return apiTags.includes("alpha") ? "legacyAlpha" : "legacy";
+	if (apiTags.includes(ApiTag.legacy)) {
+		return apiTags.includes(ApiTag.alpha) ? ApiLevel.legacyAlpha : "legacy";
 	}
 	if (apiTags.length === 1) {
 		return apiTags[0];
@@ -125,7 +119,7 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	const records: ExportRecords = {
 		public: [],
 		legacy: [],
-		legacyAlpha: [],
+		"legacy-alpha": [],
 		beta: [],
 		alpha: [],
 		internal: [],
