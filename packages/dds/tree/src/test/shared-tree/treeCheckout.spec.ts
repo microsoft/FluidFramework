@@ -801,6 +801,37 @@ describe("sharedTreeView", () => {
 			},
 			{ skip: true },
 		);
+
+		itView("dispose branches created during the transaction", ({ view, tree }) => {
+			const branchA = tree.branch();
+			view.checkout.transaction.start();
+			const branchB = tree.branch();
+			view.checkout.transaction.start();
+			const branchC = tree.branch();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, false);
+			assert.equal(branchC.disposed, false);
+			view.checkout.transaction.abort();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, false);
+			assert.equal(branchC.disposed, true);
+			view.checkout.transaction.commit();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, true);
+			assert.equal(branchC.disposed, true);
+		});
+
+		itView("statuses are reported correctly", ({ view }) => {
+			assert.equal(view.checkout.isTransacting(), false);
+			view.checkout.transaction.start();
+			assert.equal(view.checkout.isTransacting(), true);
+			view.checkout.transaction.start();
+			assert.equal(view.checkout.isTransacting(), true);
+			view.checkout.transaction.commit();
+			assert.equal(view.checkout.isTransacting(), true);
+			view.checkout.transaction.abort();
+			assert.equal(view.checkout.isTransacting(), false);
+		});
 	});
 
 	describe("disposal", () => {
