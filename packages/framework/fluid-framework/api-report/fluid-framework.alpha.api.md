@@ -1162,6 +1162,7 @@ type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSc
 
 // @alpha
 export interface TreeIndex<TKey extends TreeIndexKey, TValue> extends ReadonlyMap<TKey, TValue> {
+    dispose(): void;
 }
 
 // @alpha
