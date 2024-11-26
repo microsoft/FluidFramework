@@ -128,9 +128,27 @@ Notifications API is partially implemented. All messages are always broadcast ev
 
 Notifications are fundamentally unreliable at this time as there are no built-in acknowledgements nor retained state. To prevent most common loss of notifications, always check for connection before sending.
 
-### Throttling
+### Throttling/batching
 
-Throttling is not yet implemented. `BroadcastControls` exists in the API to provide control over throttling of value updates, but throttling is not yet implemented. It is recommended that `BroadcastControls.allowableUpdateLatencyMs` use is considered and specified to light up once support is added.
+Presence signals are batched together and throttled to prevent flooding the network with signals when presence values are rapidly updated.
+The presence infrastructure will not immediately send outgoing signals; rather, they will be batched with any other outgoing messages and queued until a later time.
+
+A presence value manager such as `LatestValueManager` has an `allowableUpdateLatencyMs` value that can be configured; this value controls the longest time a message will be queued.
+This value can be controlled dynamically at runtime, so adjustments can be made based on runtime data.
+
+The default `allowableUpdateLatencyMs` is **60 milliseconds**.
+
+#### Example
+
+You can configure the batching and throttling behavior using the `allowableUpdateLatencyMs` property as in the following example:
+
+```ts
+// Configure a state workspace
+const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+	// This value manager has an allowable latency of 100ms, overriding the default value of 60ms.
+	count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+});
+```
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 

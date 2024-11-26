@@ -807,7 +807,7 @@ describe("Presence", () => {
 					],
 				);
 
-				// Configure a state workspaces
+				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
 					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
 				}); // will be queued, deadline is 1110
