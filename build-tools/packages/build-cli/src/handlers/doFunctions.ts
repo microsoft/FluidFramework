@@ -156,7 +156,13 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { bumpType, context, releaseGroup, releaseVersion, shouldInstall } = data;
+	const {
+		bumpType: bumpTypeLazy,
+		context,
+		releaseGroup,
+		releaseVersion,
+		shouldInstall,
+	} = data;
 
 	const rgRepo = isReleaseGroup(releaseGroup)
 		? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -165,6 +171,9 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 			context.fullPackageMap.get(releaseGroup)!;
 
 	const scheme = detectVersionScheme(releaseVersion);
+
+	const bumpType = await bumpTypeLazy.value;
+
 	const newVersion = bumpVersionScheme(releaseVersion, bumpType, scheme);
 	const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];
 

@@ -55,7 +55,8 @@ export const checkBranchName: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context, bumpType, shouldCheckBranch } = data;
+	const { context, bumpType: bumpTypeLazy, shouldCheckBranch } = data;
+	const bumpType = await bumpTypeLazy.value;
 
 	if (shouldCheckBranch === true) {
 		switch (bumpType) {
@@ -276,7 +277,7 @@ export const checkMainNextIntegrated: StateHandlerFunction = async (
 
 	const { bumpType, context, shouldCheckMainNextIntegrated } = data;
 
-	if (bumpType === "major") {
+	if ((await bumpType.value) === "major") {
 		if (shouldCheckMainNextIntegrated === true) {
 			const [main, next] = await Promise.all([
 				context.gitRepo.getShaForBranch("main"),
@@ -508,7 +509,8 @@ export const checkReleaseNotes: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { bumpType, releaseGroup, releaseVersion } = data;
+	const { bumpType: bumpTypeLazy, releaseGroup, releaseVersion } = data;
+	const bumpType = await bumpTypeLazy.value;
 
 	if (
 		// Only some release groups use changeset-based change-tracking.
@@ -563,7 +565,8 @@ export const checkChangelogs: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { releaseGroup, bumpType } = data;
+	const { releaseGroup, bumpType: bumpTypeLazy } = data;
+	const bumpType = await bumpTypeLazy.value;
 
 	if (
 		// Only some release groups use changeset-based change-tracking.
@@ -641,10 +644,12 @@ export const checkReleaseGroupIsBumped: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context, releaseGroup, releaseVersion, bumpType } = data;
+	const { context, releaseGroup, releaseVersion, bumpType: bumpTypeLazy } = data;
 
 	context.repo.reload();
 	const repoVersion = context.getVersion(releaseGroup);
+
+	const bumpType = await bumpTypeLazy.value;
 	const targetVersion = bumpVersionScheme(releaseVersion, bumpType).version;
 
 	if (repoVersion !== targetVersion) {
@@ -707,13 +712,14 @@ export const checkShouldCommit: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { bumpType, context, shouldCommit, releaseGroup, releaseVersion } = data;
+	const { bumpType: bumpTypeLazy, context, shouldCommit, releaseGroup, releaseVersion } = data;
 
 	if (shouldCommit !== true) {
 		BaseStateHandler.signalFailure(machine, state);
 		return true;
 	}
 
+	const bumpType = await bumpTypeLazy.value;
 	const branchName = generateBumpVersionBranchName(releaseGroup, bumpType, releaseVersion);
 	const commitMsg = generateBumpVersionCommitMessage(releaseGroup, bumpType, releaseVersion);
 
