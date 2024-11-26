@@ -130,7 +130,16 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 		// In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
 		// When @alpha is mapped to /legacy, @beta should not be included in
 		// @alpha aka /legacy entrypoint.
-		promises.push(generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, this.logger));
+		promises.push(
+			generateEntrypoints(
+				mainEntrypoint,
+				mapApiTagLevelToOutput,
+				this.logger,
+				typeof packageJson.exports === "object" &&
+					packageJson.exports !== null &&
+					"./legacyAlpha" in packageJson.exports,
+			),
+		);
 
 		if (node10TypeCompat) {
 			promises.push(
@@ -339,6 +348,7 @@ async function generateEntrypoints(
 	mainEntrypoint: string,
 	mapApiTagLevelToOutput: Map<ApiLevel, ExportData>,
 	log: CommandLogger,
+	supportLegacyAlpha: boolean,
 ): Promise<void> {
 	log.info(`Processing: ${mainEntrypoint}`);
 
@@ -460,9 +470,15 @@ async function generateEntrypoints(
 			...namedExportMap.beta,
 			...namedExportMap.alpha,
 		]),
-		writeExports("legacy", [...namedExportMap.public, ...namedExportMap.legacy]),
+		writeExports("legacy", [
+			...namedExportMap.public,
+			...namedExportMap.legacy,
+			...(supportLegacyAlpha ? [] : namedExportMap.legacyAlpha),
+		]),
 		writeExports("legacyAlpha", [
 			...namedExportMap.public,
+			...namedExportMap.beta,
+			...namedExportMap.alpha,
 			...namedExportMap.legacy,
 			...namedExportMap.legacyAlpha,
 		]),
