@@ -60,11 +60,11 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
+		"@fluid-private/test-tools": "workspace:~",
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/test-tools": "workspace:~",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/node": "^18.19.0",

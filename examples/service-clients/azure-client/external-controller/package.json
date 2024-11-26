@@ -55,6 +55,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
+		"@fluid-private/test-tools": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -65,7 +66,6 @@
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/server-local-server": "^5.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/test-tools": "workspace:~",
 		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",

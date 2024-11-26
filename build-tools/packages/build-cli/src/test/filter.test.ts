@@ -188,7 +188,6 @@ describe("selectAndFilterPackages", () => {
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-internal/getkeys",
-			"@fluidframework/test-tools",
 		]);
 	});
 

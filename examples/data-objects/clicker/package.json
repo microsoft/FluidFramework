@@ -62,10 +62,10 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
+		"@fluid-private/test-tools": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/test-tools": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",

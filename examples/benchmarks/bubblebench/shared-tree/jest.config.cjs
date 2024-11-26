@@ -4,7 +4,7 @@
  */
 
 // Get the test port from the global map and set it in env for this test
-const testTools = require("@fluidframework/test-tools");
+const testTools = require("@fluid-private/test-tools");
 const { name } = require("./package.json");
 
 mappedPort = testTools.getTestPort(name);

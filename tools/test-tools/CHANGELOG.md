@@ -1,4 +1,4 @@
-# @fluidframework/test-tools
+# @fluid-private/test-tools
 
 ## vNext
 
