@@ -207,4 +207,10 @@ export {
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export { type Revertible, RevertibleStatus, type RevertibleFactory } from "./revertible.js";
+export {
+	type Revertible,
+	RevertibleStatus,
+	type RevertibleFactory,
+	type RevertibleAlphaFactory,
+	type RevertibleAlpha,
+} from "./revertible.js";

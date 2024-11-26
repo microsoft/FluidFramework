@@ -13,5 +13,6 @@ module.exports = {
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"no-case-declarations": "off",
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 };

@@ -4,6 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
 
 import {
 	type Anchor,
@@ -35,7 +37,6 @@ import {
 	combineVisitors,
 	deepCopyMapTree,
 } from "../../core/index.js";
-import { createEmitter, type Listenable } from "../../events/index.js";
 import {
 	assertNonNegativeSafeInteger,
 	assertValidIndex,
