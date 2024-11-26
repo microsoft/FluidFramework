@@ -9,7 +9,7 @@ import type { Listenable } from "@fluidframework/core-interfaces";
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { ValueManager } from "./internalTypes.js";
-import { brandedObjectEntries } from "./internalTypes.js";
+import { objectEntries } from "./internalUtils.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
 import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -110,7 +110,7 @@ class LatestValueManagerImpl<T, Key extends string>
 
 	public *clientValues(): IterableIterator<LatestValueClientData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [clientSessionId, value] of brandedObjectEntries(allKnownStates.states)) {
+		for (const [clientSessionId, value] of objectEntries(allKnownStates.states)) {
 			if (clientSessionId !== allKnownStates.self) {
 				yield {
 					client: this.datastore.lookupClient(clientSessionId),
