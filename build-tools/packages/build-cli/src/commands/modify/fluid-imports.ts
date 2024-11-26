@@ -633,6 +633,23 @@ class ApiLevelReader {
 			addUniqueNamedExportsToMap(exports.alpha, memberData, ApiLevel.internal);
 		} else {
 			addUniqueNamedExportsToMap(exports.legacy, memberData, ApiLevel.legacy);
+			if (exports.legacyAlpha.length > 0) {
+				// @alpha APIs have been mapped to both /alpha and /legacy paths.
+				// Later @legacy tag was added explicitly.
+				// Check for a /legacy/alpha export to map @legacy & @alpha as legacy/alpha.
+				const legacyAlphaExport =
+					this.tempSource
+						.addImportDeclaration({
+							moduleSpecifier: `${packageName}/legacyAlpha`,
+						})
+						.getModuleSpecifierSourceFile() !== undefined;
+
+				addUniqueNamedExportsToMap(
+					exports.legacyAlpha,
+					memberData,
+					legacyAlphaExport ? ApiLevel.legacyAlpha : ApiLevel.legacy,
+				);
+			}
 			addUniqueNamedExportsToMap(exports.beta, memberData, ApiLevel.beta);
 			if (exports.alpha.length > 0) {
 				// @alpha APIs have been mapped to both /alpha and /legacy paths.

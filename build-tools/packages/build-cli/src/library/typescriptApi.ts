@@ -17,6 +17,7 @@ interface ExportRecord {
 interface ExportRecords {
 	public: ExportRecord[];
 	legacy: ExportRecord[];
+	legacyAlpha: ExportRecord[];
 	beta: ExportRecord[];
 	alpha: ExportRecord[];
 	internal: ExportRecord[];
@@ -103,7 +104,7 @@ function getNodeApiLevel(node: Node): ApiLevel | undefined {
 		return undefined;
 	}
 	if (apiTags.includes("legacy")) {
-		return "legacy";
+		return apiTags.includes("alpha") ? "legacyAlpha" : "legacy";
 	}
 	if (apiTags.length === 1) {
 		return apiTags[0];
@@ -124,6 +125,7 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	const records: ExportRecords = {
 		public: [],
 		legacy: [],
+		legacyAlpha: [],
 		beta: [],
 		alpha: [],
 		internal: [],
