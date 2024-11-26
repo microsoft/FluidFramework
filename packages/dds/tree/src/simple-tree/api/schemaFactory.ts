@@ -339,7 +339,7 @@ export class SchemaFactory<
 		never,
 		TMetadata
 	> {
-		return objectSchema(this.scoped(name), fields, true, options);
+		return objectSchema(this.scoped(name), fields, true, options?.metadata);
 	}
 
 	/**
@@ -387,9 +387,14 @@ export class SchemaFactory<
 	 * class NamedMap extends factory.map("name", factory.number) {}
 	 * ```
 	 */
-	public map<Name extends TName, const T extends ImplicitAllowedTypes>(
+	public map<
+		Name extends TName,
+		const T extends ImplicitAllowedTypes,
+		const TMetadata extends NodeSchemaMetadata,
+	>(
 		name: Name,
 		allowedTypes: T,
+		options?: NodeSchemaOptions<TMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
@@ -397,18 +402,22 @@ export class SchemaFactory<
 		MapNodeInsertableData<T>,
 		true,
 		T,
-		undefined
+		undefined,
+		TMetadata
 	>;
 
 	/**
+	 * {@link SchemaFactory.map} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return `TreeNodeSchemaBoth`, however TypeScript gives an error if one of the overloads implicitly up-casts the return type of the implementation.
 	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
 	 * and the implementation is type safe, and forcing an unsafe typing instead.
 	 */
-	public map<const T extends ImplicitAllowedTypes>(
+	public map<const T extends ImplicitAllowedTypes, const TMetadata extends NodeSchemaMetadata>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
+		options?: NodeSchemaOptions<TMetadata>,
 	): TreeNodeSchema<string, NodeKind.Map, TreeMapNode<T>, MapNodeInsertableData<T>, true, T> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -422,6 +431,7 @@ export class SchemaFactory<
 						nameOrAllowedTypes as T,
 						false,
 						true,
+						options?.metadata,
 					) as TreeNodeSchema,
 			) as TreeNodeSchemaBoth<
 				string,
@@ -430,7 +440,8 @@ export class SchemaFactory<
 				MapNodeInsertableData<T>,
 				true,
 				T,
-				undefined
+				undefined,
+				TMetadata
 			>;
 		}
 		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
@@ -441,8 +452,15 @@ export class SchemaFactory<
 			MapNodeInsertableData<T>,
 			true,
 			T,
-			undefined
-		> = this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
+			undefined,
+			TMetadata
+		> = this.namedMap(
+			nameOrAllowedTypes as TName,
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+		);
 		return out;
 	}
 
@@ -455,11 +473,13 @@ export class SchemaFactory<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
+		TMetadata extends NodeSchemaMetadata,
 	>(
 		name: Name,
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
+		metadata: TMetadata | undefined,
 	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
@@ -467,7 +487,8 @@ export class SchemaFactory<
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T,
-		undefined
+		undefined,
+		TMetadata
 	> {
 		return mapSchema(
 			this.scoped(name),
@@ -475,6 +496,7 @@ export class SchemaFactory<
 			implicitlyConstructable,
 			// The current policy is customizable nodes don't get fake prototypes.
 			!customizable,
+			metadata,
 		);
 	}
 
@@ -806,10 +828,11 @@ export class SchemaFactory<
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(
-		name: Name,
-		allowedTypes: T,
-	) {
+	public mapRecursive<
+		Name extends TName,
+		const T extends Unenforced<ImplicitAllowedTypes>,
+		const TMetadata extends NodeSchemaMetadata,
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TMetadata>) {
 		const MapSchema = this.namedMap(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -817,6 +840,7 @@ export class SchemaFactory<
 			// Setting this (implicitlyConstructable) to true seems to work ok currently, but not for other node kinds.
 			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			false,
+			options?.metadata,
 		);
 
 		return MapSchema as TreeNodeSchemaClass<
