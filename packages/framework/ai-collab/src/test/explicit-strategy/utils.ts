@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 // eslint-disable-next-line import/no-internal-modules
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -74,5 +76,157 @@ export function initializeOpenAIClient(service: "openai" | "azure"): OpenAI {
 
 		const client = new OpenAI({ apiKey });
 		return client;
+	}
+}
+
+/**
+ * A utility class for snapshot testing.
+ */
+// export class MochaSnapshotUnitTester {
+// 	public constructor(
+// 		public readonly snapshotDirectory: string,
+// 		public readonly suiteName: string,
+// 	) {}
+
+// 	public expectToMatchSnapshot(
+// 		mochaContext: Mocha.Context,
+// 		output: string,
+// 		options?: { fileNameOverride?: string },
+// 	): void {
+// 		const snapshotBaseFolderDir = path.join(this.snapshotDirectory, "__snapshots__");
+
+// 		// Create the __snapshots__ directory if it does not exist
+// 		if (!fs.existsSync(snapshotBaseFolderDir)) {
+// 			fs.mkdirSync(snapshotBaseFolderDir);
+// 		}
+
+// 		// Directory to store snapshots
+// 		const snapshotDir: string = path.join(
+// 			this.snapshotDirectory,
+// 			"__snapshots__",
+// 			this.suiteName,
+// 		);
+
+// 		if (!fs.existsSync(snapshotDir)) {
+// 			fs.mkdirSync(snapshotDir);
+// 		}
+
+// 		const testName: string =
+// 			options?.fileNameOverride ??
+// 			mochaContext.test?.title.replace(/\s+/g, "_") ??
+// 			"unknown_test";
+// 		const snapshotFile: string = path.join(snapshotDir, `${testName}.snap.json`);
+
+// 		const shouldUpdateSnapshot: boolean = process.env.UPDATE_SNAPSHOTS === "true";
+
+// 		if (fs.existsSync(snapshotFile) && !shouldUpdateSnapshot) {
+// 			// Snapshot exists, compare outputs
+// 			const expectedOutput: string = fs.readFileSync(snapshotFile, "utf8");
+// 			assert.strictEqual(output, expectedOutput);
+// 		} else {
+// 			// Snapshot does not exist or updating snapshot
+// 			fs.writeFileSync(snapshotFile, output, "utf8");
+// 			console.log(
+// 				`Snapshot ${fs.existsSync(snapshotFile) ? "updated" : "created"} for test: ${testName}`,
+// 			);
+// 		}
+// 	}
+// }
+
+/**
+ * A utility class for snapshot testing.
+ */
+export class MochaSnapshotUnitTester {
+	public constructor(
+		public readonly snapshotDirectory: string,
+		public readonly suiteName: string,
+	) {}
+
+	public expectToMatchSnapshot(
+		mochaContext: Mocha.Context,
+		output: string,
+		options?: { fileNameOverride?: string; metadata?: Record<string, string> },
+	): void {
+		const snapshotBaseFolderDir = path.join(this.snapshotDirectory, "__snapshots__");
+
+		// Create the __snapshots__ directory if it does not exist
+		if (!fs.existsSync(snapshotBaseFolderDir)) {
+			fs.mkdirSync(snapshotBaseFolderDir);
+		}
+
+		// Directory to store snapshots
+		const snapshotDir: string = path.join(
+			this.snapshotDirectory,
+			"__snapshots__",
+			this.suiteName,
+		);
+
+		if (!fs.existsSync(snapshotDir)) {
+			fs.mkdirSync(snapshotDir);
+		}
+
+		const testName: string =
+			options?.fileNameOverride ??
+			mochaContext.test?.title.replace(/\s+/g, "_") ??
+			"unknown_test";
+		const snapshotFile: string = path.join(snapshotDir, `${testName}.snap`);
+
+		const shouldUpdateSnapshot: boolean = process.env.UPDATE_SNAPSHOTS === "true";
+
+		if (fs.existsSync(snapshotFile) && !shouldUpdateSnapshot) {
+			// Snapshot exists, compare outputs
+			const fileContent: string = fs.readFileSync(snapshotFile, "utf8");
+			const expectedOutput = this.removeMetadata(fileContent);
+			assert.strictEqual(
+				output.trim(),
+				expectedOutput.trim(),
+				`Snapshot mismatch for test: ${testName}`,
+			);
+		} else {
+			// Add metadata headers
+			const metadataJson: Record<string, string> = { ...options?.metadata };
+			if (mochaContext.test?.parent?.title !== undefined) {
+				metadataJson["Test Suite Title"] = mochaContext.test?.parent?.title;
+			}
+			if (mochaContext.test?.title !== undefined) {
+				metadataJson["Test Title"] = mochaContext.test?.title;
+			}
+			const metadata = this.generateMetadata(metadataJson);
+
+			const snapshotContent = `${metadata}\n\n${output.trim()}`;
+
+			// Save the snapshot
+			fs.writeFileSync(snapshotFile, snapshotContent, "utf8");
+			console.log(
+				`Snapshot ${fs.existsSync(snapshotFile) ? "updated" : "created"} for test: ${testName}`,
+			);
+		}
+	}
+
+	/**
+	 * Generate metadata headers for the snapshot.
+	 */
+	private generateMetadata(additionalMetadata?: Record<string, string>): string {
+		const metadataEntries = {
+			"Generated on": new Date().toISOString(),
+			"description": "This is a snapshot file utilized for testing purposes.",
+			...additionalMetadata,
+		};
+
+		// Format metadata as a block enclosed by `---`
+		const metadata = Object.entries(metadataEntries)
+			.map(([key, value]) => `${key}: ${value}`)
+			.join("\n");
+
+		return `---\n${metadata}\n---`;
+	}
+
+	/**
+	 * Remove metadata from the snapshot content before comparison.
+	 */
+	private removeMetadata(content: string): string {
+		// Remove metadata block delimited by `---`
+		// eslint-disable-next-line unicorn/better-regex
+		return content.replace(/^---[\s\S]*?---\n*/, "").trim();
 	}
 }
