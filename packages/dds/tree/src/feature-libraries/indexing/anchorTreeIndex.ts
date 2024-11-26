@@ -150,7 +150,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				cursor.clear();
 			},
 			enterNode(index: number): void {
-				assert(parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
+				assert(parentField !== undefined, "must be in a field to enter node");
 
 				parent = {
 					parent,
@@ -160,7 +160,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				parentField = undefined;
 			},
 			exitNode(index: number): void {
-				assert(parent !== undefined, 0x3ac /* Must have parent node */);
+				assert(parent !== undefined, "must have parent node");
 				const temp = parent;
 				parentField = temp.parentField;
 				parent = temp.parent;
