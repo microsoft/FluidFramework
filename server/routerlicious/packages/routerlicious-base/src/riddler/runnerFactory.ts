@@ -25,7 +25,7 @@ import { ITenantDocument } from "./tenantManager";
 import { IRiddlerResourcesCustomizations } from "./customizations";
 import { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { StartupCheck } from "@fluidframework/server-services-shared";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
  * @internal
@@ -49,6 +49,7 @@ export class RiddlerResources implements IResources {
 		public readonly tenantKeyGenerator: utils.ITenantKeyGenerator,
 		public readonly startupCheck: IReadinessCheck,
 		public readonly cache: RedisCache,
+		public readonly redisClientConnectionManagers: utils.IRedisClientConnectionManager[],
 		public readonly readinessCheck?: IReadinessCheck,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -62,7 +63,11 @@ export class RiddlerResources implements IResources {
 	}
 
 	public async dispose(): Promise<void> {
-		await this.mongoManager.close();
+		const mongoManagerCloseP = this.mongoManager.close();
+		const redisClientConnectionManagersCloseP = closeRedisClientConnections(
+			this.redisClientConnectionManagers,
+		);
+		await Promise.all([mongoManagerCloseP, redisClientConnectionManagersCloseP]);
 	}
 }
 
@@ -77,6 +82,8 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		// Cache connection
 		const redisConfig = config.get("redisForTenantCache");
 		let cache: RedisCache;
+		// List of Redis client connection managers that need to be closed on dispose
+		const redisClientConnectionManagers: utils.IRedisClientConnectionManager[] = [];
 		if (redisConfig) {
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
@@ -100,6 +107,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 							redisConfig.slotsRefreshTimeout,
 							retryDelays,
 					  );
+			redisClientConnectionManagers.push(redisClientConnectionManagerForTenantCache);
 			cache = new RedisCache(redisClientConnectionManagerForTenantCache, redisParams);
 		}
 		// Database connection
@@ -183,6 +191,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			tenantKeyGenerator,
 			startupCheck,
 			cache,
+			redisClientConnectionManagers,
 			customizations?.readinessCheck,
 		);
 	}

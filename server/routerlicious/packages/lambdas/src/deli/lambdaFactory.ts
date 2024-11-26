@@ -373,6 +373,8 @@ export class DeliLambdaFactory
 	}
 
 	public async dispose(): Promise<void> {
+		// Emit this event to close the broadcasterLambda and publisher
+		this.emit("dispose");
 		const mongoClosedP = this.operationsDbMongoManager.close();
 		const forwardProducerClosedP = this.forwardProducer.close();
 		const signalProducerClosedP = this.signalProducer?.close();
