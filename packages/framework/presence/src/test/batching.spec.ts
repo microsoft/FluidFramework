@@ -38,6 +38,9 @@ describe("Presence", () => {
 		});
 
 		afterEach(() => {
+			// Tick the clock forward by a large amount before resetting it
+			// in case there are lingering queued signals or timers
+			clock.tick(1000);
 			clock.reset();
 		});
 
@@ -505,44 +508,69 @@ describe("Presence", () => {
 			});
 
 			it("batches signals with different allowed latencies", async () => {
-				runtime.signalsExpected.push([
-					"Pres:DatastoreUpdate",
-					{
-						"sendTimestamp": 1060,
-						"avgLatency": 10,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": {
-										"rev": 0,
-										"timestamp": 1000,
-										"value": "sessionId-2",
-									},
-								},
-							},
-							"s:name:testStateWorkspace": {
-								"count": {
-									"sessionId-2": {
-										"rev": 2,
-										"timestamp": 1050,
-										"value": {
-											"num": 34,
+				runtime.signalsExpected.push(
+					[
+						"Pres:DatastoreUpdate",
+						{
+							"sendTimestamp": 1060,
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": {
+											"rev": 0,
+											"timestamp": 1000,
+											"value": "sessionId-2",
 										},
 									},
 								},
-								"note": {
-									"sessionId-2": {
-										"rev": 1,
-										"timestamp": 1020,
-										"value": {
-											"message": "will be queued",
+								"s:name:testStateWorkspace": {
+									"count": {
+										"sessionId-2": {
+											"rev": 2,
+											"timestamp": 1050,
+											"value": {
+												"num": 34,
+											},
+										},
+									},
+									"note": {
+										"sessionId-2": {
+											"rev": 1,
+											"timestamp": 1020,
+											"value": {
+												"message": "will be queued",
+											},
 										},
 									},
 								},
 							},
 						},
-					},
-				]);
+					],
+					[
+						"Pres:DatastoreUpdate",
+						{
+							"sendTimestamp": 1110,
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": { "rev": 0, "timestamp": 1000, "value": "sessionId-2" },
+									},
+								},
+								"s:name:testStateWorkspace": {
+									"note": {
+										"sessionId-2": {
+											"rev": 2,
+											"timestamp": 1060,
+											"value": { "message": "final message" },
+										},
+									},
+								},
+							},
+						},
+					],
+				);
 
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
@@ -559,15 +587,19 @@ describe("Presence", () => {
 				clock.tick(30); // Time is now 1050
 				count.local = { num: 34 }; // will be queued; deadline remains 1060
 
-				clock.tick(10); // Time is now 1060
-				note.local = { message: "final message" }; // will be queued; deadline remains 1060
-
 				// SIGNAL #1
 				// At time 1060, the deadline timer will fire and send a single signal with the value
-				// from both workspaces (num=34, message="final message").
+				// from both workspaces (num=34, message="will be queued").
+
+				clock.tick(10); // Time is now 1060
+				note.local = { message: "final message" }; // will be queued; deadline is 1110
+
+				// SIGNAL #2
+				// At time 1110, the deadline timer will fire and send a single signal with the value
+				// from the note workspace (message="final message").
 
 				// It's necessary to tick the timer beyond the deadline so the timer will fire.
-				clock.tick(30); // Time is now 1080
+				clock.tick(100); // Time is now 1160
 			});
 
 			it("batches signals from multiple workspaces", async () => {
