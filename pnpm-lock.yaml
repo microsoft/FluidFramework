@@ -11444,6 +11444,9 @@ importers:
 
   packages/framework/presence:
     dependencies:
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../common/client-utils
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
