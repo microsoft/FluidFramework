@@ -3,6 +3,16 @@ title: Signals and Signaler
 sidebar_position: 6
 ---
 
+:::warning
+
+Signaler/SignalManager are now deprecated and no longer supported by Fluid team.
+
+Please checkout our new Presence offering [here](../build/presence).
+
+**We highly recommend moving to the new Presence APIs**
+
+:::
+
 When using DDSes, data is sequenced and stored within the Fluid container to achieve synchronized shared state. For scenarios that involve shared persisted data, DDSes provide an effective way to communicate data so that it is retained in the container. However, there could be many scenarios where we need to communicate data that is short-lived, in which the ordering and storage of said information would be wasteful and unnecessary. For instance, displaying the currently selected object of each user is an example of short-lived information in which the past data is mostly irrelevant.
 
 Signals provide an appropriate channel for transmitting transient data, since the information that is communicated via signals is not retained in the container. Signals are not guaranteed to be ordered on delivery relative to other signals and ops, but they still provide a useful communication channel for impermanent and short-lived data.
