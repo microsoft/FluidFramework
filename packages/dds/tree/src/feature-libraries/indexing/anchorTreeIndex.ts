@@ -22,15 +22,16 @@ import {
 	type ProtoNodes,
 	keyAsDetachedField,
 	compareUpPaths,
+	TreeNavigationResult,
 } from "../../core/index.js";
 import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
 import { TreeStatus } from "../flex-tree/index.js";
 
 /**
- * A function that gets the value to index a node on.
+ * A function that gets the value to index a node on, must be pure and functional.
  * The given cursor should point to the node that will be indexed.
  *
- * @returns a value on the node that the index will use as
+ * @returns a value the index will use as the key for the given node
  *
  * @remarks
  * This function does not own the cursor in any way, it walks the cursor to find the key the node is indexed on
@@ -60,11 +61,11 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	/**
 	 * The actual index from keys to anchor nodes.
 	 */
-	private readonly nodes = new Map<TKey, AnchorNode[]>();
+	private readonly keyToNodes = new Map<TKey, AnchorNode[]>();
 	/**
 	 * Maintained for efficient removal of anchor nodes from the index when updating their keys
 	 */
-	private readonly anchorKeys = new Map<AnchorNode, TKey>();
+	private readonly nodeToKey = new Map<AnchorNode, TKey>();
 	/**
 	 * Keeps track of anchors for disposal.
 	 */
@@ -78,7 +79,8 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	/**
 	 * @param forest - the forest that is being indexed
 	 * @param indexer - a function that retrieves the key finder based on a given schema or undefined if the schema does not have an associated key finder
-	 * @param getValue - a function that returns the value or undefined given at least one anchor node
+	 * @param getValue - a pure and functional function that returns the associated value of one or more anchor nodes, can be used to map and filter the indexed anchor nodes
+	 * so that the values returned from the index are more usable
 	 * @param checkTreeStatus - a function that gets the tree status from an anchor node, used for filtering out detached nodes
 	 */
 	public constructor(
@@ -117,39 +119,33 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 		let parent: UpPath | undefined;
 
 		return createAnnouncedVisitor({
+			// nodes (and their entire subtrees) are added to the index as soon as they are created
 			afterCreate: (content: ProtoNodes, destination: FieldKey) => {
 				const detachedCursor = this.forest.allocateCursor();
-				this.forest.tryMoveCursorToField(
-					{ fieldKey: destination, parent: undefined },
-					detachedCursor,
+				assert(
+					this.forest.tryMoveCursorToField(
+						{ fieldKey: destination, parent: undefined },
+						detachedCursor,
+					) === TreeNavigationResult.Ok,
+					"destination of created nodes must be a valid detached field",
 				);
 				this.indexField(detachedCursor);
 				detachedCursor.free();
 			},
-			beforeReplace: () => {
-				assert(parent !== undefined, "must have a parent");
-				const cursor = this.forest.allocateCursor();
-				this.forest.moveCursorToPath(parent, cursor);
-				const anchor = cursor.buildAnchor();
-				const anchorNode = this.forest.anchors.locate(anchor);
-				if (anchorNode !== undefined) {
-					const previousKey = this.anchorKeys.get(anchorNode);
-					if (previousKey !== undefined) {
-						this.removeAnchor(anchorNode, previousKey);
-					}
-				}
-				cursor.clear();
-				this.forest.forgetAnchor(anchor);
-			},
+			// when a replace happens, the keys of previously indexed nodes could be changed so we must re-index them
 			afterReplace: () => {
 				assert(parent !== undefined, "must have a parent");
 				const cursor = this.forest.allocateCursor();
 				this.forest.moveCursorToPath(parent, cursor);
 				assert(cursor.mode === CursorLocationType.Nodes, "replace should happen in a node");
 				cursor.exitNode();
+				// we must re-index the spine because the key finders allow for any value under a subtree to be the key
+				// this means that a replace can cause the key for any node up its spine to be changed
 				this.indexSpine(cursor);
 				cursor.clear();
 			},
+			// the methods below are used to keep track of the path that has been traversed by the visitor
+			// this is required so that cursors can be moved to the correct location when index updates are required
 			enterNode(index: number): void {
 				assert(parentField !== undefined, "must be in a field to enter node");
 
@@ -180,7 +176,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 */
 	public get(key: TKey): TValue | undefined {
 		this.checkNotDisposed();
-		return this.getFilteredValue(this.nodes.get(key));
+		return this.getFilteredValue(this.keyToNodes.get(key));
 	}
 
 	/**
@@ -197,7 +193,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	public get size(): number {
 		this.checkNotDisposed();
 		let s = 0;
-		for (const nodes of this.nodes.values()) {
+		for (const nodes of this.keyToNodes.values()) {
 			if (this.getFilteredValue(nodes) !== undefined) {
 				s += 1;
 			}
@@ -210,7 +206,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 */
 	public *keys(): IterableIterator<TKey> {
 		this.checkNotDisposed();
-		for (const [key, nodes] of this.nodes.entries()) {
+		for (const [key, nodes] of this.keyToNodes.entries()) {
 			if (this.getFilteredValue(nodes) !== undefined) {
 				yield key;
 			}
@@ -222,7 +218,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 */
 	public *values(): IterableIterator<TValue> {
 		this.checkNotDisposed();
-		for (const nodes of this.nodes.values()) {
+		for (const nodes of this.keyToNodes.values()) {
 			const filtered = this.getFilteredValue(nodes);
 			if (filtered !== undefined) {
 				yield filtered;
@@ -235,7 +231,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 */
 	public *entries(): IterableIterator<[TKey, TValue]> {
 		this.checkNotDisposed();
-		for (const [key, nodes] of this.nodes.entries()) {
+		for (const [key, nodes] of this.keyToNodes.entries()) {
 			const filtered = this.getFilteredValue(nodes);
 			if (filtered !== undefined) {
 				yield [key, filtered];
@@ -256,7 +252,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 		thisArg?: unknown,
 	): void {
 		this.checkNotDisposed();
-		for (const [key, nodes] of this.nodes.entries()) {
+		for (const [key, nodes] of this.keyToNodes.entries()) {
 			const filtered = this.getFilteredValue(nodes);
 			if (filtered !== undefined) {
 				callbackfn.call(thisArg, filtered, key, this);
@@ -270,7 +266,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 */
 	public *allEntries(): IterableIterator<[TKey, TValue]> {
 		this.checkNotDisposed();
-		for (const [key, nodes] of this.nodes.entries()) {
+		for (const [key, nodes] of this.keyToNodes.entries()) {
 			const value = this.getValue(nodes as unknown as TreeIndexNodes<AnchorNode>);
 			if (value !== undefined) {
 				yield [key, value];
@@ -292,7 +288,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				this.forest.forgetAnchor(anchor);
 			}
 		}
-		this.nodes.clear();
+		this.keyToNodes.clear();
 		this.anchors.clear();
 		this.forest.deregisterAnnouncedVisitor(this.keyFinder);
 		this.disposed = true;
@@ -332,7 +328,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			const anchorNode = this.forest.anchors.locate(anchor) ?? fail("expected anchor node");
 
 			// check if this anchor node already exists in the index
-			const existingKey = this.anchorKeys.get(anchorNode);
+			const existingKey = this.nodeToKey.get(anchorNode);
 			if (existingKey !== undefined) {
 				// if the node already exists but has the same key, we return early
 				if (existingKey === key) {
@@ -344,14 +340,8 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				}
 			}
 
-			const nodes = this.nodes.get(key);
-			if (nodes !== undefined) {
-				// if the key already exists in the index, the anchor node is appended to its list of nodes
-				nodes.push(anchorNode);
-			} else {
-				this.nodes.set(key, [anchorNode]);
-			}
-			this.anchorKeys.set(anchorNode, key);
+			getOrCreate(this.keyToNodes, key, () => []).push(anchorNode);
+			this.nodeToKey.set(anchorNode, key);
 
 			getOrCreate(this.anchors, anchorNode, () => []).push(anchor);
 			// when the anchor node is destroyed, delete it from the index
@@ -403,17 +393,17 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	}
 
 	private removeAnchor(anchorNode: AnchorNode, key: TKey): void {
-		const indexedNodes = this.nodes.get(key);
+		const indexedNodes = this.keyToNodes.get(key);
 		assert(indexedNodes !== undefined, "destroyed anchor node should be tracked by index");
 		const index = indexedNodes.indexOf(anchorNode);
 		assert(index !== -1, "destroyed anchor node should be tracked by index");
 		const newNodes = filterNodes(indexedNodes, (n) => n !== anchorNode);
 		if (newNodes !== undefined && newNodes.length > 0) {
-			this.nodes.set(key, newNodes);
+			this.keyToNodes.set(key, newNodes);
 		} else {
-			this.nodes.delete(key);
+			this.keyToNodes.delete(key);
 		}
-		this.anchorKeys.delete(anchorNode);
+		this.nodeToKey.delete(anchorNode);
 		assert(this.anchors.delete(anchorNode), "destroyed anchor should be tracked by index");
 	}
 
