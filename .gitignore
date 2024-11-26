@@ -12,7 +12,7 @@ alpha.d.ts
 beta.d.ts
 internal.d.ts
 legacy.d.ts
-legacyAlpha.d.ts
+legacy-alpha.d.ts
 
 # TypeScript incremental build cache
 *.tsbuildinfo
