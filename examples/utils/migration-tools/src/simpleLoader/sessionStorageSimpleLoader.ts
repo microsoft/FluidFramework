@@ -40,24 +40,22 @@ export class SessionStorageSimpleLoader implements ISimpleLoader {
 	public async createDetached(
 		version: string,
 	): Promise<{ container: IContainer; attach: () => Promise<string> }> {
-		const documentId = uuid();
 		const loader = new SimpleLoader({
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader: this.codeLoader,
 			logger: this.logger,
-			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
+			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(uuid()),
 		});
 		return loader.createDetached(version);
 	}
 	public async loadExisting(id: string): Promise<IContainer> {
-		const documentId = id;
 		const loader = new SimpleLoader({
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader: this.codeLoader,
 			logger: this.logger,
-			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
+			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(uuid()),
 		});
 		return loader.loadExisting(`${window.location.origin}/${id}`);
 	}
