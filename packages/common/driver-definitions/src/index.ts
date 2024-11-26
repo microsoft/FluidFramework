@@ -108,6 +108,7 @@ export type {
 	SummaryObject,
 	SummaryTree,
 	SummaryTypeNoHandle,
+	LegacyAlphaThatReferencesLegacyBetaAndPublic,
 } from "./protocol/index.js";
 export {
 	FileMode,

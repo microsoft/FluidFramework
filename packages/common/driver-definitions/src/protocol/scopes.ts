@@ -6,7 +6,7 @@
 /**
  * Defines scope access for a Container/Document.
  * @legacy
- * @alpha
+ * @beta
  */
 export enum ScopeType {
 	/**

@@ -33,6 +33,7 @@ export type {
 	IQuorumProposals,
 	IQuorumProposalsEvents,
 	ISequencedProposal,
+	LegacyAlphaThatReferencesLegacyBetaAndPublic,
 } from "./consensus.js";
 export type { IsoDate } from "./date.js";
 export type {

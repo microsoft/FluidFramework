@@ -143,7 +143,7 @@ export interface IRef {
 /**
  * Required params to create ref
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ICreateRefParams {
 	ref: string;
@@ -153,7 +153,7 @@ export interface ICreateRefParams {
 /**
  * Required params to patch ref
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IPatchRefParams {
 	sha: string;

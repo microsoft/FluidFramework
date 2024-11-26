@@ -10,7 +10,7 @@ import type { IUser } from "./users.js";
  *
  * See {@link https://datatracker.ietf.org/doc/html/rfc7519#section-4}
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ITokenClaims {
 	/**

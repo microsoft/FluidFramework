@@ -7,7 +7,7 @@ import type { IsoDate } from "./date.js";
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IDocumentAttributes {
 	/**
@@ -23,7 +23,7 @@ export interface IDocumentAttributes {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export enum FileMode {
 	File = "100644",
@@ -35,7 +35,7 @@ export enum FileMode {
 /**
  * Raw blob stored within the tree.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IBlob {
 	/**
@@ -52,7 +52,7 @@ export interface IBlob {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IAttachment {
 	id: string;
@@ -60,7 +60,7 @@ export interface IAttachment {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ICreateBlobResponse {
 	id: string;
@@ -69,7 +69,7 @@ export interface ICreateBlobResponse {
 /**
  * A tree entry wraps a path with a type of node.
  * @legacy
- * @alpha
+ * @beta
  */
 export type ITreeEntry = {
 	/**
@@ -100,7 +100,7 @@ export type ITreeEntry = {
 /**
  * Type of entries that can be stored in a tree.
  * @legacy
- * @alpha
+ * @beta
  */
 export enum TreeEntry {
 	Blob = "Blob",
@@ -110,7 +110,7 @@ export enum TreeEntry {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ITree {
 	entries: ITreeEntry[];
@@ -137,7 +137,7 @@ export interface ITree {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ISnapshotTree {
 	id?: string;
@@ -169,7 +169,7 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
 /**
  * Represents a version of the snapshot of a data store.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IVersion {
 	/**
