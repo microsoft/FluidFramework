@@ -26,7 +26,6 @@ import {
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
-	type TreeStoredSchema,
 } from "../../core/index.js";
 import {
 	booleanSchema,
@@ -36,7 +35,6 @@ import {
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
-	toStoredSchema,
 	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
 import {
