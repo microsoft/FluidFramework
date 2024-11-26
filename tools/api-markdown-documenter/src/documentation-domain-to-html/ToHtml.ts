@@ -5,12 +5,14 @@
 
 import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { h } from "hastscript";
+
 import type { DocumentNode, DocumentationNode } from "../documentation-domain/index.js";
-import type { TransformationConfig } from "./configuration/index.js";
+
 import {
 	createTransformationContext,
 	type TransformationContext,
 } from "./TransformationContext.js";
+import type { TransformationConfig } from "./configuration/index.js";
 
 /**
  * Generates an HTML AST from the provided {@link DocumentNode}.

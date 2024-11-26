@@ -6,6 +6,7 @@
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { ClientConnectionId } from "./baseTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type {
 	PresenceNotifications,
 	PresenceNotificationsSchema,
@@ -14,7 +15,7 @@ import type {
 	PresenceWorkspaceAddress,
 } from "./types.js";
 
-import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
+import type { ISubscribable } from "@fluidframework/presence/internal/events";
 
 /**
  * A Fluid client session identifier.
@@ -195,11 +196,13 @@ export interface IPresence {
 	 *
 	 * @param workspaceAddress - Address of the requested PresenceStates Workspace
 	 * @param requestedContent - Requested states for the workspace
+	 * @param controls - Optional settings for default broadcast controls
 	 * @returns A PresenceStates workspace
 	 */
 	getStates<StatesSchema extends PresenceStatesSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: StatesSchema,
+		controls?: BroadcastControlSettings,
 	): PresenceStates<StatesSchema>;
 
 	/**

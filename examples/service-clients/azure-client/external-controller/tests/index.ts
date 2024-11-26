@@ -17,10 +17,7 @@ import {
 	LocalResolver,
 	LocalSessionStorageDbFactory,
 } from "@fluidframework/local-driver/internal";
-import {
-	ILocalDeltaConnectionServer,
-	LocalDeltaConnectionServer,
-} from "@fluidframework/server-local-server";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import type { IFluidContainer, ContainerSchema } from "fluid-framework";
 import { SharedMap } from "fluid-framework/legacy";
 
@@ -28,7 +25,7 @@ import { DiceRollerController } from "../src/controller.js";
 import { makeAppView } from "../src/view.js";
 
 // The local server needs to be shared across the Loader instances for collaboration to happen
-const localServerMap = new Map<string, ILocalDeltaConnectionServer>();
+const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 
 const urlResolver = new LocalResolver();
 
@@ -43,12 +40,6 @@ export async function getSessionStorageContainer(
 	containerRuntimeFactory: IRuntimeFactory,
 	createNew: boolean,
 ): Promise<{ container: IContainer; attach: (() => Promise<void>) | undefined }> {
-	let localServer = localServerMap.get(containerId);
-	if (localServer === undefined) {
-		localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-		localServerMap.set(containerId, localServer);
-	}
-
 	const documentServiceFactory = new LocalDocumentServiceFactory(localServer);
 	const url = `${window.location.origin}/${containerId}`;
 
