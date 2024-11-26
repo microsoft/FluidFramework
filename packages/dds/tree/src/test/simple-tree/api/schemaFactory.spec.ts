@@ -614,6 +614,19 @@ describe("schemaFactory", () => {
 			class NamedMap extends factory.map("name", factory.number) {}
 			const namedInstance = new NamedMap(new Map([["x", 5]]));
 		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Foo extends factory.map("Foo", factory.number, {
+				metadata: { description: "A map containing numbers", custom: { baz: true } },
+			}) {}
+
+			assert.deepEqual(Foo.metadata, {
+				description: "A map containing numbers",
+				custom: { baz: true },
+			});
+		});
 	});
 
 	describe("produces proxies that can be read after insertion for trees of", () => {
