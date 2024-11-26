@@ -127,17 +127,24 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			);
 		}
 
+		// check the packages exports to see
+		// if it supports legacyAlpha, and if so seperate them
+		const separateLegacyFromAlpha =
+			typeof packageJson.exports === "object" &&
+			packageJson.exports !== null &&
+			`./${ApiLevel.legacyAlpha}` in packageJson.exports;
+
 		// In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
 		// When @alpha is mapped to /legacy, @beta should not be included in
 		// @alpha aka /legacy entrypoint.
+		const separateBetaFromAlpha = this.flags.outFileAlpha !== ApiLevel.alpha;
 		promises.push(
 			generateEntrypoints(
 				mainEntrypoint,
 				mapApiTagLevelToOutput,
 				this.logger,
-				typeof packageJson.exports === "object" &&
-					packageJson.exports !== null &&
-					"./legacyAlpha" in packageJson.exports,
+				separateBetaFromAlpha,
+				separateLegacyFromAlpha,
 			),
 		);
 
@@ -348,7 +355,8 @@ async function generateEntrypoints(
 	mainEntrypoint: string,
 	mapApiTagLevelToOutput: Map<ApiLevel, ExportData>,
 	log: CommandLogger,
-	supportLegacyAlpha: boolean,
+	separateBetaFromAlpha: boolean,
+	separateLegacyFromAlpha: boolean,
 ): Promise<void> {
 	log.info(`Processing: ${mainEntrypoint}`);
 
@@ -425,7 +433,7 @@ async function generateEntrypoints(
 		}
 	}
 
-	const writeExports = async (
+	const writeExport = async (
 		apiTagLevel: ApiLevel,
 		namedExports: Omit<ExportSpecifierStructure, "kind">[],
 	): Promise<void> => {
@@ -463,25 +471,27 @@ async function generateEntrypoints(
 	};
 
 	await Promise.all([
-		writeExports("public", namedExportMap.public),
-		writeExports("beta", [...namedExportMap.public, ...namedExportMap.beta]),
-		writeExports("alpha", [
+		writeExport(ApiLevel.public, namedExportMap.public),
+		writeExport(ApiLevel.beta, [...namedExportMap.public, ...namedExportMap.beta]),
+		writeExport(ApiLevel.alpha, [
 			...namedExportMap.public,
 			...namedExportMap.beta,
 			...namedExportMap.alpha,
 		]),
-		writeExports("legacy", [
+		writeExport(ApiLevel.legacy, [
 			...namedExportMap.public,
 			...namedExportMap.legacy,
-			...(supportLegacyAlpha ? [] : namedExportMap["legacy-alpha"]),
+			...(separateLegacyFromAlpha ? [] : namedExportMap["legacy-alpha"]),
 		]),
-		writeExports(ApiLevel.legacyAlpha, [
-			...namedExportMap.public,
-			...namedExportMap.beta,
-			...namedExportMap.alpha,
-			...namedExportMap.legacy,
-			...namedExportMap["legacy-alpha"],
-		]),
+		separateLegacyFromAlpha
+			? writeExport(ApiLevel.legacyAlpha, [
+					...namedExportMap.public,
+					...namedExportMap.beta,
+					...namedExportMap.alpha,
+					...namedExportMap.legacy,
+					...namedExportMap["legacy-alpha"],
+				])
+			: undefined,
 	]);
 }
 

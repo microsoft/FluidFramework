@@ -634,9 +634,7 @@ class ApiLevelReader {
 		} else {
 			addUniqueNamedExportsToMap(exports.legacy, memberData, ApiLevel.legacy);
 			if (exports["legacy-alpha"].length > 0) {
-				// @alpha APIs have been mapped to both /alpha and /legacy paths.
-				// Later @legacy tag was added explicitly.
-				// Check for a /legacy/alpha export to map @legacy & @alpha as legacy/alpha.
+				// Check for a legacyAlpha export to map @legacy & @alpha as legacyAlpha.
 				const legacyAlphaExport =
 					this.tempSource
 						.addImportDeclaration({

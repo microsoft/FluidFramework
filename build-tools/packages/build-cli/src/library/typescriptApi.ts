@@ -98,7 +98,7 @@ function getNodeApiLevel(node: Node): ApiLevel | undefined {
 		return undefined;
 	}
 	if (apiTags.includes(ApiTag.legacy)) {
-		return apiTags.includes(ApiTag.alpha) ? ApiLevel.legacyAlpha : "legacy";
+		return apiTags.includes(ApiTag.alpha) ? ApiLevel.legacyAlpha : ApiLevel.legacy;
 	}
 	if (apiTags.length === 1) {
 		return apiTags[0];
