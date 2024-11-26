@@ -139,6 +139,11 @@ export interface IForestSubscription {
 	 * Obtains and registers an {@link AnnouncedVisitor} that responds to changes on the forest.
 	 */
 	registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void;
+
+	/**
+	 * Deregister the given visitor so that it stops responding to updates
+	 */
+	deregisterAnnouncedVisitor(visitor: () => AnnouncedVisitor): void;
 }
 
 /**

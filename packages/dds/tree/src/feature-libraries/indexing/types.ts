@@ -28,4 +28,9 @@ export type TreeIndexKey = number | string | boolean | IFluidHandle | null;
  * @alpha
  */
 export interface TreeIndex<TKey extends TreeIndexKey, TValue>
-	extends ReadonlyMap<TKey, TValue> {}
+	extends ReadonlyMap<TKey, TValue> {
+	/**
+	 * Disposes the index such that it can no longer be used and receives no updates from the forest
+	 */
+	dispose(): void;
+}

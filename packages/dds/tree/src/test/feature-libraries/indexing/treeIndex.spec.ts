@@ -244,11 +244,41 @@ describe("tree indexes", () => {
 		assertContents([parentId, parent, child]);
 	});
 
+	it("cannot be used once disposed", () => {
+		const { view } = createView(new IndexableChild({ childKey: childId }));
+		const { index } = createIndex(view);
+		index.dispose();
+
+		assert.throws(() => Array.from(index.allEntries()));
+		assert.throws(() => Array.from(index.entries()));
+		assert.throws(() => index.forEach(() => {}));
+		assert.throws(() => index.get(childId));
+		assert.throws(() => index.has(childId));
+		assert.throws(() => Array.from(index.keys()));
+		assert.throws(() => index.size);
+		assert.throws(() => Array.from(index.values()));
+	});
+
+	it("does not receive updates once disposed", () => {
+		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
+		const { index } = createIndex(view);
+		index.dispose();
+
+		parent.child = new IndexableChild({ childKey: parentId });
+		assert.throws(() => index.get(parentId));
+	});
+
 	it("can be disposed only once", () => {
 		const { view } = createView(new IndexableChild({ childKey: childId }));
 		const { index } = createIndex(view);
 		index[disposeSymbol]();
 		assert.throws(() => index[disposeSymbol]());
+
+		// check that disposal works using either api call
+		const { view: view2 } = createView(new IndexableChild({ childKey: childId }));
+		const { index: index2 } = createIndex(view2);
+		index2.dispose();
+		assert.throws(() => index2.dispose());
 	});
 
 	it("completely removes nodes when they are garbage collected", () => {

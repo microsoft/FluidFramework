@@ -55,7 +55,7 @@ interface StackNode {
 export class ChunkedForest implements IEditableForest {
 	private activeVisitor?: DeltaVisitor;
 
-	private readonly deltaVisitors: (() => AnnouncedVisitor)[] = [];
+	private readonly deltaVisitors: Set<() => AnnouncedVisitor> = new Set();
 	readonly #events = createEmitter<ForestEvents>();
 	public readonly events: Listenable<ForestEvents> = this.#events;
 
@@ -87,7 +87,11 @@ export class ChunkedForest implements IEditableForest {
 	}
 
 	public registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
-		this.deltaVisitors.push(visitor);
+		this.deltaVisitors.add(visitor);
+	}
+
+	public deregisterAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
+		this.deltaVisitors.delete(visitor);
 	}
 
 	public acquireVisitor(): DeltaVisitor {
@@ -265,7 +269,8 @@ export class ChunkedForest implements IEditableForest {
 			},
 		};
 
-		const announcedVisitors = this.deltaVisitors.map((getVisitor) => getVisitor());
+		const announcedVisitors: AnnouncedVisitor[] = [];
+		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
 		const combinedVisitor = combineVisitors(
 			[forestVisitor, ...announcedVisitors],
 			announcedVisitors,
