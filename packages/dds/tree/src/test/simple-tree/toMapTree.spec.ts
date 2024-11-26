@@ -1296,7 +1296,8 @@ describe("toMapTree", () => {
 				policy: {
 					fieldKinds,
 					validateSchema: true,
-					// TODO: Unit test leveraging this policy in this file
+					// toMapTree drops all extra fields, so varying this policy is unnecessary
+					// (schema validation only occurs after converting to a MapTree)
 					allowUnknownOptionalFields: () => false,
 				},
 			};
@@ -1405,37 +1406,17 @@ describe("toMapTree", () => {
 					);
 				});
 
-				it("uses policy to determine whether additional optional fields are allowed", () => {
-					const factory = new SchemaFactory(undefined);
-					class Person extends factory.object("Person", { name: factory.string }) {}
-
-					const schema: TreeStoredSchema = toStoredSchema(Person);
-
-					// 'age' is an additional field that is not declared in the object schema.
-					// Schema validation should defer to the policy to determine whether this is allowed.
-					const content = { name: "Alice", age: 42 };
-
-					mapTreeFromNodeData(content, Person, new MockNodeKeyManager(), {
-						schema,
-						policy: {
-							fieldKinds: new Map(),
-							validateSchema: true,
-							allowUnknownOptionalFields: (identifier) => identifier === Person.identifier,
-						},
-					});
-
-					assert.throws(
-						() => {
-							mapTreeFromNodeData(content, Person, new MockNodeKeyManager(), {
-								schema,
-								policy: {
-									fieldKinds: new Map(),
-									validateSchema: true,
-									allowUnknownOptionalFields: () => false,
-								},
-							});
-						},
-						validateUsageError(/Tree does not conform to schema/),
+				it("Only imports data in the schema", () => {
+					const schemaValidationPolicy = createSchemaAndPolicyForObjectNode();
+					// Note that despite the content containing keys not in the object schema, this test passes.
+					// This is by design: if an app author wants to preserve data that isn't in the schema (ex: to
+					// collaborate with other clients that have newer schema without erasing auxiliary data), they
+					// can use import/export tree APIs as noted in `SchemaFactoryObjectOptions`.
+					mapTreeFromNodeData(
+						{ foo: "Hello world", notInSchemaKey: 5, anotherNotInSchemaKey: false },
+						[myObjectSchema, schemaFactory.string],
+						new MockNodeKeyManager(),
+						schemaValidationPolicy,
 					);
 				});
 			});
