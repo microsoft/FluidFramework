@@ -6,6 +6,7 @@
 import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
 import {
 	IStorageNameRetriever,
+	ISimplifiedCustomDataRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
@@ -34,6 +35,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): Router {
 	const router: Router = Router();
 

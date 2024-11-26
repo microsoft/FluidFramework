@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/server-services-client";
 import {
 	IStorageNameRetriever,
+	ISimplifiedCustomDataRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
@@ -39,6 +40,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): Router {
 	const router: Router = Router();
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
@@ -129,6 +131,7 @@ export function create(
 			isEphemeralContainer,
 			denyList,
 			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
 		});
 		return service.createSummary(params, initial);
 	}
