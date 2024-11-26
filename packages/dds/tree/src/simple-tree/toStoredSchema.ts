@@ -33,10 +33,17 @@ import { LeafNodeSchema } from "./leafNodeSchema.js";
 import { isObjectNodeSchema } from "./objectNodeTypes.js";
 import { normalizeFlexListEager } from "./flexList.js";
 
+const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
+
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
  */
 export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
+	const cached = viewToStoredCache.get(root);
+	if (cached !== undefined) {
+		return cached;
+	}
+
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	walkFieldSchema(root, {
 		node(schema) {
@@ -52,10 +59,12 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 		},
 	});
 
-	return {
+	const result: TreeStoredSchema = {
 		nodeSchema,
 		rootFieldSchema: convertField(root),
 	};
+	viewToStoredCache.set(root, result);
+	return result;
 }
 
 /**

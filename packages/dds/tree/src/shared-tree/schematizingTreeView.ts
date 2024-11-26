@@ -12,12 +12,7 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	AllowedUpdateType,
-	anchorSlot,
-	Compatibility,
-	type SchemaPolicy,
-} from "../core/index.js";
+import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
 import {
 	type NodeKeyManager,
 	defaultSchemaPolicy,
@@ -58,7 +53,9 @@ import {
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
+	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
+
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
  * exists and error if creating a second.
@@ -116,14 +113,14 @@ export class SchematizingSimpleTreeView<
 		}
 		checkout.forest.anchors.slots.set(ViewSlot, this);
 
-		const policy = {
+		this.rootFieldSchema = normalizeFieldSchema(config.schema);
+		this.schemaPolicy = {
 			...defaultSchemaPolicy,
 			validateSchema: config.enableSchemaValidation,
+			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(this.rootFieldSchema),
 		};
-		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.schemaPolicy = defaultSchemaPolicy;
 
-		this.viewSchema = new ViewSchema(policy, {}, toStoredSchema(this.rootFieldSchema));
+		this.viewSchema = new ViewSchema(this.schemaPolicy, {}, this.rootFieldSchema);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -166,16 +163,13 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 				{
 					schema: this.checkout.storedSchema,
-					policy: {
-						...defaultSchemaPolicy,
-						validateSchema: this.config.enableSchemaValidation,
-					},
+					policy: this.schemaPolicy,
 				},
 			);
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.viewSchema.schema,
+				schema: toStoredSchema(this.viewSchema.schema),
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -202,7 +196,7 @@ export class SchematizingSimpleTreeView<
 				AllowedUpdateType.SchemaCompatible,
 				this.checkout,
 				{
-					schema: this.viewSchema.schema,
+					schema: toStoredSchema(this.viewSchema.schema),
 					initialTree: undefined,
 				},
 			);
@@ -432,11 +426,7 @@ export function requireSchema(
 
 	{
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
-		assert(
-			compatibility.write === Compatibility.Compatible &&
-				compatibility.read === Compatibility.Compatible,
-			0x8c3 /* requireSchema invoked with incompatible schema */,
-		);
+		assert(compatibility.canView, 0x8c3 /* requireSchema invoked with incompatible schema */);
 	}
 
 	const view = new CheckoutFlexTreeView(checkout, schemaPolicy, nodeKeyManager, onDispose);

@@ -201,7 +201,6 @@ export {
 export {
 	type Adapters,
 	AdaptedViewSchema,
-	Compatibility,
 	type TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view/index.js";

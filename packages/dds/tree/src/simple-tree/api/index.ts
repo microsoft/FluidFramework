@@ -17,7 +17,11 @@ export {
 	type TreeBranchEvents,
 	asTreeViewAlpha,
 } from "./tree.js";
-export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
+export {
+	SchemaFactory,
+	type ScopedSchemaName,
+	type SchemaFactoryObjectOptions,
+} from "./schemaFactory.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
