@@ -26,7 +26,6 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -193,27 +192,6 @@ describe("SharedTreeCore", () => {
 		// Three commits are behind or at the minimum sequence number and are evicted
 		factory.processAllMessages(); // Minimum sequence number === 3
 		assert.equal(getTrunkLength(tree), 6 - 3);
-	});
-
-	it("can complete a transaction that spans trunk eviction", () => {
-		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
-		const tree = new TestSharedTreeCore(runtime);
-		const factory = new MockContainerRuntimeFactory();
-		factory.createContainerRuntime(runtime);
-		tree.connect({
-			deltaConnection: runtime.createDeltaConnection(),
-			objectStorage: new MockStorage(),
-		});
-
-		changeTree(tree);
-		factory.processAllMessages();
-		assert.equal(getTrunkLength(tree), 1);
-		const branch1 = tree.getLocalBranch().fork();
-		branch1.startTransaction();
-		changeTree(tree);
-		changeTree(tree);
-		factory.processAllMessages();
-		branch1.commitTransaction();
 	});
 
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
@@ -548,7 +526,7 @@ describe("SharedTreeCore", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.getLocalBranch().startTransaction();
+			tree.startTransaction();
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 1);
@@ -556,7 +534,7 @@ describe("SharedTreeCore", () => {
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 2);
 			assert.equal(enricher.enrichmentLog[1].input, tree.getLocalBranch().getHead().change);
-			tree.getLocalBranch().commitTransaction();
+			tree.commitTransaction();
 			assert.equal(enricher.enrichmentLog.length, 2);
 			assert.equal(machine.submissionLog.length, 1);
 			assert.notEqual(machine.submissionLog[0], tree.getLocalBranch().getHead().change);
@@ -575,12 +553,12 @@ describe("SharedTreeCore", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.getLocalBranch().startTransaction();
+			tree.startTransaction();
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 1);
 			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
-			tree.getLocalBranch().abortTransaction();
+			tree.abortTransaction();
 			assert.equal(enricher.enrichmentLog.length, 1);
 			assert.equal(machine.submissionLog.length, 0);
 		});
@@ -618,26 +596,6 @@ describe("SharedTreeCore", () => {
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(machine.sequencingLog.length, 2);
 		});
-	});
-
-	it("throws an error if attaching during a transaction", () => {
-		const tree = createTree([]);
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-		const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(),
-		});
-		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-		tree.getLocalBranch().startTransaction();
-		assert.throws(
-			() => {
-				tree.connect({
-					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
-					objectStorage: new MockStorage(),
-				});
-			},
-			(e: Error) =>
-				validateAssertionError(e, /Cannot attach while a transaction is in progress/),
-		);
 	});
 
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {
