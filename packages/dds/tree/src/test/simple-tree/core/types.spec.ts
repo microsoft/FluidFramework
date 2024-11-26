@@ -24,6 +24,7 @@ import {
 	typeSchemaSymbol,
 	// Used to test that TreeNode is a type only export.
 	TreeNode as TreeNodePublic,
+	type NodeSchemaMetadata,
 } from "../../../simple-tree/index.js";
 import type { FlexTreeNode } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -135,6 +136,7 @@ describe("simple-tree types", () => {
 				public static readonly identifier = "Subclass";
 				public static readonly info = numberSchema;
 				public static readonly implicitlyConstructable: false;
+				public static readonly metadata: NodeSchemaMetadata | undefined = undefined;
 
 				public static override prepareInstance<T2>(
 					this: typeof TreeNodeValid<T2>,
@@ -235,6 +237,7 @@ describe("simple-tree types", () => {
 				public static readonly info = numberSchema;
 				public static readonly implicitlyConstructable: false;
 				public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+				public static readonly metadata: NodeSchemaMetadata | undefined = undefined;
 
 				public static override buildRawNode<T2>(
 					this: typeof TreeNodeValid<T2>,
@@ -288,6 +291,7 @@ describe("simple-tree types", () => {
 				public static readonly info = numberSchema;
 				public static readonly implicitlyConstructable: false;
 				public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+				public static readonly metadata: NodeSchemaMetadata | undefined = undefined;
 
 				public static override buildRawNode<T2>(
 					this: typeof TreeNodeValid<T2>,
