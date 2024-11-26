@@ -45,11 +45,15 @@ describe(`Presence with AzureClient`, () => {
 	const connectTimeoutMs = 10_000;
 	const user1: AzureUser = {
 		id: "test-user-id-1",
-		name: "test-user-name-2",
+		name: "test-user-name-1",
 	};
 	const user2: AzureUser = {
-		id: "test-user-id-1",
+		id: "test-user-id-2",
 		name: "test-user-name-2",
+	};
+	const user3: AzureUser = {
+		id: "test-user-id-3",
+		name: "test-user-name-3",
 	};
 
 	afterEach(async () => {
@@ -124,10 +128,11 @@ describe(`Presence with AzureClient`, () => {
 			containerId,
 		} = await getOrCreatePresenceContainer(undefined, user1);
 		const { presence: presence2 } = await getOrCreatePresenceContainer(containerId, user2);
-
 		// Wait for attendees to join
 		await waitForAttendeeEvent("attendeeJoined", presence1, presence2);
-
+		const { presence: presence3 } = await getOrCreatePresenceContainer(containerId, user3);
+		// Wait for attendees to join
+		await waitForAttendeeEvent("attendeeJoined", presence1, presence2, presence3);
 		// Get attendee we will disconnect
 		const disconnectedAttendee = presence1.getMyself();
 
@@ -135,8 +140,12 @@ describe(`Presence with AzureClient`, () => {
 		container1.disconnect();
 
 		// VERIFY - Ensure the attendeeDisconnected event is emitted
-		const returnedAttendees = await waitForAttendeeEvent("attendeeDisconnected", presence2);
-		assert.strictEqual(returnedAttendees.length, 1);
+		const returnedAttendees = await waitForAttendeeEvent(
+			"attendeeDisconnected",
+			presence2,
+			presence3,
+		);
+		assert.strictEqual(returnedAttendees.length, 2);
 
 		for (const attendee of returnedAttendees) {
 			assert.equal(attendee.sessionId, disconnectedAttendee.sessionId, "Session ID mismatch");
