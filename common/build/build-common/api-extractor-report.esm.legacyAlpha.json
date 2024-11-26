@@ -4,7 +4,7 @@
 	"mainEntryPointFilePath": "<projectFolder>/lib/legacyAlpha.d.ts",
 	"apiReport": {
 		"reportFileName": "<unscopedPackageName>.legacy",
-		"reportVariants": ["public", "beta"]
+		"reportVariants": ["public", "beta", "alpha"]
 	},
 	"docModel": {
 		"enabled": false
