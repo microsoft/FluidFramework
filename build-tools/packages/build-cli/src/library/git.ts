@@ -54,8 +54,8 @@ export type GitHubRepoShortString = `${string}/${string}`;
  */
 export interface GitContext {
 	/**
-	 * A string of the form "OWNER/REPO" that is a substring of the full URL to the upstream remote repository. If a
-	 * remote is found that partially matches this string, it will be considered the upstream remote.
+	 * A string of the form "OWNER/REPO" that is a substring of the full URL to an upstream remote repository on GitHub.
+	 * If a remote is found that partially matches this string, it will be considered the upstream remote.
 	 */
 	upstreamRemotePartialUrl: Readonly<GitHubRepoShortString>;
 
