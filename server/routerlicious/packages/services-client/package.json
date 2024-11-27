@@ -95,6 +95,10 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_NetworkError": {
+				"backCompat": false
+			}
+		}
 	}
 }

@@ -160,9 +160,38 @@ module.exports = {
 
 	multiCommandExecutables: ["oclif", "syncpack"],
 	declarativeTasks: {
+		// fluid-build lowercases the executable name, so we need to use buildversion instead of buildVersion.
+		"flub check buildversion": {
+			inputGlobs: [
+				"package.json",
+
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			outputGlobs: ["package.json"],
+			gitignore: ["input", "output"],
+		},
 		"jssm-viz": {
 			inputGlobs: ["src/**/*.fsl"],
 			outputGlobs: ["src/**/*.fsl.svg"],
+		},
+		"markdown-magic": {
+			inputGlobs: [],
+			outputGlobs: [
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have generated markdown files at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/*.md",
+				"{azure,examples,experimental,packages}/*/*/*/*.md",
+				"{azure,examples,experimental,packages}/*/*/*/*/*.md",
+				"tools/markdown-magic/**/*.md",
+			],
+			gitignore: ["input", "output"],
 		},
 		"oclif manifest": {
 			inputGlobs: ["package.json", "src/**"],
@@ -189,7 +218,9 @@ module.exports = {
 			outputGlobs: [
 				"package.json",
 
-				// release group packages
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
 				"{azure,examples,experimental,packages}/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
@@ -215,7 +246,9 @@ module.exports = {
 			outputGlobs: [
 				"package.json",
 
-				// release group packages
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
 				"{azure,examples,experimental,packages}/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/*/package.json",

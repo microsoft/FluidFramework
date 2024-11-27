@@ -10,11 +10,7 @@ import type {
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ICodecOptions } from "../../codec/index.js";
-import {
-	RevisionTagCodec,
-	TreeStoredSchemaRepository,
-	type GraphCommit,
-} from "../../core/index.js";
+import { RevisionTagCodec, TreeStoredSchemaRepository } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
@@ -32,9 +28,13 @@ import {
 	type SharedTreeBranch,
 	SharedTreeCore,
 	type Summarizable,
+	TransactionResult,
+	TransactionStack,
+	type Transactor,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 import { strict as assert } from "node:assert";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 /**
  * A `SharedTreeCore` with
@@ -47,8 +47,6 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		snapshotFormatVersion: "0.0.0",
 		packageVersion: "0.0.0",
 	};
-
-	private transactionStart?: GraphCommit<DefaultChangeset>;
 
 	public constructor(
 		runtime: IFluidDataStoreRuntime = new MockFluidDataStoreRuntime({
@@ -97,33 +95,26 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		...args: Parameters<SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["submitCommit"]>
 	): void {
 		// We do not submit ops for changes that are part of a transaction.
-		if (this.transactionStart === undefined) {
+		if (!this.transaction.isInProgress()) {
 			super.submitCommit(...args);
 		}
 	}
 
-	public startTransaction(): void {
-		assert(
-			this.transactionStart === undefined,
-			"Transaction already started. TestSharedTreeCore does not support nested transactions.",
-		);
-		this.transactionStart = this.getLocalBranch().getHead();
+	public transaction: Transactor = new TransactionStack(() => {
+		const startCommit = this.getLocalBranch().getHead();
 		this.commitEnricher.startTransaction();
-	}
-
-	public abortTransaction(): void {
-		assert(this.transactionStart !== undefined, "No transaction to abort.");
-		const start = this.transactionStart;
-		this.transactionStart = undefined;
-		this.commitEnricher.abortTransaction();
-		this.getLocalBranch().removeAfter(start);
-	}
-
-	public commitTransaction(): void {
-		assert(this.transactionStart !== undefined, "No transaction to commit.");
-		const start = this.transactionStart;
-		this.transactionStart = undefined;
-		this.commitEnricher.commitTransaction();
-		this.getLocalBranch().squashAfter(start);
-	}
+		return (result) => {
+			this.commitEnricher.commitTransaction();
+			switch (result) {
+				case TransactionResult.Commit:
+					this.getLocalBranch().squashAfter(startCommit);
+					break;
+				case TransactionResult.Abort:
+					this.getLocalBranch().removeAfter(startCommit);
+					break;
+				default:
+					unreachableCase(result);
+			}
+		};
+	});
 }
