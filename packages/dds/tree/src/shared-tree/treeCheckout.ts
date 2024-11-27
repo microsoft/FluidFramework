@@ -63,7 +63,7 @@ import {
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
-import { Breakable, disposeSymbol, fail, getLast, hasSingle, hasSome } from "../util/index.js";
+import { Breakable, disposeSymbol, fail, getLast, hasSome } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -429,17 +429,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 				this.events.emit("afterBatch");
 			}
-			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
-				assert(
-					hasSingle(event.newCommits),
-					"Expected exactly one new commit for transaction commit event",
-				);
-				const firstCommit = event.newCommits[0];
-				const transactionRevision = firstCommit.revision;
-				for (const transactionStep of event.removedCommits) {
-					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
-				}
-			}
 		});
 		_branch.events.on("afterChange", (event) => {
 			// The following logic allows revertibles to be generated for the change.
@@ -674,9 +663,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					// If a transaction is rolled back, revert removed roots back to the latest snapshot
 					this.removedRoots = removedRoots;
 					break;
-				case TransactionResult.Commit:
-					this._branch.squashAfter(startCommit);
+				case TransactionResult.Commit: {
+					const removedCommits = this._branch.squashAfter(startCommit);
+					const transactionRevision = this._branch.getHead().revision;
+					for (const transactionStep of removedCommits) {
+						this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
+					}
 					break;
+				}
 				default:
 					unreachableCase(result);
 			}
@@ -900,13 +894,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 */
 	private isRemoteChangeEvent(event: SharedTreeBranchChange<SharedTreeChange>): boolean {
 		return (
-			// remote changes are only ever applied to the main branch
+			// Remote changes are only ever applied to the main branch
 			!this.isBranch &&
-			// remote changes are applied to the main branch by rebasing it onto the trunk,
-			// no other rebases are allowed on the main branch so this means any replaces that are not
-			// transaction commits are remote changes
+			// Remote changes are applied to the main branch by rebasing it onto the trunk.
+			// No other rebases are allowed on the main branch, so we can use this to detect remote changes.
 			event.type === "replace" &&
-			getChangeReplaceType(event) !== "transactionCommit"
+			getChangeReplaceType(event) === "rebase"
 		);
 	}
 }
