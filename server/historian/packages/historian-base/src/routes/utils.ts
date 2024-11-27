@@ -18,6 +18,7 @@ import {
 import {
 	runWithRetry,
 	IStorageNameRetriever,
+	ISimplifiedCustomDataRetriever,
 	IRevokedTokenChecker,
 	IDocumentManager,
 	IDocumentStaticProperties,
@@ -45,6 +46,7 @@ export type CommonRouteParams = [
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ];
 
 export class createGitServiceArgs {
@@ -61,6 +63,7 @@ export class createGitServiceArgs {
 	isEphemeralContainer?: boolean = false;
 	ephemeralDocumentTTLSec?: number = 60 * 60 * 24; // 24 hours
 	denyList?: IDenyList;
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 }
 
 function getEphemeralContainerCacheKey(documentId: string): string {
@@ -250,6 +253,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		isEphemeralContainer,
 		ephemeralDocumentTTLSec,
 		denyList,
+		simplifiedCustomDataRetriever,
 	} = createArgs;
 	const token = parseToken(tenantId, authorization);
 	const decoded = decode(token) as ITokenClaims;
@@ -263,6 +267,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	}
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant);
 	const customData: ITenantCustomDataExternal = details.customData;
+	const simplifiedCustomData = simplifiedCustomDataRetriever?.get(customData);
 	const writeToExternalStorage = !!customData?.externalStorageData;
 	const storageUrl = config.get("storageUrl") as string | undefined;
 	const ignoreEphemeralFlag: boolean = config.get("ignoreEphemeralFlag");
@@ -297,6 +302,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		storageUrl,
 		isEphemeral,
 		maxCacheableSummarySize,
+		simplifiedCustomData,
 	);
 	return service;
 }
