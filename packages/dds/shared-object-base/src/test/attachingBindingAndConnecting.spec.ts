@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
@@ -137,7 +137,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after creation", () => {
-		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
 			it(`!isAttached and !connected with runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -151,8 +151,8 @@ describe("SharedObject attaching binding and connecting", () => {
 
 				assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
 				assert.strictEqual(sharedObject.connected, false, "!connected");
-			}),
-		);
+			});
+		}
 
 		it("!isAttached with detached transition to attach runtime", () => {
 			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
@@ -180,7 +180,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after load", () => {
-		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -225,8 +225,8 @@ describe("SharedObject attaching binding and connecting", () => {
 					connected && sharedObject.isAttached(),
 					"connected",
 				);
-			}),
-		);
+			});
+		}
 
 		it("isAttached with detached transition to attach runtime", async () => {
 			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
@@ -270,7 +270,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after connect", () => {
-		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -310,8 +310,8 @@ describe("SharedObject attaching binding and connecting", () => {
 					connected && sharedObject.isAttached(),
 					"connected",
 				);
-			}),
-		);
+			});
+		}
 
 		it("isAttached with detached transition to attach runtime", async () => {
 			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
@@ -351,7 +351,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after load and connect", () => {
-		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -398,12 +398,12 @@ describe("SharedObject attaching binding and connecting", () => {
 					connected && sharedObject.isAttached(),
 					"connected",
 				);
-			}),
-		);
+			});
+		}
 	});
 
 	describe("shared object after bindToContext", () => {
-		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -450,8 +450,8 @@ describe("SharedObject attaching binding and connecting", () => {
 					connected && sharedObject.isAttached(),
 					"connected",
 				);
-			}),
-		);
+			});
+		}
 
 		it("isAttached with detached transition to attach runtime", async () => {
 			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();

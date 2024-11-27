@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { RemoteFluidObjectHandle } from "../remoteObjectHandle.js";
 import { FluidSerializer } from "../serializer.js";
@@ -15,22 +15,21 @@ describe("FluidSerializer", () => {
 	function printHandle(target: any) {
 		return JSON.stringify(target, (key, value) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return value?.IFluidHandle !== undefined ? "#HANDLE" : value;
+			return value?.IFluidHandle === undefined ? value : "#HANDLE";
 		});
 	}
 
 	function createNestedCases(testCases: any[]) {
-		// Add an object where each field references one of the JSON serializable types.
 		testCases.push(
+			// Add an object where each field references one of the JSON serializable types.
 			testCases.reduce<any>((o, value, index) => {
 				o[`f${index}`] = value;
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return o;
 			}, {}),
+			// Add an array that contains each of our constructed test cases.
+			[...testCases]
 		);
-
-		// Add an array that contains each of our constructed test cases.
-		testCases.push([...testCases]);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return testCases;
@@ -45,17 +44,16 @@ describe("FluidSerializer", () => {
 		// are of particular interest.
 		const simple = createNestedCases([false, true, 0, 1, "", "x", null, [], {}]);
 
-		// Add an object where each field references one of the JSON serializable types.
 		simple.push(
+			// Add an object where each field references one of the JSON serializable types.
 			simple.reduce<any>((o, value, index) => {
 				o[`f${index}`] = value;
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return o;
 			}, {}),
+			// Add an array that contains each of our constructed test cases.
+			[...simple]
 		);
-
-		// Add an array that contains each of our constructed test cases.
-		simple.push([...simple]);
 
 		// Verify that `encode` is a no-op for these simple cases.
 		for (const input of simple) {
@@ -104,7 +102,7 @@ describe("FluidSerializer", () => {
 		}
 
 		// Non-finite numbers are coerced to null.  Date is coerced to string.
-		const tricky = createNestedCases([-Infinity, NaN, +Infinity, new Date()]);
+		const tricky = createNestedCases([Number.NEGATIVE_INFINITY, Number.NaN, +Number.POSITIVE_INFINITY, new Date()]);
 
 		// Undefined is extra special in that it can't appear at the root, but can appear
 		// embedded in the tree, in which case the key is elided (if an object) or it is

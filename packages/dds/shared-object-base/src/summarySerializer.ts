@@ -14,7 +14,7 @@ import { FluidSerializer } from "./serializer.js";
 export class SummarySerializer extends FluidSerializer {
 	private readonly serializedRoutes: Set<string> = new Set();
 	public getSerializedRoutes(): string[] {
-		return Array.from(this.serializedRoutes);
+		return [...this.serializedRoutes];
 	}
 
 	protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal) {

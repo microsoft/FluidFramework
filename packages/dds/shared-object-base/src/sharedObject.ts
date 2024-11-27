@@ -532,17 +532,17 @@ export abstract class SharedObjectCore<
 		// Should I change the state at the end? So that we *can't* send new stuff before we send old?
 		this._connected = connected;
 
-		if (!connected) {
+		if (connected) {
+			// Call this for now so that DDSes like ConsensusOrderedCollection that maintain their own pending
+			// messages will work.
+			this.onConnect();
+		} else {
 			// Things that are true now...
 			// - if we had a connection we can no longer send messages over it
 			// - if we had outbound messages some may or may not be ACK'd. Won't know until next message
 			//
 			// - nack could get a new msn - but might as well do it in the join?
 			this.onDisconnect();
-		} else {
-			// Call this for now so that DDSes like ConsensusOrderedCollection that maintain their own pending
-			// messages will work.
-			this.onConnect();
 		}
 	}
 

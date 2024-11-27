@@ -25,7 +25,7 @@ export function serializeHandles(
 	bind: IFluidHandle,
 ): string | undefined {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return value !== undefined ? serializer.stringify(value, bind) : value;
+	return value === undefined ? value : serializer.stringify(value, bind);
 }
 
 /**
