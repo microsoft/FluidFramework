@@ -53,6 +53,7 @@ import { v4 as uuid } from "uuid";
 import { Constants, getSession, StageTrace } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
 import type { RequestHandler } from "express-serve-static-core";
+import { getDocumentUrlsfromNetworkInfo } from "./restHelper";
 
 export function create(
 	storage: IDocumentStorage,
@@ -191,7 +192,13 @@ export function create(
 			const tenantId = getParam(request.params, "tenantId");
 			Lumberjack.info(`This is the clientIPAddress: ${clientIPAddress}.`);
 			Lumberjack.info(`Here is the result ${JSON.stringify(networkInfo)}.`);
-			const tenantInfo = getDocumentUrlsfromNetworkInfo(tenantId, networkInfo.isPrivateLink);
+			const tenantInfo = getDocumentUrlsfromNetworkInfo(
+				tenantId,
+				externalOrdererUrl,
+				externalHistorianUrl,
+				externalDeltaStreamUrl,
+				networkInfo.isPrivateLink,
+			);
 			// If enforcing server generated document id, ignore id parameter
 			const id = enforceServerGeneratedDocumentId
 				? uuid()
@@ -306,34 +313,6 @@ export function create(
 		};
 	}
 
-	function getDocumentUrlsfromNetworkInfo(
-		tenantId: string,
-		isPrivateLink?: boolean | false,
-	): {
-		documentOrdererUrl: string;
-		documentHistorianUrl: string;
-		documentDeltaStreamUrl: string;
-	} {
-		if (isPrivateLink) {
-			return {
-				documentOrdererUrl: externalOrdererUrl.replace("https://", `https://${tenantId}.`),
-				documentHistorianUrl: externalHistorianUrl.replace(
-					"https://",
-					`https://${tenantId}.`,
-				),
-				documentDeltaStreamUrl: externalDeltaStreamUrl.replace(
-					"https://",
-					`https://${tenantId}.`,
-				),
-			};
-		}
-		return {
-			documentOrdererUrl: externalOrdererUrl,
-			documentHistorianUrl: externalHistorianUrl,
-			documentDeltaStreamUrl: externalDeltaStreamUrl,
-		};
-	}
-
 	/**
 	 * Get the session information.
 	 */
@@ -359,6 +338,9 @@ export function create(
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			const documentUrls = getDocumentUrlsfromNetworkInfo(
 				tenantId,
+				externalOrdererUrl,
+				externalHistorianUrl,
+				externalDeltaStreamUrl,
 				networkInfo.isPrivateLink,
 			);
 

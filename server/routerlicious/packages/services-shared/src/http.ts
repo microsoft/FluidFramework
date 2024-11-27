@@ -9,7 +9,6 @@ import type { RequestHandler, Response } from "express";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { getNetworkInformationFromIP } from "./ipUtils";
 import { ITenantManager, type ITenantConfig } from "@fluidframework/server-services-core";
-
 /**
  * Check a given path string for path traversal (e.g. "../" or "/").
  * @internal
@@ -54,6 +53,7 @@ export function validatePrivateLink(tenantManager: ITenantManager): RequestHandl
 		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
 		if (result.isPrivateLink) {
 			if (tenantInfo.customData.accountLinkID === result.privateLinkId) {
+				Lumberjack.info("This is a private link request", { tenantId, clientIPAddress });
 			} else {
 				return handleResponse(
 					Promise.reject(
