@@ -95,3 +95,23 @@ export function renderMousePresence(
 	onPositionChanged();
 	mouseTracker.on("mousePositionChanged", onPositionChanged);
 }
+
+export function renderControlPanel(controlPanel: HTMLDivElement) {
+	controlPanel.style.paddingBottom = "10px";
+	const slider = document.createElement("input");
+	slider.type = "range";
+	slider.id = "mouse-latency";
+	slider.name = "mouse-latency";
+	slider.min = "0";
+	slider.max = "200";
+	slider.defaultValue = "60";
+	const sliderLabel = document.createElement("label");
+	sliderLabel.htmlFor = "mouse-latency";
+	sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;
+	controlPanel.appendChild(slider);
+	controlPanel.appendChild(sliderLabel);
+
+	slider.addEventListener("input", (evt) => {
+		sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;
+	});
+}

@@ -19,7 +19,7 @@ import { SharedMap } from "fluid-framework/legacy";
 
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
-import { renderFocusPresence, renderMousePresence } from "./view.js";
+import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
 const user = {
 	id: "1234567890",
@@ -90,9 +90,12 @@ async function start() {
 
 	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
+	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
+	renderControlPanel(controlPanelDiv);
+	const slider = document.getElementById("mouse-latency") as HTMLInputElement;
 
 	const focusTracker = new FocusTracker(presence, appPresence, services.audience);
-	const mouseTracker = new MouseTracker(presence, appPresence, services.audience);
+	const mouseTracker = new MouseTracker(presence, appPresence, services.audience, slider);
 
 	renderFocusPresence(focusTracker, contentDiv);
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);

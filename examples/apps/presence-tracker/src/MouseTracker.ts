@@ -40,11 +40,18 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		statesWorkspace: PresenceStates<{}>,
 		public readonly audience: IAzureAudience,
+		latencyInput: HTMLInputElement,
 	) {
 		super();
 
 		statesWorkspace.add("cursor", Latest({ x: 0, y: 0 }));
 		this.cursor = statesWorkspace.props.cursor;
+
+		latencyInput.addEventListener("input", (e) => {
+			const target = e.target as HTMLInputElement;
+			this.cursor.controls.allowableUpdateLatencyMs = parseInt(target.value, 10);
+			console.log(`latency: ${this.cursor.controls.allowableUpdateLatencyMs}`);
+		});
 
 		this.presence.events.on("attendeeDisconnected", (client: ISessionClient) => {
 			this.posMap.delete(client);
