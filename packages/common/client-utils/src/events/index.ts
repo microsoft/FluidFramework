@@ -3,7 +3,4 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	mode: "production",
-	devtool: "source-map",
-};
+export { createEmitter, CustomEventEmitter } from "./emitter.js";

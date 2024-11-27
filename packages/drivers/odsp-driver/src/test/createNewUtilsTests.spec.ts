@@ -203,6 +203,49 @@ describe("Create New Utils Tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
+	it("createNewFluidFile with undefined summary and rename it", async () => {
+		const odspResolvedUrl = await useCreateNewModule(createChildLogger(), async (module) =>
+			mockFetchOk(
+				async () =>
+					module.createNewFluidFile(
+						async (_options) => "token",
+						newFileParams,
+						createChildLogger(),
+						undefined,
+						epochTracker,
+						fileEntry,
+						true /* createNewCaching */,
+						false /* forceAccessTokenViaAuthorizationHeader */,
+					),
+				{ itemId: "itemId1", id: "Summary handle" },
+				{ "x-fluid-epoch": "epoch1" },
+			),
+		);
+
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl, false));
+		assert(snapshot === undefined);
+
+		assert(odspResolvedUrl.pendingRename === "filename");
+
+		const renameResponse = await useCreateNewModule(createChildLogger(), async (module) =>
+			mockFetchOk(
+				async () =>
+					module.renameEmptyFluidFile(
+						async (_options) => "token",
+						odspResolvedUrl,
+						odspResolvedUrl.pendingRename!,
+						createChildLogger(),
+						epochTracker,
+					),
+				{ id: "Summary handle", name: "filename" },
+				{ "x-fluid-epoch": "epoch1" },
+			),
+		);
+
+		assert(renameResponse.name === "filename");
+	});
+
 	it("Should cache converted summary during createNewContainerOnExistingFile", async () => {
 		const existingFileParams: IExistingFileInfo = {
 			type: "Existing",

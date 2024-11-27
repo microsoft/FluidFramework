@@ -49,8 +49,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -131,8 +131,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -186,8 +186,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -313,8 +313,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/js-yaml':
         specifier: ^4.0.5
         version: 4.0.9
@@ -391,8 +391,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/odsp-client
@@ -509,8 +509,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.54
@@ -597,8 +597,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -727,8 +727,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -893,8 +893,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -1044,8 +1044,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -1171,8 +1171,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -1271,8 +1271,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -1377,8 +1377,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -1504,8 +1504,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -1616,8 +1616,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.11
@@ -1683,8 +1683,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -1798,8 +1798,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -1904,8 +1904,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -2019,8 +2019,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/express':
         specifier: ^4.17.21
         version: 4.17.21
@@ -2125,8 +2125,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/id-compressor':
         specifier: workspace:~
         version: link:../../../packages/runtime/id-compressor
@@ -2231,8 +2231,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@testing-library/dom':
         specifier: ^10.4.0
         version: 10.4.0
@@ -2355,8 +2355,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -2473,8 +2473,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -2606,8 +2606,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/codemirror':
         specifier: 5.60.7
         version: 5.60.7
@@ -2682,8 +2682,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -2791,8 +2791,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -2900,8 +2900,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.11
@@ -2988,8 +2988,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -3025,8 +3025,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.11
@@ -3107,8 +3107,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -3207,8 +3207,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -3241,8 +3241,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -3275,8 +3275,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.11
@@ -3315,8 +3315,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.11
@@ -3355,8 +3355,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.11
@@ -3470,8 +3470,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.54
@@ -3569,8 +3569,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
@@ -3687,8 +3687,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
@@ -3787,8 +3787,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -3929,8 +3929,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
@@ -4128,8 +4128,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -4211,9 +4211,6 @@ importers:
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.8
-      stream-http:
-        specifier: ^3.2.0
-        version: 3.2.0
       supertest:
         specifier: ^3.4.2
         version: 3.4.2
@@ -4238,9 +4235,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.95.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/service-clients/azure-client/external-controller:
     dependencies:
@@ -4294,8 +4288,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../../packages/framework/fluid-static
@@ -4433,8 +4427,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.54
@@ -4539,8 +4533,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@mixer/webpack-bundle-compare':
         specifier: ^0.1.0
         version: 0.1.1
@@ -4681,8 +4675,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -4787,8 +4781,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -4914,8 +4908,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/express':
         specifier: ^4.17.21
         version: 4.17.21
@@ -5032,8 +5026,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -5186,8 +5180,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -5364,8 +5358,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -5530,8 +5524,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -5666,8 +5660,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -5778,8 +5772,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -5896,8 +5890,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -6111,8 +6105,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -6261,8 +6255,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/runtime/container-runtime
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../../../packages/drivers/local-driver
@@ -6482,8 +6476,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/test-runtime-utils
@@ -6579,8 +6573,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -6676,8 +6670,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../../packages/runtime/test-runtime-utils
@@ -6770,8 +6764,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/test-runtime-utils
@@ -6909,8 +6903,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/test-runtime-utils
@@ -7024,8 +7018,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -7094,8 +7088,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -7167,8 +7161,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/tinylicious-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/tinylicious-client
@@ -7267,8 +7261,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -7388,8 +7382,8 @@ importers:
         specifier: npm:@fluidframework/container-definitions@2.10.0
         version: /@fluidframework/container-definitions@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -7436,8 +7430,8 @@ importers:
         specifier: npm:@fluidframework/core-interfaces@2.10.0
         version: /@fluidframework/core-interfaces@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -7490,8 +7484,8 @@ importers:
         specifier: npm:@fluidframework/core-utils@2.10.0
         version: /@fluidframework/core-utils@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -7569,8 +7563,8 @@ importers:
         specifier: npm:@fluidframework/driver-definitions@2.10.0
         version: /@fluidframework/driver-definitions@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -7645,8 +7639,8 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -7745,8 +7739,8 @@ importers:
         specifier: npm:@fluidframework/counter@2.10.0
         version: /@fluidframework/counter@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -7842,8 +7836,8 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -7966,8 +7960,8 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/map-previous':
         specifier: npm:@fluidframework/map@2.10.0
         version: /@fluidframework/map@2.10.0(debug@4.3.7)
@@ -8099,8 +8093,8 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/matrix-previous':
         specifier: npm:@fluidframework/matrix@2.10.0
         version: /@fluidframework/matrix@2.10.0
@@ -8229,8 +8223,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/merge-tree-previous':
         specifier: npm:@fluidframework/merge-tree@2.10.0
         version: /@fluidframework/merge-tree@2.10.0(debug@4.3.7)
@@ -8344,8 +8338,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/ordered-collection-previous':
         specifier: npm:@fluidframework/ordered-collection@2.10.0
         version: /@fluidframework/ordered-collection@2.10.0
@@ -8450,8 +8444,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -8553,8 +8547,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/register-collection-previous':
         specifier: npm:@fluidframework/register-collection@2.10.0
         version: /@fluidframework/register-collection@2.10.0
@@ -8677,8 +8671,8 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/sequence-previous':
         specifier: npm:@fluidframework/sequence@2.10.0
         version: /@fluidframework/sequence@2.10.0
@@ -8807,8 +8801,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/shared-object-base-previous':
         specifier: npm:@fluidframework/shared-object-base@2.10.0
         version: /@fluidframework/shared-object-base@2.10.0(debug@4.3.7)
@@ -8916,8 +8910,8 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/shared-summary-block-previous':
         specifier: npm:@fluidframework/shared-summary-block@2.10.0
         version: /@fluidframework/shared-summary-block@2.10.0
@@ -9034,8 +9028,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/task-manager-previous':
         specifier: npm:@fluidframework/task-manager@2.10.0
         version: /@fluidframework/task-manager@2.10.0
@@ -9152,8 +9146,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -9288,8 +9282,8 @@ importers:
         specifier: workspace:~
         version: link:../../loader/container-loader
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -9406,8 +9400,8 @@ importers:
         specifier: npm:@fluidframework/debugger@2.10.0
         version: /@fluidframework/debugger@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -9476,8 +9470,8 @@ importers:
         specifier: npm:@fluidframework/driver-base@2.10.0
         version: /@fluidframework/driver-base@2.10.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -9561,8 +9555,8 @@ importers:
         specifier: npm:@fluidframework/driver-web-cache@2.10.0
         version: /@fluidframework/driver-web-cache@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -9634,8 +9628,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/file-driver-previous':
         specifier: npm:@fluidframework/file-driver@2.10.0
         version: /@fluidframework/file-driver@2.10.0
@@ -9731,8 +9725,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/local-driver-previous':
         specifier: npm:@fluidframework/local-driver@2.10.0
         version: /@fluidframework/local-driver@2.10.0(debug@4.3.7)
@@ -9846,8 +9840,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-driver-previous':
         specifier: npm:@fluidframework/odsp-driver@2.10.0
         version: /@fluidframework/odsp-driver@2.10.0(debug@4.3.7)
@@ -9928,8 +9922,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-driver-definitions-previous':
         specifier: npm:@fluidframework/odsp-driver-definitions@2.10.0
         version: /@fluidframework/odsp-driver-definitions@2.10.0
@@ -9998,8 +9992,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-urlresolver-previous':
         specifier: npm:@fluidframework/odsp-urlresolver@2.10.0
         version: /@fluidframework/odsp-urlresolver@2.10.0
@@ -10080,8 +10074,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/replay-driver-previous':
         specifier: npm:@fluidframework/replay-driver@2.10.0
         version: /@fluidframework/replay-driver@2.10.0
@@ -10174,8 +10168,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/routerlicious-driver-previous':
         specifier: npm:@fluidframework/routerlicious-driver@2.10.0
         version: /@fluidframework/routerlicious-driver@2.10.0(debug@4.3.7)
@@ -10274,8 +10268,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/routerlicious-urlresolver-previous':
         specifier: npm:@fluidframework/routerlicious-urlresolver@2.10.0
         version: /@fluidframework/routerlicious-urlresolver@2.10.0
@@ -10365,8 +10359,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/tinylicious-driver-previous':
         specifier: npm:@fluidframework/tinylicious-driver@2.10.0
         version: /@fluidframework/tinylicious-driver@2.10.0
@@ -10468,8 +10462,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -10541,8 +10535,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/id-compressor':
         specifier: workspace:~
         version: link:../../runtime/id-compressor
@@ -10662,8 +10656,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -10771,8 +10765,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/merge-tree':
         specifier: workspace:~
         version: link:../../dds/merge-tree
@@ -11065,8 +11059,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -11129,8 +11123,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -11232,8 +11226,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -11323,8 +11317,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/fluid-static-previous':
         specifier: npm:@fluidframework/fluid-static@2.10.0
         version: /@fluidframework/fluid-static@2.10.0
@@ -11414,8 +11408,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -11446,6 +11440,9 @@ importers:
 
   packages/framework/presence:
     dependencies:
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../common/client-utils
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -11505,8 +11502,8 @@ importers:
         specifier: workspace:~
         version: link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -11596,8 +11593,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/request-handler-previous':
         specifier: npm:@fluidframework/request-handler@2.10.0
         version: /@fluidframework/request-handler@2.10.0(debug@4.3.7)
@@ -11681,8 +11678,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/datastore
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
@@ -11769,8 +11766,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -11893,8 +11890,8 @@ importers:
         specifier: npm:@fluidframework/container-loader@2.10.0
         version: /@fluidframework/container-loader@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -12005,8 +12002,8 @@ importers:
         specifier: npm:@fluidframework/driver-utils@2.10.0
         version: /@fluidframework/driver-utils@2.10.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -12090,8 +12087,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -12196,8 +12193,8 @@ importers:
         specifier: npm:@fluidframework/container-runtime@2.10.0
         version: /@fluidframework/container-runtime@2.10.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../test-runtime-utils
@@ -12290,8 +12287,8 @@ importers:
         specifier: npm:@fluidframework/container-runtime-definitions@2.10.0
         version: /@fluidframework/container-runtime-definitions@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -12375,8 +12372,8 @@ importers:
         specifier: npm:@fluidframework/datastore@2.10.0
         version: /@fluidframework/datastore@2.10.0(debug@4.3.7)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../test-runtime-utils
@@ -12466,8 +12463,8 @@ importers:
         specifier: npm:@fluidframework/datastore-definitions@2.10.0
         version: /@fluidframework/datastore-definitions@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -12536,8 +12533,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/id-compressor-previous':
         specifier: npm:@fluidframework/id-compressor@2.10.0
         version: /@fluidframework/id-compressor@2.10.0
@@ -12621,8 +12618,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/runtime-definitions-previous':
         specifier: npm:@fluidframework/runtime-definitions@2.10.0
         version: /@fluidframework/runtime-definitions@2.10.0
@@ -12703,8 +12700,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/runtime-utils-previous':
         specifier: npm:@fluidframework/runtime-utils@2.10.0
         version: /@fluidframework/runtime-utils@2.10.0(debug@4.3.7)
@@ -12824,8 +12821,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils-previous':
         specifier: npm:@fluidframework/test-runtime-utils@2.10.0
         version: /@fluidframework/test-runtime-utils@2.10.0
@@ -12939,8 +12936,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -13007,6 +13004,9 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
+      '@fluid-private/test-version-utils':
+        specifier: workspace:~
+        version: link:../../../test/test-version-utils
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../framework/aqueduct
@@ -13102,8 +13102,8 @@ importers:
         specifier: workspace:~
         version: link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -13143,6 +13143,9 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
+      '@fluid-private/test-version-utils':
+        specifier: workspace:~
+        version: link:../../../test/test-version-utils
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../framework/aqueduct
@@ -13214,8 +13217,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -13308,8 +13311,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../test/test-utils
@@ -13417,8 +13420,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/container-runtime-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../test/test-utils
@@ -13504,8 +13507,8 @@ importers:
         specifier: workspace:~
         version: link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/id-compressor':
         specifier: workspace:~
         version: link:../../runtime/id-compressor
@@ -13642,8 +13645,8 @@ importers:
         specifier: workspace:~
         version: link:../../loader/driver-utils
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../drivers/local-driver
@@ -13736,8 +13739,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -13851,8 +13854,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -13918,8 +13921,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -13991,8 +13994,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -14094,8 +14097,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -14293,8 +14296,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
@@ -14360,8 +14363,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -14496,8 +14499,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -14623,8 +14626,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-utils-previous':
         specifier: npm:@fluidframework/test-utils@2.10.0
         version: /@fluidframework/test-utils@2.10.0
@@ -14795,8 +14798,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -14901,8 +14904,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -14953,8 +14956,8 @@ importers:
         specifier: npm:@fluidframework/devtools@2.10.0
         version: /@fluidframework/devtools@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.54)
@@ -15074,8 +15077,8 @@ importers:
         specifier: workspace:~
         version: link:../../../runtime/container-runtime-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../runtime/runtime-utils
@@ -15285,8 +15288,8 @@ importers:
         specifier: npm:@fluidframework/devtools-core@2.10.0
         version: /@fluidframework/devtools-core@2.10.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/id-compressor':
         specifier: workspace:~
         version: link:../../../runtime/id-compressor
@@ -15439,8 +15442,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../test/test-utils
@@ -15608,8 +15611,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../../dds/shared-object-base
@@ -15807,8 +15810,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.54
@@ -15880,8 +15883,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/fluid-runner-previous':
         specifier: npm:@fluidframework/fluid-runner@2.10.0
         version: /@fluidframework/fluid-runner@2.10.0
@@ -16031,8 +16034,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/json-stable-stringify':
         specifier: ^1.0.32
         version: 1.0.36
@@ -16101,8 +16104,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-doclib-utils-previous':
         specifier: npm:@fluidframework/odsp-doclib-utils@2.10.0
         version: /@fluidframework/odsp-doclib-utils@2.10.0(debug@4.3.7)
@@ -16189,8 +16192,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/telemetry-utils-previous':
         specifier: npm:@fluidframework/telemetry-utils@2.10.0
         version: /@fluidframework/telemetry-utils@2.10.0
@@ -16295,8 +16298,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/tool-utils-previous':
         specifier: npm:@fluidframework/tool-utils@2.10.0
         version: /@fluidframework/tool-utils@2.10.0
@@ -19296,8 +19299,8 @@ packages:
       sha.js: 2.4.11
     dev: true
 
-  /@fluid-internal/eslint-plugin-fluid@0.1.2(eslint@8.55.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-E7LF4ukpCoyZcxpDUQz0edXsKllbh4m8NAdiug6sSI1KIIQFwtq5vvW3kQ0Op5xA9w10T6crfcvmuAzdP84UGg==}
+  /@fluid-internal/eslint-plugin-fluid@0.1.3(eslint@8.55.0)(typescript@5.4.5):
+    resolution: {integrity: sha512-l3MPEQ34lYP9QOIQ9vx9ncyvkYqR7ci7ZixxD4RdOmGBnAFOqipBjn5Je9AJfztQ3jWgcT3jiV+AVT3rBjc2Yw==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@typescript-eslint/parser': 6.21.0(eslint@8.55.0)(typescript@5.4.5)
@@ -20155,16 +20158,17 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/eslint-config-fluid@5.4.0(eslint@8.55.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-V9lKsH1oFq3pX8UjSv8AyZ9BswPEcozGi3Ic/KuMdsYHj8Ibm3EgTtYSyNgVOAFivDW474qvXc5PDhKD8T/mfw==}
+  /@fluidframework/eslint-config-fluid@5.6.0(eslint@8.55.0)(typescript@5.4.5):
+    resolution: {integrity: sha512-XMQDPFpHbuSPJyRJvSg1mcjBOxCocqpGkIWNmNc/P1bdC6H01Ghi0Q4rFzb2icbJ5SyQFEOr0zAxYd882O3YdQ==}
     dependencies:
-      '@fluid-internal/eslint-plugin-fluid': 0.1.2(eslint@8.55.0)(typescript@5.4.5)
+      '@fluid-internal/eslint-plugin-fluid': 0.1.3(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0
       '@rushstack/eslint-plugin': 0.13.1(eslint@8.55.0)(typescript@5.4.5)
       '@rushstack/eslint-plugin-security': 0.7.1(eslint@8.55.0)(typescript@5.4.5)
       '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5)(eslint@8.55.0)(typescript@5.4.5)
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
+      eslint-config-biome: 1.9.3
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
       eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5)(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
@@ -26314,10 +26318,6 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /builtin-status-codes@3.0.0:
-    resolution: {integrity: sha512-HpGFw18DgFWlncDfjTa2rcQ4W88O1mC8e8yZ2AvQY5KDaktSTwo+KRf6nHK6FRI5FyRyb/5T6+TSxfP7QyGsmQ==}
-    dev: true
-
   /busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
     engines: {node: '>=10.16.0'}
@@ -28539,6 +28539,10 @@ packages:
       esutils: 2.0.3
     optionalDependencies:
       source-map: 0.6.1
+    dev: true
+
+  /eslint-config-biome@1.9.3:
+    resolution: {integrity: sha512-Zrz6Z+Gtv1jqnfHsqvpwCSqclktvQF1OnyDAfDOvjzzck2c5Nw3crEHI2KLuH+LnNBttiPAb7Y7e8sF158sOgQ==}
     dev: true
 
   /eslint-config-prettier@9.0.0(eslint@8.55.0):
@@ -37579,15 +37583,6 @@ packages:
     resolution: {integrity: sha512-rT00SPnTVyRsaSz5zgSPma/aHSOic5U1prhYdRy5HS2kTZviFpmDgzilbtsJsxiroqACmayynDN/9VzIbX5DOw==}
     dependencies:
       duplexer: 0.1.2
-
-  /stream-http@3.2.0:
-    resolution: {integrity: sha512-Oq1bLqisTyK3TSCXpPbT4sdeYNdmyZJv1LxpEm2vu1ZhK89kSE5YXwZc3cWk0MagGaKriBh9mCFbVGtO+vY29A==}
-    dependencies:
-      builtin-status-codes: 3.0.0
-      inherits: 2.0.4
-      readable-stream: 3.6.2
-      xtend: 4.0.2
-    dev: true
 
   /stream-to-pull-stream@1.7.3:
     resolution: {integrity: sha512-6sNyqJpr5dIOQdgNy/xcDWwDuzAsAwVzhzrWlAPAQ7Lkjx/rv0wgvxEyKwTq6FmNd5rjTrELt/CLmaSw7crMGg==}

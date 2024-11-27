@@ -151,7 +151,7 @@ export class KafkaRunner implements IRunner {
 			const seekTimeout = this.config?.get("kafka:seekTimeoutAfterPause") ?? 1000;
 			await this.consumer.pauseFetching(partitionId, seekTimeout, offset);
 		}
-		this.partitionManager?.pause(partitionId);
+		this.partitionManager?.pause(partitionId, offset);
 	}
 
 	public async resume(partitionId: number): Promise<void> {

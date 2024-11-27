@@ -3,68 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { getOrCreate } from "../util/index.js";
-import type { Listenable, Listeners, Off } from "./listeners.js";
+import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+	Listeners,
+	MapGetSet,
+	NoListenersCallback,
+	Off,
+} from "@fluidframework/core-interfaces/internal";
 
 /**
- * Interface for an event emitter that can emit typed events to subscribed listeners.
+ * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
+ * @param map - The map to query/update
+ * @param key - The key to lookup in the map
+ * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
+ * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
+ * @internal
  */
-export interface IEmitter<TListeners extends Listeners<TListeners>> {
-	/**
-	 * Emits an event with the specified name and arguments, notifying all subscribers by calling their registered listener functions.
-	 * @param eventName - the name of the event to fire
-	 * @param args - the arguments passed to the event listener functions
-	 */
-	emit<K extends keyof Listeners<TListeners>>(
-		eventName: K,
-		...args: Parameters<TListeners[K]>
-	): void;
-
-	/**
-	 * Emits an event with the specified name and arguments, notifying all subscribers by calling their registered listener functions.
-	 * It also collects the return values of all listeners into an array.
-	 *
-	 * Warning: This method should be used with caution. It deviates from the standard event-based integration pattern as creates substantial coupling between the emitter and its listeners.
-	 * For the majority of use-cases it is recommended to use the standard {@link IEmitter.emit} functionality.
-	 * @param eventName - the name of the event to fire
-	 * @param args - the arguments passed to the event listener functions
-	 * @returns An array of the return values of each listener, preserving the order listeners were called.
-	 */
-	emitAndCollect<K extends keyof Listeners<TListeners>>(
-		eventName: K,
-		...args: Parameters<TListeners[K]>
-	): ReturnType<TListeners[K]>[];
-}
-
-/**
- * Called when the last listener for `eventName` is removed.
- * Useful for determining when to clean up resources related to detecting when the event might occurs.
- */
-export type NoListenersCallback<TListeners extends object> = (
-	eventName: keyof Listeners<TListeners>,
-) => void;
-
-/**
- * Allows querying if an object has listeners.
- * @sealed
- */
-export interface HasListeners<TListeners extends Listeners<TListeners>> {
-	/**
-	 * When no `eventName` is provided, returns true iff there are any listeners.
-	 *
-	 * When `eventName` is provided, returns true iff there are listeners for that event.
-	 *
-	 * @remarks
-	 * This can be used to know when its safe to cleanup data-structures which only exist to fire events for their listeners.
-	 */
-	hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
+function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V {
+	let value = map.get(key);
+	if (value === undefined) {
+		value = defaultValue(key);
+		map.set(key, value);
+	}
+	return value;
 }
 
 /**
  * Provides an API for subscribing to and listening to events.
  *
- * @remarks Classes wishing to emit events may either extend this class, compose over it, or expose it as a property of type {@link Listenable}.
+ * @remarks Classes wishing to emit events may either extend this class, compose over it, or expose it as a property of type {@link @fluidframework/core-interfaces#Listenable}.
  *
  * @example Extending this class
  *
@@ -112,8 +81,9 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
  * 	}
  * }
  * ```
+ * @internal
  */
-export class EventEmitter<TListeners extends Listeners<TListeners>>
+export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 	implements Listenable<TListeners>, HasListeners<TListeners>
 {
 	protected readonly listeners = new Map<
@@ -168,7 +138,7 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 			const eventDescription =
 				typeof eventName === "symbol" ? eventName.description : String(eventName.toString());
 
-			throw new UsageError(
+			throw new Error(
 				`Attempted to register the same listener object twice for event ${eventDescription}`,
 			);
 		}
@@ -189,7 +159,7 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 
 	public hasListeners(eventName?: keyof TListeners): boolean {
 		if (eventName === undefined) {
-			return this.listeners.size !== 0;
+			return this.listeners.size > 0;
 		}
 		return this.listeners.has(eventName);
 	}
@@ -197,9 +167,10 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 
 /**
  * This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
+ * @internal
  */
 class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
-	extends EventEmitter<TListeners>
+	extends CustomEventEmitter<TListeners>
 	implements IEmitter<TListeners>
 {
 	public constructor(noListeners?: NoListenersCallback<TListeners>) {
@@ -222,10 +193,10 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
 }
 
 /**
- * Create a {@link Listenable} that can be instructed to emit events via the {@link IEmitter} interface.
+ * Create a {@link @fluidframework/core-interfaces#Listenable} that can be instructed to emit events via the {@link @fluidframework/core-interfaces#IEmitter} interface.
  *
- * A class can delegate handling {@link Listenable} to the returned value while using it to emit the events.
- * See also {@link EventEmitter} which be used as a base class to implement {@link Listenable} via extension.
+ * A class can delegate handling {@link @fluidframework/core-interfaces#Listenable} to the returned value while using it to emit the events.
+ * See also CustomEventEmitter which be used as a base class to implement {@link @fluidframework/core-interfaces#Listenable} via extension.
  * @example Forwarding events to the emitter
  * ```typescript
  * interface MyEvents {
@@ -233,7 +204,7 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  * }
  *
  * class MyClass implements Listenable<MyEvents> {
- * 	private readonly events = createEmitterMinimal<MyEvents>();
+ * 	private readonly events = createEmitter<MyEvents>();
  *
  * 	private load(): void {
  * 		this.events.emit("loaded");
@@ -248,6 +219,7 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  * 	}
  * }
  * ```
+ * @internal
  */
 export function createEmitter<TListeners extends object>(
 	noListeners?: NoListenersCallback<TListeners>,

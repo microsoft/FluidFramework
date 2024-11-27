@@ -15,12 +15,13 @@ export class InMemoryDb extends EventEmitter implements IDb {
 	}
 
 	public collection<T>(name: string): ICollection<T> {
-		if (!this.collections.has(name)) {
-			const collection = new Collection();
-			this.collections.set(name, collection);
+		const existingCollection = this.collections.get(name);
+		if (existingCollection) {
+			return existingCollection as ICollection<T>;
 		}
-
-		return this.collections.get(name);
+		const collection = new Collection();
+		this.collections.set(name, collection);
+		return collection as ICollection<T>;
 	}
 
 	public async dropCollection(name: string): Promise<boolean> {

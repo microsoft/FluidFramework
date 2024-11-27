@@ -76,7 +76,7 @@ export class NetworkError extends Error {
 	 * Value representing the time in seconds that should be waited before retrying.
 	 * TODO: remove in favor of retryAfterMs once driver supports retryAfterMs.
 	 */
-	public readonly retryAfter: number;
+	public readonly retryAfter?: number;
 
 	constructor(
 		/**
