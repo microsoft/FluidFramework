@@ -88,7 +88,7 @@ async function start() {
 	location.hash = id;
 	document.title = id;
 
-	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
+	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
 	renderControlPanel(controlPanelDiv);
@@ -97,7 +97,7 @@ async function start() {
 	const focusTracker = new FocusTracker(presence, appPresence, services.audience);
 	const mouseTracker = new MouseTracker(presence, appPresence, services.audience, slider);
 
-	renderFocusPresence(focusTracker, contentDiv);
+	renderFocusPresence(focusTracker, focusDiv);
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
 }
 
