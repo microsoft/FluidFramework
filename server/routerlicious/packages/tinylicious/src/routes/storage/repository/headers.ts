@@ -36,7 +36,7 @@ export function create(store: nconf.Provider): Router {
 		const headerP = getHeader(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.params.sha,
 			useCache,
 		);
@@ -49,7 +49,7 @@ export function create(store: nconf.Provider): Router {
 		const headerP = getTree(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.params.sha,
 			useCache,
 		);

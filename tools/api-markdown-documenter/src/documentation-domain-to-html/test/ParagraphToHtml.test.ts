@@ -8,7 +8,9 @@
  * Licensed under the MIT License.
  */
 import { h } from "hastscript";
+
 import { ParagraphNode, PlainTextNode } from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 describe("ParagraphNode HTML rendering tests", () => {

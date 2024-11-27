@@ -5,10 +5,11 @@
 
 import { expect } from "chai";
 import type { Nodes as HastNodes } from "hast";
+
 import type { DocumentationNode } from "../../documentation-domain/index.js";
-import { createTransformationContext } from "../TransformationContext.js";
-import { type TransformationConfig } from "../configuration/index.js";
 import { documentationNodeToHtml } from "../ToHtml.js";
+import { createTransformationContext } from "../TransformationContext.js";
+import type { TransformationConfig } from "../configuration/index.js";
 
 /**
  * Tests transforming an individual {@link DocumentationNode} to HTML.

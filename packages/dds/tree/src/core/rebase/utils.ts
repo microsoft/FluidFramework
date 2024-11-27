@@ -484,7 +484,7 @@ export function findAncestor<T extends { parent?: T }>(
  * @param descendant - a descendant. If an empty `path` array is included, it will be populated
  * with the chain of ancestry for `descendant` from most distant to closest (not including the ancestor found by `predicate`,
  * but otherwise including `descendant`).
- * @param predicate - a function which will be evaluated on every ancestor of `descendant` until it returns true.
+ * @param predicate - a function which will be evaluated on `descendant` and then ancestor of `descendant` (in ascending order) until it returns true.
  * @returns the closest ancestor of `descendant` that satisfies `predicate`, or `undefined` if no such ancestor exists.
  *
  * @example

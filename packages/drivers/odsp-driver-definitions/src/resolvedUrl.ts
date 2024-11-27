@@ -122,6 +122,11 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	tokens: {};
 
 	fileName: string;
+	/**
+	 * Used to track when a file was created with a temporary name. In that case this value will
+	 * be the desired name, which the file is eventually renamed too.
+	 */
+	pendingRename?: string;
 
 	summarizer: boolean;
 
