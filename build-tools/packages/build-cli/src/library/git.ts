@@ -44,15 +44,20 @@ function getVersionFromTag(tag: string): string | undefined {
 }
 
 /**
+ * A type of string used to denote a GitHub repo by owner and repo name.
+ */
+export type GitHubRepoShortString = `${string}/${string}`;
+
+/**
  * Context object with metadata about the local Git repository. This is used by CLI commands that need access to
  * relevant metadata that can't be queried from Git itself, such as the `upstreamRemotePartialUrl`.
  */
 export interface GitContext {
 	/**
-	 * A string that is a substring of the full URL to the upstream remote repository. If a remote is found that
-	 * partically matches this string, it will be considered the upstream remote.
+	 * A string of the form "OWNER/REPO" that is a substring of the full URL to the upstream remote repository. If a
+	 * remote is found that partially matches this string, it will be considered the upstream remote.
 	 */
-	upstreamRemotePartialUrl: Readonly<string>;
+	upstreamRemotePartialUrl: Readonly<GitHubRepoShortString>;
 
 	/**
 	 * The branch name when the Git context was initialized.
@@ -99,7 +104,7 @@ export class Repository implements GitContext {
 
 	constructor(
 		gitOptions: SetRequired<Partial<SimpleGitOptions>, "baseDir">,
-		public readonly upstreamRemotePartialUrl: string,
+		public readonly upstreamRemotePartialUrl: GitHubRepoShortString,
 		protected readonly log?: CommandLogger,
 	) {
 		const options: SetRequired<Partial<SimpleGitOptions>, "baseDir"> = {

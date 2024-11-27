@@ -138,12 +138,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			};
 		}
 
-		// if (context.gitContext === undefined) {
-		// 	this.error(`Command can only be run in a git repository.`, { exit: 1 });
-		// }
-
 		const repo = await context.getGitRepository();
-		// context.originRemotePartialUrl is 'microsoft/FluidFramework'; see BaseCommand.getContext().
 		const remote = await repo.getRemote(repo.upstreamRemotePartialUrl);
 
 		if (remote === undefined) {

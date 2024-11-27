@@ -106,7 +106,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const context = await this.getContext();
 		const gitRepo = await context.getGitRepository();
 		if (gitRepo === undefined) {
-			this.errorLog(`gitRepo undefined: ${JSON.stringify(gitRepo)}`);
+			this.errorLog(`Apparently not inside a git repo`);
 			this.error("gitRepo is undefined", { exit: 1 });
 		}
 
