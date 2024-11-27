@@ -53,7 +53,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 // @alpha
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    protected abstract applyStashedOp(content: any): void;
+    protected abstract applyStashedOp(content: unknown): void;
     // (undocumented)
     readonly attributes: IChannelAttributes;
     bindToContext(): void;
@@ -62,7 +62,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     protected didAttach(): void;
     protected dirty(): void;
-    emit(event: EventEmitterEventType, ...args: any[]): boolean;
+    emit(event: EventEmitterEventType, ...args: unknown[]): boolean;
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly handle: IFluidHandleInternal;

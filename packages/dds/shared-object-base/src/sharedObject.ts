@@ -504,13 +504,13 @@ export abstract class SharedObjectCore<
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
 			},
-			reSubmit: (content: any, localOpMetadata: unknown) => {
+			reSubmit: (content: unknown, localOpMetadata: unknown) => {
 				this.reSubmit(content, localOpMetadata);
 			},
-			applyStashedOp: (content: any): void => {
+			applyStashedOp: (content: unknown): void => {
 				this.applyStashedOp(parseHandles(content, this.serializer));
 			},
-			rollback: (content: any, localOpMetadata: unknown) => {
+			rollback: (content: unknown, localOpMetadata: unknown) => {
 				this.rollback(content, localOpMetadata);
 			},
 		} satisfies IDeltaHandler);
@@ -630,7 +630,7 @@ export abstract class SharedObjectCore<
 	 *
 	 * @param content - Contents of a stashed op.
 	 */
-	protected abstract applyStashedOp(content: any): void;
+	protected abstract applyStashedOp(content: unknown): void;
 
 	/**
 	 * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,
@@ -642,7 +642,7 @@ export abstract class SharedObjectCore<
 	 * @param args - Arguments to pass to the event listeners.
 	 * @returns `true` if the event had listeners, `false` otherwise.
 	 */
-	public emit(event: EventEmitterEventType, ...args: any[]): boolean {
+	public emit(event: EventEmitterEventType, ...args: unknown[]): boolean {
 		return this.callbacksHelper.measure(() => {
 			return super.emit(event, ...args);
 		});
@@ -655,7 +655,7 @@ export abstract class SharedObjectCore<
 	 * @param args - Arguments for the event
 	 * @returns Whatever `super.emit()` returns.
 	 */
-	private emitInternal(event: EventEmitterEventType, ...args: any[]): boolean {
+	private emitInternal(event: EventEmitterEventType, ...args: unknown[]): boolean {
 		return super.emit(event, ...args);
 	}
 }
@@ -793,7 +793,7 @@ export abstract class SharedObject<
 	 * Calls the serializer over all data in this object that reference other GC nodes.
 	 * Derived classes must override this to provide custom list of references to other GC nodes.
 	 */
-	protected processGCDataCore(serializer: IFluidSerializer) {
+	protected processGCDataCore(serializer: IFluidSerializer): void {
 		// We run the full summarize logic to get the list of outbound routes from this object. This is a little
 		// expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
 		// See: https://github.com/microsoft/FluidFramework/issues/4547
@@ -814,7 +814,7 @@ export abstract class SharedObject<
 		propertyName: string,
 		incrementBy: number,
 		telemetryContext?: ITelemetryContext,
-	) {
+	): void {
 		if (telemetryContext !== undefined) {
 			// TelemetryContext needs to implment a get function
 			assert(

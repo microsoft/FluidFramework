@@ -27,7 +27,10 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { IFluidSerializer } from "../serializer.js";
 import { SharedObject } from "../sharedObject.js";
 
-type Overridable<T> = T extends ((...args: any) => any) | string | number | undefined | []
+/* eslint-disable-next-line @typescript-eslint/ban-types --
+	Trying to use sepcfic function signatures here instead of Function makes it so some of the properties of
+	OverridableType below (summarizeCore, loadCore, processCore) end up not typed correctly */
+type Overridable<T> = T extends Function | string | number | undefined | []
 	? T
 	: {
 			-readonly [P in keyof T]?: Overridable<T[P]>;
@@ -36,8 +39,8 @@ type Overridable<T> = T extends ((...args: any) => any) | string | number | unde
 function createOverridableProxy<T extends object>(
 	name: string,
 	...overrides: Overridable<T>[]
-) {
-	return new Proxy<T>({} as any as T, {
+): T {
+	return new Proxy<T>({} as unknown as T, {
 		get: (_, p, r) => {
 			for (const override of overrides) {
 				if (p in override) {
@@ -49,37 +52,41 @@ function createOverridableProxy<T extends object>(
 	});
 }
 
-function createTestSharedObject(
-	overrides: Overridable<{
-		id: string;
-		runtime: IFluidDataStoreRuntime;
-		attributes: IChannelAttributes;
-		telemetryConfigPrefix: string;
-		summarizeCore: (
-			this: SharedObject,
-			serializer: IFluidSerializer,
-			telemetryContext?: ITelemetryContext | undefined,
-			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
-		) => ISummaryTreeWithStats;
-		loadCore: (this: SharedObject, services: IChannelStorageService) => Promise<void>;
-		processCore: (
-			this: SharedObject,
+type OverridableType = Overridable<{
+	id: string;
+	runtime: IFluidDataStoreRuntime;
+	attributes: IChannelAttributes;
+	telemetryConfigPrefix: string;
+	summarizeCore: (
+		this: SharedObject,
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext | undefined,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+	) => ISummaryTreeWithStats;
+	loadCore: (this: SharedObject, services: IChannelStorageService) => Promise<void>;
+	processCore: (
+		this: SharedObject,
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) => void;
+	onDisconnect: (this: SharedObject) => void;
+	applyStashedOp: (this: SharedObject, content: unknown) => void;
+	didAttach: () => void;
+}>;
 
-			message: ISequencedDocumentMessage,
-			local: boolean,
-			localOpMetadata: unknown,
-		) => void;
-		onDisconnect: (this: SharedObject) => void;
-		applyStashedOp: (this: SharedObject, content: any) => unknown;
-		didAttach: () => void;
-	}>,
-) {
+function createTestSharedObject(overrides: OverridableType): {
+	overrides: OverridableType;
+	sharedObject: SharedObject;
+} {
 	class TestSharedObject extends SharedObject {
 		protected summarizeCore = overrides?.summarizeCore?.bind(this);
-		protected loadCore = overrides?.loadCore?.bind(this);
-		protected processCore = overrides?.processCore?.bind(this);
-		protected onDisconnect = overrides?.onDisconnect?.bind(this);
-		protected applyStashedOp = overrides?.applyStashedOp?.bind(this);
+		/* eslint-disable @typescript-eslint/no-non-null-assertion */
+		protected loadCore = overrides?.loadCore!.bind(this);
+		protected processCore = overrides?.processCore!.bind(this);
+		protected onDisconnect = overrides?.onDisconnect!.bind(this);
+		protected applyStashedOp = overrides?.applyStashedOp!.bind(this);
+		/* eslint-enable @typescript-eslint/no-non-null-assertion */
 		protected didAttach =
 			overrides.didAttach?.bind(this) ?? (() => assert.fail("didAttach not set"));
 	}
