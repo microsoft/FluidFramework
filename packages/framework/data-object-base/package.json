@@ -37,9 +37,6 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
-		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
@@ -57,9 +54,7 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
