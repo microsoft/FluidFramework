@@ -655,7 +655,7 @@ extends:
                     # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
                     # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
                     - ${{ if parameters.testCoverage }}:
-                        - template: include-install-build-tools.yml
+                        - template: /tools/pipelines/templates/include-install-build-tools.yml@self
                           parameters:
                             buildDirectory: ${{ parameters.buildDirectory }}
                             buildToolsVersionToInstall: repo
