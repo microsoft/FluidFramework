@@ -10,6 +10,7 @@ import {
 	ObjectNodeStoredSchema,
 	storedEmptyFieldSchema,
 	ValueSchema,
+	type FieldKindIdentifier,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
@@ -21,6 +22,7 @@ import {
 	allowsRepoSuperset,
 	isRepoSuperset as isRepoSupersetOriginal,
 	type FlexFieldKind,
+	normalizeStoredSchema,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { fieldSchema } from "./comparison.spec.js";
@@ -29,7 +31,7 @@ import { fieldSchema } from "./comparison.spec.js";
 // This function can go away once the older codepath is removed, see comment on the top of `discrepancies.ts` for more information.
 function isRepoSuperset(superset: TreeStoredSchema, original: TreeStoredSchema): boolean {
 	const allowsSupersetResult = allowsRepoSuperset(defaultSchemaPolicy, original, superset);
-	const isRepoSupersetResult = isRepoSupersetOriginal(superset, original);
+	const isRepoSupersetResult = isRepoSupersetOriginal(defaultSchemaPolicy, superset, original);
 	assert.equal(
 		allowsSupersetResult,
 		isRepoSupersetResult,
@@ -59,32 +61,77 @@ const stringName = brand<TreeNodeSchemaIdentifier>("string");
 const numberName = brand<TreeNodeSchemaIdentifier>("number");
 const testTreeNodeIdentifier = brand<TreeNodeSchemaIdentifier>("tree");
 
-describe("Schema Discrepancies", () => {
-	const createObjectNodeSchema = (
-		fields: [string, TreeFieldStoredSchema][],
-		treeName: string,
-		root: TreeFieldStoredSchema,
-	): TreeStoredSchema => {
-		const objectNodeSchema = new ObjectNodeStoredSchema(
-			new Map(fields.map(([key, schema]) => [brand(key), schema])),
-		);
-		return {
-			rootFieldSchema: root,
-			nodeSchema: new Map([[brand<TreeNodeSchemaIdentifier>(treeName), objectNodeSchema]]),
-		};
-	};
-
-	const createMapNodeSchema = (
-		field: TreeFieldStoredSchema,
-		treeName: string,
-		root: TreeFieldStoredSchema,
-	): TreeStoredSchema => ({
+const createObjectNodeSchema = (
+	fields: [string, TreeFieldStoredSchema][],
+	treeName: string,
+	root: TreeFieldStoredSchema,
+): TreeStoredSchema => {
+	const objectNodeSchema = new ObjectNodeStoredSchema(
+		new Map(fields.map(([key, schema]) => [brand(key), schema])),
+	);
+	return {
 		rootFieldSchema: root,
-		nodeSchema: new Map([
-			[brand<TreeNodeSchemaIdentifier>(treeName), new MapNodeStoredSchema(field)],
-		]),
+		nodeSchema: new Map([[brand<TreeNodeSchemaIdentifier>(treeName), objectNodeSchema]]),
+	};
+};
+
+const createMapNodeSchema = (
+	field: TreeFieldStoredSchema,
+	treeName: string,
+	root: TreeFieldStoredSchema,
+): TreeStoredSchema => ({
+	rootFieldSchema: root,
+	nodeSchema: new Map([
+		[brand<TreeNodeSchemaIdentifier>(treeName), new MapNodeStoredSchema(field)],
+	]),
+});
+
+describe("NormalizeStoredSchema", () => {
+	const root = storedEmptyFieldSchema;
+	const neverField = fieldSchema(FieldKinds.required, []);
+
+	it("Convert never fields to explicit forbidden fields", () => {
+		const neverTree = createMapNodeSchema(neverField, testTreeNodeIdentifier, root);
+		const normalizedTree1 = normalizeStoredSchema(neverTree, defaultSchemaPolicy);
+		assert.equal(
+			normalizedTree1.rootFieldSchema.kind,
+			brand<FieldKindIdentifier>("Forbidden"),
+		);
 	});
 
+	it("Drop the never trees from the stored schema", () => {
+		const neverTree2 = createObjectNodeSchema(
+			[["x", neverField]],
+			testTreeNodeIdentifier,
+			root,
+		);
+
+		const neverTree3 = createObjectNodeSchema(
+			[
+				["x", neverField],
+				["y", fieldSchema(FieldKinds.required, [numberName])],
+			],
+			testTreeNodeIdentifier,
+			root,
+		);
+
+		const normalizedTree2 = normalizeStoredSchema(neverTree2, defaultSchemaPolicy);
+		assert.equal(
+			normalizedTree2.rootFieldSchema.kind,
+			brand<FieldKindIdentifier>("Forbidden"),
+		);
+		assert.equal(normalizedTree2.nodeSchema.size, 0);
+
+		const normalizedTree3 = normalizeStoredSchema(neverTree3, defaultSchemaPolicy);
+		assert.equal(
+			normalizedTree3.rootFieldSchema.kind,
+			brand<FieldKindIdentifier>("Forbidden"),
+		);
+		assert.equal(normalizedTree3.nodeSchema.size, 0);
+	});
+});
+
+describe("Schema Discrepancies", () => {
 	const createLeafNodeSchema = (
 		leafValue: ValueSchema,
 		treeName: string,
@@ -158,17 +205,10 @@ describe("Schema Discrepancies", () => {
 			[],
 		);
 
-		/**
-		 * Below is an inconsistency between 'isRepoSuperset' and 'allowsRepoSuperset'. The 'isRepoSuperset' will
-		 * halt further validation if an inconsistency in `nodeKind` is found. However, the current logic of
-		 * 'allowsRepoSuperset' permits relaxing an object node to a map node, which allows for a union of all types
-		 * permitted on the object node's fields. It is unclear if this behavior is desired, as
-		 * 'getAllowedContentDiscrepancies' currently does not support it.
-		 *
-		 * TODO: If we decide to support this behavior, we will need better e2e tests for this scenario. Additionally,
-		 * we may need to adjust the encoding of map nodes and object nodes to ensure consistent encoding.
-		 */
-		assert.equal(isRepoSupersetOriginal(objectNodeSchema, mapNodeSchema), false);
+		assert.equal(
+			isRepoSupersetOriginal(defaultSchemaPolicy, objectNodeSchema, mapNodeSchema),
+			true,
+		);
 		assert.equal(
 			allowsRepoSuperset(defaultSchemaPolicy, objectNodeSchema, mapNodeSchema),
 			true,
@@ -551,6 +591,36 @@ describe("Schema Discrepancies", () => {
 			testTreeNodeIdentifier,
 			root1,
 		);
+
+		it("NeverTree", () => {
+			const root = storedEmptyFieldSchema;
+			const neverField = fieldSchema(FieldKinds.required, []);
+
+			// The never field will be converted to explict Forbidden fields when validating superset
+			const neverTree = createMapNodeSchema(neverField, testTreeNodeIdentifier, root);
+			const mapNodeSchema2 = createMapNodeSchema(
+				fieldSchema(FieldKinds.optional, [numberName]),
+				testTreeNodeIdentifier,
+				root,
+			);
+			validateStrictSuperset(mapNodeSchema2, neverTree);
+
+			// The never tree with "x" identifier will be dropped when validating superset
+			const neverTree2 = createObjectNodeSchema(
+				[
+					["x", neverField],
+					["y", fieldSchema(FieldKinds.required, [stringName])],
+				],
+				testTreeNodeIdentifier,
+				root,
+			);
+			const objectNodeSchema1 = createObjectNodeSchema(
+				[["y", fieldSchema(FieldKinds.optional, [stringName])]],
+				testTreeNodeIdentifier,
+				root,
+			);
+			validateStrictSuperset(objectNodeSchema1, neverTree2);
+		});
 
 		it("Relaxing a field kind to more general field kind", () => {
 			const mapNodeSchema2 = createMapNodeSchema(
