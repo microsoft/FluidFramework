@@ -1000,9 +1000,6 @@ importers:
       '@fluid-experimental/data-objects':
         specifier: workspace:~
         version: link:../../../experimental/framework/data-objects
-      '@fluid-experimental/presence':
-        specifier: workspace:~
-        version: link:../../../packages/framework/presence
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
@@ -1027,6 +1024,9 @@ importers:
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-static
+      '@fluidframework/presence':
+        specifier: workspace:~
+        version: link:../../../packages/framework/presence
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/routerlicious-driver

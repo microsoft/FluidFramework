@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IAzureAudience } from "@fluidframework/azure-client";
+import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	Latest,
 	type IPresence,
 	type ISessionClient,
 	type LatestValueManager,
 	type PresenceStates,
-} from "@fluid-experimental/presence";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IAzureAudience } from "@fluidframework/azure-client";
-import { IEvent } from "@fluidframework/core-interfaces";
+} from "@fluidframework/presence/alpha";
 
 export interface IFocusTrackerEvents extends IEvent {
 	(event: "focusChanged", listener: () => void): void;

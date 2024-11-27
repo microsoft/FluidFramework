@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IAzureAudience } from "@fluidframework/azure-client";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import {
 	type IPresence,
 	type ISessionClient,
 	Latest,
 	type LatestValueManager,
 	type PresenceStates,
-} from "@fluid-experimental/presence";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IAzureAudience } from "@fluidframework/azure-client";
-import type { IEvent } from "@fluidframework/core-interfaces";
+} from "@fluidframework/presence/alpha";
 
 export interface IMouseTrackerEvents extends IEvent {
 	(event: "mousePositionChanged", listener: () => void): void;

@@ -40,7 +40,7 @@
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/data-objects": "workspace:~",
-		"@fluid-experimental/presence": "workspace:~",
+		"@fluidframework/presence": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",

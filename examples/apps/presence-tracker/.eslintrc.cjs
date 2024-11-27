@@ -10,5 +10,12 @@ module.exports = {
 	],
 	rules: {
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
+		"import/no-internal-modules": [
+			"error",
+			{
+				allow: ["@fluidframework/presence/alpha", "fluid-framework/legacy"],
+			},
+		],
 	},
 };

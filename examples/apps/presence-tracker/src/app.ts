@@ -4,17 +4,17 @@
  */
 
 import {
-	acquirePresenceViaDataObject,
-	ExperimentalPresenceManager,
-} from "@fluid-experimental/presence";
-import {
 	AzureClient,
 	AzureContainerServices,
 	AzureLocalConnectionConfig,
 } from "@fluidframework/azure-client";
+import {
+	acquirePresenceViaDataObject,
+	ExperimentalPresenceManager,
+} from "@fluidframework/presence/alpha";
+// eslint-disable-next-line import/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
-// eslint-disable-next-line import/no-internal-modules
 import { SharedMap } from "fluid-framework/legacy";
 
 import { FocusTracker } from "./FocusTracker.js";
