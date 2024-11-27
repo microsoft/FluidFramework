@@ -4613,7 +4613,6 @@ export class ContainerRuntime
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
 			default:
-				// Don't check message.compatDetails because this is for rolling back a local op so the type will be known
 				throw new Error(`Can't rollback ${type}`);
 		}
 	}

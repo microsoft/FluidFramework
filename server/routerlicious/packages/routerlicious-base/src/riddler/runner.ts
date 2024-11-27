@@ -24,8 +24,8 @@ import { ITenantRepository } from "./mongoTenantRepository";
  * @internal
  */
 export class RiddlerRunner implements IRunner {
-	private server: IWebServer;
-	private runningDeferred: Deferred<void>;
+	private server?: IWebServer;
+	private runningDeferred?: Deferred<void>;
 	private stopped: boolean = false;
 	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.RiddlerRunner);
 
@@ -51,7 +51,7 @@ export class RiddlerRunner implements IRunner {
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
-		const usingClusterModule: boolean | undefined = this.config.get("riddler:useNodeCluster");
+		const usingClusterModule: boolean | undefined = this.config?.get("riddler:useNodeCluster");
 		// Don't include application logic in primary thread when Node.js cluster module is enabled.
 		const includeAppLogic = !(cluster.isPrimary && usingClusterModule);
 
@@ -75,7 +75,7 @@ export class RiddlerRunner implements IRunner {
 
 			this.server = this.serverFactory.create(riddler);
 		} else {
-			this.server = this.serverFactory.create(null);
+			this.server = this.serverFactory.create(undefined);
 		}
 
 		const httpServer = this.server.httpServer;
@@ -149,8 +149,8 @@ export class RiddlerRunner implements IRunner {
 	 * Event listener for HTTP server "listening" event.
 	 */
 	private onListening() {
-		const addr = this.server.httpServer.address();
-		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+		const addr = this.server?.httpServer?.address();
+		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
 		Lumberjack.info(`Listening on ${bind}`);
 	}
 }

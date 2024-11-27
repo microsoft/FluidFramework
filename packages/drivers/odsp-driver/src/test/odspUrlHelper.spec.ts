@@ -5,7 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { hasOdcOrigin, isOdcUrl, isSpoUrl } from "../odspUrlHelper.js";
+import {
+	checkForKnownServerFarmType,
+	hasOdcOrigin,
+	isOdcUrl,
+	isSpoUrl,
+} from "../odspUrlHelper.js";
 
 describe("odspUrlHelper", () => {
 	describe("hasOdcOrigin", () => {
@@ -173,6 +178,71 @@ describe("odspUrlHelper", () => {
 					new URL("https://foo.onedrive.com/v2x1/drives('ABC123')/items('ABC123!123')"),
 				),
 				false,
+			);
+		});
+	});
+
+	describe("checkForKnownServerFarmType", () => {
+		it("SPDF", () => {
+			assert.equal(
+				checkForKnownServerFarmType("https://microsoft.sharepoint-df.com/path?query=string"),
+				"SPDF",
+			);
+			// Actual create-new-file URL (with IDs scrubbed)
+			assert.equal(
+				checkForKnownServerFarmType(
+					"https://microsoft.sharepoint-df.com/_api/v2.1/drives/b!ci..bo/items/root:%2FLoopAppData/Untitled.loop:/opStream/snapshots/snapshot?ump=1",
+				),
+				"SPDF",
+			);
+			// Actual trees-latest URL (with IDs scrubbed)
+			assert.equal(
+				checkForKnownServerFarmType(
+					"https://microsoft-my.sharepoint-df.com/_api/v2.1/drives/b!AG..wb/items/01..NV/opStream/snapshots/trees/latest?ump=1",
+				),
+				"SPDF",
+			);
+			assert.equal(
+				checkForKnownServerFarmType("https://foo.sharepoint-df.com/path?query=string"),
+				"SPDF",
+			);
+			assert.equal(
+				checkForKnownServerFarmType("https://sharepoint-df.com/path?query=string"),
+				undefined,
+			);
+			assert.equal(
+				checkForKnownServerFarmType("https://foo.not-sharepoint-df.com/path?query=string"),
+				undefined,
+			);
+		});
+		it("MSIT", () => {
+			assert.equal(
+				checkForKnownServerFarmType("https://microsoft.sharepoint.com/path?query=string"),
+				"MSIT",
+			);
+			assert.equal(
+				checkForKnownServerFarmType("https://microsoft-my.sharepoint.com/path?query=string"),
+				"MSIT",
+			);
+			assert.equal(
+				checkForKnownServerFarmType(
+					"https://microsoft-my.not.sharepoint.com/path?query=string",
+				),
+				undefined,
+			);
+			assert.equal(
+				checkForKnownServerFarmType("https://microsoft.foo.com/path?query=string"),
+				undefined,
+			);
+		});
+		it("other", () => {
+			assert.equal(
+				checkForKnownServerFarmType("https://foo.com/path?query=string"),
+				undefined,
+			);
+			assert.throws(
+				() => checkForKnownServerFarmType("NOT A URL"),
+				"expected it to throw with invalid input",
 			);
 		});
 	});

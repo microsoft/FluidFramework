@@ -526,7 +526,6 @@ describe("Garbage Collection Tests", () => {
 						type: GarbageCollectionMessageType.TombstoneLoaded,
 						nodePath: nodes[0],
 					},
-					compatDetails: { behavior: "Ignore" },
 				} satisfies ContainerRuntimeGCMessage,
 				"submitted message not as expected",
 			);
@@ -2217,61 +2216,21 @@ describe("Garbage Collection Tests", () => {
 		assert.strictEqual(garbageCollector.deletedNodes.size, 0, "Expecting 0 deleted nodes");
 	});
 
-	describe("Future GC op type compatibility", () => {
+	it("process remote op with unrecognized type", async () => {
+		const garbageCollector = createGarbageCollector();
 		const gcMessageFromFuture: Record<string, unknown> = {
 			type: "FUTURE_MESSAGE",
 			hello: "HELLO",
 		};
-
-		let garbageCollector: IGarbageCollector;
-		beforeEach(async () => {
-			garbageCollector = createGarbageCollector({
-				createParams: { gcOptions: { enableGCSweep: true } },
-			});
-		});
-
-		it("can submit GC op compat behavior", async () => {
-			const gcWithPrivates = garbageCollector as GcWithPrivates;
-			const containerRuntimeGCMessage: Omit<ContainerRuntimeGCMessage, "type" | "contents"> & {
-				type: string;
-				contents: any;
-			} = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture,
-				compatDetails: { behavior: "Ignore" },
-			};
-
-			assert.doesNotThrow(
-				() =>
-					gcWithPrivates.submitMessage(containerRuntimeGCMessage as ContainerRuntimeGCMessage),
-				"Cannot submit GC message with compatDetails",
-			);
-		});
-
-		it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-			assert.throws(
-				() =>
-					garbageCollector.processMessages(
-						[gcMessageFromFuture as unknown as GarbageCollectionMessage],
-						Date.now(),
-						false /* local */,
-					),
-				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-				"Garbage collection message of unknown type FROM_THE_FUTURE",
-			);
-		});
-
-		it("process remote op with unrecognized type and no compat behavior", async () => {
-			assert.throws(
-				() =>
-					garbageCollector.processMessages(
-						[gcMessageFromFuture as unknown as GarbageCollectionMessage],
-						Date.now(),
-						false /* local */,
-					),
-				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-				"Garbage collection message of unknown type FROM_THE_FUTURE",
-			);
-		});
+		assert.throws(
+			() =>
+				garbageCollector.processMessages(
+					[gcMessageFromFuture as unknown as GarbageCollectionMessage],
+					Date.now(),
+					false /* local */,
+				),
+			(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+			"Garbage collection message of unknown type FUTURE_MESSAGE",
+		);
 	});
 });

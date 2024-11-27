@@ -27,7 +27,7 @@ import { createOdspUrl } from "./../createOdspUrl.js";
 import { EpochTracker } from "./../epochTracker.js";
 import { getHeadersWithAuth } from "./../getUrlAndHeadersWithAuth.js";
 import { OdspDriverUrlResolver } from "./../odspDriverUrlResolver.js";
-import { getApiRoot } from "./../odspUrlHelper.js";
+import { checkForKnownServerFarmType, getApiRoot } from "./../odspUrlHelper.js";
 import {
 	INewFileInfo,
 	buildOdspShareLinkReqParams,
@@ -202,10 +202,16 @@ export async function createNewEmptyFluidFile(
 			{ ...options, request: { url, method } },
 			"CreateNewFile",
 		);
+		const internalFarmType = checkForKnownServerFarmType(newFileInfo.siteUrl);
 
 		return PerformanceEvent.timedExecAsync(
 			logger,
-			{ eventName: "createNewEmptyFile" },
+			{
+				eventName: "createNewEmptyFile",
+				details: {
+					internalFarmType,
+				},
+			},
 			async (event) => {
 				const headers = getHeadersWithAuth(authHeader);
 				headers["Content-Type"] = "application/json";

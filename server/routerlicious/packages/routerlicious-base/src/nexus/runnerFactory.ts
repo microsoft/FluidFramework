@@ -189,7 +189,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 				  )
 				: undefined;
 		const collaborationSessionTracker =
-			enableCollaborationSessionTracking === true
+			enableCollaborationSessionTracking === true && collaborationSessionManager !== undefined
 				? new services.CollaborationSessionTracker(
 						clientManager,
 						collaborationSessionManager,
@@ -222,7 +222,12 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 		const factory = await services.getDbFactory(config);
 		if (globalDbEnabled) {
-			globalDbMongoManager = new core.MongoManager(factory, false, null, true);
+			globalDbMongoManager = new core.MongoManager(
+				factory,
+				false,
+				undefined /* retryDelayMs */,
+				true /* global */,
+			);
 		}
 
 		// Database connection for operations db
@@ -265,7 +270,9 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const defaultTTLInSeconds = 864000;
 		const checkpointsTTLSeconds =
 			config.get("checkpoints:checkpointsTTLInSeconds") ?? defaultTTLInSeconds;
-		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
+		if (checkpointsCollection.createTTLIndex !== undefined) {
+			await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
+		}
 
 		const nodeCollectionName = config.get("mongo:collectionNames:nodes");
 		const nodeManager = new NodeManager(operationsDbMongoManager, nodeCollectionName);
@@ -408,7 +415,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const verifyMaxMessageSize = config.get("nexus:verifyMaxMessageSize") ?? false;
 
 		// This cache will be used to store connection counts for logging connectionCount metrics.
-		let redisCache: core.ICache;
+		let redisCache: core.ICache | undefined;
 		if (config.get("nexus:enableConnectionCountLogging")) {
 			const redisClientConnectionManagerForLogging =
 				customizations?.redisClientConnectionManagerForLogging
