@@ -217,7 +217,7 @@ export abstract class SharedObjectCore<
 	 * would result in same error thrown. If called multiple times, only first error is remembered.
 	 * @param error - error object that is thrown whenever an attempt is made to modify this object
 	 */
-	private closeWithError(error: any) {
+	private closeWithError(error: any): void {
 		if (this.closeError === undefined) {
 			this.closeError = error;
 		}
@@ -226,7 +226,7 @@ export abstract class SharedObjectCore<
 	/**
 	 * Verifies that this object is not closed via closeWithError(). If it is, throws an error used to close it.
 	 */
-	private verifyNotClosed() {
+	private verifyNotClosed(): void {
 		if (this.closeError !== undefined) {
 			throw this.closeError;
 		}
@@ -242,7 +242,7 @@ export abstract class SharedObjectCore<
 	 * DDS state does not match what user sees. Because of it DDS moves to "corrupted state" and does not
 	 * allow processing of ops or local changes, which very quickly results in container closure.
 	 */
-	private eventListenerErrorHandler(event: EventEmitterEventType, e: any) {
+	private eventListenerErrorHandler(event: EventEmitterEventType, e: unknown): void {
 		const error = DataProcessingError.wrapIfUnrecognized(
 			e,
 			"SharedObjectEventListenerException",
@@ -253,7 +253,7 @@ export abstract class SharedObjectCore<
 		throw error;
 	}
 
-	private setBoundAndHandleAttach() {
+	private setBoundAndHandleAttach(): void {
 		// Ensure didAttach is only called once, and we only register a single event
 		// but we still call setConnectionState as our existing mocks don't
 		// always propagate connection state
@@ -312,7 +312,7 @@ export abstract class SharedObjectCore<
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).connect}
 	 */
-	public connect(services: IChannelServices) {
+	public connect(services: IChannelServices): void {
 		// handle the case where load is called
 		// before connect; loading detached data stores
 		if (this.services === undefined) {
@@ -362,7 +362,7 @@ export abstract class SharedObjectCore<
 	/**
 	 * Allows the distributed data type to perform custom local loading.
 	 */
-	protected initializeLocalCore() {
+	protected initializeLocalCore(): void {
 		return;
 	}
 
@@ -370,7 +370,7 @@ export abstract class SharedObjectCore<
 	 * Allows the distributive data type the ability to perform custom processing once an attach has happened.
 	 * Also called after non-local data type get loaded.
 	 */
-	protected didAttach() {
+	protected didAttach(): void {
 		return;
 	}
 
@@ -385,7 +385,7 @@ export abstract class SharedObjectCore<
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	);
+	): void;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
@@ -433,7 +433,7 @@ export abstract class SharedObjectCore<
 	 * Called when the object has fully connected to the delta stream
 	 * Default implementation for DDS, override if different behavior is required.
 	 */
-	protected onConnect() {}
+	protected onConnect(): void {}
 
 	/**
 	 * Called when a message has to be resubmitted. This typically happens after a reconnection for unacked messages.
@@ -443,7 +443,7 @@ export abstract class SharedObjectCore<
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	protected reSubmitCore(content: any, localOpMetadata: unknown) {
+	protected reSubmitCore(content: any, localOpMetadata: unknown): void {
 		this.submitLocalMessage(content, localOpMetadata);
 	}
 
@@ -479,7 +479,7 @@ export abstract class SharedObjectCore<
 		});
 	}
 
-	private attachDeltaHandler() {
+	private attachDeltaHandler(): void {
 		// Services should already be there in case we are attaching delta handler.
 		assert(
 			this.services !== undefined,
@@ -520,7 +520,7 @@ export abstract class SharedObjectCore<
 	 * Set the state of connection to services.
 	 * @param connected - true if connected, false otherwise.
 	 */
-	private setConnectionState(connected: boolean) {
+	private setConnectionState(connected: boolean): void {
 		// only an attached shared object can transition its
 		// connected state. This is defensive, as some
 		// of our test harnesses don't handle this correctly
@@ -557,7 +557,7 @@ export abstract class SharedObjectCore<
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	) {
+	): void {
 		this.verifyNotClosed(); // This will result in container closure.
 		this.emitInternal("pre-op", message, local, this);
 
@@ -581,7 +581,7 @@ export abstract class SharedObjectCore<
 	 * Process messages for this shared object. The messages here are contiguous messages for this object in a batch.
 	 * @param messageCollection - The collection of messages to process.
 	 */
-	private processMessages(messagesCollection: IRuntimeMessageCollection) {
+	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent, local } = messagesCollection;
 		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
 			this.process(
@@ -602,14 +602,14 @@ export abstract class SharedObjectCore<
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	private reSubmit(content: any, localOpMetadata: unknown) {
+	private reSubmit(content: unknown, localOpMetadata: unknown): void {
 		this.reSubmitCore(content, localOpMetadata);
 	}
 
 	/**
 	 * Revert an op
 	 */
-	protected rollback(content: any, localOpMetadata: unknown) {
+	protected rollback(content: any, localOpMetadata: unknown): void {
 		throw new Error("rollback not supported");
 	}
 

@@ -54,7 +54,7 @@ describe("createSharedObjectKind's return type", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		runtime.createChannel = (id: string | undefined, type: string) => {
 			createChannelCalls.push([id, type]);
-			return null as unknown as IChannel;
+			return undefined as unknown as IChannel;
 		};
 		SharedFoo.create(runtime);
 		assert.deepEqual(createChannelCalls, [[undefined, SharedFooFactory.Type]]);

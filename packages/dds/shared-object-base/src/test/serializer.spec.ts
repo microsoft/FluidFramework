@@ -28,7 +28,7 @@ describe("FluidSerializer", () => {
 				return o;
 			}, {}),
 			// Add an array that contains each of our constructed test cases.
-			[...testCases]
+			[...testCases],
 		);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -52,7 +52,7 @@ describe("FluidSerializer", () => {
 				return o;
 			}, {}),
 			// Add an array that contains each of our constructed test cases.
-			[...simple]
+			[...simple],
 		);
 
 		// Verify that `encode` is a no-op for these simple cases.
@@ -102,7 +102,12 @@ describe("FluidSerializer", () => {
 		}
 
 		// Non-finite numbers are coerced to null.  Date is coerced to string.
-		const tricky = createNestedCases([Number.NEGATIVE_INFINITY, Number.NaN, +Number.POSITIVE_INFINITY, new Date()]);
+		const tricky = createNestedCases([
+			Number.NEGATIVE_INFINITY,
+			Number.NaN,
+			+Number.POSITIVE_INFINITY,
+			new Date(),
+		]);
 
 		// Undefined is extra special in that it can't appear at the root, but can appear
 		// embedded in the tree, in which case the key is elided (if an object) or it is

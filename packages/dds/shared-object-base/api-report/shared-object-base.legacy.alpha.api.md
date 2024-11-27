@@ -33,10 +33,10 @@ export interface ISharedObjectKind<TSharedObject> {
 }
 
 // @alpha
-export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;
+export function makeHandlesSerializable(value: unknown, serializer: IFluidSerializer, bind: IFluidHandle): any;
 
 // @alpha
-export function parseHandles(value: any, serializer: IFluidSerializer): any;
+export function parseHandles(value: unknown, serializer: IFluidSerializer): any;
 
 // @alpha
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
@@ -79,7 +79,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected newAckBasedPromise<T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
     protected onConnect(): void;
     protected abstract onDisconnect(): any;
-    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): any;
+    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     protected rollback(content: any, localOpMetadata: unknown): void;
     // (undocumented)
