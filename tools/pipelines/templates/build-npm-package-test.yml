@@ -556,16 +556,6 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
-                # Publish the Code Coverage artifact in this format as it is easier for devs to find coverage html for each file.
-                - ${{ if eq(parameters.testCoverage, true) }}:
-                  - output: pipelineArtifact
-                    displayName: Publish Artifacts - code-coverage
-                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                    targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-                    artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
-                    sbomEnabled: false
-                    publishLocation: pipeline
-
                 - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - _api-extractor-temp
@@ -633,6 +623,13 @@ extends:
                             )
                           )}}
 
+                    - task: Npm@1
+                      displayName: 'npm run test:copyresults'
+                      inputs:
+                        command: custom
+                        workingDir: '${{ parameters.buildDirectory }}'
+                        customCommand: 'run test:copyresults'
+
                     - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                       - task: Bash@3
                         displayName: Upload tinylicious log
@@ -658,6 +655,12 @@ extends:
                     # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
                     # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
                     - ${{ if parameters.testCoverage }}:
+                        - template: include-install-build-tools.yml
+                          parameters:
+                            buildDirectory: ${{ parameters.buildDirectory }}
+                            buildToolsVersionToInstall: repo
+                            pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
+
                         - task: Bash@3
                           displayName: Check for nyc/report directory
                           condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
@@ -667,6 +670,7 @@ extends:
                             script: |
                               set -eu -o pipefail
                               test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
+
                         - task: Bash@3
                           displayName: Patch Coverage Results
                           condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
@@ -676,6 +680,7 @@ extends:
                             script: |
                               set -eu -o pipefail
                               sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+
                         - task: PublishCodeCoverageResults@2
                           displayName: Publish Code Coverage
                           condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
@@ -721,6 +726,16 @@ extends:
                       parameters:
                         buildDirectory: '${{ parameters.buildDirectory }}'
                         testResultDirs: '${{ parameters.testResultDirs }}'
+
+                        # Publish the Code Coverage artifact in this format as it is easier for devs to find coverage html for each file.
+                    - ${{ if eq(parameters.testCoverage, true) }}:
+                      - output: pipelineArtifact
+                        displayName: Publish Artifacts - code-coverage
+                        condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                        artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
+                        sbomEnabled: false
+                        publishLocation: pipeline
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
