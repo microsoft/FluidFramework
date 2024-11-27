@@ -28,9 +28,13 @@ import {
 	type SharedTreeBranch,
 	SharedTreeCore,
 	type Summarizable,
+	TransactionResult,
+	TransactionStack,
+	type Transactor,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 /**
  * A `SharedTreeCore` with
@@ -87,7 +91,30 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		return super.getLocalBranch();
 	}
 
-	public get preparedCommitsCount(): number {
-		return this.commitEnricher.preparedCommitsCount;
+	protected override submitCommit(
+		...args: Parameters<SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["submitCommit"]>
+	): void {
+		// We do not submit ops for changes that are part of a transaction.
+		if (!this.transaction.isInProgress()) {
+			super.submitCommit(...args);
+		}
 	}
+
+	public transaction: Transactor = new TransactionStack(() => {
+		const startCommit = this.getLocalBranch().getHead();
+		this.commitEnricher.startTransaction();
+		return (result) => {
+			this.commitEnricher.commitTransaction();
+			switch (result) {
+				case TransactionResult.Commit:
+					this.getLocalBranch().squashAfter(startCommit);
+					break;
+				case TransactionResult.Abort:
+					this.getLocalBranch().removeAfter(startCommit);
+					break;
+				default:
+					unreachableCase(result);
+			}
+		};
+	});
 }

@@ -6,15 +6,26 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControls.js";
+import { RequiredBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
 import { brandedObjectEntries } from "./internalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
-import { handleFromDatastore, type StateDatastore } from "./stateDatastore.js";
-import type { PresenceStates, PresenceStatesMethods, PresenceStatesSchema } from "./types.js";
+import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
+import { handleFromDatastore } from "./stateDatastore.js";
+import type { PresenceStates, PresenceStatesSchema } from "./types.js";
 import { unbrandIVM } from "./valueManager.js";
 
 /**
+ * Extracts `Part` from {@link InternalTypes.ManagerFactory} return type
+ * matching the {@link PresenceStatesSchema} `Keys` given.
+ *
+ * @remarks
+ * If the `Part` is an optional property, undefined will be included in the
+ * result. Applying `Required` to the return type prior to extracting `Part`
+ * does not work as expected. Use Exclude\<, undefined\> can be used as needed.
+ *
  * @internal
  */
 export type MapSchemaElement<
@@ -26,10 +37,25 @@ export type MapSchemaElement<
 /**
  * @internal
  */
+export interface RuntimeLocalUpdateOptions {
+	allowableUpdateLatencyMs: number;
+
+	/**
+	 * Special option allowed for unicast notifications.
+	 */
+	targetClientId?: ClientConnectionId;
+}
+
+/**
+ * @internal
+ */
 export interface PresenceRuntime {
 	readonly clientSessionId: ClientSessionId;
 	lookupClient(clientId: ClientConnectionId): ISessionClient;
-	localUpdate(states: { [key: string]: ClientUpdateEntry }, forceBroadcast: boolean): void;
+	localUpdate(
+		states: { [key: string]: ClientUpdateEntry },
+		options: RuntimeLocalUpdateOptions,
+	): void;
 }
 
 type PresenceSubSchemaFromWorkspaceSchema<
@@ -48,7 +74,7 @@ type MapEntries<TSchema extends PresenceStatesSchema> = PresenceSubSchemaFromWor
  * ValueElementMap is a map of key to a map of clientId to ValueState.
  * It is not restricted to the schema of the map as it may receive updates from other clients
  * with managers that have not been registered locally. Each map node is responsible for keeping
- * all sessions state to be able to pick arbitrary client to rebroadcast to others.
+ * all session's state to be able to pick arbitrary client to rebroadcast to others.
  *
  * This generic aspect makes some typing difficult. The loose typing is not broadcast to the
  * consumers that are expected to maintain their schema over multiple versions of clients.
@@ -99,11 +125,13 @@ interface ValueUpdateRecord {
 export interface PresenceStatesInternal {
 	ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
 		content: TSchemaAdditional,
+		controls: BroadcastControlSettings | undefined,
 	): PresenceStates<TSchemaAdditional>;
 	processUpdate(
 		received: number,
 		timeModifier: number,
 		remoteDatastore: ValueUpdateRecord,
+		senderConnectionId: ClientConnectionId,
 	): void;
 }
 
@@ -118,7 +146,12 @@ function isValueDirectory<
 	return "items" in value;
 }
 
-function mergeValueDirectory<
+/**
+ * Merge a value directory.
+ *
+ * @internal
+ */
+export function mergeValueDirectory<
 	T,
 	TValueState extends
 		| InternalTypes.ValueRequiredState<T>
@@ -193,35 +226,65 @@ export function mergeUntrackedDatastore(
 	}
 }
 
+/**
+ * The default allowable update latency for PresenceStates workspaces in milliseconds.
+ */
+const defaultAllowableUpdateLatencyMs = 60;
+
+/**
+ * Produces the value type of a schema element or set of elements.
+ */
+type SchemaElementValueType<
+	TSchema extends PresenceStatesSchema,
+	Keys extends keyof TSchema & string,
+> = Exclude<MapSchemaElement<TSchema, "initialData", Keys>, undefined>["value"];
+
 class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	implements
 		PresenceStatesInternal,
-		PresenceStatesMethods<TSchema, unknown>,
+		PresenceStates<TSchema>,
 		StateDatastore<
 			keyof TSchema & string,
-			MapSchemaElement<TSchema, "value", keyof TSchema & string>
+			SchemaElementValueType<TSchema, keyof TSchema & string>
 		>
 {
-	public readonly nodes: MapEntries<TSchema>;
+	private readonly nodes: MapEntries<TSchema>;
+	public readonly props: PresenceStates<TSchema>["props"];
+
+	public readonly controls: RequiredBroadcastControl;
 
 	public constructor(
 		private readonly runtime: PresenceRuntime,
 		private readonly datastore: ValueElementMap<TSchema>,
 		initialContent: TSchema,
+		controlsSettings: BroadcastControlSettings | undefined,
 	) {
+		this.controls = new RequiredBroadcastControl(defaultAllowableUpdateLatencyMs);
+		if (controlsSettings?.allowableUpdateLatencyMs !== undefined) {
+			this.controls.allowableUpdateLatencyMs = controlsSettings.allowableUpdateLatencyMs;
+		}
+
 		// Prepare initial map content from initial state
 		{
 			const clientSessionId = this.runtime.clientSessionId;
 			let anyInitialValues = false;
+			let cumulativeAllowableUpdateLatencyMs: number | undefined;
 			// eslint-disable-next-line unicorn/no-array-reduce
 			const initial = Object.entries(initialContent).reduce(
 				(acc, [key, nodeFactory]) => {
 					const newNodeData = nodeFactory(key, handleFromDatastore(this));
 					acc.nodes[key as keyof TSchema] = newNodeData.manager;
-					if ("value" in newNodeData) {
+					if ("initialData" in newNodeData) {
+						const { value, allowableUpdateLatencyMs } = newNodeData.initialData;
 						acc.datastore[key] = acc.datastore[key] ?? {};
-						acc.datastore[key][clientSessionId] = newNodeData.value;
-						acc.newValues[key] = newNodeData.value;
+						acc.datastore[key][clientSessionId] = value;
+						acc.newValues[key] = value;
+						if (allowableUpdateLatencyMs !== undefined) {
+							cumulativeAllowableUpdateLatencyMs =
+								cumulativeAllowableUpdateLatencyMs === undefined
+									? allowableUpdateLatencyMs
+									: Math.min(cumulativeAllowableUpdateLatencyMs, allowableUpdateLatencyMs);
+						}
 						anyInitialValues = true;
 					}
 					return acc;
@@ -235,8 +298,16 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 				},
 			);
 			this.nodes = initial.nodes;
+			// props is the public view of nodes that limits the entries types to
+			// the public interface of the value manager with an additional type
+			// filter that beguiles the type system. So just reinterpret cast.
+			this.props = this.nodes as unknown as PresenceStates<TSchema>["props"];
+
 			if (anyInitialValues) {
-				this.runtime.localUpdate(initial.newValues, false);
+				this.runtime.localUpdate(initial.newValues, {
+					allowableUpdateLatencyMs:
+						cumulativeAllowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
+				});
 			}
 		}
 	}
@@ -245,7 +316,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		key: Key,
 	): {
 		self: ClientSessionId | undefined;
-		states: ClientRecord<MapSchemaElement<TSchema, "value", Key>>;
+		states: ClientRecord<SchemaElementValueType<TSchema, Key>>;
 	} {
 		return {
 			self: this.runtime.clientSessionId,
@@ -255,16 +326,23 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 
 	public localUpdate<Key extends keyof TSchema & string>(
 		key: Key,
-		value: MapSchemaElement<TSchema, "value", Key> & ClientUpdateEntry,
-		forceBroadcast: boolean,
+		value: SchemaElementValueType<TSchema, Key> & ClientUpdateEntry,
+		options: LocalStateUpdateOptions,
 	): void {
-		this.runtime.localUpdate({ [key]: value }, forceBroadcast);
+		this.runtime.localUpdate(
+			{ [key]: value },
+			{
+				...options,
+				allowableUpdateLatencyMs:
+					options.allowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
+			},
+		);
 	}
 
 	public update<Key extends keyof TSchema & string>(
 		key: Key,
 		clientId: ClientSessionId,
-		value: Exclude<MapSchemaElement<TSchema, "value", Key>, undefined>,
+		value: Exclude<MapSchemaElement<TSchema, "initialData", Key>, undefined>["value"],
 	): void {
 		const allKnownState = this.datastore[key];
 		allKnownState[clientId] = mergeValueDirectory(allKnownState[clientId], value, 0);
@@ -287,21 +365,32 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		assert(!(key in this.nodes), 0xa3c /* Already have entry for key in map */);
 		const nodeData = nodeFactory(key, handleFromDatastore(this));
 		this.nodes[key] = nodeData.manager;
-		if ("value" in nodeData) {
+		if ("initialData" in nodeData) {
+			const { value, allowableUpdateLatencyMs } = nodeData.initialData;
 			if (key in this.datastore) {
 				// Already have received state from other clients. Kept in `all`.
 				// TODO: Send current `all` state to state manager.
 			} else {
 				this.datastore[key] = {};
 			}
-			this.datastore[key][this.runtime.clientSessionId] = nodeData.value;
-			this.runtime.localUpdate({ [key]: nodeData.value }, false);
+			this.datastore[key][this.runtime.clientSessionId] = value;
+			this.runtime.localUpdate(
+				{ [key]: value },
+				{
+					allowableUpdateLatencyMs:
+						allowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
+				},
+			);
 		}
 	}
 
 	public ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
 		content: TSchemaAdditional,
+		controls: BroadcastControlSettings | undefined,
 	): PresenceStates<TSchema & TSchemaAdditional> {
+		if (controls?.allowableUpdateLatencyMs !== undefined) {
+			this.controls.allowableUpdateLatencyMs = controls.allowableUpdateLatencyMs;
+		}
 		for (const [key, nodeFactory] of Object.entries(content)) {
 			if (key in this.nodes) {
 				const node = unbrandIVM(this.nodes[key]);
@@ -343,30 +432,12 @@ export function createPresenceStates<TSchema extends PresenceStatesSchema>(
 	runtime: PresenceRuntime,
 	datastore: ValueElementMap<PresenceStatesSchema>,
 	initialContent: TSchema,
+	controls: BroadcastControlSettings | undefined,
 ): { public: PresenceStates<TSchema>; internal: PresenceStatesInternal } {
-	const impl = new PresenceStatesImpl(runtime, datastore, initialContent);
-
-	// Capture the top level "public" map. Both the map implementation and
-	// the wrapper object reference this object.
-	const nodes = impl.nodes;
-
-	// Create a wrapper object that has just the public interface methods and nothing more.
-	const wrapper = {
-		add: impl.add.bind(impl),
-	};
+	const impl = new PresenceStatesImpl<TSchema>(runtime, datastore, initialContent, controls);
 
 	return {
-		public: new Proxy(wrapper as PresenceStates<TSchema>, {
-			get(target, p, receiver): unknown {
-				if (typeof p === "string") {
-					return target[p] ?? nodes[p];
-				}
-				return Reflect.get(target, p, receiver);
-			},
-			set(_target, _p, _newValue, _receiver): false {
-				return false;
-			},
-		}),
+		public: impl,
 		internal: impl,
 	};
 }

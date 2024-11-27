@@ -88,6 +88,7 @@ export {
 	createObliterateRangeOp,
 } from "./opBuilder.js";
 export {
+	AdjustParams,
 	IJSONSegment,
 	IMarkerDef,
 	IMergeTreeAnnotateMsg,
@@ -97,6 +98,7 @@ export {
 	IMergeTreeInsertMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
+	IMergeTreeAnnotateAdjustMsg,
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
@@ -124,6 +126,7 @@ export {
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
 export {
+	PropsOrAdjust,
 	copyPropertiesAndManager,
 	PropertiesManager,
 	PropertiesRollback,

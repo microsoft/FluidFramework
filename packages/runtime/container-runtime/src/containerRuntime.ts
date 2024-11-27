@@ -19,6 +19,8 @@ import {
 	IRuntime,
 	LoaderHeader,
 	IDeltaManager,
+	IDeltaManagerFull,
+	isIDeltaManagerFull,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
@@ -232,6 +234,7 @@ import {
 	SummaryManager,
 	aliasBlobName,
 	chunksBlobName,
+	recentBatchInfoBlobName,
 	createRootSummarizerNodeWithGC,
 	electedSummarizerBlobName,
 	extractSummaryMetadataMessage,
@@ -928,14 +931,23 @@ export class ContainerRuntime
 			}
 		};
 
-		const [chunks, metadata, electedSummarizerData, aliases, serializedIdCompressor] =
-			await Promise.all([
-				tryFetchBlob<[string, string[]][]>(chunksBlobName),
-				tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
-				tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
-				tryFetchBlob<[string, string][]>(aliasBlobName),
-				tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
-			]);
+		const [
+			chunks,
+			recentBatchInfo,
+			metadata,
+			electedSummarizerData,
+			aliases,
+			serializedIdCompressor,
+		] = await Promise.all([
+			tryFetchBlob<[string, string[]][]>(chunksBlobName),
+			tryFetchBlob<ReturnType<DuplicateBatchDetector["getRecentBatchInfoForSummary"]>>(
+				recentBatchInfoBlobName,
+			),
+			tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
+			tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
+			tryFetchBlob<[string, string][]>(aliasBlobName),
+			tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
+		]);
 
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerSnapshot = await loadBlobManagerLoadInfo(context);
@@ -1112,9 +1124,10 @@ export class ContainerRuntime
 			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
+			recentBatchInfo,
 		);
 
-		runtime.blobManager.trackPendingStashedUploads().then(
+		runtime.blobManager.stashedBlobsUploadP.then(
 			() => {
 				// make sure we didn't reconnect before the promise resolved
 				if (runtime.delayConnectClientId !== undefined && !runtime.disposed) {
@@ -1259,16 +1272,18 @@ export class ContainerRuntime
 	 * accesses such as sets "read-only" mode for the summarizer client. This is the default delta manager that should
 	 * be used unless the innerDeltaManager is required.
 	 */
-	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+		return this._deltaManager;
+	}
+
+	private readonly _deltaManager: IDeltaManagerFull;
+
 	/**
 	 * The delta manager provided by the container context. By default, using the default delta manager (proxy)
 	 * should be sufficient. This should be used only if necessary. For example, for validating and propagating connected
 	 * events which requires access to the actual real only info, this is needed.
 	 */
-	private readonly innerDeltaManager: IDeltaManager<
-		ISequencedDocumentMessage,
-		IDocumentMessage
-	>;
+	private readonly innerDeltaManager: IDeltaManagerFull;
 
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
@@ -1488,6 +1503,7 @@ export class ContainerRuntime
 			// the runtime configuration overrides
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
+		recentBatchInfo?: [number, string][],
 	) {
 		super();
 
@@ -1528,6 +1544,7 @@ export class ContainerRuntime
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		};
 
+		assert(isIDeltaManagerFull(deltaManager), 0xa80 /* Invalid delta manager */);
 		this.innerDeltaManager = deltaManager;
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
@@ -1644,7 +1661,7 @@ export class ContainerRuntime
 			this.logger,
 		);
 
-		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+		let outerDeltaManager: IDeltaManagerFull;
 		this.useDeltaManagerOpsProxy =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
@@ -1663,7 +1680,7 @@ export class ContainerRuntime
 			outerDeltaManager = pendingOpsDeltaManagerProxy;
 		}
 
-		this.deltaManager = outerDeltaManager;
+		this._deltaManager = outerDeltaManager;
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1702,7 +1719,7 @@ export class ContainerRuntime
 		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
 		// Don't waste resources doing so if not needed.
 		if (this.offlineEnabled) {
-			this.duplicateBatchDetector = new DuplicateBatchDetector();
+			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
 
 		if (context.attachState === AttachState.Attached) {
@@ -2034,7 +2051,7 @@ export class ContainerRuntime
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 		});
 
-		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this, this.logger);
+		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.logger);
 		BindBatchTracker(this, this.logger);
 
 		this.entryPoint = new LazyPromise(async () => {
@@ -2239,8 +2256,8 @@ export class ContainerRuntime
 			});
 			// If the inbound deltas queue is paused or disconnected, we expect a reconnect and unpause
 			// as long as it's not a summarizer client.
-			if (this.deltaManager.inbound.paused) {
-				props.inboundPaused = this.deltaManager.inbound.paused; // reusing telemetry
+			if (this._deltaManager.inbound.paused) {
+				props.inboundPaused = this._deltaManager.inbound.paused; // reusing telemetry
 			}
 			const defP = new Deferred<boolean>();
 			this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
@@ -2407,6 +2424,12 @@ export class ContainerRuntime
 		if (this.remoteMessageProcessor.partialMessages.size > 0) {
 			const content = JSON.stringify([...this.remoteMessageProcessor.partialMessages]);
 			addBlobToSummary(summaryTree, chunksBlobName, content);
+		}
+
+		const recentBatchInfo =
+			this.duplicateBatchDetector?.getRecentBatchInfoForSummary(telemetryContext);
+		if (recentBatchInfo !== undefined) {
+			addBlobToSummary(summaryTree, recentBatchInfoBlobName, JSON.stringify(recentBatchInfo));
 		}
 
 		const dataStoreAliases = this.channelCollection.aliases;
@@ -2646,20 +2669,21 @@ export class ContainerRuntime
 
 		this._connected = connected;
 
-		if (!connected) {
-			this._signalTracking.signalsLost = 0;
-			this._signalTracking.signalsOutOfOrder = 0;
-			this._signalTracking.signalTimestamp = 0;
-			this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-			this._signalTracking.totalSignalsSentInLatencyWindow = 0;
-			this._signalTracking.roundTripSignalSequenceNumber = undefined;
-			this._signalTracking.trackingSignalSequenceNumber = undefined;
-			this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
-		} else {
+		if (connected) {
 			assert(
 				this.attachState === AttachState.Attached,
 				0x3cd /* Connection is possible only if container exists in storage */,
 			);
+			if (changeOfState) {
+				this._signalTracking.signalsLost = 0;
+				this._signalTracking.signalsOutOfOrder = 0;
+				this._signalTracking.signalTimestamp = 0;
+				this._signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
+				this._signalTracking.totalSignalsSentInLatencyWindow = 0;
+				this._signalTracking.roundTripSignalSequenceNumber = undefined;
+				this._signalTracking.trackingSignalSequenceNumber = undefined;
+				this._signalTracking.minimumTrackingSignalSequenceNumber = undefined;
+			}
 		}
 
 		// Fail while disconnected
@@ -3204,16 +3228,7 @@ export class ContainerRuntime
 		};
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
-		if (
-			message.clientId === this.clientId &&
-			// jason-ha: This `connected` check seems incorrect. Signals that come through
-			// here must have been received while connected to service and there is no need
-			// to avoid processing when connection has dropped. Because container runtime's
-			// `connected` (and `_connected`) state also reflects some ops state, it may
-			//  easily be false when newly connected and signal tracking may very well
-			// complain lost signals (that were simply skipped per this check).
-			this.connected
-		) {
+		if (message.clientId === this.clientId) {
 			this.processSignalForTelemetry(envelope);
 		}
 
@@ -3946,7 +3961,7 @@ export class ContainerRuntime
 			) === true;
 
 		try {
-			await this.deltaManager.inbound.pause();
+			await this._deltaManager.inbound.pause();
 			if (shouldPauseInboundSignal) {
 				await this.deltaManager.inboundSignal.pause();
 			}
@@ -4211,7 +4226,7 @@ export class ContainerRuntime
 			this._summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
 
 			// Restart the delta manager
-			this.deltaManager.inbound.resume();
+			this._deltaManager.inbound.resume();
 			if (shouldPauseInboundSignal) {
 				this.deltaManager.inboundSignal.resume();
 			}
@@ -4598,7 +4613,6 @@ export class ContainerRuntime
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
 			default:
-				// Don't check message.compatDetails because this is for rolling back a local op so the type will be known
 				throw new Error(`Can't rollback ${type}`);
 		}
 	}

@@ -40,10 +40,7 @@ export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements 
     // (undocumented)
     getMembers(): Map<string, IClient>;
     // (undocumented)
-    getSelf(): {
-        clientId: string;
-        client: undefined;
-    } | undefined;
+    getSelf(): ISelf | undefined;
     // (undocumented)
     removeMember(clientId: string): boolean;
     // (undocumented)
@@ -302,8 +299,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     deleteChildSummarizerNode(id: string): void;
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
-    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
