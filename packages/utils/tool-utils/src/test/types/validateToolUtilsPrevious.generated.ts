@@ -85,7 +85,7 @@ declare type current_as_old_for_Function_saveRC = requireAssignableTo<TypeOnly<t
  * typeValidation.broken:
  * "Interface_IAsyncCache": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IAsyncCache = requireAssignableTo<TypeOnly<old.IAsyncCache<any,any>>, TypeOnly<current.IAsyncCache<any,any>>>
+declare type old_as_current_for_Interface_IAsyncCache = requireAssignableTo<TypeOnly<old.IAsyncCache<never,never>>, TypeOnly<current.IAsyncCache<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -94,7 +94,7 @@ declare type old_as_current_for_Interface_IAsyncCache = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_IAsyncCache": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IAsyncCache = requireAssignableTo<TypeOnly<current.IAsyncCache<any,any>>, TypeOnly<old.IAsyncCache<any,any>>>
+declare type current_as_old_for_Interface_IAsyncCache = requireAssignableTo<TypeOnly<current.IAsyncCache<never,never>>, TypeOnly<old.IAsyncCache<never,never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

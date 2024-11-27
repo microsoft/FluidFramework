@@ -171,8 +171,11 @@ export class Throttler implements IThrottler {
 		}
 
 		const lastThrottleUpdateTime = this.lastThrottleUpdateAtMap.get(id);
-		if (now - lastThrottleUpdateTime > this.minThrottleIntervalInMs) {
-			const countDelta = this.countDeltaMap.get(id);
+		if (
+			lastThrottleUpdateTime !== undefined &&
+			now - lastThrottleUpdateTime > this.minThrottleIntervalInMs
+		) {
+			const countDelta = this.countDeltaMap.get(id) ?? 0;
 			this.lastThrottleUpdateAtMap.set(id, now);
 			this.countDeltaMap.set(id, 0);
 			const messageMetaData = {

@@ -65,7 +65,10 @@ export async function loadContainerPaused(
 	const lastProcessedSequenceNumber = dm.initialSequenceNumber;
 
 	const pauseContainer = (): void => {
-		assert(isIDeltaManagerFull(dm), "Delta manager does not have inbound/outbound queues.");
+		assert(
+			isIDeltaManagerFull(dm),
+			0xa7f /* Delta manager does not have inbound/outbound queues. */,
+		);
 		// eslint-disable-next-line no-void
 		void dm.inbound.pause();
 		// eslint-disable-next-line no-void

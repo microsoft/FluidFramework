@@ -340,7 +340,7 @@ export function applyTransactionBoundary(
 			unreachableCase(boundary);
 	}
 
-	if (!checkout.transaction.inProgress()) {
+	if (!checkout.transaction.isInProgress()) {
 		// Transaction is complete, so merge the changes into the root view and clean up the fork from the state.
 		state.transactionViews.delete(state.client.channel);
 		const rootView = viewFromState(state);

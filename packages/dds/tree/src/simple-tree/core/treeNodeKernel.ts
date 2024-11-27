@@ -4,7 +4,8 @@
  */
 
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { createEmitter, type Listenable, type Off } from "../../events/index.js";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable, Off } from "@fluidframework/core-interfaces";
 import type { TreeNode, Unhydrated } from "./types.js";
 import {
 	anchorSlot,
@@ -17,7 +18,6 @@ import {
 	assertFlexTreeEntityNotFreed,
 	ContextSlot,
 	flexTreeSlot,
-	isFlexTreeNode,
 	isFreedSymbol,
 	LazyEntity,
 	TreeStatus,
@@ -71,10 +71,15 @@ export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema
 }
 
 /** The {@link HydrationState} of a {@link TreeNodeKernel} before the kernel is hydrated */
-type UnhydratedState = Off;
+interface UnhydratedState {
+	off: Off;
+	innerNode: UnhydratedFlexTreeNode;
+}
 
 /** The {@link HydrationState} of a {@link TreeNodeKernel} after the kernel is hydrated */
 interface HydratedState {
+	/** The flex node for this kernel (lazy - undefined if it has not yet been demanded) */
+	innerNode?: FlexTreeNode;
 	/** The {@link AnchorNode} that this node is associated with. */
 	anchorNode: AnchorNode;
 	/** All {@link Off | event deregistration functions} that should be run when the kernel is disposed. */
@@ -86,14 +91,13 @@ type HydrationState = UnhydratedState | HydratedState;
 
 /** True if and only if the given {@link HydrationState} is post-hydration */
 function isHydrated(state: HydrationState): state is HydratedState {
-	return typeof state === "object";
+	return (state as Partial<HydratedState>).anchorNode !== undefined;
 }
 
 /**
  * Contains state and an internal API for managing {@link TreeNode}s.
  * @remarks All {@link TreeNode}s have an associated kernel object.
  * The kernel has the same lifetime as the node and spans both its unhydrated and hydrated states.
- * When hydration occurs, the kernel is notified via the {@link TreeNodeKernel.hydrate | hydrate} method.
  */
 export class TreeNodeKernel {
 	private disposed = false;
@@ -110,7 +114,7 @@ export class TreeNodeKernel {
 	 */
 	public generationNumber: number = 0;
 
-	#hydrationState: HydrationState = () => {};
+	#hydrationState: HydrationState;
 
 	/**
 	 * Events registered before hydration.
@@ -133,7 +137,7 @@ export class TreeNodeKernel {
 	public constructor(
 		public readonly node: TreeNode,
 		public readonly schema: TreeNodeSchema,
-		private innerNode: InnerNode,
+		innerNode: InnerNode,
 		private readonly initialContext: Context,
 	) {
 		assert(!treeNodeToKernel.has(node), 0xa1a /* only one kernel per node can be made */);
@@ -144,9 +148,9 @@ export class TreeNodeKernel {
 			mapTreeNodeToProxy.set(innerNode, node);
 			// Register for change events from the unhydrated flex node.
 			// These will be fired if the unhydrated node is edited, and will also be forwarded later to the hydrated node.
-			this.#hydrationState = innerNode.events.on(
-				"childrenChangedAfterBatch",
-				({ changedFields }) => {
+			this.#hydrationState = {
+				innerNode,
+				off: innerNode.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
 					this.#unhydratedEvents.value.emit("childrenChangedAfterBatch", {
 						changedFields,
 					});
@@ -161,15 +165,16 @@ export class TreeNodeKernel {
 						// This cast is safe because the parent (if it exists) of an unhydrated flex node is always another unhydrated flex node.
 						n = n.parentField.parent.parent as UnhydratedFlexTreeNode | undefined;
 					}
-				},
-			);
+				}),
+			};
 		} else {
 			// Hydrated case
+			const { anchorNode } = innerNode;
 			assert(
-				!innerNode.anchorNode.slots.has(proxySlot),
+				!anchorNode.slots.has(proxySlot),
 				0x7f5 /* Cannot associate an flex node with multiple simple-tree nodes */,
 			);
-			this.hydrate(innerNode.anchorNode);
+			this.#hydrationState = this.createHydratedState(anchorNode);
 		}
 	}
 
@@ -191,27 +196,11 @@ export class TreeNodeKernel {
 	 * Happens at most once for any given node.
 	 * Cleans up mappings to {@link UnhydratedFlexTreeNode} - it is assumed that they are no longer needed once the proxy has an anchor node.
 	 */
-	public hydrate(anchorNode: AnchorNode): void {
+	private hydrate(anchorNode: AnchorNode): void {
 		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
 		assert(!isHydrated(this.#hydrationState), 0xa2b /* hydration should only happen once */);
-
-		// If the this node is raw and thus has a MapTreeNode, forget it:
-		if (this.innerNode instanceof UnhydratedFlexTreeNode) {
-			mapTreeNodeToProxy.delete(this.innerNode);
-		}
-
-		// However, it's fine for an anchor node to rotate through different proxies when the content at that place in the tree is replaced.
-		anchorNode.slots.set(proxySlot, this.node);
-		this.#hydrationState = {
-			anchorNode,
-			offAnchorNode: new Set([
-				anchorNode.events.on("afterDestroy", () => this.dispose()),
-				// TODO: this should be triggered on change even for unhydrated nodes.
-				anchorNode.events.on("childrenChanging", () => {
-					this.generationNumber += 1;
-				}),
-			]),
-		};
+		mapTreeNodeToProxy.delete(this.#hydrationState.innerNode);
+		this.#hydrationState = this.createHydratedState(anchorNode);
 
 		// If needed, register forwarding emitters for events from before hydration
 		if (this.#unhydratedEvents.evaluated) {
@@ -226,6 +215,20 @@ export class TreeNodeKernel {
 				}
 			}
 		}
+	}
+
+	private createHydratedState(anchorNode: AnchorNode): HydratedState {
+		anchorNode.slots.set(proxySlot, this.node);
+		return {
+			anchorNode,
+			offAnchorNode: new Set([
+				anchorNode.events.on("afterDestroy", () => this.dispose()),
+				// TODO: this should be triggered on change even for unhydrated nodes.
+				anchorNode.events.on("childrenChanging", () => {
+					this.generationNumber += 1;
+				}),
+			]),
+		};
 	}
 
 	public getStatus(): TreeStatus {
@@ -282,13 +285,12 @@ export class TreeNodeKernel {
 	 * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
 	 */
 	public getOrCreateInnerNode(allowFreed = false): InnerNode {
-		if (!(this.innerNode instanceof UnhydratedFlexTreeNode)) {
-			// Cooked case
-			return this.innerNode;
+		if (!isHydrated(this.#hydrationState)) {
+			return this.#hydrationState.innerNode; // Unhydrated case
 		}
 
-		if (!isHydrated(this.#hydrationState)) {
-			return this.innerNode;
+		if (this.#hydrationState.innerNode !== undefined) {
+			return this.#hydrationState.innerNode; // Cooked case
 		}
 
 		// Marinated case -> cooked
@@ -296,21 +298,23 @@ export class TreeNodeKernel {
 		// The proxy is bound to an anchor node, but it may or may not have an actual flex node yet
 		const flexNode = anchorNode.slots.get(flexTreeSlot);
 		if (flexNode !== undefined) {
-			this.innerNode = flexNode;
-			return flexNode; // If it does have a flex node, return it...
-		} // ...otherwise, the flex node must be created
-		const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
-		const cursor = context.checkout.forest.allocateCursor("getFlexNode");
-		context.checkout.forest.moveCursorToPath(anchorNode, cursor);
-		const newFlexNode = makeTree(context, cursor);
-		cursor.free();
-		this.innerNode = newFlexNode;
-		// Calling this is a performance improvement, however, do this only after demand to avoid momentarily having no anchors to anchorNode
-		anchorForgetters?.get(this.node)?.();
-		if (!allowFreed) {
-			assertFlexTreeEntityNotFreed(newFlexNode);
+			// If the flex node already exists, use it...
+			this.#hydrationState.innerNode = flexNode;
+		} else {
+			// ...otherwise, the flex node must be created
+			const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
+			const cursor = context.checkout.forest.allocateCursor("getFlexNode");
+			context.checkout.forest.moveCursorToPath(anchorNode, cursor);
+			this.#hydrationState.innerNode = makeTree(context, cursor);
+			cursor.free();
+			// Calling this is a performance improvement, however, do this only after demand to avoid momentarily having no anchors to anchorNode
+			anchorForgetters?.get(this.node)?.();
+			if (!allowFreed) {
+				assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
+			}
 		}
-		return newFlexNode;
+
+		return this.#hydrationState.innerNode;
 	}
 
 	/**
@@ -344,24 +348,19 @@ export class TreeNodeKernel {
 	/**
 	 * Retrieves the InnerNode associated with the given target via {@link setInnerNode}, if any.
 	 * @remarks
-	 * If `target` is a unhydrated node, returns its MapTreeNode.
+	 * If `target` is an unhydrated node, returns its UnhydratedFlexTreeNode.
 	 * If `target` is a cooked node (or marinated but a FlexTreeNode exists) returns the FlexTreeNode.
-	 * If the target is not a node, or a marinated node with no FlexTreeNode for its anchor, returns undefined.
+	 * If the target is a marinated node with no FlexTreeNode for its anchor, returns undefined.
 	 */
 	public tryGetInnerNode(): InnerNode | undefined {
-		if (isFlexTreeNode(this.innerNode)) {
-			// Cooked case
-			return this.innerNode;
+		if (isHydrated(this.#hydrationState)) {
+			return (
+				this.#hydrationState.innerNode ??
+				this.#hydrationState.anchorNode.slots.get(flexTreeSlot)
+			);
 		}
 
-		if (!isHydrated(this.#hydrationState)) {
-			return this.innerNode;
-		}
-
-		// Marinated case -> cooked
-		const anchorNode = this.#hydrationState.anchorNode;
-		// The proxy is bound to an anchor node, but it may or may not have an actual flex node yet
-		return anchorNode.slots.get(flexTreeSlot);
+		return this.#hydrationState.innerNode;
 	}
 }
 

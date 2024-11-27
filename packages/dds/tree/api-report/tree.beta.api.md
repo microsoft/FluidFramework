@@ -110,7 +110,7 @@ type _InlineTrick = 0;
 export type Input<T extends never> = T;
 
 // @public
-type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = FlattenKeys<{
+type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = Record<string, never> extends T ? Record<string, never> : FlattenKeys<{
     readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property & string]>;
 } & {
     readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
@@ -197,8 +197,7 @@ declare namespace InternalTypes {
 }
 export { InternalTypes }
 
-// @public
-export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+export { IsListener }
 
 // @public @sealed
 export class IterableTreeArrayContent<T> implements Iterable<T> {
@@ -223,15 +222,9 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
-// @public @sealed
-export interface Listenable<TListeners extends object> {
-    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
-}
+export { Listenable }
 
-// @public
-export type Listeners<T extends object> = {
-    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
-};
+export { Listeners }
 
 // @public @sealed
 export interface MakeNominal {
@@ -283,8 +276,7 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<I
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
-// @public
-export type Off = () => void;
+export { Off }
 
 // @public @sealed
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends ReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {
@@ -382,6 +374,8 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         string,
         InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>
         ]>;
+    } | {
+        readonly [x: string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
     }, false, T, undefined>;
     readonly null: TreeNodeSchemaNonClass<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null, true, unknown, never>;
     readonly number: TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never>;
