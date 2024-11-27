@@ -300,6 +300,13 @@ export interface IDocumentDeltaConnection
 	serviceConfiguration: IClientConfiguration;
 
 	/**
+	 * A list of optional features that ordering service supports.
+	 * Features supported might be service specific.
+	 * If we have standardized features across all services, they need to be exposed in more structured way.
+	 */
+	supportedFeatures?: Record<string, unknown>;
+
+	/**
 	 * Last known sequence number to ordering service at the time of connection
 	 * It may lap actual last sequence number (quite a bit, if container  is very active).
 	 * But it's best information for client to figure out how far it is behind, at least

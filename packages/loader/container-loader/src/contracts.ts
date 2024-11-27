@@ -77,6 +77,11 @@ export interface IConnectionManager {
 	 */
 	readonly serviceConfiguration: IClientConfiguration | undefined;
 
+	/**
+	 * A list of optional features that ordering service supports.
+	 */
+	readonly supportedFeatures?: Record<string, unknown>;
+
 	readonly readOnlyInfo: ReadOnlyInfo;
 
 	// Various connectivity properties for telemetry describing type of current connection

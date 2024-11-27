@@ -119,7 +119,11 @@ export function prepareConnectedPresence(
 	});
 	runtime.signalsExpected.push([expectedClientJoin.type, expectedClientJoin.content]);
 
-	const presence = createPresenceManager(runtime, clientSessionId as ClientSessionId);
+	const presence = createPresenceManager(
+		runtime,
+		undefined,
+		clientSessionId as ClientSessionId,
+	);
 
 	// Validate expectations post initialization to make sure logger
 	// and runtime are left in a clean expectation state.

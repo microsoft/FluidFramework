@@ -260,6 +260,15 @@ export class DocumentDeltaConnection
 		return this.details.serviceConfiguration;
 	}
 
+	/**
+	 * A list of optional features that ordering service supports.
+	 * Features supported might be service specific.
+	 * If we have standardized features across all services, they need to be exposed in more structured way.
+	 */
+	public get supportedFeatures(): Record<string, unknown> | undefined {
+		return this.details.supportedFeatures;
+	}
+
 	private checkNotDisposed() {
 		assert(!this.disposed, 0x20c /* "connection disposed" */);
 	}
