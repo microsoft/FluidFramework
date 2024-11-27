@@ -54,7 +54,7 @@ export class TestThrottlerHelper implements IThrottlerHelper {
 		} else {
 			throttlingMetrics.throttleStatus = false;
 			throttlingMetrics.retryAfterInMs = 0;
-			throttlingMetrics.throttleReason = undefined;
+			throttlingMetrics.throttleReason = "";
 		}
 
 		// update stored throttling metric
@@ -63,7 +63,7 @@ export class TestThrottlerHelper implements IThrottlerHelper {
 		return this.getThrottlerResponseFromThrottlingMetrics(throttlingMetrics);
 	}
 
-	public async getThrottleStatus(id: string): Promise<IThrottlerResponse> {
+	public async getThrottleStatus(id: string): Promise<IThrottlerResponse | undefined> {
 		const throttlingMetrics = this.throttleStorage[id];
 
 		if (!throttlingMetrics) {

@@ -45,7 +45,8 @@ export class RedisCache implements ICache {
 		}
 	}
 
-	public async get(key: string): Promise<string> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	public async get(key: string): Promise<string | null> {
 		try {
 			// eslint-disable-next-line @typescript-eslint/return-await
 			return this.redisClientConnectionManager.getRedisClient().get(this.getKey(key));

@@ -38,6 +38,9 @@ export class DocumentContextManager extends EventEmitter {
 
 	private closed = false;
 
+	private headUpdatedAfterResume = false; // used to track whether the head has been updated after a resume event, so that we allow moving out of order only once during resume.
+	private tailUpdatedAfterResume = false; // used to track whether the tail has been updated after a resume event, so that we allow moving out of order only once during resume.
+
 	constructor(private readonly partitionContext: IContext) {
 		super();
 	}
@@ -65,6 +68,22 @@ export class DocumentContextManager extends EventEmitter {
 			Lumberjack.verbose("Emitting error from contextManager, context error event.");
 			this.emit("error", error, errorData);
 		});
+		context.addListener("pause", (offset: number, reason?: any) => {
+			// Find the lowest offset of all contexts and emit pause
+			let lowestOffset = offset;
+			for (const docContext of this.contexts) {
+				if (docContext.head.offset < lowestOffset) {
+					lowestOffset = docContext.head.offset;
+				}
+			}
+			this.headUpdatedAfterResume = false; // reset this flag when we pause
+			this.tailUpdatedAfterResume = false; // reset this flag when we pause
+			Lumberjack.info("Emitting pause from contextManager", { lowestOffset, offset, reason });
+			this.emit("pause", lowestOffset, offset, reason);
+		});
+		context.addListener("resume", () => {
+			this.emit("resume");
+		});
 		return context;
 	}
 
@@ -78,11 +97,44 @@ export class DocumentContextManager extends EventEmitter {
 	}
 
 	/**
-	 * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards.
+	 * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards, except if the resumeBackToOffset is specified.
+	 * resumeBackToOffset is specified during resume after a lambda pause (eg: circuit breaker)
 	 * @returns True if the head was updated, false if it was not.
 	 */
-	public setHead(head: IQueuedMessage) {
-		if (head.offset > this.head.offset) {
+	public setHead(head: IQueuedMessage, resumeBackToOffset?: number | undefined) {
+		if (head.offset > this.head.offset || head.offset === resumeBackToOffset) {
+			// If head is moving backwards
+			if (head.offset <= this.head.offset) {
+				if (head.offset <= this.lastCheckpoint.offset) {
+					Lumberjack.info(
+						"Not updating contextManager head since new head's offset is <= last checkpoint, returning early",
+						{
+							newHeadOffset: head.offset,
+							currentHeadOffset: this.head.offset,
+							lastCheckpointOffset: this.lastCheckpoint.offset,
+						},
+					);
+					return false;
+				}
+				if (this.headUpdatedAfterResume) {
+					Lumberjack.warning(
+						"ContextManager head is moving backwards again after a previous move backwards. This is unexpected.",
+						{ resumeBackToOffset, currentHeadOffset: this.head.offset },
+					);
+					return false;
+				}
+				Lumberjack.info(
+					"Allowing the contextManager head to move to the specified offset",
+					{ resumeBackToOffset, currentHeadOffset: this.head.offset },
+				);
+			}
+			if (!this.headUpdatedAfterResume && resumeBackToOffset !== undefined) {
+				Lumberjack.info("Setting headUpdatedAfterResume to true", {
+					resumeBackToOffset,
+					currentHeadOffset: this.head.offset,
+				});
+				this.headUpdatedAfterResume = true;
+			}
 			this.head = head;
 			return true;
 		}
@@ -90,11 +142,28 @@ export class DocumentContextManager extends EventEmitter {
 		return false;
 	}
 
-	public setTail(tail: IQueuedMessage) {
+	public setTail(tail: IQueuedMessage, resumeBackToOffset?: number | undefined) {
 		assert(
-			tail.offset > this.tail.offset && tail.offset <= this.head.offset,
-			`${tail.offset} > ${this.tail.offset} && ${tail.offset} <= ${this.head.offset}`,
+			(tail.offset > this.tail.offset ||
+				(tail.offset === resumeBackToOffset && !this.tailUpdatedAfterResume)) &&
+				tail.offset <= this.head.offset,
+			`Tail offset ${tail.offset} must be greater than the current tail offset ${this.tail.offset} or equal to the resume offset ${resumeBackToOffset} if not yet resumed (tailUpdatedAfterResume: ${this.tailUpdatedAfterResume}), and less than or equal to the head offset ${this.head.offset}.`,
 		);
+
+		if (tail.offset <= this.tail.offset) {
+			Lumberjack.info("Allowing the contextManager tail to move to the specified offset.", {
+				resumeBackToOffset,
+				currentTailOffset: this.tail.offset,
+			});
+		}
+
+		if (!this.tailUpdatedAfterResume && resumeBackToOffset !== undefined) {
+			Lumberjack.info("Setting tailUpdatedAfterResume to true", {
+				resumeBackToOffset,
+				currentTailOffset: this.tail.offset,
+			});
+			this.tailUpdatedAfterResume = true;
+		}
 
 		this.tail = tail;
 		this.updateCheckpoint();

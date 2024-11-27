@@ -15,6 +15,7 @@ import {
 	IRunner,
 	IRunnerFactory,
 	IWebServerFactory,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -24,7 +25,6 @@ import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 import { IRiddlerResourcesCustomizations } from "./customizations";
 import { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
 import { StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
@@ -48,7 +48,7 @@ export class RiddlerResources implements IResources {
 		public readonly riddlerStorageRequestMetricIntervalMs: number,
 		public readonly tenantKeyGenerator: utils.ITenantKeyGenerator,
 		public readonly startupCheck: IReadinessCheck,
-		public readonly cache: RedisCache,
+		public readonly cache?: RedisCache,
 		public readonly readinessCheck?: IReadinessCheck,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -76,7 +76,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 	): Promise<RiddlerResources> {
 		// Cache connection
 		const redisConfig = config.get("redisForTenantCache");
-		let cache: RedisCache;
+		let cache: RedisCache | undefined;
 		if (redisConfig) {
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
@@ -114,7 +114,12 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 		if (globalDbEnabled) {
 			const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
-			globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
+			globalDbMongoManager = new MongoManager(
+				factory,
+				globalDbReconnect,
+				undefined /* reconnectDelayMs */,
+				true /* global */,
+			);
 		}
 
 		const mongoManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
