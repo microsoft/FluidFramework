@@ -282,7 +282,9 @@ describe("FluidSerializer", () => {
 			});
 
 			// Parse a handle whose url is absolute path.
-			const parsedHandle: RemoteFluidObjectHandle = serializer.parse(serializedHandle);
+			const parsedHandle: RemoteFluidObjectHandle = serializer.parse(
+				serializedHandle,
+			) as RemoteFluidObjectHandle;
 			assert.strictEqual(
 				parsedHandle.absolutePath,
 				"/default/sharedDDS",
@@ -303,7 +305,9 @@ describe("FluidSerializer", () => {
 
 			// Parse a handle whose url is a path relative to its route context. The serializer will generate absolute
 			// path for the handle and create a handle with it.
-			const parsedHandle: RemoteFluidObjectHandle = serializer.parse(serializedHandle);
+			const parsedHandle: RemoteFluidObjectHandle = serializer.parse(
+				serializedHandle,
+			) as RemoteFluidObjectHandle;
 			assert.strictEqual(
 				parsedHandle.absolutePath,
 				"/default/sharedDDS",
