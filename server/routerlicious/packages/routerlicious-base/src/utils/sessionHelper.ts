@@ -288,8 +288,7 @@ export async function getSession(
 ): Promise<ISession> {
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-<<<<<<< HEAD
-	let document: IDocument;
+	let document;
 	try {
 		// Retry document existence check to avoid document DB race condition
 		document = (await runWithRetry(
@@ -317,11 +316,7 @@ export async function getSession(
 	}
 
 	// Additional check to ensure that scheduledDeletionTime is not undefined
-	if (!document || document.scheduledDeletionTime !== undefined) {
-=======
-	const document = await documentRepository.readOne({ tenantId, documentId });
 	if (!document || document?.scheduledDeletionTime !== undefined) {
->>>>>>> 5d813e5b68bf8633cd4b43ec366cb9754e3f9d2e
 		connectionTrace?.stampStage("DocumentDoesNotExist");
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
 	}
