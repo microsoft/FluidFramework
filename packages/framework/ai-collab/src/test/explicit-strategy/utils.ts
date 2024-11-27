@@ -82,60 +82,6 @@ export function initializeOpenAIClient(service: "openai" | "azure"): OpenAI {
 /**
  * A utility class for snapshot testing.
  */
-// export class MochaSnapshotUnitTester {
-// 	public constructor(
-// 		public readonly snapshotDirectory: string,
-// 		public readonly suiteName: string,
-// 	) {}
-
-// 	public expectToMatchSnapshot(
-// 		mochaContext: Mocha.Context,
-// 		output: string,
-// 		options?: { fileNameOverride?: string },
-// 	): void {
-// 		const snapshotBaseFolderDir = path.join(this.snapshotDirectory, "__snapshots__");
-
-// 		// Create the __snapshots__ directory if it does not exist
-// 		if (!fs.existsSync(snapshotBaseFolderDir)) {
-// 			fs.mkdirSync(snapshotBaseFolderDir);
-// 		}
-
-// 		// Directory to store snapshots
-// 		const snapshotDir: string = path.join(
-// 			this.snapshotDirectory,
-// 			"__snapshots__",
-// 			this.suiteName,
-// 		);
-
-// 		if (!fs.existsSync(snapshotDir)) {
-// 			fs.mkdirSync(snapshotDir);
-// 		}
-
-// 		const testName: string =
-// 			options?.fileNameOverride ??
-// 			mochaContext.test?.title.replace(/\s+/g, "_") ??
-// 			"unknown_test";
-// 		const snapshotFile: string = path.join(snapshotDir, `${testName}.snap.json`);
-
-// 		const shouldUpdateSnapshot: boolean = process.env.UPDATE_SNAPSHOTS === "true";
-
-// 		if (fs.existsSync(snapshotFile) && !shouldUpdateSnapshot) {
-// 			// Snapshot exists, compare outputs
-// 			const expectedOutput: string = fs.readFileSync(snapshotFile, "utf8");
-// 			assert.strictEqual(output, expectedOutput);
-// 		} else {
-// 			// Snapshot does not exist or updating snapshot
-// 			fs.writeFileSync(snapshotFile, output, "utf8");
-// 			console.log(
-// 				`Snapshot ${fs.existsSync(snapshotFile) ? "updated" : "created"} for test: ${testName}`,
-// 			);
-// 		}
-// 	}
-// }
-
-/**
- * A utility class for snapshot testing.
- */
 export class MochaSnapshotUnitTester {
 	public constructor(
 		public readonly snapshotDirectory: string,
