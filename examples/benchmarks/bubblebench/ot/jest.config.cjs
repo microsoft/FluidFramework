@@ -8,11 +8,12 @@ let mappedPort = 9000; // Defaul port test-tools would provide if no mapping exi
 // Only import test-tools if POLICY_CHECK is not set.
 // This allows us to run policy checks on the jest config files without having to build the repo.
 if (process.env.POLICY_CHECK === undefined) {
+	/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment */
 	const testTools = require("@fluid-private/test-tools");
+	const { name: string } = require("./package.json");
 	mappedPort = testTools.getTestPort(name);
+	/* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment */
 }
-const { name } = require("./package.json");
-
 process.env.PORT = mappedPort;
 
 module.exports = {
