@@ -52,7 +52,8 @@ export class RestLessClient {
 
 		if (
 			newRequest.data &&
-			["post", "put", "patch"].includes(newRequest.method?.toLowerCase())
+			newRequest.method !== undefined &&
+			["post", "put", "patch"].includes(newRequest.method.toLowerCase())
 		) {
 			const stringifiedBody = JSON.stringify(newRequest.data);
 			body.append(RestLessFieldNames.Body, stringifiedBody);
