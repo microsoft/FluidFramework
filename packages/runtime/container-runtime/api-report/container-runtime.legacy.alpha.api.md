@@ -545,6 +545,8 @@ export interface ISummarizeEventProps {
     // (undocumented)
     error?: any;
     // (undocumented)
+    failureMessage?: string;
+    // (undocumented)
     maxAttempts: number;
     // (undocumented)
     result: "success" | "failure" | "canceled";
@@ -578,13 +580,38 @@ export interface ISummarizeResults {
 // @alpha (undocumented)
 export interface ISummarizerEvents extends IEvent {
     // (undocumented)
-    (event: "summarize", listener: (props: ISummarizeEventProps) => void): any;
+    (event: "summarize", listener: (props: ISummarizeEventProps & ISummarizerObservabilityProps) => void): any;
+    // (undocumented)
+    (event: "summarizeAllAttemptsFailed", listener: (props: Omit<ISummarizeEventProps, "result"> & ISummarizerObservabilityProps) => void): any;
+    // (undocumented)
+    (event: "lastSummaryAttempt", listener: (props: ISummarizeEventProps & ISummarizerObservabilityProps) => void): any;
+    // (undocumented)
+    (event: "summarizerStop", listener: (props: {
+        stopReason: string;
+        error?: any;
+    } & ISummarizerObservabilityProps) => void): any;
+    // (undocumented)
+    (event: "summarizerStart", listener: (props: {
+        onBehalfOf: string;
+    } & ISummarizerObservabilityProps) => void): any;
+    // (undocumented)
+    (event: "summarizerStartupFailed", listener: (props: {
+        reason: SummarizerStopReason;
+    } & ISummarizerObservabilityProps) => void): any;
 }
 
 // @alpha (undocumented)
 export interface ISummarizerInternalsProvider {
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
+}
+
+// @alpha (undocumented)
+export interface ISummarizerObservabilityProps {
+    // (undocumented)
+    numUnsummarizedNonRuntimeOps: number;
+    // (undocumented)
+    numUnsummarizedRuntimeOps: number;
 }
 
 // @alpha (undocumented)

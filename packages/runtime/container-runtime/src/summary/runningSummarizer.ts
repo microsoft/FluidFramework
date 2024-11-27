@@ -42,6 +42,7 @@ import {
 	SubmitSummaryResult,
 	SummarizerStopReason,
 	type IRetriableFailureError,
+	type ISummarizerObservabilityProps,
 } from "./summarizerTypes.js";
 import {
 	IAckedSummary,
@@ -492,6 +493,8 @@ export class RunningSummarizer
 					// summarizeProps
 					{ summarizeReason: "lastSummary" },
 					{},
+					undefined,
+					true /* isLastSummary */,
 				);
 			}
 		}
@@ -579,12 +582,14 @@ export class RunningSummarizer
 	 * @param options - summary options
 	 * @param cancellationToken - cancellation token to use to be able to cancel this summary, if needed
 	 * @param resultsBuilder - optional, result builder to use.
+	 * @param isLastSummary - optional, is the call to this method for a last summary when shutting down the summarizer?
 	 * @returns ISummarizeResult - result of running a summary.
 	 */
 	private trySummarizeOnce(
 		summarizeProps: ISummarizeTelemetryProperties,
 		options: ISummarizeOptions,
 		resultsBuilder = new SummarizeResultBuilder(),
+		isLastSummary = false,
 	): ISummarizeResults {
 		this.lockedSummaryAction(
 			() => {
@@ -604,7 +609,26 @@ export class RunningSummarizer
 				const summarizeResult = this.generator.summarize(summaryOptions, resultsBuilder);
 				// ensure we wait till the end of the process
 				const result = await summarizeResult.receivedSummaryAckOrNack;
-				if (!result.success) {
+
+				const event = isLastSummary ? "lastSummaryAttempt" : "summarize";
+				if (result.success) {
+					this.emit(event, {
+						result: "success",
+						currentAttempt: 1,
+						maxAttempts: 1,
+						numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
+						numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
+					});
+				} else {
+					this.emit(event, {
+						result: "failure",
+						currentAttempt: 1,
+						maxAttempts: 1,
+						error: result.error,
+						failureMessage: result.message,
+						numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
+						numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
+					});
 					this.mc.logger.sendErrorEvent(
 						{
 							eventName: "SummarizeFailed",
@@ -701,6 +725,7 @@ export class RunningSummarizer
 		let status: "success" | "failure" | "canceled" = "success";
 		let results: ISummarizeResults | undefined;
 		let error: IRetriableFailureError | undefined;
+		let failureMessage: string | undefined;
 		do {
 			currentAttempt++;
 			if (this.cancellationToken.cancelled) {
@@ -731,12 +756,16 @@ export class RunningSummarizer
 			// Emit "summarize" event for this failed attempt.
 			status = "failure";
 			error = ackNackResult.error;
+			failureMessage = ackNackResult.message;
 			retryAfterSeconds = error.retryAfterSeconds;
-			const eventProps: ISummarizeEventProps = {
+			const eventProps: ISummarizeEventProps & ISummarizerObservabilityProps = {
 				result: status,
 				currentAttempt,
 				maxAttempts,
 				error,
+				failureMessage,
+				numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
+				numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
 			};
 			this.emit("summarize", eventProps);
 
@@ -761,7 +790,13 @@ export class RunningSummarizer
 
 		// If the attempt was successful, emit "summarize" event and return. A failed attempt may be retried below.
 		if (status !== "failure") {
-			this.emit("summarize", { result: status, currentAttempt, maxAttempts });
+			this.emit("summarize", {
+				result: status,
+				currentAttempt,
+				maxAttempts,
+				numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
+				numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
+			});
 			return results;
 		}
 
@@ -772,14 +807,16 @@ export class RunningSummarizer
 			// Ack / nack is the final step, so if it succeeds we're done.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
 			status = ackNackResult.success ? "success" : "failure";
-			if (!ackNackResult.success) {
-				error = ackNackResult.error;
-			}
-			const eventProps: ISummarizeEventProps = {
+			error = ackNackResult.success ? undefined : ackNackResult.error;
+			failureMessage = ackNackResult.success ? undefined : ackNackResult.message;
+			const eventProps: ISummarizeEventProps & ISummarizerObservabilityProps = {
 				result: status,
 				currentAttempt,
 				maxAttempts,
-				error: ackNackResult.success ? undefined : ackNackResult.error,
+				error,
+				failureMessage,
+				numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
+				numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
 			};
 			this.emit("summarize", eventProps);
 			results = summarizeResult;
@@ -795,6 +832,14 @@ export class RunningSummarizer
 				},
 				error,
 			);
+			this.emit("summarizeAllAttemptsFailed", {
+				maxAttempts,
+				summaryAttempts: currentAttempt,
+				error,
+				failureMessage,
+				numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
+				numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
+			});
 			this.stopSummarizerCallback("failToSummarize");
 		}
 		return results;

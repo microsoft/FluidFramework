@@ -433,6 +433,16 @@ export interface ISummarizeEventProps {
 	currentAttempt: number;
 	maxAttempts: number;
 	error?: any;
+	failureMessage?: string;
+}
+
+/**
+ * @legacy
+ * @alpha
+ */
+export interface ISummarizerObservabilityProps {
+	numUnsummarizedRuntimeOps: number;
+	numUnsummarizedNonRuntimeOps: number;
 }
 
 /**
@@ -440,7 +450,36 @@ export interface ISummarizeEventProps {
  * @alpha
  */
 export interface ISummarizerEvents extends IEvent {
-	(event: "summarize", listener: (props: ISummarizeEventProps) => void);
+	(
+		event: "summarize",
+		listener: (props: ISummarizeEventProps & ISummarizerObservabilityProps) => void,
+	);
+	(
+		event: "summarizeAllAttemptsFailed",
+		listener: (
+			props: Omit<ISummarizeEventProps, "result"> & ISummarizerObservabilityProps,
+		) => void,
+	);
+	(
+		event: "lastSummaryAttempt",
+		listener: (props: ISummarizeEventProps & ISummarizerObservabilityProps) => void,
+	);
+	(
+		event: "summarizerStop",
+		listener: (
+			props: { stopReason: string; error?: any } & ISummarizerObservabilityProps,
+		) => void,
+	);
+	(
+		event: "summarizerStart",
+		listener: (props: { onBehalfOf: string } & ISummarizerObservabilityProps) => void,
+	);
+	(
+		event: "summarizerStartupFailed",
+		listener: (
+			props: { reason: SummarizerStopReason } & ISummarizerObservabilityProps,
+		) => void,
+	);
 }
 
 /**

@@ -25,7 +25,6 @@ import {
 	IConnectableRuntime,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
-	ISummarizeEventProps,
 	ISummarizeHeuristicData,
 	ISummarizeResults,
 	ISummarizer,
@@ -107,9 +106,21 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 	public async run(onBehalfOf: string): Promise<SummarizerStopReason> {
 		try {
-			return await this.runCore(onBehalfOf);
+			const stopReason = await this.runCore(onBehalfOf);
+			this.emit("summarizerStop", {
+				stopReason,
+				numUnsummarizedRuntimeOps: this._heuristicData?.numRuntimeOps,
+				numUnsummarizedNonRuntimeOps: this._heuristicData?.numNonRuntimeOps,
+			});
+			return stopReason;
 		} catch (error) {
 			this.stop("summarizerException");
+			this.emit("summarizerStop", {
+				stopReason: "summarizerException",
+				error,
+				numUnsummarizedRuntimeOps: this._heuristicData?.numRuntimeOps,
+				numUnsummarizedNonRuntimeOps: this._heuristicData?.numNonRuntimeOps,
+			});
 			throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
 		} finally {
 			this.close();
@@ -148,8 +159,19 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		});
 
 		if (runCoordinator.cancelled) {
+			this.emit("summarizerStartupFailed", {
+				reason: await runCoordinator.waitCancelled,
+				numUnsummarizedRuntimeOps: this._heuristicData?.numRuntimeOps,
+				numUnsummarizedNonRuntimeOps: this._heuristicData?.numNonRuntimeOps,
+			});
 			return runCoordinator.waitCancelled;
 		}
+
+		this.emit("summarizerStart", {
+			onBehalfOf,
+			numUnsummarizedRuntimeOps: this._heuristicData?.numRuntimeOps,
+			numUnsummarizedNonRuntimeOps: this._heuristicData?.numNonRuntimeOps,
+		});
 
 		const runningSummarizer = await this.start(onBehalfOf, runCoordinator);
 
@@ -254,14 +276,10 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			this.runtime,
 		);
 		this.runningSummarizer = runningSummarizer;
-		this.runningSummarizer.on("summarize", this.handleSummarizeEvent);
+		this.setupForwardedEvents();
 		this.starting = false;
 		return runningSummarizer;
 	}
-
-	private readonly handleSummarizeEvent = (eventProps: ISummarizeEventProps) => {
-		this.emit("summarize", eventProps);
-	};
 
 	/**
 	 * Disposes of resources after running.  This cleanup will
@@ -275,7 +293,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 		this._disposed = true;
 		if (this.runningSummarizer) {
-			this.runningSummarizer.off("summarize", this.handleSummarizeEvent);
+			this.cleanupForwardedEvents();
 			this.runningSummarizer.dispose();
 			this.runningSummarizer = undefined;
 		}
@@ -354,5 +372,24 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 	public recordSummaryAttempt?(summaryRefSeqNum?: number) {
 		this._heuristicData?.recordAttempt(summaryRefSeqNum);
+	}
+
+	private readonly forwardedEvents = new Map<any, () => void>();
+
+	private setupForwardedEvents() {
+		["summarize", "summarizeAllAttemptsFailed", "lastSummaryAttempt"].forEach((event) => {
+			const listener = (...args: any[]) => {
+				this.emit(event, ...args);
+			};
+			this.runningSummarizer?.on(event as any, listener);
+			this.forwardedEvents.set(event, listener);
+		});
+	}
+
+	private cleanupForwardedEvents() {
+		this.forwardedEvents.forEach((listener, event) =>
+			this.runningSummarizer?.off(event, listener),
+		);
+		this.forwardedEvents.clear();
 	}
 }
