@@ -153,7 +153,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 		const factory = await services.getDbFactory(config);
 		if (globalDbEnabled) {
-			globalDbMongoManager = new core.MongoManager(factory, false, null, true);
+			globalDbMongoManager = new core.MongoManager(
+				factory,
+				false,
+				undefined /* retryDelayMs */,
+				true /* global */,
+			);
 		}
 
 		// Database connection for operations db
@@ -196,7 +201,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const defaultTTLInSeconds = 864000;
 		const checkpointsTTLSeconds =
 			config.get("checkpoints:checkpointsTTLInSeconds") ?? defaultTTLInSeconds;
-		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
+		if (checkpointsCollection.createTTLIndex !== undefined) {
+			await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
+		}
 
 		const nodeCollectionName = config.get("mongo:collectionNames:nodes");
 
@@ -426,7 +433,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.startupCheck,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
-			null,
+			undefined,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
 			resources.readinessCheck,
