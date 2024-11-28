@@ -10,7 +10,7 @@ let mappedPort = 9000; // Defaul port test-tools would provide if no mapping exi
 if (process.env.POLICY_CHECK === undefined) {
 	/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment */
 	const testTools = require("@fluid-private/test-tools");
-	const { name: string } = require("./package.json");
+	const { name } = require("./package.json");
 	mappedPort = testTools.getTestPort(name);
 	/* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment */
 }

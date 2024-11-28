@@ -11,7 +11,7 @@ if (process.env.POLICY_CHECK === undefined) {
 	/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment */
 	// eslint-disable-next-line import/no-extraneous-dependencies
 	const testTools = require("@fluid-private/test-tools");
-	const { name: string } = require("./package.json");
+	const { name } = require("./package.json");
 	mappedPort = testTools.getTestPort(name);
 	/* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment */
 }
