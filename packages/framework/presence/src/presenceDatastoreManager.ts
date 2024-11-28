@@ -467,14 +467,21 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				}
 			}
 
-			this.localUpdate({
-				"system:presence": {
-					clientToSessionId: {
-						[clientConnectionId]: { ...currentClientToSessionValueState },
+			const content = {
+				sendTimestamp: Date.now(),
+				avgLatency: this.averageLatency,
+				// isComplete: false,
+				data: {
+					"system:presence": {
+						clientToSessionId: {
+							[clientConnectionId]: { ...currentClientToSessionValueState },
+						},
 					},
+					...updates,
 				},
-				...updates,
-			});
+			} satisfies DatastoreUpdateMessage["content"];
+
+			this.runtime.submitSignal(datastoreUpdateMessageType, content);
 
 			this.logger?.sendTelemetryEvent({
 				eventName: "JoinResponse",
