@@ -111,8 +111,7 @@
 					"@fluidframework/build-common",
 					"@fluidframework/eslint-config-fluid",
 					"@fluid-internal/eslint-plugin-fluid",
-					"@fluid-tools/benchmark",
-					"@fluid-private/test-tools"
+					"@fluid-tools/benchmark"
 				]
 			},
 			"Tools": {
