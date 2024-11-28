@@ -5,10 +5,10 @@
 
 /**
  * `true` iff the given type is an acceptable shape for a {@link Listeners | event} listener
- * @public
+ * @system @public
  *
  * @remarks
- * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces`.
+ * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
  */
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
@@ -18,6 +18,7 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
  * @remarks
  * Any object type is a valid {@link Listeners}, but only the {@link IsListener | event-like} properties of that
  * type will be included.
+ * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
  *
  * @example
  * ```typescript
@@ -27,10 +28,7 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
  * }
  * ```
  *
- * @public
- *
- * @remarks
- * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces`.
+ * @system @public
  */
 export type Listeners<T extends object> = {
 	[P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
@@ -50,10 +48,10 @@ export type Listeners<T extends object> = {
  * ```
  * {@link createEmitter} can help implement this interface via delegation.
  *
- * @sealed @public
- *
  * @remarks
- * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces`.
+ * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
+ *
+ * @sealed @system @public
  */
 export interface Listenable<TListeners extends object> {
 	/**
@@ -86,6 +84,7 @@ export interface Listenable<TListeners extends object> {
  * A function that, when called, will deregister an event listener subscription that was previously registered.
  * @remarks
  * It is returned by the {@link Listenable.on | event registration function} when event registration occurs.
- * @public
+ * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
+ * @system @public
  */
 export type Off = () => void;
