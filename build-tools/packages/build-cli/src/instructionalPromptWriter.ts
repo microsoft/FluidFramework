@@ -77,11 +77,6 @@ export const ADOPipelineLinks = new Map<ReleasePackage | ReleaseGroup | undefine
 		"https://dev.azure.com/fluidframework/internal/_build?definitionId=62",
 	],
 	[
-		"@fluid-private/test-tools",
-		"https://dev.azure.com/fluidframework/internal/_build?definitionId=13",
-	],
-	["tinylicious", "https://dev.azure.com/fluidframework/internal/_build?definitionId=22"],
-	[
 		"@fluidframework/build-common",
 		"https://dev.azure.com/fluidframework/internal/_build?definitionId=3",
 	],
