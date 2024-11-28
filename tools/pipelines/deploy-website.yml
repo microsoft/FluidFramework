@@ -262,7 +262,7 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  pool: Small
+  pool: Small-eastus2
   dependsOn: ['build', 'guardian']
   variables:
     deployOverrideVar: ${{ parameters.deployOverride }}

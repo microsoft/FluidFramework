@@ -14,11 +14,15 @@ class InternalErrorRule extends BaseMongoExceptionRetryRule {
 		super("InternalErrorRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
 			error.code === 1 &&
-			error.codeName &&
-			(error.codeName as string) === InternalErrorRule.codeName
+			"codeName" in error &&
+			typeof error.codeName === "string" &&
+			error.codeName === InternalErrorRule.codeName
 		);
 	}
 }
@@ -31,11 +35,15 @@ class InternalBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
 		super("InternalBulkWriteErrorRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
 			error.code === 1 &&
-			error.name &&
-			(error.name as string).includes(InternalBulkWriteErrorRule.errorName)
+			"name" in error &&
+			typeof error.name === "string" &&
+			error.name.includes(InternalBulkWriteErrorRule.errorName)
 		);
 	}
 }
@@ -69,14 +77,17 @@ class NoConnectionAvailableRule extends BaseMongoExceptionRetryRule {
 		super("NoConnectionAvailableRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		// TODO: This timed out actually included two different messages:
 		// 1. Retries due to rate limiting: False.
 		// 2. Retries due to rate limiting: True.
 		// We might need to split this into two different rules after consult with DB team.
 		return (
-			error.message &&
-			(error.message as string).startsWith(NoConnectionAvailableRule.messagePrefix)
+			typeof error === "object" &&
+			error !== null &&
+			"message" in error &&
+			typeof error.message === "string" &&
+			error.message.startsWith(NoConnectionAvailableRule.messagePrefix)
 		);
 	}
 
@@ -107,7 +118,13 @@ class NoPrimaryInReplicasetRule extends BaseMongoExceptionRetryRule {
 		// 1. Retries due to rate limiting: False.
 		// 2. Retries due to rate limiting: True.
 		// We might need to split this into two different rules after consult with DB team.
-		return error.message && (error.message as string) === NoPrimaryInReplicasetRule.message;
+		return (
+			typeof error === "object" &&
+			error !== null &&
+			"message" in error &&
+			typeof error.message === "string" &&
+			error.message === NoPrimaryInReplicasetRule.message
+		);
 	}
 }
 
@@ -121,11 +138,14 @@ class PoolDestroyedRule extends BaseMongoExceptionRetryRule {
 		super("PoolDestroyedRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
-			error.message &&
-			((error.message as string) === PoolDestroyedRule.message1 ||
-				(error.message as string) === PoolDestroyedRule.message2)
+			typeof error === "object" &&
+			error !== null &&
+			"message" in error &&
+			typeof error.message === "string" &&
+			(error.message === PoolDestroyedRule.message1 ||
+				error.message === PoolDestroyedRule.message2)
 		);
 	}
 }
@@ -140,11 +160,15 @@ class RequestSizeLargeRule extends BaseMongoExceptionRetryRule {
 		super("RequestSizeLargeRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
 			error.code === 16 &&
-			error.errmsg &&
-			(error.errmsg as string).startsWith(RequestSizeLargeRule.errorMsgPrefix)
+			"errmsg" in error &&
+			typeof error.errmsg === "string" &&
+			error.errmsg.startsWith(RequestSizeLargeRule.errorMsgPrefix)
 		);
 	}
 }
@@ -158,11 +182,15 @@ class RequestTimedNoRateLimitInfo extends BaseMongoExceptionRetryRule {
 		super("RequestTimedNoRateLimitInfo", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
 			error.code === 50 &&
-			error.errmsg &&
-			(error.errmsg as string) === RequestTimedNoRateLimitInfo.errmsg
+			"errmsg" in error &&
+			typeof error.errmsg === "string" &&
+			error.errmsg === RequestTimedNoRateLimitInfo.errmsg
 		);
 	}
 }
@@ -177,11 +205,15 @@ class RequestTimedOutWithHttpInfo extends BaseMongoExceptionRetryRule {
 		super("RequestTimedOutWithHttpInfo", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
 			error.code === 50 &&
-			error.errmsg &&
-			(error.errmsg as string).startsWith(RequestTimedOutWithHttpInfo.errmsgPrefix)
+			"errmsg" in error &&
+			typeof error.errmsg === "string" &&
+			error.errmsg.startsWith(RequestTimedOutWithHttpInfo.errmsgPrefix)
 		);
 	}
 }
@@ -196,12 +228,18 @@ class RequestTimedOutWithRateLimitTrue extends BaseMongoExceptionRetryRule {
 		super("RequestTimedOutWithRateLimitTrue", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
 			error.code === 50 &&
-			error.errmsg &&
-			(error.codeName as string) === RequestTimedOutWithRateLimitTrue.codeName &&
-			(error.errmsg as string) === RequestTimedOutWithRateLimitTrue.errorMsg
+			"errmsg" in error &&
+			typeof error.errmsg === "string" &&
+			error.errmsg === RequestTimedOutWithRateLimitTrue.errorMsg &&
+			"codeName" in error &&
+			typeof error.codeName === "string" &&
+			error.codeName === RequestTimedOutWithRateLimitTrue.codeName
 		);
 	}
 }
@@ -216,12 +254,18 @@ class RequestTimedOutWithRateLimitFalse extends BaseMongoExceptionRetryRule {
 		super("RequestTimedOutWithRateLimitFalse", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
 			error.code === 50 &&
-			error.errmsg &&
-			(error.codeName as string) === RequestTimedOutWithRateLimitFalse.codeName &&
-			(error.errmsg as string) === RequestTimedOutWithRateLimitFalse.errorMsg
+			"errmsg" in error &&
+			typeof error.errmsg === "string" &&
+			"codeName" in error &&
+			typeof error.codeName === "string" &&
+			error.codeName === RequestTimedOutWithRateLimitFalse.codeName &&
+			error.errmsg === RequestTimedOutWithRateLimitFalse.errorMsg
 		);
 	}
 }
@@ -234,11 +278,15 @@ class RequestTimedOutBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
 		super("RequestTimedOutBulkWriteErrorRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
 			error.code === 50 &&
-			error.name &&
-			(error.name as string).includes(RequestTimedOutBulkWriteErrorRule.errorName)
+			"name" in error &&
+			typeof error.name === "string" &&
+			error.name.includes(RequestTimedOutBulkWriteErrorRule.errorName)
 		);
 	}
 }
@@ -251,8 +299,14 @@ class ConnectionPoolClearedErrorRule extends BaseMongoExceptionRetryRule {
 		super("ConnectionPoolClearedErrorRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
-		return error.name && (error.name as string) === ConnectionPoolClearedErrorRule.errorName;
+	public match(error: unknown): boolean {
+		return (
+			typeof error === "object" &&
+			error !== null &&
+			"name" in error &&
+			typeof error.name === "string" &&
+			error.name === ConnectionPoolClearedErrorRule.errorName
+		);
 	}
 }
 
@@ -266,12 +320,18 @@ class ServiceUnavailableRule extends BaseMongoExceptionRetryRule {
 		super("ServiceUnavailableRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
-			(error.code === 1 &&
-				error.errorDetails &&
-				(error.errorDetails as string).includes(ServiceUnavailableRule.errorDetails)) ||
-			(error.errmsg && (error.errmsg as string).includes(ServiceUnavailableRule.errorDetails))
+			typeof error === "object" &&
+			error !== null &&
+			(("code" in error &&
+				error.code === 1 &&
+				"errorDetails" in error &&
+				typeof error.errorDetails === "string" &&
+				error.errorDetails.includes(ServiceUnavailableRule.errorDetails)) ||
+				("errmsg" in error &&
+					typeof error.errmsg === "string" &&
+					error.errmsg.includes(ServiceUnavailableRule.errorDetails)))
 		);
 	}
 }
@@ -286,9 +346,13 @@ class TopologyDestroyed extends BaseMongoExceptionRetryRule {
 		super("TopologyDestroyed", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
-			error.message && (error.message as string).toLowerCase() === TopologyDestroyed.message
+			typeof error === "object" &&
+			error !== null &&
+			"message" in error &&
+			typeof error.message === "string" &&
+			error.message.toLowerCase() === TopologyDestroyed.message
 		);
 	}
 }
@@ -302,11 +366,15 @@ class UnauthorizedRule extends BaseMongoExceptionRetryRule {
 		super("UnauthorizedRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
 			error.code === 13 &&
-			error.codeName &&
-			(error.codeName as string) === UnauthorizedRule.codeName
+			"codeName" in error &&
+			typeof error.codeName == "string" &&
+			error.codeName === UnauthorizedRule.codeName
 		);
 	}
 }
@@ -320,9 +388,13 @@ class ConnectionClosedMongoErrorRule extends BaseMongoExceptionRetryRule {
 		super("ConnectionClosedMongoErrorRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
-			error.message && /^connection .+ closed$/.test(error.message as string) === true // matches any message of format "connection <some-info> closed"
+			typeof error === "object" &&
+			error !== null &&
+			"message" in error &&
+			typeof error.message === "string" &&
+			/^connection .+ closed$/.test(error.message) === true // matches any message of format "connection <some-info> closed"
 		);
 	}
 }
@@ -335,12 +407,16 @@ class ConnectionTimedOutBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
 		super("ConnectionTimedOutBulkWriteErrorRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
-			error.name &&
-			(error.name as string) === ConnectionTimedOutBulkWriteErrorRule.errorName &&
-			error.message &&
-			/^connection .*timed out$/.test(error.message as string) === true
+			typeof error === "object" &&
+			error !== null &&
+			"name" in error &&
+			typeof error.name === "string" &&
+			error.name === ConnectionTimedOutBulkWriteErrorRule.errorName &&
+			"message" in error &&
+			typeof error.message === "string" &&
+			/^connection .*timed out$/.test(error.message) === true
 		);
 	}
 }
@@ -353,12 +429,16 @@ class NetworkTimedOutErrorRule extends BaseMongoExceptionRetryRule {
 		super("NetworkTimedOutErrorRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
-			error.name &&
-			(error.name as string) === NetworkTimedOutErrorRule.errorName &&
-			error.message &&
-			/^connection .*timed out$/.test(error.message as string) === true
+			typeof error === "object" &&
+			error !== null &&
+			"name" in error &&
+			typeof error.name === "string" &&
+			error.name === NetworkTimedOutErrorRule.errorName &&
+			"message" in error &&
+			typeof error.message === "string" &&
+			/^connection .*timed out$/.test(error.message) === true
 		);
 	}
 }
@@ -371,12 +451,16 @@ class MongoServerSelectionErrorRule extends BaseMongoExceptionRetryRule {
 		super("MongoServerSelectionErrorRule", retryRuleOverride);
 	}
 
-	public match(error: any): boolean {
+	public match(error: unknown): boolean {
 		return (
-			error.name &&
-			(error.name as string) === MongoServerSelectionErrorRule.errorName &&
-			error.message &&
-			/^connection .*closed$/.test(error.message as string) === true
+			typeof error === "object" &&
+			error !== null &&
+			"name" in error &&
+			typeof error.name === "string" &&
+			error.name === MongoServerSelectionErrorRule.errorName &&
+			"message" in error &&
+			typeof error.message === "string" &&
+			/^connection .*closed$/.test(error.message) === true
 		);
 	}
 }

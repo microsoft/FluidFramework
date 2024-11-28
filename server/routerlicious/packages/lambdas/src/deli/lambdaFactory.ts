@@ -86,15 +86,16 @@ export class DeliLambdaFactory
 		};
 
 		let gitManager: IGitManager;
-		let document: IDocument;
+		let document: IDocument | undefined;
 
 		try {
 			// Lookup the last sequence number stored
 			// TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-			document = await this.documentRepository.readOne({ documentId, tenantId });
+			document =
+				(await this.documentRepository.readOne({ documentId, tenantId })) ?? undefined;
 
 			// Check if the document was deleted prior.
-			if (!isDocumentValid(document)) {
+			if (document === undefined || !isDocumentValid(document)) {
 				// (Old, from tanviraumi:) Temporary guard against failure until we figure out what causing this to trigger.
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
 				const errorMessage = `Received attempt to connect to a missing/deleted document.`;

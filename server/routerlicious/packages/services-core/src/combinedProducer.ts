@@ -35,7 +35,7 @@ export class CombinedProducer<T = ITicketedMessage> implements IProducer<T> {
 	public async send(messages: T[], tenantId: string, documentId: string): Promise<any> {
 		if (this.parallel) {
 			// parallelly
-			const sendP = [];
+			const sendP: Promise<void>[] = [];
 			for (const producer of this.producers) {
 				sendP.push(producer.send(messages, tenantId, documentId));
 			}
@@ -49,7 +49,7 @@ export class CombinedProducer<T = ITicketedMessage> implements IProducer<T> {
 	}
 
 	public async close(): Promise<void> {
-		const closeP = [];
+		const closeP: Promise<void>[] = [];
 		for (const producer of this.producers) {
 			closeP.push(producer.close());
 		}

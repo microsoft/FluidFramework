@@ -9,7 +9,7 @@
 
 Deprecation Notice: Interfaces Migrated to `@fluidframework/core-interfaces`
 
-The following interfaces and types are now deprecated in `@fluidframework/tree`. It is recommended to import these interfaces from `@fluidframework/core-interfaces`.
+The following interfaces and types are now deprecated in `@fluidframework/tree`. It is recommended to import them from either `@fluidframework/core-interfaces` or `fluid-framework`.
 
 - Listeners
 - IsListener
