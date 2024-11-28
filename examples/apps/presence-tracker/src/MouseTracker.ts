@@ -24,7 +24,7 @@ export interface IMousePosition {
 }
 
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
-	private readonly cursor: LatestValueManager<IMousePosition>;
+	public readonly cursor: LatestValueManager<IMousePosition>;
 
 	/**
 	 * Local map of mouse position status for clients

@@ -11,6 +11,8 @@ import {
 import {
 	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
+	Notifications,
+	type ISessionClient,
 } from "@fluidframework/presence/alpha";
 // eslint-disable-next-line import/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -18,7 +20,7 @@ import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 import { SharedMap } from "fluid-framework/legacy";
 
 import { FocusTracker } from "./FocusTracker.js";
-import { MouseTracker } from "./MouseTracker.js";
+import { MouseTracker, type IMousePosition } from "./MouseTracker.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
 const user = {
@@ -83,6 +85,23 @@ async function start() {
 
 	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
 	const appPresence = presence.getStates("name:trackerData", {});
+	const notificationsWorkspace = presence.getNotifications("name:reactions", {});
+	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
+	const notifications: typeof notificationsWorkspace = notificationsWorkspace;
+
+	notifications.add(
+		"reactions",
+		Notifications<
+			// Below explicit generic specification should not be required.
+			{
+				send: (reaction: string, intensity: "normal"|"intense") => void;
+			},
+			"reactions"
+		>(
+			// A default handler is not required
+			{},
+		),
+	);
 
 	// update the browser URL and the window title with the actual container ID
 	location.hash = id;
@@ -96,6 +115,38 @@ async function start() {
 
 	const focusTracker = new FocusTracker(presence, appPresence, services.audience);
 	const mouseTracker = new MouseTracker(presence, appPresence, services.audience, slider);
+
+	const { reactions } = notifications.props;
+
+	document.body.addEventListener("click", (e) => {
+		reactions.emit.broadcast("send", "❤️", "normal");
+	});
+
+	document.body.addEventListener("keypress", (e) => {
+		reactions.emit.broadcast("send", e.key, "intense");
+	});
+
+	reactions.notifications.on(
+		"send",
+		// eslint-disable-next-line @typescript-eslint/no-shadow
+		(client: ISessionClient, reaction: string, intensity: string) => {
+			const clientPosition = mouseTracker.cursor.clientValue(client).value;
+			const reactionDiv = document.createElement("div");
+			reactionDiv.className = "reaction";
+			reactionDiv.style.position = "absolute";
+			reactionDiv.style.left = `${clientPosition.x}px`;
+			reactionDiv.style.top = `${clientPosition.y}px`;
+			if(intensity === "intense") {
+				reactionDiv.style.fontSize = "xxx-large";
+			}
+			reactionDiv.textContent = reaction;
+			document.body.appendChild(reactionDiv);
+
+			setTimeout(() => {
+				reactionDiv.remove();
+			}, 1000);
+		},
+	);
 
 	renderFocusPresence(focusTracker, focusDiv);
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);

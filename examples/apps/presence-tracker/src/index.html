@@ -7,6 +7,24 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Test application</title>
+		<style>
+			.reaction {
+				position: absolute;
+				font-size: x-large;
+				animation: fadeUp 1s forwards;
+			}
+
+			@keyframes fadeUp {
+				0% {
+						opacity: 1;
+						transform: translateY(0) rotate(45deg);
+				}
+				100% {
+						opacity: 0;
+						transform: translateY(-50px) rotate(-45deg);
+				}
+		}
+		</style>
 	</head>
 	<body style="margin: 0; height: 100%">
 		<div id="control-panel" style="padding: 10px"></div>
