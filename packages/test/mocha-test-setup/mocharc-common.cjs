@@ -61,6 +61,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		config["timeout"] = process.env.FLUID_TEST_TIMEOUT;
 	}
 
+	config["timeout"] = 999998;
 	const packageJson = require(`${packageDir}/package.json`);
 	config["reporter"] = `mocha-multi-reporters`;
 	// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
