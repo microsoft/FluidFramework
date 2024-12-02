@@ -79,9 +79,9 @@ export function getCreationToken(
 	// Current time in seconds
 	const tokenClaims = decode(token) as ITokenClaims;
 
-	const { tenantId, user, jti } = tokenClaims;
+	const { tenantId, user, jti, ver } = tokenClaims;
 
-	return generateToken(tenantId, documentId, key, [], user, jti /* JwtId */, lifetime);
+	return generateToken(tenantId, documentId, key, [], user, lifetime, ver, jti);
 }
 
 /**
@@ -96,9 +96,9 @@ export function generateToken(
 	key: string,
 	scopes: ScopeType[],
 	user?: IUser,
-	jti?: string,
 	lifetime: number = 60 * 60,
 	ver: string = "1.0",
+	jti: string = uuid(),
 ): string {
 	let userClaim = user ? user : generateUser();
 	if (userClaim.id === "" || userClaim.id === undefined) {
@@ -117,9 +117,8 @@ export function generateToken(
 		exp: now + lifetime,
 		ver,
 	};
-	const jwtid = jti ? jti : uuid();
 
-	return sign(claims, key, { jwtid });
+	return sign(claims, key, { jwtid: jti });
 }
 
 /**
