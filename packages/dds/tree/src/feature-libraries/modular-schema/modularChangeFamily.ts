@@ -2310,8 +2310,11 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		count: number,
 		newChanges: NodeId,
 	): void {
-		// XXX
+		// XXX: How do we update the composite changeset's roots?
+		// Should we have a separate table for updates to that?
 		setInCrossFieldMap(this.table.entries, baseAttachId, count, {
+			currentId: baseAttachId,
+			newId: newDetachId,
 			nodeChange: newChanges,
 		});
 	}

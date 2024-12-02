@@ -52,7 +52,7 @@ export interface ComposeNodeManager {
 		baseAttachId: ChangeAtomId,
 		newDetachId: ChangeAtomId | undefined,
 		count: number,
-		newChanges: NodeId,
+		newChanges: NodeId | undefined,
 	): void;
 }
 
@@ -75,4 +75,8 @@ export interface RebaseNodeManager<T = unknown> {
 export interface DetachedNodeEntry<T = unknown> {
 	nodeChange?: NodeId;
 	fieldData?: T;
+	currentId?: ChangeAtomId;
+	newId?: ChangeAtomId;
+
+	// XXX: Tree for build
 }

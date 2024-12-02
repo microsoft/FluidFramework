@@ -326,11 +326,7 @@ export function testToDelta() {
 
 			it("move & remove", () => {
 				const [moveOut, moveIn] = Mark.move(2, brand(0));
-				const changeset = [
-					moveOut,
-					{ count: 1 },
-					Mark.attachAndDetach(moveIn, Mark.remove(2, brand(4))),
-				];
+				const changeset = [moveOut, { count: 1 }, Mark.rename(2, brand(2), brand(4))];
 				const delta = toDelta(changeset);
 
 				const id = { minor: 0 };
@@ -344,9 +340,9 @@ export function testToDelta() {
 			it("insert & move & remove", () => {
 				const [moveOut, moveIn] = Mark.move(2, brand(2));
 				const changeset: SF.Changeset = [
-					{ ...moveOut, cellId: { localId: brand(0) } },
+					Mark.rename(2, brand(0), brand(2)),
 					{ count: 1 },
-					Mark.attachAndDetach(moveIn, Mark.remove(2, brand(6))),
+					Mark.rename(2, brand(4), brand(6)),
 				];
 				const delta = toDelta(changeset);
 				const buildId = { minor: 0 };
@@ -363,12 +359,12 @@ export function testToDelta() {
 
 			it("move & move & move", () => {
 				const changeset = [
-					Mark.moveOut(2, brand(0), { finalEndpoint: { localId: brand(4) } }),
+					Mark.moveOut(2, brand(0)),
 					{ count: 1 },
 					Mark.rename(2, brand(2), brand(2)),
 					Mark.rename(2, brand(4), brand(4)),
 					{ count: 1 },
-					Mark.moveIn(2, brand(4), { finalEndpoint: { localId: brand(0) } }),
+					Mark.moveIn(2, brand(4)),
 				];
 				const delta = toDelta(changeset);
 

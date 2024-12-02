@@ -13,15 +13,8 @@ import type {
 
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
+import { getAttach, isMoveMark, type NodeRangeQueryFunc } from "./moveEffectTable.js";
 import {
-	getMoveIn,
-	isMoveIn,
-	isMoveMark,
-	isMoveOut,
-	type NodeRangeQueryFunc,
-} from "./moveEffectTable.js";
-import {
-	type Attach,
 	type CellMark,
 	type Changeset,
 	type Detach,
@@ -37,7 +30,6 @@ import {
 	areEqualCellIds,
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
-	asAttachAndDetach,
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
@@ -45,7 +37,6 @@ import {
 	getInputCellId,
 	getOutputCellId,
 	isAttach,
-	isAttachAndDetachEffect,
 	isDetach,
 	isImpactfulCellRename,
 	isNewAttach,
@@ -57,7 +48,6 @@ import {
 	normalizeCellRename,
 	settleMark,
 	withNodeChange,
-	withRevision,
 } from "./utils.js";
 import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
 
@@ -172,35 +162,26 @@ function composeMarksIgnoreChild(
 	if (isRename(baseMark) && isRename(newMark)) {
 		return { ...baseMark, idOverride: newMark.idOverride };
 	} else if (isRename(baseMark)) {
-		assert(
-			isAttach(newMark) || isAttachAndDetachEffect(newMark),
-			0x9f1 /* Unexpected mark type */,
-		);
+		assert(isAttach(newMark), 0x9f1 /* Unexpected mark type */);
 		return { ...newMark, cellId: baseMark.cellId };
 	} else if (isRename(newMark)) {
-		assert(
-			isDetach(baseMark) || isAttachAndDetachEffect(baseMark),
-			0x9f2 /* Unexpected mark type */,
-		);
-		return isDetach(baseMark)
-			? { ...baseMark, idOverride: newMark.idOverride }
-			: { ...baseMark, detach: { ...baseMark.detach, idOverride: newMark.idOverride } };
+		assert(isDetach(baseMark), 0x9f2 /* Unexpected mark type */);
+		return { ...baseMark, idOverride: newMark.idOverride };
 	}
 
 	if (isImpactfulCellRename(newMark)) {
-		const newAttachAndDetach = asAttachAndDetach(newMark);
 		assert(
-			newAttachAndDetach.cellId !== undefined,
+			newMark.cellId !== undefined,
 			0x9f3 /* Impactful cell rename must target empty cell */,
 		);
 		if (markEmptiesCells(baseMark)) {
 			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
 			// so we are just left with the detach portion of the AttachAndDetach.
 			const newDetach: CellMark<Detach> = {
-				...newAttachAndDetach.detach,
-				count: baseMark.count,
+				...newMark,
 			};
 
+			delete newDetach.cellId;
 			return newDetach;
 		}
 
@@ -209,47 +190,16 @@ function composeMarksIgnoreChild(
 				baseMark.cellId !== undefined,
 				0x9f4 /* Impactful cell rename must target empty cell */,
 			);
-			const baseAttachAndDetach = asAttachAndDetach(baseMark);
-			const newOutputId = getOutputCellId(newAttachAndDetach);
 
-			const originalAttach = { ...baseAttachAndDetach.attach };
-			const finalDetach = { ...newAttachAndDetach.detach };
-
-			handleMovePivot(baseMark.count, originalAttach, finalDetach);
-
-			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
-				return { count: baseAttachAndDetach.count, cellId: baseAttachAndDetach.cellId };
-			}
-
-			// `newMark`'s attach portion cancels with `baseMark`'s detach portion.
-			const detachRevision = finalDetach.revision;
-			if (detachRevision !== undefined) {
-				finalDetach.revision = detachRevision;
-			}
-
-			return normalizeCellRename(baseMark.cellId, baseMark.count, originalAttach, finalDetach);
+			// XXX: Do we need to make a call to the node manager here?
+			return { ...newMark, cellId: baseMark.cellId };
 		}
 
-		return normalizeCellRename(
-			newAttachAndDetach.cellId,
-			newAttachAndDetach.count,
-			newAttachAndDetach.attach,
-			newAttachAndDetach.detach,
-		);
+		return newMark;
 	}
 	if (isImpactfulCellRename(baseMark)) {
-		const baseAttachAndDetach = asAttachAndDetach(baseMark);
 		if (markFillsCells(newMark)) {
-			const originalAttach = withRevision(
-				{
-					...baseAttachAndDetach.attach,
-					cellId: baseAttachAndDetach.cellId,
-					count: baseAttachAndDetach.count,
-				},
-				baseAttachAndDetach.attach.revision,
-			);
-
-			return originalAttach;
+			return { ...newMark, cellId: baseMark.cellId };
 		} else {
 			// Other mark types have been handled by previous conditional branches.
 			assert(newMark.type === NoopMarkType, 0x80a /* Unexpected mark type */);
@@ -270,7 +220,12 @@ function composeMarksIgnoreChild(
 		const attach = extractMarkEffect(baseMark);
 		const detach = extractMarkEffect(newMark);
 
-		handleMovePivot(baseMark.count, attach, detach);
+		moveEffects.composeBaseAttach(
+			{ revision: baseMark.revision, localId: baseMark.id },
+			getOutputCellId(newMark),
+			baseMark.count,
+			newMark.changes,
+		);
 
 		if (areEqualCellIds(getOutputCellId(newMark), baseMark.cellId)) {
 			// The output and input cell IDs are the same, so this mark has no effect.
@@ -280,23 +235,6 @@ function composeMarksIgnoreChild(
 	} else {
 		const length = baseMark.count;
 		return createNoopMark(length, undefined);
-	}
-}
-
-/**
- * Checks if `baseAttach` and `newDetach` are both moves, and if so updates their move endpoints as appropriate,
- * and removes their `finalEndpoint` endpoint fields. Note that can mutate `baseAttach` and `newDetach`.
- * If the effects are not both moves this function does nothing.
- * @param count - The number of cells targeted
- * @param baseAttach - The base attach effect at this location
- * @param newDetach - The new detach effect at this location
- */
-function handleMovePivot(count: number, baseAttach: Attach, newDetach: Detach): void {
-	if (isMoveIn(baseAttach) && isMoveOut(newDetach)) {
-		// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
-		// so we remove it as a normalization.
-		delete baseAttach.finalEndpoint;
-		delete newDetach.finalEndpoint;
 	}
 }
 
@@ -323,7 +261,7 @@ function handleNodeChanges(
 	moveEffects: ComposeNodeManager,
 ): NodeId | undefined {
 	if (newMark.changes !== undefined) {
-		const baseSource = getMoveIn(baseMark);
+		const baseSource = getAttach(baseMark);
 		let newId;
 		if (isMoveMark(newMark)) {
 			newId = getDetachId(newMark);
@@ -500,10 +438,7 @@ function getMovedChangesFromMark(
 	moveEffects: ComposeNodeManager,
 	markEffect: MarkEffect,
 ): NodeId | undefined {
-	if (isAttachAndDetachEffect(markEffect)) {
-		return getMovedChangesFromMark(moveEffects, markEffect.detach);
-	}
-	if (!isMoveOut(markEffect)) {
+	if (!isDetach(markEffect)) {
 		return undefined;
 	}
 
@@ -527,13 +462,5 @@ function withUpdatedEndpoint<TMark extends MarkEffect>(
 	count: number,
 	effects: ComposeNodeManager,
 ): TMark {
-	if (isAttachAndDetachEffect(mark)) {
-		return {
-			...mark,
-			attach: withUpdatedEndpoint(mark.attach, count, effects),
-			detach: withUpdatedEndpoint(mark.detach, count, effects),
-		};
-	}
-
 	return mark;
 }

@@ -9,7 +9,7 @@ import { type DeltaDetachedNodeId, offsetDetachId } from "../../core/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 
 import type { Changeset, Mark } from "./types.js";
-import { isAttachAndDetachEffect, isDetachOfRemovedNodes, isInsert } from "./utils.js";
+import { isDetachOfRemovedNodes, isInsert } from "./utils.js";
 import type { RelevantRemovedRootsFromChild } from "../modular-schema/index.js";
 
 export function* relevantRemovedRoots(
@@ -35,7 +35,7 @@ export function* relevantRemovedRoots(
 
 function refersToRelevantRemovedRoots(mark: Mark): boolean {
 	if (mark.cellId !== undefined) {
-		const effect = isAttachAndDetachEffect(mark) ? mark.attach : mark;
+		const effect = mark;
 		if (isInsert(effect)) {
 			// This tree is being inserted or restored.
 			return true;

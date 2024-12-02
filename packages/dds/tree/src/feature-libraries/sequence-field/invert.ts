@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTag } from "../../core/index.js";
-import { type IdAllocator, type Mutable, fail } from "../../util/index.js";
+import type { IdAllocator, Mutable } from "../../util/index.js";
 import type { InvertNodeManager, NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
@@ -16,25 +16,16 @@ import {
 	type Changeset,
 	type Detach,
 	type Mark,
-	type MarkEffect,
 	type MarkList,
-	type MoveIn,
-	type MoveOut,
 	type NoopMark,
 	NoopMarkType,
 	type Remove,
 	type Rename,
 } from "./types.js";
 import {
-	extractMarkEffect,
-	getDetachOutputCellId,
-	getDetachId,
 	getInputCellId,
 	getOutputCellId,
-	isAttach,
-	isDetach,
 	isImpactful,
-	normalizeCellRename,
 	splitMark,
 	withNodeChange,
 } from "./utils.js";
@@ -148,144 +139,7 @@ function invertMark(
 				removeMark.idOverride = inputId;
 			}
 
-			const inverse = withNodeChange(removeMark, mark.changes);
-			return [inverse];
-		}
-		case "MoveOut": {
-			if (mark.changes !== undefined) {
-				assert(mark.count === 1, 0x6ed /* Mark with changes can only target a single cell */);
-
-				const endpoint = getDetachId(mark);
-				crossFieldManager.invertDetach(endpoint, mark.count, mark.changes);
-			}
-
-			const cellId = getDetachOutputCellId(mark) ?? {
-				revision: mark.revision ?? fail("Revision must be defined"),
-				localId: mark.id,
-			};
-
-			const moveIn: MoveIn = {
-				type: "MoveIn",
-				id: mark.id,
-				revision,
-			};
-
-			if (mark.finalEndpoint !== undefined) {
-				moveIn.finalEndpoint = {
-					localId: mark.finalEndpoint.localId,
-					revision: mark.revision,
-				};
-			}
-			let effect: MarkEffect = moveIn;
-			const inputId = getInputCellId(mark);
-			if (inputId !== undefined) {
-				const detach: Mutable<Detach> = {
-					type: "Remove",
-					id: mark.id,
-					revision,
-				};
-				if (isRollback) {
-					detach.idOverride = inputId;
-				}
-				effect = {
-					type: "AttachAndDetach",
-					attach: moveIn,
-					detach,
-				};
-			}
-			return [{ ...effect, count: mark.count, cellId }];
-		}
-		case "MoveIn": {
-			const inputId = getInputCellId(mark);
-			assert(inputId !== undefined, 0x89e /* Active move-ins should target empty cells */);
-			const invertedMark: Mutable<CellMark<MoveOut>> = {
-				type: "MoveOut",
-				id: mark.id,
-				count: mark.count,
-				revision,
-			};
-
-			if (isRollback) {
-				invertedMark.idOverride = inputId;
-			}
-
-			if (mark.finalEndpoint) {
-				invertedMark.finalEndpoint = {
-					localId: mark.finalEndpoint.localId,
-					revision: mark.revision,
-				};
-			}
-			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);
-		}
-		case "AttachAndDetach": {
-			const attach: Mark = {
-				count: mark.count,
-				cellId: mark.cellId,
-				...mark.attach,
-			};
-			const idAfterAttach = getOutputCellId(attach);
-
-			// We put `mark.changes` on the detach so that if it is a move source
-			// the changes can be sent to the endpoint.
-			const detach: Mark = {
-				count: mark.count,
-				cellId: idAfterAttach,
-				changes: mark.changes,
-				...mark.detach,
-			};
-			const attachInverses = invertMark(attach, isRollback, crossFieldManager, revision);
-			const detachInverses = invertMark(detach, isRollback, crossFieldManager, revision);
-
-			if (detachInverses.length === 0) {
-				return attachInverses;
-			}
-
-			assert(
-				detachInverses.length === 1,
-				0x80d /* Only expected MoveIn marks to be split when inverting */,
-			);
-
-			let detachInverse = detachInverses[0] ?? oob();
-			assert(isAttach(detachInverse), 0x80e /* Inverse of a detach should be an attach */);
-
-			const inverses: Mark[] = [];
-			for (const attachInverse of attachInverses) {
-				let detachInverseCurr: Mark = detachInverse;
-				if (attachInverse.count !== detachInverse.count) {
-					[detachInverseCurr, detachInverse] = splitMark(detachInverse, attachInverse.count);
-				}
-
-				if (attachInverse.type === NoopMarkType) {
-					if (attachInverse.changes !== undefined) {
-						assert(
-							detachInverseCurr.changes === undefined,
-							0x80f /* Unexpected node changes */,
-						);
-						detachInverseCurr.changes = attachInverse.changes;
-					}
-					inverses.push(detachInverseCurr);
-					continue;
-				}
-				assert(isDetach(attachInverse), 0x810 /* Inverse of an attach should be a detach */);
-				assert(detachInverseCurr.cellId !== undefined, 0x9f6 /* Expected empty cell */);
-				const inverted = normalizeCellRename(
-					detachInverseCurr.cellId,
-					attachInverse.count,
-					extractMarkEffect(detachInverseCurr),
-					extractMarkEffect(attachInverse),
-				);
-				if (detachInverse.changes !== undefined) {
-					inverted.changes = detachInverse.changes;
-				}
-
-				if (attachInverse.changes !== undefined) {
-					assert(inverted.changes === undefined, 0x811 /* Unexpected node changes */);
-					inverted.changes = attachInverse.changes;
-				}
-				inverses.push(inverted);
-			}
-
-			return inverses;
+			return applyMovedChanges(removeMark, mark.revision, crossFieldManager);
 		}
 		default:
 			unreachableCase(type);
@@ -293,7 +147,7 @@ function invertMark(
 }
 
 function applyMovedChanges(
-	mark: CellMark<MoveOut>,
+	mark: CellMark<Detach>,
 	revision: RevisionTag | undefined,
 	manager: InvertNodeManager,
 ): Mark[] {
@@ -304,7 +158,7 @@ function applyMovedChanges(
 		const [mark1, mark2] = splitMark(mark, entry.length);
 		const mark1WithChanges =
 			entry.value !== undefined
-				? withNodeChange<CellMark<MoveOut>, MoveOut>(mark1, entry.value.nodeChange)
+				? withNodeChange<CellMark<Detach>, Detach>(mark1, entry.value.nodeChange)
 				: mark1;
 
 		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager)];
@@ -313,7 +167,7 @@ function applyMovedChanges(
 	if (entry.value?.nodeChange !== undefined) {
 		// XXX
 		// manager.onMoveIn(entry.value.nodeChange);
-		return [withNodeChange<CellMark<MoveOut>, MoveOut>(mark, entry.value.nodeChange)];
+		return [withNodeChange<CellMark<Detach>, Detach>(mark, entry.value.nodeChange)];
 	}
 
 	return [mark];

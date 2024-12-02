@@ -3,35 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
-
-import { CrossFieldTarget } from "../modular-schema/index.js";
-
 import type { MoveMarkEffect } from "./helperTypes.js";
-import type { CellMark, Mark, MarkEffect, MoveIn, MoveOut } from "./types.js";
-import { isAttachAndDetachEffect, splitMark } from "./utils.js";
+import type { Attach, CellMark, Mark, MarkEffect } from "./types.js";
+import { isAttach, isDetach, splitMark } from "./utils.js";
 import type { ChangeAtomId } from "../../core/index.js";
 
 export type MoveMark = CellMark<MoveMarkEffect>;
 
 export function isMoveMark(effect: MarkEffect): effect is MoveMarkEffect {
-	return isMoveOut(effect) || isMoveIn(effect);
+	return isAttach(effect) || isDetach(effect);
 }
 
-export function isMoveOut(effect: MarkEffect): effect is MoveOut {
-	return effect.type === "MoveOut";
-}
-
-export function isMoveIn(effect: MarkEffect): effect is MoveIn {
-	return effect.type === "MoveIn";
-}
-
-export function getMoveIn(effect: MarkEffect): MoveIn | undefined {
+export function getAttach(effect: MarkEffect): Attach | undefined {
 	switch (effect.type) {
-		case "MoveIn":
+		case "Insert":
 			return effect;
-		case "AttachAndDetach":
-			return getMoveIn(effect.attach);
 		default:
 			return undefined;
 	}
@@ -53,24 +39,7 @@ function getFirstMoveEffectLength(
 	// XXX: Should check for attach or detach instead
 	if (isMoveMark(markEffect)) {
 		return effects({ revision: markEffect.revision, localId: markEffect.id }, count);
-	} else if (isAttachAndDetachEffect(markEffect)) {
-		return Math.min(
-			getFirstMoveEffectLength(markEffect.attach, count, effects),
-			getFirstMoveEffectLength(markEffect.detach, count, effects),
-		);
 	}
 
 	return count;
-}
-
-export function getCrossFieldTargetFromMove(mark: MoveMarkEffect): CrossFieldTarget {
-	const type = mark.type;
-	switch (type) {
-		case "MoveIn":
-			return CrossFieldTarget.Destination;
-		case "MoveOut":
-			return CrossFieldTarget.Source;
-		default:
-			unreachableCase(type);
-	}
 }

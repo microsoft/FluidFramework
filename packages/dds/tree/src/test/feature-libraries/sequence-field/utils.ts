@@ -159,13 +159,6 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 			case "Rename":
 			case NoopMarkType:
 				return effect;
-			case "AttachAndDetach": {
-				return {
-					...effect,
-					attach: normalizeEffect(effect.attach),
-					detach: normalizeEffect(effect.detach),
-				};
-			}
 			case "Insert": {
 				const atom = normalizeAtom(
 					{ revision: effect.revision, localId: effect.id },
@@ -176,34 +169,6 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 					id: atom.localId,
 					revision: atom.revision,
 				};
-			}
-			case "MoveIn": {
-				const effectId = { revision: effect.revision, localId: effect.id };
-				const atom = normalizeAtom(effectId, CrossFieldTarget.Source);
-				const normalized: Mutable<SF.MoveIn> = { ...effect };
-				normalized.finalEndpoint =
-					normalized.finalEndpoint !== undefined
-						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Destination)
-						: normalizeAtom(effectId, CrossFieldTarget.Destination);
-				normalized.id = atom.localId;
-				normalized.revision = atom.revision;
-				return normalized as TEffect;
-			}
-			case "MoveOut": {
-				const effectId = { revision: effect.revision, localId: effect.id };
-				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
-				const normalized: Mutable<SF.MoveOut> = { ...effect };
-				if (normalized.idOverride === undefined) {
-					// Use the idOverride so we don't normalize the output cell ID
-					normalized.idOverride = effectId;
-				}
-				normalized.finalEndpoint =
-					normalized.finalEndpoint !== undefined
-						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Source)
-						: normalizeAtom(effectId, CrossFieldTarget.Source);
-				normalized.id = atom.localId;
-				normalized.revision = atom.revision;
-				return normalized as TEffect;
 			}
 			case "Remove": {
 				const effectId = { revision: effect.revision, localId: effect.id };
