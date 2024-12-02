@@ -48,6 +48,7 @@ import {
 	loggerToMonitoringContext,
 	tagCodeArtifacts,
 	type ICustomData,
+	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -77,7 +78,7 @@ export abstract class SharedObjectCore<
 	extends EventEmitterWithErrorHandling<TEvent>
 	implements ISharedObject<TEvent>
 {
-	public get IFluidLoadable() {
+	public get IFluidLoadable(): this {
 		return this;
 	}
 
@@ -136,7 +137,9 @@ export abstract class SharedObjectCore<
 		protected runtime: IFluidDataStoreRuntime,
 		public readonly attributes: IChannelAttributes,
 	) {
-		super((event: EventEmitterEventType, e: any) => this.eventListenerErrorHandler(event, e));
+		super((event: EventEmitterEventType, e: unknown) =>
+			this.eventListenerErrorHandler(event, e),
+		);
 
 		assert(!id.includes("/"), 0x304 /* Id cannot contain slashes */);
 
@@ -217,7 +220,7 @@ export abstract class SharedObjectCore<
 	 * would result in same error thrown. If called multiple times, only first error is remembered.
 	 * @param error - error object that is thrown whenever an attempt is made to modify this object
 	 */
-	private closeWithError(error: any): void {
+	private closeWithError(error: IFluidErrorBase | undefined): void {
 		if (this.closeError === undefined) {
 			this.closeError = error;
 		}
@@ -259,7 +262,8 @@ export abstract class SharedObjectCore<
 		// always propagate connection state
 		this.setBoundAndHandleAttach = () => this.setConnectionState(this.runtime.connected);
 		this._isBoundToContext = true;
-		const runDidAttach = () => {
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		const runDidAttach: () => void = () => {
 			// Allows objects to do any custom processing if it is attached.
 			this.didAttach();
 			this.setConnectionState(this.runtime.connected);
@@ -390,7 +394,9 @@ export abstract class SharedObjectCore<
 	/**
 	 * Called when the object has disconnected from the delta stream.
 	 */
-	protected abstract onDisconnect();
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: change return type to void (legacy breaking)
+	protected abstract onDisconnect(): any;
 
 	/**
 	 * The serializer to serialize / parse handles.
@@ -405,6 +411,7 @@ export abstract class SharedObjectCore<
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any -- TODO: use unknown instead of any (legacy breaking)
 	protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
@@ -443,6 +450,7 @@ export abstract class SharedObjectCore<
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any -- TODO: use unknown instead of any (legacy breaking)
 	protected reSubmitCore(content: any, localOpMetadata: unknown): void {
 		this.submitLocalMessage(content, localOpMetadata);
 	}
@@ -456,6 +464,7 @@ export abstract class SharedObjectCore<
 	protected async newAckBasedPromise<T>(
 		executor: (
 			resolve: (value: T | PromiseLike<T>) => void,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use unknown instead of any (legacy breaking)
 			reject: (reason?: any) => void,
 		) => void,
 	): Promise<T> {
@@ -609,6 +618,7 @@ export abstract class SharedObjectCore<
 	/**
 	 * Revert an op
 	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any -- TODO: use unknown instead of any (legacy breaking)
 	protected rollback(content: any, localOpMetadata: unknown): void {
 		throw new Error("rollback not supported");
 	}
