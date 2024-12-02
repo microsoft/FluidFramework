@@ -38,14 +38,12 @@ class SessionClient implements ISessionClient {
 	 */
 	public order: number = 0;
 
-	private connectionStatus: SessionClientStatus;
+	private connectionStatus: SessionClientStatus = SessionClientStatus.Disconnected;
 
 	public constructor(
 		public readonly sessionId: ClientSessionId,
 		public connectionId: ClientConnectionId | undefined = undefined,
-	) {
-		this.connectionStatus = SessionClientStatus.Disconnected;
-	}
+	) {}
 
 	public getConnectionId(): ClientConnectionId {
 		if (this.connectionId === undefined) {
