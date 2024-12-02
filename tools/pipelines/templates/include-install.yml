@@ -27,3 +27,5 @@ steps:
       script: |
         set -eu -o pipefail
         ${{ parameters.packageManagerInstallCommand }}
+    env:
+      NPM_CONFIG_REGISTRY: $(ado-feeds-primary-registry)
