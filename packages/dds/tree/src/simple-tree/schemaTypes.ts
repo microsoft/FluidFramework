@@ -190,7 +190,10 @@ export interface FieldProps<TCustomMetadata = unknown> {
 
 	/**
 	 * Optional metadata to associate with the field.
-	 * @remarks Note: this metadata is not persisted in the document.
+	 *
+	 * @remarks
+	 * Note: this metadata is not persisted in the document; it only exists locally at runtime.
+	 * So making changes to these values will not affect collaborators.
 	 */
 	readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
 }
@@ -836,7 +839,10 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 export interface NodeSchemaOptions<out TMetadata = NodeSchemaMetadata> {
 	/**
 	 * Optional metadata to associate with the Node Schema.
-	 * @remarks Note: this metadata is not persisted in the document.
+	 *
+	 * @remarks
+	 * Note: this metadata is not persisted in the document; it only exists locally at runtime.
+	 * So making changes to these values will not affect collaborators.
 	 */
 	readonly metadata?: TMetadata;
 }
