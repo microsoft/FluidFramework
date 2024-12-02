@@ -132,15 +132,14 @@ describe("Document Dirty", () => {
 			const urlResolver = new LocalResolver();
 			const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-			const loaderProps: ILoaderProps = {
+			const createDetachedContainerProps: ILoaderProps = {
 				urlResolver,
 				documentServiceFactory,
 				codeLoader,
 			};
 
 			const containerUsingProps = await createAndAttachContainerUsingProps(
-				codeDetails,
-				loaderProps,
+				{ ...createDetachedContainerProps, codeDetails },
 				urlResolver.createCreateNewRequest(documentId),
 			);
 			loaderContainerTracker.addContainer(containerUsingProps);

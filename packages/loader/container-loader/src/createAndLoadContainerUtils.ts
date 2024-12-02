@@ -8,7 +8,7 @@ import {
 	IContainer,
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
-	type ILoaderOptions,
+	type IContainerPolicies,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -49,10 +49,10 @@ export interface ICreateAndLoadContainerProps {
 	readonly codeLoader: ICodeDetailsLoader;
 
 	/**
-	 * A property bag of options used by various layers
+	 * A property bag of options/policies used by various layers
 	 * to control features
 	 */
-	readonly options?: ILoaderOptions | undefined;
+	readonly options?: IContainerPolicies | undefined;
 
 	/**
 	 * Scope is provided to all container and is a set of shared
@@ -79,7 +79,7 @@ export interface ICreateAndLoadContainerProps {
 	/**
 	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
 	 */
-	readonly canReconnect?: boolean | undefined;
+	readonly allowReconnect?: boolean | undefined;
 
 	/**
 	 * Client details provided in the override will be merged over the default client.
@@ -136,7 +136,8 @@ export async function createDetachedContainer(
 ): Promise<IContainer> {
 	const loader = new Loader(createDetachedContainerProps);
 	return loader.createDetachedContainer(createDetachedContainerProps.codeDetails, {
-		...createDetachedContainerProps,
+		canReconnect: createDetachedContainerProps.allowReconnect,
+		clientDetailsOverride: createDetachedContainerProps.clientDetailsOverride,
 	});
 }
 
@@ -152,7 +153,10 @@ export async function rehydrateDetachedContainer(
 	const loader = new Loader(rehydrateDetachedContainerProps);
 	return loader.rehydrateDetachedContainerFromSnapshot(
 		rehydrateDetachedContainerProps.serializedState,
-		rehydrateDetachedContainerProps,
+		{
+			canReconnect: rehydrateDetachedContainerProps.allowReconnect,
+			clientDetailsOverride: rehydrateDetachedContainerProps.clientDetailsOverride,
+		},
 	);
 }
 

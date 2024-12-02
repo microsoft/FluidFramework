@@ -9,15 +9,18 @@ export {
 	createDetachedContainer,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
-	ICodeDetailsLoader,
+	ICreateAndLoadContainerProps,
 	ICreateDetachedContainerProps,
+	ILoadExistingContainerProps,
+	IRehydrateDetachedContainerProps,
+} from "./createAndLoadContainerUtils.js";
+export {
+	ICodeDetailsLoader,
 	IDetachedBlobStorage,
 	IFluidModuleWithDetails,
 	ILoaderOptions,
 	ILoaderProps,
 	ILoaderServices,
-	ILoadExistingContainerProps,
-	IRehydrateDetachedContainerProps,
 	Loader,
 } from "./loader.js";
 export { loadContainerPaused } from "./loadPaused.js";

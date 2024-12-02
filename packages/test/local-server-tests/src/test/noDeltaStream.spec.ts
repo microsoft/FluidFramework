@@ -48,15 +48,14 @@ describe("No Delta Stream", () => {
 	let loaderContainerTracker: LoaderContainerTracker;
 
 	async function createContainer(): Promise<IContainer> {
-		const loaderProps = createLoaderProps(
+		const createDetachedContainerProps = createLoaderProps(
 			[[codeDetails, factory]],
 			new LocalDocumentServiceFactory(deltaConnectionServer),
 			new LocalResolver(),
 		);
 
 		const container = await createAndAttachContainerUsingProps(
-			codeDetails,
-			loaderProps,
+			{ ...createDetachedContainerProps, codeDetails },
 			createLocalResolverCreateNewRequest(documentId),
 		);
 		loaderContainerTracker.addContainer(container);

@@ -83,7 +83,6 @@ export function createLoaderProps(
  * @param attachRequest - The request to create new from.
  * @legacy
  * @alpha
- * @deprecated - use createAndAttachContainerUsingProps function instead
  */
 
 export async function createAndAttachContainer(
@@ -99,18 +98,15 @@ export async function createAndAttachContainer(
 
 /**
  * Creates a detached Container and attaches it.
- * @param source - The code details used to create the Container.
- * @param loaderProps - The loaderProps to use to initialize the container.
+ * @param createDetachedContainerProps - The props to use to initialize the container.
  * @param attachRequest - The request to create new from.
  * @internal
  */
 export async function createAndAttachContainerUsingProps(
-	source: IFluidCodeDetails,
-	loaderProps: ILoaderProps,
+	createDetachedContainerProps: ICreateDetachedContainerProps,
 	attachRequest: IRequest,
 ): Promise<IContainer> {
-	const props: ICreateDetachedContainerProps = { ...loaderProps, codeDetails: source };
-	const container = await createDetachedContainer(props);
+	const container = await createDetachedContainer(createDetachedContainerProps);
 	await container.attach(attachRequest);
 
 	return container;

@@ -79,7 +79,7 @@ describe("Logging Last Connection Mode ", () => {
 		const urlResolver = new LocalResolver();
 		const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
-		const loaderProps: ILoaderProps = {
+		const createDetachedContainerProps: ILoaderProps = {
 			urlResolver,
 			documentServiceFactory,
 			codeLoader,
@@ -87,8 +87,7 @@ describe("Logging Last Connection Mode ", () => {
 		};
 
 		const container1 = await createAndAttachContainerUsingProps(
-			codeDetails,
-			loaderProps,
+			{ ...createDetachedContainerProps, codeDetails },
 			urlResolver.createCreateNewRequest(documentId),
 		);
 		loaderContainerTracker.addContainer(container1);

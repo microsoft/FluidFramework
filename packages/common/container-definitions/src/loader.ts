@@ -549,8 +549,6 @@ export interface ILoader extends Partial<IProvideLoader> {
  * The Host's view of the Loader, used for loading Containers
  * @legacy
  * @alpha
- * @deprecated Use the standalone apis instead to create detached containers namely {@link @fluidframework/container-loader#rehydrateDetachedContainer}
- * and {@link @fluidframework/container-loader#createDetachedContainer}
  */
 export interface IHostLoader extends ILoader {
 	/**
@@ -615,6 +613,18 @@ export type ILoaderOptions = {
 	 */
 	provideScopeLoader?: boolean;
 
+	/**
+	 * Max time (in ms) container will wait for a leave message of a disconnected client.
+	 */
+	maxClientLeaveWaitTime?: number;
+};
+
+/**
+ * Policies to have various behaviors during container create and load.
+ * @alpha
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type IContainerPolicies = {
 	/**
 	 * Max time (in ms) container will wait for a leave message of a disconnected client.
 	 */

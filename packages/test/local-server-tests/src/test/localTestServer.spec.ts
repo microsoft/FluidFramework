@@ -75,14 +75,13 @@ describe("LocalTestServer", () => {
 	let sharedString2: SharedString;
 
 	async function createContainer(): Promise<IContainer> {
-		const loaderProps = createLocalLoaderProps(
+		const createDetachedContainerProps = createLocalLoaderProps(
 			[[codeDetails, factory]],
 			deltaConnectionServer,
 			urlResolver,
 		);
 		const containerUsingPops = await createAndAttachContainerUsingProps(
-			codeDetails,
-			loaderProps,
+			{ ...createDetachedContainerProps, codeDetails },
 			urlResolver.createCreateNewRequest(documentId),
 		);
 		loaderContainerTracker.addContainer(containerUsingPops);

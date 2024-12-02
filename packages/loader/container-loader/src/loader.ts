@@ -204,69 +204,9 @@ export interface ILoaderProps {
 }
 
 /**
- * Props used to load a container.
- * @alpha
- */
-export interface ILoadExistingContainerProps extends ILoaderProps {
-	/**
-	 * The request to resolve the container.
-	 */
-	readonly request: IRequest;
-
-	/**
-	 * Pending local state to be applied to the container.
-	 */
-	readonly pendingLocalState?: string | undefined;
-}
-
-/**
- * Props used to create a detached container.
- * @alpha
- */
-export interface ICreateDetachedContainerProps extends ILoaderProps {
-	/**
-	 * The code details for the container to be created.
-	 */
-	readonly codeDetails: IFluidCodeDetails;
-
-	/**
-	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
-	 */
-	readonly canReconnect?: boolean | undefined;
-
-	/**
-	 * Client details provided in the override will be merged over the default client.
-	 */
-	readonly clientDetailsOverride?: IClientDetails | undefined;
-}
-
-/**
- * Props used to rehydrate a detached container.
- * @alpha
- */
-export interface IRehydrateDetachedContainerProps extends ILoaderProps {
-	/**
-	 * The serialized state returned by calling serialize on another container
-	 */
-	readonly serializedState: string;
-
-	/**
-	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
-	 */
-	readonly canReconnect?: boolean | undefined;
-
-	/**
-	 * Client details provided in the override will be merged over the default client.
-	 */
-	readonly clientDetailsOverride?: IClientDetails | undefined;
-}
-
-/**
  * Services and properties used by and exposed by the loader
  * @legacy
  * @alpha
- * @deprecated Deprecated as the {@link @fluidframework/container-loader#Loader} class is deprecated. Use the standalone APIs instead to load or create and load containers namely
- * rehydrateDetachedContainer, createDetachedContainer and loadExistingContainer in the fluidframework/container-loader package.
  */
 export interface ILoaderServices {
 	/**
@@ -342,10 +282,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
  * Manages Fluid resource loading
  * @legacy
  * @alpha
- * @deprecated Use the standalone APIs instead to load or create and load containers namely
- * rehydrateDetachedContainer, createDetachedContainer and loadExistingContainer in the fluidframework/container-loader package.
  */
-// eslint-disable-next-line import/no-deprecated
 export class Loader implements IHostLoader {
 	public readonly services: ILoaderServices;
 	private readonly mc: MonitoringContext;
@@ -491,50 +428,4 @@ export class Loader implements IHostLoader {
 			},
 		);
 	}
-}
-
-/**
- * {@inheritDoc @fluidframework/container-definitions#ILoader.resolve}
- * @alpha
- */
-export async function loadExistingContainer(
-	loadExistingContainerProps: ILoadExistingContainerProps,
-): Promise<IContainer> {
-	const loader = new Loader(loadExistingContainerProps);
-	return loader.resolve(
-		loadExistingContainerProps.request,
-		loadExistingContainerProps.pendingLocalState,
-	);
-}
-
-/**
- * Creates a new container using the specified code details but in an unattached state. While unattached, all
- * updates will only be local until the user explicitly attaches the container to a service provider.
- * @param createDetachedContainerProps - Services and properties necessary for creating detached container.
- * @alpha
- */
-export async function createDetachedContainer(
-	createDetachedContainerProps: ICreateDetachedContainerProps,
-): Promise<IContainer> {
-	const loader = new Loader(createDetachedContainerProps);
-	return loader.createDetachedContainer(
-		createDetachedContainerProps.codeDetails,
-		createDetachedContainerProps,
-	);
-}
-
-/**
- * Creates a new container using the specified snapshot but in an unattached state. While unattached, all
- * updates will only be local until the user explicitly attaches the container to a service provider.
- * @param rehydrateDetachedContainerProps - Services and properties necessary for rehydrating detached container from a previously serialized container's state.
- * @alpha
- */
-export async function rehydrateDetachedContainer(
-	rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps,
-): Promise<IContainer> {
-	const loader = new Loader(rehydrateDetachedContainerProps);
-	return loader.rehydrateDetachedContainerFromSnapshot(
-		rehydrateDetachedContainerProps.serializedState,
-		rehydrateDetachedContainerProps,
-	);
 }

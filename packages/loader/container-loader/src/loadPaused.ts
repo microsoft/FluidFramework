@@ -13,7 +13,8 @@ import type { IErrorBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 
-import { loadExistingContainer, type ILoaderProps } from "./loader.js";
+import { loadExistingContainer } from "./createAndLoadContainerUtils.js";
+import { type ILoaderProps } from "./loader.js";
 
 /* eslint-disable jsdoc/check-indentation */
 

@@ -95,10 +95,9 @@ describe("Ops on Reconnect", () => {
 	async function createContainer(
 		runtimeOptions?: IContainerRuntimeOptions,
 	): Promise<IContainer> {
-		const loaderProps = createLoaderProps(runtimeOptions);
+		const createDetachedContainerProps = createLoaderProps(runtimeOptions);
 		const container: IContainer = await createAndAttachContainerUsingProps(
-			codeDetails,
-			loaderProps,
+			{ ...createDetachedContainerProps, codeDetails },
 			urlResolver.createCreateNewRequest(documentId),
 		);
 		loaderContainerTracker.addContainer(container);

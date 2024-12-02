@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @deprecated
+// @alpha
 export function createAndAttachContainer(source: IFluidCodeDetails, loader: IHostLoader, attachRequest: IRequest): Promise<IContainer>;
 
 // @alpha (undocumented)

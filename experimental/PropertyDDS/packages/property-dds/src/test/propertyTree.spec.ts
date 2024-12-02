@@ -355,15 +355,14 @@ function executePerPropertyTreeType(
 	}
 
 	async function createContainer(): Promise<IContainer> {
-		const loaderProps = createLocalLoaderProps(
+		const createDetachedContainerProps = createLocalLoaderProps(
 			[[codeDetails, factory]],
 			deltaConnectionServer,
 			urlResolver,
 		);
 
 		const containerUsingProps = await createAndAttachContainerUsingProps(
-			codeDetails,
-			loaderProps,
+			{ ...createDetachedContainerProps, codeDetails },
 			urlResolver.createCreateNewRequest(documentId),
 		);
 		opProcessingController.addContainer(containerUsingProps);

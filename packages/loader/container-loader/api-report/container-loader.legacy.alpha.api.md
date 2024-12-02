@@ -67,7 +67,7 @@ export interface ILoaderProps {
     readonly urlResolver: IUrlResolver;
 }
 
-// @alpha @deprecated
+// @alpha
 export interface ILoaderServices {
     readonly codeLoader: ICodeDetailsLoader;
     // @deprecated
@@ -120,7 +120,7 @@ export interface IScribeProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-// @alpha @deprecated
+// @alpha
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)

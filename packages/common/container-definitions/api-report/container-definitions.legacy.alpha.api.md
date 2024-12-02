@@ -337,7 +337,7 @@ export interface IGetPendingLocalStateProps {
     readonly stopBlobAttachingSignal?: AbortSignal;
 }
 
-// @alpha @deprecated
+// @alpha
 export interface IHostLoader extends ILoader {
     createDetachedContainer(codeDetails: IFluidCodeDetails, createDetachedProps?: {
         canReconnect?: boolean;
