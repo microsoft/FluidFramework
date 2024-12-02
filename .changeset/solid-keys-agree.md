@@ -6,9 +6,9 @@
 "section": feature
 ---
 
-Enable Synchronous Child Datastore Creation
+Synchronous Child Datastore Creation
 
-## Overview
+#### Overview
 
 This feature introduces a new pattern for creating datastores synchronously within the Fluid Framework. It allows for the synchronous creation of a child datastore from an existing datastore, provided that the child datastore is available synchronously via the existing datastore's registry and that the child's factory supports synchronous creation. This method also ensures strong typing for the consumer.
 
@@ -20,14 +20,14 @@ Datastores offer increased capabilities, such as the ability to reference them v
 
 Synchronous creation relies on both the factory and the datastore to support it. This means that asynchronous operations, such as resolving handles, some browser API calls, consensus-based operations, or other asynchronous tasks, cannot be performed during the creation flow. Therefore, synchronous child datastore creation is best limited to scenarios where the existing asynchronous process cannot be used, such as when a new datastore must be created in direct response to synchronous user input.
 
-## Key Benefits
+#### Key Benefits
 
 - **Synchronous Creation**: Allows for the immediate creation of child datastores without waiting for asynchronous operations.
 - **Strong Typing**: Ensures type safety and better developer experience by leveraging TypeScript's type system.
 
-## Use Cases
+#### Use Cases
 
-### Example 1: Creating a Child Datastore
+##### Example 1: Creating a Child Datastore
 
 In this example, we demonstrate how to support creating a child datastore synchronously from a parent datastore.
 
