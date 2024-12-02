@@ -7,7 +7,6 @@ import {
 	IContainer,
 	IFluidCodeDetails,
 	IFluidModule,
-	// eslint-disable-next-line import/no-deprecated
 	IHostLoader,
 	ILoader,
 	ILoaderOptions as ILoaderOptions1,
