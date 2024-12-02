@@ -98,6 +98,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	 */
 	private readonly attendees = new Map<ClientConnectionId | ClientSessionId, SessionClient>();
 
+	// When local client disconnects, we temporarlily lose the connectivity status of other attendees in the session.
+	// Upon disconnect, we mark all other attendees connections as stale and update their status to disconnected after 30 seconds of inactivity.
 	private readonly staleConnectionClients = new Set<SessionClient>();
 
 	public constructor(
@@ -110,15 +112,6 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	) {
 		this.selfAttendee = new SessionClient(clientSessionId);
 		this.attendees.set(clientSessionId, this.selfAttendee);
-
-		// Set a timeout to check for stale connections after 30 seconds
-		setTimeout(() => {
-			for (const client of this.staleConnectionClients) {
-				// Mark the client as disconnected and remove from the stale connection set
-				client.setDisconnected();
-				this.staleConnectionClients.delete(client);
-			}
-		}, 30000);
 	}
 
 	public ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
@@ -214,6 +207,15 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 					this.staleConnectionClients.add(staleConnecionClient);
 				}
 			}
+
+			// Set a timeout to check for stale connections after 30 seconds
+			setTimeout(() => {
+				for (const client of this.staleConnectionClients) {
+					// Mark the client as disconnected and remove from the stale connection set
+					client.setDisconnected();
+					this.staleConnectionClients.delete(client);
+				}
+			}, 30000);
 		}
 	}
 
@@ -271,6 +273,10 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				isJoining = true;
 			}
 			attendee.connectionId = clientConnectionId;
+		} else if (this.staleConnectionClients.has(attendee) && isConnected) {
+			// If the attendee is marked as stale, update the connection status to connected
+			attendee.setConnected();
+			this.staleConnectionClients.delete(attendee);
 		}
 		// Always update entry for the connection ID. (Okay if already set.)
 		this.attendees.set(clientConnectionId, attendee);

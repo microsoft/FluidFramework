@@ -479,6 +479,27 @@ describe("Presence", () => {
 							);
 						});
 
+						it("updates stale attendees status to 'Disconnected'", () => {
+							// Setup
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+							assert(knownAttendee.getConnectionStatus() === SessionClientStatus.Connected);
+
+							// Act - remove client connection id
+							runtime.removeMember("client2");
+
+							// Verify - stale attendee should still be connected after 15 seconds
+							clock.tick(15001);
+							assert(knownAttendee.getConnectionStatus() === SessionClientStatus.Connected);
+
+							// Verify - stale attendee should be disconnected after 30 seconds
+							clock.tick(15001);
+							assert.equal(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Disconnected,
+								"Stale attendee has wrong status",
+							);
+						});
+
 						it('is not announced via `attendeeDisconnected` when already "Disconnected"', () => {
 							// Setup
 
