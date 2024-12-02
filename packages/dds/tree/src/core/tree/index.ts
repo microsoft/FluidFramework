@@ -94,6 +94,7 @@ export {
 	type AnnouncedVisitor,
 	announceDelta,
 	applyDelta,
+	createAnnouncedVisitor,
 	combineVisitors,
 	makeDetachedFieldIndex,
 } from "./visitorUtils.js";
