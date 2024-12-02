@@ -100,6 +100,9 @@ export function mergeKArrays<T>(arrays: T[][], comparator: (a: T, b: T) => numbe
 	const mergedResult: T[] = [];
 	while (heap.size > 0) {
 		const node = heap.pop();
+		if (node === undefined) {
+			continue;
+		}
 		mergedResult.push(node.value);
 		const nextIndex = node.index + 1;
 		if (nextIndex < arrays[node.row].length) {
