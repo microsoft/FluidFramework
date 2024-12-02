@@ -92,7 +92,7 @@ describe("Presence", () => {
 
 			describe("attendee", () => {
 				interface IAttendeeSignalInfo {
-					fixedTime: number;
+					fixedTime?: number;
 					clientSessionId: string;
 					clientConnectionId: ClientConnectionId;
 					averageLatency?: number;
@@ -561,124 +561,6 @@ describe("Presence", () => {
 					});
 				});
 			});
-
-			// describe("attendees", () => {
-			// 	const firstAttendeeSessionId = "sessionId-4";
-			// 	const firstAttendeeConnectionId = "client4";
-			// 	const secondAttendeeSessionId = "sessionId-5";
-			// 	const secondAttendeeConnectionId = "client5";
-			// 	let firstAttendeeSignal: ReturnType<typeof generateBasicClientJoin>;
-			// 	let secondAttendeeSignal: ReturnType<typeof generateBasicClientJoin>;
-			// 	let firstAttendeeSignalWithUpdate: ReturnType<typeof generateBasicClientJoin>;
-
-			// 	beforeEach(() => {
-			// 		// Ignore submitted signals
-			// 		runtime.submitSignal = () => {};
-
-			// 		firstAttendeeSignal = generateBasicClientJoin(clock.now - 50, {
-			// 			averageLatency: 50,
-			// 			clientSessionId: firstAttendeeSessionId,
-			// 			clientConnectionId: firstAttendeeConnectionId,
-			// 			updateProviders: ["client2"],
-			// 		});
-
-			// 		secondAttendeeSignal = generateBasicClientJoin(clock.now - 50, {
-			// 			averageLatency: 20,
-			// 			clientSessionId: secondAttendeeSessionId,
-			// 			clientConnectionId: secondAttendeeConnectionId,
-			// 			updateProviders: ["client4"],
-			// 		});
-
-			// 		firstAttendeeSignalWithUpdate = generateBasicClientJoin(clock.now - 50, {
-			// 			averageLatency: 50,
-			// 			clientSessionId: firstAttendeeSessionId,
-			// 			clientConnectionId: firstAttendeeConnectionId,
-			// 			priorClientToSessionId: {
-			// 				...firstAttendeeSignal.content.data["system:presence"].clientToSessionId,
-			// 				[secondAttendeeConnectionId]: {
-			// 					rev: 0,
-			// 					timestamp: 0,
-			// 					value: secondAttendeeSessionId,
-			// 				},
-			// 			},
-			// 		});
-			// 	});
-
-			// 	describe("that are joining", () => {
-			// 		let newAttendees: ISessionClient[];
-			// 		beforeEach(() => {
-			// 			newAttendees = [];
-			// 			afterCleanUp.push(
-			// 				presence.events.on("attendeeJoined", (attendee) => {
-			// 					assert(newAttendees.length < 3, "Only two attendees should be announced");
-			// 					newAttendees.push(attendee);
-			// 				}),
-			// 			);
-			// 		});
-
-			// 		function verifyNewAttendees(
-			// 			expectedConnectionId1: ClientConnectionId,
-			// 			expectedConnectionId2: ClientConnectionId,
-			// 		): void {
-			// 			assert.equal(newAttendees.length, 2, "Not all attendees were announced");
-			// 			assert.ok(newAttendees[0]);
-			// 			assert.ok(newAttendees[1]);
-			// 			assert.equal(
-			// 				newAttendees[0].sessionId,
-			// 				firstAttendeeSessionId,
-			// 				"First attendee has wrong session id",
-			// 			);
-			// 			assert.equal(
-			// 				newAttendees[0].getConnectionId(),
-			// 				expectedConnectionId1,
-			// 				"First attendee has wrong client connection id",
-			// 			);
-			// 			assert.equal(
-			// 				newAttendees[0].getConnectionStatus(),
-			// 				SessionClientStatus.Connected,
-			// 				"First attendee connection status is not Connected",
-			// 			);
-			// 			assert.equal(
-			// 				newAttendees[1].sessionId,
-			// 				secondAttendeeSessionId,
-			// 				"Second attendee has wrong session id",
-			// 			);
-			// 			assert.equal(
-			// 				newAttendees[1].getConnectionId(),
-			// 				expectedConnectionId2,
-			// 				"Second attendee has wrong client connection id",
-			// 			);
-			// 			assert.equal(
-			// 				newAttendees[1].getConnectionStatus(),
-			// 				SessionClientStatus.Connected,
-			// 				"Second attendee connection status is not Connected",
-			// 			);
-			// 		}
-
-			// 		it("is announced via `attendeeJoined`", () => {
-			// 			// Act - simulate join message from clients
-			// 			presence.processSignal("", firstAttendeeSignal, false);
-			// 			presence.processSignal("", secondAttendeeSignal, false);
-			// 			presence.processSignal("", firstAttendeeSignalWithUpdate, false);
-
-			// 			// Verify
-			// 			verifyNewAttendees(firstAttendeeConnectionId, secondAttendeeConnectionId);
-			// 		});
-
-			// 		it("is announced via `attendeeJoined` when second joining attendee is unknown to audience", () => {
-			// 			// Setup - remove connection from audience
-			// 			runtime.removeMember(secondAttendeeConnectionId);
-
-			// 			// Act - simulate join message from clients
-			// 			presence.processSignal("", firstAttendeeSignal, false);
-			// 			presence.processSignal("", secondAttendeeSignal, false);
-			// 			presence.processSignal("", firstAttendeeSignalWithUpdate, false);
-
-			// 			// Verify
-			// 			verifyNewAttendees(firstAttendeeConnectionId, secondAttendeeConnectionId);
-			// 		});
-			// 	});
-			// });
 		});
 	});
 });
