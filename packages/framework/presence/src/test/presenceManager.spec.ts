@@ -104,20 +104,7 @@ describe("Presence", () => {
 					>;
 				}
 				// Helper function to set up attendee(s)
-				function sendAttendeeSignals(
-					attendeesInfo: {
-						fixedTime?: number;
-						clientSessionId?: string;
-						clientConnectionId?: ClientConnectionId;
-						averageLatency?: number;
-						connectionOrder?: number;
-						updateProviders?: string[];
-						priorClientToSessionId?: Record<
-							ClientConnectionId,
-							{ rev: number; timestamp: number; value: string }
-						>;
-					}[],
-				): {
+				function sendAttendeeSignals(attendeesInfo: IAttendeeSignalInfo[]): {
 					attendees: ISessionClient[];
 					verifyAttendees: (
 						expectedSessionIds: string[],
@@ -288,34 +275,43 @@ describe("Presence", () => {
 					});
 
 					it("is announced via `attendeeJoined` when second joining attendee is unknown to audience", () => {
-						runtime.removeMember("client5");
+						// SETUP - create attendee signals
+						// Signal for second joining attendee
 						const secondJoinSignal = {
 							fixedTime: clock.now - 40,
 							averageLatency: 20,
-							clientSessionId: "sessionId-5",
-							clientConnectionId: "client5",
-							updateProviders: ["client2"],
+							clientSessionId: "sessionId-9",
+							clientConnectionId: "client9",
+							updateProviders: [
+								"client2" /* Response will be requested from the first joining attendee */,
+							],
 						};
+
+						// Response signal broadcasted from first joining attendee in response to the second join signal sent above
 						const responseSignal = {
 							fixedTime: clock.now - 30,
 							averageLatency: 30,
 							clientSessionId: initialAttedeeSignal.clientSessionId,
 							clientConnectionId: initialAttedeeSignal.clientConnectionId,
+							// Include the prior client to session id mapping info for the second joining attendee
 							priorClientToSessionId: {
-								"client5": {
+								"client9": {
 									rev: 0,
 									timestamp: clock.now - 40,
-									value: "sessionId-5",
+									value: "sessionId-9",
 								},
 							},
 						};
 
+						// ACT - simulate join messages from clients
+						// Order is important here: 1st client joins -> 2nd client joins -> 1st client responds to 2nd client joining
 						const { verifyAttendees } = sendAttendeeSignals([
-							initialAttedeeSignal,
-							secondJoinSignal,
-							responseSignal,
+							initialAttedeeSignal, // First client joins
+							secondJoinSignal, // Second client joins
+							responseSignal, // First client responds to second client joining
 						]);
 
+						// VERIFY
 						verifyAttendees(
 							[initialAttedeeSignal.clientSessionId, secondJoinSignal.clientSessionId],
 							[initialAttedeeSignal.clientConnectionId, secondJoinSignal.clientConnectionId],
