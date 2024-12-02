@@ -60,7 +60,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	/**
 	 * Add a loader to start to track any container created from them
 	 * @param loader - loader to start tracking any container created.
-	 * @deprecated - Directly use addContainer to add container for tracking.
 	 */
 	public add<LoaderType extends IHostLoader>(loader: LoaderType) {
 		// TODO: Expose Loader API to able to intercept container creation (See issue #5114)

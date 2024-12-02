@@ -42,7 +42,6 @@ export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadabl
 // @alpha (undocumented)
 export class LoaderContainerTracker implements IOpProcessingController {
     constructor(syncSummarizerClients?: boolean);
-    // @deprecated
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;
     addContainer(container: IContainer): void;
     ensureSynchronized(...containers: IContainer[]): Promise<void>;
