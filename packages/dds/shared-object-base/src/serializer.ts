@@ -4,7 +4,6 @@
  */
 
 // RATIONALE: Many methods consume and return 'any' by necessity.
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
