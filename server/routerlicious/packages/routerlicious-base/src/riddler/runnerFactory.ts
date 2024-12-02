@@ -25,7 +25,6 @@ import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 import { IRiddlerResourcesCustomizations } from "./customizations";
 import { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
@@ -49,8 +48,8 @@ export class RiddlerResources implements IResources {
 		public readonly riddlerStorageRequestMetricIntervalMs: number,
 		public readonly tenantKeyGenerator: utils.ITenantKeyGenerator,
 		public readonly startupCheck: IReadinessCheck,
-		public readonly cache?: RedisCache,
 		public readonly redisClientConnectionManagers: utils.IRedisClientConnectionManager[],
+		public readonly cache?: RedisCache,
 		public readonly readinessCheck?: IReadinessCheck,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -196,8 +195,8 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			riddlerStorageRequestMetricIntervalMs,
 			tenantKeyGenerator,
 			startupCheck,
-			cache,
 			redisClientConnectionManagers,
+			cache,
 			customizations?.readinessCheck,
 		);
 	}
