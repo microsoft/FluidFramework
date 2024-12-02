@@ -8,7 +8,7 @@ import fs from "node:fs";
 
 import { ComposableEventEmitter } from "@fluid-internal/client-utils";
 import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
-import type { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -27,12 +27,11 @@ export interface LoggerConfig {
 	runId?: string;
 }
 
-export interface IScenarioRunnerTelemetryEvents extends IEvent {
-	(
-		event: ScenarioRunnerTelemetryEventNames,
-		listener: (e: ITelemetryBaseEvent & { originalEventName: string }) => void,
-	): void;
-}
+export type IScenarioRunnerTelemetryEvents = {
+	[event in ScenarioRunnerTelemetryEventNames]: (
+		e: ITelemetryBaseEvent & { originalEventName: string },
+	) => void;
+};
 
 class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 	private error: boolean = false;
