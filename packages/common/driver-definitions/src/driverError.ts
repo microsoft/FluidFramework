@@ -14,7 +14,7 @@ const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTy
 /**
  * Different error types the Driver may report out to the Host.
  * @legacy
- * @alpha
+ * @beta
  */
 export const DriverErrorTypes = {
 	// Inherit base error types
@@ -109,7 +109,7 @@ export const DriverErrorTypes = {
 /**
  * {@inheritDoc (DriverErrorTypes:variable)}
  * @legacy
- * @alpha
+ * @beta
  */
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
@@ -124,7 +124,7 @@ export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErro
  * It will be either {@link @fluidframework/driver-definitions#(DriverErrorTypes:variable)} or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 	readonly errorType: string;
@@ -138,7 +138,7 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 /**
  * Base interface for all errors and warnings
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IDriverErrorBase {
 	/**
@@ -172,7 +172,7 @@ export interface IDriverErrorBase {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IThrottlingWarning extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.throttlingError;
@@ -181,7 +181,7 @@ export interface IThrottlingWarning extends IDriverErrorBase {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IGenericNetworkError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.genericNetworkError;
@@ -190,7 +190,7 @@ export interface IGenericNetworkError extends IDriverErrorBase {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IAuthorizationError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.authorizationError;
@@ -200,7 +200,7 @@ export interface IAuthorizationError extends IDriverErrorBase {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ILocationRedirectionError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.locationRedirection;
@@ -211,7 +211,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
  * Having this uber interface without types that have their own interfaces
  * allows compiler to differentiate interfaces based on error type
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IDriverBasicError extends IDriverErrorBase {
 	readonly errorType:
@@ -233,7 +233,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type DriverError =
 	| IThrottlingWarning

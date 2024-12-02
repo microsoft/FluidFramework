@@ -13,7 +13,7 @@ import type { ISequencedClient } from "./clients.js";
  * at which the proposal is made and no client within the collaboration window rejects
  * the proposal.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IProposal {
 	/**
@@ -30,21 +30,21 @@ export interface IProposal {
 /**
  * Similar to {@link IProposal} except it also includes the sequence number when it was made.
  * @legacy
- * @alpha
+ * @beta
  */
 export type ISequencedProposal = { sequenceNumber: number } & IProposal;
 
 /**
  * Adds the sequence number at which the message was approved to an {@link ISequencedProposal}.
  * @legacy
- * @alpha
+ * @beta
  */
 export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedProposal;
 
 /**
  * Adds the sequence number at which the message was committed to an {@link IApprovedProposal}.
  * @legacy
- * @alpha
+ * @beta
  */
 export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
 
@@ -106,7 +106,7 @@ export interface IQuorumClients {
 /**
  * Interface for tracking proposals in the Quorum.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IQuorumProposals {
 	propose(key: string, value: unknown): Promise<void>;
@@ -132,9 +132,18 @@ export interface IQuorumProposals {
 }
 
 /**
- * Interface combining tracking of clients as well as proposals in the Quorum.
  * @legacy
  * @alpha
+ */
+export interface LegacyAlphaThatReferencesLegacyBetaAndPublic {
+	beta: IQuorumProposals;
+	public: IQuorumClients;
+}
+
+/**
+ * Interface combining tracking of clients as well as proposals in the Quorum.
+ * @legacy
+ * @beta
  */
 export interface IQuorum
 	extends Omit<IQuorumClients, "on" | "once" | "off">,
@@ -157,7 +166,7 @@ export interface IProtocolState {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IProcessMessageResult {
 	immediateNoOp?: boolean;

@@ -4,7 +4,6 @@
  */
 
 export { ApiLevel, knownApiLevels, isKnownApiLevel } from "./apiLevel.js";
-export { ApiTag } from "./apiTag.js";
 export {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,

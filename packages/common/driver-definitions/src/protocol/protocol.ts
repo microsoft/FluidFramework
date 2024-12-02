@@ -5,7 +5,7 @@
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export enum MessageType {
 	/**
@@ -95,7 +95,7 @@ export enum SignalType {
 /**
  * Messages to track latency trace.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ITrace {
 	/**
@@ -116,7 +116,7 @@ export interface ITrace {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface INack {
 	/**
@@ -138,7 +138,7 @@ export interface INack {
 /**
  * Document-specific message.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IDocumentMessage {
 	/**
@@ -194,7 +194,7 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
 /**
  * Branch origin information.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IBranchOrigin {
 	/**
@@ -216,7 +216,7 @@ export interface IBranchOrigin {
 /**
  * Sequenced message for a distributed document.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ISequencedDocumentMessage {
 	/**
@@ -339,7 +339,7 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 /**
  * Common interface between incoming and outgoing signals.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ISignalMessageBase {
 	/**
@@ -372,7 +372,7 @@ export interface ISignalMessageBase {
 /**
  * Interface for signals sent by the server to clients.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ISignalMessage extends ISignalMessageBase {
 	/**
@@ -391,7 +391,7 @@ export type ISentSignalMessage = ISignalMessageBase;
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IUploadedSummaryDetails {
 	/**
@@ -402,7 +402,7 @@ export interface IUploadedSummaryDetails {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ISummaryContent {
 	/**
@@ -449,7 +449,7 @@ export interface IServerError {
 /**
  * Data about the original proposed summary message.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ISummaryProposal {
 	/**
@@ -461,7 +461,7 @@ export interface ISummaryProposal {
 /**
  * Contents of summary ack expected from the server.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ISummaryAck {
 	/**
@@ -478,7 +478,7 @@ export interface ISummaryAck {
 /**
  * Contents of summary nack expected from the server.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ISummaryNack {
 	/**
@@ -509,7 +509,7 @@ export interface ISummaryNack {
 /**
  * Interface for nack content.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface INackContent {
 	/**
@@ -540,7 +540,7 @@ export interface INackContent {
 /**
  * Type of the nack.
  * @legacy
- * @alpha
+ * @beta
  */
 export enum NackErrorType {
 	/**
