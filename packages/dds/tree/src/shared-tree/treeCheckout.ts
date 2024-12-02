@@ -393,7 +393,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			if (event.change !== undefined) {
 				let revision: RevisionTag | undefined;
 				if (event.type === "replace") {
-					assert(hasSome(event.newCommits), "Expected new commit for non no-op change event");
+					assert(
+						hasSome(event.newCommits),
+						0xa81 /* Expected new commit for non no-op change event */,
+					);
 					revision = getLast(event.newCommits).revision;
 				} else {
 					revision = event.change.revision;
@@ -567,7 +570,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				const revertibleBranch = this.revertibleCommitBranches.get(revision);
 				assert(
 					revertibleBranch !== undefined,
-					"change to revert does not exist on the given forked branch",
+					0xa82 /* change to revert does not exist on the given forked branch */,
 				);
 				forkedCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
 

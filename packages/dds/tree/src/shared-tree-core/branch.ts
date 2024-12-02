@@ -268,7 +268,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		// The net change to this branch is provided by the `rebaseBranch` API
 		const { newSourceHead, commits } = rebaseResult;
 		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
-		assert(hasSome(targetCommits), "Expected commit(s) for a non no-op rebase");
+		assert(hasSome(targetCommits), 0xa83 /* Expected commit(s) for a non no-op rebase */);
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		const changeEvent = {
@@ -317,7 +317,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 			return true;
 		});
-		assert(hasSome(removedCommits), "Commit must be in the branch's ancestry");
+		assert(hasSome(removedCommits), 0xa84 /* Commit must be in the branch's ancestry */);
 
 		const change = makeAnonChange(this.changeFamily.rebaser.compose(inverses));
 		const changeEvent = {
@@ -346,7 +346,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 		const removedCommits: GraphCommit<TChange>[] = [];
 		findAncestor([this.head, removedCommits], (c) => c === commit);
-		assert(hasSome(removedCommits), "Commit must be in the branch's ancestry");
+		assert(hasSome(removedCommits), 0xa85 /* Commit must be in the branch's ancestry */);
 
 		const squashedChange = this.changeFamily.rebaser.compose(removedCommits);
 		const revision = this.mintRevisionTag();
@@ -393,7 +393,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 		// Compute the net change to this branch
 		const sourceCommits = rebaseResult.commits.sourceCommits;
-		assert(hasSome(sourceCommits), "Expected source commits in non no-op merge");
+		assert(hasSome(sourceCommits), 0xa86 /* Expected source commits in non no-op merge */);
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
 		const taggedChange = makeAnonChange(change);
 		const changeEvent = {
