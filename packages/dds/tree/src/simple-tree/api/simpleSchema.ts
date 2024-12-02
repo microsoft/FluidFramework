@@ -22,7 +22,7 @@ export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
 	readonly kind: TNodeKind;
 
 	/**
-	 * Node metadata.
+	 * {@inheritDoc NodeSchemaOptions.metadata}
 	 */
 	readonly metadata?: NodeSchemaMetadata | undefined;
 }
