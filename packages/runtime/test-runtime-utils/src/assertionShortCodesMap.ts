@@ -1648,5 +1648,14 @@ export const shortCodeMap = {
 	"0xa86": "Expected source commits in non no-op merge",
 	"0xa87": "Expected resubmit queue to be non-empty",
 	"0xa88": "temporaryFileName should only be set for new file creation in the empty file create flow",
-	"0xa89": "must be a LocalDetachedFluidDataStoreContext"
+	"0xa89": "must be a LocalDetachedFluidDataStoreContext",
+	"0xa8a": "destination of created nodes must be a valid detached field",
+	"0xa8b": "must have a parent",
+	"0xa8c": "replace should happen in a node",
+	"0xa8d": "must be in a field to enter node",
+	"0xa8e": "must have parent node",
+	"0xa8f": "invalid operation on a disposed index",
+	"0xa90": "destroyed anchor node should be tracked by index",
+	"0xa91": "destroyed anchor node should be tracked by index",
+	"0xa92": "destroyed anchor should be tracked by index"
 };

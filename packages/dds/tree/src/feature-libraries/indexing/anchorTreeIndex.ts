@@ -127,17 +127,20 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 						{ fieldKey: destination, parent: undefined },
 						detachedCursor,
 					) === TreeNavigationResult.Ok,
-					"destination of created nodes must be a valid detached field",
+					0xa8a /* destination of created nodes must be a valid detached field */,
 				);
 				this.indexField(detachedCursor);
 				detachedCursor.free();
 			},
 			// when a replace happens, the keys of previously indexed nodes could be changed so we must re-index them
 			afterReplace: () => {
-				assert(parent !== undefined, "must have a parent");
+				assert(parent !== undefined, 0xa8b /* must have a parent */);
 				const cursor = this.forest.allocateCursor();
 				this.forest.moveCursorToPath(parent, cursor);
-				assert(cursor.mode === CursorLocationType.Nodes, "replace should happen in a node");
+				assert(
+					cursor.mode === CursorLocationType.Nodes,
+					0xa8c /* replace should happen in a node */,
+				);
 				cursor.exitNode();
 				// we must re-index the spine because the key finders allow for any value under a subtree to be the key
 				// this means that a replace can cause the key for any node up its spine to be changed
@@ -147,7 +150,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			// the methods below are used to keep track of the path that has been traversed by the visitor
 			// this is required so that cursors can be moved to the correct location when index updates are required
 			enterNode(index: number): void {
-				assert(parentField !== undefined, "must be in a field to enter node");
+				assert(parentField !== undefined, 0xa8d /* must be in a field to enter node */);
 
 				parent = {
 					parent,
@@ -157,7 +160,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				parentField = undefined;
 			},
 			exitNode(index: number): void {
-				assert(parent !== undefined, "must have parent node");
+				assert(parent !== undefined, 0xa8e /* must have parent node */);
 				const temp = parent;
 				parentField = temp.parentField;
 				parent = temp.parent;
@@ -299,7 +302,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			if (errorMessage !== undefined) {
 				throw new Error(errorMessage);
 			}
-			assert(false, "invalid operation on a disposed index");
+			assert(false, 0xa8f /* invalid operation on a disposed index */);
 		}
 	}
 
@@ -394,9 +397,12 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 
 	private removeAnchor(anchorNode: AnchorNode, key: TKey): void {
 		const indexedNodes = this.keyToNodes.get(key);
-		assert(indexedNodes !== undefined, "destroyed anchor node should be tracked by index");
+		assert(
+			indexedNodes !== undefined,
+			0xa90 /* destroyed anchor node should be tracked by index */,
+		);
 		const index = indexedNodes.indexOf(anchorNode);
-		assert(index !== -1, "destroyed anchor node should be tracked by index");
+		assert(index !== -1, 0xa91 /* destroyed anchor node should be tracked by index */);
 		const newNodes = filterNodes(indexedNodes, (n) => n !== anchorNode);
 		if (newNodes !== undefined && newNodes.length > 0) {
 			this.keyToNodes.set(key, newNodes);
@@ -404,7 +410,10 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			this.keyToNodes.delete(key);
 		}
 		this.nodeToKey.delete(anchorNode);
-		assert(this.anchors.delete(anchorNode), "destroyed anchor should be tracked by index");
+		assert(
+			this.anchors.delete(anchorNode),
+			0xa92 /* destroyed anchor should be tracked by index */,
+		);
 	}
 
 	/**
