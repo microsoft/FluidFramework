@@ -12,7 +12,8 @@ import { IDocument } from "./document";
 export class MongoDocumentRepository implements IDocumentRepository {
 	constructor(private readonly collection: ICollection<IDocument>) {}
 
-	async readOne(filter: any): Promise<IDocument> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	async readOne(filter: any): Promise<IDocument | null> {
 		return this.collection.findOne(filter);
 	}
 

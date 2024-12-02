@@ -50,8 +50,8 @@ export async function closeRedisClientConnections(
  * @internal
  */
 export async function runnerHttpServerStop(
-	server: IWebServer,
-	runningDeferredPromise: Deferred<void>,
+	server: IWebServer | undefined,
+	runningDeferredPromise: Deferred<void> | undefined,
 	runnerServerCloseTimeoutMs: number,
 	runnerMetric: Lumber,
 	caller: string | undefined,
@@ -64,7 +64,7 @@ export async function runnerHttpServerStop(
 	try {
 		runnerMetric.setProperties(runnerMetricProperties);
 		// Close the underlying server and then resolve the runner once closed
-		await promiseTimeout(runnerServerCloseTimeoutMs, server.close());
+		await promiseTimeout(runnerServerCloseTimeoutMs, server?.close() ?? Promise.resolve());
 		if (caller === "uncaughtException") {
 			runningDeferredPromise?.reject({
 				uncaughtException: serializeError(uncaughtException),

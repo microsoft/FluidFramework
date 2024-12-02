@@ -14,9 +14,13 @@ import {
 import { DocumentLambda } from "./documentLambda";
 
 /**
+ * @typeParam TConfig - The configuration type for the lambdas created by this factory
  * @internal
  */
-export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+export class DocumentLambdaFactory<TConfig>
+	extends EventEmitter
+	implements IPartitionLambdaFactory<TConfig>
+{
 	constructor(
 		private readonly documentLambdaFactory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
 		private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,
@@ -29,7 +33,7 @@ export class DocumentLambdaFactory extends EventEmitter implements IPartitionLam
 		});
 	}
 
-	public async create(config: undefined, context: IContext): Promise<IPartitionLambda> {
+	public async create(config: TConfig, context: IContext): Promise<IPartitionLambda> {
 		return new DocumentLambda(
 			this.documentLambdaFactory,
 			context,

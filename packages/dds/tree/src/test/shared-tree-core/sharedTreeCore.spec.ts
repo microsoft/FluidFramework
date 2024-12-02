@@ -526,7 +526,7 @@ describe("SharedTreeCore", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.startTransaction();
+			tree.transaction.start();
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 1);
@@ -534,7 +534,7 @@ describe("SharedTreeCore", () => {
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 2);
 			assert.equal(enricher.enrichmentLog[1].input, tree.getLocalBranch().getHead().change);
-			tree.commitTransaction();
+			tree.transaction.commit();
 			assert.equal(enricher.enrichmentLog.length, 2);
 			assert.equal(machine.submissionLog.length, 1);
 			assert.notEqual(machine.submissionLog[0], tree.getLocalBranch().getHead().change);
@@ -553,12 +553,12 @@ describe("SharedTreeCore", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.startTransaction();
+			tree.transaction.start();
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 1);
 			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
-			tree.abortTransaction();
+			tree.transaction.abort();
 			assert.equal(enricher.enrichmentLog.length, 1);
 			assert.equal(machine.submissionLog.length, 0);
 		});

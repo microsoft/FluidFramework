@@ -15,6 +15,7 @@ import {
 	IRunner,
 	IRunnerFactory,
 	IWebServerFactory,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -48,7 +49,7 @@ export class RiddlerResources implements IResources {
 		public readonly riddlerStorageRequestMetricIntervalMs: number,
 		public readonly tenantKeyGenerator: utils.ITenantKeyGenerator,
 		public readonly startupCheck: IReadinessCheck,
-		public readonly cache: RedisCache,
+		public readonly cache?: RedisCache,
 		public readonly redisClientConnectionManagers: utils.IRedisClientConnectionManager[],
 		public readonly readinessCheck?: IReadinessCheck,
 	) {
@@ -81,7 +82,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 	): Promise<RiddlerResources> {
 		// Cache connection
 		const redisConfig = config.get("redisForTenantCache");
-		let cache: RedisCache;
+		let cache: RedisCache | undefined;
 		// List of Redis client connection managers that need to be closed on dispose
 		const redisClientConnectionManagers: utils.IRedisClientConnectionManager[] = [];
 		if (redisConfig) {
@@ -122,7 +123,12 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 		if (globalDbEnabled) {
 			const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
-			globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
+			globalDbMongoManager = new MongoManager(
+				factory,
+				globalDbReconnect,
+				undefined /* reconnectDelayMs */,
+				true /* global */,
+			);
 		}
 
 		const mongoManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;

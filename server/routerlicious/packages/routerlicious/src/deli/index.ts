@@ -24,7 +24,7 @@ import {
 export async function deliCreate(
 	config: Provider,
 	customizations?: Record<string, any>,
-): Promise<core.IPartitionLambdaFactory> {
+): Promise<core.IPartitionLambdaFactory<core.IPartitionLambdaConfig>> {
 	const kafkaEndpoint = config.get("kafka:lib:endpoint");
 	const kafkaLibrary = config.get("kafka:lib:name");
 	const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
@@ -86,17 +86,22 @@ export async function deliCreate(
 	core.DefaultServiceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs =
 		ephemeralContainerSoftDeleteTimeInMs;
 
-	let globalDb: core.IDb;
+	let globalDb: core.IDb | undefined;
 	if (globalDbEnabled) {
 		const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
-		const globalDbManager = new core.MongoManager(factory, globalDbReconnect, null, true);
+		const globalDbManager = new core.MongoManager(
+			factory,
+			globalDbReconnect,
+			undefined /* reconnectDelayMs */,
+			true /* global */,
+		);
 		globalDb = await globalDbManager.getDatabase();
 	}
 
 	const operationsDbManager = new core.MongoManager(factory, false);
 	const operationsDb = await operationsDbManager.getDatabase();
 
-	const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
+	const db: core.IDb = globalDbEnabled && globalDb !== undefined ? globalDb : operationsDb;
 
 	// eslint-disable-next-line @typescript-eslint/await-thenable
 	const collection = await db.collection<core.IDocument>(documentsCollectionName);
