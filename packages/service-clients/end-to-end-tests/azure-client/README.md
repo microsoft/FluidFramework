@@ -1,7 +1,7 @@
 # @fluidframework/azure-end-to-end-tests
 
 Functional end-to-end tests for Azure Fluid Relay (AFR) and Azure Local Service.
-Here we evaluate various scenarios that involving `azure-client`, `IFluidContainer` and a range of distributed data structures (DDSes).
+Here we evaluate various scenarios involving `azure-client`, `IFluidContainer` and a range of distributed data structures (DDSes).
 
 To run AFR end-to-end tests: `test:realsvc:azure`.
 
