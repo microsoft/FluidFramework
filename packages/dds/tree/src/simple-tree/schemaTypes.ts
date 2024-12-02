@@ -192,8 +192,8 @@ export interface FieldProps<TCustomMetadata = unknown> {
 	 * Optional metadata to associate with the field.
 	 *
 	 * @remarks
-	 * Note: this metadata is not persisted in the document; it only exists locally at runtime.
-	 * So making changes to these values will not affect collaborators.
+	 * Note: this metadata is not persisted; it is strictly local to the application.
+	 * So, making changes to these values will not affect collaborators.
 	 */
 	readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
 }
@@ -841,8 +841,8 @@ export interface NodeSchemaOptions<out TMetadata = NodeSchemaMetadata> {
 	 * Optional metadata to associate with the Node Schema.
 	 *
 	 * @remarks
-	 * Note: this metadata is not persisted in the document; it only exists locally at runtime.
-	 * So making changes to these values will not affect collaborators.
+	 * Note: this metadata is not persisted; it is strictly local to the application.
+	 * So, making changes to these values will not affect collaborators.
 	 */
 	readonly metadata?: TMetadata;
 }
