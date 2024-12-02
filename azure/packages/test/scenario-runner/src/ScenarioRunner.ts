@@ -5,13 +5,13 @@
 
 import { ChildProcess } from "child_process";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { ComposableEventEmitter } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils/internal";
 
 import {
 	IRunConfig,
 	IRunner,
-	IRunnerEvents,
+	IRunnerEventsType,
 	IRunnerStatus,
 	IScenarioConfig,
 	IScenarioRunConfig,
@@ -25,7 +25,7 @@ export abstract class ScenarioRunner<
 		A,
 		S = A,
 	>
-	extends TypedEventEmitter<IRunnerEvents>
+	extends ComposableEventEmitter<IRunnerEventsType>
 	implements IRunner
 {
 	/**
