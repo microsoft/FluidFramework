@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ValueSchema } from "../../core/index.js";
 import { getOrCreate, hasSingle, type Mutable } from "../../util/index.js";
@@ -194,12 +194,11 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 		type: "object",
 		_treeNodeSchemaKind: NodeKind.Map,
 		patternProperties: {
-			"^.*$":
-				allowedTypes.length === 1
-					? (allowedTypes[0] ?? oob())
-					: {
-							anyOf: allowedTypes,
-						},
+			"^.*$": hasSingle(allowedTypes)
+				? allowedTypes[0]
+				: {
+						anyOf: allowedTypes,
+					},
 		},
 	};
 
