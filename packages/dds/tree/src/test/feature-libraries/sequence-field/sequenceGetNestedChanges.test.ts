@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules

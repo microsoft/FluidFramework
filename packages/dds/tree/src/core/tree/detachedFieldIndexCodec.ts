@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	type ICodecOptions,
@@ -24,6 +24,7 @@ import type {
 	Major,
 } from "./detachedFieldIndexTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { hasSingle } from "../../util/index.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
@@ -83,8 +84,8 @@ export function makeDetachedNodeToFieldCodec(
 				for (const [minor, detachedField] of innerMap) {
 					rootRanges.push([minor, detachedField.root]);
 				}
-				if (rootRanges.length === 1) {
-					const firstRootRange = rootRanges[0] ?? oob();
+				if (hasSingle(rootRanges)) {
+					const firstRootRange = rootRanges[0];
 					const rootsForRevision: EncodedRootsForRevision = [
 						encodedRevision,
 						firstRootRange[0],

@@ -4,7 +4,7 @@
  */
 
 import { StringBuilder } from "@rushstack/node-core-library";
-import chalk from "chalk";
+import chalk from "picocolors";
 
 // eslint-disable-next-line import/no-deprecated
 import { MonoRepoKind, indentString } from "./library/index.js";

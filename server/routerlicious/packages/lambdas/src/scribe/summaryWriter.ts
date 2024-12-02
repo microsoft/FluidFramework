@@ -57,8 +57,8 @@ export class SummaryWriter implements ISummaryWriter {
 		private readonly tenantId: string,
 		private readonly documentId: string,
 		private readonly summaryStorage: IGitManager,
-		private readonly deltaService: IDeltaService,
-		private readonly opStorage: ICollection<ISequencedOperationMessage>,
+		private readonly deltaService: IDeltaService | undefined,
+		private readonly opStorage: ICollection<ISequencedOperationMessage> | undefined,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly lastSummaryMessages: ISequencedDocumentMessage[],
 		private readonly getDeltasViaAlfred: boolean,
@@ -732,7 +732,7 @@ export class SummaryWriter implements ISummaryWriter {
 	}
 
 	private async retrieveOps(gt: number, lt: number): Promise<ISequencedDocumentMessage[]> {
-		if (this.getDeltasViaAlfred) {
+		if (this.getDeltasViaAlfred && this.deltaService !== undefined) {
 			return this.deltaService.getDeltas(
 				"",
 				this.tenantId,
@@ -741,6 +741,10 @@ export class SummaryWriter implements ISummaryWriter {
 				lt,
 				"scribe",
 			);
+		}
+
+		if (this.opStorage === undefined) {
+			return [];
 		}
 
 		const query = {

@@ -84,7 +84,6 @@ export interface ISummaryHandle {
 // @public
 export interface ISummaryTree {
     groupId?: string;
-    // (undocumented)
     tree: {
         [path: string]: SummaryObject;
     };

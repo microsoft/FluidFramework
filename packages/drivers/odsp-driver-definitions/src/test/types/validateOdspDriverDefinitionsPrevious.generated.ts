@@ -508,7 +508,7 @@ declare type current_as_old_for_TypeAlias_OdspErrorTypes = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_TokenFetcher": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TokenFetcher = requireAssignableTo<TypeOnly<old.TokenFetcher<any>>, TypeOnly<current.TokenFetcher<any>>>
+declare type old_as_current_for_TypeAlias_TokenFetcher = requireAssignableTo<TypeOnly<old.TokenFetcher<never>>, TypeOnly<current.TokenFetcher<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -517,7 +517,7 @@ declare type old_as_current_for_TypeAlias_TokenFetcher = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_TokenFetcher": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TokenFetcher = requireAssignableTo<TypeOnly<current.TokenFetcher<any>>, TypeOnly<old.TokenFetcher<any>>>
+declare type current_as_old_for_TypeAlias_TokenFetcher = requireAssignableTo<TypeOnly<current.TokenFetcher<never>>, TypeOnly<old.TokenFetcher<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

@@ -19,8 +19,8 @@ import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-defi
 /**
  * @internal
  */
-export interface IModelContainerRuntimeEntryPoint<T> {
-	getModel(container: IContainer): Promise<T>;
+export interface IModelContainerRuntimeEntryPoint<ModelType> {
+	getModel(container: IContainer): Promise<ModelType>;
 }
 
 /**

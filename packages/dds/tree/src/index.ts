@@ -29,19 +29,24 @@ export {
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
 	type RevertibleFactory,
+	type RevertibleAlphaFactory,
+	type RevertibleAlpha,
 } from "./core/index.js";
 export { type Brand } from "./util/index.js";
 
-export {
-	type Listeners,
-	type IsListener,
-	type Listenable,
-	type Off,
-} from "./events/index.js";
+export type {
+	Listeners,
+	IsListener,
+	Listenable,
+	Off,
+} from "@fluidframework/core-interfaces";
 
 export {
 	TreeStatus,
 	TreeCompressionStrategy,
+	type TreeIndex,
+	type TreeIndexKey,
+	type TreeIndexNodes,
 } from "./feature-libraries/index.js";
 
 export {
@@ -126,6 +131,11 @@ export {
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
+	// Index APIs
+	type SimpleTreeIndex,
+	type IdentifierIndex,
+	createSimpleTreeIndex,
+	createIdentifierIndex,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -170,6 +180,21 @@ export {
 	getJsonSchema,
 	type LazyItem,
 	type Unenforced,
+	type SimpleNodeSchemaBase,
+	type SimpleTreeSchema,
+	type SimpleNodeSchema,
+	type SimpleFieldSchema,
+	type SimpleLeafNodeSchema,
+	type SimpleMapNodeSchema,
+	type SimpleArrayNodeSchema,
+	type SimpleObjectNodeSchema,
+	normalizeAllowedTypes,
+	getSimpleSchema,
+	numberSchema,
+	stringSchema,
+	booleanSchema,
+	handleSchema,
+	nullSchema,
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,

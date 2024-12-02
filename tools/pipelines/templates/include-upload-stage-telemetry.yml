@@ -40,7 +40,7 @@ stages:
   jobs:
   - job: upload_run_telemetry
     displayName: Upload stage telemetry to Kusto
-    pool: Small
+    pool: Small-eastus2
     variables:
     - group: ado-feeds
 

@@ -10,7 +10,7 @@ import {
 	type DifferenceChange,
 	type DifferenceMove,
 	SharedTreeBranchManager,
-} from "@fluid-experimental/ai-collab";
+} from "@fluidframework/ai-collab/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {

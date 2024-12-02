@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type AsyncGenerator,
@@ -528,7 +528,7 @@ export const makeTransactionEditGenerator = (
 				boundary: "commit",
 			},
 			opWeights.commit,
-			(state) => viewFromState(state).checkout.transaction.inProgress(),
+			(state) => viewFromState(state).checkout.transaction.isInProgress(),
 		],
 		[
 			{
@@ -536,7 +536,7 @@ export const makeTransactionEditGenerator = (
 				boundary: "abort",
 			},
 			opWeights.abort,
-			(state) => viewFromState(state).checkout.transaction.inProgress(),
+			(state) => viewFromState(state).checkout.transaction.isInProgress(),
 		],
 	]);
 };
@@ -642,7 +642,7 @@ export function makeOpGenerator(
 				[
 					() => makeConstraintEditGenerator(weights),
 					constraintWeight,
-					(state: FuzzTestState) => viewFromState(state).checkout.transaction.inProgress(),
+					(state: FuzzTestState) => viewFromState(state).checkout.transaction.isInProgress(),
 				],
 			] as const
 		)

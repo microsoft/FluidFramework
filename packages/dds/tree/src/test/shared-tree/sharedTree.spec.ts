@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -12,6 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ITestFluidObject,
@@ -81,10 +82,10 @@ import {
 	treeTestFactory,
 	validateTreeConsistency,
 	validateTreeContent,
-	validateViewConsistency,
 	validateUsageError,
 	StringArray,
 	NumberArray,
+	validateViewConsistency,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -1442,69 +1443,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	// TODO: many of these events tests should be tests of SharedTreeView instead.
 	describe("Events", () => {
-		it("triggers revertible events for local changes", () => {
-			const value = "42";
-			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith(
-				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
-			);
-			view1.initialize([]);
-			provider.processMessages();
-			const tree2 = provider.trees[1];
-			const view2 = tree2.viewWith(
-				new TreeViewConfiguration({
-					schema: StringArray,
-					enableSchemaValidation,
-				}),
-			);
-
-			const {
-				undoStack: undoStack1,
-				redoStack: redoStack1,
-				unsubscribe: unsubscribe1,
-			} = createTestUndoRedoStacks(tree1.checkout.events);
-			const {
-				undoStack: undoStack2,
-				redoStack: redoStack2,
-				unsubscribe: unsubscribe2,
-			} = createTestUndoRedoStacks(tree2.checkout.events);
-
-			// Insert node
-			view1.root.insertAtStart(value);
-			provider.processMessages();
-
-			// Validate insertion
-			assert.deepEqual([...view2.root], [value]);
-			assert.equal(undoStack1.length, 1);
-			assert.equal(undoStack2.length, 0);
-
-			undoStack1.pop()?.revert();
-			provider.processMessages();
-
-			// Insert node
-			view2.root.insertAtStart("43");
-			provider.processMessages();
-
-			assert.equal(undoStack1.length, 0);
-			assert.equal(redoStack1.length, 1);
-			assert.equal(undoStack2.length, 1);
-			assert.equal(redoStack2.length, 0);
-
-			redoStack1.pop()?.revert();
-			provider.processMessages();
-
-			assert.equal(undoStack1.length, 1);
-			assert.equal(redoStack1.length, 0);
-			assert.equal(undoStack2.length, 1);
-			assert.equal(redoStack2.length, 0);
-
-			unsubscribe1();
-			unsubscribe2();
-		});
-
 		it("doesn't trigger a revertible event for rebases", () => {
 			const provider = new TestTreeProviderLite(2);
 			// Initialize the tree
@@ -1550,42 +1489,6 @@ describe("SharedTree", () => {
 
 			unsubscribe1();
 			unsubscribe2();
-		});
-
-		// TODO: move this event test to the tree view tests
-		it("emits a changed event for local edits", () => {
-			const value = "42";
-			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith(
-				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
-			);
-			view1.initialize([]);
-			provider.processMessages();
-
-			let localEdits = 0;
-			let remoteEdits = 0;
-
-			const unsubscribe = view1.events.on("changed", (metadata) => {
-				if (metadata.isLocal === true) {
-					localEdits++;
-				} else {
-					remoteEdits++;
-				}
-			});
-
-			// Insert node
-			view1.root.insertAtStart(value);
-			provider.processMessages();
-
-			// Validate insertion
-			assert.deepEqual([...view1.root], [value]);
-
-			assert.equal(localEdits, 1);
-			// check that the edit is not counted twice
-			assert.equal(remoteEdits, 0);
-
-			unsubscribe();
 		});
 
 		it("emits a changed event for remote edits", () => {
@@ -2191,6 +2094,28 @@ describe("SharedTree", () => {
 			validateUsageError(
 				/The provided data is incompatible with all of the types allowed by the schema/,
 			),
+		);
+	});
+
+	it("throws an error if attaching during a transaction", () => {
+		const sharedTreeFactory = new SharedTreeFactory();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const tree = sharedTreeFactory.create(runtime, "tree");
+		const runtimeFactory = new MockContainerRuntimeFactory();
+		runtimeFactory.createContainerRuntime(runtime);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: StringArray }));
+		view.initialize([]);
+		assert.throws(
+			() => {
+				Tree.runTransaction(view, () => {
+					tree.connect({
+						deltaConnection: runtime.createDeltaConnection(),
+						objectStorage: new MockStorage(),
+					});
+				});
+			},
+			(e: Error) =>
+				validateAssertionError(e, /Cannot attach while a transaction is in progress/),
 		);
 	});
 

@@ -1,5 +1,13 @@
 # @fluidframework/data-object-base
 
+## 2.11.0
+
+Dependency updates only.
+
+## 2.10.0
+
+Dependency updates only.
+
 ## 2.5.0
 
 Dependency updates only.

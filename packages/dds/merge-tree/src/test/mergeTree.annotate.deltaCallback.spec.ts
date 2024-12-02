@@ -49,7 +49,7 @@ describe("MergeTree", () => {
 				4,
 				6,
 				{
-					foo: "bar",
+					props: { foo: "bar" },
 				},
 				currentSequenceNumber,
 				localClientId,
@@ -69,7 +69,7 @@ describe("MergeTree", () => {
 				3,
 				3,
 				{
-					foo: "bar",
+					props: { foo: "bar" },
 				},
 				currentSequenceNumber,
 				localClientId,
@@ -100,7 +100,7 @@ describe("MergeTree", () => {
 				3,
 				8,
 				{
-					foo: "bar",
+					props: { foo: "bar" },
 				},
 				currentSequenceNumber,
 				localClientId,
@@ -135,7 +135,7 @@ describe("MergeTree", () => {
 				3,
 				8,
 				{
-					foo: "bar",
+					props: { foo: "bar" },
 				},
 				currentSequenceNumber,
 				localClientId,
@@ -170,7 +170,7 @@ describe("MergeTree", () => {
 				3,
 				8,
 				{
-					foo: "bar",
+					props: { foo: "bar" },
 				},
 				currentSequenceNumber,
 				localClientId,
@@ -205,7 +205,7 @@ describe("MergeTree", () => {
 				4,
 				6,
 				{
-					foo: "bar",
+					props: { foo: "bar" },
 				},
 				remoteSequenceNumber,
 				remoteClientId,

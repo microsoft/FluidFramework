@@ -47,6 +47,7 @@ export {
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	createAnnouncedVisitor,
 	combineVisitors,
 	announceDelta,
 	applyDelta,
@@ -121,7 +122,7 @@ export {
 	type TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
-	type TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
+	type TreeStoredSchemaSubscription,
 	type MutableTreeStoredSchema,
 	type FieldKindIdentifier,
 	type FieldKindData,
@@ -206,4 +207,10 @@ export {
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export { type Revertible, RevertibleStatus, type RevertibleFactory } from "./revertible.js";
+export {
+	type Revertible,
+	RevertibleStatus,
+	type RevertibleFactory,
+	type RevertibleAlphaFactory,
+	type RevertibleAlpha,
+} from "./revertible.js";

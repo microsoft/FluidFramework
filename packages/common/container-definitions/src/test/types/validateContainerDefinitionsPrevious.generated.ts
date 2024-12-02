@@ -193,7 +193,6 @@ declare type old_as_current_for_Interface_IContainer = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IContainer": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainer = requireAssignableTo<TypeOnly<current.IContainer>, TypeOnly<old.IContainer>>
 
 /*
@@ -212,7 +211,6 @@ declare type old_as_current_for_Interface_IContainerContext = requireAssignableT
  * typeValidation.broken:
  * "Interface_IContainerContext": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerContext = requireAssignableTo<TypeOnly<current.IContainerContext>, TypeOnly<old.IContainerContext>>
 
 /*
@@ -258,8 +256,7 @@ declare type current_as_old_for_Interface_IContainerLoadMode = requireAssignable
  * typeValidation.broken:
  * "Interface_IDeltaManager": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_Interface_IDeltaManager = requireAssignableTo<TypeOnly<current.IDeltaManager<any,any>>, TypeOnly<old.IDeltaManager<any,any>>>
+declare type current_as_old_for_Interface_IDeltaManager = requireAssignableTo<TypeOnly<current.IDeltaManager<never,never>>, TypeOnly<old.IDeltaManager<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -277,7 +274,7 @@ declare type current_as_old_for_Interface_IDeltaManagerEvents = requireAssignabl
  * typeValidation.broken:
  * "Interface_IDeltaQueue": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDeltaQueue = requireAssignableTo<TypeOnly<current.IDeltaQueue<any>>, TypeOnly<old.IDeltaQueue<any>>>
+declare type current_as_old_for_Interface_IDeltaQueue = requireAssignableTo<TypeOnly<current.IDeltaQueue<never>>, TypeOnly<old.IDeltaQueue<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -286,7 +283,7 @@ declare type current_as_old_for_Interface_IDeltaQueue = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_IDeltaQueueEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDeltaQueueEvents = requireAssignableTo<TypeOnly<current.IDeltaQueueEvents<any>>, TypeOnly<old.IDeltaQueueEvents<any>>>
+declare type current_as_old_for_Interface_IDeltaQueueEvents = requireAssignableTo<TypeOnly<current.IDeltaQueueEvents<never>>, TypeOnly<old.IDeltaQueueEvents<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

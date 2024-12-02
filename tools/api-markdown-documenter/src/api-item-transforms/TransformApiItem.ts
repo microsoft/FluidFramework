@@ -23,10 +23,11 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { type DocumentNode, type SectionNode } from "../documentation-domain/index.js";
+import type { DocumentNode, SectionNode } from "../documentation-domain/index.js";
+
 import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
 import { createDocument } from "./Utilities.js";
-import { type ApiItemTransformationConfiguration } from "./configuration/index.js";
+import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers/index.js";
 
 /**
