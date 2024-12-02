@@ -48,7 +48,7 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 			};
 			this.objectP = this.routeContext.resolveHandle(request).then<FluidObject>((response) => {
 				if (response.mimeType === "fluid/object") {
-					const fluidObject: FluidObject = response.value;
+					const fluidObject: FluidObject = response.value as FluidObject;
 					return fluidObject;
 				}
 				throw responseToException(response, request);
