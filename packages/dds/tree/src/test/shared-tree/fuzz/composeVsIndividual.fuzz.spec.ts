@@ -27,9 +27,9 @@ import {
 	type FuzzView,
 	makeOpGenerator,
 	viewFromState,
-	asSchematizingSimpleTreeView,
 } from "./fuzzEditGenerators.js";
 import {
+	applyBranchEdit,
 	applyConstraint,
 	applyFieldEdit,
 	applySynchronizationOp,
@@ -73,8 +73,7 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<
 		);
 	},
 	undoRedo: async (state, { operation }) => {
-		const tree =
-			state.main !== undefined ? asSchematizingSimpleTreeView(state.main) : assert.fail();
+		const tree = state.main ?? assert.fail();
 		assert(isRevertibleSharedTreeView(tree.checkout));
 		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, operation);
 		return state;
@@ -88,6 +87,9 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<
 	},
 	constraint: async (state, operation) => {
 		applyConstraint(state, operation);
+	},
+	branchEdit: async (state, operation) => {
+		return applyBranchEdit(state, operation);
 	},
 });
 
@@ -147,7 +149,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			forkedView.currentSchema =
 				treeSchema ?? assert.fail("nodeSchema should not be undefined");
 			initialState.branch = forkedView;
-			asSchematizingSimpleTreeView(initialState.branch).checkout.transaction.start();
+			initialState.branch.checkout.transaction.start();
 			initialState.transactionViews?.delete(initialState.clients[0].channel);
 			const transactionViews = new Map();
 
@@ -156,15 +158,10 @@ describe("Fuzz - composed vs individual changes", () => {
 		});
 		emitter.on("testEnd", (finalState: BranchedTreeFuzzTestState) => {
 			assert(finalState.branch !== undefined);
-			const childTreeView = toJsonableTree(
-				asSchematizingSimpleTreeView(finalState.branch).checkout,
-			);
-			asSchematizingSimpleTreeView(finalState.branch).checkout.transaction.commit();
-			const tree =
-				finalState.main !== undefined
-					? asSchematizingSimpleTreeView(finalState.main)
-					: assert.fail();
-			tree.checkout.merge(asSchematizingSimpleTreeView(finalState.branch).checkout);
+			const childTreeView = toJsonableTree(finalState.branch.checkout);
+			finalState.branch.checkout.transaction.commit();
+			const tree = finalState.main ?? assert.fail();
+			tree.checkout.merge(finalState.branch.checkout);
 			validateTree(tree.checkout, childTreeView);
 		});
 		createDDSFuzzSuite(model, {

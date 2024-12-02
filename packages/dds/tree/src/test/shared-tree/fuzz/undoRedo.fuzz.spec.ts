@@ -29,7 +29,6 @@ import {
 } from "../../utils.js";
 
 import {
-	asSchematizingSimpleTreeView,
 	type EditGeneratorOpWeights,
 	type FuzzTestState,
 	makeOpGenerator,
@@ -88,7 +87,7 @@ describe("Fuzz - revert", () => {
 			init(state);
 			state.anchors = [];
 			for (const client of state.clients) {
-				const checkout = asSchematizingSimpleTreeView(viewFromState(state, client)).checkout;
+				const checkout = viewFromState(state, client).checkout;
 				state.anchors.push(createAnchors(checkout));
 			}
 		});
@@ -103,9 +102,7 @@ describe("Fuzz - revert", () => {
 			assert(redoStack.length === 0, "redoStack should be empty");
 
 			// Save final tree state to validate redo later
-			const tree = asSchematizingSimpleTreeView(
-				viewFromState(state, state.clients[0]),
-			).checkout;
+			const tree = viewFromState(state, state.clients[0]).checkout;
 			const stateAfterEdits = toJsonableTree(tree);
 
 			// Undo all the edits in the reverse order they were made
@@ -122,7 +119,7 @@ describe("Fuzz - revert", () => {
 
 			// Validate that the anchors are still valid after undoing all the edits
 			for (const [i, client] of state.clients.entries()) {
-				const view = asSchematizingSimpleTreeView(viewFromState(state, client)).checkout;
+				const view = viewFromState(state, client).checkout;
 				validateAnchors(view, anchors[i], true);
 			}
 
@@ -139,7 +136,7 @@ describe("Fuzz - revert", () => {
 
 			// Validate that the anchors are still valid after redoing all the edits
 			for (const [i, client] of state.clients.entries()) {
-				const view = asSchematizingSimpleTreeView(viewFromState(state, client)).checkout;
+				const view = viewFromState(state, client).checkout;
 				validateAnchors(view, anchors[i], false);
 			}
 
@@ -218,7 +215,7 @@ describe("Fuzz - revert", () => {
 });
 
 function init(state: UndoRedoFuzzTestState) {
-	const tree = asSchematizingSimpleTreeView(viewFromState(state, state.clients[0])).checkout;
+	const tree = viewFromState(state, state.clients[0]).checkout;
 	state.initialTreeState = toJsonableTree(tree);
 	state.containerRuntimeFactory.processAllMessages();
 	const undoStack: Revertible[] = [];
@@ -227,7 +224,7 @@ function init(state: UndoRedoFuzzTestState) {
 	state.redoStack = redoStack;
 	state.unsubscribe = [];
 	for (const client of state.clients) {
-		const checkout = asSchematizingSimpleTreeView(viewFromState(state, client)).checkout;
+		const checkout = viewFromState(state, client).checkout;
 		const unsubscribe = checkout.events.on("changed", (commit, getRevertible) => {
 			if (getRevertible !== undefined) {
 				if (commit.kind === CommitKind.Undo) {

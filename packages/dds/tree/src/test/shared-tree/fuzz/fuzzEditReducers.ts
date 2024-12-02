@@ -12,7 +12,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
-import { Tree, type SharedTreeFactory } from "../../../shared-tree/index.js";
+import { Tree, type SharedTree, type SharedTreeFactory } from "../../../shared-tree/index.js";
 import { fail } from "../../../util/index.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
@@ -22,7 +22,6 @@ import {
 	type FuzzView,
 	getAllowableNodeTypes,
 	viewFromState,
-	asSchematizingSimpleTreeView,
 } from "./fuzzEditGenerators.js";
 import {
 	createTreeViewSchema,
@@ -50,9 +49,10 @@ import {
 	GeneratedFuzzValueType,
 	type NodeObjectValue,
 	type GUIDNodeValue,
+	type BranchEdit,
 } from "./operationTypes.js";
 
-import { asTreeViewAlpha, getOrCreateInnerNode } from "../../../simple-tree/index.js";
+import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
@@ -64,10 +64,10 @@ import {
 } from "../../../simple-tree/index.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
-	treeEdit: (state, { edit }) => {
+	treeEdit: (state, { edit, forkedViewIndex }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
-				applyFieldEdit(viewFromState(state), edit);
+				applyFieldEdit(viewFromState(state, state.client, forkedViewIndex), edit);
 				break;
 			}
 			default:
@@ -78,7 +78,7 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 		applyTransactionBoundary(state, boundary);
 	},
 	undoRedo: (state, { operation }) => {
-		const view = asSchematizingSimpleTreeView(viewFromState(state)).checkout;
+		const view = viewFromState(state).checkout;
 		assert(isRevertibleSharedTreeView(view));
 		applyUndoRedoEdit(view.undoStack, view.redoStack, operation);
 	},
@@ -90,6 +90,9 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 	},
 	constraint: (state, operation) => {
 		applyConstraint(state, operation);
+	},
+	branchEdit: (state, operation) => {
+		applyBranchEdit(state, operation);
 	},
 });
 export const fuzzReducer: AsyncReducer<
@@ -170,8 +173,8 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 	view.dispose();
 	state.transactionViews?.delete(state.client.channel);
 
-	const newView = asTreeViewAlpha(
-		state.client.channel.viewWith(new TreeViewConfiguration({ schema: newSchema })),
+	const newView = state.client.channel.viewWith(
+		new TreeViewConfiguration({ schema: newSchema }),
 	) as FuzzTransactionView;
 	newView.upgradeSchema();
 
@@ -181,6 +184,61 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 	const transactionViews = state.transactionViews ?? new Map();
 	transactionViews.set(state.client.channel, newView);
 	state.transactionViews = transactionViews;
+}
+
+export function applyBranchEdit(state: FuzzTestState, branchEdit: BranchEdit) {
+	switch (branchEdit.contents.type) {
+		case "fork": {
+			const forkedViews = state.forkedViews ?? new Map<SharedTree, FuzzView[]>();
+			const clientForkedViews = forkedViews.get(state.client.channel) ?? [];
+
+			if (branchEdit.contents.branchNumber !== undefined) {
+				assert(clientForkedViews.length > branchEdit.contents.branchNumber);
+			}
+
+			const view =
+				branchEdit.contents.branchNumber !== undefined
+					? clientForkedViews[branchEdit.contents.branchNumber]
+					: viewFromState(state);
+			assert(view !== undefined);
+			const forkedView = view.fork() as FuzzView;
+			forkedView.currentSchema = view.currentSchema;
+			clientForkedViews?.push(forkedView);
+			forkedViews.set(state.client.channel, clientForkedViews);
+			state.forkedViews = forkedViews;
+			break;
+		}
+		case "merge": {
+			const forkBranchIndex = branchEdit.contents.forkBranch;
+			const forkedViews = state.forkedViews ?? new Map<SharedTree, FuzzView[]>();
+			const clientForkedViews = forkedViews.get(state.client.channel) ?? [];
+
+			const baseBranch =
+				branchEdit.contents.baseBranch !== undefined
+					? clientForkedViews[branchEdit.contents.baseBranch]
+					: viewFromState(state);
+			assert(forkBranchIndex !== undefined);
+			const forkedBranch = clientForkedViews[forkBranchIndex];
+			if (baseBranch.checkout.transaction.inProgress()) {
+				return;
+			}
+			const removeIndexes =
+				branchEdit.contents.baseBranch !== undefined
+					? [branchEdit.contents.baseBranch, forkBranchIndex]
+					: [forkBranchIndex];
+			baseBranch.merge(forkedBranch);
+			const updatedClientForkedViews = clientForkedViews.filter(
+				(_, index) => !removeIndexes.includes(index),
+			);
+			if (branchEdit.contents.baseBranch !== undefined) {
+				updatedClientForkedViews.push(baseBranch);
+			}
+			forkedViews.set(state.client.channel, updatedClientForkedViews);
+			state.forkedViews = forkedViews;
+		}
+		default:
+			break;
+	}
 }
 
 /**
@@ -196,10 +254,7 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 		assert(fieldEdit.change.type === "optional");
 		switch (fieldEdit.change.edit.type) {
 			case "set": {
-				asSchematizingSimpleTreeView(tree).root = generateFuzzNode(
-					fieldEdit.change.edit.value,
-					tree.currentSchema,
-				);
+				tree.root = generateFuzzNode(fieldEdit.change.edit.value, tree.currentSchema);
 				break;
 			}
 			case "clear": {
@@ -322,7 +377,7 @@ export function applyTransactionBoundary(
 		state.transactionViews.set(state.client.channel, view);
 	}
 
-	const { checkout } = asSchematizingSimpleTreeView(view);
+	const { checkout } = view;
 	switch (boundary) {
 		case "start": {
 			checkout.transaction.start();
@@ -343,7 +398,7 @@ export function applyTransactionBoundary(
 	if (!checkout.transaction.inProgress()) {
 		// Transaction is complete, so merge the changes into the root view and clean up the fork from the state.
 		state.transactionViews.delete(state.client.channel);
-		const rootView = asSchematizingSimpleTreeView(viewFromState(state));
+		const rootView = viewFromState(state);
 		rootView.checkout.merge(checkout);
 	}
 }
@@ -376,7 +431,7 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 				: undefined;
 
 			if (constraintNode !== undefined) {
-				asSchematizingSimpleTreeView(tree).checkout.editor.addNodeExistsConstraint(
+				tree.checkout.editor.addNodeExistsConstraint(
 					getOrCreateInnerNode(constraintNode).anchorNode,
 				);
 			}

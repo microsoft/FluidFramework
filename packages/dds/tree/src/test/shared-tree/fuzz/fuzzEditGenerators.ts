@@ -60,20 +60,19 @@ import {
 	type GeneratedFuzzNode,
 	GeneratedFuzzValueType,
 	type NodeRange,
+	type BranchEdit,
 } from "./operationTypes.js";
 
 import {
 	getOrCreateInnerNode,
-	type TreeViewAlpha,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNode,
 	type TreeNodeSchema,
 	asTreeViewAlpha,
-	type ImplicitFieldSchema,
 } from "../../../simple-tree/index.js";
 
-export type FuzzView = TreeViewAlpha<typeof fuzzFieldSchema> & {
+export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
 	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
@@ -87,7 +86,7 @@ export type FuzzView = TreeViewAlpha<typeof fuzzFieldSchema> & {
 	currentSchema: FuzzNodeSchema;
 };
 
-export type FuzzTransactionView = TreeViewAlpha<typeof fuzzFieldSchema> & {
+export type FuzzTransactionView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
 	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
@@ -109,6 +108,15 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	 * which should be used in place of this view until the transaction is complete.
 	 */
 	clientViews?: Map<SharedTree, FuzzView>;
+
+	/**
+	 * Schematized view of clients' forked views and their nodeSchemas.
+	 *
+	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
+	 * which should be used in place of this view until the transaction is complete.
+	 */
+	forkedViews?: Map<SharedTree, FuzzView[]>;
+
 	/**
 	 * Schematized view of clients undergoing transactions with their nodeSchemas.
 	 * Edits to this view are not visible to other clients until the transaction is closed.
@@ -119,24 +127,21 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	transactionViews?: Map<ISharedTree, FuzzTransactionView>;
 }
 
-/**
- *
- * @param view - TreeViewAlpha view you want to cast as a SchematizingSimpleTreeView
- * @returns view as a SchematizingSimpleTreeView
- *
- * TODO: Once the two tree view apis merge, we will no longer need this function.
- */
-export function asSchematizingSimpleTreeView<TSchema extends ImplicitFieldSchema>(
-	view: TreeViewAlpha<TSchema>,
-): SchematizingSimpleTreeView<TSchema> {
-	return view as SchematizingSimpleTreeView<TSchema>;
-}
-
 export function viewFromState(
 	state: FuzzTestState,
 	client: Client<SharedTreeFactory> = state.client,
+	forkedBranchIndex?: number | undefined,
 ): FuzzView {
 	state.clientViews ??= new Map();
+	// If the forked view info contains the branch number, return that branch. Otherwise return the main client view
+	if (forkedBranchIndex !== undefined) {
+		const forkedViews = state.forkedViews?.get(client.channel);
+		assert(
+			forkedViews !== undefined && forkedViews.length >= forkedBranchIndex,
+			"branch does not exist",
+		);
+		return forkedViews[forkedBranchIndex];
+	}
 	const view =
 		state.transactionViews?.get(client.channel) ??
 		(getOrCreate(state.clientViews, client.channel, (tree) => {
@@ -273,6 +278,8 @@ export interface EditGeneratorOpWeights {
 	synchronizeTrees: number;
 	schema: number;
 	nodeConstraint: number;
+	fork: number;
+	merge: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	set: 0,
@@ -290,6 +297,8 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	synchronizeTrees: 0,
 	schema: 0,
 	nodeConstraint: 0,
+	fork: 0,
+	merge: 0,
 };
 
 export interface EditGeneratorOptions {
@@ -359,6 +368,7 @@ export const makeTreeEditGenerator = (
 	interface FuzzTestStateForFieldEdit<TFuzzField extends FuzzField = FuzzField>
 		extends FuzzTestState {
 		fieldInfo: TFuzzField;
+		branchIndex: number | undefined;
 	}
 
 	const sequenceFieldEditGenerator = createWeightedGeneratorWithBailout<
@@ -403,7 +413,7 @@ export const makeTreeEditGenerator = (
 			(state): CrossFieldMove => {
 				const srcField = state.fieldInfo.parentFuzzNode.arrayChildren;
 				const dstFieldInfo = selectTreeField(
-					viewFromState(state),
+					viewFromState(state, state.client, state.branchIndex),
 					state.random,
 					weights.fieldSelection,
 					(field: FuzzField) =>
@@ -414,7 +424,10 @@ export const makeTreeEditGenerator = (
 				return {
 					type: "crossFieldMove",
 					range: chooseRange(state.random, srcField.length),
-					dstParent: maybeDownPathFromNode(dstParent, viewFromState(state).currentSchema),
+					dstParent: maybeDownPathFromNode(
+						dstParent,
+						viewFromState(state, state.client, state.branchIndex).currentSchema,
+					),
 					dstIndex: state.random.integer(0, dstParent.arrayChildren.length),
 				};
 			},
@@ -501,10 +514,24 @@ export const makeTreeEditGenerator = (
 		// likely to be hit during when a test is badly configured, in which case the remedy is to fix the config,
 		// as opposed to increasing the number of attempts.
 		let attemptsRemaining = 20;
+		const clientForkedViews = state.forkedViews?.get(state.client.channel);
+		const forkedViewIndex =
+			clientForkedViews !== undefined && clientForkedViews.length > 0
+				? state.random.pick(Array.from({ length: clientForkedViews.length }, (_, i) => i))
+				: undefined;
+		const forkOrMain = state.random.pick(["fork", "main"]);
+		const selectedForkIndex = forkOrMain === "fork" ? forkedViewIndex : undefined;
 		do {
-			fieldInfo = selectTreeField(viewFromState(state), state.random, weights.fieldSelection);
-
-			change = fieldEditChangeGenerator({ ...state, fieldInfo });
+			fieldInfo = selectTreeField(
+				viewFromState(state, state.client, selectedForkIndex),
+				state.random,
+				weights.fieldSelection,
+			);
+			change = fieldEditChangeGenerator({
+				...state,
+				fieldInfo,
+				branchIndex: selectedForkIndex,
+			});
 			attemptsRemaining -= 1;
 		} while (change === "no-valid-selections" && attemptsRemaining > 0);
 		assert(change !== "no-valid-selections", "No valid field edit found");
@@ -514,10 +541,11 @@ export const makeTreeEditGenerator = (
 				type: "fieldEdit",
 				parentNodePath: maybeDownPathFromNode(
 					fieldInfo.parentFuzzNode,
-					viewFromState(state).currentSchema,
+					viewFromState(state, state.client, selectedForkIndex).currentSchema,
 				),
 				change,
 			},
+			forkedViewIndex: selectedForkIndex,
 		};
 	};
 };
@@ -544,10 +572,7 @@ export const makeTransactionEditGenerator = (
 				boundary: "commit",
 			},
 			opWeights.commit,
-			(state) =>
-				(
-					viewFromState(state) as unknown as SchematizingSimpleTreeView<typeof fuzzFieldSchema>
-				).checkout.transaction.inProgress(),
+			(state) => viewFromState(state).checkout.transaction.inProgress(),
 		],
 		[
 			{
@@ -555,8 +580,60 @@ export const makeTransactionEditGenerator = (
 				boundary: "abort",
 			},
 			opWeights.abort,
+			(state) => viewFromState(state).checkout.transaction.inProgress(),
+		],
+	]);
+};
+
+export const makeBranchEditGenerator = (
+	opWeightsArg: Partial<EditGeneratorOpWeights>,
+): Generator<BranchEdit, FuzzTestState> => {
+	const opWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeightsArg,
+	};
+
+	return createWeightedGenerator<BranchEdit, FuzzTestState>([
+		[
+			(state): BranchEdit => {
+				const forkedViews = state.forkedViews?.get(state.client.channel);
+				const forkedViewsLength = forkedViews === undefined ? 0 : forkedViews.length;
+				return {
+					type: "branchEdit",
+					contents: {
+						type: "fork",
+						branchNumber:
+							forkedViewsLength === 0
+								? undefined
+								: state.random.integer(0, forkedViewsLength - 1),
+					},
+				};
+			},
+			opWeights.fork,
+		],
+		[
+			(state): BranchEdit => {
+				const forkedViews = state.forkedViews?.get(state.client.channel);
+				const forkedViewsLength = forkedViews === undefined ? 0 : forkedViews.length;
+				const forkedBranchIndex =
+					forkedViewsLength === 0 ? undefined : state.random.integer(0, forkedViewsLength - 1);
+				const filteredIndexes = Array.from({ length: forkedViewsLength }, (_, i) => i).filter(
+					(num) => num !== forkedBranchIndex,
+				);
+				return {
+					type: "branchEdit",
+					contents: {
+						type: "merge",
+						baseBranch:
+							filteredIndexes.length === 0 ? undefined : state.random.pick(filteredIndexes),
+						forkBranch: forkedBranchIndex,
+					},
+				};
+			},
+			opWeights.merge,
 			(state) =>
-				asSchematizingSimpleTreeView(viewFromState(state)).checkout.transaction.inProgress(),
+				state.forkedViews?.get(state.client.channel) !== undefined &&
+				state.forkedViews.get(state.client.channel)?.length !== 0,
 		],
 	]);
 };
@@ -635,6 +712,8 @@ export function makeOpGenerator(
 		schema,
 		synchronizeTrees,
 		nodeConstraint,
+		fork,
+		merge,
 		...others
 	} = weights;
 	// This assert will trigger when new weights are added to EditGeneratorOpWeights but this function has not been
@@ -662,11 +741,9 @@ export function makeOpGenerator(
 				[
 					() => makeConstraintEditGenerator(weights),
 					constraintWeight,
-					(state: FuzzTestState) =>
-						asSchematizingSimpleTreeView(
-							viewFromState(state),
-						).checkout.transaction.inProgress(),
+					(state: FuzzTestState) => viewFromState(state).checkout.transaction.inProgress(),
 				],
+				[() => makeBranchEditGenerator(weights), weights.fork + weights.merge],
 			] as const
 		)
 			.filter(([, weight]) => weight > 0)
