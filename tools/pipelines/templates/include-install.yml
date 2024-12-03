@@ -32,7 +32,7 @@ steps:
         rm -rf node_modules
         echo "Running install"
         registry="$(pnpm config get registry)"
-        token=$(echo -n "Bearer ${SYSTEM_ACCESSTOKEN}" | base64)
+        token=$(echo -n "Bearer ${SYSTEM_ACCESSTOKEN}" | base64 --wrap 0)
         if [ $registry != "https://registry.npmjs.org/" ]; then
           echo "Authenticating to registry: ${registry}"
           # Remove leading `https://` from registry URL
