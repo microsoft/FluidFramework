@@ -35,7 +35,10 @@ const routes = [
 
 	// Legacy file name
 	{ from: "/docs/deployment/azure-frs", to: "/docs/deployment/azure-fluid-relay" },
-	{ from: "/versioned_docs/v1/deployment/azure-frs", to: "/versioned_docs/v1/deployment/azure-fluid-relay" },
+	{
+		from: "/versioned_docs/v1/deployment/azure-frs",
+		to: "/versioned_docs/v1/deployment/azure-fluid-relay",
+	},
 ];
 
 module.exports = routes;
