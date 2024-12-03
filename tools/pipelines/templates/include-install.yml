@@ -31,6 +31,15 @@ steps:
         echo "Removing node_modules"
         rm -rf node_modules
         echo "Running install"
-        ${{ parameters.packageManagerInstallCommand }} --force
+        registry = "$(pnpm config get registry)"
+        token = echo -n "Bearer ${SYSTEM_ACCESSTOKEN}" | base64
+        if [ $registry != "https://registry.npmjs.org/" ]; then
+          echo "Authenticating to registry: ${registry}"
+          npm config set //${registry}:_authToken=${token}
+        else
+          echo "No authentication needed for registry: ${registry}"
+        fi
+        ${{ parameters.packageManagerInstallCommand }}
     env:
       NPM_CONFIG_REGISTRY: $(ado-feeds-primary-registry)
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
