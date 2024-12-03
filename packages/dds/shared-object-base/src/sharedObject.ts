@@ -389,15 +389,13 @@ export abstract class SharedObjectCore<
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use void instead of any (legacy breaking)
-	): any;
+	): void;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
 	 */
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 change return type to void (legacy breaking)
-	protected abstract onDisconnect(): any;
+	protected abstract onDisconnect(): void;
 
 	/**
 	 * The serializer to serialize / parse handles.
