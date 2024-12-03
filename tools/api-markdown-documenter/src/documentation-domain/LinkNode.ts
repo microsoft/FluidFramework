@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Link, type UrlTarget } from "../Link.js";
+import type { Link, UrlTarget } from "../Link.js";
+
 import {
 	DocumentationParentNodeBase,
 	type SingleLineDocumentationNode,

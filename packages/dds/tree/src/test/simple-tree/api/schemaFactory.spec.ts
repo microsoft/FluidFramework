@@ -846,8 +846,7 @@ describe("schemaFactory", () => {
 
 		class Empty extends f.object("C", {}) {}
 
-		// TODO: should not build
-		// BUG: object schema with no fields permit construction with any object, not just empty object.
+		// @ts-expect-error Invalid extra field
 		// TODO: this should runtime error when constructed (not just when hydrated)
 		const c2 = new Empty({ x: {} });
 

@@ -1,0 +1,4 @@
+build
+node_modules
+docs/api
+versioned_docs/*/api

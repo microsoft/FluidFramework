@@ -4,6 +4,10 @@
 
 <!-- Enumerate unpublished changes here. They can be merged into release sections when the next release is published. -->
 
+# 1.0.2
+
+Enhance selection styling in main menu of the devtools view and fix menu item roles for accessibility.
+
 # 1.0.1
 
 Update extension name to omit the " (preview)" postfix.

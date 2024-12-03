@@ -30,7 +30,7 @@ export class LevelDb extends EventEmitter implements IDb {
 
 	public collection<T>(name: string): ICollection<T> {
 		const collectionDb = this.db.sublevel(name);
-		return new Collection(collectionDb, this.getProperty(name));
+		return new Collection(collectionDb, this.getProperty(name)) as ICollection<T>;
 	}
 
 	public async dropCollection(name: string): Promise<boolean> {

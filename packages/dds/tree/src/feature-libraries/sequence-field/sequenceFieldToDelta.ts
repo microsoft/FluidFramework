@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	type DeltaDetachedNodeChanges,
@@ -12,7 +12,7 @@ import {
 	type DeltaMark,
 	areEqualChangeAtomIds,
 } from "../../core/index.js";
-import type { Mutable } from "../../util/index.js";
+import { getLast, hasSome, type Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 
 import { isMoveIn, isMoveOut } from "./moveEffectTable.js";
@@ -176,8 +176,8 @@ export function sequenceFieldToDelta(
 		}
 	}
 	// Remove trailing no-op marks
-	while (local.length > 0) {
-		const lastMark = local[local.length - 1] ?? oob();
+	while (hasSome(local)) {
+		const lastMark = getLast(local);
 		if (
 			lastMark.attach !== undefined ||
 			lastMark.detach !== undefined ||

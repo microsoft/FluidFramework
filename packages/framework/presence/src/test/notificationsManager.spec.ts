@@ -346,7 +346,7 @@ describe("Presence", () => {
 			assert(unattendedEventCalled, "unattendedEvent not called");
 		});
 
-		it.skip("raises `unattendedEvent` event when recognized notification is received without listeners", async () => {
+		it("raises `unattendedEvent` event when recognized notification is received without listeners", async () => {
 			let unattendedEventCalled = false;
 
 			function newIdEventHandler(client: ISessionClient, id: number): void {
@@ -376,8 +376,7 @@ describe("Presence", () => {
 				unattendedEventCalled = true;
 			});
 
-			// TODO: Internal Event implementation needs updated. See https://github.com/microsoft/FluidFramework/pull/23046.
-			// testEvents.notifications.off("newId", newIdEventHandler);
+			testEvents.notifications.off("newId", newIdEventHandler);
 
 			// Processing this signal should trigger the testEvents.newId event listeners
 			presence.processSignal(

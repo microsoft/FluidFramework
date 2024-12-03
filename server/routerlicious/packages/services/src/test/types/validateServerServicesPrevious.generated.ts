@@ -862,6 +862,7 @@ declare function get_current_ClassDeclaration_WebServer():
 declare function use_old_ClassDeclaration_WebServer(
     use: TypeOnly<old.WebServer>): void;
 use_old_ClassDeclaration_WebServer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_WebServer());
 
 /*

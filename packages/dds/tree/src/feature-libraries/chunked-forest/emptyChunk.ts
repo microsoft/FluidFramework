@@ -10,11 +10,13 @@ import {
 	type FieldUpPath,
 	type PathRootPrefix,
 	type UpPath,
+	type ChunkedCursor,
+	type TreeChunk,
+	cursorChunk,
+	dummyRoot,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import { prefixFieldPath } from "../treeCursorUtils.js";
-
-import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
  * Chunk that is empty.

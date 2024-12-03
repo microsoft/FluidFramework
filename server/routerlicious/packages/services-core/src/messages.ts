@@ -195,7 +195,7 @@ export interface ISequencedOperationMessage extends ITicketedMessage {
 /**
  * @internal
  */
-export interface IBoxcarMessage extends ITicketedMessage {
+export interface IBoxcarMessage extends IMessage, Partial<IRoutingKey> {
 	// The type of the message
 	type: typeof BoxcarType;
 

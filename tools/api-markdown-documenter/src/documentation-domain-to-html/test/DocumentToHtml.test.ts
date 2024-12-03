@@ -5,6 +5,7 @@
 
 import { expect } from "chai";
 import { h } from "hastscript";
+
 import {
 	DocumentNode,
 	HeadingNode,

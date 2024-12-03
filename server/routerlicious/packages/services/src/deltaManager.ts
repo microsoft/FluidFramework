@@ -33,7 +33,7 @@ export class DeltaManager implements IDeltaService {
 		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId, baseUrl);
 		const resultP = restWrapper.get<ISequencedDocumentMessage[]>(
 			`/deltas/${tenantId}/${documentId}`,
-			{ from, to, caller },
+			{ from, to, caller: caller ?? "Unknown" },
 		);
 		return resultP;
 	}

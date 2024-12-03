@@ -106,7 +106,7 @@ export function create(store: nconf.Provider): Router {
 	const router: Router = Router();
 
 	router.get("/repos/:ignored?/:tenantId/git/refs", (request, response) => {
-		const refsP = getRefs(store, request.params.tenantId, request.get("Authorization"));
+		const refsP = getRefs(store, request.params.tenantId, request.get("Authorization") ?? "");
 
 		utils.handleResponse(refsP, response, false);
 	});
@@ -115,7 +115,7 @@ export function create(store: nconf.Provider): Router {
 		const refP = getRef(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.params[0],
 		);
 
@@ -126,7 +126,7 @@ export function create(store: nconf.Provider): Router {
 		const refP = createRef(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.body,
 		);
 
@@ -137,7 +137,7 @@ export function create(store: nconf.Provider): Router {
 		const refP = updateRef(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.params[0],
 			request.body,
 		);
@@ -149,7 +149,7 @@ export function create(store: nconf.Provider): Router {
 		const refP = deleteRef(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.params[0],
 		);
 

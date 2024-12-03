@@ -7,13 +7,14 @@ import * as Path from "node:path";
 
 import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 
-import { type Heading } from "../Heading.js";
-import { type Link } from "../Link.js";
+import type { Heading } from "../Heading.js";
+import type { Link } from "../Link.js";
 import { getQualifiedApiItemName, getReleaseTag } from "../utilities/index.js";
-import {
-	type ApiItemTransformationConfiguration,
-	type DocumentBoundaries,
-	type HierarchyBoundaries,
+
+import type {
+	ApiItemTransformationConfiguration,
+	DocumentBoundaries,
+	HierarchyBoundaries,
 } from "./configuration/index.js";
 
 /**
@@ -152,7 +153,9 @@ function getApiItemPath(
 
 	return [
 		fileName,
-		...documentAncestry.map((hierarchyItem) => config.getFileNameForItem(hierarchyItem)),
+		...documentAncestry.map((hierarchyItem) =>
+			getDocumentNameForApiItem(hierarchyItem, config),
+		),
 	].reverse();
 }
 

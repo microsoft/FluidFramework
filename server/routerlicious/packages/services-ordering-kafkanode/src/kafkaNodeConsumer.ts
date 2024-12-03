@@ -25,17 +25,17 @@ const defaultReconnectDelay = 5000;
  * @internal
  */
 export class KafkaNodeConsumer implements IConsumer {
-	private client: kafka.KafkaClient;
-	private consumerGroup: kafka.ConsumerGroup;
+	private client!: kafka.KafkaClient;
+	private consumerGroup!: kafka.ConsumerGroup;
 	private readonly events = new EventEmitter();
-	private readonly zookeeper: IZookeeperClient;
+	private readonly zookeeper?: IZookeeperClient;
 
 	constructor(
 		private readonly clientOptions: kafka.KafkaClientOptions,
 		clientId: string,
 		public readonly groupId: string,
 		public readonly topic: string,
-		private readonly zookeeperEndpoint?: string,
+		zookeeperEndpoint?: string,
 		private readonly topicPartitions?: number,
 		private readonly topicReplicationFactor?: number,
 		private readonly reconnectDelay: number = defaultReconnectDelay,
@@ -90,7 +90,7 @@ export class KafkaNodeConsumer implements IConsumer {
 	public async close(): Promise<void> {
 		await util.promisify(((callback) => this.consumerGroup.close(false, callback)) as any)();
 		await util.promisify(((callback) => this.client.close(callback)) as any)();
-		if (this.zookeeperEndpoint) {
+		if (this.zookeeper) {
 			this.zookeeper.close();
 		}
 	}
@@ -128,7 +128,8 @@ export class KafkaNodeConsumer implements IConsumer {
 			// Close the client if it exists
 			if (this.client) {
 				this.client.close();
-				this.client = undefined;
+				// This gets reassigned immediately in `this.connect()`
+				this.client = undefined as unknown as kafka.KafkaClient;
 			}
 
 			this.events.emit("error", error);

@@ -12,6 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ITestFluidObject,
@@ -2093,6 +2094,28 @@ describe("SharedTree", () => {
 			validateUsageError(
 				/The provided data is incompatible with all of the types allowed by the schema/,
 			),
+		);
+	});
+
+	it("throws an error if attaching during a transaction", () => {
+		const sharedTreeFactory = new SharedTreeFactory();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const tree = sharedTreeFactory.create(runtime, "tree");
+		const runtimeFactory = new MockContainerRuntimeFactory();
+		runtimeFactory.createContainerRuntime(runtime);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: StringArray }));
+		view.initialize([]);
+		assert.throws(
+			() => {
+				Tree.runTransaction(view, () => {
+					tree.connect({
+						deltaConnection: runtime.createDeltaConnection(),
+						objectStorage: new MockStorage(),
+					});
+				});
+			},
+			(e: Error) =>
+				validateAssertionError(e, /Cannot attach while a transaction is in progress/),
 		);
 	});
 

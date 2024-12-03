@@ -20,12 +20,11 @@ import { IFluidSerializer } from "./serializer.js";
  * @internal
  */
 export function serializeHandles(
-	value: any,
+	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): string | undefined {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return value !== undefined ? serializer.stringify(value, bind) : value;
+	return value === undefined ? value : serializer.stringify(value, bind);
 }
 
 /**
@@ -43,11 +42,11 @@ export function serializeHandles(
  * @alpha
  */
 export function makeHandlesSerializable(
-	value: any,
+	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
+): any {
 	return serializer.encode(value, bind);
 }
 
@@ -62,8 +61,8 @@ export function makeHandlesSerializable(
  * @legacy
  * @alpha
  */
-export function parseHandles(value: any, serializer: IFluidSerializer) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
+export function parseHandles(value: unknown, serializer: IFluidSerializer): any {
 	return serializer.decode(value);
 }
 
@@ -89,7 +88,7 @@ export function createSingleBlobSummary(
  * @internal
  */
 export function bindHandles(
-	value: any,
+	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): void {

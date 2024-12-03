@@ -12,11 +12,11 @@ import {
 	ApiModel,
 	type IResolveDeclarationReferenceResult,
 } from "@microsoft/api-extractor-model";
-import { type DocComment, type DocInheritDocTag } from "@microsoft/tsdoc";
+import type { DocComment, DocInheritDocTag } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
 
-import { defaultConsoleLogger, type Logger } from "./Logging.js";
 import type { ConfigurationBase } from "./ConfigurationBase.js";
+import { defaultConsoleLogger, type Logger } from "./Logging.js";
 
 /**
  * {@link loadModel} options.

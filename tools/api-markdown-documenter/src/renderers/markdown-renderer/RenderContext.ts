@@ -4,6 +4,7 @@
  */
 
 import type { TextFormatting } from "../../documentation-domain/index.js";
+
 import type { Renderers } from "./configuration/index.js";
 
 /**

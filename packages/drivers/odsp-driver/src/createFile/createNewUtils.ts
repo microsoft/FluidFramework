@@ -32,6 +32,7 @@ import {
 } from "./../contracts.js";
 import { EpochTracker, FetchType } from "./../epochTracker.js";
 import { getHeadersWithAuth } from "./../getUrlAndHeadersWithAuth.js";
+import { checkForKnownServerFarmType } from "./../odspUrlHelper.js";
 import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./../odspUtils.js";
 import { runWithRetry } from "./../retryUtils.js";
 
@@ -222,11 +223,12 @@ export async function createNewFluidContainerCore<T>(args: {
 		fetchType,
 		validateResponseCallback,
 	} = args;
+	const internalFarmType = checkForKnownServerFarmType(initialUrl);
 
 	return getWithRetryForTokenRefresh(async (options) => {
 		return PerformanceEvent.timedExecAsync(
 			logger,
-			{ eventName: telemetryName },
+			{ eventName: telemetryName, details: { internalFarmType } },
 			async (event) => {
 				const snapshotBody = JSON.stringify(containerSnapshot);
 				let url: string;

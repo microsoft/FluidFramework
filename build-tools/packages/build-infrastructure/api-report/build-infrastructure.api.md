@@ -14,23 +14,6 @@ import { SimpleGit } from 'simple-git';
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 // @public
-export class BuildProject<P extends IPackage> implements IBuildProject<P> {
-    constructor(searchPath: string,
-    upstreamRemotePartialUrl?: string | undefined);
-    protected readonly configFilePath: string;
-    readonly configuration: BuildProjectLayout;
-    getGitRepository(): Promise<Readonly<SimpleGit>>;
-    getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
-    get packages(): Map<PackageName, P>;
-    relativeToRepo(p: string): string;
-    get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup>;
-    reload(): void;
-    readonly root: string;
-    readonly upstreamRemotePartialUrl?: string | undefined;
-    get workspaces(): Map<WorkspaceName, IWorkspace>;
-}
-
-// @public
 export const BUILDPROJECT_CONFIG_VERSION = 1;
 
 // @public
@@ -47,6 +30,9 @@ export interface BuildProjectLayout {
 
 // @public
 export function createPackageManager(name: PackageManagerName): IPackageManager;
+
+// @public
+export function findGitRootSync(cwd?: string): string;
 
 // @public
 export interface FluidPackageJsonFields {
@@ -67,6 +53,24 @@ export function getBuildProjectConfig(searchPath: string, noCache?: boolean): {
     config: BuildProjectLayout;
     configFilePath: string;
 };
+
+// @public
+export function getChangedSinceRef<P extends IPackage>(buildProject: IBuildProject<P>, ref: string, remote?: string): Promise<{
+    files: string[];
+    dirs: string[];
+    workspaces: IWorkspace[];
+    releaseGroups: IReleaseGroup[];
+    packages: P[];
+}>;
+
+// @public
+export function getFiles(git: SimpleGit, directory: string): Promise<string[]>;
+
+// @public
+export function getMergeBaseRemote(git: SimpleGit, branch: string, remote?: string, localRef?: string): Promise<string>;
+
+// @public
+export function getRemote(git: SimpleGit, partialUrl: string | undefined): Promise<string | undefined>;
 
 // @public
 export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable {
@@ -237,6 +241,12 @@ export interface Reloadable {
 
 // @public
 export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;
+
+// @public
+export function updatePackageJsonFile<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => void): void;
+
+// @public
+export function updatePackageJsonFileAsync<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => Promise<void>): Promise<void>;
 
 // @public
 export interface WorkspaceDefinition {

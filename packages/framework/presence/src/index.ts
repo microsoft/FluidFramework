@@ -18,13 +18,6 @@
 // 	JsonSerializable,
 // } from "@fluidframework/presence/internal/core-interfaces";
 
-// If desired these are the "required" types from events.
-// export type {
-// 	Events,
-// 	IsEvent,
-// 	ISubscribable,
-// } from "@fluidframework/presence/internal/events";
-
 export type { ClientConnectionId } from "./baseTypes.js";
 
 export type {
@@ -80,7 +73,7 @@ export type {
 
 export {
 	type NotificationEmitter,
-	type NotificationSubscribable,
+	type NotificationListenable,
 	type NotificationSubscriptions,
 	Notifications,
 	type NotificationsManager,

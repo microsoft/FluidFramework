@@ -33,10 +33,10 @@ export interface ISharedObjectKind<TSharedObject> {
 }
 
 // @alpha
-export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;
+export function makeHandlesSerializable(value: unknown, serializer: IFluidSerializer, bind: IFluidHandle): any;
 
 // @alpha
-export function parseHandles(value: any, serializer: IFluidSerializer): any;
+export function parseHandles(value: unknown, serializer: IFluidSerializer): any;
 
 // @alpha
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {

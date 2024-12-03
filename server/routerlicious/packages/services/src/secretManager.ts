@@ -12,7 +12,7 @@ import * as core from "@fluidframework/server-services-core";
  */
 export class SecretManager implements core.ISecretManager {
 	public getLatestKeyVersion(): core.EncryptionKeyVersion {
-		return undefined;
+		return core.EncryptionKeyVersion.key2022;
 	}
 
 	public decryptSecret(

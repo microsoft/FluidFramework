@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type Logger } from "./Logging.js";
+import type { Logger } from "./Logging.js";
 
 /**
  * Common base interface for configuration interfaces.

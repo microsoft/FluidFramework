@@ -10,7 +10,7 @@ import {
 } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import { PlainTextNode } from "./PlainTextNode.js";
-import { type TextFormatting } from "./TextFormatting.js";
+import type { TextFormatting } from "./TextFormatting.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
 // TODO: Rename to "FormattedSpan" - this doesn't really correspond to a "span" in a traditional sense.

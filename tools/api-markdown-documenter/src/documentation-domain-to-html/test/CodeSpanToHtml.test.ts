@@ -8,7 +8,9 @@
  * Licensed under the MIT License.
  */
 import { h } from "hastscript";
+
 import { CodeSpanNode, PlainTextNode } from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 describe("CodeSpan HTML rendering tests", () => {

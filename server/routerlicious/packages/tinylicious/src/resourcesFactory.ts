@@ -49,7 +49,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		const databaseManager = new MongoDatabaseManager(
 			globalDbEnabled,
 			mongoManager,
-			null,
+			mongoManager,
 			collectionNames.nodes,
 			collectionNames.documents,
 			collectionNames.checkpoints,

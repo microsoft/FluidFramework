@@ -4,13 +4,15 @@
  */
 
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { createEmitter, type Listenable, type Off } from "../../events/index.js";
-import type { TreeNode, Unhydrated } from "./types.js";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable, Off } from "@fluidframework/core-interfaces";
+import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
 import {
 	anchorSlot,
 	type AnchorEvents,
 	type AnchorNode,
 	type AnchorSet,
+	type TreeValue,
 	type UpPath,
 } from "../../core/index.js";
 import {
@@ -446,4 +448,37 @@ export function getTreeNodeSchemaFromHydratedFlexNode(flexNode: FlexTreeNode): T
 export function getOrCreateInnerNode(treeNode: TreeNode, allowFreed = false): InnerNode {
 	const kernel = getKernel(treeNode);
 	return kernel.getOrCreateInnerNode(allowFreed);
+}
+
+/**
+ * Gets a flex node from an anchor node
+ */
+function flexNodeFromAnchor(anchorNode: AnchorNode): FlexTreeNode {
+	// the proxy is bound to an anchor node, but it may or may not have an actual flex node yet
+	const flexNode = anchorNode.slots.get(flexTreeSlot);
+	if (flexNode !== undefined) {
+		return flexNode; // If it does have a flex node, return it...
+	} // ...otherwise, the flex node must be created
+	const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
+	const cursor = context.checkout.forest.allocateCursor("getFlexNode");
+	context.checkout.forest.moveCursorToPath(anchorNode, cursor);
+	const newFlexNode = makeTree(context, cursor);
+	cursor.free();
+	return newFlexNode;
+}
+
+/**
+ * Gets a tree node from an anchor node
+ */
+export function treeNodeFromAnchor(anchorNode: AnchorNode): TreeNode | TreeValue {
+	const cached = anchorNode.slots.get(proxySlot);
+	if (cached !== undefined) {
+		return cached;
+	}
+
+	const flexNode = flexNodeFromAnchor(anchorNode);
+	const classSchema = getTreeNodeSchemaFromHydratedFlexNode(flexNode);
+	return typeof classSchema === "function"
+		? new classSchema(flexNode as unknown as InternalTreeNode)
+		: (classSchema as { create(data: FlexTreeNode): TreeValue }).create(flexNode);
 }

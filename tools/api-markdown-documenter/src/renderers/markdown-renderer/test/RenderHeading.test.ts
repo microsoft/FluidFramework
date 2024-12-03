@@ -6,6 +6,7 @@
 import { expect } from "chai";
 
 import { HeadingNode } from "../../../documentation-domain/index.js";
+
 import { testRender } from "./Utilities.js";
 
 describe("Heading Markdown rendering tests", () => {

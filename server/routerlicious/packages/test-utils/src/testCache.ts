@@ -21,13 +21,15 @@ export class TestCache implements ICache {
 		return result;
 	}
 	public async incr(key: string): Promise<number> {
-		let val = parseInt(this.map.get(key), 10) ?? 0;
+		const strVal = this.map.get(key);
+		let val = strVal ? parseInt(strVal, 10) : 0;
 		val += 1;
 		this.map.set(key, val.toString());
 		return val;
 	}
 	public async decr(key: string): Promise<number> {
-		let val = parseInt(this.map.get(key), 10) ?? 0;
+		const strVal = this.map.get(key);
+		let val = strVal ? parseInt(strVal, 10) : 0;
 		val -= 1;
 		this.map.set(key, val.toString());
 		return val;

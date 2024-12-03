@@ -6,6 +6,7 @@
 import { expect } from "chai";
 
 import { HorizontalRuleNode } from "../../../documentation-domain/index.js";
+
 import { testRender } from "./Utilities.js";
 
 describe("HorizontalRule Markdown rendering tests", () => {

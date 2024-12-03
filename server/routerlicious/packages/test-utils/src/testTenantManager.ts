@@ -40,7 +40,10 @@ export class TestTenant implements ITenant {
 		return {
 			historianUrl: this.historianUrl,
 			internalHistorianUrl: this.historianUrl,
-			credentials: null,
+			credentials: {
+				user: "test",
+				password: "test",
+			},
 			owner: this.owner,
 			repository: this.repository,
 			url: this.url,

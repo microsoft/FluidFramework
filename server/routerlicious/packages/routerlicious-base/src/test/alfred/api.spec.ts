@@ -195,8 +195,8 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
-						null,
-						null,
+						undefined,
+						undefined,
 						defaultCollaborationSessionEventEmitter,
 						undefined,
 						undefined,
@@ -208,12 +208,13 @@ describe("Routerlicious", () => {
 
 				const assertThrottle = async (
 					url: string,
-					token: string | (() => string),
-					body: any,
+					token: string | (() => string) | undefined,
+					body: any | undefined,
 					method: "get" | "post" | "patch" = "get",
 					limit: number = limitTenant,
 				): Promise<void> => {
-					const tokenProvider = typeof token === "function" ? token : () => token;
+					const tokenProvider =
+						typeof token === "function" ? token : () => token ?? "no-token";
 					for (let i = 0; i < limit; i++) {
 						// we're not interested in making the requests succeed with 200s, so just assert that not 429
 						await supertest[method](url)
@@ -231,29 +232,29 @@ describe("Routerlicious", () => {
 
 				describe("/api/v1", () => {
 					it("/ping", async () => {
-						await assertThrottle("/api/v1/ping", null, null);
+						await assertThrottle("/api/v1/ping", undefined, undefined);
 					});
 					it("/tenants/:tenantid/accesstoken", async () => {
 						await assertThrottle(
 							`/api/v1/tenants/${appTenant1.id}/accesstoken`,
 							"Bearer 12345", // Dummy bearer token
-							null,
+							undefined,
 							"post",
 						);
 					});
 					it("/:tenantId/:id/root", async () => {
 						await assertThrottle(
 							`/api/v1/${appTenant1.id}/${document1._id}/root`,
-							null,
-							null,
+							undefined,
+							undefined,
 							"patch",
 						);
 					});
 					it("/:tenantId/:id/blobs", async () => {
 						await assertThrottle(
 							`/api/v1/${appTenant1.id}/${document1._id}/blobs`,
-							null,
-							null,
+							undefined,
+							undefined,
 							"post",
 						);
 					});
@@ -264,12 +265,12 @@ describe("Routerlicious", () => {
 						await assertThrottle(
 							`/documents/${appTenant2.id}/${document1._id}`,
 							tenantToken2,
-							null,
+							undefined,
 						);
 						await assertThrottle(
 							`/documents/${appTenant1.id}/${document1._id}`,
 							tenantToken1,
-							null,
+							undefined,
 						);
 						await supertest
 							.get(`/documents/${appTenant1.id}/${document1._id}`)
@@ -294,12 +295,12 @@ describe("Routerlicious", () => {
 						await assertThrottle(
 							`/deltas/raw/${appTenant2.id}/${document1._id}`,
 							tenantToken2,
-							null,
+							undefined,
 						);
 						await assertThrottle(
 							`/deltas/raw/${appTenant1.id}/${document1._id}`,
 							tenantToken1,
-							null,
+							undefined,
 						);
 						await supertest
 							.get(`/deltas/raw/${appTenant1.id}/${document1._id}`)
@@ -310,7 +311,7 @@ describe("Routerlicious", () => {
 						await assertThrottle(
 							`/deltas/${appTenant1.id}/${document1._id}`,
 							tenantToken1,
-							null,
+							undefined,
 							"get",
 							limitGetDeltas,
 						);
@@ -323,12 +324,12 @@ describe("Routerlicious", () => {
 						await assertThrottle(
 							`/deltas/v1/${appTenant2.id}/${document1._id}`,
 							tenantToken2,
-							null,
+							undefined,
 						);
 						await assertThrottle(
 							`/deltas/v1/${appTenant1.id}/${document1._id}`,
 							tenantToken1,
-							null,
+							undefined,
 						);
 						await supertest
 							.get(`/deltas/v1/${appTenant1.id}/${document1._id}`)
@@ -339,12 +340,12 @@ describe("Routerlicious", () => {
 						await assertThrottle(
 							`/deltas/${appTenant2.id}/${document1._id}/v1`,
 							tenantToken2,
-							null,
+							undefined,
 						);
 						await assertThrottle(
 							`/deltas/${appTenant1.id}/${document1._id}/v1`,
 							tenantToken1,
-							null,
+							undefined,
 						);
 						await supertest
 							.get(`/deltas/${appTenant1.id}/${document1._id}/v1`)
@@ -411,8 +412,8 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
-						null,
-						null,
+						undefined,
+						undefined,
 						defaultCollaborationSessionEventEmitter,
 						undefined,
 						undefined,
@@ -620,8 +621,8 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
-						null,
-						null,
+						undefined,
+						undefined,
 						defaultCollaborationSessionEventEmitter,
 						undefined,
 						undefined,
@@ -975,8 +976,8 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
-						null,
-						null,
+						undefined,
+						undefined,
 						defaultCollaborationSessionEventEmitter,
 						undefined,
 						undefined,

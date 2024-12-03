@@ -9,13 +9,13 @@ import type { ApiModel } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
+import type { Suite } from "mocha";
 
+import { loadModel } from "../LoadModel.js";
 import {
 	transformApiModel,
 	type ApiItemTransformationConfiguration,
 } from "../api-item-transforms/index.js";
-import type { Suite } from "mocha";
-import { loadModel } from "../LoadModel.js";
 import type { DocumentNode } from "../documentation-domain/index.js";
 
 /**

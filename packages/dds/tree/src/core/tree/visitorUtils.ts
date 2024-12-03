@@ -13,7 +13,7 @@ import type { FieldKey } from "../schema-stored/index.js";
 import type { ProtoNodes, Root } from "./delta.js";
 import { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
-import type { PlaceIndex, Range } from "./pathTree.js";
+import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
 import { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -132,4 +132,59 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 		oldContentDestination: FieldKey,
 	): void;
 	afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void;
+}
+
+/**
+ * Creates an announced visitor with only the provided functions and uses a no op for the rest.
+ * This is provided to make some of the delta visitor definitions cleaner.
+ */
+export function createAnnouncedVisitor(visitorFunctions: {
+	free?: () => void;
+	create?: (content: ProtoNodes, destination: FieldKey) => void;
+	afterCreate?: (content: ProtoNodes, destination: FieldKey) => void;
+	beforeDestroy?: (field: FieldKey, count: number) => void;
+	destroy?: (detachedField: FieldKey, count: number) => void;
+	beforeAttach?: (source: FieldKey, count: number, destination: PlaceIndex) => void;
+	attach?: (source: FieldKey, count: number, destination: PlaceIndex) => void;
+	afterAttach?: (source: FieldKey, destination: Range) => void;
+	beforeDetach?: (source: Range, destination: FieldKey) => void;
+	afterDetach?: (source: PlaceIndex, count: number, destination: FieldKey) => void;
+	detach?: (source: Range, destination: FieldKey) => void;
+	beforeReplace?: (
+		newContent: FieldKey,
+		oldContent: Range,
+		oldContentDestination: FieldKey,
+	) => void;
+	replace?: (
+		newContentSource: FieldKey,
+		range: Range,
+		oldContentDestination: FieldKey,
+	) => void;
+	afterReplace?: (newContentSource: FieldKey, newContent: Range, oldContent: FieldKey) => void;
+	enterNode?: (index: NodeIndex) => void;
+	exitNode?: (index: NodeIndex) => void;
+	enterField?: (key: FieldKey) => void;
+	exitField?: (key: FieldKey) => void;
+}): AnnouncedVisitor {
+	const noOp = (): void => {};
+	return {
+		free: visitorFunctions.free ?? noOp,
+		create: visitorFunctions.create ?? noOp,
+		afterCreate: visitorFunctions.afterCreate ?? noOp,
+		beforeDestroy: visitorFunctions.beforeDestroy ?? noOp,
+		destroy: visitorFunctions.destroy ?? noOp,
+		beforeAttach: visitorFunctions.beforeAttach ?? noOp,
+		attach: visitorFunctions.attach ?? noOp,
+		afterAttach: visitorFunctions.afterAttach ?? noOp,
+		beforeDetach: visitorFunctions.beforeDetach ?? noOp,
+		detach: visitorFunctions.detach ?? noOp,
+		afterDetach: visitorFunctions.afterDetach ?? noOp,
+		beforeReplace: visitorFunctions.beforeReplace ?? noOp,
+		replace: visitorFunctions.replace ?? noOp,
+		afterReplace: visitorFunctions.afterReplace ?? noOp,
+		enterNode: visitorFunctions.enterNode ?? noOp,
+		exitNode: visitorFunctions.exitNode ?? noOp,
+		enterField: visitorFunctions.enterField ?? noOp,
+		exitField: visitorFunctions.exitField ?? noOp,
+	};
 }

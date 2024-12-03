@@ -3,30 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ApiCallSignature,
-	type ApiClass,
-	type ApiConstructSignature,
-	type ApiConstructor,
-	type ApiEntryPoint,
-	type ApiEnum,
-	type ApiEnumMember,
-	type ApiFunction,
-	type ApiIndexSignature,
-	type ApiInterface,
-	type ApiItem,
-	type ApiMethod,
-	type ApiMethodSignature,
-	type ApiModel,
-	type ApiNamespace,
-	type ApiPropertyItem,
-	type ApiTypeAlias,
-	type ApiVariable,
+import type {
+	ApiCallSignature,
+	ApiClass,
+	ApiConstructSignature,
+	ApiConstructor,
+	ApiEntryPoint,
+	ApiEnum,
+	ApiEnumMember,
+	ApiFunction,
+	ApiIndexSignature,
+	ApiInterface,
+	ApiItem,
+	ApiMethod,
+	ApiMethodSignature,
+	ApiModel,
+	ApiNamespace,
+	ApiPropertyItem,
+	ApiTypeAlias,
+	ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { type SectionNode } from "../../documentation-domain/index.js";
+import type { SectionNode } from "../../documentation-domain/index.js";
 import * as DefaultTransformationImplementations from "../default-implementations/index.js";
-import { type ApiItemTransformationConfiguration } from "./Configuration.js";
+
+import type { ApiItemTransformationConfiguration } from "./Configuration.js";
 
 /**
  * Signature for a function which generates one or more {@link SectionNode}s describing an

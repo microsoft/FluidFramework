@@ -758,6 +758,24 @@ declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry = req
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_NamedFluidDataStoreRegistryEntry2": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 = requireAssignableTo<TypeOnly<old.NamedFluidDataStoreRegistryEntry2>, TypeOnly<current.NamedFluidDataStoreRegistryEntry2>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_NamedFluidDataStoreRegistryEntry2": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 = requireAssignableTo<TypeOnly<current.NamedFluidDataStoreRegistryEntry2>, TypeOnly<old.NamedFluidDataStoreRegistryEntry2>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_SummarizeInternalFn": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_SummarizeInternalFn = requireAssignableTo<TypeOnly<old.SummarizeInternalFn>, TypeOnly<current.SummarizeInternalFn>>

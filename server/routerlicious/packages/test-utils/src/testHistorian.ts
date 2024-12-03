@@ -29,6 +29,7 @@ import {
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
+	NetworkError,
 } from "@fluidframework/server-services-client";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
@@ -109,6 +110,9 @@ export class TestHistorian implements IHistorian {
 			throw new Error("blob ID is undefined");
 		}
 		const blob = await this.blobs.findOne({ _id: sha });
+		if (!blob) {
+			throw new NetworkError(404, "Blob not found");
+		}
 
 		return {
 			content: IsoBuffer.from(
@@ -117,7 +121,8 @@ export class TestHistorian implements IHistorian {
 			).toString("base64"),
 			encoding: "base64",
 			sha: blob._id,
-			size: blob.content !== undefined ? blob.content.length : blob.value?.content.length,
+			size:
+				blob.content !== undefined ? blob.content.length : blob.value?.content.length ?? -1,
 			url: "",
 		};
 	}
@@ -148,7 +153,7 @@ export class TestHistorian implements IHistorian {
 	}
 
 	public async getCommits(sha: string, count: number): Promise<ICommitDetails[]> {
-		const commit = await this.getCommit(sha);
+		const commit = await this.getCommit(sha).catch(() => undefined);
 		return commit
 			? [
 					{
@@ -171,27 +176,28 @@ export class TestHistorian implements IHistorian {
 		let commit = await this.commits.findOne({ _id: sha });
 		if (!commit) {
 			const ref = await this.getRef(`refs/heads/${sha}`);
-			if (ref !== undefined) {
+			if (ref !== undefined && ref !== null) {
 				commit = await this.commits.findOne({ _id: ref.object.sha });
 			}
 		}
-		if (commit) {
-			return {
-				author: {} as Partial<IAuthor> as IAuthor,
-				committer: {} as Partial<ICommitter> as ICommitter,
-				message: commit.message ?? commit.value?.message,
-				parents:
-					commit.parents !== undefined
-						? commit.parents.map<ICommitHash>((p) => ({ sha: p, url: "" }))
-						: commit.value?.parents.map<ICommitHash>((p) => ({ sha: p, url: "" })),
-				sha: commit._id,
-				tree: {
-					sha: commit.tree ?? commit.value?.tree,
-					url: "",
-				},
-				url: "",
-			};
+		if (!commit) {
+			throw new NetworkError(404, "Commit not found");
 		}
+		return {
+			author: {} as Partial<IAuthor> as IAuthor,
+			committer: {} as Partial<ICommitter> as ICommitter,
+			message: commit.message ?? commit.value?.message,
+			parents:
+				(commit.parents !== undefined
+					? commit.parents.map<ICommitHash>((p) => ({ sha: p, url: "" }))
+					: commit.value?.parents.map<ICommitHash>((p) => ({ sha: p, url: "" }))) ?? [],
+			sha: commit._id,
+			tree: {
+				sha: commit.tree ?? commit.value?.tree,
+				url: "",
+			},
+			url: "",
+		};
 	}
 
 	public async createCommit(commit: ICreateCommitParams): Promise<ICommit> {
@@ -216,26 +222,31 @@ export class TestHistorian implements IHistorian {
 		throw new Error("Not Supported");
 	}
 
-	public async getRef(ref: string): Promise<IRef> {
+	public async getRef(ref: string): Promise<IRef | null> {
 		const _id = ref.startsWith("refs/") ? ref.substr(5) : ref;
 		const val = await this.refs.findOne({ _id });
-		if (val) {
-			return {
-				ref: val.ref ?? val.value?.ref,
-				url: "",
-				object: {
-					sha: val.sha ?? val.value?.sha,
-					url: "",
-					type: "",
-				},
-			};
+		if (!val) {
+			return null;
 		}
+		return {
+			ref: val.ref ?? val.value?.ref,
+			url: "",
+			object: {
+				sha: val.sha ?? val.value?.sha,
+				url: "",
+				type: "",
+			},
+		};
 	}
 
 	public async createRef(params: ICreateRefParams): Promise<IRef> {
 		const _id = params.ref.startsWith("refs/") ? params.ref.substr(5) : params.ref;
 		await this.refs.insertOne({ _id, ...params, value: params });
-		return this.getRef(params.ref);
+		const newRefFromStorage = await this.getRef(params.ref);
+		if (newRefFromStorage === null) {
+			throw new Error("Newly created ref not found in storage.");
+		}
+		return newRefFromStorage;
 	}
 
 	public async updateRef(ref: string, params: IPatchRefParams): Promise<IRef> {
@@ -243,7 +254,11 @@ export class TestHistorian implements IHistorian {
 		await (params.force
 			? this.refs.upsert({ _id }, { sha: params.sha, ref }, {})
 			: this.refs.update({ _id }, { sha: params.sha, ref }, {}));
-		return this.getRef(ref);
+		const newRefFromStorage = await this.getRef(ref);
+		if (newRefFromStorage === null) {
+			throw new Error("Newly created ref not found in storage.");
+		}
+		return newRefFromStorage;
 	}
 
 	public async deleteRef(ref: string): Promise<void> {
@@ -274,31 +289,32 @@ export class TestHistorian implements IHistorian {
 
 	public async getTreeHelper(sha: string, recursive: boolean, path: string = ""): Promise<ITree> {
 		const tree = await this.trees.findOne({ _id: sha });
-		if (tree) {
-			const finalTree: ITree = {
-				sha: tree._id,
+		if (!tree) {
+			throw new NetworkError(404, "Tree not found");
+		}
+		const finalTree: ITree = {
+			sha: tree._id,
+			url: "",
+			tree: [],
+		};
+		for (const entry of tree.tree ?? tree.value?.tree ?? []) {
+			const entryPath: string = path === "" ? entry.path : `${path}/${entry.path}`;
+			const treeEntry: ITreeEntry = {
+				mode: entry.mode,
+				path: entryPath,
+				sha: entry.sha,
+				size: 0,
+				type: entry.type,
 				url: "",
-				tree: [],
 			};
-			for (const entry of tree.tree ?? tree.value?.tree ?? []) {
-				const entryPath: string = path === "" ? entry.path : `${path}/${entry.path}`;
-				const treeEntry: ITreeEntry = {
-					mode: entry.mode,
-					path: entryPath,
-					sha: entry.sha,
-					size: 0,
-					type: entry.type,
-					url: "",
-				};
-				finalTree.tree.push(treeEntry);
-				if (entry.type === "tree" && recursive) {
-					const childTree = await this.getTreeHelper(entry.sha, recursive, entryPath);
-					if (childTree) {
-						finalTree.tree = finalTree.tree.concat(childTree.tree);
-					}
+			finalTree.tree.push(treeEntry);
+			if (entry.type === "tree" && recursive) {
+				const childTree = await this.getTreeHelper(entry.sha, recursive, entryPath);
+				if (childTree) {
+					finalTree.tree = finalTree.tree.concat(childTree.tree);
 				}
 			}
-			return finalTree;
 		}
+		return finalTree;
 	}
 }

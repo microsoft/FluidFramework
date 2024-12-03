@@ -17,10 +17,10 @@ import {
 
 import type { SectionNode } from "../../documentation-domain/index.js";
 import type { ApiModuleLike } from "../../utilities/index.js";
+import { getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
+import { filterItems } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
-import { filterItems } from "../ApiItemTransformUtilities.js";
-import { getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
 
 /**
  * Default documentation transform for module-like API items (packages, namespaces).

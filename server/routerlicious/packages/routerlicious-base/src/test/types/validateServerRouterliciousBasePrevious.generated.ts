@@ -529,6 +529,7 @@ declare function get_current_ClassDeclaration_RiddlerResources():
 declare function use_old_ClassDeclaration_RiddlerResources(
     use: TypeOnly<old.RiddlerResources>): void;
 use_old_ClassDeclaration_RiddlerResources(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_RiddlerResources());
 
 /*

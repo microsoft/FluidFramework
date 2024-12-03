@@ -1,5 +1,58 @@
 # fluid-framework
 
+## 2.11.0
+
+### Minor Changes
+
+-   Revertible objects can now be cloned using `RevertibleAlpha.clone()` ([#23044](https://github.com/microsoft/FluidFramework/pull/23044)) [5abfa015af](https://github.com/microsoft/FluidFramework/commit/5abfa015aff9d639d82830f3ad828324d5680bd7)
+
+    The `DisposableRevertible` interface has been replaced with `RevertibleAlpha`. The new `RevertibleAlpha` interface extends `Revertible` and includes a `clone(branch: TreeBranch)` method to facilitate cloning a Revertible to a specified target branch. The source branch where the `RevertibleAlpha` was created must share revision logs with the target branch where the `RevertibleAlpha` is being cloned. If this condition is not met, the operation will throw an error.
+
+-   Providing unused properties in object literals for building empty ObjectNodes no longer compiles ([#23162](https://github.com/microsoft/FluidFramework/pull/23162)) [dc3c30019e](https://github.com/microsoft/FluidFramework/commit/dc3c30019ef869b27b9468bff59f10434d3c5c68)
+
+    ObjectNodes with no fields will now emit a compiler error if constructed from an object literal with fields.
+    This matches the behavior of non-empty ObjectNodes which already gave errors when unexpected properties were provided.
+
+    ```typescript
+    class A extends schemaFactory.object("A", {}) {}
+    const a = new A({ thisDoesNotExist: 5 }); // This now errors.
+    ```
+
+-   ✨ New! Alpha APIs for indexing ([#22491](https://github.com/microsoft/FluidFramework/pull/22491)) [cd95357ba8](https://github.com/microsoft/FluidFramework/commit/cd95357ba8f8cea6615f4fb0e9a62743770dce83)
+
+    SharedTree now supports indexing via two new APIs, `createSimpleTreeIndex` and `createIdentifierIndex`.
+
+    `createSimpleTreeIndex` is used to create a `SimpleTreeIndex` which indexes nodes based on their schema.
+    Depending on the schema, the user specifies which field to key the node on.
+
+    The following example indexes `IndexableParent`s and `IndexableChild`s and returns the first node of a particular key:
+
+    ```typescript
+    function isStringKey(key: TreeIndexKey): key is string {
+    	return typeof key === "string";
+    }
+
+    const index = createSimpleTreeIndex(
+    	view,
+    	new Map([
+    		[IndexableParent, parentKey],
+    		[IndexableChild, childKey],
+    	]),
+    	(nodes) => nodes[0],
+    	isStringKey,
+    	[IndexableParent, IndexableChild],
+    );
+    ```
+
+    `createIdentifierIndex` is used to create an `IdentifierIndex` which provides an efficient way to retrieve nodes using the node identifier.
+
+    Example:
+
+    ```typescript
+    const identifierIndex = createIdentifierIndex(view);
+    const node = identifierIndex.get("node12345");
+    ```
+
 ## 2.10.0
 
 ### Minor Changes

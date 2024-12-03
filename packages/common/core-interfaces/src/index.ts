@@ -48,3 +48,14 @@ export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./pr
 export type { ConfigTypes, IConfigProviderBase } from "./config.js";
 export type { ISignalEnvelope } from "./messages.js";
 export type { ErasedType } from "./erasedType.js";
+
+export type {
+	HasListeners,
+	IEmitter,
+	IsListener,
+	Listeners,
+	Listenable,
+	MapGetSet,
+	NoListenersCallback,
+	Off,
+} from "./events/index.js";

@@ -9,6 +9,9 @@ module.exports = {
 		project: ["./tsconfig.json"],
 	},
 	rules: {
+		// Too many false positives with array access
+		"@fluid-internal/fluid/no-unchecked-record-access": "off",
+
 		// Rule is reported in a lot of places where it would be invalid to follow the suggested pattern
 		"@typescript-eslint/class-literal-property-style": "off",
 

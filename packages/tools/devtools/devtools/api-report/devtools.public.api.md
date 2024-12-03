@@ -4,12 +4,4 @@
 
 ```ts
 
-export { ContainerKey }
-
-export { createDevtoolsLogger }
-
-export { HasContainerKey }
-
-export { IDevtoolsLogger }
-
 ```

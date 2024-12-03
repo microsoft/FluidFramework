@@ -40,12 +40,13 @@ export const getAuthorizationTokenFromCredentials = (credentials: ICredentials):
 export class Historian implements IHistorian {
 	private readonly defaultQueryString: Record<string, string | number | boolean> = {};
 	private readonly cacheBust: boolean;
+	private readonly restWrapper: RestWrapper;
 
 	constructor(
 		public endpoint: string,
 		private readonly historianApi: boolean,
 		disableCache: boolean,
-		private readonly restWrapper?: RestWrapper,
+		restWrapper?: RestWrapper,
 	) {
 		if (disableCache && this.historianApi) {
 			this.defaultQueryString.disableCache = disableCache;
@@ -54,9 +55,7 @@ export class Historian implements IHistorian {
 			this.cacheBust = disableCache;
 		}
 
-		if (this.restWrapper === undefined) {
-			this.restWrapper = new BasicRestWrapper(this.endpoint);
-		}
+		this.restWrapper = restWrapper ?? new BasicRestWrapper(this.endpoint);
 	}
 
 	public async getHeader(sha: string): Promise<any> {

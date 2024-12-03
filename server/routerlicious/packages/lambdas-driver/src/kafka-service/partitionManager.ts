@@ -122,10 +122,10 @@ export class PartitionManager extends EventEmitter {
 		this.removeAllListeners();
 	}
 
-	public pause(partitionId: number): void {
+	public pause(partitionId: number, offset: number): void {
 		const partition = this.partitions.get(partitionId);
 		if (partition) {
-			partition.pause();
+			partition.pause(offset);
 		} else {
 			throw new Error(`PartitionId ${partitionId} not found for pause`);
 		}

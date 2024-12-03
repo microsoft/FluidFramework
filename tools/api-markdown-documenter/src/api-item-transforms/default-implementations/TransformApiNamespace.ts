@@ -7,6 +7,7 @@ import type { ApiItem, ApiNamespace } from "@microsoft/api-extractor-model";
 
 import type { SectionNode } from "../../documentation-domain/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
+
 import { transformApiModuleLike } from "./TransformApiModuleLike.js";
 
 /**

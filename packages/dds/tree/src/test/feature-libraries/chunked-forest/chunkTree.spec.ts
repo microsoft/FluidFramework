@@ -11,11 +11,10 @@ import {
 	type FieldKey,
 	type Value,
 	mapCursorField,
+	tryGetChunk,
 } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
-// eslint-disable-next-line import/no-internal-modules
-import { tryGetChunk } from "../../../feature-libraries/chunked-forest/chunk.js";
 import {
 	type ChunkPolicy,
 	type ShapeInfo,

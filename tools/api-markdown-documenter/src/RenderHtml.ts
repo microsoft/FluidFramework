@@ -7,14 +7,14 @@ import * as Path from "node:path";
 
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
+import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
+import type { Logger } from "./Logging.js";
 import {
 	type ApiItemTransformationConfiguration,
 	transformApiModel,
 } from "./api-item-transforms/index.js";
-import { type DocumentNode } from "./documentation-domain/index.js";
-import { type Logger } from "./Logging.js";
+import type { DocumentNode } from "./documentation-domain/index.js";
 import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "./renderers/index.js";
-import { type FileSystemConfiguration } from "./FileSystemConfiguration.js";
 
 /**
  * Renders the provided model and its contents, and writes each document to a file on disk.

@@ -25,6 +25,9 @@ export class MongoManager {
 		this.databaseP = this.connect(this.global);
 		this.healthCheck = async (): Promise<void> => {
 			const database = await this.databaseP;
+			if (database.healthCheck === undefined) {
+				return;
+			}
 			return database.healthCheck();
 		};
 	}

@@ -23,7 +23,7 @@ import {
 } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { StartupCheck } from "@fluidframework/server-services-shared";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
  * @internal
@@ -48,6 +48,7 @@ export class AlfredResources implements core.IResources {
 		public documentRepository: core.IDocumentRepository,
 		public documentDeleteService: IDocumentDeleteService,
 		public startupCheck: IReadinessCheck,
+		public redisClientConnectionManagers: utils.IRedisClientConnectionManager[],
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
@@ -76,11 +77,15 @@ export class AlfredResources implements core.IResources {
 		const serviceMessageManagerP = this.serviceMessageResourceManager
 			? this.serviceMessageResourceManager.close()
 			: Promise.resolve();
+		const redisClientConnectionManagersP = closeRedisClientConnections(
+			this.redisClientConnectionManagers,
+		);
 		await Promise.all([
 			producerClosedP,
 			mongoClosedP,
 			tokenRevocationManagerP,
 			serviceMessageManagerP,
+			redisClientConnectionManagersP,
 		]);
 	}
 }
@@ -108,6 +113,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
+		// List of Redis client connection managers that need to be closed on dispose
+		const redisClientConnectionManagers: utils.IRedisClientConnectionManager[] = [];
 
 		const producer = services.createProducer(
 			kafkaLibrary,
@@ -149,6 +156,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfig2.slotsRefreshTimeout,
 						retryDelays,
 				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForJwtCache);
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
 
 		// Database connection for global db if enabled
@@ -156,7 +164,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 		const factory = await services.getDbFactory(config);
 		if (globalDbEnabled) {
-			globalDbMongoManager = new core.MongoManager(factory, false, null, true);
+			globalDbMongoManager = new core.MongoManager(
+				factory,
+				false,
+				undefined /* retryDelayMs */,
+				true /* global */,
+			);
 		}
 
 		// Database connection for operations db
@@ -199,7 +212,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const defaultTTLInSeconds = 864000;
 		const checkpointsTTLSeconds =
 			config.get("checkpoints:checkpointsTTLInSeconds") ?? defaultTTLInSeconds;
-		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
+		if (checkpointsCollection.createTTLIndex !== undefined) {
+			await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
+		}
 
 		const nodeCollectionName = config.get("mongo:collectionNames:nodes");
 
@@ -226,6 +241,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfigForThrottling.slotsRefreshTimeout,
 						retryDelays,
 				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
@@ -399,6 +415,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentRepository,
 			documentDeleteService,
 			startupCheck,
+			redisClientConnectionManagers,
 			tokenRevocationManager,
 			revokedTokenChecker,
 			collaborationSessionEventEmitter,

@@ -112,7 +112,7 @@ export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageSto
 		await this.redisClientConnectionManager.getRedisClient().lpush(id, usageDataString);
 	}
 
-	public async getUsageData(id: string): Promise<IUsageData> {
+	public async getUsageData(id: string): Promise<IUsageData | undefined> {
 		const usageDataString = await this.redisClientConnectionManager.getRedisClient().rpop(id);
 		if (usageDataString) {
 			return JSON.parse(usageDataString) as IUsageData;

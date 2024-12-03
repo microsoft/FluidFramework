@@ -10,6 +10,7 @@
 import { h } from "hastscript";
 
 import { LinkNode, PlainTextNode } from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 describe("Link HTML rendering tests", () => {

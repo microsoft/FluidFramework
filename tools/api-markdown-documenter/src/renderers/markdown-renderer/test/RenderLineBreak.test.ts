@@ -6,6 +6,7 @@
 import { expect } from "chai";
 
 import { LineBreakNode } from "../../../documentation-domain/index.js";
+
 import { testRender } from "./Utilities.js";
 
 describe("LineBreak Markdown rendering tests", () => {

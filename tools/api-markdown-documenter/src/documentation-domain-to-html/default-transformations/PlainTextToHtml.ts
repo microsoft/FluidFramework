@@ -8,8 +8,10 @@
 import "hast-util-raw";
 
 import type { Nodes as HastTree } from "hast";
+
 import type { PlainTextNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
+
 import { applyFormatting } from "./Utilities.js";
 
 /**

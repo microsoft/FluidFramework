@@ -26,6 +26,8 @@ module.exports = {
 				devDependencies: ["src/**/test/**"],
 			},
 		],
+
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 	overrides: [
 		{

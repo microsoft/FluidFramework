@@ -3,22 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ApiEntryPoint,
-	type ApiItem,
-	type ApiModel,
-	type ApiPackage,
-} from "@microsoft/api-extractor-model";
+import type { ApiEntryPoint, ApiItem, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
 
-import { type DocumentNode, type SectionNode } from "../documentation-domain/index.js";
+import type { DocumentNode, SectionNode } from "../documentation-domain/index.js";
+
+import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
+import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 import { createDocument } from "./Utilities.js";
 import {
 	type ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
-import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
 import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers/index.js";
-import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 
 /**
  * Renders the provided model and its contents to a series of {@link DocumentNode}s.

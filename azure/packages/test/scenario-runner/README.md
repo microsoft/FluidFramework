@@ -2,7 +2,7 @@
 
 ## Azure Scenario Runner
 
-This package provides a reference application that executes pre-set scenarios with the intent of measuring the Fluid Framework's performance and reliability. We primarily use this package as part of a pipeline scheduled to run periodically to measure, log, and report various performance and reliability metrics. These metrics can then be used to gauge an undrestanding of the expected behavior/performance of the Fluid Framework in these various scenarios, which can help define the SLA.
+This package provides a reference application that executes pre-set scenarios with the intent of measuring the Fluid Framework's performance and reliability. We primarily use this package as part of a pipeline scheduled to run periodically to measure, log, and report various performance and reliability metrics. These metrics can then be used to gauge an understanding of the expected behavior/performance of the Fluid Framework in these various scenarios, which can help define the SLA.
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
@@ -66,11 +66,11 @@ This scenario creates/loads a document and attempts to add many nested `SharedMa
 
 ## Running the perf tests locally
 
-1. Set the `azure__fluid__relay__service__tenantId` environment variable to equal your FRS TenantID
-2. Set the `azure__fluid__relay__service__tenantKey` environment variable to equal your FRS Tenant's Primary Key
-3. Set the `azure__fluid__relay__service__function__url` environment variable to equal your FRS Service Function URL
-4. Set the `azure__fluid__relay__service__endpoint` environment variable to equal the Alfred endpoint of your FRS tenant
-5. (Optional) Set the `azure__fluid__relay__service__region` environment variable to equal the region of your FRS tenant (eg. `westus2`, `westus3`, `eastus`, `westeurope`)
+1. Set the `azure__fluid__relay__service__tenantId` environment variable to equal your Azure Fluid Relay (AFR) TenantID
+2. Set the `azure__fluid__relay__service__tenantKey` environment variable to equal your AFR Tenant's Primary Key
+3. Set the `azure__fluid__relay__service__function__url` environment variable to equal your AFR Service Function URL
+4. Set the `azure__fluid__relay__service__endpoint` environment variable to equal the Alfred endpoint of your AFR tenant
+5. (Optional) Set the `azure__fluid__relay__service__region` environment variable to equal the region of your AFR tenant (eg. `westus2`, `westus3`, `eastus`, `westeurope`)
 6. Run the test with `npm run start`
 
 ## Configuring the test configuration
@@ -81,7 +81,7 @@ The test configuration file `testConfig_v1.yml` can be configured to modify the 
 
 [TBD]
 
-Scenario runnner for FRS and Azure Local Service. This package can be used to create and execute various scenarios involving azure-client, IFluidContainer and a range of distributed data structures (DDSes), while collecting telemetry and validating state in the process. Scenarios are sourced via yaml config files.
+Scenario runner for AFR and Azure Local Service. This package can be used to create and execute various scenarios involving azure-client, IFluidContainer and a range of distributed data structures (DDSes), while collecting telemetry and validating state in the process. Scenarios are sourced via yaml config files.
 
 You can add new scenarios by following existing patterns (see `MapTrafficRunner` or `DocLoaderRunner` for examples) and adding additional test configs to the `configs` directory. Then, run your scenario with the command: `npm run start:scenario ./configs/<config-name>.yml`.
 

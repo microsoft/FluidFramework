@@ -12,6 +12,7 @@ import {
 	TableHeaderRowNode,
 	TableNode,
 } from "../../../documentation-domain/index.js";
+
 import { testRender } from "./Utilities.js";
 
 describe("Table Markdown rendering tests", () => {

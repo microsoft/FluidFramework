@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ApiItem } from "@microsoft/api-extractor-model";
+import type { ApiItem } from "@microsoft/api-extractor-model";
 import {
 	type DocCodeSpan,
 	type DocDeclarationReference,
@@ -20,7 +20,8 @@ import {
 	type DocHtmlStartTag,
 } from "@microsoft/tsdoc";
 
-import { type Link } from "../Link.js";
+import type { ConfigurationBase } from "../ConfigurationBase.js";
+import type { Link } from "../Link.js";
 import {
 	CodeSpanNode,
 	type DocumentationNode,
@@ -34,9 +35,9 @@ import {
 	SingleLineSpanNode,
 	SpanNode,
 } from "../documentation-domain/index.js";
-import { type ConfigurationBase } from "../ConfigurationBase.js";
+
 import { getTsdocNodeTransformationOptions } from "./Utilities.js";
-import { type ApiItemTransformationConfiguration } from "./configuration/index.js";
+import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
 
 /**
  * Library of transformations from {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode}s

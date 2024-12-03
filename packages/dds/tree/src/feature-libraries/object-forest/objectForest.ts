@@ -4,10 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
 
 import {
 	type Anchor,
 	AnchorSet,
+	type AnnouncedVisitor,
 	type CursorLocationType,
 	type DeltaVisitor,
 	type DetachedField,
@@ -31,9 +34,9 @@ import {
 	type UpPath,
 	type Value,
 	aboveRootPlaceholder,
+	combineVisitors,
 	deepCopyMapTree,
 } from "../../core/index.js";
-import { createEmitter, type Listenable } from "../../events/index.js";
 import {
 	assertNonNegativeSafeInteger,
 	assertValidIndex,
@@ -72,6 +75,7 @@ export class ObjectForest implements IEditableForest {
 
 	// All cursors that are in the "Current" state. Must be empty when editing.
 	public readonly currentCursors: Set<Cursor> = new Set();
+	private readonly deltaVisitors: Set<() => AnnouncedVisitor> = new Set();
 
 	readonly #events = createEmitter<ForestEvents>();
 	public readonly events: Listenable<ForestEvents> = this.#events;
@@ -254,9 +258,23 @@ export class ObjectForest implements IEditableForest {
 			}
 		}
 
-		const visitor = new Visitor(this);
-		this.activeVisitor = visitor;
-		return visitor;
+		const forestVisitor = new Visitor(this);
+		const announcedVisitors: AnnouncedVisitor[] = [];
+		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
+		const combinedVisitor = combineVisitors(
+			[forestVisitor, ...announcedVisitors],
+			announcedVisitors,
+		);
+		this.activeVisitor = combinedVisitor;
+		return combinedVisitor;
+	}
+
+	public registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
+		this.deltaVisitors.add(visitor);
+	}
+
+	public deregisterAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
+		this.deltaVisitors.delete(visitor);
 	}
 
 	private nextRange = 0;

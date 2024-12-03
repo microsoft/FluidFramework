@@ -7,12 +7,38 @@ import { strict as assert } from "assert";
 
 import { IClient } from "@fluidframework/driver-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 
 import { DefaultTokenProvider } from "../defaultTokenProvider.js";
+import { DeltaStorageService } from "../deltaStorageService.js";
 import { R11sDocumentDeltaConnection } from "../documentDeltaConnection.js";
 import { DocumentService } from "../documentService.js";
 import { RouterliciousDocumentServiceFactory } from "../documentServiceFactory.js";
+import type { IR11sResponse } from "../restWrapper.js";
+import { RestWrapper } from "../restWrapperBase.js";
+
+class MockRestWrapper extends RestWrapper {
+	protected async request<T>(): Promise<IR11sResponse<T>> {
+		throw new Error("Method not implemented.");
+	}
+	public async get(url: string, headers?: Record<string, string>): Promise<any> {
+		const headerElements = headers
+			? Object.entries(headers)
+					.map(([key, value]) => `${key}=${value}`)
+					.join("&")
+			: "";
+		const modifiedUrl = `${url}/${headerElements}`;
+		/* Usually the response would be the ops from the server but here we are sending
+	the modified url to check what information is being sent with the link. */
+		const response = {
+			content: modifiedUrl,
+			propsToLog: {},
+			requestUrl: `${modifiedUrl}${"/requestUrl"}`,
+		};
+		return response;
+	}
+}
 
 describe("DocumentService", () => {
 	let documentService: DocumentService;
@@ -141,5 +167,28 @@ describe("DocumentService", () => {
 		await documentService.connectToDeltaStream(client);
 		assert.equal(documentService.policies?.summarizeProtocolTree, true);
 		stubbedDeltaConnectionCreate.restore();
+	});
+
+	it("DocumentDeltaStorageService sends fetchReason along with fetchMessages", async () => {
+		// Create fake restWrapperBase
+		const restWrapperBase = new MockRestWrapper();
+		const testLogger = new MockLogger();
+		const documentDeltaStorageService = new DeltaStorageService(
+			"https://mock.url/deltaStorageUrl",
+			restWrapperBase,
+			testLogger.toTelemetryLogger(),
+		);
+		const message = await documentDeltaStorageService.get(
+			"tenantId",
+			"id",
+			1,
+			10,
+			"testReason",
+		);
+		assert.equal(
+			message.messages,
+			// Expected to be from 0 because in the get method we are subtracting 1 from the from value
+			"https://mock.url/deltaStorageUrl/from=0&to=10&fetchReason=testReason",
+		);
 	});
 });

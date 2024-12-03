@@ -693,7 +693,7 @@ describe("sharedTreeView", () => {
 			viewBranch.root.insertAtEnd("43");
 			tree.merge(treeBranch, false);
 			assert.deepEqual(viewBranch.root, ["42", "43"]);
-			assert.equal(viewBranch.checkout.transaction.inProgress(), false);
+			assert.equal(viewBranch.checkout.transaction.isInProgress(), false);
 		});
 
 		itView("do not close across forks", ({ view, tree }) => {
@@ -704,7 +704,7 @@ describe("sharedTreeView", () => {
 			view.root.insertAtEnd("A");
 			assert.throws(
 				() => viewBranch.checkout.transaction.commit(),
-				(e: Error) => validateAssertionError(e, "No transaction is currently in progress"),
+				(e: Error) => validateAssertionError(e, "No transaction to commit"),
 			);
 		});
 
@@ -801,6 +801,37 @@ describe("sharedTreeView", () => {
 			},
 			{ skip: true },
 		);
+
+		itView("dispose branches created during the transaction", ({ view, tree }) => {
+			const branchA = tree.branch();
+			view.checkout.transaction.start();
+			const branchB = tree.branch();
+			view.checkout.transaction.start();
+			const branchC = tree.branch();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, false);
+			assert.equal(branchC.disposed, false);
+			view.checkout.transaction.abort();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, false);
+			assert.equal(branchC.disposed, true);
+			view.checkout.transaction.commit();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, true);
+			assert.equal(branchC.disposed, true);
+		});
+
+		itView("statuses are reported correctly", ({ view }) => {
+			assert.equal(view.checkout.transaction.isInProgress(), false);
+			view.checkout.transaction.start();
+			assert.equal(view.checkout.transaction.isInProgress(), true);
+			view.checkout.transaction.start();
+			assert.equal(view.checkout.transaction.isInProgress(), true);
+			view.checkout.transaction.commit();
+			assert.equal(view.checkout.transaction.isInProgress(), true);
+			view.checkout.transaction.abort();
+			assert.equal(view.checkout.transaction.isInProgress(), false);
+		});
 	});
 
 	describe("disposal", () => {

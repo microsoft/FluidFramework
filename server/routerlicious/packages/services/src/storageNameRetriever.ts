@@ -13,6 +13,6 @@ export class StorageNameRetriever implements IStorageNameRetriever {
 	public constructor() {}
 
 	public async get(tenantId: string, documentId: string): Promise<string> {
-		return undefined;
+		return "Unknown";
 	}
 }

@@ -24,9 +24,9 @@ import { ensureTopics } from "./kafkaTopics";
  */
 export class KafkaNodeProducer implements IProducer {
 	private readonly messages = new Map<string, IPendingBoxcar[]>();
-	private client: kafka.KafkaClient;
-	private producer: kafka.Producer;
-	private sendPending: NodeJS.Immediate;
+	private client!: kafka.KafkaClient;
+	private producer!: kafka.Producer;
+	private sendPending?: NodeJS.Immediate;
 	private readonly events = new EventEmitter();
 	private connecting = false;
 	private connected = false;
@@ -60,10 +60,13 @@ export class KafkaNodeProducer implements IProducer {
 		const key = `${tenantId}/${documentId}`;
 
 		// Get the list of boxcars for the given key
-		if (!this.messages.has(key)) {
-			this.messages.set(key, [new PendingBoxcar(tenantId, documentId)]);
+		const existingBoxcars = this.messages.get(key);
+		const boxcars: IPendingBoxcar[] = existingBoxcars ?? [
+			new PendingBoxcar(tenantId, documentId),
+		];
+		if (!existingBoxcars) {
+			this.messages.set(key, boxcars);
 		}
-		const boxcars = this.messages.get(key);
 
 		// Create a new boxcar if necessary (will only happen when not connected)
 		if (boxcars[boxcars.length - 1].messages.length + messages.length >= this.maxBatchSize) {
@@ -230,7 +233,8 @@ export class KafkaNodeProducer implements IProducer {
 		// Close the client if it exists
 		if (this.client) {
 			this.client.close();
-			this.client = undefined;
+			// This gets re-assigned immediately in `this.connect()`
+			this.client = undefined as unknown as kafka.KafkaClient;
 		}
 
 		this.connecting = this.connected = false;

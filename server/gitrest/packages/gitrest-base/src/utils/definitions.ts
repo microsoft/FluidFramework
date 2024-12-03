@@ -94,6 +94,7 @@ export interface IFileSystemManagerParams {
 
 export interface IFileSystemManagerFactory {
 	create(fileSystemManagerParams?: IFileSystemManagerParams): IFileSystemManager;
+	dispose?(): Promise<void>;
 }
 
 export interface IFileSystemManagerFactories {

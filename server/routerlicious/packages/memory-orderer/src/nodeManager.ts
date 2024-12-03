@@ -42,16 +42,17 @@ export class NodeManager extends EventEmitter {
 	/**
 	 * Loads the given remote node with the provided ID
 	 */
-	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	public loadRemote(id: string): Promise<IConcreteNode> {
+	public async loadRemote(id: string): Promise<IConcreteNode> {
 		// Return immediately if have the resolved value
-		if (this.nodes.has(id)) {
-			return Promise.resolve(this.nodes.get(id));
+		const existingNode = this.nodes.get(id);
+		if (existingNode !== undefined) {
+			return existingNode;
 		}
 
 		// Otherwise return a promise for the node
-		if (this.pendingNodes.has(id)) {
-			return this.pendingNodes.get(id);
+		const existingPendingNode = this.pendingNodes.get(id);
+		if (existingPendingNode !== undefined) {
+			return existingPendingNode;
 		}
 
 		// Otherwise load in the information

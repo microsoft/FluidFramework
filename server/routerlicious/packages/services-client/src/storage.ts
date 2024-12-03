@@ -73,7 +73,7 @@ export interface IGitService {
 	getCommit(sha: string): Promise<git.ICommit>;
 	createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit>;
 	getRefs(): Promise<git.IRef[]>;
-	getRef(ref: string): Promise<git.IRef>;
+	getRef(ref: string): Promise<git.IRef | null>;
 	createRef(params: git.ICreateRefParams): Promise<git.IRef>;
 	updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef>;
 	deleteRef(ref: string): Promise<void>;
@@ -117,7 +117,8 @@ export interface IGitManager {
 	createGitTree(params: git.ICreateTreeParams): Promise<git.ITree>;
 	createTree(files: api.ITree): Promise<git.ITree>;
 	createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit>;
-	getRef(ref: string): Promise<git.IRef>;
+	// eslint-disable-next-line @rushstack/no-new-null
+	getRef(ref: string): Promise<git.IRef | null>;
 	createRef(branch: string, sha: string): Promise<git.IRef>;
 	upsertRef(branch: string, commitSha: string): Promise<git.IRef>;
 	write(

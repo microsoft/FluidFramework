@@ -13,6 +13,7 @@ import {
 	TableBodyCellNode,
 	TableHeaderCellNode,
 } from "../../../documentation-domain/index.js";
+
 import { testRender } from "./Utilities.js";
 
 describe("Table Markdown rendering tests", () => {

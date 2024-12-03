@@ -4,7 +4,7 @@
  */
 
 export { uniformChunk, ChunkShape } from "./uniformChunk.js";
-export { type TreeChunk, dummyRoot } from "./chunk.js";
+export { type TreeChunk, dummyRoot } from "../../core/index.js";
 export {
 	chunkTree,
 	defaultChunkPolicy,
