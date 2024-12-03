@@ -564,15 +564,6 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
-                - ${{ if eq(parameters.testCoverage, true) }}:
-                      - output: pipelineArtifact
-                        displayName: Publish Artifacts - code-coverage
-                        condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                        targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-                        artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
-                        sbomEnabled: false
-                        publishLocation: pipeline
-
           # Job - Tests
           - ${{ each test in parameters.taskTest }}:
             - job: Test_${{ test.jobName }}
@@ -735,6 +726,18 @@ extends:
                       parameters:
                         buildDirectory: '${{ parameters.buildDirectory }}'
                         testResultDirs: '${{ parameters.testResultDirs }}'
+
+              templateContext:
+              outputParentDirectory: $(Build.ArtifactStagingDirectory)
+              outputs:
+                - ${{ if eq(parameters.testCoverage, true) }}:
+                      - output: pipelineArtifact
+                        displayName: Publish Artifacts - code-coverage
+                        condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                        artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
+                        sbomEnabled: false
+                        publishLocation: pipeline
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
