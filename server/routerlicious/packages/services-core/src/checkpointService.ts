@@ -172,7 +172,7 @@ export class CheckpointService implements ICheckpointService {
 		}
 	}
 
-	async clearCheckpoint(
+	public async clearCheckpoint(
 		documentId: string,
 		tenantId: string,
 		service: DocumentLambda,
@@ -199,12 +199,12 @@ export class CheckpointService implements ICheckpointService {
 			  }));
 	}
 
-	async restoreFromCheckpoint(
+	public async restoreFromCheckpoint(
 		documentId: string,
 		tenantId: string,
 		service: DocumentLambda,
 		document: IDocument,
-	) {
+	): Promise<IScribe | IDeliState> {
 		let lastCheckpoint: IDeliState | IScribe | undefined;
 		let isLocalCheckpoint = false;
 		let localLogOffset: number | undefined;
@@ -225,20 +225,21 @@ export class CheckpointService implements ICheckpointService {
 			if (!this.localCheckpointEnabled || !this.checkpointRepository) {
 				// If we cannot checkpoint locally, use document
 				lastCheckpoint = parseCheckpointString(document[service]);
-				globalLogOffset = lastCheckpoint.logOffset;
-				globalSequenceNumber = lastCheckpoint.sequenceNumber;
+				globalLogOffset = lastCheckpoint?.logOffset;
+				globalSequenceNumber = lastCheckpoint?.sequenceNumber;
 				checkpointSource = "defaultGlobalCollection";
 			} else {
 				// Search checkpoints collection for checkpoint
-				const checkpoint: ICheckpoint | undefined = await this.checkpointRepository
-					.getCheckpoint(documentId, tenantId)
-					.catch((error) => {
-						Lumberjack.error(
-							`Error retrieving local checkpoint`,
-							getLumberBaseProperties(documentId, tenantId),
-						);
-						return undefined;
-					});
+				const checkpoint: ICheckpoint | undefined =
+					(await this.checkpointRepository
+						.getCheckpoint(documentId, tenantId)
+						.catch((error) => {
+							Lumberjack.error(
+								`Error retrieving local checkpoint`,
+								getLumberBaseProperties(documentId, tenantId),
+							);
+							return undefined;
+						})) ?? undefined;
 
 				const localCheckpoint: IDeliState | IScribe | undefined = parseCheckpointString(
 					checkpoint?.[service],
@@ -310,11 +311,11 @@ export class CheckpointService implements ICheckpointService {
 			restoreFromCheckpointMetric.error(
 				`Error restoring checkpoint from database. Last checkpoint not found.`,
 			);
-			return;
+			throw new Error("Could not restore checkpoint: Last checkpoint not found.");
 		}
 	}
 
-	async getLatestCheckpoint(
+	public async getLatestCheckpoint(
 		tenantId: string,
 		documentId: string,
 		activeClients?: boolean,

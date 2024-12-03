@@ -17,7 +17,8 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 		private readonly checkpointType: string,
 	) {}
 
-	async getCheckpoint(documentId: string, tenantId: string): Promise<ICheckpoint> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	async getCheckpoint(documentId: string, tenantId: string): Promise<ICheckpoint | null> {
 		const pointReadFilter = this.composePointReadFilter(documentId, tenantId);
 		return this.collection.findOne(pointReadFilter);
 	}

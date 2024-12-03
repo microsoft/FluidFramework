@@ -5,10 +5,9 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import type { TreeValue } from "../../../core/index.js";
+import type { TreeValue, TreeChunk } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
 import { type FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
-import type { TreeChunk } from "../chunk.js";
 
 /**
  * Utilities related to chunk encoding and decoding that do not depend on specific chunk types or formats.

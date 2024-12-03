@@ -187,7 +187,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		this.dbCircuitBreaker?.shutdown();
 	}
 
-	public pause(): void {
+	public pause(offset: number): void {
 		this.current.clear();
 		this.pending.clear();
 		this.pendingMetric = undefined;

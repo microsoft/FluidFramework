@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
@@ -27,7 +27,10 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { IFluidSerializer } from "../serializer.js";
 import { SharedObject } from "../sharedObject.js";
 
-type Overridable<T> = T extends ((...args: any) => any) | string | number | undefined | []
+/* eslint-disable-next-line @typescript-eslint/ban-types --
+	Trying to use specific function signatures here instead of Function makes it so some of the properties of
+	OverridableType below (summarizeCore, loadCore, processCore) end up not typed correctly */
+type Overridable<T> = T extends Function | string | number | undefined | []
 	? T
 	: {
 			-readonly [P in keyof T]?: Overridable<T[P]>;
@@ -36,8 +39,8 @@ type Overridable<T> = T extends ((...args: any) => any) | string | number | unde
 function createOverridableProxy<T extends object>(
 	name: string,
 	...overrides: Overridable<T>[]
-) {
-	return new Proxy<T>({} as any as T, {
+): T {
+	return new Proxy<T>({} as unknown as T, {
 		get: (_, p, r) => {
 			for (const override of overrides) {
 				if (p in override) {
@@ -49,31 +52,33 @@ function createOverridableProxy<T extends object>(
 	});
 }
 
-function createTestSharedObject(
-	overrides: Overridable<{
-		id: string;
-		runtime: IFluidDataStoreRuntime;
-		attributes: IChannelAttributes;
-		telemetryConfigPrefix: string;
-		summarizeCore: (
-			this: SharedObject,
-			serializer: IFluidSerializer,
-			telemetryContext?: ITelemetryContext | undefined,
-			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
-		) => ISummaryTreeWithStats;
-		loadCore: (this: SharedObject, services: IChannelStorageService) => Promise<void>;
-		processCore: (
-			this: SharedObject,
+type OverridableType = Overridable<{
+	id: string;
+	runtime: IFluidDataStoreRuntime;
+	attributes: IChannelAttributes;
+	telemetryConfigPrefix: string;
+	summarizeCore: (
+		this: SharedObject,
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext | undefined,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+	) => ISummaryTreeWithStats;
+	loadCore: (this: SharedObject, services: IChannelStorageService) => Promise<void>;
+	processCore: (
+		this: SharedObject,
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) => void;
+	onDisconnect: (this: SharedObject) => void;
+	applyStashedOp: (this: SharedObject, content: unknown) => void;
+	didAttach: () => void;
+}>;
 
-			message: ISequencedDocumentMessage,
-			local: boolean,
-			localOpMetadata: unknown,
-		) => void;
-		onDisconnect: (this: SharedObject) => void;
-		applyStashedOp: (this: SharedObject, content: any) => unknown;
-		didAttach: () => void;
-	}>,
-) {
+function createTestSharedObject(overrides: OverridableType): {
+	overrides: OverridableType;
+	sharedObject: SharedObject;
+} {
 	class TestSharedObject extends SharedObject {
 		protected summarizeCore = overrides?.summarizeCore?.bind(this);
 		protected loadCore = overrides?.loadCore?.bind(this);
@@ -109,7 +114,7 @@ function createTestSharedObject(
 			createOverridableProxy<IFluidDataStoreRuntime>(
 				"runtime",
 				runtime,
-				new TypedEventEmitter<IFluidDataStoreRuntimeEvents>() as any as Overridable<IFluidDataStoreRuntime>,
+				new TypedEventEmitter<IFluidDataStoreRuntimeEvents>() as unknown as Overridable<IFluidDataStoreRuntime>,
 			),
 			createOverridableProxy<IChannelAttributes>("attributes", attributes),
 			overrides?.telemetryConfigPrefix ?? "testSharedObject",
@@ -137,7 +142,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after creation", () => {
-		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
 			it(`!isAttached and !connected with runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -151,8 +156,8 @@ describe("SharedObject attaching binding and connecting", () => {
 
 				assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
 				assert.strictEqual(sharedObject.connected, false, "!connected");
-			}),
-		);
+			});
+		}
 
 		it("!isAttached with detached transition to attach runtime", () => {
 			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
@@ -160,7 +165,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			let didAttach = 0;
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
-					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
+					...(runtimeEvents as unknown as Overridable<IFluidDataStoreRuntime>),
 					attachState: AttachState.Detached,
 				},
 				didAttach: () => didAttach++,
@@ -180,7 +185,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after load", () => {
-		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -225,8 +230,8 @@ describe("SharedObject attaching binding and connecting", () => {
 					connected && sharedObject.isAttached(),
 					"connected",
 				);
-			}),
-		);
+			});
+		}
 
 		it("isAttached with detached transition to attach runtime", async () => {
 			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
@@ -235,7 +240,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			let loaded = false;
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
-					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
+					...(runtimeEvents as unknown as Overridable<IFluidDataStoreRuntime>),
 					attachState: AttachState.Detached,
 					connected: true,
 				},
@@ -270,7 +275,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after connect", () => {
-		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -310,8 +315,8 @@ describe("SharedObject attaching binding and connecting", () => {
 					connected && sharedObject.isAttached(),
 					"connected",
 				);
-			}),
-		);
+			});
+		}
 
 		it("isAttached with detached transition to attach runtime", async () => {
 			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
@@ -319,7 +324,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			let didAttach = 0;
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
-					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
+					...(runtimeEvents as unknown as Overridable<IFluidDataStoreRuntime>),
 					attachState: AttachState.Detached,
 					connected: true,
 				},
@@ -351,7 +356,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after load and connect", () => {
-		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -398,12 +403,12 @@ describe("SharedObject attaching binding and connecting", () => {
 					connected && sharedObject.isAttached(),
 					"connected",
 				);
-			}),
-		);
+			});
+		}
 	});
 
 	describe("shared object after bindToContext", () => {
-		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		for (const { connected, attachState } of runtimeAttachStateAndConnectedMatrix) {
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -450,8 +455,8 @@ describe("SharedObject attaching binding and connecting", () => {
 					connected && sharedObject.isAttached(),
 					"connected",
 				);
-			}),
-		);
+			});
+		}
 
 		it("isAttached with detached transition to attach runtime", async () => {
 			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
@@ -459,7 +464,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			let attachCalled = false;
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
-					...(runtimeEvents as any),
+					...(runtimeEvents as unknown as Overridable<IFluidDataStoreRuntime>),
 					attachState: AttachState.Detached,
 					connected: false,
 					bindChannel: (channel) => {

@@ -13,7 +13,7 @@ import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
 import { IHistorianResourcesCustomizations } from "./customizations";
-import { StartupCheck } from "@fluidframework/server-services-shared";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -27,6 +27,7 @@ export class HistorianResources implements core.IResources {
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly documentManager: core.IDocumentManager,
 		public readonly startupCheck: core.IReadinessCheck,
+		public readonly redisClientConnectionManagers: utils.IRedisClientConnectionManager[],
 		public readonly cache?: historianServices.RedisCache,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public readonly denyList?: historianServices.IDenyList,
@@ -38,7 +39,7 @@ export class HistorianResources implements core.IResources {
 	}
 
 	public async dispose(): Promise<void> {
-		return;
+		await closeRedisClientConnections(this.redisClientConnectionManagers);
 	}
 }
 
@@ -48,6 +49,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		customizations: IHistorianResourcesCustomizations,
 	): Promise<HistorianResources> {
 		const redisConfig = config.get("redis");
+		// List of Redis client connection managers that need to be closed on dispose
+		const redisClientConnectionManagers: utils.IRedisClientConnectionManager[] = [];
 		const redisClientConnectionManager = customizations?.redisClientConnectionManager
 			? customizations.redisClientConnectionManager
 			: new RedisClientConnectionManager(
@@ -56,6 +59,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 					redisConfig.enableClustering,
 					redisConfig.slotsRefreshTimeout,
 			  );
+		redisClientConnectionManagers.push(redisClientConnectionManager);
 
 		const redisParams = {
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
@@ -96,6 +100,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
 				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 
 		const redisParamsForThrottling = {
 			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
@@ -221,6 +226,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			restClusterThrottlers,
 			documentManager,
 			startupCheck,
+			redisClientConnectionManagers,
 			gitCache,
 			revokedTokenChecker,
 			denyList,
