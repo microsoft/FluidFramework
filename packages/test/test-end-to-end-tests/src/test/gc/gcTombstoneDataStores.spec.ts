@@ -583,7 +583,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				const handle: IFluidHandle = parseHandles(
 					{ type: "__fluid_handle__", url: unreferencedId },
 					serializer,
-				);
+				) as IFluidHandle;
 
 				// This fails because the DataStore is tombstoned
 				let tombstoneError: ExpectedTombstoneError | undefined;
