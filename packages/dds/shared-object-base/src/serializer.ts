@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// RATIONALE: Many methods consume and return 'any' by necessity.
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
