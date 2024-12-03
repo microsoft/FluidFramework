@@ -53,7 +53,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 // @alpha
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    protected abstract applyStashedOp(content: any): void;
+    protected abstract applyStashedOp(content: unknown): void;
     // (undocumented)
     readonly attributes: IChannelAttributes;
     bindToContext(): void;
@@ -76,16 +76,16 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     load(services: IChannelServices): Promise<void>;
     protected abstract loadCore(services: IChannelStorageService): Promise<void>;
     protected readonly logger: ITelemetryLoggerExt;
-    protected newAckBasedPromise<T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
+    protected newAckBasedPromise<T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: unknown) => void) => void): Promise<T>;
     protected onConnect(): void;
     protected abstract onDisconnect(): void;
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
-    protected rollback(content: any, localOpMetadata: unknown): void;
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
+    protected rollback(content: unknown, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
     protected abstract get serializer(): IFluidSerializer;
-    protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
+    protected submitLocalMessage(content: unknown, localOpMetadata?: unknown): void;
     abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
 }
 
