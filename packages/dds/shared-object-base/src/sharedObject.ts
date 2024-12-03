@@ -389,7 +389,8 @@ export abstract class SharedObjectCore<
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	): void;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use void instead of any (legacy breaking)
+	): any;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
@@ -640,7 +641,8 @@ export abstract class SharedObjectCore<
 	 *
 	 * @param content - Contents of a stashed op.
 	 */
-	protected abstract applyStashedOp(content: unknown): void;
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
+	protected abstract applyStashedOp(content: any): void;
 
 	/**
 	 * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,
@@ -652,8 +654,9 @@ export abstract class SharedObjectCore<
 	 * @param args - Arguments to pass to the event listeners.
 	 * @returns `true` if the event had listeners, `false` otherwise.
 	 */
-	public emit(event: EventEmitterEventType, ...args: unknown[]): boolean {
+	public emit(event: EventEmitterEventType, ...args: any[]): boolean {
 		return this.callbacksHelper.measure(() => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return super.emit(event, ...args);
 		});
 	}
