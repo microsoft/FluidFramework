@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import type { Listenable } from "@fluidframework/core-interfaces";
 
 /**
  * The collaboration session may be in one of four states:
@@ -34,17 +34,20 @@ export interface IAcceptedMigrationDetails {
 /**
  * @alpha
  */
-export interface IMigrationToolEvents extends IEvent {
-	(event: "stopping" | "migrating" | "migrated", listener: () => void);
-	(event: "connected" | "disconnected", listener: () => void);
-	(event: "disposed", listener: () => void);
+export interface IMigrationToolEvents {
+	stopping: () => void;
+	migrating: () => void;
+	migrated: () => void;
+	connected: () => void;
+	disconnected: () => void;
+	disposed: () => void;
 }
 
 /**
  * @alpha
  */
 export interface IMigrationTool {
-	readonly events: IEventProvider<IMigrationToolEvents>;
+	readonly events: Listenable<IMigrationToolEvents>;
 
 	readonly connected: boolean;
 	/**

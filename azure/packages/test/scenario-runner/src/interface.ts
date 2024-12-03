@@ -20,6 +20,10 @@ export interface IRunnerStatus {
 	details: unknown;
 }
 
+export interface IRunnerEvents {
+	status: (s: IRunnerStatus) => void;
+}
+
 export interface IScenarioConfig {
 	schema: ContainerFactorySchema;
 	clientStartDelayMs?: number;
@@ -38,11 +42,7 @@ export interface IScenarioRunConfig extends IRunConfig, IScenarioConfig {
 	childId: number;
 }
 
-export interface IRunnerEventsType {
-	status: (s: IRunnerStatus) => void;
-}
-
-export interface IRunner extends Listenable<IRunnerEventsType> {
+export interface IRunner extends Listenable<IRunnerEvents> {
 	/**
 	 * Runs in 1 or more child processes.
 	 */

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IEvent } from "@fluidframework/core-interfaces";
+import { ComposableEventEmitter } from "@fluid-internal/client-utils";
+// import type { IEvent } from "@fluidframework/core-interfaces";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
 
@@ -29,15 +29,18 @@ export interface ISharedStringHelperTextChangedEventArgs {
  * Events emitted by {@link SharedStringHelper}.
  * @internal
  */
-export interface ISharedStringHelperEvents extends IEvent {
-	(event: "textChanged", listener: (event: ISharedStringHelperTextChangedEventArgs) => void);
+// export interface ISharedStringHelperEvents extends IEvent {
+// 	(event: "textChanged", listener: (event: ISharedStringHelperTextChangedEventArgs) => void);
+// }
+export interface ISharedStringHelperEvents {
+	textChanged: (event: ISharedStringHelperTextChangedEventArgs) => void;
 }
 
 /**
  * Given a {@link @fluidframework/sequence#SharedString}, will provide a friendly API for use.
  * @internal
  */
-export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEvents> {
+export class SharedStringHelper extends ComposableEventEmitter<ISharedStringHelperEvents> {
 	private readonly _sharedString: SharedString;
 	private _latestText: string;
 	constructor(sharedString: SharedString) {

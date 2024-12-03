@@ -11,7 +11,7 @@ import { delay } from "@fluidframework/core-utils/internal";
 import {
 	IRunConfig,
 	IRunner,
-	IRunnerEventsType,
+	IRunnerEvents,
 	IRunnerStatus,
 	IScenarioConfig,
 	IScenarioRunConfig,
@@ -25,7 +25,7 @@ export abstract class ScenarioRunner<
 		A,
 		S = A,
 	>
-	extends ComposableEventEmitter<IRunnerEventsType>
+	extends ComposableEventEmitter<IRunnerEvents>
 	implements IRunner
 {
 	/**

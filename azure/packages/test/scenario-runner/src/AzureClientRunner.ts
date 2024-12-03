@@ -11,7 +11,7 @@ import {
 	IRunner,
 	IRunnerStatus,
 	RunnerStatus,
-	type IRunnerEventsType,
+	type IRunnerEvents,
 } from "./interface.js";
 import { getLogger } from "./logger.js";
 import {
@@ -34,7 +34,7 @@ export interface AzureClientRunnerConfig {
 export type AzureClientRunnerRunConfig = AzureClientRunnerConfig & IRunConfig;
 
 export class AzureClientRunner
-	extends ComposableEventEmitter<IRunnerEventsType>
+	extends ComposableEventEmitter<IRunnerEvents>
 	implements IRunner
 {
 	private status: RunnerStatus = RunnerStatus.NotStarted;
