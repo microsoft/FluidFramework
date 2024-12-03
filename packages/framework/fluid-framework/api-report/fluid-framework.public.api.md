@@ -620,7 +620,7 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly description?: string | undefined;
 }
 
-// @public
+// @public @sealed
 export interface NodeSchemaOptions<out TMetadata = NodeSchemaMetadata> {
     readonly metadata?: TMetadata;
 }
