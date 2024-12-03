@@ -100,24 +100,31 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  *
  * @see {@link Input}
  *
- * @privateRemarks TODO: consider separating these cases into different types.
+ * @privateRemarks
+ * TODO: consider separating these cases into different types.
+ *
+ * Empty objects don't get "no excess property" checks in literals.
+ * To prevent extraneous properties in literals for the fields of an empty object from compiling, the empty case is special cased to produce `Record<string, never>`.
+ * More details at {@link https://mercury.com/blog/creating-an-emptyobject-type-in-typescript}.
  *
  * @system @public
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-> = FlattenKeys<
-	{
-		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
-			T[Property & string]
+> = Record<string, never> extends T
+	? Record<string, never>
+	: FlattenKeys<
+			{
+				readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
+					T[Property & string]
+				>;
+			} & {
+				// Field does not have a known default, make it required:
+				readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
+					? Property
+					: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
+			}
 		>;
-	} & {
-		// Field does not have a known default, make it required:
-		readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
-			? Property
-			: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
-	}
->;
 
 /**
  * Maps from simple field keys ("property" keys) to information about the field.

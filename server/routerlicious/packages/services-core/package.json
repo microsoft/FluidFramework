@@ -79,6 +79,18 @@
 			},
 			"ClassDeclaration_MongoManager": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_TokenRevokedError": {
+				"backCompat": false
+			},
+			"ClassDeclaration_TokenRevocationError": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IBoxcarMessage": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IWebServer": {
+				"backCompat": false
 			}
 		}
 	}

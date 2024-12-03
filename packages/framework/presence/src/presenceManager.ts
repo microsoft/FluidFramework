@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {
 	ITelemetryLoggerExt,
@@ -11,6 +13,7 @@ import type {
 import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
 import type {
 	ClientSessionId,
@@ -32,8 +35,6 @@ import type {
 	IContainerExtension,
 	IExtensionMessage,
 } from "@fluidframework/presence/internal/container-definitions/internal";
-import type { IEmitter } from "@fluidframework/presence/internal/events";
-import { createEmitter } from "@fluidframework/presence/internal/events";
 
 /**
  * Portion of the container extension requirements ({@link IContainerExtension}) that are delegated to presence manager.
@@ -115,8 +116,13 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 	public getStates<TSchema extends PresenceStatesSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
+		controls?: BroadcastControlSettings,
 	): PresenceStates<TSchema> {
-		return this.datastoreManager.getWorkspace(`s:${workspaceAddress}`, requestedContent);
+		return this.datastoreManager.getWorkspace(
+			`s:${workspaceAddress}`,
+			requestedContent,
+			controls,
+		);
 	}
 
 	public getNotifications<TSchema extends PresenceStatesSchema>(

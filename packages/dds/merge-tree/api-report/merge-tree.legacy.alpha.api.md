@@ -216,7 +216,7 @@ export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDel
 }
 
 // @alpha (undocumented)
-export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
+export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeAnnotateAdjustMsg | IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 
 // @alpha (undocumented)
 export interface IMergeTreeDeltaOpArgs {
@@ -290,6 +290,7 @@ export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 export interface IMergeTreeOptions {
     // (undocumented)
     catchUpBlobName?: string;
+    mergeTreeEnableAnnotateAdjust?: boolean;
     mergeTreeEnableObliterate?: boolean;
     mergeTreeEnableObliterateReconnect?: boolean;
     mergeTreeEnableSidedObliterate?: boolean;
