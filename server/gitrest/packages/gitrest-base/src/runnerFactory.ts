@@ -40,7 +40,10 @@ export class GitrestResources implements core.IResources {
 	}
 
 	public async dispose(): Promise<void> {
-		return;
+		// Dispose the ephemeral file system manager factories that use Redis
+		if (this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory.dispose) {
+			await this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory.dispose();
+		}
 	}
 }
 

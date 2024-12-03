@@ -21,12 +21,23 @@ export type FluidDataStoreRegistryEntry = Readonly<
  * @alpha
  */
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+
+/**
+ * An associated pair of an identifier and registry entry.  Registry entries
+ * may be dynamically loaded.
+ * @legacy
+ * @alpha
+ */
+export type NamedFluidDataStoreRegistryEntry2 = [
+	string,
+	Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry,
+];
 /**
  * An iterable identifier/registry entry pair list
  * @legacy
  * @alpha
  */
-export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
+export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
 
 /**
  * @legacy
@@ -50,5 +61,27 @@ export interface IProvideFluidDataStoreRegistry {
  * @alpha
  */
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
+	/**
+	 * Retrieves a data store registry entry by its identifier.
+	 *
+	 * @remarks
+	 * The `get` function plays a crucial role in the lifecycle of a data store by providing access to the registry entry
+	 * associated with a given identifier. This registry entry can then be used to create or load a data store.
+	 *
+	 * @param name - The unique identifier of the data store registry entry to retrieve.
+	 * @returns A promise that resolves to the data store registry entry, or the entry itself, or undefined if not found.
+	 */
 	get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
+
+	/**
+	 * Synchronously retrieves a data store registry entry by its identifier.
+	 *
+	 * @remarks
+	 * The `get` function plays a crucial role in the lifecycle of a data store by providing access to the registry entry
+	 * associated with a given identifier. This registry entry can then be used to create or load a data store.
+	 *
+	 * @param name - The unique identifier of the data store registry entry to retrieve.
+	 * @returns The data store registry entry, or the entry itself, or undefined if not found.
+	 */
+	getSync?(name: string): FluidDataStoreRegistryEntry | undefined;
 }

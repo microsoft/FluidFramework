@@ -247,6 +247,11 @@ export interface MenuSectionButtonHeaderProps extends MenuSectionLabelHeaderProp
 	 * Button alt text.
 	 */
 	altText: string;
+
+	/**
+	 * Whether or not this selectable heading is the current selection.
+	 */
+	isActive: boolean;
 }
 
 const useMenuSectionButtonHeaderStyles = makeStyles({
@@ -256,7 +261,18 @@ const useMenuSectionButtonHeaderStyles = makeStyles({
 		flexDirection: "row",
 		fontWeight: "bold",
 		cursor: "pointer",
-		role: "button",
+		"&:hover": {
+			color: tokens.colorNeutralForeground1Hover,
+			backgroundColor: tokens.colorNeutralBackground1Hover,
+		},
+	},
+	active: {
+		color: tokens.colorNeutralForeground1Selected,
+		backgroundColor: tokens.colorNeutralBackground1Selected,
+	},
+	inactive: {
+		color: tokens.colorNeutralForeground1,
+		backgroundColor: tokens.colorNeutralBackground1,
 	},
 });
 
@@ -266,8 +282,9 @@ const useMenuSectionButtonHeaderStyles = makeStyles({
 export function MenuSectionButtonHeader(
 	props: MenuSectionButtonHeaderProps,
 ): React.ReactElement {
-	const { label, icon, onClick, altText } = props;
+	const { label, icon, onClick, altText, isActive } = props;
 	const styles = useMenuSectionButtonHeaderStyles();
+	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
 		if ((event.key === "Enter" || event.key === " ") && onClick) {
@@ -277,11 +294,12 @@ export function MenuSectionButtonHeader(
 
 	return (
 		<div
-			className={styles.root}
+			className={style}
 			onClick={onClick}
 			onKeyDown={handleKeyDown}
 			aria-label={altText}
 			tabIndex={0}
+			role="button"
 		>
 			{label}
 			{icon}
@@ -353,16 +371,14 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
  */
 export interface MenuProps {
 	/**
-	 * The current menu selection (if any).
+	 * The current menu selection.
 	 */
-	currentSelection?: MenuSelection | undefined;
+	currentSelection: MenuSelection;
 
 	/**
 	 * Sets the menu selection to the specified value.
-	 *
-	 * @remarks Passing `undefined` clears the selection.
 	 */
-	setSelection(newSelection: MenuSelection | undefined): void;
+	setSelection(newSelection: MenuSelection): void;
 
 	/**
 	 * Set of features supported by the {@link @fluidframework/devtools-core#IFluidDevtools}
@@ -491,7 +507,14 @@ export function Menu(props: MenuProps): React.ReactElement {
 
 	menuSections.push(
 		<MenuSection
-			header={<MenuSectionButtonHeader label="Home" altText="Home" onClick={onHomeClicked} />}
+			header={
+				<MenuSectionButtonHeader
+					label="Home"
+					altText="Home"
+					onClick={onHomeClicked}
+					isActive={currentSelection.type === "homeMenuSelection"}
+				/>
+			}
 			key="home-menu-section"
 		/>,
 		<ContainersMenuSection
@@ -530,6 +553,7 @@ export function Menu(props: MenuProps): React.ReactElement {
 						label="Op Latency"
 						altText="Op Latency"
 						onClick={onOpLatencyClicked}
+						isActive={currentSelection?.type === "opLatencyMenuSelection"}
 					/>
 				}
 				key="op-latency-menu-section"
@@ -544,6 +568,7 @@ export function Menu(props: MenuProps): React.ReactElement {
 					label="Settings"
 					altText="Settings"
 					onClick={onSettingsClicked}
+					isActive={currentSelection?.type === "settingsMenuSelection"}
 				/>
 			}
 			key="settings-menu-section"

@@ -5,8 +5,9 @@
 
 import type { DocumentNode, DocumentationNode } from "../../documentation-domain/index.js";
 import { DocumentWriter } from "../DocumentWriter.js";
-import { type RenderConfiguration, defaultRenderers } from "./configuration/index.js";
+
 import { type RenderContext, getContextWithDefaults } from "./RenderContext.js";
+import { type RenderConfiguration, defaultRenderers } from "./configuration/index.js";
 
 /**
  * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a `string`.

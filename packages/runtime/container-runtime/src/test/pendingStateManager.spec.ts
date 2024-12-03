@@ -13,11 +13,7 @@ import {
 import { MockLogger2, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import type {
-	InboundSequencedContainerRuntimeMessage,
-	RecentlyAddedContainerRuntimeMessageDetails,
-	UnknownContainerRuntimeMessage,
-} from "../messageTypes.js";
+import type { InboundSequencedContainerRuntimeMessage } from "../messageTypes.js";
 import {
 	BatchManager,
 	BatchMessage,
@@ -602,45 +598,6 @@ describe("Pending State Manager", () => {
 				];
 				const pendingStateManager = createPendingStateManager(messages);
 				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
-			});
-		});
-
-		describe("Future op compat behavior", () => {
-			it("pending op roundtrip", async () => {
-				const pendingStateManager = createPendingStateManager([]);
-				const futureRuntimeMessage: Pick<ISequencedDocumentMessage, "type" | "contents"> &
-					RecentlyAddedContainerRuntimeMessageDetails = {
-					type: "FROM_THE_FUTURE",
-					contents: "Hello",
-					compatDetails: { behavior: "FailToProcess" },
-				};
-
-				pendingStateManager.onFlushBatch(
-					[
-						{
-							contents: JSON.stringify(futureRuntimeMessage),
-							referenceSequenceNumber: 0,
-						},
-					],
-					1,
-				);
-				const inboundMessage = futureRuntimeMessage as ISequencedDocumentMessage &
-					UnknownContainerRuntimeMessage;
-				pendingStateManager.processInboundMessages(
-					{
-						type: "fullBatch",
-						messages: [inboundMessage],
-						batchStart: {
-							batchStartCsn: 1 /* batchStartCsn */,
-							batchId: undefined,
-							clientId: "clientId",
-							keyMessage: inboundMessage,
-						},
-						length: 1,
-						groupedBatch: false,
-					},
-					true /* local */,
-				);
 			});
 		});
 	});
