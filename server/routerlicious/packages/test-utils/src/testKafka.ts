@@ -18,7 +18,7 @@ import { TestContext } from "./testContext";
  */
 export class TestConsumer implements IConsumer {
 	private readonly emitter = new EventEmitter();
-	private pausedQueue: string[] = null;
+	private pausedQueue: string[] | null = null;
 	private failOnCommit = false;
 
 	// Leverage the context code for storing and tracking an offset

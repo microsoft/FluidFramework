@@ -5,7 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 import type { GraphCommit, TaggedChange } from "../core/index.js";
-import { disposeSymbol } from "../util/index.js";
+import { disposeSymbol, hasSome } from "../util/index.js";
 import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
 
 /**
@@ -114,7 +114,8 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			this.isInResubmitPhase,
 			0x982 /* No available commit to resubmit outside of resubmit phase */,
 		);
-		return this.resubmitQueue[0] ?? oob();
+		assert(hasSome(this.resubmitQueue), 0xa87 /* Expected resubmit queue to be non-empty */);
+		return this.resubmitQueue[0];
 	}
 
 	public get isInResubmitPhase(): boolean {

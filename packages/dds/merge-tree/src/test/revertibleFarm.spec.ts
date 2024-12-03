@@ -56,7 +56,7 @@ describe("MergeTree.Client", () => {
 				const clients = createClientsAtInitialState(
 					{
 						initialState: "",
-						options: {},
+						options: { mergeTreeEnableAnnotateAdjust: true },
 					},
 					"A",
 					"B",

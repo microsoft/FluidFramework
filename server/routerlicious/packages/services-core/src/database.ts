@@ -31,16 +31,16 @@ export interface IDatabaseManager {
 	 * Retrieves the delta collection
 	 */
 	getDeltaCollection(
-		tenantId: string,
-		documentId: string,
+		tenantId: string | undefined,
+		documentId: string | undefined,
 	): Promise<ICollection<ISequencedOperationMessage>>;
 
 	/**
 	 * Scribe deltas collection
 	 */
 	getScribeDeltaCollection(
-		tenantId: string,
-		documentId: string,
+		tenantId: string | undefined,
+		documentId: string | undefined,
 	): Promise<ICollection<ISequencedOperationMessage>>;
 }
 
@@ -52,7 +52,8 @@ export interface IDocumentRepository {
 	/**
 	 * Retrieves a document from the database
 	 */
-	readOne(filter: any): Promise<IDocument>;
+	// eslint-disable-next-line @rushstack/no-new-null
+	readOne(filter: any): Promise<IDocument | null>;
 
 	/**
 	 * Update one document in the database
@@ -99,7 +100,8 @@ export interface ICheckpointRepository {
 	/**
 	 * Retrieves a checkpoint from the database
 	 */
-	getCheckpoint(documentId: string, tenantId: string): Promise<ICheckpoint>;
+	// eslint-disable-next-line @rushstack/no-new-null
+	getCheckpoint(documentId: string, tenantId: string): Promise<ICheckpoint | null>;
 
 	/**
 	 * Writes a checkpoint to the database
@@ -155,7 +157,8 @@ export interface ICollection<T> {
 	 * @param options - optional. If set, provide customized options to the implementations
 	 * @returns The value of the query in the database.
 	 */
-	findOne(query: any, options?: any): Promise<T>;
+	// eslint-disable-next-line @rushstack/no-new-null
+	findOne(query: any, options?: any): Promise<T | null>;
 
 	/**
 	 * @returns All values in the database.
@@ -284,7 +287,7 @@ export interface IDb {
 	 * @param name - collection name
 	 * @param dbName - database name where collection located
 	 */
-	collection<T>(name: string, dbName?: string): ICollection<T>;
+	collection<T extends { [key: string]: any }>(name: string, dbName?: string): ICollection<T>;
 
 	/**
 	 * Removes a collection or view from the database.
