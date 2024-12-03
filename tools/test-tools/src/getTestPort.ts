@@ -19,10 +19,8 @@ export function getTestPort(pkgName: string): string {
 		const portMapPath: string = fs
 			.readFileSync(path.join(os.tmpdir(), "testportmap.json"))
 			.toString();
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const testPortsJson = JSON.parse(portMapPath);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-		mappedPort = testPortsJson[pkgName];
+		const testPortsJson = JSON.parse(portMapPath) as Record<string, string>;
+		mappedPort = testPortsJson[pkgName] ?? "8081";
 	} catch {
 		console.warn(
 			"Port mapping not available, using default port of 8081. If you encounter port collisions, be sure to run assign-test-ports.",
