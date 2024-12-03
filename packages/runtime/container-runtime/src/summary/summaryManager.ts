@@ -453,7 +453,6 @@ export class SummaryManager
 		[
 			"summarize",
 			"summarizeAllAttemptsFailed",
-			"lastSummaryAttempt",
 			"summarizerStop",
 			"summarizerStart",
 			"summarizerStartupFailed",

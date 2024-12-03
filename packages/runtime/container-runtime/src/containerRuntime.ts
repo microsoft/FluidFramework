@@ -2007,7 +2007,6 @@ export class ContainerRuntime
 				[
 					"summarize",
 					"summarizeAllAttemptsFailed",
-					"lastSummaryAttempt",
 					"summarizerStop",
 					"summarizerStart",
 					"summarizerStartupFailed",

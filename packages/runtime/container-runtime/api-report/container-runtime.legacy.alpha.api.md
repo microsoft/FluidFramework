@@ -547,6 +547,8 @@ export interface ISummarizeEventProps {
     // (undocumented)
     failureMessage?: string;
     // (undocumented)
+    isLastSummary?: string;
+    // (undocumented)
     maxAttempts: number;
     // (undocumented)
     result: "success" | "failure" | "canceled";
@@ -583,8 +585,6 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarize", listener: (props: ISummarizeEventProps & ISummarizerObservabilityProps) => void): any;
     // (undocumented)
     (event: "summarizeAllAttemptsFailed", listener: (props: Omit<ISummarizeEventProps, "result"> & ISummarizerObservabilityProps) => void): any;
-    // (undocumented)
-    (event: "lastSummaryAttempt", listener: (props: ISummarizeEventProps & ISummarizerObservabilityProps) => void): any;
     // (undocumented)
     (event: "summarizerStop", listener: (props: {
         stopReason: string;

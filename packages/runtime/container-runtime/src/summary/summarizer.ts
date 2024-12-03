@@ -377,7 +377,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	private readonly forwardedEvents = new Map<any, () => void>();
 
 	private setupForwardedEvents() {
-		["summarize", "summarizeAllAttemptsFailed", "lastSummaryAttempt"].forEach((event) => {
+		["summarize", "summarizeAllAttemptsFailed"].forEach((event) => {
 			const listener = (...args: any[]) => {
 				this.emit(event, ...args);
 			};

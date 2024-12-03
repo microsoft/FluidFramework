@@ -190,6 +190,13 @@ export class RunningSummarizer
 	/** The maximum number of summary attempts to do when submit summary fails. */
 	private readonly maxAttemptsForSubmitFailures: number;
 
+	/**
+	 * These are necessary to store outside of methods because of the logic around runnning a lastSummary.
+	 * We want the lastSummary to also be captured as "all attempts failed".
+	 */
+	private lastSummarizeFailureEventProps: Omit<ISummarizeEventProps, "result"> | undefined =
+		undefined;
+
 	private constructor(
 		baseLogger: ITelemetryBaseLogger,
 		private readonly summaryWatcher: IClientSummaryWatcher,
@@ -505,6 +512,15 @@ export class RunningSummarizer
 		// submit summary. We should reconsider this flow and make summarizer move to exit faster.
 		// This resolves when the current pending summary gets an ack or fails.
 		await this.summarizingLock;
+
+		if (this.lastSummarizeFailureEventProps !== undefined) {
+			this.emit("summarizeAllAttemptsFailed", {
+				...this.lastSummarizeFailureEventProps,
+				numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
+				numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
+			});
+		}
+		this.lastSummarizeFailureEventProps = undefined;
 	}
 
 	private async waitStart() {
@@ -610,17 +626,18 @@ export class RunningSummarizer
 				// ensure we wait till the end of the process
 				const result = await summarizeResult.receivedSummaryAckOrNack;
 
-				const event = isLastSummary ? "lastSummaryAttempt" : "summarize";
 				if (result.success) {
-					this.emit(event, {
+					this.emit("summarize", {
 						result: "success",
 						currentAttempt: 1,
 						maxAttempts: 1,
 						numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
 						numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
+						isLastSummary,
 					});
+					this.lastSummarizeFailureEventProps = undefined;
 				} else {
-					this.emit(event, {
+					this.emit("summarize", {
 						result: "failure",
 						currentAttempt: 1,
 						maxAttempts: 1,
@@ -628,6 +645,7 @@ export class RunningSummarizer
 						failureMessage: result.message,
 						numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
 						numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
+						isLastSummary,
 					});
 					this.mc.logger.sendErrorEvent(
 						{
@@ -637,6 +655,14 @@ export class RunningSummarizer
 						},
 						result.error,
 					);
+					if (isLastSummary) {
+						this.lastSummarizeFailureEventProps = {
+							currentAttempt: (this.lastSummarizeFailureEventProps?.currentAttempt ?? 0) + 1,
+							maxAttempts: (this.lastSummarizeFailureEventProps?.currentAttempt ?? 0) + 1,
+							error: result.error,
+							failureMessage: result.message,
+						};
+					}
 				}
 			},
 			() => {
@@ -832,14 +858,12 @@ export class RunningSummarizer
 				},
 				error,
 			);
-			this.emit("summarizeAllAttemptsFailed", {
+			this.lastSummarizeFailureEventProps = {
+				currentAttempt,
 				maxAttempts,
-				summaryAttempts: currentAttempt,
 				error,
 				failureMessage,
-				numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
-				numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
-			});
+			};
 			this.stopSummarizerCallback("failToSummarize");
 		}
 		return results;
