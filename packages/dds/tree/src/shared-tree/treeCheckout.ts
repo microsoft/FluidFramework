@@ -607,7 +607,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				const revertibleBranch = this.revertibleCommitBranches.get(revision);
 				assert(
 					revertibleBranch !== undefined,
-					"change to revert does not exist on the given forked branch",
+					0xa82 /* change to revert does not exist on the given forked branch */,
 				);
 				forkedCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
 

@@ -423,8 +423,6 @@ module.exports = {
 				"^examples/data-objects/table-document/",
 				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
 				"^experimental/dds/tree/",
-				// comments in api-extractor JSON files fail parsing - PR #22498 to fix
-				"^packages/framework/presence/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",

@@ -24,6 +24,7 @@ import type {
 	TreeNodeSchemaClass,
 	TreeNode,
 	TreeNodeSchemaCore,
+	TreeNodeSchemaNonClass,
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./toMapTree.js";
@@ -759,15 +760,19 @@ export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> =
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
+ * @privateRemarks
+ * If a schema is both TreeNodeSchemaClass and TreeNodeSchemaNonClass, prefer TreeNodeSchemaClass since that includes subclasses properly.
  * @public
  */
-export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
+export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaClass<
 	string,
 	NodeKind,
 	infer TNode
 >
 	? TNode
-	: never;
+	: T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode>
+		? TNode
+		: never;
 
 /**
  * Data which can be used as a node to be inserted.
