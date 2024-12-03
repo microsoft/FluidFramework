@@ -194,24 +194,17 @@ export function create(
 			try {
 				const ordererUrl: string = config.get("worker:serverUrl");
 				const document = await storage.getDocument(tenantId, documentId);
-				// TODO: delete
-				const redirect: boolean = config.get("redirect");
-				if (document.session.ordererUrl !== ordererUrl || redirect) {
+				if (document.session.ordererUrl !== ordererUrl) {
 					Lumberjack.info("Redirecting to docs cluster", {
 						documentUrl: document.session.ordererUrl,
 						currentUrl: ordererUrl,
-						targetUrlAndPath: `>${document.session.ordererUrl}<-doc url, original path->${request.originalUrl}<`,
+						targetUrlAndPath: `${document.session.ordererUrl}${request.originalUrl}`,
 					});
 					response.redirect(308, `${document.session.ordererUrl}${request.originalUrl}`);
 					return;
 				}
 				const signalRoom: IRoom = { tenantId, documentId };
 				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-				// TODO: Delete
-				Lumberjack.info("Broadcasting signal", {
-					signalRoom,
-					signalContent,
-				});
 				collaborationSessionEventEmitter.emit("broadcastSignal", payload);
 				response.status(200).send("OK");
 				return;
