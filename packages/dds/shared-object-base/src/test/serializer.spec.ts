@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+
 import { RemoteFluidObjectHandle } from "../remoteObjectHandle.js";
 import { FluidSerializer } from "../serializer.js";
 import { makeHandlesSerializable, parseHandles } from "../utils.js";
@@ -12,26 +14,25 @@ import { makeHandlesSerializable, parseHandles } from "../utils.js";
 import { MockHandleContext, makeJson } from "./utils.js";
 
 describe("FluidSerializer", () => {
-	function printHandle(target: any) {
+	function printHandle(target: unknown): string {
 		return JSON.stringify(target, (key, value) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return value?.IFluidHandle === undefined ? value : "#HANDLE";
+			return isFluidHandle(value) ? "#HANDLE" : value;
 		});
 	}
 
-	function createNestedCases(testCases: any[]) {
+	function createNestedCases(testCases: unknown[]): unknown[] {
 		testCases.push(
 			// Add an object where each field references one of the JSON serializable types.
-			testCases.reduce<any>((o, value, index) => {
+			// eslint-disable-next-line unicorn/no-array-reduce -- Not sure how to refactor this correctly
+			testCases.reduce<object>((o, value, index) => {
 				o[`f${index}`] = value;
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return o;
 			}, {}),
 			// Add an array that contains each of our constructed test cases.
 			[...testCases],
 		);
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return testCases;
 	}
 
@@ -42,13 +43,14 @@ describe("FluidSerializer", () => {
 
 		// Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
 		// are of particular interest.
+		// eslint-disable-next-line unicorn/no-null -- Explicitly testing null.
 		const simple = createNestedCases([false, true, 0, 1, "", "x", null, [], {}]);
 
 		simple.push(
 			// Add an object where each field references one of the JSON serializable types.
-			simple.reduce<any>((o, value, index) => {
+			// eslint-disable-next-line unicorn/no-array-reduce -- Not sure how to refactor this correctly
+			simple.reduce<object>((o, value, index) => {
 				o[`f${index}`] = value;
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return o;
 			}, {}),
 			// Add an array that contains each of our constructed test cases.
@@ -58,6 +60,7 @@ describe("FluidSerializer", () => {
 		// Verify that `encode` is a no-op for these simple cases.
 		for (const input of simple) {
 			it(`${printHandle(input)} -> ${JSON.stringify(input)}`, () => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- test deals with several object shapes
 				const actual = serializer.encode(input, handle);
 				assert.strictEqual(
 					actual,
@@ -65,6 +68,7 @@ describe("FluidSerializer", () => {
 					"encode() on input with no handles must return original input.",
 				);
 
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- test deals with several object shapes
 				const decoded = serializer.decode(actual);
 				assert.strictEqual(
 					decoded,
@@ -116,6 +120,7 @@ describe("FluidSerializer", () => {
 
 		for (const input of tricky) {
 			it(`${printHandle(input)} -> ${JSON.stringify(input)}`, () => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- test deals with several object shapes
 				const actual = serializer.encode(input, handle);
 				assert.strictEqual(
 					actual,
@@ -123,6 +128,7 @@ describe("FluidSerializer", () => {
 					"encode() on input with no handles must return original input.",
 				);
 
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- test deals with several object shapes
 				const decoded = serializer.decode(actual);
 				assert.strictEqual(
 					decoded,
@@ -169,8 +175,9 @@ describe("FluidSerializer", () => {
 			url: "/root",
 		};
 
-		function check(decodedForm, encodedForm) {
+		function check(decodedForm, encodedForm): void {
 			it(`${printHandle(decodedForm)} -> ${JSON.stringify(encodedForm)}`, () => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.encode()
 				const replaced = serializer.encode(decodedForm, handle);
 				assert.notStrictEqual(
 					replaced,
@@ -179,9 +186,11 @@ describe("FluidSerializer", () => {
 				);
 				assert.deepStrictEqual(replaced, encodedForm, "encode() must return expected output.");
 
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.encode()
 				const replacedTwice = serializer.encode(replaced, handle);
 				assert.deepStrictEqual(replacedTwice, replaced, "encode should be idempotent");
 
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.decode()
 				const decodedRoundTrip = serializer.decode(replaced);
 				assert.notStrictEqual(
 					decodedRoundTrip,
@@ -194,6 +203,7 @@ describe("FluidSerializer", () => {
 					"input must round-trip through encode()/decode().",
 				);
 
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.decode()
 				const decodedTwice = serializer.decode(decodedRoundTrip);
 				assert.deepStrictEqual(decodedTwice, decodedRoundTrip, "decode should be idempotent");
 
@@ -224,6 +234,7 @@ describe("FluidSerializer", () => {
 		);
 
 		it(`sizable json tree`, () => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- The test works on funky objects
 			const input: any = makeJson(
 				/* breadth: */ 4,
 				/* depth: */ 4,
@@ -237,9 +248,10 @@ describe("FluidSerializer", () => {
 			);
 
 			// Add some handles to intermediate objects.
-			input.h = handle;
-			input.o1.h = handle;
+			input.h = handle; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+			input.o1.h = handle; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.encode()
 			const replaced = serializer.encode(input, handle);
 			assert.notStrictEqual(
 				replaced,
@@ -247,6 +259,7 @@ describe("FluidSerializer", () => {
 				"encode() must shallow-clone rather than mutate original object.",
 			);
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.decode()
 			const decoded = serializer.decode(replaced);
 			assert.notStrictEqual(
 				decoded,
@@ -327,12 +340,16 @@ describe("FluidSerializer", () => {
 			const bind = new RemoteFluidObjectHandle("/", new MockHandleContext());
 			const handle = new RemoteFluidObjectHandle("/okay", new MockHandleContext());
 			const input = { x: handle, y: 123 };
-			const serializedOnce = makeHandlesSerializable(input, serializer, bind);
+			const serializedOnce = makeHandlesSerializable(input, serializer, bind) as {
+				x: { type: "__fluid_handle__" };
+			};
 			assert(
 				serializedOnce.x.type === "__fluid_handle__",
 				"Serialized handle should be a handle",
 			);
-			const serializedTwice = makeHandlesSerializable(serializedOnce, serializer, bind);
+			const serializedTwice = makeHandlesSerializable(serializedOnce, serializer, bind) as {
+				x: { type: "__fluid_handle__" };
+			};
 			assert(
 				serializedTwice.x.type === "__fluid_handle__",
 				"Twice-Serialized handle should be a handle",
@@ -344,12 +361,14 @@ describe("FluidSerializer", () => {
 				url: "/root",
 			};
 			const input = { x: serializedHandle, y: 123 };
-			const parsedOnce = parseHandles(input, serializer);
+			const parsedOnce = parseHandles(input, serializer) as { x: RemoteFluidObjectHandle };
 			assert(
 				parsedOnce.x instanceof RemoteFluidObjectHandle,
 				"Parsed handle should be an instance of RemoteFluidObjectHandle",
 			);
-			const parsedTwice = parseHandles(parsedOnce, serializer);
+			const parsedTwice = parseHandles(parsedOnce, serializer) as {
+				x: RemoteFluidObjectHandle;
+			};
 			assert(
 				parsedTwice.x instanceof RemoteFluidObjectHandle,
 				"Twice-Parsed handle should be an instance of RemoteFluidObjectHandle",
