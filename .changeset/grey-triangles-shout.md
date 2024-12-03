@@ -8,7 +8,7 @@ section: tree
 Allow associating metadata with Node Schema
 
 Users of TreeView can now specify metadata when creating Node Schema.
-This includes system-understood metadata, i.e., `description`.
+This includes system-understood metadata, e.g., `description`.
 
 Example:
 
