@@ -396,7 +396,7 @@ export abstract class SharedObjectCore<
 	 * Called when the object has disconnected from the delta stream.
 	 */
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: change return type to void (legacy breaking)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 change return type to void (legacy breaking)
 	protected abstract onDisconnect(): any;
 
 	/**

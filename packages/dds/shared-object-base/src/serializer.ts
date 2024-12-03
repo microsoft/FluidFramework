@@ -87,13 +87,13 @@ export class FluidSerializer implements IFluidSerializer {
 	 *
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any -- TODO: ddsFuzzHarness breaks
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any -- TODO: AB#26129 ddsFuzzHarness breaks when we update any->unknown
 	public encode(input: any, bind: IFluidHandleInternal): any {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		return !!input && typeof input === "object"
-			? // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- TODO: ddsFuzzHarness breaks
+			? // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- TODO: AB#26129 ddsFuzzHarness breaks when we update any->unknown
 				this.recursivelyReplace(input, this.encodeValue, bind)
 			: input;
 	}
@@ -107,7 +107,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 *
 	 * The decoded handles are implicitly bound to the handle context of this serializer.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: ddsFuzzHarness breaks
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 ddsFuzzHarness breaks when we update any->unknown
 	public decode(input: unknown): any {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
