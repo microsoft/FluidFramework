@@ -465,7 +465,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			let attachCalled = false;
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
-					// ...runtimeEvents,
+					...(runtimeEvents as unknown as Overridable<IFluidDataStoreRuntime>),
 					attachState: AttachState.Detached,
 					connected: false,
 					bindChannel: (channel) => {
