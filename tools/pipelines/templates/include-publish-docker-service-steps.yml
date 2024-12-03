@@ -28,52 +28,48 @@ parameters:
   default:
 
 jobs:
-- deployment: publish_${{ replace(parameters.environment, '-', '_') }}
-  displayName: Publish ${{ parameters.environment }}
-  environment: ${{ parameters.environment }}
+- job: publish_images
+  displayName: Publish docker images
   pool: ${{ parameters.pool }}
   workspace:
     clean: all
   variables:
     version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
     containerTagSuffix: $(version)
-  strategy:
-    runOnce:
-      deploy:
-        steps:
-        - download: none
+  steps:
+  - download: none
 
-        - task: Bash@3
-          displayName: Pull image
-          inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-              'docker pull ${{ parameters.containerTag }}'
+  - task: Bash@3
+    displayName: Pull image
+    inputs:
+      targetType: 'inline'
+      script: |
+        set -eu -o pipefail
+        'docker pull ${{ parameters.containerTag }}'
 
-        - task: Docker@1
-          displayName: Tag image as '$(containerTagSuffix)'
-          inputs:
-            command: 'Tag image'
-            arguments: '${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)'
+  - task: Docker@1
+    displayName: Tag image as '$(containerTagSuffix)'
+    inputs:
+      command: 'Tag image'
+      arguments: '${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)'
 
-        - task: Docker@1
-          displayName: Tag image as 'latest'
-          inputs:
-            command: 'Tag image'
-            arguments: '${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest'
+  - task: Docker@1
+    displayName: Tag image as 'latest'
+    inputs:
+      command: 'Tag image'
+      arguments: '${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest'
 
-        - task: 1ES.PushContainerImage@1
-          displayName: Docker Push
-          inputs:
-            image: $(containerTag)
-            remoteImage: >
-              ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest,
-              ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)
+  - task: 1ES.PushContainerImage@1
+    displayName: Docker Push
+    inputs:
+      image: $(containerTag)
+      remoteImage: >
+        ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest,
+        ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)
 
-        - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
-          parameters:
-            tagName: ${{ parameters.tagName }}
+  - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
+    parameters:
+      tagName: ${{ parameters.tagName }}
   # templateContext is available because our templates were migrated to extend 1ES templates for pipelines, so
   # the stage defined in this file ends up being passed to a 1ES template which provides this functionality.
   templateContext:

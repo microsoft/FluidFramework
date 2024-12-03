@@ -37,11 +37,10 @@ stages:
   variables:
   - group: ado-feeds
   jobs:
-  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
+  - template: /tools/pipelines/templates/include-publish-npm-package-job.yml@self
     parameters:
       feedUrl: $(ado-feeds-test) # Comes from the ado-feeds variable group
       feedKind: internal-test
-      environment: test-package-build-feed
       pool: ${{ parameters.pool }}
       buildDirectory: ${{ parameters.buildDirectory }}
       buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
@@ -65,12 +64,10 @@ stages:
   variables:
   - group: ado-feeds
   jobs:
-  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
+  - template: /tools/pipelines/templates/include-publish-npm-package-job.yml@self
     parameters:
       feedUrl: $(ado-feeds-build) # Comes from the ado-feeds variable group
       feedKind: internal-build
-      # Environment should match the condition for publish_npm_internal_dev
-      environment: package-build-feed
       pool: ${{ parameters.pool }}
       buildDirectory: ${{ parameters.buildDirectory }}
       buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
@@ -95,12 +92,10 @@ stages:
     variables:
     - group: ado-feeds
     jobs:
-    - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
+    - template: /tools/pipelines/templates/include-publish-npm-package-job.yml@self
       parameters:
         feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
         feedKind: internal-dev
-        # Environment should match the condition for publish_npm_internal_build
-        environment: package-build-feed
         pool: ${{ parameters.pool }}
         buildDirectory: ${{ parameters.buildDirectory }}
         buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
@@ -113,11 +108,10 @@ stages:
   variables:
   - group: ado-feeds
   jobs:
-  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
+  - template: /tools/pipelines/templates/include-publish-npm-package-job.yml@self
     parameters:
       feedUrl: https://registry.npmjs.org
       feedKind: public
-      environment: package-npmjs-feed
       pool: ${{ parameters.pool }}
       customEndPoint: npmjs
       publishFlags: --access public
