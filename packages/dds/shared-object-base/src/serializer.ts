@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IFluidHandleContext,
@@ -33,7 +32,7 @@ export interface IFluidSerializer {
 	 * the root to any replaced handles.  (If no handles are found, returns the original object.)
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-	encode(value: unknown, bind: IFluidHandle): any;
+	encode(value: any, bind: IFluidHandle): any;
 
 	/**
 	 * Given a fully-jsonable object tree that may have encoded handle objects embedded within, will return an
@@ -45,12 +44,13 @@ export interface IFluidSerializer {
 	 * The decoded handles are implicitly bound to the handle context of this serializer.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-	decode(input: unknown): any;
+	decode(input: any): any;
 
 	/**
 	 * Stringifies a given value. Converts any IFluidHandle to its stringified equivalent.
 	 */
-	stringify(value: unknown, bind: IFluidHandle): string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
+	stringify(value: any, bind: IFluidHandle): string;
 
 	/**
 	 * Parses the given JSON input string and returns the JavaScript object defined by it. Any Fluid

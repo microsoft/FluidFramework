@@ -6,10 +6,10 @@
 
 // @alpha (undocumented)
 export interface IFluidSerializer {
-    decode(input: unknown): any;
-    encode(value: unknown, bind: IFluidHandle): any;
+    decode(input: any): any;
+    encode(value: any, bind: IFluidHandle): any;
     parse(value: string): any;
-    stringify(value: unknown, bind: IFluidHandle): string;
+    stringify(value: any, bind: IFluidHandle): string;
 }
 
 // @alpha
