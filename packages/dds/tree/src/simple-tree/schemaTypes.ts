@@ -829,6 +829,7 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
  * See {@link NodeSchemaMetadata.custom}.
  *
+ * @sealed
  * @public
  */
 export interface NodeSchemaOptions<out TMetadata = NodeSchemaMetadata> {
