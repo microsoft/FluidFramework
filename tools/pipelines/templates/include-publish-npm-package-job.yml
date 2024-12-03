@@ -10,9 +10,6 @@ parameters:
 - name: feedUrl
   type: string
 
-- name: environment
-  type: string
-
 - name: pool
   type: object
   default: Small-eastus2
