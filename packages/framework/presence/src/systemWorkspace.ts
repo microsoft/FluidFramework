@@ -98,7 +98,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	 */
 	private readonly attendees = new Map<ClientConnectionId | ClientSessionId, SessionClient>();
 
-	// When local client disconnects, we temporarlily lose the connectivity status of other attendees in the session.
+	// When local client disconnects, we lose the connectivity status updates for remote attendees in the session.
 	// Upon disconnect, we mark all other attendees connections as stale and update their status to disconnected after 30 seconds of inactivity.
 	private readonly staleConnectionClients = new Set<SessionClient>();
 
