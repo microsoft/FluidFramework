@@ -26,6 +26,7 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         set -eu -o pipefail
-        ${{ parameters.packageManagerInstallCommand }}
+        echo $(pnpm config get registry)
+        ${{ parameters.packageManagerInstallCommand }} --force
     env:
       NPM_CONFIG_REGISTRY: $(ado-feeds-primary-registry)
