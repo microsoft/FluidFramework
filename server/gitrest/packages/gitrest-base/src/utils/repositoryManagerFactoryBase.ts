@@ -48,7 +48,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		fileSystemManager: IFileSystemManager,
 		repoOwner: string,
 		repoName: string,
-		repo: TRepo,
+		repo: TRepo | undefined,
 		gitdir: string,
 		externalStorageManager: IExternalStorageManager,
 		lumberjackBaseProperties: Record<string, any>,
@@ -260,9 +260,6 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 			}
 
 			const repository = this.repositoryCache.get(repoPath);
-			if (!repository) {
-				throw new NetworkError(404, "Repository not found");
-			}
 			return this.createRepoManager(
 				fileSystemManager,
 				params.repoOwner,
