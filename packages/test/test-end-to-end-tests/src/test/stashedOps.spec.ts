@@ -2025,7 +2025,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("applies stashed ops with no saved ops", async function () {
-		// TODO: This test is consistently failing when ran against FRS. See ADO:7968
+		// TODO: This test is consistently failing when ran against AFR. See ADO:7968
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
