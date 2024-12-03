@@ -460,7 +460,6 @@ describe("SharedObject attaching binding and connecting", () => {
 
 		it("isAttached with detached transition to attach runtime", async () => {
 			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
-
 			let didAttach = 0;
 			let attachCalled = false;
 			const { overrides, sharedObject } = createTestSharedObject({
