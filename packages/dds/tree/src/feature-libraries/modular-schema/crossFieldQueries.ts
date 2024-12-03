@@ -4,13 +4,7 @@
  */
 
 import type { ChangesetLocalId, RevisionTag } from "../../core/index.js";
-import {
-	type RangeMap,
-	type RangeQueryResult,
-	getFromRangeMap,
-	getOrAddInMap,
-	setInRangeMap,
-} from "../../util/index.js";
+import { RangeMap, type RangeQueryResult } from "../../util/index.js";
 import type { NodeId } from "./modularChangeTypes.js";
 
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
@@ -32,7 +26,8 @@ export function setInCrossFieldMap<T>(
 	count: number,
 	value: T,
 ): void {
-	setInRangeMap(getOrAddInMap(map, revision, []), id, count, value);
+	const rangeMap = map.has(revision) ? (map.get(revision) as RangeMap<T>) : new RangeMap<T>();
+	rangeMap.setInRange(id, count, value);
 }
 
 export function getFirstFromCrossFieldMap<T>(
@@ -41,7 +36,8 @@ export function getFirstFromCrossFieldMap<T>(
 	id: ChangesetLocalId,
 	count: number,
 ): RangeQueryResult<T> {
-	return getFromRangeMap(map.get(revision) ?? [], id, count);
+	const rangeMap = map.has(revision) ? (map.get(revision) as RangeMap<T>) : new RangeMap<T>();
+	return rangeMap.getFromRange(id, count);
 }
 
 /**
