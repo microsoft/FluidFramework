@@ -31,8 +31,8 @@ steps:
         echo "Removing node_modules"
         rm -rf node_modules
         echo "Running install"
-        registry = "$(pnpm config get registry)"
-        token = echo -n "Bearer ${SYSTEM_ACCESSTOKEN}" | base64
+        registry="$(pnpm config get registry)"
+        token=echo -n "Bearer ${SYSTEM_ACCESSTOKEN}" | base64
         if [ $registry != "https://registry.npmjs.org/" ]; then
           echo "Authenticating to registry: ${registry}"
           npm config set //${registry}:_authToken=${token}
