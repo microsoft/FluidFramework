@@ -32,7 +32,7 @@ export interface IFluidSerializer {
 	 * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
 	 * the root to any replaced handles.  (If no handles are found, returns the original object.)
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use unknown (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
 	encode(value: unknown, bind: IFluidHandle): any;
 
 	/**
@@ -44,7 +44,7 @@ export interface IFluidSerializer {
 	 *
 	 * The decoded handles are implicitly bound to the handle context of this serializer.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use unknown (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
 	decode(input: unknown): any;
 
 	/**
@@ -56,7 +56,7 @@ export interface IFluidSerializer {
 	 * Parses the given JSON input string and returns the JavaScript object defined by it. Any Fluid
 	 * handles will be realized as part of the parse
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use unknown (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
 	parse(value: string): any;
 }
 

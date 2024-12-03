@@ -45,7 +45,7 @@ export function makeHandlesSerializable(
 	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use unknown (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
 ): any {
 	return serializer.encode(value, bind);
 }
@@ -61,7 +61,7 @@ export function makeHandlesSerializable(
  * @legacy
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use unknown (breaking change)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
 export function parseHandles(value: unknown, serializer: IFluidSerializer): any {
 	return serializer.decode(value);
 }
