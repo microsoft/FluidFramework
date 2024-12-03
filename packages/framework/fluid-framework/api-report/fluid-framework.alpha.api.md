@@ -735,6 +735,7 @@ export type JsonNodeSchema = JsonLeafNodeSchema | JsonMapNodeSchema | JsonArrayN
 
 // @alpha @sealed
 export interface JsonNodeSchemaBase<TNodeKind extends NodeKind, TJsonSchemaType extends JsonSchemaType> {
+    readonly description?: string | undefined;
     readonly _treeNodeSchemaKind: TNodeKind;
     readonly type: TJsonSchemaType;
 }
@@ -838,7 +839,7 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly description?: string | undefined;
 }
 
-// @public
+// @public @sealed
 export interface NodeSchemaOptions<out TMetadata = NodeSchemaMetadata> {
     readonly metadata?: TMetadata;
 }
