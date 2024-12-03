@@ -257,11 +257,12 @@ export class SquashingTransactionStack<
 			// TODO:#8603: This may need to be computed differently if we allow rebasing during a transaction.
 			const startHead = this.activeBranch.getHead();
 			const onPop = onPush?.();
-			this.setTransactionBranch(this.#transactionBranch ?? this.branch.fork());
-			this.activeBranch.editor.enterTransaction();
+			const transactionBranch = this.#transactionBranch ?? this.branch.fork();
+			this.setTransactionBranch(transactionBranch);
+			transactionBranch.editor.enterTransaction();
 			return (result) => {
 				assert(this.#transactionBranch !== undefined, "Expected transaction branch");
-				this.activeBranch.editor.exitTransaction();
+				this.#transactionBranch.editor.exitTransaction();
 				switch (result) {
 					case TransactionResult.Abort:
 						// When a transaction is aborted, roll back all the transaction's changes on the current branch
