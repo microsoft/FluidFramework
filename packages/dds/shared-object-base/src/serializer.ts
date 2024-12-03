@@ -158,10 +158,10 @@ export class FluidSerializer implements IFluidSerializer {
 	// Invoked for non-null objects to recursively replace references to IFluidHandles.
 	// Clones as-needed to avoid mutating the `input` object.  If no IFluidHandes are present,
 	// returns the original `input`.
-	private recursivelyReplace<T = unknown>(
+	private recursivelyReplace<TContext = unknown>(
 		input: object,
-		replacer: (input: unknown, context?: T) => unknown,
-		context?: T,
+		replacer: (input: unknown, context?: TContext) => unknown,
+		context?: TContext,
 	): unknown {
 		// Note: Caller is responsible for ensuring that `input` is defined / non-null.
 		//       (Required for Object.keys() below.)
