@@ -50,3 +50,5 @@ steps:
       echo "Using pnpm $(pnpm -v)"
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
       pnpm config set -g workspace-concurrency 0
+  env:
+    COREPACK_NPM_REGISTRY: $(ado-feeds-primary-registry)
