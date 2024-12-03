@@ -728,16 +728,16 @@ extends:
                         testResultDirs: '${{ parameters.testResultDirs }}'
 
               templateContext:
-              outputParentDirectory: $(Build.ArtifactStagingDirectory)
-              outputs:
-                - ${{ if eq(parameters.testCoverage, true) }}:
-                      - output: pipelineArtifact
-                        displayName: Publish Artifacts - code-coverage
-                        condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                        targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-                        artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
-                        sbomEnabled: false
-                        publishLocation: pipeline
+                outputParentDirectory: $(Build.ArtifactStagingDirectory)
+                outputs:
+                  - ${{ if eq(parameters.testCoverage, true) }}:
+                        - output: pipelineArtifact
+                          displayName: Publish Artifacts - code-coverage
+                          condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                          targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                          artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
+                          sbomEnabled: false
+                          publishLocation: pipeline
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
