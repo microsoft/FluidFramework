@@ -198,7 +198,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const port = normalizePort(process.env.PORT || "3000");
 		const tenantManager: core.ITenantManager = new services.TenantManager(
 			riddlerEndpoint,
-			`http://localhost:${port}` /* internalHistorianUrl (self) */,
+			"http://invalid-api-use" /* internalHistorianUrl (explicitly invalid to avoid circular reference) */,
 		);
 		const documentManager: core.IDocumentManager = new services.DocumentManager(
 			alfredEndpoint,
