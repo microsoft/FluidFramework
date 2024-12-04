@@ -443,18 +443,15 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		updateProviders?: ClientConnectionId[],
 	): void {
 		this.refreshBroadcastRequested = true;
-		// We must be connected to receive this message, so clientId should be defined.
-		// If it isn't then, not really a problem; just won't be in provider or quorum list.
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const clientId = this.runtime.clientId!;
-		// const requestor = message.clientId;
+
+		// If we have targeted signal support, we directly send our local client's state to the new client.
 		if (this.targetedSignalSupport) {
 			const clientConnectionId = this.runtime.clientId;
 			assert(clientConnectionId !== undefined, "Client connected without clientId");
 			const currentClientToSessionValueState =
 				this.datastore["system:presence"].clientToSessionId[clientConnectionId];
 			const updates: GeneralDatastoreMessageContent = {};
-
+			// Loop through all workspaces and their keys to find state associated with local client.
 			for (const [workspaceAddress, workspaceDatastore] of Object.entries(this.datastore)) {
 				for (const [key, value] of Object.entries(workspaceDatastore)) {
 					for (const [sessionId, entry] of Object.entries(value)) {
@@ -466,7 +463,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					}
 				}
 			}
-
 			const content = {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
@@ -480,13 +476,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					...updates,
 				},
 			} satisfies DatastoreUpdateMessage["content"];
-
 			this.runtime.submitSignal(datastoreUpdateMessageType, content);
-
 			this.logger?.sendTelemetryEvent({
 				eventName: "JoinResponse",
 				details: {
-					type: "localUpdate",
+					type: "targeted",
 					requestor,
 					role: "primary",
 				},
@@ -498,6 +492,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			updateProviders !== undefined,
 			"updateProviders must be defined with no targeted signal support",
 		);
+
+		// We must be connected to receive this message, so clientId should be defined.
+		// If it isn't then, not really a problem; just won't be in provider or quorum list.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const clientId = this.runtime.clientId!;
+		// const requestor = message.clientId;
 
 		if (updateProviders.includes(clientId)) {
 			// Send all current state to the new client
