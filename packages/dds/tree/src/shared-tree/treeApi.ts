@@ -432,6 +432,7 @@ export function runTransaction<
 		| ((node: TNode) => TResult | typeof rollback)
 		| ((root: TRoot) => TResult | typeof rollback),
 	preconditions: readonly TransactionConstraint[] = [],
+	undoPreconditions: readonly TransactionConstraint[] = [],
 ): TResult | typeof rollback {
 	if (treeOrNode instanceof SchematizingSimpleTreeView) {
 		const t = transaction as (root: TRoot) => TResult | typeof rollback;
@@ -439,6 +440,7 @@ export function runTransaction<
 			treeOrNode.checkout,
 			() => t(treeOrNode.root as TRoot),
 			preconditions,
+			undoPreconditions,
 		);
 	} else {
 		const node = treeOrNode as TNode;
@@ -450,7 +452,12 @@ export function runTransaction<
 			);
 		}
 		const treeView = getCheckoutFlexTreeView(context);
-		return runTransactionInCheckout(treeView.checkout, () => t(node), preconditions);
+		return runTransactionInCheckout(
+			treeView.checkout,
+			() => t(node),
+			preconditions,
+			undoPreconditions,
+		);
 	}
 }
 
@@ -458,6 +465,7 @@ function runTransactionInCheckout<TResult>(
 	checkout: ITreeCheckout,
 	transaction: () => TResult | typeof rollback,
 	preconditions: readonly TransactionConstraint[],
+	undoPreconditions: readonly TransactionConstraint[] = [],
 ): TResult | typeof rollback {
 	checkout.transaction.start();
 	for (const constraint of preconditions) {
@@ -470,13 +478,25 @@ function runTransactionInCheckout<TResult>(
 						`Attempted to add a "nodeInDocument" constraint, but the node is not currently in the document. Node status: ${nodeStatus}`,
 					);
 				}
-				checkout.editor.addNodeExistsConstraint(node.anchorNode);
+				checkout.editor.addInputNodeExistsConstraint(node.anchorNode);
 				break;
 			}
 			default:
 				unreachableCase(constraint.type);
 		}
 	}
+	for (const constraint of undoPreconditions) {
+		switch (constraint.type) {
+			case "nodeInDocument": {
+				const node = getOrCreateInnerNode(constraint.node);
+				checkout.editor.addUndoNodeExistsConstraint(node.anchorNode);
+				break;
+			}
+			default:
+				unreachableCase(constraint.type);
+		}
+	}
+
 	let result: ReturnType<typeof transaction>;
 	try {
 		result = transaction();
@@ -488,9 +508,10 @@ function runTransactionInCheckout<TResult>(
 
 	if (result === rollback) {
 		checkout.transaction.abort();
-	} else {
-		checkout.transaction.commit();
+		return result;
 	}
+
+	checkout.transaction.commit();
 
 	return result;
 }

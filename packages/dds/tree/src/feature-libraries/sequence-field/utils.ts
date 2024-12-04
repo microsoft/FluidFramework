@@ -19,6 +19,7 @@ import {
 	CrossFieldTarget,
 	type NodeId,
 	type CrossFieldKeyRange,
+	type NestedChangesIndices,
 } from "../modular-schema/index.js";
 
 import type {
@@ -61,15 +62,25 @@ export function createEmpty(): Changeset {
 	return [];
 }
 
-export function getNestedChanges(change: Changeset): [NodeId, number | undefined][] {
-	const output: [NodeId, number | undefined][] = [];
-	let index = 0;
-	for (const { changes, cellId, count } of change) {
+export function getNestedChanges(change: Changeset): NestedChangesIndices {
+	const output: NestedChangesIndices = [];
+	let inputIndex = 0;
+	let outputIndex = 0;
+	for (const mark of change) {
+		const { changes, count } = mark;
 		if (changes !== undefined) {
-			output.push([changes, cellId === undefined ? index : undefined]);
+			output.push([
+				changes,
+				!areInputCellsEmpty(mark) ? inputIndex : undefined /* inputIndex */,
+				!areOutputCellsEmpty(mark) ? outputIndex : undefined /* outputIndex */,
+			]);
 		}
-		if (cellId === undefined) {
-			index += count;
+		if (!areInputCellsEmpty(mark)) {
+			inputIndex += count;
+		}
+
+		if (!areOutputCellsEmpty(mark)) {
+			outputIndex += count;
 		}
 	}
 	return output;

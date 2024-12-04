@@ -17,6 +17,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type {
 	FieldChangeHandler,
+	NestedChangesIndices,
 	NodeChangeComposer,
 	NodeChangePruner,
 	NodeChangeRebaser,
@@ -82,8 +83,9 @@ function compose(
 	return composed;
 }
 
-function getNestedChanges(change: GenericChangeset): [NodeId, number | undefined][] {
-	return change.toArray().map(([index, nodeChange]) => [nodeChange, index]);
+function getNestedChanges(change: GenericChangeset): NestedChangesIndices {
+	// For generic changeset, the indices in the input and output contexts are the same.
+	return change.toArray().map(([index, nodeChange]) => [nodeChange, index, index]);
 }
 
 function rebaseGenericChange(
