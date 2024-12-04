@@ -329,7 +329,7 @@ extends:
                     echo "  Is Pull Request: $([[ "$(Build.Reason)" == "PullRequest" ]] && echo true || echo false)"
                     echo "  Contains 'realsvc:tinylicious': $([[ "${{ test.name }}" == *"realsvc:tinylicious"* ]] && echo true || echo false)"
                     echo "  Contains 'stress:tinylicious': $([[ "${{ test.name }}" == *"stress:tinylicious"* ]] && echo true || echo false)"
-                displayName: Debug testCoverage value
+                displayName: "Debug testCoverage value ${{ test.jobName }}"
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
