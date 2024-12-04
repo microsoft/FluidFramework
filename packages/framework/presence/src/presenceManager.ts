@@ -56,11 +56,7 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 
 	private readonly mc: MonitoringContext | undefined = undefined;
 
-	public constructor(
-		runtime: IEphemeralRuntime,
-		clientSessionId: ClientSessionId,
-		supportedFeatures?: Record<string, unknown>,
-	) {
+	public constructor(runtime: IEphemeralRuntime, clientSessionId: ClientSessionId) {
 		const logger = runtime.logger;
 		if (logger) {
 			this.mc = createChildMonitoringContext({ logger, namespace: "Presence" });
@@ -72,7 +68,6 @@ class PresenceManager implements IPresence, PresenceExtensionInterface {
 			runtime,
 			this.events,
 			this.mc?.logger,
-			supportedFeatures,
 		);
 
 		runtime.on("connected", this.onConnect.bind(this));
@@ -164,7 +159,6 @@ function setupSubComponents(
 	runtime: IEphemeralRuntime,
 	events: IEmitter<PresenceEvents>,
 	logger: ITelemetryLoggerExt | undefined,
-	supportedFeatures?: Record<string, unknown>,
 ): [PresenceDatastoreManager, SystemWorkspace] {
 	const systemWorkspaceDatastore: SystemWorkspaceDatastore = {
 		clientToSessionId: {},
@@ -182,7 +176,6 @@ function setupSubComponents(
 		logger,
 		systemWorkspaceDatastore,
 		systemWorkspaceConfig.statesEntry,
-		supportedFeatures,
 	);
 	return [datastoreManager, systemWorkspaceConfig.workspace];
 }
@@ -195,7 +188,6 @@ function setupSubComponents(
 export function createPresenceManager(
 	runtime: IEphemeralRuntime,
 	clientSessionId: ClientSessionId = createSessionId() as ClientSessionId,
-	supportedFeatures?: Record<string, unknown>,
 ): IPresence & PresenceExtensionInterface {
-	return new PresenceManager(runtime, clientSessionId, supportedFeatures);
+	return new PresenceManager(runtime, clientSessionId);
 }

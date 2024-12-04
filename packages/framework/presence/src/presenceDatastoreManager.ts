@@ -144,7 +144,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
-	private readonly targetedSignalSupport: boolean;
+	private readonly targetedSignalSupport: boolean = false;
 
 	private readonly timer = new TimerManager();
 
@@ -160,12 +160,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: PresenceWorkspaceEntry<PresenceStatesSchema>,
-		supportedFeatures?: Record<string, unknown>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
 		this.workspaces.set("system:presence", systemWorkspace);
-		this.targetedSignalSupport = supportedFeatures?.submit_signals_v2 === true ? true : false;
 	}
 
 	public joinSession(clientId: ClientConnectionId): void {
