@@ -4,7 +4,9 @@
  */
 
 import type { Nodes as HastTree } from "hast";
+
 import { PlainTextNode } from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 describe("PlainText to HTML transformation tests", () => {

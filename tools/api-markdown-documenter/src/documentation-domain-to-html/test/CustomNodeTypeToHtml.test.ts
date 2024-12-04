@@ -9,8 +9,10 @@
  */
 import { expect } from "chai";
 import type { Nodes as HastNodes } from "hast";
+
 import { DocumentationLiteralNodeBase } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
+
 import { testTransformation } from "./Utilities.js";
 
 /**

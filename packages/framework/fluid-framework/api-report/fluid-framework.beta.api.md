@@ -31,6 +31,9 @@ Kind
 export type AssignableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindAssignment<GetTypes<Types>["readWrite"], Kind> : [TSchema] extends [ImplicitAllowedTypes] ? GetTypes<TSchema>["readWrite"] : never;
 
 // @public
+export type AssignableTreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKindAssignment<GetTypesUnsafe<Types>["readWrite"], Kind> : GetTypesUnsafe<TSchema>["readWrite"];
+
+// @public
 export enum AttachState {
     Attached = "Attached",
     Attaching = "Attaching",
@@ -488,7 +491,7 @@ type _InlineTrick = 0;
 export type Input<T extends never> = T;
 
 // @public
-type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = FlattenKeys<{
+type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = Record<string, never> extends T ? Record<string, never> : FlattenKeys<{
     readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property & string]>;
 } & {
     readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
@@ -667,7 +670,7 @@ export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 }
 
 // @public
-export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
+export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaClass<string, NodeKind, infer TNode> ? TNode : T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode> ? TNode : never;
 
 // @public
 type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchemaUnsafe<string, NodeKind, infer TNode> ? TNode : never;
@@ -701,17 +704,17 @@ type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchem
 type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T as [T[Property]] extends [
     CustomizedSchemaTyping<unknown, {
-        readWrite: never;
-        input: unknown;
-        output: TreeNode | TreeLeafValue;
+        readonly readWrite: never;
+        readonly input: unknown;
+        readonly output: TreeNode | TreeLeafValue;
     }>
     ] ? never : Property]: AssignableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
 } & {
     readonly [Property in keyof T as [T[Property]] extends [
     CustomizedSchemaTyping<unknown, {
-        readWrite: never;
-        input: unknown;
-        output: TreeNode | TreeLeafValue;
+        readonly readWrite: never;
+        readonly input: unknown;
+        readonly output: TreeNode | TreeLeafValue;
     }>
     ] ? Property : never]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
@@ -863,7 +866,7 @@ export interface StrictTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTyp
     // (undocumented)
     output: TOutput;
     // (undocumented)
-    readWrite: TInput extends never ? never : TOutput;
+    readWrite: TOutput;
 }
 
 // @public

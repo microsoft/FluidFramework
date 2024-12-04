@@ -21,8 +21,8 @@ class RabbitmqTaskSender implements ITaskMessageSender {
 	private readonly events = new EventEmitter();
 	private readonly rabbitmqConnectionString: string;
 	private readonly taskQueues: string[];
-	private connection: amqp.Connection;
-	private channel: amqp.Channel;
+	private connection: amqp.Connection | undefined;
+	private channel: amqp.Channel | undefined;
 
 	constructor(rabbitmqConfig: any, config: any) {
 		this.rabbitmqConnectionString = rabbitmqConfig.connectionString;
@@ -34,7 +34,7 @@ class RabbitmqTaskSender implements ITaskMessageSender {
 		this.channel = await this.connection.createChannel();
 
 		// Assert task queues.
-		const queuePromises = [];
+		const queuePromises: ReturnType<typeof this.channel.assertQueue>[] = [];
 		for (const queue of this.taskQueues) {
 			queuePromises.push(this.channel.assertQueue(queue, { durable: true }));
 		}
@@ -48,7 +48,7 @@ class RabbitmqTaskSender implements ITaskMessageSender {
 	}
 
 	public sendTask(queueName: string, message: ITaskMessage) {
-		this.channel.sendToQueue(queueName, Buffer.from(JSON.stringify(message)), {
+		this.channel?.sendToQueue(queueName, Buffer.from(JSON.stringify(message)), {
 			persistent: false,
 		});
 	}
@@ -59,8 +59,8 @@ class RabbitmqTaskSender implements ITaskMessageSender {
 	}
 
 	public async close() {
-		const closeChannelP = this.channel.close();
-		const closeConnectionP = this.connection.close();
+		const closeChannelP = this.channel?.close();
+		const closeConnectionP = this.connection?.close();
 		await Promise.all([closeChannelP, closeConnectionP]);
 	}
 }
