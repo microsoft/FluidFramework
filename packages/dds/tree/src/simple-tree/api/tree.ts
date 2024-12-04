@@ -35,7 +35,10 @@ import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-
+import type {
+	TransactionParams,
+	TransactionStatus,
+} from "../../shared-tree/transactionTypes.js";
 /**
  * A tree from which a {@link TreeView} can be created.
  *
@@ -542,6 +545,12 @@ export interface TreeViewAlpha<
 
 	// Override the base branch method to return a typed view rather than merely a branch.
 	fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
+
+	/**
+	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param params - The parameters for the transaction.
+	 */
+	runTransaction<TResult>(params: TransactionParams<TResult>): TransactionStatus<TResult>;
 }
 
 /**
