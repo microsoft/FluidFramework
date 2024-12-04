@@ -18,7 +18,6 @@ steps:
     - template: include-install-pnpm.yml
       parameters:
         buildDirectory: ${{ parameters.buildDirectory }}
-        enableCache: false
 
   - task: Bash@3
     displayName: Install dependencies

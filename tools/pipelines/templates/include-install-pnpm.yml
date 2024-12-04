@@ -6,19 +6,19 @@
 # This template can be included in pipelines to install pnpm with store caching enabled.
 
 parameters:
-  # The path containing the project(s) to build.
-  - name: buildDirectory
-    type: string
+# The path containing the project(s) to build.
+- name: buildDirectory
+  type: string
 
-  # If set to false, the pnpm store will not be cached or restored from cache.
-  - name: enableCache
-    type: boolean
-    default: true
+# If set to false, the pnpm store will not be cached or restored from cache.
+- name: enableCache
+  type: boolean
+  default: true
 
-  # The path to the pnpm store. The contents here will be cached and restored when using pnpm in a pipeline.
-  - name: pnpmStorePath
-    type: string
-    default: $(Pipeline.Workspace)/.pnpm-store
+# The path to the pnpm store. The contents here will be cached and restored when using pnpm in a pipeline.
+- name: pnpmStorePath
+  type: string
+  default: $(Pipeline.Workspace)/.pnpm-store
 
 steps:
 - ${{ if eq(parameters.enableCache, true) }}:
