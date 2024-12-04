@@ -140,7 +140,7 @@ export function getEditingSystemPrompt(
 	).getSchemaText();
 
 	const topLevelEditWrapperDescription = doesNodeContainArraySchema(treeNode)
-		? `contains one of the following interfaces: "Modify", null or an array node only edit: "Insert", "Remove", "Move".`
+		? `contains one of the following interfaces: "Modify", null or an array node only edit: "Insert", "Remove", "Move"`
 		: `contains the interface "Modify" or null`;
 
 	// TODO: security: user prompt in system prompt
