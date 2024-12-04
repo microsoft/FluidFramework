@@ -71,7 +71,7 @@ steps:
 
 # Authenticate to npm feed if required
 - task: npmAuthenticate@0
-  displayName: 'npm authenticate (internal feed)'
+  displayName: 'Npm authenticate'
   condition: and(succeeded(), eq(variables['registryType'], 'private'))
   retryCountOnTaskFailure: 1
   inputs:
