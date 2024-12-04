@@ -132,6 +132,35 @@ describe("Prompt Generation Regression Tests", () => {
 		});
 	});
 
+	it("Editing System Prompt with tree node with no array schema property but has child node that does should contain array types", function (this: Mocha.Context) {
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+
+		class TestWrapperNode extends sf.object("TestWrapperNode", {
+			childNodeProperty: TestTodoAppSchema,
+		}) {}
+
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestWrapperNode }));
+
+		view.initialize({ childNodeProperty: initialAppState });
+
+		idGenerator.assignIds(view.root);
+
+		const actualPrompt = getEditingSystemPrompt(
+			userAsk,
+			idGenerator,
+			view.root,
+			[],
+			systemRoleContext,
+		);
+
+		snapShotTester.expectToMatchSnapshot(this, actualPrompt, {
+			fileNameOverride: "Editing_System_Prompt_Nested_Array_Schema_But_No_Top_Level_Array",
+		});
+	});
+
 	it("Editing System Prompt with plan and empty edit log has no regression", function (this: Mocha.Context) {
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),

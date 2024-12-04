@@ -1,8 +1,8 @@
 ---
-Generated on: 2024-12-04T17:43:56.128Z
+Generated on: 2024-12-04T17:49:05.123Z
 description: This is a snapshot file utilized for testing purposes.
 Test Suite Title: Prompt Generation Regression Tests
-Test Title: Editing System Prompt with plan and populated edit log has no regression
+Test Title: Editing System Prompt with tree node with no array schema property but has child node that does should contain array types
 ---
 
 You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
@@ -19,7 +19,7 @@ interface Modify {
     type: "modify";
     explanation: string; // A description of what this edit is meant to accomplish in human readable English
     target: ObjectTarget; // A pointer to a specific object node in the tree, identified by the target object's Id.
-    field: "title" | "description" | "completed";
+    field: "childNodeProperty" | "title" | "description" | "completed";
     modification: any; // Domain-specific content here
 }
 
@@ -71,14 +71,11 @@ interface EditWrapper {
     edit: Insert | Remove | Move | Modify | null; // The next edit to apply to the tree, or null if the task is complete.
 }
 
-	The tree is a JSON object with the following schema: interface TestTodoAppSchema { title: string; description: string; todos: Todo[]; } interface Todo { title: string; completed: boolean; }
-	You have made a plan to accomplish the user's goal. The plan is: "Change the completed field to false for the todo at index 0 in the list of todos". You will perform one or more edits that correspond to that plan to accomplish the goal.
-	You have already performed the following edits:
-			1. {"type":"modify","explanation":"Change the completed field to false for the todo at index 0 in the list of todos","target":{"target":"Todo1"},"field":"complete","modification":false} This edit produced an error, and was discarded. The error message was: "Expected field schema"
-2. {"type":"modify","explanation":"Change the completed field to false for the todo at index 0 in the list of todos","target":{"target":"Todo1"},"field":"completed","modification":false}
-			This means that the current state of the tree reflects these changes.
-	The current state of the tree is: {"__fluid_objectId":"TestTodoAppSchema1","title":"My First Todo List","description":"This is a list of todos","todos":[{"__fluid_objectId":"Todo1","title":"Task 1","completed":false},{"__fluid_objectId":"Todo2","title":"Task 2","completed":true}]}.
-	Before you made the above edits the user requested you accomplish the following goal:
+	The tree is a JSON object with the following schema: interface TestWrapperNode { childNodeProperty: TestTodoAppSchema; } interface TestTodoAppSchema { title: string; description: string; todos: Todo[]; } interface Todo { title: string; completed: boolean; }
+	
+	
+	The current state of the tree is: {"__fluid_objectId":"TestWrapperNode1","childNodeProperty":{"__fluid_objectId":"TestTodoAppSchema1","title":"My First Todo List","description":"This is a list of todos","todos":[{"__fluid_objectId":"Todo1","title":"Task 1","completed":true},{"__fluid_objectId":"Todo2","title":"Task 2","completed":true}]}}.
+	The user requested you accomplish the following goal:
 	"Change the completed to false for the first task and create a new edit"
 	If the goal is now completed or is impossible, you should return null.
 	Otherwise, you should create an edit that makes progress towards the goal. It should have an English description ("explanation") of which edit to perform (specifying one of the allowed edit types).

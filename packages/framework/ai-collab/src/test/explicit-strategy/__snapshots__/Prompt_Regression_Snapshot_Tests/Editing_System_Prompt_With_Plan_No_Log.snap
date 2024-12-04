@@ -1,5 +1,5 @@
 ---
-Generated on: 2024-11-27T18:26:23.047Z
+Generated on: 2024-12-04T17:43:56.118Z
 description: This is a snapshot file utilized for testing purposes.
 Test Suite Title: Prompt Generation Regression Tests
 Test Title: Editing System Prompt with plan and empty edit log has no regression
@@ -9,7 +9,7 @@ You are a collaborative agent who interacts with a JSON tree by performing edits
 The application that owns the JSON tree has the following guidance about your role: "You're a helpful AI assistant".
 Edits are JSON objects that conform to the following schema of which the top level object you produce is an "EditWrapper" object which contains one of the following interfaces: "Insert", "Modify", "Remove", "Move", or null:
 	
-// A pointer to a specific object in the tree.
+// A pointer to a specific object node in the tree, identified by the target object's Id.
 interface ObjectTarget {
     target: string; // The id of the object (as specified by the object's __fluid_objectId property) that is being referenced
 }
@@ -18,7 +18,7 @@ interface ObjectTarget {
 interface Modify {
     type: "modify";
     explanation: string; // A description of what this edit is meant to accomplish in human readable English
-    target: ObjectTarget; // A pointer to a specific object in the tree.
+    target: ObjectTarget; // A pointer to a specific object node in the tree, identified by the target object's Id.
     field: "title" | "description" | "completed";
     modification: any; // Domain-specific content here
 }

@@ -50,7 +50,7 @@ const initialAppState = {
 };
 
 describe("Type Generation", () => {
-	it("doesNodeContainArraySchema should return true if the node contains an array schema", () => {
+	it("doesNodeContainArraySchema should return true if the node contains an array schema property", () => {
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
@@ -58,10 +58,10 @@ describe("Type Generation", () => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
 		view.initialize(initialAppState);
 
-		assert.equal(true, doesNodeContainArraySchema(view.root));
+		assert.equal(doesNodeContainArraySchema(view.root), true);
 	});
 
-	it("doesNodeContainArraySchema should return false if the node does NOT contain an array schema", () => {
+	it("doesNodeContainArraySchema should return false if the node does NOT contain an array schema property", () => {
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
@@ -70,7 +70,7 @@ describe("Type Generation", () => {
 		view.initialize(initialAppState);
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		assert.equal(false, doesNodeContainArraySchema(view.root.todos[0]!));
+		assert.equal(doesNodeContainArraySchema(view.root.todos[0]!), false);
 	});
 
 	it("doesNodeContainArraySchema should return true if the node is an array itself", () => {
@@ -81,6 +81,22 @@ describe("Type Generation", () => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
 		view.initialize(initialAppState);
 
-		assert.equal(true, doesNodeContainArraySchema(view.root.todos));
+		assert.equal(doesNodeContainArraySchema(view.root.todos), true);
+	});
+
+	it("doesNodeContainArraySchema should return true if the node schema contains no array property but its child node does", () => {
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+
+		class TestWrapperNode extends sf.object("TestWrapperNode", {
+			childNodeProperty: TestTodoAppSchema,
+		}) {}
+
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestWrapperNode }));
+		view.initialize({ childNodeProperty: initialAppState });
+
+		assert.equal(doesNodeContainArraySchema(view.root.childNodeProperty.todos), true);
 	});
 });

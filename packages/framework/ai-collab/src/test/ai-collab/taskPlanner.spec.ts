@@ -169,8 +169,8 @@ const factory = SharedTree.getFactory();
 
 const OPENAI_API_KEY = "";
 
-describe("Ai Planner App", () => {
-	it.skip("should be able to change the priority of a task", async () => {
+describe.skip("Ai Planner App", () => {
+	it("should be able to change the priority of a task", async () => {
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
@@ -198,9 +198,9 @@ describe("Ai Planner App", () => {
 		});
 
 		assert(view.root.taskGroups[0]?.tasks[0]?.priority === "high");
-	});
+	}).timeout(60000);
 
-	it.skip("Using a tree node without any array in its schema now succeeds (BUG FIX regression)", async () => {
+	it("BUG FIX REGRESSION: Using a tree node without any array in its schema now succeeds ", async () => {
 		class TestAppSchema extends sf.object("PrioritySpecification", {
 			priority: sf.string,
 		}) {}
@@ -280,7 +280,7 @@ describe("Ai Planner App", () => {
 					"400 Invalid schema for response_format 'SharedTreeAI'. Please ensure it is a valid JSON Schema.",
 			);
 		}
-	});
+	}).timeout(60000);
 
 	it.skip("BUG: OpenAI structured output fails when json schema with psuedo optional field is used in response format", async () => {
 		class TaskList extends sf.array("taskList", sf.string) {}
@@ -359,5 +359,5 @@ describe("Ai Planner App", () => {
 		});
 
 		assert.equal(view.root.nonOptionalProp, "Hello World");
-	});
+	}).timeout(60000);
 });
