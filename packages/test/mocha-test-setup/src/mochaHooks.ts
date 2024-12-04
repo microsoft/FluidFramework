@@ -58,7 +58,7 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 
 	/**
 	 * Sets the test that is currently running.
-	 * The test name will be included in all events logged through the logger until {@link clearCurentTest} is called.
+	 * The test name will be included in all events logged through the logger until {@link clearCurrentTest} is called.
 	 * @param testName - The name of the test that is currently running.
 	 */
 	public setCurrentTest(testName: string) {
