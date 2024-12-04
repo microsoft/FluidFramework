@@ -39,6 +39,7 @@ import {
 	type NodeId,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
+	type NestedChangesIndices,
 } from "../modular-schema/index.js";
 
 import type {
@@ -720,11 +721,16 @@ export const optionalChangeHandler: FieldChangeHandler<
 	getCrossFieldKeys: (_change) => [],
 };
 
-function getNestedChanges(change: OptionalChangeset): [NodeId, number | undefined][] {
-	return change.childChanges.map(([register, nodeId]) => [
-		nodeId,
-		register === "self" ? 0 : undefined,
-	]);
+function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
+	return change.childChanges.map(([register, nodeId]) => {
+		// The node is deleted in the input context iif register is not self.
+		const inputIndex = register === "self" ? 0 : undefined;
+		// The node is deleted in the output context iif:
+		// - valueReplace exists and it's value is not the same as register.
+		// - valueReplace doesn't exist and register is not self (same as input index).
+		const outputIndex = register === (change.valueReplace?.src ?? "self") ? 0 : undefined;
+		return [nodeId, inputIndex, outputIndex];
+	});
 }
 
 function* relevantRemovedRoots(

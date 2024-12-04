@@ -213,14 +213,18 @@ function makeModularChangeCodec(
 		context: FieldChangeEncodingContext,
 	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
-		const { fieldChanges, nodeExistsConstraint } = change;
+		const { fieldChanges, inputNodeExistsConstraint, outputNodeExistsConstraint } = change;
 
 		if (fieldChanges !== undefined) {
 			encodedChange.fieldChanges = encodeFieldChangesForJsonI(fieldChanges, context);
 		}
 
-		if (nodeExistsConstraint !== undefined) {
-			encodedChange.nodeExistsConstraint = nodeExistsConstraint;
+		if (inputNodeExistsConstraint !== undefined) {
+			encodedChange.inputNodeExistsConstraint = inputNodeExistsConstraint;
+		}
+
+		if (outputNodeExistsConstraint !== undefined) {
+			encodedChange.outputNodeExistsConstraint = outputNodeExistsConstraint;
 		}
 
 		return encodedChange;
@@ -299,7 +303,8 @@ function makeModularChangeCodec(
 		idAllocator: IdAllocator,
 	): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
-		const { fieldChanges, nodeExistsConstraint } = encodedChange;
+		const { fieldChanges, inputNodeExistsConstraint, outputNodeExistsConstraint } =
+			encodedChange;
 
 		if (fieldChanges !== undefined) {
 			decodedChange.fieldChanges = decodeFieldChangesFromJson(
@@ -311,8 +316,12 @@ function makeModularChangeCodec(
 			);
 		}
 
-		if (nodeExistsConstraint !== undefined) {
-			decodedChange.nodeExistsConstraint = nodeExistsConstraint;
+		if (inputNodeExistsConstraint !== undefined) {
+			decodedChange.inputNodeExistsConstraint = inputNodeExistsConstraint;
+		}
+
+		if (outputNodeExistsConstraint !== undefined) {
+			decodedChange.outputNodeExistsConstraint = outputNodeExistsConstraint;
 		}
 
 		return decodedChange;
@@ -476,7 +485,7 @@ function makeModularChangeCodec(
 				changes: encodeFieldChangesForJson(change.fieldChanges, context, change.nodeChanges),
 				builds: encodeDetachedNodes(change.builds, context),
 				refreshers: encodeDetachedNodes(change.refreshers, context),
-				violations: change.constraintViolationCount,
+				violations: change.inputConstraintViolationCount,
 			};
 		},
 
@@ -505,7 +514,7 @@ function makeModularChangeCodec(
 			}
 
 			if (encodedChange.violations !== undefined) {
-				decoded.constraintViolationCount = encodedChange.violations;
+				decoded.inputConstraintViolationCount = encodedChange.violations;
 			}
 
 			const decodedRevInfos = decodeRevisionInfos(encodedChange.revisions, context);

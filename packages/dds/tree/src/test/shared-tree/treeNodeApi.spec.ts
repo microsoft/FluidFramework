@@ -34,7 +34,7 @@ import {
 
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
-import type { requireAssignableTo } from "../../util/index.js";
+import { fail, type requireAssignableTo } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { runTransaction } from "../../shared-tree/treeApi.js";
 
@@ -65,11 +65,13 @@ describe("treeApi", () => {
 				view: TreeView<typeof TestObject>,
 				transaction: (root: TestObject) => TResult | typeof rollback,
 				preconditions?: TransactionConstraint[],
+				undoPreconditions?: TransactionConstraint[],
 			) {
 				return runTransaction(
 					inputType === "view" ? view : view.root,
 					transaction,
 					preconditions,
+					undoPreconditions,
 				);
 			}
 
@@ -148,6 +150,39 @@ describe("treeApi", () => {
 					);
 				});
 				assert.equal(view.root.content, 42);
+			});
+
+			/**
+			 * This test exercises the undo precondition constraints API with a representative scenario.
+			 * For more in-depth testing of undo precondition constraints, see editing.spec.ts.
+			 */
+			it("revert constraint violated by interim change", () => {
+				const view = getTestObjectView({});
+				const child = view.root.child;
+				assert(child !== undefined);
+
+				const stack = createTestUndoRedoStacks(view.events);
+
+				run(
+					view,
+					(root) => {
+						root.content = 43;
+					},
+					undefined,
+					[{ type: "nodeInDocument", node: child }],
+				);
+				assert.equal(view.root.content, 43);
+
+				const changed42To43 = stack.undoStack[0] ?? fail("Missing undo");
+
+				// This change should violate the constraint in the revert
+				view.root.child = undefined;
+
+				// This revert should do nothing since its constraint has been violated
+				changed42To43.revert();
+				assert.equal(view.root.content, 43);
+
+				stack.unsubscribe();
 			});
 
 			it("respects a violated node existence constraint after sequencing", () => {
