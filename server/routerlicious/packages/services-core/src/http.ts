@@ -26,7 +26,7 @@ export interface IWebServerFactory {
 export interface IWebSocket {
 	id: string;
 
-	handshake(): any;
+	handshake: any;
 
 	on(event: string, listener: (...args: any[]) => void): void;
 

@@ -54,5 +54,4 @@ export {
 	WebServer,
 	WholeSummaryReadGitManager,
 	WholeSummaryWriteGitManager,
-	getNetworkInformationFromIP,
 } from "@fluidframework/server-services-shared";

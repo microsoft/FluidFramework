@@ -80,6 +80,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 	}
 
 	public async getTenantfromRiddler(tenantId?: string): Promise<core.ITenantConfig> {
+		if (!tenantId) {
+			return undefined;
+		}
 		const restWrapper = new BasicRestWrapper(
 			undefined /* baseUrl */,
 			undefined /* defaultQueryString */,

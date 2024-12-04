@@ -1149,6 +1149,9 @@ importers:
       debug:
         specifier: ^4.3.4
         version: 4.3.4(supports-color@8.1.1)
+      ipaddr.js:
+        specifier: ^2.2.0
+        version: 2.2.0
       json-stringify-safe:
         specifier: ^5.0.1
         version: 5.0.1

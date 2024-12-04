@@ -30,7 +30,6 @@ import {
 	validateRequestParams,
 	handleResponse,
 	validatePrivateLink,
-	getNetworkInformationFromIP,
 } from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
@@ -41,6 +40,7 @@ import {
 	NetworkError,
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
+	getNetworkInformationFromIP,
 } from "@fluidframework/server-services-client";
 import {
 	getLumberBaseProperties,

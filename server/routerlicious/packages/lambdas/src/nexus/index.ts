@@ -12,8 +12,11 @@ import {
 	ISignalMessage,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
-// import { getNetworkInformationFromIP } from "@fluidframework/server-services-shared";
+import {
+	isNetworkError,
+	NetworkError,
+	getNetworkInformationFromIP,
+} from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import * as core from "@fluidframework/server-services-core";
 import {
@@ -235,22 +238,15 @@ export function configureWebSocketServices(
 				return;
 			}
 
-			const tenantId = socket?.handshake()?.query?.tenantId as string | undefined;
-			// const clientIPAddress = "test";
+			const tenantId = socket?.handshake?.query?.tenantId as string | undefined;
 			const tennatInfo = await tenantManager.getTenantfromRiddler(tenantId);
-			// const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			const privateLinkEnable = tennatInfo?.customData?.privateLinkEnable ?? false;
-			// if (networkInfo.isPrivateLink) {
-			// 	// if (tennatInfo.customData.accountLinkID === networkInfo.privateLinkId) {
-			// 	// 	/* empty */
-			// 	// } else {
-			// 	// 	return;
-			// 	// }
-			// 	// if (privateLinkEnable) {
-			// 	// 	return;
-			// 	// }
-			// }
-			if (privateLinkEnable) {
+			const clientIPAddress = socket?.handshake?.address as string | undefined;
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+			if (networkInfo.isPrivateLink) {
+				// This is a private link request
+			}
+			if (privateLinkEnable && clientIPAddress) {
 				return;
 			}
 

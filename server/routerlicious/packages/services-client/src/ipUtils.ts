@@ -25,7 +25,12 @@ const PrivateLinkIpStructure = {
 	privateAddressMostSignificantByte: 13,
 };
 
-export function getNetworkInformationFromIP(clientIp: string): NetworkInformation {
+/**
+ * Get the network information from the client IP address, including whether it is a private link and the private link ID.
+ *
+ * @internal
+ */
+export function getNetworkInformationFromIP(clientIp?: string): NetworkInformation {
 	if (clientIp && IPv6.isValid(clientIp)) {
 		const ipBytes = IPv6.parse(clientIp).toByteArray();
 		const ipBits = ipBytes.map((ip) => to8BitBinaryString(ip)).join("");

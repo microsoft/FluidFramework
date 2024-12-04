@@ -99,6 +99,9 @@ export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) =
 // @internal
 export const getGlobalTimeoutContext: () => ITimeoutContext;
 
+// @internal
+export function getNetworkInformationFromIP(clientIp?: string): NetworkInformation;
+
 // @internal (undocumented)
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
