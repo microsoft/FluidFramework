@@ -63,7 +63,7 @@ import {
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
-import { Breakable, disposeSymbol, fail, getLast, hasSingle, hasSome } from "../util/index.js";
+import { Breakable, disposeSymbol, fail, getLast, hasSome } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -393,7 +393,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			if (event.change !== undefined) {
 				let revision: RevisionTag | undefined;
 				if (event.type === "replace") {
-					assert(hasSome(event.newCommits), "Expected new commit for non no-op change event");
+					assert(
+						hasSome(event.newCommits),
+						0xa81 /* Expected new commit for non no-op change event */,
+					);
 					revision = getLast(event.newCommits).revision;
 				} else {
 					revision = event.change.revision;
@@ -428,17 +431,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					}
 				}
 				this.events.emit("afterBatch");
-			}
-			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
-				assert(
-					hasSingle(event.newCommits),
-					"Expected exactly one new commit for transaction commit event",
-				);
-				const firstCommit = event.newCommits[0];
-				const transactionRevision = firstCommit.revision;
-				for (const transactionStep of event.removedCommits) {
-					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
-				}
 			}
 		});
 		_branch.events.on("afterChange", (event) => {
@@ -578,7 +570,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				const revertibleBranch = this.revertibleCommitBranches.get(revision);
 				assert(
 					revertibleBranch !== undefined,
-					"change to revert does not exist on the given forked branch",
+					0xa82 /* change to revert does not exist on the given forked branch */,
 				);
 				forkedCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
 
@@ -674,9 +666,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					// If a transaction is rolled back, revert removed roots back to the latest snapshot
 					this.removedRoots = removedRoots;
 					break;
-				case TransactionResult.Commit:
-					this._branch.squashAfter(startCommit);
+				case TransactionResult.Commit: {
+					const removedCommits = this._branch.squashAfter(startCommit);
+					const transactionRevision = this._branch.getHead().revision;
+					for (const transactionStep of removedCommits) {
+						this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
+					}
 					break;
+				}
 				default:
 					unreachableCase(result);
 			}
@@ -900,13 +897,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 */
 	private isRemoteChangeEvent(event: SharedTreeBranchChange<SharedTreeChange>): boolean {
 		return (
-			// remote changes are only ever applied to the main branch
+			// Remote changes are only ever applied to the main branch
 			!this.isBranch &&
-			// remote changes are applied to the main branch by rebasing it onto the trunk,
-			// no other rebases are allowed on the main branch so this means any replaces that are not
-			// transaction commits are remote changes
+			// Remote changes are applied to the main branch by rebasing it onto the trunk.
+			// No other rebases are allowed on the main branch, so we can use this to detect remote changes.
 			event.type === "replace" &&
-			getChangeReplaceType(event) !== "transactionCommit"
+			getChangeReplaceType(event) === "rebase"
 		);
 	}
 }
