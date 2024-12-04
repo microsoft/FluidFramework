@@ -1671,16 +1671,9 @@ describe("Runtime", () => {
 					await emitAck();
 
 					const eventProps = await summarizePromiseP;
-					const expectedEventProps: ISummarizeEventProps = {
-						result: "success",
-						currentAttempt: 1,
-						maxAttempts: defaultMaxAttempts,
-					};
-					assert.deepStrictEqual(
-						eventProps,
-						expectedEventProps,
-						"Summarize event not as expected",
-					);
+					assert.strictEqual(eventProps.result, "success");
+					assert.strictEqual(eventProps.currentAttempt, 1);
+					assert.strictEqual(eventProps.maxAttempts, defaultMaxAttempts);
 				});
 
 				it("should emit summarize event with failed result", async () => {
@@ -1691,16 +1684,9 @@ describe("Runtime", () => {
 					await emitNack();
 
 					const { error, ...eventProps } = await summarizePromiseP;
-					const expectedEventProps: ISummarizeEventProps = {
-						result: "failure",
-						currentAttempt: 1,
-						maxAttempts: defaultMaxAttempts,
-					};
-					assert.deepStrictEqual(
-						eventProps,
-						expectedEventProps,
-						"Summarize event not as expected",
-					);
+					assert.strictEqual(eventProps.result, "failure");
+					assert.strictEqual(eventProps.currentAttempt, 1);
+					assert.strictEqual(eventProps.maxAttempts, defaultMaxAttempts);
 				});
 
 				it("should emit summarize event with canceled result", async () => {
@@ -1718,16 +1704,9 @@ describe("Runtime", () => {
 					await emitNack();
 
 					const eventProps = await summarizePromiseP;
-					const expectedEventProps: ISummarizeEventProps = {
-						result: "canceled",
-						currentAttempt: 1,
-						maxAttempts: defaultMaxAttempts,
-					};
-					assert.deepStrictEqual(
-						eventProps,
-						expectedEventProps,
-						"Summarize event not as expected",
-					);
+					assert.strictEqual(eventProps.result, "canceled");
+					assert.strictEqual(eventProps.currentAttempt, 1);
+					assert.strictEqual(eventProps.maxAttempts, defaultMaxAttempts);
 				});
 
 				it("should emit summarize event for every attempt with nack failure", async () => {
@@ -1741,16 +1720,9 @@ describe("Runtime", () => {
 					for (let attemptNumber = 1; attemptNumber <= defaultMaxAttempts; attemptNumber++) {
 						await emitNack(retryAfterSeconds);
 						const { error, ...eventProps } = await summarizePromiseP;
-						const expectedEventProps: ISummarizeEventProps = {
-							result: "failure",
-							currentAttempt: attemptNumber,
-							maxAttempts: defaultMaxAttempts,
-						};
-						assert.deepStrictEqual(
-							eventProps,
-							expectedEventProps,
-							`Summarize event for attempt ${attemptNumber} not as expected`,
-						);
+						assert.strictEqual(eventProps.result, "failure");
+						assert.strictEqual(eventProps.currentAttempt, attemptNumber);
+						assert.strictEqual(eventProps.maxAttempts, defaultMaxAttempts);
 
 						summarizePromiseP = getSummarizeEventPromise();
 
@@ -1791,16 +1763,9 @@ describe("Runtime", () => {
 						attemptNumber++
 					) {
 						const { error, ...eventProps } = await summarizePromiseP;
-						const expectedEventProps: ISummarizeEventProps = {
-							result: "failure",
-							currentAttempt: attemptNumber,
-							maxAttempts: defaultMaxAttemptsForSubmitFailures,
-						};
-						assert.deepStrictEqual(
-							eventProps,
-							expectedEventProps,
-							`Summarize event for attempt ${attemptNumber} not as expected`,
-						);
+						assert.strictEqual(eventProps.result, "failure");
+						assert.strictEqual(eventProps.currentAttempt, attemptNumber);
+						assert.strictEqual(eventProps.maxAttempts, defaultMaxAttemptsForSubmitFailures);
 						summarizePromiseP = getSummarizeEventPromise();
 						// Wait for "retryAfterSeconds". The next attempt should start after this.
 						await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
