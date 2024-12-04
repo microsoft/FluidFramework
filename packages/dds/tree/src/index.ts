@@ -3,247 +3,29 @@
  * Licensed under the MIT License.
  */
 
-export {
-	EmptyKey,
-	type FieldKey,
-	type TreeValue,
-	type FieldMapObject,
-	type NodeData,
-	type GenericTreeNode,
-	type JsonableTree,
-	type GenericFieldsNode,
-	type TreeNodeSchemaIdentifier,
-	type TreeFieldStoredSchema,
-	ValueSchema,
-	TreeNodeStoredSchema,
-	type FieldKindIdentifier,
-	type TreeTypeSet,
-	type TreeStoredSchema,
-	type Revertible,
-	CommitKind,
-	RevertibleStatus,
-	type CommitMetadata,
-	type StoredSchemaCollection,
-	type ErasedTreeNodeSchemaDataFormat,
-	ObjectNodeStoredSchema,
-	MapNodeStoredSchema,
-	LeafNodeStoredSchema,
-	type RevertibleFactory,
-	type RevertibleAlphaFactory,
-	type RevertibleAlpha,
-} from "./core/index.js";
-export { type Brand } from "./util/index.js";
+// eslint-disable-next-line no-restricted-syntax
+export * from "./indexCommonApi.js";
 
-export type {
-	/**
-	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
-	 */
-	Listeners,
-	/**
-	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
-	 */
-	IsListener,
-	/**
-	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
-	 */
-	Listenable,
-	/**
-	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
-	 */
-	Off,
-} from "@fluidframework/core-interfaces";
-
-export {
-	TreeStatus,
-	TreeCompressionStrategy,
-} from "./feature-libraries/index.js";
-
-export {
-	type ISharedTree,
-	type SharedTreeOptions,
-	ForestType,
-	type SharedTreeContentSnapshot,
-	type SharedTreeFormatOptions,
-	SharedTreeFormatVersion,
-	Tree,
-	type TransactionConstraint,
-	type NodeInDocumentConstraint,
-	type RunTransaction,
-	rollback,
-	type ForestOptions,
-	getBranch,
-	type BranchableTree,
-	type TreeBranchFork,
-	independentInitializedView,
-	type ViewContent,
-	TreeAlpha,
-	independentView,
-} from "./shared-tree/index.js";
-
-export {
-	TreeArrayNode,
-	type Unhydrated,
-	IterableTreeArrayContent,
-	TreeNode,
-	type ViewableTree,
-	type ITree,
-	type TreeNodeSchema,
-	TreeViewConfiguration,
-	type ITreeViewConfiguration,
-	type ITreeConfigurationOptions,
-	type TreeView,
-	type TreeViewEvents,
-	SchemaFactory,
-	type ImplicitFieldSchema,
-	type TreeFieldFromImplicitField,
-	type TreeChangeEvents,
-	type NodeFromSchema,
-	type TreeMapNode,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type TreeLeafValue,
-	FieldKind,
-	FieldSchema,
-	type FieldSchemaMetadata,
-	type ImplicitAllowedTypes,
-	type InsertableTreeFieldFromImplicitField,
-	type InsertableTypedNode,
-	NodeKind,
-	type TreeObjectNode,
-	type TreeNodeFromImplicitAllowedTypes,
-	type TreeNodeSchemaClass,
-	type SchemaCompatibilityStatus,
-	type FieldProps,
-	type InternalTreeNode,
-	type WithType,
-	type NodeChangedData,
-	// Types not really intended for public use, but used in links.
-	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
-	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
-	type TreeNodeApi,
-	type TreeNodeSchemaCore,
-	// Types not really intended for public use, but used in inferred types exposed in the public API.
-	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
-	// error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
-	type AllowedTypes,
-	type TreeObjectNodeUnsafe,
-	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	type TreeArrayNodeUnsafe,
-	type TreeMapNodeUnsafe,
-	type InsertableObjectFromSchemaRecordUnsafe,
-	type InsertableTreeFieldFromImplicitFieldUnsafe,
-	type FieldSchemaUnsafe,
-	type TreeNodeSchemaClassUnsafe,
-	type InsertableTreeNodeFromAllowedTypesUnsafe,
-	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
-	type typeSchemaSymbol,
-	type TreeNodeSchemaNonClass,
-	// Recursive Schema APIs
-	type ValidateRecursiveSchema,
-	type FixRecursiveArraySchema,
-	// experimental @alpha APIs:
-	adaptEnum,
-	enumFromStrings,
-	singletonSchema,
-	type UnsafeUnknownSchema,
-	type TreeViewAlpha,
-	type InsertableField,
-	type Insertable,
-	type InsertableContent,
-	type FactoryContent,
-	type FactoryContentObject,
-	type ReadableField,
-	type ReadSchema,
-	// test recursive schema for checking that d.ts files handles schema correctly
-	test_RecursiveObject,
-	test_RecursiveObject_base,
-	test_RecursiveObjectPojoMode,
-	// Beta APIs
-	TreeBeta,
-	type TreeChangeEventsBeta,
-	type VerboseTreeNode,
-	type EncodeOptions,
-	type ParseOptions,
-	type VerboseTree,
-	extractPersistedSchema,
-	comparePersistedSchema,
-	type ConciseTree,
-	// Back to normal types
-	type JsonTreeSchema,
-	type JsonSchemaId,
-	type JsonNodeSchema,
-	type JsonNodeSchemaBase,
-	type JsonLeafNodeSchema,
-	type JsonMapNodeSchema,
-	type JsonArrayNodeSchema,
-	type JsonObjectNodeSchema,
-	type JsonFieldSchema,
-	type JsonSchemaRef,
-	type JsonRefPath,
-	type JsonSchemaType,
-	type JsonLeafSchemaType,
-	getJsonSchema,
-	type LazyItem,
-	type Unenforced,
-	type SimpleNodeSchemaBase,
-	type SimpleTreeSchema,
-	type SimpleNodeSchema,
-	type SimpleFieldSchema,
-	type SimpleLeafNodeSchema,
-	type SimpleMapNodeSchema,
-	type SimpleArrayNodeSchema,
-	type SimpleObjectNodeSchema,
-	normalizeAllowedTypes,
-	getSimpleSchema,
-	numberSchema,
-	stringSchema,
-	booleanSchema,
-	handleSchema,
-	nullSchema,
-	type ReadonlyArrayNode,
-	type InsertableTreeNodeFromAllowedTypes,
-	type Input,
-	type TreeBranch,
-	type TreeBranchEvents,
-	asTreeViewAlpha,
-} from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
 } from "./treeFactory.js";
 
-export {
-	type ICodecOptions,
-	type JsonValidator,
-	type SchemaValidationFunction,
-	FluidClientVersion,
-} from "./codec/index.js";
-export { noopValidator } from "./codec/index.js";
-export { typeboxValidator } from "./external-utilities/index.js";
-
-export {
-	type Covariant,
-	BrandedType,
-	type RestrictiveReadonlyRecord,
-	type RestrictiveStringRecord,
-	type MakeNominal,
-	type IsUnion,
-	type UnionToIntersection,
-	type UnionToTuple,
-	type PopUnion,
-} from "./util/index.js";
-
-import * as InternalTypes from "./internalTypes.js";
-export {
+export type {
 	/**
-	 * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
-	 * They are used internally to implement API aspects, but are not intended for use by external consumers.
+	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
 	 */
-	InternalTypes,
-};
-
-// Internal/System types:
-// These would be put in `internalTypes` except doing so tents to cause errors like:
-// The inferred type of 'NodeMap' cannot be named without a reference to '../../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
-export type { MapNodeInsertableData } from "./simple-tree/index.js";
-
-export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
+	Listeners,
+	/**
+	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+	 */
+	IsListener,
+	/**
+	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+	 */
+	Listenable,
+	/**
+	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+	 */
+	Off,
+} from "@fluidframework/core-interfaces";

@@ -62,6 +62,16 @@
 				"types": "./dist/legacy.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./internal/alpha-apis": {
+			"import": {
+				"types": "./lib/indexCommonApi.d.ts",
+				"default": "./lib/indexCommonApi.js"
+			},
+			"require": {
+				"types": "./dist/indexCommonApi.d.ts",
+				"default": "./dist/indexCommonApi.js"
+			}
 		}
 	},
 	"main": "lib/index.js",
