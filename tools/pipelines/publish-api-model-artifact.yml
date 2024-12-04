@@ -138,7 +138,7 @@ stages:
         runOnce:
           deploy:
             steps:
-            - template: templates/upload-json-steps.yml
+            - template: /tools/pipelines/templates/upload-json-steps.yml
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 uploadAsLatest: ${{ variables.isMain }}
