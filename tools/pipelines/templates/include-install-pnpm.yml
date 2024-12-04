@@ -64,6 +64,9 @@ steps:
       fi
   env:
     NPM_REGISTRY: $(ado-feeds-primary-registry)
+    # The setvariable task in this script only sets the environment variable for subsequent tasks in this job.
+    # We use the same value here to ensure that all configuration applies throughout pnpm usage in this job.
+    NPM_CONFIG_USERCONFIG: $(Agent.TempDirectory)/.npmrc
     # We should leverage the primary npm registry to install pnpm as well. However, ADO artifacts feeds do not implement
     # the full npm registry API including a route that corepack uses to get package metadata--the version route here:
     # https://github.com/nodejs/corepack/blob/bc13d40037d0b1bfd386e260ae741f55505b5c7c/sources/npmRegistryUtils.ts#L32
