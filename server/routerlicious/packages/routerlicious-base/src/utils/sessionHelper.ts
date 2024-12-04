@@ -291,7 +291,7 @@ export async function getSession(
 	let document;
 	try {
 		// Retry document existence check to avoid document DB race condition
-		document = (await runWithRetry(
+		document = await runWithRetry(
 			async () =>
 				documentRepository.readOne({ tenantId, documentId }).then((result) => {
 					if (result === null) {
@@ -301,14 +301,15 @@ export async function getSession(
 							true /* canRetry */,
 						);
 					}
+					return result;
 				}),
 			"getDocumentForSession",
-			1, // maxRetries
+			2, // maxRetries
 			500, // retryAfterMs
 			baseLumberjackProperties, // telemetry props
 			undefined,
 			(error) => shouldRetryNetworkError(error),
-		)) as IDocument;
+		);
 	} catch (error) {
 		// Add a stage stamp before throwing the error
 		connectionTrace?.stampStage("DocumentDoesNotExist");
