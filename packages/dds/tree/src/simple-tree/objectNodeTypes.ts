@@ -10,21 +10,20 @@ import type {
 	SimpleKeyMap,
 } from "./objectNode.js";
 import type { ImplicitFieldSchema, FieldSchema } from "./schemaTypes.js";
-import { NodeKind, type TreeNodeSchema, type TreeNodeSchemaBoth } from "./core/index.js";
+import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 
 /**
  * A schema for {@link TreeObjectNode}s.
  * @privateRemarks
  * This is a candidate for being promoted to the public package API.
- * @public
  */
 export interface ObjectNodeSchema<
 	TName extends string = string,
 	T extends
 		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaBoth<
+> extends TreeNodeSchemaClass<
 		TName,
 		NodeKind.Object,
 		TreeObjectNode<T, TName>,

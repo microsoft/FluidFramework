@@ -202,6 +202,11 @@ export {
 	CustomizedTyping,
 	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
 	customizeSchemaTyping,
+	type GetTypesUnsafe,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	type DefaultTreeNodeFromImplicitAllowedTypesUnsafe,
+	type StrictTypesUnsafe,
+	type AssignableTreeFieldFromImplicitFieldUnsafe,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

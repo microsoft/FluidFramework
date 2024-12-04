@@ -114,6 +114,11 @@ export {
 	conciseFromCursor,
 	createFromCursor,
 	asTreeViewAlpha,
+	type GetTypesUnsafe,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	type DefaultTreeNodeFromImplicitAllowedTypesUnsafe,
+	type StrictTypesUnsafe,
+	type AssignableTreeFieldFromImplicitFieldUnsafe,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

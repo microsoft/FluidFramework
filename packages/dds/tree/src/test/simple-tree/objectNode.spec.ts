@@ -11,6 +11,7 @@ import {
 	SchemaFactory,
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type GetTypesUnsafe,
 	type NodeBuilderData,
 	type TreeNode,
 } from "../../simple-tree/index.js";
@@ -21,6 +22,7 @@ import type {
 import { describeHydration, hydrate, pretty } from "./utils.js";
 import type {
 	areSafelyAssignable,
+	FlattenKeys,
 	requireAssignableTo,
 	requireTrue,
 } from "../../util/index.js";
@@ -318,7 +320,7 @@ describeHydration(
 				}) {}
 				const n = init(HasId, {});
 				assert.throws(() => {
-					// Due to recursive type limitations, this compiles but shouldn't, see ObjectFromSchemaRecordUnsafe
+					// @ts-expect-error Readonly
 					n.id = "x";
 				});
 			});
@@ -348,6 +350,8 @@ describeHydration(
 				const initial: InsertableField<NonExact> = { child: 1 };
 				const n: NonExact = init(NonExact, initial);
 				const childRead = n.child;
+				type XXX = FlattenKeys<GetTypesUnsafe<typeof child>>;
+				type _check = requireTrue<areSafelyAssignable<typeof childRead, number | null>>;
 				assert.throws(() => {
 					// @ts-expect-error this should not compile
 					n.child = "x";

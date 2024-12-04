@@ -668,7 +668,7 @@ export interface StrictTypes<
  * @typeparam TOutput - Internal: do not specify.
  * @remarks
  * Handles input types contravariantly so any input which might be invalid is rejected.
- * @sealed @alpha
+ * @alpha
  */
 export function customizeSchemaTyping<TSchema extends ImplicitAllowedTypes>(
 	schema: TSchema,
