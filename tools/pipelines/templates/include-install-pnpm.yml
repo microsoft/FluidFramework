@@ -51,6 +51,7 @@ steps:
       # All below settings are user-level. We set the user-level .npmrc to be located in a well-known temp location
       # that will persist for the duration of this job.
       echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$(Agent.TempDirectory)/.npmrc"
+      echo "Pnpm user config location: $(pnpm config get userconfig)"
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
       echo "Pnpm store: ${{ parameters.pnpmStorePath }}"
       echo "Primary registry: ${NPM_REGISTRY}"
