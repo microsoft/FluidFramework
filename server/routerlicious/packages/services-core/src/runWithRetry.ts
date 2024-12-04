@@ -50,7 +50,7 @@ export async function runWithRetry<T>(
 		metric = Lumberjack.newLumberMetric(LumberEventName.RunWithRetry, telemetryProperties);
 	}
 	try {
-		while (retryCount < maxRetries || maxRetries === -1) {
+		while (retryCount <= maxRetries || maxRetries === -1) {
 			try {
 				const result = await api();
 				success = true;
@@ -163,7 +163,7 @@ export async function requestWithRetry<T>(
 	try {
 		// if maxRetries is -1, we retry indefinitely
 		// unless shouldRetry returns false at some point.
-		while (retryCount < maxRetries || maxRetries === -1) {
+		while (retryCount <= maxRetries || maxRetries === -1) {
 			try {
 				const result = await request();
 				success = true;

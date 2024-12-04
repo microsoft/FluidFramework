@@ -21,11 +21,22 @@ describe("runWithRetry", () => {
 		const maxRetries = 3;
 		const retryAfterMs = 1000;
 
-		try {
-			await runWithRetry(apiStub, "testApi", maxRetries, retryAfterMs);
-		} catch (error) {
+		const promise = runWithRetry(
+			apiStub,
+			"testApi",
+			maxRetries,
+			retryAfterMs,
+			undefined,
+			undefined,
+			undefined,
+			(error, numRetries, retryAfterInterval) => retryAfterInterval,
+		).catch(() => {
 			// Expected to throw
-		}
+		});
+
+		await clock.runAllAsync();
+
+		await promise;
 
 		assert.equal(apiStub.callCount, maxRetries + 1);
 	});
@@ -36,26 +47,56 @@ describe("runWithRetry", () => {
 		const maxRetries = 3;
 		const retryAfterMs = 1000;
 
-		const result = await runWithRetry(apiStub, "testApi", maxRetries, retryAfterMs);
+		const result = await runWithRetry(
+			apiStub,
+			"testApi",
+			maxRetries,
+			retryAfterMs,
+			undefined,
+			undefined,
+			undefined,
+			(error, numRetries, retryAfterInterval) => retryAfterInterval,
+		);
 
 		assert.equal(apiStub.callCount, 1);
 		assert.equal(result, "Success");
 	});
 
-	it("should wait the correct interval between retries", async () => {
+	it("should wait the correct interval between multiple retries", async () => {
 		apiStub.onCall(0).rejects(new Error("Test error"));
-		apiStub.onCall(1).resolves("Success");
+		apiStub.onCall(1).rejects(new Error("Test error"));
+		apiStub.onCall(2).resolves("Success");
 
 		const maxRetries = 3;
 		const retryAfterMs = 1000;
+		const startTime = Date.now();
+		const calculateIntervalMs = (error, numRetries, retryAfterInterval) =>
+			retryAfterInterval * 2 ** numRetries;
 
-		const promise = runWithRetry(apiStub, "testApi", maxRetries, retryAfterMs);
+		const promise = runWithRetry(
+			apiStub,
+			"testApi",
+			maxRetries,
+			retryAfterMs,
+			undefined,
+			undefined,
+			undefined,
+			calculateIntervalMs,
+		);
 
-		await clock.tickAsync(retryAfterMs);
+		await clock.runAllAsync();
 
 		const result = await promise;
 
-		assert.equal(apiStub.callCount, 2);
+		const endTime = Date.now();
+		// The total time should be the sum of the retry intervals defined by the calculateIntervalMs function
+		assert.equal(
+			endTime - startTime,
+			calculateIntervalMs(undefined, 0, retryAfterMs) +
+				calculateIntervalMs(undefined, 1, retryAfterMs),
+		);
+
+		assert.equal(apiStub.callCount, 3);
 		assert.equal(result, "Success");
 	});
 
@@ -66,19 +107,20 @@ describe("runWithRetry", () => {
 		const retryAfterMs = 1000;
 		const shouldRetry = sinon.stub().returns(false);
 
-		try {
-			await runWithRetry(
-				apiStub,
-				"testApi",
-				maxRetries,
-				retryAfterMs,
-				{},
-				undefined,
-				shouldRetry,
-			);
-		} catch (error) {
+		const promise = runWithRetry(
+			apiStub,
+			"testApi",
+			maxRetries,
+			retryAfterMs,
+			{},
+			undefined,
+			shouldRetry,
+			(error, numRetries, retryAfterInterval) => retryAfterInterval,
+		).catch(() => {
 			// Expected to throw
-		}
+		});
+
+		await promise;
 
 		assert.equal(apiStub.callCount, 1);
 	});
@@ -90,21 +132,21 @@ describe("runWithRetry", () => {
 		const retryAfterMs = 1000;
 		const onErrorFn = sinon.spy();
 
-		try {
-			await runWithRetry(
-				apiStub,
-				"testApi",
-				maxRetries,
-				retryAfterMs,
-				{},
-				undefined,
-				undefined,
-				undefined,
-				onErrorFn,
-			);
-		} catch (error) {
+		const promise = runWithRetry(
+			apiStub,
+			"testApi",
+			maxRetries,
+			retryAfterMs,
+			{},
+			undefined,
+			undefined,
+			(error, numRetries, retryAfterInterval) => retryAfterInterval,
+			onErrorFn,
+		).catch(() => {
 			// Expected to throw
-		}
+		});
+		await clock.runAllAsync();
+		await promise;
 
 		assert.equal(onErrorFn.callCount, maxRetries + 1);
 	});
