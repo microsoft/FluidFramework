@@ -48,8 +48,8 @@ export class WholeSummaryUploadManager implements ISummaryUploadManager {
 			type === "channel" ? ".app" : "",
 		);
 		const snapshotPayload: IWholeSummaryPayload = {
-			entries: snapshotTree.entries,
-			message: undefined,
+			entries: snapshotTree.entries ?? [],
+			message: `${type} summary upload`,
 			sequenceNumber,
 			type,
 		};

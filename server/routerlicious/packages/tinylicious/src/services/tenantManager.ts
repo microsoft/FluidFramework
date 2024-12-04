@@ -52,7 +52,10 @@ export class TinyliciousTenant implements ITenant {
 		return {
 			historianUrl: this.historianUrl,
 			internalHistorianUrl: this.historianUrl,
-			credentials: null,
+			credentials: {
+				user: "tinylicious",
+				password: "",
+			},
 			owner: this.owner,
 			repository: this.repository,
 			url: this.url,
