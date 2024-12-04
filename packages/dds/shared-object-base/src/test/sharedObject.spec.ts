@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	IChannelAttributes,
@@ -40,13 +40,13 @@ class MySharedObject extends SharedObject {
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	) {
+	): void {
 		throw new Error("Method not implemented.");
 	}
-	protected onDisconnect() {
+	protected onDisconnect(): void {
 		throw new Error("Method not implemented.");
 	}
-	protected applyStashedOp(content: any): unknown {
+	protected applyStashedOp(content: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 }
@@ -60,7 +60,7 @@ class MySharedObjectCore extends SharedObjectCore {
 		);
 	}
 
-	protected readonly serializer = {} as any as IFluidSerializer;
+	protected readonly serializer = {} as unknown as IFluidSerializer;
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		throw new Error("Method not implemented.");
@@ -72,13 +72,13 @@ class MySharedObjectCore extends SharedObjectCore {
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	) {
+	): void {
 		throw new Error("Method not implemented.");
 	}
-	protected onDisconnect() {
+	protected onDisconnect(): void {
 		throw new Error("Method not implemented.");
 	}
-	protected applyStashedOp(content: any): unknown {
+	protected applyStashedOp(content: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 	public getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats {
@@ -98,7 +98,7 @@ class MySharedObjectCore extends SharedObjectCore {
 describe("SharedObject", () => {
 	it("rejects slashes in id", () => {
 		const invalidId = "beforeSlash/afterSlash";
-		const codeBlock = () => new MySharedObject(invalidId);
+		const codeBlock = (): SharedObject => new MySharedObject(invalidId);
 		assert.throws(codeBlock, (e: Error) =>
 			validateAssertionError(e, "Id cannot contain slashes"),
 		);
@@ -108,7 +108,7 @@ describe("SharedObject", () => {
 describe("SharedObjectCore", () => {
 	it("rejects slashes in id", () => {
 		const invalidId = "beforeSlash/afterSlash";
-		const codeBlock = () => new MySharedObjectCore(invalidId);
+		const codeBlock = (): SharedObjectCore => new MySharedObjectCore(invalidId);
 		assert.throws(codeBlock, (e: Error) =>
 			validateAssertionError(e, "Id cannot contain slashes"),
 		);

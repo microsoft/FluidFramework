@@ -59,7 +59,7 @@ export function createAzureClient(
 	};
 	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
 	if (useAzure && endPoint === undefined) {
-		throw new Error("Azure FRS endpoint is missing");
+		throw new Error("Azure Fluid Relay service endpoint is missing");
 	}
 
 	// use AzureClient remote mode will run against live Azure Fluid Relay.
@@ -122,7 +122,7 @@ export function createAzureClientLegacy(
 	};
 	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
 	if (useAzure && endPoint === undefined) {
-		throw new Error("Azure FRS endpoint is missing");
+		throw new Error("Azure Azure Fluid Relay service endpoint is missing");
 	}
 
 	// use AzureClient remote mode will run against live Azure Fluid Relay.
@@ -189,7 +189,7 @@ export async function createContainerFromPayload(
 		? (process.env.azure__fluid__relay__service__endpoint as string)
 		: "http://localhost:7071";
 	if (useAzure && endPoint === undefined) {
-		throw new Error("Azure FRS endpoint is missing");
+		throw new Error("Azure Fluid Relay service endpoint is missing");
 	}
 
 	const tokenProvider = useAzure

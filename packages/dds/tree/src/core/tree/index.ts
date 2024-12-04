@@ -111,5 +111,13 @@ export {
 	emptyDelta,
 } from "./deltaUtil.js";
 
+export {
+	type TreeChunk,
+	dummyRoot,
+	cursorChunk,
+	tryGetChunk,
+	type ChunkedCursor,
+} from "./chunk.js";
+
 export { DetachedFieldIndex } from "./detachedFieldIndex.js";
 export { type ForestRootId } from "./detachedFieldIndexTypes.js";

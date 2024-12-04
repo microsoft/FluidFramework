@@ -31,6 +31,7 @@ import {
 	IRepositoryManager,
 	IRepositoryManagerFactory,
 	isContainerSummary,
+	isIStorageRoutingId,
 	latestSummarySha,
 	logAndThrowApiError,
 	persistLatestFullSummaryInStorage,
@@ -43,11 +44,20 @@ function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: st
 	return `${repoManager.path}/${documentId}`;
 }
 
+type WholeSummaryCompatibleRepoManagerParams = IRepoManagerParams &
+	Required<Pick<IRepoManagerParams, "storageRoutingId">>;
+
+function isWholeSummaryCompatibleRepoManagerParams(
+	params: IRepoManagerParams,
+): params is WholeSummaryCompatibleRepoManagerParams {
+	return params.storageRoutingId !== undefined && isIStorageRoutingId(params.storageRoutingId);
+}
+
 async function getSummary(
 	repoManager: IRepositoryManager,
 	fileSystemManager: IFileSystemManager,
 	sha: string,
-	repoManagerParams: IRepoManagerParams,
+	repoManagerParams: WholeSummaryCompatibleRepoManagerParams,
 	externalWriterConfig?: IExternalWriterConfig,
 	persistLatestFullSummary = false,
 	persistLatestFullEphemeralSummary = false,
@@ -131,7 +141,7 @@ async function createSummary(
 	repoManager: IRepositoryManager,
 	fileSystemManager: IFileSystemManager,
 	payload: IWholeSummaryPayload,
-	repoManagerParams: IRepoManagerParams,
+	repoManagerParams: WholeSummaryCompatibleRepoManagerParams,
 	externalWriterConfig?: IExternalWriterConfig,
 	isInitialSummary?: boolean,
 	persistLatestFullSummary = false,
@@ -165,19 +175,18 @@ async function createSummary(
 	// Waiting to pre-compute and persist latest summary would slow down document creation,
 	// so skip this step if it is a new document.
 	if (isContainerSummary(payload)) {
-		const latestFullSummary: IWholeFlatSummary | undefined = (
-			writeSummaryResponse as IWholeFlatSummary
-		).trees
-			? writeSummaryResponse
-			: await wholeSummaryManager.readSummary(writeSummaryResponse.id).catch((error) => {
-					// This read is for Historian caching purposes, so it should be ignored on failure.
-					Lumberjack.error(
-						"Failed to read latest summary after writing container summary",
-						lumberjackProperties,
-						error,
-					);
-					return undefined;
-			  });
+		const latestFullSummary =
+			"trees" in writeSummaryResponse && Array.isArray(writeSummaryResponse.trees)
+				? writeSummaryResponse
+				: await wholeSummaryManager.readSummary(writeSummaryResponse.id).catch((error) => {
+						// This read is for Historian caching purposes, so it should be ignored on failure.
+						Lumberjack.error(
+							"Failed to read latest summary after writing container summary",
+							lumberjackProperties,
+							error,
+						);
+						return undefined;
+				  });
 		if (latestFullSummary) {
 			const enablePersistLatestFullSummary = repoManagerParams.isEphemeralContainer
 				? persistLatestFullEphemeralSummary
@@ -217,7 +226,7 @@ async function createSummary(
 async function deleteSummary(
 	repoManager: IRepositoryManager,
 	fileSystemManager: IFileSystemManager,
-	repoManagerParams: IRepoManagerParams,
+	repoManagerParams: WholeSummaryCompatibleRepoManagerParams,
 	softDelete: boolean,
 	repoPerDocEnabled: boolean,
 	externalWriterConfig?: IExternalWriterConfig,
@@ -264,9 +273,7 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
-		const tenantId = repoManagerParams.storageRoutingId?.tenantId;
-		const documentId = repoManagerParams.storageRoutingId?.documentId;
-		if (!tenantId || !documentId) {
+		if (!isWholeSummaryCompatibleRepoManagerParams(repoManagerParams)) {
 			handleResponse(
 				Promise.reject(
 					new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`),
@@ -275,13 +282,15 @@ export function create(
 			);
 			return;
 		}
+		const tenantId = repoManagerParams.storageRoutingId.tenantId;
+		const documentId = repoManagerParams.storageRoutingId.documentId;
 		getGlobalTelemetryContext().bindProperties({ tenantId, documentId }, () => {
 			const resultP = repoManagerFactory
 				.open(repoManagerParams)
 				.then(async (repoManager) => {
 					const fileSystemManagerFactory = getFilesystemManagerFactory(
 						fileSystemManagerFactories,
-						repoManagerParams.isEphemeralContainer,
+						repoManagerParams.isEphemeralContainer ?? false,
 					);
 					const fsManager = fileSystemManagerFactory.create({
 						...repoManagerParams.fileSystemManagerParams,
@@ -315,8 +324,6 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
-		const tenantId = repoManagerParams.storageRoutingId?.tenantId;
-		const documentId = repoManagerParams.storageRoutingId?.documentId;
 		// request.query type is { [string]: string } but it's actually { [string]: any }
 		// Account for possibilities of undefined, boolean, or string types. A number will be false.
 		const isInitialSummary: boolean | undefined =
@@ -333,7 +340,7 @@ export function create(
 		};
 		Lumberjack.info("Received request to create a summary", lumberjackProperties);
 
-		if (!tenantId || !documentId) {
+		if (!isWholeSummaryCompatibleRepoManagerParams(repoManagerParams)) {
 			handleResponse(
 				Promise.reject(
 					new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`),
@@ -342,6 +349,8 @@ export function create(
 			);
 			return;
 		}
+		const tenantId = repoManagerParams.storageRoutingId.tenantId;
+		const documentId = repoManagerParams.storageRoutingId.documentId;
 		const wholeSummaryPayload: IWholeSummaryPayload = request.body;
 		getGlobalTelemetryContext().bindProperties({ tenantId, documentId }, () => {
 			const resultP = (async () => {
@@ -358,7 +367,7 @@ export function create(
 				);
 				const fileSystemManagerFactory = getFilesystemManagerFactory(
 					fileSystemManagerFactories,
-					repoManagerParams.isEphemeralContainer,
+					repoManagerParams.isEphemeralContainer ?? false,
 				);
 				const fsManager = fileSystemManagerFactory.create({
 					...repoManagerParams.fileSystemManagerParams,
@@ -397,9 +406,7 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
-		const tenantId = repoManagerParams.storageRoutingId?.tenantId;
-		const documentId = repoManagerParams.storageRoutingId?.documentId;
-		if (!tenantId || !documentId) {
+		if (!isWholeSummaryCompatibleRepoManagerParams(repoManagerParams)) {
 			handleResponse(
 				Promise.reject(
 					new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`),
@@ -408,6 +415,8 @@ export function create(
 			);
 			return;
 		}
+		const tenantId = repoManagerParams.storageRoutingId.tenantId;
+		const documentId = repoManagerParams.storageRoutingId.documentId;
 		const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
 		getGlobalTelemetryContext().bindProperties({ tenantId, documentId }, () => {
 			const resultP = repoManagerFactory
@@ -415,7 +424,7 @@ export function create(
 				.then(async (repoManager) => {
 					const fileSystemManagerFactory = getFilesystemManagerFactory(
 						fileSystemManagerFactories,
-						repoManagerParams.isEphemeralContainer,
+						repoManagerParams.isEphemeralContainer ?? false,
 					);
 					const fsManager = fileSystemManagerFactory.create({
 						...repoManagerParams.fileSystemManagerParams,

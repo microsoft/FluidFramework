@@ -128,6 +128,15 @@ declare type current_as_old_for_ClassStatics_TypedEventEmitter = requireAssignab
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Function_createEmitter": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_createEmitter = requireAssignableTo<TypeOnly<typeof current.createEmitter>, TypeOnly<typeof old.createEmitter>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_gitHashFile": {"backCompat": false}
  */
 declare type current_as_old_for_Function_gitHashFile = requireAssignableTo<TypeOnly<typeof current.gitHashFile>, TypeOnly<typeof old.gitHashFile>>
