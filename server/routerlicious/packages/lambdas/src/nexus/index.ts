@@ -13,6 +13,7 @@ import {
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
+// import { getNetworkInformationFromIP } from "@fluidframework/server-services-shared";
 import { v4 as uuid } from "uuid";
 import * as core from "@fluidframework/server-services-core";
 import {
@@ -231,6 +232,25 @@ export function configureWebSocketServices(
 					error,
 				);
 				socket.emit("connect_document_error", error);
+				return;
+			}
+
+			const tenantId = socket?.handshake()?.query?.tenantId as string | undefined;
+			// const clientIPAddress = "test";
+			const tennatInfo = await tenantManager.getTenantfromRiddler(tenantId);
+			// const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+			const privateLinkEnable = tennatInfo?.customData?.privateLinkEnable ?? false;
+			// if (networkInfo.isPrivateLink) {
+			// 	// if (tennatInfo.customData.accountLinkID === networkInfo.privateLinkId) {
+			// 	// 	/* empty */
+			// 	// } else {
+			// 	// 	return;
+			// 	// }
+			// 	// if (privateLinkEnable) {
+			// 	// 	return;
+			// 	// }
+			// }
+			if (privateLinkEnable) {
 				return;
 			}
 

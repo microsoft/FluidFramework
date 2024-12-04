@@ -36,6 +36,10 @@ class SocketIoSocket implements core.IWebSocket {
 		return this.socket.id;
 	}
 
+	public get handshake(): any {
+		return this.socket.handshake;
+	}
+
 	constructor(private readonly socket: Socket) {}
 
 	public on(event: string, listener: (...args: any[]) => void) {

@@ -57,6 +57,7 @@ declare function get_old_ClassDeclaration_LocalDeltaConnectionServer():
 declare function use_current_ClassDeclaration_LocalDeltaConnectionServer(
     use: TypeOnly<current.LocalDeltaConnectionServer>): void;
 use_current_ClassDeclaration_LocalDeltaConnectionServer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalDeltaConnectionServer());
 
 /*
@@ -106,6 +107,7 @@ declare function get_old_ClassDeclaration_LocalWebSocket():
 declare function use_current_ClassDeclaration_LocalWebSocket(
     use: TypeOnly<current.LocalWebSocket>): void;
 use_current_ClassDeclaration_LocalWebSocket(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalWebSocket());
 
 /*
@@ -130,6 +132,7 @@ declare function get_old_ClassDeclaration_LocalWebSocketServer():
 declare function use_current_ClassDeclaration_LocalWebSocketServer(
     use: TypeOnly<current.LocalWebSocketServer>): void;
 use_current_ClassDeclaration_LocalWebSocketServer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalWebSocketServer());
 
 /*
