@@ -287,9 +287,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	public get clientDetails(): IClientDetails {
 		return this.connectionManager.clientDetails;
 	}
-	public get supportedFeatures(): Record<string, unknown> | undefined {
-		return this.connectionManager.supportedFeatures;
-	}
 
 	public submit(
 		type: MessageType,

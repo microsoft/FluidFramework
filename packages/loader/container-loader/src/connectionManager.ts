@@ -307,10 +307,6 @@ export class ConnectionManager implements IConnectionManager {
 		return this.connection?.serviceConfiguration;
 	}
 
-	public get supportedFeatures(): Record<string, unknown> | undefined {
-		return this.connection?.supportedFeatures;
-	}
-
 	public get scopes(): string[] | undefined {
 		return this.connection?.claims.scopes;
 	}

@@ -215,7 +215,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly readOnlyInfo: ReadOnlyInfo;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     submitSignal(content: any, targetClientId?: string): void;
-    readonly supportedFeatures?: Record<string, unknown>;
     readonly version: string;
 }
 

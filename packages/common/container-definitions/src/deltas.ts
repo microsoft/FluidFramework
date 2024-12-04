@@ -213,11 +213,6 @@ export interface IDeltaManager<T, U>
 	readonly serviceConfiguration: IClientConfiguration | undefined;
 
 	/**
-	 * A list of optional features that ordering service supports.
-	 */
-	readonly supportedFeatures?: Record<string, unknown>;
-
-	/**
 	 * Flag to indicate whether the client can write or not.
 	 */
 	readonly active: boolean;

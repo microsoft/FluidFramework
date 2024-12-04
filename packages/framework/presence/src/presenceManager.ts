@@ -194,8 +194,8 @@ function setupSubComponents(
  */
 export function createPresenceManager(
 	runtime: IEphemeralRuntime,
-	supportedFeatures?: Record<string, unknown>,
 	clientSessionId: ClientSessionId = createSessionId() as ClientSessionId,
+	supportedFeatures?: Record<string, unknown>,
 ): IPresence & PresenceExtensionInterface {
 	return new PresenceManager(runtime, clientSessionId, supportedFeatures);
 }

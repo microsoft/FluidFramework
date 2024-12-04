@@ -38,10 +38,7 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 		if (!this._presenceManager) {
 			// TODO: investigate if ContainerExtensionStore (path-based address routing for
 			// Signals) is readily detectable here and use that presence manager directly.
-			const manager = createPresenceManager(
-				this.runtime,
-				this.runtime.deltaManagerInternal.supportedFeatures,
-			);
+			const manager = createPresenceManager(this.runtime);
 			this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assertSignalMessageIsValid(message);
 				manager.processSignal("", message, local);
