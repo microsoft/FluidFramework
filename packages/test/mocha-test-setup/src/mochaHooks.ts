@@ -7,7 +7,6 @@ import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-defin
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import * as mochaModule from "mocha";
 
-import { FileLogger } from "./fileLogger.js";
 import { pkgName } from "./packageVersion.js";
 
 // this will enabling capturing the full stack for errors
@@ -85,9 +84,7 @@ const log = console.log;
 const error = console.log;
 const warn = console.warn;
 
-const originalLogger =
-	_global.getTestLogger?.() ??
-	(process.env.USE_FILE_LOGGER !== undefined ? new FileLogger() : nullLogger);
+const originalLogger = _global.getTestLogger?.() ?? nullLogger;
 const testLogger = new FluidTestRunLogger(originalLogger);
 
 /**
@@ -140,7 +137,6 @@ export const mochaHooks = {
 		// Clear the current test from the logger. Important so if anything calls `getTestLogger` outside the context of a
 		// test (e.g. during a `before` or `after` hook), it doesn't log events with the name of the last test that ran.
 		testLogger.clearCurentTest();
-		void testLogger.flush();
 	},
 };
 
