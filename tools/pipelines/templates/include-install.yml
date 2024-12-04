@@ -1,7 +1,8 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# include-install template for the install step in client build and test stability pipeline
+# Installs dependencies in the specified directory. If using pnpm, also ensures pnpm is installed
+# and configured in ${{ parameters.pnpmInstallDirectory }}
 
 parameters:
 - name: packageManager
@@ -13,12 +14,15 @@ parameters:
 - name: packageManagerInstallCommand
   type: string
 
+- name: pnpmInstallDirectory
+  type: string
+  default: $(Build.SourcesDirectory)
+
 steps:
   - ${{ if eq(parameters.packageManager, 'pnpm') }}:
     - template: include-install-pnpm.yml
       parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
-        enableCache: false
+        buildDirectory: ${{ parameters.pnpmInstallDirectory }}
 
   - task: Bash@3
     displayName: Install dependencies
@@ -27,10 +31,6 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         set -eu -o pipefail
-        echo "registry: $(pnpm config get registry)"
-        echo "Removing node_modules"
-        rm -rf node_modules
-        echo "Running install"
         registry="$(pnpm config get registry)"
         token=$(echo -n "${SYSTEM_ACCESSTOKEN}" | base64 --wrap 0)
         if [ $registry != "https://registry.npmjs.org/" ]; then
@@ -42,6 +42,7 @@ steps:
         else
           echo "No authentication needed for registry: ${registry}"
         fi
+        echo "Installing dependencies."
         ${{ parameters.packageManagerInstallCommand }}
     env:
       NPM_CONFIG_REGISTRY: $(ado-feeds-primary-registry)

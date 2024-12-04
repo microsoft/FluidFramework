@@ -35,18 +35,11 @@ stages:
     steps:
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+    - template: /tools/pipelines/templates/include-install.yml@self
       parameters:
-        buildDirectory: $(Build.SourcesDirectory)
-
-    - task: Bash@3
-      displayName: Install dependencies
-      inputs:
-        targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
-        script: |
-          set -eu -o pipefail
-          ${{ parameters.dependencyInstallCommand }}
+        packageManager: pnpm
+        buildDirectory: ${{ parameters.buildDirectory }}
+        packageManagerInstallCommand: ${{ parameters.dependencyInstallCommand }}
 
     - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
       - ${{ each check in parameters.checks }}:

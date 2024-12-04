@@ -110,18 +110,11 @@ stages:
 
         - template: templates/include-use-node-version.yml
 
-        - template: templates/include-install-pnpm.yml
+        - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
+            packageManager: pnpm
             buildDirectory: $(Build.SourcesDirectory)/docs
-
-        - task: Bash@3
-          displayName: Install dependencies
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)/docs
-            script: |
-              set -eu -o pipefail
-              pnpm i --frozen-lockfile
+            packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
 
         - task: Npm@1
           displayName: npm run build
@@ -233,18 +226,11 @@ stages:
 
         - template: templates/include-use-node-version.yml
 
-        - template: templates/include-install-pnpm.yml
+        - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
+            packageManager: pnpm
             buildDirectory: $(Build.SourcesDirectory)/docs
-
-        - task: Bash@3
-          displayName: Install dependencies
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)/docs
-            script: |
-              set -eu -o pipefail
-              pnpm i --frozen-lockfile
+            packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
 
         - task: Npm@1
           displayName: Build

@@ -51,7 +51,8 @@ steps:
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
       pnpm config set -g workspace-concurrency 0
   # We should leverage the primary npm registry to install pnpm. However, ADO artifacts feeds do not implement
-  # the full npm registry API including a route that corepack uses to get package metadata, including the version
+  # the full npm registry API including a route that corepack uses to get package metadata--the version
   # route here: https://github.com/nodejs/corepack/blob/bc13d40037d0b1bfd386e260ae741f55505b5c7c/sources/npmRegistryUtils.ts#L32
+  # Thus installing pnpm from an ADO feed using corepack is not currently possible.
   # env:
   #   COREPACK_NPM_REGISTRY: $(ado-feeds-primary-registry)

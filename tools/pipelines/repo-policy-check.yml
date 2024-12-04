@@ -64,19 +64,12 @@ extends:
       - job: run_policy_check
         steps:
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
-        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+        - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
+            packageManager: pnpm
             buildDirectory: .
-
-        - task: Bash@3
-          displayName: Install root dependencies
-          inputs:
-            targetType: 'inline'
-            workingDirectory: .
-            script: |
-              set -eu -o pipefail
-              # We only need to install the root dependencies
-              pnpm install --workspace-root --frozen-lockfile
+            # We only need to install the root dependencies
+            packageManagerInstallCommand: 'pnpm install --workspace-root --frozen-lockfile'
 
         - task: Npm@1
           displayName: Policy Check
