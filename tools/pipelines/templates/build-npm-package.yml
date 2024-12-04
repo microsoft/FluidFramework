@@ -319,6 +319,18 @@ extends:
                       fi
                     fi
 
+              - ${{ each test in parameters.taskTest }}:
+                - script: |
+                    echo "Debugging testCoverage"
+                    echo "testCoverage: ${{ parameters.testCoverage }}"
+                    echo "Build Reason: $(Build.Reason)"
+                    echo "Test Name: ${{ test.name }}"
+                    echo "Conditions:"
+                    echo "  Is Pull Request: $([[ "$(Build.Reason)" == "PullRequest" ]] && echo true || echo false)"
+                    echo "  Contains 'realsvc:tinylicious': $([[ "${{ test.name }}" == *"realsvc:tinylicious"* ]] && echo true || echo false)"
+                    echo "  Contains 'stress:tinylicious': $([[ "${{ test.name }}" == *"stress:tinylicious"* ]] && echo true || echo false)"
+                displayName: Debug testCoverage value
+
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
               - template: /tools/pipelines/templates/include-install.yml@self
@@ -610,6 +622,14 @@ extends:
                         echo "##vso[task.setvariable variable=startTest]true"
                       displayName: Start Test
 
+                    - script: |
+                        if [[ "${{ test.name }}" == *"stress:tinylicious"* ]]; then
+                          echo "Test name contains 'stress:tinylicious'";
+                        else
+                          echo "Test name does NOT contain 'stress:tinylicious'";
+                        fi
+                      displayName: Verify Contains Logic
+
                     - template: /tools/pipelines/templates/include-test-task.yml@self
                       parameters:
                         taskTestStep: '${{ test.name }}'
@@ -621,8 +641,8 @@ extends:
                             or(
                               ne(variables['Build.Reason'], 'PullRequest'),
                               and(
-                                not(contains('${{ test.name }}', 'realsvc:tinylicious')),
-                                not(contains('${{ test.name }}', 'stress:tinylicious'))
+                                not(contains(taskTestStep, 'realsvc:tinylicious')),
+                                not(contains(taskTestStep, 'stress:tinylicious'))
                               )
                             )
                           )}}
