@@ -82,9 +82,7 @@ export function getPlanningSystemPrompt(
 			The other agent follows this guidance: ${systemRoleContext}`
 	}`;
 
-	const editOptions = doesNodeContainArraySchema(treeNode)
-		? "inserting, modifying, removing, or moving elements in the tree"
-		: "modifying elements in the tree";
+	const editOptions = `modifying ${doesNodeContainArraySchema(treeNode) ? "as well as inserting, removing, or moving" : ""} elements in the tree`;
 
 	const systemPrompt = `
 	${role}
@@ -142,13 +140,13 @@ export function getEditingSystemPrompt(
 	).getSchemaText();
 
 	const topLevelEditWrapperDescription = doesNodeContainArraySchema(treeNode)
-		? `contains one of the following interfaces: "Insert", "Modify", "Remove", "Move", or null`
+		? `contains one of the following interfaces: "Modify", null or an array node only edit: "Insert", "Remove", "Move".`
 		: `contains the interface "Modify" or null`;
 
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
-	${role}\nEdits are JSON objects that conform to the following schema of which the top level object you produce is an "EditWrapper" object which ${topLevelEditWrapperDescription}:
-	\n${treeSchemaString}
+	${role}\nEdits are JSON objects that conform to the schema described below. The top-level object you produce for a given edit is an "EditWrapper" object which ${topLevelEditWrapperDescription}.
+	\nHere are the schema definitions for an edit:\n${treeSchemaString}\n
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
 	${plan === undefined ? "" : `You have made a plan to accomplish the user's goal. The plan is: "${plan}". You will perform one or more edits that correspond to that plan to accomplish the goal.`}
 	${

@@ -411,11 +411,7 @@ function hasAtLeastTwo<T>(array: T[]): array is [T, T, ...T[]] {
 export function doesNodeContainArraySchema(node: TreeNode): boolean {
 	const schema = Tree.schema(node);
 	const simpleSchema = getSimpleSchema(schema);
-
-	const definitionMap = simpleSchema.definitions;
-
-	for (const name of simpleSchema.definitions.keys()) {
-		const nodeSchema = definitionMap.get(name) ?? fail("Unexpected definition");
+	for (const [, nodeSchema] of simpleSchema.definitions) {
 		if (nodeSchema.kind === NodeKind.Array) {
 			return true;
 		}

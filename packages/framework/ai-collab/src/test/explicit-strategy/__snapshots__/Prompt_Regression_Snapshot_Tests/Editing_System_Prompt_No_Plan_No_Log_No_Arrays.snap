@@ -1,5 +1,5 @@
 ---
-Generated on: 2024-12-04T17:43:56.136Z
+Generated on: 2024-12-04T19:06:02.146Z
 description: This is a snapshot file utilized for testing purposes.
 Test Suite Title: Prompt Generation Regression Tests
 Test Title: Editing System Prompt created with node containing no arrays has no regression
@@ -7,8 +7,9 @@ Test Title: Editing System Prompt created with node containing no arrays has no 
 
 You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
 The application that owns the JSON tree has the following guidance about your role: "You're a helpful AI assistant".
-Edits are JSON objects that conform to the following schema of which the top level object you produce is an "EditWrapper" object which contains the interface "Modify" or null:
+Edits are JSON objects that conform to the schema described below. The top-level object you produce for a given edit is an "EditWrapper" object which contains the interface "Modify" or null.
 	
+Here are the schema definitions for an edit:
 // A pointer to a specific object node in the tree, identified by the target object's Id.
 interface ObjectTarget {
     target: string; // The id of the object (as specified by the object's __fluid_objectId property) that is being referenced
@@ -26,6 +27,7 @@ interface Modify {
 interface EditWrapper {
     edit: Modify | null; // The next edit to apply to the tree, or null if the task is complete.
 }
+
 
 	The tree is a JSON object with the following schema: interface Todo { title: string; completed: boolean; }
 	
