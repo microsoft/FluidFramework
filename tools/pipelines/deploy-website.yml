@@ -47,10 +47,7 @@ variables:
   - name: repoToTrigger
     value: microsoft/FluidFramework
   - name: shouldRetainGuardianAssets
-    value: ${{ or(
-      eq(parameters.guardianAssetRetentionOverride, 'force'),
-      and(eq(parameters.guardianAssetRetentionOverride, 'default'))
-      )}}
+    value: ${{ eq(parameters.guardianAssetRetentionOverride, 'default') }}
   - name: deploymentToken
     ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
       value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
@@ -105,7 +102,6 @@ stages:
 
     - job: build_site
       displayName: 'Build website'
-      dependsOn: upload_json
       pool: Large-eastus2
       steps:
         - checkout: self
@@ -266,7 +262,7 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  pool: Small
+  pool: Small-eastus2
   dependsOn: ['build', 'guardian']
   variables:
     deployOverrideVar: ${{ parameters.deployOverride }}

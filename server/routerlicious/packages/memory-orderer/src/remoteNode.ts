@@ -111,12 +111,12 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 		// Connect to the given remote node
 		const db = await mongoManager.getDatabase();
 		const nodeCollection = db.collection<INode>(nodeCollectionName);
-		const details = await nodeCollection.findOne({ _id: id });
+		const details = (await nodeCollection.findOne({ _id: id })) ?? undefined;
 
 		const socket =
-			details.expiration >= Date.now()
+			details !== undefined && details.expiration >= Date.now()
 				? await Socket.connect<INodeMessage>(details.address, id)
-				: null;
+				: undefined;
 		const node = new RemoteNode(id, socket);
 
 		return node;
@@ -142,11 +142,11 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 
 	private constructor(
 		private readonly _id: string,
-		private readonly socket: Socket<INodeMessage>,
+		private readonly socket: Socket<INodeMessage> | undefined,
 	) {
 		super();
 
-		this.socket.on("message", (message) => {
+		this.socket?.on("message", (message) => {
 			switch (message.type) {
 				case "op":
 					this.route(message.payload as IOpMessage);
@@ -175,7 +175,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 					if (!this.topicMap.has(fullId)) {
 						this.topicMap.set(fullId, []);
 					}
-					this.topicMap.get(fullId).push(socketConnection);
+					this.topicMap.get(fullId)?.push(socketConnection);
 
 					pendingConnect.deferred.resolve(socketConnection);
 					break;
@@ -197,7 +197,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 	}
 
 	public send(cid: number, type: string, payload: any) {
-		this.socket.send({
+		this.socket?.send({
 			cid,
 			payload,
 			type: type as any,
@@ -226,7 +226,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 
 	private route(message: IOpMessage) {
 		const sockets = this.topicMap.get(message.topic);
-		for (const socket of sockets) {
+		for (const socket of sockets ?? []) {
 			socket.emit(message.op, message.data[0], ...message.data.slice(1));
 		}
 	}

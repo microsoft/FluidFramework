@@ -53,7 +53,7 @@ Specifies which test driver to use: odsp, routerlicious, tinylicious. The config
 
 #### --driverEndpoint, -e
 
-Specifies which endpoint of test driver to use: odsp, odsp-df for odsp driver or frs, r11s, docker for routerlicious driver.
+Specifies which endpoint of test driver to use: `odsp`, `odsp-df` for `odsp-driver` or `frs` (for Azure Fluid Relay), `r11s`, `docker` for `routerlicious-driver`.
 
 #### --profile, -p
 

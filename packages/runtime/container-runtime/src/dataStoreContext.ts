@@ -545,7 +545,7 @@ export abstract class FluidDataStoreContext
 		]);
 		assert(
 			context instanceof LocalDetachedFluidDataStoreContext,
-			"must be a LocalDetachedFluidDataStoreContext",
+			0xa89 /* must be a LocalDetachedFluidDataStoreContext */,
 		);
 
 		const created = childFactory.createDataStore(context) as ReturnType<
