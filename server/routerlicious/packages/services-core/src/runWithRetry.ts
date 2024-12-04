@@ -82,10 +82,6 @@ export async function runWithRetry<T>(
 					);
 					throw error;
 				}
-				// if maxRetries is -1, we retry indefinitely
-				// unless shouldRetry returns false at some point.
-				if (maxRetries !== -1 && retryCount >= maxRetries) {
-				}
 
 				const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
 				await delay(intervalMs);
