@@ -423,7 +423,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 		branch.events.on("afterChange", (event) => {
 			// The following logic allows revertibles to be generated for the change.
-			// Currently only appends (including merges) and transaction commits are supported.
+			// Currently only appends (including merges and transaction commits) are supported.
 			if (event.type === "append") {
 				// TODO:#20949: When the SharedTree is detached, these commits will already have been garbage collected.
 				//       Figure out a way to generate revertibles before the commits are garbage collected.
@@ -771,9 +771,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The branch has already been disposed and cannot be disposed again.",
 		);
 		this.disposed = true;
+		this.#transaction.branch.dispose();
 		this.#transaction.dispose();
 		this.purgeRevertibles();
-		this.#transaction.activeBranch.dispose();
 		for (const view of this.views) {
 			view.dispose();
 		}

@@ -246,9 +246,7 @@ export class SquashingTransactionStack<
 	 * @param onPush - {@link OnPush | A function} that will be called when a transaction is pushed to the {@link TransactionStack | stack}.
 	 */
 	public constructor(
-		/** The branch that will be forked off of when a transaction begins */
 		branch: SharedTreeBranch<TEditor, TChange>,
-		/** Called once when the outer-most transaction is committed */
 		squash: (commits: GraphCommit<TChange>[]) => TaggedChange<TChange>,
 		onPush?: OnPush,
 	) {

@@ -36,7 +36,7 @@ import { hasSome } from "../util/index.js";
  * * Append - when one or more commits are appended to the head of the branch, for example via
  * a change applied by the branch's editor, or as a result of merging another branch into this one
  * * Remove - when one or more commits are removed from the head of the branch.
- * * Rebase - when a rebase operation replaces commits at the head of the branch with rebased versions of those commits.
+ * * Rebase - when a rebase operation adds commits from another branch and replaces existing commits with their rebased versions.
  */
 export type SharedTreeBranchChange<TChange> =
 	| {
