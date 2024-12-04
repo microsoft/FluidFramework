@@ -116,21 +116,21 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
 	const useAzure = connectionConfig.type === "remote";
 
 	if (!connectionConfig.endpoint) {
-		throw new Error("Missing FRS configuration: Relay Service Endpoint URL.");
+		throw new Error("Missing AFR configuration: Relay Service Endpoint URL.");
 	}
 
 	let connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
 
 	if (useAzure) {
 		if (!connectionConfig.tenantId) {
-			throw new Error("Missing FRS configuration: Tenant ID.");
+			throw new Error("Missing AFR configuration: Tenant ID.");
 		}
 
 		let tokenProvider: ITokenProvider;
 		/* Insecure Token Provider */
 		if (!connectionConfig.useSecureTokenProvider) {
 			if (!connectionConfig.key) {
-				throw new Error("Missing FRS configuration: Tenant Primary Key.");
+				throw new Error("Missing AFR configuration: Tenant Primary Key.");
 			}
 			tokenProvider = createInsecureTokenProvider(
 				connectionConfig.key,
@@ -140,7 +140,7 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
 		} else {
 			/* Secure Token Provider (Azure Function) */
 			if (!connectionConfig.functionUrl) {
-				throw new Error("Missing FRS configuration: Function URL.");
+				throw new Error("Missing AFR configuration: Function URL.");
 			}
 			tokenProvider = createAzureTokenProvider(
 				connectionConfig.functionUrl,
