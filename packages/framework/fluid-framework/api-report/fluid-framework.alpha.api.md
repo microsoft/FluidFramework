@@ -646,6 +646,9 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 
+// @public
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+
 // @alpha
 export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
 
@@ -753,6 +756,17 @@ export interface JsonValidator {
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public @sealed
+export interface Listenable<TListeners extends object> {
+    off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+}
+
+// @public
+export type Listeners<T extends object> = {
+    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
+};
+
+// @public @sealed
 export interface MakeNominal {
 }
 
@@ -812,6 +826,9 @@ type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchem
 type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+// @public
+export type Off = () => void;
 
 // @alpha
 export interface ParseOptions<TCustom> {

@@ -54,6 +54,10 @@ export type {
 	ReplaceIEventThisPlaceHolder,
 	FluidObject, // Linked in doc comment
 	FluidObjectProviderKeys, // Used by FluidObject
+	IsListener,
+	Listeners,
+	Listenable,
+	Off,
 } from "@fluidframework/core-interfaces";
 
 export type { isFluidHandle } from "@fluidframework/runtime-utils";

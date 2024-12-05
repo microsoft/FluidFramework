@@ -5,10 +5,10 @@
 
 /**
  * `true` iff the given type is an acceptable shape for a {@link Listeners | event} listener
- * @system @public
+ * @public
  *
  * @remarks
- * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
+ * Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or`@fluidframework/core-interfaces`  instead.
  */
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
@@ -18,7 +18,7 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
  * @remarks
  * Any object type is a valid {@link Listeners}, but only the {@link IsListener | event-like} properties of that
  * type will be included.
- * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
+ * Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or`@fluidframework/core-interfaces`  instead.
  *
  * @example
  * ```typescript
@@ -28,7 +28,7 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
  * }
  * ```
  *
- * @system @public
+ * @public
  */
 export type Listeners<T extends object> = {
 	[P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
@@ -49,9 +49,9 @@ export type Listeners<T extends object> = {
  * {@link @fluid-internal/client-utils#createEmitter} can help implement this interface via delegation.
  *
  * @remarks
- * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
+ * Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or`@fluidframework/core-interfaces`  instead.
  *
- * @sealed @system @public
+ * @sealed @public
  */
 export interface Listenable<TListeners extends object> {
 	/**
@@ -84,7 +84,7 @@ export interface Listenable<TListeners extends object> {
  * A function that, when called, will deregister an event listener subscription that was previously registered.
  * @remarks
  * It is returned by the {@link Listenable.on | event registration function} when event registration occurs.
- * Deprecated in `@fluidframework/tree`. Consider importing from `@fluidframework/core-interfaces` instead.
- * @system @public
+ * Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or`@fluidframework/core-interfaces`  instead.
+ * @public
  */
 export type Off = () => void;
