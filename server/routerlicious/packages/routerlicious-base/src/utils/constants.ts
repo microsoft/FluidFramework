@@ -8,7 +8,6 @@
  */
 export const Constants = Object.freeze({
 	alfredRestThrottleIdSuffix: "AlfredRest",
-	nexusRestThrottleIdSuffix: "NexusRest",
 	createDocThrottleIdPrefix: "createDoc",
 	getDeltasThrottleIdPrefix: "getDeltas",
 	getSessionThrottleIdPrefix: "getSession",
