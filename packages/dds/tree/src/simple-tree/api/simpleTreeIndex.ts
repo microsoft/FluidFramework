@@ -200,9 +200,8 @@ export function createSimpleTreeIndex<
 				return treeNodeApi.status(simpleTree);
 			}
 		},
-		// simple tree indexes do not need to re-index their spines because the api only allows nodes to be keyed on fields directly under them
-		// rather than anywhere in their subtree
-		false,
+		// simple tree indexes are shallow indexes, indicating so allows for a performance optimization
+		true,
 	);
 
 	// all the type checking guarantees that we put nodes of the correct type in the index
