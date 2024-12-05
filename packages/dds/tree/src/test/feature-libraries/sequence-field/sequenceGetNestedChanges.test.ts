@@ -12,6 +12,7 @@ import { brand } from "../../../util/index.js";
 import { MarkMaker as Mark } from "./testEdits.js";
 import type { RevisionTag } from "../../../core/index.js";
 import { mintRevisionTag } from "../../utils.js";
+// eslint-disable-next-line import/no-internal-modules
 import type { NestedChangesIndices } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 const tag1: RevisionTag = mintRevisionTag();
