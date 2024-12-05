@@ -147,7 +147,6 @@ describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvid
 	};
 	const groupedBatchingContainerConfig: ITestContainerConfig = {
 		...testContainerConfig,
-		runtimeOptions: { enableGroupedBatching: true },
 	};
 
 	let provider: ITestObjectProvider;

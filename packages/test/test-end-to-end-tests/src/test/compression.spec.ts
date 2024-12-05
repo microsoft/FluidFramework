@@ -152,7 +152,6 @@ const compressionSuite = (getProvider) => {
 					chunkSizeInBytes: option.compressionAndChunking.chunking
 						? 100
 						: Number.POSITIVE_INFINITY,
-					enableGroupedBatching: option.grouping,
 				});
 				const values = [
 					generateRandomStringOfSize(100),

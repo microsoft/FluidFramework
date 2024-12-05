@@ -252,7 +252,6 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 						minimumBatchSizeInBytes: 1,
 						compressionAlgorithm: CompressionAlgorithms.lz4,
 					},
-					enableGroupedBatching,
 				},
 			});
 

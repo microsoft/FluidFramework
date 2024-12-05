@@ -63,7 +63,7 @@ describeCompat(
 		const setupContainers = async () => {
 			const configWithFeatureGates = {
 				...testContainerConfig,
-				runtimeOptions: { enableGroupedBatching: true, flushMode: FlushMode.Immediate },
+				runtimeOptions: { flushMode: FlushMode.Immediate },
 			};
 			container = await provider.makeTestContainer(configWithFeatureGates);
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;

@@ -262,7 +262,6 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			...testContainerConfig,
 			runtimeOptions: {
 				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-				enableGroupedBatching,
 			},
 		};
 

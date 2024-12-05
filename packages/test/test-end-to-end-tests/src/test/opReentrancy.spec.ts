@@ -134,9 +134,7 @@ describeCompat(
 
 				await setupContainers({
 					...testContainerConfig,
-					runtimeOptions: {
-						enableGroupedBatching,
-					},
+					runtimeOptions: {},
 				});
 
 				sharedString1.insertText(0, "ad");
@@ -200,9 +198,7 @@ describeCompat(
 
 				await setupContainers({
 					...testContainerConfig,
-					runtimeOptions: {
-						enableGroupedBatching,
-					},
+					runtimeOptions: {},
 				});
 
 				const concurrentValue = 10;

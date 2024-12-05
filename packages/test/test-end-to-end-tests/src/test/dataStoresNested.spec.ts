@@ -46,7 +46,6 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	let loader: IHostLoader | undefined;
 
 	const runtimeOptions: IContainerRuntimeOptions = {
-		enableGroupedBatching: true,
 		// Force summarizer heuristics to be disabled so we can control when to summarize
 		summaryOptions: {
 			summaryConfigOverrides: {

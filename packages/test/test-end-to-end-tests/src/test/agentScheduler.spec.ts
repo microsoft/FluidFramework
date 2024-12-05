@@ -43,7 +43,6 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 				// but it's too cumbersome, so just disable all options that can screw up compat matrix
 				{
 					compressionOptions: undefined,
-					enableGroupedBatching: false,
 					enableRuntimeIdCompressor: undefined,
 				},
 			),
