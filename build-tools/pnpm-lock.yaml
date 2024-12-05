@@ -91,6 +91,9 @@ importers:
       '@andrewbranch/untar.js':
         specifier: ^1.0.3
         version: 1.0.3
+      '@fluid-tools/build-infrastructure':
+        specifier: workspace:~
+        version: link:../build-infrastructure
       '@fluid-tools/version-tools':
         specifier: workspace:~
         version: link:../version-tools

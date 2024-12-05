@@ -4,6 +4,7 @@
  */
 
 export { BaseCommand } from "./base.js";
+export { BaseCommandWithBuildProject } from "./baseCommand.js";
 export { unscopedPackageNameString } from "./constants.js";
 export {
 	GenerateEntrypointsCommand,
