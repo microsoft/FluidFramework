@@ -60,7 +60,6 @@ export function TaskCard(props: {
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 	sharedTreeTask: SharedTreeTask;
 }): JSX.Element {
-
 	const { enqueueSnackbar } = useSnackbar();
 
 	const [aiPromptPopoverAnchor, setAiPromptPopoverAnchor] = useState<
@@ -188,14 +187,18 @@ export function TaskCard(props: {
 
 										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 										const currentBranch = TreeAlpha.branch(props.sharedTreeBranch.root)!;
-										const aiCollabBranch = currentBranch.fork() as TreeViewAlpha<typeof SharedTreeAppState>;
+										const aiCollabBranch = currentBranch.fork() as TreeViewAlpha<
+											typeof SharedTreeAppState
+										>;
 										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, -- Note that two levels up from the task is the task group node.
-										const parentTaskGroup = Tree.parent(Tree.parent(props.sharedTreeTask)!) as SharedTreeTaskGroup;
+										const parentTaskGroup = Tree.parent(
+											Tree.parent(props.sharedTreeTask)!,
+										) as SharedTreeTaskGroup;
 
 										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 										const aiCollabBranchTask = aiCollabBranch.root.taskGroups
-											.find(taskGroup => taskGroup.id === parentTaskGroup.id)!
-											.tasks.find(task => task.id === props.sharedTreeTask.id)!;
+											.find((taskGroup) => taskGroup.id === parentTaskGroup.id)!
+											.tasks.find((task) => task.id === props.sharedTreeTask.id)!;
 
 										console.log("aiCollabBranchTask:", { ...aiCollabBranchTask });
 
@@ -205,7 +208,7 @@ export function TaskCard(props: {
 												openAI: {
 													client: new OpenAI({
 														apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-														dangerouslyAllowBrowser: true
+														dangerouslyAllowBrowser: true,
 													}),
 													modelName: "gpt-4o",
 												},
@@ -231,29 +234,33 @@ export function TaskCard(props: {
 															}
 														}
 													}
-												}
+												},
 											});
 										} catch (error) {
 											console.error("Error in aiCollab:", error);
-											enqueueSnackbar(`Copilot: Something went wrong processing your request - "${query}":  ${error instanceof Error ? error.message : "unknown error"}`, {
-												variant: "error",
-												autoHideDuration: 5000,
-											});
+											enqueueSnackbar(
+												`Copilot: Something went wrong processing your request - "${query}":  ${error instanceof Error ? error.message : "unknown error"}`,
+												{
+													variant: "error",
+													autoHideDuration: 5000,
+												},
+											);
 											setIsAiTaskRunning(false);
 											return;
 										}
 
-										if (response.status === 'success') {
+										if (response.status === "success") {
 											enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
 												variant: "success",
 												autoHideDuration: 5000,
 											});
 
-											const differences = new SharedTreeBranchManager({ nodeIdAttributeName: "id" })
-												.compare(
-													props.sharedTreeTask as unknown as Record<string, unknown>,
-													aiCollabBranchTask as unknown as Record<string, unknown>
-												);
+											const differences = new SharedTreeBranchManager({
+												nodeIdAttributeName: "id",
+											}).compare(
+												props.sharedTreeTask as unknown as Record<string, unknown>,
+												aiCollabBranchTask as unknown as Record<string, unknown>,
+											);
 											setBranchDifferences(differences);
 											currentBranch.merge(aiCollabBranch);
 											setAiPromptPopoverAnchor(undefined);
@@ -263,7 +270,6 @@ export function TaskCard(props: {
 												{ variant: "error", autoHideDuration: 5000 },
 											);
 										}
-
 
 										setIsAiTaskRunning(false);
 									}}

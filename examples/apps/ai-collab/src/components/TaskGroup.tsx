@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { aiCollab, type AiCollabErrorResponse, type AiCollabSuccessResponse, type Difference, SharedTreeBranchManager } from "@fluidframework/ai-collab/alpha";
 import {
-	TreeAlpha,
-	type TreeBranch,
-	type TreeViewAlpha,
-} from "@fluidframework/tree/alpha";
+	aiCollab,
+	type AiCollabErrorResponse,
+	type AiCollabSuccessResponse,
+	type Difference,
+	SharedTreeBranchManager,
+} from "@fluidframework/ai-collab/alpha";
+import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -29,12 +31,8 @@ import React, { useState } from "react";
 
 import { TaskCard } from "./TaskCard";
 
-import {
-	SharedTreeAppState,
-	SharedTreeTaskGroup,
-} from "@/types/sharedTreeAppSchema";
+import { SharedTreeAppState, SharedTreeTaskGroup } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
-
 
 export function TaskGroup(props: {
 	treeView: TreeView<typeof SharedTreeAppState>;
@@ -105,31 +103,30 @@ export function TaskGroup(props: {
 
 				<Box sx={{ flexGrow: 1 }}></Box>
 
-				{isDiffModalOpen && props.treeView !== undefined && llmBranchData &&
-					(
-						<TaskGroupDiffModal
-							isOpen={isDiffModalOpen}
-							onClose={() => {
-								setIsDiffModalOpen(false);
-								setLlmBranchData(undefined);
-								setPopoverAnchor(undefined);
-							}}
-							onAccept={() => {
-								llmBranchData.originalBranch.merge(llmBranchData.forkBranch);
-								setIsDiffModalOpen(false);
-								setLlmBranchData(undefined);
-								setPopoverAnchor(undefined);
-							}}
-							onDecline={() => {
-								setIsDiffModalOpen(false);
-								setLlmBranchData(undefined);
-								setPopoverAnchor(undefined);
-							}}
-							treeView={llmBranchData.forkBranch as TreeViewAlpha<typeof SharedTreeAppState>}
-							differences={llmBranchData.differences}
-							newBranchTargetNode={llmBranchData.newBranchTargetNode}
-						></TaskGroupDiffModal>
-					)}
+				{isDiffModalOpen && props.treeView !== undefined && llmBranchData && (
+					<TaskGroupDiffModal
+						isOpen={isDiffModalOpen}
+						onClose={() => {
+							setIsDiffModalOpen(false);
+							setLlmBranchData(undefined);
+							setPopoverAnchor(undefined);
+						}}
+						onAccept={() => {
+							llmBranchData.originalBranch.merge(llmBranchData.forkBranch);
+							setIsDiffModalOpen(false);
+							setLlmBranchData(undefined);
+							setPopoverAnchor(undefined);
+						}}
+						onDecline={() => {
+							setIsDiffModalOpen(false);
+							setLlmBranchData(undefined);
+							setPopoverAnchor(undefined);
+						}}
+						treeView={llmBranchData.forkBranch as TreeViewAlpha<typeof SharedTreeAppState>}
+						differences={llmBranchData.differences}
+						newBranchTargetNode={llmBranchData.newBranchTargetNode}
+					></TaskGroupDiffModal>
+				)}
 
 				<Button
 					variant="contained"
@@ -177,18 +174,25 @@ export function TaskGroup(props: {
 								});
 
 								if (process.env.NEXT_PUBLIC_OPEN_AI_KEY === undefined) {
-									enqueueSnackbar(`Copilot: Cannot initiate request - No Open AI API key found.`, {
-										variant: "error",
-										autoHideDuration: 5000,
-									});
+									enqueueSnackbar(
+										`Copilot: Cannot initiate request - No Open AI API key found.`,
+										{
+											variant: "error",
+											autoHideDuration: 5000,
+										},
+									);
 									return;
 								}
 
 								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 								const currentBranch = TreeAlpha.branch(props.treeView.root)!;
-								const aiCollabBranch = currentBranch.fork() as TreeViewAlpha<typeof SharedTreeAppState>;
+								const aiCollabBranch = currentBranch.fork() as TreeViewAlpha<
+									typeof SharedTreeAppState
+								>;
 								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								const aiCollabBranchTaskGroup = aiCollabBranch.root.taskGroups.find(taskGroup => taskGroup.id === props.sharedTreeTaskGroup.id)!;
+								const aiCollabBranchTaskGroup = aiCollabBranch.root.taskGroups.find(
+									(taskGroup) => taskGroup.id === props.sharedTreeTaskGroup.id,
+								)!;
 
 								let response: AiCollabSuccessResponse | AiCollabErrorResponse;
 								try {
@@ -196,7 +200,7 @@ export function TaskGroup(props: {
 										openAI: {
 											client: new OpenAI({
 												apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-												dangerouslyAllowBrowser: true
+												dangerouslyAllowBrowser: true,
 											}),
 											modelName: "gpt-4o-mini",
 										},
@@ -212,19 +216,21 @@ export function TaskGroup(props: {
 										planningStep: true,
 										finalReviewStep: false,
 										dumpDebugLog: true,
-									})
+									});
 								} catch (error) {
 									console.error("Error in aiCollab:", error);
-									enqueueSnackbar(`Copilot: Something went wrong processing your request - "${query}":  ${error instanceof Error ? error.message : "unknown error"}`, {
-										variant: "error",
-										autoHideDuration: 5000,
-									});
+									enqueueSnackbar(
+										`Copilot: Something went wrong processing your request - "${query}":  ${error instanceof Error ? error.message : "unknown error"}`,
+										{
+											variant: "error",
+											autoHideDuration: 5000,
+										},
+									);
 									setIsAiTaskRunning(false);
 									return;
 								}
 
-
-								if (response.status === 'success') {
+								if (response.status === "success") {
 									const branchManager = new SharedTreeBranchManager({
 										nodeIdAttributeName: "id",
 									});
@@ -241,7 +247,7 @@ export function TaskGroup(props: {
 										differences,
 										originalBranch: currentBranch,
 										forkBranch: aiCollabBranch,
-										newBranchTargetNode: aiCollabBranchTaskGroup
+										newBranchTargetNode: aiCollabBranchTaskGroup,
 									});
 									setIsDiffModalOpen(true);
 									enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
