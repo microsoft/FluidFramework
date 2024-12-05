@@ -55,8 +55,7 @@ export function propertyCopy(): void {
 		const bObj = createMap<number>();
 		// eslint-disable-next-line guard-for-in, no-restricted-syntax
 		for (const key in obj) {
-			const value = obj[key];
-			if (value !== undefined) {
+			if (key in obj) {
 				bObj[key] = obj[key];
 			}
 		}
