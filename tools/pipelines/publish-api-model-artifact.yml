@@ -100,7 +100,7 @@ stages:
           submodules: false
           clean: true
 
-        - template: /tools/pipelines/templates/include-install-build-tools.yml
+        - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
             buildDirectory: $(Build.SourcesDirectory)
         - task: Bash@3
@@ -138,7 +138,7 @@ stages:
         runOnce:
           deploy:
             steps:
-            - template: /tools/pipelines/templates/upload-json-steps.yml
+            - template: /tools/pipelines/templates/upload-json-steps.yml@self
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 uploadAsLatest: ${{ variables.isMain }}

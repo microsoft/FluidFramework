@@ -70,7 +70,7 @@ parameters:
 
 
 stages:
-  - template: /tools/pipelines/templates/include-conditionally-run-stress-tests.yml
+  - template: /tools/pipelines/templates/include-conditionally-run-stress-tests.yml@self
     parameters:
       artifactBuildId: $(resources.pipeline.client.runID)
       packages: ${{ parameters.packages }}

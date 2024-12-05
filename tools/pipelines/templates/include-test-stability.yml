@@ -90,15 +90,15 @@ jobs:
             TestCoverage=$(testCoverage)
           "
 
-    - template: /tools/pipelines/templates/include-use-node-version.yml
+    - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-    - template: /tools/pipelines/templates/include-install.yml
+    - template: /tools/pipelines/templates/include-install.yml@self
       parameters:
         packageManager: ${{ parameters.packageManager }}
         buildDirectory: ${{ parameters.buildDirectory }}
         packageManagerInstallCommand: ${{ parameters.packageManagerInstallCommand }}
 
-    - template: /tools/pipelines/templates/include-build-lint.yml
+    - template: /tools/pipelines/templates/include-build-lint.yml@self
       parameters:
         taskBuild: ${{ parameters.taskBuild }}
         taskLint: ${{ parameters.taskLint }}
@@ -113,7 +113,7 @@ jobs:
         displayName: Start Test
 
       - ${{ each taskTestStep in parameters.taskTest }}:
-        - template: /tools/pipelines/templates/include-test-task.yml
+        - template: /tools/pipelines/templates/include-test-task.yml@self
           parameters:
             taskTestStep: ${{ taskTestStep }}
             buildDirectory: ${{ parameters.buildDirectory }}
@@ -141,6 +141,6 @@ jobs:
           continueOnError: true
 
       # Process test result, include publishing and logging
-      - template: /tools/pipelines/templates/include-process-test-results.yml
+      - template: /tools/pipelines/templates/include-process-test-results.yml@self
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}

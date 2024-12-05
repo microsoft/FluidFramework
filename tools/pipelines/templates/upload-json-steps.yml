@@ -29,7 +29,7 @@ steps:
   clean: true
 
 # Download the api-extractor outputs
-- template: /tools/pipelines/templates/download-api-extractor-artifact.yml
+- template: /tools/pipelines/templates/download-api-extractor-artifact.yml@self
   parameters:
     pipelineName: Build - client packages
     branchName: ${{ variables['Build.SourceBranch'] }}
