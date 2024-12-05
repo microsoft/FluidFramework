@@ -190,8 +190,8 @@ export function TaskCard(props: {
 										const aiCollabBranch = currentBranch.fork() as TreeViewAlpha<
 											typeof SharedTreeAppState
 										>;
-										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, -- Note that two levels up from the task is the task group node.
 										const parentTaskGroup = Tree.parent(
+											// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, -- Note that two levels up from the task is the task group node.
 											Tree.parent(props.sharedTreeTask)!,
 										) as SharedTreeTaskGroup;
 
