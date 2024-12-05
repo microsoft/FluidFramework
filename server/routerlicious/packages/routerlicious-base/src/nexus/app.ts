@@ -12,14 +12,19 @@ import {
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
+import * as api from "./api";
 import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import type { Provider } from "nconf";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { IReadinessCheck, IThrottler, IDocumentStorage } from "@fluidframework/server-services-core";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 
 export function create(
 	config: Provider,
 	startupCheck: IReadinessCheck,
 	readinessCheck?: IReadinessCheck,
+	restThrottler?: Map<string, IThrottler>,
+	storage?: IDocumentStorage,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -46,6 +51,12 @@ export function create(
 	const healthEndpoints = createHealthCheckEndpoints("nexus", startupCheck, readinessCheck);
 
 	app.use("/healthz", healthEndpoints);
+
+	// Bind routes
+	const collaborationSessionEventEmitter = new TypedEventEmitter<ICollaborationSessionEvents>();
+	const routes = api.create(config, restThrottler, collaborationSessionEventEmitter, storage);
+	app.use(routes);
+
 	// Catch 404 and forward to error handler
 	app.use(catch404());
 

@@ -600,7 +600,8 @@ function setUpSignalListenerForRoomBroadcasting(
 ): () => void {
 	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
 		const { signalRoom, signalContent } = broadcastSignal;
-
+		// TODO: delete
+		Lumberjack.info("Signal listener for room broadcasting received signal");
 		// No-op if the room (collab session) that signal came in from is different
 		// than the current room. We reuse websockets so there could be multiple rooms
 		// that we are sending the signal to, and we don't want to do that.
