@@ -30,6 +30,7 @@ import {
 	type IVersion,
 	type FetchSource,
 	type IDocumentAttributes,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	ISummaryTreeWithStats,
@@ -70,10 +71,8 @@ import {
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
-	type ContainerRuntimeGCMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
-	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
@@ -85,14 +84,9 @@ import {
 import {
 	ISummaryCancellationToken,
 	neverCancelledSummaryToken,
+	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
-
-// Type test:
-const outboundMessage: OutboundContainerRuntimeMessage =
-	{} as unknown as OutboundContainerRuntimeMessage;
-// @ts-expect-error Outbound type should not include compat behavior
-(() => {})(outboundMessage.compatDetails);
 
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
@@ -147,6 +141,22 @@ function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
 	);
 }
 
+function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime): void {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	(containerRuntime as any).channelCollection = {
+		setConnectionState: (_connected: boolean, _clientId?: string) => {},
+		// Pass data store op right back to ContainerRuntime
+		reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+			submitDataStoreOp(
+				containerRuntime,
+				envelope.address,
+				envelope.contents,
+				localOpMetadata,
+			);
+		},
+	} as ChannelCollection;
+}
+
 describe("Runtime", () => {
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -198,6 +208,7 @@ describe("Runtime", () => {
 			logger = new MockLogger(),
 			mockStorage = defaultMockStorage,
 			loadedFromVersion,
+			baseSnapshot,
 		} = params;
 
 		const mockContext = {
@@ -225,6 +236,7 @@ describe("Runtime", () => {
 			clientId,
 			connected: true,
 			storage: mockStorage as IDocumentStorageService,
+			baseSnapshot,
 		} satisfies Partial<IContainerContext>;
 
 		// Update the delta manager's last message which is used for validation during summarization.
@@ -368,19 +380,7 @@ describe("Runtime", () => {
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 
-					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-					(containerRuntime as any).channelCollection = {
-						setConnectionState: (_connected: boolean, _clientId?: string) => {},
-						// Pass data store op right back to ContainerRuntime
-						reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-							submitDataStoreOp(
-								containerRuntime,
-								envelope.address,
-								envelope.contents,
-								localOpMetadata,
-							);
-						},
-					} as ChannelCollection;
+					defineResubmitAndSetConnectionState(containerRuntime);
 
 					changeConnectionState(containerRuntime, false, mockClientId);
 
@@ -613,19 +613,7 @@ describe("Runtime", () => {
 					});
 
 					it("Resubmitting batch preserves original batches", async () => {
-						// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-						(containerRuntime as any).channelCollection = {
-							setConnectionState: (_connected: boolean, _clientId?: string) => {},
-							// Pass data store op right back to ContainerRuntime
-							reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-								submitDataStoreOp(
-									containerRuntime,
-									envelope.address,
-									envelope.contents,
-									localOpMetadata,
-								);
-							},
-						} as ChannelCollection;
+						defineResubmitAndSetConnectionState(containerRuntime);
 
 						changeConnectionState(containerRuntime, false, fakeClientId);
 
@@ -1133,7 +1121,7 @@ describe("Runtime", () => {
 			);
 		});
 
-		describe("[DEPRECATED] Future op type compatibility", () => {
+		describe("Unrecognized types not supported", () => {
 			let containerRuntime: ContainerRuntime;
 			beforeEach(async () => {
 				containerRuntime = await ContainerRuntime.loadRuntime({
@@ -1146,37 +1134,6 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-			});
-
-			it("can submit op compat behavior (temporarily still available for GC op)", async () => {
-				// Create a container runtime type where the submit method is public. This makes it easier to test
-				// submission and processing of ops. The other option is to send data store or alias ops whose
-				// processing requires creation of data store context and runtime as well.
-				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
-					submit(
-						containerRuntimeMessage: OutboundContainerRuntimeMessage,
-						localOpMetadata: unknown,
-						metadata: Record<string, unknown> | undefined,
-					): void;
-				};
-				const containerRuntimeWithSubmit =
-					containerRuntime as unknown as ContainerRuntimeWithSubmit;
-
-				const gcMessageWithDeprecatedCompatDetails: ContainerRuntimeGCMessage = {
-					type: ContainerMessageType.GC,
-					contents: { type: "Sweep", deletedNodeIds: [] },
-					compatDetails: { behavior: "Ignore" },
-				};
-
-				assert.doesNotThrow(
-					() =>
-						containerRuntimeWithSubmit.submit(
-							gcMessageWithDeprecatedCompatDetails,
-							undefined,
-							undefined,
-						),
-					"Cannot submit container runtime message with compatDetails",
-				);
 			});
 
 			/** Overwrites channelCollection property and exposes private submit function with modified typing */
@@ -1207,7 +1164,7 @@ describe("Runtime", () => {
 				return patched;
 			}
 
-			it("Op with unrecognized type and 'Ignore' compat behavior is ignored by resubmit", async () => {
+			it("Op with unrecognized type is ignored by resubmit", async () => {
 				const patchedContainerRuntime = patchContainerRuntime();
 
 				changeConnectionState(patchedContainerRuntime, false, mockClientId);
@@ -1217,7 +1174,6 @@ describe("Runtime", () => {
 				patchedContainerRuntime.submit({
 					type: "FUTURE_TYPE" as any,
 					contents: "3",
-					compatDetails: { behavior: "Ignore" }, // This op should be ignored by resubmit
 				});
 				submitDataStoreOp(patchedContainerRuntime, "4", "test");
 
@@ -1235,34 +1191,8 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
-					Record<string, unknown> = {
-					type: "FROM_THE_FUTURE",
-					contents: "Hello",
-					compatDetails: { behavior: "Ignore" },
-				};
-
-				const packedOp: Omit<
-					ISequencedDocumentMessage,
-					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
-				> = {
-					contents: JSON.stringify(futureRuntimeMessage),
-					type: MessageType.Operation,
-					sequenceNumber: 123,
-					clientId: "someClientId",
-					minimumSequenceNumber: 0,
-				};
-				assert.throws(
-					() =>
-						containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */),
-					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-					"Ops with unrecognized type and 'Ignore' compat behavior should fail to process",
-				);
-			});
-
-			it("process remote op with unrecognized type and no compat behavior", async () => {
-				const futureRuntimeMessage = {
+			it("process remote op with unrecognized type", async () => {
+				const futureRuntimeMessage: Record<string, unknown> = {
 					type: "FROM_THE_FUTURE",
 					contents: "Hello",
 				};
@@ -1281,11 +1211,10 @@ describe("Runtime", () => {
 					() =>
 						containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */),
 					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-					"Ops with unrecognized type and no specified compat behavior should fail to process",
+					"Ops with unrecognized type should fail to process",
 				);
 			});
 		});
-
 		describe("Supports mixin classes", () => {
 			it("new loadRuntime method works", async () => {
 				const makeMixin = <T>(
@@ -2141,6 +2070,79 @@ describe("Runtime", () => {
 					);
 				});
 			});
+
+			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
+				// Duplicate Batch Detection requires OfflineLoad enabled
+				const settings_enableOfflineLoad = { "Fluid.Container.enableOfflineLoad": true };
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({
+						settings: settings_enableOfflineLoad,
+					}) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Add batchId1 to DuplicateBatchDetected via ContainerRuntime.process,
+				// and get its serialized representation from summarizing
+				containerRuntime.process(
+					{
+						sequenceNumber: 123,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						metadata: { batchId: "batchId1" },
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					false,
+				);
+				const { summary } = await containerRuntime.summarize({ fullTree: true });
+				const blob = summary.tree[recentBatchInfoBlobName];
+				assert(blob.type === SummaryType.Blob, "Expected blob");
+				assert.equal(blob.content, '[[123,"batchId1"]]', "Expected single batchId mapping");
+
+				// Load a new ContainerRuntime with the serialized DuplicateBatchDetector state.
+				const mockStorage = {
+					// Hardcode readblob fn to return the blob contents put in the summary
+					readBlob: async (_id) => stringToBuffer(blob.content as string, "utf8"),
+				};
+				const containerRuntime2 = await ContainerRuntime.loadRuntime({
+					context: getMockContext({
+						settings: settings_enableOfflineLoad,
+						baseSnapshot: {
+							trees: {},
+							blobs: { [recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage" },
+						},
+						mockStorage,
+					}) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Process an op with a duplicate batchId to what was loaded with
+				assert.throws(
+					() => {
+						containerRuntime2.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						);
+					},
+					(e: any) => e.message === "Duplicate batch - The same batch was sequenced twice",
+					"Expected duplicate batch detected after loading with recentBatchInfo",
+				);
+			});
 		});
 
 		describe("Load Partial Snapshot with datastores with GroupId", () => {
@@ -2851,22 +2853,10 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("ignores in-flight signals on disconnect/reconnect", () => {
+			it("ignores signals sent before disconnect and resets stats on reconnect", () => {
 				// Define resubmit and setConnectionState on channel collection
 				// This is needed to submit test data store ops
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				(containerRuntime as any).channelCollection = {
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
-					// Pass data store op right back to ContainerRuntime
-					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-						submitDataStoreOp(
-							containerRuntime,
-							envelope.address,
-							envelope.contents,
-							localOpMetadata,
-						);
-					},
-				} as ChannelCollection;
+				defineResubmitAndSetConnectionState(containerRuntime);
 
 				sendSignals(4);
 
@@ -2908,6 +2898,58 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLatency",
 							sent: 97, // 101 (tracked latency signal) - 5 (earliest sent signal on reconnect) + 1 = 97
+							lost: 0,
+							outOfOrder: 0,
+							reconnectCount: 1,
+						},
+					],
+					"SignalLatency telemetry should be logged with correct reconnect count",
+					/* inlineDetailsProp = */ true,
+				);
+			});
+
+			it("ignores signals sent while disconnected and resets stats on reconnect", () => {
+				// SETUP - define resubmit and setConnectionState on channel collection.
+				// This is needed to submit test data store ops. Once defined, submit a test data store op
+				// so that message is queued in PendingStateManager and reconnect count is increased.
+				defineResubmitAndSetConnectionState(containerRuntime);
+				// Send and process an initial signal to prime the system.
+				submitDataStoreOp(containerRuntime, "1", "test");
+				sendSignals(1); // 1st signal (#1)
+				processSubmittedSignals(1);
+
+				// ACT - Disconnect client and send signals while disconnected.
+				// Reconnect client and continue sending signals.
+				changeConnectionState(containerRuntime, false, mockClientId);
+				// Send and drop 150 signals (#2 to #151)
+				sendSignals(150);
+				dropSignals(150);
+				changeConnectionState(containerRuntime, true, mockClientId);
+				// Send and process 100 signals (#152 to #251)
+				// This should include tracked latency signal (#251)
+				sendSignals(100);
+				processSubmittedSignals(100);
+
+				// VERIFY - SignalLatency telemetry should be logged with correct reconnect count
+				// No error events should be logged for signals sent before disconnect
+				logger.assertMatchNone(
+					[
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+						{
+							eventName: "ContainerRuntime:SignalLost",
+						},
+					],
+					"SignalOutOfOrder/SignalLost telemetry should not be logged on reconnect",
+					/* inlineDetailsProp = */ true,
+					/* clearEventsAfterCheck = */ false,
+				);
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							sent: 50, // 201 (tracked latency signal) - 152 (earliest sent signal on reconnect) + 1 = 50
 							lost: 0,
 							outOfOrder: 0,
 							reconnectCount: 1,

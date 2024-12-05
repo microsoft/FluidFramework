@@ -1,0 +1,77 @@
+---
+title: Overview
+sidebar_position: 1
+---
+
+:::note
+
+This article assumes that you are familiar with the concept of _operation_ in the Fluid Framework. See [How Fluid works](..#how-fluid-works).
+
+:::
+
+There are three primary concepts to understand when building an application with Fluid.
+
+-   Service
+-   Container
+-   Shared objects
+
+### Service
+
+Fluid clients require a centralized service that all connected clients use to send and receive operations. Fluid offers multiple service implementations that developers can use without any modifications. For each of them, there is a corresponding client library. You must use the client library that corresponds to the service you are connecting to. See [Available Fluid Services](../deployment/service-options) for more information about Fluid service options.
+
+Each service-specific library adheres to a common API structure and has the primary goal of creating and retrieving container objects. The common structure enables you to switch from one service to another with minimal code changes.
+
+See [Service-specific client libraries](#service-specific-client-libraries) for more details.
+
+#### Azure Fluid Relay
+
+[Azure Fluid Relay](../deployment/azure-fluid-relay) is a cloud service that enables real-time collaboration on shared data models. It is a fully managed service that provides a secure, scalable, and reliable way to connect clients to each other and to the data models they share.
+
+#### SharePoint Embedded
+
+Microsoft [SharePoint Embedded](../deployment/sharepoint-embedded) is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.
+
+#### Tinylicious
+
+The [Tinylicious service](/docs/testing/tinylicious) runs on your development computer and is used for development and testing.
+It is used in Fluid examples throughout this documentation.
+
+### Container
+
+The container is the primary unit of encapsulation in Fluid. It consists of a collection of shared objects and supporting APIs to manage the lifecycle of the container and the objects within it. New containers must be created from a client, but are bound to the data stored on the supporting server. After a container has been created, it can be accessed by other clients.
+
+For more about containers see [Containers](./containers).
+
+### Shared objects
+
+A _shared object_ is any object type that supports collaboration (simultaneous editing).
+The fundamental type of shared object that is provided by Fluid Framework is called a **Distributed Data Structure (DDS)**. A DDS holds shared data that the collaborators are working with.
+
+Fluid Framework supports a second type of shared object called **Data Object**.
+_This type of object is in beta and should not be used in a production application._
+A Data Object contains one or more DDSes that are organized to enable a particular collaborative use case.
+DDSes are low-level data structures, while Data Objects are composed of DDSes and other shared objects.
+Data Objects are used to organize DDSes into semantically meaningful groupings for your scenario, as well as providing an API surface to your app's data.
+
+For more information about these types and the differences between them, see [Data modeling](./data-modeling) and [Introducing distributed data structures](./dds).
+
+## Library structure
+
+There are two primary libraries you'll use when building with Fluid: the basic Fluid Framework library and a service-specific client library (such as Fluid Azure Relay or Tinylicious).
+
+### The Fluid Framework library
+
+The Fluid Framework library is a collection of core Fluid APIs that make it easy to build and use applications.
+This library contains all the common type definitions as well as all the built-in shared objects.
+The library is in the package [fluid-framework](https://www.npmjs.com/package/fluid-framework).
+
+### Service-specific client libraries
+
+Fluid works with multiple service implementations. Each service has a corresponding service-specific client library. These libraries have a common API structure but also support functionality unique to each service.
+
+For specifics about each service-specific client implementation see their corresponding documentation.
+
+-   The client library for the [Tinylicious](/docs/testing/tinylicious) service is in the package [@fluidframework/tinylicious-client](https://www.npmjs.com/package/@fluidframework/tinylicious-client).
+-   The client library for the [Azure Fluid Relay](../deployment/azure-fluid-relay) is in the package [@fluidframework/azure-client](https://www.npmjs.com/package/@fluidframework/azure-client).
+
+For more information see [Packages](./packages).

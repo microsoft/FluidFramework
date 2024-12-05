@@ -83,19 +83,19 @@ export class ReleaseGroup implements IReleaseGroup {
 	public get releaseGroupDependencies(): IReleaseGroup[] {
 		const dependentReleaseGroups = new Set<IReleaseGroup>();
 		const ignoredDependencies = new Set<PackageName>();
-		const fluidRepo = this.workspace.fluidRepo;
+		const buildProject = this.workspace.buildProject;
 		for (const pkg of this.packages) {
 			for (const { name } of pkg.combinedDependencies) {
 				if (ignoredDependencies.has(name)) {
 					continue;
 				}
-				const depPackage = fluidRepo.packages.get(name);
+				const depPackage = buildProject.packages.get(name);
 				if (depPackage === undefined || depPackage.releaseGroup === this.name) {
 					ignoredDependencies.add(name);
 					continue;
 				}
 
-				const releaseGroup = fluidRepo.releaseGroups.get(depPackage.releaseGroup);
+				const releaseGroup = buildProject.releaseGroups.get(depPackage.releaseGroup);
 				if (releaseGroup === undefined) {
 					throw new Error(
 						`Cannot find release group "${depPackage.releaseGroup}" in workspace "${this.workspace}"`,

@@ -118,7 +118,7 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 
 	private async getTreeInternalRecursive(sha: string): Promise<resources.ITree> {
 		const mapFunction: isomorphicGit.WalkerMap = async (filepath, [walkerEntry]) => {
-			if (filepath !== "." && filepath !== "..") {
+			if (walkerEntry !== null && filepath !== "." && filepath !== "..") {
 				const type = await walkerEntry.type();
 				const mode = (await walkerEntry.mode()).toString(8);
 				const oid = await walkerEntry.oid();

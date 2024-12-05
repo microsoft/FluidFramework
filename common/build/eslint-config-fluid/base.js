@@ -135,15 +135,11 @@ module.exports = {
 			},
 		],
 
-		// eslint-plugin-import
+		// #region eslint-plugin-import
+
 		"import/no-default-export": "error",
 		"import/no-deprecated": "off",
-		"import/no-extraneous-dependencies": [
-			"error",
-			{
-				devDependencies: ["**/*.spec.ts", "src/test/**"],
-			},
-		],
+		"import/no-extraneous-dependencies": "error",
 		"import/no-internal-modules": "error",
 		"import/no-unassigned-import": "error",
 		"import/no-unresolved": [
@@ -167,6 +163,8 @@ module.exports = {
 				},
 			},
 		],
+
+		// #region
 
 		// eslint-plugin-unicorn
 		"unicorn/better-regex": "error",

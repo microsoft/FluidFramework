@@ -46,7 +46,7 @@ export interface IWebServer {
 	/**
 	 * Web socket interface
 	 */
-	webSocketServer: IWebSocketServer;
+	webSocketServer: IWebSocketServer | undefined;
 
 	/**
 	 * HTTP server interface

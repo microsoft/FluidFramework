@@ -11,6 +11,7 @@ import {
 	CheckoutFlexTreeView,
 	type TransactionConstraint,
 	Tree,
+	TreeAlpha,
 	type rollback,
 } from "../../shared-tree/index.js";
 import {
@@ -21,6 +22,8 @@ import {
 	type InsertableTypedNode,
 	type TreeNodeSchema,
 	type NodeFromSchema,
+	asTreeViewAlpha,
+	type TreeViewAlpha,
 } from "../../simple-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -99,11 +102,11 @@ describe("treeApi", () => {
 				try {
 					run(view, (root) => {
 						root.content = 43;
-						throw Error("Oh no");
+						throw new Error("Oh no");
 					});
-				} catch (e) {
-					assert(e instanceof Error);
-					assert.equal(e.message, "Oh no");
+				} catch (error) {
+					assert(error instanceof Error);
+					assert.equal(error.message, "Oh no");
 				}
 				assert.equal(view.root.content, 42);
 			});
@@ -400,5 +403,34 @@ describe("treeApi", () => {
 		assert.equal(Tree.contains(level3, level1), false);
 		assert.equal(Tree.contains(level3, level2), false);
 		assert.equal(Tree.contains(level2, level1), false);
+	});
+
+	it("context", () => {
+		const schemaFactory = new SchemaFactory(undefined);
+		class Array extends schemaFactory.array("array", schemaFactory.number) {}
+		const view = getView(
+			new TreeViewConfiguration({ schema: Array, enableSchemaValidation: true }),
+		);
+		view.initialize([1, 2, 3]);
+
+		// Hydrated
+		const array = view.root;
+		const context = TreeAlpha.branch(array);
+		assert(context !== undefined);
+
+		// Unhydrated
+		assert.equal(TreeAlpha.branch(new Array([1, 2, 3])), undefined);
+	});
+
+	it("can cast to alpha", () => {
+		const schemaFactory = new SchemaFactory(undefined);
+		const view = getView(
+			new TreeViewConfiguration({ schema: schemaFactory.null, enableSchemaValidation: true }),
+		);
+		view.initialize(null);
+		assert.equal(
+			asTreeViewAlpha(view) satisfies TreeViewAlpha<typeof schemaFactory.null>,
+			view,
+		);
 	});
 });

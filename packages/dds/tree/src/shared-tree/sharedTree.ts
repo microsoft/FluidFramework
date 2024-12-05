@@ -5,6 +5,12 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -26,12 +32,7 @@ import {
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
-import {
-	type HasListeners,
-	type IEmitter,
-	type Listenable,
-	createEmitter,
-} from "../events/index.js";
+
 import {
 	DetachedFieldIndexSummarizer,
 	ForestSummarizer,
@@ -53,8 +54,11 @@ import {
 import type {
 	ITree,
 	ImplicitFieldSchema,
+	ReadSchema,
 	TreeView,
+	TreeViewAlpha,
 	TreeViewConfiguration,
+	UnsafeUnknownSchema,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -65,7 +69,7 @@ import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import {
 	type CheckoutEvents,
 	type TreeCheckout,
-	type TreeBranch,
+	type BranchableTree,
 	createTreeCheckout,
 } from "./treeCheckout.js";
 import { breakingClass, throwIfBroken } from "../util/index.js";
@@ -307,6 +311,25 @@ export class SharedTree
 				breaker: this.breaker,
 			},
 		);
+
+		this.checkout.transaction.events.on("started", () => {
+			if (this.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.startTransaction();
+			}
+		});
+		this.checkout.transaction.events.on("aborting", () => {
+			if (this.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.abortTransaction();
+			}
+		});
+		this.checkout.transaction.events.on("committing", () => {
+			if (this.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.commitTransaction();
+			}
+		});
 	}
 
 	@throwIfBroken
@@ -324,10 +347,21 @@ export class SharedTree
 		}
 	}
 
+	// For the new TreeViewAlpha API
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
+
+	// For the old TreeView API
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
-	): SchematizingSimpleTreeView<TRoot> {
-		return this.checkout.viewWith(config);
+	): SchematizingSimpleTreeView<TRoot> & TreeView<TRoot>;
+
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
+		return this.checkout.viewWith(config) as SchematizingSimpleTreeView<TRoot> &
+			TreeView<ReadSchema<TRoot>>;
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
@@ -335,35 +369,73 @@ export class SharedTree
 		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
 		this._events.emit("afterBatch");
 	}
+
+	protected override submitCommit(
+		...args: Parameters<
+			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["submitCommit"]
+		>
+	): void {
+		// We do not submit ops for changes that are part of a transaction.
+		if (!this.checkout.transaction.isInProgress()) {
+			super.submitCommit(...args);
+		}
+	}
+
+	protected override didAttach(): void {
+		if (this.checkout.transaction.isInProgress()) {
+			// Attaching during a transaction is not currently supported.
+			// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
+			throw new UsageError(
+				"Cannot attach while a transaction is in progress. Commit or abort the transaction before attaching.",
+			);
+		}
+		super.didAttach();
+	}
+
+	protected override applyStashedOp(
+		...args: Parameters<
+			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
+		>
+	): void {
+		assert(
+			!this.checkout.transaction.isInProgress(),
+			0x674 /* Unexpected transaction is open while applying stashed ops */,
+		);
+		super.applyStashedOp(...args);
+	}
 }
 
 /**
- * Get a {@link TreeBranch} from a {@link ITree}.
+ * Get a {@link BranchableTree} from a {@link ITree}.
  * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
  * @privateRemarks This function will be removed if/when the branching API becomes public,
  * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
+ * @deprecated This API is superseded by {@link TreeBranch}, which should be used instead.
  */
-export function getBranch(tree: ITree): TreeBranch;
+export function getBranch(tree: ITree): BranchableTree;
 /**
- * Get a {@link TreeBranch} from a {@link TreeView}.
+ * Get a {@link BranchableTree} from a {@link TreeView}.
  * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
  * Branches are currently an unstable "alpha" API and are subject to change in the future.
  * @privateRemarks This function will be removed if/when the branching API becomes public,
  * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
  * @alpha
+ * @deprecated This API is superseded by {@link TreeBranch}, which should be used instead.
  */
-export function getBranch<T extends ImplicitFieldSchema>(view: TreeView<T>): TreeBranch;
-export function getBranch<T extends ImplicitFieldSchema>(
-	treeOrView: ITree | TreeView<T>,
-): TreeBranch {
+export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	view: TreeViewAlpha<T>,
+): BranchableTree;
+export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	treeOrView: ITree | TreeViewAlpha<T>,
+): BranchableTree {
 	assert(
 		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
 		0xa48 /* Unsupported implementation */,
 	);
 	const checkout: TreeCheckout = treeOrView.checkout;
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
-	return checkout as unknown as TreeBranch;
+	return checkout as unknown as BranchableTree;
 }
 
 /**

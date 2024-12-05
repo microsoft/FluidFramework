@@ -10,6 +10,7 @@
 import { h } from "hastscript";
 
 import { LineBreakNode } from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 it("LineBreak HTML rendering test", () => {

@@ -1,0 +1,39 @@
+/* Override Docusaurus theme footer styling */
+.footer {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-around;
+	flex-wrap: wrap;
+	row-gap: 2px;
+	column-gap: 5px;
+}
+
+.ffcom-footer-social {
+	display: flex;
+	flex-direction: column;
+}
+
+.ffcom-footer-copyright {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.ffcom-footer-privacy {
+	display: flex;
+	flex-direction: column;
+}
+
+/* Reorder items on mobile */
+@media all and (max-width: 450px) {
+	.ffcom-footer-social {
+		order: 1;
+	}
+	.ffcom-footer-privacy {
+		order: 2;
+	}
+	.ffcom-footer-copyright {
+		order: 3;
+	}
+}

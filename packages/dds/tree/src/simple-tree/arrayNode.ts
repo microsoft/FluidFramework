@@ -46,6 +46,7 @@ import {
 } from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
+import type { Unenforced } from "./api/index.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -61,15 +62,25 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
 		Awaited<TreeNode & WithType<string, NodeKind.Array>> {}
 
 /**
- * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
+ * A {@link TreeNode} which implements 'readonly T[]' and the array mutation APIs.
  *
- * @privateRemarks
- * Inlining this into TreeArrayNode causes recursive array use to stop compiling.
+ * @typeParam TAllowedTypes - Schema for types which are allowed as members of this array.
+ * @typeParam T - Use Default: Do not specify. Type of values to read from the array.
+ * @typeParam TNew - Use Default: Do not specify. Type of values to write into the array.
+ * @typeParam TMoveFrom - Use Default: Do not specify. Type of node from which children can be moved into this array.
  *
- * @system @sealed @public
+ * @sealed @public
  */
-export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom = ReadonlyArrayNode>
-	extends ReadonlyArrayNode<T> {
+export interface TreeArrayNode<
+	TAllowedTypes extends Unenforced<ImplicitAllowedTypes> = ImplicitAllowedTypes,
+	out T = [TAllowedTypes] extends [ImplicitAllowedTypes]
+		? TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
+		: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
+	in TNew = [TAllowedTypes] extends [ImplicitAllowedTypes]
+		? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>
+		: InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
+	in TMoveFrom = ReadonlyArrayNode,
+> extends ReadonlyArrayNode<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -368,20 +379,6 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom = ReadonlyArrayN
 	 */
 	values(): IterableIterator<T>;
 }
-
-/**
- * A {@link TreeNode} which implements 'readonly T[]' and the array mutation APIs.
- *
- * @typeParam TAllowedTypes - Schema for types which are allowed as members of this array.
- *
- * @sealed @public
- */
-export interface TreeArrayNode<
-	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-> extends TreeArrayNodeBase<
-		TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
-		InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>
-	> {}
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the array mutation APIs.
@@ -816,9 +813,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	>;
 
 	public constructor(
-		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+		input?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
 	) {
-		super(input);
+		super(input ?? []);
 	}
 
 	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
@@ -1077,7 +1074,8 @@ export function arraySchema<
 		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
-		T
+		T,
+		undefined
 	>;
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
@@ -1098,7 +1096,7 @@ export function arraySchema<
 				// Since proxy reports this as a "non-configurable" property, it must exist on the underlying object used as the proxy target, not as an inherited property.
 				// This should not get used as the proxy should intercept all use.
 				Object.defineProperty(instance, "length", {
-					value: NaN,
+					value: Number.NaN,
 					writable: true,
 					enumerable: false,
 					configurable: false,
