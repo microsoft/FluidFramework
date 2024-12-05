@@ -5,9 +5,7 @@
  */
 
 import * as core from "@fluidframework/server-services-core";
-import {
-	getNetworkInformationFromIP,
-} from "@fluidframework/server-services-client";
+import { getNetworkInformationFromIP } from "@fluidframework/server-services-client";
 
 // eslint-disable-next-line jsdoc/require-description
 /**
@@ -15,8 +13,8 @@ import {
  */
 export async function checkNetworkInformation(
 	tenantManager: core.ITenantManager,
-	socket: core.IWebSocket
-): Promise<{ message: string, shouldConnect: boolean }> {
+	socket: core.IWebSocket,
+): Promise<{ message: string; shouldConnect: boolean }> {
 	const tenantId = socket?.handshake?.query?.tenantId as string | undefined;
 	const tennatInfo = await tenantManager.getTenantfromRiddler(tenantId);
 	const clientIPAddress = socket?.handshake?.address as string | undefined;
@@ -31,9 +29,13 @@ export async function checkNetworkInformation(
 	} else {
 		const accountLinkID = tennatInfo?.customData?.accountLinkID;
 		if (accountLinkID) {
-			return { message: "This is a failed private link tenant socket connection from public network", shouldConnect: false };
+			return {
+				message:
+					"This is a failed private link tenant socket connection from public network",
+				shouldConnect: false,
+			};
 		} else {
-			return { message: 'should connect', shouldConnect: false};
+			return { message: "should connect", shouldConnect: false };
 		}
 	}
 }

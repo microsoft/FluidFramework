@@ -12,10 +12,7 @@ import {
 	ISignalMessage,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import {
-	isNetworkError,
-	NetworkError,
-} from "@fluidframework/server-services-client";
+import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import * as core from "@fluidframework/server-services-core";
 import {
@@ -107,6 +104,7 @@ export function configureWebSocketServices(
 	isTokenExpiryEnabled: boolean = false,
 	isClientConnectivityCountingEnabled: boolean = false,
 	isSignalUsageCountingEnabled: boolean = false,
+	isNetworkCheck: boolean = false,
 	cache?: core.ICache,
 	connectThrottlerPerTenant?: core.IThrottler,
 	connectThrottlerPerCluster?: core.IThrottler,
@@ -238,18 +236,17 @@ export function configureWebSocketServices(
 				return;
 			}
 
-			const networkError = await checkNetworkInformation(
-				tenantManager,
-				socket,
-			);
-			if (networkError.shouldConnect) {
-				const nackMessage = createNackMessage(
-					404,
-					NackErrorType.BadRequestError,
-					networkError.message,
-				);
-				socket.emit("nack", "", [nackMessage]);
-				return;
+			if (isNetworkCheck) {
+				const networkError = await checkNetworkInformation(tenantManager, socket);
+				if (networkError.shouldConnect) {
+					const nackMessage = createNackMessage(
+						404,
+						NackErrorType.BadRequestError,
+						networkError.message,
+					);
+					socket.emit("nack", "", [nackMessage]);
+					return;
+				}
 			}
 
 			const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);

@@ -43,38 +43,46 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
  * Validate private link.
  * @internal
  */
-export function validatePrivateLink(tenantManager: ITenantManager): RequestHandler {
+export function validatePrivateLink(
+	tenantManager: ITenantManager,
+	isNetworkCheck: boolean = false,
+): RequestHandler {
 	return async (req, res, next) => {
-		const tenantId = req.params.tenantId;
-		const clientIPAddress = req.ip ? req.ip : "";
-		const result = getNetworkInformationFromIP(clientIPAddress);
-		const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
-		const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
-		if (result.isPrivateLink) {
-			if (tenantInfo.customData.accountLinkID === result.privateLinkId) {
-				Lumberjack.info("This is a private link request", { tenantId, clientIPAddress });
+		if (isNetworkCheck) {
+			const tenantId = req.params.tenantId;
+			const clientIPAddress = req.ip ? req.ip : "";
+			const result = getNetworkInformationFromIP(clientIPAddress);
+			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
+			const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
+			if (result.isPrivateLink) {
+				if (tenantInfo.customData.accountLinkID === result.privateLinkId) {
+					Lumberjack.info("This is a private link request", {
+						tenantId,
+						clientIPAddress,
+					});
+				} else {
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(
+								400,
+								`This req private network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
+							),
+						),
+						res,
+					);
+				}
 			} else {
-				return handleResponse(
-					Promise.reject(
-						new NetworkError(
-							400,
-							`This req private network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
+				if (privateLinkEnable) {
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(
+								400,
+								`This req public network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
+							),
 						),
-					),
-					res,
-				);
-			}
-		} else {
-			if (privateLinkEnable) {
-				return handleResponse(
-					Promise.reject(
-						new NetworkError(
-							400,
-							`This req public network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
-						),
-					),
-					res,
-				);
+						res,
+					);
+				}
 			}
 		}
 		next();
