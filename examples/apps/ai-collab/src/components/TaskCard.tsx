@@ -204,7 +204,7 @@ export function TaskCard(props: {
 											response = await aiCollab({
 												openAI: {
 													client: new OpenAI({
-														apiKey: process.env.NEXT_PUBLIC_OPEN_AI_KEY,
+														apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
 														dangerouslyAllowBrowser: true
 													}),
 													modelName: "gpt-4o",
