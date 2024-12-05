@@ -224,18 +224,6 @@ export class Outbox {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
-
-		// If compression is enabled, we will always successfully receive
-		// blobAttach ops and compress then send them at the next JS turn, regardless
-		// of the overall size of the accumulated ops in the batch.
-		// However, it is more efficient to flush these ops faster, preferably
-		// after they reach a size which would benefit from compression.
-		if (
-			this.blobAttachBatch.contentSizeInBytes >=
-			this.params.config.compressionOptions.minimumBatchSizeInBytes
-		) {
-			this.flushInternal(this.blobAttachBatch);
-		}
 	}
 
 	public submitIdAllocation(message: BatchMessage) {
@@ -337,8 +325,7 @@ export class Outbox {
 
 		const rawBatch = batchManager.popBatch(resubmittingBatchId);
 		const shouldGroup =
-			(!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch)) ||
-			rawBatch.messages.length >= 2;
+			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
 		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
@@ -353,11 +340,13 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const processedBatch = !disableGroupedBatching
-				? this.compressBatch(
-						shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
-					)
-				: rawBatch;
+			const processedBatch =
+				rawBatch.contentSizeInBytes >=
+				this.params.config.compressionOptions.minimumBatchSizeInBytes
+					? shouldGroup
+						? this.compressAndChunkBatch(this.params.groupingManager.groupBatch(rawBatch))
+						: this.compressAndChunkBatch(rawBatch)
+					: rawBatch;
 
 			clientSequenceNumber = this.sendBatch(processedBatch);
 			assert(
@@ -422,9 +411,8 @@ export class Outbox {
 	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original),
 	 * or (C) a batch containing the last chunk (plus empty placeholders from compression if applicable).
 	 */
-	private compressBatch(batch: IBatch): IBatch {
+	private compressAndChunkBatch(batch: IBatch<[BatchMessage]>): IBatch {
 		if (
-			batch.messages.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||

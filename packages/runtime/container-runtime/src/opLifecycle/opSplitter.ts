@@ -116,7 +116,7 @@ export class OpSplitter {
 	 * @remarks - A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
 	 * @param batch - the compressed batch which needs to be processed
-	 * @returns A new adjusted batch (last chunk + empty placeholders) which can be sent over the wire
+	 * @returns A batch with the last chunk of the original message
 	 */
 	public splitFirstBatchMessage(batch: IBatch): IBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
