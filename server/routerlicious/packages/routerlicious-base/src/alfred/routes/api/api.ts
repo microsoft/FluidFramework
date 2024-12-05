@@ -194,13 +194,13 @@ export function create(
 			try {
 				const ordererUrl: string = config.get("worker:serverUrl");
 				const document = await storage.getDocument(tenantId, documentId);
-				if (document.session.ordererUrl !== ordererUrl) {
+				if (document?.session.ordererUrl !== ordererUrl) {
 					Lumberjack.info("Redirecting to docs cluster", {
-						documentUrl: document.session.ordererUrl,
+						documentUrl: document?.session.ordererUrl,
 						currentUrl: ordererUrl,
-						targetUrlAndPath: `${document.session.ordererUrl}${request.originalUrl}`,
+						targetUrlAndPath: `${document?.session.ordererUrl}${request.originalUrl}`,
 					});
-					response.redirect(308, `${document.session.ordererUrl}${request.originalUrl}`);
+					response.redirect(308, `${document?.session.ordererUrl}${request.originalUrl}`);
 					return;
 				}
 				const signalRoom: IRoom = { tenantId, documentId };
