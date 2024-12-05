@@ -74,7 +74,7 @@ export {
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
-	getAllowedContentIncompatibilities,
+	getAllowedContentDiscrepancies,
 	isRepoSuperset,
 	isNeverTree,
 } from "./modular-schema/index.js";
@@ -172,3 +172,12 @@ export {
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
+
+export {
+	type KeyFinder,
+	AnchorTreeIndex,
+	hasElement,
+	type TreeIndex,
+	type TreeIndexKey,
+	type TreeIndexNodes,
+} from "./indexing/index.js";

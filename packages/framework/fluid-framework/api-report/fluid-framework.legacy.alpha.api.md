@@ -517,7 +517,7 @@ type _InlineTrick = 0;
 export type Input<T extends never> = T;
 
 // @public
-type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = FlattenKeys<{
+type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = Record<string, never> extends T ? Record<string, never> : FlattenKeys<{
     readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property & string]>;
 } & {
     readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
@@ -756,6 +756,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 
 // @alpha (undocumented)
 export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
+    annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
     annotateRange(start: number, end: number, props: PropertySet): void;
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     getContainingSegment(pos: number): {
@@ -864,6 +865,7 @@ export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public @sealed
 export interface Listenable<TListeners extends object> {
+    off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
 
@@ -894,7 +896,7 @@ type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = 
 type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchemaUnsafe<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
 // @public
-export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
+export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaClass<string, NodeKind, infer TNode> ? TNode : T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode> ? TNode : never;
 
 // @public
 type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchemaUnsafe<string, NodeKind, infer TNode> ? TNode : never;
@@ -1029,6 +1031,8 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         string,
         InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>
         ]>;
+    } | {
+        readonly [x: string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
     }, false, T, undefined>;
     readonly null: TreeNodeSchemaNonClass<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null, true, unknown, never>;
     readonly number: TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never>;

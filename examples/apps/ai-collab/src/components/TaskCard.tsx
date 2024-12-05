@@ -13,7 +13,7 @@ import {
 	type DifferenceChange,
 	type DifferenceMove,
 	SharedTreeBranchManager,
-} from "@fluid-experimental/ai-collab";
+} from "@fluidframework/ai-collab/alpha";
 import {
 	// Tree,
 	TreeAlpha,

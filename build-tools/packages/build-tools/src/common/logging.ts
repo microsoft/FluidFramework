@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import chalk from "chalk";
+import chalk from "picocolors";
 
 import { commonOptions } from "../fluidBuild/commonOptions";
 

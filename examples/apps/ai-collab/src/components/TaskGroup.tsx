@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { aiCollab, type AiCollabErrorResponse, type AiCollabSuccessResponse, type Difference, SharedTreeBranchManager } from "@fluid-experimental/ai-collab";
+import { aiCollab, type AiCollabErrorResponse, type AiCollabSuccessResponse, type Difference, SharedTreeBranchManager } from "@fluidframework/ai-collab/alpha";
 import {
 	Tree,
 	TreeAlpha,

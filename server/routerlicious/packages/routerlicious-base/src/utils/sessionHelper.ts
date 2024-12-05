@@ -207,7 +207,7 @@ async function updateExistingSession(
 				`The document with isSessionAlive as false does not exist`,
 				lumberjackProperties,
 			);
-			const doc: IDocument = await runWithRetry(
+			const doc = await runWithRetry(
 				async () =>
 					documentRepository.readOne({
 						tenantId,
@@ -221,7 +221,7 @@ async function updateExistingSession(
 				undefined /* shouldIgnoreError */,
 				(error) => true /* shouldRetry */,
 			);
-			if (!doc && !doc.session) {
+			if (!doc?.session) {
 				Lumberjack.error(
 					`Error running getSession from document: ${JSON.stringify(doc)}`,
 					lumberjackProperties,
@@ -287,8 +287,8 @@ export async function getSession(
 ): Promise<ISession> {
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	const document: IDocument = await documentRepository.readOne({ tenantId, documentId });
-	if (!document || document.scheduledDeletionTime !== undefined) {
+	const document = await documentRepository.readOne({ tenantId, documentId });
+	if (!document || document?.scheduledDeletionTime !== undefined) {
 		connectionTrace?.stampStage("DocumentDoesNotExist");
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
 	}
