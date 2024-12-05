@@ -31,6 +31,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
