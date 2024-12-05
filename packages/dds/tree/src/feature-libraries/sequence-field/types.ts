@@ -25,7 +25,6 @@ export interface HasMoveId {
 }
 
 /**
- * @internal
  */
 export interface CellId extends ChangeAtomId {}
 
