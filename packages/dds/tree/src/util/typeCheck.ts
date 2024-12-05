@@ -107,8 +107,6 @@ export interface Contravariant<in T> {
  * ```typescript
  * protected _typeCheck?: Covariant<T>;
  * ```
- *
- * @internal
  */
 export interface Covariant<out T> {
 	_removeContravariance?: T;

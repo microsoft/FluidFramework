@@ -13,7 +13,6 @@ export {
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
 } from "./core/index.js";
-export { type Brand } from "./util/index.js";
 
 export type {
 	Listeners,
@@ -170,11 +169,6 @@ export {
 	type SimpleObjectNodeSchema,
 	normalizeAllowedTypes,
 	getSimpleSchema,
-	numberSchema,
-	stringSchema,
-	booleanSchema,
-	handleSchema,
-	nullSchema,
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
@@ -197,8 +191,6 @@ export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
 export {
-	type Covariant,
-	BrandedType,
 	type RestrictiveReadonlyRecord,
 	type RestrictiveStringRecord,
 	type MakeNominal,
