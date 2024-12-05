@@ -5,7 +5,6 @@
 
 import { aiCollab, type AiCollabErrorResponse, type AiCollabSuccessResponse, type Difference, SharedTreeBranchManager } from "@fluidframework/ai-collab/alpha";
 import {
-	Tree,
 	TreeAlpha,
 	type TreeBranch,
 	type TreeViewAlpha,
@@ -25,17 +24,14 @@ import {
 } from "@mui/material";
 import { type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
-// eslint-disable-next-line import/no-extraneous-dependencies
-import OpenAI from "openai";
+import { OpenAI } from "openai";
 import React, { useState } from "react";
 
 import { TaskCard } from "./TaskCard";
 
 import {
 	SharedTreeAppState,
-	SharedTreeTask,
 	SharedTreeTaskGroup,
-	validateLlmTask,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
@@ -210,30 +206,13 @@ export function TaskGroup(props: {
 												"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
 											userAsk: query,
 										},
+										limiters: {
+											maxModelCalls: 30,
+										},
 										planningStep: true,
-										finalReviewStep: true,
+										finalReviewStep: false,
 										dumpDebugLog: true,
-										validator: (treeNode) => {
-											console.log("validator running on treeNode", { ...treeNode });
-											if (treeNode !== undefined) {
-												const schema = Tree.schema(treeNode);
-												switch (schema.identifier) {
-													case SharedTreeTaskGroup.identifier: {
-														for (const task of (treeNode as SharedTreeTaskGroup).tasks) {
-															validateLlmTask(task);
-														}
-														break;
-													}
-													case SharedTreeTask.identifier: {
-														validateLlmTask(treeNode as SharedTreeTask);
-													}
-													default: {
-														break;
-													}
-												}
-											}
-										}
-									});
+									})
 								} catch (error) {
 									console.error("Error in aiCollab:", error);
 									enqueueSnackbar(`Copilot: Something went wrong processing your request - "${query}":  ${error instanceof Error ? error.message : "unknown error"}`, {

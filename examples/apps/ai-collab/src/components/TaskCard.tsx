@@ -40,11 +40,9 @@ import {
 } from "@mui/material";
 import { Tree, type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
-// eslint-disable-next-line import/no-extraneous-dependencies
-import OpenAI from "openai";
+import { OpenAI } from "openai";
 import React, { useState, type ReactNode, type SetStateAction } from "react";
 
-// import { editTask } from "@/actions/task";
 import {
 	SharedTreeTask,
 	SharedTreeTaskGroup,
@@ -56,32 +54,12 @@ import {
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
-// import {
-// 	type Task,
-// } from "@/types/task";
-// import { useSharedTreeRerender } from "@/useSharedTreeRerender";
-
-// function convertSharedTreeTaskToTask(sharedTreeTask: SharedTreeTask): Task {
-// 	return {
-// 		id: sharedTreeTask.id,
-// 		assignee: sharedTreeTask.assignee,
-// 		title: sharedTreeTask.title,
-// 		description: sharedTreeTask.description,
-// 		priority: sharedTreeTask.priority as TaskPriority,
-// 		complexity: sharedTreeTask.complexity,
-// 		status: sharedTreeTask.status as TaskStatus,
-// 	};
-// }
-
 export function TaskCard(props: {
 	sharedTreeBranch: TreeView<typeof SharedTreeAppState>;
 	branchDifferences?: Difference[];
 	sharedTreeTaskGroup: SharedTreeTaskGroup;
 	sharedTreeTask: SharedTreeTask;
 }): JSX.Element {
-	// if (props.branchDifferences) {
-	// 	console.log(`Task id ${props.sharedTreeTask.id} recieved branchDifferences: `, props.branchDifferences);
-	// }
 
 	const { enqueueSnackbar } = useSnackbar();
 
@@ -97,42 +75,11 @@ export function TaskCard(props: {
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTask, logId: "TaskCard" });
 
 	const [branchDifferences, setBranchDifferences] = useState(props.branchDifferences);
-	// const [fieldDifferences, setFieldDifferences] = useState<{
-	// 	isNewCreation: boolean;
-	// 	changes: Record<string, DifferenceChange>;
-	// 	moved?: DifferenceMove;
-	// }>({
-	// 	isNewCreation: false,
-	// 	changes: {} satisfies Record<string, DifferenceChange>,
-	// })
-
-	// Update the computed field differences when the branch differences change
-	// useEffect(() => {
-	// 	const newFieldDifferences = { ...fieldDifferences };
-	// 	for (const diff of branchDifferences ?? []) {
-	// 		if (diff.type === "CHANGE") {
-	// 			const path = diff.path[diff.path.length - 1];
-	// 			if (path === undefined) {
-	// 				throw new Error(`List of paths in CHANGE diff is empty`);
-	// 			}
-	// 			newFieldDifferences.changes[path] = diff;
-	// 		}
-	// 		if (diff.type === "CREATE") {
-	// 			newFieldDifferences.isNewCreation = true;
-	// 		}
-	// 		if (diff.type === "MOVE") {
-	// 			newFieldDifferences.moved = diff;
-	// 		}
-	// 	}
-	// 	setFieldDifferences(newFieldDifferences);
-	// }, [branchDifferences]);
 
 	const deleteTask = (): void => {
 		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(props.sharedTreeTask);
 		props.sharedTreeTaskGroup.tasks.removeAt(taskIndex);
 	};
-
-	// const task: Task = convertSharedTreeTaskToTask(props.sharedTreeTask);
 
 	const fieldDifferences: {
 		isNewCreation: boolean;
