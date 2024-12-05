@@ -146,6 +146,17 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		return () => this.off(eventName, listener);
 	}
 
+	public once<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		listener: TListeners[K],
+	): Off {
+		const wrappedListener = (): void => {
+			this.off(eventName, listener); // Remove the original listener
+		};
+
+		return this.on(eventName, wrappedListener);
+	}
+
 	public off<K extends keyof Listeners<TListeners>>(
 		eventName: K,
 		listener: TListeners[K],

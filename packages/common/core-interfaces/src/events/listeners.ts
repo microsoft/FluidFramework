@@ -60,6 +60,8 @@ export interface Listenable<TListeners extends object> {
 	 */
 	on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 
+	once<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+
 	/**
 	 * Deregister an event listener.
 	 * @param eventName - The name of the event.

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { strict as assert } from "node:assert";
 
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
@@ -281,6 +282,89 @@ describe("CustomEventEmitter", () => {
 	});
 });
 
+describe("CustomEventEmitter - once", () => {
+	it("fires a listener once and deregisters it", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count = 0;
+		const listener = (): number => (count += 1);
+
+		emitter.once("open", listener);
+
+		emitter.emit("open");
+		assert.strictEqual(count, 1);
+
+		emitter.emit("open");
+		assert.strictEqual(count, 1);
+	});
+
+	it("removes the listener after being called", () => {
+		const emitter = createEmitter<TestEvents>();
+		let opened = false;
+
+		// Register a listener with once
+		emitter.once("open", () => {
+			opened = true;
+		});
+
+		emitter.emit("open");
+		assert(!opened);
+	});
+
+	it("works with multiple once listeners for different events", () => {
+		const emitter = createEmitter<TestEvents>();
+		let opened = false;
+		let closed = false;
+
+		// Register 'once' listeners for different events
+		emitter.once("open", () => {
+			opened = true;
+		});
+		emitter.once("close", () => {
+			closed = true;
+		});
+
+		emitter.emit("open");
+		assert(opened);
+		assert(!closed);
+
+		emitter.emit("close", false);
+		assert(closed); // 'close' event listener should be called now
+	});
+
+	it("does not allow repeated firing of a once listener", () => {
+		const emitter = createEmitter<TestEvents>();
+		let opened = 0;
+
+		// Register a listener with once
+		emitter.once("open", () => {
+			opened += 1;
+		});
+
+		emitter.emit("open");
+		emitter.emit("open");
+		emitter.emit("open");
+
+		assert.strictEqual(opened, 1); // Listener should only fire once
+	});
+
+	it("deregisters the listener immediately after it is fired", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count = 0;
+		const listener = () => {
+			count += 1;
+		};
+
+		// Using once to register the listener
+		emitter.once("open", listener);
+
+		emitter.emit("open");
+		emitter.emit("open"); // Should not trigger the listener again
+		emitter.emit("open"); // Should not trigger the listener again
+
+		assert.strictEqual(count, 1);
+	});
+});
+
 /**
  * The below classes correspond to the examples given in {@link CustomEventEmitter} to ensure that they compile.
  *
@@ -332,6 +416,10 @@ export class MyCompositionClass implements Listenable<MyEvents> {
 
 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
 		return this.events.on(eventName, listener);
+	}
+
+	public once<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+		return this.events.once(eventName, listener);
 	}
 
 	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
