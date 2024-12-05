@@ -312,22 +312,29 @@ export class SharedTree
 			},
 		);
 
-		this.checkout.events.on("transactionStarted", () => {
+		this.checkout.transaction.events.on("started", () => {
 			if (this.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.startTransaction();
 			}
 		});
-		this.checkout.events.on("transactionAborted", () => {
+		this.checkout.transaction.events.on("aborting", () => {
 			if (this.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.abortTransaction();
 			}
 		});
-		this.checkout.events.on("transactionCommitted", () => {
+		this.checkout.transaction.events.on("committing", () => {
 			if (this.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.commitTransaction();
+			}
+		});
+		this.checkout.events.on("beforeBatch", (newCommits) => {
+			if (this.isAttached()) {
+				if (this.checkout.transaction.isInProgress()) {
+					this.commitEnricher.addTransactionCommits(newCommits);
+				}
 			}
 		});
 	}
@@ -367,22 +374,11 @@ export class SharedTree
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
 		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
-		this._events.emit("afterBatch");
-	}
-
-	protected override submitCommit(
-		...args: Parameters<
-			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["submitCommit"]
-		>
-	): void {
-		// We do not submit ops for changes that are part of a transaction.
-		if (!this.checkout.isTransacting()) {
-			super.submitCommit(...args);
-		}
+		this._events.emit("afterBatch", []);
 	}
 
 	protected override didAttach(): void {
-		if (this.checkout.isTransacting()) {
+		if (this.checkout.transaction.isInProgress()) {
 			// Attaching during a transaction is not currently supported.
 			// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
 			throw new UsageError(
@@ -398,7 +394,7 @@ export class SharedTree
 		>
 	): void {
 		assert(
-			!this.checkout.isTransacting(),
+			!this.checkout.transaction.isInProgress(),
 			0x674 /* Unexpected transaction is open while applying stashed ops */,
 		);
 		super.applyStashedOp(...args);

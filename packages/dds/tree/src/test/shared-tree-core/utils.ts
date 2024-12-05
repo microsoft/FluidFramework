@@ -12,6 +12,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import type { ICodecOptions } from "../../codec/index.js";
 import {
 	RevisionTagCodec,
+	tagChange,
 	TreeStoredSchemaRepository,
 	type GraphCommit,
 } from "../../core/index.js";
@@ -28,6 +29,7 @@ import {
 } from "../../feature-libraries/index.js";
 import {
 	type ChangeEnricherReadonlyCheckout,
+	SquashingTransactionStack,
 	type ResubmitMachine,
 	type SharedTreeBranch,
 	SharedTreeCore,
@@ -48,7 +50,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		packageVersion: "0.0.0",
 	};
 
-	private transactionStart?: GraphCommit<DefaultChangeset>;
+	private readonly changeFamily: DefaultChangeFamily;
 
 	public constructor(
 		runtime: IFluidDataStoreRuntime = new MockFluidDataStoreRuntime({
@@ -73,9 +75,10 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			codecOptions,
 			chunkCompressionStrategy,
 		);
+		const changeFamily = new DefaultChangeFamily(codec);
 		super(
 			summarizables,
-			new DefaultChangeFamily(codec),
+			changeFamily,
 			codecOptions,
 			formatVersions,
 			id,
@@ -87,43 +90,49 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			resubmitMachine,
 			enricher,
 		);
+		this.changeFamily = changeFamily;
+
+		this.transaction.events.on("started", () => {
+			if (this.isAttached()) {
+				this.commitEnricher.startTransaction();
+			}
+		});
+		this.transaction.events.on("aborting", () => {
+			if (this.isAttached()) {
+				this.commitEnricher.abortTransaction();
+			}
+		});
+		this.transaction.events.on("committing", () => {
+			if (this.isAttached()) {
+				this.commitEnricher.commitTransaction();
+			}
+		});
+		this.transaction.activeBranchEvents.on("afterChange", (event) => {
+			if (event.type === "append" && this.isAttached() && this.transaction.isInProgress()) {
+				this.commitEnricher.addTransactionCommits(event.newCommits);
+			}
+		});
 	}
 
 	public override getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
 		return super.getLocalBranch();
 	}
 
-	protected override submitCommit(
-		...args: Parameters<SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["submitCommit"]>
-	): void {
-		// We do not submit ops for changes that are part of a transaction.
-		if (this.transactionStart === undefined) {
-			super.submitCommit(...args);
-		}
+	public override get editor(): DefaultEditBuilder {
+		return this.transaction.activeBranchEditor;
 	}
 
-	public startTransaction(): void {
-		assert(
-			this.transactionStart === undefined,
-			"Transaction already started. TestSharedTreeCore does not support nested transactions.",
-		);
-		this.transactionStart = this.getLocalBranch().getHead();
-		this.commitEnricher.startTransaction();
-	}
-
-	public abortTransaction(): void {
-		assert(this.transactionStart !== undefined, "No transaction to abort.");
-		const start = this.transactionStart;
-		this.transactionStart = undefined;
-		this.commitEnricher.abortTransaction();
-		this.getLocalBranch().removeAfter(start);
-	}
-
-	public commitTransaction(): void {
-		assert(this.transactionStart !== undefined, "No transaction to commit.");
-		const start = this.transactionStart;
-		this.transactionStart = undefined;
-		this.commitEnricher.commitTransaction();
-		this.getLocalBranch().squashAfter(start);
-	}
+	public transaction = new SquashingTransactionStack(
+		this.getLocalBranch(),
+		(commits: GraphCommit<DefaultChangeset>[]) => {
+			const revision = this.mintRevisionTag();
+			return tagChange(
+				this.changeFamily.rebaser.changeRevision(
+					this.changeFamily.rebaser.compose(commits),
+					revision,
+				),
+				revision,
+			);
+		},
+	);
 }

@@ -334,6 +334,7 @@ declare function get_current_InterfaceDeclaration_IBoxcarMessage():
 declare function use_old_InterfaceDeclaration_IBoxcarMessage(
     use: TypeOnly<old.IBoxcarMessage>): void;
 use_old_InterfaceDeclaration_IBoxcarMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IBoxcarMessage());
 
 /*
@@ -3437,6 +3438,7 @@ declare function get_current_ClassDeclaration_TokenRevocationError():
 declare function use_old_ClassDeclaration_TokenRevocationError(
     use: TypeOnly<old.TokenRevocationError>): void;
 use_old_ClassDeclaration_TokenRevocationError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TokenRevocationError());
 
 /*
@@ -3461,6 +3463,7 @@ declare function get_current_ClassDeclaration_TokenRevokedError():
 declare function use_old_ClassDeclaration_TokenRevokedError(
     use: TypeOnly<old.TokenRevokedError>): void;
 use_old_ClassDeclaration_TokenRevokedError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TokenRevokedError());
 
 /*

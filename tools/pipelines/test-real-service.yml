@@ -109,11 +109,11 @@ stages:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
-  # end-to-end tests frs
+  # end-to-end tests AFR
   - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_frs
-      stageDisplayName: e2e - frs
+      stageDisplayName: e2e - AFR
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
