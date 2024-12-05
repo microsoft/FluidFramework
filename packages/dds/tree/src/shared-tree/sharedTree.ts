@@ -330,7 +330,7 @@ export class SharedTree
 				this.commitEnricher.commitTransaction();
 			}
 		});
-		this.checkout.events.on("afterBatch", (newCommits) => {
+		this.checkout.events.on("beforeBatch", (newCommits) => {
 			if (this.isAttached()) {
 				if (this.checkout.transaction.isInProgress()) {
 					this.commitEnricher.addTransactionCommits(newCommits);

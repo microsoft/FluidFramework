@@ -85,8 +85,16 @@ import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.
  */
 export interface CheckoutEvents {
 	/**
+	 * The view is currently in a consistent state, but a batch of changes is about to be processed.
+	 * @remarks After this event fires, it is safe to access the FlexTree, Forest and AnchorSet again until {@link CheckoutEvents.afterBatch} fires.
+	 * @param appendedCommits - Any commits that were appended to the checkout's branch in order to produce the changes in this batch.
+	 * May be empty if the changes were produced by e.g. a rebase or the initial loading of the document.
+	 */
+	beforeBatch(appendedCommits: readonly GraphCommit<SharedTreeChange>[]): void;
+
+	/**
 	 * A batch of changes has finished processing and the view is in a consistent state.
-	 * It is once again safe to access the FlexTree, Forest and AnchorSet.
+	 * @remarks It is once again safe to access the FlexTree, Forest and AnchorSet.
 	 * @param appendedCommits - Any commits that were appended to the checkout's branch in order to produce the changes in this batch.
 	 * May be empty if the changes were produced by e.g. a rebase or the initial loading of the document.
 	 * @remarks
@@ -480,6 +488,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		if (event.change !== undefined) {
+			this.events.emit("beforeBatch", event.type === "append" ? event.newCommits : []);
+
 			let revision: RevisionTag | undefined;
 			if (event.type === "rebase") {
 				assert(hasSome(event.newCommits), "Expected new commit for non no-op change event");
