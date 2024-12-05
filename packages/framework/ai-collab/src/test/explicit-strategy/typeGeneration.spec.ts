@@ -97,6 +97,6 @@ describe("Type Generation", () => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestWrapperNode }));
 		view.initialize({ childNodeProperty: initialAppState });
 
-		assert.equal(doesNodeContainArraySchema(view.root.childNodeProperty.todos), true);
+		assert.equal(doesNodeContainArraySchema(view.root), true);
 	});
 });

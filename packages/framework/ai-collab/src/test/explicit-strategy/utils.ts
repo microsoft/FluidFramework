@@ -83,6 +83,8 @@ export function initializeOpenAIClient(service: "openai" | "azure"): OpenAI {
  * A utility class for snapshot testing.
  */
 export class MochaSnapshotUnitTester {
+	public static readonly DEFAULT_SNAPSHOT_DIRECTORY: string = "__snapshots__";
+
 	public constructor(
 		public readonly snapshotDirectory: string,
 		public readonly suiteName: string,
@@ -91,35 +93,27 @@ export class MochaSnapshotUnitTester {
 	public expectToMatchSnapshot(
 		mochaContext: Mocha.Context,
 		output: string,
-		options?: { fileNameOverride?: string; metadata?: Record<string, string> },
+		snapshotFileName: string,
+		options?: { metadata?: Record<string, string> },
 	): void {
-		const snapshotBaseFolderDir = path.join(this.snapshotDirectory, "__snapshots__");
-
-		// Create the __snapshots__ directory if it does not exist
-		if (!fs.existsSync(snapshotBaseFolderDir)) {
-			fs.mkdirSync(snapshotBaseFolderDir);
-		}
-
 		// Directory to store snapshots
 		const snapshotDir: string = path.join(
 			this.snapshotDirectory,
-			"__snapshots__",
+			MochaSnapshotUnitTester.DEFAULT_SNAPSHOT_DIRECTORY,
 			this.suiteName,
 		);
 
 		if (!fs.existsSync(snapshotDir)) {
-			fs.mkdirSync(snapshotDir);
+			fs.mkdirSync(snapshotDir, { recursive: true });
 		}
 
-		const testName: string =
-			options?.fileNameOverride ??
-			mochaContext.test?.title.replace(/\s+/g, "_") ??
-			"unknown_test";
+		const testName: string = snapshotFileName;
 		const snapshotFile: string = path.join(snapshotDir, `${testName}.snap`);
 
 		const shouldUpdateSnapshot: boolean = process.env.UPDATE_SNAPSHOTS === "true";
 
-		if (fs.existsSync(snapshotFile) && !shouldUpdateSnapshot) {
+		const doesFileAlreadyExist = fs.existsSync(snapshotFile);
+		if (doesFileAlreadyExist && !shouldUpdateSnapshot) {
 			// Snapshot exists, compare outputs
 			const fileContent: string = fs.readFileSync(snapshotFile, "utf8");
 			const expectedOutput = this.removeMetadata(fileContent);
@@ -144,7 +138,7 @@ export class MochaSnapshotUnitTester {
 			// Save the snapshot
 			fs.writeFileSync(snapshotFile, snapshotContent, "utf8");
 			console.log(
-				`Snapshot ${fs.existsSync(snapshotFile) ? "updated" : "created"} for test: ${testName}`,
+				`Snapshot ${doesFileAlreadyExist ? "updated" : "created"} for test: ${testName}`,
 			);
 		}
 	}

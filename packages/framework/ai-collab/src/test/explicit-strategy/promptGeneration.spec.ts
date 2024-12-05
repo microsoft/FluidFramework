@@ -9,7 +9,6 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-// eslint-disable-next-line import/order
 import {
 	getSimpleSchema,
 	SchemaFactory,
@@ -18,8 +17,6 @@ import {
 	TreeViewConfiguration,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
-
-// eslint-disable-next-line import/no-internal-modules
 import { describe, it } from "mocha";
 
 // eslint-disable-next-line import/no-internal-modules
@@ -104,9 +101,7 @@ describe("Prompt Generation Regression Tests", () => {
 
 		const actualPrompt = getPlanningSystemPrompt(view.root, userAsk, systemRoleContext);
 
-		snapShotTester.expectToMatchSnapshot(this, actualPrompt, {
-			fileNameOverride: "Planning_System_Prompt",
-		});
+		snapShotTester.expectToMatchSnapshot(this, actualPrompt, "Planning_System_Prompt");
 	});
 
 	it("Editing System Prompt with no plan and empty edit log has no regression", function (this: Mocha.Context) {
@@ -127,12 +122,14 @@ describe("Prompt Generation Regression Tests", () => {
 			systemRoleContext,
 		);
 
-		snapShotTester.expectToMatchSnapshot(this, actualPrompt, {
-			fileNameOverride: "Editing_System_Prompt_No_Plan_No_Log",
-		});
+		snapShotTester.expectToMatchSnapshot(
+			this,
+			actualPrompt,
+			"Editing_System_Prompt_No_Plan_No_Log",
+		);
 	});
 
-	it("Editing System Prompt with tree node with no array schema property but has child node that does should contain array types", function (this: Mocha.Context) {
+	it("Editing System Prompt using a tree node with a nested array property but no top level array should still contain array types", function (this: Mocha.Context) {
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
@@ -156,9 +153,11 @@ describe("Prompt Generation Regression Tests", () => {
 			systemRoleContext,
 		);
 
-		snapShotTester.expectToMatchSnapshot(this, actualPrompt, {
-			fileNameOverride: "Editing_System_Prompt_Nested_Array_Schema_But_No_Top_Level_Array",
-		});
+		snapShotTester.expectToMatchSnapshot(
+			this,
+			actualPrompt,
+			"Editing_System_Prompt_Nested_Array_Schema_But_No_Top_Level_Array",
+		);
 	});
 
 	it("Editing System Prompt with plan and empty edit log has no regression", function (this: Mocha.Context) {
@@ -180,9 +179,11 @@ describe("Prompt Generation Regression Tests", () => {
 			plan,
 		);
 
-		snapShotTester.expectToMatchSnapshot(this, actualPrompt, {
-			fileNameOverride: "Editing_System_Prompt_With_Plan_No_Log",
-		});
+		snapShotTester.expectToMatchSnapshot(
+			this,
+			actualPrompt,
+			"Editing_System_Prompt_With_Plan_No_Log",
+		);
 	});
 
 	it("Editing System Prompt with plan and populated edit log has no regression", function (this: Mocha.Context) {
@@ -240,9 +241,11 @@ describe("Prompt Generation Regression Tests", () => {
 			plan,
 		);
 
-		snapShotTester.expectToMatchSnapshot(this, actualPrompt, {
-			fileNameOverride: "Editing_System_Prompt_With_Plan_With_Log",
-		});
+		snapShotTester.expectToMatchSnapshot(
+			this,
+			actualPrompt,
+			"Editing_System_Prompt_With_Plan_With_Log",
+		);
 	});
 
 	it("Editing System Prompt created with node containing no arrays has no regression", function (this: Mocha.Context) {
@@ -264,9 +267,11 @@ describe("Prompt Generation Regression Tests", () => {
 			systemRoleContext,
 		);
 
-		snapShotTester.expectToMatchSnapshot(this, actualPrompt, {
-			fileNameOverride: "Editing_System_Prompt_No_Plan_No_Log_No_Arrays",
-		});
+		snapShotTester.expectToMatchSnapshot(
+			this,
+			actualPrompt,
+			"Editing_System_Prompt_No_Plan_No_Log_No_Arrays",
+		);
 	});
 
 	it("Review System Prompt has no regression", function (this: Mocha.Context) {
@@ -305,8 +310,6 @@ describe("Prompt Generation Regression Tests", () => {
 			systemRoleContext,
 		);
 
-		snapShotTester.expectToMatchSnapshot(this, actualPrompt, {
-			fileNameOverride: "Review_System_Prompt",
-		});
+		snapShotTester.expectToMatchSnapshot(this, actualPrompt, "Review_System_Prompt");
 	});
 });
