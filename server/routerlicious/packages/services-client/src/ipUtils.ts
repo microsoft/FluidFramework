@@ -2,6 +2,11 @@
 /* eslint-disable max-len */
 import { IPv6, IPv4 } from "ipaddr.js";
 
+/**
+ * The network information from the client IP address
+ *
+ * @internal
+ */
 export class NetworkInformation {
 	public isPrivateLink!: boolean;
 	public privateLinkId?: string;

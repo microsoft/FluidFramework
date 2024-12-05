@@ -15,7 +15,6 @@ import {
 import {
 	isNetworkError,
 	NetworkError,
-	getNetworkInformationFromIP,
 } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import * as core from "@fluidframework/server-services-core";
@@ -51,6 +50,7 @@ import { addNexusMessageTrace } from "./trace";
 import { connectDocument } from "./connect";
 import { disconnectDocument } from "./disconnect";
 import { isValidConnectionMessage } from "./protocol";
+import { checkNetworkInformation } from "./networkHelper";
 
 export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
 
@@ -238,15 +238,17 @@ export function configureWebSocketServices(
 				return;
 			}
 
-			const tenantId = socket?.handshake?.query?.tenantId as string | undefined;
-			const tennatInfo = await tenantManager.getTenantfromRiddler(tenantId);
-			const privateLinkEnable = tennatInfo?.customData?.privateLinkEnable ?? false;
-			const clientIPAddress = socket?.handshake?.address as string | undefined;
-			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
-			if (networkInfo.isPrivateLink) {
-				// This is a private link request
-			}
-			if (privateLinkEnable && clientIPAddress) {
+			const networkError = await checkNetworkInformation(
+				tenantManager,
+				socket,
+			);
+			if (networkError.shouldConnect) {
+				const nackMessage = createNackMessage(
+					404,
+					NackErrorType.BadRequestError,
+					networkError.message,
+				);
+				socket.emit("nack", "", [nackMessage]);
 				return;
 			}
 

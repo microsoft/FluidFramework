@@ -598,6 +598,16 @@ export class NetworkError extends Error {
     };
 }
 
+// @internal
+export class NetworkInformation {
+    // (undocumented)
+    isPrivateLink: boolean;
+    // (undocumented)
+    privateIpAddress?: string;
+    // (undocumented)
+    privateLinkId?: string;
+}
+
 // @internal (undocumented)
 export function promiseTimeout(mSec: number, promise: Promise<any>): Promise<any>;
 
