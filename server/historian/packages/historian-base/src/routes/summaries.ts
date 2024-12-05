@@ -14,11 +14,7 @@ import {
 	IRevokedTokenChecker,
 	IDocumentManager,
 } from "@fluidframework/server-services-core";
-import {
-	IThrottleMiddlewareOptions,
-	throttle,
-	getParam,
-} from "@fluidframework/server-services-utils";
+import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
@@ -31,7 +27,7 @@ import * as utils from "./utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	storageNameRetriever: IStorageNameRetriever,
+	storageNameRetriever: IStorageNameRetriever | undefined,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
@@ -44,7 +40,7 @@ export function create(
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
 
 	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
 	const restTenantGeneralThrottler = restTenantThrottlers.get(
@@ -53,7 +49,7 @@ export function create(
 
 	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
 	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.createSummaryThrottleIdPrefix,
 	};
 	const restTenantCreateSummaryThrottler = restTenantThrottlers.get(
@@ -62,7 +58,7 @@ export function create(
 
 	// Throttling logic for getting summary to provide per-tenant rate-limiting at the HTTP route level
 	const getSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.getSummaryThrottleIdPrefix,
 	};
 	const restTenantGetSummaryThrottler = restTenantThrottlers.get(
@@ -89,7 +85,7 @@ export function create(
 
 	async function getSummary(
 		tenantId: string,
-		authorization: string,
+		authorization: string | undefined,
 		sha: string,
 		useCache: boolean,
 	): Promise<IWholeFlatSummary> {
@@ -109,7 +105,7 @@ export function create(
 
 	async function createSummary(
 		tenantId: string,
-		authorization: string,
+		authorization: string | undefined,
 		params: IWholeSummaryPayload,
 		initial?: boolean,
 		storageName?: string,
@@ -135,7 +131,7 @@ export function create(
 
 	async function deleteSummary(
 		tenantId: string,
-		authorization: string,
+		authorization: string | undefined,
 		softDelete: boolean,
 	): Promise<boolean[]> {
 		const service = await utils.createGitService({
@@ -152,9 +148,10 @@ export function create(
 		});
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
-			deletionPs.push(
-				tenantService.deleteFromCache(tenantId, parseToken(tenantId, authorization)),
-			);
+			const token = parseToken(tenantId, authorization);
+			if (token) {
+				deletionPs.push(tenantService.deleteFromCache(tenantId, token));
+			}
 		}
 		return Promise.all(deletionPs);
 	}

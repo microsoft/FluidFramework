@@ -130,7 +130,7 @@ export class GitWholeSummaryManager {
 				writeSummaryMetric.setProperty("summaryType", "container");
 				const writeSummaryInfo = await writeContainerSummary(
 					payload,
-					isInitial,
+					isInitial ?? false,
 					{
 						documentId: this.documentId,
 						repoManager: this.repoManager,

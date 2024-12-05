@@ -194,10 +194,7 @@ describe("tree indexes", () => {
 		assertContents([parentId, parent], [childId, child]);
 	});
 
-	// TODO: implement these series of tests
-	// they're not currently required because the API that will be made public makes this case impossible
-	// but the lower level API should still support and test this case
-	describe.skip("can re-index nodes in the spine of a replaced value", () => {
+	describe("can re-index nodes in the spine of a replaced value", () => {
 		// schemas for the nested objects
 		class Egg extends sf.object("Egg", {
 			color: sf.string,
@@ -209,12 +206,185 @@ describe("tree indexes", () => {
 			bird: sf.required(Bird),
 		}) {}
 
-		// creates an index that indexes all nests that have blue eggs in them
-		function createNestIndex(root: SchematizingSimpleTreeView<(typeof Nest)[]>) {}
+		const Tree = sf.object("Tree", {
+			nests: sf.array(Nest),
+		});
 
-		const config = new TreeViewConfiguration({ schema: Nest });
-		const view = getView(config);
-		view.initialize({ bird: { eggs: [{ color: "blue" }] } });
+		// creates an index that indexes all nests on the most common color of eggs they hold
+		function createNestIndex(root: SchematizingSimpleTreeView<typeof Tree>) {
+			const anchorIds = new Map<AnchorNode, number>();
+			const { forest } = root.checkout;
+			let indexedAnchorNodeCount = 0;
+
+			const index = new AnchorTreeIndex(
+				forest,
+				(schemaId) => {
+					if (schemaId === Nest.identifier) {
+						return (cursor) => {
+							const colors = new Map<string, number>();
+
+							cursor.enterField(brand("bird"));
+							if (cursor.firstNode()) {
+								cursor.enterField(brand("eggs"));
+								cursor.firstNode();
+								cursor.enterField(brand("")); // enter the array of eggs
+								let hasNextEgg = cursor.firstNode();
+
+								while (hasNextEgg) {
+									cursor.enterField(brand("color"));
+									cursor.firstNode();
+									const color = cursor.value as string;
+
+									// increment or initialize color count in the map
+									colors.set(color, (colors.get(color) ?? 0) + 1);
+
+									cursor.exitNode();
+									cursor.exitField(); // exit "color"
+									hasNextEgg = cursor.nextNode(); // move to next egg
+								}
+								cursor.exitNode(); // exit the current egg
+								cursor.exitField(); // exit the array field
+								cursor.exitNode(); // exit the array node
+								cursor.exitField(); // exit "eggs" field
+								cursor.exitNode(); // exit "bird"
+							}
+
+							// Early exit if no colors were found
+							if (colors.size === 0) {
+								throw new Error("there should be no empty nests for these tests");
+							}
+
+							// Find the color with the maximum count
+							let maxColor = "";
+							let maxCount = 0;
+							for (const [color, count] of colors) {
+								if (count > maxCount) {
+									maxColor = color;
+									maxCount = count;
+								}
+							}
+
+							return maxColor;
+						};
+					}
+				},
+				(anchorNodes) => {
+					return anchorNodes.map((a) =>
+						getOrCreate(anchorIds, a, () => indexedAnchorNodeCount++),
+					);
+				},
+				(anchorNode: AnchorNode) => {
+					const cursor = forest.allocateCursor();
+					forest.moveCursorToPath(anchorNode, cursor);
+					const flexNode = makeTree(root.getView().context, cursor);
+					cursor.free();
+					const simpleTree = getOrCreateNodeFromInnerNode(flexNode);
+					if (!isTreeValue(simpleTree)) {
+						return treeApi.status(simpleTree);
+					}
+				},
+			);
+
+			return {
+				index,
+				assertContents(...expected: [key: string, ...values: readonly TreeNode[]][]): void {
+					function assertSameElements(
+						actual: Iterable<unknown>,
+						expectedSet: Iterable<unknown>,
+					): void {
+						assert.deepEqual(new Set(actual), new Set(expectedSet));
+					}
+
+					const expectedEntries = expected.map(
+						([key, ...nodes]) =>
+							[
+								key,
+								nodes.map((f) => {
+									const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
+									return getOrCreate(
+										anchorIds,
+										flexNode.anchorNode,
+										() => indexedAnchorNodeCount++,
+									);
+								}),
+							] as const,
+					);
+
+					// Check that the index reports the expected size
+					assert.equal(index.size, expectedEntries.length);
+
+					// Check that all expected entries are present
+					for (const [key, expectedNodes] of expectedEntries) {
+						assert.equal(index.has(key), true);
+						const nodes = index.get(key);
+						assert(nodes !== undefined);
+						assertSameElements(nodes, expectedNodes);
+					}
+
+					// Check that all iterators exactly match expected entries
+					assertSameElements(
+						index.keys(),
+						expectedEntries.map(([key]) => key),
+					);
+					assertSameElements(
+						index.values(),
+						expectedEntries.map(([_, value]) => value),
+					);
+					assertSameElements(index.entries(), expectedEntries);
+					assertSameElements(index, expectedEntries);
+
+					const set = new Map(expectedEntries);
+					index.forEach((value, key, i) => {
+						assert.equal(i, index);
+						assert.deepEqual(value, set.get(key));
+						set.delete(key);
+					});
+					assert.equal(set.size, 0);
+				},
+			};
+		}
+
+		it("when a node is replaced", () => {
+			const config = new TreeViewConfiguration({ schema: Tree });
+			const view = getView(config);
+			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
+			view.initialize({ nests: [nest] });
+
+			const { assertContents } = createNestIndex(view);
+			assertContents(["blue", nest]);
+
+			// change the color of the blue egg so that the nest should now be indexed on "red"
+			nest.bird.eggs[0].color = "red";
+			assertContents(["red", nest]);
+		});
+
+		it("when a node is added", () => {
+			const config = new TreeViewConfiguration({ schema: Tree });
+			const view = getView(config);
+			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
+			view.initialize({ nests: [nest] });
+
+			const { assertContents } = createNestIndex(view);
+			assertContents(["blue", nest]);
+
+			// insert another red egg so that the nest should now be indexed on "red"
+			nest.bird.eggs.insertAtEnd({ color: "red" });
+			assertContents(["red", nest]);
+		});
+
+		it("when a node is detached", () => {
+			const config = new TreeViewConfiguration({ schema: Tree });
+			const view = getView(config);
+			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
+			view.initialize({ nests: [nest] });
+
+			const { assertContents } = createNestIndex(view);
+			assertContents(["blue", nest]);
+
+			// remove the blue egg so that the nest should now be indexed on "red"
+			nest.bird.eggs.removeAt(0);
+			assertContents(["red", nest]);
+		});
 	});
 
 	it("does not include nodes that are detached when the index is created", () => {

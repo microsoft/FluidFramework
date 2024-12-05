@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	HasListeners,
 	IEmitter,
@@ -44,6 +44,7 @@ import {
 	visitDelta,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
+	type GraphCommit,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -55,10 +56,9 @@ import {
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
 import {
+	SquashingTransactionStack,
 	SharedTreeBranch,
 	TransactionResult,
-	TransactionStack,
-	getChangeReplaceType,
 	onForkTransitive,
 	type SharedTreeBranchChange,
 	type Transactor,
@@ -85,13 +85,22 @@ import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.
  */
 export interface CheckoutEvents {
 	/**
+	 * The view is currently in a consistent state, but a batch of changes is about to be processed.
+	 * @remarks After this event fires, it is safe to access the FlexTree, Forest and AnchorSet again until {@link CheckoutEvents.afterBatch} fires.
+	 * @param appendedCommits - Any commits that were appended to the checkout's branch in order to produce the changes in this batch.
+	 * May be empty if the changes were produced by e.g. a rebase or the initial loading of the document.
+	 */
+	beforeBatch(appendedCommits: readonly GraphCommit<SharedTreeChange>[]): void;
+
+	/**
 	 * A batch of changes has finished processing and the view is in a consistent state.
-	 * It is once again safe to access the FlexTree, Forest and AnchorSet.
-	 *
+	 * @remarks It is once again safe to access the FlexTree, Forest and AnchorSet.
+	 * @param appendedCommits - Any commits that were appended to the checkout's branch in order to produce the changes in this batch.
+	 * May be empty if the changes were produced by e.g. a rebase or the initial loading of the document.
 	 * @remarks
 	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
 	 */
-	afterBatch(): void;
+	afterBatch(appendedCommits: readonly GraphCommit<SharedTreeChange>[]): void;
 
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
@@ -364,7 +373,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public static readonly revertTelemetryEventName = "RevertRevertible";
 
 	public constructor(
-		private readonly _branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		/** True if and only if this checkout is for a forked branch and not the "main branch" of the tree. */
 		public readonly isBranch: boolean,
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
@@ -385,121 +394,159 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		private readonly logger?: ITelemetryLoggerExt,
 		private readonly breaker: Breakable = new Breakable("TreeCheckout"),
 	) {
+		this.#transaction = new SquashingTransactionStack(
+			branch,
+			(commits) => {
+				const revision = this.mintRevisionTag();
+				for (const transactionStep of commits) {
+					this.removedRoots.updateMajor(transactionStep.revision, revision);
+				}
+
+				const squashedChange = this.changeFamily.rebaser.compose(commits);
+				const change = this.changeFamily.rebaser.changeRevision(squashedChange, revision);
+				return tagChange(change, revision);
+			},
+			() => {
+				// Keep track of all the forks created during the transaction so that we can dispose them when the transaction ends.
+				// This is a policy decision that we think is useful for the user, but it is not necessary for correctness.
+				const forks = new Set<TreeCheckout>();
+				const onDisposeUnSubscribes: (() => void)[] = [];
+				const onForkUnSubscribe = onForkTransitive(this, (fork) => {
+					forks.add(fork);
+					onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
+				});
+				// When each transaction is started, take a snapshot of the current state of removed roots
+				const removedRootsSnapshot = this.removedRoots.clone();
+				return (result) => {
+					if (result === TransactionResult.Abort) {
+						this.removedRoots = removedRootsSnapshot;
+					}
+
+					forks.forEach((fork) => fork.dispose());
+					onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+					onForkUnSubscribe();
+				};
+			},
+		);
+
+		branch.events.on("afterChange", (event) => {
+			// The following logic allows revertibles to be generated for the change.
+			// Currently only appends (including merges and transaction commits) are supported.
+			if (event.type === "append") {
+				// TODO:#20949: When the SharedTree is detached, these commits will already have been garbage collected.
+				//       Figure out a way to generate revertibles before the commits are garbage collected.
+				for (const commit of event.newCommits) {
+					const kind = event.type === "append" ? event.kind : CommitKind.Default;
+					const { change, revision } = commit;
+
+					const getRevertible = hasSchemaChange(change)
+						? undefined
+						: (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => {
+								if (!withinEventContext) {
+									throw new UsageError(
+										"Cannot get a revertible outside of the context of a changed event.",
+									);
+								}
+								if (this.revertibleCommitBranches.get(revision) !== undefined) {
+									throw new UsageError(
+										"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
+									);
+								}
+								const revertible = this.createRevertible(
+									revision,
+									kind,
+									this,
+									onRevertibleDisposed,
+								);
+								this.revertibleCommitBranches.set(
+									revision,
+									this.#transaction.activeBranch.fork(commit),
+								);
+								this.revertibles.add(revertible);
+								return revertible;
+							};
+
+					let withinEventContext = true;
+					this.events.emit("changed", { isLocal: true, kind }, getRevertible);
+					withinEventContext = false;
+				}
+			} else if (this.isRemoteChangeEvent(event)) {
+				// TODO: figure out how to plumb through commit kind info for remote changes
+				this.events.emit("changed", { isLocal: false, kind: CommitKind.Default });
+			}
+		});
+
+		this.#transaction.activeBranchEvents.on("beforeChange", this.onBeforeChange);
+		this.#transaction.activeBranchEvents.on("ancestryTrimmed", this.onAncestryTrimmed);
+	}
+
+	private readonly onBeforeChange = (
+		event: SharedTreeBranchChange<SharedTreeChange>,
+	): void => {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
 		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
-		_branch.events.on("beforeChange", (event) => {
-			if (event.change !== undefined) {
-				let revision: RevisionTag | undefined;
-				if (event.type === "replace") {
-					assert(
-						hasSome(event.newCommits),
-						0xa81 /* Expected new commit for non no-op change event */,
-					);
-					revision = getLast(event.newCommits).revision;
+		if (event.change !== undefined) {
+			this.events.emit("beforeBatch", event.type === "append" ? event.newCommits : []);
+
+			let revision: RevisionTag | undefined;
+			if (event.type === "rebase") {
+				assert(hasSome(event.newCommits), "Expected new commit for non no-op change event");
+				revision = getLast(event.newCommits).revision;
+			} else {
+				revision = event.change.revision;
+			}
+
+			// Conflicts due to schema will be empty and thus are not applied.
+			for (const change of event.change.change.changes) {
+				if (change.type === "data") {
+					const delta = intoDelta(tagChange(change.innerChange, revision));
+					this.withCombinedVisitor((visitor) => {
+						visitDelta(delta, visitor, this.removedRoots, revision);
+					});
+				} else if (change.type === "schema") {
+					// Schema changes from a current to a new schema are expected to be backwards compatible.
+					// This guarantees that all data in the forest (which is valid before the schema change)
+					// is also valid under the new schema.
+					// Note however, that such schema changes may in some cases be rolled back:
+					// Case 1: A transaction with a schema change may be aborted.
+					// The transaction may have made some data changes that would render some trees invalid
+					// under the old schema, but these changes will also be rolled back, thereby putting the forest
+					// back in the state before the transaction, which is valid under the original (reinstated) schema.
+					// Case 2: A branch with a schema change may be rebased such that the schema change (because
+					// of a constraint) is no longer applied.
+					// Such a branch may contain data changes that would render some trees invalid under the
+					// original schema. These data changes may not necessarily be rolled back.
+					// They will however be rebased over the rollback of the schema change. This rebasing will
+					// ensure that these data changes are muted if they would render some trees invalid under the
+					// original (reinstated) schema.
+					this.storedSchema.apply(change.innerChange.schema.new);
 				} else {
-					revision = event.change.revision;
-				}
-
-				// Conflicts due to schema will be empty and thus are not applied.
-				for (const change of event.change.change.changes) {
-					if (change.type === "data") {
-						const delta = intoDelta(tagChange(change.innerChange, revision));
-						this.withCombinedVisitor((visitor) => {
-							visitDelta(delta, visitor, this.removedRoots, revision);
-						});
-					} else if (change.type === "schema") {
-						// Schema changes from a current to a new schema are expected to be backwards compatible.
-						// This guarantees that all data in the forest (which is valid before the schema change)
-						// is also valid under the new schema.
-						// Note however, that such schema changes may in some cases be rolled back:
-						// Case 1: A transaction with a schema change may be aborted.
-						// The transaction may have made some data changes that would render some trees invalid
-						// under the old schema, but these changes will also be rolled back, thereby putting the forest
-						// back in the state before the transaction, which is valid under the original (reinstated) schema.
-						// Case 2: A branch with a schema change may be rebased such that the schema change (because
-						// of a constraint) is no longer applied.
-						// Such a branch may contain data changes that would render some trees invalid under the
-						// original schema. These data changes may not necessarily be rolled back.
-						// They will however be rebased over the rollback of the schema change. This rebasing will
-						// ensure that these data changes are muted if they would render some trees invalid under the
-						// original (reinstated) schema.
-						storedSchema.apply(change.innerChange.schema.new);
-					} else {
-						fail("Unknown Shared Tree change type.");
-					}
-				}
-				this.events.emit("afterBatch");
-			}
-		});
-		_branch.events.on("afterChange", (event) => {
-			// The following logic allows revertibles to be generated for the change.
-			// Currently only appends (including merges) and transaction commits are supported.
-			if (!this.transaction.isInProgress()) {
-				if (
-					event.type === "append" ||
-					(event.type === "replace" && getChangeReplaceType(event) === "transactionCommit")
-				) {
-					// TODO:#20949: When the SharedTree is detached, these commits will already have been garbage collected.
-					//       Figure out a way to generate revertibles before the commits are garbage collected.
-					for (const commit of event.newCommits) {
-						const kind = event.type === "append" ? event.kind : CommitKind.Default;
-						const { change, revision } = commit;
-
-						const getRevertible = hasSchemaChange(change)
-							? undefined
-							: (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => {
-									if (!withinEventContext) {
-										throw new UsageError(
-											"Cannot get a revertible outside of the context of a changed event.",
-										);
-									}
-									if (this.revertibleCommitBranches.get(revision) !== undefined) {
-										throw new UsageError(
-											"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
-										);
-									}
-									const revertible = this.createRevertible(
-										revision,
-										kind,
-										this,
-										onRevertibleDisposed,
-									);
-									this.revertibleCommitBranches.set(revision, _branch.fork(commit));
-									this.revertibles.add(revertible);
-									return revertible;
-								};
-
-						let withinEventContext = true;
-						this.events.emit("changed", { isLocal: true, kind }, getRevertible);
-						withinEventContext = false;
-					}
-				} else if (this.isRemoteChangeEvent(event)) {
-					// TODO: figure out how to plumb through commit kind info for remote changes
-					this.events.emit("changed", { isLocal: false, kind: CommitKind.Default });
+					fail("Unknown Shared Tree change type.");
 				}
 			}
-		});
+			this.events.emit("afterBatch", event.type === "append" ? event.newCommits : []);
+		}
+	};
 
+	private readonly onAncestryTrimmed = (revisions: RevisionTag[]): void => {
 		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
 		// trimmed revisions.
-		_branch.events.on("ancestryTrimmed", (revisions) => {
-			this.withCombinedVisitor((visitor) => {
-				revisions.forEach((revision) => {
-					// get all the roots last created or used by the revision
-					const roots = this.removedRoots.getRootsLastTouchedByRevision(revision);
+		this.withCombinedVisitor((visitor) => {
+			revisions.forEach((revision) => {
+				// get all the roots last created or used by the revision
+				const roots = this.removedRoots.getRootsLastTouchedByRevision(revision);
 
-					// get the detached field for the root and delete it from the removed roots
-					for (const root of roots) {
-						visitor.destroy(this.removedRoots.toFieldKey(root), 1);
-					}
+				// get the detached field for the root and delete it from the removed roots
+				for (const root of roots) {
+					visitor.destroy(this.removedRoots.toFieldKey(root), 1);
+				}
 
-					this.removedRoots.deleteRootsLastTouchedByRevision(revision);
-				});
+				this.removedRoots.deleteRootsLastTouchedByRevision(revision);
 			});
 		});
-	}
+	};
 
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
 		const anchorVisitor = this.forest.anchors.acquireVisitor();
@@ -622,7 +669,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	public get editor(): ISharedTreeEditor {
 		this.checkNotDisposed();
-		return this._branch.editor;
+		return this.#transaction.activeBranchEditor;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -643,53 +690,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * To avoid updating observers of the view state with intermediate results during a transaction,
 	 * use {@link ITreeCheckout#branch} and {@link ISharedTreeFork#merge}.
 	 */
-	readonly #transaction = new TransactionStack(() => {
-		// Keep track of the commit that each transaction was on when it started
-		// TODO:#8603: This may need to be computed differently if we allow rebasing during a transaction.
-		const startCommit = this._branch.getHead();
-		// Keep track of all the forks created during the transaction so that we can dispose them when the transaction ends.
-		// This is a policy decision that we think is useful for the user, but it is not necessary for correctness.
-		const forks = new Set<TreeCheckout>();
-		const onDisposeUnSubscribes: (() => void)[] = [];
-		const onForkUnSubscribe = onForkTransitive(this, (fork) => {
-			forks.add(fork);
-			onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
-		});
-		// When each transaction is started, take a snapshot of the current state of removed roots
-		const removedRoots = this.removedRoots.clone();
-		this._branch.editor.enterTransaction();
-		return (result) => {
-			this._branch.editor.exitTransaction();
-			switch (result) {
-				case TransactionResult.Abort:
-					this._branch.removeAfter(startCommit);
-					// If a transaction is rolled back, revert removed roots back to the latest snapshot
-					this.removedRoots = removedRoots;
-					break;
-				case TransactionResult.Commit: {
-					const removedCommits = this._branch.squashAfter(startCommit);
-					const transactionRevision = this._branch.getHead().revision;
-					for (const transactionStep of removedCommits) {
-						this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
-					}
-					break;
-				}
-				default:
-					unreachableCase(result);
-			}
-
-			forks.forEach((fork) => fork.dispose());
-			onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
-			onForkUnSubscribe();
-		};
-	});
+	readonly #transaction: SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange>;
 
 	public branch(): TreeCheckout {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
 		const anchors = new AnchorSet();
-		const branch = this._branch.fork();
+		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
 		const checkout = new TreeCheckout(
@@ -726,7 +734,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			0xa5d /* The main branch cannot be rebased onto another branch. */,
 		);
 
-		checkout._branch.rebaseOnto(this._branch);
+		checkout.#transaction.activeBranch.rebaseOnto(this.#transaction.activeBranch);
 	}
 
 	public rebaseOnto(checkout: ITreeCheckout): void {
@@ -752,7 +760,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		while (checkout.transaction.isInProgress()) {
 			checkout.transaction.commit();
 		}
-		this._branch.merge(checkout._branch);
+		this.#transaction.activeBranch.merge(checkout.#transaction.activeBranch);
 		if (disposeMerged && checkout.isBranch) {
 			// Dispose the merged checkout unless it is the main branch.
 			checkout[disposeSymbol]();
@@ -773,9 +781,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The branch has already been disposed and cannot be disposed again.",
 		);
 		this.disposed = true;
+		this.#transaction.branch.dispose();
 		this.#transaction.dispose();
 		this.purgeRevertibles();
-		this._branch.dispose();
 		for (const view of this.views) {
 			view.dispose();
 		}
@@ -834,7 +842,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			revisionForInvert,
 		);
 
-		const headCommit = this._branch.getHead();
+		const headCommit = this.#transaction.activeBranch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
 			change = tagChange(
@@ -849,7 +857,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			);
 		}
 
-		this._branch.apply(
+		this.#transaction.activeBranch.apply(
 			change,
 			kind === CommitKind.Default || kind === CommitKind.Redo
 				? CommitKind.Undo
@@ -901,8 +909,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			!this.isBranch &&
 			// Remote changes are applied to the main branch by rebasing it onto the trunk.
 			// No other rebases are allowed on the main branch, so we can use this to detect remote changes.
-			event.type === "replace" &&
-			getChangeReplaceType(event) === "rebase"
+			event.type === "rebase"
 		);
 	}
 }

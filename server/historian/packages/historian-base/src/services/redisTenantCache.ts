@@ -76,7 +76,7 @@ export class RedisTenantCache {
 		}
 	}
 
-	public async get(key: string): Promise<string> {
+	public async get(key: string): Promise<string | null> {
 		try {
 			return await this.redisClientConnectionManager.getRedisClient().get(this.getKey(key));
 		} catch (error) {

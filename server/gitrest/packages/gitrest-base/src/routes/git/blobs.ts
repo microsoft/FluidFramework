@@ -35,7 +35,7 @@ export function create(
 			.then(async (repoManager) => {
 				const fileSystemManagerFactory = getFilesystemManagerFactory(
 					fileSystemManagerFactories,
-					repoManagerParams.isEphemeralContainer,
+					repoManagerParams.isEphemeralContainer ?? false,
 				);
 				const fsManager = fileSystemManagerFactory.create({
 					...repoManagerParams.fileSystemManagerParams,
@@ -65,7 +65,7 @@ export function create(
 			.then(async (repoManager) => {
 				const fileSystemManagerFactory = getFilesystemManagerFactory(
 					fileSystemManagerFactories,
-					repoManagerParams.isEphemeralContainer,
+					repoManagerParams.isEphemeralContainer ?? false,
 				);
 				const fsManager = fileSystemManagerFactory.create({
 					...repoManagerParams.fileSystemManagerParams,

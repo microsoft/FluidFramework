@@ -12,7 +12,7 @@ import {
 } from "../core/index.js";
 import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
 import { TransactionEnricher } from "./transactionEnricher.js";
-import { getChangeReplaceType, type SharedTreeBranchChange } from "./branch.js";
+import type { SharedTreeBranchChange } from "./branch.js";
 
 /**
  * Utility for enriching commits from a {@link Branch} before these commits are applied and submitted.
@@ -50,26 +50,13 @@ export class BranchCommitEnricher<TChange> {
 	 * @param isAttached - Whether or not the SharedTree is attached to the service.
 	 */
 	public processChange(change: SharedTreeBranchChange<TChange>): void {
-		if (this.#transactionEnricher.isTransacting()) {
-			if (change.type === "append") {
-				for (const commit of change.newCommits) {
-					// We do not submit ops for changes that are part of a transaction.
-					// But we need to enrich the commits that will be sent if the transaction is committed.
-					this.#transactionEnricher.addTransactionStep(commit);
-				}
-			}
-		} else {
-			if (
-				change.type === "append" ||
-				(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
-			) {
-				for (const newCommit of change.newCommits) {
-					const newChange =
-						this.#getOuterTransactionChange?.(newCommit.revision) ??
-						this.#enricher.updateChangeEnrichments(newCommit.change, newCommit.revision);
+		if (change.type === "append") {
+			for (const newCommit of change.newCommits) {
+				const newChange =
+					this.#getOuterTransactionChange?.(newCommit.revision) ??
+					this.#enricher.updateChangeEnrichments(newCommit.change, newCommit.revision);
 
-					this.#preparedCommits.set(newCommit, replaceChange(newCommit, newChange));
-				}
+				this.#preparedCommits.set(newCommit, replaceChange(newCommit, newChange));
 			}
 		}
 
@@ -110,5 +97,17 @@ export class BranchCommitEnricher<TChange> {
 	 */
 	public abortTransaction(): void {
 		this.#transactionEnricher.abortTransaction();
+	}
+
+	/**
+	 * Add new transaction commits to the current transaction.
+	 * @param newCommits - The new commits to add.
+	 * @remarks This will throw an error if there is no ongoing transaction.
+	 */
+	public addTransactionCommits(newCommits: Iterable<GraphCommit<TChange>>): void {
+		assert(this.#transactionEnricher.isTransacting(), "Not in transaction");
+		for (const commit of newCommits) {
+			this.#transactionEnricher.addTransactionStep(commit);
+		}
 	}
 }

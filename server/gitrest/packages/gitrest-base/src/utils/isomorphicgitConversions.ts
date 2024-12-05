@@ -79,7 +79,7 @@ export function commitToICommit(commitResult: isomorphicGit.ReadCommitResult): r
 		parents:
 			commitResult.commit.parent && commitResult.commit.parent.length > 0
 				? commitResult.commit.parent.map((parent) => oidToCommitHash(parent))
-				: null,
+				: [],
 		sha: commitResult.oid,
 		tree: {
 			sha: commitResult.commit.tree,
@@ -97,7 +97,7 @@ export function iCreateCommitParamsToCommitObject(
 	commitParams: resources.ICreateCommitParams,
 ): isomorphicGit.CommitObject {
 	const parent =
-		commitParams.parents && commitParams.parents.length > 0 ? commitParams.parents : null;
+		commitParams.parents && commitParams.parents.length > 0 ? commitParams.parents : [];
 	return {
 		message: commitParams.message,
 		tree: commitParams.tree,

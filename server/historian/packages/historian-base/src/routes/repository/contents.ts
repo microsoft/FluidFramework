@@ -9,11 +9,7 @@ import {
 	IRevokedTokenChecker,
 	IDocumentManager,
 } from "@fluidframework/server-services-core";
-import {
-	IThrottleMiddlewareOptions,
-	throttle,
-	getParam,
-} from "@fluidframework/server-services-utils";
+import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
@@ -25,7 +21,7 @@ import { Constants } from "../../utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	storageNameRetriever: IStorageNameRetriever,
+	storageNameRetriever: IStorageNameRetriever | undefined,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
@@ -37,7 +33,7 @@ export function create(
 	const router: Router = Router();
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
 	const restTenantGeneralThrottler = restTenantThrottlers.get(
@@ -46,9 +42,9 @@ export function create(
 
 	async function getContent(
 		tenantId: string,
-		authorization: string,
+		authorization: string | undefined,
 		path: string,
-		ref: string,
+		ref: string | undefined,
 	): Promise<any> {
 		const service = await utils.createGitService({
 			config,

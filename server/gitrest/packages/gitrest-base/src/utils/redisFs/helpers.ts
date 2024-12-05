@@ -32,7 +32,7 @@ export async function executeRedisFsApiWithMetric<T>(
 	api: () => Promise<T>,
 	apiName: RedisFsApis,
 	metricEnabled: boolean,
-	samplingPeriod: number,
+	samplingPeriod?: number,
 	telemetryProperties?: Record<string, any>,
 	logResponseSize: boolean = false,
 ): Promise<T> {

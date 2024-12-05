@@ -127,7 +127,7 @@ export class RedisFs extends FsPromisesBase {
 		const filepathString = filepath.toString();
 		// Do not read packed-ref files which are not supported in r11s scenarios
 		if (filepathString.includes(packedRefsFileName)) {
-			return undefined;
+			return "";
 		}
 
 		const data = await executeRedisFsApiWithMetric(
@@ -338,7 +338,9 @@ export class RedisFs extends FsPromisesBase {
 			{
 				folderpathString,
 			},
-		).catch((error) => Lumberjack.error("An error occurred while deleting keys", null, error));
+		).catch((error) =>
+			Lumberjack.error("An error occurred while deleting keys", undefined, error),
+		);
 	}
 
 	/**
