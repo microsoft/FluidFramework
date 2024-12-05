@@ -84,8 +84,21 @@ const createAndConfigureHttpServer = (
 	httpServerConfig: Partial<IHttpServerConfig> | undefined,
 ): http.Server => {
 	const server = http.createServer(requestListener);
-	server.timeout =
+	const timeout =
 		httpServerConfig?.connectionTimeoutMs ?? defaultHttpServerConfig.connectionTimeoutMs;
+	if (timeout > 0) {
+		server.setTimeout(timeout, () => {
+			Lumberjack.info(
+				"------------------------HTTP Server setTimeout------------------------",
+			);
+		});
+		server.on("timeout", (socket) => {
+			Lumberjack.info(
+				"------------------------HTTP Server on timeout------------------------",
+				socket,
+			);
+		});
+	}
 	return server;
 };
 

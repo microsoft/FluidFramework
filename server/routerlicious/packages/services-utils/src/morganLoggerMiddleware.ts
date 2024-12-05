@@ -69,6 +69,16 @@ export function jsonMorganLoggerMiddleware(
 	enableLatencyMetric: boolean = false,
 ): express.RequestHandler {
 	return (request, response, next): void => {
+		request.on("timeout", () => {
+			Lumberjack.error(
+				"-------------------------HTTP Request timed out with on-------------------------",
+			);
+		});
+		request.once("timeout", () => {
+			Lumberjack.error(
+				"-------------------------HTTP Request timed out with once-------------------------",
+			);
+		});
 		const responseLatencyP = enableLatencyMetric
 			? new Promise<IResponseLatency>((resolve, reject) => {
 					let complete = false;
@@ -83,7 +93,14 @@ export function jsonMorganLoggerMiddleware(
 					response.once("prefinish", prefinishListener);
 					response.once("finish", finishListener);
 					response.once("timeout", () => {
-						Lumberjack.error("-------------------------HTTP Request timed out-------------------------");
+						Lumberjack.error(
+							"-------------------------HTTP Response timed out with once-------------------------",
+						);
+					});
+					response.on("timeout", () => {
+						Lumberjack.error(
+							"-------------------------HTTP Response timed out with on-------------------------",
+						);
 					});
 					response.once("close", () => {
 						response.removeListener("prefinish", prefinishListener);
