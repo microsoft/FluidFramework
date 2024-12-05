@@ -151,7 +151,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				assert(cursor.mode === CursorLocationType.Nodes, "replace should happen in a node");
 				cursor.exitNode();
 				this.indexField(cursor);
-				if (this.isShallowIndex) {
+				if (!this.isShallowIndex) {
 					// we must also re-index the spine if the key finders allow for any value under a subtree to be the key
 					// this means that a replace can cause the key for any node up its spine to be changed
 					this.indexSpine(cursor);
@@ -313,7 +313,6 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 */
 	private reIndexSpine(path: UpPath): void {
 		if (!this.isShallowIndex) {
-			assert(parent !== undefined, "must have a parent");
 			const cursor = this.forest.allocateCursor();
 			this.forest.moveCursorToPath(path, cursor);
 			assert(cursor.mode === CursorLocationType.Nodes, "attach should happen in a node");
