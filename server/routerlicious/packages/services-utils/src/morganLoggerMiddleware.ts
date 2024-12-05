@@ -82,6 +82,9 @@ export function jsonMorganLoggerMiddleware(
 					};
 					response.once("prefinish", prefinishListener);
 					response.once("finish", finishListener);
+					response.once("timeout", () => {
+						Lumberjack.error("-------------------------HTTP Request timed out-------------------------");
+					});
 					response.once("close", () => {
 						response.removeListener("prefinish", prefinishListener);
 						response.removeListener("finish", finishListener);
