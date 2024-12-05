@@ -43,6 +43,7 @@ import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { testReplaceRevisions } from "./replaceRevisions.test.js";
+// eslint-disable-next-line import/no-internal-modules
 import type { NestedChangesIndices } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 /**
