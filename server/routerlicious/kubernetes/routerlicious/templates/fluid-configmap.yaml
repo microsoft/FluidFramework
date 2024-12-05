@@ -132,7 +132,7 @@ data:
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.nexus.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.nexus.numberOfMessagesPerTrace }},
-            "isNetworkCheck": {{ .Values.alfred.isNetworkCheck }},
+            "isNetworkCheck": {{ .Values.nexus.isNetworkCheck }},
             "throttling": {
                 "socketConnectionsPerTenant": {{ toJson .Values.nexus.throttling.socketConnectionsPerTenant }},
                 "socketConnectionsPerCluster": {{ toJson .Values.nexus.throttling.socketConnectionsPerCluster }},
