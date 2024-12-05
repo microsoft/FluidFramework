@@ -674,6 +674,10 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 		case FieldKinds.required.identifier:
 			kind = FieldKind.Required;
 			break;
+		case FieldKinds.forbidden.identifier:
+			kind = FieldKind.Optional;
+			assert(schema.types.size === 0, "invalid forbidden field");
+			break;
 		default:
 			fail("invalid field kind");
 	}

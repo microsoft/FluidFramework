@@ -170,6 +170,11 @@ export function customFromCursorStored<TChild>(
 	return fields;
 }
 
+/**
+ * Assumes `schema` corresponds to a simple-tree schema.
+ * If it is an array schema, returns the allowed types for the array field.
+ * Otherwise returns `undefined`.
+ */
 export function tryStoredSchemaAsArray(
 	schema: TreeNodeStoredSchema,
 ): ReadonlySet<string> | undefined {
