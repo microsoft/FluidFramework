@@ -73,8 +73,14 @@ export class NexusRunner implements IRunner {
 
 		// Create an HTTP server with a request listener for health endpoints.
 		const throttler = new Map<string, IThrottler>();
-		throttler.set(Constants.generalRestCallThrottleIdPrefix, this.socketSubmitSignalThrottler)
-		const nexus = app.create(this.config, this.startupCheck, this.readinessCheck, throttler, this.storage);
+		throttler.set(Constants.generalRestCallThrottleIdPrefix, this.socketSubmitSignalThrottler);
+		const nexus = app.create(
+			this.config,
+			this.startupCheck,
+			this.readinessCheck,
+			throttler,
+			this.storage,
+		);
 		nexus.set("port", this.port);
 		this.server = this.serverFactory.create(nexus);
 

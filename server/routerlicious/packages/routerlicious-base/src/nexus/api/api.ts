@@ -7,7 +7,12 @@ import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom, IRuntimeSignalEnvelope } from "@fluidframework/server-lambdas";
+import {
+	IBroadcastSignalEventPayload,
+	ICollaborationSessionEvents,
+	IRoom,
+	IRuntimeSignalEnvelope,
+} from "@fluidframework/server-lambdas";
 import { Router } from "express";
 import winston from "winston";
 import { Provider } from "nconf";
@@ -29,7 +34,8 @@ export function create(
 	const generalTenantThrottler = tenantThrottlers?.get(Constants.generalRestCallThrottleIdPrefix);
 
 	router.post(
-		"/:tenantId/:id/broadcast-signal", validateRequestParams("tenantId", "id"),
+		"/:tenantId/:id/broadcast-signal",
+		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
@@ -60,7 +66,10 @@ export function create(
 						currentUrl: deltaStreamUrl,
 						targetUrlAndPath: `${document?.session.deltaStreamUrl}${request.originalUrl}`,
 					});
-					response.redirect(308, `${document?.session.deltaStreamUrl}${request.originalUrl}`);
+					response.redirect(
+						308,
+						`${document?.session.deltaStreamUrl}${request.originalUrl}`,
+					);
 					return;
 				}
 				const signalRoom: IRoom = { tenantId, documentId };
