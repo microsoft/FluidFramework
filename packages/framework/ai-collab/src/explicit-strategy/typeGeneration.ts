@@ -4,11 +4,18 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal";
+import {
+	FieldKind,
+	getSimpleSchema,
+	NodeKind,
+	Tree,
+	ValueSchema,
+} from "@fluidframework/tree/internal";
 import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,
 	SimpleTreeSchema,
+	TreeNode,
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
@@ -19,13 +26,17 @@ import { fail, getOrCreate, mapIterable } from "./utils.js";
  * Zod Object type used to represent & validate the ObjectTarget type within a {@link TreeEdit}.
  * @remarks this is used as a component with {@link generateGenericEditTypes} to produce the final zod validation objects.
  */
-const objectTarget = z.object({
-	target: z
-		.string()
-		.describe(
-			`The id of the object (as specified by the object's ${objectIdKey} property) that is being referenced`,
-		),
-});
+const objectTarget = z
+	.object({
+		target: z
+			.string()
+			.describe(
+				`The id of the object (as specified by the object's ${objectIdKey} property) that is being referenced`,
+			),
+	})
+	.describe(
+		"A pointer to a specific object node in the tree, identified by the target object's Id.",
+	);
 /**
  * Zod Object type used to represent & validate the ObjectPlace type within a {@link TreeEdit}.
  * @remarks this is used as a component with {@link generateGenericEditTypes} to produce the final zod validation objects.
@@ -101,6 +112,7 @@ export function generateGenericEditTypes(
 		const modifyFieldSet = new Set<string>();
 		const modifyTypeSet = new Set<string>();
 		const typeMap = new Map<string, Zod.ZodTypeAny>();
+
 		for (const name of schema.definitions.keys()) {
 			getOrCreateType(
 				schema.definitions,
@@ -132,31 +144,9 @@ export function generateGenericEditTypes(
 				}
 			}
 		}
-		const insert = z
-			.object({
-				type: z.literal("insert"),
-				explanation: z.string().describe(editDescription),
-				content: generateDomainTypes
-					? getType(insertSet)
-					: z.any().describe("Domain-specific content here"),
-				destination: z.union([arrayPlace, objectPlace]),
-			})
-			.describe("Inserts a new object at a specific Place or ArrayPlace.");
-		const remove = z
-			.object({
-				type: z.literal("remove"),
-				explanation: z.string().describe(editDescription),
-				source: z.union([objectTarget, range]),
-			})
-			.describe("Deletes an object or Range of objects from the tree.");
-		const move = z
-			.object({
-				type: z.literal("move"),
-				explanation: z.string().describe(editDescription),
-				source: z.union([objectTarget, range]),
-				destination: z.union([arrayPlace, objectPlace]),
-			})
-			.describe("Moves an object or Range of objects to a new Place or ArrayPlace.");
+
+		const doesSchemaHaveArray = insertSet.size > 0;
+
 		const modify = z
 			.object({
 				type: z.enum(["modify"]),
@@ -168,23 +158,62 @@ export function generateGenericEditTypes(
 					: z.any().describe("Domain-specific content here"),
 			})
 			.describe("Sets a field on a specific ObjectTarget.");
-		const editTypes = [insert, remove, move, modify, z.null()] as const;
+
+		const remove = z
+			.object({
+				type: z.literal("remove"),
+				explanation: z.string().describe(editDescription),
+				source: z.union([objectTarget, range]),
+			})
+			.describe("Deletes an object or Range of objects from the tree.");
+
+		const insert = z
+			.object({
+				type: z.literal("insert"),
+				explanation: z.string().describe(editDescription),
+				content: generateDomainTypes
+					? getType(insertSet)
+					: z.any().describe("Domain-specific content here"),
+				destination: z.union([arrayPlace, objectPlace]),
+			})
+			.describe("Inserts a new object at a specific Place or ArrayPlace.");
+
+		const move = z
+			.object({
+				type: z.literal("move"),
+				explanation: z.string().describe(editDescription),
+				source: z.union([objectTarget, range]),
+				destination: z.union([arrayPlace, objectPlace]),
+			})
+			.describe("Moves an object or Range of objects to a new Place or ArrayPlace.");
+
+		const typeRecord: Record<string, Zod.ZodTypeAny> = {
+			ObjectTarget: objectTarget,
+			Modify: modify,
+		};
+
+		typeRecord.Modify = modify;
+
+		if (doesSchemaHaveArray) {
+			typeRecord.ObjectPlace = objectPlace;
+			typeRecord.ArrayPlace = arrayPlace;
+			typeRecord.Range = range;
+			typeRecord.Insert = insert;
+			typeRecord.Remove = remove;
+			typeRecord.Move = move;
+		}
+
+		const editTypes = doesSchemaHaveArray
+			? ([insert, remove, move, modify, z.null()] as const)
+			: ([modify, z.null()] as const);
+
 		const editWrapper = z.object({
 			edit: z
 				.union(editTypes)
 				.describe("The next edit to apply to the tree, or null if the task is complete."),
 		});
-		const typeRecord: Record<string, Zod.ZodTypeAny> = {
-			ObjectTarget: objectTarget,
-			ObjectPlace: objectPlace,
-			ArrayPlace: arrayPlace,
-			Range: range,
-			Insert: insert,
-			Remove: remove,
-			Move: move,
-			Modify: modify,
-			EditWrapper: editWrapper,
-		};
+		typeRecord.EditWrapper = editWrapper;
+
 		return [typeRecord, "EditWrapper"];
 	});
 }
@@ -327,6 +356,7 @@ function getOrCreateTypeForField(
 		}
 	}
 }
+
 function getTypeForAllowedTypes(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	typeMap: Map<string, Zod.ZodTypeAny>,
@@ -362,6 +392,7 @@ function getTypeForAllowedTypes(
 		);
 	}
 }
+
 function tryGetSingleton<T>(set: ReadonlySet<T>): T | undefined {
 	if (set.size === 1) {
 		for (const item of set) {
@@ -369,6 +400,22 @@ function tryGetSingleton<T>(set: ReadonlySet<T>): T | undefined {
 		}
 	}
 }
+
 function hasAtLeastTwo<T>(array: T[]): array is [T, T, ...T[]] {
 	return array.length >= 2;
+}
+
+/**
+ * Determines if the provided {@link TreeNode} contains an array schema.
+ */
+export function doesNodeContainArraySchema(node: TreeNode): boolean {
+	const schema = Tree.schema(node);
+	const simpleSchema = getSimpleSchema(schema);
+	for (const [, nodeSchema] of simpleSchema.definitions) {
+		if (nodeSchema.kind === NodeKind.Array) {
+			return true;
+		}
+	}
+
+	return false;
 }
