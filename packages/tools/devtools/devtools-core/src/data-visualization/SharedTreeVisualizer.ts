@@ -10,7 +10,7 @@ import type {
 	VerboseTree,
 	VerboseTreeNode,
 } from "@fluidframework/tree/internal";
-import { EmptyKey, NodeKind, SchemaFactory, Tree } from "@fluidframework/tree/internal";
+import { NodeKind, SchemaFactory, Tree } from "@fluidframework/tree/internal";
 
 import type { VisualizeChildData } from "./DataVisualization.js";
 import type { VisualSharedTreeNode, SharedTreeSchemaNode } from "./VisualSharedTreeTypes.js";
@@ -161,16 +161,8 @@ function getObjectAllowedTypes(schema: SimpleObjectNodeSchema): string {
 	const result: string[] = [];
 
 	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
-		// Set of allowed tree types `TreeTypeSet`.
 		const fieldTypes = treeFieldSimpleSchema.allowedTypes;
-
 		result.push(`${fieldKey} : ${concatenateTypes(fieldTypes)}`);
-
-		// If the field key is `EmptyKey`, then it is an array field.
-		// Return the allowed types in string format, instead of JSON format.
-		if (fieldKey === EmptyKey) {
-			return result.join("");
-		}
 	}
 
 	return `{ ${result.join(", ")} }`;
@@ -230,7 +222,7 @@ async function visualizeMapNode(
 	return {
 		schema: {
 			schemaName: tree.type,
-			allowedTypes: concatenateTypes(schema.allowedTypes),
+			allowedTypes: `Record<string, ${concatenateTypes(schema.allowedTypes)}>`,
 		},
 		fields: await visualizeVerboseNodeFields(tree, treeSchema, visualizeChildData),
 		kind: VisualSharedTreeNodeKind.InternalNode,

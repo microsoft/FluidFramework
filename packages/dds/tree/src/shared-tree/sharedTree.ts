@@ -98,7 +98,6 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
  * Copy of data from an {@link ISharedTree} at some point in time.
  * @remarks
  * This is unrelated to Fluids concept of "snapshots".
- * @internal
  */
 export interface SharedTreeContentSnapshot {
 	/**
@@ -123,16 +122,7 @@ export interface SharedTreeContentSnapshot {
  * {@link ITree} extended with some non-public APIs.
  * @internal
  */
-export interface ISharedTree extends ISharedObject, ITree {
-	/**
-	 * Provides a copy of the current content of the tree.
-	 * This can be useful for inspecting the tree when no suitable view schema is available.
-	 * This is only intended for use in testing and exceptional code paths: it is not performant.
-	 *
-	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
-	 */
-	contentSnapshot(): SharedTreeContentSnapshot;
-
+export interface ITreeInternal extends ISharedObject, ITree {
 	/**
 	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
 	 * @privateRemarks
@@ -147,6 +137,20 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
 	 */
 	exportSimpleSchema(): SimpleTreeSchema;
+}
+
+/**
+ * {@link ITreeInternal} extended with some non-exported APIs.
+ */
+export interface ISharedTree extends ISharedObject, ITree {
+	/**
+	 * Provides a copy of the current content of the tree.
+	 * This can be useful for inspecting the tree when no suitable view schema is available.
+	 * This is only intended for use in testing and exceptional code paths: it is not performant.
+	 *
+	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
+	 */
+	contentSnapshot(): SharedTreeContentSnapshot;
 }
 
 /**

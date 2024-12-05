@@ -4,30 +4,11 @@
  */
 
 export {
-	EmptyKey,
-	type FieldKey,
-	type TreeValue,
-	type FieldMapObject,
-	type NodeData,
-	type GenericTreeNode,
-	type JsonableTree,
-	type GenericFieldsNode,
-	type TreeNodeSchemaIdentifier,
-	type TreeFieldStoredSchema,
 	ValueSchema,
-	TreeNodeStoredSchema,
-	type FieldKindIdentifier,
-	type TreeTypeSet,
-	type TreeStoredSchema,
 	type Revertible,
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
-	type StoredSchemaCollection,
-	type ErasedTreeNodeSchemaDataFormat,
-	ObjectNodeStoredSchema,
-	MapNodeStoredSchema,
-	LeafNodeStoredSchema,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
@@ -50,10 +31,9 @@ export {
 } from "./feature-libraries/index.js";
 
 export {
-	type ISharedTree,
+	type ITreeInternal,
 	type SharedTreeOptions,
 	ForestType,
-	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,

@@ -21,7 +21,7 @@ import {
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import type { ISharedTree } from "@fluidframework/tree/internal";
+import type { ITreeInternal } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
@@ -256,7 +256,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectNode> => {
-	const sharedTree = sharedObject as ISharedTree;
+	const sharedTree = sharedObject as ITreeInternal;
 
 	// Root node of the SharedTree's content.
 	const treeView = sharedTree.exportVerbose();
