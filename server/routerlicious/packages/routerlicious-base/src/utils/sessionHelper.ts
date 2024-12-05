@@ -305,7 +305,7 @@ export async function getSession(
 				}),
 			"getDocumentForSession",
 			2, // maxRetries
-			500, // retryAfterMs
+			150, // retryAfterMs
 			baseLumberjackProperties, // telemetry props
 			undefined,
 			(error) => shouldRetryNetworkError(error),
