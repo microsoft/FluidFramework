@@ -20,7 +20,8 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	IFluidAccessTokenGenerator,
- IReadinessCheck } from "@fluidframework/server-services-core";
+	IReadinessCheck,
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";

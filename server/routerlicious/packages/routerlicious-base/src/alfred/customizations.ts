@@ -12,7 +12,8 @@ import {
 	IWebSocketTracker,
 	IServiceMessageResourceManager,
 	IFluidAccessTokenGenerator,
- IReadinessCheck } from "@fluidframework/server-services-core";
+	IReadinessCheck,
+} from "@fluidframework/server-services-core";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { IDocumentDeleteService } from "./services";
 

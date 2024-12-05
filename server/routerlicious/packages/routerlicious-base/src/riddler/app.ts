@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISecretManager, ICache , IReadinessCheck } from "@fluidframework/server-services-core";
+import { ISecretManager, ICache, IReadinessCheck } from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";

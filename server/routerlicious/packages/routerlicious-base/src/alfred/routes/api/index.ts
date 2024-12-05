@@ -16,7 +16,8 @@ import {
 	ITokenRevocationManager,
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
- IReadinessCheck } from "@fluidframework/server-services-core";
+	IReadinessCheck,
+} from "@fluidframework/server-services-core";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import cors from "cors";
 import { Router } from "express";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISession, NetworkError } from "@fluidframework/server-services-client";
+import { ISession, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
 	IDocument,
 	runWithRetry,
@@ -290,35 +290,33 @@ export async function getSession(
 ): Promise<ISession> {
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	let document;
-	try {
-		// Retry document existence check to avoid document DB race condition
-		document = await runWithRetry(
-			async () =>
-				documentRepository.readOne({ tenantId, documentId }).then((result) => {
-					if (result === null) {
-						throw new NetworkError(
-							404,
-							"Document is deleted and cannot be accessed",
-							true /* canRetry */,
-						);
-					}
-					return result;
-				}),
-			"getDocumentForSession",
-			readDocumentMaxRetries, // maxRetries
-			readDocumentRetryTimeout, // retryAfterMs
-			baseLumberjackProperties, // telemetry props
-			undefined,
-			(error) => shouldRetryNetworkError(error),
-		);
-	} catch (error) {
-		// Add a stage stamp before throwing the error
-		connectionTrace?.stampStage("DocumentDoesNotExist");
+	const document = await runWithRetry(
+		async () =>
+			documentRepository.readOne({ tenantId, documentId }).then((result) => {
+				if (result === null) {
+					throw new NetworkError(
+						404,
+						"Document is deleted and cannot be accessed",
+						true /* canRetry */,
+					);
+				}
+				return result;
+			}),
+		"getDocumentForSession",
+		readDocumentMaxRetries, // maxRetries
+		readDocumentRetryTimeout, // retryAfterMs
+		baseLumberjackProperties, // telemetry props
+		undefined,
+		(error) => shouldRetryNetworkError(error),
+	).catch((error) => {
+		if (isNetworkError(error) && error.code === 404) {
+			return undefined;
+		}
+		connectionTrace?.stampStage("DocumentDBError");
 		throw error;
-	}
+	});
 
-	// Additional check to ensure that scheduledDeletionTime is not undefined
+	// Check whether document was found in the DB.
 	if (!document || document?.scheduledDeletionTime !== undefined) {
 		connectionTrace?.stampStage("DocumentDoesNotExist");
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
