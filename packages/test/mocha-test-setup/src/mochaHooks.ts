@@ -9,11 +9,10 @@ import * as mochaModule from "mocha";
 
 import { pkgName } from "./packageVersion.js";
 
-// this will enabling capturing the full stack for errors
-// since this is test capturing the full stack is worth it
-// in non-test environment we need to be more cautious
-// as this will incur a perf impact when errors are
-// thrown and will take more storage in any logging sink
+// This will enable capturing the full stack for errors.
+// Since this package is only used when we run tests, capturing the full stack is worth it.
+// In non-test environments we need to be more cautious as this will incur a perf impact when errors are
+// thrown and will take more storage in any logging sink.
 // https://v8.dev/docs/stack-trace-api
 Error.stackTraceLimit = Number.POSITIVE_INFINITY;
 
@@ -84,8 +83,7 @@ const log = console.log;
 const error = console.log;
 const warn = console.warn;
 
-const originalLogger = _global.getTestLogger?.() ?? nullLogger;
-const testLogger = new FluidTestRunLogger(originalLogger);
+let testLogger: FluidTestRunLogger;
 
 /**
  * @internal
@@ -95,9 +93,12 @@ export const mochaHooks = {
 		// Code in our tests will call the global `getTestLogger` function to get a logger to use.
 
 		// First we call the version of that function that was (potentially) injected dynamicaly to get the logger that it
-		// provides and save a reference to it (above).
-		// Then we redefine `getTestLogger` so it returns a more intelligent logger which adds test-run-related context to
-		// all events logged through it. See the documentation on `FluidTestRunLogger` for details.
+		// provides and wrap it with a more intelligent logger which adds test-run-related context to all events logged
+		// through it. See the documentation on `FluidTestRunLogger` for details.
+		const originalLogger = _global.getTestLogger?.() ?? nullLogger;
+		testLogger = new FluidTestRunLogger(originalLogger);
+
+		// Then we redefine `getTestLogger` so it returns the wrapper logger.
 		// NOTE: if we have other global mocha hooks defined somewhere, they include a `beforeEach` hook, and the module in
 		// which they are defined gets loaded before this one, then if that `beforeEach` hook calls `getTestLogger` the logger
 		// it will get will still have a lot of the test-run-related context, but not the name of the current test, because
@@ -112,6 +113,7 @@ export const mochaHooks = {
 			console.warn = () => {};
 		}
 
+		ensureTestRunLoggerIsInitialized(testLogger);
 		testLogger.setCurrentTest(this.currentTest?.fullTitle() ?? "");
 		testLogger.send({
 			category: "generic",
@@ -119,6 +121,7 @@ export const mochaHooks = {
 		});
 	},
 	afterEach(this: Mocha.Context) {
+		ensureTestRunLoggerIsInitialized(testLogger);
 		testLogger.send({
 			category: "generic",
 			eventName: "fluid:telemetry:Test_end",
@@ -143,3 +146,12 @@ export const mochaHooks = {
 globalThis.getMochaModule = () => {
 	return mochaModule;
 };
+
+function ensureTestRunLoggerIsInitialized(
+	loggerToTest: FluidTestRunLogger | undefined,
+): loggerToTest is FluidTestRunLogger {
+	if (loggerToTest instanceof FluidTestRunLogger) {
+		return true;
+	}
+	throw new Error("Test run logger is not initialized");
+}
