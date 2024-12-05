@@ -257,19 +257,21 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectNode> => {
 	const sharedTree = sharedObject as ISharedTree;
-	const contentSnapshot = sharedTree.contentSnapshot();
 
-	// Root node of the SharedTree's treeview. Assume there is only one root node.
-	const treeView = contentSnapshot.tree[0];
+	// Root node of the SharedTree's content.
+	const treeView = sharedTree.exportVerbose();
+	// TODO: this visualizer doesn't consider the root as a field, and thus does not display the allowed types or handle when it is empty.
+	if (treeView === undefined) {
+		throw new Error("Support for visualizing empty trees is not implemented");
+	}
 
 	// Schema of the tree node.
-	const treeSchema = contentSnapshot.schema.nodeSchema.get(treeView.type);
+	const treeSchema = sharedTree.exportSimpleSchema();
 
 	// Traverses the SharedTree and generates a visual representation of the tree and its schema.
 	const visualTreeRepresentation = await visualizeSharedTreeNodeBySchema(
 		treeView,
 		treeSchema,
-		contentSnapshot,
 		visualizeChildData,
 	);
 

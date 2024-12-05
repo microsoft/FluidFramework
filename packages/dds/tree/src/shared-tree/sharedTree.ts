@@ -7,6 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	HasListeners,
 	IEmitter,
+	IFluidHandle,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
@@ -23,9 +24,16 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
 	type IEditableForest,
+	type ITreeCursor,
 	type JsonableTree,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
 	RevisionTagCodec,
 	type TaggedChange,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
@@ -35,6 +43,7 @@ import {
 
 import {
 	DetachedFieldIndexSummarizer,
+	FieldKinds,
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
@@ -51,14 +60,24 @@ import {
 	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
-import type {
-	ITree,
-	ImplicitFieldSchema,
-	ReadSchema,
-	TreeView,
-	TreeViewAlpha,
-	TreeViewConfiguration,
-	UnsafeUnknownSchema,
+import {
+	type ITree,
+	type ImplicitFieldSchema,
+	NodeKind,
+	type ReadSchema,
+	type SimpleFieldSchema,
+	type SimpleTreeSchema,
+	type TreeView,
+	type TreeViewAlpha,
+	type TreeViewConfiguration,
+	type UnsafeUnknownSchema,
+	type VerboseTree,
+	tryStoredSchemaAsArray,
+	type SimpleNodeSchema,
+	customFromCursorStored,
+	FieldKind,
+	type CustomTreeNode,
+	type CustomTreeValue,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -72,7 +91,7 @@ import {
 	type BranchableTree,
 	createTreeCheckout,
 } from "./treeCheckout.js";
-import { breakingClass, throwIfBroken } from "../util/index.js";
+import { breakingClass, fail, throwIfBroken } from "../util/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
@@ -113,6 +132,21 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
+
+	/**
+	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
+	 * @privateRemarks
+	 * TODO:
+	 * THis should probably get promoted to a public API on ITree eventually.
+	 */
+	exportVerbose(): VerboseTree | undefined;
+
+	/**
+	 * Exports the SimpleTreeSchema that is stored in the tree, using stored keys for object fields.
+	 * @remarks
+	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
+	 */
+	exportSimpleSchema(): SimpleTreeSchema;
 }
 
 /**
@@ -330,6 +364,35 @@ export class SharedTree
 				this.commitEnricher.commitTransaction();
 			}
 		});
+	}
+
+	public exportVerbose(): VerboseTree | undefined {
+		const cursor = this.checkout.forest.allocateCursor("contentSnapshot");
+		try {
+			moveToDetachedField(this.checkout.forest, cursor);
+			const length = cursor.getFieldLength();
+			if (length === 0) {
+				return undefined;
+			} else if (length === 1) {
+				cursor.enterNode(0);
+				return verboseFromCursor(cursor, this.storedSchema.nodeSchema);
+			} else {
+				fail("Invalid document root length");
+			}
+		} finally {
+			cursor.free();
+		}
+	}
+
+	public exportSimpleSchema(): SimpleTreeSchema {
+		return {
+			...exportSimpleFieldSchemaStored(this.storedSchema.rootFieldSchema),
+			definitions: new Map(
+				[...this.storedSchema.nodeSchema].map(([key, schema]) => {
+					return [key, exportSimpleNodeSchemaStored(schema)];
+				}),
+			),
+		};
 	}
 
 	@throwIfBroken
@@ -577,4 +640,60 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		tree.initializeLocal();
 		return tree;
 	}
+}
+
+function verboseFromCursor(
+	reader: ITreeCursor,
+	schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
+): VerboseTree {
+	const fields = customFromCursorStored(reader, schema, verboseFromCursor);
+	const nodeSchema = schema.get(reader.type) ?? fail("missing schema for type in cursor");
+	if (nodeSchema instanceof LeafNodeStoredSchema) {
+		return fields as CustomTreeValue<IFluidHandle>;
+	}
+
+	return {
+		type: reader.type,
+		fields: fields as CustomTreeNode<IFluidHandle>,
+	};
+}
+
+function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {
+	let kind: FieldKind;
+	switch (schema.kind) {
+		case FieldKinds.identifier.identifier:
+			kind = FieldKind.Identifier;
+			break;
+		case FieldKinds.optional.identifier:
+			kind = FieldKind.Optional;
+			break;
+		case FieldKinds.required.identifier:
+			kind = FieldKind.Required;
+			break;
+		default:
+			fail("invalid field kind");
+	}
+	return { kind, allowedTypes: schema.types };
+}
+
+function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
+	const arrayTypes = tryStoredSchemaAsArray(schema);
+	if (arrayTypes !== undefined) {
+		return { kind: NodeKind.Array, allowedTypes: arrayTypes };
+	}
+	if (schema instanceof ObjectNodeStoredSchema) {
+		const fields: Record<string, SimpleFieldSchema> = {};
+		for (const [key, field] of schema.objectNodeFields) {
+			fields[key] = exportSimpleFieldSchemaStored(field);
+		}
+		return { kind: NodeKind.Object, fields };
+	}
+	if (schema instanceof MapNodeStoredSchema) {
+		assert(schema.mapFields.kind === FieldKinds.optional.identifier, "Invalid map schema");
+		return { kind: NodeKind.Map, allowedTypes: schema.mapFields.types };
+	}
+	if (schema instanceof LeafNodeStoredSchema) {
+		return { kind: NodeKind.Leaf, leafKind: schema.leafValue };
+	}
+	fail("invalid schema kind");
 }

@@ -4,25 +4,16 @@
  */
 
 import type {
-	FieldMapObject,
-	JsonableTree,
-	SharedTreeContentSnapshot,
-	TreeNodeStoredSchema,
-	TreeTypeSet,
+	SimpleMapNodeSchema,
+	SimpleObjectNodeSchema,
+	SimpleTreeSchema,
+	VerboseTree,
+	VerboseTreeNode,
 } from "@fluidframework/tree/internal";
-import {
-	EmptyKey,
-	LeafNodeStoredSchema,
-	MapNodeStoredSchema,
-	ObjectNodeStoredSchema,
-} from "@fluidframework/tree/internal";
+import { EmptyKey, NodeKind, SchemaFactory, Tree } from "@fluidframework/tree/internal";
 
 import type { VisualizeChildData } from "./DataVisualization.js";
-import type {
-	SharedTreeLeafNode,
-	VisualSharedTreeNode,
-	SharedTreeSchemaNode,
-} from "./VisualSharedTreeTypes.js";
+import type { VisualSharedTreeNode, SharedTreeSchemaNode } from "./VisualSharedTreeTypes.js";
 import { VisualSharedTreeNodeKind } from "./VisualSharedTreeTypes.js";
 import {
 	type VisualChildNode,
@@ -159,30 +150,21 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 /**
  * Concatenrate allowed types for `ObjectNodeStoredSchema` and `MapNodeStoredSchema`.
  */
-function concatenateTypes(fieldKey: string, fieldTypes: TreeTypeSet | undefined): string {
-	let fieldAllowedType = fieldKey === EmptyKey ? "" : `${fieldKey} : `;
-
-	if (fieldTypes === undefined) {
-		fieldAllowedType += "any";
-	} else {
-		const allowedTypes = [...fieldTypes].join(" | ");
-		fieldAllowedType += `${allowedTypes}`;
-	}
-
-	return fieldAllowedType;
+function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
+	return [...fieldTypes].join(" | ");
 }
 
 /**
  * Returns the allowed fields & types for the object fields (e.g., `foo : string | number, bar: boolean`)
  */
-function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
+function getObjectAllowedTypes(schema: SimpleObjectNodeSchema): string {
 	const result: string[] = [];
 
-	for (const [fieldKey, treeFieldStoredSchema] of schema.objectNodeFields) {
+	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
 		// Set of allowed tree types `TreeTypeSet`.
-		const fieldTypes = treeFieldStoredSchema.types;
+		const fieldTypes = treeFieldSimpleSchema.allowedTypes;
 
-		result.push(concatenateTypes(fieldKey, fieldTypes));
+		result.push(`${fieldKey} : ${concatenateTypes(fieldTypes)}`);
 
 		// If the field key is `EmptyKey`, then it is an array field.
 		// Return the allowed types in string format, instead of JSON format.
@@ -195,103 +177,43 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 }
 
 /**
- * Returns the allowed fields & types for the map fields.
+ * Returns the schema & fields of the node.
  */
-function getMapAllowedTypes(
-	fields: FieldMapObject<JsonableTree> | undefined,
-	schema: MapNodeStoredSchema,
-): string {
-	if (fields === undefined) {
-		throw new TypeError("Fields should not be undefined.");
-	}
-
-	const mapFieldAllowedTypes = schema.mapFields.types;
-
-	const result: string[] = [];
-
-	for (const [fieldKey] of Object.entries(fields)) {
-		result.push(concatenateTypes(fieldKey, mapFieldAllowedTypes));
-	}
-
-	return `{ ${result.join(", ")} }`;
-}
-
-/**
- * Returns the schema & leaf value of the node with type {@link LeafNodeStoredSchema}.
- */
-async function visualizeLeafNode(
-	tree: JsonableTree,
+async function visualizeVerboseNodeFields(
+	tree: VerboseTreeNode,
+	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
-): Promise<SharedTreeLeafNode> {
-	return {
-		schema: {
-			schemaName: tree.type,
-		},
-		value: await visualizeChildData(tree.value),
-		kind: VisualSharedTreeNodeKind.LeafNode,
-	};
+): Promise<Record<string, VisualSharedTreeNode>> {
+	const treeFields = tree.fields;
+
+	const fields: Record<string | number, VisualSharedTreeNode> = {};
+
+	for (const [fieldKey, childField] of Object.entries(treeFields)) {
+		fields[fieldKey] = await visualizeSharedTreeNodeBySchema(
+			childField,
+			treeSchema,
+			visualizeChildData,
+		);
+	}
+
+	return fields;
 }
 
 /**
  * Returns the schema & fields of the node with type {@link ObjectNodeStoredSchema}.
  */
 async function visualizeObjectNode(
-	tree: JsonableTree,
-	schema: ObjectNodeStoredSchema,
-	contentSnapshot: SharedTreeContentSnapshot,
+	tree: VerboseTreeNode,
+	schema: SimpleObjectNodeSchema,
+	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const treeFields = tree.fields;
-
-	if (treeFields === undefined || Object.keys(treeFields).length === 0) {
-		return {
-			schema: {
-				schemaName: tree.type,
-				allowedTypes: getObjectAllowedTypes(schema),
-			},
-			fields: {},
-			kind: VisualSharedTreeNodeKind.InternalNode,
-		};
-	}
-
-	const fields: Record<string | number, VisualSharedTreeNode> = {};
-
-	// `EmptyKey` indicates an array field (e.g., `schemabuilder.array()`).
-	// Hides level of indirection by omitting the empty key in the visual output.
-	if (
-		Object.keys(treeFields).length === 1 &&
-		Object.prototype.hasOwnProperty.call(treeFields, EmptyKey)
-	) {
-		const children = treeFields[EmptyKey];
-
-		for (let i = 0; i < children.length; i++) {
-			const childSchema = contentSnapshot.schema.nodeSchema.get(children[i].type);
-			fields[i] = await visualizeSharedTreeNodeBySchema(
-				children[i],
-				childSchema,
-				contentSnapshot,
-				visualizeChildData,
-			);
-		}
-	} else {
-		for (const [fieldKey, childField] of Object.entries(treeFields)) {
-			const childSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
-
-			fields[fieldKey] = await visualizeSharedTreeNodeBySchema(
-				childField[0],
-				childSchema,
-				contentSnapshot,
-				visualizeChildData,
-			);
-		}
-	}
-
 	return {
 		schema: {
 			schemaName: tree.type,
 			allowedTypes: getObjectAllowedTypes(schema),
 		},
-		fields,
+		fields: await visualizeVerboseNodeFields(tree, treeSchema, visualizeChildData),
 		kind: VisualSharedTreeNodeKind.InternalNode,
 	};
 }
@@ -300,43 +222,17 @@ async function visualizeObjectNode(
  * Returns the schema & fields of the node with type {@link MapNodeStoredSchema}.
  */
 async function visualizeMapNode(
-	tree: JsonableTree,
-	schema: MapNodeStoredSchema,
-	contentSnapshot: SharedTreeContentSnapshot,
+	tree: VerboseTreeNode,
+	schema: SimpleMapNodeSchema,
+	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const treeFields = tree.fields;
-
-	if (treeFields === undefined || Object.keys(treeFields).length === 0) {
-		return {
-			schema: {
-				schemaName: tree.type,
-				allowedTypes: getMapAllowedTypes(treeFields, schema),
-			},
-			fields: {},
-			kind: VisualSharedTreeNodeKind.InternalNode,
-		};
-	}
-
-	const fields: Record<string | number, VisualSharedTreeNode> = {};
-
-	for (const [fieldKey, childField] of Object.entries(treeFields)) {
-		const fieldSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
-
-		fields[fieldKey] = await visualizeSharedTreeNodeBySchema(
-			childField[0],
-			fieldSchema,
-			contentSnapshot,
-			visualizeChildData,
-		);
-	}
-
 	return {
 		schema: {
 			schemaName: tree.type,
-			allowedTypes: getMapAllowedTypes(treeFields, schema),
+			allowedTypes: concatenateTypes(schema.allowedTypes),
 		},
-		fields,
+		fields: await visualizeVerboseNodeFields(tree, treeSchema, visualizeChildData),
 		kind: VisualSharedTreeNodeKind.InternalNode,
 	};
 }
@@ -350,26 +246,67 @@ async function visualizeMapNode(
  * @remarks
  */
 export async function visualizeSharedTreeNodeBySchema(
-	tree: JsonableTree,
-	schema: TreeNodeStoredSchema | undefined,
-	contentSnapshot: SharedTreeContentSnapshot,
+	tree: VerboseTree,
+	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	if (schema instanceof LeafNodeStoredSchema) {
-		const leafVisualized = await visualizeLeafNode(tree, visualizeChildData);
-		return leafVisualized;
-	} else if (schema instanceof ObjectNodeStoredSchema) {
-		const objectVisualized = visualizeObjectNode(
-			tree,
-			schema,
-			contentSnapshot,
-			visualizeChildData,
-		);
-		return objectVisualized;
-	} else if (schema instanceof MapNodeStoredSchema) {
-		const mapVisualized = visualizeMapNode(tree, schema, contentSnapshot, visualizeChildData);
-		return mapVisualized;
-	} else {
+	const sf = new SchemaFactory(undefined);
+	if (Tree.is(tree, [sf.boolean, sf.null, sf.number, sf.handle, sf.string])) {
+		const nodeSchema = Tree.schema(tree);
+		return {
+			schema: {
+				schemaName: nodeSchema.identifier,
+			},
+			value: await visualizeChildData(tree),
+			kind: VisualSharedTreeNodeKind.LeafNode,
+		};
+	}
+
+	const schema = treeSchema.definitions.get(tree.type);
+	if (schema === undefined) {
 		throw new TypeError("Unrecognized schema type.");
+	}
+
+	switch (schema.kind) {
+		case NodeKind.Object: {
+			const objectVisualized = visualizeObjectNode(
+				tree,
+				schema,
+				treeSchema,
+				visualizeChildData,
+			);
+			return objectVisualized;
+		}
+		case NodeKind.Map: {
+			const mapVisualized = visualizeMapNode(tree, schema, treeSchema, visualizeChildData);
+			return mapVisualized;
+		}
+		case NodeKind.Array: {
+			const fields: Record<number, VisualSharedTreeNode> = {};
+			const children = tree.fields;
+			if (!Array.isArray(children)) {
+				throw new TypeError("Invalid array");
+			}
+
+			for (let i = 0; i < children.length; i++) {
+				fields[i] = await visualizeSharedTreeNodeBySchema(
+					children[i],
+					treeSchema,
+					visualizeChildData,
+				);
+			}
+
+			return {
+				schema: {
+					schemaName: tree.type,
+					allowedTypes: concatenateTypes(schema.allowedTypes),
+				},
+				fields: await visualizeVerboseNodeFields(tree, treeSchema, visualizeChildData),
+				kind: VisualSharedTreeNodeKind.InternalNode,
+			};
+		}
+		default: {
+			throw new TypeError("Unrecognized schema type.");
+		}
 	}
 }
