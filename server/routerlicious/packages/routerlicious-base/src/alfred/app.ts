@@ -16,7 +16,7 @@ import {
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
-} from "@fluidframework/server-services-core";
+ IReadinessCheck } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { json, urlencoded } from "body-parser";
@@ -37,7 +37,6 @@ import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export function create(
 	config: Provider,

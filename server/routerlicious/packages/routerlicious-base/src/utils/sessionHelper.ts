@@ -285,6 +285,8 @@ export async function getSession(
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	ephemeralDocumentTTLSec?: number,
 	connectionTrace?: StageTrace<string>,
+	readDocumentRetryTimeout: number = 150,
+	readDocumentMaxRetries: number = 2,
 ): Promise<ISession> {
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
@@ -304,8 +306,8 @@ export async function getSession(
 					return result;
 				}),
 			"getDocumentForSession",
-			2, // maxRetries
-			150, // retryAfterMs
+			readDocumentMaxRetries, // maxRetries
+			readDocumentRetryTimeout, // retryAfterMs
 			baseLumberjackProperties, // telemetry props
 			undefined,
 			(error) => shouldRetryNetworkError(error),

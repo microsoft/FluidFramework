@@ -1,5 +1,9 @@
 import sinon from "sinon";
-import { IDocumentRepository, IDocument, MongoDocumentRepository } from "@fluidframework/server-services-core";
+import {
+	IDocumentRepository,
+	IDocument,
+	MongoDocumentRepository,
+} from "@fluidframework/server-services-core";
 import { getSession } from "../../utils/sessionHelper";
 import { strict as assert } from "assert";
 
@@ -9,7 +13,8 @@ describe("sessionHelper", () => {
 
 		beforeEach(() => {
 			// Create a mock document repository that will fail the first doc call
-			documentRepository = sinon.createStubInstance<IDocumentRepository>(MongoDocumentRepository);
+			documentRepository =
+				sinon.createStubInstance<IDocumentRepository>(MongoDocumentRepository);
 		});
 
 		it("should retry on initial failure and succeed on subsequent calls", async () => {
@@ -33,8 +38,10 @@ describe("sessionHelper", () => {
 
 			// Force the first documentRepository call to return a null document, to test retry behaviors
 			documentRepository.readOne
-				.onFirstCall().resolves(null)
-				.onSecondCall().resolves(document);
+				.onFirstCall()
+				.resolves(null)
+				.onSecondCall()
+				.resolves(document);
 
 			const session = await getSession(
 				ordererUrl,
@@ -43,7 +50,7 @@ describe("sessionHelper", () => {
 				tenantId,
 				documentId,
 				documentRepository,
-				sessionStickinessDurationMs
+				sessionStickinessDurationMs,
 			);
 
 			assert.ok(session);
@@ -67,7 +74,7 @@ describe("sessionHelper", () => {
 					tenantId,
 					documentId,
 					documentRepository,
-					sessionStickinessDurationMs
+					sessionStickinessDurationMs,
 				);
 				assert.fail("Expected an error to be thrown");
 			} catch (error: any) {

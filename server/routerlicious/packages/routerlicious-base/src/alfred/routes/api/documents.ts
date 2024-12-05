@@ -387,6 +387,10 @@ export function create(
 			);
 			// Tracks the different stages of getSessionMetric
 			const connectionTrace = new StageTrace<string>("GetSession");
+			const readDocumentRetryTimeout: number = config.get(
+				"getSession:readDocumentRetryTimeout",
+			);
+			const readDocumentMaxRetries: number = config.get("getSession:readDocumentMaxRetries");
 
 			const session = getSession(
 				externalOrdererUrl,
@@ -400,6 +404,8 @@ export function create(
 				clusterDrainingChecker,
 				ephemeralDocumentTTLSec,
 				connectionTrace,
+				readDocumentRetryTimeout,
+				readDocumentMaxRetries,
 			);
 
 			const onSuccess = (result: ISession): void => {

@@ -17,13 +17,12 @@ import {
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
-} from "@fluidframework/server-services-core";
+ IReadinessCheck } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { IDocumentDeleteService } from "../services";
 import * as api from "./api";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 export interface IRoutes {
 	agent: Router;

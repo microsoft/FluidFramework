@@ -429,5 +429,9 @@
 	},
 	"clusterDraining": {
 		"enable": false
+	},
+	"getSession": {
+		"readDocumentRetryTimeout": 150,
+		"readDocumentMaxRetries": 2
 	}
 }

@@ -12,10 +12,9 @@ import {
 	IWebSocketTracker,
 	IServiceMessageResourceManager,
 	IFluidAccessTokenGenerator,
-} from "@fluidframework/server-services-core";
+ IReadinessCheck } from "@fluidframework/server-services-core";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { IDocumentDeleteService } from "./services";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
 
 /**
  * @internal
