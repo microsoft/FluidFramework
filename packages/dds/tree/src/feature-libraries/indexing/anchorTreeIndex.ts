@@ -82,6 +82,8 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 * @param getValue - a pure and functional function that returns the associated value of one or more anchor nodes, can be used to map and filter the indexed anchor nodes
 	 * so that the values returned from the index are more usable
 	 * @param checkTreeStatus - a function that gets the tree status from an anchor node, used for filtering out detached nodes
+	 * @param reIndexSpine - as a performance optimization, re-indexing up the spine can be turned off for indexes that do not need it, this only applies to indexes that only allow
+	 * nodes to be keyed off of fields directly under them rather than anywhere in their subtree
 	 */
 	public constructor(
 		private readonly forest: IForestSubscription,
@@ -90,6 +92,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 		) => KeyFinder<TKey> | undefined,
 		private readonly getValue: (anchorNodes: TreeIndexNodes<AnchorNode>) => TValue | undefined,
 		private readonly checkTreeStatus: (node: AnchorNode) => TreeStatus | undefined,
+		private readonly reIndexSpine = true,
 	) {
 		this.forest.registerAnnouncedVisitor(this.keyFinder);
 
@@ -132,6 +135,28 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				this.indexField(detachedCursor);
 				detachedCursor.free();
 			},
+			afterAttach: () => {
+				if (this.reIndexSpine) {
+					assert(parent !== undefined, "must have a parent");
+					const cursor = this.forest.allocateCursor();
+					this.forest.moveCursorToPath(parent, cursor);
+					assert(cursor.mode === CursorLocationType.Nodes, "attach should happen in a node");
+					cursor.exitNode();
+					this.indexSpine(cursor);
+					cursor.clear();
+				}
+			},
+			afterDetach: () => {
+				if (this.reIndexSpine) {
+					assert(parent !== undefined, "must have a parent");
+					const cursor = this.forest.allocateCursor();
+					this.forest.moveCursorToPath(parent, cursor);
+					assert(cursor.mode === CursorLocationType.Nodes, "detach should happen in a node");
+					cursor.exitNode();
+					this.indexSpine(cursor);
+					cursor.clear();
+				}
+			},
 			// when a replace happens, the keys of previously indexed nodes could be changed so we must re-index them
 			afterReplace: () => {
 				assert(parent !== undefined, "must have a parent");
@@ -139,9 +164,12 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				this.forest.moveCursorToPath(parent, cursor);
 				assert(cursor.mode === CursorLocationType.Nodes, "replace should happen in a node");
 				cursor.exitNode();
-				// we must re-index the spine because the key finders allow for any value under a subtree to be the key
-				// this means that a replace can cause the key for any node up its spine to be changed
-				this.indexSpine(cursor);
+				this.indexField(cursor);
+				if (this.reIndexSpine) {
+					// we must also re-index the spine if the key finders allow for any value under a subtree to be the key
+					// this means that a replace can cause the key for any node up its spine to be changed
+					this.indexSpine(cursor);
+				}
 				cursor.clear();
 			},
 			// the methods below are used to keep track of the path that has been traversed by the visitor
@@ -368,8 +396,6 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 * Given a cursor in field mode, indexes all nodes under the field and then indexes all nodes up the spine.
 	 */
 	private indexSpine(cursor: ITreeSubscriptionCursor): void {
-		this.indexField(cursor);
-
 		if (keyAsDetachedField(cursor.getFieldKey()) !== rootField) {
 			cursor.exitField();
 			cursor.exitNode();
