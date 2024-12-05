@@ -431,7 +431,7 @@
 		"enable": false
 	},
 	"getSession": {
-		"readDocumentRetryTimeout": 150,
+		"readDocumentRetryDelay": 150,
 		"readDocumentMaxRetries": 2
 	}
 }
