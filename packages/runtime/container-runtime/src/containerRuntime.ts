@@ -218,7 +218,6 @@ import {
 	ISubmitSummaryOptions,
 	ISummarizeResults,
 	ISummarizer,
-	ISummarizerEvents,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummaryMetadataMessage,
@@ -839,7 +838,7 @@ export async function loadContainerRuntime(
  * @alpha
  */
 export class ContainerRuntime
-	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
+	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements
 		IContainerRuntime,
 		IRuntime,

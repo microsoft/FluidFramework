@@ -7,7 +7,10 @@ import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
+import {
+	IContainerRuntimeEvents,
+	type ISummarizeEventProps,
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -31,7 +34,6 @@ import sinon from "sinon";
 import { ISummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IGeneratedSummaryStats,
-	ISummarizeEventProps,
 	ISummarizeHeuristicData,
 	ISummarizerRuntime,
 	ISummaryCancellationToken,

@@ -4,6 +4,12 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
+	ISummarizeEventProps,
+	ISummarizerEvents,
+	ISummarizerObservabilityProps,
+	SummarizerStopReason,
+} from "@fluidframework/container-runtime-definitions/internal";
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred, PromiseTimer, delay } from "@fluidframework/core-utils/internal";
 import {
@@ -29,20 +35,16 @@ import {
 	IOnDemandSummarizeOptions,
 	IRefreshSummaryAckOptions,
 	ISubmitSummaryOptions,
-	ISummarizeEventProps,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
 	ISummarizeOptions,
 	ISummarizeResults,
 	ISummarizeRunnerTelemetry,
 	ISummarizeTelemetryProperties,
-	ISummarizerEvents,
 	ISummarizerRuntime,
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
-	SummarizerStopReason,
 	type IRetriableFailureError,
-	type ISummarizerObservabilityProps,
 } from "./summarizerTypes.js";
 import {
 	IAckedSummary,

@@ -4,6 +4,10 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
+	ISummarizerEvents,
+	SummarizerStopReason,
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
 	IDisposable,
 	IEvent,
@@ -28,8 +32,6 @@ import {
 	IOnDemandSummarizeOptions,
 	ISummarizeResults,
 	ISummarizer,
-	ISummarizerEvents,
-	SummarizerStopReason,
 } from "./summarizerTypes.js";
 import { SummaryCollection } from "./summaryCollection.js";
 

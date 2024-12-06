@@ -4,6 +4,10 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
+	ISummarizerEvents,
+	SummarizerStopReason,
+} from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
@@ -28,11 +32,9 @@ import {
 	ISummarizeHeuristicData,
 	ISummarizeResults,
 	ISummarizer,
-	ISummarizerEvents,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
-	SummarizerStopReason,
 } from "./summarizerTypes.js";
 import { SummaryCollection } from "./summaryCollection.js";
 import { SummarizeResultBuilder } from "./summaryGenerator.js";
