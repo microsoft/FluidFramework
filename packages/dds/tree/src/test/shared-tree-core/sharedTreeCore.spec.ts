@@ -530,14 +530,23 @@ describe("SharedTreeCore", () => {
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 1);
-			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
+			assert.equal(
+				enricher.enrichmentLog[0].input,
+				tree.transaction.activeBranch.getHead().change,
+			);
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 2);
-			assert.equal(enricher.enrichmentLog[1].input, tree.getLocalBranch().getHead().change);
+			assert.equal(
+				enricher.enrichmentLog[1].input,
+				tree.transaction.activeBranch.getHead().change,
+			);
 			tree.transaction.commit();
 			assert.equal(enricher.enrichmentLog.length, 2);
 			assert.equal(machine.submissionLog.length, 1);
-			assert.notEqual(machine.submissionLog[0], tree.getLocalBranch().getHead().change);
+			assert.notEqual(
+				machine.submissionLog[0],
+				tree.transaction.activeBranch.getHead().change,
+			);
 		});
 
 		it("handles aborted outer transaction", () => {
@@ -557,7 +566,10 @@ describe("SharedTreeCore", () => {
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 1);
-			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
+			assert.equal(
+				enricher.enrichmentLog[0].input,
+				tree.transaction.activeBranch.getHead().change,
+			);
 			tree.transaction.abort();
 			assert.equal(enricher.enrichmentLog.length, 1);
 			assert.equal(machine.submissionLog.length, 0);
