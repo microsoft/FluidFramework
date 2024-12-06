@@ -119,7 +119,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	migrator.events.on("migrated", () => {
 		container.dispose();
 		// TODO: Load new container
-		render(model, migrator.currentMigrationTool);
+		render(model, migrator.migrationTool);
 		// TODO: Figure out what good casting looks like
 		updateTabForId(migrator.migrationResult as string);
 	});
@@ -132,7 +132,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
 	// Render it
-	render(model, migrator.currentMigrationTool);
+	render(model, migrator.migrationTool);
 
 	element.append(appDiv, debugDiv);
 

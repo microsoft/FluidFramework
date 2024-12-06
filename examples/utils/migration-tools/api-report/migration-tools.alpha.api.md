@@ -132,13 +132,13 @@ export class Migrator implements IMigrator {
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
-    get currentMigrationTool(): IMigrationTool;
-    // (undocumented)
     get events(): IEventProvider<IMigratorEvents>;
     // (undocumented)
     get migrationResult(): unknown | undefined;
     // (undocumented)
     get migrationState(): MigrationState;
+    // (undocumented)
+    get migrationTool(): IMigrationTool;
 }
 
 // @alpha (undocumented)

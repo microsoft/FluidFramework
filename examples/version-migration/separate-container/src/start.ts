@@ -125,7 +125,7 @@ async function start(): Promise<void> {
 	migrator.events.on("migrated", () => {
 		container.dispose();
 		// TODO: Load new container
-		renderModel(model, migrator.currentMigrationTool);
+		renderModel(model, migrator.migrationTool);
 		// TODO: Figure out what good casting looks like
 		updateTabForId(migrator.migrationResult as string);
 	});
@@ -155,7 +155,7 @@ async function start(): Promise<void> {
 	// }
 	// In this demo however, we trigger the proposal through the debug buttons.
 
-	renderModel(model, migrator.currentMigrationTool);
+	renderModel(model, migrator.migrationTool);
 	updateTabForId(id);
 }
 

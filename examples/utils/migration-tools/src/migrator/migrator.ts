@@ -67,16 +67,16 @@ export class Migrator implements IMigrator {
 		return this._currentMigratable.migrationTool.newContainerId;
 	}
 
-	public get currentMigrationTool(): IMigrationTool {
+	public get migrationTool(): IMigrationTool {
 		return this._currentMigratable.migrationTool;
 	}
 
 	public get migrationState(): MigrationState {
-		return this.currentMigrationTool.migrationState;
+		return this.migrationTool.migrationState;
 	}
 
 	public get connected(): boolean {
-		return this.currentMigrationTool.connected;
+		return this.migrationTool.connected;
 	}
 
 	private readonly _events = new TypedEventEmitter<IMigratorEvents>();
@@ -127,11 +127,11 @@ export class Migrator implements IMigrator {
 	 * that a freshly-loaded migrated container is in collaborating state.
 	 */
 	private readonly takeAppropriateActionForCurrentMigratable = (): void => {
-		const migrationState = this.currentMigrationTool.migrationState;
+		const migrationState = this.migrationTool.migrationState;
 		if (migrationState === "migrating") {
 			this.ensureMigrating();
 		} else if (migrationState === "collaborating" || migrationState === "stopping") {
-			this.currentMigrationTool.events.once(
+			this.migrationTool.events.once(
 				"migrating",
 				this.takeAppropriateActionForCurrentMigratable,
 			);
@@ -145,7 +145,7 @@ export class Migrator implements IMigrator {
 		if (!this.connected) {
 			// If we are not connected we should wait until we reconnect and try again. Note: we re-enter the state
 			// machine, since it's possible another client has already completed the migration by the time we reconnect.
-			this.currentMigrationTool.events.once(
+			this.migrationTool.events.once(
 				"connected",
 				this.takeAppropriateActionForCurrentMigratable,
 			);
@@ -156,7 +156,7 @@ export class Migrator implements IMigrator {
 			return;
 		}
 
-		const migrationTool = this.currentMigrationTool;
+		const migrationTool = this.migrationTool;
 		const acceptedMigration = migrationTool.acceptedMigration;
 		if (acceptedMigration === undefined) {
 			throw new Error("Expect an accepted migration before migration starts");
@@ -241,7 +241,7 @@ export class Migrator implements IMigrator {
 				// Volunteer to complete the migration.
 				let isAssigned: boolean;
 				try {
-					isAssigned = await this.currentMigrationTool.volunteerForMigration();
+					isAssigned = await this.migrationTool.volunteerForMigration();
 				} catch {
 					// volunteerForMigration() will throw an error on disconnection. In this case, we should exit and
 					// re-enter the state machine which will wait until we reconnect.
@@ -251,7 +251,7 @@ export class Migrator implements IMigrator {
 					return;
 				}
 
-				if (this.currentMigrationTool.newContainerId !== undefined) {
+				if (this.migrationTool.newContainerId !== undefined) {
 					// If newContainerId is already set, then another client already completed the migration.
 					return;
 				}
@@ -263,14 +263,14 @@ export class Migrator implements IMigrator {
 				}
 
 				// Check to make sure we still have the task assignment.
-				if (!this.currentMigrationTool.haveMigrationTask()) {
+				if (!this.migrationTool.haveMigrationTask()) {
 					// Exit early if we lost the task assignment, we are most likely disconnected.
 					return;
 				}
 
 				await migrationTool.finalizeMigration(this._preparedModelId);
 
-				this.currentMigrationTool.completeMigrationTask();
+				this.migrationTool.completeMigrationTask();
 			};
 
 			// Prepare the detached model if we haven't already.
@@ -296,7 +296,7 @@ export class Migrator implements IMigrator {
 					// We assume if we are still connected after exiting the loop, then we should be in the "migrated"
 					// state. The following assert validates this assumption.
 					assert(
-						this.currentMigrationTool.newContainerId !== undefined,
+						this.migrationTool.newContainerId !== undefined,
 						"newContainerId should be defined",
 					);
 				}
