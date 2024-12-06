@@ -52,7 +52,6 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 	createPiece: async (runtime: IContainerRuntime): Promise<FluidObject> => {
 		return async (
 			loader: ISimpleLoader,
-			initialMigratable: IMigratableModel,
 			initialId: string,
 			container: IContainer,
 			dataTransformationCallback?: DataTransformationCallback,
@@ -78,9 +77,7 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 			};
 			const migrator = new Migrator(
 				loader,
-				initialMigratable,
 				migrationTool,
-				initialId,
 				exportData,
 				dataTransformationCallback,
 			);

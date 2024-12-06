@@ -111,7 +111,6 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 	const migrator: Migrator = await (entryPoint as any).getMigrator(
 		loader,
-		model,
 		id,
 		container,
 		inventoryListDataTransformationCallback,

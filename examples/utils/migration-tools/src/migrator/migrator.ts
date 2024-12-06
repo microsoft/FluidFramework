@@ -58,7 +58,7 @@ export class Migrator implements IMigrator {
 		return this.migrationTool.migrationState;
 	}
 
-	public get connected(): boolean {
+	private get connected(): boolean {
 		return this.migrationTool.connected;
 	}
 
@@ -89,10 +89,8 @@ export class Migrator implements IMigrator {
 
 	public constructor(
 		private readonly simpleLoader: ISimpleLoader,
-		initialMigratable: IMigratableModel,
 		// TODO: Make private
 		public readonly migrationTool: IMigrationTool,
-		initialId: string,
 		private readonly exportData: (migrationSequenceNumber: number) => Promise<unknown>,
 		private readonly dataTransformationCallback?: DataTransformationCallback,
 	) {
