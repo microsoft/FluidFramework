@@ -1129,6 +1129,9 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
@@ -1411,6 +1414,7 @@ describe("Runtime", () => {
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: undefined,
+				enableGroupedBatching: false,
 				explicitSchemaControl: false,
 			} satisfies IContainerRuntimeOptions;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
@@ -2603,6 +2607,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {
+						enableGroupedBatching: false,
 						flushMode: FlushMode.TurnBased,
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -3178,6 +3183,7 @@ describe("Runtime", () => {
 						existing: false,
 						requestHandler: undefined,
 						runtimeOptions: {
+							enableGroupedBatching: false,
 							flushMode: FlushMode.TurnBased,
 						},
 						provideEntryPoint: mockProvideEntryPoint,

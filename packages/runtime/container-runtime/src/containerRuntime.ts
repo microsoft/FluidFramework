@@ -519,9 +519,8 @@ export interface IContainerRuntimeOptions {
 	 * The grouping an ungrouping of such messages is handled by the "OpGroupingManager".
 	 *
 	 * By default, the feature is enabled.
-	 * @deprecated  The ability to configure Grouped Batching is now removed and it is now disabled if compression is disabled.
 	 */
-	// readonly enableGroupedBatching?: boolean;
+	readonly enableGroupedBatching?: boolean;
 
 	/**
 	 * When this property is set to true, it requires runtime to control is document schema properly through ops
@@ -913,7 +912,7 @@ export class ContainerRuntime
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
-			// enableGroupedBatching = true,
+			enableGroupedBatching = true,
 			explicitSchemaControl = false,
 		} = runtimeOptions;
 
@@ -1084,8 +1083,7 @@ export class ContainerRuntime
 				explicitSchemaControl,
 				compressionLz4,
 				idCompressorMode,
-				// Grouped batching is disabled if compression is disabled.
-				opGroupingEnabled: compressionLz4, // enableGroupedBatching,
+				opGroupingEnabled: enableGroupedBatching,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -1112,7 +1110,7 @@ export class ContainerRuntime
 				chunkSizeInBytes,
 				// Requires<> drops undefined from IdCompressorType
 				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
-				// enableGroupedBatching,
+				enableGroupedBatching,
 				explicitSchemaControl,
 			},
 			containerScope,

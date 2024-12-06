@@ -21,6 +21,7 @@ import {
 
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
+		enableGroupedBatching: true,
 		summaryOptions: {
 			initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without thi
 			summaryConfigOverrides: {

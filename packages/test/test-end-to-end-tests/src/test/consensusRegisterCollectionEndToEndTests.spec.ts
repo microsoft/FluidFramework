@@ -293,6 +293,7 @@ describeCompat(
 		const groupedBatchingContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
+			runtimeOptions: { enableGroupedBatching: true },
 		};
 
 		let provider: ITestObjectProvider;

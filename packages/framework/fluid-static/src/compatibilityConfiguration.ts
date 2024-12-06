@@ -30,8 +30,7 @@ export const compatibilityModeRuntimeOptions: Record<
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		},
 		// Grouped batching is on by default but introduces a new type of op which is not compatible with 1.x clients.
-		// Container Runtime should disable GroupedBatching if compression is disabled
-		// enableGroupedBatching: false,
+		enableGroupedBatching: false,
 		// TODO: Include explicit disables for things that are currently off-by-default?
 
 		// Explicitly disable running Sweep in compat mode "1". Sweep is supported only in 2.x. So, when 1.x and 2.x

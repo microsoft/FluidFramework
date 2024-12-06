@@ -156,6 +156,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 			);
 
 			await runAndValidateBatch(provider, proxyDsf, this.timeout(), {
+				enableGroupedBatching,
 				chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
 				compressionOptions: {
 					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY, // disable
@@ -413,7 +414,9 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 					},
 				);
 				try {
-					await runAndValidateBatch(provider, proxyDsf, this.timeout(), {});
+					await runAndValidateBatch(provider, proxyDsf, this.timeout(), {
+						enableGroupedBatching: false,
+					});
 					assert.fail("expected error");
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);

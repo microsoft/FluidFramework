@@ -112,6 +112,7 @@ export function generateRuntimeOptions(
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
+		enableGroupedBatching: [true, false],
 		explicitSchemaControl: [true, false],
 	};
 
