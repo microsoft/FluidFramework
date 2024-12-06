@@ -120,7 +120,8 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		container.dispose();
 		// TODO: Load new container
 		render(model, migrator.currentMigrationTool);
-		updateTabForId(migrator.currentModelId);
+		// TODO: Figure out what good casting looks like
+		updateTabForId(migrator.migrationResult as string);
 	});
 
 	// eslint-disable-next-line @typescript-eslint/dot-notation

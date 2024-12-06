@@ -96,9 +96,9 @@ export interface IMigrator {
 	readonly events: IEventProvider<IMigratorEvents>;
 
 	/**
-	 * The container id of the current model.
+	 * The result of the migration, if complete.  Likely the container ID of the new container.
 	 */
-	readonly currentModelId: string;
+	readonly migrationResult: unknown | undefined;
 
 	/**
 	 * The migration state of the current model.  Note that since we swap out for the new model as soon as migration

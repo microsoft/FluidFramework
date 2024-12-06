@@ -62,12 +62,13 @@ interface MigratableParts {
 export class Migrator implements IMigrator {
 	private readonly _currentMigratable: MigratableParts;
 
-	public get currentMigrationTool(): IMigrationTool {
-		return this._currentMigratable.migrationTool;
+	public get migrationResult(): unknown | undefined {
+		// TODO: Abstract
+		return this._currentMigratable.migrationTool.newContainerId;
 	}
 
-	public get currentModelId(): string {
-		return this._currentMigratable.id;
+	public get currentMigrationTool(): IMigrationTool {
+		return this._currentMigratable.migrationTool;
 	}
 
 	public get migrationState(): MigrationState {

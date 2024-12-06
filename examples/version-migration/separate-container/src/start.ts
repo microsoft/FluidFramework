@@ -126,7 +126,8 @@ async function start(): Promise<void> {
 		container.dispose();
 		// TODO: Load new container
 		renderModel(model, migrator.currentMigrationTool);
-		updateTabForId(migrator.currentModelId);
+		// TODO: Figure out what good casting looks like
+		updateTabForId(migrator.migrationResult as string);
 	});
 	// If the loader doesn't know how to load the container code required for migration, it emits "migrationNotSupported".
 	// For example, this might be hit if another client has a newer loader and proposes a version our

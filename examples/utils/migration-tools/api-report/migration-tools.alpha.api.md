@@ -81,9 +81,9 @@ export interface IMigrationToolEvents extends IEvent {
 
 // @alpha (undocumented)
 export interface IMigrator {
-    readonly currentModelId: string;
     // (undocumented)
     readonly events: IEventProvider<IMigratorEvents>;
+    readonly migrationResult: unknown | undefined;
     readonly migrationState: MigrationState;
 }
 
@@ -134,9 +134,9 @@ export class Migrator implements IMigrator {
     // (undocumented)
     get currentMigrationTool(): IMigrationTool;
     // (undocumented)
-    get currentModelId(): string;
-    // (undocumented)
     get events(): IEventProvider<IMigratorEvents>;
+    // (undocumented)
+    get migrationResult(): unknown | undefined;
     // (undocumented)
     get migrationState(): MigrationState;
 }
