@@ -43,7 +43,7 @@
 		"@fluidframework/odsp-urlresolver": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
-		"express": "^4.21.1",
+		"express": "^4.21.2",
 		"webpack-dev-server": "~4.15.2"
 	},
 	"devDependencies": {
