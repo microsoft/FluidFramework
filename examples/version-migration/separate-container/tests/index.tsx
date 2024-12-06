@@ -5,9 +5,9 @@
 
 import {
 	getModelAndMigrationToolFromContainer,
-	IMigratableModel,
-	IMigrationTool,
-	IVersionedModel,
+	type IMigratableModel,
+	type IMigrator,
+	type IVersionedModel,
 	Migrator,
 	SessionStorageSimpleLoader,
 } from "@fluid-example/migration-tools/internal";
@@ -79,7 +79,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	let appRoot: Root | undefined;
 	let debugRoot: Root | undefined;
 
-	const render = (model: IVersionedModel, migrationTool: IMigrationTool) => {
+	const render = (model: IVersionedModel, migrator: IMigrator) => {
 		// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 		// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 		// view code loader to pull in the view dynamically based on the version we discover.
@@ -88,7 +88,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 				appRoot.unmount();
 			}
 			appRoot = createRoot(appDiv);
-			appRoot.render(createElement(InventoryListAppView, { model, migrationTool }));
+			appRoot.render(createElement(InventoryListAppView, { model, migrator }));
 
 			// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 			if (debugRoot !== undefined) {
@@ -98,7 +98,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 			debugRoot.render(
 				createElement(DebugView, {
 					model,
-					migrationTool,
+					migrator,
 					getUrlForContainerId,
 				}),
 			);
@@ -118,7 +118,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	migrator.events.on("migrated", () => {
 		container.dispose();
 		// TODO: Load new container
-		render(model, migrator.migrationTool);
+		render(model, migrator);
 		// TODO: Figure out what good casting looks like
 		updateTabForId(migrator.migrationResult as string);
 	});
@@ -131,7 +131,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
 	// Render it
-	render(model, migrator.migrationTool);
+	render(model, migrator);
 
 	element.append(appDiv, debugDiv);
 

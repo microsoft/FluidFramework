@@ -5,7 +5,7 @@
 
 import type {
 	IMigratableModel,
-	IMigrationTool,
+	IMigrator,
 	IVersionedModel,
 	Migrator,
 } from "@fluid-example/migration-tools/internal";
@@ -48,7 +48,7 @@ const getUrlForContainerId = (containerId: string): string => `/#${containerId}`
 let appRoot: Root | undefined;
 let debugRoot: Root | undefined;
 
-const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): void => {
+const renderModel = (model: IVersionedModel, migrator: IMigrator): void => {
 	// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 	// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 	// view code loader to pull in the view dynamically based on the version we discover.
@@ -58,7 +58,7 @@ const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): voi
 			appRoot.unmount();
 		}
 		appRoot = createRoot(appDiv);
-		appRoot.render(createElement(InventoryListAppView, { model, migrationTool }));
+		appRoot.render(createElement(InventoryListAppView, { model, migrator }));
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
@@ -69,7 +69,7 @@ const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): voi
 		debugRoot.render(
 			createElement(DebugView, {
 				model,
-				migrationTool,
+				migrator,
 				getUrlForContainerId,
 			}),
 		);
@@ -109,6 +109,7 @@ async function start(): Promise<void> {
 		model = modelAndMigrationTool.model;
 	}
 
+	// TODO: Update stale documentation
 	// The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
 	// the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
 	// It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
@@ -124,7 +125,7 @@ async function start(): Promise<void> {
 	migrator.events.on("migrated", () => {
 		container.dispose();
 		// TODO: Load new container
-		renderModel(model, migrator.migrationTool);
+		renderModel(model, migrator);
 		// TODO: Figure out what good casting looks like
 		updateTabForId(migrator.migrationResult as string);
 	});
@@ -154,7 +155,7 @@ async function start(): Promise<void> {
 	// }
 	// In this demo however, we trigger the proposal through the debug buttons.
 
-	renderModel(model, migrator.migrationTool);
+	renderModel(model, migrator);
 	updateTabForId(id);
 }
 

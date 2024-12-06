@@ -81,16 +81,19 @@ export interface IMigrationToolEvents extends IEvent {
 
 // @alpha (undocumented)
 export interface IMigrator {
+    readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
     // (undocumented)
     readonly events: IEventProvider<IMigratorEvents>;
     readonly migrationResult: unknown | undefined;
     readonly migrationState: MigrationState;
+    readonly proposedVersion: string | undefined;
+    proposeVersion: (newVersion: string) => void;
 }
 
 // @alpha (undocumented)
 export interface IMigratorEvents extends IEvent {
     // (undocumented)
-    (event: "migrated" | "migrating", listener: () => void): any;
+    (event: "stopping" | "migrating" | "migrated", listener: () => void): any;
     // (undocumented)
     (event: "migrationNotSupported", listener: (version: string) => void): any;
 }
@@ -130,6 +133,8 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 export class Migrator implements IMigrator {
     constructor(simpleLoader: ISimpleLoader, migrationTool: IMigrationTool, exportDataCallback: (migrationSequenceNumber: number) => Promise<unknown>, dataTransformationCallback?: DataTransformationCallback | undefined);
     // (undocumented)
+    get acceptedMigration(): IAcceptedMigrationDetails | undefined;
+    // (undocumented)
     get events(): IEventProvider<IMigratorEvents>;
     // (undocumented)
     get migrationResult(): unknown | undefined;
@@ -137,6 +142,10 @@ export class Migrator implements IMigrator {
     get migrationState(): MigrationState;
     // (undocumented)
     readonly migrationTool: IMigrationTool;
+    // (undocumented)
+    get proposedVersion(): string | undefined;
+    // (undocumented)
+    readonly proposeVersion: (newVersion: string) => void;
 }
 
 // @alpha (undocumented)

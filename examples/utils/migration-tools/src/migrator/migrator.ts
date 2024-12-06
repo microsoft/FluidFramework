@@ -8,7 +8,11 @@ import type { IContainer } from "@fluidframework/container-definitions/internal"
 import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { IMigrationTool, MigrationState } from "../migrationTool/index.js";
+import type {
+	IAcceptedMigrationDetails,
+	IMigrationTool,
+	MigrationState,
+} from "../migrationTool/index.js";
 import { type ISimpleLoader } from "../simpleLoader/index.js";
 
 import type {
@@ -62,6 +66,14 @@ export class Migrator implements IMigrator {
 		return this.migrationTool.connected;
 	}
 
+	public get proposedVersion(): string | undefined {
+		return this.migrationTool.proposedVersion;
+	}
+
+	public get acceptedMigration(): IAcceptedMigrationDetails | undefined {
+		return this.migrationTool.acceptedMigration;
+	}
+
 	private readonly _events = new TypedEventEmitter<IMigratorEvents>();
 	public get events(): IEventProvider<IMigratorEvents> {
 		return this._events;
@@ -94,8 +106,16 @@ export class Migrator implements IMigrator {
 		private readonly exportDataCallback: (migrationSequenceNumber: number) => Promise<unknown>,
 		private readonly dataTransformationCallback?: DataTransformationCallback,
 	) {
+		// TODO: Think about matching events between tool and migrator
+		this.migrationTool.events.on("stopping", () => {
+			this._events.emit("stopping");
+		});
 		this.takeAppropriateActionForCurrentMigratable();
 	}
+
+	public readonly proposeVersion = (newVersion: string): void => {
+		this.migrationTool.proposeVersion(newVersion);
+	};
 
 	/**
 	 * This method makes no assumptions about the state of the current migratable - this is particularly important
@@ -113,6 +133,7 @@ export class Migrator implements IMigrator {
 				this.takeAppropriateActionForCurrentMigratable,
 			);
 		}
+		// Do nothing if already migrated
 	};
 
 	private readonly ensureMigrating = (): void => {
@@ -271,6 +292,7 @@ export class Migrator implements IMigrator {
 			.then(() => {
 				// We assume that if we resolved that either the migration was completed or we disconnected.
 				// In either case, we should re-enter the state machine to take the appropriate action.
+				this._migrationP = undefined;
 				if (this.connected) {
 					// We assume if we are still connected after exiting the loop, then we should be in the "migrated"
 					// state. The following assert validates this assumption.
@@ -278,8 +300,8 @@ export class Migrator implements IMigrator {
 						this.migrationTool.newContainerId !== undefined,
 						"newContainerId should be defined",
 					);
+					this._events.emit("migrated");
 				}
-				this._migrationP = undefined;
 				this.takeAppropriateActionForCurrentMigratable();
 			})
 			.catch(console.error);

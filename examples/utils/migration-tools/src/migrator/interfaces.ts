@@ -5,7 +5,7 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
-import type { MigrationState } from "../migrationTool/index.js";
+import type { IAcceptedMigrationDetails, MigrationState } from "../migrationTool/index.js";
 
 // #region IMigratableModel
 
@@ -85,7 +85,7 @@ export type DataTransformationCallback = (
  * @alpha
  */
 export interface IMigratorEvents extends IEvent {
-	(event: "migrated" | "migrating", listener: () => void);
+	(event: "stopping" | "migrating" | "migrated", listener: () => void);
 	(event: "migrationNotSupported", listener: (version: string) => void);
 }
 
@@ -105,4 +105,20 @@ export interface IMigrator {
 	 * completes, we'll only ever see this as collaborating or migrating, never migrated.
 	 */
 	readonly migrationState: MigrationState;
+
+	/**
+	 * The version string of the proposed new version to use, if one has been proposed.
+	 */
+	readonly proposedVersion: string | undefined;
+
+	/**
+	 * The details of the accepted migration, if one has been accepted.
+	 */
+	readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
+
+	/**
+	 * Propose a new version to use.
+	 * @param newVersion - the version string
+	 */
+	proposeVersion: (newVersion: string) => void;
 }
