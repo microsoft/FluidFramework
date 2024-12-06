@@ -96,12 +96,6 @@ export interface IMigrator {
 	readonly events: IEventProvider<IMigratorEvents>;
 
 	/**
-	 * The currently monitored migratable model.  As the Migrator completes a migration, it will swap in the new
-	 * migrated model and emit a "migrated" event.
-	 */
-	readonly currentModel: IMigratableModel;
-
-	/**
 	 * The container id of the current model.
 	 */
 	readonly currentModelId: string;

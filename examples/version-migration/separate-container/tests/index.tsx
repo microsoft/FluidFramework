@@ -37,6 +37,9 @@ const isIInventoryListAppModel = (
 
 const getUrlForContainerId = (containerId: string) => `/#${containerId}`;
 
+// Store the top-level containers on the window so our tests can more easily observe the migration happening
+// eslint-disable-next-line @typescript-eslint/dot-notation
+window["containers"] = [];
 // Store the migrators on the window so our tests can more easily observe the migration happening
 // eslint-disable-next-line @typescript-eslint/dot-notation
 window["migrators"] = [];
@@ -116,11 +119,12 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	migrator.events.on("migrated", () => {
 		container.dispose();
 		// TODO: Load new container
-		model = migrator.currentModel;
 		render(model, migrator.currentMigrationTool);
 		updateTabForId(migrator.currentModelId);
 	});
 
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	window["containers"].push(container);
 	// eslint-disable-next-line @typescript-eslint/dot-notation
 	window["migrators"].push(migrator);
 

@@ -61,9 +61,6 @@ interface MigratableParts {
  */
 export class Migrator implements IMigrator {
 	private readonly _currentMigratable: MigratableParts;
-	public get currentModel(): IMigratableModel {
-		return this._currentMigratable.model;
-	}
 
 	public get currentMigrationTool(): IMigrationTool {
 		return this._currentMigratable.migrationTool;

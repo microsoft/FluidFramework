@@ -125,7 +125,6 @@ async function start(): Promise<void> {
 	migrator.events.on("migrated", () => {
 		container.dispose();
 		// TODO: Load new container
-		model = migrator.currentModel;
 		renderModel(model, migrator.currentMigrationTool);
 		updateTabForId(migrator.currentModelId);
 	});

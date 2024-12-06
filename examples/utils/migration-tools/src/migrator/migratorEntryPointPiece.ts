@@ -57,6 +57,7 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 			container: IContainer,
 			dataTransformationCallback?: DataTransformationCallback,
 		) => {
+			console.log(container.getSpecifiedCodeDetails());
 			const migrationTool = (await getDataStoreEntryPoint(
 				runtime,
 				migrationToolId,
