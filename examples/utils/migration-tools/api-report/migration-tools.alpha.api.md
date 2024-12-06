@@ -53,33 +53,6 @@ export interface IMigratableModel extends IVersionedModel, IImportExportModel<un
 }
 
 // @alpha (undocumented)
-export interface IMigrationTool {
-    readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
-    completeMigrationTask(): void;
-    // (undocumented)
-    readonly connected: boolean;
-    // (undocumented)
-    readonly events: IEventProvider<IMigrationToolEvents>;
-    finalizeMigration(id: string): Promise<void>;
-    haveMigrationTask(): boolean;
-    readonly migrationState: MigrationState;
-    readonly newContainerId: string | undefined;
-    readonly proposedVersion: string | undefined;
-    proposeVersion: (newVersion: string) => void;
-    volunteerForMigration(): Promise<boolean>;
-}
-
-// @alpha (undocumented)
-export interface IMigrationToolEvents extends IEvent {
-    // (undocumented)
-    (event: "stopping" | "migrating" | "migrated", listener: () => void): any;
-    // (undocumented)
-    (event: "connected" | "disconnected", listener: () => void): any;
-    // (undocumented)
-    (event: "disposed", listener: () => void): any;
-}
-
-// @alpha (undocumented)
 export interface IMigrator {
     readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
     // (undocumented)
@@ -118,35 +91,6 @@ export const loadCompositeRuntime: (context: IContainerContext, existing: boolea
 
 // @alpha
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
-
-// @alpha (undocumented)
-export class MigrationToolFactory implements IFluidDataStoreFactory {
-    // (undocumented)
-    get IFluidDataStoreFactory(): IFluidDataStoreFactory;
-    // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
-    // (undocumented)
-    get type(): string;
-}
-
-// @alpha
-export class Migrator implements IMigrator {
-    constructor(simpleLoader: ISimpleLoader, migrationTool: IMigrationTool, exportDataCallback: (migrationSequenceNumber: number) => Promise<unknown>, dataTransformationCallback?: DataTransformationCallback | undefined);
-    // (undocumented)
-    get acceptedMigration(): IAcceptedMigrationDetails | undefined;
-    // (undocumented)
-    get events(): IEventProvider<IMigratorEvents>;
-    // (undocumented)
-    get migrationResult(): unknown | undefined;
-    // (undocumented)
-    get migrationState(): MigrationState;
-    // (undocumented)
-    readonly migrationTool: IMigrationTool;
-    // (undocumented)
-    get proposedVersion(): string | undefined;
-    // (undocumented)
-    readonly proposeVersion: (newVersion: string) => void;
-}
 
 // @alpha (undocumented)
 export const migratorEntryPointPiece: IEntryPointPiece;

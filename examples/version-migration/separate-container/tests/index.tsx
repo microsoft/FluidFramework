@@ -8,7 +8,6 @@ import {
 	type IMigratableModel,
 	type IMigrator,
 	type IVersionedModel,
-	Migrator,
 	SessionStorageSimpleLoader,
 } from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
@@ -109,7 +108,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 
 	const entryPoint = await container.getEntryPoint();
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-	const migrator: Migrator = await (entryPoint as any).getMigrator(
+	const migrator: IMigrator = await (entryPoint as any).getMigrator(
 		loader,
 		id,
 		container,

@@ -16,10 +16,7 @@ export {
 } from "./compositeRuntime/index.js";
 export {
 	IAcceptedMigrationDetails,
-	IMigrationTool,
-	IMigrationToolEvents,
 	MigrationState,
-	MigrationToolFactory,
 } from "./migrationTool/index.js";
 export {
 	DataTransformationCallback,
@@ -29,7 +26,6 @@ export {
 	IMigrator,
 	IMigratorEvents,
 	IVersionedModel,
-	Migrator,
 	migratorEntryPointPiece,
 } from "./migrator/index.js";
 export {
