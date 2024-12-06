@@ -91,7 +91,7 @@ export class Migrator implements IMigrator {
 		private readonly simpleLoader: ISimpleLoader,
 		// TODO: Make private
 		public readonly migrationTool: IMigrationTool,
-		private readonly exportData: (migrationSequenceNumber: number) => Promise<unknown>,
+		private readonly exportDataCallback: (migrationSequenceNumber: number) => Promise<unknown>,
 		private readonly dataTransformationCallback?: DataTransformationCallback,
 	) {
 		this.takeAppropriateActionForCurrentMigratable();
@@ -171,7 +171,9 @@ export class Migrator implements IMigrator {
 					);
 				const migratedModel = detachedModel;
 
-				const exportedData = await this.exportData(acceptedMigration.migrationSequenceNumber);
+				const exportedData = await this.exportDataCallback(
+					acceptedMigration.migrationSequenceNumber,
+				);
 
 				// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
 				// exported data into a format that the new model can import?  If we can determine it early, then

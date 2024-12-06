@@ -128,7 +128,7 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 
 // @alpha
 export class Migrator implements IMigrator {
-    constructor(simpleLoader: ISimpleLoader, migrationTool: IMigrationTool, exportData: (migrationSequenceNumber: number) => Promise<unknown>, dataTransformationCallback?: DataTransformationCallback | undefined);
+    constructor(simpleLoader: ISimpleLoader, migrationTool: IMigrationTool, exportDataCallback: (migrationSequenceNumber: number) => Promise<unknown>, dataTransformationCallback?: DataTransformationCallback | undefined);
     // (undocumented)
     get events(): IEventProvider<IMigratorEvents>;
     // (undocumented)

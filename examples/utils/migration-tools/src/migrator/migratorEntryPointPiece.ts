@@ -61,7 +61,7 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 				runtime,
 				migrationToolId,
 			)) as IMigrationTool;
-			const exportData = async (migrationSequenceNumber: number): Promise<unknown> => {
+			const exportDataCallback = async (migrationSequenceNumber: number): Promise<unknown> => {
 				// Here we load the model to at least the acceptance sequence number and export.  We do this with a
 				// separately loaded model to ensure we don't include any local un-ack'd changes.  Late-arriving messages
 				// may or may not make it into the migrated data, there is no guarantee either way.
@@ -78,7 +78,7 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 			const migrator = new Migrator(
 				loader,
 				migrationTool,
-				exportData,
+				exportDataCallback,
 				dataTransformationCallback,
 			);
 			return migrator;
