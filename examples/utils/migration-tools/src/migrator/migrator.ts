@@ -33,18 +33,14 @@ export const getModelAndMigrationToolFromContainer = async <ModelType>(
 ): Promise<{ model: ModelType }> => {
 	// TODO: Fix typing here
 	const entryPoint = (await container.getEntryPoint()) as {
-		getModel: (container: IContainer) => Promise<ModelType>;
+		model: ModelType;
 	};
 	// If the user tries to use this model loader with an incompatible container runtime, we want to give them
 	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
-	if (typeof entryPoint.getModel !== "function") {
-		throw new TypeError("Incompatible container runtime: doesn't provide getModel");
-	}
-	const model = await entryPoint.getModel(container);
-	if (typeof model !== "object") {
+	if (typeof entryPoint.model !== "object") {
 		throw new TypeError("Incompatible container runtime: doesn't provide model");
 	}
-	return { model };
+	return { model: entryPoint.model };
 };
 
 /**
