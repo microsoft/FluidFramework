@@ -5,7 +5,6 @@
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	type ITestObjectProvider,
@@ -46,14 +45,6 @@ describeCompat("Wait for summary", "NoCompat", (getTestObjectProvider, apis) => 
 		const testContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
-			runtimeOptions: {
-				chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
-				compressionOptions: {
-					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-					compressionAlgorithm: CompressionAlgorithms.lz4,
-				},
-				enableRuntimeIdCompressor: "on",
-			},
 		};
 
 		const loader = provider.makeTestLoader(testContainerConfig);
