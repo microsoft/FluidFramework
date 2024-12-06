@@ -129,7 +129,7 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 
 // @alpha
 export class Migrator implements IMigrator {
-    constructor(simpleLoader: ISimpleLoader, initialMigratable: IMigratableModel, initialMigrationTool: IMigrationTool, initialId: string, dataTransformationCallback?: DataTransformationCallback | undefined);
+    constructor(simpleLoader: ISimpleLoader, initialMigratable: IMigratableModel, initialMigrationTool: IMigrationTool, initialId: string, exportData: (migrationSequenceNumber: number) => Promise<unknown>, dataTransformationCallback?: DataTransformationCallback | undefined);
     // (undocumented)
     get connected(): boolean;
     // (undocumented)

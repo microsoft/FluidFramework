@@ -9,7 +9,7 @@ import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { IMigrationTool, MigrationState } from "../migrationTool/index.js";
-import { type ISimpleLoader, waitForAtLeastSequenceNumber } from "../simpleLoader/index.js";
+import { type ISimpleLoader } from "../simpleLoader/index.js";
 
 import type {
 	DataTransformationCallback,
@@ -111,6 +111,7 @@ export class Migrator implements IMigrator {
 		initialMigratable: IMigratableModel,
 		initialMigrationTool: IMigrationTool,
 		initialId: string,
+		private readonly exportData: (migrationSequenceNumber: number) => Promise<unknown>,
 		private readonly dataTransformationCallback?: DataTransformationCallback,
 	) {
 		this._currentMigratable = {
@@ -195,20 +196,7 @@ export class Migrator implements IMigrator {
 					);
 				const migratedModel = detachedModel;
 
-				// Here we load the model to at least the acceptance sequence number and export.  We do this with a
-				// separately loaded model to ensure we don't include any local un-ack'd changes.  Late-arriving messages
-				// may or may not make it into the migrated data, there is no guarantee either way.
-				// TODO: Consider making this a read-only client
-				const container = await this.simpleLoader.loadExisting(this.currentModelId);
-				await waitForAtLeastSequenceNumber(
-					container,
-					acceptedMigration.migrationSequenceNumber,
-				);
-				// TODO: verify IMigratableModel
-				const { model: exportModel } =
-					await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
-				const exportedData = await exportModel.exportData();
-				container.dispose();
+				const exportedData = await this.exportData(acceptedMigration.migrationSequenceNumber);
 
 				// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
 				// exported data into a format that the new model can import?  If we can determine it early, then
