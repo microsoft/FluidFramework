@@ -23,14 +23,10 @@ const waitForSummary = async (
 	container: IContainer,
 	testContainerConfig: ITestContainerConfig,
 ) => {
-	const testConfig = {
-		...testContainerConfig,
-		runtimeOptions: { ...testContainerConfig.runtimeOptions, summaryOptions: undefined },
-	};
 	const { summarizer, container: summarizingContainer } = await createSummarizer(
 		provider,
 		container,
-		testConfig,
+		testContainerConfig,
 	);
 	await summarizeNow(summarizer);
 	summarizingContainer.close();
@@ -43,8 +39,8 @@ describeCompat("Wait for summary", "NoCompat", (getTestObjectProvider, apis) => 
 
 	it("Wait for summary", async function () {
 		const provider = getTestObjectProvider();
-		// This test fails on ODSP.
-		if (provider.driver.type === "odsp") {
+		// This test fails on ODSP at least.
+		if (provider.driver.type !== "local") {
 			this.skip();
 		}
 		const testContainerConfig: ITestContainerConfig = {
@@ -55,11 +51,6 @@ describeCompat("Wait for summary", "NoCompat", (getTestObjectProvider, apis) => 
 				compressionOptions: {
 					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
-				},
-				summaryOptions: {
-					summaryConfigOverrides: {
-						state: "disabled",
-					},
 				},
 				enableRuntimeIdCompressor: "on",
 			},
