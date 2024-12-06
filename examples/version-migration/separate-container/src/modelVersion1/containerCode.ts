@@ -6,7 +6,7 @@
 import {
 	CompositeEntryPoint,
 	loadCompositeRuntime,
-	migrationToolEntryPointPiece,
+	migratorEntryPointPiece,
 } from "@fluid-example/migration-tools/internal";
 import type {
 	IContainerContext,
@@ -46,7 +46,7 @@ export class InventoryListContainerRuntimeFactory implements IRuntimeFactory {
 	): Promise<IRuntime> {
 		const compositeEntryPoint = new CompositeEntryPoint();
 		compositeEntryPoint.addEntryPointPiece(modelEntryPointPiece);
-		compositeEntryPoint.addEntryPointPiece(migrationToolEntryPointPiece);
+		compositeEntryPoint.addEntryPointPiece(migratorEntryPointPiece);
 		return loadCompositeRuntime(context, existing, compositeEntryPoint, this.runtimeOptions);
 	}
 }

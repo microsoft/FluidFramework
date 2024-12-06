@@ -30,11 +30,10 @@ import type {
  */
 export const getModelAndMigrationToolFromContainer = async <ModelType>(
 	container: IContainer,
-): Promise<{ model: ModelType; migrationTool: IMigrationTool }> => {
+): Promise<{ model: ModelType }> => {
 	// TODO: Fix typing here
 	const entryPoint = (await container.getEntryPoint()) as {
 		getModel: (container: IContainer) => Promise<ModelType>;
-		migrationTool: IMigrationTool;
 	};
 	// If the user tries to use this model loader with an incompatible container runtime, we want to give them
 	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
@@ -45,10 +44,7 @@ export const getModelAndMigrationToolFromContainer = async <ModelType>(
 	if (typeof model !== "object") {
 		throw new TypeError("Incompatible container runtime: doesn't provide model");
 	}
-	if (typeof entryPoint.migrationTool !== "object") {
-		throw new TypeError("Incompatible container runtime: doesn't provide migrationTool");
-	}
-	return { model, migrationTool: entryPoint.migrationTool };
+	return { model };
 };
 
 /**
@@ -68,7 +64,7 @@ interface MigratableParts {
  * @alpha
  */
 export class Migrator implements IMigrator {
-	private _currentMigratable: MigratableParts;
+	private readonly _currentMigratable: MigratableParts;
 	public get currentModel(): IMigratableModel {
 		return this._currentMigratable.model;
 	}
@@ -99,12 +95,6 @@ export class Migrator implements IMigrator {
 	 * _migratedLoadP promise.
 	 */
 	private _migrationP: Promise<void> | undefined;
-
-	/**
-	 * If loading the migrated container is in progress, the promise that will resolve when it completes.  Mutually
-	 * exclusive with _migrationP promise.
-	 */
-	private _migratedLoadP: Promise<void> | undefined;
 
 	// TODO: Better typing, decide if we can just retain attach()
 	/**
@@ -145,9 +135,7 @@ export class Migrator implements IMigrator {
 		const migrationState = this.currentMigrationTool.migrationState;
 		if (migrationState === "migrating") {
 			this.ensureMigrating();
-		} else if (migrationState === "migrated") {
-			this.ensureLoading();
-		} else {
+		} else if (migrationState === "collaborating" || migrationState === "stopping") {
 			this.currentMigrationTool.events.once(
 				"migrating",
 				this.takeAppropriateActionForCurrentMigratable,
@@ -171,10 +159,6 @@ export class Migrator implements IMigrator {
 
 		if (this._migrationP !== undefined) {
 			return;
-		}
-
-		if (this._migratedLoadP !== undefined) {
-			throw new Error("Cannot perform migration, we are currently trying to load");
 		}
 
 		const migrationTool = this.currentMigrationTool;
@@ -338,64 +322,5 @@ export class Migrator implements IMigrator {
 				this.takeAppropriateActionForCurrentMigratable();
 			})
 			.catch(console.error);
-	};
-
-	private readonly ensureLoading = (): void => {
-		// We assume ensureLoading() is called a single time after we reach the "migrated" state.
-
-		if (this._migratedLoadP !== undefined) {
-			return;
-		}
-
-		if (this._migrationP !== undefined) {
-			throw new Error("Cannot start loading the migrated before migration is complete");
-		}
-
-		const migrationTool = this.currentMigrationTool;
-		const acceptedMigration = migrationTool.acceptedMigration;
-		if (acceptedMigration === undefined) {
-			throw new Error("Expect an accepted version before migration starts");
-		}
-
-		const migratedId = migrationTool.newContainerId;
-		if (migratedId === undefined) {
-			throw new Error("Migration ended without a new container being created");
-		}
-
-		const doTheLoad = async (): Promise<void> => {
-			// doTheLoad() should only be called once. It will resolve once we complete loading.
-
-			const migrationSupported = await this.simpleLoader.supportsVersion(
-				acceptedMigration.newVersion,
-			);
-			if (!migrationSupported) {
-				this._events.emit("migrationNotSupported", acceptedMigration.newVersion);
-				this._migratedLoadP = undefined;
-				return;
-			}
-			const migratedContainer = await this.simpleLoader.loadExisting(migratedId);
-			const { model: migratedModel, migrationTool: migratedMigrationTool } =
-				await getModelAndMigrationToolFromContainer<IMigratableModel>(migratedContainer);
-			// Note: I'm choosing not to dispose the old migratable here, and instead allow the lifecycle management
-			// of the migratable to be the responsibility of whoever created the Migrator (and handed it its first
-			// migratable).  It could also be fine to dispose here, just need to have an explicit contract to clarify
-			// who is responsible for managing that.
-			this._currentMigratable = {
-				model: migratedModel,
-				migrationTool: migratedMigrationTool,
-				id: migratedId,
-			};
-			this._events.emit("migrated", migratedModel, migratedId);
-			this._migratedLoadP = undefined;
-
-			// Reset retry values
-			this._preparedDetachedModel = undefined;
-			this._preparedModelId = undefined;
-
-			// Only once we've completely finished with the old migratable, start on the new one.
-			this.takeAppropriateActionForCurrentMigratable();
-		};
-
-		this._migratedLoadP = doTheLoad().catch(console.error);
 	};
 }

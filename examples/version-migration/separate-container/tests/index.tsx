@@ -11,6 +11,7 @@ import {
 	Migrator,
 	SessionStorageSimpleLoader,
 } from "@fluid-example/migration-tools/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -49,25 +50,24 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	const testMode = searchParams.get("testMode") !== null;
 	const loader = new SessionStorageSimpleLoader(new DemoCodeLoader(testMode));
 	let id: string;
+	let container: IContainer;
 	let model: IMigratableModel;
-	let migrationTool: IMigrationTool;
 
 	if (location.hash.length === 0) {
 		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
 		// Normally we would create with the most-recent version.
-		const { container, attach } = await loader.createDetached("one");
+		const createDetachedResult = await loader.createDetached("one");
+		container = createDetachedResult.container;
 		const modelAndMigrationTool =
 			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
 		model = modelAndMigrationTool.model;
-		migrationTool = modelAndMigrationTool.migrationTool;
-		id = await attach();
+		id = await createDetachedResult.attach();
 	} else {
 		id = location.hash.slice(1);
-		const container = await loader.loadExisting(id);
+		container = await loader.loadExisting(id);
 		const modelAndMigrationTool =
 			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
 		model = modelAndMigrationTool.model;
-		migrationTool = modelAndMigrationTool.migrationTool;
 	}
 
 	const appDiv = document.createElement("div");
@@ -104,18 +104,19 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		}
 	};
 
-	const migrator = new Migrator(
+	const entryPoint = await container.getEntryPoint();
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+	const migrator: Migrator = await (entryPoint as any).getMigrator(
 		loader,
 		model,
-		migrationTool,
 		id,
+		container,
 		inventoryListDataTransformationCallback,
 	);
 	migrator.events.on("migrated", () => {
 		model.dispose();
 		model = migrator.currentModel;
-		migrationTool = migrator.currentMigrationTool;
-		render(model, migrationTool);
+		render(model, migrator.currentMigrationTool);
 		updateTabForId(migrator.currentModelId);
 	});
 
@@ -125,7 +126,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
 	// Render it
-	render(model, migrationTool);
+	render(model, migrator.currentMigrationTool);
 
 	element.append(appDiv, debugDiv);
 

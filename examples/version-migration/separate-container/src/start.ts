@@ -7,12 +7,13 @@ import type {
 	IMigratableModel,
 	IMigrationTool,
 	IVersionedModel,
+	Migrator,
 } from "@fluid-example/migration-tools/internal";
 import {
 	getModelAndMigrationToolFromContainer,
-	Migrator,
 	SimpleLoader,
 } from "@fluid-example/migration-tools/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,
@@ -88,43 +89,43 @@ async function start(): Promise<void> {
 	});
 
 	let id: string;
+	let container: IContainer;
 	let model: IMigratableModel;
-	let migrationTool: IMigrationTool;
 
 	if (location.hash.length === 0) {
 		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
 		// Normally we would create with the most-recent version.
-		const { container, attach } = await loader.createDetached("one");
+		const createDetachedResult = await loader.createDetached("one");
+		container = createDetachedResult.container;
 		const modelAndMigrationTool =
 			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
 		model = modelAndMigrationTool.model;
-		migrationTool = modelAndMigrationTool.migrationTool;
-		id = await attach();
+		id = await createDetachedResult.attach();
 	} else {
 		id = location.hash.slice(1);
-		const container = await loader.loadExisting(id);
+		container = await loader.loadExisting(id);
 		const modelAndMigrationTool =
 			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
 		model = modelAndMigrationTool.model;
-		migrationTool = modelAndMigrationTool.migrationTool;
 	}
 
 	// The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
 	// the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
 	// It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
 	// import with newly created models.
-	const migrator = new Migrator(
+	const entryPoint = await container.getEntryPoint();
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+	const migrator: Migrator = await (entryPoint as any).getMigrator(
 		loader,
 		model,
-		migrationTool,
 		id,
+		container,
 		inventoryListDataTransformationCallback,
 	);
 	migrator.events.on("migrated", () => {
 		model.dispose();
 		model = migrator.currentModel;
-		migrationTool = migrator.currentMigrationTool;
-		renderModel(model, migrationTool);
+		renderModel(model, migrator.currentMigrationTool);
 		updateTabForId(migrator.currentModelId);
 	});
 	// If the loader doesn't know how to load the container code required for migration, it emits "migrationNotSupported".
@@ -153,7 +154,7 @@ async function start(): Promise<void> {
 	// }
 	// In this demo however, we trigger the proposal through the debug buttons.
 
-	renderModel(model, migrationTool);
+	renderModel(model, migrator.currentMigrationTool);
 	updateTabForId(id);
 }
 

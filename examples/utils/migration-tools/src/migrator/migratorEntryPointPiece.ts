@@ -11,10 +11,10 @@ import type { IEntryPointPiece } from "../compositeRuntime/index.js";
 import { MigrationToolFactory, type IMigrationTool } from "../migrationTool/index.js";
 import type { ISimpleLoader } from "../simpleLoader/index.js";
 
-import type { IMigratableModel } from "./interfaces.js";
+import type { DataTransformationCallback, IMigratableModel } from "./interfaces.js";
 import { Migrator } from "./migrator.js";
 
-const migratorEntryPointPieceName = "migrationTool";
+const migratorEntryPointPieceName = "getMigrator";
 
 const migrationToolRegistryKey = "migration-tool";
 const migrationToolFactory = new MigrationToolFactory();
@@ -55,12 +55,19 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 			initialMigratable: IMigratableModel,
 			initialId: string,
 			container: IContainer,
+			dataTransformationCallback?: DataTransformationCallback,
 		) => {
 			const migrationTool = (await getDataStoreEntryPoint(
 				runtime,
 				migrationToolId,
 			)) as IMigrationTool;
-			const migrator = new Migrator(loader, initialMigratable, migrationTool, initialId);
+			const migrator = new Migrator(
+				loader,
+				initialMigratable,
+				migrationTool,
+				initialId,
+				dataTransformationCallback,
+			);
 			return migrator;
 		};
 	},
