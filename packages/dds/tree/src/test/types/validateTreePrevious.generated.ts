@@ -508,6 +508,7 @@ declare type old_as_current_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedT
  * typeValidation.broken:
  * "TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes = requireAssignableTo<TypeOnly<current.InsertableTreeNodeFromImplicitAllowedTypes<never>>, TypeOnly<old.InsertableTreeNodeFromImplicitAllowedTypes<never>>>
 
 /*
