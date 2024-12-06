@@ -14,8 +14,8 @@ import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
-	SummarizerStopReason,
 } from "@fluidframework/container-runtime/internal";
+import type { SummarizerStopReason } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,

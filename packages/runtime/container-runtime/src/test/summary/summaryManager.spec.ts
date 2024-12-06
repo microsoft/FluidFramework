@@ -7,6 +7,10 @@ import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
+	ISummarizerEvents,
+	SummarizerStopReason,
+} from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
@@ -25,14 +29,12 @@ import {
 	ISummarizer,
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
-	ISummarizerEvents,
 	ISummarizerRuntime,
 	ISummaryManagerConfig,
 	ISummaryOpMessage,
 	RunningSummarizer,
 	SummarizeHeuristicData,
 	Summarizer,
-	SummarizerStopReason,
 	SummaryCollection,
 	SummaryManager,
 	SummaryManagerState,
