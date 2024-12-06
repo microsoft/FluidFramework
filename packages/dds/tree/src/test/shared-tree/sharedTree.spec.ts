@@ -1554,8 +1554,11 @@ describe("SharedTree", () => {
 			otherLoadedView.root.insertAtStart("d");
 			await provider.ensureSynchronized();
 
-			const loader = provider.makeTestLoader();
-			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const loadedContainer = await provider.loadTestContainer(
+				undefined,
+				undefined,
+				pendingOps,
+			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<SharedTree>("TestSharedTree");
 			const view = tree.viewWith(
@@ -1850,8 +1853,11 @@ describe("SharedTree", () => {
 			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
-			const loader = provider.makeTestLoader();
-			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const loadedContainer = await provider.loadTestContainer(
+				undefined,
+				undefined,
+				pendingOps,
+			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);

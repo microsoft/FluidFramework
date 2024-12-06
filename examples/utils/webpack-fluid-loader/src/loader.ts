@@ -11,7 +11,12 @@ import {
 	IFluidModule,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	rehydrateDetachedContainer,
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IUser } from "@fluidframework/driver-definitions";
@@ -112,14 +117,14 @@ function makeSideBySideDiv(divId: string) {
 /**
  * Create a loader with WebCodeLoader and return it.
  */
-async function createWebLoader(
+async function createLoaderProps(
 	documentId: string,
 	fluidModule: IFluidModule,
 	options: RouteOptions,
 	urlResolver: InsecureUrlResolver | OdspUrlResolver | LocalResolver,
 	testOrderer: boolean = false,
 	odspPersistantCache?: IPersistedCache,
-): Promise<Loader> {
+): Promise<ILoaderProps> {
 	const odspHostStoragePolicy: HostStoragePolicy = {};
 	if (window.location.hash === "#binarySnapshot") {
 		assert(
@@ -158,11 +163,11 @@ async function createWebLoader(
 		throw new Error("Couldn't find the factory");
 	}
 
-	return new Loader({
+	return {
 		urlResolver: testOrderer ? new LocalResolver() : urlResolver,
 		documentServiceFactory,
 		codeLoader: new StaticCodeLoader(runtimeFactory),
-	});
+	};
 }
 
 export async function start(
@@ -196,7 +201,7 @@ export async function start(
 	const odspPersistantCache = new OdspPersistentCache();
 
 	// Create the loader that is used to load the Container.
-	const loader1 = await createWebLoader(
+	const loaderProps1 = await createLoaderProps(
 		documentId,
 		fluidModule,
 		options,
@@ -208,7 +213,7 @@ export async function start(
 	let container1: IContainer;
 	if (autoAttach || manualAttach) {
 		// For new documents, create a detached container which will be attached later.
-		container1 = await loader1.createDetachedContainer(codeDetails);
+		container1 = await createDetachedContainer({ ...loaderProps1, codeDetails });
 	} else {
 		// For existing documents, we try to load the container with the given documentId.
 		const documentUrl = `${window.location.origin}/${documentId}`;
@@ -236,9 +241,12 @@ export async function start(
 		}
 		// This is just to replicate what apps do while loading which is to load the container in paused state and not load
 		// delta stream within the critical load flow.
-		container1 = await loader1.resolve({
-			url: documentUrl,
-			headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+		container1 = await loadExistingContainer({
+			...loaderProps1,
+			request: {
+				url: documentUrl,
+				headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+			},
 		});
 		container1.connect();
 	}
@@ -263,7 +271,7 @@ export async function start(
 	// We have rendered the Fluid object. If the container is detached, attach it now.
 	if (container1.attachState === AttachState.Detached) {
 		container1 = await attachContainer(
-			loader1,
+			loaderProps1,
 			container1,
 			fluidObjectUrl,
 			urlResolver,
@@ -281,7 +289,7 @@ export async function start(
 	// For side by side mode, we need to create a second container and Fluid object.
 	if (rightDiv !== undefined) {
 		// Create a new loader that is used to load the second container.
-		const loader2 = await createWebLoader(
+		const loaderProps2 = await createLoaderProps(
 			documentId,
 			fluidModule,
 			options,
@@ -295,7 +303,10 @@ export async function start(
 			0x31b /* container1.resolvedUrl is undefined */,
 		);
 		const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
-		const container2 = await loader2.resolve({ url: requestUrl2 });
+		const container2 = await loadExistingContainer({
+			...loaderProps2,
+			request: { url: requestUrl2 },
+		});
 
 		await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
 	}
@@ -349,7 +360,7 @@ async function getFluidObjectAndRender(
  * is clicked. Otherwise, it attaches the container right away.
  */
 async function attachContainer(
-	loader: Loader,
+	loaderProps: ILoaderProps,
 	container: IContainer,
 	fluidObjectUrl: string,
 	urlResolver: InsecureUrlResolver | OdspUrlResolver | LocalResolver,
@@ -419,7 +430,10 @@ async function attachContainer(
 			summaryList.appendChild(listItem);
 			rehydrateButton.onclick = async () => {
 				const snapshot = summaryList.value;
-				currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+				currentContainer = await rehydrateDetachedContainer({
+					...loaderProps,
+					serializedState: snapshot,
+				});
 				const newLeftDiv =
 					rightDiv !== undefined ? makeSideBySideDiv(uuid()) : document.createElement("div");
 				currentLeftDiv.replaceWith(newLeftDiv);
