@@ -31,6 +31,7 @@ export {
 	IMigratorEvents,
 	IVersionedModel,
 	Migrator,
+	migratorEntryPointPiece,
 } from "./migrator/index.js";
 export {
 	ISimpleLoader,

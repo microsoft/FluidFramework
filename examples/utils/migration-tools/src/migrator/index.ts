@@ -15,3 +15,4 @@ export {
 	getModelAndMigrationToolFromContainer,
 	Migrator,
 } from "./migrator.js";
+export { migratorEntryPointPiece } from "./migratorEntryPointPiece.js";

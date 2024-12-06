@@ -149,6 +149,9 @@ export class Migrator implements IMigrator {
 }
 
 // @alpha (undocumented)
+export const migratorEntryPointPiece: IEntryPointPiece;
+
+// @alpha (undocumented)
 export class SessionStorageSimpleLoader implements ISimpleLoader {
     constructor(codeLoader: ICodeDetailsLoader, logger?: ITelemetryBaseLogger | undefined);
     // (undocumented)
