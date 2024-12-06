@@ -236,19 +236,6 @@ export function configureWebSocketServices(
 				return;
 			}
 
-			if (isNetworkCheck) {
-				const networkError = await checkNetworkInformation(tenantManager, socket);
-				if (networkError.shouldConnect) {
-					const nackMessage = createNackMessage(
-						404,
-						NackErrorType.BadRequestError,
-						networkError.message,
-					);
-					socket.emit("nack", "", [nackMessage]);
-					return;
-				}
-			}
-
 			const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);
 			const driverVersion: string | undefined = userAgentInfo.driverVersion;
 			const baseLumberjackProperties = getLumberBaseProperties(
@@ -264,6 +251,29 @@ export function configureWebSocketServices(
 				[CommonProperties.roomClients]: JSON.stringify([...roomMap.keys()]),
 				[BaseTelemetryProperties.correlationId]: correlationId,
 			};
+
+			if (isNetworkCheck) {
+				Lumberjack.info(
+					`Come to isNetworkCheck: ${isNetworkCheck}`,
+					baseLumberjackProperties,
+				);
+				const networkError = await checkNetworkInformation(tenantManager, socket);
+				if (!networkError.shouldConnect) {
+					const nackMessage = createNackMessage(
+						404,
+						NackErrorType.BadRequestError,
+						networkError.message,
+					);
+					const error = new NetworkError(404, "socket private link check failed");
+					Lumberjack.warning(
+						"socket private link check failed",
+						baseLumberjackProperties,
+						error,
+					);
+					socket.emit("nack", "", [nackMessage]);
+					return;
+				}
+			}
 
 			connectDocumentP = getGlobalTelemetryContext().bindPropertiesAsync(
 				{ correlationId, ...baseLumberjackProperties },
