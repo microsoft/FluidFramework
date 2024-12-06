@@ -49,7 +49,6 @@ declare type old_as_current_for_Interface_ContainerDevtoolsProps = requireAssign
  * typeValidation.broken:
  * "Interface_ContainerDevtoolsProps": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ContainerDevtoolsProps = requireAssignableTo<TypeOnly<current.ContainerDevtoolsProps>, TypeOnly<old.ContainerDevtoolsProps>>
 
 /*
@@ -68,26 +67,7 @@ declare type old_as_current_for_Interface_FluidDevtoolsProps = requireAssignable
  * typeValidation.broken:
  * "Interface_FluidDevtoolsProps": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_FluidDevtoolsProps = requireAssignableTo<TypeOnly<current.FluidDevtoolsProps>, TypeOnly<old.FluidDevtoolsProps>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_HasContainerKey": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_HasContainerKey = requireAssignableTo<TypeOnly<old.HasContainerKey>, TypeOnly<current.HasContainerKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_HasContainerKey": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_HasContainerKey = requireAssignableTo<TypeOnly<current.HasContainerKey>, TypeOnly<old.HasContainerKey>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

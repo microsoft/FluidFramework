@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
 
 import { getEffectiveBatchId } from "./batchManager.js";
 import { type BatchStartInfo } from "./remoteMessageProcessor.js";
@@ -17,6 +18,16 @@ export class DuplicateBatchDetector {
 
 	/** We map from sequenceNumber to batchId to find which ones we can stop tracking as MSN advances */
 	private readonly batchIdsBySeqNum = new Map<number, string>();
+
+	/** Initialize from snapshot data if provided - otherwise initialize empty */
+	constructor(batchIdsFromSnapshot: [number, string][] | undefined) {
+		if (batchIdsFromSnapshot) {
+			this.batchIdsBySeqNum = new Map(batchIdsFromSnapshot);
+			for (const batchId of this.batchIdsBySeqNum.values()) {
+				this.batchIdsAll.add(batchId);
+			}
+		}
+	}
 
 	/**
 	 * Records this batch's batchId, and checks if it's a duplicate of a batch we've already seen.
@@ -74,5 +85,27 @@ export class DuplicateBatchDetector {
 				this.batchIdsAll.delete(batchId);
 			}
 		});
+	}
+
+	/**
+	 * Returns a snapshot of the state of the detector which can be included in a summary
+	 * and used to "rehydrate" this class when loading from a snapshot.
+	 *
+	 * @returns - A serializable object representing the state of the detector, or undefined if there is nothing to save.
+	 */
+	public getRecentBatchInfoForSummary(
+		telemetryContext?: ITelemetryContext,
+	): [number, string][] | undefined {
+		if (this.batchIdsBySeqNum.size === 0) {
+			return undefined;
+		}
+
+		telemetryContext?.set(
+			"fluid_DuplicateBatchDetector_",
+			"recentBatchCount",
+			this.batchIdsBySeqNum.size,
+		);
+
+		return [...this.batchIdsBySeqNum.entries()];
 	}
 }

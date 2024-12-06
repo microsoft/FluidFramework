@@ -1,9 +1,9 @@
 {
 	"manifest_version": 3,
-	"name": "Fluid Framework Developer Tools (Preview)",
+	"name": "Fluid Framework Developer Tools",
 	"description": "Devtools extension for viewing live data about your Fluid application.",
 	"author": "Microsoft",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"action": {
 		"default_icon": {
 			"16": "icons/icon_16.png",

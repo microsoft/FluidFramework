@@ -56,7 +56,7 @@ use_old_ClassDeclaration_DocumentContext(
 declare function get_old_ClassDeclaration_DocumentLambdaFactory():
     TypeOnly<old.DocumentLambdaFactory>;
 declare function use_current_ClassDeclaration_DocumentLambdaFactory(
-    use: TypeOnly<current.DocumentLambdaFactory>): void;
+    use: TypeOnly<current.DocumentLambdaFactory<any>>): void;
 use_current_ClassDeclaration_DocumentLambdaFactory(
     get_old_ClassDeclaration_DocumentLambdaFactory());
 
@@ -66,7 +66,7 @@ use_current_ClassDeclaration_DocumentLambdaFactory(
 * "ClassDeclaration_DocumentLambdaFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DocumentLambdaFactory():
-    TypeOnly<current.DocumentLambdaFactory>;
+    TypeOnly<current.DocumentLambdaFactory<any>>;
 declare function use_old_ClassDeclaration_DocumentLambdaFactory(
     use: TypeOnly<old.DocumentLambdaFactory>): void;
 use_old_ClassDeclaration_DocumentLambdaFactory(

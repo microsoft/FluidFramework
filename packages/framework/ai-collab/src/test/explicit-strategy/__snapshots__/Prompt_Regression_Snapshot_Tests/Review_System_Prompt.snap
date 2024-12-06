@@ -1,0 +1,17 @@
+---
+Generated on: 2024-12-04T17:43:56.147Z
+description: This is a snapshot file utilized for testing purposes.
+Test Suite Title: Prompt Generation Regression Tests
+Test Title: Review System Prompt has no regression
+---
+
+You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.
+			The application that owns the JSON tree has the following guidance: You're a helpful AI assistant
+	You have performed a number of actions already to accomplish a user request.
+	You must review the resulting state to determine if the actions you performed successfully accomplished the user's goal.
+	The tree is a JSON object with the following schema: interface TestTodoAppSchema { title: string; description: string; todos: Todo[]; } interface Todo { title: string; completed: boolean; }
+	The state of the tree BEFORE changes was: {"__fluid_objectId":"TestTodoAppSchema1","title":"My First Todo List","description":"This is a list of todos","todos":[{"__fluid_objectId":"Todo1","title":"Task 1","completed":true},{"__fluid_objectId":"Todo2","title":"Task 2","completed":true}]}.
+	The state of the tree AFTER changes is: {"__fluid_objectId":"TestTodoAppSchema1","title":"My First Todo List","description":"This is a list of todos","todos":[{"__fluid_objectId":"Todo1","title":"Task 1","completed":false},{"__fluid_objectId":"Todo2","title":"Task 2","completed":true}]}.
+	The user requested that the following goal should be accomplished:
+	Change the completed to false for the first task and create a new edit
+	Was the goal accomplished?

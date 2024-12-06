@@ -140,7 +140,7 @@ export function convertSummaryTreeToWholeSummaryTree(
 			throw new Error(`Invalid tree entry for ${summaryObject.type}`);
 		}
 
-		wholeSummaryTree.entries.push(entry);
+		wholeSummaryTree.entries?.push(entry);
 	}
 
 	return wholeSummaryTree;
@@ -226,7 +226,7 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
  * @returns Whether the value is of IWholeSummaryTreeEntry type
  */
 function isWholeSummaryTreeValueEntry(obj: any): obj is IWholeSummaryTreeValueEntry {
-	return obj && typeof obj === "object" && "value" in obj;
+	return typeof obj === "object" && obj !== null && "value" in obj;
 }
 
 /**
@@ -235,7 +235,7 @@ function isWholeSummaryTreeValueEntry(obj: any): obj is IWholeSummaryTreeValueEn
  * @returns Whether the value is of IWholeSummaryBlob type
  */
 function isWholeSummaryBlob(obj: unknown): obj is IWholeSummaryBlob {
-	return obj && typeof obj === "object" && "content" in obj;
+	return typeof obj === "object" && obj !== null && "content" in obj;
 }
 
 /**
@@ -244,7 +244,7 @@ function isWholeSummaryBlob(obj: unknown): obj is IWholeSummaryBlob {
  * @returns Whether the value is of IWholeSummaryBlob type
  */
 function isWholeSummaryTree(obj: any): obj is IWholeSummaryTree {
-	return obj && typeof obj === "object" && "type" in obj;
+	return typeof obj === "object" && obj !== null && "type" in obj;
 }
 
 /**
@@ -258,7 +258,7 @@ export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
 	unreferenced?: true | undefined,
 ): ISummaryTree {
 	const tree: { [path: string]: SummaryObject } = {};
-	for (const entry of wholeSummaryTree.entries) {
+	for (const entry of wholeSummaryTree.entries ?? []) {
 		switch (entry.type) {
 			case "blob": {
 				assert(isWholeSummaryTreeValueEntry(entry), "Invalid entry type");
