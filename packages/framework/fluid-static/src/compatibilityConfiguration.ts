@@ -30,6 +30,9 @@ export const compatibilityModeRuntimeOptions: Record<
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		},
 		// Grouped batching is on by default but introduces a new type of op which is not compatible with 1.x clients.
+		/**
+		 * @deprecated The ability to configure Grouped Batching is now removed and it is now disabled if compression is disabled.
+		 */
 		enableGroupedBatching: false,
 		// TODO: Include explicit disables for things that are currently off-by-default?
 
