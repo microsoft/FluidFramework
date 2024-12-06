@@ -87,15 +87,10 @@ const createAndConfigureHttpServer = (
 	const timeout =
 		httpServerConfig?.connectionTimeoutMs ?? defaultHttpServerConfig.connectionTimeoutMs;
 	if (timeout > 0) {
-		server.setTimeout(timeout, () => {
-			Lumberjack.info(
-				"------------------------HTTP Server setTimeout------------------------",
-			);
-		});
+		server.timeout = timeout;
 		server.on("timeout", (socket) => {
 			Lumberjack.info(
 				"------------------------HTTP Server on timeout------------------------",
-				socket,
 			);
 		});
 	}
