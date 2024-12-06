@@ -141,7 +141,7 @@ export class NestedMapRunner extends ScenarioRunner<
 				const scenarioLogger = await loggerP;
 				await timeoutPromise(
 					(resolve) =>
-						scenarioLogger.events.once(FluidSummarizerTelemetryEventNames.Summarize, () =>
+						scenarioLogger.events.on(FluidSummarizerTelemetryEventNames.Summarize, () =>
 							resolve(),
 						),
 					{

@@ -4,7 +4,7 @@
  */
 
 import { AzureClient } from "@fluidframework/azure-client";
-import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { CommanderStatic } from "commander";
 
@@ -20,8 +20,8 @@ export interface IRunnerStatus {
 	details: unknown;
 }
 
-export interface IRunnerEvents extends IEvent {
-	(event: "status", listener: (s: IRunnerStatus) => void): void;
+export interface IRunnerEvents {
+	status: (s: IRunnerStatus) => void;
 }
 
 export interface IScenarioConfig {
@@ -42,7 +42,7 @@ export interface IScenarioRunConfig extends IRunConfig, IScenarioConfig {
 	childId: number;
 }
 
-export interface IRunner extends IEventProvider<IRunnerEvents> {
+export interface IRunner extends Listenable<IRunnerEvents> {
 	/**
 	 * Runs in 1 or more child processes.
 	 */

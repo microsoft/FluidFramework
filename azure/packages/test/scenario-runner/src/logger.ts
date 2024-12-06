@@ -6,9 +6,9 @@
 import crypto from "crypto";
 import fs from "node:fs";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { ComposableEventEmitter } from "@fluid-internal/client-utils";
 import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
-import type { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -27,12 +27,11 @@ export interface LoggerConfig {
 	runId?: string;
 }
 
-export interface IScenarioRunnerTelemetryEvents extends IEvent {
-	(
-		event: ScenarioRunnerTelemetryEventNames,
-		listener: (e: ITelemetryBaseEvent & { originalEventName: string }) => void,
-	): void;
-}
+export type IScenarioRunnerTelemetryEvents = {
+	[event in ScenarioRunnerTelemetryEventNames]: (
+		e: ITelemetryBaseEvent & { originalEventName: string },
+	) => void;
+};
 
 class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 	private error: boolean = false;
@@ -40,7 +39,7 @@ class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 	private targetEvents: string[] = [];
 	private transformedEvents: Map<ScenarioRunnerTelemetryEventNames, string> = new Map();
 	private logs: ITelemetryBaseEvent[] = [];
-	public readonly events = new TypedEventEmitter<IScenarioRunnerTelemetryEvents>();
+	public readonly events = new ComposableEventEmitter<IScenarioRunnerTelemetryEvents>();
 
 	public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
 
