@@ -44,31 +44,14 @@ export const getModelAndMigrationToolFromContainer = async <ModelType>(
 };
 
 /**
- * As the Migrator migrates, it updates its reference to the current version of the model.
- * This interface describes the characteristics of the model that it's tracking in a single object,
- * which will be swapped out atomically as the migration happens.
- */
-interface MigratableParts {
-	model: IMigratableModel;
-	migrationTool: IMigrationTool;
-	id: string;
-}
-
-/**
  * The Migrator maintains a reference to the current model, and interacts with it (and its MigrationTool)
  * to detect, observe, trigger, and execute migration as appropriate.
  * @alpha
  */
 export class Migrator implements IMigrator {
-	private readonly _currentMigratable: MigratableParts;
-
 	public get migrationResult(): unknown | undefined {
 		// TODO: Abstract
-		return this._currentMigratable.migrationTool.newContainerId;
-	}
-
-	public get migrationTool(): IMigrationTool {
-		return this._currentMigratable.migrationTool;
+		return this.migrationTool.newContainerId;
 	}
 
 	public get migrationState(): MigrationState {
@@ -107,16 +90,12 @@ export class Migrator implements IMigrator {
 	public constructor(
 		private readonly simpleLoader: ISimpleLoader,
 		initialMigratable: IMigratableModel,
-		initialMigrationTool: IMigrationTool,
+		// TODO: Make private
+		public readonly migrationTool: IMigrationTool,
 		initialId: string,
 		private readonly exportData: (migrationSequenceNumber: number) => Promise<unknown>,
 		private readonly dataTransformationCallback?: DataTransformationCallback,
 	) {
-		this._currentMigratable = {
-			model: initialMigratable,
-			migrationTool: initialMigrationTool,
-			id: initialId,
-		};
 		this.takeAppropriateActionForCurrentMigratable();
 	}
 
