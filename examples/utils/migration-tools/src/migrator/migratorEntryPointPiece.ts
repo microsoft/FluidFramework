@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
 import type { IEntryPointPiece } from "../compositeRuntime/index.js";
-import { MigrationToolFactory } from "../migrationTool/index.js";
+import { MigrationToolFactory, type IMigrationTool } from "../migrationTool/index.js";
+import type { ISimpleLoader } from "../simpleLoader/index.js";
+
+import type { IMigratableModel } from "./interfaces.js";
+import { Migrator } from "./migrator.js";
 
 const migratorEntryPointPieceName = "migrationTool";
 
@@ -45,14 +50,18 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 		await getDataStoreEntryPoint(runtime, migrationToolId);
 	},
 	createPiece: async (runtime: IContainerRuntime): Promise<FluidObject> => {
-		// TODO: This changes, we don't return the migration tool directly but instead a callback that creates a
-		// wrapping Migrator and returns that instead.
-		const migrationTool = await getDataStoreEntryPoint(runtime, migrationToolId);
-		// return async (container: IContainer) =>
-		// 	new InventoryListAppModel(
-		// 		(await getDataStoreEntryPoint(runtime, inventoryListAlias)) as IInventoryList,
-		// 		container,
-		// 	);
-		return migrationTool;
+		return async (
+			loader: ISimpleLoader,
+			initialMigratable: IMigratableModel,
+			initialId: string,
+			container: IContainer,
+		) => {
+			const migrationTool = (await getDataStoreEntryPoint(
+				runtime,
+				migrationToolId,
+			)) as IMigrationTool;
+			const migrator = new Migrator(loader, initialMigratable, migrationTool, initialId);
+			return migrator;
+		};
 	},
 };
