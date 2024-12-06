@@ -19,7 +19,6 @@ export {
 	IMigrationTool,
 	IMigrationToolEvents,
 	MigrationState,
-	migrationToolEntryPointPiece,
 	MigrationToolFactory,
 } from "./migrationTool/index.js";
 export {

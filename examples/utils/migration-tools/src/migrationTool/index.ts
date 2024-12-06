@@ -10,4 +10,3 @@ export {
 	MigrationState,
 } from "./interfaces.js";
 export { MigrationToolFactory } from "./migrationTool.js";
-export { migrationToolEntryPointPiece } from "./migrationToolEntryPointPiece.js";

@@ -119,9 +119,6 @@ export const loadCompositeRuntime: (context: IContainerContext, existing: boolea
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
 // @alpha (undocumented)
-export const migrationToolEntryPointPiece: IEntryPointPiece;
-
-// @alpha (undocumented)
 export class MigrationToolFactory implements IFluidDataStoreFactory {
     // (undocumented)
     get IFluidDataStoreFactory(): IFluidDataStoreFactory;
