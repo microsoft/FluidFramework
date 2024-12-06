@@ -198,9 +198,9 @@ describe.skip("Ai Planner App", () => {
 		});
 
 		assert(view.root.taskGroups[0]?.tasks[0]?.priority === "high");
-	});
+	}).timeout(60000);
 
-	it.skip("BUG: Invalid json schema produced when schema has no arrays at all", async () => {
+	it("BUG FIX REGRESSION: Using a tree node without any array in its schema now succeeds ", async () => {
 		class TestAppSchema extends sf.object("PrioritySpecification", {
 			priority: sf.string,
 		}) {}
@@ -212,32 +212,24 @@ describe.skip("Ai Planner App", () => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppSchema }));
 		view.initialize({ priority: "low" });
 
-		try {
-			await aiCollab({
-				openAI: {
-					client: new OpenAI({
-						apiKey: OPENAI_API_KEY,
-					}),
-					modelName: "gpt-4o",
-				},
-				treeNode: view.root,
-				prompt: {
-					systemRoleContext: "You are a managing objects with a priority field.",
-					userAsk: "Change the priority from low to high",
-				},
-				planningStep: true,
-				finalReviewStep: true,
-			});
-		} catch (error) {
-			assert(error instanceof APIError);
-			assert(error.status === 400);
-			assert(error.type === "invalid_request_error");
-			assert(
-				error.message ===
-					"400 Invalid schema for response_format 'SharedTreeAI': In context=('properties', 'edit', 'anyOf', '1', 'properties', 'content', 'not'), schema must have a 'type' key.",
-			);
-		}
-	});
+		await aiCollab({
+			openAI: {
+				client: new OpenAI({
+					apiKey: OPENAI_API_KEY,
+				}),
+				modelName: "gpt-4o",
+			},
+			treeNode: view.root,
+			prompt: {
+				systemRoleContext:
+					"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+				userAsk: "Change the priority of the first task from low to high",
+			},
+			planningStep: true,
+			finalReviewStep: true,
+		});
+		assert(view.root.priority === "high");
+	}).timeout(60000);
 
 	it.skip("BUG: Invalid json schema produced when schema has multiple keys with the same name and order", async () => {
 		class TaskList extends sf.array("taskList", sf.string) {}
@@ -288,7 +280,7 @@ describe.skip("Ai Planner App", () => {
 					"400 Invalid schema for response_format 'SharedTreeAI'. Please ensure it is a valid JSON Schema.",
 			);
 		}
-	});
+	}).timeout(60000);
 
 	it.skip("BUG: OpenAI structured output fails when json schema with psuedo optional field is used in response format", async () => {
 		class TaskList extends sf.array("taskList", sf.string) {}
@@ -367,5 +359,5 @@ describe.skip("Ai Planner App", () => {
 		});
 
 		assert.equal(view.root.nonOptionalProp, "Hello World");
-	});
+	}).timeout(60000);
 });

@@ -31,10 +31,13 @@ export class RedisCache implements ICache {
 		redisClientConnectionManager.addErrorHandler(undefined, "Redis Cache Error");
 	}
 
-	public async get<T>(key: string): Promise<T> {
+	public async get<T>(key: string): Promise<T | null> {
 		const stringValue = await this.redisClientConnectionManager
 			.getRedisClient()
 			.get(this.getKey(key));
+		if (stringValue === null) {
+			return null;
+		}
 		return JSON.parse(stringValue) as T;
 	}
 

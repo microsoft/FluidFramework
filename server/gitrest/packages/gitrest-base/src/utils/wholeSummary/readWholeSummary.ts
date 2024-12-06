@@ -54,7 +54,8 @@ export async function readSummary(
 				id: treeId,
 				entries: treeEntries,
 				// We don't store sequence numbers in git
-				sequenceNumber: undefined,
+				// This must be typecast to number currently because Gitrest is out of spec with the type definition.
+				sequenceNumber: undefined as unknown as number,
 			},
 		],
 		blobs,
