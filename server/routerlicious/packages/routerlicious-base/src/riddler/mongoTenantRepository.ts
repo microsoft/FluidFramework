@@ -30,7 +30,8 @@ export interface ITenantRepository {
 	 * @param options - optional. If set, provide customized options to the implementations
 	 * @returns The value of the query in the database.
 	 */
-	findOne(query: any, options?: any): Promise<ITenantDocument>;
+	// eslint-disable-next-line @rushstack/no-new-null
+	findOne(query: any, options?: any): Promise<ITenantDocument | null>;
 
 	/**
 	 * Finds the query in the database. If it exists, update the value to set.
@@ -63,7 +64,7 @@ export class MongoTenantRepository implements ITenantRepository {
 	async find(query: any, sort: any, limit?: number, skip?: number): Promise<ITenantDocument[]> {
 		return this.collection.find(query, sort, limit, skip);
 	}
-	async findOne(query: any, options?: any): Promise<ITenantDocument> {
+	async findOne(query: any, options?: any): Promise<ITenantDocument | null> {
 		return this.collection.findOne(query, options);
 	}
 	async update(filter: any, set: any, addToSet: any, options?: any): Promise<void> {

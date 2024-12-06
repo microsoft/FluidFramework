@@ -28,7 +28,7 @@ class TestSecretManager implements ISecretManager {
 	constructor(private readonly encryptionKey: string) {}
 
 	public getLatestKeyVersion(): EncryptionKeyVersion {
-		return undefined;
+		return EncryptionKeyVersion.key2022;
 	}
 
 	public decryptSecret(encryptedSecret: string): string {

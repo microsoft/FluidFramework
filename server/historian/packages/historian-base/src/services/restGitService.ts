@@ -147,10 +147,13 @@ export class RestGitService {
 		return createResults;
 	}
 
-	public async getContent(path: string, ref: string): Promise<any> {
-		const query = new URLSearchParams({ ref }).toString();
+	public async getContent(path: string, ref: string | undefined): Promise<any> {
+		const query = new URLSearchParams();
+		if (ref !== undefined) {
+			query.set("ref", ref);
+		}
 		return this.get(
-			`/repos/${this.getRepoPath()}/contents/${encodeURIComponent(path)}?${query}`,
+			`/repos/${this.getRepoPath()}/contents/${encodeURIComponent(path)}?${query.toString()}`,
 		);
 	}
 
@@ -225,7 +228,7 @@ export class RestGitService {
 	public async createRef(params: ICreateRefParamsExternal): Promise<git.IRef> {
 		// We modify this param to prevent writes to external storage if tenant is not linked
 		if (!this.writeToExternalStorage) {
-			params.config.enabled = false;
+			params.config = { ...params.config, enabled: false };
 		}
 		return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
 	}
@@ -244,7 +247,8 @@ export class RestGitService {
 		if (
 			summaryParams.type === "container" &&
 			(summaryResponse as IWholeFlatSummary).trees !== undefined &&
-			summarySize <= this.maxCacheableSummarySize
+			(this.maxCacheableSummarySize === undefined ||
+				summarySize <= this.maxCacheableSummarySize)
 		) {
 			// Cache the written summary for future retrieval. If this fails, next summary retrieval
 			// will receive an older version, but that is OK. Client will catch up with ops.
@@ -326,7 +330,7 @@ export class RestGitService {
 	public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
 		// We modify this param to prevent writes to external storage if tenant is not linked
 		if (!this.writeToExternalStorage) {
-			params.config.enabled = false;
+			params.config = { ...params.config, enabled: false };
 		}
 		return this.patch(`/repos/${this.getRepoPath()}/git/refs/${ref}`, params);
 	}
@@ -405,7 +409,7 @@ export class RestGitService {
 
 				const submoduleCommits = new Array<string>();
 				const quorumValuesSha = new Array<string>();
-				let quorumValues: string;
+				let quorumValues: string | undefined;
 
 				baseTree.tree.forEach((entry) => {
 					if (entry.path.includes("quorum")) {
@@ -522,7 +526,7 @@ export class RestGitService {
 		if (this.cache) {
 			// Attempt to cache to Redis - log any errors but don't fail
 			runWithRetry(
-				async () => this.cache.set(key, value) /* api */,
+				async () => this.cache?.set(key, value) /* api */,
 				"RestGitService.setCache" /* callName */,
 				3 /* maxRetries */,
 				1000 /* retryAfterMs */,
@@ -537,8 +541,8 @@ export class RestGitService {
 	private async getCache<T>(key: string): Promise<T | undefined> {
 		if (this.cache) {
 			// Attempt to cache to Redis - log any errors but don't fail
-			const cachedValue: T | undefined = await runWithRetry(
-				async () => this.cache.get<T | undefined>(key) /* api */,
+			const cachedValue = await runWithRetry(
+				async () => this.cache?.get<T>(key) /* api */,
 				"RestGitService.getCache" /* callName */,
 				3 /* maxRetries */,
 				1000 /* retryAfterMs */,
@@ -548,7 +552,9 @@ export class RestGitService {
 				Lumberjack.error(`Error fetching ${key} from cache`, this.lumberProperties, error);
 				return undefined;
 			});
-			return cachedValue;
+			if (cachedValue !== null) {
+				return cachedValue;
+			}
 		}
 		return undefined;
 	}

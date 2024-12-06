@@ -5,6 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
+import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
@@ -88,7 +93,6 @@ import {
 	type RevertibleAlpha,
 	type RevertibleAlphaFactory,
 } from "../core/index.js";
-import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	type NodeKeyManager,
@@ -116,7 +120,6 @@ import {
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
-	type ITransaction,
 	type ITreeCheckoutFork,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -148,6 +151,7 @@ import type { Client } from "@fluid-private/test-dds-utils";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
+import type { Transactor } from "../shared-tree-core/index.js";
 
 // Testing utilities
 
@@ -1215,7 +1219,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 		}
 		return this.options.editor;
 	}
-	public get transaction(): ITransaction {
+	public get transaction(): Transactor {
 		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
 	}
 	public get events(): Listenable<CheckoutEvents> {
