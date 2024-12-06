@@ -8,4 +8,4 @@
 
 Marked `IContainerRuntimeOptions.enableGroupedBatching` as deprecated
 
-- We want to remove the ability to configure batch grouping, so `IContainerRuntimeOptions.enableGroupedBatching` is now being marked as deprecated and batch grouping will now depend on batch compression.
+- We will remove the ability to disable Grouped Batching in v2.20.0. The only exception (i.e. where Grouped Batching would be disabled) is for compatibility with older (v1) clients, and this will be implemented without needing to expose `IContainerRuntimeOptions.enableGroupedBatching`.
