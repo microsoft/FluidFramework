@@ -29,6 +29,7 @@ export {
 export {
 	unscopedPackageNameString,
 	BaseCommand,
+	BaseCommandWithBuildProject,
 	GenerateEntrypointsCommand,
 } from "./commands/index.js";
 export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context.js";
