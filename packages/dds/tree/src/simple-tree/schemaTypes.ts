@@ -190,7 +190,10 @@ export interface FieldProps<TCustomMetadata = unknown> {
 
 	/**
 	 * Optional metadata to associate with the field.
-	 * @remarks Note: this metadata is not persisted in the document.
+	 *
+	 * @remarks
+	 * Note: this metadata is not persisted; it is strictly local to the application.
+	 * So, making changes to these values will not affect collaborators.
 	 */
 	readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
 }
@@ -824,3 +827,49 @@ export type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boole
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
+
+/**
+ * Additional information to provide to Node Schema creation.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @sealed
+ * @public
+ */
+export interface NodeSchemaOptions<out TMetadata = NodeSchemaMetadata> {
+	/**
+	 * Optional metadata to associate with the Node Schema.
+	 *
+	 * @remarks
+	 * Note: this metadata is not persisted; it is strictly local to the application.
+	 * So, making changes to these values will not affect collaborators.
+	 */
+	readonly metadata?: TMetadata;
+}
+
+/**
+ * Metadata associated with a Node Schema.
+ *
+ * @remarks Specified via {@link NodeSchemaOptions.metadata}.
+ *
+ * @sealed
+ * @public
+ */
+export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
+	/**
+	 * User-defined metadata.
+	 */
+	readonly custom?: TCustomMetadata;
+
+	/**
+	 * The description of the Node Schema.
+	 *
+	 * @remarks
+	 *
+	 * If provided, will be used by the system in scenarios where a description of the field is useful.
+	 * E.g., when converting a Node Schema to {@link https://json-schema.org/ | JSON Schema}, this description will be
+	 * used as the `description` property.
+	 */
+	readonly description?: string | undefined;
+}

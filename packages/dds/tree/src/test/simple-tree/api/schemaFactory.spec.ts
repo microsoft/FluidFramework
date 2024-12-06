@@ -363,7 +363,22 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("Field Metadata", () => {
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Foo extends factory.object(
+				"Foo",
+				{ bar: factory.number },
+				{ metadata: { description: "An object", custom: { baz: true } } },
+			) {}
+
+			assert.deepEqual(Foo.metadata, {
+				description: "An object",
+				custom: { baz: true },
+			});
+		});
+
+		it("Field schema metadata", () => {
 			const schemaFactory = new SchemaFactory("com.example");
 			const barMetadata = {
 				description: "Bar",
@@ -543,6 +558,19 @@ describe("schemaFactory", () => {
 			class NamedList extends factory.array("name", factory.number) {}
 			const namedInstance = new NamedList([5]);
 		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Foo extends factory.array("Foo", factory.number, {
+				metadata: { description: "An array of numbers", custom: { baz: true } },
+			}) {}
+
+			assert.deepEqual(Foo.metadata, {
+				description: "An array of numbers",
+				custom: { baz: true },
+			});
+		});
 	});
 
 	describe("Map", () => {
@@ -598,6 +626,19 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactory("test");
 			class NamedMap extends factory.map("name", factory.number) {}
 			const namedInstance = new NamedMap(new Map([["x", 5]]));
+		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Foo extends factory.map("Foo", factory.number, {
+				metadata: { description: "A map containing numbers", custom: { baz: true } },
+			}) {}
+
+			assert.deepEqual(Foo.metadata, {
+				description: "A map containing numbers",
+				custom: { baz: true },
+			});
 		});
 	});
 
