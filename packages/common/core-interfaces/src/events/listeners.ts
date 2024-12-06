@@ -15,6 +15,7 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
  * @remarks
  * Any object type is a valid {@link Listeners}, but only the {@link IsListener | event-like} properties of that
  * type will be included.
+ *
  * @example
  * ```typescript
  * interface MyEvents {
@@ -74,7 +75,6 @@ export interface Listenable<TListeners extends object> {
  * A function that, when called, will deregister an event listener subscription that was previously registered.
  * @remarks
  * It is returned by the {@link Listenable.on | event registration function} when event registration occurs.
- * Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or`@fluidframework/core-interfaces`  instead.
  * @public
  */
 export type Off = () => void;
