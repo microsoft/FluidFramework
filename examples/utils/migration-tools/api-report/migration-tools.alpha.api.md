@@ -50,7 +50,6 @@ export interface IImportExportModel<ImportType, ExportType> {
 
 // @alpha
 export interface IMigratableModel extends IVersionedModel, IImportExportModel<unknown, unknown> {
-    dispose(): void;
 }
 
 // @alpha (undocumented)

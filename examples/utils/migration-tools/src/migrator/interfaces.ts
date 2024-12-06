@@ -66,16 +66,7 @@ export interface IImportExportModel<ImportType, ExportType> {
  */
 export interface IMigratableModel
 	extends IVersionedModel,
-		IImportExportModel<unknown, unknown> {
-	/**
-	 * Dispose the model, rendering it inoperable and closing connections.
-	 *
-	 * @privateRemarks
-	 * This is required on the interface because the Migrator will make its own instance of the model for export,
-	 * and needs to clean that model up after the export is done.
-	 */
-	dispose(): void;
-}
+		IImportExportModel<unknown, unknown> {}
 
 // #region IMigrator
 

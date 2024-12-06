@@ -123,7 +123,8 @@ async function start(): Promise<void> {
 		inventoryListDataTransformationCallback,
 	);
 	migrator.events.on("migrated", () => {
-		model.dispose();
+		container.dispose();
+		// TODO: Load new container
 		model = migrator.currentModel;
 		renderModel(model, migrator.currentMigrationTool);
 		updateTabForId(migrator.currentModelId);
