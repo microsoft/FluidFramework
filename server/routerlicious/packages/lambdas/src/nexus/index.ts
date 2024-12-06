@@ -257,6 +257,22 @@ export function configureWebSocketServices(
 					`Come to isNetworkCheck: ${isNetworkCheck}`,
 					baseLumberjackProperties,
 				);
+				Lumberjack.info(
+					`Print the socket handshake address: ${socket.handshake.address}`,
+					baseLumberjackProperties,
+				);
+				Lumberjack.info(
+					`Print the socket handshake headers x forward: ${
+						socket.handshake.headers["x-forwarded-for"].split(",")[0]
+					}`,
+					baseLumberjackProperties,
+				);
+				Lumberjack.info(
+					`Print the socket handshake headers: ${JSON.stringify(
+						socket.handshake.headers,
+					)}`,
+					baseLumberjackProperties,
+				);
 				const networkError = await checkNetworkInformation(tenantManager, socket);
 				if (!networkError.shouldConnect) {
 					const nackMessage = createNackMessage(
