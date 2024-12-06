@@ -537,6 +537,16 @@ function areEqualRegisterIds(id1: RegisterId, id2: RegisterId): boolean {
 	return id1 === "self" || id2 === "self" ? id1 === id2 : areEqualChangeAtomIds(id1, id2);
 }
 
+function areEqualRegisterIdsOpt(
+	id1: RegisterId | undefined,
+	id2: RegisterId | undefined,
+): boolean {
+	if (id1 === undefined || id2 === undefined) {
+		return id1 === id2;
+	}
+	return areEqualRegisterIds(id1, id2);
+}
+
 function getBidirectionalMaps(moves: OptionalChangeset["moves"]): {
 	srcToDst: ChangeAtomIdMap<ChangeAtomId>;
 	dstToSrc: ChangeAtomIdMap<ChangeAtomId>;
@@ -722,13 +732,26 @@ export const optionalChangeHandler: FieldChangeHandler<
 };
 
 function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
+	// True iff the content of the field changes in some way
+	const isFieldContentChanged =
+		change.valueReplace !== undefined && change.valueReplace.src !== "self";
+
+	// The node that is moved into the field (if any).
+	const nodeMovedIntoField = change.valueReplace?.src;
+
 	return change.childChanges.map(([register, nodeId]) => {
-		// The node is deleted in the input context iif register is not self.
+		// The node is removed in the input context iif register is not self.
 		const inputIndex = register === "self" ? 0 : undefined;
-		// The node is deleted in the output context iif:
-		// - valueReplace exists and it's value is not the same as register.
-		// - valueReplace doesn't exist and register is not self (same as input index).
-		const outputIndex = register === (change.valueReplace?.src ?? "self") ? 0 : undefined;
+		const outputIndex =
+			register === "self"
+				? // If the node starts out as not-removed, is it removed in the output context iff the field content is changed
+					isFieldContentChanged
+					? undefined
+					: 0
+				: // If the node starts out as removed, then it remains removed in the output context iff it is not the node that is moved into the field
+					!areEqualRegisterIdsOpt(register, nodeMovedIntoField)
+					? undefined
+					: 0;
 		return [nodeId, inputIndex, outputIndex];
 	});
 }

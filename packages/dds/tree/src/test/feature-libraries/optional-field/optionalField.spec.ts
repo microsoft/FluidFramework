@@ -951,6 +951,25 @@ describe("optionalField", () => {
 			const expected: NestedChangesIndices = [[nodeId1, 0, 0]];
 			assert.deepEqual(actual, expected);
 		});
+		it("includes changes to a node being removed from the field", () => {
+			const change: OptionalChangeset = Change.atOnce(
+				Change.child(nodeId1),
+				Change.clear("self", brand(41)),
+			);
+			const actual = optionalChangeHandler.getNestedChanges(change);
+			const expected: NestedChangesIndices = [[nodeId1, 0, undefined]];
+			assert.deepEqual(actual, expected);
+		});
+		it("includes changes to a node being moved into from the field", () => {
+			const change: OptionalChangeset = Change.atOnce(
+				Change.reserve("self", brand(41)),
+				Change.childAt(brand(42), nodeId1),
+				Change.move(brand(42), "self"),
+			);
+			const actual = optionalChangeHandler.getNestedChanges(change);
+			const expected: NestedChangesIndices = [[nodeId1, undefined, 0]];
+			assert.deepEqual(actual, expected);
+		});
 		it("includes changes to removed nodes", () => {
 			const change: OptionalChangeset = Change.atOnce(
 				Change.childAt(brand(41), nodeId1),

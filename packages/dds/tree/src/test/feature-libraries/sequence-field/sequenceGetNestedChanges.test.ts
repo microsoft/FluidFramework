@@ -27,11 +27,15 @@ export function testGetNestedChanges() {
 			assert.deepEqual(actual, []);
 		});
 		it("includes changes to nodes in the field", () => {
-			const change = [Mark.modify(nodeId1), { count: 42 }, Mark.modify(nodeId2)];
+			const change = [
+				Mark.remove(1, brand(42), { changes: nodeId1 }),
+				{ count: 42 },
+				Mark.modify(nodeId2),
+			];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
 			const expected: NestedChangesIndices = [
-				[nodeId1, 0, 0],
-				[nodeId2, 43, 43],
+				[nodeId1, 0, undefined],
+				[nodeId2, 43, 42],
 			];
 			assert.deepEqual(actual, expected);
 		});
