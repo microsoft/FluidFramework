@@ -1109,10 +1109,7 @@ export class Container
 
 				this._lifecycleState = "closing";
 
-				// Back-compat for Old driver
-				if (this.service?.off !== undefined) {
-					this.service?.off("metadataUpdate", this.metadataUpdateHandler);
-				}
+				this.service?.off("metadataUpdate", this.metadataUpdateHandler);
 
 				this._protocolHandler?.close();
 
@@ -1606,10 +1603,9 @@ export class Container
 		serviceProvider: () => Promise<IDocumentService>,
 	): Promise<IDocumentService> {
 		const service = await serviceProvider();
-		// Back-compat for Old driver
-		if (service.on !== undefined) {
-			service.on("metadataUpdate", this.metadataUpdateHandler);
-		}
+
+		service.on("metadataUpdate", this.metadataUpdateHandler);
+
 		return service;
 	}
 
