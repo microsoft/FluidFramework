@@ -53,30 +53,10 @@
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"postpack": "npm run clean:manifest",
-		"test": "npm run test:mocha",
-		"test:coverage": "c8 npm run test",
-		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.*js\"",
+		"test": "npm run test:vitest",
+		"test:coverage": "npm run test:vitest -- --coverage",
+		"test:vitest": "vitest run test",
 		"tsc": "tsc"
-	},
-	"c8": {
-		"all": true,
-		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"lib/test/**/*.*js"
-		],
-		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"lib/**/*.*js"
-		],
-		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
-		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
 		"@andrewbranch/untar.js": "^1.0.3",
@@ -162,6 +142,7 @@
 		"@types/sort-json": "^2.0.3",
 		"@types/unist": "^3.0.3",
 		"@types/xml2js": "^0.4.14",
+		"@vitest/coverage-v8": "^2.0.3",
 		"c8": "^7.14.0",
 		"chai": "^4.5.0",
 		"chai-arrays": "^2.2.0",
@@ -178,7 +159,8 @@
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.2",
 		"tslib": "^2.8.0",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"vitest": "^2.0.3"
 	},
 	"engines": {
 		"node": ">=18.17.1"

@@ -4,8 +4,7 @@
  */
 
 import { GitRepo, type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import { expect } from "chai";
-import { describe, it } from "mocha";
+import { describe, expect, it } from "vitest";
 
 import { type PackageNamePolicyConfig } from "../../config.js";
 import { Context } from "../../library/index.js";

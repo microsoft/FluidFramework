@@ -5,16 +5,15 @@
 
 import type { PackageJson } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
-import { assert } from "chai";
 import { parseJSON } from "date-fns";
-import { describe, it } from "mocha";
+import { assert, describe, it } from "vitest";
 
-import { VersionDetails } from "../../library/index.js";
 import {
 	ensureDevDependencyExists,
 	generateReleaseGitTagName,
 	sortVersions,
 } from "../../library/package.js";
+import { VersionDetails } from "../../src/library/index.js";
 
 describe("VersionDetails sorting", () => {
 	const versions: VersionDetails[] = [

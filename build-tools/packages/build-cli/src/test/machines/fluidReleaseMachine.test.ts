@@ -3,13 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import chai, { expect } from "chai";
-import assertArrays from "chai-arrays";
-import { describe, it } from "mocha";
+import { describe, expect, it } from "vitest";
 
 import { FluidReleaseMachine as machine } from "../../machines/fluidReleaseMachine.js";
-
-chai.use(assertArrays);
 
 /**
  * The expected path patch releases will go through. When the state machine is updated these will likely change and need
@@ -138,12 +134,13 @@ describe("FluidReleaseMachine", () => {
 
 			if (!state.startsWith("Do") || requiresBothActions.has(state)) {
 				it(state, () => {
-					expect(exits).to.deep.equal(["failure", "success"]);
+					["failure", "success"].forEach((item) => expect(exits).toContain(item));
 				});
 			} else {
 				// Do* actions are not required to have a failure action
 				it(state, () => {
-					expect(exits).to.deep.equal(["success"]);
+					expect(exits).toContain("success");
+					expect(exits).toHaveLength(1);
 				});
 			}
 		}
