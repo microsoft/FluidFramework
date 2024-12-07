@@ -20,6 +20,7 @@ export {
 } from "./migrationTool/index.js";
 export {
 	DataTransformationCallback,
+	ExportDataCallback,
 	IImportExportModel,
 	IMigratableModel,
 	IMigrator,
@@ -28,7 +29,7 @@ export {
 	LoadSourceContainerCallback,
 	makeMigrationCallback,
 	MigrationCallback,
-	migratorEntryPointPiece,
+	makeMigratorEntryPointPiece,
 } from "./migrator/index.js";
 export {
 	ISimpleLoader,

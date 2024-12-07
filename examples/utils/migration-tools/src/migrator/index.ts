@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { makeMigrationCallback } from "./callbackHelpers.js";
 export {
 	DataTransformationCallback,
 	IImportExportModel,
@@ -17,7 +18,4 @@ export {
 	type MigrationCallback,
 	Migrator,
 } from "./migrator.js";
-export {
-	makeMigrationCallback,
-	migratorEntryPointPiece,
-} from "./migratorEntryPointPiece.js";
+export { makeMigratorEntryPointPiece } from "./migratorEntryPointPiece.js";

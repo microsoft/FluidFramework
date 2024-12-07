@@ -19,7 +19,10 @@ export class CompositeEntryPoint {
 }
 
 // @alpha
-export type DataTransformationCallback = (exportedData: unknown, modelVersion: string) => Promise<unknown>;
+export type DataTransformationCallback = (exportedData: unknown, targetVersion: string) => Promise<unknown>;
+
+// @alpha
+export type ExportDataCallback = (container: IContainer) => Promise<unknown>;
 
 // @alpha
 export interface IAcceptedMigrationDetails {
@@ -96,13 +99,13 @@ export type LoadSourceContainerCallback = () => Promise<IContainer>;
 export const makeMigrationCallback: (loader: ISimpleLoader, dataTransformationCallback?: DataTransformationCallback | undefined) => MigrationCallback;
 
 // @alpha
+export const makeMigratorEntryPointPiece: (exportDataCallback: ExportDataCallback) => IEntryPointPiece;
+
+// @alpha
 export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;
 
 // @alpha
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
-
-// @alpha (undocumented)
-export const migratorEntryPointPiece: IEntryPointPiece;
 
 // @alpha (undocumented)
 export class SessionStorageSimpleLoader implements ISimpleLoader {
