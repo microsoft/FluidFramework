@@ -181,10 +181,9 @@ export class Migrator implements IMigrator {
 				const detachedContainer = await this.simpleLoader.createDetached(
 					acceptedMigration.newVersion,
 				);
-				const detachedModel = await getModelFromContainer<IMigratableModel>(
+				const destinationModel = await getModelFromContainer<IMigratableModel>(
 					detachedContainer.container,
 				);
-				const migratedModel = detachedModel;
 
 				const exportedData = await this.exportDataCallback(
 					acceptedMigration.migrationSequenceNumber,
@@ -195,7 +194,7 @@ export class Migrator implements IMigrator {
 				// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
 				// MigratableModelLoaders.
 				let transformedData: unknown;
-				if (migratedModel.supportsDataFormat(exportedData)) {
+				if (destinationModel.supportsDataFormat(exportedData)) {
 					// If the migrated model already supports the data format, go ahead with the migration.
 					transformedData = exportedData;
 					// eslint-disable-next-line unicorn/no-negated-condition
@@ -205,7 +204,7 @@ export class Migrator implements IMigrator {
 					try {
 						transformedData = await this.dataTransformationCallback(
 							exportedData,
-							migratedModel.version,
+							destinationModel.version,
 						);
 					} catch {
 						// TODO: This implies that the contract is to throw if the data can't be transformed, which
@@ -220,7 +219,7 @@ export class Migrator implements IMigrator {
 					this._migrationP = undefined;
 					return;
 				}
-				await migratedModel.importData(transformedData);
+				await destinationModel.importData(transformedData);
 
 				// Store the detached model for later use and retry scenarios
 				this._preparedDetachedModel = detachedContainer;
