@@ -34,6 +34,61 @@ async function getDataStoreEntryPoint(
 }
 
 /**
+ * Callback provided to load the source container that data will be exported from.  Should be a separately
+ * loaded container to avoid including local changes.
+ * @alpha
+ */
+export type LoadSourceContainerCallback = () => Promise<IContainer>;
+/**
+ * Callback provided to take desired migration steps after migration has been agreed upon and data has been
+ * exported.  Typically creating a new container and importing the data into it.
+ * @alpha
+ */
+export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;
+
+/**
+ * Make a typical migration callback.
+ * @alpha
+ */
+export const makeMigrationCallback = (
+	loader: ISimpleLoader,
+	dataTransformationCallback?: DataTransformationCallback | undefined,
+): MigrationCallback => {
+	const migrationCallback = async (
+		version: string,
+		exportedData: unknown,
+	): Promise<unknown> => {
+		const detachedContainer = await loader.createDetached(version);
+		const destinationModel = await getModelFromContainer<IMigratableModel>(
+			detachedContainer.container,
+		);
+		// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
+		// exported data into a format that the new model can import?  If we can determine it early, then
+		// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
+		// MigratableModelLoaders.
+		// TODO: Error paths in case the format isn't ingestible.
+		let transformedData: unknown;
+		if (destinationModel.supportsDataFormat(exportedData)) {
+			// If the migrated model already supports the data format, go ahead with the migration.
+			transformedData = exportedData;
+			// eslint-disable-next-line unicorn/no-negated-condition
+		} else if (dataTransformationCallback !== undefined) {
+			// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
+			// a format that we can import.
+			transformedData = await dataTransformationCallback(
+				exportedData,
+				destinationModel.version,
+			);
+		}
+		await destinationModel.importData(transformedData);
+		const newContainerId = await detachedContainer.attach();
+		detachedContainer.container.dispose();
+		return newContainerId;
+	};
+	return migrationCallback;
+};
+
+/**
  * @alpha
  */
 export const migratorEntryPointPiece: IEntryPointPiece = {
@@ -51,9 +106,8 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 	},
 	createPiece: async (runtime: IContainerRuntime): Promise<FluidObject> => {
 		return async (
-			loader: ISimpleLoader,
-			loadSourceContainerCallback: () => Promise<IContainer>,
-			dataTransformationCallback?: DataTransformationCallback,
+			loadSourceContainerCallback: LoadSourceContainerCallback,
+			migrationCallback: MigrationCallback,
 		) => {
 			const migrationTool = (await getDataStoreEntryPoint(
 				runtime,
@@ -71,38 +125,6 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 				const exportedData = await exportModel.exportData();
 				exportContainer.dispose();
 				return exportedData;
-			};
-			// This callback will take sort-of the role of a code loader, creating the new detached container appropriately.
-			const migrationCallback = async (
-				version: string,
-				exportedData: unknown,
-			): Promise<unknown> => {
-				const detachedContainer = await loader.createDetached(version);
-				const destinationModel = await getModelFromContainer<IMigratableModel>(
-					detachedContainer.container,
-				);
-				// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
-				// exported data into a format that the new model can import?  If we can determine it early, then
-				// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
-				// MigratableModelLoaders.
-				// TODO: Error paths in case the format isn't ingestible.
-				let transformedData: unknown;
-				if (destinationModel.supportsDataFormat(exportedData)) {
-					// If the migrated model already supports the data format, go ahead with the migration.
-					transformedData = exportedData;
-					// eslint-disable-next-line unicorn/no-negated-condition
-				} else if (dataTransformationCallback !== undefined) {
-					// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
-					// a format that we can import.
-					transformedData = await dataTransformationCallback(
-						exportedData,
-						destinationModel.version,
-					);
-				}
-				await destinationModel.importData(transformedData);
-				const newContainerId = await detachedContainer.attach();
-				detachedContainer.container.dispose();
-				return newContainerId;
 			};
 			const migrator = new Migrator(migrationTool, exportDataCallback, migrationCallback);
 			return migrator;

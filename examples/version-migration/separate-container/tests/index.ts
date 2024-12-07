@@ -7,6 +7,7 @@ import {
 	type IMigratableModel,
 	type IMigrator,
 	type IVersionedModel,
+	makeMigrationCallback,
 	SessionStorageSimpleLoader,
 } from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
@@ -119,12 +120,16 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		}
 	};
 
+	const migrationCallback = makeMigrationCallback(
+		loader,
+		inventoryListDataTransformationCallback,
+	);
+
 	const entryPoint = await container.getEntryPoint();
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 	const migrator: IMigrator = await (entryPoint as any).getMigrator(
-		loader,
 		async () => loader.loadExisting(id),
-		inventoryListDataTransformationCallback,
+		migrationCallback,
 	);
 	migrator.events.on("migrated", () => {
 		container.dispose();

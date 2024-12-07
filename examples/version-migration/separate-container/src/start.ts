@@ -8,7 +8,7 @@ import type {
 	IMigrator,
 	IVersionedModel,
 } from "@fluid-example/migration-tools/internal";
-import { SimpleLoader } from "@fluid-example/migration-tools/internal";
+import { makeMigrationCallback, SimpleLoader } from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
@@ -119,6 +119,11 @@ async function start(): Promise<void> {
 		model = await getModelFromContainer<IMigratableModel>(container);
 	}
 
+	const migrationCallback = makeMigrationCallback(
+		loader,
+		inventoryListDataTransformationCallback,
+	);
+
 	// TODO: Update stale documentation
 	// The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
 	// the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
@@ -127,9 +132,8 @@ async function start(): Promise<void> {
 	const entryPoint = await container.getEntryPoint();
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 	const migrator: IMigrator = await (entryPoint as any).getMigrator(
-		loader,
 		async () => loader.loadExisting(id),
-		inventoryListDataTransformationCallback,
+		migrationCallback,
 	);
 	migrator.events.on("migrated", () => {
 		container.dispose();

@@ -12,4 +12,9 @@ export {
 	IVersionedModel,
 } from "./interfaces.js";
 export { Migrator } from "./migrator.js";
-export { migratorEntryPointPiece } from "./migratorEntryPointPiece.js";
+export {
+	type LoadSourceContainerCallback,
+	makeMigrationCallback,
+	type MigrationCallback,
+	migratorEntryPointPiece,
+} from "./migratorEntryPointPiece.js";

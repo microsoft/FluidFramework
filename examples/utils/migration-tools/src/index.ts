@@ -25,6 +25,9 @@ export {
 	IMigrator,
 	IMigratorEvents,
 	IVersionedModel,
+	LoadSourceContainerCallback,
+	makeMigrationCallback,
+	MigrationCallback,
 	migratorEntryPointPiece,
 } from "./migrator/index.js";
 export {

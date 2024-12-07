@@ -90,6 +90,15 @@ export interface IVersionedModel {
 export const loadCompositeRuntime: (context: IContainerContext, existing: boolean, compositeEntryPoint: CompositeEntryPoint, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
 
 // @alpha
+export type LoadSourceContainerCallback = () => Promise<IContainer>;
+
+// @alpha
+export const makeMigrationCallback: (loader: ISimpleLoader, dataTransformationCallback?: DataTransformationCallback | undefined) => MigrationCallback;
+
+// @alpha
+export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;
+
+// @alpha
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
 // @alpha (undocumented)
