@@ -13,8 +13,28 @@ import type {
 	IMigrationTool,
 	MigrationState,
 } from "../migrationTool/index.js";
+// TODO: Probably just bring this in here.
+import { waitForAtLeastSequenceNumber } from "../simpleLoader/index.js";
 
 import type { IMigrator, IMigratorEvents } from "./interfaces.js";
+
+/**
+ * Callback that should take the given container and export its data in some format.
+ * @alpha
+ */
+export type ExportDataCallback = (container: IContainer) => Promise<unknown>;
+/**
+ * Callback provided to load the source container that data will be exported from.  Should be a separately
+ * loaded container to avoid including local changes.
+ * @alpha
+ */
+export type LoadSourceContainerCallback = () => Promise<IContainer>;
+/**
+ * Callback provided to take desired migration steps after migration has been agreed upon and data has been
+ * exported.  Typically creating a new container and importing the data into it.
+ * @alpha
+ */
+export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;
 
 /**
  * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
@@ -77,12 +97,10 @@ export class Migrator implements IMigrator {
 	public constructor(
 		// TODO: Make private
 		public readonly migrationTool: IMigrationTool,
-		private readonly exportDataCallback: (migrationSequenceNumber: number) => Promise<unknown>,
+		private readonly loadSourceContainerCallback: LoadSourceContainerCallback,
+		private readonly exportDataCallback: ExportDataCallback,
 		// This callback will take sort-of the role of a code loader, creating the new detached container appropriately.
-		private readonly migrationCallback: (
-			version: string,
-			exportedData: unknown,
-		) => Promise<unknown>,
+		private readonly migrationCallback: MigrationCallback,
 	) {
 		// TODO: Think about matching events between tool and migrator
 		this.migrationTool.events.on("stopping", () => {
@@ -139,9 +157,20 @@ export class Migrator implements IMigrator {
 		// TODO: Consider also taking a callback to verify the accepted version can be migrated to here?
 
 		const doTheMigration = async (): Promise<void> => {
-			const exportedData = await this.exportDataCallback(
+			// Here we load the model to at least the acceptance sequence number and export.  We do this with a
+			// separately loaded model to ensure we don't include any local un-ack'd changes.  Late-arriving messages
+			// may or may not make it into the migrated data, there is no guarantee either way.
+			// TODO: Consider making this a read-only client
+			const exportContainer = await this.loadSourceContainerCallback();
+			await waitForAtLeastSequenceNumber(
+				exportContainer,
 				acceptedMigration.migrationSequenceNumber,
 			);
+			// TODO: verify IMigratableModel
+			// const exportModel = await getModelFromContainer<IMigratableModel>(exportContainer);
+			// const exportedData = await exportModel.exportData();
+			const exportedData = await this.exportDataCallback(exportContainer);
+			exportContainer.dispose();
 
 			const migrationResult = await this.migrationCallback(
 				acceptedMigration.newVersion,

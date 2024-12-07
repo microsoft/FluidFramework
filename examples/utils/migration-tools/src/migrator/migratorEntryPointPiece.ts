@@ -9,10 +9,15 @@ import type { FluidObject } from "@fluidframework/core-interfaces";
 
 import type { IEntryPointPiece } from "../compositeRuntime/index.js";
 import { MigrationToolFactory, type IMigrationTool } from "../migrationTool/index.js";
-import { type ISimpleLoader, waitForAtLeastSequenceNumber } from "../simpleLoader/index.js";
+import { type ISimpleLoader } from "../simpleLoader/index.js";
 
 import type { DataTransformationCallback, IMigratableModel } from "./interfaces.js";
-import { getModelFromContainer, Migrator } from "./migrator.js";
+import {
+	getModelFromContainer,
+	Migrator,
+	type LoadSourceContainerCallback,
+	type MigrationCallback,
+} from "./migrator.js";
 
 const migratorEntryPointPieceName = "getMigrator";
 
@@ -32,19 +37,6 @@ async function getDataStoreEntryPoint(
 
 	return entryPointHandle.get();
 }
-
-/**
- * Callback provided to load the source container that data will be exported from.  Should be a separately
- * loaded container to avoid including local changes.
- * @alpha
- */
-export type LoadSourceContainerCallback = () => Promise<IContainer>;
-/**
- * Callback provided to take desired migration steps after migration has been agreed upon and data has been
- * exported.  Typically creating a new container and importing the data into it.
- * @alpha
- */
-export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;
 
 /**
  * Make a typical migration callback.
@@ -71,7 +63,6 @@ export const makeMigrationCallback = (
 		if (destinationModel.supportsDataFormat(exportedData)) {
 			// If the migrated model already supports the data format, go ahead with the migration.
 			transformedData = exportedData;
-			// eslint-disable-next-line unicorn/no-negated-condition
 		} else if (dataTransformationCallback !== undefined) {
 			// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
 			// a format that we can import.
@@ -105,6 +96,11 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 		await getDataStoreEntryPoint(runtime, migrationToolId);
 	},
 	createPiece: async (runtime: IContainerRuntime): Promise<FluidObject> => {
+		const exportDataCallback = async (container: IContainer): Promise<unknown> => {
+			// TODO: verify IMigratableModel
+			const exportModel = await getModelFromContainer<IMigratableModel>(container);
+			return exportModel.exportData();
+		};
 		return async (
 			loadSourceContainerCallback: LoadSourceContainerCallback,
 			migrationCallback: MigrationCallback,
@@ -113,20 +109,12 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 				runtime,
 				migrationToolId,
 			)) as IMigrationTool;
-			const exportDataCallback = async (migrationSequenceNumber: number): Promise<unknown> => {
-				// Here we load the model to at least the acceptance sequence number and export.  We do this with a
-				// separately loaded model to ensure we don't include any local un-ack'd changes.  Late-arriving messages
-				// may or may not make it into the migrated data, there is no guarantee either way.
-				// TODO: Consider making this a read-only client
-				const exportContainer = await loadSourceContainerCallback();
-				await waitForAtLeastSequenceNumber(exportContainer, migrationSequenceNumber);
-				// TODO: verify IMigratableModel
-				const exportModel = await getModelFromContainer<IMigratableModel>(exportContainer);
-				const exportedData = await exportModel.exportData();
-				exportContainer.dispose();
-				return exportedData;
-			};
-			const migrator = new Migrator(migrationTool, exportDataCallback, migrationCallback);
+			const migrator = new Migrator(
+				migrationTool,
+				loadSourceContainerCallback,
+				exportDataCallback,
+				migrationCallback,
+			);
 			return migrator;
 		};
 	},

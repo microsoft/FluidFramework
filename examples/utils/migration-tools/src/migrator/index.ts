@@ -11,10 +11,13 @@ export {
 	IMigratorEvents,
 	IVersionedModel,
 } from "./interfaces.js";
-export { Migrator } from "./migrator.js";
 export {
+	type ExportDataCallback,
 	type LoadSourceContainerCallback,
-	makeMigrationCallback,
 	type MigrationCallback,
+	Migrator,
+} from "./migrator.js";
+export {
+	makeMigrationCallback,
 	migratorEntryPointPiece,
 } from "./migratorEntryPointPiece.js";
