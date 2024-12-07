@@ -5,6 +5,7 @@
 
 export {
 	CreateDetachedContainerCallback,
+	makeCreateDetachedCallback,
 	makeMigrationCallback,
 } from "./callbackHelpers.js";
 export {

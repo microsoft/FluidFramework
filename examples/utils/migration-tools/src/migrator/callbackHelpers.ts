@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import type { IRequest } from "@fluidframework/core-interfaces";
 
 import type { DataTransformationCallback, IMigratableModel } from "./interfaces.js";
 import { type MigrationCallback } from "./migrator.js";
@@ -33,6 +34,32 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
 	}
 
 	return entryPoint.model;
+};
+
+/**
+ * Make an encapsulated createDetached callback for use with makeMigrationCallback.
+ * @alpha
+ */
+export const makeCreateDetachedCallback = (
+	loader: IHostLoader,
+	generateCreateNewRequest: () => IRequest,
+) => {
+	return async (
+		version: string,
+	): Promise<{ container: IContainer; attach: () => Promise<string> }> => {
+		const container = await loader.createDetachedContainer({ package: version });
+		// The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,
+		// without leaking out the loader, service, etc.  We also return the container ID here so we don't have
+		// to stamp it on something that would rather not know it (e.g. the container).
+		const attach = async (): Promise<string> => {
+			await container.attach(generateCreateNewRequest());
+			if (container.resolvedUrl === undefined) {
+				throw new Error("Resolved Url not available on attached container");
+			}
+			return container.resolvedUrl.id;
+		};
+		return { container, attach };
+	};
 };
 
 /**

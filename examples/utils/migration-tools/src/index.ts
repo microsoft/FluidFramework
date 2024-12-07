@@ -28,6 +28,7 @@ export {
 	IMigratorEvents,
 	IVersionedModel,
 	LoadSourceContainerCallback,
+	makeCreateDetachedCallback,
 	makeMigrationCallback,
 	MigrationCallback,
 	makeMigratorEntryPointPiece,

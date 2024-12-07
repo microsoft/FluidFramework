@@ -102,6 +102,12 @@ export const loadCompositeRuntime: (context: IContainerContext, existing: boolea
 export type LoadSourceContainerCallback = () => Promise<IContainer>;
 
 // @alpha
+export const makeCreateDetachedCallback: (loader: IHostLoader, generateCreateNewRequest: () => IRequest) => (version: string) => Promise<{
+    container: IContainer;
+    attach: () => Promise<string>;
+}>;
+
+// @alpha
 export const makeMigrationCallback: (createDetachedContainerCallback: CreateDetachedContainerCallback, dataTransformationCallback?: DataTransformationCallback | undefined) => MigrationCallback;
 
 // @alpha

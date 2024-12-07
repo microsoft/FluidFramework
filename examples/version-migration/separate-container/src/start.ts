@@ -8,8 +8,12 @@ import type {
 	IMigrator,
 	IVersionedModel,
 } from "@fluid-example/migration-tools/internal";
-import { makeMigrationCallback, SimpleLoader } from "@fluid-example/migration-tools/internal";
+import {
+	makeCreateDetachedCallback,
+	makeMigrationCallback,
+} from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,
@@ -93,14 +97,18 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
 };
 
 async function start(): Promise<void> {
-	const loader = new SimpleLoader({
+	const loader = new Loader({
 		urlResolver: new InsecureTinyliciousUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(
 			new InsecureTinyliciousTokenProvider(),
 		),
 		codeLoader: new DemoCodeLoader(),
-		generateCreateNewRequest: createTinyliciousCreateNewRequest,
 	});
+
+	const createDetachedCallback = makeCreateDetachedCallback(
+		loader,
+		createTinyliciousCreateNewRequest,
+	);
 
 	let id: string;
 	let container: IContainer;
@@ -109,18 +117,18 @@ async function start(): Promise<void> {
 	if (location.hash.length === 0) {
 		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
 		// Normally we would create with the most-recent version.
-		const createDetachedResult = await loader.createDetached("one");
+		const createDetachedResult = await createDetachedCallback("one");
 		container = createDetachedResult.container;
 		model = await getModelFromContainer<IMigratableModel>(container);
 		id = await createDetachedResult.attach();
 	} else {
 		id = location.hash.slice(1);
-		container = await loader.loadExisting(id);
+		container = await loader.resolve({ url: id });
 		model = await getModelFromContainer<IMigratableModel>(container);
 	}
 
 	const migrationCallback = makeMigrationCallback(
-		loader.createDetached,
+		createDetachedCallback,
 		inventoryListDataTransformationCallback,
 	);
 
@@ -132,7 +140,7 @@ async function start(): Promise<void> {
 	const entryPoint = await container.getEntryPoint();
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 	const migrator: IMigrator = await (entryPoint as any).getMigrator(
-		async () => loader.loadExisting(id),
+		async () => loader.resolve({ url: id }),
 		migrationCallback,
 	);
 	migrator.events.on("migrated", () => {

@@ -7,10 +7,19 @@ import {
 	type IMigratableModel,
 	type IMigrator,
 	type IVersionedModel,
+	makeCreateDetachedCallback,
 	makeMigrationCallback,
-	SessionStorageSimpleLoader,
 } from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	createLocalResolverCreateNewRequest,
+	LocalDocumentServiceFactory,
+	LocalResolver,
+	LocalSessionStorageDbFactory,
+} from "@fluidframework/local-driver/internal";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { v4 as uuid } from "uuid";
 
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -19,6 +28,9 @@ import { inventoryListDataTransformationCallback } from "../src/dataTransform.js
 import { DemoCodeLoader } from "../src/demoCodeLoader.js";
 import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "../src/view/index.js";
+
+const urlResolver = new LocalResolver();
+const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID
@@ -68,7 +80,16 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	const searchParams = new URLSearchParams(location.search);
 	const testMode = searchParams.get("testMode") !== null;
-	const loader = new SessionStorageSimpleLoader(new DemoCodeLoader(testMode));
+	const loader = new Loader({
+		urlResolver,
+		documentServiceFactory: new LocalDocumentServiceFactory(localServer),
+		codeLoader: new DemoCodeLoader(testMode),
+	});
+
+	const createDetachedCallback = makeCreateDetachedCallback(loader, () =>
+		createLocalResolverCreateNewRequest(uuid()),
+	);
+
 	let id: string;
 	let container: IContainer;
 	let model: IMigratableModel;
@@ -76,13 +97,13 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	if (location.hash.length === 0) {
 		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
 		// Normally we would create with the most-recent version.
-		const createDetachedResult = await loader.createDetached("one");
+		const createDetachedResult = await createDetachedCallback("one");
 		container = createDetachedResult.container;
 		model = await getModelFromContainer<IMigratableModel>(container);
 		id = await createDetachedResult.attach();
 	} else {
 		id = location.hash.slice(1);
-		container = await loader.loadExisting(id);
+		container = await loader.resolve({ url: `${window.location.origin}/${id}` });
 		model = await getModelFromContainer<IMigratableModel>(container);
 	}
 
@@ -121,14 +142,14 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	};
 
 	const migrationCallback = makeMigrationCallback(
-		loader.createDetached,
+		createDetachedCallback,
 		inventoryListDataTransformationCallback,
 	);
 
 	const entryPoint = await container.getEntryPoint();
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 	const migrator: IMigrator = await (entryPoint as any).getMigrator(
-		async () => loader.loadExisting(id),
+		async () => loader.resolve({ url: `${window.location.origin}/${id}` }),
 		migrationCallback,
 	);
 	migrator.events.on("migrated", () => {
