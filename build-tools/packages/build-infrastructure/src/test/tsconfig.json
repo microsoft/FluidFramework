@@ -4,7 +4,7 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../lib/test",
-		"types": ["node", "mocha", "chai"],
+		"types": ["node"],
 	},
 	"references": [
 		{

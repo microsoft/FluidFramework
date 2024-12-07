@@ -57,8 +57,10 @@
 		"format:biome": "biome check --write .",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
-		"test": "npm run test:mocha",
+		"test": "npm run test:mocha && npm run test:vitest",
 		"test:coverage": "c8 npm run test",
+		"test:vitest": "vitest run",
+		"test:vitest:coverage": "npm run test:vitest -- --coverage",
 		"test:mocha": "mocha --recursive lib/test",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
@@ -108,7 +110,8 @@
 		"ts-node": "^10.9.2",
 		"typedoc": "^0.26.10",
 		"typedoc-plugin-markdown": "^4.2.9",
-		"unionfs": "^4.5.4"
+		"unionfs": "^4.5.4",
+		"vitest": "^2.1.4"
 	},
 	"oclif": {
 		"bin": "buildProject",
