@@ -73,6 +73,9 @@ importers:
       inquirer:
         specifier: ^8.2.6
         version: 8.2.6
+      npm-check-updates:
+        specifier: ^16.14.20
+        version: 16.14.20
       rimraf:
         specifier: ^4.4.1
         version: 4.4.1
