@@ -7,14 +7,13 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type {
 	IAcceptedMigrationDetails,
 	IMigrationTool,
 	MigrationState,
 } from "../migrationTool/index.js";
-// TODO: Probably just bring this in here.
-import { waitForAtLeastSequenceNumber } from "../simpleLoader/index.js";
 
 import type { IMigrator, IMigratorEvents } from "./interfaces.js";
 
@@ -37,24 +36,26 @@ export type LoadSourceContainerCallback = () => Promise<IContainer>;
 export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;
 
 /**
- * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
- * type checking for added safety.
+ * Get a promise that will resolve once the container has advanced to at least the given sequence number
+ * @param container - the container to observe
+ * @param sequenceNumber - the sequence number we want to load to at minimum
  */
-export const getModelFromContainer = async <ModelType>(
+const waitForAtLeastSequenceNumber = async (
 	container: IContainer,
-): Promise<ModelType> => {
-	const entryPoint = (await container.getEntryPoint()) as {
-		model: ModelType;
-	};
-
-	// If the user tries to use this with an incompatible container runtime, we want to give them
-	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
-	if (typeof entryPoint.model !== "object") {
-		throw new TypeError("Incompatible container runtime: doesn't provide model");
-	}
-
-	return entryPoint.model;
-};
+	sequenceNumber: number,
+): Promise<void> =>
+	new Promise<void>((resolve) => {
+		if (sequenceNumber <= container.deltaManager.lastSequenceNumber) {
+			resolve();
+		}
+		const callbackOps = (message: ISequencedDocumentMessage): void => {
+			if (sequenceNumber <= message.sequenceNumber) {
+				resolve();
+				container.deltaManager.off("op", callbackOps);
+			}
+		};
+		container.deltaManager.on("op", callbackOps);
+	});
 
 /**
  * The Migrator maintains a reference to the current model, and interacts with it (and its MigrationTool)
@@ -166,9 +167,6 @@ export class Migrator implements IMigrator {
 				exportContainer,
 				acceptedMigration.migrationSequenceNumber,
 			);
-			// TODO: verify IMigratableModel
-			// const exportModel = await getModelFromContainer<IMigratableModel>(exportContainer);
-			// const exportedData = await exportModel.exportData();
 			const exportedData = await this.exportDataCallback(exportContainer);
 			exportContainer.dispose();
 

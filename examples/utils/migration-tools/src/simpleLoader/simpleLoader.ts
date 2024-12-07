@@ -10,31 +10,8 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type { ISimpleLoader } from "./interfaces.js";
-
-/**
- * Get a promise that will resolve once the container has advanced to at least the given sequence number
- * @param container - the container to observe
- * @param sequenceNumber - the sequence number we want to load to at minimum
- */
-export const waitForAtLeastSequenceNumber = async (
-	container: IContainer,
-	sequenceNumber: number,
-): Promise<void> =>
-	new Promise<void>((resolve) => {
-		if (sequenceNumber <= container.deltaManager.lastSequenceNumber) {
-			resolve();
-		}
-		const callbackOps = (message: ISequencedDocumentMessage): void => {
-			if (sequenceNumber <= message.sequenceNumber) {
-				resolve();
-				container.deltaManager.off("op", callbackOps);
-			}
-		};
-		container.deltaManager.on("op", callbackOps);
-	});
 
 /**
  * @alpha
