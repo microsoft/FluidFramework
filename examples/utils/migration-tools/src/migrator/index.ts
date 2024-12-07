@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { makeMigrationCallback } from "./callbackHelpers.js";
+export {
+	CreateDetachedContainerCallback,
+	makeMigrationCallback,
+} from "./callbackHelpers.js";
 export {
 	DataTransformationCallback,
 	IImportExportModel,

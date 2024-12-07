@@ -120,7 +120,7 @@ async function start(): Promise<void> {
 	}
 
 	const migrationCallback = makeMigrationCallback(
-		loader,
+		loader.createDetached,
 		inventoryListDataTransformationCallback,
 	);
 

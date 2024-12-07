@@ -19,6 +19,7 @@ export {
 	MigrationState,
 } from "./migrationTool/index.js";
 export {
+	CreateDetachedContainerCallback,
 	DataTransformationCallback,
 	ExportDataCallback,
 	IImportExportModel,

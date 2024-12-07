@@ -19,6 +19,12 @@ export class CompositeEntryPoint {
 }
 
 // @alpha
+export type CreateDetachedContainerCallback = (version: string) => Promise<{
+    container: IContainer;
+    attach: () => Promise<string>;
+}>;
+
+// @alpha
 export type DataTransformationCallback = (exportedData: unknown, targetVersion: string) => Promise<unknown>;
 
 // @alpha
@@ -96,7 +102,7 @@ export const loadCompositeRuntime: (context: IContainerContext, existing: boolea
 export type LoadSourceContainerCallback = () => Promise<IContainer>;
 
 // @alpha
-export const makeMigrationCallback: (loader: ISimpleLoader, dataTransformationCallback?: DataTransformationCallback | undefined) => MigrationCallback;
+export const makeMigrationCallback: (createDetachedContainerCallback: CreateDetachedContainerCallback, dataTransformationCallback?: DataTransformationCallback | undefined) => MigrationCallback;
 
 // @alpha
 export const makeMigratorEntryPointPiece: (exportDataCallback: ExportDataCallback) => IEntryPointPiece;
@@ -127,7 +133,7 @@ export class SimpleLoader implements ISimpleLoader {
         generateCreateNewRequest: () => IRequest;
     });
     // (undocumented)
-    createDetached(version: string): Promise<{
+    readonly createDetached: (version: string) => Promise<{
         container: IContainer;
         attach: () => Promise<string>;
     }>;

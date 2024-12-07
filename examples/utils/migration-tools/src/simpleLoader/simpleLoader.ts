@@ -52,9 +52,9 @@ export class SimpleLoader implements ISimpleLoader {
 	// callback here, but this callback at least allows us to keep the method off the container interface.
 	// TODO: Consider making the version param optional, and in that case having a mechanism to query the codeLoader
 	// for the latest/default version to use?
-	public async createDetached(
+	public readonly createDetached = async (
 		version: string,
-	): Promise<{ container: IContainer; attach: () => Promise<string> }> {
+	): Promise<{ container: IContainer; attach: () => Promise<string> }> => {
 		const container = await this.loader.createDetachedContainer({ package: version });
 		// The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,
 		// without leaking out the loader, service, etc.  We also return the container ID here so we don't have
@@ -67,7 +67,7 @@ export class SimpleLoader implements ISimpleLoader {
 			return container.resolvedUrl.id;
 		};
 		return { container, attach };
-	}
+	};
 
 	public async loadExisting(id: string): Promise<IContainer> {
 		return this.loader.resolve({

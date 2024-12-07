@@ -5,10 +5,17 @@
 
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 
-import { type ISimpleLoader } from "../simpleLoader/index.js";
-
 import type { DataTransformationCallback, IMigratableModel } from "./interfaces.js";
 import { type MigrationCallback } from "./migrator.js";
+
+/**
+ * A callback for creating a detached container.  We need to have an encapsulated attach(), since the
+ * normal IContainer.attach() parameters vary between services.
+ * @alpha
+ */
+export type CreateDetachedContainerCallback = (
+	version: string,
+) => Promise<{ container: IContainer; attach: () => Promise<string> }>;
 
 /**
  * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
@@ -33,17 +40,15 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
  * @alpha
  */
 export const makeMigrationCallback = (
-	loader: ISimpleLoader,
+	createDetachedContainerCallback: CreateDetachedContainerCallback,
 	dataTransformationCallback?: DataTransformationCallback | undefined,
 ): MigrationCallback => {
 	const migrationCallback = async (
 		version: string,
 		exportedData: unknown,
 	): Promise<unknown> => {
-		const detachedContainer = await loader.createDetached(version);
-		const destinationModel = await getModelFromContainer<IMigratableModel>(
-			detachedContainer.container,
-		);
+		const { container, attach } = await createDetachedContainerCallback(version);
+		const destinationModel = await getModelFromContainer<IMigratableModel>(container);
 		// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
 		// exported data into a format that the new model can import?  If we can determine it early, then
 		// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
@@ -62,8 +67,8 @@ export const makeMigrationCallback = (
 			);
 		}
 		await destinationModel.importData(transformedData);
-		const newContainerId = await detachedContainer.attach();
-		detachedContainer.container.dispose();
+		const newContainerId = await attach();
+		container.dispose();
 		return newContainerId;
 	};
 	return migrationCallback;

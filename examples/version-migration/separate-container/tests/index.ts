@@ -121,7 +121,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	};
 
 	const migrationCallback = makeMigrationCallback(
-		loader,
+		loader.createDetached,
 		inventoryListDataTransformationCallback,
 	);
 
