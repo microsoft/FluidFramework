@@ -15,6 +15,7 @@
  */
 
 export {
+	BuildProject,
 	getAllDependencies,
 	loadBuildProject,
 } from "./buildProject.js";
@@ -57,4 +58,14 @@ export type {
 	IPackageManager,
 } from "./types.js";
 export { isIPackage, isIReleaseGroup } from "./types.js";
+export {
+	filterPackages,
+	type FilterablePackage,
+	selectAndFilterPackages,
+	type GlobString,
+	AllPackagesSelectionCriteria,
+	EmptySelectionCriteria,
+	type PackageSelectionCriteria,
+	type PackageFilterOptions,
+} from "./filter.js";
 export { setVersion } from "./versions.js";

@@ -14,6 +14,26 @@ import { SimpleGit } from 'simple-git';
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 // @public
+export const AllPackagesSelectionCriteria: PackageSelectionCriteria;
+
+// @public
+export class BuildProject<P extends IPackage> implements IBuildProject<P> {
+    constructor(searchPath: string,
+    upstreamRemotePartialUrl?: string | undefined);
+    protected readonly configFilePath: string;
+    readonly configuration: BuildProjectLayout;
+    getGitRepository(): Promise<Readonly<SimpleGit>>;
+    getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
+    get packages(): Map<PackageName, P>;
+    relativeToRepo(p: string): string;
+    get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup>;
+    reload(): void;
+    readonly root: string;
+    readonly upstreamRemotePartialUrl?: string | undefined;
+    get workspaces(): Map<WorkspaceName, IWorkspace>;
+}
+
+// @public
 export const BUILDPROJECT_CONFIG_VERSION = 1;
 
 // @public
@@ -30,6 +50,20 @@ export interface BuildProjectLayout {
 
 // @public
 export function createPackageManager(name: PackageManagerName): IPackageManager;
+
+// @public
+export const EmptySelectionCriteria: PackageSelectionCriteria;
+
+// @public
+export interface FilterablePackage {
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    private?: boolean | undefined;
+}
+
+// @public
+export function filterPackages<T extends FilterablePackage>(packages: T[], filters: PackageFilterOptions): Promise<T[]>;
 
 // @public
 export function findGitRootSync(cwd?: string): string;
@@ -71,6 +105,9 @@ export function getMergeBaseRemote(git: SimpleGit, branch: string, remote?: stri
 
 // @public
 export function getRemote(git: SimpleGit, partialUrl: string | undefined): Promise<string | undefined>;
+
+// @public
+export type GlobString = string;
 
 // @public
 export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable {
@@ -215,6 +252,13 @@ export interface PackageDependency {
 }
 
 // @public
+export interface PackageFilterOptions {
+    private: boolean | undefined;
+    scope?: string[] | undefined;
+    skipScope?: string[] | undefined;
+}
+
+// @public
 export type PackageJson = SetRequired<PackageJson_2 & FluidPackageJsonFields, "name" | "scripts" | "version">;
 
 // @public
@@ -222,6 +266,16 @@ export type PackageManagerName = "npm" | "pnpm" | "yarn";
 
 // @public
 export type PackageName = Opaque<string, "PackageName">;
+
+// @public
+export interface PackageSelectionCriteria {
+    changedSinceBranch?: string | undefined;
+    directory?: string | undefined;
+    releaseGroupRoots: (GlobString | string)[];
+    releaseGroups: (GlobString | string)[];
+    workspaceRoots: (GlobString | string)[];
+    workspaces: (GlobString | string)[];
+}
 
 // @public
 export interface ReleaseGroupDefinition {
@@ -238,6 +292,12 @@ export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
 export interface Reloadable {
     reload(): void;
 }
+
+// @public
+export function selectAndFilterPackages<P extends IPackage>(buildProject: IBuildProject<P>, selection: PackageSelectionCriteria, filter?: PackageFilterOptions): Promise<{
+    selected: P[];
+    filtered: P[];
+}>;
 
 // @public
 export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;

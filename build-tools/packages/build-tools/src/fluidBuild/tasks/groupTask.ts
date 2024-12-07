@@ -6,13 +6,13 @@
 import { AsyncPriorityQueue } from "async";
 
 import type { BuildContext } from "../buildContext";
-import { BuildPackage, BuildResult } from "../buildGraph";
+import { BuildGraphPackage, BuildResult } from "../buildGraph";
 import { LeafTask } from "./leaf/leafTask";
 import { Task, TaskExec } from "./task";
 
 export class GroupTask extends Task {
 	constructor(
-		node: BuildPackage,
+		node: BuildGraphPackage,
 		command: string,
 		context: BuildContext,
 		protected readonly subTasks: Task[],
