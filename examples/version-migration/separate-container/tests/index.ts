@@ -123,8 +123,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 	const migrator: IMigrator = await (entryPoint as any).getMigrator(
 		loader,
-		id,
-		container,
+		async () => loader.loadExisting(id),
 		inventoryListDataTransformationCallback,
 	);
 	migrator.events.on("migrated", () => {

@@ -52,11 +52,9 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 	createPiece: async (runtime: IContainerRuntime): Promise<FluidObject> => {
 		return async (
 			loader: ISimpleLoader,
-			initialId: string,
-			container: IContainer,
+			loadSourceContainerCallback: () => Promise<IContainer>,
 			dataTransformationCallback?: DataTransformationCallback,
 		) => {
-			console.log(container.getSpecifiedCodeDetails());
 			const migrationTool = (await getDataStoreEntryPoint(
 				runtime,
 				migrationToolId,
@@ -66,7 +64,7 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 				// separately loaded model to ensure we don't include any local un-ack'd changes.  Late-arriving messages
 				// may or may not make it into the migrated data, there is no guarantee either way.
 				// TODO: Consider making this a read-only client
-				const exportContainer = await loader.loadExisting(initialId);
+				const exportContainer = await loadSourceContainerCallback();
 				await waitForAtLeastSequenceNumber(exportContainer, migrationSequenceNumber);
 				// TODO: verify IMigratableModel
 				const exportModel = await getModelFromContainer<IMigratableModel>(exportContainer);
@@ -103,6 +101,7 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 				}
 				await destinationModel.importData(transformedData);
 				const newContainerId = await detachedContainer.attach();
+				detachedContainer.container.dispose();
 				return newContainerId;
 			};
 			const migrator = new Migrator(migrationTool, exportDataCallback, migrationCallback);
