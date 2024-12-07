@@ -1,0 +1,155 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import { useFakeTimers, type SinonFakeTimers } from "sinon";
+import { describe, it, afterAll, afterEach, beforeAll, beforeEach, expect } from "vitest";
+
+import { Notifications, type PresenceNotifications } from "../index.js";
+import type { createPresenceManager } from "../presenceManager.js";
+
+import {
+	getDataFromSignal,
+	getPresenceWorkspaceFromSignal,
+	MockRuntimeSignalSnapshotter,
+} from "./snapshotEphemeralRuntime.js";
+import { prepareConnectedPresence } from "./testUtils.js";
+
+describe("Presence", () => {
+	describe("NotificationsManager", () => {
+		describe("snapshot tests", () => {
+			let runtime: MockRuntimeSignalSnapshotter;
+			let logger: EventAndErrorTrackingLogger;
+			const initialTime = 1000;
+			let clock: SinonFakeTimers;
+			let presence: ReturnType<typeof createPresenceManager>;
+
+			beforeAll(async () => {
+				clock = useFakeTimers();
+			});
+
+			beforeEach(() => {
+				logger = new EventAndErrorTrackingLogger();
+				runtime = new MockRuntimeSignalSnapshotter(logger, true);
+
+				// We are configuring the runtime to be in a connected state, so ensure it looks connected
+				runtime.connected = true;
+
+				// Note that while the initialTime is set to 1000, the prepareConnectedPresence call advances
+				// it to 1010 so all tests start at that time.
+				clock.setSystemTime(initialTime);
+
+				// Disable submitting signals with a dummy function. This ensures we don't capture signals from
+				// test setup, like the prepareConnectedPresence call.
+				const submitSignalOriginal = runtime.submitSignal;
+				runtime.submitSignal = () => {};
+
+				// Set up the presence connection
+				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+
+				// Restore the submitSignal function
+				runtime.submitSignal = submitSignalOriginal;
+			});
+
+			afterEach(() => {
+				clock.reset();
+			});
+
+			afterAll(() => {
+				clock.restore();
+			});
+
+			it("notification signals are sent immediately", async () => {
+				// Configure a notifications workspaces
+				// eslint-disable-next-line @typescript-eslint/ban-types
+				const notificationsWorkspace: PresenceNotifications<{}> = presence.getNotifications(
+					"name:testNotificationWorkspace",
+					{},
+				);
+
+				notificationsWorkspace.add(
+					"testEvents",
+					Notifications<
+						// Below explicit generic specification should not be required.
+						{
+							newId: (id: number) => void;
+						},
+						"testEvents"
+					>(
+						// A default handler is not required
+						{},
+					),
+				);
+
+				const { testEvents } = notificationsWorkspace.props;
+
+				clock.tick(40); // Time is now 1050
+				// SIGNAL #1
+				testEvents.emit.broadcast("newId", 77);
+
+				clock.tick(10); // Time is now 1060
+				// SIGNAL #2
+				testEvents.emit.broadcast("newId", 88);
+
+				expect(runtime.submittedSignals).toHaveLength(2);
+
+				expect(
+					getPresenceWorkspaceFromSignal(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						runtime.submittedSignals[0]!,
+						"n:name:testNotificationWorkspace",
+					),
+				).toMatchInlineSnapshot(`
+					{
+					  "testEvents": {
+					    "sessionId-2": {
+					      "ignoreUnmonitored": true,
+					      "rev": 0,
+					      "timestamp": 0,
+					      "value": {
+					        "args": [
+					          77,
+					        ],
+					        "name": "newId",
+					      },
+					    },
+					  },
+					}
+				`);
+
+				// Verify first signal set the newId to 77
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				const value = getDataFromSignal(
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					runtime.submittedSignals[0]!,
+					"n:name:testNotificationWorkspace",
+					"testEvents",
+					"sessionId-2",
+					"value",
+				);
+
+				expect(value).toMatchInlineSnapshot(`
+					{
+					  "args": [
+					    77,
+					  ],
+					  "name": "newId",
+					}
+				`);
+
+				// Verify first signal set the newId to 88
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				expect(getDataFromSignal(
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					runtime.submittedSignals[1]!,
+					"n:name:testNotificationWorkspace",
+					"testEvents",
+					"sessionId-2",
+					"value",
+				).args).toEqual([88]);
+			});
+		});
+	});
+});
