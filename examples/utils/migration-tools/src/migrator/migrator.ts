@@ -22,29 +22,24 @@ import type {
 	IMigratorEvents,
 } from "./interfaces.js";
 
-// TODO: This probably shouldn't be exported, consider having the migrator get its own model/tool out.
 /**
- * The purpose of the model pattern and the model loader is to wrap the IContainer in a more useful object and
- * interface.  This demo uses a convention of the entrypoint providing a getModelAndMigrationTool method to do so.
- * It does this with the expectation that the model has been bundled with the container code.
- *
- * Other strategies to obtain the wrapping model could also work fine here - for example a standalone model code
- * loader that separately fetches model code and wraps the container from the outside.
- * @internal
+ * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
+ * type checking for added safety.
  */
-export const getModelAndMigrationToolFromContainer = async <ModelType>(
+export const getModelFromContainer = async <ModelType>(
 	container: IContainer,
-): Promise<{ model: ModelType }> => {
-	// TODO: Fix typing here
+): Promise<ModelType> => {
 	const entryPoint = (await container.getEntryPoint()) as {
 		model: ModelType;
 	};
-	// If the user tries to use this model loader with an incompatible container runtime, we want to give them
+
+	// If the user tries to use this with an incompatible container runtime, we want to give them
 	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
 	if (typeof entryPoint.model !== "object") {
 		throw new TypeError("Incompatible container runtime: doesn't provide model");
 	}
-	return { model: entryPoint.model };
+
+	return entryPoint.model;
 };
 
 /**
@@ -186,10 +181,9 @@ export class Migrator implements IMigrator {
 				const detachedContainer = await this.simpleLoader.createDetached(
 					acceptedMigration.newVersion,
 				);
-				const { model: detachedModel } =
-					await getModelAndMigrationToolFromContainer<IMigratableModel>(
-						detachedContainer.container,
-					);
+				const detachedModel = await getModelFromContainer<IMigratableModel>(
+					detachedContainer.container,
+				);
 				const migratedModel = detachedModel;
 
 				const exportedData = await this.exportDataCallback(

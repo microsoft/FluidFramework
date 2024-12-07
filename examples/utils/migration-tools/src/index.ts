@@ -20,7 +20,6 @@ export {
 } from "./migrationTool/index.js";
 export {
 	DataTransformationCallback,
-	getModelAndMigrationToolFromContainer,
 	IImportExportModel,
 	IMigratableModel,
 	IMigrator,

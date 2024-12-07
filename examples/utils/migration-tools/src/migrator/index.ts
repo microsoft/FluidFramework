@@ -11,8 +11,5 @@ export {
 	IMigratorEvents,
 	IVersionedModel,
 } from "./interfaces.js";
-export {
-	getModelAndMigrationToolFromContainer,
-	Migrator,
-} from "./migrator.js";
+export { Migrator } from "./migrator.js";
 export { migratorEntryPointPiece } from "./migratorEntryPointPiece.js";

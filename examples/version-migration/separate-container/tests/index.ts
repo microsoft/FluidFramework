@@ -4,7 +4,6 @@
  */
 
 import {
-	getModelAndMigrationToolFromContainer,
 	type IMigratableModel,
 	type IMigrator,
 	type IVersionedModel,
@@ -44,6 +43,24 @@ window["containers"] = [];
 window["migrators"] = [];
 
 /**
+ * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
+ * type checking for added safety.
+ */
+const getModelFromContainer = async <ModelType>(container: IContainer): Promise<ModelType> => {
+	const entryPoint = (await container.getEntryPoint()) as {
+		model: ModelType;
+	};
+
+	// If the user tries to use this with an incompatible container runtime, we want to give them
+	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
+	if (typeof entryPoint.model !== "object") {
+		throw new TypeError("Incompatible container runtime: doesn't provide model");
+	}
+
+	return entryPoint.model;
+};
+
+/**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
@@ -60,16 +77,12 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		// Normally we would create with the most-recent version.
 		const createDetachedResult = await loader.createDetached("one");
 		container = createDetachedResult.container;
-		const modelAndMigrationTool =
-			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
-		model = modelAndMigrationTool.model;
+		model = await getModelFromContainer<IMigratableModel>(container);
 		id = await createDetachedResult.attach();
 	} else {
 		id = location.hash.slice(1);
 		container = await loader.loadExisting(id);
-		const modelAndMigrationTool =
-			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
-		model = modelAndMigrationTool.model;
+		model = await getModelFromContainer<IMigratableModel>(container);
 	}
 
 	const appDiv = document.createElement("div");

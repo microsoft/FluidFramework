@@ -12,7 +12,7 @@ import { MigrationToolFactory, type IMigrationTool } from "../migrationTool/inde
 import { type ISimpleLoader, waitForAtLeastSequenceNumber } from "../simpleLoader/index.js";
 
 import type { DataTransformationCallback, IMigratableModel } from "./interfaces.js";
-import { getModelAndMigrationToolFromContainer, Migrator } from "./migrator.js";
+import { getModelFromContainer, Migrator } from "./migrator.js";
 
 const migratorEntryPointPieceName = "getMigrator";
 
@@ -69,8 +69,7 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 				const exportContainer = await loader.loadExisting(initialId);
 				await waitForAtLeastSequenceNumber(exportContainer, migrationSequenceNumber);
 				// TODO: verify IMigratableModel
-				const { model: exportModel } =
-					await getModelAndMigrationToolFromContainer<IMigratableModel>(exportContainer);
+				const exportModel = await getModelFromContainer<IMigratableModel>(exportContainer);
 				const exportedData = await exportModel.exportData();
 				exportContainer.dispose();
 				return exportedData;
