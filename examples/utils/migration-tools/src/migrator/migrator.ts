@@ -15,12 +15,7 @@ import type {
 } from "../migrationTool/index.js";
 import { type ISimpleLoader } from "../simpleLoader/index.js";
 
-import type {
-	DataTransformationCallback,
-	IMigratableModel,
-	IMigrator,
-	IMigratorEvents,
-} from "./interfaces.js";
+import type { IMigrator, IMigratorEvents } from "./interfaces.js";
 
 /**
  * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
@@ -80,26 +75,16 @@ export class Migrator implements IMigrator {
 	 */
 	private _migrationP: Promise<void> | undefined;
 
-	// TODO: Better typing, decide if we can just retain attach()
-	/**
-	 * Detached model that is ready to attach. This is stored for retry scenarios.
-	 */
-	private _preparedDetachedModel:
-		| { container: IContainer; attach: () => Promise<string> }
-		| undefined;
-
-	/**
-	 * After attaching the prepared model, but before we have written its ID into the current model, we'll store the ID
-	 * here to support retry scenarios.
-	 */
-	private _preparedModelId: string | undefined;
-
 	public constructor(
 		private readonly simpleLoader: ISimpleLoader,
 		// TODO: Make private
 		public readonly migrationTool: IMigrationTool,
 		private readonly exportDataCallback: (migrationSequenceNumber: number) => Promise<unknown>,
-		private readonly dataTransformationCallback?: DataTransformationCallback,
+		// This callback will take sort-of the role of a code loader, creating the new detached container appropriately.
+		private readonly migrationCallback: (
+			version: string,
+			exportedData: unknown,
+		) => Promise<unknown>,
 	) {
 		// TODO: Think about matching events between tool and migrator
 		this.migrationTool.events.on("stopping", () => {
@@ -156,127 +141,32 @@ export class Migrator implements IMigrator {
 		}
 
 		const doTheMigration = async (): Promise<void> => {
-			// doTheMigration() is called at the start of migration and should only resolve in two cases. First, is if
-			// either the local or another client successfully completes the migration. Second, is if we disconnect
-			// during the migration process. In both cases we should re-enter the state machine and take the
-			// appropriate action (see then() block below).
-
-			const prepareTheMigration = async (): Promise<void> => {
-				// It's possible that our modelLoader is older and doesn't understand the new acceptedMigration.
-				// Currently this fails the migration gracefully and emits an event so the app developer can know
-				// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
-				// forward, or at least advise the end user to refresh the page or something.
-				// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
-				// a new MigratableModelLoader?
-				// TODO: Does the above TODO still matter now that this uses SimpleLoader?
-				const migrationSupported = await this.simpleLoader.supportsVersion(
-					acceptedMigration.newVersion,
-				);
-				if (!migrationSupported) {
-					this._events.emit("migrationNotSupported", acceptedMigration.newVersion);
-					this._migrationP = undefined;
-					return;
-				}
-
-				const detachedContainer = await this.simpleLoader.createDetached(
-					acceptedMigration.newVersion,
-				);
-				const destinationModel = await getModelFromContainer<IMigratableModel>(
-					detachedContainer.container,
-				);
-
-				const exportedData = await this.exportDataCallback(
-					acceptedMigration.migrationSequenceNumber,
-				);
-
-				// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
-				// exported data into a format that the new model can import?  If we can determine it early, then
-				// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
-				// MigratableModelLoaders.
-				let transformedData: unknown;
-				if (destinationModel.supportsDataFormat(exportedData)) {
-					// If the migrated model already supports the data format, go ahead with the migration.
-					transformedData = exportedData;
-					// eslint-disable-next-line unicorn/no-negated-condition
-				} else if (this.dataTransformationCallback !== undefined) {
-					// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
-					// a format that we can import.
-					try {
-						transformedData = await this.dataTransformationCallback(
-							exportedData,
-							destinationModel.version,
-						);
-					} catch {
-						// TODO: This implies that the contract is to throw if the data can't be transformed, which
-						// isn't great.  How should the dataTransformationCallback indicate failure?
-						this._events.emit("migrationNotSupported", acceptedMigration.newVersion);
-						this._migrationP = undefined;
-						return;
-					}
-				} else {
-					// We can't get the data into a format that we can import, give up.
-					this._events.emit("migrationNotSupported", acceptedMigration.newVersion);
-					this._migrationP = undefined;
-					return;
-				}
-				await destinationModel.importData(transformedData);
-
-				// Store the detached model for later use and retry scenarios
-				this._preparedDetachedModel = detachedContainer;
-			};
-
-			const completeTheMigration = async (): Promise<void> => {
-				assert(
-					this._preparedDetachedModel !== undefined,
-					"this._preparedDetachedModel should be defined",
-				);
-
-				// Volunteer to complete the migration.
-				let isAssigned: boolean;
-				try {
-					isAssigned = await this.migrationTool.volunteerForMigration();
-				} catch {
-					// volunteerForMigration() will throw an error on disconnection. In this case, we should exit and
-					// re-enter the state machine which will wait until we reconnect.
-					// Note: while we wait to reconnect it is possible that another client will have already completed
-					// the migration.
-					assert(!this.connected, "We should be disconnected");
-					return;
-				}
-
-				if (this.migrationTool.newContainerId !== undefined) {
-					// If newContainerId is already set, then another client already completed the migration.
-					return;
-				}
-
-				assert(isAssigned, "We should be assigned the migration task");
-
-				if (this._preparedModelId === undefined) {
-					this._preparedModelId = await this._preparedDetachedModel.attach();
-				}
-
-				// Check to make sure we still have the task assignment.
-				if (!this.migrationTool.haveMigrationTask()) {
-					// Exit early if we lost the task assignment, we are most likely disconnected.
-					return;
-				}
-
-				await migrationTool.finalizeMigration(this._preparedModelId);
-
-				this.migrationTool.completeMigrationTask();
-			};
-
-			// Prepare the detached model if we haven't already.
-			if (this._preparedDetachedModel === undefined) {
-				await prepareTheMigration();
-			}
-
-			// Ensure another client has not already completed the migration.
-			if (this.migrationState !== "migrating") {
+			// It's possible that our modelLoader is older and doesn't understand the new acceptedMigration.
+			// Currently this fails the migration gracefully and emits an event so the app developer can know
+			// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
+			// forward, or at least advise the end user to refresh the page or something.
+			// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
+			// a new MigratableModelLoader?
+			// TODO: Does the above TODO still matter now that this uses SimpleLoader?
+			const migrationSupported = await this.simpleLoader.supportsVersion(
+				acceptedMigration.newVersion,
+			);
+			if (!migrationSupported) {
+				this._events.emit("migrationNotSupported", acceptedMigration.newVersion);
+				this._migrationP = undefined;
 				return;
 			}
 
-			await completeTheMigration();
+			const exportedData = await this.exportDataCallback(
+				acceptedMigration.migrationSequenceNumber,
+			);
+
+			const migrationResult = await this.migrationCallback(
+				acceptedMigration.newVersion,
+				exportedData,
+			);
+			// TODO: Don't cast here
+			await migrationTool.finalizeMigration(migrationResult as string);
 		};
 
 		this._events.emit("migrating");
