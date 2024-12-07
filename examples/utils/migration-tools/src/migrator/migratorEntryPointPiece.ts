@@ -105,12 +105,7 @@ export const migratorEntryPointPiece: IEntryPointPiece = {
 				const newContainerId = await detachedContainer.attach();
 				return newContainerId;
 			};
-			const migrator = new Migrator(
-				loader,
-				migrationTool,
-				exportDataCallback,
-				migrationCallback,
-			);
+			const migrator = new Migrator(migrationTool, exportDataCallback, migrationCallback);
 			return migrator;
 		};
 	},

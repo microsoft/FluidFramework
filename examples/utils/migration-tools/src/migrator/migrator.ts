@@ -13,7 +13,6 @@ import type {
 	IMigrationTool,
 	MigrationState,
 } from "../migrationTool/index.js";
-import { type ISimpleLoader } from "../simpleLoader/index.js";
 
 import type { IMigrator, IMigratorEvents } from "./interfaces.js";
 
@@ -76,7 +75,6 @@ export class Migrator implements IMigrator {
 	private _migrationP: Promise<void> | undefined;
 
 	public constructor(
-		private readonly simpleLoader: ISimpleLoader,
 		// TODO: Make private
 		public readonly migrationTool: IMigrationTool,
 		private readonly exportDataCallback: (migrationSequenceNumber: number) => Promise<unknown>,
@@ -94,6 +92,7 @@ export class Migrator implements IMigrator {
 	}
 
 	public readonly proposeVersion = (newVersion: string): void => {
+		// TODO: Consider also taking a callback to verify the accepted version can be migrated to here?
 		this.migrationTool.proposeVersion(newVersion);
 	};
 
@@ -117,8 +116,9 @@ export class Migrator implements IMigrator {
 	};
 
 	private readonly ensureMigrating = (): void => {
-		// ensureMigrating() is called when we reach the "migrating" state. This should likely only happen once, but
-		// can happen multiple times if we disconnect during the migration process.
+		if (this._migrationP !== undefined) {
+			return;
+		}
 
 		if (!this.connected) {
 			// If we are not connected we should wait until we reconnect and try again. Note: we re-enter the state
@@ -130,33 +130,15 @@ export class Migrator implements IMigrator {
 			return;
 		}
 
-		if (this._migrationP !== undefined) {
-			return;
-		}
+		const acceptedMigration = this.migrationTool.acceptedMigration;
+		assert(
+			acceptedMigration !== undefined,
+			"Expect an accepted migration before migration starts",
+		);
 
-		const migrationTool = this.migrationTool;
-		const acceptedMigration = migrationTool.acceptedMigration;
-		if (acceptedMigration === undefined) {
-			throw new Error("Expect an accepted migration before migration starts");
-		}
+		// TODO: Consider also taking a callback to verify the accepted version can be migrated to here?
 
 		const doTheMigration = async (): Promise<void> => {
-			// It's possible that our modelLoader is older and doesn't understand the new acceptedMigration.
-			// Currently this fails the migration gracefully and emits an event so the app developer can know
-			// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
-			// forward, or at least advise the end user to refresh the page or something.
-			// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
-			// a new MigratableModelLoader?
-			// TODO: Does the above TODO still matter now that this uses SimpleLoader?
-			const migrationSupported = await this.simpleLoader.supportsVersion(
-				acceptedMigration.newVersion,
-			);
-			if (!migrationSupported) {
-				this._events.emit("migrationNotSupported", acceptedMigration.newVersion);
-				this._migrationP = undefined;
-				return;
-			}
-
 			const exportedData = await this.exportDataCallback(
 				acceptedMigration.migrationSequenceNumber,
 			);
@@ -166,26 +148,15 @@ export class Migrator implements IMigrator {
 				exportedData,
 			);
 			// TODO: Don't cast here
-			await migrationTool.finalizeMigration(migrationResult as string);
+			await this.migrationTool.finalizeMigration(migrationResult as string);
 		};
 
 		this._events.emit("migrating");
 
 		this._migrationP = doTheMigration()
 			.then(() => {
-				// We assume that if we resolved that either the migration was completed or we disconnected.
-				// In either case, we should re-enter the state machine to take the appropriate action.
 				this._migrationP = undefined;
-				if (this.connected) {
-					// We assume if we are still connected after exiting the loop, then we should be in the "migrated"
-					// state. The following assert validates this assumption.
-					assert(
-						this.migrationTool.newContainerId !== undefined,
-						"newContainerId should be defined",
-					);
-					this._events.emit("migrated");
-				}
-				this.takeAppropriateActionForCurrentMigratable();
+				this._events.emit("migrated");
 			})
 			.catch(console.error);
 	};
