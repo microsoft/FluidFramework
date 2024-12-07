@@ -193,7 +193,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				filePathsToCheck.push(...stdInput.split("\n"));
 			}
 		} else {
-			const repo = new Repository({ baseDir: gitRoot });
+			const repo = new Repository({ baseDir: gitRoot }, "microsoft/FluidFramework");
 			const gitFiles = await repo.getFiles(".");
 			filePathsToCheck.push(...gitFiles);
 		}

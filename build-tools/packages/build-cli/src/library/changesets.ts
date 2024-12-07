@@ -11,11 +11,11 @@ import { compareAsc, formatISO, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
 import issueParser from "issue-parser";
+import { simpleGit } from "simple-git";
 const { test: hasFrontMatter } = matter;
 
 import type { ReleaseNotesSectionName } from "../config.js";
 import { ReleasePackage } from "../releaseGroups.js";
-import { Repository } from "./git.js";
 
 export const DEFAULT_CHANGESET_PATH = ".changeset";
 
@@ -213,7 +213,7 @@ function compareChangesets<T extends Pick<Changeset, "commit" | "additionalMetad
  * @returns An array containing the changesets.
  */
 export async function loadChangesets(dir: string, log?: Logger): Promise<Changeset[]> {
-	const repo = new Repository({ baseDir: dir });
+	const repo = simpleGit({ baseDir: dir });
 	const changesetFiles = await globby(["*.md", "!README.md"], { cwd: dir, absolute: true });
 	const changesets: Changeset[] = [];
 
@@ -222,7 +222,7 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 
 		// Get the date the changeset file was added to git.
 		// eslint-disable-next-line no-await-in-loop
-		const results = await repo.gitClient.log({ file, strictDate: true });
+		const results = await repo.log({ file, strictDate: true });
 		// git log returns commits ordered newest -> oldest, so we want the last item, which is the earliest commit
 		const rawCommit = results.all?.at(-1);
 		const pullRequest =

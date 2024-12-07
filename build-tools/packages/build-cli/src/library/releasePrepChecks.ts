@@ -7,7 +7,6 @@ import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
 import type { Context } from "./context.js";
-import { Repository } from "./git.js";
 import { getPreReleaseDependencies } from "./package.js";
 
 /**
@@ -74,8 +73,9 @@ type CheckResult = CheckResultFailure | undefined;
 export const CheckNoLocalChanges: CheckFunction = async (
 	context: Context,
 ): Promise<CheckResult> => {
-	const status = await context.gitRepo.getStatus();
-	if (status !== "") {
+	const gitRepo = await context.getGitRepository();
+	const status = await gitRepo.gitClient.status();
+	if (!status.isClean()) {
 		return {
 			message:
 				"There are some local changes. The branch should be clean. Stopping further checks to ensure changes aren't lost. Stash your changes and try again.",
@@ -119,7 +119,8 @@ export const CheckDependenciesInstalled: CheckFunction = async (
 export const CheckHasRemoteBranchUpToDate: CheckFunction = async (
 	context: Context,
 ): Promise<CheckResult> => {
-	const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
+	const gitRepo = await context.getGitRepository();
+	const remote = await gitRepo.getRemote(gitRepo.upstreamRemotePartialUrl);
 
 	if (remote === undefined) {
 		return {
@@ -129,7 +130,7 @@ export const CheckHasRemoteBranchUpToDate: CheckFunction = async (
 
 	let succeeded = false;
 	try {
-		succeeded = await context.gitRepo.isBranchUpToDate(context.originalBranchName, remote);
+		succeeded = await gitRepo.isBranchUpToDate(gitRepo.originalBranchName, remote);
 	} catch (error) {
 		return {
 			message: `Error when checking remote branch. Does the remote branch exist? Full error message:\n${
@@ -192,7 +193,7 @@ export const CheckNoPolicyViolations: CheckFunction = async (
 	// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 	// like we do in CI.
 	const result = await execa("npm", ["run", "policy-check"], {
-		cwd: context.gitRepo.resolvedRoot,
+		cwd: context.root,
 	});
 
 	if (result.exitCode !== 0) {
@@ -213,14 +214,14 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 	// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 	// like we do in CI.
 	await execa("npm", ["run", "policy-check:asserts"], {
-		cwd: context.gitRepo.resolvedRoot,
+		cwd: context.root,
 	});
 
 	// check for policy check violation
-	const afterPolicyCheckStatus = await context.gitRepo.getStatus();
-	if (afterPolicyCheckStatus !== "") {
-		const repo = new Repository({ baseDir: context.repo.resolvedRoot });
-		await repo.gitClient.reset(ResetMode.HARD);
+	const gitRepo = await context.getGitRepository();
+	const afterPolicyCheckStatus = await gitRepo.gitClient.status();
+	if (!afterPolicyCheckStatus.isClean()) {
+		await gitRepo.gitClient.reset(ResetMode.HARD);
 		return {
 			message: "Found some untagged asserts. These should be tagged before release.",
 			fixCommand: "pnpm run policy-check:asserts",
