@@ -73,7 +73,7 @@ const joinMessageType = "Pres:ClientJoin";
 interface ClientJoinMessage extends IInboundSignalMessage {
 	type: typeof joinMessageType;
 	content: {
-		updateProviders: ClientConnectionId[];
+		updateProviders?: ClientConnectionId[];
 		sendTimestamp: number;
 		avgLatency: number;
 		data: DatastoreMessageContent;
@@ -144,7 +144,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
+	private readonly targetedSignalSupport: boolean = false;
+
 	private readonly timer = new TimerManager();
+
 	private readonly workspaces = new Map<
 		string,
 		PresenceWorkspaceEntry<PresenceStatesSchema>
@@ -164,21 +167,33 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	}
 
 	public joinSession(clientId: ClientConnectionId): void {
-		// Broadcast join message to all clients
-		const updateProviders = [...this.runtime.getQuorum().getMembers().keys()].filter(
-			(quorumClientId) => quorumClientId !== clientId,
-		);
-		// Limit to three providers to prevent flooding the network.
-		// If none respond, others present will (should) after a delay.
-		if (updateProviders.length > 3) {
-			updateProviders.length = 3;
+		if (this.targetedSignalSupport) {
+			this.runtime.submitSignal(
+				joinMessageType,
+				{
+					sendTimestamp: Date.now(),
+					avgLatency: this.averageLatency,
+					data: this.datastore,
+				} satisfies ClientJoinMessage["content"],
+				clientId,
+			);
+		} else {
+			// Broadcast join message to all clients
+			const updateProviders = [...this.runtime.getQuorum().getMembers().keys()].filter(
+				(quorumClientId) => quorumClientId !== clientId,
+			);
+			// Limit to three providers to prevent flooding the network.
+			// If none respond, others present will (should) after a delay.
+			if (updateProviders.length > 3) {
+				updateProviders.length = 3;
+			}
+			this.runtime.submitSignal(joinMessageType, {
+				sendTimestamp: Date.now(),
+				avgLatency: this.averageLatency,
+				data: this.datastore,
+				updateProviders,
+			} satisfies ClientJoinMessage["content"]);
 		}
-		this.runtime.submitSignal(joinMessageType, {
-			sendTimestamp: Date.now(),
-			avgLatency: this.averageLatency,
-			data: this.datastore,
-			updateProviders,
-		} satisfies ClientJoinMessage["content"]);
 	}
 
 	public getWorkspace<TSchema extends PresenceStatesSchema>(
@@ -372,7 +387,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// to how work is scheduled. If we are not connected, we can't respond to the
 			// join request. We will make our own Join request once we are connected.
 			if (this.runtime.connected) {
-				this.prepareJoinResponse(message.content.updateProviders, message.clientId);
+				this.prepareJoinResponse(message.clientId, message.content.updateProviders);
 			}
 			// It is okay to continue processing the contained updates even if we are not
 			// connected.
@@ -422,15 +437,66 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	 * correlation with other telemetry where it is often called just `clientId`.
 	 */
 	private prepareJoinResponse(
-		updateProviders: ClientConnectionId[],
 		requestor: ClientConnectionId,
+		updateProviders?: ClientConnectionId[],
 	): void {
 		this.refreshBroadcastRequested = true;
+
+		// If we have targeted signal support, we directly send our local client's state to the new client.
+		if (this.targetedSignalSupport) {
+			const clientConnectionId = this.runtime.clientId;
+			assert(clientConnectionId !== undefined, "Client connected without clientId");
+			const currentClientToSessionValueState =
+				this.datastore["system:presence"].clientToSessionId[clientConnectionId];
+			const updates: GeneralDatastoreMessageContent = {};
+			// Loop through all workspaces and their keys to find state associated with local client.
+			for (const [workspaceAddress, workspaceDatastore] of Object.entries(this.datastore)) {
+				for (const [key, value] of Object.entries(workspaceDatastore)) {
+					for (const [sessionId, entry] of Object.entries(value)) {
+						if (sessionId === this.clientSessionId) {
+							updates[workspaceAddress][key] = {
+								[this.clientSessionId]: entry as ClientUpdateEntry,
+							};
+						}
+					}
+				}
+			}
+			const content = {
+				sendTimestamp: Date.now(),
+				avgLatency: this.averageLatency,
+				// isComplete: false,
+				data: {
+					"system:presence": {
+						clientToSessionId: {
+							[clientConnectionId]: { ...currentClientToSessionValueState },
+						},
+					},
+					...updates,
+				},
+			} satisfies DatastoreUpdateMessage["content"];
+			this.runtime.submitSignal(datastoreUpdateMessageType, content);
+			this.logger?.sendTelemetryEvent({
+				eventName: "JoinResponse",
+				details: {
+					type: "targeted",
+					requestor,
+					role: "primary",
+				},
+			});
+			return;
+		}
+
+		assert(
+			updateProviders !== undefined,
+			"updateProviders must be defined with no targeted signal support",
+		);
+
 		// We must be connected to receive this message, so clientId should be defined.
 		// If it isn't then, not really a problem; just won't be in provider or quorum list.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const clientId = this.runtime.clientId!;
 		// const requestor = message.clientId;
+
 		if (updateProviders.includes(clientId)) {
 			// Send all current state to the new client
 			this.broadcastAllKnownState();
