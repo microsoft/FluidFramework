@@ -96,11 +96,9 @@ export class Migrator implements IMigrator {
 	private _migrationP: Promise<void> | undefined;
 
 	public constructor(
-		// TODO: Make private
-		public readonly migrationTool: IMigrationTool,
+		private readonly migrationTool: IMigrationTool,
 		private readonly loadSourceContainerCallback: LoadSourceContainerCallback,
 		private readonly exportDataCallback: ExportDataCallback,
-		// This callback will take sort-of the role of a code loader, creating the new detached container appropriately.
 		private readonly migrationCallback: MigrationCallback,
 	) {
 		// TODO: Think about matching events between tool and migrator
