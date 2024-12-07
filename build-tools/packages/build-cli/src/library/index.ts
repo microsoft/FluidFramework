@@ -46,6 +46,8 @@ export {
 	PreReleaseDependencies,
 	setVersion,
 	sortVersions,
+	setPackageDependencies,
+	type DependencyWithRange,
 } from "./package.js";
 export { difference } from "./sets.js";
 export { getIndent, indentString, readLines } from "./text.js";
