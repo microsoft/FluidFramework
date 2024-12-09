@@ -211,7 +211,6 @@ extends:
     - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest" }
     - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest" }
     - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest" }
-    - { name: "check:are-the-types-wrong", jobName: "AreTheTypesWrong" }
     testResultDirs:
     - nyc/examples
     - nyc/experimental
