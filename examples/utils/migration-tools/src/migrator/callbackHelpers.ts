@@ -18,17 +18,6 @@ export type CreateDetachedContainerCallback = (
 ) => Promise<{ container: IContainer; attach: () => Promise<string> }>;
 
 /**
- * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import.
- * The targetVersion is also provided to inform the appropriate transformation to perform.
- * It is async to permit network calls or lazy-loading the transform logic within the function.
- * @alpha
- */
-export type DataTransformationCallback = (
-	exportedData: unknown,
-	targetVersion: string,
-) => Promise<unknown>;
-
-/**
  * A callback for creating a detached container.  We need to have an encapsulated attach(), since the
  * normal IContainer.attach() parameters vary between services.
  * @alpha

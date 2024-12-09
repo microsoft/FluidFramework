@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { DataTransformationCallback } from "@fluid-example/migration-tools/internal";
-
 export interface IParsedInventoryItemData {
 	name: string;
 	quantity: number;
@@ -110,10 +108,10 @@ function transformToTwo(stringData: string): string {
  * (1-\>2, 2-\>3, 3-\>4, etc.).  This way only one new transform function needs to be produced and tested for each new
  * format used.
  */
-export const inventoryListDataTransformationCallback: DataTransformationCallback = async (
+export const inventoryListDataTransformationCallback = async (
 	exportedData: unknown,
 	modelVersion: string,
-) => {
+): Promise<unknown> => {
 	if (typeof exportedData !== "string") {
 		throw new TypeError("Unexpected data format");
 	}

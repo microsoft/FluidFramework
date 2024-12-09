@@ -5,7 +5,6 @@
 
 export {
 	CreateDetachedContainerCallback,
-	DataTransformationCallback,
 	ImportDataCallback,
 	makeCreateDetachedCallback,
 	makeMigrationCallback,

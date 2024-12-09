@@ -25,9 +25,6 @@ export type CreateDetachedContainerCallback = (version: string) => Promise<{
 }>;
 
 // @alpha
-export type DataTransformationCallback = (exportedData: unknown, targetVersion: string) => Promise<unknown>;
-
-// @alpha
 export type ExportDataCallback = (container: IContainer) => Promise<unknown>;
 
 // @alpha

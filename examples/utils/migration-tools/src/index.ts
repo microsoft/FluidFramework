@@ -20,7 +20,6 @@ export {
 } from "./migrationTool/index.js";
 export {
 	CreateDetachedContainerCallback,
-	DataTransformationCallback,
 	ExportDataCallback,
 	IImportExportModel,
 	IMigratableModel,
