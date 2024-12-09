@@ -17,7 +17,9 @@ export async function checkNetworkInformation(
 ): Promise<{ message: string; shouldConnect: boolean }> {
 	const tenantId = socket?.handshake?.query?.tenantId as string | undefined;
 	const tennatInfo = await tenantManager.getTenantfromRiddler(tenantId);
-	const clientIPAddress = socket?.handshake?.address as string | undefined;
+	const clientIPAddress = socket.handshake.headers["x-forwarded-for"].split(",")[0] as
+		| string
+		| undefined;
 	const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 	if (networkInfo.isPrivateLink) {
 		const accountLinkID = tennatInfo?.customData?.accountLinkID;
