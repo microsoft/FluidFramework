@@ -53,14 +53,14 @@ export interface IMigrationTool {
 	readonly migrationState: MigrationState;
 
 	/**
-	 * The container id where the migrated content can be found, if the migration has fully completed.
+	 * The result of the migration (e.g. the new container ID), if the migration has fully completed.
 	 */
-	readonly newContainerId: string | undefined;
+	readonly migrationResult: unknown | undefined;
 	/**
 	 * Set the container id where the migrated content can be found, finalizing the migration.
-	 * @param id - the container id
+	 * @param migrationResult - the result of the migration, e.g. the new container id
 	 */
-	finalizeMigration(id: string): Promise<void>;
+	finalizeMigration(migrationResult: unknown): Promise<void>;
 
 	/**
 	 * The version string of the proposed new version to use, if one has been proposed.
@@ -75,21 +75,4 @@ export interface IMigrationTool {
 	 * @param newVersion - the version string
 	 */
 	proposeVersion: (newVersion: string) => void;
-
-	/**
-	 * Volunteer to perform the migration.
-	 * @returns A promise which resolves true when the local client has been selected to perform the migration.
-	 * resolves false if the migration was already completed by another client.
-	 */
-	volunteerForMigration(): Promise<boolean>;
-
-	/**
-	 * Whether the local client is selected to perform the migration.
-	 */
-	haveMigrationTask(): boolean;
-
-	/**
-	 * Completes the migration task to indicate to other clients the migration is complete.
-	 */
-	completeMigrationTask(): void;
 }

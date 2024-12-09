@@ -64,8 +64,7 @@ const waitForAtLeastSequenceNumber = async (
  */
 export class Migrator implements IMigrator {
 	public get migrationResult(): unknown | undefined {
-		// TODO: Abstract
-		return this.migrationTool.newContainerId;
+		return this.migrationTool.migrationResult;
 	}
 
 	public get migrationState(): MigrationState {
@@ -172,8 +171,7 @@ export class Migrator implements IMigrator {
 				acceptedMigration.newVersion,
 				exportedData,
 			);
-			// TODO: Don't cast here
-			await this.migrationTool.finalizeMigration(migrationResult as string);
+			await this.migrationTool.finalizeMigration(migrationResult);
 		};
 
 		this._events.emit("migrating");

@@ -25,7 +25,6 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
-import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 
 import type {
 	IAcceptedMigrationDetails,
@@ -36,11 +35,9 @@ import type {
 
 const consensusRegisterCollectionId = "consensus-register-collection";
 const pactMapId = "pact-map";
-const taskManagerId = "task-manager";
 
 const newVersionKey = "newVersion";
-const migrateTaskName = "migrate";
-const newContainerIdKey = "newContainerId";
+const migrationResultKey = "migrationResult";
 
 class MigrationTool implements IMigrationTool {
 	private _disposed = false;
@@ -66,7 +63,7 @@ class MigrationTool implements IMigrationTool {
 	}
 
 	public get migrationState(): MigrationState {
-		if (this.newContainerId !== undefined) {
+		if (this.migrationResult !== undefined) {
 			return "migrated";
 		} else if (this.acceptedMigration !== undefined) {
 			return "migrating";
@@ -78,16 +75,15 @@ class MigrationTool implements IMigrationTool {
 		}
 	}
 
-	public get newContainerId(): string | undefined {
-		return this.consensusRegisterCollection.read(newContainerIdKey);
+	public get migrationResult(): unknown | undefined {
+		return this.consensusRegisterCollection.read(migrationResultKey);
 	}
 
 	public constructor(
 		// TODO:  Does this need a full runtime?  Can we instead specify exactly what the data object requires?
 		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly consensusRegisterCollection: IConsensusRegisterCollection<string>,
+		private readonly consensusRegisterCollection: IConsensusRegisterCollection<unknown>,
 		private readonly pactMap: IPactMap<string>,
-		private readonly taskManager: ITaskManager,
 	) {
 		if (this.runtime.disposed) {
 			this.dispose();
@@ -112,23 +108,23 @@ class MigrationTool implements IMigrationTool {
 			});
 
 			this.consensusRegisterCollection.on("atomicChanged", (key: string) => {
-				if (key === newContainerIdKey) {
+				if (key === migrationResultKey) {
 					this._events.emit("migrated");
 				}
 			});
 		}
 	}
 
-	public async finalizeMigration(id: string): Promise<void> {
+	public async finalizeMigration(migrationResult: unknown): Promise<void> {
 		// Only permit a single container to be set as a migration destination.
-		if (this.consensusRegisterCollection.read(newContainerIdKey) !== undefined) {
+		if (this.consensusRegisterCollection.read(migrationResultKey) !== undefined) {
 			throw new Error("New container was already established");
 		}
 
 		// Using a consensus data structure is important here, because other clients might race us to set the new
 		// value.  All clients must agree on the final value even in these race conditions so everyone ends up in the
 		// same final container.
-		await this.consensusRegisterCollection.write(newContainerIdKey, id);
+		await this.consensusRegisterCollection.write(migrationResultKey, migrationResult);
 	}
 
 	public get proposedVersion(): string | undefined {
@@ -164,18 +160,6 @@ class MigrationTool implements IMigrationTool {
 		this.pactMap.set(newVersionKey, newVersion);
 	};
 
-	public async volunteerForMigration(): Promise<boolean> {
-		return this.taskManager.volunteerForTask(migrateTaskName);
-	}
-
-	public haveMigrationTask(): boolean {
-		return this.taskManager.assigned(migrateTaskName);
-	}
-
-	public completeMigrationTask(): void {
-		this.taskManager.complete(migrateTaskName);
-	}
-
 	/**
 	 * Called when the host container closes and disposes itself
 	 */
@@ -188,12 +172,10 @@ class MigrationTool implements IMigrationTool {
 
 const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
 const pactMapFactory = PactMap.getFactory();
-const taskManagerFactory = TaskManager.getFactory();
 
 const migrationToolSharedObjectRegistry = new Map<string, IChannelFactory>([
 	[consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory],
 	[pactMapFactory.type, pactMapFactory],
-	[taskManagerFactory.type, taskManagerFactory],
 ]);
 
 /**
@@ -224,13 +206,11 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 
 		let consensusRegisterCollection: IConsensusRegisterCollection<string>;
 		let pactMap: IPactMap<string>;
-		let taskManager: ITaskManager;
 		if (existing) {
 			consensusRegisterCollection = (await runtime.getChannel(
 				consensusRegisterCollectionId,
 			)) as IConsensusRegisterCollection<string>;
 			pactMap = (await runtime.getChannel(pactMapId)) as IPactMap<string>;
-			taskManager = (await runtime.getChannel(taskManagerId)) as ITaskManager;
 		} else {
 			consensusRegisterCollection = runtime.createChannel(
 				consensusRegisterCollectionId,
@@ -239,21 +219,11 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 			consensusRegisterCollection.bindToContext();
 			pactMap = runtime.createChannel(pactMapId, pactMapFactory.type) as IPactMap<string>;
 			pactMap.bindToContext();
-			taskManager = runtime.createChannel(
-				taskManagerId,
-				taskManagerFactory.type,
-			) as ITaskManager;
-			taskManager.bindToContext();
 		}
 
 		// By this point, we've performed any async work required to get the dependencies of the MigrationTool,
 		// so just a normal sync constructor will work fine (no followup async initialize()).
-		const instance = new MigrationTool(
-			runtime,
-			consensusRegisterCollection,
-			pactMap,
-			taskManager,
-		);
+		const instance = new MigrationTool(runtime, consensusRegisterCollection, pactMap);
 
 		return runtime;
 	}
