@@ -22,10 +22,14 @@ const waitForSummary = async (
 	container: IContainer,
 	testContainerConfig: ITestContainerConfig,
 ) => {
+	const testConfig = {
+		...testContainerConfig,
+		runtimeOptions: { ...testContainerConfig.runtimeOptions, summaryOptions: undefined },
+	};
 	const { summarizer, container: summarizingContainer } = await createSummarizer(
 		provider,
 		container,
-		testContainerConfig,
+		testConfig,
 	);
 	await summarizeNow(summarizer);
 	summarizingContainer.close();
@@ -45,6 +49,13 @@ describeCompat("Wait for summary", "NoCompat", (getTestObjectProvider, apis) => 
 		const testContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: "disabled",
+					},
+				},
+			},
 		};
 
 		const loader = provider.makeTestLoader(testContainerConfig);
