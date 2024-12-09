@@ -10,12 +10,15 @@ import { commonOptions } from "../fluidBuild/commonOptions";
 /**
  * A function that logs an Error or error message.
  */
-export type ErrorLoggingFunction = (msg: string | Error | undefined, ...args: any[]) => void;
+export type ErrorLoggingFunction = (
+	msg: string | Error,
+	...args: any[]
+) => string | Error | void;
 
 /**
  * A function that logs an error message.
  */
-export type LoggingFunction = (message?: string, ...args: any[]) => void;
+export type LoggingFunction = (message: string, ...args: any[]) => string | void;
 
 /**
  * A general-purpose logger object.
@@ -88,7 +91,7 @@ export const defaultLogger: Logger = {
 	verbose,
 };
 
-function logWithTime(msg: string | Error | undefined, logFunc: ErrorLoggingFunction) {
+function logWithTime(msg: string | Error, logFunc: ErrorLoggingFunction) {
 	if (!commonOptions.logtime) {
 		logFunc(msg);
 		return;
@@ -109,28 +112,33 @@ function logWithTime(msg: string | Error | undefined, logFunc: ErrorLoggingFunct
 	logFunc(chalk.yellow(`[${hours}:${mins}:${secs}] `) + msg);
 }
 
-function log(msg: string | undefined): void {
+function log(msg: string): string {
 	if (!commonOptions.quiet) {
 		logWithTime(msg, console.log);
 	}
+	return msg;
 }
 
-function info(msg: string | Error | undefined) {
+function info(msg: string | Error): string | Error {
 	if (!commonOptions.quiet) {
 		logWithTime(`INFO: ${msg}`, console.log);
 	}
+	return msg;
 }
 
-function verbose(msg: string | Error | undefined) {
+function verbose(msg: string | Error): string | Error {
 	if (!commonOptions.quiet && commonOptions.verbose) {
 		logWithTime(`VERBOSE: ${msg}`, console.log);
 	}
+	return msg;
 }
 
-function warning(msg: string | Error | undefined) {
+function warning(msg: string | Error): string | Error {
 	logWithTime(`${chalk.yellow(`WARNING`)}: ${msg}`, console.log);
+	return msg;
 }
 
-function errorLog(msg: string | Error | undefined) {
+function errorLog(msg: string | Error): string | Error {
 	logWithTime(`${chalk.red(`ERROR`)}: ${msg}`, console.error);
+	return msg;
 }

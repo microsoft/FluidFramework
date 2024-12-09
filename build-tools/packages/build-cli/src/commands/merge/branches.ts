@@ -30,6 +30,9 @@ interface CleanupBranch {
 export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	static readonly description = "Sync branches depending on the batch size passed";
 
+	// This command is deprecated and should no longer be used.
+	static readonly state = "deprecated";
+
 	static readonly flags = {
 		pat: Flags.string({
 			description:
