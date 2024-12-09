@@ -161,7 +161,7 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 			);
 		}
 
-		const wrappedListener = (...args: Parameters<TListeners[K]>): void => {
+		const wrappedListener = (args: Parameters<TListeners[K]>): void => {
 			listener(args);
 			this.off(eventName, wrappedListener as TListeners[K]);
 		};

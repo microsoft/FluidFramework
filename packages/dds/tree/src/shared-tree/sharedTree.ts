@@ -330,6 +330,13 @@ export class SharedTree
 				this.commitEnricher.commitTransaction();
 			}
 		});
+		this.checkout.events.on("beforeBatch", (newCommits) => {
+			if (this.isAttached()) {
+				if (this.checkout.transaction.isInProgress()) {
+					this.commitEnricher.addTransactionCommits(newCommits);
+				}
+			}
+		});
 	}
 
 	@throwIfBroken
@@ -367,18 +374,7 @@ export class SharedTree
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
 		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
-		this._events.emit("afterBatch");
-	}
-
-	protected override submitCommit(
-		...args: Parameters<
-			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["submitCommit"]
-		>
-	): void {
-		// We do not submit ops for changes that are part of a transaction.
-		if (!this.checkout.transaction.isInProgress()) {
-			super.submitCommit(...args);
-		}
+		this._events.emit("afterBatch", []);
 	}
 
 	protected override didAttach(): void {

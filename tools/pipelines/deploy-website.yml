@@ -44,6 +44,7 @@ parameters:
 variables:
   - group: doc-versions
   - group: storage-vars
+  - group: ado-feeds
   - name: repoToTrigger
     value: microsoft/FluidFramework
   - name: shouldRetainGuardianAssets

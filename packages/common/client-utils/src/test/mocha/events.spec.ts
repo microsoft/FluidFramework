@@ -360,7 +360,7 @@ describe("CustomEventEmitter", () => {
 	it("deregisters the listener immediately after it is fired", () => {
 		const emitter = createEmitter<TestEvents>();
 		let count = 0;
-		const listener = () => {
+		const listener = (): void => {
 			count += 1;
 		};
 
