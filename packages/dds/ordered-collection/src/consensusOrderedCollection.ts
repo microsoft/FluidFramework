@@ -270,7 +270,8 @@ export class ConsensusOrderedCollection<T = any>
 		const blob = await storage.readBlob(snapshotFileNameTracking);
 		const rawContentTracking = bufferToString(blob, "utf8");
 		const content = this.deserializeValue(rawContentTracking, this.serializer);
-		this.jobTracking = new Map(content) as JobTrackingInfo<T>;
+		// TODO: this was using any before, but probably should be using a better type
+		this.jobTracking = new Map(content as any) as JobTrackingInfo<T>;
 
 		assert(
 			this.data.size() === 0,
