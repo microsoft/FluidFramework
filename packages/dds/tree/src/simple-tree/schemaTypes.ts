@@ -577,6 +577,196 @@ export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 
 /**
+ * {@inheritdoc (CustomizedTyping:type)}
+ * @system @public
+ */
+export const CustomizedTyping: unique symbol = Symbol("CustomizedTyping");
+
+/**
+ * TODO: rewrite this doc and/or dedup this with UnsafeUnknownSchema.
+ * This system should be able to replace how UnsafeUnknownSchema is used.
+ *
+ * A special type which can be provided to some APIs as the schema type parameter when schema cannot easily be provided at compile time and an unsafe (instead of disabled) editing API is desired.
+ * @remarks
+ * When used, this means the TypeScript typing should err on the side of completeness (allow all inputs that could be valid).
+ * This introduces the risk that out-of-schema data could be allowed at compile time, and only error at runtime.
+ *
+ * @privateRemarks
+ * This only applies to APIs which input data which is expected to be in schema, since APIs outputting have easy mechanisms to do so in a type safe way even when the schema is unknown.
+ * In most cases that amounts to returning `TreeNode | TreeLeafValue`.
+ *
+ * This can be contrasted with the default behavior of TypeScript, which is to require the intersection of the possible types for input APIs,
+ * which for unknown schema defining input trees results in the `never` type.
+ *
+ * Any APIs which use this must produce UsageErrors when out of schema data is encountered, and never produce unrecoverable errors,
+ * or silently accept invalid data.
+ * This is currently only type exported from the package: the symbol is just used as a way to get a named type.
+ * @system @public
+ */
+export type CustomizedTyping = typeof CustomizedTyping;
+
+/**
+ * Collection of schema aware types.
+ * @remarks
+ * This type is only uses as a type constraint.
+ * It's fields are similar to an unordered set of generic type parameters.
+ * @sealed @public
+ */
+export interface CustomTypes {
+	/**
+	 * Type used for inserting values.
+	 */
+	readonly input: unknown;
+	/**
+	 * Type used for the read+write property on object nodes.
+	 *
+	 * Set to never to disable setter.
+	 * @remarks
+	 * Due to https://github.com/microsoft/TypeScript/issues/43826 we cannot set the desired setter type.
+	 * Instead we can only control the types of the read+write property and the type of a readonly property.
+	 */
+	readonly readWrite: TreeLeafValue | TreeNode;
+	/**
+	 * Type for reading data.
+	 * @remarks
+	 * See limitation for read+write properties on ObjectNodes in {@link CustomTypes.readWrite}.
+	 */
+	readonly output: TreeLeafValue | TreeNode;
+}
+
+/**
+ * @system @public
+ */
+export type CustomizedSchemaTyping<TSchema, TCustom extends CustomTypes> = TSchema & {
+	[CustomizedTyping]: TCustom;
+};
+
+/**
+ * Default strict policy.
+ *
+ * @typeparam TSchema - The schema to process
+ * @typeparam TInput - Internal: do not specify.
+ * @typeparam TOutput - Internal: do not specify.
+ * @remarks
+ * Handles input types contravariantly so any input which might be invalid is rejected.
+ * @sealed @public
+ */
+export interface StrictTypes<
+	TSchema extends ImplicitAllowedTypes,
+	TInput = DefaultInsertableTreeNodeFromImplicitAllowedTypes<TSchema>,
+	TOutput extends TreeNode | TreeLeafValue = DefaultTreeNodeFromImplicitAllowedTypes<TSchema>,
+> {
+	input: TInput;
+	readWrite: TInput extends never ? never : TOutput;
+	output: TOutput;
+}
+
+/**
+ * Default strict policy.
+ *
+ * @typeparam TSchema - The schema to process
+ * @typeparam TInput - Internal: do not specify.
+ * @typeparam TOutput - Internal: do not specify.
+ * @remarks
+ * Handles input types contravariantly so any input which might be invalid is rejected.
+ * @alpha
+ */
+export function customizeSchemaTyping<TSchema extends ImplicitAllowedTypes>(
+	schema: TSchema,
+): Customizer<TSchema> {
+	// This function just does type branding, and duplicating the typing here to avoid any would just make it harder to maintain not easier:
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const f = (): any => schema;
+	return { strict: f, relaxed: f, simplified: f, simplifiedUnrestricted: f, custom: f };
+}
+
+/**
+ * Utility for customizing the types used for data matching a given schema.
+ * @sealed @public
+ */
+export interface Customizer<TSchema extends ImplicitAllowedTypes> {
+	/**
+	 * The default {@link StrictTypes}, explicitly applied.
+	 */
+	strict(): CustomizedSchemaTyping<TSchema, StrictTypes<TSchema>>;
+	/**
+	 * Relaxed policy: allows possible invalid edits (which will err at runtime) when schema is not exact.
+	 * @remarks
+	 * Handles input types covariantly so any input which might be valid with the schema is allowed
+	 * instead of the default strict policy of only inputs with all possible schema re allowed.
+	 */
+	relaxed(): CustomizedSchemaTyping<
+		TSchema,
+		{
+			input: TSchema extends TreeNodeSchema
+				? InsertableTypedNode<TSchema>
+				: TSchema extends AllowedTypes
+					? TSchema[number] extends LazyItem<infer TSchemaInner extends TreeNodeSchema>
+						? InsertableTypedNode<TSchemaInner>
+						: never
+					: never;
+			readWrite: TreeNodeFromImplicitAllowedTypes<TSchema>;
+			output: TreeNodeFromImplicitAllowedTypes<TSchema>;
+		}
+	>;
+	/**
+	 * Replace typing with a single substitute which allowed types must implement.
+	 * @remarks
+	 * This is generally type safe for reading the tree, but allows instances of `T` other than those listed in the schema to be assigned,
+	 * which can be out of schema and err at runtime in the same way {@link Customizer.relaxed} does.
+	 * Until with {@link Customizer.relaxed}, implicit construction is disabled, meaning all nodes must be explicitly constructed (and thus implement `T`) before being inserted.
+	 */
+	simplified<T extends TreeNodeFromImplicitAllowedTypes<TSchema>>(): CustomizedSchemaTyping<
+		TSchema,
+		{
+			input: T;
+			readWrite: T;
+			output: T;
+		}
+	>;
+
+	/**
+	 * The same as {@link Customizer} except that more T values are allowed, even ones not known to be implemented by `TSchema`.
+	 */
+	simplifiedUnrestricted<T extends TreeNode | TreeLeafValue>(): CustomizedSchemaTyping<
+		TSchema,
+		{
+			input: T;
+			readWrite: T;
+			output: T;
+		}
+	>;
+
+	/**
+	 * Fully arbitrary customization.
+	 * Provided types override existing types.
+	 */
+	custom<T extends Partial<CustomTypes>>(): CustomizedSchemaTyping<
+		TSchema,
+		{
+			// Check if property is provided. This check is needed to early out missing values so if undefined is allowed,
+			// not providing the field doesn't overwrite the corresponding type with undefined.
+			// TODO: test this case
+			[Property in keyof CustomTypes]: Property extends keyof T
+				? T[Property] extends CustomTypes[Property]
+					? T[Property]
+					: GetTypes<TSchema>[Property]
+				: GetTypes<TSchema>[Property];
+		}
+	>;
+}
+
+/**
+ * Fetch types associated with a schema, or use the default if not customized.
+ * @system @public
+ */
+export type GetTypes<TSchema extends ImplicitAllowedTypes> = [TSchema] extends [
+	CustomizedSchemaTyping<unknown, infer TCustom>,
+]
+	? TCustom
+	: StrictTypes<TSchema>;
+
+/**
  * Content which could be inserted into a tree.
  *
  * @see {@link Input}
@@ -661,9 +851,21 @@ export type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extend
 
 /**
  * Type of tree node for a field of the given schema.
+ *
+ * @typeparam TSchema - Schema to process.
+ * @remarks
+ * Defaults to {@link DefaultTreeNodeFromImplicitAllowedTypes}.
  * @public
  */
 export type TreeNodeFromImplicitAllowedTypes<
+	TSchema extends ImplicitAllowedTypes = TreeNodeSchema,
+> = GetTypes<TSchema>["output"];
+
+/**
+ * Default type of tree node for a field of the given schema.
+ * @system @public
+ */
+export type DefaultTreeNodeFromImplicitAllowedTypes<
 	TSchema extends ImplicitAllowedTypes = TreeNodeSchema,
 > = TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
@@ -727,20 +929,32 @@ export type Input<T extends never> = T;
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
  *
+ * @typeparam TSchema - Schema to process.
+ * @remarks
+ * Defaults to {@link DefaultInsertableTreeNodeFromImplicitAllowedTypes}.
+ * @public
+ */
+export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> =
+	GetTypes<TSchema>["input"];
+
+/**
+ * Type of content that can be inserted into the tree for a node of the given schema.
+ *
  * @see {@link Input}
  *
  * @typeparam TSchema - Schema to process.
  *
  * @privateRemarks
  * This is a bit overly conservative, since cases like `A | [A]` give never and could give `A`.
- * @public
+ * @system @public
  */
-export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> =
-	[TSchema] extends [TreeNodeSchema]
-		? InsertableTypedNode<TSchema>
-		: [TSchema] extends [AllowedTypes]
-			? InsertableTreeNodeFromAllowedTypes<TSchema>
-			: never;
+export type DefaultInsertableTreeNodeFromImplicitAllowedTypes<
+	TSchema extends ImplicitAllowedTypes,
+> = [TSchema] extends [TreeNodeSchema]
+	? InsertableTypedNode<TSchema>
+	: [TSchema] extends [AllowedTypes]
+		? InsertableTreeNodeFromAllowedTypes<TSchema>
+		: never;
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.

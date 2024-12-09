@@ -118,6 +118,11 @@ export {
 	conciseFromCursor,
 	createFromCursor,
 	asTreeViewAlpha,
+	type GetTypesUnsafe,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	type DefaultTreeNodeFromImplicitAllowedTypesUnsafe,
+	type StrictTypesUnsafe,
+	type AssignableTreeFieldFromImplicitFieldUnsafe,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -150,6 +155,15 @@ export {
 	type Input,
 	type ReadableField,
 	type ReadSchema,
+	customizeSchemaTyping,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
+	type Customizer,
+	type GetTypes,
+	type StrictTypes,
+	type CustomTypes,
+	type CustomizedSchemaTyping,
+	CustomizedTyping,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
@@ -164,6 +178,8 @@ export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
+	type AssignableTreeFieldFromImplicitField,
+	type ApplyKindAssignment,
 	type TreeObjectNode,
 	setField,
 } from "./objectNode.js";
