@@ -59,8 +59,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get containerRuntime(): this;
     // (undocumented)
     createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
-    // @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: Readonly<string | string[]>, props?: any): Promise<IDataStore>;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
