@@ -24,9 +24,9 @@ export async function checkNetworkInformation(
 	if (networkInfo.isPrivateLink) {
 		const accountLinkID = tennatInfo?.customData?.accountLinkID;
 		if (networkInfo.privateLinkId === accountLinkID) {
-			return { message: "This is a private link socket connection", shouldConnect: false };
+			return { message: "This is a private link socket connection", shouldConnect: true };
 		} else {
-			return { message: "should connect", shouldConnect: true };
+			return { message: "private link should not connect", shouldConnect: false };
 		}
 	} else {
 		const accountLinkID = tennatInfo?.customData?.accountLinkID;
@@ -37,7 +37,7 @@ export async function checkNetworkInformation(
 				shouldConnect: false,
 			};
 		} else {
-			return { message: "should connect", shouldConnect: false };
+			return { message: "public should connect", shouldConnect: true };
 		}
 	}
 }
