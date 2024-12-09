@@ -58,9 +58,10 @@ const waitForAtLeastSequenceNumber = async (
 	});
 
 /**
- * The Migrator maintains a reference to the current model, and interacts with it (and its MigrationTool)
- * to detect, observe, trigger, and execute migration as appropriate.
- * @alpha
+ * The Migrator monitors and interacts with its IMigrationTool to handle and trigger migration.  It is designed
+ * to be a one-time-use tool that is provided as part of the (old) container code bundle, through the container
+ * entryPoint.  It makes minimal assumptions about what the eventual new container might look like as a
+ * future-proofing strategy.
  */
 export class Migrator implements IMigrator {
 	public get migrationResult(): unknown | undefined {

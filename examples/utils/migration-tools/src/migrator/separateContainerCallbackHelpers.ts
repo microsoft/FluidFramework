@@ -9,6 +9,12 @@ import type { IRequest } from "@fluidframework/core-interfaces";
 import { type MigrationCallback } from "./migrator.js";
 
 /**
+ * These callback helpers are useful if you are migrating TO this version of the platform.  If the platform changes significantly
+ * in the future (e.g. loader API changes, create new flow changes), then you would likely want to use an updated set of callbacks
+ * from the version of the platform you are migrating to instead.
+ */
+
+/**
  * A callback for creating a detached container.  We need to have an encapsulated attach(), since the
  * normal IContainer.attach() parameters vary between services.
  * @alpha
@@ -18,8 +24,8 @@ export type CreateDetachedContainerCallback = (
 ) => Promise<{ container: IContainer; attach: () => Promise<string> }>;
 
 /**
- * A callback for creating a detached container.  We need to have an encapsulated attach(), since the
- * normal IContainer.attach() parameters vary between services.
+ * A callback for importing the exported data into the new destinationContainer.  You must implement this with the specifics of
+ * your import flow.
  * @alpha
  */
 export type ImportDataCallback = (
@@ -28,20 +34,18 @@ export type ImportDataCallback = (
 ) => Promise<void>;
 
 /**
- * Make an encapsulated createDetached callback for use with makeMigrationCallback.
+ * Make an encapsulated createDetached callback for use with makeSeparateContainerMigrationCallback.  This is split off to
+ * isolate the loader-specific API calls and the service-specific URL create new request format.
  * @alpha
  */
-export const makeCreateDetachedCallback = (
+export const makeCreateDetachedContainerCallback = (
 	loader: IHostLoader,
 	generateCreateNewRequest: () => IRequest,
-) => {
+): CreateDetachedContainerCallback => {
 	return async (
 		version: string,
 	): Promise<{ container: IContainer; attach: () => Promise<string> }> => {
 		const container = await loader.createDetachedContainer({ package: version });
-		// The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,
-		// without leaking out the loader, service, etc.  We also return the container ID here so we don't have
-		// to stamp it on something that would rather not know it (e.g. the container).
 		const attach = async (): Promise<string> => {
 			await container.attach(generateCreateNewRequest());
 			if (container.resolvedUrl === undefined) {
@@ -54,10 +58,11 @@ export const makeCreateDetachedCallback = (
 };
 
 /**
- * Make a typical migration callback.
+ * Make a typical separate container migration callback.  It needs to be told how to create the new detached container and also
+ * how to import the data into that container.  The migrationResult it generates is the container ID of the new container.
  * @alpha
  */
-export const makeMigrationCallback = (
+export const makeSeparateContainerMigrationCallback = (
 	createDetachedContainerCallback: CreateDetachedContainerCallback,
 	importDataCallback: ImportDataCallback,
 ): MigrationCallback => {

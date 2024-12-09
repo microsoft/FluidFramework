@@ -4,12 +4,6 @@
  */
 
 export {
-	CreateDetachedContainerCallback,
-	ImportDataCallback,
-	makeCreateDetachedCallback,
-	makeMigrationCallback,
-} from "./callbackHelpers.js";
-export {
 	IMigrator,
 	IMigratorEvents,
 } from "./interfaces.js";
@@ -23,3 +17,9 @@ export {
 	IMigratorEntryPoint,
 	makeMigratorEntryPointPiece,
 } from "./migratorEntryPointPiece.js";
+export {
+	CreateDetachedContainerCallback,
+	ImportDataCallback,
+	makeCreateDetachedContainerCallback,
+	makeSeparateContainerMigrationCallback,
+} from "./separateContainerCallbackHelpers.js";

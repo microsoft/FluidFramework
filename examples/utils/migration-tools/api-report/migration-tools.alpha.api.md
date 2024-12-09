@@ -80,16 +80,13 @@ export const loadCompositeRuntime: (context: IContainerContext, existing: boolea
 export type LoadSourceContainerCallback = () => Promise<IContainer>;
 
 // @alpha
-export const makeCreateDetachedCallback: (loader: IHostLoader, generateCreateNewRequest: () => IRequest) => (version: string) => Promise<{
-    container: IContainer;
-    attach: () => Promise<string>;
-}>;
-
-// @alpha
-export const makeMigrationCallback: (createDetachedContainerCallback: CreateDetachedContainerCallback, importDataCallback: ImportDataCallback) => MigrationCallback;
+export const makeCreateDetachedContainerCallback: (loader: IHostLoader, generateCreateNewRequest: () => IRequest) => CreateDetachedContainerCallback;
 
 // @alpha
 export const makeMigratorEntryPointPiece: (exportDataCallback: ExportDataCallback) => IEntryPointPiece;
+
+// @alpha
+export const makeSeparateContainerMigrationCallback: (createDetachedContainerCallback: CreateDetachedContainerCallback, importDataCallback: ImportDataCallback) => MigrationCallback;
 
 // @alpha
 export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;

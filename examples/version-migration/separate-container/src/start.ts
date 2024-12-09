@@ -9,8 +9,8 @@ import type {
 	ImportDataCallback,
 } from "@fluid-example/migration-tools/internal";
 import {
-	makeCreateDetachedCallback,
-	makeMigrationCallback,
+	makeCreateDetachedContainerCallback,
+	makeSeparateContainerMigrationCallback,
 } from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -54,7 +54,7 @@ const loader = new Loader({
 	codeLoader: new DemoCodeLoader(),
 });
 
-const createDetachedCallback = makeCreateDetachedCallback(
+const createDetachedCallback = makeCreateDetachedContainerCallback(
 	loader,
 	createTinyliciousCreateNewRequest,
 );
@@ -77,7 +77,10 @@ const importDataCallback: ImportDataCallback = async (
 		: await inventoryListDataTransformationCallback(exportedData, destinationModel.version);
 	await destinationModel.importData(transformedData);
 };
-const migrationCallback = makeMigrationCallback(createDetachedCallback, importDataCallback);
+const migrationCallback = makeSeparateContainerMigrationCallback(
+	createDetachedCallback,
+	importDataCallback,
+);
 
 /**
  * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
@@ -150,7 +153,6 @@ export const setupContainer = async (
 	migrator.events.on("migrated", () => {
 		const newContainerId = migrator.migrationResult as string;
 		container.dispose();
-		// TODO: Better error handling?
 		setupContainer(newContainerId).catch(console.error);
 	});
 

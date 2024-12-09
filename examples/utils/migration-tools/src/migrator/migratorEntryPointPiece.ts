@@ -20,8 +20,8 @@ import {
 const migratorEntryPointPieceName = "getMigrator";
 
 const migrationToolRegistryKey = "migration-tool";
-const migrationToolFactory = new MigrationToolFactory();
 const migrationToolId = "migration-tool";
+const migrationToolFactory = new MigrationToolFactory();
 
 async function getDataStoreEntryPoint(
 	containerRuntime: IContainerRuntime,
@@ -48,8 +48,8 @@ export interface IMigratorEntryPoint {
 }
 
 /**
- * Create the entry point piece.  To be called by the container author, who can provide appropriate access to the
- * container data.
+ * Create the entry point piece.  This function is called by the container author, who can provide appropriate access
+ * to the container data through the ExportDataCallback.
  * @alpha
  */
 export const makeMigratorEntryPointPiece = (

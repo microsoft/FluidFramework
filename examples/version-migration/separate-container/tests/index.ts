@@ -5,8 +5,8 @@
 
 import {
 	type IMigrator,
-	makeCreateDetachedCallback,
-	makeMigrationCallback,
+	makeCreateDetachedContainerCallback,
+	makeSeparateContainerMigrationCallback,
 } from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -85,7 +85,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		codeLoader: new DemoCodeLoader(testMode),
 	});
 
-	const createDetachedCallback = makeCreateDetachedCallback(loader, () =>
+	const createDetachedCallback = makeCreateDetachedContainerCallback(loader, () =>
 		createLocalResolverCreateNewRequest(uuid()),
 	);
 
@@ -160,7 +160,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		await destinationModel.importData(transformedData);
 	};
 
-	const migrationCallback = makeMigrationCallback(createDetachedCallback, importDataCallback);
+	const migrationCallback = makeSeparateContainerMigrationCallback(
+		createDetachedCallback,
+		importDataCallback,
+	);
 
 	const entryPoint = await container.getEntryPoint();
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
