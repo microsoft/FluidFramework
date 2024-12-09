@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "chai";
-import { describe, it } from "mocha";
+import { assert, describe, it } from "vitest";
 
 import { MonoRepoKind } from "../../library/index.js";
 

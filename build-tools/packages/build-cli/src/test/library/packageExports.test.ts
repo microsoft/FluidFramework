@@ -3,15 +3,11 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-nested-callbacks */
-
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
+import { assert, beforeEach, describe, it } from "vitest";
 
-import { assert } from "chai";
-import { describe, it } from "mocha";
-
-import type { ExportData, Node10CompatExportData } from "../../library/packageExports.js";
-import { queryTypesResolutionPathsFromPackageExports } from "../../library/packageExports.js";
+import type { ExportData, Node10CompatExportData } from "../../src/library/packageExports.js";
+import { queryTypesResolutionPathsFromPackageExports } from "../../src/library/packageExports.js";
 
 const typeOnlyExportPackage: PackageJson = {
 	name: "@fluid-test/test-package-typeonly",
