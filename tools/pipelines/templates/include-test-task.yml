@@ -15,16 +15,6 @@ parameters:
   default: false
 
 steps:
-- script: |
-    echo "Running ${{ parameters.taskTestStep }} test"
-    if [[ "${{ parameters.taskTestStep }}" == "ci:test:mocha" || "${{ parameters.taskTestStep }}" == "ci:test:realsvc:local" ]]; then
-      echo "Running test with coverage"
-      echo "##vso[task.setvariable variable=runWithCoverage]true"
-    else
-      echo "Running test without coverage"
-      echo "##vso[task.setvariable variable=runWithCoverage]false"
-    fi
-  displayName: 'runWithCoverage variable'
 
 # Test - With coverage
 - ${{ if and(parameters.testCoverage, variables['runWithCoverage']) }}:
