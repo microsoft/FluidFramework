@@ -376,7 +376,7 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 				: undefined;
 
 			if (constraintNode !== undefined) {
-				tree.checkout.editor.addNodeExistsConstraint(
+				tree.checkout.editor.addInputNodeExistsConstraint(
 					getOrCreateInnerNode(constraintNode).anchorNode,
 				);
 			}
