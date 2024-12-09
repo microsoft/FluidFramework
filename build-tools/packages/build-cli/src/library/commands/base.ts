@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { Command, Flags, Interfaces } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
 import type { PrettyPrintableError } from "@oclif/core/errors";
@@ -13,7 +14,6 @@ import {
 	findGitRootSync,
 	loadBuildProject,
 } from "@fluid-tools/build-infrastructure";
-import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { CommandLogger } from "../../logging.js";
 import { Context } from "../context.js";
 import { indentString } from "../text.js";
@@ -152,10 +152,8 @@ export abstract class BaseCommand<T extends typeof Command>
 	async getContext(): Promise<Context> {
 		if (this._context === undefined) {
 			const resolvedRoot = await getResolvedFluidRoot();
-			const gitRepo = new GitRepo(resolvedRoot);
-			const branch = await gitRepo.getCurrentBranchName();
 
-			this._context = new Context(gitRepo, "microsoft/FluidFramework", branch);
+			this._context = new Context(resolvedRoot);
 		}
 
 		return this._context;

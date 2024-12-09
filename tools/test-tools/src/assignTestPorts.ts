@@ -40,12 +40,12 @@ export function getPackageInfo(): PackageInfo[] {
 	}
 }
 
-export function writePortMapFile(): void {
+export function writePortMapFile(initialPort: number): void {
 	const info: PackageInfo[] = getPackageInfo();
 
 	// Assign a unique port to each package
 	const portMap: { [pkgName: string]: number } = {};
-	let port = 8081;
+	let port = initialPort;
 	for (const pkg of info) {
 		if (pkg.name === undefined) {
 			console.error("missing name in package info");
