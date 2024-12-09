@@ -4,9 +4,7 @@
  */
 
 import {
-	type IMigratableModel,
 	type IMigrator,
-	type IVersionedModel,
 	makeCreateDetachedCallback,
 	makeMigrationCallback,
 } from "@fluid-example/migration-tools/internal";
@@ -26,6 +24,7 @@ import { createRoot, type Root } from "react-dom/client";
 
 import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";
 import { DemoCodeLoader } from "../src/demoCodeLoader.js";
+import type { IMigratableModel, IVersionedModel } from "../src/migratableModel.js";
 import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "../src/view/index.js";
 

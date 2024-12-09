@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IMigratableModel,
-	IMigrator,
-	MigrationState,
-} from "@fluid-example/migration-tools/internal";
+import type { IMigrator, MigrationState } from "@fluid-example/migration-tools/internal";
 import React, { useEffect, useState } from "react";
 
+import type { IMigratableModel } from "../migratableModel.js";
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
 export interface IDebugViewProps {

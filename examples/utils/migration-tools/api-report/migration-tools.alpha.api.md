@@ -47,17 +47,6 @@ export interface IEntryPointPiece {
     readonly registryEntries: NamedFluidDataStoreRegistryEntries;
 }
 
-// @alpha
-export interface IImportExportModel<ImportType, ExportType> {
-    exportData: () => Promise<ExportType>;
-    importData: (initialData: ImportType) => Promise<void>;
-    supportsDataFormat: (initialData: unknown) => initialData is ImportType;
-}
-
-// @alpha
-export interface IMigratableModel extends IVersionedModel, IImportExportModel<unknown, unknown> {
-}
-
 // @alpha (undocumented)
 export interface IMigrator {
     readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
@@ -88,11 +77,6 @@ export interface ISimpleLoader {
     }>;
     loadExisting(id: string): Promise<IContainer>;
     supportsVersion(version: string): Promise<boolean>;
-}
-
-// @alpha
-export interface IVersionedModel {
-    readonly version: string;
 }
 
 // @alpha

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigratableModel } from "@fluid-example/migration-tools/internal";
-
 import { parseStringDataVersionTwo, readVersion } from "../dataTransform.js";
+import type { IMigratableModel } from "../migratableModel.js";
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.

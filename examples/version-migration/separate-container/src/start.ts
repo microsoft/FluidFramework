@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IMigratableModel,
-	IMigrator,
-	ImportDataCallback,
-	IVersionedModel,
-} from "@fluid-example/migration-tools/internal";
+import type { IMigrator, ImportDataCallback } from "@fluid-example/migration-tools/internal";
 import {
 	makeCreateDetachedCallback,
 	makeMigrationCallback,
@@ -27,6 +22,7 @@ import { createRoot, type Root } from "react-dom/client";
 
 import { inventoryListDataTransformationCallback } from "./dataTransform.js";
 import { DemoCodeLoader } from "./demoCodeLoader.js";
+import type { IMigratableModel, IVersionedModel } from "./migratableModel.js";
 import type { IInventoryListAppModel } from "./modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "./view/index.js";
 

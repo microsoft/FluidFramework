@@ -21,12 +21,9 @@ export {
 export {
 	CreateDetachedContainerCallback,
 	ExportDataCallback,
-	IImportExportModel,
-	IMigratableModel,
 	IMigrator,
 	IMigratorEvents,
 	ImportDataCallback,
-	IVersionedModel,
 	LoadSourceContainerCallback,
 	makeCreateDetachedCallback,
 	makeMigrationCallback,

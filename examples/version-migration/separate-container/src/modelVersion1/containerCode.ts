@@ -5,7 +5,6 @@
 
 import {
 	CompositeEntryPoint,
-	type IMigratableModel,
 	loadCompositeRuntime,
 	makeMigratorEntryPointPiece,
 } from "@fluid-example/migration-tools/internal";
@@ -16,6 +15,8 @@ import type {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+
+import type { IMigratableModel } from "../migratableModel.js";
 
 import { modelEntryPointPiece } from "./modelEntryPointPiece.js";
 

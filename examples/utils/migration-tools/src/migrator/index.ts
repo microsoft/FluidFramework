@@ -10,11 +10,8 @@ export {
 	makeMigrationCallback,
 } from "./callbackHelpers.js";
 export {
-	IImportExportModel,
-	IMigratableModel,
 	IMigrator,
 	IMigratorEvents,
-	IVersionedModel,
 } from "./interfaces.js";
 export {
 	type ExportDataCallback,
