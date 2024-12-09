@@ -190,18 +190,6 @@ module.exports = {
 					},
 				},
 			},
-			"@fluidframework/test-tools": {
-				directory: "tools/test-tools",
-				releaseGroups: {
-					"test-tools": {
-						include: ["@fluidframework/test-tools"],
-						rootPackageName: "@fluidframework/test-tools",
-						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl:
-							"https://dev.azure.com/fluidframework/internal/_build?definitionId=13",
-					},
-				},
-			},
 		},
 	},
 };
