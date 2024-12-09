@@ -671,8 +671,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -801,8 +801,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -979,8 +979,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1112,8 +1112,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1242,8 +1242,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1457,8 +1457,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1569,8 +1569,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1751,8 +1751,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1866,8 +1866,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1972,8 +1972,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -2320,8 +2320,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -2426,8 +2426,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -2544,8 +2544,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -2750,8 +2750,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -2856,8 +2856,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -3181,8 +3181,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -3867,8 +3867,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -4220,8 +4220,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -4368,8 +4368,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -5146,8 +5146,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -5315,8 +5315,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -5499,8 +5499,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -5659,8 +5659,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -5792,8 +5792,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -5943,8 +5943,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -6067,8 +6067,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -7453,8 +7453,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -15305,8 +15305,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -15637,8 +15637,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -15839,8 +15839,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5))
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       mocha:
         specifier: ^10.2.0
         version: 10.8.2
@@ -23532,6 +23532,10 @@ packages:
     resolution: {integrity: sha512-dbOVRyxHprdSpwSAR9/YshLwmnwf+RSl5hf0kCGlhAcEeZY9aRqo4oNmaT0tLC16Zy9D0zekDjWkjHGjXlglaQ==}
     engines: {node: '>=8.0.0'}
 
+  jest-junit@16.0.0:
+    resolution: {integrity: sha512-A94mmw6NfJab4Fg/BlvVOUXzXgF0XIH6EmTgJ5NDPp4xoKq0Kr7sErb+4Xs9nZvu58pJojz5RFGpqnZYJTrRfQ==}
+    engines: {node: '>=10.12.0'}
+
   jest-leak-detector@29.7.0:
     resolution: {integrity: sha512-kYA8IJcSYtST2BY9I+SMC32nDpBT3J2NvWJx8+JCuCdl/CR1I4EKUJROiP8XtCcxqgTTBGJNdbB1A8XRKbTetw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -30780,9 +30784,9 @@ snapshots:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint-config-biome: 1.9.4
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -36863,33 +36867,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.0(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.8.1
       is-bun-module: 1.3.0
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-node
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -36903,13 +36907,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.2
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       get-tsconfig: 4.8.1
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -38947,6 +38951,13 @@ snapshots:
       mkdirp: 0.5.6
       strip-ansi: 5.2.0
       uuid: 3.4.0
+      xml: 1.0.1
+
+  jest-junit@16.0.0:
+    dependencies:
+      mkdirp: 1.0.4
+      strip-ansi: 6.0.1
+      uuid: 8.3.2
       xml: 1.0.1
 
   jest-leak-detector@29.7.0:
