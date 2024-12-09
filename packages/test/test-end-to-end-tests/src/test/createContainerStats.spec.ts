@@ -6,7 +6,11 @@
 import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	LoaderHeader,
+	Severity,
+} from "@fluidframework/container-definitions/internal";
 import {
 	DefaultSummaryConfiguration,
 	IAckedSummary,
@@ -209,7 +213,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		);
 
 		// Close the main container which should also close the summarizer.
-		mainContainer.close();
+		mainContainer.close(Severity.Expected);
 
 		// Load and set up a new main container with the above summary and validate that it loads with summaryNumber 2.
 		mainContainer = await loadContainer(summaryVersion);

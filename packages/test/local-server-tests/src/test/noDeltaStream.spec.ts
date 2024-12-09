@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	Severity,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils/internal";
@@ -141,7 +145,7 @@ describe("No Delta Stream", () => {
 
 		assert.strictEqual(dataObject.root.get("test"), "key", "mapKey");
 
-		container.close();
+		container.close(Severity.Expected);
 	});
 
 	it("doesn't affect normal containers", async () => {
@@ -208,7 +212,7 @@ describe("No Delta Stream", () => {
 
 		assert.strictEqual(dataObject.root.get("test"), "key", "mapKey");
 
-		container.close();
+		container.close(Severity.Expected);
 	});
 
 	afterEach(async () => {

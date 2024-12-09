@@ -5,7 +5,11 @@
 
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IHostLoader,
+	Severity,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	ChannelCollection,
@@ -113,7 +117,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	afterEach(() => {
 		provider.reset();
 		for (const container of containers) {
-			container.close();
+			container.close(Severity.Expected);
 		}
 		containers = [];
 		summaryCollection = undefined;

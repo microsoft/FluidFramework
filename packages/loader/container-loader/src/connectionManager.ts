@@ -5,7 +5,11 @@
 
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaQueue,
+	ReadOnlyInfo,
+	type Severity,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IDisposable,
 	ITelemetryBaseProperties,
@@ -425,7 +429,11 @@ export class ConnectionManager implements IConnectionManager {
 		});
 	}
 
-	public dispose(error?: ICriticalContainerError, switchToReadonly: boolean = true): void {
+	public dispose(
+		severity: Severity,
+		error?: ICriticalContainerError,
+		switchToReadonly: boolean = true,
+	): void {
 		if (this._disposed) {
 			return;
 		}

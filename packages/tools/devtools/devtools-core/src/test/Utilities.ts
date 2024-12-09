@@ -8,6 +8,7 @@ import type { IAudience } from "@fluidframework/container-definitions";
 import type {
 	IContainer,
 	IContainerEvents,
+	Severity,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
@@ -45,7 +46,7 @@ class MockContainer
 		this.emit("attached");
 	}
 
-	public dispose(error?: IErrorBase | undefined): void {
+	public dispose(severity: Severity, error?: IErrorBase | undefined): void {
 		this.emit("disposed");
 	}
 

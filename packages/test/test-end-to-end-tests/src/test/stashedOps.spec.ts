@@ -12,6 +12,7 @@ import {
 	IContainer,
 	IHostLoader,
 	LoaderHeader,
+	Severity,
 	type ILoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -126,13 +127,13 @@ const getPendingOps = async (
 	if (send === true) {
 		pendingState = await container.getPendingLocalState?.();
 		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
-		container.close();
+		container.close(Severity.Expected);
 	} else if (send === "afterReconnect") {
 		pendingState = await container.getPendingLocalState?.();
 		container.disconnect();
 		container.connect();
 		await testObjectProvider.ensureSynchronized(); // Note: This will have a different clientId than in pendingState
-		container.close();
+		container.close(Severity.Expected);
 	} else {
 		pendingState = await container.closeAndGetPendingLocalState?.();
 	}
@@ -250,7 +251,7 @@ const waitForSummary = async (
 		testConfig,
 	);
 	await summarizeNow(summarizer);
-	summarizingContainer.close();
+	summarizingContainer.close(Severity.Expected);
 };
 // Introduced in 0.37
 // REVIEW: enable compat testing
@@ -1306,7 +1307,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				await new Promise((resolve) => container2.deltaManager.on("connect", resolve));
 			}
 
-			container.close();
+			container.close(Severity.Expected);
 			await connectP;
 		},
 	);
@@ -1512,7 +1513,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				await new Promise((resolve) => container3.deltaManager.on("connect", resolve));
 			}
 
-			container2.close();
+			container2.close(Severity.Expected);
 			await connectP;
 		},
 	);
@@ -1850,7 +1851,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		map.set(testKey, testValue);
 
 		const summary = detachedContainer.serialize();
-		detachedContainer.close();
+		detachedContainer.close(Severity.Expected);
 		const rehydratedContainer: IContainerExperimental =
 			await loader2.rehydrateDetachedContainerFromSnapshot(summary);
 		const dataStore2 = (await rehydratedContainer.getEntryPoint()) as ITestFluidObject;
@@ -1964,7 +1965,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 		}
 		pendingState = await pendingStateP;
-		container.close();
+		container.close(Severity.Expected);
 		// no pending changes went through
 		for (let i = 5; i--; ) {
 			assert.strictEqual(map1.get(`${i}`), undefined);
@@ -2010,7 +2011,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 		}
 		pendingState = await pendingStateP;
-		container.close();
+		container.close(Severity.Expected);
 
 		// because the event listener was always refreshing pendingState on "connected", the stash blob
 		// should be safe to use

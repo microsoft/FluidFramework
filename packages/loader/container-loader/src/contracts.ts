@@ -10,6 +10,7 @@ import {
 	IFluidCodeDetails,
 	isFluidPackage,
 	IConnectionDetails,
+	Severity,
 } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
@@ -125,7 +126,11 @@ export interface IConnectionManager {
 	/**
 	 * Disposed connection manager
 	 */
-	dispose(error?: ICriticalContainerError, switchToReadonly?: boolean): void;
+	dispose(
+		severity: Severity,
+		error?: ICriticalContainerError,
+		switchToReadonly?: boolean,
+	): void;
 
 	get connectionMode(): ConnectionMode;
 }

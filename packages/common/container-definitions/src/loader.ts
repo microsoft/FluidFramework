@@ -272,6 +272,17 @@ export interface IContainerEvents extends IEvent {
 }
 
 /**
+ * Severity of disconnect events emitted by the {@link IContainer}.
+ * @legacy
+ * @alpha
+ */
+export enum Severity {
+	Expected = "Expected",
+	Corruption = "Corruption",
+	Unknown = "Unknown",
+}
+
+/**
  * Namespace for the different connection states a container can be in.
  * PLEASE NOTE: The sequence of the numerical values does no correspond to the typical connection state progression.
  * @public
@@ -386,7 +397,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * @param error - If the container is being disposed due to error, this provides details about the error that
 	 * resulted in disposing it.
 	 */
-	dispose(error?: ICriticalContainerError): void;
+	dispose(severity: Severity, error?: ICriticalContainerError): void;
 
 	/**
 	 * Closes the container.
@@ -394,7 +405,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * @param error - If the container is being closed due to error, this provides details about the error that
 	 * resulted in closing it.
 	 */
-	close(error?: ICriticalContainerError): void;
+	close(severity: Severity, error?: ICriticalContainerError): void;
 
 	/**
 	 * Propose new code details that define the code to be loaded for this container's runtime.

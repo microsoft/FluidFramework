@@ -7,6 +7,7 @@ import {
 	IDeltaQueue,
 	IContainer,
 	IHostLoader,
+	Severity,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
@@ -198,7 +199,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	public reset() {
 		this.lastProposalSeqNum = 0;
 		for (const container of this.containers.keys()) {
-			container.close();
+			container.close(Severity.Expected);
 		}
 		this.containers.clear();
 

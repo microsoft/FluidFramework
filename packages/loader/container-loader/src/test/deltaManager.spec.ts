@@ -10,6 +10,7 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-private/test-loader-utils";
+import { Severity } from "@fluidframework/container-definitions/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaStorageService,
@@ -534,7 +535,7 @@ describe("Loader", () => {
 				}));
 
 				// Dispose will trigger abort
-				deltaManager.dispose();
+				deltaManager.dispose(Severity.Expected);
 				await flushPromises();
 
 				mockLogger.assertMatch([
