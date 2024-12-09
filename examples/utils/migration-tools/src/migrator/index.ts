@@ -19,4 +19,7 @@ export {
 	type MigrationCallback,
 	Migrator,
 } from "./migrator.js";
-export { makeMigratorEntryPointPiece } from "./migratorEntryPointPiece.js";
+export {
+	IMigratorEntryPoint,
+	makeMigratorEntryPointPiece,
+} from "./migratorEntryPointPiece.js";

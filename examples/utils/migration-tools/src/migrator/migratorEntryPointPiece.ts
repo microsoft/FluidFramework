@@ -9,6 +9,7 @@ import type { FluidObject } from "@fluidframework/core-interfaces";
 import type { IEntryPointPiece } from "../compositeRuntime/index.js";
 import { MigrationToolFactory, type IMigrationTool } from "../migrationTool/index.js";
 
+import type { IMigrator } from "./interfaces.js";
 import {
 	type ExportDataCallback,
 	type LoadSourceContainerCallback,
@@ -33,6 +34,17 @@ async function getDataStoreEntryPoint(
 	}
 
 	return entryPointHandle.get();
+}
+
+/**
+ * The partial type of the entrypoint provided when makeMigratorEntryPointPiece is used.
+ * @alpha
+ */
+export interface IMigratorEntryPoint {
+	getMigrator: (
+		loadSourceContainerCallback: LoadSourceContainerCallback,
+		migrationCallback: MigrationCallback,
+	) => Promise<IMigrator>;
 }
 
 /**

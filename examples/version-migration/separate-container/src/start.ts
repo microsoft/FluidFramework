@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrator, ImportDataCallback } from "@fluid-example/migration-tools/internal";
+import type {
+	IMigrator,
+	IMigratorEntryPoint,
+	ImportDataCallback,
+} from "@fluid-example/migration-tools/internal";
 import {
 	makeCreateDetachedCallback,
 	makeMigrationCallback,
@@ -42,6 +46,57 @@ const isIInventoryListAppModel = (
 
 const getUrlForContainerId = (containerId: string): string => `/#${containerId}`;
 
+const loader = new Loader({
+	urlResolver: new InsecureTinyliciousUrlResolver(),
+	documentServiceFactory: new RouterliciousDocumentServiceFactory(
+		new InsecureTinyliciousTokenProvider(),
+	),
+	codeLoader: new DemoCodeLoader(),
+});
+
+const createDetachedCallback = makeCreateDetachedCallback(
+	loader,
+	createTinyliciousCreateNewRequest,
+);
+
+const importDataCallback: ImportDataCallback = async (
+	destinationContainer: IContainer,
+	exportedData: unknown,
+) => {
+	const destinationModel = await getModelFromContainer<IMigratableModel>(destinationContainer);
+	// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
+	// exported data into a format that the new model can import?  If we can determine it early, then
+	// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
+	// MigratableModelLoaders.
+	// TODO: Error paths in case the format isn't ingestible.
+	// If the migrated model already supports the data format, go ahead with the migration.
+	// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
+	// a format that we can import.
+	const transformedData = destinationModel.supportsDataFormat(exportedData)
+		? exportedData
+		: await inventoryListDataTransformationCallback(exportedData, destinationModel.version);
+	await destinationModel.importData(transformedData);
+};
+const migrationCallback = makeMigrationCallback(createDetachedCallback, importDataCallback);
+
+/**
+ * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
+ * type checking for added safety.
+ */
+const getModelFromContainer = async <ModelType>(container: IContainer): Promise<ModelType> => {
+	const entryPoint = (await container.getEntryPoint()) as {
+		model: ModelType;
+	};
+
+	// If the user tries to use this with an incompatible container runtime, we want to give them
+	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
+	if (typeof entryPoint.model !== "object") {
+		throw new TypeError("Incompatible container runtime: doesn't provide model");
+	}
+
+	return entryPoint.model;
+};
+
 let appRoot: Root | undefined;
 let debugRoot: Root | undefined;
 
@@ -75,93 +130,31 @@ const renderModel = (model: IVersionedModel, migrator: IMigrator): void => {
 	}
 };
 
-/**
- * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
- * type checking for added safety.
- */
-const getModelFromContainer = async <ModelType>(container: IContainer): Promise<ModelType> => {
-	const entryPoint = (await container.getEntryPoint()) as {
-		model: ModelType;
-	};
-
-	// If the user tries to use this with an incompatible container runtime, we want to give them
-	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
-	if (typeof entryPoint.model !== "object") {
-		throw new TypeError("Incompatible container runtime: doesn't provide model");
-	}
-
-	return entryPoint.model;
-};
-
-async function start(): Promise<void> {
-	const loader = new Loader({
-		urlResolver: new InsecureTinyliciousUrlResolver(),
-		documentServiceFactory: new RouterliciousDocumentServiceFactory(
-			new InsecureTinyliciousTokenProvider(),
-		),
-		codeLoader: new DemoCodeLoader(),
-	});
-
-	const createDetachedCallback = makeCreateDetachedCallback(
-		loader,
-		createTinyliciousCreateNewRequest,
-	);
-
-	let id: string;
-	let container: IContainer;
-	let model: IMigratableModel;
-
-	if (location.hash.length === 0) {
-		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
-		// Normally we would create with the most-recent version.
-		const createDetachedResult = await createDetachedCallback("one");
-		container = createDetachedResult.container;
-		model = await getModelFromContainer<IMigratableModel>(container);
-		id = await createDetachedResult.attach();
-	} else {
-		id = location.hash.slice(1);
-		container = await loader.resolve({ url: id });
-		model = await getModelFromContainer<IMigratableModel>(container);
-	}
-
-	const importDataCallback: ImportDataCallback = async (
-		destinationContainer: IContainer,
-		exportedData: unknown,
-	) => {
-		const destinationModel =
-			await getModelFromContainer<IMigratableModel>(destinationContainer);
-		// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
-		// exported data into a format that the new model can import?  If we can determine it early, then
-		// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
-		// MigratableModelLoaders.
-		// TODO: Error paths in case the format isn't ingestible.
-		// If the migrated model already supports the data format, go ahead with the migration.
-		// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
-		// a format that we can import.
-		const transformedData = destinationModel.supportsDataFormat(exportedData)
-			? exportedData
-			: await inventoryListDataTransformationCallback(exportedData, destinationModel.version);
-		await destinationModel.importData(transformedData);
-	};
-	const migrationCallback = makeMigrationCallback(createDetachedCallback, importDataCallback);
+export const setupContainer = async (
+	id: string,
+	alreadyLoadedContainer?: IContainer | undefined,
+): Promise<void> => {
+	// The first createDetached flow ends up with a live container reference that we want to retain rather
+	// than disposing it and loading a second time.  In all other cases we'll do the actual load here.
+	const container = alreadyLoadedContainer ?? (await loader.resolve({ url: id }));
+	const model = await getModelFromContainer<IMigratableModel>(container);
 
 	// TODO: Update stale documentation
 	// The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
 	// the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
 	// It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
 	// import with newly created models.
-	const entryPoint = await container.getEntryPoint();
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-	const migrator: IMigrator = await (entryPoint as any).getMigrator(
+	// TODO: Comment on casting
+	const { getMigrator } = (await container.getEntryPoint()) as IMigratorEntryPoint;
+	const migrator: IMigrator = await getMigrator(
 		async () => loader.resolve({ url: id }),
 		migrationCallback,
 	);
 	migrator.events.on("migrated", () => {
+		const newContainerId = migrator.migrationResult as string;
 		container.dispose();
-		// TODO: Load new container
-		renderModel(model, migrator);
-		// TODO: Figure out what good casting looks like
-		updateTabForId(migrator.migrationResult as string);
+		// TODO: Better error handling?
+		setupContainer(newContainerId).catch(console.error);
 	});
 	// If the loader doesn't know how to load the container code required for migration, it emits "migrationNotSupported".
 	// For example, this might be hit if another client has a newer loader and proposes a version our
@@ -177,20 +170,26 @@ async function start(): Promise<void> {
 		);
 	});
 
-	// This would be a good point to trigger normal upgrade logic - we're fully set up for migration, can inspect the
-	// model, and haven't rendered yet.  We could even migrate multiple times if necessary (e.g. if daisy-chaining is
-	// required).  E.g. something like:
-	// let versionToPropose: string;
-	// while (versionToPropose = await getMigrationTargetFromSomeService(model.version)) {
-	//     model.proposeVersion(versionToPropose);
-	//     await new Promise<void>((resolve) => {
-	//         migrator.once("migrated", resolve);
-	//     });
-	// }
-	// In this demo however, we trigger the proposal through the debug buttons.
-
 	renderModel(model, migrator);
 	updateTabForId(id);
+};
+
+async function start(): Promise<void> {
+	let id: string;
+	let container: IContainer;
+
+	if (location.hash.length === 0) {
+		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
+		// Normally we would create with the most-recent version.
+		const createDetachedResult = await createDetachedCallback("one");
+		container = createDetachedResult.container;
+		id = await createDetachedResult.attach();
+	} else {
+		id = location.hash.slice(1);
+		container = await loader.resolve({ url: id });
+	}
+
+	await setupContainer(id, container);
 }
 
 await start();

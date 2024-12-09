@@ -22,11 +22,12 @@ export {
 	CreateDetachedContainerCallback,
 	ExportDataCallback,
 	IMigrator,
+	IMigratorEntryPoint,
 	IMigratorEvents,
 	ImportDataCallback,
 	LoadSourceContainerCallback,
 	makeCreateDetachedCallback,
 	makeMigrationCallback,
-	MigrationCallback,
 	makeMigratorEntryPointPiece,
+	MigrationCallback,
 } from "./migrator/index.js";

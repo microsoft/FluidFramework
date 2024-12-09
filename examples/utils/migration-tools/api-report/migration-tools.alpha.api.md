@@ -58,6 +58,12 @@ export interface IMigrator {
     proposeVersion: (newVersion: string) => void;
 }
 
+// @alpha
+export interface IMigratorEntryPoint {
+    // (undocumented)
+    getMigrator: (loadSourceContainerCallback: LoadSourceContainerCallback, migrationCallback: MigrationCallback) => Promise<IMigrator>;
+}
+
 // @alpha (undocumented)
 export interface IMigratorEvents extends IEvent {
     // (undocumented)
