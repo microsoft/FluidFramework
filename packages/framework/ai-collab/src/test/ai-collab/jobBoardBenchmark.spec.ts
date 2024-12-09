@@ -21,7 +21,7 @@ import { after } from "mocha";
 import { OpenAI } from "openai";
 import * as zod from "zod";
 
-import { aiCollab } from "../../index.js";
+import { aiCollab, type GenerateTreeEditsResponse } from "../../index.js";
 
 // Define a schema factory that is used to generate classes for the schema
 const sf = new SchemaFactory("ef0b8eff-2876-4801-9b6a-973f09aab904");
@@ -265,8 +265,9 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		};
 
 		const startTime = Date.now();
+		let response: GenerateTreeEditsResponse;
 		try {
-			await aiCollab({
+			response = await aiCollab({
 				openAI: {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
@@ -342,6 +343,7 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		}
 		const foundJohnDoe = createJohnDoeCandidateTask.data;
 		assert(foundJohnDoe !== undefined);
+		assert(response.diffs !== undefined);
 
 		measureSubTaskBenchmark(
 			completedTasksBenchmark,
