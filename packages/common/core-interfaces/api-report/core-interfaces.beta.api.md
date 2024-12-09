@@ -312,8 +312,7 @@ export interface ITelemetryBaseProperties {
 export interface Listenable<TListeners extends object> {
     off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
-    // (undocumented)
-    once<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+    once<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
 }
 
 // @public

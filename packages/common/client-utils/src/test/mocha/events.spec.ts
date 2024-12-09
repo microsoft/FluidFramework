@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { strict as assert } from "node:assert";
 
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
@@ -280,21 +279,32 @@ describe("CustomEventEmitter", () => {
 			(e: Error) => validateAssertionError(e, /register.*twice.*TestEvent/),
 		);
 	});
-});
 
-describe("CustomEventEmitter - once", () => {
+	it("Fire an event once", () => {
+		const emitter = createEmitter<TestEvents>();
+		let val = false;
+		emitter.once("close", () => {
+			val = true;
+			console.log("This will be called by once:", val);
+		});
+
+		emitter.emit("close", val); // Listener is triggered
+
+		emitter.emit("close", val); // Listener is not triggered
+	});
+
 	it("fires a listener once and deregisters it", () => {
 		const emitter = createEmitter<TestEvents>();
-		let count = 0;
+		let count = 1;
 		const listener = (): number => (count += 1);
 
 		emitter.once("open", listener);
 
 		emitter.emit("open");
-		assert.strictEqual(count, 1);
+		assert.strictEqual(count, 2);
 
 		emitter.emit("open");
-		assert.strictEqual(count, 1);
+		assert.strictEqual(count, 2);
 	});
 
 	it("removes the listener after being called", () => {
@@ -307,7 +317,7 @@ describe("CustomEventEmitter - once", () => {
 		});
 
 		emitter.emit("open");
-		assert(!opened);
+		assert(opened);
 	});
 
 	it("works with multiple once listeners for different events", () => {
@@ -319,15 +329,15 @@ describe("CustomEventEmitter - once", () => {
 		emitter.once("open", () => {
 			opened = true;
 		});
-		emitter.once("close", () => {
-			closed = true;
+		emitter.once("close", (value: boolean) => {
+			closed = value;
 		});
 
 		emitter.emit("open");
 		assert(opened);
 		assert(!closed);
 
-		emitter.emit("close", false);
+		emitter.emit("close", true);
 		assert(closed); // 'close' event listener should be called now
 	});
 
@@ -418,7 +428,7 @@ export class MyCompositionClass implements Listenable<MyEvents> {
 		return this.events.on(eventName, listener);
 	}
 
-	public once<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+	public once<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
 		return this.events.once(eventName, listener);
 	}
 
