@@ -69,16 +69,6 @@ export interface IMigratorEvents extends IEvent {
 // @alpha
 export type ImportDataCallback = (destinationContainer: IContainer, exportedData: unknown) => Promise<void>;
 
-// @alpha (undocumented)
-export interface ISimpleLoader {
-    createDetached(version: string): Promise<{
-        container: IContainer;
-        attach: () => Promise<string>;
-    }>;
-    loadExisting(id: string): Promise<IContainer>;
-    supportsVersion(version: string): Promise<boolean>;
-}
-
 // @alpha
 export const loadCompositeRuntime: (context: IContainerContext, existing: boolean, compositeEntryPoint: CompositeEntryPoint, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
 
@@ -102,35 +92,5 @@ export type MigrationCallback = (version: string, exportedData: unknown) => Prom
 
 // @alpha
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
-
-// @alpha (undocumented)
-export class SessionStorageSimpleLoader implements ISimpleLoader {
-    constructor(codeLoader: ICodeDetailsLoader, logger?: ITelemetryBaseLogger | undefined);
-    // (undocumented)
-    createDetached(version: string): Promise<{
-        container: IContainer;
-        attach: () => Promise<string>;
-    }>;
-    // (undocumented)
-    loadExisting(id: string): Promise<IContainer>;
-    // (undocumented)
-    supportsVersion(version: string): Promise<boolean>;
-}
-
-// @alpha (undocumented)
-export class SimpleLoader implements ISimpleLoader {
-    constructor(props: Pick<ILoaderProps, "urlResolver" | "documentServiceFactory" | "codeLoader" | "logger"> & {
-        generateCreateNewRequest: () => IRequest;
-    });
-    // (undocumented)
-    readonly createDetached: (version: string) => Promise<{
-        container: IContainer;
-        attach: () => Promise<string>;
-    }>;
-    // (undocumented)
-    loadExisting(id: string): Promise<IContainer>;
-    // (undocumented)
-    supportsVersion(version: string): Promise<boolean>;
-}
 
 ```
