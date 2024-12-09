@@ -9,6 +9,9 @@ import { exec, execNoError } from "./utils";
 
 const traceGitRepo = registerDebug("fluid-build:gitRepo");
 
+/**
+ * @deprecated Should not be used outside the build-tools package.
+ */
 export class GitRepo {
 	constructor(public readonly resolvedRoot: string) {}
 

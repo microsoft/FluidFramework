@@ -14,6 +14,9 @@ import {
 	type IFluidBuildDirs,
 } from "./fluidBuildConfig";
 
+/**
+ * @deprecated Should not be used outside the build-tools package.
+ */
 export class FluidRepo {
 	private readonly _releaseGroups = new Map<string, MonoRepo>();
 
