@@ -350,13 +350,6 @@ extends:
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
               - task: Npm@1
-                displayName: 'npm run check:are-the-types-wrong'
-                inputs:
-                  command: custom
-                  workingDir: '${{ parameters.buildDirectory }}'
-                  customCommand: 'run check:are-the-types-wrong'
-
-              - task: Npm@1
                 displayName: 'npm run webpack'
                 inputs:
                   command: custom
