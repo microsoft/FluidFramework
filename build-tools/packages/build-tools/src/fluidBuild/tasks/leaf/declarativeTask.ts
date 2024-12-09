@@ -6,7 +6,7 @@
 import globby from "globby";
 
 import type { BuildContext } from "../../buildContext";
-import type { BuildPackage } from "../../buildGraph";
+import type { BuildGraphPackage } from "../../buildGraph";
 import {
 	type DeclarativeTask,
 	type GitIgnoreSettingValue,
@@ -17,7 +17,7 @@ import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
 class DeclarativeTaskHandler extends LeafWithFileStatDoneFileTask {
 	constructor(
-		node: BuildPackage,
+		node: BuildGraphPackage,
 		command: string,
 		context: BuildContext,
 		taskName: string | undefined,
@@ -73,7 +73,7 @@ export function createDeclarativeTaskHandler(
 	taskDefinition: DeclarativeTask,
 ): TaskHandlerFunction {
 	const handler: TaskHandlerFunction = (
-		node: BuildPackage,
+		node: BuildGraphPackage,
 		command: string,
 		context: BuildContext,
 		taskName?: string,

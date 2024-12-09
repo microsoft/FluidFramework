@@ -4,16 +4,27 @@
  */
 
 export { GitRepo } from "./common/gitRepo";
-export { FluidRepo } from "./fluidBuild/fluidRepo";
-export { type IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig";
-export { getResolvedFluidRoot, getFluidBuildConfig } from "./fluidBuild/fluidUtils";
-export type { Logger } from "./common/logging";
-export { MonoRepo } from "./common/monoRepo";
+export { getFluidBuildConfig } from "./fluidBuild/config";
+export type { IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig";
 export {
-	Package,
-	type PackageJson,
-	updatePackageJsonFile,
+	/**
+	 * @deprecated Replace usage as soon as possible.
+	 */
+	FluidRepoBuild as FluidRepo,
+} from "./fluidBuild/fluidRepoBuild";
+export type { Logger } from "./common/logging";
+export {
+	/**
+	 * @deprecated Replace usage as soon as possible.
+	 */
+	BuildPackage as Package,
+	MonoRepo,
+	/**
+	 * @deprecated Replace usage as soon as possible.
+	 */
+	type FluidBuildPackageJson as PackageJson,
 	updatePackageJsonFileAsync,
+	updatePackageJsonFile,
 } from "./common/npmPackage";
 export { Timer } from "./common/timer";
 
@@ -41,3 +52,14 @@ export type {
 	requireAssignableTo,
 	SkipUniqueSymbols,
 } from "./common/typeCompatibility";
+
+// re-export some stuff temporarily from build-infrastructure
+export {
+	type IPackage,
+	type ReleaseGroupName,
+	type PackageName,
+	/**
+	 * @deprecated Replace as soon as possible with IReleaseGroup directly.
+	 */
+	// type IReleaseGroup as MonoRepo,
+} from "@fluid-tools/build-infrastructure";

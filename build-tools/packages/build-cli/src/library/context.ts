@@ -101,10 +101,10 @@ export class Context {
 		public readonly originalBranchName: string,
 	) {
 		// Load the packages
-		this.fluidBuildConfig = getFluidBuildConfig(this.gitRepo.resolvedRoot);
+		this.fluidBuildConfig = getFluidBuildConfig(this.gitRepo.resolvedRoot).config;
 		this.flubConfig = getFlubConfig(this.gitRepo.resolvedRoot);
-		this.repo = new FluidRepo(this.gitRepo.resolvedRoot, this.fluidBuildConfig.repoPackages);
-		this.fullPackageMap = this.repo.createPackageMap();
+		this.repo = new FluidRepo(this.gitRepo.resolvedRoot);
+		this.fullPackageMap = this.repo.packages;
 	}
 
 	/**
@@ -172,7 +172,8 @@ export class Context {
 		let ver = "";
 
 		if (isMonoRepoKind(key)) {
-			const rgRepo = this.repo.releaseGroups.get(key);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+			const rgRepo = this.repo.releaseGroups.get(key as any);
 			if (rgRepo === undefined) {
 				throw new Error(`Release group not found: ${key}`);
 			}

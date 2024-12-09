@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { readFile } from "node:fs/promises";
-import { Package } from "../common/npmPackage";
-
+import { type IPackage } from "@fluid-tools/build-infrastructure";
 import registerDebug from "debug";
+import { readFile } from "fs/promises";
+
 const traceDepCheck = registerDebug("fluid-build:depCheck");
 
 /**
@@ -51,7 +51,7 @@ export class NpmDepChecker {
 	]);
 
 	constructor(
-		private readonly pkg: Package,
+		private readonly pkg: IPackage,
 		private readonly checkFiles: string[],
 	) {
 		if (checkFiles.length !== 0 && pkg.packageJson.dependencies) {
