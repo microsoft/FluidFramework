@@ -10,6 +10,7 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-private/test-loader-utils";
+import { Severity } from "@fluidframework/container-definitions/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaStorageService,
@@ -27,7 +28,7 @@ import {
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
-import { IConnectionManagerFactoryArgs, Severity } from "../contracts.js";
+import { IConnectionManagerFactoryArgs } from "../contracts.js";
 import { DeltaManager } from "../deltaManager.js";
 import { NoopHeuristic } from "../noopHeuristic.js";
 

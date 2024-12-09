@@ -10,6 +10,7 @@ import {
 	IFluidCodeDetails,
 	isFluidPackage,
 	IConnectionDetails,
+	Severity,
 } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
@@ -26,12 +27,6 @@ export enum ReconnectMode {
 	Never = "Never",
 	Disabled = "Disabled",
 	Enabled = "Enabled",
-}
-
-export enum Severity {
-	Expected = "Expected",
-	Corruption = "Corruption",
-	Unknown = "Unknown",
 }
 
 export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {

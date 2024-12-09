@@ -8,6 +8,7 @@ import {
 	IDeltaManagerEvents,
 	IDeltaManagerFull,
 	IDeltaQueue,
+	Severity,
 	type IDeltaSender,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
@@ -51,7 +52,6 @@ import {
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
-	Severity,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
 import { ThrottlingWarning } from "./error.js";

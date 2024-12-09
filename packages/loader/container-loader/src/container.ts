@@ -29,6 +29,7 @@ import {
 	isFluidCodeDetails,
 	IDeltaManager,
 	ReadOnlyInfo,
+	Severity,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -120,7 +121,6 @@ import {
 	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
 	ReconnectMode,
-	Severity,
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";

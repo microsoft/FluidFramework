@@ -5,7 +5,11 @@
 
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaQueue,
+	ReadOnlyInfo,
+	type Severity,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IDisposable,
 	ITelemetryBaseProperties,
@@ -58,7 +62,6 @@ import {
 	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
 	ReconnectMode,
-	type Severity,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
 import { SignalType } from "./protocol.js";
