@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import type { Listenable } from "@fluidframework/core-interfaces";
 
 import type { MigrationState } from "../migrationTool/index.js";
 
@@ -93,16 +93,17 @@ export type DataTransformationCallback = (
 /**
  * @alpha
  */
-export interface IMigratorEvents extends IEvent {
-	(event: "migrated" | "migrating", listener: () => void);
-	(event: "migrationNotSupported", listener: (version: string) => void);
+export interface IMigratorEvents {
+	migrated: () => void;
+	migrating: () => void;
+	migrationNotSupported: (version: string) => void;
 }
 
 /**
  * @alpha
  */
 export interface IMigrator {
-	readonly events: IEventProvider<IMigratorEvents>;
+	readonly events: Listenable<IMigratorEvents>;
 
 	/**
 	 * The currently monitored migratable model.  As the Migrator completes a migration, it will swap in the new

@@ -4,7 +4,7 @@
  */
 
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import type { Listenable } from "@fluidframework/core-interfaces";
 
 import type { ISameContainerMigrationTool } from "./sameContainerMigrationTool.js";
 
@@ -48,8 +48,8 @@ export interface IImportExportModel<ImportType, ExportType> {
 /**
  * @internal
  */
-export interface ISameContainerMigratableModelEvents extends IEvent {
-	(event: "connected", listener: () => void);
+export interface ISameContainerMigratableModelEvents {
+	connected: () => void;
 }
 
 // TODO: Is there a better way to express the unknown format here?  I think I'd prefer to put the burden of calling
@@ -61,7 +61,7 @@ export interface ISameContainerMigratableModelEvents extends IEvent {
 export interface ISameContainerMigratableModel
 	extends IVersionedModel,
 		IImportExportModel<unknown, unknown>,
-		IEventProvider<ISameContainerMigratableModelEvents> {
+		Listenable<ISameContainerMigratableModelEvents> {
 	/**
 	 * The tool that will be used to facilitate the migration.
 	 * TODO: Currently this is the only difference as compared to IMigratableModel (which has a non-same-container tool).

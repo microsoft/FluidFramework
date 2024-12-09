@@ -85,16 +85,18 @@ export interface IMigrator {
     readonly currentModel: IMigratableModel;
     readonly currentModelId: string;
     // (undocumented)
-    readonly events: IEventProvider<IMigratorEvents>;
+    readonly events: Listenable<IMigratorEvents>;
     readonly migrationState: MigrationState;
 }
 
 // @alpha (undocumented)
-export interface IMigratorEvents extends IEvent {
+export interface IMigratorEvents {
     // (undocumented)
-    (event: "migrated" | "migrating", listener: () => void): any;
+    migrated: () => void;
     // (undocumented)
-    (event: "migrationNotSupported", listener: (version: string) => void): any;
+    migrating: () => void;
+    // (undocumented)
+    migrationNotSupported: (version: string) => void;
 }
 
 // @alpha (undocumented)
@@ -143,7 +145,7 @@ export class Migrator implements IMigrator {
     // (undocumented)
     get currentModelId(): string;
     // (undocumented)
-    get events(): IEventProvider<IMigratorEvents>;
+    get events(): Listenable<IMigratorEvents>;
     // (undocumented)
     get migrationState(): MigrationState;
 }
