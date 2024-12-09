@@ -519,6 +519,7 @@ export interface IContainerRuntimeOptions {
 	 * The grouping an ungrouping of such messages is handled by the "OpGroupingManager".
 	 *
 	 * By default, the feature is enabled.
+	 * @deprecated The ability to configure Grouped Batching is now removed and it is now disabled if compression is disabled.
 	 */
 	readonly enableGroupedBatching?: boolean;
 
