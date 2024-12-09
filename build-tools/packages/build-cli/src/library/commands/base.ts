@@ -8,6 +8,11 @@ import { Command, Flags, Interfaces } from "@oclif/core";
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
 
+import {
+	IBuildProject,
+	findGitRootSync,
+	loadBuildProject,
+} from "@fluid-tools/build-infrastructure";
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { CommandLogger } from "../../logging.js";
 import { Context } from "../context.js";
@@ -282,5 +287,20 @@ export abstract class BaseCommand<T extends typeof Command>
 			const color = typeof message === "string" ? chalk.gray : chalk.red;
 			this.log(color(`VERBOSE: ${message}`));
 		}
+	}
+}
+
+export abstract class BaseCommandWithBuildProject<
+	T extends typeof Command,
+> extends BaseCommand<T> {
+	private _buildProject: IBuildProject | undefined;
+
+	public getBuildProject(repoRoot?: string): IBuildProject {
+		if (this._buildProject === undefined) {
+			const root = repoRoot ?? findGitRootSync();
+			this._buildProject = loadBuildProject(root);
+		}
+
+		return this._buildProject;
 	}
 }
