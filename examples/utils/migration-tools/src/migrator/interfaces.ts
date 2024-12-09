@@ -14,7 +14,6 @@ import type { IAcceptedMigrationDetails, MigrationState } from "../migrationTool
  */
 export interface IMigratorEvents extends IEvent {
 	(event: "stopping" | "migrating" | "migrated", listener: () => void);
-	(event: "migrationNotSupported", listener: (version: string) => void);
 }
 
 /**
@@ -22,11 +21,6 @@ export interface IMigratorEvents extends IEvent {
  */
 export interface IMigrator {
 	readonly events: IEventProvider<IMigratorEvents>;
-
-	/**
-	 * The result of the migration, if complete.  Likely the container ID of the new container.
-	 */
-	readonly migrationResult: unknown | undefined;
 
 	/**
 	 * The migration state of the current model.  Note that since we swap out for the new model as soon as migration
@@ -43,6 +37,11 @@ export interface IMigrator {
 	 * The details of the accepted migration, if one has been accepted.
 	 */
 	readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
+
+	/**
+	 * The result of the migration, if complete.  Likely the container ID of the new container.
+	 */
+	readonly migrationResult: unknown | undefined;
 
 	/**
 	 * Propose a new version to use.

@@ -139,12 +139,9 @@ export const setupContainer = async (
 	const container = alreadyLoadedContainer ?? (await loader.resolve({ url: id }));
 	const model = await getModelFromContainer<IMigratableModel>(container);
 
-	// TODO: Update stale documentation
-	// The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
-	// the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
-	// It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
-	// import with newly created models.
-	// TODO: Comment on casting
+	// In this example, our container code mixes in an IMigratorEntryPoint to the container entryPoint.  The getMigrator
+	// function lets us construct an IMigrator by providing the necessary external tools it needs to operate.  The IMigrator
+	// is an object we can use to watch migration status, propose a migration, and discover the migration result.
 	const { getMigrator } = (await container.getEntryPoint()) as IMigratorEntryPoint;
 	const migrator: IMigrator = await getMigrator(
 		async () => loader.resolve({ url: id }),
@@ -155,19 +152,6 @@ export const setupContainer = async (
 		container.dispose();
 		// TODO: Better error handling?
 		setupContainer(newContainerId).catch(console.error);
-	});
-	// If the loader doesn't know how to load the container code required for migration, it emits "migrationNotSupported".
-	// For example, this might be hit if another client has a newer loader and proposes a version our
-	// loader doesn't know about.
-	// However, this will never be hit in this demo since we have a finite set of container codes to support.  If the
-	// code loader pulls in the appropriate code dynamically, this might also never be hit since all clients
-	// are theoretically referencing the same code library.
-	migrator.events.on("migrationNotSupported", (version: string) => {
-		// To move forward, we would need to acquire a loader capable of loading the given code, retry the
-		// load, and set up a new Migrator with the new loader.
-		console.error(
-			`Tried to migrate to version ${version} which is not supported by the current loader`,
-		);
 	});
 
 	renderModel(model, migrator);

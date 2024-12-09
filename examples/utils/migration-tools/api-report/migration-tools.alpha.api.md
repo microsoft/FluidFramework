@@ -68,8 +68,6 @@ export interface IMigratorEntryPoint {
 export interface IMigratorEvents extends IEvent {
     // (undocumented)
     (event: "stopping" | "migrating" | "migrated", listener: () => void): any;
-    // (undocumented)
-    (event: "migrationNotSupported", listener: (version: string) => void): any;
 }
 
 // @alpha

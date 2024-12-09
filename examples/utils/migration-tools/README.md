@@ -79,13 +79,10 @@ Finally, to actually execute the migration we provide the `Migrator` class.  Thi
 
 TODO: Detail usage of the Migrator
 
-### `SimpleLoader`
-
-See documentation for `SimpleLoader` [here](./src/simpleLoader/README.md).  `SimpleLoader` is used in place of a `Loader` and is used by the `Migrator`.
-
 ### Code loader
 
-To migrate between two different code versions, you must also provide a code loader to the `SimpleLoader` that is capable of loading those two respective code versions.  This uses the usual `ICodeDetailsLoader` interface.
+TODO: this is kind of externalized now.
+To migrate between two different code versions, you must also provide a code loader that is capable of loading those two respective code versions.  This uses the usual `ICodeDetailsLoader` interface.
 
 ### `DataTransformationCallback`
 
