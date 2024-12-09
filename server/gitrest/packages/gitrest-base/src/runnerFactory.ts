@@ -157,6 +157,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			"git:apiMetricsSamplingPeriod",
 		);
 		const enableSlimGitInit: boolean = config.get("git:enableSlimGitInit") ?? false;
+		const maxBlobSizeBytes: number | undefined = config.get("git:maxBlobSizeBytes");
 
 		if (gitLibrary === "isomorphic-git") {
 			return new IsomorphicGitManagerFactory(
@@ -167,6 +168,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 				enableRepositoryManagerMetrics,
 				enableSlimGitInit,
 				apiMetricsSamplingPeriod,
+				maxBlobSizeBytes,
 			);
 		}
 		throw new Error("Invalid git library name.");

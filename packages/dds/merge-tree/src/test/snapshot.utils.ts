@@ -55,7 +55,7 @@ export class TestString {
 		private readonly options?: IMergeTreeOptionsInternal,
 		initialState: string = "",
 	) {
-		this.client = createClientsAtInitialState({ initialState, options }, id)[id];
+		this.client = createClientsAtInitialState({ initialState, options }, id)[id]!;
 		this.client.startOrUpdateCollaboration(id);
 	}
 

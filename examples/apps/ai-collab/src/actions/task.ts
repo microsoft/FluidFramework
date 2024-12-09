@@ -63,7 +63,7 @@ export async function editTaskGroup(
 		replaceTaskGroupIdsWithSimpleId(taskGroup);
 	console.log("newToOldTaskGroupId:", newToOldTaskGroupId);
 	console.log("newToOldTaskIds:", newToOldTaskIds);
-	console.log("taskGroupCopy:", newToOldEngineerIds);
+	console.log("newToOldEngineerIds:", newToOldEngineerIds);
 	console.log("taskGroupCopy:", taskGroupCopy);
 
 	const prompt = `You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks. \n\n
