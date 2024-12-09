@@ -105,29 +105,33 @@ export class Migrator implements IMigrator {
 		this.migrationTool.events.on("stopping", () => {
 			this._events.emit("stopping");
 		});
-		this.takeAppropriateActionForCurrentMigratable();
+
+		// Ignore migration state until connection completes
+		if (this.connected) {
+			this.watchMigrationState();
+		} else {
+			// If we are not connected we should wait until we reconnect and try again. Note: we re-enter the state
+			// machine, since it's possible another client has already completed the migration by the time we reconnect.
+			this.migrationTool.events.once("connected", this.watchMigrationState);
+		}
 	}
 
 	public readonly proposeVersion = (newVersion: string): void => {
-		// TODO: Consider also taking a callback to verify the accepted version can be migrated to here?
+		if (this.proposedVersion !== undefined) {
+			throw new Error("A proposal was already made");
+		}
 		this.migrationTool.proposeVersion(newVersion);
 	};
 
 	/**
-	 * This method makes no assumptions about the state of the current migratable - this is particularly important
-	 * for the case that we just finished loading a migrated container, but that migrated container is also either
-	 * in the process of migrating or already migrated (and thus we need to load again).  It is not safe to assume
-	 * that a freshly-loaded migrated container is in collaborating state.
+	 * Detect the current migration state and set up listeners to observe changes.
 	 */
-	private readonly takeAppropriateActionForCurrentMigratable = (): void => {
+	private readonly watchMigrationState = (): void => {
 		const migrationState = this.migrationTool.migrationState;
 		if (migrationState === "migrating") {
 			this.ensureMigrating();
 		} else if (migrationState === "collaborating" || migrationState === "stopping") {
-			this.migrationTool.events.once(
-				"migrating",
-				this.takeAppropriateActionForCurrentMigratable,
-			);
+			this.migrationTool.events.once("migrating", this.ensureMigrating);
 		}
 		// Do nothing if already migrated
 	};
@@ -137,29 +141,18 @@ export class Migrator implements IMigrator {
 			return;
 		}
 
-		if (!this.connected) {
-			// If we are not connected we should wait until we reconnect and try again. Note: we re-enter the state
-			// machine, since it's possible another client has already completed the migration by the time we reconnect.
-			this.migrationTool.events.once(
-				"connected",
-				this.takeAppropriateActionForCurrentMigratable,
-			);
-			return;
-		}
-
 		const acceptedMigration = this.migrationTool.acceptedMigration;
 		assert(
 			acceptedMigration !== undefined,
 			"Expect an accepted migration before migration starts",
 		);
 
-		// TODO: Consider also taking a callback to verify the accepted version can be migrated to here?
-
 		const doTheMigration = async (): Promise<void> => {
-			// Here we load the model to at least the acceptance sequence number and export.  We do this with a
-			// separately loaded model to ensure we don't include any local un-ack'd changes.  Late-arriving messages
+			// Load the container to at least the acceptance sequence number and export.  We do this with a
+			// separate container to ensure we don't include any local un-ack'd changes.  Late-arriving messages
 			// may or may not make it into the migrated data, there is no guarantee either way.
 			// TODO: Consider making this a read-only client
+			// TODO: Consider more aggressive checks on whether the migration finished and early disconnect, or an abort signal.
 			const sourceContainer = await this.loadSourceContainerCallback();
 			await waitForAtLeastSequenceNumber(
 				sourceContainer,
@@ -168,11 +161,20 @@ export class Migrator implements IMigrator {
 			const exportedData = await this.exportDataCallback(sourceContainer);
 			sourceContainer.dispose();
 
+			// Exit early if someone else finished the migration while we were exporting.
+			if (this.migrationTool.migrationResult !== undefined) {
+				return;
+			}
+
 			const migrationResult = await this.migrationCallback(
 				acceptedMigration.newVersion,
 				exportedData,
 			);
-			await this.migrationTool.finalizeMigration(migrationResult);
+
+			// Confirm that no one else finished the migration already before trying to finalize.
+			if (this.migrationTool.migrationResult === undefined) {
+				await this.migrationTool.finalizeMigration(migrationResult);
+			}
 		};
 
 		this._events.emit("migrating");

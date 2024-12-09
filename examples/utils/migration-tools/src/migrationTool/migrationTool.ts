@@ -80,7 +80,7 @@ class MigrationTool implements IMigrationTool {
 	}
 
 	public constructor(
-		// TODO:  Does this need a full runtime?  Can we instead specify exactly what the data object requires?
+		// TODO:  Consider just specifying what the data object requires rather than taking a full runtime.
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly consensusRegisterCollection: IConsensusRegisterCollection<unknown>,
 		private readonly pactMap: IPactMap<string>,
@@ -97,6 +97,10 @@ class MigrationTool implements IMigrationTool {
 			});
 			this.pactMap.on("pending", (key: string) => {
 				if (key === newVersionKey) {
+					// TODO: Consider doing something dramatic here to park the container.  If the host gets the
+					// Migrator it's not really necessary (they have all the info they need to show readonly UI,
+					// stop sending changes, etc.) but this would add some extra protection in case some host isn't
+					// watching their Migrator.
 					this._events.emit("stopping");
 				}
 			});
@@ -117,9 +121,7 @@ class MigrationTool implements IMigrationTool {
 
 	public async finalizeMigration(migrationResult: unknown): Promise<void> {
 		// Only permit a single container to be set as a migration destination.
-		if (this.consensusRegisterCollection.read(migrationResultKey) !== undefined) {
-			throw new Error("New container was already established");
-		}
+		assert(this.migrationResult === undefined, "Migration was already finalized");
 
 		// Using a consensus data structure is important here, because other clients might race us to set the new
 		// value.  All clients must agree on the final value even in these race conditions so everyone ends up in the
@@ -136,11 +138,10 @@ class MigrationTool implements IMigrationTool {
 		if (migrationDetails === undefined) {
 			return undefined;
 		}
-		if (migrationDetails.value === undefined) {
-			throw new Error(
-				"Expect migration version to be specified if migration has been accepted",
-			);
-		}
+		assert(
+			migrationDetails.value !== undefined,
+			"Expect migration version to be specified if migration has been accepted",
+		);
 		return {
 			newVersion: migrationDetails.value,
 			migrationSequenceNumber: migrationDetails.acceptedSequenceNumber,
@@ -148,12 +149,8 @@ class MigrationTool implements IMigrationTool {
 	}
 
 	public readonly proposeVersion = (newVersion: string): void => {
-		// Don't permit changes to the version after a new one has already been accepted.
-		// TODO: Consider whether we should throw on trying to set when a pending proposal exists -- currently
-		// the PactMap will silently drop these on the floor.
-		if (this.acceptedMigration !== undefined) {
-			throw new Error("New version was already accepted");
-		}
+		// Don't permit changes to the version after a new one has already been proposed.
+		assert(this.proposeVersion !== undefined, "A proposal was already made");
 
 		// Note that the accepted proposal could come from another client (e.g. two clients try to propose
 		// simultaneously).
