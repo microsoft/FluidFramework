@@ -4,13 +4,14 @@
  */
 
 import { ISignaler } from "@fluid-experimental/data-objects";
-import { ComposableEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IAzureAudience } from "@fluidframework/azure-client";
 import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { IMember } from "fluid-framework";
 
-export interface IFocusTrackerEvents {
-	focusChanged: () => void;
+export interface IFocusTrackerEvents extends IEvent {
+	(event: "focusChanged", listener: () => void): void;
 }
 
 export interface IFocusSignalPayload {
@@ -18,7 +19,7 @@ export interface IFocusSignalPayload {
 	focus: boolean;
 }
 
-export class FocusTracker extends ComposableEventEmitter<IFocusTrackerEvents> {
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	private static readonly focusSignalType = "changedFocus";
 	private static readonly focusRequestType = "focusRequest";
 
@@ -65,7 +66,7 @@ export class FocusTracker extends ComposableEventEmitter<IFocusTrackerEvents> {
 		});
 
 		this.signaler.on("error", (error) => {
-			// this.emit("error", error);
+			this.emit("error", error);
 		});
 		this.signaler.onSignal(
 			FocusTracker.focusSignalType,

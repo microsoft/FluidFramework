@@ -4,7 +4,7 @@
  */
 
 import type { ISameContainerMigrationTool } from "@fluid-example/example-utils";
-import { ComposableEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -27,7 +27,7 @@ export type InventoryListAppModelExportFormat1 = string;
  * Container does -- instead it is specially designed for the specific container code.
  */
 export class InventoryListAppModel
-	extends ComposableEventEmitter<IInventoryListAppModelEvents>
+	extends TypedEventEmitter<IInventoryListAppModelEvents>
 	implements IInventoryListAppModel
 {
 	// To be used by the consumer of the model to pair with an appropriate view.

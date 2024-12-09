@@ -4,8 +4,12 @@
  */
 
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
-import { ComposableEventEmitter } from "@fluid-internal/client-utils";
-import type { FluidObject, IFluidHandle, Listenable } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
+	FluidObject,
+	IEventProvider,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type {
@@ -45,8 +49,8 @@ class MigrationTool implements IMigrationTool {
 		return this._disposed;
 	}
 
-	private readonly _events = new ComposableEventEmitter<IMigrationToolEvents>();
-	public get events(): Listenable<IMigrationToolEvents> {
+	private readonly _events = new TypedEventEmitter<IMigrationToolEvents>();
+	public get events(): IEventProvider<IMigrationToolEvents> {
 		return this._events;
 	}
 

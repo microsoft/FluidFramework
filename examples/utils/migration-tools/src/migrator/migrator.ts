@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ComposableEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { IMigrationTool, MigrationState } from "../migrationTool/index.js";
@@ -89,8 +89,8 @@ export class Migrator implements IMigrator {
 		return this.currentMigrationTool.connected;
 	}
 
-	private readonly _events = new ComposableEventEmitter<IMigratorEvents>();
-	public get events(): Listenable<IMigratorEvents> {
+	private readonly _events = new TypedEventEmitter<IMigratorEvents>();
+	public get events(): IEventProvider<IMigratorEvents> {
 		return this._events;
 	}
 
@@ -385,8 +385,7 @@ export class Migrator implements IMigrator {
 				migrationTool: migratedMigrationTool,
 				id: migratedId,
 			};
-			// this._events.emit("migrated", migratedModel, migratedId);
-			this._events.emit("migrated");
+			this._events.emit("migrated", migratedModel, migratedId);
 			this._migratedLoadP = undefined;
 
 			// Reset retry values

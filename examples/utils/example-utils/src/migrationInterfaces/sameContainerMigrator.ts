@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
 import type {
 	ISameContainerMigratableModel,
@@ -24,16 +24,15 @@ export type DataTransformationCallback = (
 /**
  * @internal
  */
-export interface ISameContainerMigratorEvents {
-	migrated: () => void;
-	migrating: () => void;
-	migrationNotSupported: (version: string) => void;
+export interface ISameContainerMigratorEvents extends IEvent {
+	(event: "migrated" | "migrating", listener: () => void);
+	(event: "migrationNotSupported", listener: (version: string) => void);
 }
 
 /**
  * @internal
  */
-export interface ISameContainerMigrator extends Listenable<ISameContainerMigratorEvents> {
+export interface ISameContainerMigrator extends IEventProvider<ISameContainerMigratorEvents> {
 	/**
 	 * The currently monitored migratable model.  As the Migrator completes a migration, it will swap in the new
 	 * migrated model and emit a "migrated" event.

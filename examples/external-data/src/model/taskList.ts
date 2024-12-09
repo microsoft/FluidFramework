@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ComposableEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { ISharedCell, SharedCell } from "@fluidframework/cell/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -23,7 +23,7 @@ import type {
 	ITaskList,
 } from "../model-interface/index.js";
 
-class Task extends ComposableEventEmitter<ITaskEvents> implements ITask {
+class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public get id(): string {
 		return this._id;
 	}

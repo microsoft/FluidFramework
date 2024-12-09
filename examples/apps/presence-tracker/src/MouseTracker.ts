@@ -4,12 +4,13 @@
  */
 
 import { ISignaler } from "@fluid-experimental/data-objects";
-import { ComposableEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IAzureAudience } from "@fluidframework/azure-client";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { IMember } from "fluid-framework";
 
-export interface IMouseTrackerEvents {
-	mousePositionChanged: () => void;
+export interface IMouseTrackerEvents extends IEvent {
+	(event: "mousePositionChanged", listener: () => void): void;
 }
 
 export interface IMousePosition {
@@ -22,7 +23,7 @@ export interface IMouseSignalPayload {
 	pos: IMousePosition;
 }
 
-export class MouseTracker extends ComposableEventEmitter<IMouseTrackerEvents> {
+export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	private static readonly mouseSignalType = "positionChanged";
 
 	/**
@@ -65,7 +66,7 @@ export class MouseTracker extends ComposableEventEmitter<IMouseTrackerEvents> {
 		});
 
 		this.signaler.on("error", (error) => {
-			// this.emit("error", error);
+			this.emit("error", error);
 		});
 		this.signaler.onSignal(
 			MouseTracker.mouseSignalType,

@@ -8,7 +8,7 @@ import type {
 	ISameContainerMigratableModel,
 	ISameContainerMigratableModelEvents,
 } from "@fluid-example/example-utils";
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence/internal";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -20,7 +20,7 @@ export interface IInventoryListAppModelEvents extends ISameContainerMigratableMo
  */
 export interface IInventoryListAppModel
 	extends ISameContainerMigratableModel,
-		Listenable<IInventoryListAppModelEvents> {
+		IEventProvider<IInventoryListAppModelEvents> {
 	/**
 	 * An inventory tracker list.
 	 */

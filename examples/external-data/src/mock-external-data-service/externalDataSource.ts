@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ComposableEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import { Response } from "node-fetch";
 
 import { ITaskData, ITaskListData } from "../model-interface/index.js";
@@ -42,8 +43,13 @@ const startingExternalData: ITaskListData = {
 /**
  * Events emitted by {@link ExternalDataSource}.
  */
-export interface IExternalDataSourceEvents {
-	debugDataWritten: (data: ITaskData | ITaskListData, externalTaskListId: string) => void;
+export interface IExternalDataSourceEvents extends IEvent {
+	/**
+	 * Emitted when the external data changes.
+	 * @remarks Debug API for demo purposes - the real scenario will need to learn about the data changing via the
+	 * webhook path.
+	 */
+	(event: "debugDataWritten", listener: (data: ITaskData, externalTaskListId: string) => void);
 }
 
 /**
@@ -60,7 +66,7 @@ export interface IExternalDataSourceEvents {
  *
  * TODO: Consider adding a fake delay to the async calls to give us a better approximation of expected experience.
  */
-export class ExternalDataSource extends ComposableEventEmitter<IExternalDataSourceEvents> {
+export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
 	private data: ITaskListData;
 
 	public constructor() {
@@ -101,7 +107,7 @@ export class ExternalDataSource extends ComposableEventEmitter<IExternalDataSour
 		this.data[externalTaskListId] = data;
 
 		// Emit for debug views to update
-		this.emit("debugDataWritten", data, externalTaskListId);
+		this.emit("debugDataWritten", externalTaskListId, data);
 		return new Response(undefined, {
 			status: 200,
 			statusText: "OK",
@@ -117,6 +123,6 @@ export class ExternalDataSource extends ComposableEventEmitter<IExternalDataSour
 		this.data = startingExternalData;
 
 		// Emit for debug views to update
-		this.emit("debugDataWritten", this.data, "");
+		this.emit("debugDataWritten", this.data);
 	}
 }

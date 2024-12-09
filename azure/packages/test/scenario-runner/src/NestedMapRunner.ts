@@ -139,11 +139,17 @@ export class NestedMapRunner extends ScenarioRunner<
 			{ eventName: "Summarize", clientId: runConfig.childId },
 			async (_event) => {
 				const scenarioLogger = await loggerP;
+
 				await timeoutPromise(
-					(resolve) =>
-						scenarioLogger.events.on(FluidSummarizerTelemetryEventNames.Summarize, () =>
-							resolve(),
-						),
+					(resolve) => {
+						const off = scenarioLogger.events.on(
+							FluidSummarizerTelemetryEventNames.Summarize,
+							() => {
+								resolve();
+								off();
+							},
+						);
+					},
 					{
 						durationMs: 600000,
 						errorMsg: "summarize timeout",
