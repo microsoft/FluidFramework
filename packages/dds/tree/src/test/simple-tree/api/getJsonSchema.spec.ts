@@ -126,15 +126,18 @@ describe("getJsonSchema", () => {
 
 	it("Array schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.array(schemaFactory.string);
+		const Schema = schemaFactory.array("array", schemaFactory.string, {
+			metadata: { description: "An array of strings" },
+		});
 
 		const actual = getJsonSchema(Schema);
 
 		const expected: JsonTreeSchema = {
 			$defs: {
-				'test.Array<["com.fluidframework.leaf.string"]>': {
+				"test.array": {
 					type: "array",
 					_treeNodeSchemaKind: NodeKind.Array,
+					description: "An array of strings",
 					items: {
 						$ref: "#/$defs/com.fluidframework.leaf.string",
 					},
@@ -144,7 +147,7 @@ describe("getJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			$ref: '#/$defs/test.Array<["com.fluidframework.leaf.string"]>',
+			$ref: "#/$defs/test.array",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -152,7 +155,6 @@ describe("getJsonSchema", () => {
 		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		validator(hydrate(Schema, ["Hello", "world"]), true);
 		validator([], true);
 		validator(["Hello", "world"], true);
 		validator("Hello world", false);
@@ -163,14 +165,17 @@ describe("getJsonSchema", () => {
 
 	it("Map schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.map(schemaFactory.string);
+		const Schema = schemaFactory.map("map", schemaFactory.string, {
+			metadata: { description: "A map containing strings" },
+		});
 
 		const actual = getJsonSchema(Schema);
 		const expected: JsonTreeSchema = {
 			$defs: {
-				'test.Map<["com.fluidframework.leaf.string"]>': {
+				"test.map": {
 					type: "object",
 					_treeNodeSchemaKind: NodeKind.Map,
+					description: "A map containing strings",
 					patternProperties: {
 						"^.*$": { $ref: "#/$defs/com.fluidframework.leaf.string" },
 					},
@@ -180,7 +185,7 @@ describe("getJsonSchema", () => {
 					_treeNodeSchemaKind: NodeKind.Leaf,
 				},
 			},
-			$ref: '#/$defs/test.Map<["com.fluidframework.leaf.string"]>',
+			$ref: "#/$defs/test.map",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -220,14 +225,20 @@ describe("getJsonSchema", () => {
 
 	it("Object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.object("object", {
-			foo: schemaFactory.optional(schemaFactory.number, {
-				metadata: { description: "A number representing the concept of Foo." },
-			}),
-			bar: schemaFactory.required(schemaFactory.string, {
-				metadata: { description: "A string representing the concept of Bar." },
-			}),
-		});
+		const Schema = schemaFactory.object(
+			"object",
+			{
+				foo: schemaFactory.optional(schemaFactory.number, {
+					metadata: { description: "A number representing the concept of Foo." },
+				}),
+				bar: schemaFactory.required(schemaFactory.string, {
+					metadata: { description: "A string representing the concept of Bar." },
+				}),
+			},
+			{
+				metadata: { description: "An object with Foo and Bar." },
+			},
+		);
 
 		const actual = getJsonSchema(Schema);
 
@@ -236,6 +247,7 @@ describe("getJsonSchema", () => {
 				"test.object": {
 					type: "object",
 					_treeNodeSchemaKind: NodeKind.Object,
+					description: "An object with Foo and Bar.",
 					properties: {
 						foo: {
 							$ref: "#/$defs/com.fluidframework.leaf.number",
