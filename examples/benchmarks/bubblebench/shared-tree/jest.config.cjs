@@ -5,9 +5,9 @@
 
 // Get the test port from the global map and set it in env for this test
 let mappedPort = 9000; // Defaul port test-tools would provide if no mapping exists
-// Only import test-tools if POLICY_CHECK is not set.
+// Only import test-tools if FLUID_POLICY_CHECK is not set.
 // This allows us to run policy checks on the jest config files without having to build the repo.
-if (process.env.POLICY_CHECK === undefined) {
+if (process.env.FLUID_POLICY_CHECK === undefined) {
 	/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment */
 	const testTools = require("@fluid-private/test-tools");
 	const { name } = require("./package.json");
