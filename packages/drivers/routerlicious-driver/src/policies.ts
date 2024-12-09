@@ -4,7 +4,8 @@
  */
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface IRouterliciousDriverPolicies {
 	/**

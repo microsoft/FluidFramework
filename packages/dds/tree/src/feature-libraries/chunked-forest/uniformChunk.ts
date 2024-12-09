@@ -14,11 +14,14 @@ import {
 	type TreeValue,
 	type UpPath,
 	type Value,
+	type ChunkedCursor,
+	type TreeChunk,
+	cursorChunk,
+	dummyRoot,
 } from "../../core/index.js";
 import { ReferenceCountedBase, fail, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
-import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 

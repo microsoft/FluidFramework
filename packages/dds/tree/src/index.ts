@@ -44,6 +44,9 @@ export type {
 export {
 	TreeStatus,
 	TreeCompressionStrategy,
+	type TreeIndex,
+	type TreeIndexKey,
+	type TreeIndexNodes,
 } from "./feature-libraries/index.js";
 
 export {
@@ -128,6 +131,11 @@ export {
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
+	// Index APIs
+	type SimpleTreeIndex,
+	type IdentifierIndex,
+	createSimpleTreeIndex,
+	createIdentifierIndex,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,

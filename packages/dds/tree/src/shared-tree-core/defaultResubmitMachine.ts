@@ -114,7 +114,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			this.isInResubmitPhase,
 			0x982 /* No available commit to resubmit outside of resubmit phase */,
 		);
-		assert(hasSome(this.resubmitQueue), "Expected resubmit queue to be non-empty");
+		assert(hasSome(this.resubmitQueue), 0xa87 /* Expected resubmit queue to be non-empty */);
 		return this.resubmitQueue[0];
 	}
 
