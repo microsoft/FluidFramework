@@ -153,7 +153,9 @@ function getApiItemPath(
 
 	return [
 		fileName,
-		...documentAncestry.map((hierarchyItem) => config.getFileNameForItem(hierarchyItem)),
+		...documentAncestry.map((hierarchyItem) =>
+			getDocumentNameForApiItem(hierarchyItem, config),
+		),
 	].reverse();
 }
 

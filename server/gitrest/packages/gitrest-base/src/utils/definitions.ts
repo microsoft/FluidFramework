@@ -107,6 +107,17 @@ export interface IStorageRoutingId {
 	documentId: string;
 }
 
+export function isIStorageRoutingId(routingId: unknown): routingId is IStorageRoutingId {
+	return (
+		typeof routingId === "object" &&
+		routingId !== null &&
+		"tenantId" in routingId &&
+		typeof routingId.tenantId === "string" &&
+		"documentId" in routingId &&
+		typeof routingId.documentId === "string"
+	);
+}
+
 export interface IRepoManagerParams {
 	repoOwner: string;
 	repoName: string;

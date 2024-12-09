@@ -32,6 +32,13 @@ const routes = [
 	// Counter DDS document was removed in v2.
 	// Redirect legacy URL to v1 document.
 	{ from: "/docs/data-structures/counter", to: "/docs/v1/data-structures/counter" },
+
+	// Legacy file name
+	{ from: "/docs/deployment/azure-frs", to: "/docs/deployment/azure-fluid-relay" },
+	{
+		from: "/versioned_docs/v1/deployment/azure-frs",
+		to: "/versioned_docs/v1/deployment/azure-fluid-relay",
+	},
 ];
 
 module.exports = routes;
