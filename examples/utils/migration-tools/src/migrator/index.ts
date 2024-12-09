@@ -5,11 +5,12 @@
 
 export {
 	CreateDetachedContainerCallback,
+	DataTransformationCallback,
+	ImportDataCallback,
 	makeCreateDetachedCallback,
 	makeMigrationCallback,
 } from "./callbackHelpers.js";
 export {
-	DataTransformationCallback,
 	IImportExportModel,
 	IMigratableModel,
 	IMigrator,

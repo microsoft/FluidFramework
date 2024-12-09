@@ -141,10 +141,27 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		}
 	};
 
-	const migrationCallback = makeMigrationCallback(
-		createDetachedCallback,
-		inventoryListDataTransformationCallback,
-	);
+	const importDataCallback = async (
+		destinationContainer: IContainer,
+		exportedData: unknown,
+	) => {
+		const destinationModel =
+			await getModelFromContainer<IMigratableModel>(destinationContainer);
+		// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
+		// exported data into a format that the new model can import?  If we can determine it early, then
+		// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
+		// MigratableModelLoaders.
+		// TODO: Error paths in case the format isn't ingestible.
+		// If the migrated model already supports the data format, go ahead with the migration.
+		// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
+		// a format that we can import.
+		const transformedData = destinationModel.supportsDataFormat(exportedData)
+			? exportedData
+			: await inventoryListDataTransformationCallback(exportedData, destinationModel.version);
+		await destinationModel.importData(transformedData);
+	};
+
+	const migrationCallback = makeMigrationCallback(createDetachedCallback, importDataCallback);
 
 	const entryPoint = await container.getEntryPoint();
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any

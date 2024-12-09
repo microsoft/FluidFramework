@@ -6,6 +6,7 @@
 import type {
 	IMigratableModel,
 	IMigrator,
+	ImportDataCallback,
 	IVersionedModel,
 } from "@fluid-example/migration-tools/internal";
 import {
@@ -127,10 +128,26 @@ async function start(): Promise<void> {
 		model = await getModelFromContainer<IMigratableModel>(container);
 	}
 
-	const migrationCallback = makeMigrationCallback(
-		createDetachedCallback,
-		inventoryListDataTransformationCallback,
-	);
+	const importDataCallback: ImportDataCallback = async (
+		destinationContainer: IContainer,
+		exportedData: unknown,
+	) => {
+		const destinationModel =
+			await getModelFromContainer<IMigratableModel>(destinationContainer);
+		// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
+		// exported data into a format that the new model can import?  If we can determine it early, then
+		// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
+		// MigratableModelLoaders.
+		// TODO: Error paths in case the format isn't ingestible.
+		// If the migrated model already supports the data format, go ahead with the migration.
+		// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
+		// a format that we can import.
+		const transformedData = destinationModel.supportsDataFormat(exportedData)
+			? exportedData
+			: await inventoryListDataTransformationCallback(exportedData, destinationModel.version);
+		await destinationModel.importData(transformedData);
+	};
+	const migrationCallback = makeMigrationCallback(createDetachedCallback, importDataCallback);
 
 	// TODO: Update stale documentation
 	// The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates

@@ -80,6 +80,9 @@ export interface IMigratorEvents extends IEvent {
     (event: "migrationNotSupported", listener: (version: string) => void): any;
 }
 
+// @alpha
+export type ImportDataCallback = (destinationContainer: IContainer, exportedData: unknown) => Promise<void>;
+
 // @alpha (undocumented)
 export interface ISimpleLoader {
     createDetached(version: string): Promise<{
@@ -108,7 +111,7 @@ export const makeCreateDetachedCallback: (loader: IHostLoader, generateCreateNew
 }>;
 
 // @alpha
-export const makeMigrationCallback: (createDetachedContainerCallback: CreateDetachedContainerCallback, dataTransformationCallback?: DataTransformationCallback | undefined) => MigrationCallback;
+export const makeMigrationCallback: (createDetachedContainerCallback: CreateDetachedContainerCallback, importDataCallback: ImportDataCallback) => MigrationCallback;
 
 // @alpha
 export const makeMigratorEntryPointPiece: (exportDataCallback: ExportDataCallback) => IEntryPointPiece;

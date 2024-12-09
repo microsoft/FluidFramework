@@ -26,6 +26,7 @@ export {
 	IMigratableModel,
 	IMigrator,
 	IMigratorEvents,
+	ImportDataCallback,
 	IVersionedModel,
 	LoadSourceContainerCallback,
 	makeCreateDetachedCallback,
