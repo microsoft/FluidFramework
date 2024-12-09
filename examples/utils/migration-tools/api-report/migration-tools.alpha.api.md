@@ -25,7 +25,7 @@ export type CreateDetachedContainerCallback = (version: string) => Promise<{
 }>;
 
 // @alpha
-export type ExportDataCallback = (container: IContainer) => Promise<unknown>;
+export type ExportDataCallback = (sourceContainer: IContainer) => Promise<unknown>;
 
 // @alpha
 export interface IAcceptedMigrationDetails {

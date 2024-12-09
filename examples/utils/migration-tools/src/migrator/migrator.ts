@@ -21,7 +21,7 @@ import type { IMigrator, IMigratorEvents } from "./interfaces.js";
  * Callback that should take the given container and export its data in some format.
  * @alpha
  */
-export type ExportDataCallback = (container: IContainer) => Promise<unknown>;
+export type ExportDataCallback = (sourceContainer: IContainer) => Promise<unknown>;
 /**
  * Callback provided to load the source container that data will be exported from.  Should be a separately
  * loaded container to avoid including local changes.
@@ -160,13 +160,13 @@ export class Migrator implements IMigrator {
 			// separately loaded model to ensure we don't include any local un-ack'd changes.  Late-arriving messages
 			// may or may not make it into the migrated data, there is no guarantee either way.
 			// TODO: Consider making this a read-only client
-			const exportContainer = await this.loadSourceContainerCallback();
+			const sourceContainer = await this.loadSourceContainerCallback();
 			await waitForAtLeastSequenceNumber(
-				exportContainer,
+				sourceContainer,
 				acceptedMigration.migrationSequenceNumber,
 			);
-			const exportedData = await this.exportDataCallback(exportContainer);
-			exportContainer.dispose();
+			const exportedData = await this.exportDataCallback(sourceContainer);
+			sourceContainer.dispose();
 
 			const migrationResult = await this.migrationCallback(
 				acceptedMigration.newVersion,
