@@ -31,16 +31,19 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	wrapperDiv.appendChild(focusMessageDiv);
 
 	const onFocusChanged = () => {
-		const currentUser = focusTracker.audience.getMyself()?.name;
+		const currentUser = focusTracker.audience.getMyself();
 		const focusPresences = focusTracker.getFocusPresences();
 
 		focusDiv.innerHTML = `
-            Current user: ${currentUser}</br>
+            Current user: ${currentUser?.name} - connection: ${currentUser?.currentConnection}</br>
             ${getFocusPresencesString("</br>", focusTracker)}
         `;
 
-		focusMessageDiv.style.display =
-			currentUser !== undefined && focusPresences.get(currentUser) === false ? "" : "none";
+		const display =
+			currentUser !== undefined && focusPresences.get(currentUser.currentConnection) === true
+				? ""
+				: "none";
+		focusMessageDiv.style.display = display;
 	};
 
 	onFocusChanged();
@@ -75,19 +78,40 @@ export function renderMousePresence(
 ) {
 	const onPositionChanged = () => {
 		div.innerHTML = "";
-		mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
+
+		for (const [userName, mousePosition] of mouseTracker.getMousePresences()) {
 			if (focusTracker.getFocusPresences().get(userName) === true) {
 				const posDiv = document.createElement("div");
-				posDiv.textContent = userName;
+				posDiv.textContent = `/${userName}`;
 				posDiv.style.position = "absolute";
 				posDiv.style.left = `${mousePosition.x}px`;
-				posDiv.style.top = `${mousePosition.y}px`;
+				posDiv.style.top = `${mousePosition.y - 6}px`;
 				posDiv.style.fontWeight = "bold";
 				div.appendChild(posDiv);
 			}
-		});
+		}
 	};
 
 	onPositionChanged();
 	mouseTracker.on("mousePositionChanged", onPositionChanged);
+}
+
+export function renderControlPanel(controlPanel: HTMLDivElement) {
+	controlPanel.style.paddingBottom = "10px";
+	const slider = document.createElement("input");
+	slider.type = "range";
+	slider.id = "mouse-latency";
+	slider.name = "mouse-latency";
+	slider.min = "0";
+	slider.max = "200";
+	slider.defaultValue = "60";
+	const sliderLabel = document.createElement("label");
+	sliderLabel.htmlFor = "mouse-latency";
+	sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;
+	controlPanel.appendChild(slider);
+	controlPanel.appendChild(sliderLabel);
+
+	slider.addEventListener("input", (evt) => {
+		sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;
+	});
 }
