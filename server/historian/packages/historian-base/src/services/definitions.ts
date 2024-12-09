@@ -12,7 +12,7 @@ export interface ICache {
 	/**
 	 * Retrieves the cached entry for the given key. Or null if it doesn't exist.
 	 */
-	get<T>(key: string): Promise<T>;
+	get<T>(key: string): Promise<T | null>;
 
 	/**
 	 * Sets a cache value
