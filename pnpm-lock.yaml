@@ -78,6 +78,9 @@ importers:
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       danger:
         specifier: ^11.3.0
         version: 11.3.1
