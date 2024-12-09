@@ -8,7 +8,11 @@ import { strict as assert } from "assert";
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	Severity,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
@@ -750,7 +754,7 @@ describeCompat(
 					sharedMap1.set("0", "A");
 					const snapshotTree = container.serialize();
 					// close the container that we don't use any more, so it doesn't block ensureSynchronized()
-					container.close();
+					container.close(Severity.Expected);
 
 					const rehydratedContainer =
 						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
@@ -809,7 +813,7 @@ describeCompat(
 					sharedMap1.set("0", "A");
 					const snapshotTree = container.serialize();
 					// close the container that we don't use any more, so it doesn't block ensureSynchronized()
-					container.close();
+					container.close(Severity.Expected);
 
 					const rehydratedContainer =
 						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);

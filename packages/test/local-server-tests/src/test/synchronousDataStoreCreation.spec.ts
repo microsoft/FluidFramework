@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject } from "@fluidframework/aqueduct/internal";
-import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	AttachState,
+	Severity,
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import { waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
@@ -231,7 +231,7 @@ describe("Scenario Test", () => {
 
 		const url = await container.getAbsoluteUrl("");
 		assert(url !== undefined, "container must have url");
-		container.dispose();
+		container.dispose(Severity.Expected);
 
 		{
 			const container2 = await loader.resolve({ url });
@@ -259,7 +259,7 @@ describe("Scenario Test", () => {
 					"unexpected childValue",
 				);
 			}
-			container2.dispose();
+			container2.dispose(Severity.Expected);
 		}
 	});
 });

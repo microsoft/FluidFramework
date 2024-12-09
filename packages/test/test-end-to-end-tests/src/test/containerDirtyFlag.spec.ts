@@ -6,7 +6,11 @@
 import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IHostLoader,
+	Severity,
+} from "@fluidframework/container-definitions/internal";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
@@ -76,7 +80,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 			pendingState = await container.getPendingLocalState?.();
 			assert.strictEqual(container.closed, false);
 			await args.ensureSynchronized();
-			container.close();
+			container.close(Severity.Expected);
 		} else {
 			pendingState = await container.closeAndGetPendingLocalState?.();
 		}

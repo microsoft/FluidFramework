@@ -20,7 +20,7 @@ import {
 import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { LoaderHeader, Severity } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
@@ -213,7 +213,7 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		updateHandle(legacyTree, undefined);
 		// make sure changes are saved.
 		await provider.ensureSynchronized();
-		container.close();
+		container.close(Severity.Expected);
 	});
 
 	it("MigrationShim can make stored handles live", async () => {

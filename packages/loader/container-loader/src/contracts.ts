@@ -28,6 +28,12 @@ export enum ReconnectMode {
 	Enabled = "Enabled",
 }
 
+export enum Severity {
+	Expected = "Expected",
+	Corruption = "Corruption",
+	Unknown = "Unknown",
+}
+
 export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {
 	text: string;
 	error?: T;
@@ -125,7 +131,11 @@ export interface IConnectionManager {
 	/**
 	 * Disposed connection manager
 	 */
-	dispose(error?: ICriticalContainerError, switchToReadonly?: boolean): void;
+	dispose(
+		severity: Severity,
+		error?: ICriticalContainerError,
+		switchToReadonly?: boolean,
+	): void;
 
 	get connectionMode(): ConnectionMode;
 }

@@ -27,7 +27,7 @@ import {
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
-import { IConnectionManagerFactoryArgs } from "../contracts.js";
+import { IConnectionManagerFactoryArgs, Severity } from "../contracts.js";
 import { DeltaManager } from "../deltaManager.js";
 import { NoopHeuristic } from "../noopHeuristic.js";
 
@@ -534,7 +534,7 @@ describe("Loader", () => {
 				}));
 
 				// Dispose will trigger abort
-				deltaManager.dispose();
+				deltaManager.dispose(Severity.Expected);
 				await flushPromises();
 
 				mockLogger.assertMatch([

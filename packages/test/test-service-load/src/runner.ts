@@ -9,7 +9,11 @@ import {
 	TestDriverTypes,
 } from "@fluid-internal/test-driver-definitions";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	LoaderHeader,
+	Severity,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
@@ -279,6 +283,7 @@ async function runnerProcess(
 				// closing without error which could be a test or product bug,
 				// but we don't want silent failures.
 				container?.dispose(
+					Severity.Unknown,
 					err === undefined
 						? new GenericError("Container closed unexpectedly without error")
 						: undefined,
@@ -350,7 +355,7 @@ async function runnerProcess(
 				// this should be the only place we dispose the container
 				// to avoid the closed handler above. This is also
 				// the only expected, non-fault, closure.
-				container?.dispose();
+				container?.dispose(Severity.Unknown);
 			}
 			metricsCleanup();
 		}
@@ -456,7 +461,10 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close(new FaultInjectionError("scheduleContainerClose", false));
+								container.close(
+									Severity.Unknown,
+									new FaultInjectionError("scheduleContainerClose", false),
+								);
 							}
 						}, leaveTime);
 					}

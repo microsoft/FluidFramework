@@ -58,6 +58,7 @@ import {
 	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
 	ReconnectMode,
+	type Severity,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
 import { SignalType } from "./protocol.js";
@@ -425,7 +426,11 @@ export class ConnectionManager implements IConnectionManager {
 		});
 	}
 
-	public dispose(error?: ICriticalContainerError, switchToReadonly: boolean = true): void {
+	public dispose(
+		severity: Severity,
+		error?: ICriticalContainerError,
+		switchToReadonly: boolean = true,
+	): void {
 		if (this._disposed) {
 			return;
 		}

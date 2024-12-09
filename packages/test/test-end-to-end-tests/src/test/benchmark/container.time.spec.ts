@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { IFluidCodeDetails, Severity } from "@fluidframework/container-definitions/internal";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
@@ -78,7 +78,7 @@ describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvi
 		benchmarkFnAsync: async () => {
 			const container = await loader.createDetachedContainer(codeDetails);
 			await container.attach(provider.driver.createCreateNewRequest("newAttachedContainerId"));
-			container.close();
+			container.close(Severity.Expected);
 		},
 	});
 

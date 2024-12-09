@@ -6,6 +6,7 @@
 import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { Severity } from "@fluidframework/container-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
@@ -62,7 +63,7 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 
 		map2.set("a key", "a value");
 		await provider.ensureSynchronized();
-		container2.close();
+		container2.close(Severity.Expected);
 
 		map1.set("some key", "some value");
 		await provider.ensureSynchronized();
