@@ -51,8 +51,9 @@ public async instantiateRuntime(
 ): Promise<IRuntime> {
 	const compositeEntryPoint = new CompositeEntryPoint();
 	compositeEntryPoint.addEntryPointPiece(rootDatastoreEntryPointPiece);
-	// migrationToolEntryPointPiece is provided by the migration-tools package
-	compositeEntryPoint.addEntryPointPiece(migrationToolEntryPointPiece);
+	// makeMigratorEntryPointPiece is provided by the migration-tools package
+	const migratorEntryPointPiece = makeMigratorEntryPointPiece(exportDataCallback);
+	compositeEntryPoint.addEntryPointPiece(migratorEntryPointPiece);
 	return loadCompositeRuntime(context, existing, compositeEntryPoint, this.runtimeOptions);
 }
 ```
@@ -61,8 +62,11 @@ public async instantiateRuntime(
 
 ```ts
 // Entry points are typed as FluidObject and must be cast.  Type validation can be added here if desired.
-const { rootDatastore, migrationTool } = (await container.getEntryPoint()) as {
+const { rootDatastore, getMigrator } = (await container.getEntryPoint()) as {
 	rootDatastore: MyRootDatastore;
-	migrationTool: IMigrationTool;
+	getMigrator: (
+		loadSourceContainerCallback: LoadSourceContainerCallback,
+		migrationCallback: MigrationCallback,
+	) => Promise<IMigrator>;
 };
 ```
