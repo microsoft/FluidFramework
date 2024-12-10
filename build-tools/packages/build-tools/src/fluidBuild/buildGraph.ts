@@ -537,7 +537,7 @@ export class BuildGraph {
 		// This function must only be called once here at the beginning of the build.
 		// It checks the up-to-date state at this moment and will not be changed for the duration of the build.
 		spinner?.start();
-		spinner?.setText("Checking for incremental build task status...");
+		spinner?.setText("Checking incremental build task status...");
 		const isUpToDate = await this.isUpToDate();
 		if (timer) timer.time(`Check up to date completed`);
 		spinner?.succeed("Tasks loaded.");
