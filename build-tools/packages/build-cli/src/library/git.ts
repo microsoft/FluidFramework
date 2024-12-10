@@ -43,6 +43,45 @@ function getVersionFromTag(tag: string): string | undefined {
 	return ver.version;
 }
 
+export async function getAllPackageVersions(
+	releaseGroupOrPackage: string,
+	git: Readonly<SimpleGit>,
+): Promise<VersionDetails[] | undefined> {
+	const prefix = PackageName.getUnscopedName(releaseGroupOrPackage);
+
+	const tags = await git.tags(["--list", `${prefix}_v*`]);
+
+	const versions = new Map<string, Date>();
+
+	for (const tag of tags.all) {
+		const ver = getVersionFromTag(tag);
+		if (ver !== undefined && ver !== "" && ver !== null) {
+			// eslint-disable-next-line no-await-in-loop
+			const rawDate = await git.show([
+				// Suppress the diff output
+				"-s",
+				// ISO 8601 format
+				"--format=%cI",
+				// the git ref - a tag in this case
+				tag,
+			]);
+			const date = parseISO(rawDate.trim());
+			versions.set(ver, date);
+		}
+	}
+
+	if (versions.size === 0) {
+		return undefined;
+	}
+
+	const toReturn: VersionDetails[] = [];
+	for (const [version, date] of versions) {
+		toReturn.push({ version, date });
+	}
+
+	return toReturn;
+}
+
 /**
  * A type of string used to denote a GitHub repo by owner and repo name.
  */

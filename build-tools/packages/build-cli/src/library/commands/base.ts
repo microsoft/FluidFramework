@@ -9,10 +9,7 @@ import { Command, Flags, Interfaces } from "@oclif/core";
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
 
-import {
-	IBuildProject,
-	loadBuildProject,
-} from "@fluid-tools/build-infrastructure";
+import { IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
 import { CommandLogger } from "../../logging.js";
 import { Context } from "../context.js";
 import { indentString } from "../text.js";
@@ -292,9 +289,14 @@ export abstract class BaseCommandWithBuildProject<
 > extends BaseCommand<T> {
 	private _buildProject: IBuildProject | undefined;
 
+	/**
+	 * This method is deprecated and should only be called in BaseCommand instances.
+	 *
+	 * @deprecated This method should only be called in BaseCommand instances.
+	 */
 	public getContext(): never {
-        throw new Error("getContext method should only be called in BaseCommand instances");
-    }
+		throw new Error("getContext method should only be called in BaseCommand instances");
+	}
 
 	public getBuildProject(searchPath?: string): IBuildProject {
 		if (this._buildProject === undefined) {

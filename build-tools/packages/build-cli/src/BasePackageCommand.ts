@@ -17,7 +17,7 @@ import {
 	selectAndFilterPackages,
 } from "./filter.js";
 import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
-import { BaseCommand, BaseCommandWithBuildProject } from "./library/index.js";
+import { BaseCommand } from "./library/index.js";
 
 /**
  * Commands that run operations per project.
