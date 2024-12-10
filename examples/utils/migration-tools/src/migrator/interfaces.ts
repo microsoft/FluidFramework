@@ -57,8 +57,7 @@ export interface IMigrator {
 	readonly events: IEventProvider<IMigratorEvents>;
 
 	/**
-	 * The migration state of the current model.  Note that since we swap out for the new model as soon as migration
-	 * completes, we'll only ever see this as collaborating or migrating, never migrated.
+	 * The current state of migration.
 	 */
 	readonly migrationState: MigrationState;
 
