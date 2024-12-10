@@ -99,7 +99,13 @@ export interface ISummarizeEventProps {
 	maxAttempts: number;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	error?: any;
+	/**
+	 * Result message of a failed summarize attempt
+	 */
 	failureMessage?: string;
+	/**
+	 * Was this summarize attempt part of the lastSummary process?
+	 */
 	isLastSummary?: boolean;
 }
 

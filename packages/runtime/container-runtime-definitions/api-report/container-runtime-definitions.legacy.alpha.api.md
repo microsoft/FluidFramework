@@ -52,9 +52,7 @@ export interface ISummarizeEventProps {
     currentAttempt: number;
     // (undocumented)
     error?: any;
-    // (undocumented)
     failureMessage?: string;
-    // (undocumented)
     isLastSummary?: boolean;
     // (undocumented)
     maxAttempts: number;
