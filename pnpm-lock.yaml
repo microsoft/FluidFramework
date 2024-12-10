@@ -36,6 +36,9 @@ importers:
       '@fluid-private/changelog-generator-wrapper':
         specifier: workspace:~
         version: link:packages/tools/changelog-generator-wrapper
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -51,9 +54,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@microsoft/api-documenter':
         specifier: ^7.21.6
         version: 7.25.17
@@ -78,6 +78,9 @@ importers:
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       danger:
         specifier: ^11.3.0
         version: 11.3.1
@@ -587,6 +590,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -599,9 +605,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
@@ -639,8 +642,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -717,6 +720,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -729,9 +735,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -769,8 +772,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -883,6 +886,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -895,9 +901,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -947,8 +950,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -1034,6 +1037,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -1046,9 +1052,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1077,8 +1080,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -1161,6 +1164,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -1173,9 +1179,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1204,8 +1207,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -1367,6 +1370,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -1379,9 +1385,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1422,8 +1425,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -1497,6 +1500,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1506,9 +1512,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1534,8 +1537,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -1676,6 +1679,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1685,9 +1691,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1716,8 +1719,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -1791,6 +1794,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1800,9 +1806,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1831,8 +1834,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -1897,6 +1900,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1906,9 +1912,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1937,8 +1940,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -2285,8 +2288,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -2348,6 +2351,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2357,9 +2363,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -2391,8 +2394,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -2466,6 +2469,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2475,9 +2481,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
@@ -2509,8 +2512,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -2675,6 +2678,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2684,9 +2690,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -2715,8 +2718,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -2784,6 +2787,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2793,9 +2799,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -2821,8 +2824,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -3100,6 +3103,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3109,9 +3115,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -3146,8 +3149,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -3780,6 +3783,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3789,9 +3795,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
@@ -3832,8 +3835,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -4121,6 +4124,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4130,9 +4136,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/cors':
         specifier: ^2.8.4
         version: 2.8.17
@@ -4191,8 +4194,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -4272,6 +4275,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4302,9 +4308,6 @@ importers:
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/events_pkg':
         specifier: npm:@types/events@^3.0.0
         version: /@types/events@3.0.3
@@ -4339,8 +4342,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -5016,6 +5019,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5028,9 +5034,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5059,8 +5062,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -5170,6 +5173,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5182,9 +5188,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5228,8 +5231,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -5348,6 +5351,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5360,9 +5366,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5406,8 +5409,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -5514,6 +5517,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5526,9 +5532,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5566,8 +5569,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -5650,6 +5653,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5662,9 +5668,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5699,8 +5702,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -5762,6 +5765,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5774,9 +5780,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5805,8 +5808,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -5880,6 +5883,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.54)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5892,9 +5898,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5929,8 +5932,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -7315,8 +7318,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -15173,8 +15176,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
@@ -15508,8 +15511,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -15707,8 +15710,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.54)(ts-node@10.9.2)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       mocha:
         specifier: ^10.2.0
         version: 10.7.3
@@ -16376,6 +16379,45 @@ importers:
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
+
+  tools/test-tools:
+    devDependencies:
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.51.0
+        version: 0.51.0(@types/node@18.19.54)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
+      '@types/mocha':
+        specifier: ^9.1.1
+        version: 9.1.1
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.54
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      eslint-config-prettier:
+        specifier: ~9.0.0
+        version: 9.0.0(eslint@8.55.0)
+      mocha:
+        specifier: ^10.2.0
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
 
 packages:
 
@@ -21071,11 +21113,6 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@fluidframework/test-tools@1.0.195075:
-    resolution: {integrity: sha512-N7FiXKoz6uQhDJhJxSunya5uP/GWNEp0ohYs0Jkb8Mmnow1SKuxl29x3rC9Kf5zORjUk8krCjam50+d8aPFGaw==}
-    hasBin: true
-    dev: true
-
   /@fluidframework/test-utils@2.11.0:
     resolution: {integrity: sha512-jnq+g6rfVWfi5jKHhcknS44GZH6PsBJGOAU7WEWLhthJ3T8X4/cVYDQ4/zVAUeCPUrdwWB6MpYmiLFj0zBXNjg==}
     dependencies:
@@ -21965,15 +22002,6 @@ packages:
       write-file-atomic: 4.0.2
     transitivePeerDependencies:
       - supports-color
-    dev: true
-
-  /@jest/types@24.9.0:
-    resolution: {integrity: sha512-XKK7ze1apu5JWQ5eZjHITP66AX+QsLlbaJRBGYr8pNzwcAE2JVkwnf0yqjHTsDRcjR0mujy/NmZMXw5kl+kGBw==}
-    engines: {node: '>= 6'}
-    dependencies:
-      '@types/istanbul-lib-coverage': 2.0.6
-      '@types/istanbul-reports': 1.1.2
-      '@types/yargs': 13.0.12
     dev: true
 
   /@jest/types@29.6.3:
@@ -24337,13 +24365,6 @@ packages:
       '@types/istanbul-lib-coverage': 2.0.6
     dev: true
 
-  /@types/istanbul-reports@1.1.2:
-    resolution: {integrity: sha512-P/W9yOX/3oPZSpaYOCQzGqgCQRXn0FFO/V8bWrCQs+wLmvVVxk6CRBXALEvNs9OHIatlnlFokfhuDo2ug01ciw==}
-    dependencies:
-      '@types/istanbul-lib-coverage': 2.0.6
-      '@types/istanbul-lib-report': 3.0.3
-    dev: true
-
   /@types/istanbul-reports@3.0.4:
     resolution: {integrity: sha512-pk2B1NWalF9toCRu6gjBzR69syFjP4Od8WRAX+0mmf9lAjCRicLOWc+ZrxZHx/0XRjotgkF9t6iaMJ+aXcOdZQ==}
     dependencies:
@@ -24717,12 +24738,6 @@ packages:
 
   /@types/yargs-parser@21.0.3:
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
-    dev: true
-
-  /@types/yargs@13.0.12:
-    resolution: {integrity: sha512-qCxJE1qgz2y0hA4pIxjBR+PelCH0U5CK1XJXFwCNqfmliatKp47UCXXE9Dyk1OXBDLvsCF57TqQEJaeLfDYEOQ==}
-    dependencies:
-      '@types/yargs-parser': 21.0.3
     dev: true
 
   /@types/yargs@17.0.33:
@@ -31602,11 +31617,6 @@ packages:
       - typescript
     dev: true
 
-  /jest-get-type@24.9.0:
-    resolution: {integrity: sha512-lUseMzAley4LhIcpSP9Jf+fTrQ4a1yHQwLNeeVa2cEmbCGeoZAtYPOIv8JaxLD/sUpKxetKGP+gsHl8f8TSj8Q==}
-    engines: {node: '>= 6'}
-    dev: true
-
   /jest-get-type@29.6.3:
     resolution: {integrity: sha512-zrteXnqYxfQh7l5FHyL38jL39di8H8rHoecLH3JNxH3BwOrBsNeabdap5e0I23lD4HHI8W5VFBZqG4Eaq5LNcw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -31631,14 +31641,13 @@ packages:
       fsevents: 2.3.3
     dev: true
 
-  /jest-junit@10.0.0:
-    resolution: {integrity: sha512-dbOVRyxHprdSpwSAR9/YshLwmnwf+RSl5hf0kCGlhAcEeZY9aRqo4oNmaT0tLC16Zy9D0zekDjWkjHGjXlglaQ==}
-    engines: {node: '>=8.0.0'}
+  /jest-junit@16.0.0:
+    resolution: {integrity: sha512-A94mmw6NfJab4Fg/BlvVOUXzXgF0XIH6EmTgJ5NDPp4xoKq0Kr7sErb+4Xs9nZvu58pJojz5RFGpqnZYJTrRfQ==}
+    engines: {node: '>=10.12.0'}
     dependencies:
-      jest-validate: 24.9.0
-      mkdirp: 0.5.6
-      strip-ansi: 5.2.0
-      uuid: 3.4.0
+      mkdirp: 1.0.4
+      strip-ansi: 6.0.1
+      uuid: 8.3.2
       xml: 1.0.1
     dev: true
 
@@ -31838,18 +31847,6 @@ packages:
       ci-info: 3.9.0
       graceful-fs: 4.2.11
       picomatch: 2.3.1
-    dev: true
-
-  /jest-validate@24.9.0:
-    resolution: {integrity: sha512-HPIt6C5ACwiqSiwi+OfSSHbK8sG7akG8eATl+IPKaeIjtPOeBUd/g3J7DghugzxrGjI93qS/+RPKe1H6PqvhRQ==}
-    engines: {node: '>= 6'}
-    dependencies:
-      '@jest/types': 24.9.0
-      camelcase: 5.3.1
-      chalk: 2.4.2
-      jest-get-type: 24.9.0
-      leven: 3.1.0
-      pretty-format: 24.9.0
     dev: true
 
   /jest-validate@29.7.0:
@@ -33755,6 +33752,19 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /mocha-multi-reporters@1.5.1(mocha@10.8.2):
+    resolution: {integrity: sha512-Yb4QJOaGLIcmB0VY7Wif5AjvLMUFAdV57D2TWEva1Y0kU/3LjKpeRVmlMIfuO1SVbauve459kgtIizADqxMWPg==}
+    engines: {node: '>=6.0.0'}
+    peerDependencies:
+      mocha: '>=3.1.2'
+    dependencies:
+      debug: 4.3.7(supports-color@8.1.1)
+      lodash: 4.17.21
+      mocha: 10.8.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /mocha@10.7.3:
     resolution: {integrity: sha512-uQWxAu44wwiACGqjbPYmjo7Lg8sFrS3dQe7PP2FQI+woptP4vZXSMcfMyFL/e1yFEeEpV4RtyTpZROOKmxis+A==}
     engines: {node: '>= 14.0.0'}
@@ -33780,6 +33790,33 @@ packages:
       yargs: 16.2.0
       yargs-parser: 20.2.9
       yargs-unparser: 2.0.0
+
+  /mocha@10.8.2:
+    resolution: {integrity: sha512-VZlYo/WE8t1tstuRmqgeyBgCbJc/lEdopaa+axcKzTBJ+UIdlAB9XnmvTCAH4pwR4ElNInaedhEBmZD8iCSVEg==}
+    engines: {node: '>= 14.0.0'}
+    hasBin: true
+    dependencies:
+      ansi-colors: 4.1.3
+      browser-stdout: 1.3.1
+      chokidar: 3.6.0
+      debug: 4.3.7(supports-color@8.1.1)
+      diff: 5.2.0
+      escape-string-regexp: 4.0.0
+      find-up: 5.0.0
+      glob: 8.1.0
+      he: 1.2.0
+      js-yaml: 4.1.0
+      log-symbols: 4.1.0
+      minimatch: 5.1.6
+      ms: 2.1.3
+      serialize-javascript: 6.0.2
+      strip-json-comments: 3.1.1
+      supports-color: 8.1.1
+      workerpool: 6.5.1
+      yargs: 16.2.0
+      yargs-parser: 20.2.9
+      yargs-unparser: 2.0.0
+    dev: true
 
   /module-details-from-path@1.0.3:
     resolution: {integrity: sha512-ySViT69/76t8VhE1xXHK6Ch4NcDd26gx0MzKXLO+F7NOtnqH68d9zF94nT8ZWSxXh8ELOERsnJO/sWt1xZYw5A==}
@@ -35352,7 +35389,7 @@ packages:
     engines: {node: ^10 || ^12 || >=14}
     dependencies:
       nanoid: 3.3.7
-      picocolors: 1.1.0
+      picocolors: 1.1.1
       source-map-js: 1.2.1
     dev: true
 
@@ -35414,16 +35451,6 @@ packages:
     dependencies:
       lodash: 4.17.21
       renderkid: 3.0.0
-    dev: true
-
-  /pretty-format@24.9.0:
-    resolution: {integrity: sha512-00ZMZUiHaJrNfk33guavqgvfJS30sLYf0f8+Srklv0AMPodGGHcoHgksZ3OThYnIvOd+8yMCn0YiEOogjlgsnA==}
-    engines: {node: '>= 6'}
-    dependencies:
-      '@jest/types': 24.9.0
-      ansi-regex: 4.1.1
-      ansi-styles: 3.2.1
-      react-is: 16.13.1
     dev: true
 
   /pretty-format@27.5.1:
@@ -39145,12 +39172,6 @@ packages:
   /utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
-
-  /uuid@3.4.0:
-    resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
-    deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
-    hasBin: true
-    dev: true
 
   /uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
