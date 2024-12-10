@@ -53,7 +53,11 @@ export interface TransactionResult<TResult> {
  */
 export interface RunTransactionParams<TResult> {
 	/**
-	 * The function to run as the body of the transaction. This function is passed the root of the tree.
+	 * The function to run as the body of the transaction.
+	 * @returns The result of the transaction. The user provided result (TResult) can either be returned directly or
+	 * as part of the `TransactionResult` object which can include other properties.
+	 * It could return nothing (TResult == void) to indicate a successful transaction.
+	 *
 	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value}
 	 * (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
 	 */
