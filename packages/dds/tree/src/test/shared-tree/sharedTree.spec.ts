@@ -62,6 +62,7 @@ import {
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
 	cursorFromInsertable,
+	getSimpleSchema,
 	SchemaFactory,
 	toStoredSchema,
 	type TreeFieldFromImplicitField,
@@ -2153,5 +2154,21 @@ describe("SharedTree", () => {
 			() => tree.getAttachSummary(),
 			validateUsageError(/invalid state by another error/),
 		);
+	});
+
+	it("exportVerbose & exportSimpleSchema", () => {
+		const tree = treeTestFactory();
+		assert.deepEqual(tree.exportVerbose(), undefined);
+		const sf = new SchemaFactory(undefined);
+		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(sf.optional([])));
+
+		const config = new TreeViewConfiguration({
+			schema: numberSchema,
+		});
+		const view = tree.viewWith(config);
+		view.initialize(10);
+
+		assert.deepEqual(tree.exportVerbose(), 10);
+		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(numberSchema));
 	});
 });
