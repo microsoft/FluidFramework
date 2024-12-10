@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 
 import { CustomEventEmitter, createEmitter } from "../../events/index.js";
+import { TypedEventEmitter } from "../../typedEventEmitter.js";
 
 interface TestEvents {
 	open: () => void;
@@ -373,6 +374,106 @@ describe("CustomEventEmitter", () => {
 
 		assert.strictEqual(count, 1);
 	});
+
+	it("deregister prior to emit", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count = 0;
+		const listener = (): void => {
+			count += 1;
+		};
+
+		emitter.once("open", listener);
+		emitter.off("open", listener);
+		emitter.emit("open");
+		assert.strictEqual(count, 0);
+	});
+
+	it("old implementation: deregister prior to emit", () => {
+		const emitter = new TypedEventEmitter<TestEvents>();
+		let count = 0;
+		const listener = (): void => {
+			count += 1;
+		};
+
+		emitter.once("open", listener);
+		emitter.off("open", listener);
+		emitter.emit("open");
+		assert.strictEqual(count, 0);
+	});
+
+	it("Old implementation: Listener identity is checked with count", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count = 0;
+
+		const listener = (): void => {
+			count += 1;
+		};
+		emitter.once("open", listener);
+		emitter.once("open", listener);
+		emitter.emit("open"); // listener is called twice
+
+		assert.strictEqual(count, 2);
+	});
+
+	it("New implementation: Listener identity is checked with count", () => {
+		const emitter = new TypedEventEmitter<TestEvents>();
+		let count = 0;
+
+		const listener = (): void => {
+			count += 1;
+		};
+		emitter.once("open", listener);
+		emitter.once("open", listener);
+		emitter.emit("open"); // listener is called twice
+
+		assert.strictEqual(count, 2);
+	});
+
+	it("listener identity is checked", () => {
+		const emitter = createEmitter<TestEvents>();
+		let someConditionIWaitOn = false;
+		let count = 0;
+		const myCallback = (): void => {
+			if (someConditionIWaitOn) {
+				count += 1;
+				emitter.once("open", myCallback);
+				// assert.throws(
+				// 	() => emitter.once("open", myCallback),
+				// 	/Attempted to register the same listener object twice for event/,
+				// );
+			}
+		};
+
+		emitter.once("open", myCallback);
+		// assert.throws(
+		// 	() => emitter.once("open", myCallback),
+		// 	/Attempted to register the same listener object twice for event/,
+		// );
+		emitter.once("open", myCallback);
+
+		someConditionIWaitOn = true;
+		emitter.emit("open"); // myCallback is called twice
+		assert.strictEqual(count, 2);
+	});
+
+	it("old implementation: listener identity is checked", () => {
+		const emitter = new TypedEventEmitter<TestEvents>();
+		let someConditionIWaitOn = false;
+		let count = 0;
+		const myCallback = (): void => {
+			if (someConditionIWaitOn) {
+				count += 1;
+				emitter.once("open", myCallback);
+			}
+		};
+
+		emitter.once("open", myCallback);
+		emitter.once("open", myCallback);
+
+		someConditionIWaitOn = true;
+		emitter.emit("open"); // myCallback is called twice
+		assert.strictEqual(count, 2);
+	});
 });
 
 /**
@@ -428,7 +529,7 @@ export class MyCompositionClass implements Listenable<MyEvents> {
 		return this.events.on(eventName, listener);
 	}
 
-	public once<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
+	public once<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
 		return this.events.once(eventName, listener);
 	}
 

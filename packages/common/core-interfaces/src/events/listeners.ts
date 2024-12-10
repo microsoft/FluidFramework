@@ -66,7 +66,7 @@ export interface Listenable<TListeners extends object> {
 	 * @param eventName - The name of the event.
 	 * @param listener - The listener function to remove from the current set of event listeners.
 	 */
-	once<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+	once<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 
 	/**
 	 * Deregister an event listener.
