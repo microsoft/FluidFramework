@@ -146,6 +146,29 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		return () => this.off(eventName, listener);
 	}
 
+	public once<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		listener: TListeners[K],
+	): void {
+		const listeners = getOrCreate(this.listeners, eventName, () => new Set());
+
+		if (listeners.has(listener)) {
+			const eventDescription =
+				typeof eventName === "symbol" ? eventName.description : String(eventName.toString());
+
+			throw new Error(
+				`Attempted to register the same listener object twice for event ${eventDescription}`,
+			);
+		}
+
+		const wrappedListener = (args: Parameters<TListeners[K]>): void => {
+			listener(args);
+			this.off(eventName, wrappedListener as TListeners[K]);
+		};
+
+		listeners.add(wrappedListener as TListeners[K]);
+	}
+
 	public off<K extends keyof Listeners<TListeners>>(
 		eventName: K,
 		listener: TListeners[K],

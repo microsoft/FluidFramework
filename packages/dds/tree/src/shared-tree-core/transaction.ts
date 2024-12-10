@@ -228,6 +228,7 @@ export class SquashingTransactionStack<
 				this.activeBranch.events.on(eventName, listener);
 				return () => off(eventName, listener);
 			},
+			once: () => {},
 			off,
 		};
 	}
