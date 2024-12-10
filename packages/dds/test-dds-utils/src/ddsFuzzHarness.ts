@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter } from "@fluid-internal/client-utils";
 import type {
 	AsyncGenerator,
 	AsyncReducer,
@@ -33,6 +33,7 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/internal";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelFactory,
@@ -312,22 +313,23 @@ export interface DDSFuzzHarnessEvents {
 	/**
 	 * Raised for each non-summarizer client created during fuzz test execution.
 	 */
-	(event: "clientCreate", listener: (client: Client<IChannelFactory>) => void);
-
+	clientCreate(client: Client<IChannelFactory>): void;
 	/**
-	 * Raised after creating the initialState but prior to performing the fuzzActions..
+	 * Raised after creating the initialState but prior to performing the fuzzActions.
 	 */
-	(event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void);
-
+	testStart(initialState: DDSFuzzTestState<IChannelFactory>): void;
 	/**
 	 * Raised after all fuzzActions have been completed.
 	 */
-	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
-
+	testEnd(finalState: DDSFuzzTestState<IChannelFactory>): void;
 	/**
 	 * Raised before each generated operation is run by its reducer.
 	 */
-	(event: "operationStart", listener: (operation: BaseOperation) => void);
+	operationStart(operation: BaseOperation): void;
+	/**
+	 * Raised when each generated operation is run by its reducer.
+	 */
+	operation(state: unknown): void;
 }
 
 /**
@@ -412,7 +414,7 @@ export interface DDSFuzzSuiteOptions {
 	 * @example
 	 *
 	 * ```typescript
-	 * const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+	 * const emitter = createEmitter<DDSFuzzHarnessEvents>();
 	 * emitter.on("clientCreate", (client) => {
 	 *     // Casting is necessary as the event typing isn't parameterized with each DDS type.
 	 *     const myDDS = client.channel as MyDDSType;
@@ -425,7 +427,7 @@ export interface DDSFuzzSuiteOptions {
 	 * createDDSFuzzSuite(model, options);
 	 * ```
 	 */
-	emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
+	emitter: IEmitter<DDSFuzzHarnessEvents> & Listenable<DDSFuzzHarnessEvents>;
 
 	/**
 	 * Strategy for validating eventual consistency of DDSes.
@@ -550,7 +552,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 		numOpsBeforeAttach: 5,
 	},
 	handleGenerationDisabled: true,
-	emitter: new TypedEventEmitter(),
+	emitter: createEmitter<DDSFuzzHarnessEvents>(),
 	numberOfClients: 3,
 	only: [],
 	skip: [],

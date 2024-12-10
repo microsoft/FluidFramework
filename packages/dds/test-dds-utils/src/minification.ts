@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter } from "@fluid-internal/client-utils";
 import type { SaveInfo } from "@fluid-private/stochastic-test-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
@@ -195,8 +195,7 @@ export class FuzzTestMinimizer<
 	 * to avoid dealing with transforms that would result in invalid ops
 	 */
 	private async assertFails(): Promise<boolean> {
-		const emitter = (this.providedOptions.emitter ??=
-			new TypedEventEmitter<DDSFuzzHarnessEvents>());
+		const emitter = (this.providedOptions.emitter ??= createEmitter<DDSFuzzHarnessEvents>());
 
 		let lastOp: BaseOperation = { type: "___none___" };
 		const lastOpTracker = (op: BaseOperation): void => {
