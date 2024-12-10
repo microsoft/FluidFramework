@@ -39,7 +39,6 @@ export type PackageManager = "npm" | "pnpm" | "yarn";
  *
  * - If the version was not defined in lerna.json, then the version value in package.json will be used.
  *
- *
  * @deprecated Should not be used outside the build-tools package.
  */
 export class MonoRepo {
