@@ -1117,6 +1117,21 @@ export class ContainerRuntime
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};
 
+		// Make sure we've got all the options including internal ones (even though we have to cast back to IContainerRuntimeOptions below)
+		const internalRuntimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>> = {
+			summaryOptions,
+			gcOptions,
+			loadSequenceNumberVerification,
+			flushMode,
+			compressionOptions,
+			maxBatchSizeInBytes,
+			chunkSizeInBytes,
+			// Requires<> drops undefined from IdCompressorType
+			enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
+			enableGroupedBatching,
+			explicitSchemaControl,
+		};
+
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -1124,19 +1139,7 @@ export class ContainerRuntime
 			electedSummarizerData,
 			chunks ?? [],
 			aliases ?? [],
-			{
-				summaryOptions,
-				gcOptions,
-				loadSequenceNumberVerification,
-				flushMode,
-				compressionOptions,
-				maxBatchSizeInBytes,
-				chunkSizeInBytes,
-				// Requires<> drops undefined from IdCompressorType
-				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
-				enableGroupedBatching,
-				explicitSchemaControl,
-			} satisfies Readonly<Required<IContainerRuntimeOptionsInternal>>, // (Make sure we include all the options including internal ones)
+			internalRuntimeOptions,
 			containerScope,
 			logger,
 			existing,
@@ -1556,7 +1559,6 @@ export class ContainerRuntime
 			snapshotWithContents,
 		} = context;
 
-		// Note that this is implicitly down-casting to the internal type (so we can access internal options)
 		this.runtimeOptions = runtimeOptions;
 
 		this.logger = createChildLogger({ logger: this.baseLogger });
