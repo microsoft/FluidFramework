@@ -4,6 +4,10 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
+	ISummarizerEvents,
+	SummarizerStopReason,
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
 	IDisposable,
 	IEvent,
@@ -26,11 +30,8 @@ import {
 	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
-	ISummarizeEventProps,
 	ISummarizeResults,
 	ISummarizer,
-	ISummarizerEvents,
-	SummarizerStopReason,
 } from "./summarizerTypes.js";
 import { SummaryCollection } from "./summaryCollection.js";
 
@@ -165,10 +166,6 @@ export class SummaryManager
 		this.refreshSummarizer();
 	};
 
-	private readonly handleSummarizeEvent = (eventProps: ISummarizeEventProps) => {
-		this.emit("summarize", eventProps);
-	};
-
 	private static readonly isStartingOrRunning = (state: SummaryManagerState) =>
 		state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
 
@@ -271,7 +268,7 @@ export class SummaryManager
 
 				const summarizer = await this.createSummarizerFn();
 				this.summarizer = summarizer;
-				this.summarizer.on("summarize", this.handleSummarizeEvent);
+				this.setupForwardedEvents();
 
 				// Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
 				// If we can't run the LastSummary, simply return as to avoid paying the cost of launching
@@ -345,7 +342,7 @@ export class SummaryManager
 				assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
 				this.state = SummaryManagerState.Off;
 
-				this.summarizer?.off("summarize", this.handleSummarizeEvent);
+				this.cleanupForwardedEvents();
 				this.summarizer?.close();
 				this.summarizer = undefined;
 
@@ -448,7 +445,30 @@ export class SummaryManager
 		this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
 		this.connectedState.off("connected", this.handleConnected);
 		this.connectedState.off("disconnected", this.handleDisconnected);
-		this.summarizer?.off("summarize", this.handleSummarizeEvent);
+		this.cleanupForwardedEvents();
 		this._disposed = true;
+	}
+
+	private readonly forwardedEvents = new Map<any, () => void>();
+
+	private setupForwardedEvents() {
+		[
+			"summarize",
+			"summarizeAllAttemptsFailed",
+			"summarizerStop",
+			"summarizerStart",
+			"summarizerStartupFailed",
+		].forEach((event) => {
+			const listener = (...args: any[]) => {
+				this.emit(event, ...args);
+			};
+			this.summarizer?.on(event as any, listener);
+			this.forwardedEvents.set(event, listener);
+		});
+	}
+
+	private cleanupForwardedEvents() {
+		this.forwardedEvents.forEach((listener, event) => this.summarizer?.off(event, listener));
+		this.forwardedEvents.clear();
 	}
 }
