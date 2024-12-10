@@ -9,6 +9,7 @@ import {
 	type PresenceStates,
 	type PresenceStatesSchema,
 } from "@fluidframework/presence/alpha";
+import { v4 as uuid } from "uuid";
 
 export interface User {
 	photo: string;
@@ -22,6 +23,6 @@ export type UserPresence = PresenceStates<typeof statesSchema>;
 
 // Takes a presence object and returns the user presence object that contains the shared object states
 export function buildUserPresence(presence: IPresence): UserPresence {
-	const states = presence.getStates("name:app-client-states", statesSchema);
+	const states = presence.getStates(`name:user-avatar-states-${uuid()}`, statesSchema);
 	return states;
 }
