@@ -35,10 +35,7 @@ import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import type {
-	TransactionParams,
-	TransactionStatus,
-} from "../../shared-tree/transactionTypes.js";
+import type { RunTransactionParams, RunTransactionResult } from "../../shared-tree/index.js";
 /**
  * A tree from which a {@link TreeView} can be created.
  *
@@ -550,7 +547,9 @@ export interface TreeViewAlpha<
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param params - The parameters for the transaction.
 	 */
-	runTransaction<TResult>(params: TransactionParams<TResult>): TransactionStatus<TResult>;
+	runTransaction<TResult>(
+		params: RunTransactionParams<TResult>,
+	): RunTransactionResult<TResult>;
 }
 
 /**

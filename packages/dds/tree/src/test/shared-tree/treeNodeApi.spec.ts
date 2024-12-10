@@ -56,7 +56,7 @@ describe("treeApi", () => {
 			return view;
 		}
 
-		describe("Tree.runTransaction()", () => {
+		describe("runTransaction API", () => {
 			/**
 			 * Runs a set of transaction tests, either passing the TreeView or the root node to the `runTransaction` function depending on the configuration.
 			 * @remarks This allows for code coverage of both of those variants of the `runTransaction` API without duplicating these tests entirely.
@@ -373,13 +373,100 @@ describe("treeApi", () => {
 			});
 		});
 
-		describe("view.runTransaction()", () => {
+		describe("view.runTransaction - transaction() return values", () => {
+			it("1. success (empty return)", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction({
+					transaction: () => {
+						view.root.content = 100;
+					},
+				});
+				assert.equal(view.root.content, 100);
+				assert.equal(runTransactionResult.result, undefined);
+			});
+
+			it("2. success + user defined value", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction<number>({
+					transaction: () => {
+						view.root.content = 100;
+						return view.root.content;
+					},
+				});
+				assert.equal(runTransactionResult.result, 100);
+			});
+
+			it("3. success + undo precondition", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction({
+					transaction: () => {
+						view.root.content = 100;
+						return { undoPreconditions: [{ type: "nodeInDocument", node: view.root }] };
+					},
+				});
+				assert.equal(runTransactionResult.result, undefined);
+			});
+
+			it("4. success + user defined value + undo precondition", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction<number>({
+					transaction: () => {
+						view.root.content = 100;
+						return {
+							result: view.root.content,
+							undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
+						};
+					},
+				});
+				assert.equal(runTransactionResult.result, 100);
+			});
+
+			it("5. rollback", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction({
+					transaction: () => {
+						view.root.content = 100;
+						return Tree.runTransaction.rollback;
+					},
+				});
+				assert.equal(view.root.content, 42);
+				assert.equal(runTransactionResult.result, Tree.runTransaction.rollback);
+			});
+
+			it("6. rollback in return object", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction<number>({
+					transaction: () => {
+						view.root.content = 100;
+						return { result: Tree.runTransaction.rollback };
+					},
+				});
+				assert.equal(view.root.content, 42);
+				assert.equal(runTransactionResult.result, Tree.runTransaction.rollback);
+			});
+
+			it("7. rollback + undo precondition", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction({
+					transaction: () => {
+						view.root.content = 100;
+						return {
+							result: Tree.runTransaction.rollback,
+							undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
+						};
+					},
+				});
+				assert.equal(view.root.content, 42);
+				assert.equal(runTransactionResult.result, Tree.runTransaction.rollback);
+			});
+		});
+
+		describe("view.runTransaction API", () => {
 			it("runs transactions", () => {
 				const view = getTestObjectView();
 				view.runTransaction({
 					transaction: () => {
 						view.root.content = 43;
-						return { result: undefined };
 					},
 				});
 				assert.equal(view.root.content, 43);
@@ -396,7 +483,7 @@ describe("treeApi", () => {
 				assert.equal(view.root.content, 42);
 			});
 
-			it("rolls back transactions on error", () => {
+			it("breaks the view on error", () => {
 				const view = getTestObjectView();
 				try {
 					view.runTransaction({
@@ -424,7 +511,6 @@ describe("treeApi", () => {
 					transaction: () => {
 						view.root.content = 43;
 						view.root.content = 44;
-						return { result: undefined };
 					},
 				});
 				assert.equal(view.root.content, 44);
@@ -446,7 +532,6 @@ describe("treeApi", () => {
 					view.runTransaction({
 						transaction: () => {
 							view.root.content = 43;
-							return { result: undefined };
 						},
 						preconditions: [{ type: "nodeInDocument", node: childB }],
 					});
@@ -475,7 +560,6 @@ describe("treeApi", () => {
 				viewB.runTransaction({
 					transaction: () => {
 						viewB.root.content = 43;
-						return { result: undefined };
 					},
 					preconditions: [{ type: "nodeInDocument", node: childB }],
 				});

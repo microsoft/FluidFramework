@@ -46,8 +46,9 @@ export {
 export {
 	type TransactionConstraint,
 	type NodeInDocumentConstraint,
-	type TransactionParams,
-	type TransactionStatus,
+	type RunTransactionParams,
+	type RunTransactionResult,
+	type TransactionResult,
 	rollback,
 } from "./transactionTypes.js";
 

@@ -46,7 +46,6 @@ import {
 	type TreeBranchEvents,
 	getOrCreateInnerNode,
 	getKernel,
-	type TreeNode,
 } from "../simple-tree/index.js";
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
@@ -60,8 +59,9 @@ import {
 	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
 import {
-	type TransactionParams,
-	type TransactionStatus,
+	type RunTransactionParams,
+	type RunTransactionResult,
+	type TransactionConstraint,
 	rollback,
 } from "./transactionTypes.js";
 
@@ -226,8 +226,8 @@ export class SchematizingSimpleTreeView<
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
 	 */
 	public runTransaction<TResult>(
-		params: TransactionParams<TResult>,
-	): TransactionStatus<TResult> {
+		params: RunTransactionParams<TResult>,
+	): RunTransactionResult<TResult> {
 		this.checkout.transaction.start();
 		const preconditions = params.preconditions ?? [];
 		for (const constraint of preconditions) {
@@ -250,14 +250,28 @@ export class SchematizingSimpleTreeView<
 			}
 		}
 
-		const transactionStatus = params.transaction();
-		if (transactionStatus.result === rollback) {
+		let result: TResult | typeof rollback | undefined;
+		let undoPreconditions: readonly TransactionConstraint[] | undefined;
+		const transactionResult = params.transaction();
+		if (transactionResult !== null && typeof transactionResult === "object") {
+			if ("undoPreconditions" in transactionResult) {
+				undoPreconditions = transactionResult.undoPreconditions;
+				assert(undoPreconditions !== undefined, "undoPreconditions should not be undefined");
+			}
+			if ("result" in transactionResult) {
+				result = transactionResult.result;
+			}
+		} else {
+			result = transactionResult;
+		}
+
+		if (result === rollback) {
 			this.checkout.transaction.abort();
 		} else {
 			this.checkout.transaction.commit();
 		}
 
-		return transactionStatus;
+		return { result };
 	}
 
 	private ensureUndisposed(): void {
