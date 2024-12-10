@@ -67,14 +67,10 @@ const importDataCallback: ImportDataCallback = async (
 	exportedData: unknown,
 ) => {
 	const destinationModel = await getModelFromContainer<IMigratableModel>(destinationContainer);
-	// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
-	// exported data into a format that the new model can import?  If we can determine it early, then
-	// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
-	// MigratableModelLoaders.
-	// TODO: Error paths in case the format isn't ingestible.
 	// If the migrated model already supports the data format, go ahead with the migration.
 	// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
 	// a format that we can import.
+	// TODO: Error paths in case the format isn't ingestible.
 	const transformedData = destinationModel.supportsDataFormat(exportedData)
 		? exportedData
 		: await inventoryListDataTransformationCallback(exportedData, destinationModel.version);
