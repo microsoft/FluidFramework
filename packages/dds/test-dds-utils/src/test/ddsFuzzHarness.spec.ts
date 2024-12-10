@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter } from "@fluid-internal/client-utils";
 import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { chainAsync, done, StressMode, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
@@ -524,7 +524,7 @@ describe("DDS Fuzz Harness", () => {
 					clientAddProbability: 0.25,
 					stashableClientProbability: 1,
 				},
-				emitter: new TypedEventEmitter<DDSFuzzHarnessEvents>(),
+				emitter: createEmitter<DDSFuzzHarnessEvents>(),
 			};
 
 			const clientCreates: Client<SharedNothingFactory>[] = [];
@@ -572,7 +572,7 @@ describe("DDS Fuzz Harness", () => {
 					type: "fixedInterval",
 					interval: 3,
 				},
-				emitter: new TypedEventEmitter<DDSFuzzHarnessEvents>(),
+				emitter: createEmitter<DDSFuzzHarnessEvents>(),
 			};
 
 			const clientCreates: Client<SharedNothingFactory>[] = [];
@@ -623,7 +623,7 @@ describe("DDS Fuzz Harness", () => {
 				detachedStartOptions: {
 					numOpsBeforeAttach: 5,
 				},
-				emitter: new TypedEventEmitter(),
+				emitter: createEmitter(),
 			});
 
 			it("starts from a state with one client", async () => {
@@ -681,7 +681,7 @@ describe("DDS Fuzz Harness", () => {
 				detachedStartOptions: {
 					numOpsBeforeAttach: 0,
 				},
-				emitter: new TypedEventEmitter(),
+				emitter: createEmitter(),
 			});
 
 			it("starts from an attached state with more than one client", async () => {
@@ -716,7 +716,7 @@ describe("DDS Fuzz Harness", () => {
 	describe("events", () => {
 		describe("clientCreate", () => {
 			it("is raised for initial clients before generating any operations", async () => {
-				const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+				const emitter = createEmitter<DDSFuzzHarnessEvents>();
 				const log: string[] = [];
 				emitter.on("clientCreate", (client) => {
 					log.push(client.containerRuntime.clientId);
@@ -741,7 +741,7 @@ describe("DDS Fuzz Harness", () => {
 			});
 
 			it("is raised for clients added to the test mid-run", async () => {
-				const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+				const emitter = createEmitter<DDSFuzzHarnessEvents>();
 				const log: string[] = [];
 				emitter.on("clientCreate", (client) => {
 					log.push(client.containerRuntime.clientId);
@@ -769,7 +769,7 @@ describe("DDS Fuzz Harness", () => {
 		});
 		describe("testStart", () => {
 			it("is raised before performing the fuzzActions, but after creating the clients", async () => {
-				const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+				const emitter = createEmitter<DDSFuzzHarnessEvents>();
 				const log: string[] = [];
 				emitter.on("clientCreate", (client) => {
 					log.push(client.containerRuntime.clientId);
@@ -805,7 +805,7 @@ describe("DDS Fuzz Harness", () => {
 		});
 		describe("testEnd", () => {
 			it("is raised after performing the fuzzActions", async () => {
-				const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+				const emitter = createEmitter<DDSFuzzHarnessEvents>();
 				const log: string[] = [];
 				emitter.on("clientCreate", (client) => {
 					log.push(client.containerRuntime.clientId);
