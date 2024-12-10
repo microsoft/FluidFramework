@@ -5,7 +5,7 @@
 section: tree
 ---
 
-Allow associating metadata with Node Schema
+Metadata can now be associated with Node Schema
 
 Users of TreeView can now specify metadata when creating Node Schema via the experimental (alpha) `withMetadata` function.
 This metadata may include system-understood properties like `description`.
@@ -27,12 +27,12 @@ class Point extends withMetadata(
 ```
 
 Functionality like the experimental conversion of Tree Schema to [JSON Schema](https://json-schema.org/) (`getJsonSchema`) leverages such system-understood metadata to generate useful information.
-In the case of the `description` property, this is mapped directly to the `description` property supported by JSON Schema.
+In the case of the `description` property, it is mapped directly to the `description` property supported by JSON Schema.
 
 Custom, user-defined properties can also be specified.
-These properties will not be leveraged by the system by default, but can be used as a handy means of associating common application-specific properties with Field Schema.
+These properties will not be used by the system by default, but can be used to associate common application-specific properties with Field Schema.
 
-Example:
+#### Example
 
 An application is implementing search functionality.
 By default, the app author wishes for all app content to be potentially indexable by search, unless otherwise specified.
