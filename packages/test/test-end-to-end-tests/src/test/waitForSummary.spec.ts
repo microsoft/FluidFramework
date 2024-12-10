@@ -21,18 +21,18 @@ const waitForSummary = async (
 	provider: ITestObjectProvider,
 	container: IContainer,
 	testContainerConfig: ITestContainerConfig,
+	summaryVersion?: string,
 ) => {
-	const testConfig = {
-		...testContainerConfig,
-		runtimeOptions: { ...testContainerConfig.runtimeOptions, summaryOptions: undefined },
-	};
 	const { summarizer, container: summarizingContainer } = await createSummarizer(
 		provider,
 		container,
-		testConfig,
+		testContainerConfig,
+		summaryVersion,
 	);
-	await summarizeNow(summarizer);
+	await provider.ensureSynchronized();
+	const result = await summarizeNow(summarizer);
 	summarizingContainer.close();
+	return result.summaryVersion;
 };
 
 describeCompat("Wait for summary", "NoCompat", (getTestObjectProvider, apis) => {
@@ -41,14 +41,14 @@ describeCompat("Wait for summary", "NoCompat", (getTestObjectProvider, apis) => 
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 
 	it("Wait for summary", async function () {
-		const provider = getTestObjectProvider();
+		const provider = getTestObjectProvider({ syncSummarizer: true });
 		// This test fails on ODSP at least.
-		if (provider.driver.type !== "local") {
-			this.skip();
-		}
 		const testContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
+		};
+		const mainContainerConfig: ITestContainerConfig = {
+			...testContainerConfig,
 			runtimeOptions: {
 				summaryOptions: {
 					summaryConfigOverrides: {
@@ -58,7 +58,7 @@ describeCompat("Wait for summary", "NoCompat", (getTestObjectProvider, apis) => 
 			},
 		};
 
-		const loader = provider.makeTestLoader(testContainerConfig);
+		const loader = provider.makeTestLoader(mainContainerConfig);
 		const container1 = await createAndAttachContainer(
 			provider.defaultCodeDetails,
 			loader,
@@ -68,9 +68,9 @@ describeCompat("Wait for summary", "NoCompat", (getTestObjectProvider, apis) => 
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 		map1.set("test op 1", "test op 1");
-		await waitForSummary(provider, container1, testContainerConfig);
+		const summaryVersion = await waitForSummary(provider, container1, testContainerConfig);
 
 		map1.set("test op 2", "test op 2");
-		await waitForSummary(provider, container1, testContainerConfig);
+		await waitForSummary(provider, container1, testContainerConfig, summaryVersion);
 	});
 });
