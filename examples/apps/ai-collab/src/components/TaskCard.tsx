@@ -35,7 +35,6 @@ import {
 } from "@mui/material";
 import { Tree, type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
-import { OpenAI } from "openai";
 import React, { useState, type ReactNode, type SetStateAction } from "react";
 
 // eslint-disable-next-line import/no-internal-modules
@@ -150,31 +149,18 @@ export function TaskCard(props: {
 			autoHideDuration: 5000,
 		});
 
-		// 1. Get the OpenAI client
-		let openAiClient: OpenAI;
 		try {
-			openAiClient = getOpenAiClient();
-		} catch (error) {
-			enqueueSnackbar(`Copilot: ${error instanceof Error ? error.message : "unknown error"}`, {
-				variant: "error",
-				autoHideDuration: 5000,
-			});
-			return;
-		}
+			// 1. Get the current branch, the new branch and associated task to be used for ai collaboration
+			const { currentBranch, newBranchTree, newBranchTask } = getNewSharedTreeBranchAndTask(
+				props.sharedTreeBranch.root,
+				props.sharedTreeTask,
+			);
+			console.log("ai-collab Branch Task BEFORE:", { ...newBranchTask });
 
-		// 2. Get the current branch, the new branch and associated task to be used for ai collaboration
-		const { currentBranch, newBranchTree, newBranchTask } = getNewSharedTreeBranchAndTask(
-			props.sharedTreeBranch.root,
-			props.sharedTreeTask,
-		);
-		console.log("ai-collab Branch Task BEFORE:", { ...newBranchTask });
-
-		// 3. execute the ai collaboration
-		let response: AiCollabSuccessResponse | AiCollabErrorResponse;
-		try {
-			response = await aiCollab({
+			// 2. execute the ai collaboration
+			const response: AiCollabSuccessResponse | AiCollabErrorResponse = await aiCollab({
 				openAI: {
-					client: openAiClient,
+					client: getOpenAiClient(),
 					modelName: "gpt-4o",
 				},
 				treeNode: newBranchTask,
@@ -188,47 +174,40 @@ export function TaskCard(props: {
 				dumpDebugLog: true,
 				validator: aiCollabLlmTreeNodeValidator,
 			});
-		} catch (error) {
-			console.error("Error in aiCollab:", error);
-			enqueueSnackbar(
-				`Copilot: Something went wrong processing your request - "${userRequest}":  ${error instanceof Error ? error.message : "unknown error"}`,
-				{
-					variant: "error",
-					autoHideDuration: 5000,
-				},
-			);
-			setIsAiTaskRunning(false);
-			return;
-		}
 
-		if (response.status === "success") {
-			enqueueSnackbar(`Copilot: I've completed your request - "${userRequest}"`, {
-				variant: "success",
-				autoHideDuration: 5000,
-			});
+			if (response.status !== 'success') {
+				throw new Error(response.errorMessage);
+			}
 
-			// This is how we get a set of differences between the original task and the AI-generated task that we can use for 'diff' visualizations.
-			const differences = new SharedTreeBranchManager({
+			// 3. Handle the response from the ai collaboration
+			const taskDifferences = new SharedTreeBranchManager({
 				nodeIdAttributeName: "id",
 			}).compare(
 				props.sharedTreeTask as unknown as Record<string, unknown>,
 				newBranchTask as unknown as Record<string, unknown>,
 			);
 
+			enqueueSnackbar(`Copilot: I've completed your request - "${userRequest}"`, {
+				variant: "success",
+				autoHideDuration: 5000,
+			});
 			console.log("ai-collab Branch Task AFTER:", { ...newBranchTask });
-			console.log("ai-collab Branch Task differences:", { ...newBranchTask });
+			console.log("ai-collab Branch Task differences:", taskDifferences);
 
-			setBranchDifferences(differences);
+			setBranchDifferences(taskDifferences);
+			// Note that we don't ask for user approval before merging changes at a task level for simplicites sake.
 			currentBranch.merge(newBranchTree);
-		} else {
-			enqueueSnackbar(
-				`Copilot: Something went wrong processing your request - "${userRequest}": ${response.errorMessage}`,
-				{ variant: "error", autoHideDuration: 5000 },
-			);
 		}
-
-		setAiPromptPopoverAnchor(undefined);
-		setIsAiTaskRunning(false);
+		catch (error) {
+			enqueueSnackbar(`Copilot: Something went wrong processing your request - ${error instanceof Error ? error.message : "unknown error"}`, {
+				variant: "error",
+				autoHideDuration: 5000,
+			});
+		}
+		finally {
+			setAiPromptPopoverAnchor(undefined);
+			setIsAiTaskRunning(false);
+		}
 	};
 
 	return (

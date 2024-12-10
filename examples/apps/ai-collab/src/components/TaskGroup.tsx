@@ -26,7 +26,6 @@ import {
 } from "@mui/material";
 import { type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
-import { OpenAI } from "openai";
 import React, { useState } from "react";
 
 import { TaskCard } from "./TaskCard";
@@ -97,29 +96,16 @@ export function TaskGroup(props: {
 			autoHideDuration: 5000,
 		});
 
-		// 1. Get the OpenAI client
-		let openAiClient: OpenAI;
 		try {
-			openAiClient = getOpenAiClient();
-		} catch (error) {
-			enqueueSnackbar(`Copilot: ${error instanceof Error ? error.message : "unknown error"}`, {
-				variant: "error",
-				autoHideDuration: 5000,
-			});
-			return;
-		}
+			// 1. Get the current branch, the new branch and associated task group to be used for ai collaboration
+			const { currentBranch, newBranchTree, newBranchTaskGroup } =
+				getNewSharedTreeBranchAndTaskGroup(props.treeView.root, props.sharedTreeTaskGroup);
+			console.log("ai-collab Branch Task Group BEFORE:", { ...newBranchTaskGroup });
 
-		// 2. Get the current branch, the new branch and associated task group to be used for ai collaboration
-		const { currentBranch, newBranchTree, newBranchTaskGroup } =
-			getNewSharedTreeBranchAndTaskGroup(props.treeView.root, props.sharedTreeTaskGroup);
-		console.log("ai-collab Branch Task Group BEFORE:", { ...newBranchTaskGroup });
-
-		// 3. execute the ai collaboration
-		let response: AiCollabSuccessResponse | AiCollabErrorResponse;
-		try {
-			response = await aiCollab({
+			// 2. execute the ai collaboration
+			const response: AiCollabSuccessResponse | AiCollabErrorResponse = await aiCollab({
 				openAI: {
-					client: openAiClient,
+					client: getOpenAiClient(),
 					modelName: "gpt-4o",
 				},
 				treeNode: newBranchTaskGroup,
@@ -136,34 +122,26 @@ export function TaskGroup(props: {
 				dumpDebugLog: true,
 				validator: aiCollabLlmTreeNodeValidator,
 			});
-		} catch (error) {
-			console.error("Error in aiCollab:", error);
-			enqueueSnackbar(
-				`Copilot: Something went wrong processing your request - "${userRequest}":  ${error instanceof Error ? error.message : "unknown error"}`,
-				{
-					variant: "error",
-					autoHideDuration: 5000,
-				},
-			);
-			setIsAiTaskRunning(false);
-			return;
-		}
 
-		if (response.status === "success") {
+			// 3. Handle the response from the ai collaboration
+			if (response.status !== 'success') {
+				throw new Error(response.errorMessage);
+			}
+
 			const branchManager = new SharedTreeBranchManager({
 				nodeIdAttributeName: "id",
 			});
 
-			const differences = branchManager.compare(
+			const taskGroupDifferences = branchManager.compare(
 				props.sharedTreeTaskGroup as unknown as Record<string, unknown>,
 				newBranchTaskGroup as unknown as Record<string, unknown>,
 			);
 
 			console.log("ai-collab Branch Task Group AFTER:", { ...newBranchTaskGroup });
-			console.log("ai-collab Branch Task Group differences:", { ...differences });
+			console.log("ai-collab Branch Task Group differences:", taskGroupDifferences);
 
 			setLlmBranchData({
-				differences,
+				differences: taskGroupDifferences,
 				originalBranch: currentBranch,
 				forkBranch: newBranchTree,
 				newBranchTargetNode: newBranchTaskGroup,
@@ -173,13 +151,16 @@ export function TaskGroup(props: {
 				variant: "success",
 				autoHideDuration: 5000,
 			});
-		} else {
-			enqueueSnackbar(
-				`Copilot: Something went wrong processing your request - "${userRequest}": ${response.errorMessage}`,
-				{ variant: "error", autoHideDuration: 5000 },
-			);
 		}
-		setIsAiTaskRunning(false);
+		catch (error) {
+			enqueueSnackbar(`Copilot: Something went wrong processing your request - ${error instanceof Error ? error.message : "unknown error"}`, {
+				variant: "error",
+				autoHideDuration: 5000,
+			});
+		}
+		finally {
+			setIsAiTaskRunning(false);
+		}
 	};
 
 	return (
@@ -295,101 +276,6 @@ export function TaskGroup(props: {
 								const query = formData.get("searchQuery") as string;
 
 								await handleAiCollab(query);
-
-								// setIsAiTaskRunning(true);
-								// enqueueSnackbar(`Copilot: I'm working on your request - "${query}"`, {
-								// 	variant: "info",
-								// 	autoHideDuration: 5000,
-								// });
-
-								// let openAiClient: OpenAI;
-								// try {
-								// 	openAiClient = getOpenAiClient();
-								// } catch (error) {
-								// 	enqueueSnackbar(
-								// 		`Copilot: ${error instanceof Error ? error.message : "unknown error"}`,
-								// 		{
-								// 			variant: "error",
-								// 			autoHideDuration: 5000,
-								// 		},
-								// 	);
-								// 	return;
-								// }
-
-								// // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								// const currentBranch = TreeAlpha.branch(props.treeView.root)! as TreeViewAlpha<
-								// 	typeof SharedTreeAppState
-								// >;
-								// const aiCollabBranch = currentBranch.fork();
-								// // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								// const aiCollabBranchTaskGroup = aiCollabBranch.root.taskGroups.find(
-								// 	(taskGroup) => taskGroup.id === props.sharedTreeTaskGroup.id,
-								// )!;
-
-								// let response: AiCollabSuccessResponse | AiCollabErrorResponse;
-								// try {
-								// 	response = await aiCollab({
-								// 		openAI: {
-								// 			client: openAiClient,
-								// 			modelName: "gpt-4o",
-								// 		},
-								// 		treeNode: aiCollabBranchTaskGroup,
-								// 		prompt: {
-								// 			systemRoleContext:
-								// 				"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
-								// 			userAsk: query,
-								// 		},
-								// 		limiters: {
-								// 			maxModelCalls: 30,
-								// 		},
-								// 		planningStep: true,
-								// 		finalReviewStep: false,
-								// 		dumpDebugLog: true,
-								// 	});
-								// } catch (error) {
-								// 	console.error("Error in aiCollab:", error);
-								// 	enqueueSnackbar(
-								// 		`Copilot: Something went wrong processing your request - "${query}":  ${error instanceof Error ? error.message : "unknown error"}`,
-								// 		{
-								// 			variant: "error",
-								// 			autoHideDuration: 5000,
-								// 		},
-								// 	);
-								// 	setIsAiTaskRunning(false);
-								// 	return;
-								// }
-
-								// if (response.status === "success") {
-								// 	const branchManager = new SharedTreeBranchManager({
-								// 		nodeIdAttributeName: "id",
-								// 	});
-
-								// 	const differences = branchManager.compare(
-								// 		props.sharedTreeTaskGroup as unknown as Record<string, unknown>,
-								// 		aiCollabBranchTaskGroup as unknown as Record<string, unknown>,
-								// 	);
-
-								// 	console.log("forkBranch:", aiCollabBranch);
-								// 	console.log("newBranchTargetNode:", { ...aiCollabBranchTaskGroup });
-								// 	console.log("differences:", { ...differences });
-								// 	setLlmBranchData({
-								// 		differences,
-								// 		originalBranch: currentBranch,
-								// 		forkBranch: aiCollabBranch,
-								// 		newBranchTargetNode: aiCollabBranchTaskGroup,
-								// 	});
-								// 	setIsDiffModalOpen(true);
-								// 	enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
-								// 		variant: "success",
-								// 		autoHideDuration: 5000,
-								// 	});
-								// } else {
-								// 	enqueueSnackbar(
-								// 		`Copilot: Something went wrong processing your request - "${query}": ${response.errorMessage}`,
-								// 		{ variant: "error", autoHideDuration: 5000 },
-								// 	);
-								// }
-								// setIsAiTaskRunning(false);
 							}}
 						>
 							<TextField
