@@ -29,6 +29,8 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 	static readonly deprecationOptions = {
 		// The version in which the deprecated command will be removed.
 		version: "0.53.0",
+		// The replacement command.
+		to: "generate releaseNotes",
 	};
 
 	// Enables the global JSON flag in oclif.
