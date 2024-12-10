@@ -5,12 +5,6 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
-	HasListeners,
-	IEmitter,
-	Listenable,
-} from "@fluidframework/core-interfaces/internal";
-import { createEmitter } from "@fluid-internal/client-utils";
-import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -22,6 +16,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	type GraphCommit,
 	type IEditableForest,
 	type JsonableTree,
 	RevisionTagCodec,
@@ -47,6 +42,7 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 import {
+	type ClonableSchemaAndPolicy,
 	DefaultResubmitMachine,
 	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
@@ -66,12 +62,7 @@ import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js"
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import {
-	type CheckoutEvents,
-	type TreeCheckout,
-	type BranchableTree,
-	createTreeCheckout,
-} from "./treeCheckout.js";
+import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
 import { breakingClass, throwIfBroken } from "../util/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -191,9 +182,6 @@ export class SharedTree
 	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
 	implements ISharedTree
 {
-	private readonly _events: Listenable<CheckoutEvents> &
-		IEmitter<CheckoutEvents> &
-		HasListeners<CheckoutEvents>;
 	public readonly checkout: TreeCheckout;
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.checkout.storedSchema;
@@ -292,7 +280,6 @@ export class SharedTree
 			),
 			changeEnricher,
 		);
-		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
 		this.checkout = createTreeCheckout(
 			runtime.idCompressor,
@@ -304,7 +291,6 @@ export class SharedTree
 				schema,
 				forest,
 				fieldBatchCodec,
-				events: this._events,
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
 				logger: this.logger,
@@ -330,10 +316,10 @@ export class SharedTree
 				this.commitEnricher.commitTransaction();
 			}
 		});
-		this.checkout.events.on("beforeBatch", (newCommits) => {
-			if (this.isAttached()) {
+		this.checkout.events.on("beforeBatch", (event) => {
+			if (event.type === "append" && this.isAttached()) {
 				if (this.checkout.transaction.isInProgress()) {
-					this.commitEnricher.addTransactionCommits(newCommits);
+					this.commitEnricher.addTransactionCommits(event.newCommits);
 				}
 			}
 		});
@@ -373,8 +359,7 @@ export class SharedTree
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
-		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
-		this._events.emit("afterBatch", []);
+		this.checkout.load();
 	}
 
 	protected override didAttach(): void {
@@ -398,6 +383,27 @@ export class SharedTree
 			0x674 /* Unexpected transaction is open while applying stashed ops */,
 		);
 		super.applyStashedOp(...args);
+	}
+
+	protected override submitCommit(
+		commit: GraphCommit<SharedTreeChange>,
+		schemaAndPolicy: ClonableSchemaAndPolicy,
+		isResubmit: boolean,
+	): void {
+		assert(
+			!this.checkout.transaction.isInProgress(),
+			"Cannot submit a commit while a transaction is in progress",
+		);
+		if (isResubmit) {
+			return super.submitCommit(commit, schemaAndPolicy, isResubmit);
+		}
+
+		// Refrain from submitting new commits until they are validated by the checkout.
+		// This is not a strict requirement for correctness in our system, but in the event that there is a bug when applying commits to the checkout
+		// that causes a crash (e.g. in the forest), this will at least prevent this client from sending the problematic commit to any other clients.
+		this.checkout.onCommitValid(commit, () =>
+			super.submitCommit(commit, schemaAndPolicy, isResubmit),
+		);
 	}
 }
 

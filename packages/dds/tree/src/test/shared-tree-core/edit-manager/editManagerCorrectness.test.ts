@@ -722,10 +722,11 @@ function applyBranchCommit(
 	intention: number | number[] = [],
 ): Commit<TestChange> {
 	const revision = mintRevisionTag();
-	const [_, commit] = branch.apply({
+	branch.apply({
 		change: TestChange.mint(inputContext, intention),
 		revision,
 	});
+	const commit = branch.getHead();
 	return {
 		change: commit.change,
 		revision: commit.revision,
