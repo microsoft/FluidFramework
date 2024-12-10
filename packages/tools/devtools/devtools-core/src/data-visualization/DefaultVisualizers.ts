@@ -21,7 +21,7 @@ import {
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import type { ISharedTree } from "@fluidframework/tree/internal";
+import type { ITreeInternal } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
@@ -256,20 +256,23 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectNode> => {
-	const sharedTree = sharedObject as ISharedTree;
-	const contentSnapshot = sharedTree.contentSnapshot();
+	const sharedTree = sharedObject as ITreeInternal;
 
-	// Root node of the SharedTree's treeview. Assume there is only one root node.
-	const treeView = contentSnapshot.tree[0];
+	// Root node of the SharedTree's content.
+	const treeView = sharedTree.exportVerbose();
+	// TODO: this visualizer doesn't consider the root as a field, and thus does not display the allowed types or handle when it is empty.
+	// Tracked by https://dev.azure.com/fluidframework/internal/_workitems/edit/26472.
+	if (treeView === undefined) {
+		throw new Error("Support for visualizing empty trees is not implemented");
+	}
 
 	// Schema of the tree node.
-	const treeSchema = contentSnapshot.schema.nodeSchema.get(treeView.type);
+	const treeSchema = sharedTree.exportSimpleSchema();
 
 	// Traverses the SharedTree and generates a visual representation of the tree and its schema.
 	const visualTreeRepresentation = await visualizeSharedTreeNodeBySchema(
 		treeView,
 		treeSchema,
-		contentSnapshot,
 		visualizeChildData,
 	);
 

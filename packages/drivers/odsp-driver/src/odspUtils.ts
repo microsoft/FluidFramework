@@ -9,7 +9,11 @@ import {
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
+import {
+	IResolvedUrl,
+	ISnapshot,
+	IContainerPackageInfo,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	type AuthorizationError,
 	NetworkErrorBasic,
@@ -51,6 +55,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { fetch } from "./fetch.js";
+import { storeLocatorInOdspUrl } from "./odspFluidFileLink.js";
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
@@ -335,7 +340,8 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 /**
  * Type narrowing utility to determine if the provided {@link @fluidframework/driver-definitions#IResolvedUrl}
  * is an {@link @fluidframework/odsp-driver-definitions#IOdspResolvedUrl}.
- * @internal
+ * @legacy
+ * @alpha
  */
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
 	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
@@ -549,4 +555,71 @@ export function useLegacyFlowWithoutGroupsForSnapshotFetch(
 	loadingGroupIds: string[] | undefined,
 ): boolean {
 	return loadingGroupIds === undefined;
+}
+
+// back-compat: GitHub #9653
+const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
+	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
+
+/**
+ * Appends the store locator properties to the provided base URL. This function is useful for scenarios where an application
+ * has a base URL (for example a sharing link) of the Fluid file, but does not have the locator information that would be used by Fluid
+ * to load the file later.
+ * @param baseUrl - The input URL on which the locator params will be appended.
+ * @param resolvedUrl - odsp-driver's resolvedURL object.
+ * @param dataStorePath - The relative data store path URL.
+ * For requesting a driver URL, this value should always be '/'. If an empty string is passed, then dataStorePath
+ * will be extracted from the resolved url if present.
+ * @param containerPackageName - Name of the package to be included in the URL.
+ * @returns The provided base URL appended with odsp-specific locator information
+ */
+export function appendNavParam(
+	baseUrl: string,
+	odspResolvedUrl: IOdspResolvedUrl,
+	dataStorePath: string,
+	containerPackageName?: string,
+): string {
+	const url = new URL(baseUrl);
+
+	// If the user has passed an empty dataStorePath, then extract it from the resolved url.
+	const actualDataStorePath = dataStorePath || (odspResolvedUrl.dataStorePath ?? "");
+
+	storeLocatorInOdspUrl(url, {
+		siteUrl: odspResolvedUrl.siteUrl,
+		driveId: odspResolvedUrl.driveId,
+		itemId: odspResolvedUrl.itemId,
+		dataStorePath: actualDataStorePath,
+		appName: odspResolvedUrl.appName,
+		containerPackageName,
+		fileVersion: odspResolvedUrl.fileVersion,
+		context: odspResolvedUrl.context,
+	});
+
+	return url.href;
+}
+
+/**
+ * Returns the package name of the container package information.
+ * @param packageInfoSource - Information of the package connected to the URL
+ * @returns The package name of the container package
+ */
+export function getContainerPackageName(
+	packageInfoSource: IContainerPackageInfo | undefined,
+): string | undefined {
+	let containerPackageName: string | undefined;
+	if (packageInfoSource && "name" in packageInfoSource) {
+		containerPackageName = packageInfoSource.name;
+		// packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
+		// TODO: use a stronger type
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+	} else if (isFluidPackage((packageInfoSource as any)?.package)) {
+		// TODO: use a stronger type
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		containerPackageName = (packageInfoSource as any)?.package.name;
+	} else {
+		// TODO: use a stronger type
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		containerPackageName = (packageInfoSource as any)?.package;
+	}
+	return containerPackageName;
 }

@@ -14,7 +14,6 @@ export const version = 1 as const;
  * Key (aka Name or Label) for a field which is scoped to a specific TreeNodeStoredSchema.
  *
  * Stable identifier, used when persisting data.
- * @internal
  */
 export type FieldKey = Brand<string, "tree.FieldKey">;
 
@@ -28,7 +27,6 @@ export const FieldKeySchema = brandedStringType<FieldKey>();
  * Also known as "Definition"
  *
  * Stable identifier, used when persisting data.
- * @internal
  */
 export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<
 	TName,
@@ -40,7 +38,6 @@ export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<
  * Refers to an exact stable policy (ex: specific version of a policy),
  * for how to handle (ex: edit and merge edits to) fields marked with this kind.
  * Persisted in documents as part of stored schema.
- * @internal
  */
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();

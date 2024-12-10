@@ -44,6 +44,7 @@ parameters:
 variables:
   - group: doc-versions
   - group: storage-vars
+  - group: ado-feeds
   - name: repoToTrigger
     value: microsoft/FluidFramework
   - name: latestPipeline
@@ -82,7 +83,7 @@ variables:
 trigger:
   branches:
     include:
-    - release/**
+    - release/client/*
 pr: none
 
 stages:

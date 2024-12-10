@@ -677,7 +677,7 @@ describe("DefaultVisualizers unit tests", () => {
 								},
 								allowedTypes: {
 									value:
-										"{ apple : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle, banana : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle, cherry : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle }",
+										"Record<string, com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle>",
 									nodeKind: "ValueNode",
 								},
 							},
@@ -1698,7 +1698,7 @@ describe("DefaultVisualizers unit tests", () => {
 								},
 								allowedTypes: {
 									value:
-										"{ anthropology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object, biology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object, choreography : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object }",
+										"Record<string, com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object>",
 									nodeKind: "ValueNode",
 								},
 							},

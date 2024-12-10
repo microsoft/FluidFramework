@@ -15,8 +15,12 @@ import {
 	generateOdspHostStoragePolicy,
 } from "@fluid-private/test-drivers";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-// eslint-disable-next-line import/no-deprecated
-import { type IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	// eslint-disable-next-line import/no-deprecated
+	type IDetachedBlobStorage,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -101,8 +105,8 @@ export async function initialize(
 		}),
 	});
 
-	// Construct the loader
-	const loader = new Loader({
+	// Construct the loaderProps
+	const loaderProps: ILoaderProps = {
 		urlResolver: testDriver.createUrlResolver(),
 		documentServiceFactory: testDriver.createDocumentServiceFactory(),
 		codeLoader: createCodeLoader(containerRuntimeOptions),
@@ -110,9 +114,9 @@ export async function initialize(
 		options: loaderOptions,
 		detachedBlobStorage: new MockDetachedBlobStorage(),
 		configProvider: configProvider(configurations),
-	});
+	};
 
-	const container: IContainer = await loader.createDetachedContainer(codeDetails);
+	const container: IContainer = await createDetachedContainer({ ...loaderProps, codeDetails });
 	if ((testConfig.detachedBlobCount ?? 0) > 0) {
 		assert(
 			testDriver.type === "odsp",
