@@ -116,7 +116,7 @@ export class Migrator implements IMigrator {
 		private readonly exportDataCallback: ExportDataCallback,
 		private readonly migrationCallback: MigrationCallback,
 	) {
-		// Mirror the events from the MigrationTool, these are the source of truth and can proceed regardless of
+		// Echo the events from the MigrationTool, these are the source of truth and can proceed regardless of
 		// whatever the local Migrator is doing.
 		this.migrationTool.events.on("stopping", this.echoStopping);
 		this.migrationTool.events.on("migrating", this.echoMigrating);

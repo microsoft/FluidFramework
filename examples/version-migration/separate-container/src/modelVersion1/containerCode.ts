@@ -31,6 +31,7 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
 
 	// If the user tries to use this with an incompatible container runtime, we want to give them
 	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
+	// TODO: Now that this all lives in the container code we can probably make some stronger type assumptions.
 	if (typeof entryPoint.model !== "object") {
 		throw new TypeError("Incompatible container runtime: doesn't provide model");
 	}
@@ -38,7 +39,6 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
 	return entryPoint.model;
 };
 
-// TODO: Can/should we access the model more directly than going through the IContainer?
 const exportDataCallback = async (container: IContainer): Promise<unknown> => {
 	// TODO: verify IMigratableModel
 	const exportModel = await getModelFromContainer<IMigratableModel>(container);

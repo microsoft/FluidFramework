@@ -69,6 +69,10 @@ export const makeMigratorEntryPointPiece = (
 			await getDataStoreEntryPoint(runtime, migrationToolId);
 		},
 		createPiece: async (runtime: IContainerRuntime): Promise<FluidObject> => {
+			// The callback parameters of this returned function cannot be known/performed by the container code author,
+			// so we rely on the host to provide them.  Both require the loader layer (at least for current patterns), and
+			// migrationCallback additionally will depend on the details of the future version of the code we eventually
+			// migrate to.
 			return async (
 				loadSourceContainerCallback: LoadSourceContainerCallback,
 				migrationCallback: MigrationCallback,

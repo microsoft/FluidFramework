@@ -35,6 +35,7 @@ export interface IMigrator {
 
 	/**
 	 * The details of the accepted migration, if one has been accepted.
+	 * TODO: Consider hiding this - currently just used for debug output in the example.
 	 */
 	readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
 

@@ -8,9 +8,10 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 /**
  * The collaboration session may be in one of four states:
  * * collaborating - normal collaboration is ongoing.  The client may send data.
- * * stopping - a proposal to migrate has been made, but not accepted yet.  The client must stop sending data.
+ * * stopping - a proposal to migrate has been made, but not accepted yet.  The client should stop sending
+ * data, as it's no longer guaranteed to be included in the migration.
  * * migrating - a proposal to migrate has been accepted.  The data is currently being migrated.
- * * migrated - migration has completed and the new container is available.
+ * * migrated - migration has completed and the migration result is available.
  * @alpha
  */
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
@@ -31,37 +32,22 @@ export interface IAcceptedMigrationDetails {
 	migrationSequenceNumber: number;
 }
 
-/**
- * @alpha
- */
 export interface IMigrationToolEvents extends IEvent {
 	(event: "stopping" | "migrating" | "migrated", listener: () => void);
 	(event: "connected" | "disconnected", listener: () => void);
 	(event: "disposed", listener: () => void);
 }
 
-/**
- * @alpha
- */
 export interface IMigrationTool {
+	/**
+	 * Event emitter object.
+	 */
 	readonly events: IEventProvider<IMigrationToolEvents>;
 
-	readonly connected: boolean;
 	/**
 	 * The current state of migration.
 	 */
 	readonly migrationState: MigrationState;
-
-	/**
-	 * The result of the migration (e.g. the new container ID), if the migration has fully completed.
-	 */
-	readonly migrationResult: unknown | undefined;
-	/**
-	 * Set the container id where the migrated content can be found, finalizing the migration.
-	 * @param migrationResult - the result of the migration, e.g. the new container id
-	 */
-	finalizeMigration(migrationResult: unknown): Promise<void>;
-
 	/**
 	 * The version string of the proposed new version to use, if one has been proposed.
 	 */
@@ -71,8 +57,23 @@ export interface IMigrationTool {
 	 */
 	readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
 	/**
+	 * The result of the migration (e.g. the new container ID), if the migration has fully completed.
+	 */
+	readonly migrationResult: unknown | undefined;
+
+	/**
 	 * Propose a new version to use.
 	 * @param newVersion - the version string
 	 */
 	proposeVersion: (newVersion: string) => void;
+
+	/**
+	 * Whether the client is currently connected.
+	 */
+	readonly connected: boolean;
+	/**
+	 * Set the result of the migration, finalizing the migration.
+	 * @param migrationResult - the result of the migration, e.g. the new container id
+	 */
+	finalizeMigration(migrationResult: unknown): Promise<void>;
 }

@@ -31,6 +31,7 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
 
 	// If the user tries to use this with an incompatible container runtime, we want to give them
 	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
+	// TODO: Now that this all lives in the container code we can probably make some stronger type assumptions.
 	if (typeof entryPoint.model !== "object") {
 		throw new TypeError("Incompatible container runtime: doesn't provide model");
 	}

@@ -9,7 +9,7 @@ import type { IRequest } from "@fluidframework/core-interfaces";
 import { type MigrationCallback } from "./migrator.js";
 
 /**
- * These callback helpers are useful if you are migrating TO this version of the platform.  If the platform changes significantly
+ * These callback helpers are useful if you are migrating _TO_ this version of the platform.  If the platform changes significantly
  * in the future (e.g. loader API changes, create new flow changes), then you would likely want to use an updated set of callbacks
  * from the version of the platform you are migrating to instead.
  */
