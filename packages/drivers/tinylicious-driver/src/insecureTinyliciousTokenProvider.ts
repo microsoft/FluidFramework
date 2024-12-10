@@ -11,8 +11,7 @@ import { v4 as uuid } from "uuid";
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
  * to get up and running.
- * @legacy
- * @alpha
+ * @internal
  */
 export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 	constructor(
@@ -81,4 +80,11 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 			utf8Key,
 		);
 	}
+}
+
+/**
+ * Creates an insecure Tinylicious token provider for testing purposes.
+ */
+export function createInsecureTinyliciousTestTokenProvider(): ITokenProvider {
+	return new InsecureTinyliciousTokenProvider();
 }

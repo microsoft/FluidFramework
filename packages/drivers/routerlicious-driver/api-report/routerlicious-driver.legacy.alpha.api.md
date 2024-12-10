@@ -5,26 +5,7 @@
 ```ts
 
 // @alpha
-export class DocumentPostCreateError extends Error {
-    constructor(
-    innerError: Error);
-    // (undocumented)
-    readonly name = "DocumentPostCreateError";
-    // (undocumented)
-    get stack(): string | undefined;
-}
-
-// @alpha (undocumented)
-export interface IRouterliciousDriverPolicies {
-    enableDiscovery: boolean;
-    enableInternalSummaryCaching: boolean;
-    enableLongPollingDowngrade: boolean;
-    enablePrefetch: boolean;
-    enableRestLess: boolean;
-    enableWholeSummaryUpload: boolean;
-    maxConcurrentOrdererRequests: number;
-    maxConcurrentStorageRequests: number;
-}
+export function createRouterliciousDocumentServiceFactory(tokenProvider: ITokenProvider): IDocumentServiceFactory;
 
 // @alpha
 export interface IRouterliciousResolvedUrl extends IResolvedUrl {
@@ -43,13 +24,6 @@ export interface ITokenProvider {
 export interface ITokenResponse {
     fromCache?: boolean;
     jwt: string;
-}
-
-// @alpha
-export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
-    constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
-    createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
 }
 
 // (No @packageDocumentation comment for this package)

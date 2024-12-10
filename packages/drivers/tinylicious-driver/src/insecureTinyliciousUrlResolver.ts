@@ -27,8 +27,7 @@ export const defaultTinyliciousEndpoint = "http://localhost";
  * for a given request.  This particular implementation has a goal to avoid imposing requirements on the app's
  * URL shape, so it expects the request url to have this format (as opposed to a more traditional URL):
  * documentId/containerRelativePathing
- * @legacy
- * @alpha
+ * @internal
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 	private readonly tinyliciousEndpoint: string;
@@ -93,9 +92,15 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 }
 
 /**
- * Creates a Routerlicious {@link @fluidframework/core-interfaces#IRequest}.
- * @legacy
- * @alpha
+ * Creates an insecure Tinylicious URL resolver for testing purposes with localhost port 7070.
+ */
+export function createInsecureTinyliciousTestUrlResolver(): IUrlResolver {
+	return new InsecureTinyliciousUrlResolver();
+}
+
+/**
+ * Creates a Tinylicious {@link @fluidframework/core-interfaces#IRequest}.
+ * @internal
  */
 export const createTinyliciousCreateNewRequest = (documentId?: string): IRequest => ({
 	url: documentId ?? "",
@@ -103,3 +108,8 @@ export const createTinyliciousCreateNewRequest = (documentId?: string): IRequest
 		[DriverHeader.createNew]: true,
 	},
 });
+
+/**
+ * Creates a Tinylicious {@link @fluidframework/core-interfaces#IRequest} for testing purposes.
+ */
+export const createTinyliciousTestCreateNewRequest = createTinyliciousCreateNewRequest;
