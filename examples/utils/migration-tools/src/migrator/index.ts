@@ -4,19 +4,15 @@
  */
 
 export {
+	ExportDataCallback,
 	IMigrator,
-	IMigratorEvents,
-} from "./interfaces.js";
-export {
-	type ExportDataCallback,
-	type LoadSourceContainerCallback,
-	type MigrationCallback,
-	Migrator,
-} from "./migrator.js";
-export {
 	IMigratorEntryPoint,
-	makeMigratorEntryPointPiece,
-} from "./migratorEntryPointPiece.js";
+	IMigratorEvents,
+	LoadSourceContainerCallback,
+	MigrationCallback,
+} from "./interfaces.js";
+export { makeMigratorEntryPointPiece } from "./makeMigratorEntryPointPiece.js";
+export { Migrator } from "./migrator.js";
 export {
 	CreateDetachedContainerCallback,
 	ImportDataCallback,

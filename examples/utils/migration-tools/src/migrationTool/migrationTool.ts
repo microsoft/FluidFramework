@@ -197,7 +197,6 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 			context,
 			migrationToolSharedObjectRegistry,
 			existing,
-			// We have to provide a callback here to get an entryPoint, otherwise we would just omit it if we could always get an entryPoint.
 			async () => instance,
 		);
 

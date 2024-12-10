@@ -6,11 +6,15 @@
 // #region IMigratableModel
 
 /**
+ * TODO: These interfaces are holdover from when they were part of the migration-tools package.  They are fine,
+ * but overkill for this example.  Consider simplifying to make the example easier to understand.
+ */
+
+/**
  * A model with a detectable version.
  *
  * @remarks
  * It's appropriate to use this version to deduce the more specific type of model.
- * @alpha
  */
 export interface IVersionedModel {
 	/**
@@ -21,7 +25,6 @@ export interface IVersionedModel {
 
 /**
  * A model that can import data of ImportType when in detached state, and can also export its data to ExportType.
- * @alpha
  */
 export interface IImportExportModel<ImportType, ExportType> {
 	/**
@@ -58,7 +61,6 @@ export interface IImportExportModel<ImportType, ExportType> {
  * Lastly, it should provide dispose capabilities for two purposes: (1) The Migrator will spawn a temporary model
  * to export the data, which should be cleaned up after export and (2) After migration is complete, the old model
  * is likely no longer needed and should be cleaned up.
- * @alpha
  */
 export interface IMigratableModel
 	extends IVersionedModel,

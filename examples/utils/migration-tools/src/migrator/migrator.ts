@@ -15,25 +15,13 @@ import type {
 	MigrationState,
 } from "../migrationTool/index.js";
 
-import type { IMigrator, IMigratorEvents } from "./interfaces.js";
-
-/**
- * Callback that should take the given container and export its data in some format.
- * @alpha
- */
-export type ExportDataCallback = (sourceContainer: IContainer) => Promise<unknown>;
-/**
- * Callback provided to load the source container that data will be exported from.  Should be a separately
- * loaded container to avoid including local changes.
- * @alpha
- */
-export type LoadSourceContainerCallback = () => Promise<IContainer>;
-/**
- * Callback provided to take desired migration steps after migration has been agreed upon and data has been
- * exported.  Typically creating a new container and importing the data into it.
- * @alpha
- */
-export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;
+import type {
+	ExportDataCallback,
+	IMigrator,
+	IMigratorEvents,
+	LoadSourceContainerCallback,
+	MigrationCallback,
+} from "./interfaces.js";
 
 /**
  * Get a promise that will resolve once the container has advanced to at least the given sequence number

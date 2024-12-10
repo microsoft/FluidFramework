@@ -6,7 +6,7 @@
 import type { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
-import { type MigrationCallback } from "./migrator.js";
+import type { MigrationCallback } from "./interfaces.js";
 
 /**
  * These callback helpers are useful if you are migrating _TO_ this version of the platform.  If the platform changes significantly

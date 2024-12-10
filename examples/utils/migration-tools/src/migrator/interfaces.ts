@@ -3,9 +3,43 @@
  * Licensed under the MIT License.
  */
 
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
 import type { IAcceptedMigrationDetails, MigrationState } from "../migrationTool/index.js";
+
+// #region Migrator callbacks
+
+/**
+ * Callback that should take the given container and export its data in some format.
+ * @alpha
+ */
+export type ExportDataCallback = (sourceContainer: IContainer) => Promise<unknown>;
+/**
+ * Callback provided to load the source container that data will be exported from.  Should be a separately
+ * loaded container to avoid including local changes.
+ * @alpha
+ */
+export type LoadSourceContainerCallback = () => Promise<IContainer>;
+/**
+ * Callback provided to take desired migration steps after migration has been agreed upon and data has been
+ * exported.  Typically creating a new container and importing the data into it.
+ * @alpha
+ */
+export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;
+
+// #region Entry point
+
+/**
+ * The partial type of the entrypoint provided when makeMigratorEntryPointPiece is used.
+ * @alpha
+ */
+export interface IMigratorEntryPoint {
+	getMigrator: (
+		loadSourceContainerCallback: LoadSourceContainerCallback,
+		migrationCallback: MigrationCallback,
+	) => Promise<IMigrator>;
+}
 
 // #region IMigrator
 
