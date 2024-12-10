@@ -150,7 +150,7 @@ class MigrationTool implements IMigrationTool {
 
 	public readonly proposeVersion = (newVersion: string): void => {
 		// Don't permit changes to the version after a new one has already been proposed.
-		assert(this.proposeVersion !== undefined, "A proposal was already made");
+		assert(this.proposedVersion !== undefined, "A proposal was already made");
 
 		// Note that the accepted proposal could come from another client (e.g. two clients try to propose
 		// simultaneously).
