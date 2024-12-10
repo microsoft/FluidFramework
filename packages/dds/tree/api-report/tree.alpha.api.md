@@ -585,6 +585,17 @@ export interface RunTransaction {
     readonly rollback: typeof rollback;
 }
 
+// @alpha
+export interface RunTransactionParams<TResult> {
+    readonly preconditions?: readonly TransactionConstraint[];
+    readonly transaction: () => TransactionResult<TResult> | TResult;
+}
+
+// @alpha
+export interface RunTransactionResult<TResult> {
+    readonly result: TResult | typeof rollback | undefined;
+}
+
 // @public @sealed
 export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
@@ -675,6 +686,13 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @alpha
+export interface TransactionResult<TResult> {
+    readonly result: TResult | typeof rollback;
+    // (undocumented)
+    readonly undoPreconditions?: readonly TransactionConstraint[];
+}
 
 // @public
 export const Tree: TreeApi;
@@ -924,6 +942,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
+    runTransaction<TResult>(params: RunTransactionParams<TResult>): RunTransactionResult<TResult>;
 }
 
 // @public @sealed

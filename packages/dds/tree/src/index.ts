@@ -48,6 +48,9 @@ export {
 	type ViewContent,
 	TreeAlpha,
 	independentView,
+	type RunTransactionResult,
+	type RunTransactionParams,
+	type TransactionResult,
 } from "./shared-tree/index.js";
 
 export {
