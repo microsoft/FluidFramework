@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ImplicitFieldSchema, TreeNode } from "../simple-tree/index.js";
+import type { TreeNode } from "../simple-tree/index.js";
 
 /**
  * A special object that signifies when a SharedTree {@link RunTransaction | transaction} should "roll back".
@@ -34,16 +34,30 @@ export interface NodeInDocumentConstraint {
 }
 
 /**
+ * The status of a transaction on the tree view.
+ * @alpha
+ */
+export interface TransactionResult<TResult> {
+	/**
+	 * The value returned by the inner `transaction` function or the special {@link RunTransaction.rollback | rollback value}
+	 * (`Tree.runTransaction.rollback`) which means that the transaction was aborted.
+	 */
+	readonly result: TResult | typeof rollback;
+
+	readonly undoPreconditions?: readonly TransactionConstraint[];
+}
+
+/**
  * Parameters for running a transaction on the tree view that applies one or more edits to the tree as a single atomic unit.
  * @alpha
  */
-export interface TransactionParams<TResult> {
+export interface RunTransactionParams<TResult> {
 	/**
 	 * The function to run as the body of the transaction. This function is passed the root of the tree.
 	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value}
 	 * (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
 	 */
-	readonly transaction: () => TransactionStatus<TResult>;
+	readonly transaction: () => TransactionResult<TResult> | TResult;
 	/**
 	 * An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
 	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
@@ -57,10 +71,10 @@ export interface TransactionParams<TResult> {
  * The status of a transaction on the tree view.
  * @alpha
  */
-export interface TransactionStatus<TResult> {
+export interface RunTransactionResult<TResult> {
 	/**
 	 * The value returned by the inner `transaction` function or the special {@link RunTransaction.rollback | rollback value}
 	 * (`Tree.runTransaction.rollback`) which means that the transaction was aborted.
 	 */
-	readonly result: TResult | typeof rollback;
+	readonly result: TResult | typeof rollback | undefined;
 }
