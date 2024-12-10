@@ -346,7 +346,8 @@ export async function isReleased(
 	version: string,
 	log?: Logger,
 ): Promise<boolean> {
-	await context.gitRepo.fetchTags();
+	const gitRepo = await context.getGitRepository();
+	await gitRepo.gitClient.fetch(["--tags"]);
 
 	const tagName = generateReleaseGitTagName(releaseGroupOrPackage, version);
 	if (typeof releaseGroupOrPackage === "string" && isReleaseGroup(releaseGroupOrPackage)) {
@@ -355,8 +356,8 @@ export async function isReleased(
 	}
 
 	log?.verbose(`Checking for tag '${tagName}'`);
-	const rawTag = await context.gitRepo.getTags(tagName);
-	return rawTag.trim() === tagName;
+	const rawTag = await gitRepo.gitClient.tags({ list: tagName });
+	return rawTag.all?.[0] === tagName;
 }
 
 /**

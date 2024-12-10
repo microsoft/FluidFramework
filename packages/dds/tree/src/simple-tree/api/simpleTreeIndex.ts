@@ -200,6 +200,8 @@ export function createSimpleTreeIndex<
 				return treeNodeApi.status(simpleTree);
 			}
 		},
+		// simple tree indexes are shallow indexes, indicating so allows for a performance optimization
+		true,
 	);
 
 	// all the type checking guarantees that we put nodes of the correct type in the index
