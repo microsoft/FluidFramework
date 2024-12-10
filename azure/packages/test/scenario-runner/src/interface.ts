@@ -21,7 +21,7 @@ export interface IRunnerStatus {
 }
 
 export interface IRunnerEvents {
-	status: (s: IRunnerStatus) => void;
+	status(s: IRunnerStatus): void;
 }
 
 export interface IScenarioConfig {
