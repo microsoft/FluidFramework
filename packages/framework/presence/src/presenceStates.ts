@@ -6,12 +6,12 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { BroadcastControlSettings } from "./broadcastControls.js";
 import { RequiredBroadcastControl } from "./broadcastControls.js";
+import type { BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
-import { brandedObjectEntries } from "./internalTypes.js";
-import type { ClientSessionId, ISessionClient } from "./presence.js";
+import { brandedObjectEntries } from "./internalUtils.js";
+import type { ClientSessionId, ISessionClient } from "./sessionClientTypes.js";
 import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
 import { handleFromDatastore } from "./stateDatastore.js";
 import type { PresenceStates, PresenceStatesSchema } from "./types.js";

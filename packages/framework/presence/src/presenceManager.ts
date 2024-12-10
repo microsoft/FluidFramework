@@ -7,22 +7,22 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {
+	IContainerExtension,
+	IExtensionMessage,
+} from "@fluidframework/presence/internal/container-definitions/internal";
+import type {
 	ITelemetryLoggerExt,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { BroadcastControlSettings } from "./broadcastControls.js";
+import type { BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
-import type {
-	ClientSessionId,
-	IPresence,
-	ISessionClient,
-	PresenceEvents,
-} from "./presence.js";
+import type { IPresence, PresenceEvents } from "./presence.js";
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
+import type { ClientSessionId, ISessionClient } from "./sessionClientTypes.js";
 import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { createSystemWorkspace } from "./systemWorkspace.js";
 import type {
@@ -30,11 +30,6 @@ import type {
 	PresenceWorkspaceAddress,
 	PresenceStatesSchema,
 } from "./types.js";
-
-import type {
-	IContainerExtension,
-	IExtensionMessage,
-} from "@fluidframework/presence/internal/container-definitions/internal";
 
 /**
  * Portion of the container extension requirements ({@link IContainerExtension}) that are delegated to presence manager.
