@@ -17,9 +17,10 @@ import type {
 
 import type { IEntryPointPiece } from "./interfaces.js";
 
-// TODO: CompositeEntryPoint isn't really the right name - this is more like CompositeContainerContents
-// or CompositeContainerCode?
+// TODO: CompositeEntryPoint isn't really the right name - this is more like CompositeContainerCode?
 /**
+ * CompositeEntryPoint is a class that allows building up a container's contents as multiple distinct
+ * pieces.  These pieces are then made available on the container's entryPoint (container.getEntryPoint()).
  * @alpha
  */
 export class CompositeEntryPoint {
@@ -63,7 +64,8 @@ export class CompositeEntryPoint {
 }
 
 /**
- * TODO: Make lint happy
+ * loadCompositeRuntime should be used in place of ContainerRuntime.loadRuntime() in your container runtime
+ * factory to produce a runtime with the provided composite entryPoint.
  * @alpha
  */
 export const loadCompositeRuntime = async (

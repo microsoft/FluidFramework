@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha (undocumented)
+// @alpha
 export class CompositeEntryPoint {
     // (undocumented)
     readonly addEntryPointPiece: (entryPointPiece: IEntryPointPiece) => void;
