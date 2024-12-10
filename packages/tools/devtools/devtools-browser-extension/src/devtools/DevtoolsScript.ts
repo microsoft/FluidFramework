@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { runDevtoolsScript } from "./DevtoolsScriptContent.js";
 import { browser } from "../Globals.js";
+
+import { runDevtoolsScript } from "./DevtoolsScriptContent.js";
 
 /**
  * This module is the extension's Devtools Script.

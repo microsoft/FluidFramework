@@ -6,8 +6,11 @@
 import { expect } from "chai";
 import { createSandbox } from "sinon";
 
-import { stubGlobals } from "./Utilities.js";
+// Allow directly importing the content which this test suite is testing:
+// eslint-disable-next-line import/no-internal-modules
 import { runDevtoolsScript } from "../devtools/DevtoolsScriptContent.js";
+
+import { stubGlobals } from "./Utilities.js";
 
 describe("Devtools Script unit tests", () => {
 	const sandbox = createSandbox();

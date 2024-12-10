@@ -9,7 +9,7 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging.js";
  * Code run when "DevtoolsScript" executes.
  * Factored out for testability.
  */
-export function runDevtoolsScript(browser: typeof chrome) {
+export function runDevtoolsScript(browser: typeof chrome): void {
 	console.log(formatDevtoolsScriptMessageForLogging("Initializing Devtools Script."));
 
 	// When our extension view is launched, open the root visualization view.
