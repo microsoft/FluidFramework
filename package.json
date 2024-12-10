@@ -113,7 +113,7 @@
   "devDependencies": {
     "@fluid-tools/build-cli": "^0.6.0",
     "@fluidframework/build-tools": "^0.6.0",
-    "@fluidframework/test-tools": "^0.2.3074",
+    "@fluidframework/test-tools": "^2.0.0",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
     "c8": "^7.7.1",
