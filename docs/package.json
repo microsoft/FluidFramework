@@ -40,7 +40,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"serve": "docusaurus serve",
-		"serve-with-azure-emulation": "swa start",
+		"serve-with-azure-emulation": "swa start --config-name ff-doc-site",
 		"prestart": "npm run generate-versions",
 		"start": "docusaurus start",
 		"pretest": "playwright install --with-deps",
