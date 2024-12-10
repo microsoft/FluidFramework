@@ -14,12 +14,7 @@ import {
 	type DifferenceMove,
 	SharedTreeBranchManager,
 } from "@fluidframework/ai-collab/alpha";
-import {
-	// Tree,
-	TreeAlpha,
-	// type TreeBranch,
-	type TreeViewAlpha,
-} from "@fluidframework/tree/alpha";
+import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -43,6 +38,8 @@ import { useSnackbar } from "notistack";
 import { OpenAI } from "openai";
 import React, { useState, type ReactNode, type SetStateAction } from "react";
 
+// eslint-disable-next-line import/no-internal-modules
+import { getOpenAiClient } from "@/infra/openAiClient";
 import {
 	SharedTreeTask,
 	SharedTreeTaskGroup,
@@ -50,7 +47,7 @@ import {
 	TaskPriorities,
 	type TaskPriority,
 	TaskStatuses,
-	validateLlmTask,
+	aiCollabLlmTreeNodeValidator,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
@@ -111,6 +108,128 @@ export function TaskCard(props: {
 	} else if (fieldDifferences.moved) {
 		cardColor = "#e5c5fa";
 	}
+
+	/**
+	 * Helper function for ai collaboration which creates a new branch from the current {@link SharedTreeAppState}
+	 * as well as find the matching {@link SharedTreeTask} intended to be worked on within the new branch.
+	 */
+	const getNewSharedTreeBranchAndTask = (
+		sharedTreeAppState: SharedTreeAppState,
+		task: SharedTreeTask,
+	): {
+		currentBranch: TreeBranch;
+		newBranchTree: TreeViewAlpha<typeof SharedTreeAppState>;
+		newBranchTask: SharedTreeTask;
+	} => {
+		// 1. Create `TreeBranch` from the current `SharedTreeAppState` and fork it into a new branch.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const currentBranch = TreeAlpha.branch(sharedTreeAppState)!;
+		const newBranchTree = currentBranch.fork() as TreeViewAlpha<typeof SharedTreeAppState>;
+
+		// 2. Now that we've created the new branch, we need to find the matching Task in that new branch.
+		const parentTaskGroup = Tree.parent(
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, -- Note that two levels up from the task is the task group node.
+			Tree.parent(task)!,
+		) as SharedTreeTaskGroup;
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const newBranchTask = newBranchTree.root.taskGroups
+			.find((taskGroup) => taskGroup.id === parentTaskGroup.id)!
+			.tasks.find((_newBranchTask) => _newBranchTask.id === task.id)!;
+
+		return { currentBranch, newBranchTree, newBranchTask };
+	};
+
+	/**
+	 * Executes Ai Collaboration for this task based on the users request.
+	 */
+	const handleAiCollab = async (userRequest: string): Promise<void> => {
+		setIsAiTaskRunning(true);
+		enqueueSnackbar(`Copilot: I'm working on your request - "${userRequest}"`, {
+			variant: "info",
+			autoHideDuration: 5000,
+		});
+
+		// 1. Get the OpenAI client
+		let openAiClient: OpenAI;
+		try {
+			openAiClient = getOpenAiClient();
+		} catch (error) {
+			enqueueSnackbar(`Copilot: ${error instanceof Error ? error.message : "unknown error"}`, {
+				variant: "error",
+				autoHideDuration: 5000,
+			});
+			return;
+		}
+
+		// 2. Get the current branch, the new branch and associated task to be used for ai collaboration
+		const { currentBranch, newBranchTree, newBranchTask } = getNewSharedTreeBranchAndTask(
+			props.sharedTreeBranch.root,
+			props.sharedTreeTask,
+		);
+		console.log("ai-collab Branch Task BEFORE:", { ...newBranchTask });
+
+		// 3. execute the ai collaboration
+		let response: AiCollabSuccessResponse | AiCollabErrorResponse;
+		try {
+			response = await aiCollab({
+				openAI: {
+					client: openAiClient,
+					modelName: "gpt-4o",
+				},
+				treeNode: newBranchTask,
+				prompt: {
+					systemRoleContext:
+						"You are a manager that is helping out with a project management tool. You have been asked to edit a specific task.",
+					userAsk: userRequest,
+				},
+				planningStep: true,
+				finalReviewStep: true,
+				dumpDebugLog: true,
+				validator: aiCollabLlmTreeNodeValidator,
+			});
+		} catch (error) {
+			console.error("Error in aiCollab:", error);
+			enqueueSnackbar(
+				`Copilot: Something went wrong processing your request - "${userRequest}":  ${error instanceof Error ? error.message : "unknown error"}`,
+				{
+					variant: "error",
+					autoHideDuration: 5000,
+				},
+			);
+			setIsAiTaskRunning(false);
+			return;
+		}
+
+		if (response.status === "success") {
+			enqueueSnackbar(`Copilot: I've completed your request - "${userRequest}"`, {
+				variant: "success",
+				autoHideDuration: 5000,
+			});
+
+			// This is how we get a set of differences between the original task and the AI-generated task that we can use for 'diff' visualizations.
+			const differences = new SharedTreeBranchManager({
+				nodeIdAttributeName: "id",
+			}).compare(
+				props.sharedTreeTask as unknown as Record<string, unknown>,
+				newBranchTask as unknown as Record<string, unknown>,
+			);
+
+			console.log("ai-collab Branch Task AFTER:", { ...newBranchTask });
+			console.log("ai-collab Branch Task differences:", { ...newBranchTask });
+
+			setBranchDifferences(differences);
+			currentBranch.merge(newBranchTree);
+		} else {
+			enqueueSnackbar(
+				`Copilot: Something went wrong processing your request - "${userRequest}": ${response.errorMessage}`,
+				{ variant: "error", autoHideDuration: 5000 },
+			);
+		}
+
+		setAiPromptPopoverAnchor(undefined);
+		setIsAiTaskRunning(false);
+	};
 
 	return (
 		<Card
@@ -178,100 +297,7 @@ export function TaskCard(props: {
 										e.preventDefault();
 										const formData = new FormData(e.currentTarget);
 										const query = formData.get("searchQuery") as string;
-
-										setIsAiTaskRunning(true);
-										enqueueSnackbar(`Copilot: I'm working on your request - "${query}"`, {
-											variant: "info",
-											autoHideDuration: 5000,
-										});
-
-										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-										const currentBranch = TreeAlpha.branch(props.sharedTreeBranch.root)!;
-										const aiCollabBranch = currentBranch.fork() as TreeViewAlpha<
-											typeof SharedTreeAppState
-										>;
-										const parentTaskGroup = Tree.parent(
-											// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, -- Note that two levels up from the task is the task group node.
-											Tree.parent(props.sharedTreeTask)!,
-										) as SharedTreeTaskGroup;
-
-										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-										const aiCollabBranchTask = aiCollabBranch.root.taskGroups
-											.find((taskGroup) => taskGroup.id === parentTaskGroup.id)!
-											.tasks.find((task) => task.id === props.sharedTreeTask.id)!;
-
-										console.log("aiCollabBranchTask:", { ...aiCollabBranchTask });
-
-										let response: AiCollabSuccessResponse | AiCollabErrorResponse;
-										try {
-											response = await aiCollab({
-												openAI: {
-													client: new OpenAI({
-														apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-														dangerouslyAllowBrowser: true,
-													}),
-													modelName: "gpt-4o",
-												},
-												treeNode: aiCollabBranchTask,
-												prompt: {
-													systemRoleContext:
-														"You are a manager that is helping out with a project management tool. You have been asked to edit a specific task.",
-													userAsk: query,
-												},
-												planningStep: true,
-												finalReviewStep: true,
-												dumpDebugLog: true,
-												validator: (treeNode) => {
-													console.log("validator running on treeNode", { ...treeNode });
-													if (treeNode !== undefined) {
-														const schema = Tree.schema(treeNode);
-														switch (schema.identifier) {
-															case SharedTreeTask.identifier: {
-																validateLlmTask(treeNode as SharedTreeTask);
-															}
-															default: {
-																break;
-															}
-														}
-													}
-												},
-											});
-										} catch (error) {
-											console.error("Error in aiCollab:", error);
-											enqueueSnackbar(
-												`Copilot: Something went wrong processing your request - "${query}":  ${error instanceof Error ? error.message : "unknown error"}`,
-												{
-													variant: "error",
-													autoHideDuration: 5000,
-												},
-											);
-											setIsAiTaskRunning(false);
-											return;
-										}
-
-										if (response.status === "success") {
-											enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
-												variant: "success",
-												autoHideDuration: 5000,
-											});
-
-											const differences = new SharedTreeBranchManager({
-												nodeIdAttributeName: "id",
-											}).compare(
-												props.sharedTreeTask as unknown as Record<string, unknown>,
-												aiCollabBranchTask as unknown as Record<string, unknown>,
-											);
-											setBranchDifferences(differences);
-											currentBranch.merge(aiCollabBranch);
-											setAiPromptPopoverAnchor(undefined);
-										} else {
-											enqueueSnackbar(
-												`Copilot: Something went wrong processing your request - "${query}": ${response.errorMessage}`,
-												{ variant: "error", autoHideDuration: 5000 },
-											);
-										}
-
-										setIsAiTaskRunning(false);
+										await handleAiCollab(query);
 									}}
 								>
 									<TextField

@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import {
+	SchemaFactory,
+	Tree,
+	TreeViewConfiguration,
+	type TreeNode,
+} from "@fluidframework/tree";
 import { SharedTree } from "fluid-framework";
-
-import type { Engineer, Task, TaskGroup } from "./task";
 
 // The string passed to the SchemaFactory should be unique
 const sf = new SchemaFactory("ai-collab-sample-application");
@@ -16,33 +19,33 @@ const sf = new SchemaFactory("ai-collab-sample-application");
 export class SharedTreeTask extends sf.object("Task", {
 	title: sf.required(sf.string, {
 		metadata: {
-			description: `The title of the task`,
+			description: `The title of the task.`,
 		},
 	}),
 	id: sf.identifier,
 	description: sf.required(sf.string, {
 		metadata: {
-			description: `The description of the task`,
+			description: `The description of the task.`,
 		},
 	}),
 	priority: sf.required(sf.string, {
 		metadata: {
-			description: `The case-sensitive priority of the task which which can ONLY of three levels: "Low", "Medium", "High"`,
+			description: `The priority of the task which can ONLY be one of three levels: "Low", "Medium", "High" (case-sensitive).`,
 		},
 	}),
 	complexity: sf.required(sf.number, {
 		metadata: {
-			description: `The complexity of the task as a fibonacci number`,
+			description: `The complexity of the task as a fibonacci number.`,
 		},
 	}),
 	status: sf.required(sf.string, {
 		metadata: {
-			description: `The case-sensitive status of the task which can ONLY be either one of the following values "To Do", "In Progress", or "Done"`,
+			description: `The status of the task which can ONLY be one of the following values: "To Do", "In Progress", "Done"  (case-sensitive).`,
 		},
 	}),
 	assignee: sf.required(sf.string, {
 		metadata: {
-			description: `The name of the tasks assignee e.g. "Bob" or "Alice"`,
+			description: `The name of the tasks assignee e.g. "Bob" or "Alice".`,
 		},
 	}),
 }) {}
@@ -52,7 +55,7 @@ export class SharedTreeTaskList extends sf.array("TaskList", SharedTreeTask) {}
 export class SharedTreeEngineer extends sf.object("Engineer", {
 	name: sf.required(sf.string, {
 		metadata: {
-			description: `The name of an engineer whom can be assigned to a task`,
+			description: `The name of an engineer whom can be assigned to a task.`,
 		},
 	}),
 	id: sf.identifier,
@@ -184,33 +187,45 @@ export const TREE_CONFIGURATION = new TreeViewConfiguration({
 });
 
 /**
- * Utility function to help validate Task's created by an LLM. Since SharedTree doesn't support enums, this validator helps ensure the right values are being used
+ * Utility function to help validate Tasks created by an LLM. Since SharedTree doesn't support enums, this validator helps ensure the right values are being used
  * for the 'status' and 'priority' fields of a given Task as this is a common mistake LLM's make despite describing the fields as enums in their metadata.
  */
-export function validateLlmTask(task: SharedTreeTask): void {
+function validateLlmTask(task: SharedTreeTask): void {
 	if (Object.values(TaskStatuses).includes(task.status as TaskStatus) === false) {
-		const errorMessage = `The Task status value "${task.status}" is not valid. The accepted values are "${Object.values(TaskStatuses).join(", ")}"`;
-		console.log(errorMessage);
+		const errorMessage = `The Task status value "${task.status}" is not valid. The accepted values are '${Object.values(TaskStatuses).join(", ")}".`;
+		console.log(
+			`The LLM Produced an invalid Task. Sending the LLM the following error and feedback:`,
+			errorMessage,
+		);
 		throw new Error(errorMessage);
 	}
 
 	if (Object.values(TaskPriorities).includes(task.priority as TaskPriority) === false) {
-		const errorMessage = `The Task priority value "${task.priority}" is not valid. The accepted values are "${Object.values(TaskPriorities).join(", ")}`;
-		console.log(errorMessage);
+		const errorMessage = `The Task priority value "${task.priority}" is not valid. The accepted values are "${Object.values(TaskPriorities).join(", ")}".`;
+		console.log(
+			`The LLM Produced an invalid Task. Sending the LLM the following error and feedback:`,
+			errorMessage,
+		);
 		throw new Error(errorMessage);
 	}
 }
 
-export function sharedTreeTaskGroupToJson(taskGroup: SharedTreeTaskGroup): TaskGroup {
-	return {
-		id: taskGroup.id,
-		title: taskGroup.title,
-		description: taskGroup.description,
-		tasks: taskGroup.tasks.map((task) => {
-			return { ...task };
-		}) as Task[],
-		engineers: taskGroup.engineers.map((engineer) => {
-			return { ...engineer };
-		}) as Engineer[],
-	};
+/**
+ * TreeNode validator function for use with fluidframework/ai-collab.
+ * This helps inform the LLM of any issues with the TreeNode it produced that cannot be caught by ai-collab.
+ */
+export function aiCollabLlmTreeNodeValidator(treeNode: TreeNode): void {
+	console.log("Validator running on LLM produced treeNode", { ...treeNode });
+	if (treeNode !== undefined) {
+		const schema = Tree.schema(treeNode);
+		switch (schema.identifier) {
+			case SharedTreeTask.identifier: {
+				validateLlmTask(treeNode as SharedTreeTask);
+				break;
+			}
+			default: {
+				break;
+			}
+		}
+	}
 }
