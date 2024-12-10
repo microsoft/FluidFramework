@@ -4,14 +4,18 @@
  */
 
 export {
-	DataTransformationCallback,
-	IImportExportModel,
-	IMigratableModel,
+	ExportDataCallback,
 	IMigrator,
+	IMigratorEntryPoint,
 	IMigratorEvents,
-	IVersionedModel,
+	LoadSourceContainerCallback,
+	MigrationCallback,
 } from "./interfaces.js";
+export { makeMigratorEntryPointPiece } from "./makeMigratorEntryPointPiece.js";
+export { Migrator } from "./migrator.js";
 export {
-	getModelAndMigrationToolFromContainer,
-	Migrator,
-} from "./migrator.js";
+	CreateDetachedContainerCallback,
+	ImportDataCallback,
+	makeCreateDetachedContainerCallback,
+	makeSeparateContainerMigrationCallback,
+} from "./separateContainerCallbackHelpers.js";
