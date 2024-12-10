@@ -96,7 +96,7 @@ describe("simple-tree customTree", () => {
 	it("tryStoredSchemaAsArray", () => {
 		const arraySchema = schemaFactory.array(schemaFactory.number);
 		const arrayCase = tryStoredSchemaAsArray(getStoredSchema(arraySchema));
-		assert.deepEqual(arrayCase, new Set([schemaFactory.number]));
+		assert.deepEqual(arrayCase, new Set([schemaFactory.number.identifier]));
 
 		const objectSchema = schemaFactory.object("x", {});
 		const objectCase = tryStoredSchemaAsArray(getStoredSchema(objectSchema));
