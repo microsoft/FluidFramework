@@ -573,7 +573,7 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
-          - job: Coverage tests
+          - job: Coverage_tests
             displayName: "Coverage tests"
             dependsOn: build
             variables:
