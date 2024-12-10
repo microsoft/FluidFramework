@@ -11,7 +11,6 @@ import chalk from "picocolors";
 
 import {
 	IBuildProject,
-	findGitRootSync,
 	loadBuildProject,
 } from "@fluid-tools/build-infrastructure";
 import { CommandLogger } from "../../logging.js";
@@ -293,9 +292,13 @@ export abstract class BaseCommandWithBuildProject<
 > extends BaseCommand<T> {
 	private _buildProject: IBuildProject | undefined;
 
-	public getBuildProject(repoRoot?: string): IBuildProject {
+	public getContext(): never {
+        throw new Error("getContext method should only be called in BaseCommand instances");
+    }
+
+	public getBuildProject(searchPath?: string): IBuildProject {
 		if (this._buildProject === undefined) {
-			const root = repoRoot ?? findGitRootSync();
+			const root = searchPath ?? process.cwd();
 			this._buildProject = loadBuildProject(root);
 		}
 
