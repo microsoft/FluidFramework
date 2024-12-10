@@ -7,6 +7,10 @@ import {
 	IDeltaManager,
 	ContainerWarning,
 } from "@fluidframework/container-definitions/internal";
+import type {
+	ISummarizerEvents as NewISummarizerEvents,
+	SummarizerStopReason as NewSummarizerStopReason,
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
 	IEvent,
 	IEventProvider,
@@ -54,7 +58,7 @@ export interface ICancellationToken<T> {
  * @legacy
  * @alpha
  */
-export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
+export type ISummaryCancellationToken = ICancellationToken<NewSummarizerStopReason>;
 
 /**
  * Data required to update internal tracking state after receiving a Summary Ack.
@@ -397,6 +401,7 @@ export type EnqueueSummarizeResult =
 /**
  * @legacy
  * @alpha
+ * @deprecated Use SummarizerStopReason from the "\@fluidframework/container-runtime-definitions" package
  */
 export type SummarizerStopReason =
 	/** Summarizer client failed to summarize in all attempts. */
@@ -427,6 +432,7 @@ export type SummarizerStopReason =
 /**
  * @legacy
  * @alpha
+ * @deprecated Use ISummarizeEventProps from the "\@fluidframework/container-runtime-definitions" package
  */
 export interface ISummarizeEventProps {
 	result: "success" | "failure" | "canceled";
@@ -438,6 +444,7 @@ export interface ISummarizeEventProps {
 /**
  * @legacy
  * @alpha
+ * @deprecated Use ISummarizerEvents from the "\@fluidframework/container-runtime-definitions" package
  */
 export interface ISummarizerEvents extends IEvent {
 	(event: "summarize", listener: (props: ISummarizeEventProps) => void);
@@ -447,7 +454,7 @@ export interface ISummarizerEvents extends IEvent {
  * @legacy
  * @alpha
  */
-export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
+export interface ISummarizer extends IEventProvider<NewISummarizerEvents> {
 	/**
 	 * Allows {@link ISummarizer} to be used with our {@link @fluidframework/core-interfaces#FluidObject} pattern.
 	 */
@@ -458,12 +465,12 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	 * Summarizer will finish current processes, which may take a while.
 	 * For example, summarizer may complete last summary before exiting.
 	 */
-	stop(reason: SummarizerStopReason): void;
+	stop(reason: NewSummarizerStopReason): void;
 
 	/* Closes summarizer. Any pending processes (summary in flight) are abandoned. */
 	close(): void;
 
-	run(onBehalfOf: string): Promise<SummarizerStopReason>;
+	run(onBehalfOf: string): Promise<NewSummarizerStopReason>;
 
 	/**
 	 * Attempts to generate a summary on demand. If already running, takes no action.
