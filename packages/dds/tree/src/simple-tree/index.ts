@@ -156,7 +156,6 @@ export {
 	type ReadableField,
 	type ReadSchema,
 	type NodeSchemaMetadata,
-	type NodeSchemaOptions,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,

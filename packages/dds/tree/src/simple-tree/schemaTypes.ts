@@ -829,29 +829,7 @@ export type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boole
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
 /**
- * Additional information to provide to Node Schema creation.
- *
- * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
- * See {@link NodeSchemaMetadata.custom}.
- *
- * @sealed
- * @public
- */
-export interface NodeSchemaOptions<out TMetadata = NodeSchemaMetadata> {
-	/**
-	 * Optional metadata to associate with the Node Schema.
-	 *
-	 * @remarks
-	 * Note: this metadata is not persisted; it is strictly local to the application.
-	 * So, making changes to these values will not affect collaborators.
-	 */
-	readonly metadata?: TMetadata;
-}
-
-/**
  * Metadata associated with a Node Schema.
- *
- * @remarks Specified via {@link NodeSchemaOptions.metadata}.
  *
  * @sealed
  * @public
