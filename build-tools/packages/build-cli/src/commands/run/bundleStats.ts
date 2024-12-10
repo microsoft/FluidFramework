@@ -16,6 +16,10 @@ export default class RunBundlestats extends BaseCommand<typeof RunBundlestats> {
 	static readonly description =
 		`Generate a report from input bundle stats collected through the collect bundleStats command.`;
 
+	static readonly aliases = ["publish:bundleStats"];
+	static readonly deprecated =
+		'The "run bundleStats" command is deprecated. Please use "publish:bundleStats" instead.';
+
 	static readonly flags = {
 		dangerfile: Flags.file({
 			description: "Path to dangerfile",
