@@ -122,6 +122,7 @@ export {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	tryStoredSchemaAsArray,
+	withMetadata,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
