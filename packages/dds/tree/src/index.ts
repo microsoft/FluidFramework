@@ -128,6 +128,7 @@ export {
 	type FactoryContentObject,
 	type ReadableField,
 	type ReadSchema,
+	withMetadata,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,

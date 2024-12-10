@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockFluidDataStoreRuntime,
@@ -36,6 +36,7 @@ import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
+	withMetadata,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import type {
@@ -363,14 +364,13 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("Node schema metadata", () => {
+		it("withMetadata", () => {
 			const factory = new SchemaFactory("");
 
-			class Foo extends factory.object(
-				"Foo",
-				{ bar: factory.number },
-				{ metadata: { description: "An object", custom: { baz: true } } },
-			) {}
+			class Foo extends withMetadata(factory.object("Foo", { bar: factory.number }), {
+				description: "An object",
+				custom: { baz: true },
+			}) {}
 
 			assert.deepEqual(Foo.metadata, {
 				description: "An object",
@@ -475,7 +475,7 @@ describe("schemaFactory", () => {
 		);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
-		const item = stuff[0];
+		const item = stuff[0] ?? oob();
 		const s: string = item.text;
 		assert.equal(s, "hi");
 	});
@@ -559,11 +559,12 @@ describe("schemaFactory", () => {
 			const namedInstance = new NamedList([5]);
 		});
 
-		it("Node schema metadata", () => {
+		it("withMetadata", () => {
 			const factory = new SchemaFactory("");
 
-			class Foo extends factory.array("Foo", factory.number, {
-				metadata: { description: "An array of numbers", custom: { baz: true } },
+			class Foo extends withMetadata(factory.array("Foo", factory.number), {
+				description: "An array of numbers",
+				custom: { baz: true },
 			}) {}
 
 			assert.deepEqual(Foo.metadata, {
@@ -628,11 +629,12 @@ describe("schemaFactory", () => {
 			const namedInstance = new NamedMap(new Map([["x", 5]]));
 		});
 
-		it("Node schema metadata", () => {
+		it("withMetadata", () => {
 			const factory = new SchemaFactory("");
 
-			class Foo extends factory.map("Foo", factory.number, {
-				metadata: { description: "A map containing numbers", custom: { baz: true } },
+			class Foo extends withMetadata(factory.map("Foo", factory.number), {
+				description: "A map containing numbers",
+				custom: { baz: true },
 			}) {}
 
 			assert.deepEqual(Foo.metadata, {
