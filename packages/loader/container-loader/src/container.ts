@@ -38,7 +38,12 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
-import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	checkLayerCompatibility,
+	isPromiseLike,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import {
 	IClient,
 	IClientDetails,
@@ -494,6 +499,21 @@ export class Container
 
 	private readonly mc: MonitoringContext;
 
+	// The current generation of the Loader layer. This is used to ensure compatibility between the Loader and
+	// other layers.
+	private readonly generation = 1;
+	// A list of features required by the Loader layer to be supported by the Runtime layer.
+	private readonly requiredFeaturesFromRuntime: string[] = [];
+	// A list of features supported by the Loader layer advertised to the Runtime layer.
+	private readonly supportedFeaturesForRuntime: Map<string, unknown> = new Map([
+		/**
+		 * This version of the loader accepts `referenceSequenceNumber`, provided by the container runtime,
+		 * as a parameter to the `submitBatchFn` and `submitSummaryFn` functions.
+		 * This is then used to set the reference sequence numbers of the submitted ops in the DeltaManager.
+		 */
+		["referenceSequenceNumbers", true],
+	]);
+
 	/**
 	 * Used by the RelativeLoader to spawn a new Container for the same document.  Used to create the summarizing client.
 	 */
@@ -802,6 +822,9 @@ export class Container
 			detachedBlobStorage,
 			protocolHandlerBuilder,
 		} = createProps;
+
+		/* This is the minimum generation of the Runtime this Loader supports. */
+		this.supportedFeaturesForRuntime.set("minSupportedGeneration", 1);
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
@@ -2456,16 +2479,41 @@ export class Container
 			() => this.connected,
 			this._deltaManager.clientDetails,
 			existing,
+			this.supportedFeaturesForRuntime,
 			this.subLogger,
 			pendingLocalState,
 			snapshot,
 		);
 
-		this._runtime = await PerformanceEvent.timedExecAsync(
+		const runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
 			{ eventName: "InstantiateRuntime" },
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
+
+		const supportedFeaturesForRuntime = runtime.supportedFeatures;
+		if (
+			supportedFeaturesForRuntime &&
+			!checkLayerCompatibility(
+				supportedFeaturesForRuntime,
+				this.requiredFeaturesFromRuntime,
+				this.generation,
+			)
+		) {
+			const error = new UsageError("Loader version is not compatible with Runtime", {
+				loaderVersion: pkgVersion,
+				runtimeVersion: runtime.pkgVersion,
+				runtimeGeneration: this.generation,
+				minSupportedGeneration: supportedFeaturesForRuntime.get(
+					"minSupportedGeneration",
+				) as number,
+			});
+			this.close(error);
+			throw error;
+		}
+
+		this._runtime = runtime;
+
 		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;
