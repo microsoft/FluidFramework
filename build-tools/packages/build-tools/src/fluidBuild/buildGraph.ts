@@ -5,6 +5,7 @@
 
 import { AsyncPriorityQueue } from "async";
 import chalk from "picocolors";
+import type { Spinner } from "picospinner";
 import * as semver from "semver";
 
 import * as assert from "assert";
