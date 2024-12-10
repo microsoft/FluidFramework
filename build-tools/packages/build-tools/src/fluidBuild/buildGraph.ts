@@ -532,11 +532,14 @@ export class BuildGraph {
 		return succeeded;
 	}
 
-	public async build(timer?: Timer): Promise<BuildResult> {
+	public async build(timer?: Timer, spinner?: Spinner): Promise<BuildResult> {
 		// This function must only be called once here at the beginning of the build.
 		// It checks the up-to-date state at this moment and will not be changed for the duration of the build.
+		spinner?.start();
+		spinner?.setText("Checking for incremental build task status...");
 		const isUpToDate = await this.isUpToDate();
 		if (timer) timer.time(`Check up to date completed`);
+		spinner?.succeed("Tasks loaded.");
 
 		log(
 			`Start tasks '${chalk.cyanBright(this.buildTaskNames.join("', '"))}' in ${

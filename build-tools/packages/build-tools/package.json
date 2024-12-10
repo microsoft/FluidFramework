@@ -57,6 +57,7 @@
 		"multimatch": "^5.0.0",
 		"picocolors": "^1.1.1",
 		"picomatch": "^2.3.1",
+		"picospinner": "^2.0.0",
 		"rimraf": "^4.4.1",
 		"semver": "^7.6.3",
 		"sort-package-json": "1.57.0",
