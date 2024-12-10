@@ -196,14 +196,14 @@ async function visualizeVerboseNodeFields(
  */
 async function visualizeObjectNode(
 	tree: VerboseTreeNode,
-	schema: SimpleObjectNodeSchema,
+	nodeSchema: SimpleObjectNodeSchema,
 	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	return {
 		schema: {
 			schemaName: tree.type,
-			allowedTypes: getObjectAllowedTypes(schema),
+			allowedTypes: getObjectAllowedTypes(nodeSchema),
 		},
 		fields: await visualizeVerboseNodeFields(tree, treeSchema, visualizeChildData),
 		kind: VisualSharedTreeNodeKind.InternalNode,
@@ -215,14 +215,14 @@ async function visualizeObjectNode(
  */
 async function visualizeMapNode(
 	tree: VerboseTreeNode,
-	schema: SimpleMapNodeSchema,
+	nodeSchema: SimpleMapNodeSchema,
 	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	return {
 		schema: {
 			schemaName: tree.type,
-			allowedTypes: `Record<string, ${concatenateTypes(schema.allowedTypes)}>`,
+			allowedTypes: `Record<string, ${concatenateTypes(nodeSchema.allowedTypes)}>`,
 		},
 		fields: await visualizeVerboseNodeFields(tree, treeSchema, visualizeChildData),
 		kind: VisualSharedTreeNodeKind.InternalNode,

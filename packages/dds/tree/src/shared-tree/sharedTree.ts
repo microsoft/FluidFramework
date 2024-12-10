@@ -142,7 +142,7 @@ export interface ITreeInternal extends ISharedObject, ITree {
 /**
  * {@link ITreeInternal} extended with some non-exported APIs.
  */
-export interface ISharedTree extends ISharedObject, ITree {
+export interface ISharedTree extends ISharedObject, ITreeInternal {
 	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.

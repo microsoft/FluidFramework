@@ -261,6 +261,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	// Root node of the SharedTree's content.
 	const treeView = sharedTree.exportVerbose();
 	// TODO: this visualizer doesn't consider the root as a field, and thus does not display the allowed types or handle when it is empty.
+	// Tracked by https://dev.azure.com/fluidframework/internal/_workitems/edit/26472.
 	if (treeView === undefined) {
 		throw new Error("Support for visualizing empty trees is not implemented");
 	}
