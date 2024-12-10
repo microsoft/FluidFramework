@@ -14,8 +14,15 @@ import {
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeView,
+	customizeSchemaTyping,
 } from "../../../simple-tree/index.js";
 import { TreeFactory } from "../../../treeFactory.js";
+import {
+	brand,
+	type areSafelyAssignable,
+	type Brand,
+	type requireTrue,
+} from "../../../util/index.js";
 
 // Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
 const schema = new SchemaFactory("com.example");
@@ -110,7 +117,7 @@ describe("Class based end to end example", () => {
 	});
 
 	// Confirm that the alternative syntax for initialTree from the example above actually works.
-	it("using a mix of insertable content and nodes", () => {
+	it("using a mix of insertible content and nodes", () => {
 		const factory = new TreeFactory({});
 		const theTree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -126,5 +133,61 @@ describe("Class based end to end example", () => {
 				],
 			}),
 		);
+	});
+
+	it("customized narrowing", () => {
+		class Specific extends schema.object("Specific", {
+			s: customizeSchemaTyping(schema.string).simplified<"foo" | "bar">(),
+		}) {}
+		const parent = new Specific({ s: "bar" });
+		// Reading field gives narrowed type
+		const s: "foo" | "bar" = parent.s;
+
+		// @ts-expect-error custom typing violation does not build, but runs without error
+		const invalid = new Specific({ s: "x" });
+	});
+
+	it("customized narrowing - safer", () => {
+		const specialString = customizeSchemaTyping(schema.string).custom<{
+			input: "foo" | "bar";
+			// Assignment can't be made be more restrictive than the read type, but we can choose to disable it.
+			readWrite: never;
+		}>();
+		class Specific extends schema.object("Specific", {
+			s: specialString,
+		}) {}
+		const parent = new Specific({ s: "bar" });
+		// Reading gives string
+		const s = parent.s;
+		type _check = requireTrue<areSafelyAssignable<typeof s, string>>;
+
+		// @ts-expect-error Assigning is disabled;
+		parent.s = "x";
+
+		// @ts-expect-error custom typing violation does not build, but runs without error
+		const invalid = new Specific({ s: "x" });
+
+		class Array extends schema.array("Specific", specialString) {}
+
+		// Array constructor is also narrowed correctly.
+		const a = new Array(["bar"]);
+		// Array insertion is narrowed as well.
+		a.insertAtEnd("bar");
+		// and reading just gives string, since this example choose to do so since other clients could set unexpected strings as its not enforced by schema:
+		const s2 = a[0];
+		type _check2 = requireTrue<areSafelyAssignable<typeof s2, string>>;
+	});
+
+	it("customized branding", () => {
+		type SpecialString = Brand<string, "tree.SpecialString">;
+
+		class Specific extends schema.object("Specific", {
+			s: customizeSchemaTyping(schema.string).simplified<SpecialString>(),
+		}) {}
+		const parent = new Specific({ s: brand("bar") });
+		const s: SpecialString = parent.s;
+
+		// @ts-expect-error custom typing violation does not build, but runs without error
+		const invalid = new Specific({ s: "x" });
 	});
 });

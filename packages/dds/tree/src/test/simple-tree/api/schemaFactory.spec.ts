@@ -39,6 +39,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import type {
+	DefaultTreeNodeFromImplicitAllowedTypes,
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
@@ -89,6 +90,46 @@ import { validateUsageError } from "../../utils.js";
 
 		type FromArray = TreeNodeFromImplicitAllowedTypes<[typeof Note, typeof Note]>;
 		type _check5 = requireTrue<areSafelyAssignable<FromArray, Note>>;
+	}
+	// TreeNodeFromImplicitAllowedTypes class
+	{
+		class NoteCustomized extends schema.object("Note", { text: schema.string }) {
+			public test: boolean = false;
+		}
+
+		type _check = requireAssignableTo<typeof NoteCustomized, TreeNodeSchema>;
+		type _checkNodeType = requireAssignableTo<
+			typeof NoteCustomized,
+			TreeNodeSchema<string, NodeKind, NoteCustomized>
+		>;
+
+		type TestDefault = DefaultTreeNodeFromImplicitAllowedTypes<typeof NoteCustomized>;
+
+		type _checkDefault1 = requireAssignableTo<TestDefault, NoteCustomized>;
+		type _checkDefault2 = requireTrue<areSafelyAssignable<TestDefault, NoteCustomized>>;
+		type Instance = InstanceType<typeof NoteCustomized>;
+		type _checkInstance = requireTrue<areSafelyAssignable<Instance, NoteCustomized>>;
+
+		type Test = TreeNodeFromImplicitAllowedTypes<typeof NoteCustomized>;
+		type _check2 = requireTrue<areSafelyAssignable<Test, NoteCustomized>>;
+
+		type _check3 = requireTrue<
+			areSafelyAssignable<
+				TreeNodeFromImplicitAllowedTypes<[typeof NoteCustomized]>,
+				NoteCustomized
+			>
+		>;
+		type _check4 = requireTrue<
+			areSafelyAssignable<
+				TreeNodeFromImplicitAllowedTypes<[() => typeof NoteCustomized]>,
+				NoteCustomized
+			>
+		>;
+
+		type FromArray = TreeNodeFromImplicitAllowedTypes<
+			[typeof NoteCustomized, typeof NoteCustomized]
+		>;
+		type _check5 = requireTrue<areSafelyAssignable<FromArray, NoteCustomized>>;
 	}
 
 	// TreeFieldFromImplicitField
