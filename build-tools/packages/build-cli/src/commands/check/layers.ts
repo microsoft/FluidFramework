@@ -30,10 +30,6 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers> {
 			required: true,
 			exists: true,
 		}),
-		logtime: Flags.boolean({
-			description: "Display the current time on every status message for logging",
-			required: false,
-		}),
 		...BaseCommand.flags,
 	} as const;
 
