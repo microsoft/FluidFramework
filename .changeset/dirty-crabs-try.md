@@ -7,4 +7,4 @@
 
 SummarizerStopReason, ISummarizeEventProps, and ISummarizerEvents are now deprecated
 
-`SummarizerStopReason`, `ISummarizeEventProps`, and `ISummarizerEvents` have all been deprecated from the `"@fluidframework/container-runtime"` package. Please migrate all uses of these APIs to their respective implementations in the `"@fluidframework/container-runtime-definitions"` package.
+`SummarizerStopReason`, `ISummarizeEventProps`, and `ISummarizerEvents` have all been deprecated from the `"@fluidframework/container-runtime"` package. Please migrate all uses of these APIs to their counterparts in the `"@fluidframework/container-runtime-definitions"` package.

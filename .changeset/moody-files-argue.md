@@ -31,7 +31,7 @@ export async function createDetachedContainer(
 ```
 
 `ICreateDetachedContainerProps` are the properties that needs to be supplied to the above API which contains props like
-URL Resolver, IDocumentServiceFactory etc., which were previously used to create the `Loader` object.
+URL Resolver, IDocumentServiceFactory, etc., which were previously used to create the `Loader` object.
 
 ##### Use `loadExistingContainer` to load an existing container
 
@@ -42,7 +42,7 @@ export async function loadExistingContainer(
 ```
 
 `ILoadExistingContainerProps` are the properties that needs to be supplied to the above API which contains props like
-URL Resolver, IDocumentServiceFactory etc., which were earlier used to create the `Loader` object.
+URL Resolver, IDocumentServiceFactory, etc., which were earlier used to create the `Loader` object.
 
 ##### Use `rehydrateDetachedContainer` to create a detached container from a serializedState of another container
 
@@ -53,14 +53,14 @@ export async function rehydrateDetachedContainer(
 ```
 
 `IRehydrateDetachedContainerProps` are the properties that needs to be supplied to the above API which contains props like
-URL Resolver, IDocumentServiceFactory etc., which were earlier used to create the `Loader` object.
+URL Resolver, IDocumentServiceFactory, etc., which were earlier used to create the `Loader` object.
 
 ##### Note on `ICreateAndLoadContainerProps`.
 
 The props which were used to create the `Loader` object are now moved to the `ICreateAndLoadContainerProps` interface.
 `ICreateDetachedContainerProps`, `ILoadExistingContainerProps` and `IRehydrateDetachedContainerProps` which extends
 `ICreateAndLoadContainerProps` also contains some additional props which will be used to create and load containers like
-`IFluidCodeDetails`, `IRequest` etc. Previously these were directly passed when calling APIs like
+`IFluidCodeDetails`, `IRequest`, etc. Previously these were directly passed when calling APIs like
 `Loader.createDetachedContainer`, `Loader.resolve` and `Loader.rehydrateDetachedContainerFromSnapshot` on the `Loader`
 object. Also, `ILoaderProps.ILoaderOptions` are not replaced with `ICreateAndLoadContainerProps.IContainerPolicies`
 since there will be no concept of `Loader`.
