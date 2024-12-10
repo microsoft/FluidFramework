@@ -124,7 +124,7 @@ export function TaskGroup(props: {
 			});
 
 			// 3. Handle the response from the ai collaboration
-			if (response.status !== 'success') {
+			if (response.status !== "success") {
 				throw new Error(response.errorMessage);
 			}
 
@@ -151,14 +151,15 @@ export function TaskGroup(props: {
 				variant: "success",
 				autoHideDuration: 5000,
 			});
-		}
-		catch (error) {
-			enqueueSnackbar(`Copilot: Something went wrong processing your request - ${error instanceof Error ? error.message : "unknown error"}`, {
-				variant: "error",
-				autoHideDuration: 5000,
-			});
-		}
-		finally {
+		} catch (error) {
+			enqueueSnackbar(
+				`Copilot: Something went wrong processing your request - ${error instanceof Error ? error.message : "unknown error"}`,
+				{
+					variant: "error",
+					autoHideDuration: 5000,
+				},
+			);
+		} finally {
 			setIsAiTaskRunning(false);
 		}
 	};

@@ -175,7 +175,7 @@ export function TaskCard(props: {
 				validator: aiCollabLlmTreeNodeValidator,
 			});
 
-			if (response.status !== 'success') {
+			if (response.status !== "success") {
 				throw new Error(response.errorMessage);
 			}
 
@@ -197,14 +197,15 @@ export function TaskCard(props: {
 			setBranchDifferences(taskDifferences);
 			// Note that we don't ask for user approval before merging changes at a task level for simplicites sake.
 			currentBranch.merge(newBranchTree);
-		}
-		catch (error) {
-			enqueueSnackbar(`Copilot: Something went wrong processing your request - ${error instanceof Error ? error.message : "unknown error"}`, {
-				variant: "error",
-				autoHideDuration: 5000,
-			});
-		}
-		finally {
+		} catch (error) {
+			enqueueSnackbar(
+				`Copilot: Something went wrong processing your request - ${error instanceof Error ? error.message : "unknown error"}`,
+				{
+					variant: "error",
+					autoHideDuration: 5000,
+				},
+			);
+		} finally {
 			setAiPromptPopoverAnchor(undefined);
 			setIsAiTaskRunning(false);
 		}
