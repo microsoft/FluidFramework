@@ -6,15 +6,10 @@
 
 // @alpha
 export class CompositeEntryPoint {
-    // (undocumented)
     readonly addEntryPointPiece: (entryPointPiece: IEntryPointPiece) => void;
-    // (undocumented)
     readonly onCreate: (runtime: IContainerRuntime) => Promise<void>;
-    // (undocumented)
     readonly onLoad: (runtime: IContainerRuntime) => Promise<void>;
-    // (undocumented)
     readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<Record<string, FluidObject>>;
-    // (undocumented)
     get registryEntries(): NamedFluidDataStoreRegistryEntries;
 }
 
@@ -33,24 +28,18 @@ export interface IAcceptedMigrationDetails {
     newVersion: string;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface IEntryPointPiece {
-    // (undocumented)
     readonly createPiece: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    // (undocumented)
     readonly name: string;
-    // (undocumented)
     readonly onCreate: (runtime: IContainerRuntime) => Promise<void>;
-    // (undocumented)
     readonly onLoad: (runtime: IContainerRuntime) => Promise<void>;
-    // (undocumented)
     readonly registryEntries: NamedFluidDataStoreRegistryEntries;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface IMigrator {
     readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
-    // (undocumented)
     readonly events: IEventProvider<IMigratorEvents>;
     readonly migrationResult: unknown | undefined;
     readonly migrationState: MigrationState;
@@ -60,14 +49,12 @@ export interface IMigrator {
 
 // @alpha
 export interface IMigratorEntryPoint {
-    // (undocumented)
     getMigrator: (loadSourceContainerCallback: LoadSourceContainerCallback, migrationCallback: MigrationCallback) => Promise<IMigrator>;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface IMigratorEvents extends IEvent {
-    // (undocumented)
-    (event: "stopping" | "migrating" | "migrated", listener: () => void): any;
+    (event: "stopping" | "migrating" | "migrated", listener: () => void): void;
 }
 
 // @alpha

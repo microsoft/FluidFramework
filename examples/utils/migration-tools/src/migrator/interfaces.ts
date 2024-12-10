@@ -35,6 +35,10 @@ export type MigrationCallback = (version: string, exportedData: unknown) => Prom
  * @alpha
  */
 export interface IMigratorEntryPoint {
+	/**
+	 * Retrieve the IMigrator from the container.  It will use the provided callbacks to load the source
+	 * container for data export and perform the migration.
+	 */
 	getMigrator: (
 		loadSourceContainerCallback: LoadSourceContainerCallback,
 		migrationCallback: MigrationCallback,
@@ -44,16 +48,24 @@ export interface IMigratorEntryPoint {
 // #region IMigrator
 
 /**
+ * Events emitted by the IMigrator.
  * @alpha
  */
 export interface IMigratorEvents extends IEvent {
-	(event: "stopping" | "migrating" | "migrated", listener: () => void);
+	/**
+	 * As the migrator progresses between migration states, it emits the corresponding event.
+	 */
+	(event: "stopping" | "migrating" | "migrated", listener: () => void): void;
 }
 
 /**
+ * A tool used to propose and monitor container migration.
  * @alpha
  */
 export interface IMigrator {
+	/**
+	 * Event emitter object.
+	 */
 	readonly events: IEventProvider<IMigratorEvents>;
 
 	/**
