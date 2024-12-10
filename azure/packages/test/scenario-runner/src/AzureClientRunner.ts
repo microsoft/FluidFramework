@@ -9,9 +9,9 @@ import { AzureClient } from "@fluidframework/azure-client";
 import {
 	IRunConfig,
 	IRunner,
+	IRunnerEvents,
 	IRunnerStatus,
 	RunnerStatus,
-	type IRunnerEvents,
 } from "./interface.js";
 import { getLogger } from "./logger.js";
 import {

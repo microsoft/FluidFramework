@@ -36,7 +36,8 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			this.error(`Package not found: ${args.package_or_release_group}`);
 		}
 
-		const versions = await context.getAllVersions(rgOrPackage.name);
+		const gitRepo = await context.getGitRepository();
+		const versions = await gitRepo.getAllVersions(rgOrPackage.name);
 
 		if (!versions) {
 			this.error(`No versions found for ${rgOrPackage.name}`);

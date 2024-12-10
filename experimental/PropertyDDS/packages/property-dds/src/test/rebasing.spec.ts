@@ -20,9 +20,12 @@ import {
 import {
 	IContainer,
 	IFluidCodeDetails,
-	IHostLoader,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
+import {
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
@@ -36,8 +39,8 @@ import {
 	ITestFluidObject,
 	LoaderContainerTracker,
 	TestFluidObjectFactory,
-	createAndAttachContainer,
-	createLoader,
+	createAndAttachContainerUsingProps,
+	createLoaderProps,
 } from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
 import lodash from "lodash";
@@ -51,15 +54,21 @@ import { SharedPropertyTree } from "../propertyTree.js";
 // a "namespace" uuid to generate uuidv5 in fuzz tests
 const namespaceGuid: string = "b6abf2df-d86d-413b-8fd1-359d4aa341f2";
 
-function createLocalLoader(
+function createLocalLoaderProps(
 	packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
 	deltaConnectionServer: ILocalDeltaConnectionServer,
 	urlResolver: IUrlResolver,
 	options?: ILoaderOptions,
-): IHostLoader {
+): ILoaderProps {
 	const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
-	return createLoader(packageEntries, documentServiceFactory, urlResolver, undefined, options);
+	return createLoaderProps(
+		packageEntries,
+		documentServiceFactory,
+		urlResolver,
+		undefined,
+		options,
+	);
 }
 
 console.assert = (condition: boolean, ...data: any[]) => {
@@ -100,27 +109,31 @@ describe("PropertyDDS", () => {
 	let errorHandler: (Error) => void;
 
 	async function createContainer(): Promise<IContainer> {
-		const loader = createLocalLoader(
+		const createDetachedContainerProps = createLocalLoaderProps(
 			[[codeDetails, factory]],
 			deltaConnectionServer,
 			urlResolver,
 		);
-		opProcessingController.add(loader);
-		return createAndAttachContainer(
-			codeDetails,
-			loader,
+		const containerUsingPops = await createAndAttachContainerUsingProps(
+			{ ...createDetachedContainerProps, codeDetails },
 			urlResolver.createCreateNewRequest(documentId),
 		);
+		opProcessingController.addContainer(containerUsingPops);
+		return containerUsingPops;
 	}
 
 	async function loadContainer(): Promise<IContainer> {
-		const loader = createLocalLoader(
+		const loaderProps = createLocalLoaderProps(
 			[[codeDetails, factory]],
 			deltaConnectionServer,
 			urlResolver,
 		);
-		opProcessingController.add(loader);
-		return loader.resolve({ url: documentLoadUrl });
+		const containerUsingPops = await loadExistingContainer({
+			...loaderProps,
+			request: { url: documentLoadUrl },
+		});
+		opProcessingController.addContainer(containerUsingPops);
+		return containerUsingPops;
 	}
 
 	function createRandomTests(
