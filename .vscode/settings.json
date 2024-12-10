@@ -43,6 +43,7 @@
 		"handletable",
 		"incrementality",
 		"injective",
+		"insertable",
 		"losslessly",
 		"mitigations",
 		"mocharc",
@@ -61,7 +62,7 @@
 		"unacked",
 		"unaugmented",
 		"undoprovider",
-		"unsequenced",
+		"unsequenced"
 	],
 
 	// Enable biome as default formatter, and disable rules that disagree with it
