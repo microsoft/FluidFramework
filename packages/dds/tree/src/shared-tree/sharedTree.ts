@@ -127,7 +127,7 @@ export interface ITreeInternal extends ISharedObject, ITree {
 	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
 	 * @privateRemarks
 	 * TODO:
-	 * THis should probably get promoted to a public API on ITree eventually.
+	 * This should probably get promoted to a public API on ITree eventually.
 	 */
 	exportVerbose(): VerboseTree | undefined;
 
