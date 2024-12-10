@@ -218,7 +218,6 @@ import {
 	ISubmitSummaryOptions,
 	ISummarizeResults,
 	ISummarizer,
-	ISummarizerEvents,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummaryMetadataMessage,
@@ -840,7 +839,7 @@ export async function loadContainerRuntime(
  * @alpha
  */
 export class ContainerRuntime
-	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
+	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements
 		IContainerRuntime,
 		IRuntime,
@@ -2015,9 +2014,19 @@ export class ContainerRuntime
 						initialDelayMs: this.initialSummarizerDelayMs,
 					},
 				);
-				this.summaryManager.on("summarize", (eventProps) => {
-					this.emit("summarize", eventProps);
+				// Forward events from SummaryManager
+				[
+					"summarize",
+					"summarizeAllAttemptsFailed",
+					"summarizerStop",
+					"summarizerStart",
+					"summarizerStartupFailed",
+				].forEach((eventName) => {
+					this.summaryManager?.on(eventName, (...args: any[]) => {
+						this.emit(eventName, ...args);
+					});
 				});
+
 				this.summaryManager.start();
 			}
 		}
