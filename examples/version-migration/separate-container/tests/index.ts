@@ -9,7 +9,10 @@ import {
 	makeSeparateContainerMigrationCallback,
 } from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import {
 	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
@@ -79,13 +82,13 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	const searchParams = new URLSearchParams(location.search);
 	const testMode = searchParams.get("testMode") !== null;
-	const loader = new Loader({
+	const loaderProps: ILoaderProps = {
 		urlResolver,
 		documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 		codeLoader: new DemoCodeLoader(testMode),
-	});
+	};
 
-	const createDetachedCallback = makeCreateDetachedContainerCallback(loader, () =>
+	const createDetachedCallback = makeCreateDetachedContainerCallback(loaderProps, () =>
 		createLocalResolverCreateNewRequest(uuid()),
 	);
 
@@ -102,7 +105,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		id = await createDetachedResult.attach();
 	} else {
 		id = location.hash.slice(1);
-		container = await loader.resolve({ url: `${window.location.origin}/${id}` });
+		container = await loadExistingContainer({
+			...loaderProps,
+			request: { url: `${window.location.origin}/${id}` },
+		});
 		model = await getModelFromContainer<IMigratableModel>(container);
 	}
 
@@ -168,7 +174,11 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	const entryPoint = await container.getEntryPoint();
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 	const migrator: IMigrator = await (entryPoint as any).getMigrator(
-		async () => loader.resolve({ url: `${window.location.origin}/${id}` }),
+		async () =>
+			loadExistingContainer({
+				...loaderProps,
+				request: { url: `${window.location.origin}/${id}` },
+			}),
 		migrationCallback,
 	);
 	migrator.events.on("migrated", () => {

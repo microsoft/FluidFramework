@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	createDetachedContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
 import type { MigrationCallback } from "./interfaces.js";
@@ -39,13 +43,16 @@ export type ImportDataCallback = (
  * @alpha
  */
 export const makeCreateDetachedContainerCallback = (
-	loader: IHostLoader,
+	loaderProps: ILoaderProps,
 	generateCreateNewRequest: () => IRequest,
 ): CreateDetachedContainerCallback => {
 	return async (
 		version: string,
 	): Promise<{ container: IContainer; attach: () => Promise<string> }> => {
-		const container = await loader.createDetachedContainer({ package: version });
+		const container = await createDetachedContainer({
+			...loaderProps,
+			codeDetails: { package: version },
+		});
 		const attach = async (): Promise<string> => {
 			await container.attach(generateCreateNewRequest());
 			if (container.resolvedUrl === undefined) {

@@ -13,7 +13,10 @@ import {
 	makeSeparateContainerMigrationCallback,
 } from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	type ILoaderProps,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,
@@ -46,16 +49,16 @@ const isIInventoryListAppModel = (
 
 const getUrlForContainerId = (containerId: string): string => `/#${containerId}`;
 
-const loader = new Loader({
+const loaderProps: ILoaderProps = {
 	urlResolver: new InsecureTinyliciousUrlResolver(),
 	documentServiceFactory: new RouterliciousDocumentServiceFactory(
 		new InsecureTinyliciousTokenProvider(),
 	),
 	codeLoader: new DemoCodeLoader(),
-});
+};
 
 const createDetachedCallback = makeCreateDetachedContainerCallback(
-	loader,
+	loaderProps,
 	createTinyliciousCreateNewRequest,
 );
 
@@ -139,7 +142,9 @@ export const setupContainer = async (
 ): Promise<void> => {
 	// The first createDetached flow ends up with a live container reference that we want to retain rather
 	// than disposing it and loading a second time.  In all other cases we'll do the actual load here.
-	const container = alreadyLoadedContainer ?? (await loader.resolve({ url: id }));
+	const container =
+		alreadyLoadedContainer ??
+		(await loadExistingContainer({ ...loaderProps, request: { url: id } }));
 	const model = await getModelFromContainer<IMigratableModel>(container);
 
 	// In this example, our container code mixes in an IMigratorEntryPoint to the container entryPoint.  The getMigrator
@@ -147,7 +152,7 @@ export const setupContainer = async (
 	// is an object we can use to watch migration status, propose a migration, and discover the migration result.
 	const { getMigrator } = (await container.getEntryPoint()) as IMigratorEntryPoint;
 	const migrator: IMigrator = await getMigrator(
-		async () => loader.resolve({ url: id }),
+		async () => loadExistingContainer({ ...loaderProps, request: { url: id } }),
 		migrationCallback,
 	);
 	migrator.events.on("migrated", () => {
@@ -172,7 +177,7 @@ async function start(): Promise<void> {
 		id = await createDetachedResult.attach();
 	} else {
 		id = location.hash.slice(1);
-		container = await loader.resolve({ url: id });
+		container = await loadExistingContainer({ ...loaderProps, request: { url: id } });
 	}
 
 	await setupContainer(id, container);

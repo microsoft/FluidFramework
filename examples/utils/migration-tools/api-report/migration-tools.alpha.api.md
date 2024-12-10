@@ -80,7 +80,7 @@ export const loadCompositeRuntime: (context: IContainerContext, existing: boolea
 export type LoadSourceContainerCallback = () => Promise<IContainer>;
 
 // @alpha
-export const makeCreateDetachedContainerCallback: (loader: IHostLoader, generateCreateNewRequest: () => IRequest) => CreateDetachedContainerCallback;
+export const makeCreateDetachedContainerCallback: (loaderProps: ILoaderProps, generateCreateNewRequest: () => IRequest) => CreateDetachedContainerCallback;
 
 // @alpha
 export const makeMigratorEntryPointPiece: (exportDataCallback: ExportDataCallback) => IEntryPointPiece;
