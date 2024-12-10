@@ -89,11 +89,26 @@ export class Migrator implements IMigrator {
 		return this._events;
 	}
 
-	/**
-	 * If migration is in progress, the promise that will resolve when it completes.  Mutually exclusive with
-	 * _migratedLoadP promise.
-	 */
-	private _migrationP: Promise<void> | undefined;
+	private readonly echoStopping = (): void => {
+		this._events.emit("stopping");
+	};
+	private readonly echoMigrating = (): void => {
+		this._events.emit("migrating");
+	};
+	private readonly echoMigrated = (): void => {
+		this._events.emit("migrated");
+	};
+
+	// On disposal, unregister all listeners
+	private readonly onMigrationToolDisposed = (): void => {
+		this.migrationTool.events.off("stopping", this.echoStopping);
+		this.migrationTool.events.off("migrating", this.echoMigrating);
+		this.migrationTool.events.off("migrated", this.echoMigrated);
+
+		this.migrationTool.events.off("migrating", this.performMigration);
+
+		this.migrationTool.events.off("disposed", this.onMigrationToolDisposed);
+	};
 
 	public constructor(
 		private readonly migrationTool: IMigrationTool,
@@ -101,19 +116,22 @@ export class Migrator implements IMigrator {
 		private readonly exportDataCallback: ExportDataCallback,
 		private readonly migrationCallback: MigrationCallback,
 	) {
-		// TODO: Think about matching events between tool and migrator
-		this.migrationTool.events.on("stopping", () => {
-			this._events.emit("stopping");
-		});
+		// Mirror the events from the MigrationTool, these are the source of truth and can proceed regardless of
+		// whatever the local Migrator is doing.
+		this.migrationTool.events.on("stopping", this.echoStopping);
+		this.migrationTool.events.on("migrating", this.echoMigrating);
+		this.migrationTool.events.on("migrated", this.echoMigrated);
 
-		// Ignore migration state until connection completes
-		if (this.connected) {
-			this.watchMigrationState();
-		} else {
-			// If we are not connected we should wait until we reconnect and try again. Note: we re-enter the state
-			// machine, since it's possible another client has already completed the migration by the time we reconnect.
-			this.migrationTool.events.once("connected", this.watchMigrationState);
+		// Detect the current migration state and set up listeners to observe changes.
+		const migrationState = this.migrationTool.migrationState;
+		if (migrationState === "migrating") {
+			this.performMigration();
+		} else if (migrationState === "collaborating" || migrationState === "stopping") {
+			this.migrationTool.events.once("migrating", this.performMigration);
 		}
+		// Do nothing if already migrated
+
+		this.migrationTool.events.on("disposed", this.onMigrationToolDisposed);
 	}
 
 	public readonly proposeVersion = (newVersion: string): void => {
@@ -123,31 +141,28 @@ export class Migrator implements IMigrator {
 		this.migrationTool.proposeVersion(newVersion);
 	};
 
-	/**
-	 * Detect the current migration state and set up listeners to observe changes.
-	 */
-	private readonly watchMigrationState = (): void => {
-		const migrationState = this.migrationTool.migrationState;
-		if (migrationState === "migrating") {
-			this.ensureMigrating();
-		} else if (migrationState === "collaborating" || migrationState === "stopping") {
-			this.migrationTool.events.once("migrating", this.ensureMigrating);
-		}
-		// Do nothing if already migrated
-	};
+	private readonly performMigration = (): void => {
+		(async (): Promise<void> => {
+			const acceptedMigration = this.migrationTool.acceptedMigration;
+			assert(
+				acceptedMigration !== undefined,
+				"Expect an accepted migration before migration starts",
+			);
+			// Delay performing the migration until we are connected.  It's possible that we'll find the migration has already
+			// completed before we finish connecting, and in that case we want to avoid doing anything.
+			if (!this.connected) {
+				await new Promise<void>((resolve) => {
+					this.migrationTool.events.once("connected", () => {
+						resolve();
+					});
+				});
+			}
 
-	private readonly ensureMigrating = (): void => {
-		if (this._migrationP !== undefined) {
-			return;
-		}
+			// Do nothing if the migration has already completed.
+			if (this.migrationTool.migrationResult !== undefined) {
+				return;
+			}
 
-		const acceptedMigration = this.migrationTool.acceptedMigration;
-		assert(
-			acceptedMigration !== undefined,
-			"Expect an accepted migration before migration starts",
-		);
-
-		const doTheMigration = async (): Promise<void> => {
 			// Load the container to at least the acceptance sequence number and export.  We do this with a
 			// separate container to ensure we don't include any local un-ack'd changes.  Late-arriving messages
 			// may or may not make it into the migrated data, there is no guarantee either way.
@@ -175,15 +190,6 @@ export class Migrator implements IMigrator {
 			if (this.migrationTool.migrationResult === undefined) {
 				await this.migrationTool.finalizeMigration(migrationResult);
 			}
-		};
-
-		this._events.emit("migrating");
-
-		this._migrationP = doTheMigration()
-			.then(() => {
-				this._migrationP = undefined;
-				this._events.emit("migrated");
-			})
-			.catch(console.error);
+		})().catch(console.error);
 	};
 }
