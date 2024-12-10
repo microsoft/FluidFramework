@@ -169,7 +169,7 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
  * This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
  * @internal
  */
-export class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
+class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
 	extends CustomEventEmitter<TListeners>
 	implements IEmitter<TListeners>
 {

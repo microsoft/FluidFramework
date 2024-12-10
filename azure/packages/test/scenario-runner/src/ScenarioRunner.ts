@@ -5,7 +5,7 @@
 
 import { ChildProcess } from "child_process";
 
-import { ComposableEventEmitter } from "@fluid-internal/client-utils";
+import { CustomEventEmitter } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils/internal";
 
 import {
@@ -25,7 +25,7 @@ export abstract class ScenarioRunner<
 		A,
 		S = A,
 	>
-	extends ComposableEventEmitter<IRunnerEvents>
+	extends CustomEventEmitter<IRunnerEvents>
 	implements IRunner
 {
 	/**
