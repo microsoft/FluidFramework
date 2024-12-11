@@ -898,9 +898,25 @@ export function markSchemaMostDerived(schema: TreeNodeSchema): void {
 }
 
 /**
- * TODO
- * @param nodeSchema - TODO
- * @param metadata - TODO
+ * Binds metadata to a node schema.
+ * @remarks Accomplishes this by creating a new subclass with the specified metadata, strongly typed.
+ *
+ * @param nodeSchema - The node schema to bind metadata to.
+ * @param metadata - The metadata to bind to the node schema.
+ *
+ * @example
+ *
+ * ```typescript
+ * class Point extends withMetadata(
+ * 	schemaFactory.object("point", { x: schemaFactory.number, y: schemaFactory.number }),
+ * 	{
+ * 		description: "A point in 2D space",
+ * 		custom: {
+ * 			... // Your custom metadata properties here
+ * 		},
+ * 	}
+ * ) {}
+ * ```
  *
  * @alpha
  */
