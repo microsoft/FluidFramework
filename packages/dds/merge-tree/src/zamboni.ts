@@ -13,6 +13,7 @@ import {
 	type ISegmentLeaf,
 	type MergeBlock,
 	IMergeNode,
+	isLeaf,
 	Marker,
 	MaxNodesInBlock,
 	seqLTE,
@@ -141,7 +142,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 	for (let k = 0; k < node.childCount; k++) {
 		// TODO Non null asserting, why is this not null?
 		const childNode = node.children[k]!;
-		if (!childNode.isLeaf?.() || childNode.segmentGroups?.empty === false) {
+		if (!isLeaf(childNode) || childNode.segmentGroups?.empty === false) {
 			holdNodes.push(childNode);
 			prevSegment = undefined;
 			continue;

@@ -57,6 +57,7 @@ import {
 	MergeBlock,
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
+	isLeaf,
 	reservedMarkerIdKey,
 	seqLTE,
 	toMoveInfo,
@@ -136,7 +137,7 @@ function isRemovedOrMoved(segment: ISegmentLeaf): boolean {
 }
 
 function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undefined {
-	if (!node.isLeaf?.()) {
+	if (!isLeaf(node)) {
 		return node.cachedLength;
 	}
 	return mergeTree.localNetLength(node);
@@ -805,7 +806,7 @@ export class MergeTree {
 		clientId: number,
 		localSeq?: number,
 	): number {
-		if (node.isLeaf() && node.endpointType === "start") {
+		if (isLeaf(node) && node.endpointType === "start") {
 			return 0;
 		}
 
@@ -1100,7 +1101,7 @@ export class MergeTree {
 		localSeq?: number,
 	): number | undefined {
 		if (!this.collabWindow.collaborating || this.collabWindow.clientId === clientId) {
-			if (node.isLeaf()) {
+			if (isLeaf(node)) {
 				return this.localNetLength(node, refSeq, localSeq);
 			} else if (localSeq === undefined) {
 				// Local client sees all segments, even when collaborating
@@ -1123,7 +1124,7 @@ export class MergeTree {
 			}
 		} else {
 			// Sequence number within window
-			if (node.isLeaf()) {
+			if (isLeaf(node)) {
 				const segment = node;
 				const removalInfo = toRemovalInfo(segment);
 				const moveInfo = toMoveInfo(segment);
@@ -1268,7 +1269,7 @@ export class MergeTree {
 			segWithParent.parent,
 			segWithParent,
 			(node) => {
-				if (node.isLeaf()) {
+				if (isLeaf(node)) {
 					if (Marker.is(node) && refHasTileLabel(node, markerLabel)) {
 						foundMarker = node;
 					}
@@ -1277,10 +1278,7 @@ export class MergeTree {
 						? node.leftmostTiles[markerLabel]
 						: node.rightmostTiles[markerLabel];
 					if (marker !== undefined) {
-						assert(
-							marker.isLeaf() && Marker.is(marker),
-							0x751 /* Object returned is not a valid marker */,
-						);
+						assert(Marker.is(marker), 0x751 /* Object returned is not a valid marker */);
 						foundMarker = marker;
 					}
 				}
@@ -1732,7 +1730,7 @@ export class MergeTree {
 
 	// Assume called only when pos == len
 	private breakTie(pos: number, node: IMergeNode, seq: number): boolean {
-		if (node.isLeaf()) {
+		if (isLeaf(node)) {
 			if (pos !== 0) {
 				return false;
 			}
@@ -1780,7 +1778,7 @@ export class MergeTree {
 			child = children[childIndex];
 			// ensure we walk down the far edge of the tree, even if all sub-tree is eligible for zamboni
 			const isLastNonLeafBlock =
-				isLastChildBlock && !child.isLeaf() && childIndex === block.childCount - 1;
+				isLastChildBlock && !isLeaf(child) && childIndex === block.childCount - 1;
 			const len =
 				this.nodeLength(child, refSeq, clientId) ?? (isLastChildBlock ? 0 : undefined);
 
@@ -1794,7 +1792,7 @@ export class MergeTree {
 
 			if (_pos < len || (_pos === len && this.breakTie(_pos, child, seq))) {
 				// Found entry containing pos
-				if (child.isLeaf()) {
+				if (isLeaf(child)) {
 					const segment = child;
 					const segmentChanges = context.leaf(segment, _pos, context);
 					if (segmentChanges.replaceCurrent) {
@@ -1898,7 +1896,7 @@ export class MergeTree {
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
 			block.setOrdinal(child, i);
-			if (!child.isLeaf()) {
+			if (!isLeaf(child)) {
 				this.nodeUpdateOrdinals(child);
 			}
 		}
@@ -2621,7 +2619,7 @@ export class MergeTree {
 			computeDepth(element);
 		}
 		for (const [node] of [...depths.entries()].sort((a, b) => b[1] - a[1])) {
-			if (!node.isLeaf()) {
+			if (!isLeaf(node)) {
 				this.nodeUpdateLengthNewStructure(node);
 			}
 		}
@@ -2696,7 +2694,7 @@ export class MergeTree {
 				len ??= 0;
 				len += nodeLength;
 			}
-			if (node.isLeaf()) {
+			if (isLeaf(node)) {
 				const segment = node;
 				if ((this.localNetLength(segment) ?? 0) > 0 && Marker.is(segment)) {
 					const markerId = segment.getId();
@@ -2862,8 +2860,7 @@ export class MergeTree {
 						: this.nodeLength(node, refSeq, clientId, localSeq)) ?? 0;
 
 				const isUnackedAndInObliterate =
-					visibilitySeq !== refSeq &&
-					(!node.isLeaf() || node.seq === UnassignedSequenceNumber);
+					visibilitySeq !== refSeq && (!isLeaf(node) || node.seq === UnassignedSequenceNumber);
 
 				if (
 					(len === undefined && lenAtRefSeq === 0) ||
@@ -2879,7 +2876,7 @@ export class MergeTree {
 					return NodeAction.Skip;
 				}
 
-				if (node.isLeaf()) {
+				if (isLeaf(node)) {
 					if (leaf(node, pos, refSeq, clientId, start - pos, endPos - pos, accum) === false) {
 						return NodeAction.Exit;
 					}

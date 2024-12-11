@@ -15,7 +15,7 @@ import {
 	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentLeaf, Marker } from "../mergeTreeNodes.js";
+import { MergeBlock, ISegmentLeaf, Marker, isLeaf } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import {
 	PartialSequenceLengths,
@@ -175,17 +175,18 @@ export function obliterateRange({
 export function nodeOrdinalsHaveIntegrity(block: MergeBlock): boolean {
 	const olen = block.ordinal.length;
 	for (let i = 0; i < block.childCount; i++) {
-		if (block.children[i].ordinal) {
-			if (olen !== block.children[i].ordinal.length - 1) {
+		const child = block.children[i];
+		if (child.ordinal) {
+			if (olen !== child.ordinal.length - 1) {
 				console.log("node integrity issue");
 				return false;
 			}
-			if (i > 0 && block.children[i].ordinal <= block.children[i - 1].ordinal) {
+			if (i > 0 && child.ordinal <= block.children[i - 1].ordinal) {
 				console.log("node sib integrity issue");
 				return false;
 			}
-			if (!block.children[i].isLeaf()) {
-				return nodeOrdinalsHaveIntegrity(block.children[i] as MergeBlock);
+			if (!isLeaf(child)) {
+				return nodeOrdinalsHaveIntegrity(child);
 			}
 		} else {
 			console.log(`node child ordinal not set ${i}`);

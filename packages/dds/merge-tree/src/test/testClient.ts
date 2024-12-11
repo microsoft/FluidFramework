@@ -29,7 +29,13 @@ import {
 	forwardExcursion,
 	walkAllChildSegments,
 } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentLeaf, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import {
+	MergeBlock,
+	ISegmentLeaf,
+	Marker,
+	MaxNodesInBlock,
+	isLeaf,
+} from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
@@ -607,7 +613,7 @@ export function getStats(tree: MergeTree): MergeTreeStats {
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
 			let height = 1;
-			if (child.isLeaf()) {
+			if (isLeaf(child)) {
 				stats.leafCount++;
 				const segment = child;
 				if (segment.removedSeq !== undefined) {

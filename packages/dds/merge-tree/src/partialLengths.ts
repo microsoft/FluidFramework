@@ -16,6 +16,7 @@ import {
 	IRemovalInfo,
 	ISegmentLeaf,
 	compareNumbers,
+	isLeaf,
 	seqLTE,
 	toMoveInfo,
 	toRemovalInfo,
@@ -302,7 +303,7 @@ export class PartialSequenceLengths {
 		const childPartials: PartialSequenceLengths[] = [];
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
-			if (!child.isLeaf()) {
+			if (!isLeaf(child)) {
 				hasInternalChild = true;
 				if (recur) {
 					child.partialLengths = PartialSequenceLengths.combine(
@@ -388,7 +389,7 @@ export class PartialSequenceLengths {
 
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
-			if (child.isLeaf()) {
+			if (isLeaf(child)) {
 				// Leaf segment
 				const segment = child;
 				if (segment.seq !== undefined && seqLTE(segment.seq, collabWindow.minSeq)) {
@@ -915,7 +916,7 @@ export class PartialSequenceLengths {
 		// Compute length for seq across children
 		for (let i = 0; i < node.childCount; i++) {
 			const child = node.children[i];
-			if (child.isLeaf()) {
+			if (isLeaf(child)) {
 				const segment = child;
 				const removalInfo = toRemovalInfo(segment);
 				const moveInfo = toMoveInfo(segment);
@@ -1276,7 +1277,7 @@ export function verifyExpectedPartialLengths(
 ): void {
 	if (
 		(!mergeTree.collabWindow.collaborating || mergeTree.collabWindow.clientId === clientId) &&
-		(node.isLeaf() || localSeq === undefined)
+		(isLeaf(node) || localSeq === undefined)
 	) {
 		return;
 	}
@@ -1291,7 +1292,7 @@ export function verifyExpectedPartialLengths(
 		if (!thisNode) {
 			continue;
 		}
-		if (thisNode.isLeaf()) {
+		if (isLeaf(thisNode)) {
 			expected += mergeTree["nodeLength"](thisNode, refSeq, clientId, localSeq) ?? 0;
 		} else {
 			nodesToVisit.push(...thisNode.children.slice(0, thisNode.childCount));

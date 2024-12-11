@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { LocalClientId, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentLeaf, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { MergeBlock, ISegmentLeaf, MaxNodesInBlock, isLeaf } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 import { insertText } from "./testUtils.js";
@@ -49,7 +49,7 @@ describe("MergeTree walks", () => {
 			yield block;
 			for (let i = 0; i < block.childCount; i++) {
 				const child = block.children[i];
-				if (!child.isLeaf()) {
+				if (!isLeaf(child)) {
 					yield* getAllDescendantBlocks(child);
 				}
 			}

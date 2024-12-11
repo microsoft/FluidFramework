@@ -9,7 +9,13 @@ import { LocalClientId } from "./constants.js";
 import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import { IRemovalInfo, ISegment, ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
+import {
+	IRemovalInfo,
+	ISegment,
+	ISegmentLeaf,
+	isLeaf,
+	type MergeBlock,
+} from "./mergeTreeNodes.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,
@@ -120,7 +126,7 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment,
 			root.children[0],
 			(node) => {
 				depth++;
-				if (node?.isLeaf()) {
+				if (isLeaf(node)) {
 					firstSegment = node;
 					return NodeAction.Exit;
 				}
@@ -170,7 +176,7 @@ export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment, I
 			root.children[root.childCount - 1],
 			(node) => {
 				depth++;
-				if (node?.isLeaf()) {
+				if (isLeaf(node)) {
 					lastSegment = node;
 					return NodeAction.Exit;
 				}

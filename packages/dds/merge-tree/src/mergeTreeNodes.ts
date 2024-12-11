@@ -40,7 +40,6 @@ export interface IMergeNodeCommon {
 	 * `a.ordinal < b.ordinal` if and only if `a` comes before `b` in a pre-order traversal of the tree.
 	 */
 	ordinal: string;
-	isLeaf(): this is ISegmentInternal;
 }
 
 /**
@@ -419,10 +418,6 @@ export class MergeBlock implements IMergeNodeCommon {
 	 */
 	public leftmostTiles: Readonly<MapLike<Marker>>;
 
-	isLeaf(): this is ISegmentLeaf {
-		return false;
-	}
-
 	/**
 	 * Supports querying the total length of all descendants of this IMergeBlock from the perspective of any
 	 * (clientId, seq) within the collab window.
@@ -507,6 +502,10 @@ export function cloneLeafSegment(from: ISegmentLeaf): ISegmentLeaf {
 	});
 }
 
+export function isLeaf(node: IMergeNode | undefined): node is ISegmentLeaf {
+	return !(node instanceof MergeBlock);
+}
+
 /**
  * @legacy
  * @alpha
@@ -529,16 +528,16 @@ export abstract class BaseSegment implements ISegment {
 		}
 	}
 
-	public isLeaf(): this is ISegment {
-		return true;
-	}
-
 	public hasProperty(key: string): boolean {
 		return !!this.properties && this.properties[key] !== undefined;
 	}
 
 	public canAppend(segment: ISegment): boolean {
 		return false;
+	}
+
+	public isLeaf(): this is ISegment {
+		return true;
 	}
 
 	protected addSerializedProps(jseg: IJSONSegment): void {

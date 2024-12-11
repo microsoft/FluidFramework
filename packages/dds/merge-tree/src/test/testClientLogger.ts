@@ -17,6 +17,7 @@ import {
 } from "../mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
 import {
+	isLeaf,
 	Marker,
 	seqLTE,
 	toMoveInfo,
@@ -356,7 +357,7 @@ export class TestClientLogger {
 		while (nodes.length > 0) {
 			const node = nodes.shift();
 			if (node) {
-				if (node.isLeaf()) {
+				if (isLeaf(node)) {
 					if (node.parent !== parent) {
 						if (acked.length > 0) {
 							acked += " ";

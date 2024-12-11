@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { type ISegmentLeaf, type MergeBlock, IMergeNode, ISegment } from "./mergeTreeNodes.js";
+import {
+	type ISegmentLeaf,
+	type MergeBlock,
+	IMergeNode,
+	ISegment,
+	isLeaf,
+} from "./mergeTreeNodes.js";
 
 export const LeafAction = {
 	Exit: false,
@@ -56,7 +62,7 @@ export function depthFirstNodeWalk(
 	while (true) {
 		// go down to the leaf level
 		let blockResult: NodeAction;
-		while (start?.isLeaf() === false) {
+		while (isLeaf(start) === false) {
 			// cast is safe due to isLeaf === false in while above
 			block = start as MergeBlock;
 			childCount = block.childCount;
