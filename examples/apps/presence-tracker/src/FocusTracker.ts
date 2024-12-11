@@ -36,7 +36,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	 * Map<ISessionClient, IFocusState>
 	 * ```
 	 */
-	// private readonly focusMap = new Map<ISessionClient, IFocusState>();
+	private readonly focusMap = new Map<ISessionClient, IFocusState>();
 
 	constructor(
 		public readonly presence: IPresence,
@@ -50,11 +50,11 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		this.focus = statesWorkspace.props.focus;
 
 		this.presence.events.on("attendeeDisconnected", (client: ISessionClient) => {
-			// this.focusMap.delete(client);
+			this.focusMap.delete(client);
 		});
 
 		this.focus.events.on("updated", ({ client, value }) => {
-			// this.focusMap.set(client, value);
+			this.focusMap.set(client, value);
 			this.emit("focusChanged");
 		});
 
@@ -78,6 +78,10 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	 */
 	public getFocusPresences(): Map<ClientConnectionId, boolean> {
 		const statuses: Map<ClientConnectionId, boolean> = new Map<ClientConnectionId, boolean>();
+
+		const currentClient = this.presence.getMyself();
+		const currentConnectionId = currentClient.getConnectionId();
+		statuses.set(currentConnectionId, this.focus.local.hasFocus);
 
 		for (const { client, value } of this.focus.clientValues()) {
 			if (client.getConnectionStatus() === SessionClientStatus.Connected) {

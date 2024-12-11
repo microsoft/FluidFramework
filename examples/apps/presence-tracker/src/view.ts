@@ -22,8 +22,8 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	focusMessageDiv.id = "message-div";
 	focusMessageDiv.textContent = "Click to focus";
 	focusMessageDiv.style.position = "absolute";
-	focusMessageDiv.style.top = "10px";
-	focusMessageDiv.style.right = "10px";
+	focusMessageDiv.style.top = "50px";
+	focusMessageDiv.style.left = "10px";
 	focusMessageDiv.style.color = "red";
 	focusMessageDiv.style.fontWeight = "bold";
 	focusMessageDiv.style.fontSize = "18px";
@@ -34,7 +34,7 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 
 	const onFocusChanged = () => {
 		const session = focusTracker.presence.getMyself();
-		if(session.getConnectionStatus() === SessionClientStatus.Disconnected) {
+		if (session.getConnectionStatus() === SessionClientStatus.Disconnected) {
 			return;
 		}
 
@@ -43,16 +43,10 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 		console.debug(focusPresences);
 		const sessionConnection = session.getConnectionId();
 
-		focusDiv.innerHTML = `
-            Current user: ${currentUser?.name} - connection: ${sessionConnection} - focus: ${focusPresences.get(sessionConnection)}</br>
-            ${getFocusPresencesString("</br>", focusTracker)}
-        `;
+		focusDiv.innerHTML = `${getFocusPresencesString("</br>", focusTracker)}`;
 
-		const display =
-			currentUser !== undefined && focusPresences.get(sessionConnection) === true
-				? ""
-				: "none";
-				console.log(`Setting display to ${display}`);
+		const display = focusPresences.get(sessionConnection) === false ? "" : "none";
+		console.log(`Setting display to ${display}`);
 		focusMessageDiv.style.display = display;
 	};
 
