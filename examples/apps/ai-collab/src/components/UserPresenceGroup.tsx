@@ -39,6 +39,8 @@ const UserPresenceGroup: React.FC<UserPresenceProps> = ({
 		userPresenceGroup.props.onlineUsers.local.set(currentUserId, {
 			value: { photo: photoUrl },
 		});
+		photoUrlsMap.set(currentUserId, photoUrl);
+		setPhotoUrls([...photoUrlsMap.values()]);
 
 		isFirstRender.current = false;
 	};
@@ -51,7 +53,6 @@ const UserPresenceGroup: React.FC<UserPresenceProps> = ({
 		userPresenceGroup.props.onlineUsers.events.on("itemUpdated", (update) => {
 			photoUrlsMap.set(update.key, update.value.value.photo);
 			setPhotoUrls([...photoUrlsMap.values()]);
-			console.log(photoUrls);
 		});
 		userPresenceGroup.props.onlineUsers.events.on("itemRemoved", (update) => {
 			photoUrlsMap.delete(update.key);
@@ -61,8 +62,8 @@ const UserPresenceGroup: React.FC<UserPresenceProps> = ({
 		photoUrls,
 		photoUrlsMap,
 		userPresenceGroup.props.onlineUsers.events,
-		setPhotoUrls,
 		updateUserPresenceGroup,
+		setPhotoUrls,
 	]);
 
 	// Detect when the page is closed
