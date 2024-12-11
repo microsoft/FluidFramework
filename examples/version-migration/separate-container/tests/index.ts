@@ -5,6 +5,7 @@
 
 import {
 	type IMigrator,
+	type ImportDataCallback,
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
 	type SeparateContainerMigrationResult,
@@ -32,8 +33,12 @@ import type { IMigratableModel, IVersionedModel } from "../src/migratableModel.j
 import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "../src/view/index.js";
 
-const urlResolver = new LocalResolver();
-const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
+// Store the top-level containers on the window so our tests can more easily observe the migration happening
+// eslint-disable-next-line @typescript-eslint/dot-notation
+window["containers"] = [];
+// Store the migrators on the window so our tests can more easily observe the migration happening
+// eslint-disable-next-line @typescript-eslint/dot-notation
+window["migrators"] = [];
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID
@@ -51,12 +56,39 @@ const isIInventoryListAppModel = (
 
 const getUrlForContainerId = (containerId: string) => `/#${containerId}`;
 
-// Store the top-level containers on the window so our tests can more easily observe the migration happening
-// eslint-disable-next-line @typescript-eslint/dot-notation
-window["containers"] = [];
-// Store the migrators on the window so our tests can more easily observe the migration happening
-// eslint-disable-next-line @typescript-eslint/dot-notation
-window["migrators"] = [];
+const urlResolver = new LocalResolver();
+const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
+
+const searchParams = new URLSearchParams(location.search);
+const testMode = searchParams.get("testMode") !== null;
+const loaderProps: ILoaderProps = {
+	urlResolver,
+	documentServiceFactory: new LocalDocumentServiceFactory(localServer),
+	codeLoader: new DemoCodeLoader(testMode),
+};
+
+const createDetachedCallback = makeCreateDetachedContainerCallback(loaderProps, () =>
+	createLocalResolverCreateNewRequest(uuid()),
+);
+
+const importDataCallback: ImportDataCallback = async (
+	destinationContainer: IContainer,
+	exportedData: unknown,
+) => {
+	const destinationModel = await getModelFromContainer<IMigratableModel>(destinationContainer);
+	// If the migrated model already supports the data format, go ahead with the migration.
+	// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
+	// a format that we can import.
+	// TODO: Error paths in case the format isn't ingestible.
+	const transformedData = destinationModel.supportsDataFormat(exportedData)
+		? exportedData
+		: await inventoryListDataTransformationCallback(exportedData, destinationModel.version);
+	await destinationModel.importData(transformedData);
+};
+const migrationCallback = makeSeparateContainerMigrationCallback(
+	createDetachedCallback,
+	importDataCallback,
+);
 
 /**
  * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
@@ -81,18 +113,6 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
  * requires making async calls.
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
-	const searchParams = new URLSearchParams(location.search);
-	const testMode = searchParams.get("testMode") !== null;
-	const loaderProps: ILoaderProps = {
-		urlResolver,
-		documentServiceFactory: new LocalDocumentServiceFactory(localServer),
-		codeLoader: new DemoCodeLoader(testMode),
-	};
-
-	const createDetachedCallback = makeCreateDetachedContainerCallback(loaderProps, () =>
-		createLocalResolverCreateNewRequest(uuid()),
-	);
-
 	let id: string;
 	let container: IContainer;
 	let model: IMigratableModel;
@@ -146,31 +166,6 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 			throw new Error(`Don't know how to render version ${model.version}`);
 		}
 	};
-
-	const importDataCallback = async (
-		destinationContainer: IContainer,
-		exportedData: unknown,
-	) => {
-		const destinationModel =
-			await getModelFromContainer<IMigratableModel>(destinationContainer);
-		// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
-		// exported data into a format that the new model can import?  If we can determine it early, then
-		// clients with old MigratableModelLoaders can use that opportunity to dispose early and try to get new
-		// MigratableModelLoaders.
-		// TODO: Error paths in case the format isn't ingestible.
-		// If the migrated model already supports the data format, go ahead with the migration.
-		// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
-		// a format that we can import.
-		const transformedData = destinationModel.supportsDataFormat(exportedData)
-			? exportedData
-			: await inventoryListDataTransformationCallback(exportedData, destinationModel.version);
-		await destinationModel.importData(transformedData);
-	};
-
-	const migrationCallback = makeSeparateContainerMigrationCallback(
-		createDetachedCallback,
-		importDataCallback,
-	);
 
 	const entryPoint = await container.getEntryPoint();
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
