@@ -846,7 +846,7 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
 	 *
 	 * @remarks
 	 *
-	 * If provided, will be used by the system in scenarios where a description of the field is useful.
+	 * If provided, will be used by the system in scenarios where a description of the kind of node is useful.
 	 * E.g., when converting a Node Schema to {@link https://json-schema.org/ | JSON Schema}, this description will be
 	 * used as the `description` property.
 	 */
