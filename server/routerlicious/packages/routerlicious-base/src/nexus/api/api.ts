@@ -60,9 +60,9 @@ export function create(
 				const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
 				const redirect: boolean = config.get("redirect");
 				const document = await storage?.getDocument(tenantId, documentId);
-				if (document?.session.ordererUrl !== deltaStreamUrl || redirect) {
+				if (document?.session.deltaStreamUrl !== deltaStreamUrl || redirect) {
 					Lumberjack.info("Redirecting to docs cluster", {
-						documentUrl: document?.session.ordererUrl,
+						documentUrl: document?.session.deltaStreamUrl,
 						currentUrl: deltaStreamUrl,
 						targetUrlAndPath: `${document?.session.deltaStreamUrl}${request.originalUrl}`,
 					});
