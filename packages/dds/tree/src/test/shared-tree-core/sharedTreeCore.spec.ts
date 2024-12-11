@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IEvent } from "@fluidframework/core-interfaces";
+import { createEmitter, IsoBuffer } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
@@ -73,7 +73,7 @@ describe("SharedTreeCore", () => {
 		it("are loaded", async () => {
 			const summarizable = new MockSummarizable();
 			let loaded = false;
-			summarizable.on("loaded", () => (loaded = true));
+			summarizable.events.on("loaded", () => (loaded = true));
 			const summarizables = [summarizable] as const;
 			const tree = createTree(summarizables);
 			const defaultSummary = await createTree([]).summarize();
@@ -84,7 +84,7 @@ describe("SharedTreeCore", () => {
 		it("load blobs", async () => {
 			const summarizable = new MockSummarizable();
 			let loadedBlob = false;
-			summarizable.on("loaded", (blobContents) => {
+			summarizable.events.on("loaded", (blobContents) => {
 				if (blobContents === MockSummarizable.blobContents) {
 					loadedBlob = true;
 				}
@@ -99,10 +99,10 @@ describe("SharedTreeCore", () => {
 		it("summarize synchronously", () => {
 			const summarizableA = new MockSummarizable("summarizable A");
 			let summarizedA = false;
-			summarizableA.on("summarizeAttached", () => (summarizedA = true));
+			summarizableA.events.on("summarizeAttached", () => (summarizedA = true));
 			const summarizableB = new MockSummarizable("summarizable B");
 			let summarizedB = false;
-			summarizableB.on("summarizeAttached", () => (summarizedB = true));
+			summarizableB.events.on("summarizeAttached", () => (summarizedB = true));
 			const summarizables = [summarizableA, summarizableB] as const;
 			const tree = createTree(summarizables);
 			const { summary, stats } = tree.getAttachSummary();
@@ -130,10 +130,10 @@ describe("SharedTreeCore", () => {
 		it.skip("summarize asynchronously", async () => {
 			const summarizableA = new MockSummarizable("summarizable A");
 			let summarizedA = false;
-			summarizableA.on("summarizeAsync", () => (summarizedA = true));
+			summarizableA.events.on("summarizeAsync", () => (summarizedA = true));
 			const summarizableB = new MockSummarizable("summarizable B");
 			let summarizedB = false;
-			summarizableB.on("summarizeAsync", () => (summarizedB = true));
+			summarizableB.events.on("summarizeAsync", () => (summarizedB = true));
 			const summarizables = [summarizableA, summarizableB];
 			const tree = createTree(summarizables);
 			const { summary, stats } = await tree.summarize();
@@ -160,7 +160,7 @@ describe("SharedTreeCore", () => {
 		it("are asked for GC", () => {
 			const summarizable = new MockSummarizable("summarizable");
 			let requestedGC = false;
-			summarizable.on("gcRequested", () => (requestedGC = true));
+			summarizable.events.on("gcRequested", () => (requestedGC = true));
 			const summarizables = [summarizable] as const;
 			const tree = createTree(summarizables);
 			tree.getGCData();
@@ -630,21 +630,22 @@ describe("SharedTreeCore", () => {
 		);
 	}
 
-	interface MockSummarizableEvents extends IEvent {
-		(event: "loaded", listener: (blobContents?: string) => void): void;
-		(event: "summarize" | "summarizeAttached" | "summarizeAsync" | "gcRequested"): void;
+	interface MockSummarizableEvents {
+		loaded(blobContents?: string): void;
+		summarize(): void;
+		summarizeAttached(): void;
+		summarizeAsync(): void;
+		gcRequested(): void;
 	}
 
-	class MockSummarizable
-		extends TypedEventEmitter<MockSummarizableEvents>
-		implements Summarizable
-	{
+	class MockSummarizable implements Summarizable {
 		public static readonly blobKey = "MockIndexBlobKey";
 		public static readonly blobContents = "MockIndexBlobContent";
 
-		public constructor(public readonly key = "MockIndexsummarizable") {
-			super();
-		}
+		#events = createEmitter<MockSummarizableEvents>();
+		public events: Listenable<MockSummarizableEvents> = this.#events;
+
+		public constructor(public readonly key = "MockIndexsummarizable") {}
 
 		public async load(
 			services: IChannelStorageService,
@@ -653,9 +654,10 @@ describe("SharedTreeCore", () => {
 			if (await services.contains(MockSummarizable.blobKey)) {
 				const blob = await services.readBlob(MockSummarizable.blobKey);
 				const blobContents = parse(IsoBuffer.from(blob).toString());
-				this.emit("loaded", blobContents);
+				assert(typeof blobContents === "string");
+				this.#events.emit("loaded", blobContents);
 			} else {
-				this.emit("loaded");
+				this.#events.emit("loaded");
 			}
 		}
 
@@ -665,7 +667,7 @@ describe("SharedTreeCore", () => {
 			trackState?: boolean | undefined,
 			telemetryContext?: ITelemetryContext | undefined,
 		): ISummaryTreeWithStats {
-			this.emit("summarizeAttached");
+			this.#events.emit("summarizeAttached");
 			return this.summarizeCore(stringify);
 		}
 
@@ -675,12 +677,12 @@ describe("SharedTreeCore", () => {
 			trackState?: boolean | undefined,
 			telemetryContext?: ITelemetryContext | undefined,
 		): Promise<ISummaryTreeWithStats> {
-			this.emit("summarizeAsync");
+			this.#events.emit("summarizeAsync");
 			return this.summarizeCore(stringify);
 		}
 
 		private summarizeCore(stringify: SummaryElementStringifier): ISummaryTreeWithStats {
-			this.emit("summarize");
+			this.#events.emit("summarize");
 			return createSingleBlobSummary(
 				MockSummarizable.blobKey,
 				stringify(MockSummarizable.blobContents),
@@ -688,7 +690,7 @@ describe("SharedTreeCore", () => {
 		}
 
 		public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
-			this.emit("gcRequested");
+			this.#events.emit("gcRequested");
 			return { gcNodes: {} };
 		}
 	}
