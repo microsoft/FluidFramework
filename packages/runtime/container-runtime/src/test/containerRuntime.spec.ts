@@ -68,6 +68,7 @@ import {
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
+	type IContainerRuntimeOptionsInternal,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
@@ -266,7 +267,6 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -308,7 +308,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {
 						flushMode: FlushMode.Immediate,
-					},
+					} satisfies IContainerRuntimeOptionsInternal as IContainerRuntimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
@@ -327,9 +327,7 @@ describe("Runtime", () => {
 					}) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
-					},
+					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 				(containerRuntime as any).ensureNoDataModelChanges = (callback) => {
@@ -374,9 +372,7 @@ describe("Runtime", () => {
 						}) as IContainerContext,
 						registryEntries: [],
 						existing: false,
-						runtimeOptions: {
-							flushMode: FlushMode.TurnBased,
-						},
+						runtimeOptions: {},
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 
@@ -492,7 +488,7 @@ describe("Runtime", () => {
 									},
 								},
 								flushMode,
-							},
+							} satisfies IContainerRuntimeOptionsInternal as IContainerRuntimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
 						});
 						containerErrors.length = 0;
@@ -698,7 +694,7 @@ describe("Runtime", () => {
 									summaryConfigOverrides: { state: "disabled" },
 								},
 								flushMode,
-							},
+							} satisfies IContainerRuntimeOptionsInternal as IContainerRuntimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
 						});
 						containerErrors.length = 0;
@@ -1400,9 +1396,9 @@ describe("Runtime", () => {
 				chunkSizeInBytes: 800 * 1024,
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 				enableGroupedBatching: true,
-			};
+			} satisfies IContainerRuntimeOptionsInternal as IContainerRuntimeOptions;
 
-			const defaultRuntimeOptions = {
+			const defaultRuntimeOptions: IContainerRuntimeOptionsInternal = {
 				summaryOptions: {},
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
@@ -1416,7 +1412,7 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: false,
 				explicitSchemaControl: false,
-			} satisfies IContainerRuntimeOptions;
+			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
 			it("Container load stats", async () => {
@@ -1505,7 +1501,7 @@ describe("Runtime", () => {
 						existing: false,
 						runtimeOptions: {
 							flushMode: FlushModeExperimental.Async as unknown as FlushMode,
-						},
+						} satisfies IContainerRuntimeOptionsInternal as IContainerRuntimeOptions,
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 
@@ -1528,7 +1524,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {
 						flushMode: FlushModeExperimental.Async as unknown as FlushMode,
-					},
+					} satisfies IContainerRuntimeOptionsInternal as IContainerRuntimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
@@ -1840,7 +1836,6 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1872,7 +1867,6 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1914,7 +1908,6 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1961,7 +1954,6 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1983,7 +1975,6 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2031,7 +2022,6 @@ describe("Runtime", () => {
 						registryEntries: [],
 						existing: false,
 						runtimeOptions: {
-							flushMode: FlushMode.TurnBased,
 							enableRuntimeIdCompressor: "on",
 						},
 						provideEntryPoint: mockProvideEntryPoint,
@@ -2081,7 +2071,6 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2120,7 +2109,6 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2334,7 +2322,6 @@ describe("Runtime", () => {
 					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
 					existing: true,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2363,7 +2350,6 @@ describe("Runtime", () => {
 					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
 					existing: true,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2412,7 +2398,6 @@ describe("Runtime", () => {
 					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
 					existing: true,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2472,7 +2457,6 @@ describe("Runtime", () => {
 					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
 					existing: true,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2514,7 +2498,6 @@ describe("Runtime", () => {
 					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
 					existing: true,
 					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2608,7 +2591,6 @@ describe("Runtime", () => {
 					requestHandler: undefined,
 					runtimeOptions: {
 						enableGroupedBatching: false,
-						flushMode: FlushMode.TurnBased,
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -3184,7 +3166,6 @@ describe("Runtime", () => {
 						requestHandler: undefined,
 						runtimeOptions: {
 							enableGroupedBatching: false,
-							flushMode: FlushMode.TurnBased,
 						},
 						provideEntryPoint: mockProvideEntryPoint,
 					});
