@@ -364,20 +364,6 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("withMetadata", () => {
-			const factory = new SchemaFactory("");
-
-			class Foo extends withMetadata(factory.object("Foo", { bar: factory.number }), {
-				description: "An object",
-				custom: { baz: true },
-			}) {}
-
-			assert.deepEqual(Foo.metadata, {
-				description: "An object",
-				custom: { baz: true },
-			});
-		});
-
 		it("Field schema metadata", () => {
 			const schemaFactory = new SchemaFactory("com.example");
 			const barMetadata = {
@@ -558,20 +544,6 @@ describe("schemaFactory", () => {
 			class NamedList extends factory.array("name", factory.number) {}
 			const namedInstance = new NamedList([5]);
 		});
-
-		it("withMetadata", () => {
-			const factory = new SchemaFactory("");
-
-			class Foo extends withMetadata(factory.array("Foo", factory.number), {
-				description: "An array of numbers",
-				custom: { baz: true },
-			}) {}
-
-			assert.deepEqual(Foo.metadata, {
-				description: "An array of numbers",
-				custom: { baz: true },
-			});
-		});
 	});
 
 	describe("Map", () => {
@@ -627,20 +599,6 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactory("test");
 			class NamedMap extends factory.map("name", factory.number) {}
 			const namedInstance = new NamedMap(new Map([["x", 5]]));
-		});
-
-		it("withMetadata", () => {
-			const factory = new SchemaFactory("");
-
-			class Foo extends withMetadata(factory.map("Foo", factory.number), {
-				description: "A map containing numbers",
-				custom: { baz: true },
-			}) {}
-
-			assert.deepEqual(Foo.metadata, {
-				description: "A map containing numbers",
-				custom: { baz: true },
-			});
 		});
 	});
 
@@ -1069,6 +1027,24 @@ describe("schemaFactory", () => {
 		assert.deepEqual(getKeys(obj), ["a"]);
 		assert.deepEqual(getKeys(arr), [0]);
 		assert.deepEqual(getKeys(mapNode), ["x"]);
+	});
+
+	it("withMetadata", () => {
+		const factory = new SchemaFactory("");
+
+		class Foo extends withMetadata(factory.array("Foo", factory.number), {
+			description: "An array of numbers",
+			custom: { baz: true },
+		}) {}
+
+		assert.deepEqual(Foo.metadata, {
+			description: "An array of numbers",
+			custom: { baz: true },
+		});
+
+		// Ensure the typing is as we expect
+		assert.equal(Foo.metadata.description, "An array of numbers");
+		assert.equal(Foo.metadata.custom.baz, true);
 	});
 });
 
