@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha
-export function aiCollab(options: AiCollabOptions): Promise<AiCollabSuccessResponse | AiCollabErrorResponse>;
+export function aiCollab(options: AiCollabOptions): Promise<GenerateTreeEditsResponse>;
 
 // @alpha
 export interface AiCollabErrorResponse {
@@ -45,6 +45,16 @@ export function createMergableDiffSeries(diffs: Difference[]): Difference[];
 
 // @alpha
 export function createMergableIdDiffSeries(oldObject: unknown, diffs: Difference[], idAttributeName: string | number): Difference[];
+
+// @alpha
+export interface Diff {
+    // (undocumented)
+    description: string;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    type: "error" | "edit";
+}
 
 // @alpha
 export type Difference = DifferenceCreate | DifferenceRemove | DifferenceChange | DifferenceMove;
@@ -97,6 +107,18 @@ export interface DifferenceRemove {
     path: ObjectPath;
     // (undocumented)
     type: "REMOVE";
+}
+
+// @alpha
+export interface GenerateTreeEditsResponse {
+    // (undocumented)
+    diffs?: Diff[];
+    // (undocumented)
+    errorMessage?: string;
+    // (undocumented)
+    status: "success" | "failure" | "partial-failure";
+    // (undocumented)
+    tokensUsed: TokenUsage;
 }
 
 // @alpha
