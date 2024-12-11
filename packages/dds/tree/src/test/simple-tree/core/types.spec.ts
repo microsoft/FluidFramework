@@ -24,7 +24,6 @@ import {
 	typeSchemaSymbol,
 	// Used to test that TreeNode is a type only export.
 	TreeNode as TreeNodePublic,
-	type NodeSchemaMetadata,
 } from "../../../simple-tree/index.js";
 import type { FlexTreeNode } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
