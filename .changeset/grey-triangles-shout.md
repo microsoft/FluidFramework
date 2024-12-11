@@ -26,7 +26,7 @@ class Point extends withMetadata(
 
 ```
 
-Functionality like the experimental conversion of Tree Schema to [JSON Schema](https://json-schema.org/) (`getJsonSchema`) leverages such system-understood metadata to generate useful information.
+Functionality like the experimental conversion of Tree Schema to [JSON Schema](https://json-schema.org/) ([getJsonSchema](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.4.0#user-content-metadata-can-now-be-associated-with-field-schema-22564)) leverages such system-understood metadata to generate useful information.
 In the case of the `description` property, it is mapped directly to the `description` property supported by JSON Schema.
 
 Custom, user-defined properties can also be specified.
