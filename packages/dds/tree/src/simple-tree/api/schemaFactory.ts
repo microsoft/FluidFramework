@@ -921,6 +921,7 @@ export function markSchemaMostDerived(schema: TreeNodeSchema): void {
  * @alpha
  */
 export function withMetadata<
+	TNewCustomMetadata = unknown,
 	TName extends string = string,
 	TKind extends NodeKind = NodeKind,
 	TNode extends TreeNode = TreeNode,
@@ -928,7 +929,6 @@ export function withMetadata<
 	ImplicitlyConstructable extends boolean = boolean,
 	Info = unknown,
 	TConstructorExtra = never,
-	TNewCustomMetadata = unknown,
 >(
 	nodeSchema: TreeNodeSchemaClass<
 		TName,
