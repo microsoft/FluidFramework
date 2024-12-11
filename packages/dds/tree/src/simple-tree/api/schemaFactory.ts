@@ -921,14 +921,14 @@ export function markSchemaMostDerived(schema: TreeNodeSchema): void {
  * @alpha
  */
 export function withMetadata<
-	const TNewCustomMetadata,
-	const TName extends string = string,
-	const TKind extends NodeKind = NodeKind,
-	const TNode extends TreeNode = TreeNode,
-	const TInsertable = never,
-	const ImplicitlyConstructable extends boolean = boolean,
-	const Info = unknown,
-	const TConstructorExtra = never,
+	TName extends string = string,
+	TKind extends NodeKind = NodeKind,
+	TNode extends TreeNode = TreeNode,
+	TInsertable = never,
+	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
+	TConstructorExtra = never,
+	TNewCustomMetadata = unknown,
 >(
 	nodeSchema: TreeNodeSchemaClass<
 		TName,
