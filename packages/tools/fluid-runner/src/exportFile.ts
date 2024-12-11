@@ -5,7 +5,10 @@
 
 import * as fs from "fs";
 
-import { DisconnectReason, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	DisconnectReason,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import {
 	loadExistingContainer,
 	type ILoaderProps,

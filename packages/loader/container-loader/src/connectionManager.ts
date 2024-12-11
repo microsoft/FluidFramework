@@ -449,12 +449,15 @@ export class ConnectionManager implements IConnectionManager {
 		let finalSwitchToReadonly = switchToReadonly;
 
 		// Handle overloads
-		if (typeof disconnectReasonOrError === "string" && disconnectReasonOrError in DisconnectReason) {
-			text = disconnectReasonOrError as DisconnectReason;
+		if (
+			typeof disconnectReasonOrError === "string" &&
+			disconnectReasonOrError in DisconnectReason
+		) {
+			text = disconnectReasonOrError;
 			error = errorOrSwitchToReadonly as ICriticalContainerError;
 		} else {
 			error = disconnectReasonOrError as ICriticalContainerError;
-			finalSwitchToReadonly = errorOrSwitchToReadonly as boolean ?? true;
+			finalSwitchToReadonly = (errorOrSwitchToReadonly as boolean) ?? true;
 		}
 
 		const disconnectReason: IConnectionStateChangeReason = {
@@ -832,7 +835,11 @@ export class ConnectionManager implements IConnectionManager {
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this._outbound.pause();
 		this._outbound.clear();
-		connection.dispose();
+		connection.dispose({
+			...reason.error,
+			name: "disconnectFromDeltaStream",
+			message: reason.text,
+		});
 
 		this.props.disconnectHandler(reason);
 
