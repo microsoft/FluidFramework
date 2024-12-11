@@ -79,6 +79,7 @@ export class NexusRunner implements IRunner {
 			this.startupCheck,
 			this.readinessCheck,
 			throttler,
+			this.collaborationSessionEventEmitter,
 			this.storage,
 		);
 		nexus.set("port", this.port);

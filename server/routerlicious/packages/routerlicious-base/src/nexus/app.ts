@@ -28,6 +28,7 @@ export function create(
 	startupCheck: IReadinessCheck,
 	readinessCheck?: IReadinessCheck,
 	restThrottler?: Map<string, IThrottler>,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	storage?: IDocumentStorage,
 ) {
 	// Express app configuration
@@ -57,7 +58,6 @@ export function create(
 	app.use("/healthz", healthEndpoints);
 
 	// Bind routes
-	const collaborationSessionEventEmitter = new TypedEventEmitter<ICollaborationSessionEvents>();
 	const routes = api.create(config, restThrottler, collaborationSessionEventEmitter, storage);
 	app.use(routes);
 
