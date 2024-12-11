@@ -10,7 +10,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
-	IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
@@ -123,7 +123,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let dataObject2map2: ISharedMap;
 
 	async function setupContainers(
-		runtimeOptions?: IContainerRuntimeOptions,
+		runtimeOptions?: IContainerRuntimeOptionsInternal,
 		disableOfflineLoad = false,
 	) {
 		if (disableOfflineLoad) {
@@ -169,7 +169,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		let dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 
 		function testFlushingUsingOrderSequentially(
-			options: IContainerRuntimeOptions,
+			options: IContainerRuntimeOptionsInternal,
 			disableOfflineLoad,
 		) {
 			beforeEach("setupBatchMessageListeners", async () => {
@@ -550,7 +550,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		function testAutomaticFlushingUsingOrderSequentially(
-			options: IContainerRuntimeOptions,
+			options: IContainerRuntimeOptionsInternal,
 			disableOfflineLoad,
 		) {
 			beforeEach("setupContainers", async () => {

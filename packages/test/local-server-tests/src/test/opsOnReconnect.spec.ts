@@ -15,6 +15,7 @@ import {
 import {
 	ContainerMessageType,
 	IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -105,7 +106,7 @@ describe("Ops on Reconnect", () => {
 	}
 
 	async function setupFirstContainer(
-		runtimeOptions: IContainerRuntimeOptions = { flushMode: FlushMode.Immediate },
+		runtimeOptions: IContainerRuntimeOptionsInternal = { flushMode: FlushMode.Immediate },
 	) {
 		// Create the first container, dataObject and DDSes.
 		container1 = await createContainer(runtimeOptions);
