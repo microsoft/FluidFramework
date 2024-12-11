@@ -194,7 +194,6 @@ export interface FieldProps<TCustomMetadata = unknown> {
 	 * @remarks
 	 * Note: this metadata is not persisted nor made part of the collaborative state; it is strictly client-local.
 	 * Different clients in the same collaborative session may see different metadata for the same field.
-	 * For the same reason, an application may change the properties of this metadata without fear of breaking collaboration.
 	 */
 	readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
 }
