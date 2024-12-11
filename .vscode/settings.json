@@ -41,6 +41,7 @@
 		"fluidframework",
 		"handlecache",
 		"handletable",
+		"incrementality",
 		"injective",
 		"losslessly",
 		"mitigations",
@@ -48,6 +49,7 @@
 		"multinomial",
 		"nonfinite",
 		"pseudorandomly",
+		"reconnections",
 		"Routerlicious",
 		"runtimes",
 		"snapshotlegacy",
@@ -59,7 +61,7 @@
 		"unacked",
 		"unaugmented",
 		"undoprovider",
-		"unsequenced",
+		"unsequenced"
 	],
 
 	// Enable biome as default formatter, and disable rules that disagree with it
