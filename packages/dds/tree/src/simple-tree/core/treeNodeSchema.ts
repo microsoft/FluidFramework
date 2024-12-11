@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { RecursiveReadonly } from "../../util/index.js";
 import type { NodeSchemaMetadata, TreeLeafValue } from "../schemaTypes.js";
 import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
 
@@ -272,7 +273,7 @@ export interface TreeNodeSchemaCore<
 	/**
 	 * User-provided {@link NodeSchemaMetadata} for this schema.
 	 */
-	readonly metadata?: TMetadata | undefined;
+	readonly metadata?: RecursiveReadonly<TMetadata> | undefined;
 
 	/**
 	 * Constructs an instance of this node type.

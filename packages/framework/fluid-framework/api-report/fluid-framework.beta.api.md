@@ -659,6 +659,11 @@ interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
 }
 
 // @public
+export type RecursiveReadonly<T> = {
+    readonly [P in keyof T]: RecursiveReadonly<T[P]>;
+};
+
+// @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
@@ -917,7 +922,7 @@ export interface TreeNodeSchemaCore<out Name extends string, out Kind extends No
     readonly info: Info;
     // (undocumented)
     readonly kind: Kind;
-    readonly metadata?: TMetadata | undefined;
+    readonly metadata?: RecursiveReadonly<TMetadata> | undefined;
 }
 
 // @public @sealed

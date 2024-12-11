@@ -200,6 +200,7 @@ export {
 	type UnionToIntersection,
 	type UnionToTuple,
 	type PopUnion,
+	type RecursiveReadonly,
 } from "./util/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
