@@ -55,15 +55,13 @@ export const releaseGroupArg = Args.custom({
 });
 
 /**
- * Takes a package or release group name and searches the build project for it.
- * Release groups are checked first, then independent packages by scoped name, then by unscoped name.
+ * Takes a release group name and searches the build project for it.
  */
 export const findReleaseGroup = (
 	name: string,
 	buildProject: IBuildProject,
 ): IReleaseGroup | undefined => {
 	return buildProject.releaseGroups.get(name as ReleaseGroupName);
-	// ?? buildProject.packages.get(name as PkgName)
 };
 
 /**
