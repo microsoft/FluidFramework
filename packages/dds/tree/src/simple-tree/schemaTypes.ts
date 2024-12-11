@@ -838,7 +838,7 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
 	/**
 	 * User-defined metadata.
 	 */
-	readonly custom?: TCustomMetadata;
+	readonly custom?: TCustomMetadata | undefined;
 
 	/**
 	 * The description of the Node Schema.
