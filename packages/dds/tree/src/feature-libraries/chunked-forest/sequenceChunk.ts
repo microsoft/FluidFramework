@@ -6,7 +6,7 @@
 import { ReferenceCountedBase } from "../../util/index.js";
 
 import { BasicChunkCursor } from "./basicChunk.js";
-import { type ChunkedCursor, type TreeChunk, dummyRoot } from "./chunk.js";
+import { type ChunkedCursor, type TreeChunk, dummyRoot } from "../../core/index.js";
 
 /**
  * General purpose multi-node sequence chunk.

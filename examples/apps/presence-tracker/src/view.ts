@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { SessionClientStatus } from "@fluidframework/presence/alpha";
+
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 
@@ -20,8 +22,8 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	focusMessageDiv.id = "message-div";
 	focusMessageDiv.textContent = "Click to focus";
 	focusMessageDiv.style.position = "absolute";
-	focusMessageDiv.style.top = "10px";
-	focusMessageDiv.style.right = "10px";
+	focusMessageDiv.style.top = "50px";
+	focusMessageDiv.style.left = "10px";
 	focusMessageDiv.style.color = "red";
 	focusMessageDiv.style.fontWeight = "bold";
 	focusMessageDiv.style.fontSize = "18px";
@@ -31,18 +33,20 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	wrapperDiv.appendChild(focusMessageDiv);
 
 	const onFocusChanged = () => {
+		const session = focusTracker.presence.getMyself();
+		if (session.getConnectionStatus() === SessionClientStatus.Disconnected) {
+			return;
+		}
+
 		const currentUser = focusTracker.audience.getMyself();
 		const focusPresences = focusTracker.getFocusPresences();
+		console.debug(focusPresences);
+		const sessionConnection = session.getConnectionId();
 
-		focusDiv.innerHTML = `
-            Current user: ${currentUser?.name} - connection: ${currentUser?.currentConnection}</br>
-            ${getFocusPresencesString("</br>", focusTracker)}
-        `;
+		focusDiv.innerHTML = `${getFocusPresencesString("</br>", focusTracker)}`;
 
-		const display =
-			currentUser !== undefined && focusPresences.get(currentUser.currentConnection) === true
-				? ""
-				: "none";
+		const display = focusPresences.get(sessionConnection) === false ? "" : "none";
+		console.log(`Setting display to ${display}`);
 		focusMessageDiv.style.display = display;
 	};
 
@@ -79,10 +83,10 @@ export function renderMousePresence(
 	const onPositionChanged = () => {
 		div.innerHTML = "";
 
-		for (const [userName, mousePosition] of mouseTracker.getMousePresences()) {
-			if (focusTracker.getFocusPresences().get(userName) === true) {
+		for (const [clientConnectionId, mousePosition] of mouseTracker.getMousePresences()) {
+			if (focusTracker.getFocusPresences().get(clientConnectionId) === true) {
 				const posDiv = document.createElement("div");
-				posDiv.textContent = `/${userName}`;
+				posDiv.textContent = `/${clientConnectionId}`;
 				posDiv.style.position = "absolute";
 				posDiv.style.left = `${mousePosition.x}px`;
 				posDiv.style.top = `${mousePosition.y - 6}px`;

@@ -19,9 +19,7 @@ import { fail } from "../../util/index.js";
 import type { FullSchemaPolicy } from "./fieldKind.js";
 
 /**
- * @internal
  */
-
 export function isNeverField(
 	policy: FullSchemaPolicy,
 	originalData: TreeStoredSchema,

@@ -7,11 +7,13 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IAzureAudience } from "@fluidframework/azure-client";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import {
+	type ClientConnectionId,
 	type IPresence,
 	type ISessionClient,
 	Latest,
 	type LatestValueManager,
 	type PresenceStates,
+	SessionClientStatus,
 } from "@fluidframework/presence/alpha";
 
 export interface IMouseTrackerEvents extends IEvent {
@@ -75,22 +77,12 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
 	 * A map of connection IDs to mouse positions.
 	 */
-	public getMousePresences(): Map<string, IMousePosition> {
-		const statuses: Map<string, IMousePosition> = new Map();
+	public getMousePresences(): Map<ClientConnectionId, IMousePosition> {
+		const statuses: Map<ClientConnectionId, IMousePosition> = new Map();
 
-		for (const { client, value: position } of this.cursor.clientValues()) {
-			const clientConnectionId = client.getConnectionId();
-
-			for (const [_, member] of this.audience.getMembers()) {
-				// TODO: Without this comparison of audience connection to presence client, the list of client seems to grow
-				// every refresh.
-				const foundConnection = member.connections.some(
-					(connection) => connection.id === clientConnectionId,
-				);
-				if (foundConnection) {
-					statuses.set(clientConnectionId, position);
-					break;
-				}
+		for (const { client, value } of this.cursor.clientValues()) {
+			if (client.getConnectionStatus() === SessionClientStatus.Connected) {
+				statuses.set(client.getConnectionId(), value);
 			}
 		}
 		return statuses;

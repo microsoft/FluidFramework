@@ -8,6 +8,8 @@ import type { IAzureAudience } from "@fluidframework/azure-client";
 import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	Latest,
+	SessionClientStatus,
+	type ClientConnectionId,
 	type IPresence,
 	type ISessionClient,
 	type LatestValueManager,
@@ -58,11 +60,13 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 
 		// Alert all connected clients that there has been a change to a client's focus state
 		window.addEventListener("focus", () => {
+			console.log("onFocus");
 			this.focus.local = {
 				hasFocus: true,
 			};
 		});
 		window.addEventListener("blur", () => {
+			console.log("onBlur");
 			this.focus.local = {
 				hasFocus: false,
 			};
@@ -72,22 +76,17 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	/**
 	 * A map of connection IDs to focus status.
 	 */
-	public getFocusPresences(): Map<string, boolean> {
-		const statuses: Map<string, boolean> = new Map<string, boolean>();
+	public getFocusPresences(): Map<ClientConnectionId, boolean> {
+		const statuses: Map<ClientConnectionId, boolean> = new Map<ClientConnectionId, boolean>();
+
+		const currentClient = this.presence.getMyself();
+		const currentConnectionId = currentClient.getConnectionId();
+		statuses.set(currentConnectionId, this.focus.local.hasFocus);
 
 		for (const { client, value } of this.focus.clientValues()) {
-			const { hasFocus } = value;
-
-			for (const [_, member] of this.audience.getMembers()) {
-				// TODO: Without this comparison of audience connection to presence client, the list of client seems to grow
-				// every refresh.
-				const foundConnection = member.connections.some(
-					(connection) => connection.id === client.getConnectionId(),
-				);
-				if (foundConnection) {
-					statuses.set(client.getConnectionId(), hasFocus);
-					break;
-				}
+			if (client.getConnectionStatus() === SessionClientStatus.Connected) {
+				const { hasFocus } = value;
+				statuses.set(client.getConnectionId(), hasFocus);
 			}
 		}
 

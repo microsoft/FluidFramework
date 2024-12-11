@@ -11,7 +11,7 @@ export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @alpha
-export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind): IRequest;
+export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind, containerPackageInfo?: IContainerPackageInfo | undefined): IRequest;
 
 // @alpha
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
@@ -129,6 +129,9 @@ export interface ISnapshotContents {
     // (undocumented)
     snapshotTree: ISnapshotTree;
 }
+
+// @alpha
+export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
 
 // @alpha
 export const locatorQueryParamName = "nav";
