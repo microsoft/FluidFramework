@@ -941,7 +941,7 @@ export class ContainerRuntime
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableGroupedBatching = true,
 			explicitSchemaControl = false,
-		} = runtimeOptions as IContainerRuntimeOptionsInternal;
+		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
 
@@ -1120,7 +1120,7 @@ export class ContainerRuntime
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};
 
-		// Make sure we've got all the options including internal ones (even though we have to cast back to IContainerRuntimeOptions below)
+		// Make sure we've got all the options including internal ones
 		const internalRuntimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>> = {
 			summaryOptions,
 			gcOptions,
