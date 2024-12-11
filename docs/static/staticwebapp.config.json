@@ -14,5 +14,6 @@
 			"route": "/404",
 			"statusCode": 404
 		}
-	]
+	],
+	"trailingSlash": "never"
 }
