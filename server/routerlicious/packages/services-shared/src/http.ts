@@ -50,6 +50,9 @@ export function validatePrivateLink(
 	return async (req, res, next) => {
 		if (isNetworkCheck) {
 			const tenantId = req.params.tenantId;
+			if (!tenantId) {
+				next();
+			}
 			const clientIPAddress = req.ip ? req.ip : "";
 			const result = getNetworkInformationFromIP(clientIPAddress);
 			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
