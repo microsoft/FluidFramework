@@ -13,7 +13,6 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import {
 	BaseSegment, // eslint-disable-next-line import/no-deprecated
 	Client,
-	cloneInto,
 	IJSONSegment,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
@@ -91,7 +90,6 @@ export class PermutationSegment extends BaseSegment {
 			/* length: */ end - start,
 			/* start: */ this.start + start,
 		);
-		cloneInto(this, b);
 		return b;
 	}
 

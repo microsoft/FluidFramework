@@ -22,7 +22,7 @@ import { IAttributionCollection } from "./attributionCollection.js";
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
-import { ISegment, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { cloneLeafSegment, ISegment, type ISegmentLeaf } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
 import {
@@ -265,8 +265,8 @@ export class SnapshotV1 {
 				) {
 					// We have a compatible pair.  Replace `prev` with the coalesced segment.  Clone to avoid
 					// modifying the segment instances currently in the MergeTree.
-					prev = prev.clone();
-					prev.append(segment.clone());
+					prev = cloneLeafSegment(prev);
+					prev.append(cloneLeafSegment(segment));
 				} else {
 					// The segment pair could not be coalesced.  Record the `prev` segment in the snapshot
 					// and make the current segment the new candidate for coalescing.

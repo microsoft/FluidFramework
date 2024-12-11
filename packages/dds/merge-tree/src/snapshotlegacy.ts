@@ -18,7 +18,7 @@ import {
 
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegment, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { cloneLeafSegment, ISegment, type ISegmentLeaf } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
 import {
 	JsonSegmentSpecs,
@@ -225,9 +225,9 @@ export class SnapshotLegacy {
 				const properties =
 					segment.propertyManager?.getAtSeq(segment.properties, seq) ?? segment.properties;
 				if (prev?.canAppend(segment) && matchProperties(prev.properties, properties)) {
-					prev.append(segment.clone());
+					prev.append(cloneLeafSegment(segment));
 				} else {
-					prev = segment.clone();
+					prev = cloneLeafSegment(segment);
 					prev.properties = properties;
 					segs.push(prev);
 				}

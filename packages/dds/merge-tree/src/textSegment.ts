@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { BaseSegment, cloneInto, ISegment } from "./mergeTreeNodes.js";
+import { BaseSegment, ISegment } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
 import type { PropertySet } from "./properties.js";
 
@@ -71,7 +71,6 @@ export class TextSegment extends BaseSegment {
 	public clone(start = 0, end?: number): TextSegment {
 		const text = this.text.slice(start, end);
 		const b = TextSegment.make(text, this.properties);
-		cloneInto(this, b);
 		return b;
 	}
 

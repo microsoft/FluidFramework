@@ -471,25 +471,40 @@ export function seqLTE(seq: number, minOrRefSeq: number): boolean {
 	return seq !== UnassignedSequenceNumber && seq <= minOrRefSeq;
 }
 
+export type NonPartial<T> = { [K in keyof Required<T>]: T[K] };
 /**
  * blah
  * @internal
  */
-export function cloneInto(from: ISegment, to: ISegment): void {
-	const toLeaf: ISegmentLeaf = to;
-	const fromleaf: ISegmentLeaf = from;
-	toLeaf.clientId = fromleaf.clientId;
-	// TODO: deep clone properties
-	toLeaf.properties = clone(fromleaf.properties);
-	toLeaf.removedClientIds = fromleaf.removedClientIds?.slice();
-	// TODO: copy removed client overlap and branch removal info
-	toLeaf.removedSeq = fromleaf.removedSeq;
-	toLeaf.movedClientIds = fromleaf.movedClientIds?.slice();
-	toLeaf.movedSeq = fromleaf.movedSeq;
-	toLeaf.movedSeqs = fromleaf.movedSeqs;
-	toLeaf.wasMovedOnInsert = fromleaf.wasMovedOnInsert;
-	toLeaf.seq = fromleaf.seq;
-	toLeaf.attribution = fromleaf.attribution?.clone();
+export function cloneLeafSegment(from: ISegmentLeaf): ISegmentLeaf {
+	const to = from.clone();
+
+	return Object.assign<
+		ISegment,
+		NonPartial<Omit<ISegmentLeaf, Exclude<keyof ISegment, "attribution" | "removedSeq">>>
+	>(to, {
+		clientId: from.clientId,
+		removedClientIds: from.removedClientIds?.slice(),
+		removedSeq: from.removedSeq,
+		movedClientIds: from.movedClientIds?.slice(),
+		movedSeq: from.movedSeq,
+		movedSeqs: from.movedSeqs?.slice(),
+		wasMovedOnInsert: from.wasMovedOnInsert,
+		seq: from.seq,
+		attribution: from.attribution?.clone(),
+		localRemovedSeq: undefined,
+		index: undefined,
+		ordinal: undefined,
+		localRefs: undefined,
+		endpointType: undefined,
+		localMovedSeq: undefined,
+		moveDst: undefined,
+		parent: undefined,
+		segmentGroups: undefined,
+		propertyManager: undefined,
+		prevObliterateByInserter: undefined,
+		localSeq: undefined,
+	});
 }
 
 /**
@@ -676,7 +691,6 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 
 	clone(): Marker {
 		const b = Marker.make(this.refType, this.properties);
-		cloneInto(this, b);
 		return b;
 	}
 

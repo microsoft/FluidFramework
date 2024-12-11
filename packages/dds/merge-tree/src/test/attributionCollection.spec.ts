@@ -21,7 +21,7 @@ import {
 	AttributionCollection,
 	SerializedAttributionCollection,
 } from "../attributionCollection.js";
-import { BaseSegment, cloneInto, ISegment } from "../mergeTreeNodes.js";
+import { BaseSegment, ISegment } from "../mergeTreeNodes.js";
 import type { PropertySet } from "../properties.js";
 
 const opKey = (seq: number): AttributionKey => ({ type: "op", seq });
@@ -576,7 +576,6 @@ describe("AttributionCollection", () => {
 
 			public clone(): ISegment {
 				const seg = new Segment(this.cachedLength);
-				cloneInto(this, seg);
 				return seg;
 			}
 
