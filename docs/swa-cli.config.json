@@ -7,7 +7,7 @@
       "appBuildCommand": "npm run build",
       "run": "npm run serve",
       "appDevserverUrl": "http://localhost:3000",
-      "swaConfigLocation": "./build",
+      "swaConfigLocation": ".",
       "apiLocation": "./api",
       "appName": "ff-doc-site",
       "resourceGroup": "website"
