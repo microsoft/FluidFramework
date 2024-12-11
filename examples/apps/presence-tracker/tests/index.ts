@@ -4,21 +4,23 @@
  */
 
 import {
-	acquirePresenceViaDataObject,
-	ExperimentalPresenceManager,
-} from "@fluidframework/presence/alpha";
-import {
 	AzureClient,
 	type AzureContainerServices,
 	type AzureLocalConnectionConfig,
 } from "@fluidframework/azure-client";
+import {
+	acquirePresenceViaDataObject,
+	ExperimentalPresenceManager,
+} from "@fluidframework/presence/alpha";
+// eslint-disable-next-line import/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedMap } from "fluid-framework/legacy";
 
+// eslint-disable-next-line import/no-internal-modules
 import { FocusTracker } from "../src/FocusTracker.js";
+// eslint-disable-next-line import/no-internal-modules
 import { MouseTracker } from "../src/MouseTracker.js";
+// eslint-disable-next-line import/no-internal-modules
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "../src/view.js";
 
 const user = {
@@ -38,7 +40,6 @@ const clientProps = {
 
 const containerSchema = {
 	initialObjects: {
-		map1: SharedMap,
 		// A Presence Manager object temporarily needs to be placed within container schema
 		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
 		presence: ExperimentalPresenceManager,

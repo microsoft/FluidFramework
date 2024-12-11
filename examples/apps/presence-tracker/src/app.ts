@@ -15,7 +15,6 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
-import { SharedMap } from "fluid-framework/legacy";
 
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
@@ -37,7 +36,6 @@ const connectionConfig: AzureLocalConnectionConfig = {
 // when the Container is first created.
 const containerSchema = {
 	initialObjects: {
-		map1: SharedMap,
 		// A Presence Manager object temporarily needs to be placed within container schema
 		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
 		presence: ExperimentalPresenceManager,
