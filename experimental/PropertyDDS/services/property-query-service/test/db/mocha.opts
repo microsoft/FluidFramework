@@ -1,9 +1,0 @@
--R spec
---recursive
---exit
---full-trace
---require hfdm-test-extension
---reporter cypress-multi-reporters
---reporter-options configFile=test/db/mocha_reporter_config.json
-test/setup_common.js
-test/db/**/*.spec.js

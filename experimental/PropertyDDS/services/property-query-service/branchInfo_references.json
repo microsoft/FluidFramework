@@ -1,5 +1,0 @@
-{"branch":{"guid":"1aa75e77-cbe5-0597-3020-3c7c033c4254","meta":{"name":"root"},"commits":[
-  {"guid":"c445e03f-9bc4-f9e7-0d58-30cb16c19b42","changeSet":"{}","meta":{"name":"root"}},
-  {"guid":"c732f59e-2fd9-13a1-6ece-7d518deaa498","changeSet":"{\"insert\":{\"NodeProperty\":{\"Prop1\":{},\"Prop2\":{\"insert\":{\"String\":{\"data\":\"abcde\"},\"Reference\":{\"selfRef\":\"/Prop2\",\"selfSubRef\":\"data\"}}},\"Prop3\":{\"insert\":{\"Reference\":{\"Ref\":\"../Prop2\"}}}},\"Reference\":{\"Ref\":\"/Prop3\"}}}","meta":{}},
-  {"guid":"c732f59e-2fd9-13a1-6ece-7d518deaa499","changeSet":"{\"modify\": {\"Reference\":{\"Ref\":\"/Prop1\"}}}","meta":{"name":"test_3"}}
-]}}
