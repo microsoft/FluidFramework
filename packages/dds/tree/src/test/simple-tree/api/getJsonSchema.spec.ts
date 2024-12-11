@@ -156,6 +156,8 @@ describe("getJsonSchema", () => {
 		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
+		// Array nodes do not satisfy AJV's array validation. This should be uncommented if/when we change this behavior.
+		// validator(hydrate(Schema, ["Hello", "world"]), true);
 		validator([], true);
 		validator(["Hello", "world"], true);
 		validator("Hello world", false);
