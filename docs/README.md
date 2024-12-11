@@ -191,6 +191,28 @@ Sidebars for other versions are configured via `versioned_sidebars/version-<vers
 
 Note that sidebars are configured for documents under `docs` and `versioned_docs`; they do not apply to unversioned *Pages*.
 
+### Documentation Versioning
+
+We currently offer versioned documentation for each of our supported major versions.
+This documentation is intended to be kept up-to-date with the most recent release of each major version series.
+
+For now, this means we publish documentation (including generated API documentation) for versions `1.x` and `2.x`.
+
+- We also support generating API documentation for the local repo code in local development only.
+  See [Local API docs build](#local-api-docs-build), but these are not intended to be published.
+
+#### Why Only Major Versions?
+
+We aim to keep the number of concurrently maintained site versions minimized, for a number of reasons:
+
+1. Developer overhead - the more versions of the docs we offer, the more work we take on to keep documentation for supported versions up to date.
+2. User overhead - the more versions we offer, the more users have to think about when they engage with our website.
+3. Build performance - Docusaurus's build isn't fast. The more versions we add to our suite, the longer our build times become.
+
+#### Updating the Site Version
+
+TODO
+
 ### Best practices
 
 #### Markdown
