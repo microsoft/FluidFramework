@@ -463,7 +463,6 @@ export class MergeBlock implements IMergeNodeCommon {
 		if (updateOrdinal) {
 			this.setOrdinal(child, index);
 		}
-		assert(child.ordinal !== undefined, "must have ordinal");
 		this.children[index] = child as IMergeNodeWithOrdinal;
 	}
 }
