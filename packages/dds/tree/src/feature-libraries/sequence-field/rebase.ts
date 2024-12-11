@@ -319,11 +319,12 @@ function separateEffectsForMove(mark: MarkEffect): {
 } {
 	const type = mark.type;
 	switch (type) {
-		case "Remove":
-		case "Rename":
-			return { remains: mark };
 		case NoopMarkType:
 			return {};
+		case "Remove":
+			return { follows: mark };
+		case "Rename":
+			return { remains: mark };
 		case "Insert": {
 			const follows: Detach = {
 				type: "Remove",

@@ -99,10 +99,8 @@ describe("Editing", () => {
 		});
 
 		it("can rebase remove over move", () => {
-			const tree1 = makeTreeFromJsonSequence([]);
+			const tree1 = makeTreeFromJsonSequence(["a", "b"]);
 			const tree2 = tree1.branch();
-			insert(tree1, 0, "a", "b");
-			tree2.rebaseOnto(tree1);
 
 			// Move b before a
 			tree1.editor.move(rootField, 1, 1, rootField, 0);

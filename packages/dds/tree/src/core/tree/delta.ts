@@ -84,6 +84,9 @@ export interface Root<TTree = ProtoNode> {
 	 * then the build should be listed under ID A.
 	 */
 	readonly build?: readonly DetachedNodeBuild<TTree>[];
+
+	readonly renames?: readonly DetachedNodeRename[];
+
 	/**
 	 * New detached nodes to be destroyed.
 	 * The ordering has no significance.

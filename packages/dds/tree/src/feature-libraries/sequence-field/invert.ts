@@ -104,6 +104,11 @@ function invertMark(
 			const inputId = getInputCellId(mark);
 			let inverse: Mutable<Mark>;
 			if (inputId === undefined) {
+				crossFieldManager.invertDetach(
+					{ revision: mark.revision, localId: mark.id },
+					mark.count,
+					mark.changes,
+				);
 				inverse = {
 					type: "Insert",
 					id: mark.id,
@@ -111,7 +116,9 @@ function invertMark(
 					count: mark.count,
 					revision,
 				};
+				return [inverse];
 			} else {
+				// XXX: This case shouldn't happen
 				inverse = {
 					type: "Remove",
 					id: mark.id,
@@ -122,8 +129,8 @@ function invertMark(
 				if (isRollback) {
 					inverse.idOverride = inputId;
 				}
+				return [withNodeChange(inverse, mark.changes)];
 			}
-			return [withNodeChange(inverse, mark.changes)];
 		}
 		case "Insert": {
 			const inputId = getInputCellId(mark);

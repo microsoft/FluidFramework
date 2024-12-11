@@ -77,6 +77,7 @@ function empty(): ModularChangeset {
 	return {
 		fieldChanges: new Map(),
 		nodeChanges: newTupleBTree(),
+		nodeRenames: newTupleBTree(),
 		rootNodes: [],
 		nodeToParent: newTupleBTree(),
 		nodeAliases: newTupleBTree(),
@@ -135,6 +136,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 		nodeChanges,
 		fieldChanges,
 		rootNodes: [], // XXX
+		nodeRenames: newTupleBTree(), // XXX
 		nodeToParent,
 		crossFieldKeys,
 		nodeAliases: newTupleBTree(),

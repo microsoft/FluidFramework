@@ -40,6 +40,10 @@ export interface ModularChangeset extends HasFieldChanges {
 	// XXX: Should we merge builds and destroys into this?
 	readonly rootNodes: RootRange[];
 
+	// XXX: Could this be merged with nodeAliases?
+	// XXX: Need to make sure whenever we split a range we also split the value of the range
+	readonly nodeRenames: CrossFieldRangeTable<NodeId>;
+
 	/**
 	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node.
 	 */
@@ -74,7 +78,9 @@ export interface RootRange {
 
 export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;
 export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;
-export type CrossFieldKeyTable = TupleBTree<CrossFieldKeyRange, FieldId>;
+
+export type CrossFieldRangeTable<T> = TupleBTree<CrossFieldKeyRange, T>;
+export type CrossFieldKeyTable = CrossFieldRangeTable<FieldId>;
 export type CrossFieldKeyRange = readonly [
 	CrossFieldTarget,
 	RevisionTag | undefined,

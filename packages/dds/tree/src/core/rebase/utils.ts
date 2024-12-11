@@ -447,6 +447,8 @@ function rollbackFromCommit<TChange>(
 	}
 	const tag = mintRevisionTag();
 	const untagged = changeRebaser.invert(commit, true, tag);
+
+	// XXX: Does this do anything?
 	const deeplyTaggedRollback = changeRebaser.changeRevision(untagged, tag, commit.revision);
 	const fullyTaggedRollback = tagRollbackInverse(deeplyTaggedRollback, tag, commit.revision);
 

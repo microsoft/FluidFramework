@@ -421,8 +421,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					sequence.changeHandler.editor.remove(index, count, id, revision),
 				);
 
-				const rootEdit = this.modularBuilder.detachRoots(id, count, revision);
-
 				const fieldEdit: FieldEditDescription = {
 					type: "field",
 					field,
@@ -430,7 +428,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					change,
 					revision,
 				};
-				this.modularBuilder.submitChanges([rootEdit, fieldEdit], revision);
+				this.modularBuilder.submitChanges([fieldEdit], revision);
 			},
 		};
 	}

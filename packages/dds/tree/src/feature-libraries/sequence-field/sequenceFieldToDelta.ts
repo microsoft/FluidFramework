@@ -82,11 +82,7 @@ export function sequenceFieldToDelta(
 					break;
 				}
 				case "Insert": {
-					assert(
-						inputCellId !== undefined,
-						0x821 /* Active Insert marks must have a CellId */,
-					);
-					const buildId = nodeIdFromChangeAtom(inputCellId);
+					const buildId = nodeIdFromChangeAtom({ revision: mark.revision, localId: mark.id });
 					deltaMark.attach = buildId;
 					if (deltaMark.fields) {
 						// Nested changes are represented on the node in its starting location

@@ -485,6 +485,7 @@ function makeModularChangeCodec(
 				fieldChanges: new Map(),
 				nodeChanges: newTupleBTree(),
 				rootNodes: [], // XXX
+				nodeRenames: newTupleBTree(), // XXX
 				nodeToParent: newTupleBTree(),
 				nodeAliases: newTupleBTree(),
 				crossFieldKeys: newCrossFieldKeyTable(),
