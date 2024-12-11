@@ -921,6 +921,7 @@ export function markSchemaMostDerived(schema: TreeNodeSchema): void {
  * @alpha
  */
 export function withMetadata<
+	const TNewCustomMetadata,
 	const TName extends string = string,
 	const TKind extends NodeKind = NodeKind,
 	const TNode extends TreeNode = TreeNode,
@@ -928,8 +929,6 @@ export function withMetadata<
 	const ImplicitlyConstructable extends boolean = boolean,
 	const Info = unknown,
 	const TConstructorExtra = never,
-	const TMetadataIn extends NodeSchemaMetadata = NodeSchemaMetadata,
-	const TMetadataOut extends TMetadataIn = TMetadataIn,
 >(
 	nodeSchema: TreeNodeSchemaClass<
 		TName,
@@ -938,10 +937,9 @@ export function withMetadata<
 		TInsertable,
 		ImplicitlyConstructable,
 		Info,
-		TConstructorExtra,
-		TMetadataIn
+		TConstructorExtra
 	>,
-	metadata: TMetadataOut,
+	metadata: NodeSchemaMetadata<TNewCustomMetadata>,
 ): TreeNodeSchemaClass<
 	TName,
 	TKind,
@@ -950,10 +948,11 @@ export function withMetadata<
 	ImplicitlyConstructable,
 	Info,
 	TConstructorExtra,
-	TMetadataOut
+	TNewCustomMetadata
 > {
 	class Derived extends nodeSchema {
-		public static readonly metadata?: TMetadataOut | undefined = metadata;
+		public static readonly metadata?: NodeSchemaMetadata<TNewCustomMetadata> | undefined =
+			metadata;
 	}
 	return Derived as unknown as TreeNodeSchemaClass<
 		TName,
@@ -963,6 +962,6 @@ export function withMetadata<
 		ImplicitlyConstructable,
 		Info,
 		TConstructorExtra,
-		TMetadataOut
+		TNewCustomMetadata
 	>;
 }

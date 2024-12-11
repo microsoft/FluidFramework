@@ -41,6 +41,7 @@ import {
 } from "../../../simple-tree/api/schemaFactory.js";
 import type {
 	NodeFromSchema,
+	NodeSchemaMetadata,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
@@ -1032,27 +1033,25 @@ describe("schemaFactory", () => {
 	it("withMetadata", () => {
 		const factory = new SchemaFactory("");
 
-		class Foo extends withMetadata(factory.array("Foo", factory.number), {
-			description: "An array of numbers",
-			custom: { baz: true },
-		}) {}
+		interface CustomMetadata {
+			baz: boolean;
+		}
 
-		assert.deepEqual(Foo.metadata, {
+		const fooMetadata: NodeSchemaMetadata<CustomMetadata> = {
 			description: "An array of numbers",
-			custom: { baz: true },
-		});
+			custom: {
+				baz: true,
+			},
+		};
+
+		class Foo extends withMetadata(factory.array("Foo", factory.number), fooMetadata) {}
+
+		assert.deepEqual(Foo.metadata, fooMetadata);
 
 		// Ensure the typing is as we expect
 		assert.equal(Foo.metadata.description, "An array of numbers");
-		assert.equal(Foo.metadata.custom.baz, true);
-
-		// Ensure properties are readonly
-		// @ts-expect-error Metadata properties are readonly
-		Foo.metadata.description = "Foo";
-		// @ts-expect-error Metadata properties are readonly
-		Foo.metadata.custom = {};
-		// @ts-expect-error Metadata properties are readonly
-		Foo.metadata.custom.baz = false;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		assert.equal(Foo.metadata.custom!.baz, true);
 	});
 });
 
