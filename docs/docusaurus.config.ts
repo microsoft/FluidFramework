@@ -162,6 +162,15 @@ const config: Config = {
 			},
 		],
 	],
+	headTags: [
+		{
+			tagName: "script",
+			attributes: {
+				src: "https://wcpstatic.microsoft.com/mscc/lib/v2/wcp-consent.js",
+				async: "true",
+			},
+		},
+	],
 };
 
 export default config;

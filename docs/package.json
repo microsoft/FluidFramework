@@ -108,6 +108,7 @@
 	"dependencies": {
 		"@microsoft/applicationinsights-react-js": "^17.3.4",
 		"@microsoft/applicationinsights-web": "^3.3.4",
+		"@wcp/wcp-consent": "1.1.0",
 		"history": "^5.3.0",
 		"uuid": "^11.0.3"
 	}

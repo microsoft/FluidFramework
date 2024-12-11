@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
+ ///<reference types="@wcp/wcp-consent" />
 import Layout from "@theme/Layout";
-import React from "react";
+import React, {Suspense} from "react";
 import appInsights from "../appInsights";
+const CookieBanner = React.lazy(() => import("../components/CookieBanner"));
+
 import {v4 as uuidv4} from "uuid";
 
 if (typeof window !== 'undefined') {
@@ -34,6 +37,9 @@ import { Homepage } from "@site/src/components/home";
 export default function Home(): React.ReactElement {
 	return (
 		<Layout>
+			<Suspense fallback={<div/>}>
+			<CookieBanner/>
+			</Suspense>
 			<Homepage />
 		</Layout>
 	);
