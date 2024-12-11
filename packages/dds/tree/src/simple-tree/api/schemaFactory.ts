@@ -438,7 +438,8 @@ export class SchemaFactory<
 			TreeMapNode<T>,
 			MapNodeInsertableData<T>,
 			true,
-			T
+			T,
+			undefined
 		> = this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
 		return out;
 	}
@@ -583,7 +584,8 @@ export class SchemaFactory<
 			TreeArrayNode<T>,
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			true,
-			T
+			T,
+			undefined
 		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
 		return out;
 	}
