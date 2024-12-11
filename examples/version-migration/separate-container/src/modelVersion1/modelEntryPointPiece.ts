@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// TODO: Note that this would theoretically come from some model loading package, not migration-tools.
+// TODO: Note that this would theoretically come from some composite entry point package, not migration-tools.
 // Maybe move back into example-utils for the short-term
 import type { IEntryPointPiece } from "@fluid-example/migration-tools/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";

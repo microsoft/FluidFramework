@@ -163,7 +163,7 @@ export const setupContainer = async (
 
 async function start(): Promise<void> {
 	let id: string;
-	let container: IContainer;
+	let container: IContainer | undefined;
 
 	if (location.hash.length === 0) {
 		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
@@ -173,7 +173,6 @@ async function start(): Promise<void> {
 		id = await createDetachedResult.attach();
 	} else {
 		id = location.hash.slice(1);
-		container = await loadExistingContainer({ ...loaderProps, request: { url: id } });
 	}
 
 	await setupContainer(id, container);
