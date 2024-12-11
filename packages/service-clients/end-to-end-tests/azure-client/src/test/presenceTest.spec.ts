@@ -114,7 +114,7 @@ describe(`Presence with AzureClient`, () => {
 			children.push(child);
 
 			// Send connect command to child
-			const message: MessageToParent = { command: "connect", containerId, user }
+			const message: MessageToParent = { command: "connect", containerId, user };
 			child.send(message);
 		}
 
@@ -139,7 +139,11 @@ describe(`Presence with AzureClient`, () => {
 			},
 		);
 
-		assert.strictEqual(attendeesJoined.length, numClients, "Number of joined attendees is wrong");
+		assert.strictEqual(
+			attendeesJoined.length,
+			numClients,
+			"Number of joined attendees is wrong",
+		);
 
 		container.disconnect();
 
