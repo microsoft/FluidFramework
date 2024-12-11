@@ -1046,6 +1046,12 @@ describe("schemaFactory", () => {
 		// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 		const description = Foo.metadata.description;
 		const baz = Foo.metadata.custom.baz;
+
+		// Ensure we can construct a node from a schema with metadata.
+		const constructed = new Foo([42, 37]);
+
+		// Ensure we can hydrate data using a schema with metadata.
+		const hydrated = hydrate(Foo, [42, 37]);
 	});
 });
 
