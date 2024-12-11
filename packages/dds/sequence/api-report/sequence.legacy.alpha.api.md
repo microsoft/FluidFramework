@@ -44,7 +44,7 @@ export interface IInterval {
 }
 
 // @alpha
-export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
+export interface IIntervalCollection<TInterval extends ISerializableInterval> extends CustomEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
     add({ start, end, props, }: {
@@ -85,11 +85,13 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
 }
 
 // @alpha
-export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
-    (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
-    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "changed", listener: (interval: TInterval, propertyDeltas: PropertySet, previousInterval: TInterval | undefined, local: boolean, slide: boolean) => void): void;
+export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> {
+    addInterval(interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined): void;
+    changed(interval: TInterval, propertyDeltas: PropertySet, previousInterval: TInterval | undefined, local: boolean, slide: boolean): void;
+    changeInterval(interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean): void;
+    // (undocumented)
+    deleteInterval(interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined): void;
+    propertyChanged(interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined): void;
 }
 
 export { InteriorSequencePlace }

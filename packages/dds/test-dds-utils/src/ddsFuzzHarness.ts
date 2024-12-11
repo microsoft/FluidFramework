@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter } from "@fluid-internal/client-utils";
 import type {
 	AsyncGenerator,
 	AsyncReducer,
@@ -32,7 +32,8 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces";
+import type { HasListeners, IEmitter } from "@fluidframework/core-interfaces/internal";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelFactory,
@@ -312,22 +313,24 @@ export interface DDSFuzzHarnessEvents {
 	/**
 	 * Raised for each non-summarizer client created during fuzz test execution.
 	 */
-	(event: "clientCreate", listener: (client: Client<IChannelFactory>) => void);
+	clientCreate(client: Client<IChannelFactory>): void;
 
 	/**
 	 * Raised after creating the initialState but prior to performing the fuzzActions..
 	 */
-	(event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void);
+	testStart(initialState: DDSFuzzTestState<IChannelFactory>): void;
 
 	/**
 	 * Raised after all fuzzActions have been completed.
 	 */
-	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
+	testEnd(finalState: DDSFuzzTestState<IChannelFactory>): void;
 
 	/**
 	 * Raised before each generated operation is run by its reducer.
 	 */
-	(event: "operationStart", listener: (operation: BaseOperation) => void);
+	operationStart(operation: BaseOperation): void;
+
+	operation(operation: BaseOperation): void;
 }
 
 /**
@@ -406,13 +409,13 @@ export interface DDSFuzzSuiteOptions {
 
 	/**
 	 * Event emitter which allows hooking into interesting points of DDS harness execution.
-	 * Test authors that want to subscribe to any of these events should create a `TypedEventEmitter`,
+	 * Test authors that want to subscribe to any of these events should create a `createEmitter`,
 	 * do so, and pass it in when creating the suite.
 	 *
 	 * @example
 	 *
 	 * ```typescript
-	 * const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+	 * const emitter = createEmitter<DDSFuzzHarnessEvents>();
 	 * emitter.on("clientCreate", (client) => {
 	 *     // Casting is necessary as the event typing isn't parameterized with each DDS type.
 	 *     const myDDS = client.channel as MyDDSType;
@@ -425,7 +428,9 @@ export interface DDSFuzzSuiteOptions {
 	 * createDDSFuzzSuite(model, options);
 	 * ```
 	 */
-	emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
+	emitter: IEmitter<DDSFuzzHarnessEvents> &
+		Listenable<DDSFuzzHarnessEvents> &
+		HasListeners<DDSFuzzHarnessEvents>;
 
 	/**
 	 * Strategy for validating eventual consistency of DDSes.
@@ -550,7 +555,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 		numOpsBeforeAttach: 5,
 	},
 	handleGenerationDisabled: true,
-	emitter: new TypedEventEmitter(),
+	emitter: createEmitter(),
 	numberOfClients: 3,
 	only: [],
 	skip: [],
@@ -1465,6 +1470,7 @@ export async function runTestForSeed<
 		async (state, operation) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const decodedHandles = serializer.decode(operation);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			options.emitter.emit("operation", decodedHandles);
 			operationCount++;
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument

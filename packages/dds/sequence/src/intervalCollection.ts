@@ -6,8 +6,7 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-deprecated */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import { CustomEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
@@ -617,8 +616,7 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
  * @legacy
  * @alpha
  */
-export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval>
-	extends IEvent {
+export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> {
 	/**
 	 * This event is invoked whenever the endpoints of an interval may have changed.
 	 * This can happen on:
@@ -632,28 +630,28 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	 * `op` is defined if and only if the server has acked this change.
 	 * `slide` is true if the change is due to sliding on removal of position
 	 */
-	(
-		event: "changeInterval",
-		listener: (
-			interval: TInterval,
-			previousInterval: TInterval,
-			local: boolean,
-			op: ISequencedDocumentMessage | undefined,
-			slide: boolean,
-		) => void,
+	changeInterval(
+		interval: TInterval,
+		previousInterval: TInterval,
+		local: boolean,
+		op: ISequencedDocumentMessage | undefined,
+		slide: boolean,
 	): void;
 	/**
 	 * This event is invoked whenever an interval is added or removed from the collection.
 	 * `local` reflects whether the change originated locally.
 	 * `op` is defined if and only if the server has acked this change.
 	 */
-	(
-		event: "addInterval" | "deleteInterval",
-		listener: (
-			interval: TInterval,
-			local: boolean,
-			op: ISequencedDocumentMessage | undefined,
-		) => void,
+	addInterval(
+		interval: TInterval,
+		local: boolean,
+		op: ISequencedDocumentMessage | undefined,
+	): void;
+
+	deleteInterval(
+		interval: TInterval,
+		local: boolean,
+		op: ISequencedDocumentMessage | undefined,
 	): void;
 	/**
 	 * This event is invoked whenever an interval's properties have changed.
@@ -664,14 +662,11 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	 * `local` reflects whether the change originated locally.
 	 * `op` is defined if and only if the server has acked this change.
 	 */
-	(
-		event: "propertyChanged",
-		listener: (
-			interval: TInterval,
-			propertyDeltas: PropertySet,
-			local: boolean,
-			op: ISequencedDocumentMessage | undefined,
-		) => void,
+	propertyChanged(
+		interval: TInterval,
+		propertyDeltas: PropertySet,
+		local: boolean,
+		op: ISequencedDocumentMessage | undefined,
 	): void;
 	/**
 	 * This event is invoked whenever an interval's endpoints or properties (or both) have changed.
@@ -685,15 +680,12 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	 * `local` reflects whether the change originated locally.
 	 * `slide` is true if the change is due to sliding on removal of position.
 	 */
-	(
-		event: "changed",
-		listener: (
-			interval: TInterval,
-			propertyDeltas: PropertySet,
-			previousInterval: TInterval | undefined,
-			local: boolean,
-			slide: boolean,
-		) => void,
+	changed(
+		interval: TInterval,
+		propertyDeltas: PropertySet,
+		previousInterval: TInterval | undefined,
+		local: boolean,
+		slide: boolean,
 	): void;
 }
 
@@ -704,8 +696,9 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
  * @alpha
  */
 export interface IIntervalCollection<TInterval extends ISerializableInterval>
-	extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
+	extends CustomEventEmitter<IIntervalCollectionEvent<TInterval>> {
 	readonly attached: boolean;
+
 	/**
 	 * Attaches an index to this collection.
 	 * All intervals which are part of this collection will be added to the index, and the index will automatically
@@ -917,13 +910,14 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
  * {@inheritdoc IIntervalCollection}
  */
 export class IntervalCollection<TInterval extends ISerializableInterval>
-	extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>>
+	extends CustomEventEmitter<IIntervalCollectionEvent<TInterval>>
 	implements IIntervalCollection<TInterval>
 {
 	private savedSerializedIntervals?: ISerializedInterval[];
 	private localCollection: LocalIntervalCollection<TInterval> | undefined;
 	private onDeserialize: DeserializeCallback | undefined;
 	private client: Client | undefined;
+	// private readonly events = createEmitter<IIntervalCollectionEvent<TInterval>>();
 	private readonly localSeqToSerializedInterval = new Map<
 		number,
 		ISerializedInterval | SerializedIntervalDelta
@@ -1156,12 +1150,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			previousInterval.start.refType = ReferenceType.Transient;
 			previousInterval.end.refType = ReferenceType.Transient;
 			this.emit("changeInterval", interval, previousInterval, local, op, slide);
-			this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
+			this.emit("changed", interval, {}, previousInterval ?? undefined, local, slide);
 			previousInterval.start.refType = startRefType;
 			previousInterval.end.refType = endRefType;
 		} else {
 			this.emit("changeInterval", interval, previousInterval, local, op, slide);
-			this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
+			this.emit("changed", interval, {}, previousInterval ?? undefined, local, slide);
 		}
 	}
 

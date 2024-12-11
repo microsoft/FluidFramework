@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter } from "@fluid-internal/client-utils";
 import { type AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	type DDSFuzzHarnessEvents,
@@ -82,7 +82,7 @@ describe("Fuzz - revert", () => {
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
 		};
-		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		const emitter = createEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (state: UndoRedoFuzzTestState) => {
 			init(state);
 			state.anchors = [];
@@ -173,7 +173,7 @@ describe("Fuzz - revert", () => {
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
 		};
-		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		const emitter = createEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", init);
 		emitter.on("testEnd", (state: UndoRedoFuzzTestState) => {
 			const undoStack = state.undoStack ?? assert.fail("undoStack should be defined");

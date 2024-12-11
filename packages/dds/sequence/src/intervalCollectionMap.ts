@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -139,7 +139,7 @@ export class IntervalCollectionMap<T extends ISerializableInterval> {
 		) => void,
 		private readonly type: IIntervalCollectionType<T>,
 		private readonly options?: Partial<SequenceOptions>,
-		public readonly eventEmitter = new TypedEventEmitter<ISharedDefaultMapEvents>(),
+		public readonly eventEmitter = createEmitter<ISharedDefaultMapEvents>(),
 	) {}
 
 	/**
@@ -317,7 +317,7 @@ export class IntervalCollectionMap<T extends ISerializableInterval> {
 		const previousValue = this.data.get(key);
 		this.data.set(key, localValue);
 		const event: IValueChanged = { key, previousValue };
-		this.eventEmitter.emit("create", event, local, this.eventEmitter);
+		this.eventEmitter.emit("create", event, local, undefined, this.eventEmitter);
 		return localValue;
 	}
 
@@ -375,7 +375,7 @@ export class IntervalCollectionMap<T extends ISerializableInterval> {
 			this.submitMessage(op, localOpMetadata);
 
 			const event: IValueChanged = { key, previousValue };
-			this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);
+			this.eventEmitter.emit("valueChanged", event, true, undefined, this.eventEmitter);
 		};
 
 		return { emit };
