@@ -1033,11 +1033,7 @@ describe("schemaFactory", () => {
 	it("withMetadata", () => {
 		const factory = new SchemaFactory("");
 
-		interface CustomMetadata {
-			baz: boolean;
-		}
-
-		const fooMetadata: NodeSchemaMetadata<CustomMetadata> = {
+		const fooMetadata = {
 			description: "An array of numbers",
 			custom: {
 				baz: true,
@@ -1050,8 +1046,7 @@ describe("schemaFactory", () => {
 
 		// Ensure the typing is as we expect
 		const description = Foo.metadata.description;
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const baz = Foo.metadata.custom!.baz;
+		const baz = Foo.metadata.custom.baz;
 	});
 });
 
