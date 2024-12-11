@@ -90,7 +90,13 @@ export {
 	verboseFromCursor,
 } from "./verboseTree.js";
 
-export type { EncodeOptions } from "./customTree.js";
+export {
+	type EncodeOptions,
+	customFromCursorStored,
+	type CustomTreeNode,
+	type CustomTreeValue,
+	tryStoredSchemaAsArray,
+} from "./customTree.js";
 
 export { type ConciseTree, conciseFromCursor } from "./conciseTree.js";
 

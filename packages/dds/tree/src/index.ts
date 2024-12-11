@@ -3,6 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Note: This file includes APIs from `indexCommonApi.ts` along with legacy-alpha and deprecated APIs.
+ *
+ * Consider adding only legacy-alpha or deprecated APIs that should be exported from `@fluidframework/tree` but not from `fluid-framework`.
+ *
+ * For APIs meant be to exported from `fluid-framework`, consider adding them to `indexCommonApi.ts`.
+ */
+
 // eslint-disable-next-line no-restricted-syntax
 export * from "./indexCommonApi.js";
 

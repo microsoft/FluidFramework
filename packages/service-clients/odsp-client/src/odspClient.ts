@@ -8,7 +8,11 @@ import type {
 	IContainer,
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import type {
 	FluidObject,
 	IConfigProviderBase,
@@ -119,11 +123,14 @@ export class OdspClient {
 		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loaderProps = this.getLoaderProps(containerSchema);
 
-		const container = await loader.createDetachedContainer({
-			package: "no-dynamic-package",
-			config: {},
+		const container = await createDetachedContainer({
+			...loaderProps,
+			codeDetails: {
+				package: "no-dynamic-package",
+				config: {},
+			},
 		});
 
 		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
@@ -140,14 +147,14 @@ export class OdspClient {
 		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loaderProps = this.getLoaderProps(containerSchema);
 		const url = createOdspUrl({
 			siteUrl: this.connectionConfig.siteUrl,
 			driveId: this.connectionConfig.driveId,
 			itemId: id,
 			dataStorePath: "",
 		});
-		const container = await loader.resolve({ url });
+		const container = await loadExistingContainer({ ...loaderProps, request: { url } });
 
 		const fluidContainer = createFluidContainer({
 			container,
@@ -157,7 +164,7 @@ export class OdspClient {
 		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
-	private createLoader(schema: ContainerSchema): Loader {
+	private getLoaderProps(schema: ContainerSchema): ILoaderProps {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
 			compatibilityMode: "2",
@@ -180,14 +187,14 @@ export class OdspClient {
 			mode: "write",
 		};
 
-		return new Loader({
+		return {
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
 			logger: this.logger,
 			options: { client },
 			configProvider: this.configProvider,
-		});
+		};
 	}
 
 	private async createFluidContainer(

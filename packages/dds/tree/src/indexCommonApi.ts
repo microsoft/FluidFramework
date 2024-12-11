@@ -3,36 +3,26 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * The exports have been reorganized: APIs intended for export from `fluid-framework` are now in `indexCommonApi.ts`, while the remaining are placed in `index.ts`.
+ *
+ * This change addresses the issue of duplicate exports for the `Listenable`, `Listener`, `Off`, and `IsListener` types, which are now moved to `@fluidframework/core-interfaces`.
+ *
+ * Customers can still import these types from `@fluidframework/tree`, but they are marked as deprecated there. It is recommended to import them directly from `@fluidframework/core-interfaces` instead.
+ *
+ * Note: This file excludes legacy alpha and deprecated APIs.
+ */
+
 export {
-	EmptyKey,
-	type FieldKey,
-	type TreeValue,
-	type FieldMapObject,
-	type NodeData,
-	type GenericTreeNode,
-	type JsonableTree,
-	type GenericFieldsNode,
-	type TreeNodeSchemaIdentifier,
-	type TreeFieldStoredSchema,
 	ValueSchema,
-	TreeNodeStoredSchema,
-	type FieldKindIdentifier,
-	type TreeTypeSet,
-	type TreeStoredSchema,
 	type Revertible,
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
-	type StoredSchemaCollection,
-	type ErasedTreeNodeSchemaDataFormat,
-	ObjectNodeStoredSchema,
-	MapNodeStoredSchema,
-	LeafNodeStoredSchema,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
 } from "./core/index.js";
-export { type Brand } from "./util/index.js";
 
 export {
 	TreeStatus,
@@ -43,10 +33,9 @@ export {
 } from "./feature-libraries/index.js";
 
 export {
-	type ISharedTree,
+	type ITreeInternal,
 	type SharedTreeOptions,
 	ForestType,
-	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
@@ -183,11 +172,6 @@ export {
 	type SimpleObjectNodeSchema,
 	normalizeAllowedTypes,
 	getSimpleSchema,
-	numberSchema,
-	stringSchema,
-	booleanSchema,
-	handleSchema,
-	nullSchema,
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
@@ -206,8 +190,6 @@ export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
 export {
-	type Covariant,
-	BrandedType,
 	type RestrictiveReadonlyRecord,
 	type RestrictiveStringRecord,
 	type MakeNominal,

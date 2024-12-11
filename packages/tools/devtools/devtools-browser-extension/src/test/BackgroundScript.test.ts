@@ -10,48 +10,30 @@ import {
 	devtoolsMessageSource,
 } from "@fluidframework/devtools-core/internal";
 import { expect } from "chai";
-import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
 
-import type { Globals } from "../Globals.js";
+// eslint-disable-next-line import/no-internal-modules
+import { runBackgroundScript } from "../background/BackgroundScriptContent.js";
 import { type DevToolsInitMessage, extensionViewMessageSource } from "../messaging/index.js";
 
 import { awaitListener, stubGlobals, stubPort } from "./Utilities.js";
 
 type Port = chrome.runtime.Port;
 
-const proxyquire = Proxyquire.noCallThru();
-
-const backgroundScriptPath = "../background/BackgroundScript"; // Relative to this file
-const globalsModulePath = "../Globals"; // Relative to this file
-
-/**
- * Require the background script using the provided `browser` APIs.
- */
-const loadBackgroundScript = (globals: Globals): void => {
-	proxyquire(backgroundScriptPath, {
-		[globalsModulePath]: {
-			...globals,
-		} as unknown,
-	});
-};
-
 describe("Background Script unit tests", () => {
 	const sandbox = createSandbox();
 
-	let globals: Globals = stubGlobals();
+	let { browser } = stubGlobals();
 
 	afterEach(() => {
 		sandbox.reset();
-		globals = stubGlobals(); // Reset globals to ensure test-local modifications are cleared
+		browser = stubGlobals().browser; // Reset globals to ensure test-local modifications are cleared
 	});
 
 	it("Registers `onConnect` listener on load", async () => {
-		const { browser } = globals;
-
 		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
 
-		loadBackgroundScript(globals);
+		runBackgroundScript(browser);
 
 		const onConnectListener = await onConnectListenerPromise;
 
@@ -59,7 +41,6 @@ describe("Background Script unit tests", () => {
 	});
 
 	it("Injects connects to the Content script upon initialization from Devtools script.", async () => {
-		const { browser } = globals;
 		const tabId = 37;
 
 		const devtoolsPort = stubPort("devtools-port");
@@ -90,7 +71,7 @@ describe("Background Script unit tests", () => {
 		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
 
 		// Load the background script (with stubbed `onConnect`)
-		loadBackgroundScript(globals);
+		runBackgroundScript(browser);
 
 		// Wait for onConnect handler to be registered by background script
 		const onConnectListener = await onConnectListenerPromise;
@@ -131,8 +112,6 @@ describe("Background Script unit tests", () => {
 	 * Returns the stubbed ports for interaction in tests.
 	 */
 	async function initializeBackgroundScript(): Promise<StubbedConnection> {
-		const { browser } = globals;
-
 		const tabId = 37;
 		const tabPort = stubPort("tab-port");
 
@@ -153,7 +132,7 @@ describe("Background Script unit tests", () => {
 		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
 
 		// Load the background script (with stubbed `onConnect`)
-		loadBackgroundScript(globals);
+		runBackgroundScript(browser);
 
 		// Wait for onConnect handler to be registered by background script
 		const connectFromDevtools = await onConnectListenerPromise;

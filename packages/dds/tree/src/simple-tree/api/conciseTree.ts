@@ -8,7 +8,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ITreeCursor } from "../../core/index.js";
 import type { TreeLeafValue, ImplicitAllowedTypes } from "../schemaTypes.js";
 import type { TreeNodeSchema } from "../core/index.js";
-import { customFromCursorInner, type EncodeOptions } from "./customTree.js";
+import { customFromCursor, type EncodeOptions } from "./customTree.js";
 import { getUnhydratedContext } from "../createContext.js";
 
 /**
@@ -55,5 +55,5 @@ function conciseFromCursorInner<TCustom>(
 	options: Required<EncodeOptions<TCustom>>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): ConciseTree<TCustom> {
-	return customFromCursorInner(reader, options, schema, conciseFromCursorInner);
+	return customFromCursor(reader, options, schema, conciseFromCursorInner);
 }
