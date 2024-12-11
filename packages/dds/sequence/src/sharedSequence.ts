@@ -64,7 +64,6 @@ export class SubSequence<T> extends BaseSegment {
 	public clone(start = 0, end?: number) {
 		const clonedItems = this.items.slice(start, end);
 		const b = new SubSequence(clonedItems);
-		this.cloneInto(b);
 		return b;
 	}
 

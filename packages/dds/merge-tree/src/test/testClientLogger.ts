@@ -17,11 +17,12 @@ import {
 } from "../mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
 import {
+	isLeaf,
 	Marker,
 	seqLTE,
 	toMoveInfo,
 	toRemovalInfo,
-	type ISegment,
+	type ISegmentLeaf,
 } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 import { PropertySet, matchProperties } from "../properties.js";
@@ -356,7 +357,7 @@ export class TestClientLogger {
 		while (nodes.length > 0) {
 			const node = nodes.shift();
 			if (node) {
-				if (node.isLeaf()) {
+				if (isLeaf(node)) {
 					if (node.parent !== parent) {
 						if (acked.length > 0) {
 							acked += " ";
@@ -400,7 +401,7 @@ export class TestClientLogger {
 	}
 }
 
-function toMoveOrRemove(segment: ISegment): { seq: number } | undefined {
+function toMoveOrRemove(segment: ISegmentLeaf): { seq: number } | undefined {
 	const mi = toMoveInfo(segment);
 	const ri = toRemovalInfo(segment);
 	if (mi !== undefined || ri !== undefined) {

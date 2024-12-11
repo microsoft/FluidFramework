@@ -367,7 +367,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 
 	private addIntervalListeners(interval: TInterval) {
-		const cloneRef = (ref: LocalReferencePosition) => {
+		const cloneRef = <T extends ISegment = ISegment>(ref: LocalReferencePosition<T>) => {
 			const segment = ref.getSegment();
 			if (segment === undefined) {
 				// Cloning is unnecessary: refs which have slid off the string entirely
@@ -383,7 +383,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 				ref.properties,
 				ref.slidingPreference,
 				ref.canSlideToEndpoint,
-			);
+			) as LocalReferencePosition<T>;
 		};
 		if (interval instanceof SequenceIntervalClass) {
 			let previousInterval: (TInterval & SequenceIntervalClass) | undefined;

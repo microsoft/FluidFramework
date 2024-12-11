@@ -78,7 +78,10 @@ describe("client.applyMsg", () => {
 		for (let i = 0; i < 100; i++) {
 			const msg = changes.get(i)!.msg;
 			client.applyMsg(msg);
-			const segmentGroup = changes.get(i)?.segmentGroup;
+			const segmentGroup:
+				| SegmentGroup<ISegmentLeaf>
+				| SegmentGroup<ISegmentLeaf>[]
+				| undefined = changes.get(i)?.segmentGroup;
 			assert(
 				!Array.isArray(segmentGroup) && segmentGroup !== undefined,
 				"segment group should be defined and not an array",

@@ -35,11 +35,11 @@ import { MergeTree } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
 	IJSONMarkerSegment,
-	IMergeNode,
 	ISegment,
 	compareNumbers,
 	compareStrings,
 	reservedMarkerIdKey,
+	type ISegmentLeaf,
 } from "../mergeTreeNodes.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
@@ -290,7 +290,7 @@ function printTextSegment(textSegment: ISegment, pos: number): boolean {
 	return true;
 }
 
-export function makeTextSegment(text: string): IMergeNode {
+export function makeTextSegment(text: string): TextSegment {
 	return new TextSegment(text);
 }
 
@@ -387,7 +387,11 @@ export function mergeTreeTest1(): void {
 	// checkRemoveSegTree(segTree, 4, 13);
 	checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
 	mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
-	const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
+	const segoff = mergeTree.getContainingSegment<ISegmentLeaf>(
+		4,
+		UniversalSequenceNumber,
+		LocalClientId,
+	);
 	log(mergeTree.getPosition(segoff.segment!, UniversalSequenceNumber, LocalClientId));
 	log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
 	log(mergeTree.toString());
@@ -1526,7 +1530,7 @@ function findReplacePerf(filename: string): void {
 	let cFetches = 0;
 	let cReplaces = 0;
 	for (let pos = 0; pos < client.getLength(); ) {
-		const curSegOff = client.getContainingSegment(pos);
+		const curSegOff = client.getContainingSegment<ISegmentLeaf>(pos);
 		cFetches++;
 
 		const curSeg = curSegOff.segment;

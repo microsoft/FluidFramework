@@ -11,6 +11,7 @@ import path from "node:path";
 import { Trace } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
+import type { ISegmentLeaf } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { MapLike, createMap, extend } from "../properties.js";
 import { ReferencePosition } from "../referencePositions.js";
@@ -135,7 +136,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number): ReferencePosi
 	const len = client.getLength();
 	for (let i = 0; i < bookmarkCount; i++) {
 		const pos = random.integer(0, len - 1);
-		const segoff = client.getContainingSegment(pos);
+		const segoff = client.getContainingSegment<ISegmentLeaf>(pos);
 		let refType = ReferenceType.Simple;
 		if (i & 1) {
 			refType = ReferenceType.SlideOnRemove;
@@ -167,7 +168,7 @@ function measureFetch(startFile: string, withBookmarks = false): void {
 			// curPG.pos is ca end
 			const curPG = client.searchForMarker(pos, "pg", true)!;
 			const properties = curPG.properties!;
-			const curSegOff = client.getContainingSegment(pos)!;
+			const curSegOff = client.getContainingSegment<ISegmentLeaf>(pos)!;
 			const curSeg = curSegOff.segment!;
 			// Combine paragraph and direct properties
 			extend(properties, curSeg.properties);

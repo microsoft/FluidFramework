@@ -7,6 +7,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ISegmentLeaf } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
@@ -14,7 +15,7 @@ import { TestClient } from "./testClient.js";
 describe("client.getPosition", () => {
 	const localUserLongId = "localUser";
 	let client: TestClient;
-	let segment: TextSegment;
+	let segment: TextSegment & ISegmentLeaf;
 	const segPos = 4;
 	beforeEach(() => {
 		client = new TestClient();
@@ -23,7 +24,7 @@ describe("client.getPosition", () => {
 		}
 		client.startOrUpdateCollaboration(localUserLongId);
 
-		const segOff = client.getContainingSegment(segPos);
+		const segOff = client.getContainingSegment<ISegmentLeaf>(segPos);
 		assert(TextSegment.is(segOff.segment!));
 		assert.strictEqual(segOff.offset, 0);
 		assert.strictEqual(segOff.segment.text, "o");

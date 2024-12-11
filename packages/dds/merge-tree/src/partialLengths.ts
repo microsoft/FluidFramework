@@ -14,8 +14,9 @@ import {
 	IMergeNode,
 	IMoveInfo,
 	IRemovalInfo,
-	ISegment,
+	ISegmentLeaf,
 	compareNumbers,
+	isLeaf,
 	seqLTE,
 	toMoveInfo,
 	toRemovalInfo,
@@ -302,7 +303,7 @@ export class PartialSequenceLengths {
 		const childPartials: PartialSequenceLengths[] = [];
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
-			if (!child.isLeaf()) {
+			if (!isLeaf(child)) {
 				hasInternalChild = true;
 				if (recur) {
 					child.partialLengths = PartialSequenceLengths.combine(
@@ -388,7 +389,7 @@ export class PartialSequenceLengths {
 
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
-			if (child.isLeaf()) {
+			if (isLeaf(child)) {
 				// Leaf segment
 				const segment = child;
 				if (segment.seq !== undefined && seqLTE(segment.seq, collabWindow.minSeq)) {
@@ -504,7 +505,7 @@ export class PartialSequenceLengths {
 	 */
 	static accumulateMoveOverlapForExisting(
 		segmentLen: number,
-		segment: ISegment,
+		segment: ISegmentLeaf,
 		firstGte: PartialSequenceLength,
 		clientIds: number[],
 	): void {
@@ -523,7 +524,7 @@ export class PartialSequenceLengths {
 		if (clientIds.length !== nonInsertingClientIds.length) {
 			PartialSequenceLengths.accumulateMoveClientOverlap(
 				firstGte,
-				[segment.clientId],
+				[segment.clientId ?? 0],
 				segment.wasMovedOnInsert ? -segment.cachedLength : segmentLen,
 			);
 		}
@@ -537,7 +538,7 @@ export class PartialSequenceLengths {
 	 * segment
 	 */
 	private static getMoveOverlapForExisting(
-		segment: ISegment,
+		segment: ISegmentLeaf,
 		obliterateOverlapLen: number,
 		clientIds: number[],
 	): RedBlackTree<number, IOverlapClient> {
@@ -548,8 +549,8 @@ export class PartialSequenceLengths {
 		);
 
 		if (clientIds.length !== nonInsertingClientIds.length) {
-			overlapObliterateClients.put(segment.clientId, {
-				clientId: segment.clientId,
+			overlapObliterateClients.put(segment.clientId ?? 0, {
+				clientId: segment.clientId ?? 0,
 				seglen: segment.wasMovedOnInsert ? -segment.cachedLength : obliterateOverlapLen,
 			});
 		}
@@ -558,7 +559,7 @@ export class PartialSequenceLengths {
 	}
 
 	private static updatePartialsAfterInsertion(
-		segment: ISegment,
+		segment: ISegmentLeaf,
 		segmentLen: number,
 		remoteObliteratedLen: number | undefined,
 		obliterateOverlapLen: number = segmentLen,
@@ -638,7 +639,7 @@ export class PartialSequenceLengths {
 	 */
 	private static insertSegment(
 		combinedPartialLengths: PartialSequenceLengths,
-		segment: ISegment,
+		segment: ISegmentLeaf,
 		removalInfo?: IRemovalInfo,
 		moveInfo?: IMoveInfo,
 	): void {
@@ -763,7 +764,7 @@ export class PartialSequenceLengths {
 			undefined,
 			partials,
 			seqOrLocalSeq,
-			clientId,
+			clientId ?? 0,
 			removeClientOverlap,
 			moveClientOverlap,
 		);
@@ -915,7 +916,7 @@ export class PartialSequenceLengths {
 		// Compute length for seq across children
 		for (let i = 0; i < node.childCount; i++) {
 			const child = node.children[i];
-			if (child.isLeaf()) {
+			if (isLeaf(child)) {
 				const segment = child;
 				const removalInfo = toRemovalInfo(segment);
 				const moveInfo = toMoveInfo(segment);
@@ -1276,7 +1277,7 @@ export function verifyExpectedPartialLengths(
 ): void {
 	if (
 		(!mergeTree.collabWindow.collaborating || mergeTree.collabWindow.clientId === clientId) &&
-		(node.isLeaf() || localSeq === undefined)
+		(isLeaf(node) || localSeq === undefined)
 	) {
 		return;
 	}
@@ -1291,7 +1292,7 @@ export function verifyExpectedPartialLengths(
 		if (!thisNode) {
 			continue;
 		}
-		if (thisNode.isLeaf()) {
+		if (isLeaf(thisNode)) {
 			expected += mergeTree["nodeLength"](thisNode, refSeq, clientId, localSeq) ?? 0;
 		} else {
 			nodesToVisit.push(...thisNode.children.slice(0, thisNode.childCount));

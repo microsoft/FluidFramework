@@ -15,7 +15,7 @@ import {
 } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { MergeBlock, MaxNodesInBlock, type ISegmentLeaf } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 import {
@@ -338,7 +338,8 @@ describe("MergeTree.insertingWalk", () => {
 		const segments: string[] = [];
 		walkAllChildSegments(mergeTree.root, (seg) => {
 			if (TextSegment.is(seg)) {
-				if (seg.localRemovedSeq !== undefined || seg.removedSeq !== undefined) {
+				const tseg: TextSegment & ISegmentLeaf = seg;
+				if (tseg.localRemovedSeq !== undefined || tseg.removedSeq !== undefined) {
 					segments.push(`(${seg.text})`);
 				} else {
 					segments.push(seg.text);

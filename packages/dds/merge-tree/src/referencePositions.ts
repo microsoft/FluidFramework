@@ -4,7 +4,7 @@
  */
 
 import { SlidingPreference } from "./localReference.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { type ISegment, type ISegmentLeaf } from "./mergeTreeNodes.js";
 import { ReferenceType } from "./ops.js";
 import { PropertySet } from "./properties.js";
 
@@ -65,7 +65,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean {
  * @legacy
  * @alpha
  */
-export interface ReferencePosition {
+export interface ReferencePosition<T extends ISegment = ISegment> {
 	/**
 	 * Properties associated with this reference
 	 */
@@ -85,7 +85,7 @@ export interface ReferencePosition {
 	 * Gets the segment that this reference position is semantically associated with. Returns undefined iff the
 	 * reference became detached from the string.
 	 */
-	getSegment(): ISegment | undefined;
+	getSegment(): T | undefined;
 
 	/**
 	 * Gets the offset for this reference position within its associated segment.
@@ -97,7 +97,7 @@ export interface ReferencePosition {
 	 */
 	getOffset(): number;
 
-	isLeaf(): this is ISegment;
+	isLeaf(): this is T;
 }
 
 /**
@@ -126,11 +126,14 @@ export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T
  * @internal
  */
 export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number {
-	const aSeg = a.getSegment();
-	const bSeg = b.getSegment();
+	const aSeg: ISegmentLeaf | undefined = a.getSegment();
+	const bSeg: ISegmentLeaf | undefined = b.getSegment();
 	if (aSeg === bSeg) {
 		return a.getOffset() - b.getOffset();
 	} else {
-		return aSeg === undefined || (bSeg !== undefined && aSeg.ordinal < bSeg.ordinal) ? -1 : 1;
+		return aSeg === undefined ||
+			(bSeg !== undefined && (aSeg.ordinal ?? "") < (bSeg.ordinal ?? ""))
+			? -1
+			: 1;
 	}
 }

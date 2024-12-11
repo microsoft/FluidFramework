@@ -396,7 +396,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	): void {
 		let localInserts = 0;
 		let localRemoves = 0;
-		walkAllChildSegments(this._mergeTree.root, (seg) => {
+		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentLeaf) => {
 			if (seg.seq === UnassignedSequenceNumber) {
 				localInserts++;
 			}
@@ -846,8 +846,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return this.clientNameToIds.get(longClientId)!.data;
 	}
 
-	getLongClientId(shortClientId: number): string {
-		return shortClientId >= 0 ? this.shortClientIdMap[shortClientId] : "original";
+	getLongClientId(shortClientId: number | undefined): string {
+		return shortClientId !== undefined && shortClientId >= 0
+			? this.shortClientIdMap[shortClientId]
+			: "original";
 	}
 
 	addLongClientId(longClientId: string): void {
@@ -912,7 +914,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		// By sorting we ensure the nearer segment will be applied and sequenced before the farther segments
 		// so their recalculated positions will be correct.
 		for (const segment of segmentGroup.segments.sort((a, b) =>
-			a.ordinal < b.ordinal ? -1 : 1,
+			(a.ordinal ?? "") < (b.ordinal ?? "") ? -1 : 1,
 		)) {
 			assert(
 				segment.segmentGroups?.remove?.(segmentGroup) === true,

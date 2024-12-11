@@ -9,9 +9,11 @@ import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
+	type IMergeNodeWithOrdinal,
+	type ISegmentLeaf,
 	type MergeBlock,
 	IMergeNode,
-	ISegment,
+	isLeaf,
 	Marker,
 	MaxNodesInBlock,
 	seqLTE,
@@ -48,7 +50,7 @@ export function zamboniSegments(
 			segmentToScour.segment.parent.needsScour !== false
 		) {
 			const block = segmentToScour.segment.parent;
-			const childrenCopy: IMergeNode[] = [];
+			const childrenCopy: IMergeNodeWithOrdinal[] = [];
 			scourNode(block, childrenCopy, mergeTree);
 			// This will avoid the cost of re-scouring nodes
 			// that have recently been scoured
@@ -99,7 +101,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 		}
 		const baseNodesInBlockCount = Math.floor(totalNodeCount / childCount);
 		let remainderCount = totalNodeCount % childCount;
-		const packedBlocks: IMergeNode[] = Array.from({ length: MaxNodesInBlock });
+		const packedBlocks: IMergeNodeWithOrdinal[] = Array.from({ length: MaxNodesInBlock });
 		let childrenPackedCount = 0;
 		for (let nodeIndex = 0; nodeIndex < childCount; nodeIndex++) {
 			let nodeCount = baseNodesInBlockCount;
@@ -136,11 +138,11 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree): void {
 	// The previous segment is tracked while scouring for the purposes of merging adjacent segments
 	// when possible.
-	let prevSegment: ISegment | undefined;
+	let prevSegment: ISegmentLeaf | undefined;
 	for (let k = 0; k < node.childCount; k++) {
 		// TODO Non null asserting, why is this not null?
 		const childNode = node.children[k]!;
-		if (!childNode.isLeaf() || childNode.segmentGroups?.empty === false) {
+		if (!isLeaf(childNode) || childNode.segmentGroups?.empty === false) {
 			holdNodes.push(childNode);
 			prevSegment = undefined;
 			continue;

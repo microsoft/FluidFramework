@@ -265,7 +265,8 @@ function revertLocalInsert(
 			0x3f1 /* tracking group removed */,
 		);
 		assert(tracked.isLeaf(), 0x3f2 /* inserts must track segments */);
-		if (toRemovalInfo(tracked) === undefined) {
+		const seg: ISegmentLeaf = tracked;
+		if (toRemovalInfo(seg) === undefined) {
 			const start = getPosition(mergeTreeWithRevert, tracked);
 			driver.removeRange(start, start + tracked.cachedLength);
 		}
@@ -287,7 +288,7 @@ function revertLocalRemove(
 
 		assert(!tracked.isLeaf(), 0x3f4 /* removes must track local refs */);
 
-		const refSeg: ISegmentInternal | undefined = tracked.getSegment();
+		const refSeg: ISegmentLeaf | undefined = tracked.getSegment();
 		let realPos = mergeTreeWithRevert.referencePositionToLocalPosition(tracked);
 
 		// References which are on EndOfStringSegment don't return detached for pos,
@@ -318,7 +319,7 @@ function revertLocalRemove(
 		const insertRef: Partial<
 			Record<"before" | "after", DoublyLinkedList<LocalReferencePosition>>
 		> = {};
-		const forward = insertSegment.ordinal < refSeg.ordinal;
+		const forward = (insertSegment.ordinal ?? "") < (refSeg.ordinal ?? "");
 		const refHandler = (lref: LocalReferencePosition): false | undefined => {
 			// once we reach it keep the original reference where it is
 			// we'll move tracking groups, and remove it as a last step.

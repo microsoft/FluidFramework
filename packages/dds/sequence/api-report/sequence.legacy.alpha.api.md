@@ -320,7 +320,7 @@ export interface SequenceInterval extends ISerializableInterval {
     compare(b: SequenceInterval): number;
     compareEnd(b: SequenceInterval): number;
     compareStart(b: SequenceInterval): number;
-    readonly end: LocalReferencePosition;
+    readonly end: LocalReferencePosition<SharedStringSegment>;
     // (undocumented)
     readonly endSide: Side;
     // (undocumented)
@@ -332,7 +332,7 @@ export interface SequenceInterval extends ISerializableInterval {
     overlapsPos(bstart: number, bend: number): boolean;
     removePositionChangeListeners(): void;
     // (undocumented)
-    readonly start: LocalReferencePosition;
+    readonly start: LocalReferencePosition<SharedStringSegment>;
     // (undocumented)
     readonly startSide: Side;
     // (undocumented)

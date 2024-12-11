@@ -29,6 +29,7 @@ import {
 	endpointPosAndSide,
 	addProperties,
 	copyPropertiesAndManager,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -37,6 +38,7 @@ import {
 	reservedIntervalIdKey,
 	sidesFromStickiness,
 } from "../intervalCollection.js";
+import type { SharedStringSegment } from "../sharedString.js";
 
 import {
 	ISerializableInterval,
@@ -106,12 +108,12 @@ function maxSide(sideA: Side, sideB: Side): Side {
  * @legacy
  */
 export interface SequenceInterval extends ISerializableInterval {
-	readonly start: LocalReferencePosition;
+	readonly start: LocalReferencePosition<SharedStringSegment>;
 	/**
 	 * End endpoint of this interval.
 	 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
 	 */
-	readonly end: LocalReferencePosition;
+	readonly end: LocalReferencePosition<SharedStringSegment>;
 	readonly intervalType: IntervalType;
 	readonly startSide: Side;
 	readonly endSide: Side;
@@ -212,12 +214,12 @@ export class SequenceIntervalClass implements SequenceInterval {
 		 * Start endpoint of this interval.
 		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
 		 */
-		public start: LocalReferencePosition,
+		public start: LocalReferencePosition<ISegmentInternal & SharedStringSegment>,
 		/**
 		 * End endpoint of this interval.
 		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
 		 */
-		public end: LocalReferencePosition,
+		public end: LocalReferencePosition<ISegmentInternal & SharedStringSegment>,
 		public intervalType: IntervalType,
 		props?: PropertySet,
 		public readonly startSide: Side = Side.Before,
@@ -502,7 +504,7 @@ export function createPositionReferenceFromSegoff(
 	fromSnapshot?: boolean,
 	slidingPreference?: SlidingPreference,
 	canSlideToEndpoint?: boolean,
-): LocalReferencePosition {
+): LocalReferencePosition<ISegmentInternal & SharedStringSegment> {
 	if (segoff === "start" || segoff === "end") {
 		return client.createLocalReferencePosition(
 			segoff,
@@ -511,7 +513,7 @@ export function createPositionReferenceFromSegoff(
 			undefined,
 			slidingPreference,
 			canSlideToEndpoint,
-		);
+		) as LocalReferencePosition<ISegmentInternal & SharedStringSegment>;
 	}
 
 	if (segoff.segment) {
@@ -522,7 +524,7 @@ export function createPositionReferenceFromSegoff(
 			undefined,
 			slidingPreference,
 			canSlideToEndpoint,
-		);
+		) as LocalReferencePosition<ISegmentInternal & SharedStringSegment>;
 		return ref;
 	}
 
@@ -540,7 +542,10 @@ export function createPositionReferenceFromSegoff(
 		throw new UsageError("Non-transient references need segment");
 	}
 
-	return createDetachedLocalReferencePosition(slidingPreference, refType);
+	return createDetachedLocalReferencePosition(
+		slidingPreference,
+		refType,
+	) as LocalReferencePosition<ISegmentInternal & SharedStringSegment>;
 }
 
 function createPositionReference(
@@ -553,7 +558,7 @@ function createPositionReference(
 	slidingPreference?: SlidingPreference,
 	exclusive: boolean = false,
 	useNewSlidingBehavior: boolean = false,
-): LocalReferencePosition {
+): LocalReferencePosition<ISegmentInternal & SharedStringSegment> {
 	let segoff;
 
 	if (op) {

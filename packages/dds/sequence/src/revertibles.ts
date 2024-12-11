@@ -123,7 +123,8 @@ export function appendDeleteIntervalToRevertibles(
 	interval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
 ): SharedStringRevertible[] {
-	const startSeg = interval.start.getSegment() as SharedStringSegment | undefined;
+	const startSeg: (SharedStringSegment & ISegmentInternal) | undefined =
+		interval.start.getSegment();
 	if (!startSeg) {
 		return revertibles;
 	}
@@ -131,7 +132,8 @@ export function appendDeleteIntervalToRevertibles(
 		startSeg.removedSeq !== undefined
 			? ReferenceType.SlideOnRemove | ReferenceType.RangeBegin
 			: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
-	const endSeg = interval.end.getSegment() as SharedStringSegment | undefined;
+	const endSeg: (SharedStringSegment & ISegmentInternal) | undefined =
+		interval.end.getSegment();
 	if (!endSeg) {
 		return revertibles;
 	}
@@ -177,7 +179,8 @@ export function appendChangeIntervalToRevertibles(
 	previousInterval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
 ) {
-	const startSeg = previousInterval.start.getSegment() as SharedStringSegment;
+	const startSeg = previousInterval.start.getSegment() as SharedStringSegment &
+		ISegmentInternal;
 	// This logic is needed because the ReferenceType StayOnRemove cannot be used
 	// on removed segments. This works for revertibles because the old position of the
 	// interval within the removed segment is handled by the remove range revertible.
@@ -185,7 +188,7 @@ export function appendChangeIntervalToRevertibles(
 		startSeg.removedSeq !== undefined
 			? ReferenceType.SlideOnRemove | ReferenceType.RangeBegin
 			: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
-	const endSeg = previousInterval.end.getSegment() as SharedStringSegment;
+	const endSeg = previousInterval.end.getSegment() as SharedStringSegment & ISegmentInternal;
 	const endType =
 		endSeg.removedSeq !== undefined
 			? ReferenceType.SlideOnRemove | ReferenceType.RangeEnd
@@ -587,7 +590,8 @@ interface RangeInfo {
 // eslint-disable-next-line import/no-deprecated
 class SortedRangeSet extends SortedSet<RangeInfo, string> {
 	protected getKey(item: RangeInfo): string {
-		return item.ranges[0].segment.ordinal;
+		const seg: ISegmentInternal = item.ranges[0].segment;
+		return seg.ordinal ?? "";
 	}
 }
 

@@ -576,7 +576,6 @@ describe("AttributionCollection", () => {
 
 			public clone(): ISegment {
 				const seg = new Segment(this.cachedLength);
-				this.cloneInto(seg);
 				return seg;
 			}
 

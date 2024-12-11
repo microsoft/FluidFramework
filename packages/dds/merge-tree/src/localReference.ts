@@ -60,7 +60,8 @@ function _validateReferenceType(refType: ReferenceType): void {
  * @legacy
  * @alpha
  */
-export interface LocalReferencePosition extends ReferencePosition {
+export interface LocalReferencePosition<T extends ISegment = ISegment>
+	extends ReferencePosition<T> {
 	callbacks?: Partial<
 		Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>
 	>;
@@ -226,11 +227,10 @@ export function setValidateRefCount(
  * Represents a collection of {@link LocalReferencePosition}s associated with one segment in a merge-tree.
  * @sealed
  *
- * @legacy
- * @alpha
+ * @internal
  */
 export class LocalReferenceCollection {
-	public static append(seg1: ISegment, seg2: ISegment): void {
+	public static append(seg1: ISegmentInternal, seg2: ISegmentInternal): void {
 		if (seg2.localRefs && !seg2.localRefs.empty) {
 			if (!seg1.localRefs) {
 				seg1.localRefs = new LocalReferenceCollection(seg1);
@@ -249,7 +249,7 @@ export class LocalReferenceCollection {
 		validateRefCount?.(seg2.localRefs);
 	}
 
-	public static setOrGet(segment: ISegment): LocalReferenceCollection {
+	public static setOrGet(segment: ISegmentInternal): LocalReferenceCollection {
 		return (segment.localRefs ??= new LocalReferenceCollection(segment));
 	}
 
@@ -260,7 +260,7 @@ export class LocalReferenceCollection {
 		/**
 		 * The segment this `LocalReferenceCollection` is associated with.
 		 */
-		private readonly segment: ISegment,
+		private readonly segment: ISegmentInternal,
 		initialRefsByfOffset: (IRefsAtOffset | undefined)[] = Array.from({
 			length: segment.cachedLength,
 		}),
@@ -460,7 +460,7 @@ export class LocalReferenceCollection {
 	 *
 	 * @remarks This method should only be called by mergeTree.
 	 */
-	public split(offset: number, splitSeg: ISegment): void {
+	public split(offset: number, splitSeg: ISegmentInternal): void {
 		if (this.empty) {
 			// shrink the offset array when empty and splitting
 			this.refsByOffset.length = offset;

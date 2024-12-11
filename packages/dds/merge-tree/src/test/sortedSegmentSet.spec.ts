@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { LocalReferencePosition } from "../localReference.js";
-import { ISegment } from "../mergeTreeNodes.js";
+import { type ISegmentLeaf } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
 import { SortedSegmentSet, SortedSegmentSetItem } from "../sortedSegmentSet.js";
@@ -62,10 +62,10 @@ describe("SortedSegmentSet", () => {
 	});
 
 	it("SortedSegmentSet of objects with segments", () => {
-		const set = new SortedSegmentSet<{ segment: ISegment }>();
+		const set = new SortedSegmentSet<{ segment: ISegmentLeaf }>();
 		for (let i = 0; i < client.getLength(); i++) {
 			for (const pos of [i, client.getLength() - 1 - i]) {
-				const segment = client.getContainingSegment(pos).segment;
+				const segment = client.getContainingSegment<ISegmentLeaf>(pos).segment;
 				assert(segment);
 				const item = { segment };
 				assert.equal(set.has(item), false);
@@ -78,10 +78,10 @@ describe("SortedSegmentSet", () => {
 	});
 
 	it("SortedSegmentSet of segments", () => {
-		const set = new SortedSegmentSet();
+		const set = new SortedSegmentSet<ISegmentLeaf>();
 		for (let i = 0; i < client.getLength(); i++) {
 			for (const pos of [i, client.getLength() - 1 - i]) {
-				const segment = client.getContainingSegment(pos).segment;
+				const segment = client.getContainingSegment<ISegmentLeaf>(pos).segment;
 				assert(segment);
 				set.addOrUpdate(segment);
 				assert.equal(set.has(segment), true);
@@ -99,7 +99,7 @@ describe("SortedSegmentSet", () => {
 		const set = new TrackingGroup();
 		for (let i = 0; i < client.getLength(); i++) {
 			for (const pos of [i, client.getLength() - 1 - i]) {
-				const segmentInfo = client.getContainingSegment(pos);
+				const segmentInfo = client.getContainingSegment<ISegmentLeaf>(pos);
 				assert(segmentInfo?.segment);
 				const lref = client.createLocalReferencePosition(
 					segmentInfo.segment,
@@ -113,7 +113,7 @@ describe("SortedSegmentSet", () => {
 			}
 		}
 		assert.equal(set.size, client.getLength() * 2);
-		validateSet<LocalReferencePosition>(
+		validateSet<LocalReferencePosition<ISegmentLeaf>>(
 			client,
 			// Cast to any because we are validating a set of local references, but the instantiated type of trackedSet
 			// on TrackingGroup is SortedSegmentSet<Trackable>.

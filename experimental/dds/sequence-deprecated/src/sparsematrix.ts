@@ -56,7 +56,6 @@ export class PaddingSegment extends BaseSegment {
 
 	public clone(start = 0, end?: number) {
 		const b = new PaddingSegment(this.cachedLength);
-		this.cloneInto(b);
 		return b;
 	}
 
@@ -128,7 +127,6 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 		if (this.tags) {
 			b.tags = this.tags.slice(start, end);
 		}
-		this.cloneInto(b);
 		return b;
 	}
 

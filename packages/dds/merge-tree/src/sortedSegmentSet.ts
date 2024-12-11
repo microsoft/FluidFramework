@@ -4,7 +4,7 @@
  */
 
 import { LocalReferencePosition } from "./localReference.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { ISegment, type ISegmentLeaf } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
 import { SortedSet } from "./sortedSet.js";
 
@@ -41,15 +41,17 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
 			// The particular value for comparison doesn't matter because `findItemPosition` tolerates
 			// elements with duplicate keys (as it must, since local references use the same key as their segment).
 			// All that matters is that it's consistent.
-			return lref.getSegment()?.ordinal ?? "";
+			const seg: ISegmentLeaf | undefined = lref.getSegment();
+			return seg?.ordinal ?? "";
 		}
 		const maybeObject = item as { readonly segment: ISegment };
 		if (maybeObject?.segment) {
-			return maybeObject.segment.ordinal;
+			const seg: ISegmentLeaf = maybeObject.segment;
+			return seg.ordinal ?? "";
 		}
 
-		const maybeSegment = item as ISegment;
-		return maybeSegment.ordinal;
+		const maybeSegment = item as ISegmentLeaf;
+		return maybeSegment.ordinal ?? "";
 	}
 
 	protected findItemPosition(item: T): { exists: boolean; index: number } {

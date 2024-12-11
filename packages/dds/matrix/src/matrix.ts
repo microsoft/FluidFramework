@@ -21,6 +21,7 @@ import {
 	Client,
 	IJSONSegment,
 	IMergeTreeOp,
+	type ISegmentInternal,
 	type LocalReferencePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
@@ -758,7 +759,7 @@ export class SharedMatrix<T = any>
 		ref: LocalReferencePosition,
 		localSeq: number,
 	): number | undefined {
-		const segment = ref.getSegment();
+		const segment: ISegmentInternal | undefined = ref.getSegment();
 		const offset = ref.getOffset();
 		// If the segment that contains the position is removed, then this setCell op should do nothing.
 		if (segment === undefined || offset === undefined || segment.removedSeq !== undefined) {

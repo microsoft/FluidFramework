@@ -71,7 +71,6 @@ export class TextSegment extends BaseSegment {
 	public clone(start = 0, end?: number): TextSegment {
 		const text = this.text.slice(start, end);
 		const b = TextSegment.make(text, this.properties);
-		this.cloneInto(b);
 		return b;
 	}
 
