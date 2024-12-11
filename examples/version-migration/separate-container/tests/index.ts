@@ -5,6 +5,7 @@
 
 import {
 	type IMigrator,
+	type IMigratorEntryPoint,
 	type ImportDataCallback,
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
@@ -114,23 +115,16 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	let id: string;
-	let container: IContainer;
-	let model: IMigratableModel;
+	let container: IContainer | undefined;
 
 	if (location.hash.length === 0) {
 		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
 		// Normally we would create with the most-recent version.
 		const createDetachedResult = await createDetachedCallback("one");
 		container = createDetachedResult.container;
-		model = await getModelFromContainer<IMigratableModel>(container);
 		id = await createDetachedResult.attach();
 	} else {
 		id = location.hash.slice(1);
-		container = await loadExistingContainer({
-			...loaderProps,
-			request: { url: `${window.location.origin}/${id}` },
-		});
-		model = await getModelFromContainer<IMigratableModel>(container);
 	}
 
 	const appDiv = document.createElement("div");
@@ -139,7 +133,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	let appRoot: Root | undefined;
 	let debugRoot: Root | undefined;
 
-	const render = (model: IVersionedModel, migrator: IMigrator) => {
+	const renderModel = (model: IVersionedModel, migrator: IMigrator): void => {
 		// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 		// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 		// view code loader to pull in the view dynamically based on the version we discover.
@@ -167,38 +161,51 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		}
 	};
 
-	const entryPoint = await container.getEntryPoint();
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-	const migrator: IMigrator = await (entryPoint as any).getMigrator(
-		async () =>
-			loadExistingContainer({
+	const setupContainer = async (
+		id: string,
+		alreadyLoadedContainer?: IContainer | undefined,
+	): Promise<void> => {
+		// The first createDetached flow ends up with a live container reference that we want to retain rather
+		// than disposing it and loading a second time.  In all other cases we'll do the actual load here.
+		const container =
+			alreadyLoadedContainer ??
+			(await loadExistingContainer({
 				...loaderProps,
 				request: { url: `${window.location.origin}/${id}` },
-			}),
-		migrationCallback,
-	);
-	migrator.events.on("migrated", () => {
-		container.dispose();
-		// TODO: Load new container
-		render(model, migrator);
-		updateTabForId(migrator.migrationResult as SeparateContainerMigrationResult);
-	});
+			}));
+		const model = await getModelFromContainer<IMigratableModel>(container);
 
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	window["containers"].push(container);
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	window["migrators"].push(migrator);
+		// In this example, our container code mixes in an IMigratorEntryPoint to the container entryPoint.  The getMigrator
+		// function lets us construct an IMigrator by providing the necessary external tools it needs to operate.  The IMigrator
+		// is an object we can use to watch migration status, propose a migration, and discover the migration result.
+		const { getMigrator } = (await container.getEntryPoint()) as IMigratorEntryPoint;
+		const migrator: IMigrator = await getMigrator(
+			// Note that the LoadSourceContainerCallback must load a new instance of the container.  We cannot simply return the
+			// container reference we already got above since it may contain local un-ack'd changes.
+			async () =>
+				loadExistingContainer({
+					...loaderProps,
+					request: { url: `${window.location.origin}/${id}` },
+				}),
+			migrationCallback,
+		);
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		window["containers"].push(container);
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		window["migrators"].push(migrator);
+		migrator.events.on("migrated", () => {
+			const newContainerId = migrator.migrationResult as SeparateContainerMigrationResult;
+			container.dispose();
+			setupContainer(newContainerId).catch(console.error);
+		});
 
-	// update the browser URL and the window title with the actual container ID
-	updateTabForId(id);
-	// Render it
-	render(model, migrator);
+		renderModel(model, migrator);
+		updateTabForId(id);
+	};
+
+	await setupContainer(id, container);
 
 	element.append(appDiv, debugDiv);
-
-	// Setting "fluidStarted" is just for our test automation
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	window["fluidStarted"] = true;
 }
 
 /**
@@ -215,6 +222,10 @@ async function setup() {
 		throw new Error("sbs-right does not exist");
 	}
 	await createContainerAndRenderInElement(rightElement);
+
+	// Setting "fluidStarted" is just for our test automation
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	window["fluidStarted"] = true;
 }
 
 setup().catch((e) => {

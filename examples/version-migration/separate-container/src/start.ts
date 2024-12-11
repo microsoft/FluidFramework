@@ -133,7 +133,7 @@ const renderModel = (model: IVersionedModel, migrator: IMigrator): void => {
 	}
 };
 
-export const setupContainer = async (
+const setupContainer = async (
 	id: string,
 	alreadyLoadedContainer?: IContainer | undefined,
 ): Promise<void> => {
