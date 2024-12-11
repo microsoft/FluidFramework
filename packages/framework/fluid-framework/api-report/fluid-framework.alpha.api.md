@@ -1386,7 +1386,7 @@ export interface ViewContent {
 }
 
 // @alpha
-export function withMetadata<TName extends string = string, TKind extends NodeKind = NodeKind, TNode extends TreeNode = TreeNode, TInsertable = never, ImplicitlyConstructable extends boolean = boolean, Info = unknown, TConstructorExtra = never, TNewCustomMetadata = unknown>(nodeSchema: TreeNodeSchemaClass<TName, TKind, TNode, TInsertable, ImplicitlyConstructable, Info, TConstructorExtra>, metadata: NodeSchemaMetadata<TNewCustomMetadata>): TreeNodeSchemaClass<TName, TKind, TNode, TInsertable, ImplicitlyConstructable, Info, TConstructorExtra, TNewCustomMetadata>;
+export function withMetadata<TNewCustomMetadata = unknown, TName extends string = string, TKind extends NodeKind = NodeKind, TNode extends TreeNode = TreeNode, TInsertable = never, ImplicitlyConstructable extends boolean = boolean, Info = unknown, TConstructorExtra = never>(nodeSchema: TreeNodeSchemaClass<TName, TKind, TNode, TInsertable, ImplicitlyConstructable, Info, TConstructorExtra>, metadata: NodeSchemaMetadata<TNewCustomMetadata>): TreeNodeSchemaClass<TName, TKind, TNode, TInsertable, ImplicitlyConstructable, Info, TConstructorExtra, TNewCustomMetadata>;
 
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
