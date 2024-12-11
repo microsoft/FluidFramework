@@ -30,7 +30,7 @@ Functionality like the experimental conversion of Tree Schema to [JSON Schema](h
 In the case of the `description` property, it is mapped directly to the `description` property supported by JSON Schema.
 
 Custom, user-defined properties can also be specified.
-These properties will not be used by the system by default, but can be used to associate common application-specific properties with Field Schema.
+These properties will not be used by the system by default, but can be used to associate common application-specific properties with Node Schema.
 
 #### Example
 
@@ -42,7 +42,7 @@ They can leverage schema metadata to decorate types of nodes that should be igno
 
 interface AppMetadata {
 	/**
-	 * Whether or not the field should be ignored by search.
+	 * Whether or not nodes of this type should be ignored by search.
 	 * @defaultValue `false`
 	 */
 	searchIgnore?: boolean;
