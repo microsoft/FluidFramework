@@ -1049,9 +1049,9 @@ describe("schemaFactory", () => {
 		assert.deepEqual(Foo.metadata, fooMetadata);
 
 		// Ensure the typing is as we expect
-		assert.equal(Foo.metadata.description, "An array of numbers");
+		const description = Foo.metadata.description;
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		assert.equal(Foo.metadata.custom!.baz, true);
+		const baz = Foo.metadata.custom!.baz;
 	});
 });
 
