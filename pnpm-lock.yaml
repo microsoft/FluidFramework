@@ -13043,6 +13043,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
+      '@fluidframework/presence':
+        specifier: workspace:~
+        version: link:../../../framework/presence
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../runtime/runtime-definitions
