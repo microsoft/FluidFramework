@@ -20,7 +20,7 @@ import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 import { SharedMap } from "fluid-framework/legacy";
 
 import { FocusTracker } from "./FocusTracker.js";
-import { MouseTracker, type IMousePosition } from "./MouseTracker.js";
+import { MouseTracker } from "./MouseTracker.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
 const user = {
@@ -94,7 +94,7 @@ async function start() {
 		Notifications<
 			// Below explicit generic specification should not be required.
 			{
-				send: (reaction: string, intensity: "normal"|"intense") => void;
+				send: (reaction: string, intensity: "normal" | "intense") => void;
 			},
 			"reactions"
 		>(
@@ -136,7 +136,7 @@ async function start() {
 			reactionDiv.style.position = "absolute";
 			reactionDiv.style.left = `${clientPosition.x}px`;
 			reactionDiv.style.top = `${clientPosition.y}px`;
-			if(intensity === "intense") {
+			if (intensity === "intense") {
 				reactionDiv.style.fontSize = "xxx-large";
 			}
 			reactionDiv.textContent = reaction;
