@@ -35,7 +35,7 @@ import {
 import {
 	RestLessServer,
 	IHttpServerConfig,
-	validatePrivateLink,
+	// validatePrivateLink,
 } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
@@ -158,8 +158,8 @@ export function create(
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
 	}
 
-	const isNetworkCheck: boolean = config.get("alfred:isNetworkCheck");
-	app.use(validatePrivateLink(tenantManager, isNetworkCheck));
+	// const isNetworkCheck: boolean = config.get("alfred:isNetworkCheck");
+	// app.use(validatePrivateLink(tenantManager, isNetworkCheck));
 
 	app.use(cookieParser());
 	app.use(json({ limit: requestSize }));

@@ -29,7 +29,7 @@ import {
 	getBooleanParam,
 	validateRequestParams,
 	handleResponse,
-	// validatePrivateLink,
+	validatePrivateLink,
 } from "@fluidframework/server-services";
 import { Request, Router } from "express";
 import winston from "winston";
@@ -148,7 +148,7 @@ export function create(
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
 	const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
-	// const isNetworkCheck: boolean = config.get("alfred:isNetworkCheck");
+	const isNetworkCheck: boolean = config.get("alfred:isNetworkCheck");
 	const externalDeltaStreamUrl: string =
 		config.get("worker:deltaStreamUrl") || externalOrdererUrl;
 	const messageBrokerId: string | undefined =
@@ -239,7 +239,7 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
-		// validatePrivateLink(tenantManager, isNetworkCheck),
+		validatePrivateLink(tenantManager, isNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
@@ -385,7 +385,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
-		// validatePrivateLink(tenantManager, isNetworkCheck),
+		validatePrivateLink(tenantManager, isNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
 			winston,
