@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { SessionClientStatus } from "@fluidframework/presence/alpha";
+
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 
@@ -31,18 +33,26 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	wrapperDiv.appendChild(focusMessageDiv);
 
 	const onFocusChanged = () => {
+		const session = focusTracker.presence.getMyself();
+		if(session.getConnectionStatus() === SessionClientStatus.Disconnected) {
+			return;
+		}
+
 		const currentUser = focusTracker.audience.getMyself();
 		const focusPresences = focusTracker.getFocusPresences();
+		console.debug(focusPresences);
+		const sessionConnection = session.getConnectionId();
 
 		focusDiv.innerHTML = `
-            Current user: ${currentUser?.name} - connection: ${currentUser?.currentConnection}</br>
+            Current user: ${currentUser?.name} - connection: ${sessionConnection} - focus: ${focusPresences.get(sessionConnection)}</br>
             ${getFocusPresencesString("</br>", focusTracker)}
         `;
 
 		const display =
-			currentUser !== undefined && focusPresences.get(currentUser.currentConnection) === true
+			currentUser !== undefined && focusPresences.get(sessionConnection) === true
 				? ""
 				: "none";
+				console.log(`Setting display to ${display}`);
 		focusMessageDiv.style.display = display;
 	};
 
@@ -79,10 +89,10 @@ export function renderMousePresence(
 	const onPositionChanged = () => {
 		div.innerHTML = "";
 
-		for (const [userName, mousePosition] of mouseTracker.getMousePresences()) {
-			if (focusTracker.getFocusPresences().get(userName) === true) {
+		for (const [clientConnectionId, mousePosition] of mouseTracker.getMousePresences()) {
+			if (focusTracker.getFocusPresences().get(clientConnectionId) === true) {
 				const posDiv = document.createElement("div");
-				posDiv.textContent = `/${userName}`;
+				posDiv.textContent = `/${clientConnectionId}`;
 				posDiv.style.position = "absolute";
 				posDiv.style.left = `${mousePosition.x}px`;
 				posDiv.style.top = `${mousePosition.y - 6}px`;
