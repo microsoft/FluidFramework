@@ -168,6 +168,29 @@ Rationale:
 
 For more details about leveraging Mermaid diagrams in Docusaurus, see [here](https://docusaurus.io/docs/markdown-features/diagrams).
 
+### Documents vs Pages
+
+*Documents* and *Pages* are distinct concepts in Docusaurus.
+For an overview of each, see: [Documents](https://docusaurus.io/docs/docs-introduction) and [Pages](https://docusaurus.io/docs/creating-pages).
+
+Some primary distinctions:
+
+1. *Documents* live under `docs` and `versioned_docs`. *Pages* live under `src/pages`.
+1. *Documents* are versioned. *Pages* are not.
+
+### The Sidebar
+
+For an overview of how to configure sidebars in Docusaurus, see [here](https://docusaurus.io/docs/sidebar).
+
+The site's "current" version sidebar is configured via `sidebars.ts`.
+
+Sidebars for other versions are configured via `versioned_sidebars/version-<version-id>.json`.
+
+- Versioned sidebars do not yet support JS/TS file formats.
+  See <https://github.com/facebook/docusaurus/issues/10407>.
+
+Note that sidebars are configured for documents under `docs` and `versioned_docs`; they do not apply to unversioned *Pages*.
+
 ### Best practices
 
 #### Markdown
