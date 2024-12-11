@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { WorkspaceName } from "@fluid-tools/build-infrastructure";
 import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import * as semver from "semver";
-import { packageOrReleaseGroupArg, semverArg } from "../../../args.js";
+import { findReleaseGroup, releaseGroupArg, semverArg } from "../../../args.js";
 import {
 	BaseCommandWithBuildProject,
-	getAllPackageVersions,
+	getVersionsFromTags,
 	sortVersions,
 } from "../../../library/index.js";
 
@@ -30,25 +29,25 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 			description:
 				"The version to check. When running in CI, this value corresponds to the pipeline trigger branch.",
 		}),
-		package_or_release_group: packageOrReleaseGroupArg({ required: true }),
+		release_group: releaseGroupArg({ required: true }),
 	} as const;
 
 	public async run(): Promise<void> {
 		const { args } = this;
-		const repo = this.getBuildProject();
-		const rgOrPackage = repo.workspaces.get(args.package_or_release_group as WorkspaceName);
+		const buildProject = this.getBuildProject();
+		const releaseGroup = findReleaseGroup(args.release_group, buildProject);
 
-		const versionInput = this.args.version;
+		const versionInput = args.version;
 
-		if (rgOrPackage === undefined) {
-			this.error(`Package not found: ${args.package_or_release_group}`);
+		if (releaseGroup === undefined) {
+			this.error(`Package not found: ${args.release_group}`);
 		}
 
-		const git = await repo.getGitRepository();
-		const versions = await getAllPackageVersions(rgOrPackage.name, git);
+		const git = await buildProject.getGitRepository();
+		const versions = await getVersionsFromTags(releaseGroup, git);
 
 		if (!versions) {
-			this.error(`No versions found for ${rgOrPackage.name}`);
+			this.error(`No versions found for ${releaseGroup.name}`);
 		}
 
 		// Filter out pre-release versions

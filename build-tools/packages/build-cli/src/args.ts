@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	IBuildProject,
+	IReleaseGroup,
+	ReleaseGroupName,
+} from "@fluid-tools/build-infrastructure";
 import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
@@ -37,6 +42,28 @@ export const findPackageOrReleaseGroup = (
 		context.fullPackageMap.get(name) ??
 		context.independentPackages.find((pkg) => PackageName.getUnscopedName(pkg.name) === name)
 	);
+};
+
+/**
+ * Creates a CLI argument for release group names. It's a factory function so that commands can override the
+ * properties more easily when using the argument.
+ */
+export const releaseGroupArg = Args.custom({
+	name: "release_group",
+	required: true,
+	description: "The name of a release group.",
+});
+
+/**
+ * Takes a package or release group name and searches the build project for it.
+ * Release groups are checked first, then independent packages by scoped name, then by unscoped name.
+ */
+export const findReleaseGroup = (
+	name: string,
+	buildProject: IBuildProject,
+): IReleaseGroup | undefined => {
+	return buildProject.releaseGroups.get(name as ReleaseGroupName);
+	// ?? buildProject.packages.get(name as PkgName)
 };
 
 /**

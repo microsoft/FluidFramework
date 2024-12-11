@@ -298,6 +298,12 @@ export abstract class BaseCommandWithBuildProject<
 		throw new Error("getContext method should only be called in BaseCommand instances");
 	}
 
+	/**
+	 * Gets the build project for the current command. The build project is loaded from the closest build root to searchPath.
+	 *
+	 * @param searchPath - The path to search for the build project.
+	 * @returns The build project.
+	 */
 	public getBuildProject(searchPath?: string): IBuildProject {
 		if (this._buildProject === undefined) {
 			const root = searchPath ?? process.cwd();

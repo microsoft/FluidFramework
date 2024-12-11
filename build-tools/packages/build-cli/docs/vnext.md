@@ -3,20 +3,19 @@
 
 Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.
 
-* [`flub vnext check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-vnext-check-latestversions-version-package_or_release_group)
+* [`flub vnext check latestVersions VERSION RELEASE_GROUP`](#flub-vnext-check-latestversions-version-release_group)
 
-## `flub vnext check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`
+## `flub vnext check latestVersions VERSION RELEASE_GROUP`
 
 Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.
 
 ```
 USAGE
-  $ flub vnext check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP [-v | --quiet]
+  $ flub vnext check latestVersions VERSION RELEASE_GROUP [-v | --quiet]
 
 ARGUMENTS
-  VERSION                   The version to check. When running in CI, this value corresponds to the pipeline trigger
-                            branch.
-  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
+  VERSION        The version to check. When running in CI, this value corresponds to the pipeline trigger branch.
+  RELEASE_GROUP  The name of a release group.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
