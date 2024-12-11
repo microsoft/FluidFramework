@@ -2,16 +2,44 @@
 
 This package contains tools for migrating data from one version to another, used by Fluid examples. They are not currently intended for use in production scenarios.
 
-Use of the migration tools imposes several requirements on the container code and application, detailed here.
+## `IMigrator`
 
-## Implementing the composite runtime pattern
+Migration is performed by using the `IMigrator`.  The `IMigrator` can be inspected to discover the state of migration (`migrationState`), provides events to listen to as the state transitions, and has the method to kick off a migration (`proposeVersion()`).
+
+```ts
+if (migrator.migrationState === "collaborating") {
+	migrator.proposeVersion("2.0");
+}
+```
+
+To ensure no data is lost when moving between containers, you should stop making edits after the `"stopping"` event is raised.  After this point, it's no longer guaranteed that changes will be included in the migration.
+
+```ts
+migrator.events.on("stopping", () => {
+	// ...disable input in your UI
+});
+```
+
+Once the `"migrated"` event is raised, you can inspect the `migrationResult` property to find the result of the migration.  If the container author used the `makeSeparateContainerMigrationCallback()` helper, this will contain the container ID of the new, migrated container.
+
+```ts
+migrator.events.on("migrated", () => {
+	console.log(`The new container ID is: ${migrator.migrationResult}`);
+});
+```
+
+## Requirements for use
+
+Accessing and using the `IMigrator` imposes several requirements on the container code and application, detailed in the following sections.
+
+### Implementing the composite runtime pattern as the container code author
 
 See documentation for the composite runtime pattern [here](./src/compositeRuntime/README.md).
 
 The migrator is provided via the composite runtime pattern using the provided `makeMigratorEntryPointPiece()`.  When using this tool,
 the host will be able to access the `IMigrator` by calling `getMigrator()` on the container entryPoint (`container.getEntryPoint()`).
 
-### Defining an example model entry point piece as the container code author
+#### Defining an example model entry point piece
 
 ```ts
 const rootDatastoreAlias = "my-root-datastore";
@@ -36,7 +64,7 @@ export const getModelEntryPointPiece: IEntryPointPiece = {
 };
 ```
 
-### Using `makeMigratorEntryPointPiece()` as the container code author
+#### Using `makeMigratorEntryPointPiece()`
 
 ```ts
 // Entry points are typed as FluidObject and must be cast.  Here we know it's a MyRootDatastore since
@@ -51,7 +79,7 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
 
 const exportDataCallback = async (container: IContainer): Promise<unknown> => {
 	const rootDatastore = await getModelFromContainer<MyRootDatastore>(container);
-	// This assumes that we've implemented an exportData() method on our root datastore.
+	// This assumes that we've implemented an exportData() method on MyRootDatastore.
 	return rootDatastore.exportData();
 };
 
@@ -91,7 +119,7 @@ const importDataCallback: ImportDataCallback = async (
 	const destinationModel = await getModelFromContainer<MyRootDatastore2>(destinationContainer);
 	// Note that if the data needs to be transformed from the old export format to some new import format,
 	// this is where it could be done.
-	// This assumes that we've implemented an importData() method on our root datastore 2.
+	// This assumes that we've implemented an importData() method on MyRootDatastore2.
 	await destinationModel.importData(exportedData);
 };
 
@@ -108,35 +136,9 @@ const migrator: IMigrator = await getMigrator(
 );
 ```
 
-## `IMigrator`
+### Providing a code loader as the host
 
-The `IMigrator` can be inspected to discover the state of migration (`migrationState`), provides events to listen to as the state transitions, and has the method to kick off a migration (`proposeVersion()`).
-
-```ts
-if (migrator.migrationState === "collaborating") {
-	migrator.proposeVersion("2.0");
-}
-```
-
-To ensure no data is lost when moving between containers, you should stop making edits after the `"stopping"` event is raised.  After this point, it's no longer guaranteed that changes will be included in the migration.
-
-```ts
-migrator.events.on("stopping", () => {
-	// ...disable input in your UI
-});
-```
-
-Once the `"migrated"` event is raised, you can inspect the `migrationResult` property to find the result of the migration.  If the container author used the `makeSeparateContainerMigrationCallback()` helper, this will contain the container ID of the new, migrated container.
-
-```ts
-migrator.events.on("migrated", () => {
-	console.log(`The new container ID is: ${migrator.migrationResult}`);
-});
-```
-
-### Code loader
-
-To migrate between two different code versions, you must also provide a code loader that is capable of loading those two respective code versions.  There is nothing new here, but if you've been statically loading your code (i.e. via `StaticCodeLoader`) you'll need to start performing real code loading.
+To migrate between two different code versions, the host must also provide a code loader that is capable of loading those two respective code versions.  There is nothing new here, but if you've been statically loading your code (i.e. via `StaticCodeLoader`) you'll need to start performing real code loading.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
