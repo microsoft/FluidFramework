@@ -135,4 +135,12 @@ export class GraphHelper {
 			driveId: response.parentReference.driveId,
 		};
 	}
+
+	// Function to get the user's profile photo
+	public async getProfilePhoto(): Promise<string> {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const photoBlob = await this.graphClient.api("/me/photo/$value").get();
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+		return URL.createObjectURL(photoBlob);
+	}
 }
