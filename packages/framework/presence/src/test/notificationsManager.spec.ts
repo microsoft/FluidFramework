@@ -123,7 +123,7 @@ describe("Presence", () => {
 							"testEvents": {
 								"sessionId-2": {
 									"rev": 0,
-									"timestamp": 0,
+									"timestamp": 1020,
 									"value": { "name": "newId", "args": [42] },
 									"ignoreUnmonitored": true,
 								},
