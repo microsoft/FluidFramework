@@ -443,7 +443,7 @@ importers:
         version: 3.0.1(csstype@3.1.3)(react-dom@18.3.1)(react@18.3.1)
       openai:
         specifier: ^4.67.3
-        version: 4.68.0(zod@3.23.8)
+        version: 4.76.1(zod@3.24.0)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -25027,7 +25027,7 @@ packages:
     resolution: {integrity: sha512-Gs0qos5wqxnQrvpYv+pf3XfcRXW6jiAn9zE/K+DlmYf6FcpxeNYN0AIETaPR7rHO4K2UY+D0CIbDP9Ut0U4m1g==}
     engines: {node: ^16.0.0 || >=18.0.0}
     peerDependencies:
-      eslint: ^7.0.0 || ^8.0.0 || 8.51.0
+      eslint: ^7.0.0 || ^8.0.0
       typescript: '*'
     peerDependenciesMeta:
       typescript:
