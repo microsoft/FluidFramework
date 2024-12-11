@@ -18,27 +18,27 @@ import type { FieldKey } from "../core/index.js";
  * @privateRemarks
  * This is a candidate for being promoted to the public package API.
  */
-export type ObjectNodeSchema<
+export interface ObjectNodeSchema<
 	TName extends string = string,
 	T extends
 		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
 	TMetadata extends NodeSchemaMetadata = NodeSchemaMetadata,
-> = TreeNodeSchemaClass<
-	TName,
-	NodeKind.Object,
-	TreeObjectNode<T, TName>,
-	object & InsertableObjectFromSchemaRecord<T>,
-	ImplicitlyConstructable,
-	T,
-	never,
-	TMetadata
-> & {
+> extends TreeNodeSchemaClass<
+		TName,
+		NodeKind.Object,
+		TreeObjectNode<T, TName>,
+		object & InsertableObjectFromSchemaRecord<T>,
+		ImplicitlyConstructable,
+		T,
+		never,
+		TMetadata
+	> {
 	/**
 	 * From property keys to the associated schema.
 	 */
 	readonly fields: ReadonlyMap<string, FieldSchema>;
-};
+}
 
 /**
  * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.
