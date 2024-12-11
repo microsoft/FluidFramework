@@ -5,7 +5,7 @@
 
 import type { IMigratableModel } from "@fluid-example/migration-tools/internal";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainer, Severity } from "@fluidframework/container-definitions/internal";
+import { IContainer, DisconnectReason } from "@fluidframework/container-definitions/internal";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
@@ -61,6 +61,6 @@ export class InventoryListAppModel implements IInventoryListAppModel, IMigratabl
 	};
 
 	public dispose(): void {
-		this.container.dispose(Severity.Expected);
+		this.container.dispose(DisconnectReason.Expected);
 	}
 }

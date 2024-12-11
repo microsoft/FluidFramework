@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-private/test-version-utils";
-import { IContainer, Severity } from "@fluidframework/container-definitions/internal";
+import { IContainer, DisconnectReason } from "@fluidframework/container-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
@@ -95,7 +95,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 				} catch (error) {
 					throw new Error(`Error summarizing: ${error}`);
 				}
-				this.container.close(Severity.Expected);
+				this.container.close(DisconnectReason.Expected);
 			}
 			async before(): Promise<void> {
 				this.container = undefined;

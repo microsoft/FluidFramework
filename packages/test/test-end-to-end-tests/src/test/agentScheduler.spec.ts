@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IAgentScheduler, TaskSubscription } from "@fluidframework/agent-scheduler/internal";
-import { IContainer, Severity } from "@fluidframework/container-definitions/internal";
+import { IContainer, DisconnectReason } from "@fluidframework/container-definitions/internal";
 import {
 	ITestObjectProvider,
 	createTestContainerRuntimeFactory,
@@ -338,7 +338,7 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 			assert.strict(taskSubscription1.haveTask(), "Container 1 should have task");
 			assert.strict(!taskSubscription2.haveTask(), "Container 2 should not have task");
 
-			container1.close(Severity.Expected);
+			container1.close(DisconnectReason.Expected);
 			await provider.ensureSynchronized();
 
 			assert.strict(!taskSubscription1.haveTask(), "Container 1 should not have task");

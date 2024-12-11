@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
 	IConnect,
@@ -637,5 +638,10 @@ export function configureWebSocketServices(
 			}
 			disposers.splice(0, disposers.length);
 		});
+
+		socket.on(
+			"disconnect_document",
+			async (clientId: string, documentId: string, err: IAnyDriverError) => {},
+		);
 	});
 }

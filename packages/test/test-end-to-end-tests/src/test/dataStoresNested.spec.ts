@@ -8,7 +8,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	IContainer,
 	IHostLoader,
-	Severity,
+	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import {
@@ -117,7 +117,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	afterEach(() => {
 		provider.reset();
 		for (const container of containers) {
-			container.close(Severity.Expected);
+			container.close(DisconnectReason.Expected);
 		}
 		containers = [];
 		summaryCollection = undefined;

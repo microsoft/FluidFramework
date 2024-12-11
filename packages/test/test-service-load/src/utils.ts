@@ -17,7 +17,7 @@ import {
 import {
 	IContainer,
 	IFluidCodeDetails,
-	Severity,
+	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line import/no-deprecated
 import { type IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
@@ -137,7 +137,7 @@ export async function initialize(
 	await container.attach(request);
 	assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
 	const resolvedUrl = container.resolvedUrl;
-	container.dispose(Severity.Expected);
+	container.dispose(DisconnectReason.Expected);
 
 	if ((testConfig.detachedBlobCount ?? 0) > 0 && testDriver.type === "odsp") {
 		const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);

@@ -4,10 +4,10 @@
  */
 
 import {
+	DisconnectReason,
 	ILoader,
 	isIDeltaManagerFull,
 	LoaderHeader,
-	Severity,
 	type IContainer,
 } from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -91,7 +91,7 @@ export async function loadContainerPaused(
 		const error = new GenericError(
 			"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
 		);
-		container.close(Severity.Unknown, error);
+		container.close(DisconnectReason.Unknown, error);
 		throw error;
 	}
 
@@ -135,7 +135,7 @@ export async function loadContainerPaused(
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		.catch((error: any) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			container.close(Severity.Unknown, error);
+			container.close(DisconnectReason.Unknown, error);
 			throw error;
 		})
 		.finally(() => {

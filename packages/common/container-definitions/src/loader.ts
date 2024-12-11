@@ -272,15 +272,22 @@ export interface IContainerEvents extends IEvent {
 }
 
 /**
- * Severity of disconnect events emitted by the {@link IContainer}.
+ * DisconnectReason of disconnect events emitted by the {@link IContainer}.
  * @legacy
  * @alpha
  */
-export enum Severity {
-	Expected = "Expected",
-	Corruption = "Corruption",
-	Unknown = "Unknown",
-}
+export const DisconnectReason = {
+	Expected: "Expected",
+	Corruption: "Corruption",
+	Unknown: "Unknown",
+} as const;
+
+/**
+ * {@inheritDoc (DisconnectReason:variable)}
+ * @legacy
+ * @alpha
+ */
+export type DisconnectReason = (typeof DisconnectReason)[keyof typeof DisconnectReason];
 
 /**
  * Namespace for the different connection states a container can be in.
@@ -397,7 +404,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * @param error - If the container is being disposed due to error, this provides details about the error that
 	 * resulted in disposing it.
 	 */
-	dispose(severity: Severity, error?: ICriticalContainerError): void;
+	dispose(disconnectReason: DisconnectReason, error?: ICriticalContainerError): void;
 
 	/**
 	 * Closes the container.
@@ -405,7 +412,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * @param error - If the container is being closed due to error, this provides details about the error that
 	 * resulted in closing it.
 	 */
-	close(severity: Severity, error?: ICriticalContainerError): void;
+	close(disconnectReason: DisconnectReason, error?: ICriticalContainerError): void;
 
 	/**
 	 * Propose new code details that define the code to be loaded for this container's runtime.

@@ -11,7 +11,7 @@ import type { ISharedCell } from "@fluidframework/cell/internal";
 import {
 	IContainer,
 	IFluidCodeDetails,
-	Severity,
+	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
@@ -754,7 +754,7 @@ describeCompat(
 					sharedMap1.set("0", "A");
 					const snapshotTree = container.serialize();
 					// close the container that we don't use any more, so it doesn't block ensureSynchronized()
-					container.close(Severity.Expected);
+					container.close(DisconnectReason.Expected);
 
 					const rehydratedContainer =
 						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
@@ -813,7 +813,7 @@ describeCompat(
 					sharedMap1.set("0", "A");
 					const snapshotTree = container.serialize();
 					// close the container that we don't use any more, so it doesn't block ensureSynchronized()
-					container.close(Severity.Expected);
+					container.close(DisconnectReason.Expected);
 
 					const rehydratedContainer =
 						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);

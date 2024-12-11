@@ -10,7 +10,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { Severity } from "@fluidframework/container-definitions/internal";
+import { DisconnectReason } from "@fluidframework/container-definitions/internal";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -244,7 +244,7 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 			// Close the main container before running GC which may generate a GC op. Otherwise, it will hit this error
 			// "GC_Deleted_DataStore_Unexpected_Delete". We don't expect local data stores to be deleted because
 			// their session expires before deletion. This mimics that behavior.
-			mainContainer.close(Severity.Expected);
+			mainContainer.close(DisconnectReason.Expected);
 
 			// Summarize again. This summary may generate a GC op if "sweep timeout" time has passed. However, the
 			// data store will not be deleted in this summary. This is done to validate that even though trailing

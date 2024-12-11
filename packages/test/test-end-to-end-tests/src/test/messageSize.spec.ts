@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import * as crypto from "crypto";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer, Severity } from "@fluidframework/container-definitions/internal";
+import { IContainer, DisconnectReason } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -285,7 +285,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					if (!enableGroupedBatching) {
 						// Workaround for the `itExpects` construct
 						localContainer.close(
-							Severity.Expected,
+							DisconnectReason.Expected,
 							new GenericError(
 								"Runtime detected too many reconnects with no progress syncing local ops.",
 							),

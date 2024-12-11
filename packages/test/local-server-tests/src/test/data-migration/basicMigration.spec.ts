@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/aqueduct/internal";
 import {
 	LoaderHeader,
-	Severity,
+	DisconnectReason,
 	type IContainer,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -186,7 +186,7 @@ describe.skip("basicMigration", () => {
 				const rootDataObject = (await container.getEntryPoint()) as RootDO;
 				modifyOldFile(rootDataObject);
 				await provider.ensureSynchronized();
-				container.close(Severity.Expected);
+				container.close(DisconnectReason.Expected);
 
 				const rootDO2 = await strategy.migrateWithoutSummary(provider);
 				await validateNewRoot(rootDO2, provider, strategy.runtimeFactory);
@@ -197,7 +197,7 @@ describe.skip("basicMigration", () => {
 				const rootDataObject = (await container.getEntryPoint()) as RootDO;
 				modifyOldFile(rootDataObject);
 				await provider.ensureSynchronized();
-				container.close(Severity.Expected);
+				container.close(DisconnectReason.Expected);
 
 				const summaryVersion = await strategy.migrateWithSummary(provider);
 
@@ -223,7 +223,7 @@ describe.skip("basicMigration", () => {
 				const rootDataObject = (await container.getEntryPoint()) as RootDO;
 				modifyOldFile(rootDataObject);
 				await provider.ensureSynchronized();
-				container.close(Severity.Expected);
+				container.close(DisconnectReason.Expected);
 
 				const c1 = await provider.loadContainer(strategy.runtimeFactory);
 				const c2 = await provider.loadContainer(strategy.runtimeFactory);

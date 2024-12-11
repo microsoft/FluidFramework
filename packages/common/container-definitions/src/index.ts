@@ -44,7 +44,7 @@ export type {
 	IResolvedFluidCodeDetails,
 	ISnapshotTreeWithBlobContents,
 } from "./loader.js";
-export { Severity, LoaderHeader } from "./loader.js";
+export { DisconnectReason, LoaderHeader } from "./loader.js";
 export type { IFluidModule } from "./fluidModule.js";
 export type {
 	IFluidPackage,

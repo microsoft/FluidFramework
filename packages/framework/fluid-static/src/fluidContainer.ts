@@ -9,7 +9,10 @@ import {
 	type ConnectionState,
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { Severity, type IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	DisconnectReason,
+	type IContainer,
+} from "@fluidframework/container-definitions/internal";
 import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
@@ -356,7 +359,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	}
 
 	public dispose(): void {
-		this.container.close(Severity.Unknown);
+		this.container.close(DisconnectReason.Unknown);
 		this.container.off("connected", this.connectedHandler);
 		this.container.off("closed", this.disposedHandler);
 		this.container.off("disconnected", this.disconnectedHandler);

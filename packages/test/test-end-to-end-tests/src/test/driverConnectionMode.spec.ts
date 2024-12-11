@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { Severity } from "@fluidframework/container-definitions/internal";
+import { DisconnectReason } from "@fluidframework/container-definitions/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { type ConnectionMode } from "@fluidframework/driver-definitions/internal";
 import {
@@ -30,7 +30,7 @@ describeCompat("Driver can control connection mode", "NoCompat", (getTestObjectP
 
 			const url = await container.getAbsoluteUrl("");
 			assert(url !== undefined, "should not be undefined");
-			container.dispose(Severity.Expected);
+			container.dispose(DisconnectReason.Expected);
 			return url;
 		});
 
@@ -64,7 +64,7 @@ describeCompat("Driver can control connection mode", "NoCompat", (getTestObjectP
 				driverConnectionMode === "write",
 				`delta manager active state must match mode:${driverConnectionMode}`,
 			);
-			overrideContainer.dispose(Severity.Expected);
+			overrideContainer.dispose(DisconnectReason.Expected);
 		});
 	}
 });

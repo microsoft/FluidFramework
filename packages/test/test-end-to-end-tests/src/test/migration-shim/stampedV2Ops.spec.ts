@@ -19,7 +19,10 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader, Severity } from "@fluidframework/container-definitions/internal";
+import {
+	LoaderHeader,
+	DisconnectReason,
+} from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -197,7 +200,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		updateQuantity(legacyTree, originalValue);
 		// make sure changes are saved.
 		await provider.ensureSynchronized();
-		container.close(Severity.Expected);
+		container.close(DisconnectReason.Expected);
 	});
 
 	it("MigrationShim can drop v1 ops and migrate ops", async () => {

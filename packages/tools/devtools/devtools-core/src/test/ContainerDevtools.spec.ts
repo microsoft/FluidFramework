@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Severity } from "@fluidframework/container-definitions/internal";
+import { DisconnectReason } from "@fluidframework/container-definitions/internal";
 import { expect } from "chai";
 
 import { ContainerDevtools, type ContainerDevtoolsProps } from "../ContainerDevtools.js";
@@ -60,11 +60,11 @@ describe("ContainerDevtools unit tests", () => {
 		expect(devtools.getContainerConnectionLog().length).to.equal(3);
 		expect(devtools.getContainerConnectionLog()[2].newState).to.equal("disconnected");
 
-		container.close(Severity.Unknown);
+		container.close(DisconnectReason.Unknown);
 		expect(devtools.getContainerConnectionLog().length).to.equal(4);
 		expect(devtools.getContainerConnectionLog()[3].newState).to.equal("closed");
 
-		container.dispose?.(Severity.Unknown);
+		container.dispose?.(DisconnectReason.Unknown);
 		expect(devtools.getContainerConnectionLog().length).to.equal(5);
 		expect(devtools.getContainerConnectionLog()[4].newState).to.equal("disposed");
 	});

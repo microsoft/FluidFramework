@@ -4,7 +4,10 @@
  */
 
 import type { IAudience } from "@fluidframework/container-definitions";
-import { Severity, type IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	DisconnectReason,
+	type IContainer,
+} from "@fluidframework/container-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 
@@ -303,7 +306,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			const message = untypedMessage as CloseContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
 				this.container.close(
-					Severity.Unknown /* TODO: Specify devtools reason here once it is supported */,
+					DisconnectReason.Unknown /* TODO: Specify devtools reason here once it is supported */,
 				);
 				return true;
 			}

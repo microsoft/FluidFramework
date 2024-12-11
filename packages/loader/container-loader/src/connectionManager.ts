@@ -8,7 +8,7 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	IDeltaQueue,
 	ReadOnlyInfo,
-	type Severity,
+	type DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IDisposable,
@@ -430,7 +430,7 @@ export class ConnectionManager implements IConnectionManager {
 	}
 
 	public dispose(
-		severity: Severity,
+		disconnectReason: DisconnectReason,
 		error?: ICriticalContainerError,
 		switchToReadonly: boolean = true,
 	): void {
@@ -444,20 +444,20 @@ export class ConnectionManager implements IConnectionManager {
 
 		this._outbound.clear();
 
-		const disconnectReason: IConnectionStateChangeReason = {
+		const disconnectStateChangeReason: IConnectionStateChangeReason = {
 			text: "Closing DeltaManager",
 			error,
 		};
 
 		const oldReadonlyValue = this.readonly;
 		// This raises "disconnect" event if we have active connection.
-		this.disconnectFromDeltaStream(disconnectReason);
+		this.disconnectFromDeltaStream(disconnectStateChangeReason);
 
 		if (switchToReadonly) {
 			// Notify everyone we are in read-only state.
 			// Useful for data stores in case we hit some critical error,
 			// to switch to a mode where user edits are not accepted
-			this.set_readonlyPermissions(true, oldReadonlyValue, disconnectReason);
+			this.set_readonlyPermissions(true, oldReadonlyValue, disconnectStateChangeReason);
 		}
 	}
 

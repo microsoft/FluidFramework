@@ -8,7 +8,7 @@ import assert from "assert";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ISharedCell } from "@fluidframework/cell/internal";
-import { Severity } from "@fluidframework/container-definitions/internal";
+import { DisconnectReason } from "@fluidframework/container-definitions/internal";
 import {
 	IFluidHandle,
 	IFluidLoadable,
@@ -476,7 +476,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				const container2 = await provider.loadTestContainer(testContainerConfig);
 				await provider.ensureSynchronized();
 
-				container1.dispose(Severity.Expected);
+				container1.dispose(DisconnectReason.Expected);
 
 				// Validate that the created objects were attached and have correct data in the new container.
 				{
@@ -521,7 +521,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				const container2 = await provider.loadTestContainer(testContainerConfig);
 				await provider.ensureSynchronized();
 
-				container1.dispose(Severity.Expected);
+				container1.dispose(DisconnectReason.Expected);
 
 				// Validate that the created objects were attached and have correct data in the new container.
 				{
@@ -603,7 +603,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			await provider.ensureSynchronized();
 
-			container1.dispose(Severity.Expected);
+			container1.dispose(DisconnectReason.Expected);
 
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const attached2 = await getExistingHandleStorage(default2, attachedFactory);
@@ -676,7 +676,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			await provider.ensureSynchronized();
 
-			container1.dispose(Severity.Expected);
+			container1.dispose(DisconnectReason.Expected);
 
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const attached2 = await getExistingHandleStorage(default2, attachedFactory);

@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { Severity } from "@fluidframework/container-definitions/internal";
+import { DisconnectReason } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
@@ -170,7 +170,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 				}
 				containerUrl = initContainer.resolvedUrl;
 
-				initContainer.close(Severity.Expected);
+				initContainer.close(DisconnectReason.Expected);
 			}
 
 			// validation code block

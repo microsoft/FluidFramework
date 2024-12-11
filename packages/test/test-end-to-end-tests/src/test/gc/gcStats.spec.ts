@@ -11,7 +11,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer, Severity } from "@fluidframework/container-definitions/internal";
+import { IContainer, DisconnectReason } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IGCRuntimeOptions,
@@ -340,7 +340,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		// Close the main container before running GC which generates a GC op. Otherwise, it will hit this error
 		// "GC_Deleted_DataStore_Unexpected_Delete". We don't expect local data stores to be deleted because
 		// their session expires before deletion. This mimics that behavior.
-		mainContainer.close(Severity.Expected);
+		mainContainer.close(DisconnectReason.Expected);
 
 		// Data store 1, its DDS and blob 1 should now be deleted.
 		expectedGCStats.nodeCount -= 3;

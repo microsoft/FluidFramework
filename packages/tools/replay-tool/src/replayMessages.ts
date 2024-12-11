@@ -8,7 +8,7 @@ import child_process from "child_process";
 import fs from "fs";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainer, Severity } from "@fluidframework/container-definitions/internal";
+import { IContainer, DisconnectReason } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -282,7 +282,7 @@ class Document {
 	}
 
 	public close() {
-		this.container.close(Severity.Expected);
+		this.container.close(DisconnectReason.Expected);
 	}
 
 	private resolveC = () => {};

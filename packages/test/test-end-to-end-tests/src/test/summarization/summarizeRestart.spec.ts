@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer, Severity } from "@fluidframework/container-definitions/internal";
+import { IContainer, DisconnectReason } from "@fluidframework/container-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -123,7 +123,7 @@ describeCompat(
 				// summary2
 				await summarizeNow(summarizer1);
 				summarizer1.close();
-				summarizingContainer1.close(Severity.Expected);
+				summarizingContainer1.close(DisconnectReason.Expected);
 
 				// Reconnect the second summarizer's container so that it is elected as the summarizer client.
 				await reconnectSummarizerToBeElected(summarizingContainer2);

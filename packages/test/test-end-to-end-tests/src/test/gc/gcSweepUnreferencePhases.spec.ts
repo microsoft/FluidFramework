@@ -10,7 +10,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer, Severity } from "@fluidframework/container-definitions/internal";
+import { IContainer, DisconnectReason } from "@fluidframework/container-definitions/internal";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -185,7 +185,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		// Close the main container before sweep so that it doesn't end up deleting local data stores which
 		// logs GC_Deleted_DataStore_Unexpected_Delete error. This error shouldn't happen outside of tests
 		// because sweep only runs after session expiry which means no local data store should be deleted.
-		mainContainer.close(Severity.Expected);
+		mainContainer.close(DisconnectReason.Expected);
 
 		await provider.ensureSynchronized();
 		summaryTree = (await summarizeNow(summarizer)).summaryTree;

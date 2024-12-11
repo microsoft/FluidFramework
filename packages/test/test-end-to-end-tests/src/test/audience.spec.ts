@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer, Severity } from "@fluidframework/container-definitions/internal";
+import { IContainer, DisconnectReason } from "@fluidframework/container-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -210,7 +210,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		);
 
 		// Close client2. It should be removed from the audience.
-		client2Container.close(Severity.Expected);
+		client2Container.close(DisconnectReason.Expected);
 		await provider.ensureSynchronized();
 
 		// Validate that client2 is removed from client1's audience.

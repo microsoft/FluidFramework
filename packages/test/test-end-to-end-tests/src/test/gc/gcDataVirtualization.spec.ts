@@ -13,7 +13,7 @@ import {
 import {
 	IContainer,
 	LoaderHeader,
-	Severity,
+	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -187,8 +187,8 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 
 		// Close the old summarizer and container so that we can summarize th new container.
 		summarizer.close();
-		container.close(Severity.Expected);
-		mainContainer.close(Severity.Expected);
+		container.close(DisconnectReason.Expected);
+		mainContainer.close(DisconnectReason.Expected);
 
 		// Unreference datastore B
 		mainDataStore2._root.delete("dataStoreB");

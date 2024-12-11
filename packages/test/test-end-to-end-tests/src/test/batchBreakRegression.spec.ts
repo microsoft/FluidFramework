@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { Severity } from "@fluidframework/container-definitions/internal";
+import { DisconnectReason } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
@@ -59,7 +59,7 @@ async function runAndValidateBatch(
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		await container.attach(provider.driver.createCreateNewRequest(Date.now().toString()));
 		containerUrl = await container.getAbsoluteUrl("");
-		container.close(Severity.Expected);
+		container.close(DisconnectReason.Expected);
 	}
 	assert(containerUrl);
 	{

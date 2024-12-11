@@ -9,7 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	IContainer,
 	IHostLoader,
-	Severity,
+	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
@@ -80,7 +80,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 			pendingState = await container.getPendingLocalState?.();
 			assert.strictEqual(container.closed, false);
 			await args.ensureSynchronized();
-			container.close(Severity.Expected);
+			container.close(DisconnectReason.Expected);
 		} else {
 			pendingState = await container.closeAndGetPendingLocalState?.();
 		}

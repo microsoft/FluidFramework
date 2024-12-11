@@ -10,7 +10,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	IContainerLoadMode,
 	LoaderHeader,
-	Severity,
+	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import { loadContainerPaused } from "@fluidframework/container-loader/internal";
 import {
@@ -132,7 +132,7 @@ describeCompat(
 						});
 					}
 					scenarioToSeqNum.set(scenario, initContainer.deltaManager.lastSequenceNumber);
-					initContainer.close(Severity.Expected);
+					initContainer.close(DisconnectReason.Expected);
 				}
 				const containerUrl = await provider.driver.createContainerUrl(
 					provider.documentId,
@@ -180,7 +180,7 @@ describeCompat(
 						errorMsg: "Not summary acked before timeout",
 					});
 					scenarioToSeqNum.set(scenario, summaryContainer.deltaManager.lastSequenceNumber);
-					summaryContainer.close(Severity.Expected);
+					summaryContainer.close(DisconnectReason.Expected);
 				}
 			}
 			return {

@@ -18,7 +18,7 @@ import {
 	IContainer,
 	IFluidCodeDetails,
 	LoaderHeader,
-	Severity,
+	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
@@ -229,7 +229,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			assert(disconnectEventRaised, "Disconnected event should be raised");
 		} finally {
 			deltaConnection.removeAllListeners();
-			container.dispose(Severity.Expected);
+			container.dispose(DisconnectReason.Expected);
 		}
 	});
 
@@ -267,7 +267,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			assert.strictEqual(container.closed, false, "Container should not be closed");
 		} finally {
 			deltaConnection.removeAllListeners();
-			container.dispose(Severity.Expected);
+			container.dispose(DisconnectReason.Expected);
 		}
 	});
 
@@ -288,7 +288,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			ConnectionState.CatchingUp,
 			"Container should be in Connecting state",
 		);
-		container.close(Severity.Expected);
+		container.close(DisconnectReason.Expected);
 		assert.strictEqual(
 			container.connectionState,
 			ConnectionState.Disconnected,
@@ -573,7 +573,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		let run = 0;
 		container.deltaManager.on("readonly", () => run++);
 
-		container.dispose(Severity.Expected);
+		container.dispose(DisconnectReason.Expected);
 		assert.strictEqual(
 			run,
 			0,
@@ -587,7 +587,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		let run = 0;
 		container.deltaManager.on("readonly", () => run++);
 
-		container.close(Severity.Expected);
+		container.close(DisconnectReason.Expected);
 		assert.strictEqual(run, 1, "DeltaManager should send readonly event on container close");
 	});
 
@@ -690,7 +690,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 				() => runtimeDispose++,
 			);
 
-			container.dispose(Severity.Expected, new DataCorruptionError("expected", {}));
+			container.dispose(DisconnectReason.Expected, new DataCorruptionError("expected", {}));
 			assert.strictEqual(
 				containerDisposed,
 				1,
@@ -743,8 +743,8 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 				() => runtimeDispose++,
 			);
 
-			container.close(Severity.Expected, new DataCorruptionError("expected", {}));
-			container.dispose(Severity.Expected, new DataCorruptionError("expected", {}));
+			container.close(DisconnectReason.Expected, new DataCorruptionError("expected", {}));
+			container.dispose(DisconnectReason.Expected, new DataCorruptionError("expected", {}));
 			assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
 			assert.strictEqual(containerClosed, 1, "Container should send closed event");
 			assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
@@ -758,27 +758,27 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			const container = await createConnectedContainer();
 			container.deltaManager.on("disconnect", () => {
 				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in DeltaManager ctor)
-				container.close(Severity.Expected);
+				container.close(DisconnectReason.Expected);
 			});
-			container.close(Severity.Expected);
+			container.close(DisconnectReason.Expected);
 		});
 
 		it("Disposing container", async () => {
 			const container = await createConnectedContainer();
 			container.deltaManager.on("disconnect", () => {
 				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in DeltaManager ctor)
-				container.dispose(Severity.Expected);
+				container.dispose(DisconnectReason.Expected);
 			});
-			container.dispose(Severity.Expected);
+			container.dispose(DisconnectReason.Expected);
 		});
 
 		it("Mix and match", async () => {
 			const container = await createConnectedContainer();
 			container.on("disconnected", () => {
 				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in Container ctor)
-				container.close(Severity.Expected);
+				container.close(DisconnectReason.Expected);
 			});
-			container.dispose(Severity.Expected);
+			container.dispose(DisconnectReason.Expected);
 		});
 	});
 

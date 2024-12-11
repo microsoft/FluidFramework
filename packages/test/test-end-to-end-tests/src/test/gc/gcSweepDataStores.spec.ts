@@ -14,7 +14,7 @@ import {
 import {
 	IContainer,
 	LoaderHeader,
-	Severity,
+	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerMessageType,
@@ -215,7 +215,7 @@ const summarizationWithUnreferencedDataStoreAfterTime = async () => {
 	const summaryVersion = (await ensureSynchronizedAndSummarize(summarizer1)).summaryVersion;
 
 	// Close the summarizer so that it doesn't interfere with the new one.
-	summarizingContainer1.close(Severity.Expected);
+	summarizingContainer1.close(DisconnectReason.Expected);
 
 	// Load a new container and summarizer from the latest summary
 	const { container: summarizingContainer2, summarizer: summarizer2 } = await loadSummarizer(
@@ -235,7 +235,7 @@ const summarizationWithUnreferencedDataStoreAfterTime = async () => {
 	await provider.ensureSynchronized();
 
 	// Close the container as it would be closed by session expiry before sweep ready ever occurs.
-	container.close(Severity.Expected);
+	container.close(DisconnectReason.Expected);
 
 	return {
 		unreferencedId,
@@ -665,7 +665,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			const logger = new MockLogger();
 			// Close the container because in real scenarios, session expiry will close it. Not closing it
 			// will cause GC_Deleted_DataStore_Unexpected_Delete error.
-			container.close(Severity.Expected);
+			container.close(DisconnectReason.Expected);
 			// Summarize. The tombstone ready data store should get realized because it has a
 			// trailing op.
 			const { summarizer: summarizer2 } = await loadSummarizer(

@@ -5,7 +5,10 @@
 
 import * as fs from "fs";
 
-import { LoaderHeader, Severity } from "@fluidframework/container-definitions/internal";
+import {
+	LoaderHeader,
+	DisconnectReason,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
 import {
@@ -144,7 +147,7 @@ export async function createContainerAndExecute(
 			try {
 				return await fluidFileConverter.execute(container, options);
 			} finally {
-				container.dispose(Severity.Expected);
+				container.dispose(DisconnectReason.Expected);
 			}
 		});
 	};

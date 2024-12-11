@@ -10,7 +10,7 @@ import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-
 import {
 	IContainer,
 	LoaderHeader,
-	Severity,
+	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
@@ -311,7 +311,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					response1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected response value for blob handle 1`,
 				);
-				container2.close(Severity.Expected);
+				container2.close(DisconnectReason.Expected);
 
 				// Reference the blob in the main container where it's not a tombstone yet. This should un-tombstone the
 				// blob.

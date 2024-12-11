@@ -9,7 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	IContainer,
 	LoaderHeader,
-	Severity,
+	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import {
 	DefaultSummaryConfiguration,
@@ -213,7 +213,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		);
 
 		// Close the main container which should also close the summarizer.
-		mainContainer.close(Severity.Expected);
+		mainContainer.close(DisconnectReason.Expected);
 
 		// Load and set up a new main container with the above summary and validate that it loads with summaryNumber 2.
 		mainContainer = await loadContainer(summaryVersion);

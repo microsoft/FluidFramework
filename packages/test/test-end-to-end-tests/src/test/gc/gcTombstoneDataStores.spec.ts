@@ -15,7 +15,7 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { Severity } from "@fluidframework/container-definitions/internal";
+import { DisconnectReason } from "@fluidframework/container-definitions/internal";
 import {
 	AllowTombstoneRequestHeaderKey,
 	ContainerRuntime,
@@ -177,8 +177,8 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
 		// Close the containers as these containers would be closed by session expiry before sweep ready ever occurs
-		container.close(Severity.Expected);
-		summarizingContainer1.close(Severity.Expected);
+		container.close(DisconnectReason.Expected);
+		summarizingContainer1.close(DisconnectReason.Expected);
 
 		// Wait some time, the datastore can be in many different unreference states
 		await delay(approximateUnreferenceTimestampMs);
@@ -991,7 +991,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// Summarize to get a baseline for incremental summary/GC, then load a new summarizer (and close the first one)
 				const { summaryVersion: summaryVersion0 } = await summarize(summarizer0);
-				summarizingContainer0.close(Severity.Expected);
+				summarizingContainer0.close(DisconnectReason.Expected);
 				const { container: closeMe, summarizer: summarizer_toBeCorrupted } =
 					await loadSummarizer(initialContainer, summaryVersion0, summarizerMockLogger);
 
@@ -1020,7 +1020,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						reason: "Summarize with corrupted GC Data",
 					},
 				);
-				closeMe.close(Severity.Expected);
+				closeMe.close(DisconnectReason.Expected);
 
 				// Then wait the Tombstone timeout and update current timestamp, and summarize again
 				await delay(tombstoneTimeoutMs);
