@@ -11,6 +11,7 @@ import {
 	ParagraphNode,
 	SectionNode,
 } from "../../../documentation-domain/index.js";
+
 import { testRender } from "./Utilities.js";
 
 describe("HierarchicalSection Markdown rendering tests", () => {

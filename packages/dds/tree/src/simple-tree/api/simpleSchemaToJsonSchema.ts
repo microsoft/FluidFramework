@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ValueSchema } from "../../core/index.js";
-import { getOrCreate, type Mutable } from "../../util/index.js";
+import { getOrCreate, hasSingle, type Mutable } from "../../util/index.js";
 import type {
 	JsonArrayNodeSchema,
 	JsonFieldSchema,
@@ -42,9 +42,9 @@ export function toJsonSchema(schema: SimpleTreeSchema): JsonTreeSchema {
 		allowedTypes.push(createSchemaRef(allowedType));
 	}
 
-	return allowedTypes.length === 1
+	return hasSingle(allowedTypes)
 		? {
-				...(allowedTypes[0] ?? oob()),
+				...allowedTypes[0],
 				$defs: definitions,
 			}
 		: {
@@ -96,8 +96,9 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 		allowedTypes.push(createSchemaRef(type));
 	});
 
-	const items: JsonFieldSchema =
-		allowedTypes.length === 1 ? (allowedTypes[0] ?? oob()) : { anyOf: allowedTypes };
+	const items: JsonFieldSchema = hasSingle(allowedTypes)
+		? allowedTypes[0]
+		: { anyOf: allowedTypes };
 
 	return {
 		type: "array",
@@ -142,12 +143,11 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 			allowedTypes.push(createSchemaRef(allowedType));
 		}
 
-		const output: Mutable<JsonFieldSchema> =
-			allowedTypes.length === 1
-				? (allowedTypes[0] ?? oob())
-				: {
-						anyOf: allowedTypes,
-					};
+		const output: Mutable<JsonFieldSchema> = hasSingle(allowedTypes)
+			? allowedTypes[0]
+			: {
+					anyOf: allowedTypes,
+				};
 
 		// Don't include "description" property at all if it's not present in the input.
 		if (value.metadata?.description !== undefined) {
@@ -178,12 +178,11 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 		type: "object",
 		_treeNodeSchemaKind: NodeKind.Map,
 		patternProperties: {
-			"^.*$":
-				allowedTypes.length === 1
-					? (allowedTypes[0] ?? oob())
-					: {
-							anyOf: allowedTypes,
-						},
+			"^.*$": hasSingle(allowedTypes)
+				? allowedTypes[0]
+				: {
+						anyOf: allowedTypes,
+					},
 		},
 	};
 }

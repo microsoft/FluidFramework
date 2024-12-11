@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
@@ -21,12 +22,7 @@ import {
 } from "../core/index.js";
 import { type Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
 
-import {
-	SharedTreeBranch,
-	type BranchTrimmingEvents,
-	getChangeReplaceType,
-	onForkTransitive,
-} from "./branch.js";
+import { SharedTreeBranch, type BranchTrimmingEvents, onForkTransitive } from "./branch.js";
 import type {
 	Commit,
 	SeqNumber,
@@ -41,7 +37,6 @@ import {
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
-import { createEmitter } from "../events/index.js";
 import {
 	TelemetryEventBatcher,
 	measure,
@@ -224,12 +219,12 @@ export class EditManager<
 		this.trackBranch(branch);
 		// Whenever the branch is rebased, update our record of its base trunk commit
 		const offBeforeRebase = branch.events.on("beforeChange", (args) => {
-			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
+			if (args.type === "rebase") {
 				this.untrackBranch(branch);
 			}
 		});
 		const offAfterRebase = branch.events.on("afterChange", (args) => {
-			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
+			if (args.type === "rebase") {
 				this.trackBranch(branch);
 				this.trimTrunk();
 			}

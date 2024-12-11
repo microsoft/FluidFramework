@@ -15,7 +15,12 @@ export {
 	LocalCodeLoader,
 	SupportedExportInterfaces,
 } from "./localCodeLoader.js";
-export { createAndAttachContainer, createLoader } from "./localLoader.js";
+export {
+	createAndAttachContainer,
+	createLoader,
+	createLoaderProps,
+	createAndAttachContainerUsingProps,
+} from "./localLoader.js";
 export { retryWithEventualValue } from "./retry.js";
 export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs.js";
 export {

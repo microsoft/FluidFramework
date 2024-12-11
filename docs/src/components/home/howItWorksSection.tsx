@@ -11,9 +11,10 @@ import { MockDiceRollerSample } from "../mockDiceRoller";
 
 import { PageSection } from "./pageSection";
 
-import ServiceSectionBG from "@site/static/assets/home/how-it-works-section-background.png";
-
 import "@site/src/css/home/howItWorksSection.css";
+
+const servicesSectionBackgroundImageSource =
+	"https://storage.fluidframework.com/static/images/website/home/how-it-works-section-background.png";
 
 const code = `import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
@@ -113,7 +114,7 @@ const renderDiceRoller = (dice, elem) => {
  */
 export function HowItWorksSection(): React.ReactElement {
 	const backgroundStyle: React.CSSProperties = {
-		background: `linear-gradient(to bottom, rgba(255, 253, 251, 0.8) 10%, rgba(255, 253, 251, 0.8)), url(${ServiceSectionBG})`,
+		background: `linear-gradient(to bottom, rgba(255, 253, 251, 0.8) 10%, rgba(255, 253, 251, 0.8)), url(${servicesSectionBackgroundImageSource})`,
 		backgroundPosition: "center",
 		backgroundRepeat: "no-repeat",
 		backgroundSize: "cover",

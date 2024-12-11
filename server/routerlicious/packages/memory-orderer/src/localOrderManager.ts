@@ -14,7 +14,7 @@ import { IConcreteNode, IConcreteNodeFactory, IReservationManager } from "./inte
  */
 export class LocalOrderManager {
 	private readonly localOrderers = new Map<string, Promise<IOrderer>>();
-	private localNodeP: Promise<IConcreteNode>;
+	private localNodeP!: Promise<IConcreteNode>;
 
 	constructor(
 		private readonly nodeFactory: IConcreteNodeFactory,

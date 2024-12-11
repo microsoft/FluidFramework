@@ -1,5 +1,206 @@
 # fluid-framework
 
+## 2.11.0
+
+### Minor Changes
+
+-   Revertible objects can now be cloned using `RevertibleAlpha.clone()` ([#23044](https://github.com/microsoft/FluidFramework/pull/23044)) [5abfa015af](https://github.com/microsoft/FluidFramework/commit/5abfa015aff9d639d82830f3ad828324d5680bd7)
+
+    The `DisposableRevertible` interface has been replaced with `RevertibleAlpha`. The new `RevertibleAlpha` interface extends `Revertible` and includes a `clone(branch: TreeBranch)` method to facilitate cloning a Revertible to a specified target branch. The source branch where the `RevertibleAlpha` was created must share revision logs with the target branch where the `RevertibleAlpha` is being cloned. If this condition is not met, the operation will throw an error.
+
+-   Providing unused properties in object literals for building empty ObjectNodes no longer compiles ([#23162](https://github.com/microsoft/FluidFramework/pull/23162)) [dc3c30019e](https://github.com/microsoft/FluidFramework/commit/dc3c30019ef869b27b9468bff59f10434d3c5c68)
+
+    ObjectNodes with no fields will now emit a compiler error if constructed from an object literal with fields.
+    This matches the behavior of non-empty ObjectNodes which already gave errors when unexpected properties were provided.
+
+    ```typescript
+    class A extends schemaFactory.object("A", {}) {}
+    const a = new A({ thisDoesNotExist: 5 }); // This now errors.
+    ```
+
+-   ✨ New! Alpha APIs for indexing ([#22491](https://github.com/microsoft/FluidFramework/pull/22491)) [cd95357ba8](https://github.com/microsoft/FluidFramework/commit/cd95357ba8f8cea6615f4fb0e9a62743770dce83)
+
+    SharedTree now supports indexing via two new APIs, `createSimpleTreeIndex` and `createIdentifierIndex`.
+
+    `createSimpleTreeIndex` is used to create a `SimpleTreeIndex` which indexes nodes based on their schema.
+    Depending on the schema, the user specifies which field to key the node on.
+
+    The following example indexes `IndexableParent`s and `IndexableChild`s and returns the first node of a particular key:
+
+    ```typescript
+    function isStringKey(key: TreeIndexKey): key is string {
+    	return typeof key === "string";
+    }
+
+    const index = createSimpleTreeIndex(
+    	view,
+    	new Map([
+    		[IndexableParent, parentKey],
+    		[IndexableChild, childKey],
+    	]),
+    	(nodes) => nodes[0],
+    	isStringKey,
+    	[IndexableParent, IndexableChild],
+    );
+    ```
+
+    `createIdentifierIndex` is used to create an `IdentifierIndex` which provides an efficient way to retrieve nodes using the node identifier.
+
+    Example:
+
+    ```typescript
+    const identifierIndex = createIdentifierIndex(view);
+    const node = identifierIndex.get("node12345");
+    ```
+
+## 2.10.0
+
+### Minor Changes
+
+-   Unsupported merge-tree types and related exposed internals have been removed ([#22696](https://github.com/microsoft/FluidFramework/pull/22696)) [7a032533a6](https://github.com/microsoft/FluidFramework/commit/7a032533a6ee6a6f76fe154ef65dfa33f87e5a7b)
+
+    As part of ongoing improvements, several internal types and related APIs have been removed. These types are unnecessary for any supported scenarios and could lead to errors if used. Since directly using these types would likely result in errors, these changes are not likely to impact any Fluid Framework consumers.
+
+    Removed types:
+
+    -   IMergeTreeTextHelper
+    -   MergeNode
+    -   ObliterateInfo
+    -   PropertiesManager
+    -   PropertiesRollback
+    -   SegmentGroup
+    -   SegmentGroupCollection
+
+    In addition to removing the above types, they are no longer exposed through the following interfaces and their implementations: `ISegment`, `ReferencePosition`, and `ISerializableInterval`.
+
+    Removed functions:
+
+    -   addProperties
+    -   ack
+
+    Removed properties:
+
+    -   propertyManager
+    -   segmentGroups
+
+    The initial deprecations of the now changed or removed types were announced in Fluid Framework v2.2.0:
+    [Fluid Framework v2.2.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.2.0.md)
+
+-   Fix typing bug in `adaptEnum` and `enumFromStrings` ([#23077](https://github.com/microsoft/FluidFramework/pull/23077)) [cfb68388cb](https://github.com/microsoft/FluidFramework/commit/cfb68388cb6b88a0ef670633b3afa46a82c99972)
+
+    When using the return value from [`adaptEnum`](https://fluidframework.com/docs/api/v2/tree#adaptenum-function) as a function, passing in a value who's type is a union no longer produced an incorrectly typed return value. This has been fixed.
+
+    Additionally [`enumFromStrings`](https://fluidframework.com/docs/api/v2/tree#enumfromstrings-function) has improved the typing of its schema, ensuring the returned object's members have sufficiently specific types.
+    Part of this improvement was fixing the `.schema` property to be a tuple over each of the schema where it was previously a tuple of a single combined schema due to a bug.
+
+    One side-effect of these fixes is that narrowing of the `value` field of a node typed from the `.schema` behaves slightly different, such that the node type is now a union instead of it being a single type with a `.value` that is a union.
+    This means that narrowing based on `.value` property narrows which node type you have, not just the value property.
+    This mainly matters when matching all cases like the switch statement below:
+
+    ```typescript
+    const Mode = enumFromStrings(schema, ["Fun", "Bonus"]);
+    type Mode = TreeNodeFromImplicitAllowedTypes<typeof Mode.schema>;
+    const node = new Mode.Bonus() as Mode;
+
+    switch (node.value) {
+    	case "Fun": {
+    		assert.fail();
+    	}
+    	case "Bonus": {
+    		// This one runs
+    		break;
+    	}
+    	default:
+    		// Before this change, "node.value" was never here, now "node" is never.
+    		unreachableCase(node);
+    }
+    ```
+
+-   SharedTree event listeners that implement `Listenable` now allow deregistration of event listeners via an `off()` function. ([#23046](https://github.com/microsoft/FluidFramework/pull/23046)) [c59225db03](https://github.com/microsoft/FluidFramework/commit/c59225db033a516ee20e459ae31567d97ce8776c)
+
+    The ability to deregister events via a callback returned by `on()` remains the same.
+    Both strategies will remain supported and consumers of SharedTree events may choose which method of deregistration they prefer in a given instance.
+
+    ```typescript
+    // The new behavior
+    function deregisterViaOff(view: TreeView<MySchema>): {
+    	const listener = () => { /* ... */ };
+    	view.events.on("commitApplied", listener); // Register
+    	view.events.off("commitApplied", listener); // Deregister
+    }
+
+    // The existing behavior (still supported)
+    function deregisterViaCallback(view: TreeView<MySchema>): {
+    	const off = view.events.on("commitApplied", () => { /* ... */ }); // Register
+    	off(); // Deregister
+    }
+    ```
+
+-   Allow constructing recursive maps from objects ([#23070](https://github.com/microsoft/FluidFramework/pull/23070)) [0185a08c6f](https://github.com/microsoft/FluidFramework/commit/0185a08c6f8bf6e922a6467f11da049503c4d215)
+
+    Previously only non-recursive maps could be constructed from objects.
+    Now all maps nodes can constructed from objects:
+
+    ```typescript
+    class MapRecursive extends sf.mapRecursive("Map", [() => MapRecursive]) {}
+    {
+    	type _check = ValidateRecursiveSchema<typeof MapRecursive>;
+    }
+    // New:
+    const fromObject = new MapRecursive({ x: new MapRecursive() });
+    // Existing:
+    const fromIterator = new MapRecursive([["x", new MapRecursive()]]);
+    const fromMap = new MapRecursive(new Map([["x", new MapRecursive()]]));
+    const fromNothing = new MapRecursive();
+    const fromUndefined = new MapRecursive(undefined);
+    ```
+
+-   SharedString DDS annotateAdjustRange ([#22751](https://github.com/microsoft/FluidFramework/pull/22751)) [d54b9dde14](https://github.com/microsoft/FluidFramework/commit/d54b9dde14e9e0e5eb7999db8ebf6da98fdfb526)
+
+    This update introduces a new feature to the `SharedString` DDS, allowing for the adjustment of properties over a specified range. The `annotateAdjustRange` method enables users to apply adjustments to properties within a given range, providing more flexibility and control over property modifications.
+
+    An adjustment is a modification applied to a property value within a specified range. Adjustments can be used to increment or decrement property values dynamically. They are particularly useful in scenarios where property values need to be updated based on user interactions or other events. For example, in a rich text editor, adjustments can be used for modifying indentation levels or font sizes, where multiple users could apply differing numerical adjustments.
+
+    ### Key Features and Use Cases:
+
+    -   **Adjustments with Constraints**: Adjustments can include optional minimum and maximum constraints to ensure the final value falls within specified bounds. This is particularly useful for maintaining consistent formatting in rich text editors.
+    -   **Consistent Property Changes**: The feature ensures that property changes are consistent, managing both local and remote changes effectively. This is essential for collaborative rich text editing where multiple users may be making adjustments simultaneously.
+    -   **Rich Text Formatting**: Adjustments can be used to modify text properties such as font size, indentation, or other formatting attributes dynamically based on user actions.
+
+    ### Configuration and Compatibility Requirements:
+
+    This feature is only available when the configuration `Fluid.Sequence.mergeTreeEnableAnnotateAdjust` is set to `true`. Additionally, all collaborating clients must have this feature enabled to use it. If any client does not have this feature enabled, it will lead to the client exiting collaboration. A future major version of Fluid will enable this feature by default.
+
+    ### Usage Example:
+
+    ```typescript
+    sharedString.annotateAdjustRange(start, end, {
+    	key: { value: 5, min: 0, max: 10 },
+    });
+    ```
+
+-   MergeTree `Client` Legacy API Removed ([#22697](https://github.com/microsoft/FluidFramework/pull/22697)) [2aa0b5e794](https://github.com/microsoft/FluidFramework/commit/2aa0b5e7941efe52386782595f96ff847c786fc3)
+
+    The `Client` class in the merge-tree package has been removed. Types that directly or indirectly expose the merge-tree `Client` class have also been removed.
+
+    The removed types were not meant to be used directly, and direct usage was not supported:
+
+    -   AttributionPolicy
+    -   IClientEvents
+    -   IMergeTreeAttributionOptions
+    -   SharedSegmentSequence
+    -   SharedStringClass
+
+    Some classes that referenced the `Client` class have been transitioned to interfaces. Direct instantiation of these classes was not supported or necessary for any supported scenario, so the change to an interface should not impact usage. This applies to the following types:
+
+    -   SequenceInterval
+    -   SequenceEvent
+    -   SequenceDeltaEvent
+    -   SequenceMaintenanceEvent
+
+    The initial deprecations of the now changed or removed types were announced in Fluid Framework v2.4.0:
+    [Several MergeTree Client Legacy APIs are now deprecated](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.4.0.md#several-mergetree-client-legacy-apis-are-now-deprecated-22629)
+
 ## 2.5.0
 
 ### Minor Changes

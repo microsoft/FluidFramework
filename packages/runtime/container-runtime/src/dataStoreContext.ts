@@ -15,12 +15,7 @@ import {
 	type IEvent,
 } from "@fluidframework/core-interfaces";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import {
-	assert,
-	isPromiseLike,
-	LazyPromise,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -503,7 +498,7 @@ export abstract class FluidDataStoreContext
 				this.rejectDeferredRealize("No registry for package", lastPkg, packages);
 			}
 			lastPkg = pkg;
-			entry = await registry.get(pkg);
+			entry = registry.getSync?.(pkg) ?? (await registry.get(pkg));
 			if (!entry) {
 				this.rejectDeferredRealize(
 					"Registry does not contain entry for the package",
@@ -527,16 +522,15 @@ export abstract class FluidDataStoreContext
 	createChildDataStore<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>> {
-		const maybe = this.registry?.get(childFactory.type);
+		const maybe = this.registry?.getSync?.(childFactory.type);
 
 		const isUndefined = maybe === undefined;
-		const isPromise = isPromiseLike(maybe);
-		const diffInstance = isPromise || maybe?.IFluidDataStoreFactory !== childFactory;
+		const diffInstance = maybe?.IFluidDataStoreFactory !== childFactory;
 
-		if (isUndefined || isPromise || diffInstance) {
+		if (isUndefined || diffInstance) {
 			throw new UsageError(
 				"The provided factory instance must be synchronously available as a child of this datastore",
-				{ isUndefined, isPromise, diffInstance },
+				{ isUndefined, diffInstance },
 			);
 		}
 		if (childFactory?.createDataStore === undefined) {
@@ -551,7 +545,7 @@ export abstract class FluidDataStoreContext
 		]);
 		assert(
 			context instanceof LocalDetachedFluidDataStoreContext,
-			"must be a LocalDetachedFluidDataStoreContext",
+			0xa89 /* must be a LocalDetachedFluidDataStoreContext */,
 		);
 
 		const created = childFactory.createDataStore(context) as ReturnType<

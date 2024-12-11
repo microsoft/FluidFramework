@@ -12,6 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ITestFluidObject,
@@ -61,6 +62,7 @@ import {
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
 	cursorFromInsertable,
+	getSimpleSchema,
 	SchemaFactory,
 	toStoredSchema,
 	type TreeFieldFromImplicitField,
@@ -1553,8 +1555,11 @@ describe("SharedTree", () => {
 			otherLoadedView.root.insertAtStart("d");
 			await provider.ensureSynchronized();
 
-			const loader = provider.makeTestLoader();
-			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const loadedContainer = await provider.loadTestContainer(
+				undefined,
+				undefined,
+				pendingOps,
+			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<SharedTree>("TestSharedTree");
 			const view = tree.viewWith(
@@ -1849,8 +1854,11 @@ describe("SharedTree", () => {
 			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
-			const loader = provider.makeTestLoader();
-			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const loadedContainer = await provider.loadTestContainer(
+				undefined,
+				undefined,
+				pendingOps,
+			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
@@ -2096,6 +2104,28 @@ describe("SharedTree", () => {
 		);
 	});
 
+	it("throws an error if attaching during a transaction", () => {
+		const sharedTreeFactory = new SharedTreeFactory();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const tree = sharedTreeFactory.create(runtime, "tree");
+		const runtimeFactory = new MockContainerRuntimeFactory();
+		runtimeFactory.createContainerRuntime(runtime);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: StringArray }));
+		view.initialize([]);
+		assert.throws(
+			() => {
+				Tree.runTransaction(view, () => {
+					tree.connect({
+						deltaConnection: runtime.createDeltaConnection(),
+						objectStorage: new MockStorage(),
+					});
+				});
+			},
+			(e: Error) =>
+				validateAssertionError(e, /Cannot attach while a transaction is in progress/),
+		);
+	});
+
 	it("breaks on exceptions", () => {
 		const tree = treeTestFactory();
 		const sf = new SchemaFactory("test");
@@ -2124,5 +2154,21 @@ describe("SharedTree", () => {
 			() => tree.getAttachSummary(),
 			validateUsageError(/invalid state by another error/),
 		);
+	});
+
+	it("exportVerbose & exportSimpleSchema", () => {
+		const tree = treeTestFactory();
+		assert.deepEqual(tree.exportVerbose(), undefined);
+		const sf = new SchemaFactory(undefined);
+		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(sf.optional([])));
+
+		const config = new TreeViewConfiguration({
+			schema: numberSchema,
+		});
+		const view = tree.viewWith(config);
+		view.initialize(10);
+
+		assert.deepEqual(tree.exportVerbose(), 10);
+		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(numberSchema));
 	});
 });

@@ -4,51 +4,35 @@
  */
 
 export {
-	EmptyKey,
-	type FieldKey,
-	type TreeValue,
-	type FieldMapObject,
-	type NodeData,
-	type GenericTreeNode,
-	type JsonableTree,
-	type GenericFieldsNode,
-	type TreeNodeSchemaIdentifier,
-	type TreeFieldStoredSchema,
 	ValueSchema,
-	TreeNodeStoredSchema,
-	type FieldKindIdentifier,
-	type TreeTypeSet,
-	type TreeStoredSchema,
 	type Revertible,
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
-	type StoredSchemaCollection,
-	type ErasedTreeNodeSchemaDataFormat,
-	ObjectNodeStoredSchema,
-	MapNodeStoredSchema,
-	LeafNodeStoredSchema,
 	type RevertibleFactory,
+	type RevertibleAlphaFactory,
+	type RevertibleAlpha,
 } from "./core/index.js";
-export { type Brand } from "./util/index.js";
 
-export {
-	type Listeners,
-	type IsListener,
-	type Listenable,
-	type Off,
-} from "./events/index.js";
+export type {
+	Listeners,
+	IsListener,
+	Listenable,
+	Off,
+} from "@fluidframework/core-interfaces";
 
 export {
 	TreeStatus,
 	TreeCompressionStrategy,
+	type TreeIndex,
+	type TreeIndexKey,
+	type TreeIndexNodes,
 } from "./feature-libraries/index.js";
 
 export {
-	type ISharedTree,
+	type ITreeInternal,
 	type SharedTreeOptions,
 	ForestType,
-	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
@@ -126,6 +110,11 @@ export {
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
+	// Index APIs
+	type SimpleTreeIndex,
+	type IdentifierIndex,
+	createSimpleTreeIndex,
+	createIdentifierIndex,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -180,11 +169,6 @@ export {
 	type SimpleObjectNodeSchema,
 	normalizeAllowedTypes,
 	getSimpleSchema,
-	numberSchema,
-	stringSchema,
-	booleanSchema,
-	handleSchema,
-	nullSchema,
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
@@ -207,8 +191,6 @@ export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
 export {
-	type Covariant,
-	BrandedType,
 	type RestrictiveReadonlyRecord,
 	type RestrictiveStringRecord,
 	type MakeNominal,

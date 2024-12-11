@@ -94,6 +94,7 @@ export interface IFileSystemManagerParams {
 
 export interface IFileSystemManagerFactory {
 	create(fileSystemManagerParams?: IFileSystemManagerParams): IFileSystemManager;
+	dispose?(): Promise<void>;
 }
 
 export interface IFileSystemManagerFactories {
@@ -104,6 +105,17 @@ export interface IFileSystemManagerFactories {
 export interface IStorageRoutingId {
 	tenantId: string;
 	documentId: string;
+}
+
+export function isIStorageRoutingId(routingId: unknown): routingId is IStorageRoutingId {
+	return (
+		typeof routingId === "object" &&
+		routingId !== null &&
+		"tenantId" in routingId &&
+		typeof routingId.tenantId === "string" &&
+		"documentId" in routingId &&
+		typeof routingId.documentId === "string"
+	);
 }
 
 export interface IRepoManagerParams {

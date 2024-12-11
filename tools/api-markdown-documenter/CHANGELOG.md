@@ -1,5 +1,11 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.17.3
+
+-   Fixes an issue where directories generated for API items configured to yield directory-wise hierarchy (via the `hierarchyBoundaries` option) would be generated with names that differed from their corresponding document names.
+    -   Longer term, it would be nice to make the relationship between directory names and document names less intertwined, but for now there are aspects of the system that rely on the two being the same, and this invariant was being violated.
+        So, for now, this is considered a bug fix.
+
 ## 0.17.2
 
 -   Fixes an issue with generated Markdown heading ID overrides where ID contents were not being properly escaped.

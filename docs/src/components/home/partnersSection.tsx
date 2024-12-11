@@ -7,13 +7,6 @@ import React from "react";
 
 import { PageSection } from "./pageSection";
 
-import AutodeskLogo from "@site/static/assets/autodesk-logo.png";
-import HexagonLogo from "@site/static/assets/hexagon-logo.png";
-import LoopLogo from "@site/static/assets/loop-logo.svg";
-import PowerAppsLogo from "@site/static/assets/power-apps-logo.png";
-import TeamsLogo from "@site/static/assets/teams-logo.png";
-import WhiteboardLogo from "@site/static/assets/whiteboard-logo.png";
-
 import "@site/src/css/home/partnersSection.css";
 
 // TODO: the spec calls for text contents between the title and the footer, but we don't have that text yet.
@@ -35,37 +28,67 @@ export function PartnersSection(): JSX.Element {
 			<div className="ffcom-partners-section-contents">
 				<div className="ffcom-partners-section-contents-inner">
 					<PartnerEntry
-						icon={<img src={AutodeskLogo} title="Autodesk" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/autodesk-logo.png"
+								title="Autodesk"
+							/>
+						}
 						title="Autodesk"
 						// bodyText={TODO}
 						learnMoreHref={autodeskLink}
 					/>
 					<PartnerEntry
-						icon={<img src={HexagonLogo} title="Hexagon" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/hexagon-logo.png"
+								title="Hexagon"
+							/>
+						}
 						title="Hexagon"
 						// bodyText={TODO}
 						learnMoreHref={hexagonLink}
 					/>
 					<PartnerEntry
-						icon={<LoopLogo title="Microsoft Loop" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/loop-logo.svg"
+								title="Microsoft Loop"
+							/>
+						}
 						title="Microsoft Loop"
 						// bodyText={TODO}
 						learnMoreHref={loopLink}
 					/>
 					<PartnerEntry
-						icon={<img src={TeamsLogo} title="Microsoft Teams" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/teams-logo.png"
+								title="Microsoft Teams"
+							/>
+						}
 						title="Microsoft Teams"
 						// bodyText={TODO}
 						learnMoreHref={teamsLink}
 					/>
 					<PartnerEntry
-						icon={<img src={PowerAppsLogo} title="Power Apps" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/power-apps-logo.png"
+								title="Power Apps"
+							/>
+						}
 						title="Power Apps"
 						// bodyText={TODO}
 						learnMoreHref={powerAppsLink}
 					/>
 					<PartnerEntry
-						icon={<img src={WhiteboardLogo} title="Whiteboard" />}
+						icon={
+							<img
+								src="https://storage.fluidframework.com/static/images/website/partner-logos/whiteboard-logo.png"
+								title="Whiteboard"
+							/>
+						}
 						title="Whiteboard"
 						// bodyText={TODO}
 						learnMoreHref={whiteboardLink}

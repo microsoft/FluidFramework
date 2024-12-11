@@ -4,9 +4,10 @@
  */
 
 import type { ConfigurationBase } from "../../ConfigurationBase.js";
-import type { TextFormatting } from "../../documentation-domain/index.js";
 import { defaultConsoleLogger } from "../../Logging.js";
-import { type Transformations } from "./Transformation.js";
+import type { TextFormatting } from "../../documentation-domain/index.js";
+
+import type { Transformations } from "./Transformation.js";
 
 /**
  * Configuration for transforming {@link DocumentationNode}s to HTML.

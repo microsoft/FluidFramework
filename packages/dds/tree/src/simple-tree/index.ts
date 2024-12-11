@@ -51,6 +51,10 @@ export {
 	type NodeChangedData,
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type SimpleTreeIndex,
+	type IdentifierIndex,
+	createSimpleTreeIndex,
+	createIdentifierIndex,
 	type SimpleNodeSchemaBase,
 	type SimpleTreeSchema,
 	type SimpleNodeSchema,
@@ -114,6 +118,10 @@ export {
 	conciseFromCursor,
 	createFromCursor,
 	asTreeViewAlpha,
+	customFromCursorStored,
+	type CustomTreeNode,
+	type CustomTreeValue,
+	tryStoredSchemaAsArray,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
