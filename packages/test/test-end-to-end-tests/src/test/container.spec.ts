@@ -95,8 +95,8 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			documentServiceFactory: provider.documentServiceFactory,
 			codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
 		});
-		loaderContainerTracker.add(loader);
 		const container = await loader.createDetachedContainer(codeDetails);
+		loaderContainerTracker.addContainer(container);
 		await container.attach(provider.driver.createCreateNewRequest("containerTest"));
 	});
 	afterEach(() => {
@@ -112,16 +112,18 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 				props?.codeLoader ??
 				new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
 		});
-		loaderContainerTracker.add(loader);
 
-		return loader.resolve({
+		const container = await loader.resolve({
 			url: testRequest.url,
 			headers: { ...testRequest.headers, ...headers },
 		});
+		loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	async function createConnectedContainer(): Promise<IContainer> {
 		const container = await provider.makeTestContainer();
+		loaderContainerTracker.addContainer(container);
 		await waitForContainerConnection(container, true, {
 			durationMs: timeoutMs,
 			errorMsg: "Container initial connection timeout",

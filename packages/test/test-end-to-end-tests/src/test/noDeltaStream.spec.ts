@@ -12,7 +12,10 @@ import {
 	LoaderHeader,
 	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
-import { loadContainerPaused } from "@fluidframework/container-loader/internal";
+import {
+	loadContainerPaused,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/internal";
 import {
 	DefaultSummaryConfiguration,
 	SummaryCollection,
@@ -28,6 +31,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	createLoader,
+	createLoaderProps,
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
@@ -214,7 +218,7 @@ describeCompat(
 
 				// spin up a validation (normal) and a storage only client, and check that they see the same things
 				{
-					const validationLoader = createLoader(
+					const validationLoaderProps = createLoaderProps(
 						[
 							[
 								provider.defaultCodeDetails,
@@ -224,8 +228,9 @@ describeCompat(
 						provider.documentServiceFactory,
 						provider.urlResolver,
 					);
-					const validationContainer = await validationLoader.resolve({
-						url: containerUrl,
+					const validationContainer = await loadExistingContainer({
+						...validationLoaderProps,
+						request: { url: containerUrl },
 					});
 					const validationDataObject =
 						await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
@@ -245,7 +250,7 @@ describeCompat(
 						},
 					);
 
-					const storageOnlyLoader = createLoader(
+					const storageOnlyLoaderProps = createLoaderProps(
 						[
 							[
 								provider.defaultCodeDetails,
@@ -260,7 +265,7 @@ describeCompat(
 						// Define sequenceNumber if opsUpToSeqNumber is set, otherwise leave undefined
 						const sequenceNumber = testConfig.opsUpToSeqNumber ? lastKnownSeqNum : undefined;
 						const storageOnlyContainer = await loadContainerPaused(
-							storageOnlyLoader,
+							storageOnlyLoaderProps,
 							{
 								url: containerUrl,
 								headers: {
@@ -288,10 +293,13 @@ describeCompat(
 							"deltaManager.lastSequenceNumber === loadedSeqNum",
 						);
 					} else {
-						const storageOnlyContainer = await storageOnlyLoader.resolve({
-							url: containerUrl,
-							headers: {
-								[LoaderHeader.loadMode]: testConfig.loadOptions,
+						const storageOnlyContainer = await loadExistingContainer({
+							...storageOnlyLoaderProps,
+							request: {
+								url: containerUrl,
+								headers: {
+									[LoaderHeader.loadMode]: testConfig.loadOptions,
+								},
 							},
 						});
 

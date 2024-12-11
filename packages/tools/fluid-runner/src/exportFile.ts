@@ -5,11 +5,11 @@
 
 import * as fs from "fs";
 
+import { DisconnectReason, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
-	LoaderHeader,
-	DisconnectReason,
-} from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
 import {
 	ITelemetryLoggerExt,
@@ -128,18 +128,21 @@ export async function createContainerAndExecute(
 			};
 		}
 
-		const loader = new Loader({
+		const loaderProps: ILoaderProps = {
 			urlResolver: new FakeUrlResolver(),
 			documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
 			codeLoader: await fluidFileConverter.getCodeLoader(logger),
 			scope: await fluidFileConverter.getScope?.(logger),
 			logger,
-		});
+		};
 
-		const container = await loader.resolve({
-			url: "/fakeUrl/",
-			headers: {
-				[LoaderHeader.loadMode]: { opsBeforeReturn: "cached" },
+		const container = await loadExistingContainer({
+			...loaderProps,
+			request: {
+				url: "/fakeUrl/",
+				headers: {
+					[LoaderHeader.loadMode]: { opsBeforeReturn: "cached" },
+				},
 			},
 		});
 

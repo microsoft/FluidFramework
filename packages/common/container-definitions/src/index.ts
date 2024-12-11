@@ -34,6 +34,7 @@ export type {
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
+	IContainerPolicies,
 	IFluidCodeResolver,
 	IFluidModuleWithDetails,
 	IHostLoader,

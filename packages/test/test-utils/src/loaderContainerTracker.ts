@@ -6,8 +6,8 @@
 import {
 	IDeltaQueue,
 	IContainer,
-	IHostLoader,
 	DisconnectReason,
+	type IHostLoader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
@@ -86,7 +86,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * @param container - container to add
 	 */
-	private addContainer(container: IContainer) {
+	public addContainer(container: IContainer) {
 		// don't add container that is already tracked
 		if (this.containers.has(container)) {
 			return;

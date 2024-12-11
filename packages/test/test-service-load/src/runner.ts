@@ -15,7 +15,11 @@ import {
 	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
+import {
+	IContainerExperimental,
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
@@ -254,7 +258,7 @@ async function runnerProcess(
 					configurations: { ...globalConfigurations, ...testConfiguration },
 				}),
 			});
-			const loader = new Loader({
+			const loaderProps: ILoaderProps = {
 				urlResolver: testDriver.createUrlResolver(),
 				documentServiceFactory,
 				codeLoader: createCodeLoader(
@@ -263,12 +267,16 @@ async function runnerProcess(
 				logger: runConfig.logger,
 				options: runConfig.loaderConfig,
 				configProvider: configProvider(testConfiguration),
-			});
+			};
 
 			const stashedOps = stashedOpP ? await stashedOpP : undefined;
 			stashedOpP = undefined; // delete to avoid reuse
 
-			container = await loader.resolve({ url, headers }, stashedOps);
+			container = await loadExistingContainer({
+				...loaderProps,
+				request: { url, headers },
+				pendingLocalState: stashedOps,
+			});
 
 			container.connect();
 			const test = (await container.getEntryPoint()) as ILoadTest;
