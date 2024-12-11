@@ -91,6 +91,11 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		Set<(...args: any[]) => TListeners[keyof TListeners]>
 	>();
 
+	private readonly wrappedListeners = new WeakMap<
+		TListeners[keyof TListeners],
+		TListeners[keyof TListeners]
+	>();
+
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
 	// Instead, use the static `create` function to get an instance which allows emitting events.
 	protected constructor(private readonly noListeners?: NoListenersCallback<TListeners>) {}
@@ -146,14 +151,49 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		return () => this.off(eventName, listener);
 	}
 
+	public once<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		listener: TListeners[K],
+	): Off {
+		const listeners = getOrCreate(this.listeners, eventName, () => new Set());
+
+		if (this.listeners.has(listener)) {
+			const eventDescription =
+				typeof eventName === "symbol" ? eventName.description : String(eventName.toString());
+
+			throw new Error(
+				`Attempted to register the same listener object twice for event ${eventDescription}`,
+			);
+		}
+
+		const wrappedListener = (args: Parameters<TListeners[K]>): void => {
+			listener(args);
+			this.off(eventName, wrappedListener as TListeners[K]);
+		};
+
+		// Store the mapping of original to wrapped listener
+		this.wrappedListeners.set(listener, wrappedListener as TListeners[K]);
+
+		listeners.add(wrappedListener as TListeners[K]);
+		return () => this.off(eventName, listener);
+	}
+
 	public off<K extends keyof Listeners<TListeners>>(
 		eventName: K,
 		listener: TListeners[K],
 	): void {
 		const listeners = this.listeners.get(eventName);
-		if (listeners?.delete(listener) === true && listeners.size === 0) {
+
+		const wrappedListener = this.wrappedListeners.get(listener);
+
+		if (listeners?.delete(wrappedListener ?? listener) === true && listeners.size === 0) {
 			this.listeners.delete(eventName);
 			this.noListeners?.(eventName);
+		}
+
+		// Clean up the mapping if it exists
+		if (wrappedListener) {
+			this.wrappedListeners.delete(listener);
 		}
 	}
 
