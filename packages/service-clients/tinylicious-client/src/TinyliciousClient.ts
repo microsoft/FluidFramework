@@ -7,9 +7,12 @@ import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	IContainer,
 	IFluidModuleWithDetails,
-	IHostLoader,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import type {
 	ConfigTypes,
 	FluidObject,
@@ -85,14 +88,17 @@ export class TinyliciousClient {
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 
 		// We're not actually using the code proposal (our code loader always loads the same module
 		// regardless of the proposal), but the Container will only give us a NullRuntime if there's
 		// no proposal.  So we'll use a fake proposal.
-		const container = await loader.createDetachedContainer({
-			package: "no-dynamic-package",
-			config: {},
+		const container = await createDetachedContainer({
+			...loaderProps,
+			codeDetails: {
+				package: "no-dynamic-package",
+				config: {},
+			},
 		});
 
 		const rootDataObject = await this.getContainerEntryPoint(container);
@@ -137,8 +143,8 @@ export class TinyliciousClient {
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema, compatibilityMode);
-		const container = await loader.resolve({ url: id });
+		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const container = await loadExistingContainer({ ...loaderProps, request: { url: id } });
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
@@ -158,10 +164,10 @@ export class TinyliciousClient {
 		};
 	}
 
-	private createLoader(
+	private getLoaderProps(
 		schema: ContainerSchema,
 		compatibilityMode: CompatibilityMode,
-	): IHostLoader {
+	): ILoaderProps {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
 			compatibilityMode,
@@ -188,16 +194,16 @@ export class TinyliciousClient {
 			// T9s client requires a write connection by default
 			"Fluid.Container.ForceWriteConnection": true,
 		};
-		const loader = new Loader({
+		const loaderProps = {
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
 			logger: this.logger,
 			options: { client },
 			configProvider: wrapConfigProviderWithDefaults(/* original */ undefined, featureGates),
-		});
+		};
 
-		return loader;
+		return loaderProps;
 	}
 
 	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {

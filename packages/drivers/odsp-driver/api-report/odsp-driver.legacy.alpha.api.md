@@ -131,6 +131,9 @@ export interface ISnapshotContents {
 }
 
 // @alpha
+export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
+
+// @alpha
 export const locatorQueryParamName = "nav";
 
 // @alpha (undocumented)

@@ -67,7 +67,7 @@
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",
 		"debug": "^4.3.4",
-		"express": "^4.21.1",
+		"express": "^4.21.2",
 		"ioredis": "^5.2.3",
 		"ioredis-mock": "^8.9.0",
 		"json-stringify-safe": "5.0.1",

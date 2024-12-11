@@ -27,7 +27,8 @@ export const defaultTinyliciousEndpoint = "http://localhost";
  * for a given request.  This particular implementation has a goal to avoid imposing requirements on the app's
  * URL shape, so it expects the request url to have this format (as opposed to a more traditional URL):
  * documentId/containerRelativePathing
- * @internal
+ * @legacy
+ * @alpha
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 	private readonly tinyliciousEndpoint: string;
@@ -93,7 +94,8 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
 /**
  * Creates a Routerlicious {@link @fluidframework/core-interfaces#IRequest}.
- * @internal
+ * @legacy
+ * @alpha
  */
 export const createTinyliciousCreateNewRequest = (documentId?: string): IRequest => ({
 	url: documentId ?? "",

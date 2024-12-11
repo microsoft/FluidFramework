@@ -65,7 +65,7 @@
 		"body-parser": "^1.20.3",
 		"debug": "^4.3.4",
 		"events": "^3.1.0",
-		"express": "^4.21.1",
+		"express": "^4.21.2",
 		"fast-redact": "^3.3.0",
 		"ioredis": "^5.2.3",
 		"lodash": "^4.17.21",

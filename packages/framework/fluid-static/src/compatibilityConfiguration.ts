@@ -5,7 +5,7 @@
 
 import {
 	CompressionAlgorithms,
-	type IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
@@ -17,7 +17,7 @@ import type { CompatibilityMode } from "./types.js";
  */
 export const compatibilityModeRuntimeOptions: Record<
 	CompatibilityMode,
-	IContainerRuntimeOptions
+	IContainerRuntimeOptionsInternal
 > = {
 	"1": {
 		// 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode

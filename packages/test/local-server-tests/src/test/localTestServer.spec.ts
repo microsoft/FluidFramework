@@ -8,9 +8,12 @@ import { strict as assert } from "assert";
 import {
 	IContainer,
 	IFluidCodeDetails,
-	IHostLoader,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
+import {
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import { IUrlResolver, MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
@@ -25,8 +28,8 @@ import {
 	ITestFluidObject,
 	LoaderContainerTracker,
 	TestFluidObjectFactory,
-	createAndAttachContainer,
-	createLoader,
+	createAndAttachContainerUsingProps,
+	createLoaderProps,
 } from "@fluidframework/test-utils/internal";
 
 /**
@@ -34,15 +37,21 @@ import {
  * @param packageEntries - A list of code details to Fluid entry points.
  * @param deltaConnectionServer - The delta connection server to use as the server.
  */
-function createLocalLoader(
+function createLocalLoaderProps(
 	packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
 	deltaConnectionServer: ILocalDeltaConnectionServer,
 	urlResolver: IUrlResolver,
 	options?: ILoaderOptions,
-): IHostLoader {
+): ILoaderProps {
 	const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
-	return createLoader(packageEntries, documentServiceFactory, urlResolver, undefined, options);
+	return createLoaderProps(
+		packageEntries,
+		documentServiceFactory,
+		urlResolver,
+		undefined,
+		options,
+	);
 }
 
 describe("LocalTestServer", () => {
@@ -66,27 +75,31 @@ describe("LocalTestServer", () => {
 	let sharedString2: SharedString;
 
 	async function createContainer(): Promise<IContainer> {
-		const loader = createLocalLoader(
+		const createDetachedContainerProps = createLocalLoaderProps(
 			[[codeDetails, factory]],
 			deltaConnectionServer,
 			urlResolver,
 		);
-		loaderContainerTracker.add(loader);
-		return createAndAttachContainer(
-			codeDetails,
-			loader,
+		const containerUsingPops = await createAndAttachContainerUsingProps(
+			{ ...createDetachedContainerProps, codeDetails },
 			urlResolver.createCreateNewRequest(documentId),
 		);
+		loaderContainerTracker.addContainer(containerUsingPops);
+		return containerUsingPops;
 	}
 
 	async function loadContainer(): Promise<IContainer> {
-		const loader = createLocalLoader(
+		const loaderProps = createLocalLoaderProps(
 			[[codeDetails, factory]],
 			deltaConnectionServer,
 			urlResolver,
 		);
-		loaderContainerTracker.add(loader);
-		return loader.resolve({ url: documentLoadUrl });
+		const containerUsingPops = await loadExistingContainer({
+			...loaderProps,
+			request: { url: documentLoadUrl },
+		});
+		loaderContainerTracker.addContainer(containerUsingPops);
+		return containerUsingPops;
 	}
 
 	beforeEach(async () => {

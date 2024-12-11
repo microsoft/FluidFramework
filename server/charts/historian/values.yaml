@@ -78,6 +78,7 @@ gitrest:
     enableRedisFsOptimizedStat: false
     redisApiMetricsSamplingPeriod: 0
     enforceStrictPersistedFullSummaryReads: false
+    maxBlobSizeBytes: 0
   redis:
     url: redis_url
     port: 6379

@@ -8,4 +8,8 @@ export type {
 	IContainerRuntimeBaseWithCombinedEvents,
 	IContainerRuntimeEvents,
 	IContainerRuntimeWithResolveHandle_Deprecated,
+	SummarizerStopReason,
+	ISummarizeEventProps,
+	ISummarizerObservabilityProps,
+	ISummarizerEvents,
 } from "./containerRuntime.js";

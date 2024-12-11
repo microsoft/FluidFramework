@@ -55,6 +55,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		enableRepositoryManagerMetrics: boolean,
 		apiMetricsSamplingPeriod?: number,
 		isEphemeralContainer?: boolean,
+		maxBlobSizeBytes?: number,
 	): IRepositoryManager;
 
 	constructor(
@@ -65,6 +66,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		private readonly enableRepositoryManagerMetrics: boolean = false,
 		private readonly enforceSynchronous: boolean = true,
 		private readonly apiMetricsSamplingPeriod?: number,
+		private readonly maxBlobSizeBytes?: number,
 	) {
 		this.internalHandler = repoPerDocEnabled
 			? this.repoPerDocInternalHandler.bind(this)
@@ -271,6 +273,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				this.enableRepositoryManagerMetrics,
 				this.apiMetricsSamplingPeriod,
 				params.isEphemeralContainer,
+				this.maxBlobSizeBytes,
 			);
 		};
 

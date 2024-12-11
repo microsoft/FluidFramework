@@ -10,35 +10,19 @@ import {
 	devtoolsMessageSource,
 } from "@fluidframework/devtools-core/internal";
 import { expect } from "chai";
-import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
 
 import type { Globals } from "../Globals.js";
+// eslint-disable-next-line import/no-internal-modules
+import { runContentScript } from "../content/ContentScriptContent.js";
 import { extensionViewMessageSource } from "../messaging/index.js";
 
 import { awaitListener, stubGlobals, stubPort } from "./Utilities.js";
 
 type Port = chrome.runtime.Port;
 
-const proxyquire = Proxyquire.noCallThru();
-
-const contentScriptPath = "../content/ContentScript"; // Relative to this file
-const globalsModulePath = "../Globals"; // Relative to this file
-
-/**
- * Require the background script using the provided `browser` APIs.
- */
-const loadContentScript = (globals: Globals): void => {
-	proxyquire(contentScriptPath, {
-		[globalsModulePath]: {
-			...globals,
-		} as unknown,
-	});
-};
-
 describe("Content Script unit tests", () => {
 	const sandbox = createSandbox();
-
 	let globals: Globals = stubGlobals();
 
 	afterEach(() => {
@@ -51,7 +35,7 @@ describe("Content Script unit tests", () => {
 
 		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
 
-		loadContentScript(globals);
+		runContentScript(browser, globals.window);
 
 		const onConnectListener = await onConnectListenerPromise;
 
@@ -67,7 +51,7 @@ describe("Content Script unit tests", () => {
 		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
 
 		// Load the Content script (with stubbed `onConnect`)
-		loadContentScript(globals);
+		runContentScript(browser, globals.window);
 
 		// Wait for onConnect handler to be registered by Content script
 		const onConnectListener = await onConnectListenerPromise;
@@ -99,7 +83,7 @@ describe("Content Script unit tests", () => {
 		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
 
 		// Load the Content script (with stubbed `onConnect`)
-		loadContentScript(globals);
+		runContentScript(browser, globals.window);
 
 		// Wait for onConnect handler to be registered by Content script
 		const connectFromBackground = await onConnectListenerPromise;

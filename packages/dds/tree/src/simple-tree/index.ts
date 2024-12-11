@@ -118,6 +118,10 @@ export {
 	conciseFromCursor,
 	createFromCursor,
 	asTreeViewAlpha,
+	customFromCursorStored,
+	type CustomTreeNode,
+	type CustomTreeValue,
+	tryStoredSchemaAsArray,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
