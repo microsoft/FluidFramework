@@ -55,7 +55,7 @@ export function TaskGroup(props: {
 	const [llmBranchData, setLlmBranchData] = useState<{
 		differences: Difference[];
 		originalBranch: TreeViewAlpha<typeof SharedTreeAppState>;
-		forkBranch: TreeViewAlpha<typeof SharedTreeAppState>;
+		aiCollabBranch: TreeViewAlpha<typeof SharedTreeAppState>;
 		newBranchTargetNode: SharedTreeTaskGroup;
 	}>();
 
@@ -74,10 +74,18 @@ export function TaskGroup(props: {
 		newBranchTaskGroup: SharedTreeTaskGroup;
 	} => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const currentBranch = TreeAlpha.branch(sharedTreeAppState)! as TreeViewAlpha<
-			typeof SharedTreeAppState
-		>;
+		const currentBranch = TreeAlpha.branch(sharedTreeAppState)!;
 		const newBranchTree = currentBranch.fork();
+
+		if (
+			!currentBranch.hasRootSchema(SharedTreeAppState) ||
+			!newBranchTree.hasRootSchema(SharedTreeAppState)
+		) {
+			throw new Error(
+				"Cannot branch from a tree that does not have the SharedTreeAppState schema.",
+			);
+		}
+
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const newBranchTaskGroup = newBranchTree.root.taskGroups.find(
 			(_taskGroup) => _taskGroup.id === taskGroup.id,
@@ -143,7 +151,7 @@ export function TaskGroup(props: {
 			setLlmBranchData({
 				differences: taskGroupDifferences,
 				originalBranch: currentBranch,
-				forkBranch: newBranchTree,
+				aiCollabBranch: newBranchTree,
 				newBranchTargetNode: newBranchTaskGroup,
 			});
 			setIsDiffModalOpen(true);
@@ -161,6 +169,7 @@ export function TaskGroup(props: {
 			);
 		} finally {
 			setIsAiTaskRunning(false);
+			setPopoverAnchor(undefined);
 		}
 	};
 
@@ -220,7 +229,7 @@ export function TaskGroup(props: {
 							setPopoverAnchor(undefined);
 						}}
 						onAccept={() => {
-							llmBranchData.originalBranch.merge(llmBranchData.forkBranch);
+							llmBranchData.originalBranch.merge(llmBranchData.aiCollabBranch);
 							setIsDiffModalOpen(false);
 							setLlmBranchData(undefined);
 							setPopoverAnchor(undefined);
@@ -230,7 +239,7 @@ export function TaskGroup(props: {
 							setLlmBranchData(undefined);
 							setPopoverAnchor(undefined);
 						}}
-						treeView={llmBranchData.forkBranch}
+						treeView={llmBranchData.aiCollabBranch}
 						differences={llmBranchData.differences}
 						newBranchTargetNode={llmBranchData.newBranchTargetNode}
 					></TaskGroupDiffModal>

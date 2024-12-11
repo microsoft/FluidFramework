@@ -42,7 +42,7 @@ import { getOpenAiClient } from "@/infra/openAiClient";
 import {
 	SharedTreeTask,
 	SharedTreeTaskGroup,
-	type SharedTreeAppState,
+	SharedTreeAppState,
 	TaskPriorities,
 	type TaskPriority,
 	TaskStatuses,
@@ -123,7 +123,16 @@ export function TaskCard(props: {
 		// 1. Create `TreeBranch` from the current `SharedTreeAppState` and fork it into a new branch.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const currentBranch = TreeAlpha.branch(sharedTreeAppState)!;
-		const newBranchTree = currentBranch.fork() as TreeViewAlpha<typeof SharedTreeAppState>;
+		const newBranchTree = currentBranch.fork();
+
+		if (
+			!currentBranch.hasRootSchema(SharedTreeAppState) ||
+			!newBranchTree.hasRootSchema(SharedTreeAppState)
+		) {
+			throw new Error(
+				"Cannot branch from a tree that does not have the SharedTreeAppState schema.",
+			);
+		}
 
 		// 2. Now that we've created the new branch, we need to find the matching Task in that new branch.
 		const parentTaskGroup = Tree.parent(
