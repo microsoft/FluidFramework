@@ -1043,7 +1043,7 @@ describe("schemaFactory", () => {
 
 		assert.deepEqual(Foo.metadata, fooMetadata);
 
-		// Ensure the typing is as we expect
+		// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 		const description = Foo.metadata.description;
 		const baz = Foo.metadata.custom.baz;
 	});
