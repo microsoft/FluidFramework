@@ -149,6 +149,8 @@ export const setupContainer = async (
 	// is an object we can use to watch migration status, propose a migration, and discover the migration result.
 	const { getMigrator } = (await container.getEntryPoint()) as IMigratorEntryPoint;
 	const migrator: IMigrator = await getMigrator(
+		// Note that the LoadSourceContainerCallback must load a new instance of the container.  We cannot simply return the
+		// container reference we already got above since it may contain local un-ack'd changes.
 		async () => loadExistingContainer({ ...loaderProps, request: { url: id } }),
 		migrationCallback,
 	);
