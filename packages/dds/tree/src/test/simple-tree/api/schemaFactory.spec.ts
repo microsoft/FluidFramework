@@ -41,7 +41,6 @@ import {
 } from "../../../simple-tree/api/schemaFactory.js";
 import type {
 	NodeFromSchema,
-	NodeSchemaMetadata,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
