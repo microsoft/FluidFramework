@@ -5,7 +5,7 @@
 section: tree
 ---
 
-Metadata can now be associated with Node Schema
+Metadata can be associated with Node Schema
 
 Users of TreeView can now specify metadata when creating Node Schema via the experimental (alpha) `withMetadata` function.
 This metadata may include system-understood properties like `description`.
