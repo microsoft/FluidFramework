@@ -33,7 +33,7 @@ export enum ContainerMessageType {
 }
 
 // @alpha
-export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
+export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
     protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration, recentBatchInfo?: [number, string][]);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
@@ -287,7 +287,7 @@ export interface IBroadcastSummaryResult {
 // @alpha
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {
     // (undocumented)
-    stop(reason: SummarizerStopReason): void;
+    stop(reason: SummarizerStopReason_2): void;
 }
 
 // @alpha
@@ -340,9 +340,11 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
+    // @deprecated
     readonly enableGroupedBatching?: boolean;
     readonly enableRuntimeIdCompressor?: IdCompressorMode;
     readonly explicitSchemaControl?: boolean;
+    // @deprecated
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
@@ -538,7 +540,7 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly summaryLogger: ITelemetryLoggerExt;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISummarizeEventProps {
     // (undocumented)
     currentAttempt: number;
@@ -556,15 +558,15 @@ export interface ISummarizeOptions {
 }
 
 // @alpha (undocumented)
-export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents_2> {
     // (undocumented)
     close(): void;
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     readonly ISummarizer?: ISummarizer;
     // (undocumented)
-    run(onBehalfOf: string): Promise<SummarizerStopReason>;
+    run(onBehalfOf: string): Promise<SummarizerStopReason_2>;
     // (undocumented)
-    stop(reason: SummarizerStopReason): void;
+    stop(reason: SummarizerStopReason_2): void;
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
 }
 
@@ -575,7 +577,7 @@ export interface ISummarizeResults {
     readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISummarizerEvents extends IEvent {
     // (undocumented)
     (event: "summarize", listener: (props: ISummarizeEventProps) => void): any;
@@ -632,7 +634,7 @@ export interface ISummaryBaseConfiguration {
 }
 
 // @alpha
-export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
+export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason_2>;
 
 // @alpha (undocumented)
 export interface ISummaryCollectionOpEvents extends IEvent {
@@ -750,7 +752,7 @@ export interface SubmitSummaryFailureData {
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
 // @alpha
-export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
+export class Summarizer extends TypedEventEmitter<ISummarizerEvents_2> implements ISummarizer {
     constructor(
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
@@ -764,9 +766,9 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
     // (undocumented)
     recordSummaryAttempt?(summaryRefSeqNum?: number): void;
     // (undocumented)
-    run(onBehalfOf: string): Promise<SummarizerStopReason>;
-    stop(reason: SummarizerStopReason): void;
-    static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean;
+    run(onBehalfOf: string): Promise<SummarizerStopReason_2>;
+    stop(reason: SummarizerStopReason_2): void;
+    static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason_2): boolean;
     // (undocumented)
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     // (undocumented)
@@ -784,7 +786,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     error: IRetriableFailureError;
 };
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export type SummarizerStopReason =
 /** Summarizer client failed to summarize in all attempts. */
 "failToSummarize"

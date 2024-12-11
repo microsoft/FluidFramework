@@ -16,6 +16,7 @@ export {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	type ForestOptions,
+	type ITreeInternal,
 } from "./sharedTree.js";
 
 export {

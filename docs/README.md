@@ -174,8 +174,11 @@ For more details about leveraging Mermaid diagrams in Docusaurus, see [here](htt
 
 ##### Links
 
--   Don't include file extensions in links. E.g., prefer `[foo](./foo)` over `[foo](./foo.md)`.
-    -   Rationale: more portable (if a document changes from `.md` to `.mdx`, for example, links will not need to be updated).
+Generally, it is recommended to include file extensions in links when possible.
+E.g., prefer `[foo](./foo.mdx)` over `[foo](./foo)`.
+
+-   Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links.
+    See: <https://docusaurus.io/docs/markdown-features/links>
 
 #### Assets
 
