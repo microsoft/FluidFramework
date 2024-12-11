@@ -7,6 +7,7 @@
 /* eslint-disable import/no-deprecated */
 
 import { CustomEventEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
@@ -696,7 +697,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
  * @alpha
  */
 export interface IIntervalCollection<TInterval extends ISerializableInterval>
-	extends CustomEventEmitter<IIntervalCollectionEvent<TInterval>> {
+	extends Listenable<IIntervalCollectionEvent<TInterval>> {
 	readonly attached: boolean;
 
 	/**

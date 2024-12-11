@@ -44,7 +44,7 @@ export interface IInterval {
 }
 
 // @alpha
-export interface IIntervalCollection<TInterval extends ISerializableInterval> extends CustomEventEmitter<IIntervalCollectionEvent<TInterval>> {
+export interface IIntervalCollection<TInterval extends ISerializableInterval> extends Listenable<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
     add({ start, end, props, }: {
