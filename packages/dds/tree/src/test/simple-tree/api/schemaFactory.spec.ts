@@ -1045,6 +1045,14 @@ describe("schemaFactory", () => {
 		// Ensure the typing is as we expect
 		assert.equal(Foo.metadata.description, "An array of numbers");
 		assert.equal(Foo.metadata.custom.baz, true);
+
+		// Ensure properties are readonly
+		// @ts-expect-error Metadata properties are readonly
+		Foo.metadata.description = "Foo";
+		// @ts-expect-error Metadata properties are readonly
+		Foo.metadata.custom = {};
+		// @ts-expect-error Metadata properties are readonly
+		Foo.metadata.custom.baz = false;
 	});
 });
 

@@ -304,6 +304,11 @@ interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
     values(): IterableIterator<TreeNodeFromImplicitAllowedTypesUnsafe<T>>;
 }
 
+// @public
+export type RecursiveReadonly<T> = {
+    readonly [P in keyof T]: RecursiveReadonly<T[P]>;
+};
+
 // @public @deprecated
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
@@ -536,7 +541,7 @@ export interface TreeNodeSchemaCore<out Name extends string, out Kind extends No
     readonly info: Info;
     // (undocumented)
     readonly kind: Kind;
-    readonly metadata?: TMetadata | undefined;
+    readonly metadata?: RecursiveReadonly<TMetadata> | undefined;
 }
 
 // @public @sealed
