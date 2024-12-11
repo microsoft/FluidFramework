@@ -137,7 +137,7 @@ export function TaskGroup(props: {
 					color="success"
 					onClick={() => {
 						props.sharedTreeTaskGroup.tasks.insertAtStart({
-							title: "New Task",
+							title: `New Task #${props.sharedTreeTaskGroup.tasks.length + 1}`,
 							description: "This is the new task. ",
 							priority: "low",
 							complexity: 1,

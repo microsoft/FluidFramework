@@ -41,6 +41,7 @@ import { walkFieldSchema } from "../walkFieldSchema.js";
  * Maybe rename "exportJsonSchema" to align on "concise" terminology.
  * Ensure schema exporting APIs here align and reference APIs for exporting view schema to the same formats (which should include stored vs property key choice).
  * Make sure users of independentView can use these export APIs (maybe provide a reference back to the ViewableTree from the TreeView to accomplish that).
+ * Some of these APIs are on ISharedTree and can get moved here.
  * @system @sealed @public
  */
 export interface ViewableTree {

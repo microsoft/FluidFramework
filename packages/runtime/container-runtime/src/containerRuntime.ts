@@ -218,7 +218,6 @@ import {
 	ISubmitSummaryOptions,
 	ISummarizeResults,
 	ISummarizer,
-	ISummarizerEvents,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummaryMetadataMessage,
@@ -534,6 +533,31 @@ export interface IContainerRuntimeOptions {
 }
 
 /**
+ * Internal extension of @see IContainerRuntimeOptions
+ *
+ * These options are not available to consumers when creating a new container runtime,
+ * but we do need to expose them for internal use, e.g. when configuring the container runtime
+ * to ensure compability with older versions.
+ *
+ * @internal
+ */
+export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptions {
+	/**
+	 * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
+	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
+	 * and then sent them as a single batch at the end of the turn.
+	 * By default, flush mode is TurnBased.
+	 */
+	readonly flushMode?: FlushMode;
+
+	/**
+	 * Allows Grouped Batching to be disabled by setting to false (default is true).
+	 * In that case, batched messages will be sent individually (but still all at the same time).
+	 */
+	readonly enableGroupedBatching?: boolean;
+}
+
+/**
  * Error responses when requesting a deleted object will have this header set to true
  * @legacy
  * @alpha
@@ -841,7 +865,7 @@ export async function loadContainerRuntime(
  * @alpha
  */
 export class ContainerRuntime
-	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
+	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements
 		IContainerRuntime,
 		IRuntime,
@@ -868,7 +892,7 @@ export class ContainerRuntime
 		context: IContainerContext;
 		registryEntries: NamedFluidDataStoreRegistryEntries;
 		existing: boolean;
-		runtimeOptions?: IContainerRuntimeOptions;
+		runtimeOptions?: IContainerRuntimeOptions; // May also include options from IContainerRuntimeOptionsInternal
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
 		/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
@@ -915,7 +939,7 @@ export class ContainerRuntime
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableGroupedBatching = true,
 			explicitSchemaControl = false,
-		} = runtimeOptions;
+		} = runtimeOptions as IContainerRuntimeOptionsInternal;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
 
@@ -1094,6 +1118,21 @@ export class ContainerRuntime
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};
 
+		// Make sure we've got all the options including internal ones (even though we have to cast back to IContainerRuntimeOptions below)
+		const internalRuntimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>> = {
+			summaryOptions,
+			gcOptions,
+			loadSequenceNumberVerification,
+			flushMode,
+			compressionOptions,
+			maxBatchSizeInBytes,
+			chunkSizeInBytes,
+			// Requires<> drops undefined from IdCompressorType
+			enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
+			enableGroupedBatching,
+			explicitSchemaControl,
+		};
+
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -1101,19 +1140,7 @@ export class ContainerRuntime
 			electedSummarizerData,
 			chunks ?? [],
 			aliases ?? [],
-			{
-				summaryOptions,
-				gcOptions,
-				loadSequenceNumberVerification,
-				flushMode,
-				compressionOptions,
-				maxBatchSizeInBytes,
-				chunkSizeInBytes,
-				// Requires<> drops undefined from IdCompressorType
-				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
-				enableGroupedBatching,
-				explicitSchemaControl,
-			},
+			internalRuntimeOptions,
 			containerScope,
 			logger,
 			existing,
@@ -1475,6 +1502,11 @@ export class ContainerRuntime
 		expiry: { policy: "absolute", durationMs: 60000 },
 	});
 
+	/**
+	 * The options to apply to this ContainerRuntime instance (including internal options hidden from the public API)
+	 */
+	private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>;
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1483,7 +1515,7 @@ export class ContainerRuntime
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
-		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
+		runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
@@ -1527,6 +1559,8 @@ export class ContainerRuntime
 			supportedFeatures,
 			snapshotWithContents,
 		} = context;
+
+		this.runtimeOptions = runtimeOptions;
 
 		this.logger = createChildLogger({ logger: this.baseLogger });
 		this.mc = createChildMonitoringContext({
@@ -1698,14 +1732,15 @@ export class ContainerRuntime
 			this.defaultMaxConsecutiveReconnects;
 
 		if (
-			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
+			this.runtimeOptions.flushMode ===
+				(FlushModeExperimental.Async as unknown as FlushMode) &&
 			supportedFeatures?.get("referenceSequenceNumbers") !== true
 		) {
 			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
 			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
 			this._flushMode = FlushMode.TurnBased;
 		} else {
-			this._flushMode = runtimeOptions.flushMode;
+			this._flushMode = this.runtimeOptions.flushMode;
 		}
 		this.offlineEnabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
@@ -2016,9 +2051,19 @@ export class ContainerRuntime
 						initialDelayMs: this.initialSummarizerDelayMs,
 					},
 				);
-				this.summaryManager.on("summarize", (eventProps) => {
-					this.emit("summarize", eventProps);
+				// Forward events from SummaryManager
+				[
+					"summarize",
+					"summarizeAllAttemptsFailed",
+					"summarizerStop",
+					"summarizerStart",
+					"summarizerStartupFailed",
+				].forEach((eventName) => {
+					this.summaryManager?.on(eventName, (...args: any[]) => {
+						this.emit(eventName, ...args);
+					});
 				});
+
 				this.summaryManager.start();
 			}
 		}
