@@ -5,7 +5,8 @@
 "section": deprecation
 ---
 
-Deprecating `IContainerRuntimeOptions.flushMode`
+IContainerRuntimeOptions.flushMode is now deprecated
 
-Only the default value `FlushMode.TurnBased` is supported when calling `ContainerRuntime.loadRuntime` directly,
-so there's no need for consumers to pass this option in.  We'll remove the option altogether in `2.20.0`.
+The `IContainerRuntimeOptions.flushMode` property is deprecated and will be removed in version 2.20.0. 
+
+Only the default value `FlushMode.TurnBased` is supported when calling `ContainerRuntime.loadRuntime` directly, so there's no need for consumers to pass this option in.
