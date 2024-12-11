@@ -35,11 +35,8 @@ import { hasSome } from "../util/index.js";
  * (or is undefined if there was no net change):
  * * Append - when one or more commits are appended to the head of the branch, for example via
  * a change applied by the branch's editor, or as a result of merging another branch into this one
- * * Remove - when one or more commits are removed from the head of the branch. This occurs
- * when a transaction is aborted and all commits pending in that transaction are removed.
- * * Replace - when an operation simultaneously removes and appends commits. For example, when this
- * branch is rebased and some commits are removed and replaced with rebased versions, or when a
- * transaction completes and all pending commits are replaced with a single squash commit.
+ * * Remove - when one or more commits are removed from the head of the branch.
+ * * Rebase - when a rebase operation adds commits from another branch and replaces existing commits with their rebased versions.
  */
 export type SharedTreeBranchChange<TChange> =
 	| {
@@ -54,49 +51,11 @@ export type SharedTreeBranchChange<TChange> =
 			removedCommits: readonly [GraphCommit<TChange>, ...GraphCommit<TChange>[]];
 	  }
 	| {
-			type: "replace";
+			type: "rebase";
 			change: TaggedChange<TChange> | undefined;
 			removedCommits: readonly GraphCommit<TChange>[];
 			newCommits: readonly GraphCommit<TChange>[];
 	  };
-
-/**
- * Returns the operation that caused the given {@link SharedTreeBranchChange}.
- */
-export function getChangeReplaceType(
-	change: SharedTreeBranchChange<unknown> & { type: "replace" },
-): "transactionCommit" | "rebase" {
-	// The "replace" variant of the change event is emitted by two operations: committing a transaction and doing a rebase.
-	// Committing a transaction will always remove one or more commits (the commits that were squashed),
-	// and will add exactly one new commit (the squash commit).
-	if (change.removedCommits.length === 0 || change.newCommits.length !== 1) {
-		return "rebase";
-	}
-
-	// There is only one case in which a rebase both removes commits and adds exactly one new commit.
-	// This occurs when there is exactly one divergent, but equivalent, commit on each branch:
-	//
-	// A ─ B (branch X)	  -- rebase Y onto X -->   A ─ B (branch X)
-	// └─ B' (branch Y)                                └─ (branch Y)
-	//
-	// B' is removed and replaced by B because both have the same revision.
-	assert(
-		change.removedCommits[0] !== undefined,
-		0x9e4 /* This wont run due to the length check above */,
-	);
-	assert(
-		change.newCommits[0] !== undefined,
-		0x9e5 /* This wont run because a replace operation always has new commits */,
-	);
-	if (
-		change.removedCommits.length === 1 &&
-		change.removedCommits[0].revision === change.newCommits[0].revision
-	) {
-		return "rebase";
-	}
-
-	return "transactionCommit";
-}
 
 /**
  * The events emitted by a `SharedTreeBranch`
@@ -272,7 +231,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		const changeEvent = {
-			type: "replace",
+			type: "rebase",
 			get change() {
 				const change = rebaseResult.sourceChange;
 				return change === undefined ? undefined : makeAnonChange(change);
@@ -330,42 +289,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		this.head = commit;
 		this.#events.emit("afterChange", changeEvent);
 		return [change, removedCommits];
-	}
-
-	/**
-	 * Replace a range of commits on this branch with a single commit composed of equivalent changes.
-	 * @param commit - All commits after (but not including) this commit will be squashed.
-	 * @returns The commits that were squashed and removed from this branch.
-	 * @remarks The commits after `commit` will be removed from this branch, and the squash commit will become the new head of this branch.
-	 * The change event emitted by this operation will have a `change` property that is undefined, since no net change occurred.
-	 */
-	public squashAfter(commit: GraphCommit<TChange>): GraphCommit<TChange>[] {
-		if (commit === this.head) {
-			return [];
-		}
-
-		const removedCommits: GraphCommit<TChange>[] = [];
-		findAncestor([this.head, removedCommits], (c) => c === commit);
-		assert(hasSome(removedCommits), 0xa85 /* Commit must be in the branch's ancestry */);
-
-		const squashedChange = this.changeFamily.rebaser.compose(removedCommits);
-		const revision = this.mintRevisionTag();
-		const newHead = mintCommit(commit, {
-			revision,
-			change: this.changeFamily.rebaser.changeRevision(squashedChange, revision),
-		});
-
-		const changeEvent = {
-			type: "replace",
-			change: undefined,
-			removedCommits,
-			newCommits: [newHead],
-		} as const;
-
-		this.#events.emit("beforeChange", changeEvent);
-		this.head = newHead;
-		this.#events.emit("afterChange", changeEvent);
-		return removedCommits;
 	}
 
 	/**

@@ -45,7 +45,7 @@ import {
 	breakingClass,
 } from "../util/index.js";
 
-import { getChangeReplaceType, type SharedTreeBranch } from "./branch.js";
+import type { SharedTreeBranch } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
 import type { SeqNumber } from "./editManagerFormat.js";
@@ -191,10 +191,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			}
 		});
 		this.editManager.localBranch.events.on("afterChange", (change) => {
-			if (
-				change.type === "append" ||
-				(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
-			) {
+			if (change.type === "append") {
 				for (const commit of change.newCommits) {
 					this.submitCommit(commit, this.schemaAndPolicy);
 				}

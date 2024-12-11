@@ -4,8 +4,29 @@
  */
 
 import { strict as assert } from "node:assert";
-import { TransactionStack, type OnPop } from "../../shared-tree-core/index.js";
+import {
+	SquashingTransactionStack,
+	SharedTreeBranch,
+	TransactionStack,
+	type OnPop,
+} from "../../shared-tree-core/index.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	cursorForJsonableTreeNode,
+	DefaultChangeFamily,
+	type DefaultChangeset,
+	type DefaultEditBuilder,
+} from "../../feature-libraries/index.js";
+import { failCodecFamily, mintRevisionTag } from "../utils.js";
+import {
+	findAncestor,
+	rootFieldKey,
+	tagChange,
+	type GraphCommit,
+	type RevisionTag,
+	type TaggedChange,
+} from "../../core/index.js";
+import { brand } from "../../util/index.js";
 
 describe("TransactionStacks", () => {
 	it("emit an event after starting a transaction", () => {
@@ -149,4 +170,123 @@ describe("TransactionStacks", () => {
 		transaction.dispose();
 		assert.equal(aborted, 2);
 	});
+});
+
+describe("SquashingTransactionStacks", () => {
+	it("squash transactions", () => {
+		const branch = createBranch();
+		let squashCount = 0;
+		const transaction = new SquashingTransactionStack(branch, (commits) => {
+			squashCount += 1;
+			return squash(commits);
+		});
+		assert.equal(transaction.activeBranch, branch);
+		transaction.start();
+		assert.notEqual(transaction.activeBranch, branch);
+		editBranch(transaction.activeBranch, "B");
+		transaction.start();
+		assert.notEqual(transaction.activeBranch, branch);
+		editBranch(transaction.activeBranch, "C");
+		transaction.commit();
+		assert.equal(squashCount, 0); // Squash should only be called for the outermost transaction commit
+		assert.notEqual(transaction.activeBranch, branch);
+		transaction.commit();
+		assert.equal(squashCount, 1);
+		assert.equal(transaction.activeBranch, branch);
+		assert.equal(edits(branch), 1); // Only one (squashed) commit should be on the branch after the initial commit, not two (unsquashed)
+	});
+
+	it("transfer events between active branches", () => {
+		const branch = createBranch();
+		const transaction = new SquashingTransactionStack(branch, squash);
+
+		let originalEventCount = 0;
+		transaction.branch.events.on("afterChange", () => {
+			originalEventCount += 1;
+		});
+
+		let activeEventCount = 0;
+		transaction.activeBranchEvents.on("afterChange", (event) => {
+			if (event.type === "append") {
+				assert(event.newCommits.length === 1);
+				assert.equal(event.newCommits[0], transaction.activeBranch.getHead());
+				activeEventCount += 1;
+			}
+		});
+
+		editBranch(transaction.activeBranch, "A"); // Original branch should be updated
+		transaction.start();
+		editBranch(transaction.activeBranch, "B"); // Transaction branch should be updated
+		transaction.abort();
+		editBranch(transaction.activeBranch, "C"); // Original branch should be updated
+		transaction.start();
+		editBranch(transaction.activeBranch, "D"); // Transaction branch should be updated
+		transaction.commit();
+		editBranch(transaction.activeBranch, "E"); // Original branch should be updated
+
+		assert.equal(originalEventCount, 4); // 3 out-of-transaction edits + 1 squash commit
+		assert.equal(activeEventCount, 5); // 5 edits overall
+	});
+
+	it("delegate edits to the active branch", () => {
+		const branch = createBranch();
+		const transaction = new SquashingTransactionStack(branch, squash);
+		const editor = transaction.activeBranchEditor; // We'll hold on to this editor across the transaction
+		assert.equal(edits(branch), 0);
+		assert.equal(transaction.activeBranch, branch);
+		edit(editor, "A");
+		assert.equal(edits(branch), 1);
+		assert.equal(transaction.activeBranch, branch);
+		transaction.start();
+		edit(editor, "B");
+		assert.equal(edits(branch), 1);
+		assert.equal(edits(transaction.activeBranch), 2);
+		transaction.abort();
+		edit(editor, "C");
+		assert.equal(edits(branch), 2);
+		assert.equal(transaction.activeBranch, branch);
+		transaction.start();
+		edit(editor, "D");
+		assert.equal(edits(branch), 2);
+		assert.equal(edits(transaction.activeBranch), 3);
+		transaction.commit();
+		edit(editor, "E");
+		assert.equal(edits(branch), 4); // 3 out-of-transaction edits + 1 squash commit
+		assert.equal(transaction.activeBranch, branch);
+	});
+
+	type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
+	const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
+	const initialRevision = mintRevisionTag();
+
+	function createBranch(): DefaultBranch {
+		const initCommit: GraphCommit<DefaultChangeset> = {
+			change: defaultChangeFamily.rebaser.compose([]),
+			revision: initialRevision,
+		};
+
+		return new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
+	}
+
+	function editBranch(branch: DefaultBranch, value: string): RevisionTag {
+		edit(branch.editor, value);
+		return branch.getHead().revision;
+	}
+
+	function edit(editor: DefaultEditBuilder, value: string): void {
+		const cursor = cursorForJsonableTreeNode({ type: brand("TestValue"), value });
+		editor.valueField({ parent: undefined, field: rootFieldKey }).set(cursor);
+	}
+
+	function squash(commits: GraphCommit<DefaultChangeset>[]): TaggedChange<DefaultChangeset> {
+		return tagChange(defaultChangeFamily.rebaser.compose(commits), mintRevisionTag());
+	}
+
+	/** The number of commits on the given branch, not including the initial commit */
+	function edits(branch: DefaultBranch): number {
+		const commits: GraphCommit<DefaultChangeset>[] = [];
+		const ancestor = findAncestor([branch.getHead(), commits]);
+		assert.equal(ancestor.revision, initialRevision);
+		return commits.length;
+	}
 });

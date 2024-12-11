@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ISession, NetworkError } from "@fluidframework/server-services-client";
+import { ISession, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
 	IDocument,
 	runWithRetry,
 	IDocumentRepository,
 	IClusterDrainingChecker,
+	shouldRetryNetworkError,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { StageTrace } from "./trace";
@@ -284,10 +285,38 @@ export async function getSession(
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	ephemeralDocumentTTLSec?: number,
 	connectionTrace?: StageTrace<string>,
+	readDocumentRetryDelay: number = 150,
+	readDocumentMaxRetries: number = 2,
 ): Promise<ISession> {
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	const document = await documentRepository.readOne({ tenantId, documentId });
+	const document = await runWithRetry(
+		async () =>
+			documentRepository.readOne({ tenantId, documentId }).then((result) => {
+				if (result === null) {
+					throw new NetworkError(
+						404,
+						"Document is deleted and cannot be accessed",
+						true /* canRetry */,
+					);
+				}
+				return result;
+			}),
+		"getDocumentForSession",
+		readDocumentMaxRetries, // maxRetries
+		readDocumentRetryDelay, // retryAfterMs
+		baseLumberjackProperties, // telemetry props
+		undefined,
+		(error) => shouldRetryNetworkError(error),
+	).catch((error) => {
+		if (isNetworkError(error) && error.code === 404) {
+			return undefined;
+		}
+		connectionTrace?.stampStage("DocumentDBError");
+		throw error;
+	});
+
+	// Check whether document was found in the DB.
 	if (!document || document?.scheduledDeletionTime !== undefined) {
 		connectionTrace?.stampStage("DocumentDoesNotExist");
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
