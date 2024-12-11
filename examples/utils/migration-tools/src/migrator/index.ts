@@ -18,4 +18,5 @@ export {
 	ImportDataCallback,
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
+	SeparateContainerMigrationResult,
 } from "./separateContainerCallbackHelpers.js";

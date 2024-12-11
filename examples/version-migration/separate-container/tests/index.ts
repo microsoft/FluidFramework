@@ -7,6 +7,7 @@ import {
 	type IMigrator,
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
+	type SeparateContainerMigrationResult,
 } from "@fluid-example/migration-tools/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
@@ -185,8 +186,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		container.dispose();
 		// TODO: Load new container
 		render(model, migrator);
-		// TODO: Figure out what good casting looks like
-		updateTabForId(migrator.migrationResult as string);
+		updateTabForId(migrator.migrationResult as SeparateContainerMigrationResult);
 	});
 
 	// eslint-disable-next-line @typescript-eslint/dot-notation

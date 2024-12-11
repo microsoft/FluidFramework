@@ -81,4 +81,7 @@ export type MigrationCallback = (version: string, exportedData: unknown) => Prom
 // @alpha
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
+// @alpha
+export type SeparateContainerMigrationResult = string;
+
 ```

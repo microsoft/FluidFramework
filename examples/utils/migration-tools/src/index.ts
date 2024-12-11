@@ -30,4 +30,5 @@ export {
 	makeSeparateContainerMigrationCallback,
 	makeMigratorEntryPointPiece,
 	MigrationCallback,
+	SeparateContainerMigrationResult,
 } from "./migrator/index.js";

@@ -38,6 +38,13 @@ export type ImportDataCallback = (
 ) => Promise<void>;
 
 /**
+ * When using the makeSeparateContainerMigrationCallback(), the migration result will be a string with the container ID of
+ * the new container.
+ * @alpha
+ */
+export type SeparateContainerMigrationResult = string;
+
+/**
  * Make an encapsulated createDetached callback for use with makeSeparateContainerMigrationCallback.  This is split off to
  * isolate the loader-specific API calls and the service-specific URL create new request format.
  * @alpha
@@ -76,7 +83,7 @@ export const makeSeparateContainerMigrationCallback = (
 	const migrationCallback = async (
 		version: string,
 		exportedData: unknown,
-	): Promise<unknown> => {
+	): Promise<SeparateContainerMigrationResult> => {
 		const { container: destinationContainer, attach } =
 			await createDetachedContainerCallback(version);
 		await importDataCallback(destinationContainer, exportedData);

@@ -7,6 +7,7 @@ import type {
 	IMigrator,
 	IMigratorEntryPoint,
 	ImportDataCallback,
+	SeparateContainerMigrationResult,
 } from "@fluid-example/migration-tools/internal";
 import {
 	makeCreateDetachedContainerCallback,
@@ -152,7 +153,7 @@ export const setupContainer = async (
 		migrationCallback,
 	);
 	migrator.events.on("migrated", () => {
-		const newContainerId = migrator.migrationResult as string;
+		const newContainerId = migrator.migrationResult as SeparateContainerMigrationResult;
 		container.dispose();
 		setupContainer(newContainerId).catch(console.error);
 	});
