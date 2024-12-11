@@ -126,8 +126,8 @@ export interface IConnectionManager {
 	/**
 	 * Disposed connection manager
 	 */
+	dispose(disconnectReason: DisconnectReason, error?: ICriticalContainerError, switchToReadonly?: boolean): void;
 	dispose(
-		disconnectReason: DisconnectReason,
 		error?: ICriticalContainerError,
 		switchToReadonly?: boolean,
 	): void;

@@ -8,7 +8,7 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	IDeltaQueue,
 	ReadOnlyInfo,
-	type DisconnectReason,
+	DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IDisposable,
@@ -430,8 +430,8 @@ export class ConnectionManager implements IConnectionManager {
 	}
 
 	public dispose(
-		disconnectReason: DisconnectReason,
-		error?: ICriticalContainerError,
+		disconnectReasonOrError?: DisconnectReason | ICriticalContainerError,
+		errorOrSwitchToReadonly?: ICriticalContainerError | boolean,
 		switchToReadonly: boolean = true,
 	): void {
 		if (this._disposed) {
@@ -444,20 +444,33 @@ export class ConnectionManager implements IConnectionManager {
 
 		this._outbound.clear();
 
-		const disconnectStateChangeReason: IConnectionStateChangeReason = {
-			text: "Closing DeltaManager",
+		let text = "Closing DeltaManager";
+		let error: ICriticalContainerError | undefined;
+		let finalSwitchToReadonly = switchToReadonly;
+
+		// Handle overloads
+		if (typeof disconnectReasonOrError === "string" && disconnectReasonOrError in DisconnectReason) {
+			text = disconnectReasonOrError as DisconnectReason;
+			error = errorOrSwitchToReadonly as ICriticalContainerError;
+		} else {
+			error = disconnectReasonOrError as ICriticalContainerError;
+			finalSwitchToReadonly = errorOrSwitchToReadonly as boolean ?? true;
+		}
+
+		const disconnectReason: IConnectionStateChangeReason = {
+			text,
 			error,
 		};
 
 		const oldReadonlyValue = this.readonly;
 		// This raises "disconnect" event if we have active connection.
-		this.disconnectFromDeltaStream(disconnectStateChangeReason);
+		this.disconnectFromDeltaStream(disconnectReason);
 
-		if (switchToReadonly) {
+		if (finalSwitchToReadonly) {
 			// Notify everyone we are in read-only state.
 			// Useful for data stores in case we hit some critical error,
 			// to switch to a mode where user edits are not accepted
-			this.set_readonlyPermissions(true, oldReadonlyValue, disconnectStateChangeReason);
+			this.set_readonlyPermissions(true, oldReadonlyValue, disconnectReason);
 		}
 	}
 
