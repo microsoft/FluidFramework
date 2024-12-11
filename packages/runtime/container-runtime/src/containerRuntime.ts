@@ -470,15 +470,6 @@ export interface IContainerRuntimeOptions {
 	 */
 	readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
 	/**
-	 * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
-	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
-	 * and then sent them as a single batch at the end of the turn.
-	 * By default, flush mode is TurnBased.
-	 *
-	 * @deprecated Only the default value TurnBased is supported. This option will be removed in the future.
-	 */
-	readonly flushMode?: FlushMode;
-	/**
 	 * Enables the runtime to compress ops. See {@link ICompressionRuntimeOptions}.
 	 */
 	readonly compressionOptions?: ICompressionRuntimeOptions;
@@ -1561,7 +1552,11 @@ export class ContainerRuntime
 			snapshotWithContents,
 		} = context;
 
-		this.runtimeOptions = runtimeOptions;
+		// Fill in the internal options with defaults in case they were not provided
+		this.runtimeOptions = {
+			flushMode: defaultFlushMode,
+			...runtimeOptions,
+		};
 
 		this.logger = createChildLogger({ logger: this.baseLogger });
 		this.mc = createChildMonitoringContext({
