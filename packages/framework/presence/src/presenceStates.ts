@@ -267,11 +267,11 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		// Prepare initial map content from initial state
 		{
 			const clientSessionId = this.runtime.clientSessionId;
+			// Empty record does not satisfy the type, but nodes will post loop.
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			const nodes = {} as MapEntries<TSchema>;
 			let anyInitialValues = false;
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			const newValues = {} as { [key: string]: InternalTypes.ValueDirectoryOrState<unknown> };
+			const newValues: { [key: string]: InternalTypes.ValueDirectoryOrState<unknown> } = {};
 			let cumulativeAllowableUpdateLatencyMs: number | undefined;
 			for (const [key, nodeFactory] of Object.entries(initialContent)) {
 				const newNodeData = nodeFactory(key, handleFromDatastore(this));
