@@ -276,6 +276,7 @@ export function createTreeCheckout(
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		logger?: ITelemetryLoggerExt;
 		breaker?: Breakable;
+		disposeForksAfterTransaction?: boolean;
 	},
 ): TreeCheckout {
 	const forest = args?.forest ?? buildForest();
@@ -317,6 +318,7 @@ export function createTreeCheckout(
 		args?.removedRoots,
 		args?.logger,
 		args?.breaker,
+		args?.disposeForksAfterTransaction,
 	);
 }
 
@@ -393,6 +395,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		/** Optional logger for telemetry. */
 		private readonly logger?: ITelemetryLoggerExt,
 		private readonly breaker: Breakable = new Breakable("TreeCheckout"),
+		private readonly disposeForksAfterTransaction?: boolean,
 	) {
 		this.#transaction = new SquashingTransactionStack(
 			branch,
@@ -421,8 +424,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					if (result === TransactionResult.Abort) {
 						this.removedRoots = removedRootsSnapshot;
 					}
-
-					forks.forEach((fork) => fork.dispose());
+					if (this.disposeForksAfterTransaction !== false) {
+						forks.forEach((fork) => fork.dispose());
+					}
 					onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
 					onForkUnSubscribe();
 				};

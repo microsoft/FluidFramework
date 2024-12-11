@@ -24,7 +24,12 @@ import {
 	forEachNodeInSubtree,
 	moveToDetachedField,
 } from "../../../core/index.js";
-import type { ITreeCheckout, SharedTree, TreeCheckout } from "../../../shared-tree/index.js";
+import {
+	SharedTreeFactory,
+	type ITreeCheckout,
+	type SharedTree,
+	type TreeCheckout,
+} from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths } from "../../utils.js";
 import type {
@@ -38,6 +43,12 @@ import {
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { typeboxValidator } from "../../../index.js";
+import type {
+	IChannelAttributes,
+	IChannelServices,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode" as string, {
@@ -144,7 +155,37 @@ export function nodeSchemaFromTreeSchema(treeSchema: typeof fuzzFieldSchema) {
 	return nodeSchema;
 }
 
-export const onCreate = (tree: SharedTree) => {
+export class SharedTreeFuzzTestFactory extends SharedTreeFactory {
+	/**
+	 * @param onCreate - Called once for each created tree (not called for trees loaded from summaries).
+	 * @param onLoad - Called once for each tree that is loaded from a summary.
+	 */
+	public constructor(
+		private readonly onCreate: (tree: SharedTree) => void,
+		private readonly onLoad?: (tree: SharedTree) => void,
+	) {
+		super({ jsonValidator: typeboxValidator, disposeForksAfterTransaction: false });
+	}
+
+	public override async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		channelAttributes: Readonly<IChannelAttributes>,
+	): Promise<SharedTree> {
+		const tree = await super.load(runtime, id, services, channelAttributes);
+		this.onLoad?.(tree);
+		return tree;
+	}
+
+	public override create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
+		const tree = super.create(runtime, id);
+		this.onCreate(tree);
+		return tree;
+	}
+}
+
+export const FuzzTestOnCreate = (tree: SharedTree) => {
 	const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
 	view.initialize(populatedInitialState);
 	view.dispose();
