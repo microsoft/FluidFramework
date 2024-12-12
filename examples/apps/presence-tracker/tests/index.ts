@@ -30,14 +30,13 @@ const user = {
 
 const connectionConfig: AzureLocalConnectionConfig = {
 	type: "local",
-	tokenProvider: new InsecureTokenProvider("unused", user),
+	tokenProvider: new InsecureTokenProvider("fooBar", user),
 	endpoint: "http://localhost:7070",
 };
 
-const clientProps = {
-	connection: connectionConfig,
-};
-
+// Define the schema of our Container.
+// This includes the DataObjects we support and any initial DataObjects we want created
+// when the Container is first created.
 const containerSchema = {
 	initialObjects: {
 		// A Presence Manager object temporarily needs to be placed within container schema
@@ -49,10 +48,14 @@ const containerSchema = {
 export type PresenceTrackerSchema = typeof containerSchema;
 
 /**
- * This is a helper function for loading the page. It's required because getting the Fluid Container
- * requires making async calls.
+ * Start the app and render.
+ *
+ * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
-async function setup() {
+async function start() {
+	const clientProps = {
+		connection: connectionConfig,
+	};
 	const client = new AzureClient(clientProps);
 	let container: IFluidContainer<PresenceTrackerSchema>;
 	let services: AzureContainerServices;
@@ -86,7 +89,7 @@ async function setup() {
 	location.hash = id;
 	document.title = id;
 
-	const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
+	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
 	renderControlPanel(controlPanelDiv);
@@ -95,7 +98,7 @@ async function setup() {
 	const focusTracker = new FocusTracker(presence, appPresence, services.audience);
 	const mouseTracker = new MouseTracker(presence, appPresence, services.audience, slider);
 
-	renderFocusPresence(focusTracker, contentDiv);
+	renderFocusPresence(focusTracker, focusDiv);
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
 
 	// Setting "fluidStarted" is just for our test automation
@@ -103,7 +106,7 @@ async function setup() {
 	window["fluidStarted"] = true;
 }
 
-setup().catch((e) => {
+start().catch((e) => {
 	console.error(e);
 	console.log(
 		"%cThere were issues setting up and starting the in memory Fluid Server",

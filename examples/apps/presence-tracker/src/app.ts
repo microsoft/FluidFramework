@@ -27,7 +27,7 @@ const user = {
 
 const connectionConfig: AzureLocalConnectionConfig = {
 	type: "local",
-	tokenProvider: new InsecureTokenProvider("fooBar", user),
+	tokenProvider: new InsecureTokenProvider("unused", user),
 	endpoint: "http://localhost:7070",
 };
 
@@ -97,6 +97,10 @@ async function start() {
 
 	renderFocusPresence(focusTracker, focusDiv);
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
+
+	// Setting "fluidStarted" is just for our test automation
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	window["fluidStarted"] = true;
 }
 
 start().catch(console.error);

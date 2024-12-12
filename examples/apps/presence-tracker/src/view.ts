@@ -31,7 +31,7 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	wrapperDiv.appendChild(focusMessageDiv);
 
 	const onFocusChanged = () => {
-		focusDiv.innerHTML = `${getFocusPresencesString("</br>", focusTracker)}`;
+		focusDiv.innerHTML = getFocusPresencesString("</br>", focusTracker);
 		const focusPresences = focusTracker.getFocusPresences();
 		const session = focusTracker.presence.getMyself();
 		const hasFocus = focusPresences.get(session);
