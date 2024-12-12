@@ -642,8 +642,8 @@ export function configureWebSocketServices(
 		socket.on(
 			"disconnect_document",
 			async (clientId: string, documentId: string, err: IAnyDriverError) => {
-                Lumberjack.error("Client disconnected due to error", { clientId, documentId }, err);
-            },
+				Lumberjack.error("Client disconnected due to error", { clientId, documentId }, err);
+			},
 		);
 	});
 }
