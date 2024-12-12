@@ -1,0 +1,96 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`setVersion > release group 1`] = `
+[
+  {
+    "name": "main-release-group-root",
+    "version": "1.2.1",
+  },
+  {
+    "name": "pkg-a",
+    "version": "1.2.1",
+  },
+  {
+    "name": "pkg-b",
+    "version": "1.2.1",
+  },
+  {
+    "name": "@private/pkg-c",
+    "version": "1.2.1",
+  },
+  {
+    "name": "@shared/shared",
+    "version": "1.2.1",
+  },
+]
+`;
+
+exports[`setVersion > repo 1`] = `
+[
+  {
+    "name": "main-release-group-root",
+    "version": "1.2.1",
+  },
+  {
+    "name": "@group2/pkg-d",
+    "version": "1.2.1",
+  },
+  {
+    "name": "@group2/pkg-e",
+    "version": "1.2.1",
+  },
+  {
+    "name": "@group3/pkg-f",
+    "version": "1.2.1",
+  },
+  {
+    "name": "@group3/pkg-g",
+    "version": "1.2.1",
+  },
+  {
+    "name": "pkg-a",
+    "version": "1.2.1",
+  },
+  {
+    "name": "pkg-b",
+    "version": "1.2.1",
+  },
+  {
+    "name": "@private/pkg-c",
+    "version": "1.2.1",
+  },
+  {
+    "name": "@shared/shared",
+    "version": "1.2.1",
+  },
+  {
+    "name": "second-release-group-root",
+    "version": "1.2.1",
+  },
+  {
+    "name": "other-pkg-a",
+    "version": "1.2.1",
+  },
+  {
+    "name": "other-pkg-b",
+    "version": "1.2.1",
+  },
+]
+`;
+
+exports[`setVersion > workspace 1`] = `
+[
+  {
+    "name": "second-release-group-root",
+    "version": "2.2.1",
+  },
+  {
+    "name": "other-pkg-a",
+    "version": "2.2.1",
+  },
+  {
+    "name": "other-pkg-b",
+    "version": "2.2.1",
+  },
+]
+`;
