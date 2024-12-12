@@ -28,6 +28,7 @@ import {
 	isFluidCodeDetails,
 	IDeltaManager,
 	ReadOnlyInfo,
+	ILoaderOptions,
 	type ILoader,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -124,7 +125,7 @@ import {
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
 // eslint-disable-next-line import/no-deprecated
-import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
+import { IDetachedBlobStorage, RelativeLoader } from "./loader.js";
 import {
 	serializeMemoryDetachedBlobStorage,
 	createMemoryDetachedBlobStorage,
@@ -221,7 +222,6 @@ export interface IContainerCreateProps {
 	 * A property bag of options used by various layers
 	 * to control features
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly options: ILoaderOptions;
 
 	/**
@@ -991,8 +991,7 @@ export class Container
 
 		// Whether the combined summary tree has been forced on by either the supportedFeatures flag by the service or the the loader option or the monitoring context
 		const enableSummarizeProtocolTree =
-			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			options.summarizeProtocolTree;
+			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2");
 
 		this.detachedBlobStorage =
 			detachedBlobStorage ??
