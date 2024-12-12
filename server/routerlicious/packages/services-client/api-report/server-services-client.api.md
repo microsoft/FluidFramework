@@ -436,7 +436,7 @@ export interface ISummaryUploadManager {
 export interface ITimeoutContext {
     bindTimeout(maxDurationMs: number, callback: () => void): void;
     bindTimeoutAsync<T>(maxDurationMs: number, callback: () => Promise<T>): Promise<T>;
-    checkTimeout(): void;
+    checkTimeout(currentStage?: string): void;
 }
 
 // @internal (undocumented)
