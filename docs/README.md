@@ -219,8 +219,8 @@ Note: generating the API documentation for the new "current" version will fail i
 
 1. Run `npx --no-install docusaurus docs:version v<current-major-version-number>` from the root of this directory.
    E.g., `... docusaurus docs:version v2` when prepping for `v3` documentation.
-    - This will "freeze" the existing "current" version documentation, copying it into `versioned_docs` under the specified version ID.
-    - This will also generate a sidebar configuration for the frozen version under `versioned_sidebars`.
+    - This will copy the contents of `docs` into `versioned_docs` under the specified version ID.
+    - This will also generate a sidebar configuration for the copied version under `versioned_sidebars`.
 1. Update `config/docs-versions.mjs` to update the version ID for the "current" version, and add the newly frozen version to the `otherVersions` list.
    This will automatically update aspects of the site, including:
     1. Which versions of the API documentation are generated during the build
