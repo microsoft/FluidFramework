@@ -26,6 +26,7 @@ import { ProtocolHandlerBuilder } from "./protocol.js";
 
 /**
  * Properties necessary for creating and loading a container.
+ * @legacy
  * @alpha
  */
 export interface ICreateAndLoadContainerProps {
@@ -88,6 +89,7 @@ export interface ICreateAndLoadContainerProps {
 
 /**
  * Props used to load a container.
+ * @legacy
  * @alpha
  */
 export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
@@ -104,6 +106,7 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 
 /**
  * Props used to create a detached container.
+ * @legacy
  * @alpha
  */
 export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
@@ -115,6 +118,7 @@ export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerPr
 
 /**
  * Props used to rehydrate a detached container.
+ * @legacy
  * @alpha
  */
 export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
@@ -128,6 +132,7 @@ export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContaine
  * Creates a new container using the specified code details but in an unattached state. While unattached, all
  * updates will only be local until the user explicitly attaches the container to a service provider.
  * @param createDetachedContainerProps - Services and properties necessary for creating detached container.
+ * @legacy
  * @alpha
  */
 export async function createDetachedContainer(
@@ -144,6 +149,7 @@ export async function createDetachedContainer(
  * Creates a new container using the specified snapshot but in an unattached state. While unattached, all
  * updates will only be local until the user explicitly attaches the container to a service provider.
  * @param rehydrateDetachedContainerProps - Services and properties necessary for rehydrating detached container from a previously serialized container's state.
+ * @legacy
  * @alpha
  */
 export async function rehydrateDetachedContainer(
@@ -162,6 +168,7 @@ export async function rehydrateDetachedContainer(
 /**
  * Loads a container with an existing snapshot from the service.
  * @param loadExistingContainerProps - Services and properties necessary for loading an existing container.
+ * @legacy
  * @alpha
  */
 export async function loadExistingContainer(
