@@ -5,7 +5,7 @@
 
 import type { ValueSchema } from "../../core/index.js";
 import type { NodeKind } from "../core/index.js";
-import type { FieldKind, FieldSchemaMetadata } from "../schemaTypes.js";
+import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "../schemaTypes.js";
 
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.
@@ -20,6 +20,11 @@ export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
 	 * @remarks can be used to type-switch between implementations.
 	 */
 	readonly kind: TNodeKind;
+
+	/**
+	 * {@inheritDoc NodeSchemaMetadata}
+	 */
+	readonly metadata?: NodeSchemaMetadata | undefined;
 }
 
 /**

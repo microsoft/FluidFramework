@@ -22,6 +22,7 @@ import {
 	type FlexListToUnion,
 	type ApplyKindInput,
 	type NodeBuilderData,
+	withMetadata,
 } from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,
@@ -456,6 +457,28 @@ describe("SchemaFactory Recursive methods", () => {
 				assert.equal((tree.a as B).b!.a, 6);
 			}
 		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Foo extends withMetadata(factory.objectRecursive("Foo", { bar: () => Bar }), {
+				description: "A recursive object called Foo",
+				custom: { baz: true },
+			}) {}
+			class Bar extends withMetadata(factory.objectRecursive("Bar", { foo: () => Foo }), {
+				description: "A recursive object called Bar",
+				custom: { baz: false },
+			}) {}
+
+			assert.deepEqual(Foo.metadata, {
+				description: "A recursive object called Foo",
+				custom: { baz: true },
+			});
+			assert.deepEqual(Bar.metadata, {
+				description: "A recursive object called Bar",
+				custom: { baz: false },
+			});
+		});
 	});
 	describe("ValidateRecursiveSchema", () => {
 		it("Valid cases", () => {
@@ -577,6 +600,23 @@ describe("SchemaFactory Recursive methods", () => {
 				assert.deepEqual([...data], []);
 			}
 		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Foo extends factory.objectRecursive("Foo", {
+				fooList: sf.arrayRecursive("FooList", [() => Foo]),
+			}) {}
+			class FooList extends withMetadata(factory.arrayRecursive("FooList", [() => Foo]), {
+				description: "A recursive list",
+				custom: { baz: true },
+			}) {}
+
+			assert.deepEqual(FooList.metadata, {
+				description: "A recursive list",
+				custom: { baz: true },
+			});
+		});
 	});
 
 	describe("mapRecursive", () => {
@@ -623,6 +663,23 @@ describe("SchemaFactory Recursive methods", () => {
 			const fromNestedNeverArray = new MapRecursive({ x: [] });
 			// @ts-expect-error Implicit construction disabled
 			const fromNestedObject = new MapRecursive({ x: { x: [] } });
+		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			class Foo extends factory.objectRecursive("Foo", {
+				fooList: sf.arrayRecursive("FooList", [() => Foo]),
+			}) {}
+			class FooList extends withMetadata(factory.mapRecursive("FooList", [() => Foo]), {
+				description: "A recursive map",
+				custom: { baz: true },
+			}) {}
+
+			assert.deepEqual(FooList.metadata, {
+				description: "A recursive map",
+				custom: { baz: true },
+			});
 		});
 	});
 
