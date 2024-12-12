@@ -7,22 +7,22 @@ section: tree
 
 Metadata can be associated with Node Schema
 
-Users of TreeView can now specify metadata when creating Node Schema via the experimental (alpha) `withMetadata` function.
+Users of TreeView can now specify metadata when creating Node Schema.
 This metadata may include system-understood properties like `description`.
 
 Example:
 
 ```typescript
 
-class Point extends withMetadata(
-	schemaFactory.object("Point", {
-		x: schemaFactory.required(schemaFactory.number),
-		y: schemaFactory.required(schemaFactory.number),
-	}),
-	{
+class Point extends schemaFactory.object("Point", {
+	x: schemaFactory.required(schemaFactory.number),
+	y: schemaFactory.required(schemaFactory.number),
+},
+{
+	metadata: {
 		description: "A point in 2D space",
 	},
-) {}
+}) {}
 
 ```
 
@@ -48,18 +48,18 @@ interface AppMetadata {
 	searchIgnore?: boolean;
 }
 
-class Point extends withMetadata(
-	schemaFactory.object("Point", {
-		x: schemaFactory.required(schemaFactory.number),
-		y: schemaFactory.required(schemaFactory.number),
-	}),
-	{
+class Point extends schemaFactory.object("Point", {
+	x: schemaFactory.required(schemaFactory.number),
+	y: schemaFactory.required(schemaFactory.number),
+},
+{
+	metadata: {
 		description: "A point in 2D space",
 		custom: {
 			searchIgnore: true,
 		},
-	},
-) {}
+	}
+}) {}
 
 ```
 
@@ -69,4 +69,4 @@ Search can then be implemented to look for the appropriate metadata, and leverag
 
 These changes add the new property "metadata" to the base type from which all node schema derive.
 If you have existing node schema subclasses that include a property of this name, there is a chance for potential conflict here that could be breaking.
-If you encounter issues here, consider renaming your property or leveraging the new `withMetadata` API.
+If you encounter issues here, consider renaming your property or leveraging the new metadata support.
