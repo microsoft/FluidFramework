@@ -12,6 +12,7 @@ import * as semver from "semver";
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
 import type { SetRequired } from "type-fest";
 
+import type { IReleaseGroup } from "@fluid-tools/build-infrastructure";
 import { parseISO } from "date-fns";
 import { CommandLogger } from "../logging.js";
 import { ReleaseGroup } from "../releaseGroups.js";
@@ -41,6 +42,52 @@ function getVersionFromTag(tag: string): string | undefined {
 	}
 
 	return ver.version;
+}
+
+/**
+ * Get all the versions for a release group. This function only considers the tags in the repo.
+ *
+ * @param git - The git repository.
+ * @param releaseGroup - The release group to get versions for.
+ * @returns List of version details, or undefined if one could not be found.
+ */
+export async function getVersionsFromTags(
+	releaseGroup: IReleaseGroup,
+	git: Readonly<SimpleGit>,
+): Promise<VersionDetails[] | undefined> {
+	const prefix = PackageName.getUnscopedName(releaseGroup.name);
+
+	const tags = await git.tags(["--list", `${prefix}_v*`]);
+
+	const versions = new Map<string, Date>();
+
+	for (const tag of tags.all) {
+		const ver = getVersionFromTag(tag);
+		if (ver !== undefined && ver !== "" && ver !== null) {
+			// eslint-disable-next-line no-await-in-loop
+			const rawDate = await git.show([
+				// Suppress the diff output
+				"-s",
+				// ISO 8601 format
+				"--format=%cI",
+				// the git ref - a tag in this case
+				tag,
+			]);
+			const date = parseISO(rawDate.trim());
+			versions.set(ver, date);
+		}
+	}
+
+	if (versions.size === 0) {
+		return undefined;
+	}
+
+	const toReturn: VersionDetails[] = [];
+	for (const [version, date] of versions) {
+		toReturn.push({ version, date });
+	}
+
+	return toReturn;
 }
 
 /**
