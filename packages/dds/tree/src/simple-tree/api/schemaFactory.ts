@@ -951,7 +951,7 @@ export function withMetadata<
 	TNewCustomMetadata
 > {
 	class Derived extends nodeSchema {
-		public static readonly metadata?: NodeSchemaMetadata<TNewCustomMetadata> | undefined =
+		public static readonly metadata: NodeSchemaMetadata<TNewCustomMetadata> | undefined =
 			metadata;
 	}
 	return Derived as unknown as TreeNodeSchemaClass<
