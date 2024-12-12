@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
-import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryLoggerExt,
+	MonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { IEphemeralRuntime, PresenceManagerInternal } from "./internalTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControls.js";
+import type { IEphemeralRuntime } from "./internalTypes.js";
 import type {
 	ClientSessionId,
 	IPresence,
@@ -17,6 +23,8 @@ import type {
 } from "./presence.js";
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
+import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
+import { createSystemWorkspace } from "./systemWorkspace.js";
 import type {
 	PresenceStates,
 	PresenceWorkspaceAddress,
@@ -26,8 +34,7 @@ import type {
 import type {
 	IContainerExtension,
 	IExtensionMessage,
-} from "@fluid-experimental/presence/internal/container-definitions/internal";
-import { createEmitter } from "@fluid-experimental/presence/internal/events";
+} from "@fluidframework/presence/internal/container-definitions/internal";
 
 /**
  * Portion of the container extension requirements ({@link IContainerExtension}) that are delegated to presence manager.
@@ -41,85 +48,81 @@ export type PresenceExtensionInterface = Required<
 /**
  * The Presence manager
  */
-class PresenceManager
-	implements IPresence, PresenceExtensionInterface, PresenceManagerInternal
-{
+class PresenceManager implements IPresence, PresenceExtensionInterface {
 	private readonly datastoreManager: PresenceDatastoreManager;
-	private readonly selfAttendee: ISessionClient;
-	private readonly attendees = new Map<ClientConnectionId | ClientSessionId, ISessionClient>();
+	private readonly systemWorkspace: SystemWorkspace;
 
-	public readonly mc: MonitoringContext | undefined = undefined;
+	public readonly events = createEmitter<PresenceEvents>();
+
+	private readonly mc: MonitoringContext | undefined = undefined;
 
 	public constructor(runtime: IEphemeralRuntime, clientSessionId: ClientSessionId) {
-		this.selfAttendee = {
-			sessionId: clientSessionId,
-			currentConnectionId: () => {
-				throw new Error("Client has never been connected");
-			},
-		};
-		this.attendees.set(clientSessionId, this.selfAttendee);
-
 		const logger = runtime.logger;
 		if (logger) {
 			this.mc = createChildMonitoringContext({ logger, namespace: "Presence" });
 			this.mc.logger.sendTelemetryEvent({ eventName: "PresenceInstantiated" });
 		}
 
-		// If already connected (now or in the past), populate self and attendees.
-		const originalClientId = runtime.clientId;
-		if (originalClientId !== undefined) {
-			this.selfAttendee.currentConnectionId = () => originalClientId;
-			this.attendees.set(originalClientId, this.selfAttendee);
-		}
+		[this.datastoreManager, this.systemWorkspace] = setupSubComponents(
+			clientSessionId,
+			runtime,
+			this.events,
+			this.mc?.logger,
+		);
 
-		// Watch for connected event that will produce new (or first) clientId.
-		// This event is added before instantiating the datastore manager so
-		// that self can be given a proper clientId before datastore manager
-		// might possibly try to use it. (Datastore manager is expected to
-		// use connected clientId more directly and no order dependence should
-		// be relied upon, but helps with debugging consistency.)
-		runtime.on("connected", (clientId: ClientConnectionId) => {
-			this.selfAttendee.currentConnectionId = () => clientId;
-			this.attendees.set(clientId, this.selfAttendee);
+		runtime.on("connected", this.onConnect.bind(this));
+
+		runtime.on("disconnected", () => {
+			if (runtime.clientId !== undefined) {
+				this.removeClientConnectionId(runtime.clientId);
+			}
 		});
 
-		this.datastoreManager = new PresenceDatastoreManagerImpl(
-			this.selfAttendee.sessionId,
-			runtime,
-			this,
-		);
+		runtime.getAudience().on("removeMember", this.removeClientConnectionId.bind(this));
+
+		// Check if already connected at the time of construction.
+		// If constructed during data store load, the runtime may already be connected
+		// and the "connected" event will be raised during completion. With construction
+		// delayed we expect that "connected" event has passed.
+		// Note: In some manual testing, this does not appear to be enough to
+		// always trigger an initial connect.
+		const clientId = runtime.clientId;
+		if (clientId !== undefined && runtime.connected) {
+			this.onConnect(clientId);
+		}
 	}
 
-	public readonly events = createEmitter<PresenceEvents>();
+	private onConnect(clientConnectionId: ClientConnectionId): void {
+		this.systemWorkspace.onConnectionAdded(clientConnectionId);
+		this.datastoreManager.joinSession(clientConnectionId);
+	}
+
+	private removeClientConnectionId(clientConnectionId: ClientConnectionId): void {
+		this.systemWorkspace.removeClientConnectionId(clientConnectionId);
+	}
 
 	public getAttendees(): ReadonlySet<ISessionClient> {
-		return new Set(this.attendees.values());
+		return this.systemWorkspace.getAttendees();
 	}
 
 	public getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient {
-		const attendee = this.attendees.get(clientId);
-		if (attendee) {
-			return attendee;
-		}
-		// This is a major hack to enable basic operation.
-		// Missing attendees should be rejected.
-		const newAttendee = {
-			sessionId: clientId as ClientSessionId,
-			currentConnectionId: () => clientId,
-		} satisfies ISessionClient;
-		this.attendees.set(clientId, newAttendee);
-		return newAttendee;
+		return this.systemWorkspace.getAttendee(clientId);
 	}
 
 	public getMyself(): ISessionClient {
-		return this.selfAttendee;
+		return this.systemWorkspace.getMyself();
 	}
 
 	public getStates<TSchema extends PresenceStatesSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
+		controls?: BroadcastControlSettings,
 	): PresenceStates<TSchema> {
-		return this.datastoreManager.getWorkspace(`s:${workspaceAddress}`, requestedContent);
+		return this.datastoreManager.getWorkspace(
+			`s:${workspaceAddress}`,
+			requestedContent,
+			controls,
+		);
 	}
 
 	public getNotifications<TSchema extends PresenceStatesSchema>(
@@ -139,6 +142,42 @@ class PresenceManager
 	public processSignal(address: string, message: IExtensionMessage, local: boolean): void {
 		this.datastoreManager.processSignal(message, local);
 	}
+}
+
+/**
+ * Helper for Presence Manager setup
+ *
+ * Presence Manager is outermost layer of the presence system and has two main
+ * sub-components:
+ * 1. PresenceDatastoreManager: Manages the unified general data for states and
+ * registry for workspaces.
+ * 2. SystemWorkspace: Custom internal workspace for system states including
+ * attendee management. It is registered with the PresenceDatastoreManager.
+ */
+function setupSubComponents(
+	clientSessionId: ClientSessionId,
+	runtime: IEphemeralRuntime,
+	events: IEmitter<PresenceEvents>,
+	logger: ITelemetryLoggerExt | undefined,
+): [PresenceDatastoreManager, SystemWorkspace] {
+	const systemWorkspaceDatastore: SystemWorkspaceDatastore = {
+		clientToSessionId: {},
+	};
+	const systemWorkspaceConfig = createSystemWorkspace(
+		clientSessionId,
+		systemWorkspaceDatastore,
+		events,
+		runtime.getAudience(),
+	);
+	const datastoreManager = new PresenceDatastoreManagerImpl(
+		clientSessionId,
+		runtime,
+		systemWorkspaceConfig.workspace.getAttendee.bind(systemWorkspaceConfig.workspace),
+		logger,
+		systemWorkspaceDatastore,
+		systemWorkspaceConfig.statesEntry,
+	);
+	return [datastoreManager, systemWorkspaceConfig.workspace];
 }
 
 /**

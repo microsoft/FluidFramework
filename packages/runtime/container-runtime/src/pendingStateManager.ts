@@ -41,7 +41,10 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
-	/** Info about the batch this pending message belongs to, for validation and for computing the batchId on reconnect */
+	/**
+	 * Info about the batch this pending message belongs to, for validation and for computing the batchId on reconnect
+	 * We don't include batchId itself to avoid redundancy, because that's stamped on opMetadata above
+	 */
 	batchInfo: {
 		/**
 		 * The Batch's original clientId, from when it was first flushed to be submitted.
@@ -55,6 +58,8 @@ export interface IPendingMessage {
 		batchStartCsn: number;
 		/** length of the batch (how many runtime messages here) */
 		length: number;
+		/** If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored */
+		ignoreBatchId?: boolean;
 	};
 }
 
@@ -100,9 +105,9 @@ function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean 
 function buildPendingMessageContent(message: InboundSequencedContainerRuntimeMessage): string {
 	// IMPORTANT: Order matters here, this must match the order of the properties used
 	// when submitting the message.
-	const { type, contents, compatDetails }: InboundContainerRuntimeMessage = message;
+	const { type, contents }: InboundContainerRuntimeMessage = message;
 	// Any properties that are not defined, won't be emitted by stringify.
-	return JSON.stringify({ type, contents, compatDetails });
+	return JSON.stringify({ type, contents });
 }
 
 function typesOfKeys<T extends object>(obj: T): Record<keyof T, string> {
@@ -121,7 +126,6 @@ function scrubAndStringify(
 	// For these known/expected keys, we can either drill in (for contents)
 	// or just use the value as-is (since it's not personal info)
 	scrubbed.contents = message.contents && typesOfKeys(message.contents);
-	scrubbed.compatDetails = message.compatDetails;
 	scrubbed.type = message.type;
 
 	return JSON.stringify(scrubbed);
@@ -239,8 +243,13 @@ export class PendingStateManager implements IDisposable {
 	 * @param batch - The batch that was flushed
 	 * @param clientSequenceNumber - The CSN of the first message in the batch,
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
+	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
 	 */
-	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
+	public onFlushBatch(
+		batch: BatchMessage[],
+		clientSequenceNumber: number | undefined,
+		ignoreBatchId?: boolean,
+	) {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
 		// In the typical case where the batch was actually sent, use the clientId and clientSequenceNumber.
@@ -269,7 +278,7 @@ export class PendingStateManager implements IDisposable {
 				localOpMetadata,
 				opMetadata,
 				// Note: We only will read this off the first message, but put it on all for simplicity
-				batchInfo: { clientId, batchStartCsn, length: batch.length },
+				batchInfo: { clientId, batchStartCsn, length: batch.length, ignoreBatchId },
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -328,15 +337,23 @@ export class PendingStateManager implements IDisposable {
 	 * @returns whether the batch IDs match
 	 */
 	private remoteBatchMatchesPendingBatch(remoteBatchStart: BatchStartInfo): boolean {
-		// We may have no pending changes - if so, no match, no problem.
-		const pendingMessage = this.pendingMessages.peekFront();
-		if (pendingMessage === undefined) {
+		// Find the first pending message that uses Batch ID, to compare to the incoming remote batch.
+		// If there is no such message, then the incoming remote batch doesn't have a match here and we can return.
+		const firstIndexUsingBatchId = Array.from({
+			length: this.pendingMessages.length,
+		}).findIndex((_, i) => this.pendingMessages.get(i)?.batchInfo.ignoreBatchId !== true);
+		const pendingMessageUsingBatchId =
+			firstIndexUsingBatchId === -1
+				? undefined
+				: this.pendingMessages.get(firstIndexUsingBatchId);
+
+		if (pendingMessageUsingBatchId === undefined) {
 			return false;
 		}
 
 		// We must compare the effective batch IDs, since one of these ops
 		// may have been the original, not resubmitted, so wouldn't have its batch ID stamped yet.
-		const pendingBatchId = getEffectiveBatchId(pendingMessage);
+		const pendingBatchId = getEffectiveBatchId(pendingMessageUsingBatchId);
 		const inboundBatchId = getEffectiveBatchId(remoteBatchStart);
 
 		return pendingBatchId === inboundBatchId;
@@ -488,7 +505,7 @@ export class PendingStateManager implements IDisposable {
 			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
 
-		// If this batch became empty on resubmit, batch.messages will be empty (so firstMessage undefined)
+		// If this batch became empty on resubmit, batch.messages will be empty (but keyMessage is always set)
 		// and the next pending message should be an empty batch marker.
 		// More Info: We must submit empty batches and track them in case a different fork
 		// of this container also submitted the same batch (and it may not be empty for that fork).

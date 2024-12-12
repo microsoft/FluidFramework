@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { ChangeRebaser, RevisionTag } from "../../core/index.js";
 
@@ -129,7 +129,7 @@ describe("rebaser", () => {
 				const tester = new BranchTester(main, branch);
 				const base =
 					baseInMain !== undefined
-						? tester[baseInMain] ?? fail("Expected baseInMain to be in main")
+						? (tester[baseInMain] ?? fail("Expected baseInMain to be in main"))
 						: tester.main;
 
 				const { newSourceHead } = rebaseBranch(

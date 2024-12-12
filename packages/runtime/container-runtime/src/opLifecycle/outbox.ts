@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { OutboundContainerRuntimeMessage } from "../messageTypes.js";
 import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
@@ -28,6 +29,8 @@ import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
 import { OpSplitter } from "./opSplitter.js";
+// eslint-disable-next-line unused-imports/no-unused-imports -- Used by "@link" comment annotation below
+import { ensureContentsDeserialized } from "./remoteMessageProcessor.js";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
@@ -52,6 +55,14 @@ export interface IOutboxParameters {
 	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
+}
+
+/**
+ * Before submitting an op to the Outbox, its contents must be serialized using this function.
+ * @remarks - The deserialization on process happens via the function {@link ensureContentsDeserialized}.
+ */
+export function serializeOpContents(contents: OutboundContainerRuntimeMessage): string {
+	return JSON.stringify(contents);
 }
 
 /**
@@ -123,11 +134,27 @@ export class Outbox {
 
 		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
 		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
-		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: false });
+		this.idAllocationBatch = new BatchManager({
+			hardLimit,
+			canRebase: false,
+			ignoreBatchId: true,
+		});
 	}
 
 	public get messageCount(): number {
 		return this.mainBatch.length + this.blobAttachBatch.length + this.idAllocationBatch.length;
+	}
+
+	public get mainBatchMessageCount(): number {
+		return this.mainBatch.length;
+	}
+
+	public get blobAttachBatchMessageCount(): number {
+		return this.blobAttachBatch.length;
+	}
+
+	public get idAllocationBatchMessageCount(): number {
+		return this.idAllocationBatch.length;
 	}
 
 	public get isEmpty(): boolean {
@@ -251,17 +278,20 @@ export class Outbox {
 	}
 
 	private flushAll(resubmittingBatchId?: BatchId) {
-		// Don't use resubmittingBatchId for idAllocationBatch.
-		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
-		this.flushInternal(this.idAllocationBatch);
-		// We need to flush an empty batch if the main batch *becomes* empty on resubmission.
-		// When resubmitting the main batch, the blobAttach batch will always be empty since we don't resubmit them simultaneously.
-		// And conversely, the blobAttach will never *become* empty on resubmit.
-		// So if both blobAttachBatch and mainBatch are empty, we must submit an empty main batch.
-		if (resubmittingBatchId && this.blobAttachBatch.empty && this.mainBatch.empty) {
+		// If we're resubmitting and all batches are empty, we need to flush an empty batch.
+		// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
+		// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
+		// by the rest of the system, including remote clients.
+		// In some cases we *must* resubmit the empty batch (to match up with a non-empty version tracked locally by a container fork), so we do it always.
+		const allBatchesEmpty =
+			this.idAllocationBatch.empty && this.blobAttachBatch.empty && this.mainBatch.empty;
+		if (resubmittingBatchId && allBatchesEmpty) {
 			this.flushEmptyBatch(resubmittingBatchId);
 			return;
 		}
+		// Don't use resubmittingBatchId for idAllocationBatch.
+		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
+		this.flushInternal(this.idAllocationBatch);
 		this.flushInternal(
 			this.blobAttachBatch,
 			true /* disableGroupedBatching */,
@@ -332,7 +362,11 @@ export class Outbox {
 			);
 		}
 
-		this.params.pendingStateManager.onFlushBatch(rawBatch.messages, clientSequenceNumber);
+		this.params.pendingStateManager.onFlushBatch(
+			rawBatch.messages,
+			clientSequenceNumber,
+			batchManager.options.ignoreBatchId,
+		);
 	}
 
 	/**

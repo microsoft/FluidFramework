@@ -46,6 +46,9 @@ import {
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 	matchProperties,
+	type AdjustParams,
+	type InteriorSequencePlace,
+	type MapLike,
 } from "@fluidframework/merge-tree/internal";
 import {
 	ISummaryTreeWithStats,
@@ -80,7 +83,12 @@ import {
 	type SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
 import { SequenceInterval } from "./intervals/index.js";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
+import {
+	SequenceDeltaEvent,
+	SequenceDeltaEventClass,
+	SequenceMaintenanceEvent,
+	SequenceMaintenanceEventClass,
+} from "./sequenceDeltaEvent.js";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 
 const snapshotFileName = "header";
@@ -253,12 +261,30 @@ export interface ISharedSegmentSequence<T extends ISegment>
 
 	/**
 	 * Obliterate is similar to remove, but differs in that segments concurrently
-	 * inserted into an obliterated range will also be removed
+	 * inserted into an obliterated range will also be removed.
+	 * Inserts are considered concurrent to an obliterate iff the insert op's seq is after the obliterate op's refSeq
+	 * and the insert's refSeq is before the obliterates seq.
+	 * Inserts made by the client which most recently obliterated a range containing the insert position
+	 * are not considered concurrent to any obliteration (the last client to obliterate gets the right to insert).
 	 *
-	 * @param start - The inclusive start of the range to obliterate
-	 * @param end - The exclusive end of the range to obliterate
+	 * The endpoints can either be inclusive or exclusive.
+	 * Exclusive endpoints allow the obliterated range to "grow" to include adjacent concurrently inserted segments on that side.
+	 *
+	 * @param start - The start of the range to obliterate.
+	 * Inclusive if side is Before or a number is provided.
+	 * @param end - The end of the range to obliterate. Inclusive if side is After.
+	 * If a number is provided it is treated as exclusive,
+	 * but the endpoint does not expand in order to preserve existing behavior.
+	 *
+	 * @example Given the initial state `"|ABC>"`,
+	 * `obliterateRange({ pos: 0, side: Side.After }, { pos: 4, side: Side.Before })` obliterates `"ABC"`, leaving only `"|>"`.
+	 * `insertFromSpec(1, { text: "AAA"})` would insert `"AAA"` before |, resulting in `"|AAA>"`.
+	 * If another client does the same thing but inserts `"BBB"` and gets sequenced later, all clients will eventually see `|BBB>`.
 	 */
-	obliterateRange(start: number, end: number): void;
+	obliterateRange(
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
+	): void;
 
 	/**
 	 * @returns The most recent sequence number which has been acked by the server and processed by this
@@ -275,6 +301,21 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	 *
 	 */
 	annotateRange(start: number, end: number, props: PropertySet): void;
+
+	/**
+	 * Annotates a specified range within the sequence by applying the provided adjustments.
+	 *
+	 * @param start - The inclusive start position of the range to annotate. This is a zero-based index.
+	 * @param end - The exclusive end position of the range to annotate. This is a zero-based index.
+	 * @param adjust - A map-like object specifying the properties to adjust. Each key-value pair represents a property and its corresponding adjustment to be applied over the range.
+	 * An adjustment is defined by an object containing a `delta` to be added to the current property value, and optional `min` and `max` constraints to limit the adjusted value.
+	 *
+	 * @remarks
+	 * The range is defined by the start and end positions, where the start position is inclusive and the end position is exclusive.
+	 * The properties provided in the adjust parameter will be applied to the specified range. Each adjustment modifies the current value of the property by adding the specified `value`.
+	 * If the current value is not a number, the `delta` will be summed with 0 to compute the new value. The optional `min` and `max` constraints are applied after the adjustment to ensure the final value falls within the specified bounds.
+	 */
+	annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
 
 	/**
 	 * @param start - The inclusive start of the range to remove
@@ -343,9 +384,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated  This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
@@ -479,7 +518,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
 		this.guardReentrancy =
-			dataStoreRuntime.options.sharedStringPreventReentrancy ?? true
+			(dataStoreRuntime.options.sharedStringPreventReentrancy ?? true)
 				? ensureNoReentrancy
 				: createReentrancyDetector((depth) => {
 						if (totalReentrancyLogs > 0) {
@@ -496,8 +535,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			"Fluid.Sequence",
 			{
 				mergeTreeEnableObliterate: (c, n) => c.getBoolean(n),
+				mergeTreeEnableSidedObliterate: (c, n) => c.getBoolean(n),
 				intervalStickinessEnabled: (c, n) => c.getBoolean(n),
 				mergeTreeReferencesCanSlideToEndpoint: (c, n) => c.getBoolean(n),
+				mergeTreeEnableAnnotateAdjust: (c, n) => c.getBoolean(n),
 			},
 			dataStoreRuntime.options,
 		);
@@ -514,15 +555,21 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
-			const event = new SequenceDeltaEvent(opArgs, deltaArgs, this.client);
+			const event = new SequenceDeltaEventClass(opArgs, deltaArgs, this.client);
 			if (event.isLocal) {
 				this.submitSequenceMessage(opArgs.op);
 			}
-			this.emit("sequenceDelta", event, this);
+			if (deltaArgs.deltaSegments.length > 0) {
+				this.emit("sequenceDelta", event, this);
+			}
 		});
 
 		this.client.on("maintenance", (args, opArgs) => {
-			this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
+			this.emit(
+				"maintenance",
+				new SequenceMaintenanceEventClass(opArgs, args, this.client),
+				this,
+			);
 		});
 
 		this.intervalCollections = new IntervalCollectionMap(
@@ -545,7 +592,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
 	}
 
-	public obliterateRange(start: number, end: number): void {
+	public obliterateRange(
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
+	): void {
 		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
 	}
 
@@ -571,6 +621,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	public annotateRange(start: number, end: number, props: PropertySet): void {
 		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
+	}
+
+	public annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void {
+		this.guardReentrancy(() => this.client.annotateAdjustRangeLocal(start, end, adjust));
 	}
 
 	public getPropertiesAtPosition(pos: number): PropertySet | undefined {

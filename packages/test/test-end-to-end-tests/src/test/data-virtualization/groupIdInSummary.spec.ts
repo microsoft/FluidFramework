@@ -24,7 +24,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { TestSnapshotCache } from "../../testSnapshotCache.js";
+import { TestPersistedCache } from "../../testPersistedCache.js";
 
 import {
 	clearCacheIfOdsp,
@@ -185,7 +185,7 @@ describeCompat(
 		let dataObjectB = {} as unknown as TestDataObject;
 		let dataObjectC = {} as unknown as TestDataObject;
 		let dataObjectD = {} as unknown as TestDataObject;
-		const persistedCache = new TestSnapshotCache();
+		const persistedCache = new TestPersistedCache();
 		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ persistedCache });
 			dataObjectA = {} as unknown as TestDataObject;

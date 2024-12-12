@@ -1,0 +1,18 @@
+---
+title: Fluid Framework API Overview
+sidebar_label: API Documentation
+sidebar_position: 10
+---
+
+{/* Note: these contents are new and should be reviewed. The current website's API docs landing page has no description about what the packages do / when to use them. It's not very useful. */}
+
+To get started with the Fluid Framework, you'll want to take a dependency on our client library, [fluid-framework](./fluid-framework.md).
+
+You'll then want to pair that with the appropriate service client implementation based on your service.
+These include:
+
+-   [@fluidframework/azure-client](./azure-client.md) (for use with [Azure Fluid Relay](../deployment/azure-fluid-relay))
+-   [@fluidframework/odsp-client](./odsp-client.md) (for use with [SharePoint Embedded](../deployment/sharepoint-embedded))
+-   [@fluidframework/tinylicious-client](./tinylicious-client) (for testing with [Tinylicious](../testing/tinylicious))
+
+For more information on our service client implementations, see [Fluid Services](../deployment/service-options).

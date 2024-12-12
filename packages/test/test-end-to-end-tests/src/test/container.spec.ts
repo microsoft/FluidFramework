@@ -94,8 +94,8 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			documentServiceFactory: provider.documentServiceFactory,
 			codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
 		});
-		loaderContainerTracker.add(loader);
 		const container = await loader.createDetachedContainer(codeDetails);
+		loaderContainerTracker.addContainer(container);
 		await container.attach(provider.driver.createCreateNewRequest("containerTest"));
 	});
 	afterEach(() => {
@@ -111,16 +111,18 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 				props?.codeLoader ??
 				new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
 		});
-		loaderContainerTracker.add(loader);
 
-		return loader.resolve({
+		const container = await loader.resolve({
 			url: testRequest.url,
 			headers: { ...testRequest.headers, ...headers },
 		});
+		loaderContainerTracker.addContainer(container);
+		return container;
 	}
 
 	async function createConnectedContainer(): Promise<IContainer> {
 		const container = await provider.makeTestContainer();
+		loaderContainerTracker.addContainer(container);
 		await waitForContainerConnection(container, true, {
 			durationMs: timeoutMs,
 			errorMsg: "Container initial connection timeout",
@@ -751,6 +753,35 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			assert.strictEqual(runtimeDispose, 1, "IContainerRuntime should send dispose event");
 		},
 	);
+
+	describe("0x314 assert", () => {
+		it("Closing container", async () => {
+			const container = await createConnectedContainer();
+			container.deltaManager.on("disconnect", () => {
+				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in DeltaManager ctor)
+				container.close();
+			});
+			container.close();
+		});
+
+		it("Disposing container", async () => {
+			const container = await createConnectedContainer();
+			container.deltaManager.on("disconnect", () => {
+				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in DeltaManager ctor)
+				container.dispose();
+			});
+			container.dispose();
+		});
+
+		it("Mix and match", async () => {
+			const container = await createConnectedContainer();
+			container.on("disconnected", () => {
+				// Assert 0x314 would appear in "after each" unexpected errors (see "super" call in Container ctor)
+				container.close();
+			});
+			container.dispose();
+		});
+	});
 
 	// Temporary disable since we reverted the fix that caused an increase in loader bundle size.
 	// Tracking alternative fix in AB#4129.

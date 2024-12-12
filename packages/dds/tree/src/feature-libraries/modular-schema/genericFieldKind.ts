@@ -103,8 +103,8 @@ function rebaseGenericChange(
 			break;
 		}
 
-		const newIndex = newEntry?.[0] ?? Infinity;
-		const baseIndex = baseEntry?.[0] ?? Infinity;
+		const newIndex = newEntry?.[0] ?? Number.POSITIVE_INFINITY;
+		const baseIndex = baseEntry?.[0] ?? Number.POSITIVE_INFINITY;
 		let newNodeChange: NodeId | undefined;
 		let baseNodeChange: NodeId | undefined;
 		let index: number;

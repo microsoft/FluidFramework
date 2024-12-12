@@ -134,10 +134,6 @@ dist/fluidBuild/tasks/leaf/prettierTask.d.ts
 dist/fluidBuild/tasks/leaf/prettierTask.d.ts.map
 dist/fluidBuild/tasks/leaf/prettierTask.js
 dist/fluidBuild/tasks/leaf/prettierTask.js.map
-dist/fluidBuild/tasks/leaf/renamerTask.d.ts
-dist/fluidBuild/tasks/leaf/renamerTask.d.ts.map
-dist/fluidBuild/tasks/leaf/renamerTask.js
-dist/fluidBuild/tasks/leaf/renamerTask.js.map
 dist/fluidBuild/tasks/leaf/ts2EsmTask.d.ts
 dist/fluidBuild/tasks/leaf/ts2EsmTask.d.ts.map
 dist/fluidBuild/tasks/leaf/ts2EsmTask.js

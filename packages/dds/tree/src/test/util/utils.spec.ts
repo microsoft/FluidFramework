@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { capitalize, mapIterable, transformObjectMap } from "../../util/index.js";
 import { benchmark } from "@fluid-tools/benchmark";

@@ -42,6 +42,7 @@ export {
 	AttributionPolicy,
 	IMergeTreeAttributionOptions,
 	IMergeTreeOptions,
+	IMergeTreeOptionsInternal,
 	getSlideToSegoff,
 } from "./mergeTree.js";
 export {
@@ -65,12 +66,12 @@ export {
 	ISegment,
 	ISegmentAction,
 	Marker,
-	MergeNode,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
 	SegmentGroup,
 	toRemovalInfo,
 	ObliterateInfo,
+	ISegmentInternal,
 } from "./mergeTreeNodes.js";
 export {
 	Trackable,
@@ -87,6 +88,7 @@ export {
 	createObliterateRangeOp,
 } from "./opBuilder.js";
 export {
+	AdjustParams,
 	IJSONSegment,
 	IMarkerDef,
 	IMergeTreeAnnotateMsg,
@@ -96,6 +98,7 @@ export {
 	IMergeTreeInsertMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
+	IMergeTreeAnnotateAdjustMsg,
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
@@ -122,8 +125,12 @@ export {
 	reservedRangeLabelsKey,
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
-export { SegmentGroupCollection } from "./segmentGroupCollection.js";
-export { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+export {
+	PropsOrAdjust,
+	copyPropertiesAndManager,
+	PropertiesManager,
+	PropertiesRollback,
+} from "./segmentPropertiesManager.js";
 export {
 	InteriorSequencePlace,
 	Side,

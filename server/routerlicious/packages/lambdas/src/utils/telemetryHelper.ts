@@ -10,8 +10,8 @@ import {
 	NackMessagesType,
 } from "@fluidframework/server-services-core";
 import {
-	BaseTelemetryProperties,
 	CommonProperties,
+	getLumberBaseProperties,
 	Lumber,
 	LumberEventName,
 	Lumberjack,
@@ -36,8 +36,7 @@ export const createSessionMetric = <T extends string = LumberEventName>(
 
 	const sessionMetric = Lumberjack.newLumberMetric(lumberEventName);
 	sessionMetric?.setProperties({
-		[BaseTelemetryProperties.tenantId]: tenantId,
-		[BaseTelemetryProperties.documentId]: documentId,
+		...getLumberBaseProperties(documentId, tenantId),
 		[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
 	});
 

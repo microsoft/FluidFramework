@@ -29,7 +29,11 @@ import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
-import { IMergeTreeOptions, MergeTree, errorIfOptionNotTrue } from "./mergeTree.js";
+import {
+	MergeTree,
+	errorIfOptionNotTrue,
+	type IMergeTreeOptionsInternal,
+} from "./mergeTree.js";
 import type {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
@@ -50,6 +54,7 @@ import {
 	toMoveInfo,
 } from "./mergeTreeNodes.js";
 import {
+	createAdjustRangeOp,
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
 	// eslint-disable-next-line import/no-deprecated
@@ -73,9 +78,11 @@ import {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	type AdjustParams,
+	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
-import { PropertySet } from "./properties.js";
+import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
@@ -100,9 +107,7 @@ export interface IIntegerRange {
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
  * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
  * they need for rebasing their ops on reconnection.
- * @legacy
- * @alpha
- * @deprecated  This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface IClientEvents {
 	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
@@ -125,9 +130,12 @@ export interface IClientEvents {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @legacy
- * @alpha
+ * This class encapsulates a merge-tree, and provides a local client specific view over it and
+ * the capability to modify it as the local client. Additionally it provides
+ * binding for processing remote ops on the encapsulated merge tree, and projects local and remote events
+ * caused by all modification to the underlying merge-tree.
+ *
+ * @internal
  */
 export class Client extends TypedEventEmitter<IClientEvents> {
 	public longClientId: string | undefined;
@@ -155,7 +163,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	constructor(
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
 		public readonly logger: ITelemetryLoggerExt,
-		options?: IMergeTreeOptions & PropertySet,
+		options?: IMergeTreeOptionsInternal & PropertySet,
 		private readonly getMinInFlightRefSeq: () => number | undefined = (): undefined =>
 			undefined,
 	) {
@@ -241,6 +249,26 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
+	 * adjusts a value
+	 */
+	public annotateAdjustRangeLocal(
+		start: number,
+		end: number,
+		adjust: MapLike<AdjustParams>,
+	): IMergeTreeAnnotateAdjustMsg {
+		const annotateOp = createAdjustRangeOp(start, end, adjust);
+
+		for (const [key, value] of Object.entries(adjust)) {
+			if (value.min !== undefined && value.max !== undefined && value.min > value.max) {
+				throw new UsageError(`min is greater than max for ${key}`);
+			}
+		}
+
+		this.applyAnnotateRangeOp({ op: annotateOp });
+		return annotateOp;
+	}
+
+	/**
 	 * Removes the range
 	 *
 	 * @param start - The inclusive start of the range to remove
@@ -272,7 +300,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		} else {
 			assert(
 				typeof start === "number" && typeof end === "number",
-				"Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled.",
+				0xa42 /* Start and end must be numbers if mergeTreeEnableSidedObliterate is not enabled. */,
 			);
 			obliterateOp = createObliterateRangeOp(start, end);
 		}
@@ -322,7 +350,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		accum: TClientData,
 		splitRange?: boolean,
 	): void;
-	public walkSegments<undefined>(
+	public walkSegments(
 		handler: ISegmentAction<undefined>,
 		start?: number,
 		end?: number,
@@ -501,13 +529,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				clientArgs.referenceSequenceNumber,
 				clientArgs.clientId,
 				clientArgs.sequenceNumber,
-				false,
 				opArgs,
 			);
 		} else {
 			assert(
 				op.type === MergeTreeDeltaType.OBLITERATE,
-				"Unexpected sided obliterate while mergeTreeEnableSidedObliterate is disabled",
+				0xa43 /* Unexpected sided obliterate while mergeTreeEnableSidedObliterate is disabled */,
 			);
 			const range = this.getValidOpRange(op, clientArgs);
 			this._mergeTree.obliterateRange(
@@ -516,7 +543,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				clientArgs.referenceSequenceNumber,
 				clientArgs.clientId,
 				clientArgs.sequenceNumber,
-				false,
 				opArgs,
 			);
 		}
@@ -541,7 +567,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			clientArgs.referenceSequenceNumber,
 			clientArgs.clientId,
 			clientArgs.sequenceNumber,
-			false,
 			opArgs,
 		);
 	}
@@ -562,7 +587,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		this._mergeTree.annotateRange(
 			range.start,
 			range.end,
-			op.props,
+			op,
 			clientArgs.referenceSequenceNumber,
 			clientArgs.clientId,
 			clientArgs.sequenceNumber,
@@ -669,7 +694,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 		}
 
-		assert(start !== undefined && end !== undefined, "Missing start or end of range");
+		assert(
+			start !== undefined && end !== undefined,
+			0xa44 /* Missing start or end of range */,
+		);
 		return { start, end };
 	}
 
@@ -681,6 +709,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private getValidOpRange(
 		op:
 			| IMergeTreeAnnotateMsg
+			| IMergeTreeAnnotateAdjustMsg
 			| IMergeTreeInsertMsg
 			| IMergeTreeRemoveMsg
 			// eslint-disable-next-line import/no-deprecated
@@ -762,11 +791,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			| ISequencedDocumentMessage
 			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
 			| undefined,
-	): {
-		clientId: number;
-		referenceSequenceNumber: number;
-		sequenceNumber: number;
-	} {
+	): IMergeTreeClientSequenceArgs {
 		// If there this no sequenced message, then the op is local
 		// and unacked, so use this clients sequenced args
 		//
@@ -857,7 +882,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private resetPendingDeltaToOps(
 		resetOp: IMergeTreeDeltaOp,
 		// eslint-disable-next-line import/no-deprecated
-		segmentGroup: SegmentGroup,
+		segmentGroup: SegmentGroup<ISegmentLeaf>,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
 		const NACKedSegmentGroup = this.pendingRebase?.shift()?.data;
@@ -890,7 +915,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			a.ordinal < b.ordinal ? -1 : 1,
 		)) {
 			assert(
-				segment.segmentGroups.remove?.(segmentGroup) === true,
+				segment.segmentGroups?.remove?.(segmentGroup) === true,
 				0x035 /* "Segment group not in segment pending queue" */,
 			);
 			assert(
@@ -902,7 +927,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			switch (resetOp.type) {
 				case MergeTreeDeltaType.ANNOTATE: {
 					assert(
-						segment.propertyManager?.hasPendingProperties(resetOp.props) === true,
+						segment.propertyManager?.hasPendingProperties(resetOp.props ?? resetOp.adjust) ===
+							true,
 						0x036 /* "Segment has no pending properties" */,
 					);
 					// if the segment has been removed or obliterated, there's no need to send the annotate op
@@ -916,11 +942,18 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							(segment.localMovedSeq !== undefined &&
 								segment.movedSeq === UnassignedSequenceNumber))
 					) {
-						newOp = createAnnotateRangeOp(
-							segmentPosition,
-							segmentPosition + segment.cachedLength,
-							resetOp.props,
-						);
+						newOp =
+							resetOp.props === undefined
+								? createAdjustRangeOp(
+										segmentPosition,
+										segmentPosition + segment.cachedLength,
+										resetOp.adjust,
+									)
+								: createAnnotateRangeOp(
+										segmentPosition,
+										segmentPosition + segment.cachedLength,
+										resetOp.props,
+									);
 					}
 					break;
 				}
@@ -1010,7 +1043,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					opList.push(newOp);
 				}
 			} else if (newOp) {
-				// eslint-disable-next-line import/no-deprecated
 				const newSegmentGroup: SegmentGroup = {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
@@ -1174,7 +1206,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segmentGroup: SegmentGroup | SegmentGroup[],
 	): IMergeTreeOp {
 		if (this.pendingRebase === undefined || this.pendingRebase.empty) {
-			// eslint-disable-next-line import/no-deprecated
 			let firstGroup: SegmentGroup;
 			if (Array.isArray(segmentGroup)) {
 				if (segmentGroup.length === 0) {

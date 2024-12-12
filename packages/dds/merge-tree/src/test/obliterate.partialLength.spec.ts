@@ -121,7 +121,6 @@ describe("obliterate partial lengths", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 
@@ -183,7 +182,6 @@ describe("obliterate partial lengths", () => {
 				refSeq,
 				clientId: remoteClientId + 1,
 				seq: refSeq + 2,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 
@@ -225,7 +223,6 @@ describe("obliterate partial lengths", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 
@@ -257,7 +254,6 @@ describe("obliterate partial lengths", () => {
 				refSeq,
 				clientId: remoteClientId,
 				seq: refSeq + 1,
-				overwrite: false,
 				opArgs: undefined as never,
 			});
 			const localObliterateOp = client.obliterateRangeLocal(0, "hello".length);

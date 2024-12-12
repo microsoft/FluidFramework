@@ -22,10 +22,8 @@ import {
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
-import {
-	IDocumentStorageService,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	LoggingError,
 	MonitoringContext,
@@ -177,7 +175,7 @@ export class MockRuntime
 
 	public processOps() {
 		assert(this.connected || this.ops.length === 0);
-		this.ops.forEach((op) => this.blobManager.processBlobAttachOp(op, true));
+		this.ops.forEach((op) => this.blobManager.processBlobAttachMessage(op, true));
 		this.ops = [];
 	}
 
@@ -245,7 +243,7 @@ export class MockRuntime
 	}
 
 	public async processStashed(processStashedWithRetry?: boolean) {
-		const uploadP = this.blobManager.trackPendingStashedUploads();
+		const uploadP = this.blobManager.stashedBlobsUploadP;
 		this.processing = true;
 		if (processStashedWithRetry) {
 			await this.processBlobs(false, false, 0);
@@ -269,7 +267,7 @@ export class MockRuntime
 	public async remoteUpload(blob: ArrayBufferLike) {
 		const response = await this.storage.createBlob(blob);
 		const op = { metadata: { localId: uuid(), blobId: response.id } };
-		this.blobManager.processBlobAttachOp(op as ISequencedDocumentMessage, false);
+		this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, false);
 		return op;
 	}
 

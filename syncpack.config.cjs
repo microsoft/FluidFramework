@@ -130,6 +130,9 @@ module.exports = {
 
 				// pinned since newer versions (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828
 				"@cerner/duplicate-package-checker-webpack-plugin",
+
+				// socket.io-client is forced to avoid 4.8 to avoid https://github.com/socketio/socket.io/issues/5202
+				"socket.io-client",
 			],
 			packages: ["**"],
 			range: "~",

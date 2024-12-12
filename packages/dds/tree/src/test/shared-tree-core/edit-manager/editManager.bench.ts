@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { type BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
@@ -272,11 +272,11 @@ describe("EditManager - Bench", () => {
 							const family = testChangeFamilyFactory(new NoOpChangeRebaser());
 							const manager = editManagerFactory(family);
 							// Subscribe to the local branch to emulate the behavior of SharedTree
-							manager.localBranch.on("afterChange", ({ change }) => {});
+							manager.localBranch.events.on("afterChange", ({ change }) => {});
 							const sequencedEdits: Commit<TestChange>[] = [];
 							for (let iChange = 0; iChange < count; iChange++) {
 								const revision = mintRevisionTag();
-								manager.localBranch.apply(TestChange.emptyChange, revision);
+								manager.localBranch.apply({ change: TestChange.emptyChange, revision });
 								sequencedEdits.push({
 									change: TestChange.emptyChange,
 									revision,

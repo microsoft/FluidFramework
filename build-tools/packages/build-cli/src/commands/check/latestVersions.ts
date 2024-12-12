@@ -36,7 +36,8 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			this.error(`Package not found: ${args.package_or_release_group}`);
 		}
 
-		const versions = await context.getAllVersions(rgOrPackage.name);
+		const gitRepo = await context.getGitRepository();
+		const versions = await gitRepo.getAllVersions(rgOrPackage.name);
 
 		if (!versions) {
 			this.error(`No versions found for ${rgOrPackage.name}`);
@@ -62,21 +63,30 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 					this.log(
 						`Version ${versionInput.version} is the latest version for major version ${majorVersion}`,
 					);
+					this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
+					this.log(
+						`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`,
+					);
 					return;
 				}
 
 				// If versions do not match on first major version encounter, then the input version is not the latest
-				this.error(
-					`skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v.version}`,
-					{ exit: 1 },
+				this.log(
+					`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v.version}`,
 				);
+				this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+				this.log(`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`);
+				return;
 			}
 		}
 
 		// Error if no major version corresponds to input version
-		this.error(
-			`No major version found corresponding to input version ${versionInput.version}`,
-			{ exit: 1 },
+		this.log(
+			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
+		);
+		this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+		this.log(
+			`##vso[task.setvariable variable=majorVersion;isoutput=true]${inputMajorVersion}`,
 		);
 	}
 }

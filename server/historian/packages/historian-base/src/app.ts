@@ -8,6 +8,7 @@ import {
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -21,7 +22,7 @@ import {
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
-import { RestLessServer } from "@fluidframework/server-services-shared";
+import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
 import { ICache, IDenyList, ITenantService } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
@@ -29,14 +30,16 @@ import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./u
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	storageNameRetriever: IStorageNameRetriever,
+	storageNameRetriever: IStorageNameRetriever | undefined,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
+	startupCheck: IReadinessCheck,
 	cache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
+	readinessCheck?: IReadinessCheck,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -64,6 +67,7 @@ export function create(
 				"historian",
 				(tokens, req, res) => {
 					const tenantId = getTenantIdFromRequest(req.params);
+					const authHeader = req.get("Authorization");
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
@@ -73,7 +77,7 @@ export function create(
 						[BaseTelemetryProperties.tenantId]: tenantId,
 						[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
 							tenantId,
-							req.get("Authorization"),
+							authHeader,
 						),
 					};
 					if (req.get(Constants.IsEphemeralContainer) !== undefined) {
@@ -117,6 +121,14 @@ export function create(
 	app.use(apiRoutes.repository.contents);
 	app.use(apiRoutes.repository.headers);
 	app.use(apiRoutes.summaries);
+
+	const healthCheckEndpoints = createHealthCheckEndpoints(
+		"historian",
+		startupCheck,
+		readinessCheck,
+		false /* createLivenessEndpoint */,
+	);
+	app.use("/healthz", healthCheckEndpoints);
 
 	// catch 404 and forward to error handler
 	app.use((req, res, next) => {

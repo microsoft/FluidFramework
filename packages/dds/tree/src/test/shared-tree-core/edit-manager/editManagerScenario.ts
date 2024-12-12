@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
@@ -269,7 +269,7 @@ export function runUnitTestScenario(
 					localCommits.push(commit);
 					knownToLocal.push(seq);
 					// Local changes should always lead to a delta that is equivalent to the local change.
-					manager.localBranch.apply(changeset, revision);
+					manager.localBranch.apply({ change: changeset, revision });
 					assert.deepEqual(
 						asDelta(manager.localBranch.getHead().change.intentions),
 						asDelta([seq]),

@@ -74,24 +74,6 @@ declare type current_as_old_for_Class_OdspDocumentServiceFactoryCore = requireAs
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_OdspDocumentServiceFactoryWithCodeSplit": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_OdspDocumentServiceFactoryWithCodeSplit = requireAssignableTo<TypeOnly<old.OdspDocumentServiceFactoryWithCodeSplit>, TypeOnly<current.OdspDocumentServiceFactoryWithCodeSplit>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_OdspDocumentServiceFactoryWithCodeSplit": {"backCompat": false}
- */
-declare type current_as_old_for_Class_OdspDocumentServiceFactoryWithCodeSplit = requireAssignableTo<TypeOnly<current.OdspDocumentServiceFactoryWithCodeSplit>, TypeOnly<old.OdspDocumentServiceFactoryWithCodeSplit>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Class_OdspDriverUrlResolver": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_OdspDriverUrlResolver = requireAssignableTo<TypeOnly<old.OdspDriverUrlResolver>, TypeOnly<current.OdspDriverUrlResolver>>
@@ -155,15 +137,6 @@ declare type current_as_old_for_ClassStatics_OdspDocumentServiceFactoryCore = re
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassStatics_OdspDocumentServiceFactoryWithCodeSplit": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_OdspDocumentServiceFactoryWithCodeSplit = requireAssignableTo<TypeOnly<typeof current.OdspDocumentServiceFactoryWithCodeSplit>, TypeOnly<typeof old.OdspDocumentServiceFactoryWithCodeSplit>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "ClassStatics_OdspDriverUrlResolver": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_OdspDriverUrlResolver = requireAssignableTo<TypeOnly<typeof current.OdspDriverUrlResolver>, TypeOnly<typeof old.OdspDriverUrlResolver>>
@@ -176,42 +149,6 @@ declare type current_as_old_for_ClassStatics_OdspDriverUrlResolver = requireAssi
  * "ClassStatics_OdspDriverUrlResolverForShareLink": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_OdspDriverUrlResolverForShareLink = requireAssignableTo<TypeOnly<typeof current.OdspDriverUrlResolverForShareLink>, TypeOnly<typeof old.OdspDriverUrlResolverForShareLink>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_ClpCompliantAppHeader": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_ClpCompliantAppHeader = requireAssignableTo<TypeOnly<old.ClpCompliantAppHeader>, TypeOnly<current.ClpCompliantAppHeader>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_ClpCompliantAppHeader": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_ClpCompliantAppHeader = requireAssignableTo<TypeOnly<current.ClpCompliantAppHeader>, TypeOnly<old.ClpCompliantAppHeader>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_SharingLinkHeader": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_SharingLinkHeader = requireAssignableTo<TypeOnly<old.SharingLinkHeader>, TypeOnly<current.SharingLinkHeader>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_SharingLinkHeader": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_SharingLinkHeader = requireAssignableTo<TypeOnly<current.SharingLinkHeader>, TypeOnly<old.SharingLinkHeader>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -299,51 +236,6 @@ declare type current_as_old_for_Function_getLocatorFromOdspUrl = requireAssignab
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Function_getOdspUrlParts": {"backCompat": false}
- */
-declare type current_as_old_for_Function_getOdspUrlParts = requireAssignableTo<TypeOnly<typeof current.getOdspUrlParts>, TypeOnly<typeof old.getOdspUrlParts>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_isOdcUrl": {"backCompat": false}
- */
-declare type current_as_old_for_Function_isOdcUrl = requireAssignableTo<TypeOnly<typeof current.isOdcUrl>, TypeOnly<typeof old.isOdcUrl>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_isOdspResolvedUrl": {"backCompat": false}
- */
-declare type current_as_old_for_Function_isOdspResolvedUrl = requireAssignableTo<TypeOnly<typeof current.isOdspResolvedUrl>, TypeOnly<typeof old.isOdspResolvedUrl>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_isSpoUrl": {"backCompat": false}
- */
-declare type current_as_old_for_Function_isSpoUrl = requireAssignableTo<TypeOnly<typeof current.isSpoUrl>, TypeOnly<typeof old.isSpoUrl>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_parseCompactSnapshotResponse": {"backCompat": false}
- */
-declare type current_as_old_for_Function_parseCompactSnapshotResponse = requireAssignableTo<TypeOnly<typeof current.parseCompactSnapshotResponse>, TypeOnly<typeof old.parseCompactSnapshotResponse>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Function_prefetchLatestSnapshot": {"backCompat": false}
  */
 declare type current_as_old_for_Function_prefetchLatestSnapshot = requireAssignableTo<TypeOnly<typeof current.prefetchLatestSnapshot>, TypeOnly<typeof old.prefetchLatestSnapshot>>
@@ -374,24 +266,6 @@ declare type old_as_current_for_Interface_ICacheAndTracker = requireAssignableTo
  * "Interface_ICacheAndTracker": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_ICacheAndTracker = requireAssignableTo<TypeOnly<current.ICacheAndTracker>, TypeOnly<old.ICacheAndTracker>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IClpCompliantAppHeader": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IClpCompliantAppHeader = requireAssignableTo<TypeOnly<old.IClpCompliantAppHeader>, TypeOnly<current.IClpCompliantAppHeader>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IClpCompliantAppHeader": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IClpCompliantAppHeader = requireAssignableTo<TypeOnly<current.IClpCompliantAppHeader>, TypeOnly<old.IClpCompliantAppHeader>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -436,7 +310,7 @@ declare type current_as_old_for_Interface_IOdspCache = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IOdspResponse": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IOdspResponse = requireAssignableTo<TypeOnly<old.IOdspResponse<any>>, TypeOnly<current.IOdspResponse<any>>>
+declare type old_as_current_for_Interface_IOdspResponse = requireAssignableTo<TypeOnly<old.IOdspResponse<never>>, TypeOnly<current.IOdspResponse<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -445,7 +319,7 @@ declare type old_as_current_for_Interface_IOdspResponse = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_IOdspResponse": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IOdspResponse = requireAssignableTo<TypeOnly<current.IOdspResponse<any>>, TypeOnly<old.IOdspResponse<any>>>
+declare type current_as_old_for_Interface_IOdspResponse = requireAssignableTo<TypeOnly<current.IOdspResponse<never>>, TypeOnly<old.IOdspResponse<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -488,24 +362,6 @@ declare type current_as_old_for_Interface_IPrefetchSnapshotContents = requireAss
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ISharingLinkHeader": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ISharingLinkHeader = requireAssignableTo<TypeOnly<old.ISharingLinkHeader>, TypeOnly<current.ISharingLinkHeader>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ISharingLinkHeader": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ISharingLinkHeader = requireAssignableTo<TypeOnly<current.ISharingLinkHeader>, TypeOnly<old.ISharingLinkHeader>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_ISnapshotContents": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ISnapshotContents = requireAssignableTo<TypeOnly<old.ISnapshotContents>, TypeOnly<current.ISnapshotContents>>
@@ -518,24 +374,6 @@ declare type old_as_current_for_Interface_ISnapshotContents = requireAssignableT
  * "Interface_ISnapshotContents": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_ISnapshotContents = requireAssignableTo<TypeOnly<current.ISnapshotContents>, TypeOnly<old.ISnapshotContents>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ISnapshotContentsWithProps": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ISnapshotContentsWithProps = requireAssignableTo<TypeOnly<old.ISnapshotContentsWithProps>, TypeOnly<current.ISnapshotContentsWithProps>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ISnapshotContentsWithProps": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ISnapshotContentsWithProps = requireAssignableTo<TypeOnly<current.ISnapshotContentsWithProps>, TypeOnly<old.ISnapshotContentsWithProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

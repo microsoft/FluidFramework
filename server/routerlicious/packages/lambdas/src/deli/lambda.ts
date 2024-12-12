@@ -434,6 +434,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			const reprocessOpsMetric = Lumberjack.newLumberMetric(LumberEventName.ReprocessOps);
 			reprocessOpsMetric.setProperties({
 				...getLumberBaseProperties(this.documentId, this.tenantId),
+				[CommonProperties.isEphemeralContainer]:
+					this.sessionMetric?.properties.get(CommonProperties.isEphemeralContainer) ??
+					false,
 				kafkaMessageOffset: rawMessage.offset,
 				databaseLastOffset: this.logOffset,
 			});

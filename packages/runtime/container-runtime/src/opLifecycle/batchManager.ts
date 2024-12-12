@@ -20,6 +20,9 @@ export interface IBatchManagerOptions {
 	 * If true, the outbox is allowed to rebase the batch during flushing.
 	 */
 	readonly canRebase: boolean;
+
+	/** If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored */
+	readonly ignoreBatchId?: boolean;
 }
 
 export interface BatchSequenceNumbers {

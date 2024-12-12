@@ -10,7 +10,6 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import type { FlexListToUnion } from "../../../feature-libraries/index.js";
 import {
 	type FieldSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
@@ -20,7 +19,9 @@ import {
 	type TreeView,
 	SchemaFactory,
 	type InternalTreeNode,
-	type ApplyKind,
+	type FlexListToUnion,
+	type ApplyKindInput,
+	type NodeBuilderData,
 } from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,
@@ -33,7 +34,7 @@ import type {
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/typesUnsafe.js";
+} from "../../../simple-tree/api/typesUnsafe.js";
 import { TreeFactory } from "../../../treeFactory.js";
 import type {
 	areSafelyAssignable,
@@ -123,7 +124,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 			type XSchema = typeof ObjectRecursive.info.x;
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
-				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
+				? ApplyKindInput<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 				: "Not a FieldSchema";
 			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
 				? Types
@@ -182,7 +183,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 			type XSchema = typeof ObjectRecursive.info.x;
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
-				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
+				? ApplyKindInput<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 				: "Not a FieldSchema";
 			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
 				? Types
@@ -248,6 +249,7 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
 			}
 
+			// Explicit construction under recursive type
 			const tree2 = hydrate(
 				ObjectRecursive,
 				new ObjectRecursive({
@@ -257,6 +259,60 @@ describe("SchemaFactory Recursive methods", () => {
 					c: new Other({ y: 5 }),
 					d: new Other({ y: 5 }),
 					e: new Other({ y: 5 }),
+				}),
+			);
+
+			// implicit construction under recursive type
+			const tree3 = hydrate(
+				ObjectRecursive,
+				new ObjectRecursive({
+					x: undefined,
+					a: { y: 5 },
+					b: { y: 5 },
+					c: { y: 5 },
+					d: { y: 5 },
+					e: { y: 5 },
+				}),
+			);
+		});
+
+		it("array under recursive object", () => {
+			class Other extends sf.array("Other", sf.number) {}
+			class ObjectRecursive extends sf.objectRecursive("Object", {
+				x: sf.optionalRecursive([() => ObjectRecursive]),
+				a: Other,
+				b: [Other],
+				c: [() => Other],
+				d: sf.optional(Other),
+				e: sf.optional([() => Other]),
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
+			}
+
+			// Explicit construction under recursive type
+			const tree2 = hydrate(
+				ObjectRecursive,
+				new ObjectRecursive({
+					x: undefined,
+					a: new Other([5]),
+					b: new Other([5]),
+					c: new Other([5]),
+					d: new Other([5]),
+					e: new Other([5]),
+				}),
+			);
+
+			// implicit construction under recursive type
+			const tree3 = hydrate(
+				ObjectRecursive,
+				new ObjectRecursive({
+					x: undefined,
+					a: [5],
+					b: [5],
+					c: [5],
+					d: [5],
+					e: [5],
 				}),
 			);
 		});
@@ -476,29 +532,97 @@ describe("SchemaFactory Recursive methods", () => {
 				data[0].insertAtEnd(new ArrayRecursive([]));
 			}
 		});
+
+		it("co-recursive", () => {
+			class A extends sf.arrayRecursive("A", [() => B]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof A>;
+			}
+			class B extends sf.arrayRecursive("B", A) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof B>;
+			}
+			// Explicit constructor call
+			{
+				const data: A = hydrate(A, new A([]));
+				assert.deepEqual([...data], []);
+			}
+		});
+
+		it("co-recursive with object", () => {
+			class A extends sf.arrayRecursive("A", [() => B]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof A>;
+			}
+			class B extends sf.objectRecursive("B", { x: A }) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof B>;
+			}
+			// Explicit constructor call
+			{
+				const data: A = hydrate(A, new A([]));
+				assert.deepEqual([...data], []);
+			}
+		});
+
+		it("co-recursive with object first", () => {
+			class B extends sf.objectRecursive("B", { x: [() => A] }) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof B>;
+			}
+			class A extends sf.array("A", B) {}
+			// Explicit constructor call
+			{
+				const data: A = hydrate(A, new A([]));
+				assert.deepEqual([...data], []);
+			}
+		});
 	});
 
 	describe("mapRecursive", () => {
-		it("simple", () => {
-			class MapRecursive extends sf.mapRecursive("Map", [() => MapRecursive]) {}
-			{
-				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
-			}
+		class MapRecursive extends sf.mapRecursive("Map", [() => MapRecursive]) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof MapRecursive>;
+		}
+
+		it("basic use", () => {
 			const node = hydrate(MapRecursive, new MapRecursive([]));
 			const data = [...node];
 			assert.deepEqual(data, []);
 
 			// Nested
 			{
-				type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof MapRecursive>;
-				const _check: T = new MapRecursive([]);
+				type TInsert = InsertableTreeNodeFromImplicitAllowedTypes<typeof MapRecursive>;
+				const _check: TInsert = new MapRecursive([]);
+
 				// Only explicitly constructed recursive maps are currently allowed:
-				type _check = requireTrue<areSafelyAssignable<T, MapRecursive>>;
+				type _check1 = requireTrue<areSafelyAssignable<TInsert, MapRecursive>>;
+
+				// Check constructor
+				type TBuild = NodeBuilderData<typeof MapRecursive>;
+				type _check2 = requireAssignableTo<MapRecursive, TBuild>;
+				type _check3 = requireAssignableTo<[], TBuild>;
+				type _check4 = requireAssignableTo<[[string, TInsert]], TBuild>;
 			}
 
 			node.set("x", new MapRecursive([]));
 
 			node.get("x")?.set("x", new MapRecursive(new Map()));
+		});
+
+		it("constructors", () => {
+			const fromIterator = new MapRecursive([["x", new MapRecursive()]]);
+			const fromMap = new MapRecursive(new Map([["x", new MapRecursive()]]));
+			const fromObject = new MapRecursive({ x: new MapRecursive() });
+
+			const fromNothing = new MapRecursive();
+			const fromUndefined = new MapRecursive(undefined);
+
+			// If supporting implicit construction, these would work:
+			// @ts-expect-error Implicit construction disabled
+			const fromNestedNeverArray = new MapRecursive({ x: [] });
+			// @ts-expect-error Implicit construction disabled
+			const fromNestedObject = new MapRecursive({ x: { x: [] } });
 		});
 	});
 

@@ -29,7 +29,7 @@ export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
 	}
 
 	const context = innerNode.anchorNode.anchorSet.slots.get(SimpleContextSlot);
-	assert(context !== undefined, "missing simple tree context");
+	assert(context !== undefined, 0xa55 /* missing simple tree context */);
 
 	return context;
 }

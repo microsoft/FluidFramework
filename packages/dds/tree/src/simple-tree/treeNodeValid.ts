@@ -18,11 +18,12 @@ import {
 	type Context,
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import { type FlexTreeNode, isFlexTreeNode, markEager } from "../feature-libraries/index.js";
+import { type FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { fail } from "../util/index.js";
 
 import { getSimpleNodeSchemaFromInnerNode } from "./core/index.js";
+import { markEager } from "./flexList.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -102,7 +103,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			// would not see the stored `constructorCached`, and the validation above against multiple derived classes would not work.
 
 			// This is not just an alias of `this`, but a reference to the item in the prototype chain being walked, which happens to start at `this`.
-			// eslint-disable-next-line @typescript-eslint/no-this-alias
+			// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
 			let schemaBase: typeof TreeNodeValid = this;
 			while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
 				schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
@@ -132,9 +133,19 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * @remarks
 	 * When used as TreeNodeSchemaNonClass and subclassed,
 	 * does not actually have the correct compile time type for the return value due to TypeScript limitations.
-	 * This is why this is not exposed as part of TreeNodeSchemaCLass where subclassing is allowed.
+	 * This is why this is not exposed as part of TreeNodeSchemaClass where subclassing is allowed.
 	 */
 	public static create<TInput, TOut, TThis extends new (args: TInput) => TOut>(
+		this: TThis,
+		input: TInput,
+	): TOut {
+		return new this(input);
+	}
+
+	/**
+	 * @see {@link TreeNodeSchemaCore.createFromInsertable}.
+	 */
+	public static createFromInsertable<TInput, TOut, TThis extends new (args: TInput) => TOut>(
 		this: TThis,
 		input: TInput,
 	): TOut {
@@ -289,7 +300,7 @@ function formattedReference(
 	object: unknown,
 	config?: DevtoolsFormatter.ObjectConfig,
 ): DevtoolsFormatter.Item {
-	if (typeof object === "undefined") {
+	if (object === undefined) {
 		return ["span", "undefined"];
 	} else if (object === "null") {
 		return ["span", "null"];

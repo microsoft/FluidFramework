@@ -61,4 +61,18 @@ export class Context extends EventEmitter implements IContext {
 
 		this.removeAllListeners();
 	}
+
+	/**
+	 * Pauses the context
+	 */
+	public pause(offset: number, reason?: any): void {
+		this.emit("pause", offset, reason);
+	}
+
+	/**
+	 * Resumes the context
+	 */
+	public resume(): void {
+		this.emit("resume");
+	}
 }

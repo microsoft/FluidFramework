@@ -256,7 +256,7 @@ declare type current_as_old_for_Interface_IContainerLoadMode = requireAssignable
  * typeValidation.broken:
  * "Interface_IDeltaManager": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDeltaManager = requireAssignableTo<TypeOnly<current.IDeltaManager<any,any>>, TypeOnly<old.IDeltaManager<any,any>>>
+declare type current_as_old_for_Interface_IDeltaManager = requireAssignableTo<TypeOnly<current.IDeltaManager<never,never>>, TypeOnly<old.IDeltaManager<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -274,7 +274,7 @@ declare type current_as_old_for_Interface_IDeltaManagerEvents = requireAssignabl
  * typeValidation.broken:
  * "Interface_IDeltaQueue": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDeltaQueue = requireAssignableTo<TypeOnly<current.IDeltaQueue<any>>, TypeOnly<old.IDeltaQueue<any>>>
+declare type current_as_old_for_Interface_IDeltaQueue = requireAssignableTo<TypeOnly<current.IDeltaQueue<never>>, TypeOnly<old.IDeltaQueue<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -283,7 +283,7 @@ declare type current_as_old_for_Interface_IDeltaQueue = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_IDeltaQueueEvents": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IDeltaQueueEvents = requireAssignableTo<TypeOnly<current.IDeltaQueueEvents<any>>, TypeOnly<old.IDeltaQueueEvents<any>>>
+declare type current_as_old_for_Interface_IDeltaQueueEvents = requireAssignableTo<TypeOnly<current.IDeltaQueueEvents<never>>, TypeOnly<old.IDeltaQueueEvents<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -401,24 +401,6 @@ declare type old_as_current_for_Interface_IFluidCodeDetailsConfig = requireAssig
  * "Interface_IFluidCodeDetailsConfig": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IFluidCodeDetailsConfig = requireAssignableTo<TypeOnly<current.IFluidCodeDetailsConfig>, TypeOnly<old.IFluidCodeDetailsConfig>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IFluidCodeResolver": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IFluidCodeResolver = requireAssignableTo<TypeOnly<old.IFluidCodeResolver>, TypeOnly<current.IFluidCodeResolver>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IFluidCodeResolver": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IFluidCodeResolver = requireAssignableTo<TypeOnly<current.IFluidCodeResolver>, TypeOnly<old.IFluidCodeResolver>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -551,24 +533,6 @@ declare type current_as_old_for_Interface_ILoader = requireAssignableTo<TypeOnly
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ILoaderHeader": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ILoaderHeader = requireAssignableTo<TypeOnly<old.ILoaderHeader>, TypeOnly<current.ILoaderHeader>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ILoaderHeader": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ILoaderHeader = requireAssignableTo<TypeOnly<current.ILoaderHeader>, TypeOnly<old.ILoaderHeader>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_IProvideFluidCodeDetailsComparer": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IProvideFluidCodeDetailsComparer = requireAssignableTo<TypeOnly<old.IProvideFluidCodeDetailsComparer>, TypeOnly<current.IProvideFluidCodeDetailsComparer>>
@@ -617,24 +581,6 @@ declare type old_as_current_for_Interface_IProvideRuntimeFactory = requireAssign
  * "Interface_IProvideRuntimeFactory": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IProvideRuntimeFactory = requireAssignableTo<TypeOnly<current.IProvideRuntimeFactory>, TypeOnly<old.IProvideRuntimeFactory>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IResolvedFluidCodeDetails": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IResolvedFluidCodeDetails = requireAssignableTo<TypeOnly<old.IResolvedFluidCodeDetails>, TypeOnly<current.IResolvedFluidCodeDetails>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IResolvedFluidCodeDetails": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IResolvedFluidCodeDetails = requireAssignableTo<TypeOnly<current.IResolvedFluidCodeDetails>, TypeOnly<old.IResolvedFluidCodeDetails>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -851,15 +797,6 @@ declare type current_as_old_for_Variable_IRuntimeFactory = requireAssignableTo<T
  * "Variable_isFluidBrowserPackage": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_isFluidBrowserPackage = requireAssignableTo<TypeOnly<typeof current.isFluidBrowserPackage>, TypeOnly<typeof old.isFluidBrowserPackage>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_isFluidCodeDetails": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_isFluidCodeDetails = requireAssignableTo<TypeOnly<typeof current.isFluidCodeDetails>, TypeOnly<typeof old.isFluidCodeDetails>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

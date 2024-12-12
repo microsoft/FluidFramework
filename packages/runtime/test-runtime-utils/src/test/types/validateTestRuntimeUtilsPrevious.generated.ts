@@ -20,24 +20,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_InsecureTokenProvider": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_InsecureTokenProvider = requireAssignableTo<TypeOnly<old.InsecureTokenProvider>, TypeOnly<current.InsecureTokenProvider>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_InsecureTokenProvider": {"backCompat": false}
- */
-declare type current_as_old_for_Class_InsecureTokenProvider = requireAssignableTo<TypeOnly<current.InsecureTokenProvider>, TypeOnly<old.InsecureTokenProvider>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Class_MockAudience": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_MockAudience = requireAssignableTo<TypeOnly<old.MockAudience>, TypeOnly<current.MockAudience>>
@@ -166,7 +148,7 @@ declare type current_as_old_for_Class_MockDeltaManager = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_MockDeltaQueue": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockDeltaQueue = requireAssignableTo<TypeOnly<old.MockDeltaQueue<any>>, TypeOnly<current.MockDeltaQueue<any>>>
+declare type old_as_current_for_Class_MockDeltaQueue = requireAssignableTo<TypeOnly<old.MockDeltaQueue<never>>, TypeOnly<current.MockDeltaQueue<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -175,25 +157,7 @@ declare type old_as_current_for_Class_MockDeltaQueue = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Class_MockDeltaQueue": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockDeltaQueue = requireAssignableTo<TypeOnly<current.MockDeltaQueue<any>>, TypeOnly<old.MockDeltaQueue<any>>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_MockEmptyDeltaConnection": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_MockEmptyDeltaConnection = requireAssignableTo<TypeOnly<old.MockEmptyDeltaConnection>, TypeOnly<current.MockEmptyDeltaConnection>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_MockEmptyDeltaConnection": {"backCompat": false}
- */
-declare type current_as_old_for_Class_MockEmptyDeltaConnection = requireAssignableTo<TypeOnly<current.MockEmptyDeltaConnection>, TypeOnly<old.MockEmptyDeltaConnection>>
+declare type current_as_old_for_Class_MockDeltaQueue = requireAssignableTo<TypeOnly<current.MockDeltaQueue<never>>, TypeOnly<old.MockDeltaQueue<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -238,7 +202,7 @@ declare type current_as_old_for_Class_MockFluidDataStoreRuntime = requireAssigna
  * typeValidation.broken:
  * "Class_MockHandle": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockHandle = requireAssignableTo<TypeOnly<old.MockHandle<any>>, TypeOnly<current.MockHandle<any>>>
+declare type old_as_current_for_Class_MockHandle = requireAssignableTo<TypeOnly<old.MockHandle<never>>, TypeOnly<current.MockHandle<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -247,7 +211,7 @@ declare type old_as_current_for_Class_MockHandle = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Class_MockHandle": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockHandle = requireAssignableTo<TypeOnly<current.MockHandle<any>>, TypeOnly<old.MockHandle<any>>>
+declare type current_as_old_for_Class_MockHandle = requireAssignableTo<TypeOnly<current.MockHandle<never>>, TypeOnly<old.MockHandle<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -326,15 +290,6 @@ declare type current_as_old_for_Class_MockStorage = requireAssignableTo<TypeOnly
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassStatics_InsecureTokenProvider": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_InsecureTokenProvider = requireAssignableTo<TypeOnly<typeof current.InsecureTokenProvider>, TypeOnly<typeof old.InsecureTokenProvider>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "ClassStatics_MockAudience": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_MockAudience = requireAssignableTo<TypeOnly<typeof current.MockAudience>, TypeOnly<typeof old.MockAudience>>
@@ -407,15 +362,6 @@ declare type current_as_old_for_ClassStatics_MockDeltaQueue = requireAssignableT
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassStatics_MockEmptyDeltaConnection": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_MockEmptyDeltaConnection = requireAssignableTo<TypeOnly<typeof current.MockEmptyDeltaConnection>, TypeOnly<typeof old.MockEmptyDeltaConnection>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "ClassStatics_MockFluidDataStoreContext": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_MockFluidDataStoreContext = requireAssignableTo<TypeOnly<typeof current.MockFluidDataStoreContext>, TypeOnly<typeof old.MockFluidDataStoreContext>>
@@ -473,42 +419,6 @@ declare type current_as_old_for_ClassStatics_MockSharedObjectServices = requireA
  * "ClassStatics_MockStorage": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_MockStorage = requireAssignableTo<TypeOnly<typeof current.MockStorage>, TypeOnly<typeof old.MockStorage>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_deepFreeze": {"backCompat": false}
- */
-declare type current_as_old_for_Function_deepFreeze = requireAssignableTo<TypeOnly<typeof current.deepFreeze>, TypeOnly<typeof old.deepFreeze>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Function_validateAssertionError": {"backCompat": false}
- */
-declare type current_as_old_for_Function_validateAssertionError = requireAssignableTo<TypeOnly<typeof current.validateAssertionError>, TypeOnly<typeof old.validateAssertionError>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IInsecureUser": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IInsecureUser = requireAssignableTo<TypeOnly<old.IInsecureUser>, TypeOnly<current.IInsecureUser>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IInsecureUser": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IInsecureUser = requireAssignableTo<TypeOnly<current.IInsecureUser>, TypeOnly<old.IInsecureUser>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

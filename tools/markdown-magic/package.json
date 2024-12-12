@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/markdown-magic",
-	"version": "2.4.0",
+	"version": "2.12.0",
 	"private": true,
 	"description": "Contains shared utilities for Markdown content generation and embedding using markdown-magic.",
 	"homepage": "https://fluidframework.com",
@@ -30,14 +30,12 @@
 		"@tylerbu/markdown-magic": "2.4.0-tylerbu-1",
 		"chalk": "^4.1.2",
 		"markdown-magic-package-scripts": "^1.2.2",
-		"markdown-magic-template": "^1.0.1",
 		"yargs": "17.7.2"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"prettier": "~3.0.3"
 	},
-	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"dependencyComments": [
 		"chalk is left at version 4 (not 5) to keep CommonJS support."
 	],

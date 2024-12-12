@@ -6,15 +6,8 @@
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import {
-	type LazyItem,
-	type TreeStatus,
-	isLazy,
-	isTreeValue,
-	FieldKinds,
-} from "../../feature-libraries/index.js";
+import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
-import { getOrCreateInnerNode } from "../proxyBinding.js";
 import {
 	type TreeLeafValue,
 	type ImplicitFieldSchema,
@@ -31,7 +24,7 @@ import {
 } from "../leafNodeSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { Off } from "../../events/index.js";
+import type { Off } from "@fluidframework/core-interfaces";
 import {
 	getKernel,
 	isTreeNode,
@@ -43,8 +36,10 @@ import {
 	getOrCreateNodeFromInnerNode,
 	UnhydratedFlexTreeNode,
 	typeSchemaSymbol,
+	getOrCreateInnerNode,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
+import { isLazy, type LazyItem } from "../flexList.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -173,7 +168,7 @@ export const treeNodeApi: TreeNodeApi = {
 			case "nodeChanged": {
 				const nodeSchema = kernel.schema;
 				if (isObjectNodeSchema(nodeSchema)) {
-					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
 						const changedProperties = new Set(
 							Array.from(
 								changedFields,
@@ -185,17 +180,17 @@ export const treeNodeApi: TreeNodeApi = {
 						listener({ changedProperties });
 					});
 				} else if (nodeSchema.kind === NodeKind.Array) {
-					return kernel.on("childrenChangedAfterBatch", () => {
+					return kernel.events.on("childrenChangedAfterBatch", () => {
 						listener({ changedProperties: undefined });
 					});
 				} else {
-					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
 						listener({ changedProperties: changedFields });
 					});
 				}
 			}
 			case "treeChanged": {
-				return kernel.on("subtreeChangedAfterBatch", () => listener({}));
+				return kernel.events.on("subtreeChangedAfterBatch", () => listener({}));
 			}
 			default:
 				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);

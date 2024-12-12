@@ -16,12 +16,12 @@ import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.j
 import type { IPresence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
 
-import type { IExtensionMessage } from "@fluid-experimental/presence/internal/container-definitions/internal";
+import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 function assertSignalMessageIsValid(
 	message: IInboundSignalMessage | IExtensionMessage,
 ): asserts message is IExtensionMessage {
-	assert(message.clientId !== null, "Signal must have a client ID");
+	assert(message.clientId !== null, 0xa58 /* Signal must have a client ID */);
 	// The other difference between messages is that `content` for
 	// IExtensionMessage is JsonDeserialized and we are fine assuming that.
 }
@@ -58,7 +58,7 @@ class PresenceManagerFactory {
 	}
 
 	public readonly factory = new BasicDataStoreFactory(
-		"@fluid-experimental/presence",
+		"@fluidframework/presence",
 		PresenceManagerDataObject,
 	);
 }

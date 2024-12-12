@@ -6,7 +6,7 @@
 import {
 	IDeltaQueue,
 	IContainer,
-	IHostLoader,
+	type IHostLoader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 
-import { waitForContainerConnection } from "./containerUtils.js";
+import { toIDeltaManagerFull, waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
 import { IOpProcessingController } from "./testObjectProvider.js";
 import { timeoutAwait, timeoutPromise } from "./timeoutUtils.js";
@@ -85,7 +85,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * @param container - container to add
 	 */
-	private addContainer(container: IContainer) {
+	public addContainer(container: IContainer) {
 		// don't add container that is already tracked
 		if (this.containers.has(container)) {
 			return;
@@ -145,7 +145,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * @param record - the record to update the trailing op information
 	 */
 	private trackTrailingNoOps(container: IContainer, record: ContainerRecord) {
-		container.deltaManager.outbound.on("op", (messages) => {
+		const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
+		deltaManagerFull.outbound.on("op", (messages) => {
 			for (const msg of messages) {
 				if (canBeCoalescedByService(msg)) {
 					// Track the NoOp that was sent.
@@ -161,7 +162,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			}
 		});
 
-		container.deltaManager.inbound.on("push", (message) => {
+		deltaManagerFull.inbound.on("push", (message) => {
 			// Received the no op back, update the record if we are tracking
 			if (
 				canBeCoalescedByService(message) &&
@@ -458,12 +459,12 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		return new Promise<void>((resolve) => {
 			const handler = () => {
 				containersToApply.map((c) => {
-					c.deltaManager.inbound.off("push", handler);
+					toIDeltaManagerFull(c.deltaManager).inbound.off("push", handler);
 				});
 				resolve();
 			};
 			containersToApply.map((c) => {
-				c.deltaManager.inbound.on("push", handler);
+				toIDeltaManagerFull(c.deltaManager).inbound.on("push", handler);
 			});
 		});
 	}
@@ -482,8 +483,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			);
 			if (record?.paused === true) {
 				debugWait(`${record.index}: container resumed`);
-				container.deltaManager.inbound.resume();
-				container.deltaManager.outbound.resume();
+				const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
+				deltaManagerFull.inbound.resume();
+				deltaManagerFull.outbound.resume();
 				resumed.push(container);
 				record.paused = false;
 			}
@@ -526,12 +528,13 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 */
 	private async pauseContainer(container: IContainer, record: ContainerRecord) {
 		debugWait(`${record.index}: pausing container`);
-		assert(!container.deltaManager.outbound.paused, "Container should not be paused yet");
-		assert(!container.deltaManager.inbound.paused, "Container should not be paused yet");
+		const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
+		assert(!deltaManagerFull.outbound.paused, "Container should not be paused yet");
+		assert(!deltaManagerFull.inbound.paused, "Container should not be paused yet");
 
 		// Pause outbound
 		debugWait(`${record.index}: pausing container outbound queues`);
-		await container.deltaManager.outbound.pause();
+		await deltaManagerFull.outbound.pause();
 
 		// Ensure the container is connected first.
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -542,7 +545,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		// Check if the container is in write mode
 		if (!container.deltaManager.active) {
 			let proposalP: Promise<boolean> | undefined;
-			if (container.deltaManager.outbound.idle) {
+			if (deltaManagerFull.outbound.idle) {
 				// Need to generate an op to force write mode
 				debugWait(`${record.index}: container force write connection`);
 				const maybeContainer = container as Partial<IContainer>;
@@ -556,11 +559,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
 
 			// Wait for nack
 			debugWait(`${record.index}: Wait for container disconnect`);
-			container.deltaManager.outbound.resume();
+			deltaManagerFull.outbound.resume();
 			await new Promise<void>((resolve) => container.once("disconnected", resolve));
 			const accepted = proposalP ? await proposalP : false;
 			assert(!accepted, "A proposal in read mode should be rejected");
-			await container.deltaManager.outbound.pause();
+			await deltaManagerFull.outbound.pause();
 
 			// Ensure the container is reconnect.
 			if (container.connectionState !== ConnectionState.Connected) {
@@ -572,7 +575,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		debugWait(`${record.index}: pausing container inbound queues`);
 
 		// Pause inbound
-		await container.deltaManager.inbound.pause();
+		await deltaManagerFull.inbound.pause();
 
 		debugWait(`${record.index}: container paused`);
 
@@ -588,7 +591,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * Pausing will switch the container to write mode. See `pauseProcessing`
 	 */
 	public async processIncoming(...containers: IContainer[]) {
-		return this.processQueue(containers, (container) => container.deltaManager.inbound);
+		return this.processQueue(
+			containers,
+			(container) => toIDeltaManagerFull(container.deltaManager).inbound,
+		);
 	}
 
 	/**
@@ -599,7 +605,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * Pausing will switch the container to write mode. See `pauseProcessing`
 	 */
 	public async processOutgoing(...containers: IContainer[]) {
-		return this.processQueue(containers, (container) => container.deltaManager.outbound);
+		return this.processQueue(
+			containers,
+			(container) => toIDeltaManagerFull(container.deltaManager).outbound,
+		);
 	}
 
 	/**
@@ -678,12 +687,13 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			}
 		};
 
-		container.deltaManager.outbound.on("op", outHandler);
-		container.deltaManager.inbound.on("push", inHandler);
+		const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
+		deltaManagerFull.outbound.on("op", outHandler);
+		deltaManagerFull.inbound.on("push", inHandler);
 
 		return () => {
-			container.deltaManager.outbound.off("op", outHandler);
-			container.deltaManager.inbound.off("push", inHandler);
+			deltaManagerFull.outbound.off("op", outHandler);
+			deltaManagerFull.inbound.off("push", inHandler);
 		};
 	}
 
@@ -726,7 +736,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
 				}
 			};
 			debugOp(`${index}: ADD: clientId: ${container.clientId}`);
-			container.deltaManager.outbound.on("op", (messages) => {
+			const deltaManagerFull = toIDeltaManagerFull(container.deltaManager);
+			deltaManagerFull.outbound.on("op", (messages) => {
 				for (const msg of messages) {
 					debugOp(
 						`${index}: OUT:          ` +
@@ -749,8 +760,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
 					);
 				};
 			};
-			container.deltaManager.inbound.on("push", getInboundHandler("IN "));
-			container.deltaManager.inbound.on("op", getInboundHandler("OP "));
+			deltaManagerFull.inbound.on("push", getInboundHandler("IN "));
+			deltaManagerFull.inbound.on("op", getInboundHandler("OP "));
 			container.deltaManager.on("connect", (details) => {
 				debugOp(`${index}: CON: clientId: ${details.clientId}`);
 			});

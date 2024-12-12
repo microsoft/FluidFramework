@@ -4,6 +4,9 @@
 
 ```ts
 
+// @public
+export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
+
 // @alpha
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
@@ -63,19 +66,15 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
 }
 
-// @alpha (undocumented)
+// @alpha
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor(params?: {
         groupId?: string;
     });
-    // (undocumented)
     addAttachment(id: string): void;
-    // (undocumented)
     addBlob(key: string, content: string | Uint8Array): void;
     addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
-    // (undocumented)
     addWithStats(key: string, summarizeResult: ISummarizeResult): void;
-    // (undocumented)
     getSummaryTree(): ISummaryTreeWithStats;
     // (undocumented)
     get stats(): Readonly<ISummaryStats>;

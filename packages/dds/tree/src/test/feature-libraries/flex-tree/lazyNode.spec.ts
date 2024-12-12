@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import {
 	type Anchor,

@@ -68,6 +68,8 @@ Init 'success'
 => CheckDependenciesInstalled 'success'
 => CheckPolicy 'success'
 => CheckAssertTagging 'success'
+=> CheckReleaseNotes 'success'
+=> CheckChangelogs 'success'
 => CheckHasRemote 'success'
 => CheckBranchUpToDate 'success'
 => CheckNoPrereleaseDependencies 'success'
@@ -91,6 +93,14 @@ CheckBranchUpToDate
 CheckPolicy
 CheckAssertTagging
 ] 'failure' -> PromptToCommitPolicy;
+
+[
+CheckReleaseNotes
+] 'failure' -> PromptToGenerateReleaseNotes;
+
+[
+CheckChangelogs
+] 'failure' -> PromptToGenerateChangelogs;
 // END Init and optional checks
 
 

@@ -4,8 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	type AnchorNode,
 	CursorLocationType,
 	type ExclusiveMapTree,
 	type FieldAnchor,
@@ -51,9 +53,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
-import { unboxedFlexNode } from "./unboxed.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { cursorForMapTreeField, cursorForMapTreeNode } from "../mapTreeCursor.js";
 
 /**
@@ -151,7 +151,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			const anchorNode =
 				context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
 				fail("parent anchor node should always exist since field is under a node");
-			this.offAfterDestroy = anchorNode.on("afterDestroy", () => {
+			this.offAfterDestroy = anchorNode.events.on("afterDestroy", () => {
 				this[disposeSymbol]();
 			});
 		}
@@ -196,7 +196,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 
 	public atIndex(index: number): FlexTreeUnknownUnboxed {
 		return inCursorNode(this[cursorSymbol], index, (cursor) =>
-			unboxedFlexNode(this.context, cursor),
+			unboxedFlexNode(this.context, cursor, this[anchorSymbol]),
 		);
 	}
 
@@ -222,7 +222,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 
 	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
 		return iterateCursorField(this[cursorSymbol], (cursor) =>
-			unboxedFlexNode(this.context, cursor),
+			unboxedFlexNode(this.context, cursor, this[anchorSymbol]),
 		);
 	}
 
@@ -259,9 +259,7 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 			return undefined;
 		}
 
-		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
-			unboxedFlexNode(this.context, cursor),
-		);
+		return this.atIndex(finalIndex);
 	}
 	public get asArray(): readonly FlexTreeUnknownUnboxed[] {
 		return this.map((x) => x);
@@ -352,3 +350,42 @@ const builderList: [FieldKindIdentifier, Builder][] = [
 ];
 
 const kindToClass: ReadonlyMap<FieldKindIdentifier, Builder> = new Map(builderList);
+
+/**
+ * Returns the flex tree node, or the value if it has one.
+ */
+export function unboxedFlexNode(
+	context: Context,
+	cursor: ITreeSubscriptionCursor,
+	fieldAnchor: FieldAnchor,
+): FlexTreeUnknownUnboxed {
+	const value = cursor.value;
+	if (value !== undefined) {
+		return value;
+	}
+
+	// Try accessing cached child node via anchors.
+	// This avoids O(depth) related costs from makeTree in the cached case.
+	const anchor = fieldAnchor.parent;
+	let child: AnchorNode | undefined;
+	if (anchor !== undefined) {
+		const anchorNode = context.checkout.forest.anchors.locate(anchor);
+		assert(anchorNode !== undefined, 0xa4c /* missing anchor */);
+		child = anchorNode.childIfAnchored(fieldAnchor.fieldKey, cursor.fieldIndex);
+	} else {
+		child = context.checkout.forest.anchors.find({
+			parent: undefined,
+			parentField: fieldAnchor.fieldKey,
+			parentIndex: cursor.fieldIndex,
+		});
+	}
+
+	if (child !== undefined) {
+		const cached = child.slots.get(flexTreeSlot);
+		if (cached !== undefined) {
+			return cached;
+		}
+	}
+
+	return makeTree(context, cursor);
+}

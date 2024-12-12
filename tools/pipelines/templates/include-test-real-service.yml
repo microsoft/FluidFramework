@@ -34,7 +34,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Small
+  default: Small-eastus2
 
 - name: testPackage
   type: string
@@ -115,6 +115,7 @@ parameters:
 
 stages:
 - stage: ${{ parameters.stageId}}
+  condition: ${{ parameters.condition }}
   displayName: ${{ parameters.stageDisplayName }}
   dependsOn: ${{ parameters.stageDependencies }}
   ${{ if parameters.stageVariables }}:
@@ -125,7 +126,6 @@ stages:
       - job:
         displayName: Run ${{ variant.name }}
         pool: ${{ parameters.poolBuild }}
-        condition: ${{ parameters.condition }}
         timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
         variables:
         - group: ado-feeds
@@ -183,6 +183,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                set -eu -o pipefail
 
                 # Extract public part from cert
                 openssl x509 -in $(downloadCertTask.secureFilePath) -out cert.crt
@@ -198,6 +199,8 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
+              set -eu -o pipefail
+
               # Show all task group conditions
 
               echo "
@@ -249,6 +252,8 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
+              set -eu -o pipefail
+
               mkdir ${{ parameters.testWorkspace }}
 
         - task: Bash@3
@@ -259,6 +264,8 @@ stages:
             workingDirectory: ${{ parameters.testWorkspace }}
             # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
             script: |
+              set -eu -o pipefail
+
               echo Initialize package
               npm init --yes
 
@@ -342,6 +349,8 @@ stages:
               workingDirectory: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
               targetType: 'inline'
               script: |
+                set -eu -o pipefail
+
                 TAR_PATH=$(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar
                 echo "Unpacking test files for ${{ parameters.testPackage }} from file '$TAR_PATH' in '$(pwd)'"
                 # Note: we could skip the last argument and have it unpack everything at once, but if we later change
@@ -359,6 +368,8 @@ stages:
               workingDirectory: ${{ parameters.testWorkspace }}
               targetType: 'inline'
               script: |
+                set -eu -o pipefail
+
                 testPkgJsonPath=${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/package.json
                 pkgJsonPath=${{ parameters.testWorkspace }}/package.json
                 node -e "
@@ -405,6 +416,8 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                set -eu -o pipefail
+
                 if [[ -d ${{ variables.testPackageDir }}/nyc ]]; then
                   echo "directory '${{ variables.testPackageDir }}/nyc' exists."
                   cd ${{ variables.testPackageDir }}/nyc

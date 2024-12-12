@@ -52,7 +52,7 @@ parameters:
 
   - name: pool
     type: string
-    default: Small-1ES
+    default: Small-eastus2
 
   - name: buildToolsVersionToInstall
     type: string
@@ -187,6 +187,9 @@ extends:
             targetType: 'inline'
             workingDirectory: ${{ parameters.buildDirectory }}
             script: |
+              # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+              # even in an error case
+
               # Show all task group conditions
               echo "
               Pipeline Variables:
@@ -287,6 +290,7 @@ extends:
               targetType: 'inline'
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
+                set -eu -o pipefail
                 ${{ parameters.packageManagerInstallCommand }}
 
           - template: /tools/pipelines/templates/include-set-package-version.yml@self
@@ -303,6 +307,7 @@ extends:
             inputs:
               targetType: 'inline'
               script: |
+                set -eu -o pipefail
                 echo "$(containerTagSuffix)"
                 echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
 
@@ -316,6 +321,7 @@ extends:
             targetType: 'inline'
             workingDirectory: $(Build.SourcesDirectory)
             script: |
+              set -eu -o pipefail
               cp ./CredScanSuppressions.json ${{ parameters.buildDirectory }}
 
         # The GitSSH Dockerfile does not have a 'base' target nor does it run pack/lint/test/docs tasks, so skip
@@ -345,6 +351,7 @@ extends:
               inputs:
                 targetType: 'inline'
                 script: |
+                  set -eu -o pipefail
                   mkdir -p $(hostPathToPackArtifact)
                   mkdir -p $(hostPathToTestResultsArtifact)
 
@@ -370,6 +377,7 @@ extends:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
+                  set -eu -o pipefail
                   flub list --no-private $RELEASE_GROUP --tarball --feed public --outFile $STAGING_PATH/pack/packagePublishOrder-public.txt
                   flub list --no-private $RELEASE_GROUP --tarball --feed internal-build --outFile $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
                   flub list --no-private $RELEASE_GROUP --tarball --feed internal-dev --outFile $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
@@ -441,6 +449,7 @@ extends:
                 targetType: 'inline'
                 workingDirectory: $(hostPathToTestResultsArtifact)
                 script: |
+                  set -eu -o pipefail
                   sudo chmod -R +r .
 
           # Docs
@@ -485,6 +494,7 @@ extends:
               targetType: 'inline'
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
+                set -eu -o pipefail
                 # containerTag should always be pushed
                 FINAL_TAG_LIST=$(containerTag)
 
@@ -510,6 +520,7 @@ extends:
               targetType: 'inline'
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
+                set -eu -o pipefail
                 pnpm store prune
 
         templateContext:

@@ -22,7 +22,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-import { TestSnapshotCache } from "../../testSnapshotCache.js";
+import { TestPersistedCache } from "../../testPersistedCache.js";
 import { supportsDataVirtualization, clearCacheIfOdsp } from "../data-virtualization/index.js";
 
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
@@ -67,7 +67,7 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 	};
 
 	let provider: ITestObjectProvider;
-	const persistedCache = new TestSnapshotCache();
+	const persistedCache = new TestPersistedCache();
 
 	const loadSummarizer = async (container: IContainer, summaryVersion?: string) => {
 		return createSummarizer(

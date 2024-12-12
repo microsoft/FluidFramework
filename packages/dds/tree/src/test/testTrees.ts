@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
@@ -35,7 +35,9 @@ import {
 	stringSchema,
 	toStoredSchema,
 	type ImplicitFieldSchema,
+	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -44,6 +46,18 @@ import { jsonableTreesFromFieldCursor } from "./feature-libraries/chunked-forest
 import { fieldJsonCursor } from "./json/jsonCursor.js";
 import { brand } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
+// eslint-disable-next-line import/no-internal-modules
+import { isLazy, type LazyItem } from "../simple-tree/flexList.js";
+
+interface TestSimpleTree {
+	readonly name: string;
+	readonly schema: ImplicitFieldSchema;
+	/**
+	 * InsertableTreeFieldFromImplicitField<TSchema>
+	 */
+	root(): InsertableField<UnsafeUnknownSchema>;
+	readonly ambiguous: boolean;
+}
 
 interface TestTree {
 	readonly name: string;
@@ -52,15 +66,26 @@ interface TestTree {
 	readonly treeFactory: (idCompressor?: IIdCompressor) => JsonableTree[];
 }
 
-function testSimpleTree<TSchema extends ImplicitFieldSchema>(
+function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
 	name: string,
 	schema: TSchema,
-	rootNode: InsertableTreeFieldFromImplicitField<TSchema>,
-): TestTree {
-	const cursor = cursorFromInsertable(schema, rootNode);
-	return test(
+	root: LazyItem<InsertableTreeFieldFromImplicitField<TSchema>>,
+	ambiguous = false,
+): TestSimpleTree {
+	const normalizedLazy = isLazy(root) ? root : () => root;
+	return {
 		name,
-		toStoredSchema(schema),
+		schema,
+		root: normalizedLazy as () => InsertableField<UnsafeUnknownSchema>,
+		ambiguous,
+	};
+}
+
+function convertSimpleTreeTest(data: TestSimpleTree): TestTree {
+	const cursor = cursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root());
+	return test(
+		data.name,
+		toStoredSchema(data.schema),
 		cursor === undefined ? [] : [jsonableTreeFromCursor(cursor)],
 	);
 }
@@ -100,8 +125,15 @@ export function treeContentFromTestTree(testData: TestTree): TreeStoredContent {
 
 const factory = new SchemaFactory("test");
 export class Minimal extends factory.object("minimal", {}) {}
+export class Minimal2 extends factory.object("minimal2", {}) {}
 export class HasMinimalValueField extends factory.object("hasMinimalValueField", {
 	field: Minimal,
+}) {}
+export class HasRenamedField extends factory.object("hasRenamedField", {
+	field: factory.required(Minimal, { key: "stored-name" }),
+}) {}
+export class HasAmbiguousField extends factory.object("hasAmbiguousField", {
+	field: [Minimal, Minimal2],
 }) {}
 export class HasNumericValueField extends factory.object("hasNumericValueField", {
 	field: factory.number,
@@ -162,12 +194,44 @@ const library = {
 	]),
 } satisfies Partial<TreeStoredSchema>;
 
-export const testTrees: readonly TestTree[] = [
+export const testSimpleTrees: readonly TestSimpleTree[] = [
 	testSimpleTree("empty", factory.optional([]), undefined),
 	testSimpleTree("null", factory.null, null),
 	testSimpleTree("minimal", Minimal, {}),
 	testSimpleTree("numeric", factory.number, 5),
 	testSimpleTree("handle", factory.handle, new MockHandle(5)),
+	testSimpleTree("true boolean", factory.boolean, true),
+	testSimpleTree("false boolean", factory.boolean, false),
+	testSimpleTree("hasMinimalValueField", HasMinimalValueField, { field: {} }),
+	testSimpleTree("hasRenamedField", HasRenamedField, { field: {} }),
+	testSimpleTree(
+		"hasAmbiguousField",
+		HasAmbiguousField,
+		() => ({ field: new Minimal({}) }),
+		true,
+	),
+	testSimpleTree("hasNumericValueField", HasNumericValueField, { field: 5 }),
+	testSimpleTree("hasPolymorphicValueField", HasPolymorphicValueField, { field: 5 }),
+	testSimpleTree("hasOptionalField-empty", HasOptionalField, {}),
+	testSimpleTree("numericMap-empty", NumericMap, {}),
+	testSimpleTree("numericMap-full", NumericMap, { a: 5, b: 6 }),
+	testSimpleTree("recursiveType-empty", RecursiveType, new RecursiveType({})),
+	testSimpleTree(
+		"recursiveType-recursive",
+		RecursiveType,
+		new RecursiveType({ field: new RecursiveType({}) }),
+	),
+	testSimpleTree(
+		"recursiveType-deeper",
+		RecursiveType,
+		new RecursiveType({
+			field: new RecursiveType({ field: new RecursiveType({ field: new RecursiveType({}) }) }),
+		}),
+	),
+];
+
+export const testTrees: readonly TestTree[] = [
+	...testSimpleTrees.map(convertSimpleTreeTest),
 	test(
 		"numericSequence",
 		{
@@ -196,12 +260,7 @@ export const testTrees: readonly TestTree[] = [
 		},
 		policy: defaultSchemaPolicy,
 	},
-	testSimpleTree("true boolean", factory.boolean, true),
-	testSimpleTree("false boolean", factory.boolean, false),
-	testSimpleTree("hasMinimalValueField", HasMinimalValueField, { field: {} }),
-	testSimpleTree("hasNumericValueField", HasNumericValueField, { field: 5 }),
-	testSimpleTree("hasPolymorphicValueField", HasPolymorphicValueField, { field: 5 }),
-	testSimpleTree("hasOptionalField-empty", HasOptionalField, {}),
+
 	test(
 		"allTheFields-minimal",
 		{
@@ -237,21 +296,6 @@ export const testTrees: readonly TestTree[] = [
 				},
 			},
 		],
-	),
-	testSimpleTree("numericMap-empty", NumericMap, {}),
-	testSimpleTree("numericMap-full", NumericMap, { a: 5, b: 6 }),
-	testSimpleTree("recursiveType-empty", RecursiveType, new RecursiveType({})),
-	testSimpleTree(
-		"recursiveType-recursive",
-		RecursiveType,
-		new RecursiveType({ field: new RecursiveType({}) }),
-	),
-	testSimpleTree(
-		"recursiveType-deeper",
-		RecursiveType,
-		new RecursiveType({
-			field: new RecursiveType({ field: new RecursiveType({ field: new RecursiveType({}) }) }),
-		}),
 	),
 ];
 

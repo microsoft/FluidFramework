@@ -15,6 +15,7 @@
 			"**/dist/*",
 			"**/lib/*",
 			"**/*.done.build.log",
+			"**/.next", // NextJS
 
 			// test collateral
 			"**/_package.json",
@@ -57,6 +58,8 @@
 			"packages/tools/fluid-runner/src/test/localOdspSnapshots/**",
 			"packages/tools/fluid-runner/src/test/telemetryExpectedOutputs/**",
 			"tools/api-markdown-documenter/src/test/snapshots/**",
+			// TODO: why does examples/apps/tree-cli-app/*.json not work?
+			"**/data/*.json",
 
 			// Generated type-tests
 			"**/*.generated.ts",

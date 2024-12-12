@@ -28,11 +28,12 @@ import * as alfredApp from "../../alfred/app";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "@fluidframework/server-services-utils";
-import { TestCache } from "@fluidframework/server-test-utils";
+import { TestCache, TestFluidAccessTokenGenerator } from "@fluidframework/server-test-utils";
 import { DeltaService, DocumentDeleteService } from "../../alfred/services";
 import * as SessionHelper from "../../utils/sessionHelper";
 import Sinon from "sinon";
 import { Constants } from "../../utils";
+import { StartupCheck } from "@fluidframework/server-services-shared";
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
@@ -130,6 +131,7 @@ describe("Routerlicious", () => {
 				new TypedEventEmitter<ICollaborationSessionEvents>();
 			let app: express.Application;
 			let supertest: request.SuperTest<request.Test>;
+			let testFluidAccessTokenGenerator: TestFluidAccessTokenGenerator;
 			describe("throttling", () => {
 				const limitTenant = 10;
 				const limitCreateDoc = 5;
@@ -174,6 +176,8 @@ describe("Routerlicious", () => {
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottler,
 					);
+					const startupCheck = new StartupCheck();
+					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -186,21 +190,27 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
-						null,
-						null,
+						startupCheck,
+						undefined,
+						undefined,
 						defaultCollaborationSessionEventEmitter,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
 				});
 
 				const assertThrottle = async (
 					url: string,
-					token: string | (() => string),
-					body: any,
+					token: string | (() => string) | undefined,
+					body: any | undefined,
 					method: "get" | "post" | "patch" = "get",
 					limit: number = limitTenant,
 				): Promise<void> => {
-					const tokenProvider = typeof token === "function" ? token : () => token;
+					const tokenProvider =
+						typeof token === "function" ? token : () => token ?? "no-token";
 					for (let i = 0; i < limit; i++) {
 						// we're not interested in making the requests succeed with 200s, so just assert that not 429
 						await supertest[method](url)
@@ -218,21 +228,29 @@ describe("Routerlicious", () => {
 
 				describe("/api/v1", () => {
 					it("/ping", async () => {
-						await assertThrottle("/api/v1/ping", null, null);
+						await assertThrottle("/api/v1/ping", undefined, undefined);
+					});
+					it("/tenants/:tenantid/accesstoken", async () => {
+						await assertThrottle(
+							`/api/v1/tenants/${appTenant1.id}/accesstoken`,
+							"Bearer 12345", // Dummy bearer token
+							undefined,
+							"post",
+						);
 					});
 					it("/:tenantId/:id/root", async () => {
 						await assertThrottle(
 							`/api/v1/${appTenant1.id}/${document1._id}/root`,
-							null,
-							null,
+							undefined,
+							undefined,
 							"patch",
 						);
 					});
 					it("/:tenantId/:id/blobs", async () => {
 						await assertThrottle(
 							`/api/v1/${appTenant1.id}/${document1._id}/blobs`,
-							null,
-							null,
+							undefined,
+							undefined,
 							"post",
 						);
 					});
@@ -243,12 +261,12 @@ describe("Routerlicious", () => {
 						await assertThrottle(
 							`/documents/${appTenant2.id}/${document1._id}`,
 							tenantToken2,
-							null,
+							undefined,
 						);
 						await assertThrottle(
 							`/documents/${appTenant1.id}/${document1._id}`,
 							tenantToken1,
-							null,
+							undefined,
 						);
 						await supertest
 							.get(`/documents/${appTenant1.id}/${document1._id}`)
@@ -273,12 +291,12 @@ describe("Routerlicious", () => {
 						await assertThrottle(
 							`/deltas/raw/${appTenant2.id}/${document1._id}`,
 							tenantToken2,
-							null,
+							undefined,
 						);
 						await assertThrottle(
 							`/deltas/raw/${appTenant1.id}/${document1._id}`,
 							tenantToken1,
-							null,
+							undefined,
 						);
 						await supertest
 							.get(`/deltas/raw/${appTenant1.id}/${document1._id}`)
@@ -289,7 +307,7 @@ describe("Routerlicious", () => {
 						await assertThrottle(
 							`/deltas/${appTenant1.id}/${document1._id}`,
 							tenantToken1,
-							null,
+							undefined,
 							"get",
 							limitGetDeltas,
 						);
@@ -302,12 +320,12 @@ describe("Routerlicious", () => {
 						await assertThrottle(
 							`/deltas/v1/${appTenant2.id}/${document1._id}`,
 							tenantToken2,
-							null,
+							undefined,
 						);
 						await assertThrottle(
 							`/deltas/v1/${appTenant1.id}/${document1._id}`,
 							tenantToken1,
-							null,
+							undefined,
 						);
 						await supertest
 							.get(`/deltas/v1/${appTenant1.id}/${document1._id}`)
@@ -318,12 +336,12 @@ describe("Routerlicious", () => {
 						await assertThrottle(
 							`/deltas/${appTenant2.id}/${document1._id}/v1`,
 							tenantToken2,
-							null,
+							undefined,
 						);
 						await assertThrottle(
 							`/deltas/${appTenant1.id}/${document1._id}/v1`,
 							tenantToken1,
-							null,
+							undefined,
 						);
 						await supertest
 							.get(`/deltas/${appTenant1.id}/${document1._id}/v1`)
@@ -375,6 +393,8 @@ describe("Routerlicious", () => {
 						restClusterGetSessionThrottler,
 					);
 
+					const startupCheck = new StartupCheck();
+					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -387,14 +407,54 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
-						null,
-						null,
+						startupCheck,
+						undefined,
+						undefined,
 						defaultCollaborationSessionEventEmitter,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
 				});
 
 				describe("/api/v1", () => {
+					it("/api/v1/tenants/:tenantid/accesstoken", async () => {
+						const body = {
+							documentId: "doc-1",
+						};
+
+						await supertest
+							.post(`/api/v1/tenants/${appTenant1.id}/accesstoken`)
+							.set("Authorization", "Bearer 12345")
+							.set("Content-Type", "application/json")
+							.send(body)
+							.expect(201);
+					});
+					it("/api/v1/tenants/:tenantid/accesstoken missing-bearer-token", async () => {
+						const body = {
+							documentId: "doc-1",
+						};
+
+						await supertest
+							.post(`/api/v1/tenants/${appTenant1.id}/accesstoken`)
+							.set("Content-Type", "application/json")
+							.send(body)
+							.expect(400);
+					});
+					it("/api/v1/tenants/:tenantid/accesstoken invalid-token", async () => {
+						const body = {
+							documentId: "doc-1",
+						};
+
+						await supertest
+							.post(`/api/v1/tenants/${appTenant1.id}/accesstoken`)
+							.set("Authorization", "Basic 12345")
+							.set("Content-Type", "application/json")
+							.send(body)
+							.expect(400);
+					});
 					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
 						const body = {
 							signalContent: {
@@ -542,6 +602,8 @@ describe("Routerlicious", () => {
 						restClusterGetSessionThrottler,
 					);
 
+					const startupCheck = new StartupCheck();
+					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -554,9 +616,14 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
-						null,
-						null,
+						startupCheck,
+						undefined,
+						undefined,
 						defaultCollaborationSessionEventEmitter,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
 				});
@@ -578,6 +645,12 @@ describe("Routerlicious", () => {
 				describe("/api/v1", () => {
 					it("/ping", async () => {
 						await assertCorrelationId("/api/v1/ping");
+					});
+					it("/tenants/:tenantid/accesstoken", async () => {
+						await assertCorrelationId(
+							`/api/v1/tenants/${appTenant1.id}/accesstoken`,
+							"post",
+						);
 					});
 					it("/:tenantId/:id/root", async () => {
 						await assertCorrelationId(
@@ -665,6 +738,8 @@ describe("Routerlicious", () => {
 						Constants.getSessionThrottleIdPrefix,
 						restClusterGetSessionThrottler,
 					);
+					const startupCheck = new StartupCheck();
+					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -677,6 +752,14 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
+						startupCheck,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
 				});
@@ -747,6 +830,8 @@ describe("Routerlicious", () => {
 
 					spyGetSession = Sinon.spy(SessionHelper, "getSession");
 
+					const startupCheck = new StartupCheck();
+					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -759,6 +844,14 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
+						startupCheck,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
 				});
@@ -864,6 +957,8 @@ describe("Routerlicious", () => {
 						restClusterGetSessionThrottler,
 					);
 
+					const startupCheck = new StartupCheck();
+					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -876,11 +971,54 @@ describe("Routerlicious", () => {
 						defaultProducer,
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
-						null,
-						null,
+						startupCheck,
+						undefined,
+						undefined,
 						defaultCollaborationSessionEventEmitter,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
+				});
+
+				describe("/api/v1", () => {
+					it("/tenants/:tenantid/accesstoken validate access token exists in response", async () => {
+						const body = {
+							documentId: "doc-1",
+							customClaims: {
+								claim1: "value1",
+								claim2: "value2",
+							},
+						};
+
+						await supertest
+							.post(`/api/v1/tenants/${appTenant1.id}/accesstoken`)
+							.set("Authorization", "Bearer 12345")
+							.set("Content-Type", "application/json")
+							.send(body)
+							.expect((res) => {
+								assert.strictEqual(res.status, 201);
+								assert.notStrictEqual(res.body.fluidAccessToken, undefined);
+							});
+					});
+					it("/tenants/:tenantid/accesstoken bearer token validation failure", async () => {
+						testFluidAccessTokenGenerator.setFailSignatureValidation();
+						await supertest
+							.post(`/api/v1/tenants/${appTenant1.id}/accesstoken`)
+							.set("Authorization", "Bearer 12345")
+							.set("Content-Type", "application/json")
+							.expect(401);
+					});
+					it("/tenants/:tenantid/accesstoken authorization failure", async () => {
+						testFluidAccessTokenGenerator.setFailAuthorizationValidation();
+						await supertest
+							.post(`/api/v1/tenants/${appTenant1.id}/accesstoken`)
+							.set("Authorization", "Bearer 12345")
+							.set("Content-Type", "application/json")
+							.expect(403);
+					});
 				});
 
 				describe("/api/v1/:tenantId/:id/broadcast-signal", () => {

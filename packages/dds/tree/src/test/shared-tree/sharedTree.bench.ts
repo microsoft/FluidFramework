@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type BenchmarkTimer,
@@ -369,7 +369,7 @@ describe("SharedTree benchmarks", () => {
 		// - generating 5 edits per second with a 2000ms round-trip time
 		// - generating 10 edits per second with a 1000ms round-trip time
 		// - generating 100 edits per second with a 100ms round-trip time
-		const commitCounts = [1, 5, 10];
+		const commitCounts = isInPerformanceTestingMode ? [1, 5, 10] : [1, 2];
 		for (const peerCount of peerCounts) {
 			for (const commitCount of commitCounts) {
 				const test = benchmark({

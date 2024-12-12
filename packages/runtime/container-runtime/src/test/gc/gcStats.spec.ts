@@ -177,7 +177,7 @@ describe("Garbage Collection Stats", () => {
 		if (lastGCMessage === undefined) {
 			return;
 		}
-		garbageCollector.processMessage(lastGCMessage, Date.now(), true /* local */);
+		garbageCollector.processMessages([lastGCMessage.contents], Date.now(), true /* local */);
 	}
 
 	describe("Mark phase stats", () => {

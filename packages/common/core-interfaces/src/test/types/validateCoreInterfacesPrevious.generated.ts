@@ -121,7 +121,7 @@ declare type current_as_old_for_Interface_IEvent = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Interface_IEventProvider": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IEventProvider = requireAssignableTo<TypeOnly<current.IEventProvider<any>>, TypeOnly<old.IEventProvider<any>>>
+declare type current_as_old_for_Interface_IEventProvider = requireAssignableTo<TypeOnly<current.IEventProvider<never>>, TypeOnly<old.IEventProvider<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -157,7 +157,7 @@ declare type current_as_old_for_Interface_IFluidHandleContext = requireAssignabl
  * typeValidation.broken:
  * "Interface_IFluidHandleErased": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IFluidHandleErased = requireAssignableTo<TypeOnly<current.IFluidHandleErased<any>>, TypeOnly<old.IFluidHandleErased<any>>>
+declare type current_as_old_for_Interface_IFluidHandleErased = requireAssignableTo<TypeOnly<current.IFluidHandleErased<never>>, TypeOnly<old.IFluidHandleErased<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -185,42 +185,6 @@ declare type current_as_old_for_Interface_IFluidHandleInternal = requireAssignab
  * "Interface_IFluidLoadable": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IFluidLoadable = requireAssignableTo<TypeOnly<current.IFluidLoadable>, TypeOnly<old.IFluidLoadable>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IFluidRunnable": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IFluidRunnable = requireAssignableTo<TypeOnly<old.IFluidRunnable>, TypeOnly<current.IFluidRunnable>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IFluidRunnable": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IFluidRunnable = requireAssignableTo<TypeOnly<current.IFluidRunnable>, TypeOnly<old.IFluidRunnable>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IGenericError": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IGenericError = requireAssignableTo<TypeOnly<old.IGenericError>, TypeOnly<current.IGenericError>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IGenericError": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IGenericError = requireAssignableTo<TypeOnly<current.IGenericError>, TypeOnly<old.IGenericError>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -299,24 +263,6 @@ declare type current_as_old_for_Interface_IProvideFluidLoadable = requireAssigna
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_IProvideFluidRunnable": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IProvideFluidRunnable = requireAssignableTo<TypeOnly<old.IProvideFluidRunnable>, TypeOnly<current.IProvideFluidRunnable>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IProvideFluidRunnable": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IProvideFluidRunnable = requireAssignableTo<TypeOnly<current.IProvideFluidRunnable>, TypeOnly<old.IProvideFluidRunnable>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_IRequest": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IRequest = requireAssignableTo<TypeOnly<old.IRequest>, TypeOnly<current.IRequest>>
@@ -365,24 +311,6 @@ declare type old_as_current_for_Interface_IResponse = requireAssignableTo<TypeOn
  * "Interface_IResponse": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IResponse = requireAssignableTo<TypeOnly<current.IResponse>, TypeOnly<old.IResponse>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ISignalEnvelope": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ISignalEnvelope = requireAssignableTo<TypeOnly<old.ISignalEnvelope>, TypeOnly<current.ISignalEnvelope>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ISignalEnvelope": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ISignalEnvelope = requireAssignableTo<TypeOnly<current.ISignalEnvelope>, TypeOnly<old.ISignalEnvelope>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -457,22 +385,13 @@ declare type old_as_current_for_Interface_IThrottlingWarning = requireAssignable
 declare type current_as_old_for_Interface_IThrottlingWarning = requireAssignableTo<TypeOnly<current.IThrottlingWarning>, TypeOnly<old.IThrottlingWarning>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IUsageError": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IUsageError = requireAssignableTo<TypeOnly<old.IUsageError>, TypeOnly<current.IUsageError>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_IUsageError": {"backCompat": false}
+ * "Interface_Listenable": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IUsageError = requireAssignableTo<TypeOnly<current.IUsageError>, TypeOnly<old.IUsageError>>
+declare type current_as_old_for_Interface_Listenable = requireAssignableTo<TypeOnly<current.Listenable<never>>, TypeOnly<old.Listenable<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -481,7 +400,7 @@ declare type current_as_old_for_Interface_IUsageError = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_Tagged": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_Tagged = requireAssignableTo<TypeOnly<old.Tagged<any>>, TypeOnly<current.Tagged<any>>>
+declare type old_as_current_for_Interface_Tagged = requireAssignableTo<TypeOnly<old.Tagged<never>>, TypeOnly<current.Tagged<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -490,7 +409,7 @@ declare type old_as_current_for_Interface_Tagged = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Interface_Tagged": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_Tagged = requireAssignableTo<TypeOnly<current.Tagged<any>>, TypeOnly<old.Tagged<any>>>
+declare type current_as_old_for_Interface_Tagged = requireAssignableTo<TypeOnly<current.Tagged<never>>, TypeOnly<old.Tagged<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -517,7 +436,7 @@ declare type current_as_old_for_TypeAlias_ConfigTypes = requireAssignableTo<Type
  * typeValidation.broken:
  * "TypeAlias_ExtendEventProvider": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ExtendEventProvider = requireAssignableTo<TypeOnly<old.ExtendEventProvider<any,any,any>>, TypeOnly<current.ExtendEventProvider<any,any,any>>>
+declare type old_as_current_for_TypeAlias_ExtendEventProvider = requireAssignableTo<TypeOnly<old.ExtendEventProvider<never,never,never>>, TypeOnly<current.ExtendEventProvider<never,never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -526,7 +445,7 @@ declare type old_as_current_for_TypeAlias_ExtendEventProvider = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_ExtendEventProvider": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ExtendEventProvider = requireAssignableTo<TypeOnly<current.ExtendEventProvider<any,any,any>>, TypeOnly<old.ExtendEventProvider<any,any,any>>>
+declare type current_as_old_for_TypeAlias_ExtendEventProvider = requireAssignableTo<TypeOnly<current.ExtendEventProvider<never,never,never>>, TypeOnly<old.ExtendEventProvider<never,never,never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -571,7 +490,7 @@ declare type current_as_old_for_TypeAlias_FluidObject = requireAssignableTo<Type
  * typeValidation.broken:
  * "TypeAlias_FluidObjectKeys": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_FluidObjectKeys = requireAssignableTo<TypeOnly<old.FluidObjectKeys<any>>, TypeOnly<current.FluidObjectKeys<any>>>
+declare type old_as_current_for_TypeAlias_FluidObjectKeys = requireAssignableTo<TypeOnly<old.FluidObjectKeys<never>>, TypeOnly<current.FluidObjectKeys<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -580,7 +499,7 @@ declare type old_as_current_for_TypeAlias_FluidObjectKeys = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_FluidObjectKeys": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_FluidObjectKeys = requireAssignableTo<TypeOnly<current.FluidObjectKeys<any>>, TypeOnly<old.FluidObjectKeys<any>>>
+declare type current_as_old_for_TypeAlias_FluidObjectKeys = requireAssignableTo<TypeOnly<current.FluidObjectKeys<never>>, TypeOnly<old.FluidObjectKeys<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -589,7 +508,7 @@ declare type current_as_old_for_TypeAlias_FluidObjectKeys = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_FluidObjectProviderKeys": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_FluidObjectProviderKeys = requireAssignableTo<TypeOnly<old.FluidObjectProviderKeys<any>>, TypeOnly<current.FluidObjectProviderKeys<any>>>
+declare type old_as_current_for_TypeAlias_FluidObjectProviderKeys = requireAssignableTo<TypeOnly<old.FluidObjectProviderKeys<never>>, TypeOnly<current.FluidObjectProviderKeys<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -598,7 +517,7 @@ declare type old_as_current_for_TypeAlias_FluidObjectProviderKeys = requireAssig
  * typeValidation.broken:
  * "TypeAlias_FluidObjectProviderKeys": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_FluidObjectProviderKeys = requireAssignableTo<TypeOnly<current.FluidObjectProviderKeys<any>>, TypeOnly<old.FluidObjectProviderKeys<any>>>
+declare type current_as_old_for_TypeAlias_FluidObjectProviderKeys = requireAssignableTo<TypeOnly<current.FluidObjectProviderKeys<never>>, TypeOnly<old.FluidObjectProviderKeys<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -625,7 +544,7 @@ declare type current_as_old_for_TypeAlias_IEventThisPlaceHolder = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_IEventTransformer": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_IEventTransformer = requireAssignableTo<TypeOnly<old.IEventTransformer<any,any>>, TypeOnly<current.IEventTransformer<any,any>>>
+declare type old_as_current_for_TypeAlias_IEventTransformer = requireAssignableTo<TypeOnly<old.IEventTransformer<never,never>>, TypeOnly<current.IEventTransformer<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -634,7 +553,43 @@ declare type old_as_current_for_TypeAlias_IEventTransformer = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_IEventTransformer": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_IEventTransformer = requireAssignableTo<TypeOnly<current.IEventTransformer<any,any>>, TypeOnly<old.IEventTransformer<any,any>>>
+declare type current_as_old_for_TypeAlias_IEventTransformer = requireAssignableTo<TypeOnly<current.IEventTransformer<never,never>>, TypeOnly<old.IEventTransformer<never,never>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IsListener": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_IsListener = requireAssignableTo<TypeOnly<old.IsListener<never>>, TypeOnly<current.IsListener<never>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IsListener": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_IsListener = requireAssignableTo<TypeOnly<current.IsListener<never>>, TypeOnly<old.IsListener<never>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_Listeners": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_Listeners = requireAssignableTo<TypeOnly<old.Listeners<never>>, TypeOnly<current.Listeners<never>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_Listeners": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_Listeners = requireAssignableTo<TypeOnly<current.Listeners<never>>, TypeOnly<old.Listeners<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -659,9 +614,27 @@ declare type current_as_old_for_TypeAlias_LogLevel = requireAssignableTo<TypeOnl
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_Off": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_Off = requireAssignableTo<TypeOnly<old.Off>, TypeOnly<current.Off>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_Off": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_Off = requireAssignableTo<TypeOnly<current.Off>, TypeOnly<old.Off>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_ReplaceIEventThisPlaceHolder": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ReplaceIEventThisPlaceHolder = requireAssignableTo<TypeOnly<old.ReplaceIEventThisPlaceHolder<any,any>>, TypeOnly<current.ReplaceIEventThisPlaceHolder<any,any>>>
+declare type old_as_current_for_TypeAlias_ReplaceIEventThisPlaceHolder = requireAssignableTo<TypeOnly<old.ReplaceIEventThisPlaceHolder<never,never>>, TypeOnly<current.ReplaceIEventThisPlaceHolder<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -670,7 +643,7 @@ declare type old_as_current_for_TypeAlias_ReplaceIEventThisPlaceHolder = require
  * typeValidation.broken:
  * "TypeAlias_ReplaceIEventThisPlaceHolder": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ReplaceIEventThisPlaceHolder = requireAssignableTo<TypeOnly<current.ReplaceIEventThisPlaceHolder<any,any>>, TypeOnly<old.ReplaceIEventThisPlaceHolder<any,any>>>
+declare type current_as_old_for_TypeAlias_ReplaceIEventThisPlaceHolder = requireAssignableTo<TypeOnly<current.ReplaceIEventThisPlaceHolder<never,never>>, TypeOnly<old.ReplaceIEventThisPlaceHolder<never,never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -697,7 +670,7 @@ declare type current_as_old_for_TypeAlias_TelemetryBaseEventPropertyType = requi
  * typeValidation.broken:
  * "TypeAlias_TransformedEvent": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TransformedEvent = requireAssignableTo<TypeOnly<old.TransformedEvent<any,any,any>>, TypeOnly<current.TransformedEvent<any,any,any>>>
+declare type old_as_current_for_TypeAlias_TransformedEvent = requireAssignableTo<TypeOnly<old.TransformedEvent<never,never,never>>, TypeOnly<current.TransformedEvent<never,never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -706,7 +679,7 @@ declare type old_as_current_for_TypeAlias_TransformedEvent = requireAssignableTo
  * typeValidation.broken:
  * "TypeAlias_TransformedEvent": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TransformedEvent = requireAssignableTo<TypeOnly<current.TransformedEvent<any,any,any>>, TypeOnly<old.TransformedEvent<any,any,any>>>
+declare type current_as_old_for_TypeAlias_TransformedEvent = requireAssignableTo<TypeOnly<current.TransformedEvent<never,never,never>>, TypeOnly<old.TransformedEvent<never,never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -752,15 +725,6 @@ declare type current_as_old_for_Variable_IFluidHandleContext = requireAssignable
  * "Variable_IFluidLoadable": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_IFluidLoadable = requireAssignableTo<TypeOnly<typeof current.IFluidLoadable>, TypeOnly<typeof old.IFluidLoadable>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_IFluidRunnable": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_IFluidRunnable = requireAssignableTo<TypeOnly<typeof current.IFluidRunnable>, TypeOnly<typeof old.IFluidRunnable>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

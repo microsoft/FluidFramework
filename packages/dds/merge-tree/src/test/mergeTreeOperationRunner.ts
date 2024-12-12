@@ -14,6 +14,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegment, SegmentGroup, toMoveInfo, toRemovalInfo } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -39,11 +40,55 @@ export const obliterateRange: TestOperation = (
 	opEnd: number,
 ) => client.obliterateRangeLocal(opStart, opEnd);
 
+export const obliterateRangeSided: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+	random: IRandom,
+) => {
+	let startSide: Side;
+	let endSide: Side;
+
+	const oblEnd = random.integer(opStart, client.getLength() - 1);
+	// TODO: to create zero length obliterate ops, change '<=' to '<'.
+	// Doing so may cause different failures than those without zero length.
+	// AB#19930
+	if (oblEnd - opStart <= 1) {
+		startSide = Side.Before;
+		endSide = Side.After;
+	} else {
+		startSide = random.pick([Side.Before, Side.After]);
+		endSide = random.pick([Side.Before, Side.After]);
+	}
+
+	const start = { pos: opStart, side: startSide };
+	const end = { pos: oblEnd, side: endSide };
+	return client.obliterateRangeLocal(start, end);
+};
+
 export const annotateRange: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
-) => client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
+	random: IRandom,
+) => {
+	// eslint-disable-next-line unicorn/prefer-ternary
+	if (random.bool()) {
+		return client.annotateRangeLocal(opStart, opEnd, {
+			[random.integer(1, 5)]: client.longClientId,
+		});
+	} else {
+		const max = random.pick([undefined, random.integer(-10, 100)]);
+		const min = random.pick([undefined, random.integer(-100, 10)]);
+		return client.annotateAdjustRangeLocal(opStart, opEnd, {
+			[random.integer(0, 2).toString()]: {
+				delta: random.integer(-5, 5),
+				min: (min ?? max ?? 0) > (max ?? 0) ? undefined : min,
+				max,
+			},
+		});
+	}
+};
 
 export const insertAtRefPos: TestOperation = (
 	client: TestClient,

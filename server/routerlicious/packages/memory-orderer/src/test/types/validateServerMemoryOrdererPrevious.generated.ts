@@ -129,6 +129,7 @@ declare function get_old_InterfaceDeclaration_IKafkaSubscriber():
 declare function use_current_InterfaceDeclaration_IKafkaSubscriber(
     use: TypeOnly<current.IKafkaSubscriber>): void;
 use_current_InterfaceDeclaration_IKafkaSubscriber(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IKafkaSubscriber());
 
 /*
@@ -321,6 +322,7 @@ declare function get_old_ClassDeclaration_LocalContext():
 declare function use_current_ClassDeclaration_LocalContext(
     use: TypeOnly<current.LocalContext>): void;
 use_current_ClassDeclaration_LocalContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalContext());
 
 /*
@@ -370,6 +372,7 @@ declare function get_old_ClassDeclaration_LocalLambdaController():
 declare function use_current_ClassDeclaration_LocalLambdaController(
     use: TypeOnly<current.LocalLambdaController>): void;
 use_current_ClassDeclaration_LocalLambdaController(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalLambdaController());
 
 /*

@@ -18,6 +18,7 @@ export {
 	unitCodec,
 	withDefaultBinaryEncoding,
 	withSchemaValidation,
+	FluidClientVersion,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type ApiModel } from "@microsoft/api-extractor-model";
+import type { ApiModel } from "@microsoft/api-extractor-model";
 
-import { type ConfigurationBase } from "../../ConfigurationBase.js";
+import type { ConfigurationBase } from "../../ConfigurationBase.js";
 import { defaultConsoleLogger } from "../../Logging.js";
+
 import {
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteOptionsWithDefaults,

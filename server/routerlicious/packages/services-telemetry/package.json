@@ -74,7 +74,7 @@
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^9.2.3",
+		"sinon": "^18.0.1",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {

@@ -60,7 +60,8 @@
 			"rdkafkaConsumeTimeout": 5,
 			"rdkafkaMaxConsumerCommitRetries": 10
 		},
-		"customRestartOnKafkaErrorCodes": [-195, -192, -187, -185, -181, 14]
+		"customRestartOnKafkaErrorCodes": [-195, -192, -187, -185, -181, 14],
+		"seekTimeoutAfterPause": 1000
 	},
 	"zookeeper": {
 		"endpoint": "zookeeper:2181"
@@ -271,7 +272,17 @@
 		"maxDbBatchSize": 1000,
 		"restartOnCheckpointFailure": true,
 		"logSavedOpsTimeIntervalMs": 60000,
-		"opsCountTelemetryEnabled": true
+		"opsCountTelemetryEnabled": true,
+		"circuitBreakerEnabled": false,
+		"circuitBreakerOptions": {
+			"errorThresholdPercentage": 0.001,
+			"resetTimeout": 30000,
+			"timeout": false,
+			"rollingCountTimeout": 1000,
+			"rollingCountBuckets": 1000,
+			"fallbackToRestartTimeoutMs": 180000,
+			"filterOnErrors": []
+		}
 	},
 	"copier": {
 		"topic": "rawdeltas",
@@ -418,5 +429,9 @@
 	},
 	"clusterDraining": {
 		"enable": false
+	},
+	"getSession": {
+		"readDocumentRetryDelay": 150,
+		"readDocumentMaxRetries": 2
 	}
 }

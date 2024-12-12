@@ -178,7 +178,7 @@ export class MonoRepo {
 
 	public get installCommand(): string {
 		return this.packageManager === "pnpm"
-			? "pnpm i"
+			? "pnpm i --no-frozen-lockfile"
 			: this.packageManager === "yarn"
 				? "npm run install-strict"
 				: "npm i --no-package-lock --no-shrinkwrap";

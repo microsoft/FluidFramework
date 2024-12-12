@@ -45,6 +45,9 @@ variables:
 - name: pipelineIdentifierForTelemetry
   value: 'EndToEndTests'
   readonly: true
+# This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+- name: DisableCodeQL
+  value: true
 
 lockBehavior: sequential
 stages:
@@ -53,7 +56,7 @@ stages:
     parameters:
       stageId: e2e_local_server
       stageDisplayName: e2e - local server
-      poolBuild: NewLarge-linux-1ES # Need Large pool for full-compat matrix
+      poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -63,13 +66,14 @@ stages:
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests tinylicious
   - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_tinylicious
       stageDisplayName: e2e - tinylicious
-      poolBuild: Large # Need Large pool for full-compat matrix
+      poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -81,6 +85,7 @@ stages:
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
         # Disable colorization for tinylicious logs (not useful when printing to a file)
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
@@ -90,7 +95,7 @@ stages:
     parameters:
       stageId: e2e_routerlicious
       stageDisplayName: e2e - routerlicious
-      poolBuild: Small
+      poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -114,6 +119,7 @@ stages:
       env:
         fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests docker
   - template: templates/include-test-real-service.yml
@@ -177,12 +183,12 @@ stages:
       env:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-  # end-to-end tests frs
+  # end-to-end tests AFR
   - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_frs
-      stageDisplayName: e2e - frs
-      poolBuild: Small
+      stageDisplayName: e2e - AFR
+      poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -207,13 +213,14 @@ stages:
       env:
         fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests odsp
   - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_odsp
       stageDisplayName: e2e - odsp
-      poolBuild: Small
+      poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -241,3 +248,4 @@ stages:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'

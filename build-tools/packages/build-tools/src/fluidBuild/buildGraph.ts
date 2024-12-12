@@ -4,7 +4,7 @@
  */
 
 import { AsyncPriorityQueue } from "async";
-import chalk from "chalk";
+import chalk from "picocolors";
 import * as semver from "semver";
 
 import * as assert from "assert";
@@ -67,7 +67,7 @@ class BuildGraphContext implements BuildContext {
 	public readonly fileHashCache = new FileHashCache();
 	public readonly taskStats = new TaskStats();
 	public readonly failedTaskLines: string[] = [];
-	public readonly fluidBuildConfig: IFluidBuildConfig | undefined;
+	public readonly fluidBuildConfig: IFluidBuildConfig;
 	public readonly repoRoot: string;
 	public readonly gitRepo: GitRepo;
 	constructor(

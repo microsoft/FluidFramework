@@ -7,8 +7,8 @@ import * as assert from "assert";
 import crypto from "crypto";
 import * as path from "path";
 import { AsyncPriorityQueue } from "async";
-import chalk from "chalk";
 import registerDebug from "debug";
+import chalk from "picocolors";
 
 import { existsSync } from "node:fs";
 import { readFile, stat, unlink, writeFile } from "node:fs/promises";
@@ -153,7 +153,10 @@ export abstract class LeafTask extends Task {
 	}
 
 	public get executable() {
-		return getExecutableFromCommand(this.command);
+		return getExecutableFromCommand(
+			this.command,
+			this.context.fluidBuildConfig?.multiCommandExecutables ?? [],
+		);
 	}
 
 	protected get useWorker() {
@@ -187,12 +190,7 @@ export abstract class LeafTask extends Task {
 			console.error(this.getExecErrors(ret));
 			return this.execDone(startTime, BuildResult.Failed);
 		}
-		if (
-			ret.stderr &&
-			// tsc-multi writes to stderr even when there are no errors, so this condition excludes that case as a workaround.
-			// Otherwise fluid-build spams warnings for all tsc-multi tasks.
-			!ret.stderr.includes("Found 0 errors")
-		) {
+		if (ret.stderr) {
 			// no error code but still error messages, treat them is non fatal warnings
 			console.warn(`${this.node.pkg.nameColored}: warning during command '${this.command}'`);
 			console.warn(this.getExecErrors(ret));
@@ -402,11 +400,13 @@ export abstract class LeafTask extends Task {
 	// check if this task is up to date
 	protected abstract checkLeafIsUpToDate(): Promise<boolean>;
 
-	// Return if the task support recheck when it time to execute.
-	// Default to false so that the task will execute if any of the dependent task is out of date at the
-	// beginning of the build.
-	// Override to true if the task know all the input dependencies (e.g. tsc) able to detect if
-	// the dependent task's output changes this tasks' input and really need rebuild or not.
+	/**
+	 * Return if the task supports recheck when it time to execute.
+	 * Default to false so that the task will execute if any of the dependent task is out of date at the
+	 * beginning of the build.
+	 * Override to true if the task knows all the input dependencies (e.g. tsc) and is able to detect if
+	 * the dependent task's output changes this tasks' input and really need rebuild or not.
+	 */
 	protected get recheckLeafIsUpToDate(): boolean {
 		return false;
 	}
@@ -433,6 +433,9 @@ export abstract class LeafTask extends Task {
 	}
 }
 
+/**
+ * A LeafTask with a "done file" which represents the work this task needs to do.
+ */
 export abstract class LeafWithDoneFileTask extends LeafTask {
 	private _isIncremental: boolean = true;
 
@@ -466,6 +469,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	protected async markExecDone() {
 		const doneFileFullPath = this.doneFileFullPath;
 		try {
+			// TODO: checkLeafIsUpToDate already called this. Consider reusing its results to save recomputation of them.
 			const content = await this.getDoneFileContent();
 			if (content !== undefined) {
 				await writeFile(doneFileFullPath, content);
@@ -527,7 +531,14 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 * Subclass should override these to configure the leaf with done file task
 	 */
 
-	// The content to be written in the done file.
+	/**
+	 * The content to be written in the "done file".
+	 * @remarks
+	 * This file must have different content if the work needed to be done by this task changes.
+	 * This is typically done by listing and/or hashing the inputs and outputs to this task.
+	 * This is invoked before the task is run to check if an existing done file from a previous run matches: if so, the task can be skipped.
+	 * If not, the task is run, after which this is invoked a second time to produce the contents to write to disk.
+	 */
 	protected abstract getDoneFileContent(): Promise<string | undefined>;
 }
 

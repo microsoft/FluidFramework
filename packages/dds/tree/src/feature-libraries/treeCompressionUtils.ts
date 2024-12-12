@@ -7,7 +7,7 @@
  * Selects which heuristics to use when encoding tree content.
  * All encoding options here are compatible with the same decoder:
  * the selection here does not impact compatibility.
- * @internal
+ * @alpha
  */
 export enum TreeCompressionStrategy {
 	/**

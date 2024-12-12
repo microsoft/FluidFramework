@@ -31,7 +31,7 @@ export function getOrCreateNodeFromInnerNode(flexNode: InnerNode): TreeNode | Tr
 	const node = flexNode as unknown as InternalTreeNode;
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (typeof classSchema === "function") {
-		return new classSchema(node) as TreeNode;
+		return new classSchema(node);
 	} else {
 		return (classSchema as { create(data: FlexTreeNode): TreeValue }).create(flexNode);
 	}

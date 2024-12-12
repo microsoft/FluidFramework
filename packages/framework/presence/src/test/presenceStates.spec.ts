@@ -5,11 +5,13 @@
 
 import type { IPresence } from "../presence.js";
 
+import { addControlsTests } from "./broadcastControlsTests.js";
+
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
-import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
+} from "@fluidframework/presence/internal/core-interfaces";
+import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
 
 describe("Presence", () => {
 	describe("PresenceStates", () => {
@@ -17,6 +19,10 @@ describe("Presence", () => {
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
+
+		addControlsTests((presence, controlSettings) => {
+			return presence.getStates("name:testWorkspaceA", {}, controlSettings);
+		});
 	});
 });
 
@@ -55,8 +61,9 @@ export function checkCompiles(): void {
 
 	const initialCaret = { id: "", pos: 0 };
 	states.add("caret", createValueManager(initialCaret));
+	const statesProps = states.props;
 
-	const fakeAdd = states.camera.z + states.cursor.x + states.caret.pos;
+	const fakeAdd = statesProps.camera.z + statesProps.cursor.x + statesProps.caret.pos;
 	console.log(fakeAdd);
 
 	// @ts-expect-error should error on typo detection

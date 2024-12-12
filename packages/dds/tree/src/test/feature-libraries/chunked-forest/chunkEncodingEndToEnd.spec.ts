@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
@@ -14,6 +14,7 @@ import {
 	mapCursorField,
 	RevisionTagCodec,
 	rootFieldKey,
+	type TaggedChange,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
@@ -56,19 +57,20 @@ import {
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
-	cursorFromInsertableTreeField,
 	forestWithContent,
+	mintRevisionTag,
 	testIdCompressor,
 	type SharedTreeWithConnectionStateSetter,
 } from "../../utils.js";
 import {
+	cursorFromInsertable,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
@@ -106,7 +108,7 @@ class HasIdentifier extends schemaFactory.object("parent", {
 }) {}
 
 function getIdentifierEncodingContext(id: string) {
-	const initialTree = cursorFromInsertableTreeField(
+	const initialTree = cursorFromInsertable(
 		HasIdentifier,
 		new HasIdentifier({ identifier: id }),
 		new MockNodeKeyManager(),
@@ -146,10 +148,10 @@ describe("End to end chunked encoding", () => {
 		const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
-		const changeLog: ModularChangeset[] = [];
+		const changeLog: TaggedChange<ModularChangeset>[] = [];
 
-		const changeReceiver = (change: ModularChangeset) => {
-			changeLog.push(change);
+		const changeReceiver = (taggedChange: TaggedChange<ModularChangeset>) => {
+			changeLog.push(taggedChange);
 		};
 		const codec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -157,7 +159,11 @@ describe("End to end chunked encoding", () => {
 			fieldBatchCodec,
 			{ jsonValidator: typeboxValidator },
 		);
-		const dummyEditor = new DefaultEditBuilder(new DefaultChangeFamily(codec), changeReceiver);
+		const dummyEditor = new DefaultEditBuilder(
+			new DefaultChangeFamily(codec),
+			mintRevisionTag,
+			changeReceiver,
+		);
 		const checkout = new MockTreeCheckout(forest, {
 			editor: dummyEditor as unknown as ISharedTreeEditor,
 		});
@@ -165,9 +171,9 @@ describe("End to end chunked encoding", () => {
 			.sequenceField({ field: rootFieldKey, parent: undefined })
 			.insert(0, chunk.cursor());
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
-		const insertedChange = changeLog[0];
+		const { change: insertedChange, revision } = changeLog[0];
 		assert(insertedChange.builds !== undefined);
-		const insertedChunk = insertedChange.builds.get([undefined, 0 as ChangesetLocalId]);
+		const insertedChunk = insertedChange.builds.get([revision, 0 as ChangesetLocalId]);
 		assert.equal(insertedChunk, chunk);
 		assert(chunk.isShared());
 	});

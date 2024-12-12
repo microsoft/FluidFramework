@@ -10,10 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	aboveRootPlaceholder,
 	EmptyKey,
-	forEachField,
-	inCursorField,
 	keyAsDetachedField,
-	mapCursorField,
 	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
@@ -40,16 +37,23 @@ import {
 	stringSchema,
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
-import { walkFieldSchema } from "../walkFieldSchema.js";
+import {
+	customFromCursor,
+	type CustomTreeNode,
+	type CustomTreeValue,
+	type EncodeOptions,
+} from "./customTree.js";
 import { getUnhydratedContext } from "../createContext.js";
 
 /**
- * Verbose encoding of a {@link TreeNode} or {@link TreeValue}.
+ * Verbose encoding of a {@link TreeNode} or {@link TreeLeafValue}.
  * @remarks
  * This is verbose meaning that every {@link TreeNode} is a {@link VerboseTreeNode}.
  * Any IFluidHandle values have been replaced by `THandle`.
  * @privateRemarks
- * This can store all possible simple trees, but it can not store all possible trees representable by our internal representations like FlexTree and JsonableTree.
+ * This can store all possible simple trees,
+ * but it can not store all possible trees representable by our internal representations like FlexTree and JsonableTree.
+ * @alpha
  */
 export type VerboseTree<THandle = IFluidHandle> =
 	| VerboseTreeNode<THandle>
@@ -77,7 +81,9 @@ export type VerboseTree<THandle = IFluidHandle> =
  * This format allows for all simple-tree compatible trees to be represented.
  *
  * Unlike `JsonableTree`, leaf nodes are not boxed into node objects, and instead have their schema inferred from the value.
- * Additionally, sequence fields can only occur on a node that has a single sequence field (with the empty key) replicating the behavior of simple-tree ArrayNodes.
+ * Additionally, sequence fields can only occur on a node that has a single sequence field (with the empty key)
+ * replicating the behavior of simple-tree ArrayNodes.
+ * @alpha
  */
 export interface VerboseTreeNode<THandle = IFluidHandle> {
 	/**
@@ -105,6 +111,7 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
 
 /**
  * Options for how to interpret a `VerboseTree<TCustom>` when schema information is available.
+ * @alpha
  */
 export interface ParseOptions<TCustom> {
 	/**
@@ -142,24 +149,6 @@ export interface SchemalessParseOptions<TCustom> {
 		parse(type: string, inputKey: string): FieldKey;
 		encode(type: string, key: FieldKey): string;
 	};
-}
-
-/**
- * Options for how to interpret a `VerboseTree<TCustom>` without relying on schema.
- */
-export interface EncodeOptions<TCustom> {
-	/**
-	 * Fixup custom input formats.
-	 * @remarks
-	 * See note on {@link ParseOptions.valueConverter}.
-	 */
-	valueConverter(data: IFluidHandle): TCustom;
-	/**
-	 * If true, interpret the input keys of object nodes as stored keys.
-	 * If false, interpret them as property keys.
-	 * @defaultValue false.
-	 */
-	readonly useStoredKeys?: boolean;
 }
 
 /**
@@ -345,12 +334,7 @@ export function verboseFromCursor<TCustom>(
 		...options,
 	};
 
-	const schemaMap = new Map<string, TreeNodeSchema>();
-	walkFieldSchema(rootSchema, {
-		node(schema) {
-			schemaMap.set(schema.identifier, schema);
-		},
-	});
+	const schemaMap = getUnhydratedContext(rootSchema).schema;
 
 	return verboseFromCursorInner(reader, config, schemaMap);
 }
@@ -360,50 +344,14 @@ function verboseFromCursorInner<TCustom>(
 	options: Required<EncodeOptions<TCustom>>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): VerboseTree<TCustom> {
-	const type = reader.type;
-	const nodeSchema = schema.get(type) ?? fail("missing schema for type in cursor");
-
-	switch (type) {
-		case numberSchema.identifier:
-		case booleanSchema.identifier:
-		case nullSchema.identifier:
-		case stringSchema.identifier:
-			assert(reader.value !== undefined, 0xa14 /* out of schema: missing value */);
-			assert(!isFluidHandle(reader.value), 0xa15 /* out of schema: unexpected FluidHandle */);
-			return reader.value;
-		case handleSchema.identifier:
-			assert(reader.value !== undefined, 0xa16 /* out of schema: missing value */);
-			assert(isFluidHandle(reader.value), 0xa17 /* out of schema: unexpected FluidHandle */);
-			return options.valueConverter(reader.value);
-		default: {
-			assert(reader.value === undefined, 0xa18 /* out of schema: unexpected value */);
-			if (nodeSchema.kind === NodeKind.Array) {
-				const fields = inCursorField(reader, EmptyKey, () =>
-					mapCursorField(reader, () => verboseFromCursorInner(reader, options, schema)),
-				);
-				return { type, fields };
-			} else {
-				const fields: Record<string, VerboseTree<TCustom>> = {};
-				forEachField(reader, () => {
-					const children = mapCursorField(reader, () =>
-						verboseFromCursorInner(reader, options, schema),
-					);
-					if (children.length === 1) {
-						const storedKey = reader.getFieldKey();
-						const key =
-							isObjectNodeSchema(nodeSchema) && !options.useStoredKeys
-								? nodeSchema.storedKeyToPropertyKey.get(storedKey) ??
-									fail("missing property key")
-								: storedKey;
-						// Length is checked above.
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						fields[key] = children[0]!;
-					} else {
-						assert(children.length === 0, 0xa19 /* invalid children number */);
-					}
-				});
-				return { type, fields };
-			}
-		}
+	const fields = customFromCursor(reader, options, schema, verboseFromCursorInner);
+	const nodeSchema = schema.get(reader.type) ?? fail("missing schema for type in cursor");
+	if (nodeSchema.kind === NodeKind.Leaf) {
+		return fields as CustomTreeValue<TCustom>;
 	}
+
+	return {
+		type: reader.type,
+		fields: fields as CustomTreeNode<TCustom>,
+	};
 }

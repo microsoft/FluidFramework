@@ -102,7 +102,9 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		}
 
 		const context = await this.getContext();
-		const tags = flags.tags ?? (await context.gitRepo.getAllTags());
+		const repo = await context.getGitRepository();
+		// eslint-disable-next-line unicorn/no-await-expression-member
+		const tags = flags.tags ?? (await repo.gitClient.tags()).all;
 
 		if (!useSimplePatchVersion && flags.tag !== undefined) {
 			const tagName = `${flags.tag}_v${fileVersion}`;
@@ -157,13 +159,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
 
 		if (flags.tag !== undefined) {
-			const isLatest = getIsLatest(
-				flags.tag,
-				version,
-				tags,
-				shouldIncludeInternalVersions,
-				true,
-			);
+			const isLatest = getIsLatest(flags.tag, version, tags, shouldIncludeInternalVersions);
 			this.log(`isLatest=${isLatest}`);
 			if (isRelease && isLatest === true) {
 				this.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
 import type { IMigrationTool } from "@fluid-example/migration-tools/internal";
 import React, { useEffect, useState } from "react";
 

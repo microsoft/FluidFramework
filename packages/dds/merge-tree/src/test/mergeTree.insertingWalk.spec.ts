@@ -160,7 +160,6 @@ const treeFactories: ITestTreeFactory[] = [
 				UniversalSequenceNumber,
 				localClientId,
 				UniversalSequenceNumber,
-				false,
 				undefined as never,
 			);
 			initialText = initialText.slice(Math.max(0, remove));
@@ -172,7 +171,6 @@ const treeFactories: ITestTreeFactory[] = [
 				UniversalSequenceNumber,
 				localClientId,
 				UniversalSequenceNumber,
-				false,
 				undefined as never,
 			);
 			initialText = initialText.slice(0, Math.max(0, initialText.length - remove));

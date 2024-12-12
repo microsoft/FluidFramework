@@ -15,6 +15,7 @@ import {
 	IRunner,
 	IRunnerFactory,
 	IWebServerFactory,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -24,6 +25,7 @@ import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 import { IRiddlerResourcesCustomizations } from "./customizations";
 import { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
  * @internal
@@ -45,7 +47,10 @@ export class RiddlerResources implements IResources {
 		public readonly fetchTenantKeyMetricIntervalMs: number,
 		public readonly riddlerStorageRequestMetricIntervalMs: number,
 		public readonly tenantKeyGenerator: utils.ITenantKeyGenerator,
-		public readonly cache: RedisCache,
+		public readonly startupCheck: IReadinessCheck,
+		public readonly redisClientConnectionManagers: utils.IRedisClientConnectionManager[],
+		public readonly cache?: RedisCache,
+		public readonly readinessCheck?: IReadinessCheck,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -58,7 +63,11 @@ export class RiddlerResources implements IResources {
 	}
 
 	public async dispose(): Promise<void> {
-		await this.mongoManager.close();
+		const mongoManagerCloseP = this.mongoManager.close();
+		const redisClientConnectionManagersCloseP = closeRedisClientConnections(
+			this.redisClientConnectionManagers,
+		);
+		await Promise.all([mongoManagerCloseP, redisClientConnectionManagersCloseP]);
 	}
 }
 
@@ -72,7 +81,9 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 	): Promise<RiddlerResources> {
 		// Cache connection
 		const redisConfig = config.get("redisForTenantCache");
-		let cache: RedisCache;
+		let cache: RedisCache | undefined;
+		// List of Redis client connection managers that need to be closed on dispose
+		const redisClientConnectionManagers: utils.IRedisClientConnectionManager[] = [];
 		if (redisConfig) {
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
@@ -96,6 +107,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 							redisConfig.slotsRefreshTimeout,
 							retryDelays,
 					  );
+			redisClientConnectionManagers.push(redisClientConnectionManagerForTenantCache);
 			cache = new RedisCache(redisClientConnectionManagerForTenantCache, redisParams);
 		}
 		// Database connection
@@ -110,7 +122,12 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 		if (globalDbEnabled) {
 			const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
-			globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
+			globalDbMongoManager = new MongoManager(
+				factory,
+				globalDbReconnect,
+				undefined /* reconnectDelayMs */,
+				true /* global */,
+			);
 		}
 
 		const mongoManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
@@ -162,6 +179,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			? customizations.tenantKeyGenerator
 			: new utils.TenantKeyGenerator();
 
+		const startupCheck = new StartupCheck();
 		return new RiddlerResources(
 			config,
 			tenantRepository,
@@ -176,7 +194,10 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			fetchTenantKeyMetricIntervalMs,
 			riddlerStorageRequestMetricIntervalMs,
 			tenantKeyGenerator,
+			startupCheck,
+			redisClientConnectionManagers,
 			cache,
+			customizations?.readinessCheck,
 		);
 	}
 }
@@ -198,8 +219,10 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 			resources.fetchTenantKeyMetricIntervalMs,
 			resources.riddlerStorageRequestMetricIntervalMs,
 			resources.tenantKeyGenerator,
+			resources.startupCheck,
 			resources.cache,
 			resources.config,
+			resources.readinessCheck,
 		);
 	}
 }

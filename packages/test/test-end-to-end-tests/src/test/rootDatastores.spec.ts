@@ -21,7 +21,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-import { TestSnapshotCache } from "../testSnapshotCache.js";
+import { TestPersistedCache } from "../testPersistedCache.js";
 
 describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) => {
 	let container1: IContainer;
@@ -42,9 +42,9 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 	};
 
 	let provider: ITestObjectProvider;
-	const testSnapshotCache = new TestSnapshotCache();
+	const testPersistedCache = new TestPersistedCache();
 	beforeEach("getTestObjectProvider", async () => {
-		provider = getTestObjectProvider({ persistedCache: testSnapshotCache });
+		provider = getTestObjectProvider({ persistedCache: testPersistedCache });
 		container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		await waitForContainerConnection(container1);
@@ -54,8 +54,8 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 		container2 = await provider.loadTestContainer(testContainerConfig);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 	});
-	afterEach("clearTestSnapshotCache", async () => {
-		testSnapshotCache.reset();
+	afterEach("clearTestPersistedCache", async () => {
+		testPersistedCache.reset();
 	});
 
 	const runtimeOf = (dataObject: ITestFluidObject): IContainerRuntime =>
@@ -187,6 +187,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			assert.equal(aliasResult6, "AlreadyAliased");
 		});
 
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 		it(
 			"Trying to create multiple datastores aliased to the same value on the same client " +
 				"will always return the same datastore",
@@ -326,6 +327,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 
 	describe("Aliasing with summary", () => {
 		const alias = "alias";
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 		it(
 			"Assign multiple data stores to the same alias, first write wins, " +
 				"different containers from snapshot",
@@ -351,7 +353,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				const { summaryVersion } = await summarizeNow(summarizer);
 
 				// For the ODSP driver, we need to clear the cache to ensure we get the latest snapshot
-				testSnapshotCache.clearCache();
+				testPersistedCache.clearCache();
 				const container3 = await provider.loadTestContainer(
 					testContainerConfig,
 					{

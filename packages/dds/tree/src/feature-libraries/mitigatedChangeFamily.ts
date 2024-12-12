@@ -32,8 +32,11 @@ export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TC
 	onError: (error: unknown) => void,
 ): ChangeFamily<TEditor, TChange> {
 	return {
-		buildEditor: (changeReceiver: (change: TChange) => void): TEditor => {
-			return unmitigatedChangeFamily.buildEditor(changeReceiver);
+		buildEditor: (
+			mintRevisionTag: () => RevisionTag,
+			changeReceiver: (change: TaggedChange<TChange>) => void,
+		): TEditor => {
+			return unmitigatedChangeFamily.buildEditor(mintRevisionTag, changeReceiver);
 		},
 		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,
@@ -58,8 +61,12 @@ export function makeMitigatedRebaser<TChange>(
 		compose: (changes: TaggedChange<TChange>[]): TChange => {
 			return withFallback(() => unmitigatedRebaser.compose(changes));
 		},
-		invert: (changes: TaggedChange<TChange>, isRollback: boolean): TChange => {
-			return withFallback(() => unmitigatedRebaser.invert(changes, isRollback));
+		invert: (
+			changes: TaggedChange<TChange>,
+			isRollback: boolean,
+			revision: RevisionTag,
+		): TChange => {
+			return withFallback(() => unmitigatedRebaser.invert(changes, isRollback, revision));
 		},
 		rebase: (
 			change: TaggedChange<TChange>,

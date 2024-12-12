@@ -11,10 +11,7 @@ import {
 	LocalSessionStorageDbFactory,
 	createLocalResolverCreateNewRequest,
 } from "@fluidframework/local-driver/internal";
-import {
-	ILocalDeltaConnectionServer,
-	LocalDeltaConnectionServer,
-} from "@fluidframework/server-local-server";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { v4 as uuid } from "uuid";
 
 import { IDetachedModel, IModelLoader } from "./interfaces.js";
@@ -22,16 +19,7 @@ import { ModelLoader } from "./modelLoader.js";
 
 const urlResolver = new LocalResolver();
 
-const deltaConnectionServerMap = new Map<string, ILocalDeltaConnectionServer>();
-const getDocumentServiceFactory = (documentId: string) => {
-	let deltaConnection = deltaConnectionServerMap.get(documentId);
-	if (deltaConnection === undefined) {
-		deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-		deltaConnectionServerMap.set(documentId, deltaConnection);
-	}
-
-	return new LocalDocumentServiceFactory(deltaConnection);
-};
+const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 
 /**
  * @internal
@@ -50,7 +38,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 		const documentId = uuid();
 		const modelLoader = new ModelLoader<ModelType>({
 			urlResolver,
-			documentServiceFactory: getDocumentServiceFactory(documentId),
+			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader: this.codeLoader,
 			logger: this.logger,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
@@ -61,7 +49,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 		const documentId = id;
 		const modelLoader = new ModelLoader<ModelType>({
 			urlResolver,
-			documentServiceFactory: getDocumentServiceFactory(documentId),
+			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader: this.codeLoader,
 			logger: this.logger,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
@@ -71,7 +59,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType> {
 		const modelLoader = new ModelLoader<ModelType>({
 			urlResolver,
-			documentServiceFactory: getDocumentServiceFactory(id),
+			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader: this.codeLoader,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(id),
 		});

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
@@ -32,6 +32,7 @@ import {
 	type NestedSet,
 	addToNestedSet,
 	fail,
+	hasSingle,
 	nestedSetContains,
 } from "../util/index.js";
 
@@ -79,10 +80,12 @@ export class SharedTreeChangeFamily
 	}
 
 	public buildEditor(
-		changeReceiver: (change: SharedTreeChange) => void,
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
 	): SharedTreeEditBuilder {
 		return new SharedTreeEditBuilder(
 			this.modularChangeFamily,
+			mintRevisionTag,
 			changeReceiver,
 			this.idCompressor,
 		);
@@ -120,6 +123,7 @@ export class SharedTreeChangeFamily
 	public invert(
 		change: TaggedChange<SharedTreeChange>,
 		isRollback: boolean,
+		revision: RevisionTag,
 	): SharedTreeChange {
 		const invertInnerChange: (
 			innerChange: SharedTreeChange["changes"][number],
@@ -131,6 +135,7 @@ export class SharedTreeChangeFamily
 						innerChange: this.modularChangeFamily.invert(
 							mapTaggedChange(change, innerChange.innerChange),
 							isRollback,
+							revision,
 						),
 					};
 				case "schema": {
@@ -175,12 +180,12 @@ export class SharedTreeChangeFamily
 			return SharedTreeChangeFamily.emptyChange;
 		}
 		assert(
-			change.change.changes.length === 1 && over.change.changes.length === 1,
+			hasSingle(change.change.changes) && hasSingle(over.change.changes),
 			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 
-		const dataChangeIntention = change.change.changes[0] ?? oob();
-		const dataChangeOver = over.change.changes[0] ?? oob();
+		const dataChangeIntention = change.change.changes[0];
+		const dataChangeOver = over.change.changes[0];
 		assert(
 			dataChangeIntention.type === "data" && dataChangeOver.type === "data",
 			0x885 /* Data change should be present. */,

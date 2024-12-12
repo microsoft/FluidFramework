@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { makeAnonChange } from "../../../core/index.js";
 import {
@@ -68,10 +68,11 @@ describe("defaultFieldKinds", () => {
 				Change.clear("self", brand(1)),
 				Change.move(brand(41), "self"),
 			);
+			const revision = mintRevisionTag();
 			assertEqual(
 				valueFieldEditor.set({
-					detach: brand(1),
-					fill: brand(41),
+					detach: { localId: brand(1), revision },
+					fill: { localId: brand(41), revision },
 				}),
 				expected,
 			);
@@ -89,13 +90,21 @@ describe("defaultFieldKinds", () => {
 		const childChange2 = Change.child(nodeChange2);
 		const childChange3 = Change.child(arbitraryChildChange);
 
+		const revision1 = mintRevisionTag();
 		const change1 = tagChangeInline(
-			fieldHandler.editor.set({ detach: brand(1), fill: brand(41) }),
-			mintRevisionTag(),
+			fieldHandler.editor.set({
+				detach: { localId: brand(1), revision: revision1 },
+				fill: { localId: brand(41), revision: revision1 },
+			}),
+			revision1,
 		);
+		const revision2 = mintRevisionTag();
 		const change2 = tagChangeInline(
-			fieldHandler.editor.set({ detach: brand(2), fill: brand(42) }),
-			mintRevisionTag(),
+			fieldHandler.editor.set({
+				detach: { localId: brand(2), revision: revision2 },
+				fill: { localId: brand(42), revision: revision2 },
+			}),
+			revision2,
 		);
 
 		const change1WithChildChange = Change.atOnce(
@@ -196,6 +205,7 @@ describe("defaultFieldKinds", () => {
 				taggedChange.change,
 				true,
 				idAllocatorFromMaxId(),
+				mintRevisionTag(),
 				failCrossFieldManager,
 				defaultRevisionMetadataFromChanges([taggedChange]),
 			);

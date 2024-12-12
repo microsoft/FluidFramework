@@ -35,7 +35,7 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 					},
 				});
 			} catch (error) {
-				console.error(`failed to emit metric ${customDataName}`, error);
+				console.error(`failed to emit metric '${customDataName}'`, error);
 			}
 		}
 	}

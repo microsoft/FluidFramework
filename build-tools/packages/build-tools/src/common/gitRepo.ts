@@ -204,24 +204,6 @@ export class GitRepo {
 	}
 
 	/**
-	 * Returns an array containing all the modified files in the repo.
-	 */
-	public async getModifiedFiles(): Promise<string[]> {
-		const results = await this.exec(`status --porcelain`, `get modified files`);
-		return (
-			results
-				.split("\n")
-				// Filter out empty lines and files that are deleted locally.
-				// Deleted files are marked with D in the first (staged) or second (unstaged) column.
-				// If a file is deleted in staged and then revived in unstaged, it will have two entries.
-				// The first entry will be "D " and the second entry will be "??". The second entry is
-				// will be enough to keep it.
-				.filter((t) => t !== "" && !t.match(/^.?D /))
-				.map((t) => t.substring(3))
-		);
-	}
-
-	/**
 	 * Returns a set containing repo root-relative paths to files that are deleted in the working tree.
 	 */
 	public async getDeletedFiles(): Promise<Set<string>> {
@@ -315,15 +297,19 @@ export class GitRepo {
 	 * @param command the git command
 	 * @param error description of command line to print when error happens
 	 */
-	private async exec(command: string, error: string, pipeStdIn?: string) {
-		return exec(`git ${command}`, this.resolvedRoot, error, pipeStdIn);
+	public async exec(command: string, error: string, pipeStdIn?: string) {
+		return exec(`git ${command}`, this.resolvedRoot, error, pipeStdIn, {
+			// Some git commands, like diff can have quite large output when there are very large changes like a pending merge with main.
+			// To mitigate this, increase the maxBuffer size from its default (1 mb at time of writing).
+			// https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback
+			maxBuffer: 1024 * 1024 * 100,
+		});
 	}
 
 	/**
 	 * Execute git command
 	 *
 	 * @param command the git command
-	 * @param error description of command line to print when error happens
 	 */
 	private async execNoError(command: string, pipeStdIn?: string) {
 		return execNoError(`git ${command}`, this.resolvedRoot, pipeStdIn);

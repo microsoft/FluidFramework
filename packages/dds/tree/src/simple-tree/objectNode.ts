@@ -16,7 +16,6 @@ import {
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import { getTreeNodeForField, prepareContentForHydration } from "./proxies.js";
-import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	type ImplicitFieldSchema,
 	getStoredKey,
@@ -39,6 +38,7 @@ import {
 	type TreeNode,
 	type Context,
 	UnhydratedFlexTreeNode,
+	getOrCreateInnerNode,
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
@@ -47,7 +47,7 @@ import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
 
 /**
- * Helper used to produce types for object nodes.
+ * Generates the properties for an ObjectNode from its field schema object.
  * @system @public
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = {
@@ -98,24 +98,33 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  *
  * 3. Union of 1 and 2.
  *
- * @privateRemarks TODO: consider separating these cases into different types.
+ * @see {@link Input}
+ *
+ * @privateRemarks
+ * TODO: consider separating these cases into different types.
+ *
+ * Empty objects don't get "no excess property" checks in literals.
+ * To prevent extraneous properties in literals for the fields of an empty object from compiling, the empty case is special cased to produce `Record<string, never>`.
+ * More details at {@link https://mercury.com/blog/creating-an-emptyobject-type-in-typescript}.
  *
  * @system @public
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-> = FlattenKeys<
-	{
-		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
-			T[Property] & string
+> = Record<string, never> extends T
+	? Record<string, never>
+	: FlattenKeys<
+			{
+				readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
+					T[Property & string]
+				>;
+			} & {
+				// Field does not have a known default, make it required:
+				readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
+					? Property
+					: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
+			}
 		>;
-	} & {
-		// Field does not have a known default, make it required:
-		readonly [Property in keyof T as FieldHasDefault<T[Property] & string> extends false
-			? Property
-			: never]: InsertableTreeFieldFromImplicitField<T[Property] & string>;
-	}
->;
 
 /**
  * Maps from simple field keys ("property" keys) to information about the field.

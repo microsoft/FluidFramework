@@ -5,22 +5,15 @@
 
 import { DoublyLinkedList, walkList } from "./collections/index.js";
 // eslint-disable-next-line import/no-deprecated
-import { ISegment, SegmentGroup } from "./mergeTreeNodes.js";
+import { SegmentGroup, type ISegmentLeaf } from "./mergeTreeNodes.js";
 
-/**
- * @deprecated - This class should not be used externally and will be removed in a subsequent release.
- * @legacy
- * @alpha
- *
- * @privateRemarks After the deprecation period this class should be remove from this package's exports, and only be used internally
- */
 export class SegmentGroupCollection {
 	// eslint-disable-next-line import/no-deprecated
-	private readonly segmentGroups: DoublyLinkedList<SegmentGroup>;
+	private readonly segmentGroups: DoublyLinkedList<SegmentGroup<ISegmentLeaf>>;
 
-	constructor(private readonly segment: ISegment) {
+	constructor(private readonly segment: ISegmentLeaf) {
 		// eslint-disable-next-line import/no-deprecated
-		this.segmentGroups = new DoublyLinkedList<SegmentGroup>();
+		this.segmentGroups = new DoublyLinkedList<SegmentGroup<ISegmentLeaf>>();
 	}
 
 	public get size(): number {
@@ -32,18 +25,18 @@ export class SegmentGroupCollection {
 	}
 
 	// eslint-disable-next-line import/no-deprecated
-	public enqueue(segmentGroup: SegmentGroup): void {
+	public enqueue(segmentGroup: SegmentGroup<ISegmentLeaf>): void {
 		this.segmentGroups.push(segmentGroup);
 		segmentGroup.segments.push(this.segment);
 	}
 
 	// eslint-disable-next-line import/no-deprecated
-	public dequeue(): SegmentGroup | undefined {
+	public dequeue(): SegmentGroup<ISegmentLeaf> | undefined {
 		return this.segmentGroups.shift()?.data;
 	}
 
 	// eslint-disable-next-line import/no-deprecated
-	public remove?(segmentGroup: SegmentGroup): boolean {
+	public remove?(segmentGroup: SegmentGroup<ISegmentLeaf>): boolean {
 		const found = this.segmentGroups.find((v) => v.data === segmentGroup);
 		if (found === undefined) {
 			return false;
@@ -53,18 +46,19 @@ export class SegmentGroupCollection {
 	}
 
 	// eslint-disable-next-line import/no-deprecated
-	public pop?(): SegmentGroup | undefined {
+	public pop?(): SegmentGroup<ISegmentLeaf> | undefined {
 		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
 	}
 
-	public copyTo(segment: ISegment): void {
-		walkList(this.segmentGroups, (sg) =>
-			segment.segmentGroups.enqueueOnCopy(sg.data, this.segment),
-		);
+	public copyTo(segmentGroups: SegmentGroupCollection): void {
+		walkList(this.segmentGroups, (sg) => segmentGroups.enqueueOnCopy(sg.data, this.segment));
 	}
 
 	// eslint-disable-next-line import/no-deprecated
-	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegment): void {
+	private enqueueOnCopy(
+		segmentGroup: SegmentGroup<ISegmentLeaf>,
+		sourceSegment: ISegmentLeaf,
+	): void {
 		this.enqueue(segmentGroup);
 		if (segmentGroup.previousProps) {
 			// duplicate the previousProps for this segment

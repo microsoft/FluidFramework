@@ -36,7 +36,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";
-import { TestSnapshotCache } from "../testSnapshotCache.js";
+import { TestPersistedCache } from "../testPersistedCache.js";
 
 import {
 	MockDetachedBlobStorage,
@@ -71,9 +71,23 @@ const usageErrorMessage = "Empty file summary creation isn't supported in this d
 const containerCloseAndDisposeUsageErrors = [
 	{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
 ];
-const ContainerCloseUsageError: ExpectedEvents = {
+const ContainerStateEventsOrErrors: ExpectedEvents = {
 	routerlicious: containerCloseAndDisposeUsageErrors,
 	tinylicious: containerCloseAndDisposeUsageErrors,
+	odsp: [
+		{
+			eventName: "fluid:telemetry:OdspDriver:createNewEmptyFile_end",
+			containerAttachState: "Detached",
+		},
+		{
+			eventName: "fluid:telemetry:OdspDriver:uploadSummary_end",
+			containerAttachState: "Attaching",
+		},
+		{
+			eventName: "fluid:telemetry:OdspDriver:renameFile_end",
+			containerAttachState: "Attaching",
+		},
+	],
 };
 
 describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
@@ -85,7 +99,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
-		// Currently FRS does not support blob API.
+		// Currently, AFR does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -277,11 +291,11 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	]);
 
 	let provider: ITestObjectProvider;
-	let testSnapshotCache: TestSnapshotCache;
+	let testPersistedCache: TestPersistedCache;
 	beforeEach("getTestObjectProvider", async function () {
-		testSnapshotCache = new TestSnapshotCache();
-		provider = getTestObjectProvider({ persistedCache: testSnapshotCache });
-		// Currently FRS does not support blob API.
+		testPersistedCache = new TestPersistedCache();
+		provider = getTestObjectProvider({ persistedCache: testPersistedCache });
+		// Currently AFR does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -299,8 +313,9 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		const attachOpP = new Promise<void>((resolve, reject) =>
 			container1.on("op", (op) => {
 				if (
-					(op.contents as { type?: unknown } | undefined)?.type ===
-					ContainerMessageType.BlobAttach
+					typeof op.contents === "string" &&
+					(JSON.parse(op.contents) as { type?: unknown })?.type ===
+						ContainerMessageType.BlobAttach
 				) {
 					if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
 						resolve();
@@ -348,7 +363,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		// Make sure the next container loads from the network so as to get latest snapshot.
-		testSnapshotCache.clearCache();
+		testPersistedCache.clearCache();
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const snapshot2 = (container2 as any).runtime.blobManager.summarize();
 		assert.strictEqual(snapshot2.stats.treeNodeCount, 1);
@@ -443,7 +458,7 @@ function serializationTests({
 			for (const summarizeProtocolTree of [undefined, true, false]) {
 				itExpects(
 					`works in detached container. summarizeProtocolTree: ${summarizeProtocolTree}`,
-					ContainerCloseUsageError,
+					ContainerStateEventsOrErrors,
 					async function () {
 						const loader = provider.makeTestLoader({
 							...testContainerConfig,
@@ -610,7 +625,7 @@ function serializationTests({
 
 			itExpects(
 				"redirect table saved in snapshot",
-				ContainerCloseUsageError,
+				ContainerStateEventsOrErrors,
 				async function () {
 					// test with and without offline load enabled
 					const offlineCfg = {
@@ -686,7 +701,7 @@ function serializationTests({
 
 			itExpects(
 				"serialize/rehydrate then attach",
-				ContainerCloseUsageError,
+				ContainerStateEventsOrErrors,
 				async function () {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,
@@ -740,7 +755,7 @@ function serializationTests({
 
 			itExpects(
 				"serialize/rehydrate multiple times then attach",
-				ContainerCloseUsageError,
+				ContainerStateEventsOrErrors,
 				async function () {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,

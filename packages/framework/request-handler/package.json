@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/request-handler",
-	"version": "2.4.0",
+	"version": "2.12.0",
 	"description": "A simple request handling library for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -98,12 +98,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -121,14 +123,14 @@
 		"@fluidframework/runtime-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
+		"@arethetypeswrong/cli": "^0.16.4",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.46.0",
+		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.46.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@2.3.0",
+		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@2.11.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
@@ -140,7 +142,6 @@
 		"diff": "^3.5.0",
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
@@ -149,6 +150,6 @@
 	},
 	"typeValidation": {
 		"broken": {},
-		"entrypoint": "internal"
+		"entrypoint": "legacy"
 	}
 }

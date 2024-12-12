@@ -37,7 +37,6 @@ export {
 } from "./nestedMap.js";
 export { addToNestedSet, type NestedSet, nestedSetContains } from "./nestedSet.js";
 export { type OffsetList, OffsetListFactory } from "./offsetList.js";
-export { TransactionResult } from "./transactionResult.js";
 export type {
 	areSafelyAssignable,
 	Contravariant,
@@ -52,6 +51,7 @@ export type {
 	requireFalse,
 	requireTrue,
 	requireAssignableTo,
+	areOnlyKeys,
 } from "./typeCheck.js";
 export { StackyIterator } from "./stackyIterator.js";
 export {
@@ -90,6 +90,9 @@ export {
 	compareStrings,
 	find,
 	count,
+	getLast,
+	hasSome,
+	hasSingle,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
@@ -99,7 +102,13 @@ export type {
 	RestrictiveStringRecord,
 	_InlineTrick,
 	FlattenKeys,
+	IsUnion,
+	UnionToIntersection,
+	UnionToTuple,
+	PopUnion,
 } from "./typeUtils.js";
+
+export { unsafeArrayToTuple } from "./typeUtils.js";
 
 export {
 	type BrandedKey,

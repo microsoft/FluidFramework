@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.4.0",
+	"version": "2.12.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -106,7 +106,7 @@
 		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:stress": "cross-env FUZZ_STRESS_RUN=1 FUZZ_TEST_COUNT=1 npm run test:mocha",
+		"test:stress": "cross-env FUZZ_STRESS_RUN=1 FUZZ_TEST_COUNT=normal npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -116,12 +116,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -144,17 +146,17 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
+		"@arethetypeswrong/cli": "^0.16.4",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
-		"@fluid-tools/build-cli": "^0.46.0",
+		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.46.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.3.0",
+		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.11.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
@@ -167,7 +169,6 @@
 		"diff": "^3.5.0",
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
@@ -176,20 +177,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IMergeTreeDeltaOpArgs": {
-				"backCompat": false
-			},
-			"TypeAlias_IMergeTreeDeltaOp": {
-				"backCompat": false
-			},
-			"Interface_IMergeTreeGroupMsg": {
-				"backCompat": false
-			},
-			"TypeAlias_IMergeTreeOp": {
-				"backCompat": false
-			}
-		},
-		"entrypoint": "internal"
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }

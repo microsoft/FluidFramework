@@ -9,7 +9,12 @@ import {
 	type IFluidModuleWithDetails,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { Loader, loadContainerPaused } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	loadContainerPaused,
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import type {
 	FluidObject,
 	IConfigProviderBase,
@@ -132,11 +137,14 @@ export class AzureClient {
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 
-		const container = await loader.createDetachedContainer({
-			package: "no-dynamic-package",
-			config: {},
+		const container = await createDetachedContainer({
+			...loaderProps,
+			codeDetails: {
+				package: "no-dynamic-package",
+				config: {},
+			},
 		});
 
 		const fluidContainer = await this.createFluidContainer<TContainerSchema>(
@@ -164,7 +172,7 @@ export class AzureClient {
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 		const url = new URL(this.connectionConfig.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
@@ -172,7 +180,11 @@ export class AzureClient {
 			encodeURIComponent(getTenantId(this.connectionConfig)),
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
-		const container = await loader.resolve({ url: url.href });
+
+		const container = await loadExistingContainer({
+			...loaderProps,
+			request: { url: url.href },
+		});
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
@@ -200,7 +212,7 @@ export class AzureClient {
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 	}> {
-		const loader = this.createLoader(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 		const url = new URL(this.connectionConfig.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
@@ -208,7 +220,7 @@ export class AzureClient {
 			encodeURIComponent(getTenantId(this.connectionConfig)),
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
-		const container = await loadContainerPaused(loader, {
+		const container = await loadContainerPaused(loaderProps, {
 			url: url.href,
 			headers: { [LoaderHeader.version]: version.id },
 		});
@@ -265,7 +277,10 @@ export class AzureClient {
 		};
 	}
 
-	private createLoader(schema: ContainerSchema, compatibilityMode: CompatibilityMode): Loader {
+	private getLoaderProps(
+		schema: ContainerSchema,
+		compatibilityMode: CompatibilityMode,
+	): ILoaderProps {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
 			compatibilityMode,
@@ -288,14 +303,14 @@ export class AzureClient {
 			mode: "write",
 		};
 
-		return new Loader({
+		return {
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
 			logger: this.logger,
 			options: { client },
 			configProvider: this.configProvider,
-		});
+		};
 	}
 
 	private async createFluidContainer<TContainerSchema extends ContainerSchema>(

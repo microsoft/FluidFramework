@@ -10,6 +10,7 @@ export {
 	ISummaryConfigurationDisableSummarizer,
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
+	IContainerRuntimeOptionsInternal,
 	loadContainerRuntime,
 	LoadContainerRuntimeParams,
 	agentSchedulerId,
@@ -26,9 +27,6 @@ export {
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
-	IContainerRuntimeMessageCompatDetails,
-	CompatModeBehavior,
-	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 export { IBlobManagerLoadInfo } from "./blobManager/index.js";

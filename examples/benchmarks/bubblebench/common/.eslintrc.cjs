@@ -5,5 +5,7 @@
 
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
-	rules: {},
+	rules: {
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+	},
 };

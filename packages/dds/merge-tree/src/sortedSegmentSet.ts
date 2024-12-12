@@ -9,7 +9,6 @@ import { ISegment } from "./mergeTreeNodes.js";
 import { SortedSet } from "./sortedSet.js";
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @internal
  */
 export type SortedSegmentSetItem =

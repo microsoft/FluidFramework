@@ -28,6 +28,7 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
+      set -eu -o pipefail
       echo Generating .npmrc for ${{ parameters.feedUrl }}
       echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
       echo "always-auth=true" >> ./.npmrc
@@ -43,7 +44,7 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
-      set -eux -o pipefail
+      set -eu -o pipefail
 
       echo "Artifact path: ${{ parameters.artifactPath }}"
       tag="--tag rc"
@@ -82,7 +83,7 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
-      set -eux -o pipefail
+      set -eu -o pipefail
       echo "Artifact path: ${{ parameters.artifactPath }}"
       orderFile=$(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt
 

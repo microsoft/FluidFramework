@@ -172,7 +172,7 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 	if (proxies.length > 0) {
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
 		let i = 0;
-		const off = forest.on("afterRootFieldCreated", (fieldKey) => {
+		const off = forest.events.on("afterRootFieldCreated", (fieldKey) => {
 			// Non null asserting here because of the length check above
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			(proxies[i]!.rootPath as Mutable<UpPath>).parentField = fieldKey;

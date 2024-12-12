@@ -71,7 +71,11 @@ export * from "@fluidframework/tree/alpha";
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";
-import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal";
+import {
+	SharedTree as OriginalSharedTree,
+	configuredSharedTree as originalConfiguredSharedTree,
+	type SharedTreeOptions,
+} from "@fluidframework/tree/internal";
 
 /**
  * A hierarchical data structure for collaboratively editing strongly typed JSON-like trees
@@ -84,6 +88,30 @@ import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal"
  * @public
  */
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
+
+/**
+ * {@link SharedTree} but allowing a non-default configuration.
+ * @remarks
+ * This is useful for debugging and testing to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ * @example
+ * ```typescript
+ * import {
+ * 	ForestType,
+ * 	TreeCompressionStrategy,
+ * 	configuredSharedTree,
+ * 	typeboxValidator,
+ * } from "@fluid-framework/alpha";
+ * const SharedTree = configuredSharedTree({
+ * 	forest: ForestType.Reference,
+ * 	jsonValidator: typeboxValidator,
+ * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+ * });
+ * ```
+ * @alpha
+ */
+export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree> {
+	return originalConfiguredSharedTree(options);
+}
 
 // #endregion Custom re-exports
 // #endregion
@@ -124,14 +152,15 @@ export type {
 	ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
-export {
+export type {
 	IntervalType,
 	SequenceDeltaEvent,
 	SequenceEvent,
 	SequenceInterval,
 	SequenceMaintenanceEvent,
-	SharedString,
 } from "@fluidframework/sequence/internal";
+
+export { SharedString } from "@fluidframework/sequence/internal";
 
 export type {
 	ISharedObject,

@@ -12,6 +12,11 @@ export enum InternalErrorCode {
 	 * The cluster is under draining.
 	 */
 	ClusterDraining = "ClusterDraining",
+
+	/**
+	 * The token has been revoked.
+	 */
+	TokenRevoked = "TokenRevoked",
 }
 
 /**
@@ -71,7 +76,7 @@ export class NetworkError extends Error {
 	 * Value representing the time in seconds that should be waited before retrying.
 	 * TODO: remove in favor of retryAfterMs once driver supports retryAfterMs.
 	 */
-	public readonly retryAfter: number;
+	public readonly retryAfter?: number;
 
 	constructor(
 		/**
@@ -199,7 +204,7 @@ export function createFluidServiceNetworkError(
 		message = errorData.message ?? "Unknown Error";
 		canRetry = errorData.canRetry;
 		isFatal = errorData.isFatal;
-		retryAfter = errorData.retryAfter;
+		retryAfter = errorData.retryAfterMs ?? errorData.retryAfter;
 		source = errorData.source;
 		internalErrorCode = errorData.internalErrorCode;
 	} else if (errorData && typeof errorData === "string") {

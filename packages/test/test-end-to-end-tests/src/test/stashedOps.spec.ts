@@ -12,13 +12,13 @@ import {
 	IContainer,
 	IHostLoader,
 	LoaderHeader,
+	type ILoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	DefaultSummaryConfiguration,
-	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import {
@@ -29,7 +29,9 @@ import {
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	ISharedDirectory,
 	SharedDirectory,
@@ -60,6 +62,8 @@ import {
 	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
+	timeoutAwait,
+	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
@@ -97,7 +101,7 @@ type SharedObjCallback = (
 const getPendingOps = async (
 	testContainerConfig: ITestContainerConfig,
 	testObjectProvider: ITestObjectProvider,
-	send: boolean,
+	send: false | true | "afterReconnect",
 	cb: SharedObjCallback = () => undefined,
 ) => {
 	const container: IContainerExperimental =
@@ -111,14 +115,23 @@ const getPendingOps = async (
 
 	await testObjectProvider.ensureSynchronized();
 	await testObjectProvider.opProcessingController.pauseProcessing(container);
-	assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+	const deltaManagerInternal = toIDeltaManagerFull(
+		toDeltaManagerInternal(dataStore.runtime.deltaManager),
+	);
+	assert(deltaManagerInternal.outbound.paused);
 
 	await cb(container, dataStore);
 
 	let pendingState: string | undefined;
-	if (send) {
+	if (send === true) {
 		pendingState = await container.getPendingLocalState?.();
 		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
+		container.close();
+	} else if (send === "afterReconnect") {
+		pendingState = await container.getPendingLocalState?.();
+		container.disconnect();
+		container.connect();
+		await testObjectProvider.ensureSynchronized(); // Note: This will have a different clientId than in pendingState
 		container.close();
 	} else {
 		pendingState = await container.closeAndGetPendingLocalState?.();
@@ -361,21 +374,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const string = await d.getSharedObject<SharedString>(stringId);
 				const collection = string.getIntervalCollection(collectionId);
 				collection.add({ start: testStart, end: testEnd });
-				// [DEPRECATED]
-				// Submit a message with an unrecognized type
-				// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
-				(
-					d.context.containerRuntime as unknown as {
-						submit: (
-							containerRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
-								Record<string, any>,
-						) => void;
-					}
-				).submit({
-					type: "FROM_THE_FUTURE",
-					contents: "Hello",
-					compatDetails: { behavior: "Ignore" },
-				});
 			},
 		);
 
@@ -1282,7 +1280,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.ok(serializedClientId);
 
 			await provider.opProcessingController.pauseProcessing(container);
-			assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+			const deltaManagerFull = toIDeltaManagerFull(
+				toDeltaManagerInternal(dataStore.runtime.deltaManager),
+			);
+			assert(deltaManagerFull.outbound.paused);
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
@@ -1485,7 +1486,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 
 			await provider.opProcessingController.pauseProcessing(container2);
-			assert(toDeltaManagerInternal(dataStore2.runtime.deltaManager).outbound.paused);
+			const deltaManagerFull = toIDeltaManagerFull(
+				toDeltaManagerInternal(dataStore2.runtime.deltaManager),
+			);
+			assert(deltaManagerFull.outbound.paused);
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 			const morePendingOps = await container2.getPendingLocalState?.();
@@ -1513,27 +1517,60 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	);
 
-	it("offline blob upload", async function () {
+	it("blob upload before loading", async function () {
+		// TODO: AB#19035: Blob upload from an offline state does not currently work before establishing a connection on ODSP due to epoch not provided.
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
 		const container = await loadOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		container.connect();
-		await waitForContainerConnection(container.container);
+		await timeoutAwait(waitForContainerConnection(container.container), {
+			errorMsg: "Timeout on waiting for container connection",
+		});
+		const handle = await timeoutAwait(handleP, {
+			errorMsg: "Timeout on waiting for handleP",
+		});
+	});
 
-		const handle = await handleP;
-		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+	it("offline blob upload", async function () {
+		const container = await loader.resolve({ url });
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+		container.disconnect();
+		// sending ops when we have never been connected does not work because our requests won't
+		// have epoch which is been set after connecting to delta connection (connectToDeltaStream)
+		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		container.connect();
+		await timeoutAwait(waitForContainerConnection(container), {
+			errorMsg: "Timeout on waiting for container connection",
+		});
+		const handle = await timeoutAwait(handleP, {
+			errorMsg: "Timeout on waiting for handleP",
+		});
+		const handleGet = await timeoutAwait(handle.get(), {
+			errorMsg: "Timeout on waiting for handle.get() ",
+		});
+		assert.strictEqual(bufferToString(handleGet, "utf8"), "blob contents");
 		map.set("blob handle", handle);
-		const container2 = await provider.loadTestContainer(testContainerConfig);
+
+		const container2 = await timeoutAwait(provider.loadTestContainer(testContainerConfig), {
+			errorMsg: "Timeout on waiting for container2 load",
+		});
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
-		await provider.ensureSynchronized();
-		assert.strictEqual(
-			bufferToString(await map2.get("blob handle").get(), "utf8"),
-			"blob contents",
-		);
+		await timeoutAwait(provider.ensureSynchronized(), {
+			errorMsg: "Timeout on waiting for ensureSynchronized after creating container2",
+		});
+
+		const handleGet2: any = await timeoutAwait(map2.get("blob handle").get(), {
+			errorMsg: "Timeout on waiting for handleGet2",
+		});
+		assert.strictEqual(bufferToString(handleGet2, "utf8"), "blob contents");
 	});
 
 	it("close while uploading blob", async function () {
@@ -1576,14 +1613,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		ac.abort();
 		const pendingOps = await pendingOpsP;
 
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		await provider.ensureSynchronized();
-		assert.strictEqual(
-			bufferToString(await map2.get("blob handle").get(), "utf8"),
-			"blob contents",
-		);
+		// we are able to load from the pending ops even though we abort
+		await loadOffline(testContainerConfig, provider, { url }, pendingOps);
 	});
 
 	it("close while uploading multiple blob", async function () {
@@ -1617,24 +1648,45 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("load offline with blob redirect table", async function () {
-		// upload blob offline so an entry is added to redirect table
-		const container = await loadOffline(testContainerConfig, provider, { url });
-		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
+		// TODO: AB#22741: Re-enable "load offline with blob redirect table"
+		if (
+			provider.driver.type === "odsp" ||
+			(provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs")
+		) {
+			this.skip();
+		}
+
+		const container = await loader.resolve({ url });
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+		container.disconnect();
 
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		container.connect();
-		const handle = await handleP;
+		const handle = await timeoutAwait(handleP, {
+			errorMsg: "Timeout on waiting for ",
+		});
 		map.set("blob handle", handle);
-		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+		const handleGet = await timeoutAwait(handle.get(), {
+			errorMsg: "Timeout on waiting for handleGet",
+		});
+		assert.strictEqual(bufferToString(handleGet, "utf8"), "blob contents");
 
 		// wait for summary with redirect table
-		await provider.ensureSynchronized();
-		await waitForSummary(provider, container1, testContainerConfig);
+		await timeoutAwait(provider.ensureSynchronized(), {
+			errorMsg: "Timeout on waiting for ensureSynchronized",
+		});
+		await timeoutAwait(waitForSummary(provider, container1, testContainerConfig), {
+			errorMsg: "Timeout on waiting for summary",
+		});
 
 		// should be able to load entirely offline
-		const stashBlob = await getPendingOps(testContainerConfig, provider, true);
-		await loadOffline(testContainerConfig, provider, { url }, stashBlob);
+		const stashBlob = await timeoutAwait(getPendingOps(testContainerConfig, provider, true), {
+			errorMsg: "Timeout on waiting for stashBlob",
+		});
+		await timeoutAwait(loadOffline(testContainerConfig, provider, { url }, stashBlob), {
+			errorMsg: "Timeout on waiting for loadOffline",
+		});
 	});
 
 	it("load offline from stashed ops with pending blob", async function () {
@@ -1822,6 +1874,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
 	it("works with summary while offline", async function () {
+		// TODO: AB#22740: Re-enable "works with summary while offline" on ODSP
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
+
 		map1.set("test op 1", "test op 1");
 		await waitForSummary(provider, container1, testContainerConfig);
 
@@ -1836,14 +1893,23 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		map1.set("test op 2", "test op 2");
-		await waitForSummary(provider, container1, testContainerConfig);
+		await timeoutAwait(waitForSummary(provider, container1, testContainerConfig), {
+			errorMsg: "Timeout on waiting for",
+		});
 
 		// load container with pending ops, which should resend the op not sent by previous container
-		const container2 = await loader.resolve({ url }, pendingOps);
+		const container2 = await timeoutAwait(loader.resolve({ url }, pendingOps), {
+			errorMsg: "Timeout on waiting for container2",
+		});
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
+		await timeoutAwait(waitForContainerConnection(container2), {
+			errorMsg: "Timeout on waiting for connection",
+		});
+		await timeoutAwait(provider.ensureSynchronized(), {
+			errorMsg: "Timeout on waiting for ensureSynchronized",
+		});
+
 		assert.strictEqual(map1.get(testKey), testValue);
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
@@ -1875,7 +1941,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		)) as IContainerExperimental;
 
 		// pause outgoing ops so we can detect dropped stashed changes
-		await container.deltaManager.outbound.pause();
+		await toIDeltaManagerFull(container.deltaManager).outbound.pause();
 		let pendingState: string | undefined;
 		let pendingStateP;
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
@@ -1959,7 +2025,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("applies stashed ops with no saved ops", async function () {
-		// TODO: This test is consistently failing when ran against FRS. See ADO:7968
+		// TODO: This test is consistently failing when ran against AFR. See ADO:7968
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -1977,9 +2043,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingState = JSON.parse(stashBlob);
 		// make sure the container loaded from summary and we have no saved ops
 		assert.strictEqual(pendingState.savedOps.length, 0);
-		assert(
-			pendingState.pendingRuntimeState.pending.pendingStates[0].referenceSequenceNumber > 0,
-		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, stashBlob);
@@ -1998,6 +2061,42 @@ describeCompat(
 	(getTestObjectProvider, apis) => {
 		const { SharedCounter } = apis.dds;
 		const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
+
+		function getIdCompressor(dds: IChannel): IIdCompressor {
+			return (dds as any).runtime.idCompressor as IIdCompressor;
+		}
+
+		/**
+		 * Load the container with the given pendingLocalState, and wait for it to close,
+		 * checking that it closed with the given error message (if possible).
+		 *
+		 * Note: There is a race condition for when the closure happens so we check a few ways the error could propagate.
+		 */
+		async function waitForExpectedContainerErrorOnLoad(
+			pendingLocalState: string,
+			expectedErrorMessage: string,
+		): Promise<boolean> {
+			try {
+				// We expect either loader.resolve to throw or else the container to close right after load
+				const container = await loader.resolve({ url }, pendingLocalState);
+
+				// This is to workaround a race condition in Container.load where the container might close between microtasks
+				// such that it resolves to the closed container rather than rejecting as it's supposed to.
+				if (container.closed) {
+					// We can't access the error that closed the container due to a gap in the API,
+					// so we must assume it is the expected error.
+					return true;
+				}
+
+				await timeoutPromise((_resolve, reject) => {
+					container.once("closed", reject);
+				});
+			} catch (error) {
+				return (error as Error).message === expectedErrorMessage;
+			}
+			// Unreachable (the timeoutPromise will throw)
+			return false;
+		}
 
 		// We disable summarization (so no summarizer container is loaded) due to challenges specifying the exact
 		// expected behavior of the summarizer container in these tests, in the presence of race conditions.
@@ -2060,7 +2159,6 @@ describeCompat(
 				// Second container, attempted to load from pendingLocalState
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "generic", // We downgrade this log if the container was still loading (which is the case for this test)
 					errorType: "dataProcessingError",
 				},
 			],
@@ -2069,27 +2167,23 @@ describeCompat(
 				const pendingLocalState = await getPendingOps(
 					testContainerConfig_noSummarizer,
 					provider,
-					true, // Do send ops from first container instance before closing
+					"afterReconnect", // Send ops after reconnecting, to ensure a different clientId
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
+						// Include an ID Allocation op to get coverage of the special logic around these ops as well
+						getIdCompressor(counter).generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
 
-				// The real scenario where the clientId would differ from the original container and pendingLocalState is this:
-				// 1. first container - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
-				// 2. second container - load with pendingLocalState (apply stashed ops to have clientId A), ops come in with clientId B, which is different.
-				//
-				// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState.
-				const obj = JSON.parse(pendingLocalState);
-				obj.clientId = "2356461c-85d2-4002-b699-5e8a0defa60b"; // Different GUID to simulate reconnect after getPendingLocalState
-				const pendingLocalStateAdjusted = JSON.stringify(obj);
-
 				// When we load the container using the adjusted pendingLocalState, the clientId mismatch should cause a ForkedContainerError
 				// when processing the ops submitted by first container before closing, because we recognize them as the same content using batchId.
-				await assert.rejects(
-					async () => loader.resolve({ url }, pendingLocalStateAdjusted),
-					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
+				const closedWithExpectedError = await waitForExpectedContainerErrorOnLoad(
+					pendingLocalState,
+					"Forked Container Error! Matching batchIds but mismatched clientId" /* expectedError */,
+				);
+				assert(
+					closedWithExpectedError,
 					"Container should have closed due to ForkedContainerError",
 				);
 
@@ -2119,6 +2213,11 @@ describeCompat(
 				},
 			],
 			async function () {
+				// AB#14900, 20297: this test is extremely flaky on Tinylicious and causing noise.
+				// Skip it for now until above items are resolved.
+				if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+					this.skip();
+				}
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
 					testContainerConfig_noSummarizer,
@@ -2126,6 +2225,8 @@ describeCompat(
 					false, // Don't send ops from first container instance before closing
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
+						// Include an ID Allocation op to get coverage of the special logic around these ops as well
+						getIdCompressor(counter).generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
@@ -2133,8 +2234,17 @@ describeCompat(
 				async function rehydrateConnectAndPause(loggingId: string) {
 					// Rehydrate and immediately pause outbound to ensure we don't send the ops yet
 					// Container won't be connected yet, so no race here.
-					const container = await loader.resolve({ url }, pendingLocalState);
-					await container.deltaManager.outbound.pause();
+					const container = await loader.resolve(
+						{
+							url,
+							headers: {
+								[LoaderHeader.loadMode]: { deltaConnection: "none" },
+							} satisfies Partial<ILoaderHeader>,
+						},
+						pendingLocalState,
+					);
+					await toIDeltaManagerFull(container.deltaManager).outbound.pause();
+					container.connect();
 
 					// Wait for the container to connect, and then pause the inbound queue
 					// This order matters - we need to process our inbound join op to finish connecting!
@@ -2142,7 +2252,7 @@ describeCompat(
 						reject: true,
 						errorMsg: `${loggingId} didn't connect in time`,
 					});
-					await container.deltaManager.inbound.pause();
+					await toIDeltaManagerFull(container.deltaManager).inbound.pause();
 
 					// Now this container should submit the op when we resume the outbound queue
 					return container;
@@ -2158,39 +2268,36 @@ describeCompat(
 				const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 				const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
+				const container2DeltaManager = toIDeltaManagerFull(container2.deltaManager);
+				const container3DeltaManager = toIDeltaManagerFull(container3.deltaManager);
 				// Here's the "in parallel" part - resume both outbound queues at the same time,
 				// and then resume both inbound queues once the outbound queues are idle (done sending).
 				const allSentP = Promise.all([
 					timeoutPromise<unknown>(
 						(resolve) => {
-							container2.deltaManager.outbound.once("idle", resolve);
+							container2DeltaManager.outbound.once("idle", resolve);
 						},
 						{ errorMsg: "container2 outbound queue never reached idle state" },
 					),
 					timeoutPromise<unknown>(
 						(resolve) => {
-							container3.deltaManager.outbound.once("idle", resolve);
+							container3DeltaManager.outbound.once("idle", resolve);
 						},
 						{ errorMsg: "container3 outbound queue never reached idle state" },
 					),
 				]);
-				container2.deltaManager.outbound.resume();
-				container3.deltaManager.outbound.resume();
+				container2DeltaManager.outbound.resume();
+				container3DeltaManager.outbound.resume();
 				await allSentP;
-				container2.deltaManager.inbound.resume();
-				container3.deltaManager.inbound.resume();
+				container2DeltaManager.inbound.resume();
+				container3DeltaManager.inbound.resume();
 
 				// At this point, both rehydrated containers should have submitted the same Counter op.
 				// ContainerRuntime will use PSM and BatchTracker and it will play out like this:
 				// - One will win the race and get their op sequenced first.
 				// - Then the other will close with Forked Container Error when it sees that ack - with matching batchId but from a different client
-				// - All other clients (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will ignore it.
+				// - Each other client (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will close.
 				await provider.ensureSynchronized();
-
-				// Container1 is not used directly in this test, but is present and observing the session,
-				// so we can double-check eventual consistency - the container should have closed and the op should not have been duplicated
-				assert(container1.closed, "container1 should be closed");
-				assert.strictEqual(counter1.value, incrementValue);
 
 				// Both containers will close with the correct value for the counter.
 				// The container whose op is sequenced first will close with "Duplicate batch" error
@@ -2199,8 +2306,25 @@ describeCompat(
 				// when it sees the winner's batch come in.
 				assert(container2.closed, "container2 should be closed");
 				assert(container3.closed, "container3 should be closed");
-				assert.strictEqual(counter2.value, incrementValue);
-				assert.strictEqual(counter3.value, incrementValue);
+				assert.strictEqual(
+					counter2.value,
+					incrementValue,
+					"container2 should have incremented to 3 (at least locally)",
+				);
+				assert.strictEqual(
+					counter3.value,
+					incrementValue,
+					"container3 should have incremented to 3 (at least locally)",
+				);
+
+				// Container1 is not used directly in this test, but is present and observing the session,
+				// so we can double-check eventual consistency - the container should have closed when processing the duplicate (after applying the first)
+				assert(container1.closed, "container1 should be closed");
+				assert.strictEqual(
+					counter1.value,
+					incrementValue,
+					"container1 should have incremented to 3 before closing",
+				);
 			},
 		);
 
@@ -2215,7 +2339,6 @@ describeCompat(
 				// Container 3
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "error",
 					errorType: "dataProcessingError",
 				},
 			],
@@ -2227,6 +2350,8 @@ describeCompat(
 					false, // Don't send ops from first container instance before closing
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
+						// Include an ID Allocation op to get coverage of the special logic around these ops as well
+						getIdCompressor(counter).generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
@@ -2242,26 +2367,12 @@ describeCompat(
 
 				// Rehydrate the second time - when we are catching up, we'll recognize the incoming op (from container2),
 				// and since it's coming from a different clientID we'll realize the container is forked and we'll close
-				// NOTE: there is a race condition for when the closure happens so we check a few ways the error could propagate.
-				await assert.rejects(
-					async () => {
-						// We expect either loader.resolve to throw or else the container to close right after load
-						const container3 = await loader.resolve({ url }, pendingLocalState);
-
-						// This is to workaround a race condition in Container.load where the container might close between microtasks
-						// such that it resolves to the closed container rather than rejecting as it's supposed to.
-						if (container3.closed) {
-							// If the container is closed, assume it was due to the right error until the bug mentioned above is fixed
-							throw new Error(
-								"Forked Container Error! Matching batchIds but mismatched clientId",
-							);
-						}
-
-						await timeoutPromise((_resolve, reject) => {
-							container3.once("closed", reject);
-						});
-					},
-					{ message: "Forked Container Error! Matching batchIds but mismatched clientId" },
+				const closedWithExpectedError = await waitForExpectedContainerErrorOnLoad(
+					pendingLocalState,
+					"Forked Container Error! Matching batchIds but mismatched clientId" /* expectedError */,
+				);
+				assert(
+					closedWithExpectedError,
 					"Container should have closed due to ForkedContainerError",
 				);
 

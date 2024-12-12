@@ -9,13 +9,14 @@ import { fileURLToPath } from "node:url";
 import { ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
+import type { DocumentNode } from "../documentation-domain/index.js";
 import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "../renderers/index.js";
+
 import {
 	endToEndTests,
 	type ApiModelTestOptions,
 	type EndToEndTestConfig,
 } from "./EndToEndTests.js";
-import type { DocumentNode } from "../documentation-domain/index.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
 
@@ -107,6 +108,7 @@ const testConfigs: EndToEndTestConfig<RenderDocumentAsHtmlConfig>[] = [
 			],
 			hierarchyBoundaries: [], // No additional hierarchy beyond the package level
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
+			skipPackage: (apiPackage) => apiPackage.name === "test-suite-b", // Skip test-suite-b package
 		},
 		renderConfig: {
 			startingHeadingLevel: 2,

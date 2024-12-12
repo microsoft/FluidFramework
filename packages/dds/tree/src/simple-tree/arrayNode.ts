@@ -14,11 +14,11 @@ import {
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import { prepareContentForHydration } from "./proxies.js";
-import { getOrCreateInnerNode } from "./proxyBinding.js";
 import {
 	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
@@ -34,6 +34,8 @@ import {
 	getOrCreateNodeFromInnerNode,
 	type TreeNodeSchemaBoth,
 	getSimpleNodeSchemaFromInnerNode,
+	getOrCreateInnerNode,
+	type TreeNodeSchemaClass,
 } from "./core/index.js";
 import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
 import { fail } from "../util/index.js";
@@ -44,18 +46,41 @@ import {
 } from "./core/index.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
+import type { Unenforced } from "./api/index.js";
 
 /**
- * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
+ * A covariant base type for {@link (TreeArrayNode:interface)}.
  *
+ * This provides the readonly subset of TreeArrayNode functionality, and is used as the source interface for moves since that needs to be covariant.
  * @privateRemarks
- * Inlining this into TreeArrayNode causes recursive array use to stop compiling.
- *
+ * Ideally this would just include `TreeNode, WithType<string, NodeKind.Array>` in the extends list but https://github.com/microsoft/TypeScript/issues/16936 prevents that from compiling.
+ * As a workaround around for this TypeScript limitation, the conflicting type intersection is wrapped in `Awaited` (which has no effect on the type in this case) which allows it to compile.
  * @system @sealed @public
  */
-export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
+export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
 	extends ReadonlyArray<T>,
-		TreeNode {
+		Awaited<TreeNode & WithType<string, NodeKind.Array>> {}
+
+/**
+ * A {@link TreeNode} which implements 'readonly T[]' and the array mutation APIs.
+ *
+ * @typeParam TAllowedTypes - Schema for types which are allowed as members of this array.
+ * @typeParam T - Use Default: Do not specify. Type of values to read from the array.
+ * @typeParam TNew - Use Default: Do not specify. Type of values to write into the array.
+ * @typeParam TMoveFrom - Use Default: Do not specify. Type of node from which children can be moved into this array.
+ *
+ * @sealed @public
+ */
+export interface TreeArrayNode<
+	TAllowedTypes extends Unenforced<ImplicitAllowedTypes> = ImplicitAllowedTypes,
+	out T = [TAllowedTypes] extends [ImplicitAllowedTypes]
+		? TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
+		: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
+	in TNew = [TAllowedTypes] extends [ImplicitAllowedTypes]
+		? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>
+		: InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
+	in TMoveFrom = ReadonlyArrayNode,
+> extends ReadonlyArrayNode<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -357,21 +382,6 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the array mutation APIs.
- *
- * @typeParam TAllowedTypes - Schema for types which are allowed as members of this array.
- *
- * @sealed @public
- */
-export interface TreeArrayNode<
-	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-> extends TreeArrayNodeBase<
-		TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
-		InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
-		TreeArrayNode
-	> {}
-
-/**
- * A {@link TreeNode} which implements 'readonly T[]' and the array mutation APIs.
  * @public
  */
 export const TreeArrayNode = {
@@ -417,9 +427,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 /**
  * Given a array node proxy, returns its underlying LazySequence field.
  */
-function getSequenceField<TSimpleType extends ImplicitAllowedTypes>(
-	arrayNode: TreeArrayNode<TSimpleType>,
-): FlexTreeSequenceField {
+function getSequenceField(arrayNode: ReadonlyArrayNode): FlexTreeSequenceField {
 	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField;
 }
 
@@ -799,10 +807,15 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	protected abstract get simpleSchema(): T;
 	protected abstract get allowedTypes(): ReadonlySet<TreeNodeSchema>;
 
+	public abstract override get [typeSchemaSymbol](): TreeNodeSchemaClass<
+		string,
+		NodeKind.Array
+	>;
+
 	public constructor(
-		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+		input?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
 	) {
-		super(input);
+		super(input ?? []);
 	}
 
 	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
@@ -901,13 +914,13 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 		field.editor.remove(removeStart, removeEnd - removeStart);
 	}
-	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
+	public moveToStart(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
 		validateIndex(sourceIndex, sourceField, "moveToStart");
 		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
-	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
+	public moveToEnd(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
 		validateIndex(sourceIndex, sourceField, "moveToEnd");
@@ -916,7 +929,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public moveToIndex(
 		destinationGap: number,
 		sourceIndex: number,
-		source?: TreeArrayNode,
+		source?: ReadonlyArrayNode,
 	): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
@@ -928,7 +941,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
-		source?: TreeArrayNode,
+		source?: ReadonlyArrayNode,
 	): void {
 		validateIndexRange(
 			sourceStart,
@@ -938,7 +951,11 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		);
 		this.moveRangeToIndex(0, sourceStart, sourceEnd, source);
 	}
-	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
+	public moveRangeToEnd(
+		sourceStart: number,
+		sourceEnd: number,
+		source?: ReadonlyArrayNode,
+	): void {
 		validateIndexRange(
 			sourceStart,
 			sourceEnd,
@@ -951,7 +968,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		destinationGap: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source?: TreeArrayNode,
+		source?: ReadonlyArrayNode,
 	): void {
 		const destinationField = getSequenceField(this);
 		const destinationSchema = this.allowedTypes;
@@ -1057,7 +1074,8 @@ export function arraySchema<
 		TreeArrayNode<T> & WithType<TName, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
-		T
+		T,
+		undefined
 	>;
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
@@ -1078,7 +1096,7 @@ export function arraySchema<
 				// Since proxy reports this as a "non-configurable" property, it must exist on the underlying object used as the proxy target, not as an inherited property.
 				// This should not get used as the proxy should intercept all use.
 				Object.defineProperty(instance, "length", {
-					value: NaN,
+					value: Number.NaN,
 					writable: true,
 					enumerable: false,
 					configurable: false,

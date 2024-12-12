@@ -4,13 +4,18 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
 	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
-
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
@@ -62,7 +67,6 @@ import {
 	type IEditableForest,
 	type IForestSubscription,
 	type JsonableTree,
-	type Revertible,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -86,9 +90,9 @@ import {
 	type TreeStoredSchemaSubscription,
 	type ITreeCursorSynchronous,
 	CursorLocationType,
-	type RevertibleFactory,
+	type RevertibleAlpha,
+	type RevertibleAlphaFactory,
 } from "../core/index.js";
-import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	type NodeKeyManager,
@@ -116,7 +120,6 @@ import {
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
-	type ITransaction,
 	type ITreeCheckoutFork,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -131,10 +134,9 @@ import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
 	SchemaFactory,
-	type InsertableTreeFieldFromImplicitField,
 	toStoredSchema,
-	type TreeViewEvents,
 	type TreeView,
+	type TreeBranchEvents,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -146,10 +148,10 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-import { cursorFromInsertable } from "../simple-tree/index.js";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
+import type { Transactor } from "../shared-tree-core/index.js";
 
 // Testing utilities
 
@@ -452,7 +454,7 @@ export function spyOnMethod(
 }
 
 /**
- * @returns `true` iff the given delta has a visible impact on the document tree.
+ * Determines whether or not the given delta has a visible impact on the document tree.
  */
 export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
 	for (const mark of delta.local ?? []) {
@@ -890,6 +892,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
+					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 					describe(
 						includeStringification ? "with stringification" : "without stringification",
 						() => {
@@ -949,11 +952,12 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 export function testChangeReceiver<TChange>(
 	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange>,
 ): [
-	changeReceiver: Parameters<ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]>[0],
+	changeReceiver: Parameters<ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]>[1],
 	getChanges: () => readonly TChange[],
 ] {
 	const changes: TChange[] = [];
-	const changeReceiver = (change: TChange): number => changes.push(change);
+	const changeReceiver = (taggedChange: TaggedChange<TChange>): number =>
+		changes.push(taggedChange.change);
 	return [changeReceiver, () => [...changes]];
 }
 
@@ -1047,16 +1051,16 @@ export function rootFromDeltaFieldMap(
 }
 
 export function createTestUndoRedoStacks(
-	events: Listenable<TreeViewEvents | CheckoutEvents>,
+	events: Listenable<TreeBranchEvents | CheckoutEvents>,
 ): {
-	undoStack: Revertible[];
-	redoStack: Revertible[];
+	undoStack: RevertibleAlpha[];
+	redoStack: RevertibleAlpha[];
 	unsubscribe: () => void;
 } {
-	const undoStack: Revertible[] = [];
-	const redoStack: Revertible[] = [];
+	const undoStack: RevertibleAlpha[] = [];
+	const redoStack: RevertibleAlpha[] = [];
 
-	function onDispose(disposed: Revertible): void {
+	function onDispose(disposed: RevertibleAlpha): void {
 		const redoIndex = redoStack.indexOf(disposed);
 		if (redoIndex !== -1) {
 			redoStack.splice(redoIndex, 1);
@@ -1068,7 +1072,7 @@ export function createTestUndoRedoStacks(
 		}
 	}
 
-	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactory): void {
+	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void {
 		if (getRevertible !== undefined) {
 			const revertible = getRevertible(onDispose);
 			if (commit.kind === CommitKind.Undo) {
@@ -1079,9 +1083,9 @@ export function createTestUndoRedoStacks(
 		}
 	}
 
-	const unsubscribeFromCommitApplied = events.on("commitApplied", onNewCommit);
+	const unsubscribeFromChangedEvent = events.on("changed", onNewCommit);
 	const unsubscribe = (): void => {
-		unsubscribeFromCommitApplied();
+		unsubscribeFromChangedEvent();
 		for (const revertible of undoStack) {
 			revertible.dispose();
 		}
@@ -1153,7 +1157,7 @@ export function treeTestFactory(
  *
  * Typically, users will want to initialize the returned view with some content (thereby setting its schema) using `TreeView.initialize`.
  */
-export function getView<TSchema extends ImplicitFieldSchema>(
+export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 	logger?: ITelemetryLoggerExt,
@@ -1178,7 +1182,7 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 /**
  * Views the supplied checkout with the given schema.
  */
-export function viewCheckout<TSchema extends ImplicitFieldSchema>(
+export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
 	checkout: TreeCheckout,
 	config: TreeViewConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
@@ -1215,7 +1219,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 		}
 		return this.options.editor;
 	}
-	public get transaction(): ITransaction {
+	public get transaction(): Transactor {
 		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
 	}
 	public get events(): Listenable<CheckoutEvents> {
@@ -1259,22 +1263,6 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
 		}
 		return true;
 	};
-}
-
-/**
- * Returns a cursor (in nodes mode) for the root node.
- *
- * @privateRemarks
- * Ideally this would work on any node, not just the root,
- * and the schema would come from the unhydrated node.
- * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
- */
-export function cursorFromInsertableTreeField(
-	schema: ImplicitFieldSchema,
-	tree: InsertableTreeFieldFromImplicitField,
-	nodeKeyManager: NodeKeyManager,
-): ITreeCursorSynchronous | undefined {
-	return cursorFromInsertable(schema, tree, nodeKeyManager);
 }
 
 function normalizeNewFieldContent(

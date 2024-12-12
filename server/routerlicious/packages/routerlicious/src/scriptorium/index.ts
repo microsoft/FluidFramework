@@ -48,6 +48,10 @@ export async function create(
 		(config.get("scriptorium:logSavedOpsTimeIntervalMs") as number) ?? 60000;
 	const opsCountTelemetryEnabled =
 		(config.get("scriptorium:opsCountTelemetryEnabled") as boolean) ?? false;
+	const circuitBreakerEnabled =
+		(config.get("scriptorium:circuitBreakerEnabled") as boolean) ?? false;
+	const circuitBreakerOptions =
+		(config.get("scriptorium:circuitBreakerOptions") as Record<string, any>) ?? {};
 
 	const factory = await services.getDbFactory(config);
 
@@ -73,7 +77,7 @@ export async function create(
 		);
 	}
 
-	if (mongoExpireAfterSeconds > 0) {
+	if (mongoExpireAfterSeconds > 0 && opCollection.createTTLIndex !== undefined) {
 		await (createCosmosDBIndexes
 			? opCollection.createTTLIndex({ _ts: 1 }, mongoExpireAfterSeconds)
 			: opCollection.createTTLIndex({ mongoTimestamp: 1 }, mongoExpireAfterSeconds));
@@ -84,7 +88,12 @@ export async function create(
 		// Database connection for global db if enabled
 		if (globalDbEnabled) {
 			const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
-			const globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
+			const globalDbMongoManager = new MongoManager(
+				factory,
+				globalDbReconnect,
+				undefined /* reconnectDelayMs */,
+				true /* global */,
+			);
 			globalDb = await globalDbMongoManager.getDatabase();
 		}
 		const documentsCollectionDb = globalDbEnabled ? globalDb : operationsDb;
@@ -96,7 +105,7 @@ export async function create(
 		// Required for checkpoint service
 		const checkpointRepository = new MongoCheckpointRepository(
 			operationsDb.collection(checkpointsCollectionName),
-			undefined /* checkpoint type */,
+			"scriptorium" /* checkpoint type */,
 		);
 		const isLocalCheckpointEnabled = config.get("checkpoints: localCheckpointEnabled");
 
@@ -132,5 +141,7 @@ export async function create(
 		shouldLogInitialSuccessVerbose,
 		logSavedOpsTimeIntervalMs,
 		opsCountTelemetryEnabled,
+		circuitBreakerEnabled,
+		circuitBreakerOptions,
 	});
 }

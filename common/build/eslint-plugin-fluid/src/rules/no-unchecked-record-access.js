@@ -160,14 +160,6 @@ module.exports = {
 	},
 };
 
-// Helper function to check if a type has an index signature
-function isIndexSignatureType(parserServices, node) {
-	const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
-	const typeChecker = parserServices.program.getTypeChecker();
-	const type = typeChecker.getTypeAtLocation(tsNode);
-	return type.getStringIndexType() !== undefined;
-}
-
 // Helper function to check if a type includes undefined
 function isTypeUndefinable(type) {
 	if (type.isUnion()) {
@@ -176,17 +168,123 @@ function isTypeUndefinable(type) {
 	return false;
 }
 
+// Helper function to check if a type has an index signature
+function isIndexSignatureType(parserServices, node) {
+    if (!node || !node.object) {
+        return false;
+    }
+
+    const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
+    if (!tsNode) {
+        return false;
+    }
+
+    const typeChecker = parserServices.program.getTypeChecker();
+    const type = typeChecker.getTypeAtLocation(tsNode);
+    if (!type) {
+        return false;
+    }
+
+    try {
+        // Check if this is a type with an index signature
+        const stringIndexType = type.getStringIndexType();
+        const numberIndexType = type.getNumberIndexType();
+
+        // If it's not a type with an index signature, no need to check further
+        if (!stringIndexType && !numberIndexType) {
+            return false;
+        }
+
+        // For array types, we don't want to treat numeric indexing as unsafe
+        if (type.symbol && type.symbol.escapedName === "Array") {
+            return false;
+        }
+
+        // For types with index signatures, we need to check if the property being accessed
+        // is statically declared (not from the index signature)
+        const propName = node.property && (node.computed ? node.property.value : node.property.name);
+        if (!propName) {
+            return true; // If we can't determine the property name, be conservative
+        }
+
+        const propSymbol = type.getProperty(propName);
+        if (!propSymbol) {
+            return true; // Property doesn't exist statically, must be from index signature
+        }
+
+        // Check if the property is actually from an explicit declaration
+        const declarations = propSymbol.declarations || [];
+        const isFromIndexSignature = declarations.some(decl =>
+            decl && (decl.kind === SyntaxKind.IndexSignature || !decl.name)
+        );
+
+        // If the property has no declarations or comes from an index signature, treat it as unsafe
+        return isFromIndexSignature || declarations.length === 0;
+
+    } catch (e) {
+        // If there's any error in type checking, be conservative
+        return true;
+    }
+}
+
 // Helper function to check if an index signature type includes undefined
 function isUndefinableIndexSignatureType(parserServices, node) {
-	const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
-	const typeChecker = parserServices.program.getTypeChecker();
-	const type = typeChecker.getTypeAtLocation(tsNode);
-	const indexType = type.getStringIndexType();
-	return (
-		indexType &&
-		(indexType.flags & TypeFlags.Undefined ||
-			(indexType.isUnion() && indexType.types.some((t) => t.flags & TypeFlags.Undefined)))
-	);
+    if (!node || !node.object) {
+        return false;
+    }
+
+    const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
+    if (!tsNode) {
+        return false;
+    }
+
+    const typeChecker = parserServices.program.getTypeChecker();
+    const type = typeChecker.getTypeAtLocation(tsNode);
+    if (!type) {
+        return false;
+    }
+
+    // Get the property being accessed
+    const propName = node.property && (node.computed ? node.property.value : node.property.name);
+    if (!propName) {
+        return false;
+    }
+
+    try {
+        // Check if it's a property explicitly defined (not from index signature)
+        const propSymbol = type.getProperty(propName);
+        if (propSymbol) {
+            const declarations = propSymbol.declarations || [];
+            const isFromIndexSignature = declarations.some(
+                decl => decl && decl.kind === SyntaxKind.IndexSignature
+            );
+
+            if (!isFromIndexSignature && declarations.length > 0) {
+                return false;
+            }
+        }
+
+        // Check both string and number index signatures
+        const stringIndexType = type.getStringIndexType();
+        const numberIndexType = type.getNumberIndexType();
+
+        const isStringIndexUndefinable = stringIndexType && (
+            stringIndexType.flags & TypeFlags.Undefined ||
+            (stringIndexType.isUnion && stringIndexType.isUnion() &&
+             stringIndexType.types.some(t => t.flags & TypeFlags.Undefined))
+        );
+
+        const isNumberIndexUndefinable = numberIndexType && (
+            numberIndexType.flags & TypeFlags.Undefined ||
+            (numberIndexType.isUnion && numberIndexType.isUnion() &&
+             numberIndexType.types.some(t => t.flags & TypeFlags.Undefined))
+        );
+
+        return isStringIndexUndefinable || isNumberIndexUndefinable;
+    } catch (e) {
+        // If there's any error in type checking, assume it might be undefinable
+        return true;
+    }
 }
 
 // Helper function to traverse up the code until the scope ends and checks if the property access has been checked for undefined

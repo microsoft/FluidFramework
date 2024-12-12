@@ -4,7 +4,6 @@
 		"outDir": "./lib",
 		"types": [
 			"react",
-			"react-dom",
 			// TODO: its a bit concerning to have all these test specific things in here where they impact non test code
 			//  and also for them to not actually work at making functioning intellisense in the tests.
 			"jest",

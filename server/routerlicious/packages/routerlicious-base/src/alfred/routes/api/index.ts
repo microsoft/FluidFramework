@@ -15,6 +15,8 @@ import {
 	IThrottler,
 	ITokenRevocationManager,
 	IClusterDrainingChecker,
+	IFluidAccessTokenGenerator,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import cors from "cors";
@@ -25,6 +27,7 @@ import { IDocumentDeleteService } from "../../services";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 
 export function create(
 	config: Provider,
@@ -38,10 +41,13 @@ export function create(
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
+	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
+	readinessCheck?: IReadinessCheck,
+	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -77,12 +83,21 @@ export function create(
 		singleUseTokenCache,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
+		fluidAccessTokenGenerator,
+	);
+
+	const healthCheckEndpoints = createHealthCheckEndpoints(
+		"alfred",
+		startupCheck,
+		readinessCheck,
+		false /* createLivenessEndpoint */,
 	);
 
 	router.use(cors());
 	router.use("/deltas", deltasRoute);
 	router.use("/documents", documentsRoute);
 	router.use("/api/v1", apiRoute);
+	router.use("/healthz", healthCheckEndpoints);
 
 	return router;
 }

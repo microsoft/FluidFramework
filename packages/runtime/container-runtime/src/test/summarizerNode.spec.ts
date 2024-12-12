@@ -7,16 +7,12 @@ import { strict as assert } from "assert";
 
 import { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
-	ISnapshotTree,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	ISummarizerNode,
 	ISummarizerNodeConfig,
-	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils/internal";
@@ -24,8 +20,6 @@ import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-u
 import { IRootSummarizerNode, createRootSummarizerNode } from "../summary/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SummarizerNode } from "../summary/summarizerNode/summarizerNode.js";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {
@@ -134,37 +128,6 @@ describe("Runtime", () => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				({ sequenceNumber }) as ISequencedDocumentMessage;
 
-			const emptySnapshot: ISnapshotTree = { blobs: {}, trees: {} };
-			const protocolTree: ISnapshotTree = {
-				blobs: { attributes: "protocolAttributes" },
-				trees: {},
-			};
-			const coreSnapshot: ISnapshotTree = {
-				blobs: {},
-				trees: {
-					[ids[1]]: {
-						blobs: {},
-						trees: {
-							[ids[2]]: emptySnapshot,
-						},
-					},
-				},
-			};
-			const simpleSnapshot: ISnapshotTree = {
-				blobs: {},
-				trees: {
-					...coreSnapshot.trees,
-					".protocol": protocolTree,
-				},
-			};
-			const channelsSnapshot: ISnapshotTree = {
-				blobs: {},
-				trees: {
-					[channelsTreeName]: coreSnapshot,
-					".protocol": protocolTree,
-				},
-			};
-
 			beforeEach(() => {
 				summarizeCalls = [0, 0, 0];
 			});
@@ -178,34 +141,6 @@ describe("Runtime", () => {
 						"create child",
 						"child node with same id already exists",
 						"0x1ab",
-					);
-				});
-			});
-
-			describe("Load Base Summary", () => {
-				it("Load base summary should do nothing for simple snapshot", async () => {
-					createRoot({ refSeq: 1 });
-					rootNode.updateBaseSummaryState(simpleSnapshot);
-
-					const latestSummary = (rootNode as SummarizerNode).latestSummary;
-					assert(latestSummary !== undefined, "latest summary should exist");
-					assert.strictEqual(
-						latestSummary.additionalPath?.path,
-						undefined,
-						"should not have any path parts for children",
-					);
-				});
-
-				it("Load base summary should strip channels subtree", async () => {
-					createRoot({ refSeq: 1 });
-					rootNode.updateBaseSummaryState(channelsSnapshot);
-
-					const latestSummary = (rootNode as SummarizerNode).latestSummary;
-					assert(latestSummary !== undefined, "latest summary should exist");
-					assert.strictEqual(
-						latestSummary.additionalPath?.path,
-						channelsTreeName,
-						"should have channels path for children",
 					);
 				});
 			});

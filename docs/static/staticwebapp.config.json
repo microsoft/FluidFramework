@@ -1,12 +1,19 @@
 {
-  "globalHeaders": {
-    "cache-control": "must-revalidate, max-age=3600",
-    "Content-Security-Policy-Report-Only": "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; object-src 'none'; base-uri 'self'; require-trusted-types-for 'script'; trusted-types default; report-uri https://csp.microsoft.com/report/FluidFramework-WW"
-  },
-  "navigationFallback": {
-    "rewrite": "/api/fallback"
-  },
-  "platform": {
-    "apiRuntime": "node:18"
-  }
+	"globalHeaders": {
+		"cache-control": "must-revalidate, max-age=3600",
+		"Content-Security-Policy-Report-Only": "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; object-src 'none'; base-uri 'self'; require-trusted-types-for 'script'; trusted-types default; report-uri https://csp.microsoft.com/report/FluidFramework-WW"
+	},
+	"navigationFallback": {
+		"rewrite": "/api/fallback"
+	},
+	"platform": {
+		"apiRuntime": "node:18"
+	},
+	"routes": [
+		{
+			"route": "/404",
+			"statusCode": 404
+		}
+	],
+	"trailingSlash": "never"
 }

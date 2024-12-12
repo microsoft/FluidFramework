@@ -12,7 +12,7 @@ import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
-import { IMergeTreeOptions } from "../mergeTree.js";
+import { type IMergeTreeOptionsInternal } from "../mergeTree.js";
 import { ISegment } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, ReferenceType } from "../ops.js";
 import { PropertySet } from "../properties.js";
@@ -25,7 +25,7 @@ import { TestSerializer } from "./testSerializer.js";
 // Reconstitutes a MergeTree client from a summary
 export async function loadSnapshot(
 	summary: ISummaryTree,
-	options?: IMergeTreeOptions,
+	options?: IMergeTreeOptionsInternal,
 ): Promise<TestClient> {
 	const services = MockStorage.createFromSummary(summary);
 	const client2 = new TestClient(options);
@@ -52,10 +52,10 @@ export class TestString {
 
 	constructor(
 		id: string,
-		private readonly options?: IMergeTreeOptions,
+		private readonly options?: IMergeTreeOptionsInternal,
 		initialState: string = "",
 	) {
-		this.client = createClientsAtInitialState({ initialState, options }, id)[id];
+		this.client = createClientsAtInitialState({ initialState, options }, id)[id]!;
 		this.client.startOrUpdateCollaboration(id);
 	}
 
@@ -109,7 +109,7 @@ export class TestString {
 	}
 
 	// Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
-	public async checkSnapshot(options?: IMergeTreeOptions): Promise<void> {
+	public async checkSnapshot(options?: IMergeTreeOptionsInternal): Promise<void> {
 		this.applyPendingOps();
 		const expectedAttributionKeys = this.client.getAllAttributionSeqs();
 		const summary = this.getSummary();

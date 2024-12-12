@@ -1,9 +1,22 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.17.3
+
+-   Fixes an issue where directories generated for API items configured to yield directory-wise hierarchy (via the `hierarchyBoundaries` option) would be generated with names that differed from their corresponding document names.
+    -   Longer term, it would be nice to make the relationship between directory names and document names less intertwined, but for now there are aspects of the system that rely on the two being the same, and this invariant was being violated.
+        So, for now, this is considered a bug fix.
+
+## 0.17.2
+
+-   Fixes an issue with generated Markdown heading ID overrides where ID contents were not being properly escaped.
+    E.g., an anchor ID of `_foo_` would generate `{#_foo_}` (which Markdown renderers could interpret as italicized contents) rather than `{#\_foo\_}`.
+    This had the effect of some Markdown renderers (in this case, Docusaurus) treating the reference ID as `foo` instead of `_foo_`.
+
 ## 0.17.1
 
 -   Updates `TSDoc` node handling to emit a _warning_ in place of an _error_ when an embedded `HTML` tag is encountered.
     Also updates the logged notice to include the tag that was encountered.
+-   Fixes a bug where the default transformation for the `API Model` page did not correctly account for the `skipPackage` configuration, and would list packages that were not intended for inclusion in the generated docs suite.
 
 ## 0.17.0
 

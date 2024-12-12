@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree",
-	"version": "2.4.0",
+	"version": "2.12.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -68,7 +68,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha \"dist/**/*.tests.js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluid-internal/mocha-test-setup",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=normal mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluid-internal/mocha-test-setup",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
@@ -91,18 +91,18 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
+		"@arethetypeswrong/cli": "^0.16.4",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.46.0",
+		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
@@ -122,7 +122,6 @@
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type DeltaFieldChanges,
@@ -23,6 +23,7 @@ import {
 	type TreeStoredSchemaSubscription,
 	type UpPath,
 	clonePath,
+	createAnnouncedVisitor,
 	detachedFieldAsKey,
 	initializeForest,
 	mapCursorField,
@@ -606,7 +607,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					);
 
 					const log: string[] = [];
-					forest.on("beforeChange", () => {
+					forest.events.on("beforeChange", () => {
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
 						log.push("beforeChange");
@@ -629,7 +630,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				);
 
 				const log: string[] = [];
-				forest.on("beforeChange", () => {
+				forest.events.on("beforeChange", () => {
 					log.push("beforeChange");
 				});
 
@@ -1117,6 +1118,41 @@ export function testForest(config: ForestTestConfiguration): void {
 				readCursor.free();
 				assert.deepEqual(actual, expected);
 			});
+		});
+
+		it("can register and deregister announced visitors", () => {
+			let treesCreated = 0;
+			const acquireVisitor = () => {
+				return createAnnouncedVisitor({
+					afterCreate: () => {
+						treesCreated++;
+					},
+				});
+			};
+
+			const forest = factory(new TreeStoredSchemaRepository(toStoredSchema(JsonArray)));
+			const content: JsonCompatible[] = [1, 2];
+			initializeForest(
+				forest,
+				content.map(singleJsonCursor),
+				testRevisionTagCodec,
+				testIdCompressor,
+			);
+
+			forest.registerAnnouncedVisitor(acquireVisitor);
+			const delta: DeltaFieldMap = new Map([
+				[rootFieldKey, { local: [{ count: 1, attach: buildId }] }],
+			]);
+			applyTestDelta(delta, forest, undefined, undefined, [
+				{ id: buildId, trees: [singleJsonCursor(3)] },
+			]);
+
+			forest.deregisterAnnouncedVisitor(acquireVisitor);
+			applyTestDelta(delta, forest, undefined, undefined, [
+				{ id: buildId, trees: [singleJsonCursor(4)] },
+			]);
+
+			assert.equal(treesCreated, 1);
 		});
 	});
 

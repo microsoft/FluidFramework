@@ -4,15 +4,16 @@
  */
 
 import {
+	getModelAndMigrationToolFromContainer,
 	IMigratableModel,
 	IMigrationTool,
 	IVersionedModel,
-	MigratableSessionStorageModelLoader,
 	Migrator,
+	SessionStorageSimpleLoader,
 } from "@fluid-example/migration-tools/internal";
 
-import React from "react";
-import ReactDOM from "react-dom";
+import { createElement } from "react";
+import { createRoot, type Root } from "react-dom/client";
 
 import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";
 import { DemoCodeLoader } from "../src/demoCodeLoader.js";
@@ -46,52 +47,57 @@ window["migrators"] = [];
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	const searchParams = new URLSearchParams(location.search);
 	const testMode = searchParams.get("testMode") !== null;
-	const modelLoader = new MigratableSessionStorageModelLoader<
-		IInventoryListAppModel & IMigratableModel
-	>(new DemoCodeLoader(testMode));
+	const loader = new SessionStorageSimpleLoader(new DemoCodeLoader(testMode));
 	let id: string;
 	let model: IMigratableModel;
 	let migrationTool: IMigrationTool;
 
 	if (location.hash.length === 0) {
-		// Normally our code loader is expected to match up with the version passed here.
-		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
-		// the version doesn't actually matter.
-		const createResponse = await modelLoader.createDetached("one");
-		model = createResponse.model;
-		migrationTool = createResponse.migrationTool;
-		// Should be the same as the uuid we generated above.
-		id = await createResponse.attach();
+		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
+		// Normally we would create with the most-recent version.
+		const { container, attach } = await loader.createDetached("one");
+		const modelAndMigrationTool =
+			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
+		model = modelAndMigrationTool.model;
+		migrationTool = modelAndMigrationTool.migrationTool;
+		id = await attach();
 	} else {
-		id = location.hash.substring(1);
-		const loadResponse = await modelLoader.loadExisting(id);
-		model = loadResponse.model;
-		migrationTool = loadResponse.migrationTool;
+		id = location.hash.slice(1);
+		const container = await loader.loadExisting(id);
+		const modelAndMigrationTool =
+			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
+		model = modelAndMigrationTool.model;
+		migrationTool = modelAndMigrationTool.migrationTool;
 	}
 
 	const appDiv = document.createElement("div");
 	const debugDiv = document.createElement("div");
 
+	let appRoot: Root | undefined;
+	let debugRoot: Root | undefined;
+
 	const render = (model: IVersionedModel, migrationTool: IMigrationTool) => {
-		ReactDOM.unmountComponentAtNode(appDiv);
 		// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
 		// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 		// view code loader to pull in the view dynamically based on the version we discover.
 		if (isIInventoryListAppModel(model)) {
-			ReactDOM.render(
-				React.createElement(InventoryListAppView, { model, migrationTool }),
-				appDiv,
-			);
+			if (appRoot !== undefined) {
+				appRoot.unmount();
+			}
+			appRoot = createRoot(appDiv);
+			appRoot.render(createElement(InventoryListAppView, { model, migrationTool }));
 
 			// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
-			ReactDOM.unmountComponentAtNode(debugDiv);
-			ReactDOM.render(
-				React.createElement(DebugView, {
+			if (debugRoot !== undefined) {
+				debugRoot.unmount();
+			}
+			debugRoot = createRoot(debugDiv);
+			debugRoot.render(
+				createElement(DebugView, {
 					model,
 					migrationTool,
 					getUrlForContainerId,
 				}),
-				debugDiv,
 			);
 		} else {
 			throw new Error(`Don't know how to render version ${model.version}`);
@@ -99,7 +105,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	};
 
 	const migrator = new Migrator(
-		modelLoader,
+		loader,
 		model,
 		migrationTool,
 		id,
@@ -107,9 +113,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	);
 	migrator.events.on("migrated", () => {
 		model.dispose();
-		render(migrator.currentModel, migrationTool);
-		updateTabForId(migrator.currentModelId);
 		model = migrator.currentModel;
+		migrationTool = migrator.currentMigrationTool;
+		render(model, migrationTool);
+		updateTabForId(migrator.currentModelId);
 	});
 
 	// eslint-disable-next-line @typescript-eslint/dot-notation

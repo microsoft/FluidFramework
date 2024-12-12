@@ -3,28 +3,37 @@
  * Licensed under the MIT License.
  */
 
-export type {
-	DataTransformationCallback,
+/**
+ * @packageDocumentation
+ * This package contains tools for migrating data from one version to another, used by Fluid examples.
+ * They are not currently intended for use in production scenarios.
+ */
+
+export {
+	CompositeEntryPoint,
+	IEntryPointPiece,
+	loadCompositeRuntime,
+} from "./compositeRuntime/index.js";
+export {
 	IAcceptedMigrationDetails,
-	IImportExportModel,
-	IMigratableModel,
 	IMigrationTool,
 	IMigrationToolEvents,
+	MigrationState,
+	migrationToolEntryPointPiece,
+	MigrationToolFactory,
+} from "./migrationTool/index.js";
+export {
+	DataTransformationCallback,
+	getModelAndMigrationToolFromContainer,
+	IImportExportModel,
+	IMigratableModel,
 	IMigrator,
 	IMigratorEvents,
 	IVersionedModel,
-	MigrationState,
-} from "./interfaces/index.js";
-export { MigrationToolFactory } from "./migrationTool.js";
-export { Migrator } from "./migrator.js";
+	Migrator,
+} from "./migrator/index.js";
 export {
-	CreateModelCallback,
-	IAttachedMigratableModel,
-	IDetachedMigratableModel,
-	IMigratableModelContainerRuntimeEntryPoint,
-	IMigratableModelLoader,
-	instantiateMigratableRuntime,
-	MigratableModelLoader,
-	MigratableSessionStorageModelLoader,
-	MigratableTinyliciousModelLoader,
-} from "./modelLoader/index.js";
+	ISimpleLoader,
+	SessionStorageSimpleLoader,
+	SimpleLoader,
+} from "./simpleLoader/index.js";

@@ -13,13 +13,14 @@ import {
 	ContainerMessageType,
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
-	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { asBatchMetadata } from "../metadata.js";
 
 import { OpDecompressor } from "./opDecompressor.js";
 import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
 import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
+// eslint-disable-next-line unused-imports/no-unused-imports -- Used by "@link" comment annotation below
+import { serializeOpContents } from "./outbox.js";
 
 /** Info about the batch we learn when we process the first message */
 export interface BatchStartInfo {
@@ -57,6 +58,7 @@ export type InboundMessageResult =
 			messages: InboundSequencedContainerRuntimeMessage[];
 			batchStart: BatchStartInfo;
 			length: number;
+			groupedBatch: boolean; // Messages in a grouped batches are sent to the runtime in bunches.
 	  }
 	| {
 			type: "batchStartingMessage";
@@ -169,6 +171,7 @@ export class RemoteMessageProcessor {
 					keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
 				},
 				length: groupedMessages.length, // Will be 0 for an empty batch
+				groupedBatch: true,
 			};
 		}
 
@@ -218,6 +221,7 @@ export class RemoteMessageProcessor {
 					keyMessage: message,
 				},
 				length: 1,
+				groupedBatch: false,
 			};
 		}
 		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
@@ -236,32 +240,16 @@ export class RemoteMessageProcessor {
 }
 
 /**
- * Takes an incoming message and if the contents is a string, JSON.parse's it in place
+ * Takes an incoming runtime message JSON.parse's its contents in place, if needed (old Loader does this for us).
+ * Only to be used for runtine messages.
+ * @remarks - Serialization during submit happens via {@link serializeOpContents}
  * @param mutableMessage - op message received
- * @param hasModernRuntimeMessageEnvelope - false if the message does not contain the modern op envelop where message.type is MessageType.Operation
- * @param logLegacyCase - callback to log when legacy op is encountered
  */
-export function ensureContentsDeserialized(
-	mutableMessage: ISequencedDocumentMessage,
-	hasModernRuntimeMessageEnvelope: boolean,
-	logLegacyCase: (codePath: string) => void,
-): void {
-	// This should become unconditional once (Loader LTS) DeltaManager.processInboundMessage() stops parsing content (ADO #12052)
-	// Note: Until that change is made in the loader, this case will never be hit.
-	// Then there will be a long time of needing both cases, until LTS catches up to the change.
-	let didParseJsonContents: boolean;
+export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
+	// This should become unconditional once Loader LTS reaches 2.4 or later.
+	// There will be a long time of needing both cases, until LTS advances to that point.
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);
-		didParseJsonContents = true;
-	} else {
-		didParseJsonContents = false;
-	}
-
-	// The DeltaManager parses the contents of the message as JSON if it is a string,
-	// so we should never end up parsing it here.
-	// Let's observe if we are wrong about this to learn about these cases.
-	if (didParseJsonContents) {
-		logLegacyCase("ensureContentsDeserialized_foundJsonContents");
 	}
 }
 
@@ -270,7 +258,7 @@ export function ensureContentsDeserialized(
  *
  * The return type illustrates the assumption that the message param
  * becomes a InboundSequencedContainerRuntimeMessage by the time the function returns
- * (but there is no runtime validation of the 'type' or 'compatDetails' values).
+ * (but there is no runtime validation of the 'type').
  */
 function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRuntimeMessage {
 	// We assume the contents is an InboundContainerRuntimeMessage (the message is "packed")
@@ -281,10 +269,6 @@ function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRu
 
 	messageUnpacked.type = contents.type;
 	messageUnpacked.contents = contents.contents;
-	if ("compatDetails" in contents) {
-		(messageUnpacked as InboundSequencedRecentlyAddedContainerRuntimeMessage).compatDetails =
-			contents.compatDetails;
-	}
 	return messageUnpacked;
 }
 

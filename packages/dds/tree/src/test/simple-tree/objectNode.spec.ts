@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -12,16 +12,49 @@ import {
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type NodeBuilderData,
-	type NodeKind,
-	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
-
+import type {
+	InsertableObjectFromSchemaRecord,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/objectNode.js";
 import { describeHydration, hydrate, pretty } from "./utils.js";
-import type { requireAssignableTo } from "../../util/index.js";
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+} from "../../util/index.js";
 import { validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
+import type {
+	InsertableTreeFieldFromImplicitField,
+	InsertableTreeNodeFromAllowedTypes,
+	InsertableTypedNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/schemaTypes.js";
 
 const schemaFactory = new SchemaFactory("Test");
+
+// InsertableObjectFromSchemaRecord
+{
+	class Note extends schemaFactory.object("Note", {}) {}
+
+	// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+	type Info = {
+		readonly stuff: readonly [typeof Note];
+	};
+
+	type Desired = InsertableTypedNode<typeof Note>;
+
+	{
+		type result = InsertableObjectFromSchemaRecord<Info>["stuff"];
+		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
+	}
+
+	{
+		type result = InsertableTreeFieldFromImplicitField<Info["stuff"]>;
+		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
+	}
+}
 
 describeHydration(
 	"ObjectNode",
@@ -207,41 +240,65 @@ describeHydration(
 			});
 		});
 
+		// Regression test for accidental use of ?? preventing null values from being read correctly.
+		it("can read null field", () => {
+			class Root extends schemaFactory.object("", {
+				x: schemaFactory.null,
+			}) {}
+			const node = init(Root, { x: null });
+			assert.equal(node.x, null);
+		});
+
 		describe("supports setting", () => {
 			describe("primitives", () => {
-				function check<const TNode>(
-					schema: TreeNodeSchema<string, NodeKind, TNode>,
-					before: TNode,
-					after: TNode,
-				) {
-					describe(`required ${typeof before} `, () => {
-						it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-							const Root = schemaFactory.object("", { value: schema });
-							const root = init(Root, { value: before });
-							assert.equal(root.value, before);
-							root.value = after;
-							assert.equal(root.value, after);
-						});
-					});
+				it("required", () => {
+					class Root extends schemaFactory.object("", {
+						x: schemaFactory.number,
+					}) {}
+					const node = init(Root, { x: 5 });
+					assert.equal(node.x, 5);
+					node.x = 6;
+					assert.equal(node.x, 6);
+				});
 
-					describe(`optional ${typeof before}`, () => {
-						it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-							const root = init(
-								schemaFactory.object("", { value: schemaFactory.optional(schema) }),
-								{ value: undefined },
-							);
-							assert.equal(root.value, undefined);
-							root.value = before;
-							assert.equal(root.value, before);
-							root.value = after;
-							assert.equal(root.value, after);
-						});
-					});
-				}
+				it("optional", () => {
+					class Root extends schemaFactory.object("", {
+						y: schemaFactory.optional(schemaFactory.number),
+					}) {}
+					const node = init(Root, {});
+					assert.equal(node.y, undefined);
+					node.y = 6;
+					assert.equal(node.y, 6);
+					node.y = undefined;
+					assert.equal(node.y, undefined);
+				});
 
-				check(schemaFactory.boolean, false, true);
-				check(schemaFactory.number, 0, 1);
-				check(schemaFactory.string, "", "!");
+				it("invalid normalize numbers", () => {
+					class Root extends schemaFactory.object("", {
+						x: [schemaFactory.number, schemaFactory.null],
+					}) {}
+					const node = init(Root, { x: Number.NaN });
+					assert.equal(node.x, null);
+					node.x = 6;
+					assert.equal(node.x, 6);
+					node.x = Number.POSITIVE_INFINITY;
+					assert.equal(node.x, null);
+					node.x = -0;
+					assert(Object.is(node.x, 0));
+				});
+
+				it("invalid numbers error", () => {
+					class Root extends schemaFactory.object("", {
+						x: schemaFactory.number,
+					}) {}
+					const node = init(Root, { x: 1 });
+					assert.throws(() => {
+						node.x = Number.NaN;
+					}, validateUsageError(/NaN/));
+					assert.equal(node.x, 1);
+					node.x = -0;
+					assert(Object.is(node.x, 0));
+				});
 			});
 
 			describe("required object", () => {
@@ -338,6 +395,24 @@ describeHydration(
 		});
 	},
 	() => {
+		it("Construction regression test", () => {
+			class Note extends schemaFactory.object("Note", {}) {}
+
+			class Canvas extends schemaFactory.object("Canvas", { stuff: [Note] }) {}
+
+			const y = new Note({});
+
+			const x = new Canvas({
+				stuff: {},
+			});
+
+			const allowed = [Note] as const;
+			{
+				type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
+				const test: X = {};
+			}
+		});
+
 		describe("shadowing", () => {
 			it("optional shadowing builtin", () => {
 				class Schema extends schemaFactory.object("x", {
@@ -477,6 +552,28 @@ describeHydration(
 			assert.equal(Tree.schema(node), Customizable);
 			assert.equal(node[typeNameSymbol], Customizable.identifier);
 			assert.equal(node[typeSchemaSymbol], Customizable);
+		});
+
+		it("Build Parameter unexpected properties", () => {
+			class A extends schemaFactory.object("A", {}) {}
+			class B extends schemaFactory.object("B", { a: schemaFactory.number }) {}
+
+			const a = new A({});
+			const b = new B({ a: 1 });
+
+			// @ts-expect-error "Object literal may only specify known properties"
+			const a2 = new A({ thisDoesNotExist: 5 });
+
+			// @ts-expect-error "Object literal may only specify known properties"
+			const b3 = new B({ a: 1, thisDoesNotExist: 5 });
+
+			type BuildA = NodeBuilderData<typeof A>;
+			type BuildB = NodeBuilderData<typeof B>;
+
+			// @ts-expect-error "Object literal may only specify known properties"
+			const builderA: BuildA = { thisDoesNotExist: 5 };
+			// @ts-expect-error "Object literal may only specify known properties"
+			const builderB: BuildB = { a: 1, thisDoesNotExist: 5 };
 		});
 	},
 );

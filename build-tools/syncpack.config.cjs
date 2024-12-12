@@ -72,7 +72,7 @@ module.exports = {
 
 		{
 			label: "Must use exact dependency ranges",
-			dependencies: ["jssm", "jssm-viz-cli", "sort-package-json"],
+			dependencies: ["sort-package-json"],
 			packages: ["**"],
 			range: "",
 		},
@@ -100,7 +100,6 @@ module.exports = {
 			label:
 				"Dependencies on other fluid packages within the workspace should use tilde dependency ranges",
 			dependencies: [
-				"@fluid-private/readme-command",
 				"@fluid-tools/build-cli",
 				"@fluid-tools/version-tools",
 				"@fluidframework/build-tools",

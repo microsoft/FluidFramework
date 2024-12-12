@@ -3,10 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IDeltaManager,
+	type IDeltaManagerFull,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IDeltaManagerErased } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { IDataStore } from "@fluidframework/runtime-definitions/internal";
 
 import { PromiseExecutor, TimeoutWithError, timeoutPromise } from "./timeoutUtils.js";
@@ -88,4 +97,21 @@ export async function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore)
 	const response: IResponse = await (dataStore as any).request({ url: "" });
 	assert(response.status === 200, "empty request should return data object");
 	return response.value as T;
+}
+
+/**
+ * @internal
+ */
+export function toIDeltaManagerFull(
+	deltaManager:
+		| IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>
+		| IDeltaManagerErased,
+): IDeltaManagerFull {
+	assert(
+		"inbound" in deltaManager && "outbound" in deltaManager,
+		"Delta manager does not have inbound/outbound queues.",
+	);
+	return deltaManager as unknown as
+		| IDeltaManagerErased
+		| IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> as IDeltaManagerFull;
 }
