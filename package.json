@@ -149,6 +149,8 @@
 		"report-dir": "nyc/report",
 		"reporter": [
 			"cobertura",
+			"clover",
+			"json-summary",
 			"html",
 			"text"
 		],
