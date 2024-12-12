@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.10.0",
+	"version": "2.12.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -159,8 +159,8 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.5.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.11.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
@@ -192,92 +192,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassStatics_SequenceDeltaEvent": {
-				"backCompat": false
-			},
-			"ClassStatics_SequenceEvent": {
-				"backCompat": false
-			},
-			"ClassStatics_SequenceInterval": {
-				"backCompat": false
-			},
-			"ClassStatics_SequenceMaintenanceEvent": {
-				"backCompat": false
-			},
-			"Class_BaseSegment": {
-				"backCompat": false
-			},
-			"Class_Marker": {
-				"backCompat": false
-			},
-			"Class_SequenceDeltaEvent": {
-				"backCompat": false
-			},
-			"Class_SequenceEvent": {
-				"backCompat": false
-			},
-			"Class_SequenceInterval": {
-				"backCompat": false
-			},
-			"Class_SequenceMaintenanceEvent": {
-				"backCompat": false
-			},
-			"Class_TextSegment": {
-				"backCompat": false
-			},
-			"Class_TrackingGroup": {
-				"backCompat": false
-			},
-			"ClassStatics_BaseSegment": {
-				"backCompat": false
-			},
-			"ClassStatics_Marker": {
-				"backCompat": false
-			},
-			"ClassStatics_TextSegment": {
-				"backCompat": false
-			},
-			"ClassStatics_TrackingGroup": {
-				"backCompat": false
-			},
-			"Interface_ISegment": {
-				"backCompat": false
-			},
-			"Interface_ISequenceDeltaRange": {
-				"backCompat": false
-			},
-			"Interface_ISerializableInterval": {
-				"backCompat": false
-			},
-			"Interface_ReferencePosition": {
-				"backCompat": false
-			},
-			"TypeAlias_IntervalRevertible": {
-				"backCompat": false
-			},
-			"TypeAlias_SharedStringRevertible": {
-				"backCompat": false
-			},
-			"TypeAlias_SharedStringSegment": {
-				"backCompat": false
-			},
-			"Class_SharedSegmentSequence": {
-				"forwardCompat": false
-			},
-			"Class_SharedStringClass": {
-				"forwardCompat": false
-			},
-			"Interface_ISharedSegmentSequence": {
-				"forwardCompat": false
-			},
-			"Interface_ISharedString": {
-				"forwardCompat": false
-			},
-			"TypeAlias_SharedString": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

@@ -6,8 +6,9 @@
 import { expect } from "chai";
 
 import { DocumentationLiteralNodeBase } from "../../../documentation-domain/index.js";
-import { type DocumentWriter } from "../../DocumentWriter.js";
-import { type RenderContext } from "../RenderContext.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import type { RenderContext } from "../RenderContext.js";
+
 import { testRender } from "./Utilities.js";
 
 /**

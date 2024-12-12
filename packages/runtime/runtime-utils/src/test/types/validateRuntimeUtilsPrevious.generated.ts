@@ -128,6 +128,15 @@ declare type current_as_old_for_ClassStatics_SummaryTreeBuilder = requireAssigna
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Function_compareFluidHandles": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_compareFluidHandles = requireAssignableTo<TypeOnly<typeof current.compareFluidHandles>, TypeOnly<typeof old.compareFluidHandles>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_convertToSummaryTreeWithStats": {"backCompat": false}
  */
 declare type current_as_old_for_Function_convertToSummaryTreeWithStats = requireAssignableTo<TypeOnly<typeof current.convertToSummaryTreeWithStats>, TypeOnly<typeof old.convertToSummaryTreeWithStats>>

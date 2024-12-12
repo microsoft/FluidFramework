@@ -721,8 +721,8 @@ importers:
         specifier: ^2.17.1
         version: 2.20.3
       express:
-        specifier: ^4.21.1
-        version: 4.21.1
+        specifier: ^4.21.2
+        version: 4.21.2
       ioredis:
         specifier: ^5.2.3
         version: 5.3.2
@@ -842,8 +842,8 @@ importers:
         specifier: ^2.8.4
         version: 2.8.5
       express:
-        specifier: ^4.21.1
-        version: 4.21.1
+        specifier: ^4.21.2
+        version: 4.21.2
       ioredis:
         specifier: ^5.2.3
         version: 5.3.2
@@ -1271,18 +1271,33 @@ importers:
       '@fluidframework/server-services-core-previous':
         specifier: npm:@fluidframework/server-services-core@5.0.0
         version: /@fluidframework/server-services-core@5.0.0
+      '@types/mocha':
+        specifier: ^10.0.1
+        version: 10.0.1
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
+      mocha:
+        specifier: ^10.2.0
+        version: 10.2.0
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      sinon:
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.1.6
         version: 5.1.6
@@ -1542,8 +1557,8 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       express:
-        specifier: ^4.21.1
-        version: 4.21.1
+        specifier: ^4.21.2
+        version: 4.21.2
       fast-redact:
         specifier: ^3.3.0
         version: 3.3.0
@@ -1736,8 +1751,8 @@ importers:
         specifier: ^4.3.4
         version: 4.3.4(supports-color@8.1.1)
       express:
-        specifier: ^4.21.1
-        version: 4.21.1
+        specifier: ^4.21.2
+        version: 4.21.2
       ioredis:
         specifier: ^5.2.3
         version: 5.3.2
@@ -2023,8 +2038,8 @@ importers:
         specifier: ^1.3.0
         version: 1.5.1
       express:
-        specifier: ^4.21.1
-        version: 4.21.1
+        specifier: ^4.21.2
+        version: 4.21.2
       isomorphic-git:
         specifier: ^1.25.7
         version: 1.25.7
@@ -2128,9 +2143,6 @@ importers:
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
-      mocha-json-output-reporter:
-        specifier: ^2.0.1
-        version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.2.0)
@@ -4073,7 +4085,7 @@ packages:
       compression: 1.7.4
       cookie-parser: 1.4.7
       cors: 2.8.5
-      express: 4.21.1
+      express: 4.21.2
       ioredis: 5.3.2
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
@@ -4111,7 +4123,7 @@ packages:
       '@fluidframework/server-services-telemetry': 5.0.0
       '@fluidframework/server-services-utils': 5.0.0
       commander: 2.20.3
-      express: 4.21.1
+      express: 4.21.2
       ioredis: 5.3.2
       nconf: 0.12.1
       winston: 3.9.0
@@ -4249,7 +4261,7 @@ packages:
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
       debug: 4.3.4(supports-color@8.1.1)
-      express: 4.21.1
+      express: 4.21.2
       ioredis: 5.3.2
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
@@ -9315,8 +9327,8 @@ packages:
     resolution: {integrity: sha512-dX7e/LHVJ6W3DE1MHWi9S1EYzDESENfLrYohG2G++ovZrYOkm4Knwa0mc1cn84xJOR4KEU0WSchhLbd0UklbHw==}
     dev: true
 
-  /express@4.21.1:
-    resolution: {integrity: sha512-YSFlK1Ee0/GC8QaO91tHcDxJiE/X4FbpAyQWkxAvG6AXCuR65YzK8ua6D9hvi/TzUfZMpc+BwuM1IPw8fmQBiQ==}
+  /express@4.21.2:
+    resolution: {integrity: sha512-28HqgMZAmih1Czt9ny7qr6ek2qddF4FclbMzwhCREB6OFfH+rXAnuNCwo1/wFvrtbgsQDb4kSbX9de9lFbrXnA==}
     engines: {node: '>= 0.10.0'}
     dependencies:
       accepts: 1.3.8
@@ -9338,7 +9350,7 @@ packages:
       methods: 1.1.2
       on-finished: 2.4.1
       parseurl: 1.3.3
-      path-to-regexp: 0.1.10
+      path-to-regexp: 0.1.12
       proxy-addr: 2.0.7
       qs: 6.11.2
       range-parser: 1.2.1
@@ -11832,16 +11844,6 @@ packages:
     hasBin: true
     dev: true
 
-  /mocha-json-output-reporter@2.1.0(mocha@10.2.0)(moment@2.29.4):
-    resolution: {integrity: sha512-FF2BItlMo8nK9+SgN/WAD01ue7G+qI1Po0U3JCZXQiiyTJ5OV3KcT1mSoZKirjYP73JFZznaaPC6Mp052PF3Vw==}
-    peerDependencies:
-      mocha: ^10.0.0
-      moment: ^2.21.0
-    dependencies:
-      mocha: 10.2.0
-      moment: 2.29.4
-    dev: true
-
   /mocha-multi-reporters@1.5.1(mocha@10.2.0):
     resolution: {integrity: sha512-Yb4QJOaGLIcmB0VY7Wif5AjvLMUFAdV57D2TWEva1Y0kU/3LjKpeRVmlMIfuO1SVbauve459kgtIizADqxMWPg==}
     engines: {node: '>=6.0.0'}
@@ -12848,8 +12850,8 @@ packages:
       minipass: 6.0.2
     dev: true
 
-  /path-to-regexp@0.1.10:
-    resolution: {integrity: sha512-7lf7qcQidTku0Gu3YDPc8DJ1q7OOucfa/BSsIwjuh56VU7katFvuM8hULfkwB3Fns/rsVF7PwPKVw1sl5KQS9w==}
+  /path-to-regexp@0.1.12:
+    resolution: {integrity: sha512-RA1GjUVMnvYFxuqovrEqZoxxW5NUZqbwKtYz/Tt7nXerk0LbLblQmrsgdeOxV5SFHf0UDggjS/bSeOZwt1pmEQ==}
 
   /path-to-regexp@8.2.0:
     resolution: {integrity: sha512-TdrF7fW9Rphjq4RjrW0Kp2AW0Ahwu9sRGTkS6bvDi0SCwZlEZYmcfDbEsTz8RVk0EHIS/Vd1bv3JhG+1xZuAyQ==}
@@ -13697,6 +13699,7 @@ packages:
 
   /rimraf@3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
     dependencies:
       glob: 7.2.3

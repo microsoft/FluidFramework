@@ -8,8 +8,17 @@ export {
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
 	type SharedTreeBranchEvents,
-	getChangeReplaceType,
 } from "./branch.js";
+
+export {
+	TransactionResult,
+	type Transactor,
+	type TransactionEvents,
+	TransactionStack,
+	SquashingTransactionStack,
+	type OnPush,
+	type OnPop,
+} from "./transaction.js";
 
 export {
 	type ExplicitCoreCodecVersions,
@@ -27,8 +36,6 @@ export {
 	type ChangeEnricherMutableCheckout,
 	NoOpChangeEnricher,
 } from "./changeEnricher.js";
-
-export { TransactionStack } from "./transactionStack.js";
 
 export { makeEditManagerCodec } from "./editManagerCodecs.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";

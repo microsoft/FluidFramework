@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/migration-tools",
-	"version": "2.10.0",
+	"version": "2.12.0",
 	"private": true,
 	"description": "Tools for migrating data",
 	"homepage": "https://fluidframework.com",
@@ -78,7 +78,6 @@
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/server-local-server": "^5.0.0",
-		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"uuid": "^9.0.0"
 	},
@@ -88,7 +87,7 @@
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/uuid": "^9.0.2",
 		"concurrently": "^8.2.1",

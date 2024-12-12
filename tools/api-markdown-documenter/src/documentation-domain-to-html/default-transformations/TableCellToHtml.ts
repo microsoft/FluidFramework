@@ -8,9 +8,10 @@
  * Licensed under the MIT License.
  */
 import type { Element as HastElement } from "hast";
+
 import { TableCellKind, type TableCellNode } from "../../documentation-domain/index.js";
-import { transformChildrenUnderTag } from "../Utilities.js";
 import type { TransformationContext } from "../TransformationContext.js";
+import { transformChildrenUnderTag } from "../Utilities.js";
 
 /**
  * Transform a {@link TableCellNode} to HTML.

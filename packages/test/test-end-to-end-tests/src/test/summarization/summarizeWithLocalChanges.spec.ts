@@ -14,10 +14,10 @@ import {
 	ISummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
 import {
-	ISummarizeEventProps,
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
+import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	IFluidHandle,
 	ITelemetryBaseEvent,

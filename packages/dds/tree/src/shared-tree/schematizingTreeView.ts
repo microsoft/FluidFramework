@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
-import {
-	type HasListeners,
-	type IEmitter,
-	type Listenable,
-	createEmitter,
-} from "../events/index.js";
 import {
 	type NodeKeyManager,
 	defaultSchemaPolicy,
@@ -403,7 +403,7 @@ export class SchematizingSimpleTreeView<
  * @remarks Currently, all contexts are also {@link SchematizingSimpleTreeView}s.
  * Other checkout implementations (e.g. not associated with a view) may be supported in the future.
  */
-function getCheckout(context: TreeBranch): TreeCheckout {
+export function getCheckout(context: TreeBranch): TreeCheckout {
 	if (context instanceof SchematizingSimpleTreeView) {
 		return context.checkout;
 	}

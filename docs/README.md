@@ -137,6 +137,25 @@ The replacement syntax to use in `.mdx` files would be:
 
 (just like you would do in a JSX context!)
 
+#### Custom Heading IDs
+
+In GitHub-flavored Markdown, you can assign a custom anchor ID to a heading by appending `{#<id>}` to the heading text.
+E.g.,
+
+```markdown
+# Foo {#bar}
+```
+
+Because curly braces are interpreted specially by JSX, this syntax doesn't work as is in `.mdx` documents.
+Instead, you'll need to escape the opening brace to prevent MDX from attempting to process the syntax as JSX.
+E.g.,
+
+```markdown
+# Foo \{#bar}
+```
+
+See the following Docusaurus issue for more context: <https://github.com/facebook/docusaurus/issues/9155>.
+
 ### Mermaid
 
 Docusaurus has built-in support for [mermaid](https://mermaid.js.org/) diagrams.
@@ -155,8 +174,11 @@ For more details about leveraging Mermaid diagrams in Docusaurus, see [here](htt
 
 ##### Links
 
--   Don't include file extensions in links. E.g., prefer `[foo](./foo)` over `[foo](./foo.md)`.
-    -   Rationale: more portable (if a document changes from `.md` to `.mdx`, for example, links will not need to be updated).
+Generally, it is recommended to include file extensions in links when possible.
+E.g., prefer `[foo](./foo.mdx)` over `[foo](./foo)`.
+
+-   Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links.
+    See: <https://docusaurus.io/docs/markdown-features/links>
 
 #### Assets
 
@@ -165,9 +187,27 @@ For more details about leveraging Mermaid diagrams in Docusaurus, see [here](htt
 When adding image assets for use in the website, please follow the instructions outlined [here](https://github.com/microsoft/FluidFramework/wiki/Uploading-images-for-the-website-to-Azure-blob-storage).
 Namely, avoid adding binary files like images to the GitHub repo.
 Instead, upload them to our Azure blob storage, and reference by URL.
+E.g., <https://storage.fluidframework.com/static/images/website/brainstorm-example.png>
 
 Images may only be uploaded by Microsoft Fluid team members.
 If you do not have the appropriate permissions, but would like to contribute to our documentation, please reach out to us [here](https://github.com/microsoft/FluidFramework/issues/new/choose).
+
+##### YouTube Videos
+
+To meet our privacy requirements, it is important that we avoid embedding content that will collect cookies.
+To ensure this, please never embed YouTube videos using their standard embed format.
+Instead, be sure to leverage `https://www.youtube-nocookie.com/`.
+
+To make this easy, we have a `YoutubeVideo` component under `@site/src/components/youtubeVideo` that can be used to embed a specified video ID using the correct settings.
+Example:
+
+```mdx
+import { YoutubeVideo } from "@site/src/components/youtubeVideo";
+
+...
+
+<YoutubeVideo videoId="foo" className="my-styling" />
+```
 
 ## Scripts
 
@@ -181,7 +221,6 @@ The following npm scripts are supported in this directory:
 | Script | Description |
 |--------|-------------|
 | `build` | Build everything: the API documentation, the website, the tests, etc. |
-| `prebuild:api-documentation` | Temporary workaround for AB#24394. Cleans up existing generated API documentation before generating new content. |
 | `build:api-documentation` | Download API model artifacts and generate API documentation. |
 | `prebuild:docusaurus` | Runs pre-site build metadata generation. |
 | `build:docusaurus` | Build the website with Docusaurus. |

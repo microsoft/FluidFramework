@@ -600,14 +600,14 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	/**
 	 * Synchronously creates a detached child data store.
 	 *
-	 * The `createChildDataStoreSync` method allows for the synchronous creation of a detached child data store. This is particularly
+	 * The `createChildDataStore` method allows for the synchronous creation of a detached child data store. This is particularly
 	 * useful in scenarios where immediate availability of the child data store is required, such as during the initialization
 	 * of a parent data store, or when creation is in response to synchronous user input.
 	 *
 	 * In order for this function to succeed:
 	 * 1. The parent data store's factory must also be an `IFluidDataStoreRegistry`.
 	 * 2. The parent data store's registry must include the same instance as the provided child factory.
-	 * 3. The parent data store's registry must synchronously provide the child factory.
+	 * 3. The parent data store's registry must synchronously provide the child factory via the `getSync` method.
 	 * 4. The child factory must implement the `createDataStore` method.
 	 *
 	 * These invariants ensure that the child data store can also be created by a remote client running the same code as this client.

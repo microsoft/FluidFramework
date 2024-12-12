@@ -5,6 +5,13 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
+	HasListeners,
+	IEmitter,
+	IFluidHandle,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -17,23 +24,26 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
 	type IEditableForest,
+	type ITreeCursor,
 	type JsonableTree,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
 	RevisionTagCodec,
 	type TaggedChange,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
-import {
-	type HasListeners,
-	type IEmitter,
-	type Listenable,
-	createEmitter,
-} from "../events/index.js";
+
 import {
 	DetachedFieldIndexSummarizer,
+	FieldKinds,
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
@@ -50,14 +60,24 @@ import {
 	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
-import type {
-	ITree,
-	ImplicitFieldSchema,
-	ReadSchema,
-	TreeView,
-	TreeViewAlpha,
-	TreeViewConfiguration,
-	UnsafeUnknownSchema,
+import {
+	type ITree,
+	type ImplicitFieldSchema,
+	NodeKind,
+	type ReadSchema,
+	type SimpleFieldSchema,
+	type SimpleTreeSchema,
+	type TreeView,
+	type TreeViewAlpha,
+	type TreeViewConfiguration,
+	type UnsafeUnknownSchema,
+	type VerboseTree,
+	tryStoredSchemaAsArray,
+	type SimpleNodeSchema,
+	customFromCursorStored,
+	FieldKind,
+	type CustomTreeNode,
+	type CustomTreeValue,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -71,14 +91,13 @@ import {
 	type BranchableTree,
 	createTreeCheckout,
 } from "./treeCheckout.js";
-import { breakingClass, throwIfBroken } from "../util/index.js";
+import { breakingClass, fail, throwIfBroken } from "../util/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
  * @remarks
  * This is unrelated to Fluids concept of "snapshots".
- * @internal
  */
 export interface SharedTreeContentSnapshot {
 	/**
@@ -103,7 +122,27 @@ export interface SharedTreeContentSnapshot {
  * {@link ITree} extended with some non-public APIs.
  * @internal
  */
-export interface ISharedTree extends ISharedObject, ITree {
+export interface ITreeInternal extends ISharedObject, ITree {
+	/**
+	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
+	 * @privateRemarks
+	 * TODO:
+	 * This should probably get promoted to a public API on ITree eventually.
+	 */
+	exportVerbose(): VerboseTree | undefined;
+
+	/**
+	 * Exports the SimpleTreeSchema that is stored in the tree, using stored keys for object fields.
+	 * @remarks
+	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
+	 */
+	exportSimpleSchema(): SimpleTreeSchema;
+}
+
+/**
+ * {@link ITreeInternal} extended with some non-exported APIs.
+ */
+export interface ISharedTree extends ISharedObject, ITreeInternal {
 	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
@@ -310,6 +349,61 @@ export class SharedTree
 				breaker: this.breaker,
 			},
 		);
+
+		this.checkout.transaction.events.on("started", () => {
+			if (this.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.startTransaction();
+			}
+		});
+		this.checkout.transaction.events.on("aborting", () => {
+			if (this.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.abortTransaction();
+			}
+		});
+		this.checkout.transaction.events.on("committing", () => {
+			if (this.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.commitTransaction();
+			}
+		});
+		this.checkout.events.on("beforeBatch", (newCommits) => {
+			if (this.isAttached()) {
+				if (this.checkout.transaction.isInProgress()) {
+					this.commitEnricher.addTransactionCommits(newCommits);
+				}
+			}
+		});
+	}
+
+	public exportVerbose(): VerboseTree | undefined {
+		const cursor = this.checkout.forest.allocateCursor("contentSnapshot");
+		try {
+			moveToDetachedField(this.checkout.forest, cursor);
+			const length = cursor.getFieldLength();
+			if (length === 0) {
+				return undefined;
+			} else if (length === 1) {
+				cursor.enterNode(0);
+				return verboseFromCursor(cursor, this.storedSchema.nodeSchema);
+			} else {
+				fail("Invalid document root length");
+			}
+		} finally {
+			cursor.free();
+		}
+	}
+
+	public exportSimpleSchema(): SimpleTreeSchema {
+		return {
+			...exportSimpleFieldSchemaStored(this.storedSchema.rootFieldSchema),
+			definitions: new Map(
+				[...this.storedSchema.nodeSchema].map(([key, schema]) => {
+					return [key, exportSimpleNodeSchemaStored(schema)];
+				}),
+			),
+		};
 	}
 
 	@throwIfBroken
@@ -347,7 +441,30 @@ export class SharedTree
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
 		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
-		this._events.emit("afterBatch");
+		this._events.emit("afterBatch", []);
+	}
+
+	protected override didAttach(): void {
+		if (this.checkout.transaction.isInProgress()) {
+			// Attaching during a transaction is not currently supported.
+			// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
+			throw new UsageError(
+				"Cannot attach while a transaction is in progress. Commit or abort the transaction before attaching.",
+			);
+		}
+		super.didAttach();
+	}
+
+	protected override applyStashedOp(
+		...args: Parameters<
+			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
+		>
+	): void {
+		assert(
+			!this.checkout.transaction.isInProgress(),
+			0x674 /* Unexpected transaction is open while applying stashed ops */,
+		);
+		super.applyStashedOp(...args);
 	}
 }
 
@@ -523,4 +640,64 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		tree.initializeLocal();
 		return tree;
 	}
+}
+
+function verboseFromCursor(
+	reader: ITreeCursor,
+	schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
+): VerboseTree {
+	const fields = customFromCursorStored(reader, schema, verboseFromCursor);
+	const nodeSchema = schema.get(reader.type) ?? fail("missing schema for type in cursor");
+	if (nodeSchema instanceof LeafNodeStoredSchema) {
+		return fields as CustomTreeValue<IFluidHandle>;
+	}
+
+	return {
+		type: reader.type,
+		fields: fields as CustomTreeNode<IFluidHandle>,
+	};
+}
+
+function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {
+	let kind: FieldKind;
+	switch (schema.kind) {
+		case FieldKinds.identifier.identifier:
+			kind = FieldKind.Identifier;
+			break;
+		case FieldKinds.optional.identifier:
+			kind = FieldKind.Optional;
+			break;
+		case FieldKinds.required.identifier:
+			kind = FieldKind.Required;
+			break;
+		case FieldKinds.forbidden.identifier:
+			kind = FieldKind.Optional;
+			assert(schema.types.size === 0, "invalid forbidden field");
+			break;
+		default:
+			fail("invalid field kind");
+	}
+	return { kind, allowedTypes: schema.types };
+}
+
+function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
+	const arrayTypes = tryStoredSchemaAsArray(schema);
+	if (arrayTypes !== undefined) {
+		return { kind: NodeKind.Array, allowedTypes: arrayTypes };
+	}
+	if (schema instanceof ObjectNodeStoredSchema) {
+		const fields: Record<string, SimpleFieldSchema> = {};
+		for (const [key, field] of schema.objectNodeFields) {
+			fields[key] = exportSimpleFieldSchemaStored(field);
+		}
+		return { kind: NodeKind.Object, fields };
+	}
+	if (schema instanceof MapNodeStoredSchema) {
+		assert(schema.mapFields.kind === FieldKinds.optional.identifier, "Invalid map schema");
+		return { kind: NodeKind.Map, allowedTypes: schema.mapFields.types };
+	}
+	if (schema instanceof LeafNodeStoredSchema) {
+		return { kind: NodeKind.Leaf, leafKind: schema.leafValue };
+	}
+	fail("invalid schema kind");
 }

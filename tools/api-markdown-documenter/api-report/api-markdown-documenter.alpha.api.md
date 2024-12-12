@@ -5,15 +5,15 @@
 ```ts
 
 import { ApiCallSignature } from '@microsoft/api-extractor-model';
-import { ApiClass } from '@microsoft/api-extractor-model';
+import type { ApiClass } from '@microsoft/api-extractor-model';
 import { ApiConstructor } from '@microsoft/api-extractor-model';
 import { ApiConstructSignature } from '@microsoft/api-extractor-model';
 import { ApiEntryPoint } from '@microsoft/api-extractor-model';
-import { ApiEnum } from '@microsoft/api-extractor-model';
-import { ApiEnumMember } from '@microsoft/api-extractor-model';
+import type { ApiEnum } from '@microsoft/api-extractor-model';
+import type { ApiEnumMember } from '@microsoft/api-extractor-model';
 import { ApiFunction } from '@microsoft/api-extractor-model';
 import { ApiIndexSignature } from '@microsoft/api-extractor-model';
-import { ApiInterface } from '@microsoft/api-extractor-model';
+import type { ApiInterface } from '@microsoft/api-extractor-model';
 import { ApiItem } from '@microsoft/api-extractor-model';
 import { ApiItemKind } from '@microsoft/api-extractor-model';
 import { ApiMethod } from '@microsoft/api-extractor-model';
@@ -21,9 +21,9 @@ import { ApiMethodSignature } from '@microsoft/api-extractor-model';
 import { ApiModel } from '@microsoft/api-extractor-model';
 import { ApiNamespace } from '@microsoft/api-extractor-model';
 import { ApiPackage } from '@microsoft/api-extractor-model';
-import { ApiPropertyItem } from '@microsoft/api-extractor-model';
-import { ApiTypeAlias } from '@microsoft/api-extractor-model';
-import { ApiVariable } from '@microsoft/api-extractor-model';
+import type { ApiPropertyItem } from '@microsoft/api-extractor-model';
+import type { ApiTypeAlias } from '@microsoft/api-extractor-model';
+import type { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';

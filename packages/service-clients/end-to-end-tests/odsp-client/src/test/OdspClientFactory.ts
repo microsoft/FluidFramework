@@ -8,7 +8,11 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { OdspClient, OdspConnectionConfig } from "@fluidframework/odsp-client/internal";
-import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	createChildLogger,
+	createMultiSinkLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";
 
@@ -128,6 +132,16 @@ export function createOdspClient(
 		throw new Error("client id is missing");
 	}
 
+	const args = process.argv.slice(2);
+
+	const driverIndex = args.indexOf("--driver");
+	const odspEndpointNameIndex = args.indexOf("--odspEndpointName");
+
+	// Get values associated with the flags
+	const driverType = driverIndex === -1 ? undefined : args[driverIndex + 1];
+	const driverEndpointName =
+		odspEndpointNameIndex === -1 ? undefined : args[odspEndpointNameIndex + 1];
+
 	const credentials: IOdspCredentials = {
 		clientId,
 		...creds,
@@ -139,6 +153,7 @@ export function createOdspClient(
 		driveId,
 		filePath: "",
 	};
+
 	const getLogger = (): ITelemetryBaseLogger | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {
@@ -149,9 +164,20 @@ export function createOdspClient(
 		}
 		return logger ?? testLogger;
 	};
+
+	const createLogger = createChildLogger({
+		logger: getLogger(),
+		properties: {
+			all: {
+				driverType,
+				driverEndpointName,
+			},
+		},
+	});
+
 	return new OdspClient({
 		connection: connectionProps,
-		logger: getLogger(),
+		logger: createLogger,
 		configProvider,
 	});
 }

@@ -2025,7 +2025,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("applies stashed ops with no saved ops", async function () {
-		// TODO: This test is consistently failing when ran against FRS. See ADO:7968
+		// TODO: This test is consistently failing when ran against AFR. See ADO:7968
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -2296,13 +2296,8 @@ describeCompat(
 				// ContainerRuntime will use PSM and BatchTracker and it will play out like this:
 				// - One will win the race and get their op sequenced first.
 				// - Then the other will close with Forked Container Error when it sees that ack - with matching batchId but from a different client
-				// - All other clients (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will ignore it.
+				// - Each other client (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will close.
 				await provider.ensureSynchronized();
-
-				// Container1 is not used directly in this test, but is present and observing the session,
-				// so we can double-check eventual consistency - the container should have closed and the op should not have been duplicated
-				assert(container1.closed, "container1 should be closed");
-				assert.strictEqual(counter1.value, incrementValue);
 
 				// Both containers will close with the correct value for the counter.
 				// The container whose op is sequenced first will close with "Duplicate batch" error
@@ -2311,8 +2306,25 @@ describeCompat(
 				// when it sees the winner's batch come in.
 				assert(container2.closed, "container2 should be closed");
 				assert(container3.closed, "container3 should be closed");
-				assert.strictEqual(counter2.value, incrementValue);
-				assert.strictEqual(counter3.value, incrementValue);
+				assert.strictEqual(
+					counter2.value,
+					incrementValue,
+					"container2 should have incremented to 3 (at least locally)",
+				);
+				assert.strictEqual(
+					counter3.value,
+					incrementValue,
+					"container3 should have incremented to 3 (at least locally)",
+				);
+
+				// Container1 is not used directly in this test, but is present and observing the session,
+				// so we can double-check eventual consistency - the container should have closed when processing the duplicate (after applying the first)
+				assert(container1.closed, "container1 should be closed");
+				assert.strictEqual(
+					counter1.value,
+					incrementValue,
+					"container1 should have incremented to 3 before closing",
+				);
 			},
 		);
 

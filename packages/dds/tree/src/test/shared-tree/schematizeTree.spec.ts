@@ -26,7 +26,6 @@ import type {
 	ITreeCheckoutFork,
 	CheckoutEvents,
 	ISharedTreeEditor,
-	ITransaction,
 } from "../../shared-tree/index.js";
 import {
 	type TreeStoredContent,
@@ -38,7 +37,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
 import { checkoutWithContent, validateViewConsistency } from "../utils.js";
-import type { Listenable } from "../../events/index.js";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import {
 	SchemaFactory,
 	ViewSchema,
@@ -48,6 +47,7 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
+import type { Transactor } from "../../shared-tree-core/index.js";
 
 const builder = new SchemaFactory("test");
 const root = builder.number;
@@ -161,7 +161,7 @@ describe("schematizeTree", () => {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			forest: { isEmpty } as IForestSubscription,
 			editor: undefined as unknown as ISharedTreeEditor,
-			transaction: undefined as unknown as ITransaction,
+			transaction: undefined as unknown as Transactor,
 			branch(): ITreeCheckoutFork {
 				throw new Error("Function not implemented.");
 			},

@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { ReleaseVersion, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
 import { Command } from "@oclif/core";
 import { Machine } from "jssm";
 import chalk from "picocolors";
 
-import { Context } from "../library/index.js";
-
-import { ReleaseVersion, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
-
 import { InstructionalPromptWriter } from "../instructionalPromptWriter.js";
+import { Context } from "../library/index.js";
 import { CommandLogger } from "../logging.js";
 import { MachineState } from "../machines/index.js";
 import { ReleaseGroup, ReleasePackage } from "../releaseGroups.js";

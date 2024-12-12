@@ -29,6 +29,7 @@ import {
 	PackageVersionMap,
 	ReleaseReport,
 	ReportKind,
+	type Repository,
 	VersionDetails,
 	filterVersionsOlderThan,
 	getDisplayDate,
@@ -166,11 +167,12 @@ export abstract class ReleaseReportBaseCommand<
 			ux.action.start("Collecting version data from git tags");
 		}
 
+		const gitRepo = await context.getGitRepository();
 		for (const rg of rgs) {
 			ux.action.status = `${rg} (release group)`;
 			// eslint-disable-next-line no-await-in-loop
 			const data = await this.collectRawReleaseData(
-				context,
+				gitRepo,
 				rg,
 				rgVerMap?.[rg] ?? context.getVersion(rg),
 				mode,
@@ -186,7 +188,7 @@ export abstract class ReleaseReportBaseCommand<
 
 			ux.action.status = `${pkg} (package)`;
 			// eslint-disable-next-line no-await-in-loop
-			const data = await this.collectRawReleaseData(context, pkg, repoVersion, mode);
+			const data = await this.collectRawReleaseData(gitRepo, pkg, repoVersion, mode);
 			if (data !== undefined) {
 				versionData[pkg] = data;
 			}
@@ -206,12 +208,12 @@ export abstract class ReleaseReportBaseCommand<
 	 * @returns The collected release data.
 	 */
 	private async collectRawReleaseData(
-		context: Context,
+		repo: Repository,
 		releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
 		repoVersion: string,
 		latestReleaseChooseMode?: ReleaseSelectionMode,
 	): Promise<RawReleaseData | undefined> {
-		const versions = await context.getAllVersions(releaseGroupOrPackage);
+		const versions = await repo.getAllVersions(releaseGroupOrPackage);
 
 		if (versions === undefined) {
 			return undefined;

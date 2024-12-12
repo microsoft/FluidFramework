@@ -16,15 +16,14 @@ export {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	type ForestOptions,
+	type ITreeInternal,
 } from "./sharedTree.js";
 
 export {
 	createTreeCheckout,
 	TreeCheckout,
 	type ITreeCheckout,
-	runSynchronous,
 	type CheckoutEvents,
-	type ITransaction,
 	type ITreeCheckoutFork,
 	type BranchableTree,
 	type TreeBranchFork,
