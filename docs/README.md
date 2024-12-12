@@ -215,10 +215,9 @@ We aim to keep the number of concurrently maintained site versions minimized, fo
 
 These steps are based on Docusaurus's tutorial [here](https://docusaurus.io/docs/versioning#tutorials).
 
-Note: in order for API documentation to be available for the new version, you will need to ensure that API model artifacts are being published for the new major version series.
-If not, attempting to build the site after following the below steps will fail.
+Note: generating the API documentation for the new "current" version will fail if the release branch for that version has not yet been created.
 
-1. Run `npx --no-install docusaurus docs:version v<*current*-major-version-number>` from the root of this directory.
+1. Run `npx --no-install docusaurus docs:version v<current-major-version-number>` from the root of this directory.
    E.g., `... docusaurus docs:version v2` when prepping for `v3` documentation.
     - This will "freeze" the existing "current" version documentation, copying it into `versioned_docs` under the specified version ID.
     - This will also generate a sidebar configuration for the frozen version under `versioned_sidebars`.
