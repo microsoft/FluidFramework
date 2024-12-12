@@ -21,7 +21,7 @@ import {
 	seqLTE,
 	toMoveInfo,
 	toRemovalInfo,
-	type ISegment,
+	type ISegmentLeaf,
 } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 import { PropertySet, matchProperties } from "../properties.js";
@@ -400,7 +400,7 @@ export class TestClientLogger {
 	}
 }
 
-function toMoveOrRemove(segment: ISegment): { seq: number } | undefined {
+function toMoveOrRemove(segment: ISegmentLeaf): { seq: number } | undefined {
 	const mi = toMoveInfo(segment);
 	const ri = toRemovalInfo(segment);
 	if (mi !== undefined || ri !== undefined) {

@@ -4,7 +4,7 @@
  */
 
 import { MergeTree } from "../mergeTree.js";
-import { ISegment, Marker } from "../mergeTreeNodes.js";
+import { ISegmentLeaf, Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { reservedTileLabelsKey } from "../referencePositions.js";
 import { TextSegment } from "../textSegment.js";
@@ -14,7 +14,7 @@ export function loadSegments(
 	segLimit: number,
 	markers: boolean = false,
 	withProps: boolean = true,
-): ISegment[] {
+): ISegmentLeaf[] {
 	const BOMFreeContent = content.replace(/^\uFEFF/, "");
 
 	const paragraphs = BOMFreeContent.split(/\r?\n/);
@@ -28,7 +28,7 @@ export function loadSegments(
 		}
 	}
 
-	const segments = [] as ISegment[];
+	const segments = [] as ISegmentLeaf[];
 	for (const paragraph of paragraphs) {
 		let pgMarker: Marker | undefined;
 		if (markers) {

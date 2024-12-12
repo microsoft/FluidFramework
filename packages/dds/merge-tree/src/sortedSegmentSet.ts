@@ -4,7 +4,7 @@
  */
 
 import { LocalReferencePosition } from "./localReference.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { ISegmentInternal } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
 import { SortedSet } from "./sortedSet.js";
 
@@ -12,9 +12,9 @@ import { SortedSet } from "./sortedSet.js";
  * @internal
  */
 export type SortedSegmentSetItem =
-	| ISegment
+	| ISegmentInternal
 	| LocalReferencePosition
-	| { readonly segment: ISegment };
+	| { readonly segment: ISegmentInternal };
 
 /**
  * Stores a unique and sorted set of segments, or objects with segments
@@ -29,10 +29,9 @@ export type SortedSegmentSetItem =
  * @internal
  */
 // eslint-disable-next-line import/no-deprecated
-export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<
-	T,
-	string
-> {
+export class SortedSegmentSet<
+	T extends SortedSegmentSetItem = ISegmentInternal,
+> extends SortedSet<T, string> {
 	protected getKey(item: T): string {
 		const maybeRef = item as Partial<LocalReferencePosition>;
 		if (maybeRef.getSegment !== undefined && maybeRef.isLeaf?.() === false) {
@@ -43,12 +42,12 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
 			// All that matters is that it's consistent.
 			return lref.getSegment()?.ordinal ?? "";
 		}
-		const maybeObject = item as { readonly segment: ISegment };
+		const maybeObject = item as { readonly segment: ISegmentInternal };
 		if (maybeObject?.segment) {
 			return maybeObject.segment.ordinal;
 		}
 
-		const maybeSegment = item as ISegment;
+		const maybeSegment = item as ISegmentInternal;
 		return maybeSegment.ordinal;
 	}
 
