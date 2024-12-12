@@ -9,7 +9,7 @@ import type {
 	InsertableObjectFromSchemaRecord,
 	SimpleKeyMap,
 } from "./objectNode.js";
-import type { ImplicitFieldSchema, FieldSchema, NodeSchemaMetadata } from "./schemaTypes.js";
+import type { ImplicitFieldSchema, FieldSchema } from "./schemaTypes.js";
 import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 
@@ -23,7 +23,7 @@ export interface ObjectNodeSchema<
 	T extends
 		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
-	TMetadata extends NodeSchemaMetadata = NodeSchemaMetadata,
+	TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 		TName,
 		NodeKind.Object,
@@ -32,7 +32,7 @@ export interface ObjectNodeSchema<
 		ImplicitlyConstructable,
 		T,
 		never,
-		TMetadata
+		TCustomMetadata
 	> {
 	/**
 	 * From property keys to the associated schema.

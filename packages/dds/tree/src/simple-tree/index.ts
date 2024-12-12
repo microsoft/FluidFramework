@@ -122,7 +122,6 @@ export {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	tryStoredSchemaAsArray,
-	withMetadata,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -155,6 +154,7 @@ export {
 	type Input,
 	type ReadableField,
 	type ReadSchema,
+	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
 } from "./schemaTypes.js";
 export {

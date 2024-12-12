@@ -22,7 +22,6 @@ import {
 	type FlexListToUnion,
 	type ApplyKindInput,
 	type NodeBuilderData,
-	withMetadata,
 } from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,
@@ -461,14 +460,26 @@ describe("SchemaFactory Recursive methods", () => {
 		it("Node schema metadata", () => {
 			const factory = new SchemaFactory("");
 
-			class Foo extends withMetadata(factory.objectRecursive("Foo", { bar: () => Bar }), {
-				description: "A recursive object called Foo",
-				custom: { baz: true },
-			}) {}
-			class Bar extends withMetadata(factory.objectRecursive("Bar", { foo: () => Foo }), {
-				description: "A recursive object called Bar",
-				custom: { baz: false },
-			}) {}
+			class Foo extends factory.objectRecursive(
+				"Foo",
+				{ bar: () => Bar },
+				{
+					metadata: {
+						description: "A recursive object called Foo",
+						custom: { baz: true },
+					},
+				},
+			) {}
+			class Bar extends factory.objectRecursive(
+				"Bar",
+				{ foo: () => Foo },
+				{
+					metadata: {
+						description: "A recursive object called Bar",
+						custom: { baz: false },
+					},
+				},
+			) {}
 
 			assert.deepEqual(Foo.metadata, {
 				description: "A recursive object called Foo",
@@ -607,9 +618,11 @@ describe("SchemaFactory Recursive methods", () => {
 			class Foo extends factory.objectRecursive("Foo", {
 				fooList: sf.arrayRecursive("FooList", [() => Foo]),
 			}) {}
-			class FooList extends withMetadata(factory.arrayRecursive("FooList", [() => Foo]), {
-				description: "A recursive list",
-				custom: { baz: true },
+			class FooList extends factory.arrayRecursive("FooList", [() => Foo], {
+				metadata: {
+					description: "A recursive list",
+					custom: { baz: true },
+				},
 			}) {}
 
 			assert.deepEqual(FooList.metadata, {
@@ -671,9 +684,11 @@ describe("SchemaFactory Recursive methods", () => {
 			class Foo extends factory.objectRecursive("Foo", {
 				fooList: sf.arrayRecursive("FooList", [() => Foo]),
 			}) {}
-			class FooList extends withMetadata(factory.mapRecursive("FooList", [() => Foo]), {
-				description: "A recursive map",
-				custom: { baz: true },
+			class FooList extends factory.mapRecursive("FooList", [() => Foo], {
+				metadata: {
+					description: "A recursive map",
+					custom: { baz: true },
+				},
 			}) {}
 
 			assert.deepEqual(FooList.metadata, {

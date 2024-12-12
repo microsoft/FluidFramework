@@ -128,7 +128,6 @@ export {
 	type FactoryContentObject,
 	type ReadableField,
 	type ReadSchema,
-	withMetadata,
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -176,6 +175,7 @@ export {
 	type TreeBranch,
 	type TreeBranchEvents,
 	asTreeViewAlpha,
+	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
 } from "./simple-tree/index.js";
 export {

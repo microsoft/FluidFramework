@@ -9,7 +9,6 @@ import {
 	NodeKind,
 	SchemaFactory,
 	type JsonTreeSchema,
-	withMetadata,
 } from "../../../simple-tree/index.js";
 
 import { hydrate } from "../utils.js";
@@ -127,8 +126,10 @@ describe("getJsonSchema", () => {
 
 	it("Array schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const Schema = withMetadata(schemaFactory.array("array", schemaFactory.string), {
-			description: "An array of strings",
+		const Schema = schemaFactory.array("array", schemaFactory.string, {
+			metadata: {
+				description: "An array of strings",
+			},
 		});
 
 		const actual = getJsonSchema(Schema);
@@ -168,8 +169,10 @@ describe("getJsonSchema", () => {
 
 	it("Map schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const Schema = withMetadata(schemaFactory.map("map", schemaFactory.string), {
-			description: "A map containing strings",
+		const Schema = schemaFactory.map("map", schemaFactory.string, {
+			metadata: {
+				description: "A map containing strings",
+			},
 		});
 
 		const actual = getJsonSchema(Schema);
@@ -228,16 +231,17 @@ describe("getJsonSchema", () => {
 
 	it("Object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const Schema = withMetadata(
-			schemaFactory.object("object", {
+		const Schema = schemaFactory.object(
+			"object",
+			{
 				foo: schemaFactory.optional(schemaFactory.number, {
 					metadata: { description: "A number representing the concept of Foo." },
 				}),
 				bar: schemaFactory.required(schemaFactory.string, {
 					metadata: { description: "A string representing the concept of Bar." },
 				}),
-			}),
-			{ description: "An object with Foo and Bar." },
+			},
+			{ metadata: { description: "An object with Foo and Bar." } },
 		);
 
 		const actual = getJsonSchema(Schema);

@@ -36,7 +36,6 @@ import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
-	withMetadata,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import type {
@@ -364,6 +363,29 @@ describe("schemaFactory", () => {
 			);
 		});
 
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			const fooMetadata = {
+				description: "An object called Foo",
+				custom: {
+					baz: true,
+				},
+			};
+
+			class Foo extends factory.object(
+				"Foo",
+				{ bar: factory.number },
+				{ metadata: fooMetadata },
+			) {}
+
+			assert.deepEqual(Foo.metadata, fooMetadata);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			const baz = Foo.metadata.custom.baz;
+		});
+
 		it("Field schema metadata", () => {
 			const schemaFactory = new SchemaFactory("com.example");
 			const barMetadata = {
@@ -544,6 +566,25 @@ describe("schemaFactory", () => {
 			class NamedList extends factory.array("name", factory.number) {}
 			const namedInstance = new NamedList([5]);
 		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			const fooMetadata = {
+				description: "An array of numbers",
+				custom: {
+					baz: true,
+				},
+			};
+
+			class Foo extends factory.array("Foo", factory.number, { metadata: fooMetadata }) {}
+
+			assert.deepEqual(Foo.metadata, fooMetadata);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			const baz = Foo.metadata.custom.baz;
+		});
 	});
 
 	describe("Map", () => {
@@ -599,6 +640,25 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactory("test");
 			class NamedMap extends factory.map("name", factory.number) {}
 			const namedInstance = new NamedMap(new Map([["x", 5]]));
+		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactory("");
+
+			const fooMetadata = {
+				description: "A map of numbers",
+				custom: {
+					baz: true,
+				},
+			};
+
+			class Foo extends factory.map("Foo", factory.number, { metadata: fooMetadata }) {}
+
+			assert.deepEqual(Foo.metadata, fooMetadata);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			const baz = Foo.metadata.custom.baz;
 		});
 	});
 
@@ -1027,31 +1087,6 @@ describe("schemaFactory", () => {
 		assert.deepEqual(getKeys(obj), ["a"]);
 		assert.deepEqual(getKeys(arr), [0]);
 		assert.deepEqual(getKeys(mapNode), ["x"]);
-	});
-
-	it("withMetadata", () => {
-		const factory = new SchemaFactory("");
-
-		const fooMetadata = {
-			description: "An array of numbers",
-			custom: {
-				baz: true,
-			},
-		};
-
-		class Foo extends withMetadata(factory.array("Foo", factory.number), fooMetadata) {}
-
-		assert.deepEqual(Foo.metadata, fooMetadata);
-
-		// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
-		const description = Foo.metadata.description;
-		const baz = Foo.metadata.custom.baz;
-
-		// Ensure we can construct a node from a schema with metadata.
-		const constructed = new Foo([42, 37]);
-
-		// Ensure we can hydrate data using a schema with metadata.
-		const hydrated = hydrate(Foo, [42, 37]);
 	});
 });
 
