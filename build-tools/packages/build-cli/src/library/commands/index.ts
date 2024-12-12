@@ -5,7 +5,4 @@
 
 export { BaseCommand } from "./base.js";
 export { unscopedPackageNameString } from "./constants.js";
-export {
-	GenerateEntrypointsCommand,
-	getGenerateEntrypointsOutput,
-} from "./generateEntrypoints.js";
+export { getGenerateEntrypointsOutput } from "./generateEntrypoints.js";
