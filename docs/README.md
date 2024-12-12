@@ -193,6 +193,8 @@ Note that sidebars are configured for documents under `docs` and `versioned_docs
 
 ### Documentation Versioning
 
+For an overview of Docusaurus's versioning functionality, see [here](https://docusaurus.io/docs/versioning).
+
 We currently offer versioned documentation for each of our supported major versions.
 This documentation is intended to be kept up-to-date with the most recent release of each major version series.
 
@@ -211,7 +213,19 @@ We aim to keep the number of concurrently maintained site versions minimized, fo
 
 #### Updating the Site Version
 
-TODO
+These steps are based on Docusaurus's tutorial [here](https://docusaurus.io/docs/versioning#tutorials).
+
+Note: in order for API documentation to be available for the new version, you will need to ensure that API model artifacts are being published for the new major version series.
+If not, attempting to build the site after following the below steps will fail.
+
+1. Run `npx --no-install docusaurus docs:version v<*current*-major-version-number>` from the root of this directory.
+   E.g., `... docusaurus docs:version v2` when prepping for `v3` documentation.
+   - This will "freeze" the existing "current" version documentation, copying it into `versioned_docs` under the specified version ID.
+   - This will also generate a sidebar configuration for the frozen version under `versioned_sidebars`.
+1. Update `config/docs-versions.mjs` to update the version ID for the "current" version, and add the newly frozen version to the `otherVersions` list.
+   This will automatically update aspects of the site, including:
+   1. Which versions of the API documentation are generated during the build
+   1. The version selection drop-down in the site header
 
 ### Best practices
 
