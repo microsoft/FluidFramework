@@ -7,7 +7,9 @@
 
 import { strict as assert } from "node:assert";
 
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { UnassignedSequenceNumber } from "../constants.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
@@ -690,6 +692,200 @@ describe("client.applyMsg", () => {
 			}
 
 		logger.validate({ baseText: "DDDDDDcbD" });
+	});
+
+	describe("annotateRangeAdjust", () => {
+		it("validate local and remote adjust combine", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "0123456789",
+					options: { mergeTreeEnableAnnotateAdjust: true },
+				},
+				"A",
+				"B",
+			);
+			let seq = 0;
+			const logger = new TestClientLogger(clients.all);
+			const ops: ISequencedDocumentMessage[] = [];
+
+			ops.push(
+				clients.A.makeOpMessage(
+					clients.A.annotateAdjustRangeLocal(1, 3, {
+						key: {
+							delta: 1,
+						},
+					}),
+					seq++,
+				),
+				clients.B.makeOpMessage(
+					clients.B.annotateAdjustRangeLocal(1, 3, {
+						key: {
+							delta: 1,
+						},
+					}),
+					seq++,
+				),
+			);
+
+			for (const op of ops.splice(0))
+				for (const c of clients.all) {
+					c.applyMsg(op);
+				}
+			assert.deepStrictEqual({ ...clients.A.getPropertiesAtPosition(2) }, { key: 2 });
+			assert.deepStrictEqual({ ...clients.B.getPropertiesAtPosition(2) }, { key: 2 });
+			logger.validate({ baseText: "0123456789" });
+		});
+
+		it("validate local and remote adjust combine with min", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "0123456789",
+					options: { mergeTreeEnableAnnotateAdjust: true },
+				},
+				"A",
+				"B",
+			);
+			let seq = 0;
+			const logger = new TestClientLogger(clients.all);
+			const ops: ISequencedDocumentMessage[] = [];
+
+			ops.push(
+				clients.A.makeOpMessage(
+					clients.A.annotateAdjustRangeLocal(1, 3, {
+						key: {
+							delta: -1,
+						},
+					}),
+					seq++,
+				),
+				clients.B.makeOpMessage(
+					clients.B.annotateAdjustRangeLocal(1, 3, {
+						key: {
+							delta: 1,
+							min: 0,
+						},
+					}),
+					seq++,
+				),
+			);
+
+			for (const op of ops.splice(0))
+				for (const c of clients.all) {
+					c.applyMsg(op);
+				}
+			assert.deepStrictEqual({ ...clients.A.getPropertiesAtPosition(2) }, { key: 0 });
+			assert.deepStrictEqual({ ...clients.B.getPropertiesAtPosition(2) }, { key: 0 });
+			logger.validate({ baseText: "0123456789" });
+		});
+
+		it("validate local and remote adjust combine with max", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "0123456789",
+					options: { mergeTreeEnableAnnotateAdjust: true },
+				},
+				"A",
+				"B",
+			);
+			let seq = 0;
+			const logger = new TestClientLogger(clients.all);
+			const ops: ISequencedDocumentMessage[] = [];
+
+			ops.push(
+				clients.A.makeOpMessage(
+					clients.A.annotateAdjustRangeLocal(1, 3, {
+						key: {
+							delta: 1,
+						},
+					}),
+					seq++,
+				),
+				clients.B.makeOpMessage(
+					clients.B.annotateAdjustRangeLocal(1, 3, {
+						key: {
+							delta: 1,
+							max: 1,
+						},
+					}),
+					seq++,
+				),
+			);
+
+			for (const op of ops.splice(0))
+				for (const c of clients.all) {
+					c.applyMsg(op);
+				}
+			assert.deepStrictEqual({ ...clients.A.getPropertiesAtPosition(2) }, { key: 1 });
+			assert.deepStrictEqual({ ...clients.B.getPropertiesAtPosition(2) }, { key: 1 });
+			logger.validate({ baseText: "0123456789" });
+		});
+
+		it("validate local and remote adjust combine with min and max", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "0123456789",
+					options: { mergeTreeEnableAnnotateAdjust: true },
+				},
+				"A",
+				"B",
+			);
+			let seq = 0;
+			const logger = new TestClientLogger(clients.all);
+			const ops: ISequencedDocumentMessage[] = [];
+
+			ops.push(
+				clients.A.makeOpMessage(
+					clients.A.annotateAdjustRangeLocal(1, 3, {
+						key: {
+							delta: 1,
+						},
+					}),
+					seq++,
+				),
+				clients.B.makeOpMessage(
+					clients.B.annotateAdjustRangeLocal(1, 3, {
+						key: {
+							delta: 0,
+							max: 0,
+							min: 0,
+						},
+					}),
+					seq++,
+				),
+			);
+
+			for (const op of ops.splice(0))
+				for (const c of clients.all) {
+					c.applyMsg(op);
+				}
+			assert.deepStrictEqual({ ...clients.A.getPropertiesAtPosition(2) }, { key: 0 });
+			assert.deepStrictEqual({ ...clients.B.getPropertiesAtPosition(2) }, { key: 0 });
+			logger.validate({ baseText: "0123456789" });
+		});
+
+		it("validate min must be less than max", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "0123456789",
+					options: { mergeTreeEnableAnnotateAdjust: true },
+				},
+				"A",
+			);
+
+			try {
+				clients.A.annotateAdjustRangeLocal(1, 3, {
+					key: {
+						delta: 1,
+						max: 1,
+						min: 2,
+					},
+				});
+				assert.fail("should fail");
+			} catch (error: unknown) {
+				assert(isFluidError(error));
+				assert.equal(error.errorType, FluidErrorTypes.usageError);
+			}
+		});
 	});
 
 	describe("obliterate", () => {

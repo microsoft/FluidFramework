@@ -17,7 +17,6 @@ import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
 	type FluidCustomChangesetMetadata,
-	Repository,
 	getDefaultBumpTypeForBranch,
 } from "../../library/index.js";
 
@@ -125,11 +124,11 @@ export default class GenerateChangesetCommand extends BaseCommand<
 
 		if (empty) {
 			const emptyFile = await createChangesetFile(
-				monorepo.directory ?? context.gitRepo.resolvedRoot,
+				monorepo.directory ?? context.root,
 				new Map(),
 			);
 			// eslint-disable-next-line @typescript-eslint/no-shadow
-			const changesetPath = path.relative(context.gitRepo.resolvedRoot, emptyFile);
+			const changesetPath = path.relative(context.root, emptyFile);
 			this.logHr();
 			this.log(`Created empty changeset: ${chalk.green(changesetPath)}`);
 			return {
@@ -139,14 +138,15 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			};
 		}
 
-		const repo = new Repository({ baseDir: context.gitRepo.resolvedRoot });
-		// context.originRemotePartialUrl is 'microsoft/FluidFramework'; see BaseCommand.getContext().
-		const remote = await repo.getRemote(context.originRemotePartialUrl);
+		const repo = await context.getGitRepository();
+		const remote = await repo.getRemote(repo.upstreamRemotePartialUrl);
 
 		if (remote === undefined) {
-			this.error(`Can't find a remote with ${context.originRemotePartialUrl}`, { exit: 1 });
+			this.error(`Can't find a remote with ${repo.upstreamRemotePartialUrl}`, {
+				exit: 1,
+			});
 		}
-		this.log(`Remote for ${context.originRemotePartialUrl} is: ${chalk.bold(remote)}`);
+		this.log(`Remote for ${repo.upstreamRemotePartialUrl} is: ${chalk.bold(remote)}`);
 
 		ux.action.start(`Comparing local changes to remote for branch ${branch}`);
 		let {
@@ -385,12 +385,12 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		const bumpType = getDefaultBumpTypeForBranch(branch, releaseGroup) ?? "minor";
 
 		const newFile = await createChangesetFile(
-			monorepo.directory ?? context.gitRepo.resolvedRoot,
+			monorepo.directory ?? context.root,
 			new Map(selectedPackages.map((p) => [p, bumpType])),
 			`${(response.summary as string).trim()}\n\n${response.description}`,
 			{ section: response.section as string },
 		);
-		const changesetPath = path.relative(context.gitRepo.resolvedRoot, newFile);
+		const changesetPath = path.relative(context.root, newFile);
 
 		this.logHr();
 		this.log(`Created new changeset: ${chalk.green(changesetPath)}`);

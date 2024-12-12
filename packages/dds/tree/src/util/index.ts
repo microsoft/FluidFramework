@@ -37,7 +37,6 @@ export {
 } from "./nestedMap.js";
 export { addToNestedSet, type NestedSet, nestedSetContains } from "./nestedSet.js";
 export { type OffsetList, OffsetListFactory } from "./offsetList.js";
-export { TransactionResult } from "./transactionResult.js";
 export type {
 	areSafelyAssignable,
 	Contravariant,
@@ -91,6 +90,9 @@ export {
 	compareStrings,
 	find,
 	count,
+	getLast,
+	hasSome,
+	hasSingle,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 

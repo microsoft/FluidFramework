@@ -4,12 +4,14 @@
  */
 
 import { h } from "hastscript";
+
 import {
 	LineBreakNode,
 	PlainTextNode,
 	SpanNode,
 	type TextFormatting,
 } from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 describe("Span to HTML transformation tests", () => {

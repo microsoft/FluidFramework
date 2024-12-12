@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.10.0",
+	"version": "2.12.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -155,8 +155,8 @@
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.5.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.11.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
@@ -177,87 +177,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Class_BaseSegment": {
-				"backCompat": false
-			},
-			"Class_Marker": {
-				"backCompat": false
-			},
-			"Class_MergeNode": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"Class_TextSegment": {
-				"backCompat": false
-			},
-			"Class_TrackingGroup": {
-				"backCompat": false
-			},
-			"Class_SegmentGroupCollection": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"ClassStatics_BaseSegment": {
-				"backCompat": false
-			},
-			"ClassStatics_Marker": {
-				"backCompat": false
-			},
-			"ClassStatics_MergeNode": {
-				"backCompat": false
-			},
-			"ClassStatics_TextSegment": {
-				"backCompat": false
-			},
-			"ClassStatics_TrackingGroup": {
-				"backCompat": false
-			},
-			"ClassStatics_SegmentGroupCollection": {
-				"backCompat": false
-			},
-			"Interface_IMergeTreeDeltaCallbackArgs": {
-				"backCompat": false
-			},
-			"Interface_IMergeTreeMaintenanceCallbackArgs": {
-				"backCompat": false
-			},
-			"Interface_IMergeTreeSegmentDelta": {
-				"backCompat": false
-			},
-			"Interface_IMoveInfo": {
-				"backCompat": false
-			},
-			"Interface_ISegment": {
-				"backCompat": false
-			},
-			"Interface_ITrackingGroup": {
-				"backCompat": false
-			},
-			"Interface_ObliterateInfo": {
-				"backCompat": false
-			},
-			"Interface_ReferencePosition": {
-				"backCompat": false
-			},
-			"Interface_SegmentGroup": {
-				"backCompat": false
-			},
-
-			"TypeAlias_MergeTreeDeltaRevertible": {
-				"backCompat": false
-			},
-			"TypeAlias_Trackable": {
-				"backCompat": false
-			},
-			"Class_PropertiesManager": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"ClassStatics_PropertiesManager": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

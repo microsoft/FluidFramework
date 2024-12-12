@@ -31,7 +31,6 @@ declare type old_as_current_for_Class_ContainerRuntime = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_ContainerRuntime": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_ContainerRuntime = requireAssignableTo<TypeOnly<current.ContainerRuntime>, TypeOnly<old.ContainerRuntime>>
 
 /*
@@ -86,7 +85,6 @@ declare type current_as_old_for_Class_SummaryCollection = requireAssignableTo<Ty
  * typeValidation.broken:
  * "ClassStatics_ContainerRuntime": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_ContainerRuntime = requireAssignableTo<TypeOnly<typeof current.ContainerRuntime>, TypeOnly<typeof old.ContainerRuntime>>
 
 /*
@@ -861,7 +859,6 @@ declare type old_as_current_for_Interface_ISummarizerRuntime = requireAssignable
  * typeValidation.broken:
  * "Interface_ISummarizerRuntime": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISummarizerRuntime = requireAssignableTo<TypeOnly<current.ISummarizerRuntime>, TypeOnly<old.ISummarizerRuntime>>
 
 /*
@@ -1096,7 +1093,6 @@ declare type old_as_current_for_Interface_LoadContainerRuntimeParams = requireAs
  * typeValidation.broken:
  * "Interface_LoadContainerRuntimeParams": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_LoadContainerRuntimeParams = requireAssignableTo<TypeOnly<current.LoadContainerRuntimeParams>, TypeOnly<old.LoadContainerRuntimeParams>>
 
 /*

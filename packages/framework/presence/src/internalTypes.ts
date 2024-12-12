@@ -14,13 +14,11 @@ import type { IRuntimeInternal } from "@fluidframework/presence/internal/contain
 /**
  * @internal
  */
-export interface ClientRecord<
-	TValue extends InternalTypes.ValueDirectoryOrState<unknown> | undefined,
-> {
+export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState<unknown>> {
 	// Caution: any particular item may or may not exist
 	// Typescript does not support absent keys without forcing type to also be undefined.
 	// See https://github.com/microsoft/TypeScript/issues/42810.
-	[ClientSessionId: ClientSessionId]: Exclude<TValue, undefined>;
+	[ClientSessionId: ClientSessionId]: TValue;
 }
 
 /**

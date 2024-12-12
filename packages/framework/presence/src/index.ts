@@ -18,13 +18,6 @@
 // 	JsonSerializable,
 // } from "@fluidframework/presence/internal/core-interfaces";
 
-// If desired these are the "required" types from events.
-// export type {
-// 	Events,
-// 	IsEvent,
-// 	ISubscribable,
-// } from "@fluidframework/presence/internal/events";
-
 export type { ClientConnectionId } from "./baseTypes.js";
 
 export type {
@@ -32,9 +25,9 @@ export type {
 	PresenceNotificationsSchema,
 	PresenceStates,
 	PresenceStatesEntries,
-	PresenceStatesEntry,
 	PresenceStatesSchema,
 	PresenceWorkspaceAddress,
+	PresenceWorkspaceEntry,
 } from "./types.js";
 
 export {
@@ -45,6 +38,11 @@ export {
 	SessionClientStatus,
 } from "./presence.js";
 
+export type {
+	BroadcastControls,
+	BroadcastControlSettings,
+} from "./broadcastControls.js";
+
 export { acquirePresence } from "./experimentalAccess.js";
 
 export {
@@ -53,7 +51,6 @@ export {
 	ExperimentalPresenceManager,
 } from "./datastorePresenceManagerFactory.js";
 
-export type { LatestValueControls } from "./latestValueControls.js";
 export {
 	LatestMap,
 	type LatestMapItemRemovedClientData,
@@ -76,7 +73,7 @@ export type {
 
 export {
 	type NotificationEmitter,
-	type NotificationSubscribable,
+	type NotificationListenable,
 	type NotificationSubscriptions,
 	Notifications,
 	type NotificationsManager,

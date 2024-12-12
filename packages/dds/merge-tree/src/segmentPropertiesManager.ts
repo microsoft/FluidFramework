@@ -162,7 +162,7 @@ export class PropertiesManager {
 			if (collaborating) {
 				assert(
 					pending !== undefined,
-					"Pending changes must exist for rollback when collaborating",
+					0xa6f /* Pending changes must exist for rollback when collaborating */,
 				);
 				pending.local.pop();
 				properties[key] = computePropertyValue(
@@ -174,7 +174,10 @@ export class PropertiesManager {
 					this.changes.delete(key);
 				}
 			} else {
-				assert(pending === undefined, "Pending changes must not exist when not collaborating");
+				assert(
+					pending === undefined,
+					0xa70 /* Pending changes must not exist when not collaborating */,
+				);
 				properties[key] = computePropertyValue(previousValue, [value]);
 			}
 			deltas[key] = previousValue;
@@ -258,7 +261,10 @@ export class PropertiesManager {
 		for (const [key, value] of opToChanges(op, seq)) {
 			const change = this.changes.get(key);
 			const acked = change?.local?.shift();
-			assert(change !== undefined && acked !== undefined, "must have local change to ack");
+			assert(
+				change !== undefined && acked !== undefined,
+				0xa71 /* must have local change to ack */,
+			);
 			// we only track remotes if there are adjusts, as only adjusts make application anti-commutative
 			// this will limit the impact of this change to only those using adjusts. Additionally, we only
 			// need to track remotes at all to support emitting the legacy snapshot format, which only sharedstring

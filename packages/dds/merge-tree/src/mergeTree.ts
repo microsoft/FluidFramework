@@ -94,6 +94,7 @@ import {
 	copyPropertiesAndManager,
 	PropertiesManager,
 	PropertiesRollback,
+	type PropsOrAdjust,
 } from "./segmentPropertiesManager.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
@@ -153,7 +154,7 @@ function ackSegment(
 ): boolean {
 	const currentSegmentGroup = segment.segmentGroups?.dequeue();
 	assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
-	assert(opArgs.sequencedMessage !== undefined, "must have sequencedMessage");
+	assert(opArgs.sequencedMessage !== undefined, 0xa6e /* must have sequencedMessage */);
 	const {
 		op,
 		sequencedMessage: { sequenceNumber, minimumSequenceNumber },
@@ -277,6 +278,14 @@ export interface IMergeTreeOptions {
 	 * @defaultValue `false`
 	 */
 	mergeTreeEnableSidedObliterate?: boolean;
+
+	/**
+	 * Enables support for annotate adjust operations, which allow for specifying
+	 * a summand which is summed with the current value to compute the new value.
+	 *
+	 * @defaultValue `false`
+	 */
+	mergeTreeEnableAnnotateAdjust?: boolean;
 }
 
 /**
@@ -1895,7 +1904,7 @@ export class MergeTree {
 	 * Annotate a range with properties
 	 * @param start - The inclusive start position of the range to annotate
 	 * @param end - The exclusive end position of the range to annotate
-	 * @param props - The properties to annotate the range with
+	 * @param propsOrAdjust - The properties or adjustments to annotate the range with
 	 * @param refSeq - The reference sequence number to use to apply the annotate
 	 * @param clientId - The id of the client making the annotate
 	 * @param seq - The sequence number of the annotate operation
@@ -1905,15 +1914,18 @@ export class MergeTree {
 	public annotateRange(
 		start: number,
 		end: number,
-		props: PropertySet,
+		propsOrAdjust: PropsOrAdjust,
 		refSeq: number,
 		clientId: number,
 		seq: number,
 		opArgs: IMergeTreeDeltaOpArgs,
-
 		// eslint-disable-next-line import/no-deprecated
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): void {
+		if (propsOrAdjust.adjust !== undefined) {
+			errorIfOptionNotTrue(this.options, "mergeTreeEnableAnnotateAdjust");
+		}
+
 		this.ensureIntervalBoundary(start, refSeq, clientId);
 		this.ensureIntervalBoundary(end, refSeq, clientId);
 		const deltaSegments: IMergeTreeSegmentDelta[] = [];
@@ -1921,17 +1933,18 @@ export class MergeTree {
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup | undefined;
+		const opObj = propsOrAdjust.props ?? propsOrAdjust.adjust;
 		const annotateSegment = (segment: ISegmentLeaf): boolean => {
 			assert(
 				!Marker.is(segment) ||
-					!(reservedMarkerIdKey in props) ||
-					props.markerId === segment.properties?.markerId,
+					!(reservedMarkerIdKey in opObj) ||
+					opObj.markerId === segment.properties?.markerId,
 				0x5ad /* Cannot change the markerId of an existing marker */,
 			);
 
 			const propertyManager = (segment.propertyManager ??= new PropertiesManager());
 			const propertyDeltas = propertyManager.handleProperties(
-				{ props },
+				propsOrAdjust,
 				segment,
 				seq,
 				this.collabWindow.minSeq,
@@ -2409,12 +2422,11 @@ export class MergeTree {
 					this.annotateRange(
 						start,
 						start + segment.cachedLength,
-						props,
+						{ props },
 						UniversalSequenceNumber,
 						this.collabWindow.clientId,
 						UniversalSequenceNumber,
 						{ op: annotateOp },
-
 						PropertiesRollback.Rollback,
 					);
 					i++;

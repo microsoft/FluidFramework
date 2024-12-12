@@ -1,6 +1,6 @@
 {
 	"name": "fluid-framework",
-	"version": "2.10.0",
+	"version": "2.12.0",
 	"description": "The main entry point into Fluid Framework public packages",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -116,7 +116,7 @@
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/node": "^18.19.0",
 		"concurrently": "^8.2.1",

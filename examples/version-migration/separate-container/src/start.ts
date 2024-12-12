@@ -8,7 +8,11 @@ import type {
 	IMigrationTool,
 	IVersionedModel,
 } from "@fluid-example/migration-tools/internal";
-import { MigratableModelLoader, Migrator } from "@fluid-example/migration-tools/internal";
+import {
+	getModelAndMigrationToolFromContainer,
+	Migrator,
+	SimpleLoader,
+} from "@fluid-example/migration-tools/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,
@@ -49,12 +53,18 @@ const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): voi
 	// view code loader to pull in the view dynamically based on the version we discover.
 	if (isIInventoryListAppModel(model)) {
 		const appDiv = document.querySelector("#app") as HTMLDivElement;
-		appRoot ??= createRoot(appDiv);
+		if (appRoot !== undefined) {
+			appRoot.unmount();
+		}
+		appRoot = createRoot(appDiv);
 		appRoot.render(createElement(InventoryListAppView, { model, migrationTool }));
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
-		debugRoot ??= createRoot(debugDiv);
+		if (debugRoot !== undefined) {
+			debugRoot.unmount();
+		}
+		debugRoot = createRoot(debugDiv);
 		debugRoot.render(
 			createElement(DebugView, {
 				model,
@@ -68,13 +78,7 @@ const renderModel = (model: IVersionedModel, migrationTool: IMigrationTool): voi
 };
 
 async function start(): Promise<void> {
-	// If we assumed the container code could consistently present a model to us, we could bake that assumption
-	// in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
-	// (unknown) container version.  So the ModelLoader would be replaced by e.g. container.getEntryPoint() or
-	// container.getEntryPoint().model if we knew that was the model.
-	// TODO: This is really loading an IInventoryListAppModel & IMigratableModel (we know this because of what the
-	// DemoCodeLoader supports).  Should we just use that more-specific type in the typing here?
-	const modelLoader = new MigratableModelLoader<IMigratableModel>({
+	const loader = new SimpleLoader({
 		urlResolver: new InsecureTinyliciousUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(
 			new InsecureTinyliciousTokenProvider(),
@@ -90,25 +94,27 @@ async function start(): Promise<void> {
 	if (location.hash.length === 0) {
 		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
 		// Normally we would create with the most-recent version.
-		const createResponse = await modelLoader.createDetached("one");
-		model = createResponse.model;
-		migrationTool = createResponse.migrationTool;
-		id = await createResponse.attach();
+		const { container, attach } = await loader.createDetached("one");
+		const modelAndMigrationTool =
+			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
+		model = modelAndMigrationTool.model;
+		migrationTool = modelAndMigrationTool.migrationTool;
+		id = await attach();
 	} else {
 		id = location.hash.slice(1);
-		const loadResponse = await modelLoader.loadExisting(id);
-		model = loadResponse.model;
-		migrationTool = loadResponse.migrationTool;
+		const container = await loader.loadExisting(id);
+		const modelAndMigrationTool =
+			await getModelAndMigrationToolFromContainer<IMigratableModel>(container);
+		model = modelAndMigrationTool.model;
+		migrationTool = modelAndMigrationTool.migrationTool;
 	}
 
 	// The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
 	// the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
 	// It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
 	// import with newly created models.
-	// TODO: Consider just passing the ModelLoader (or even the model loader construction args?) and kind of wrapping it.
-	// Then this becomes something like a MigratingModelLoader.  Then the model can have a migrationTool but sort of hide it.
 	const migrator = new Migrator(
-		modelLoader,
+		loader,
 		model,
 		migrationTool,
 		id,
@@ -121,17 +127,17 @@ async function start(): Promise<void> {
 		renderModel(model, migrationTool);
 		updateTabForId(migrator.currentModelId);
 	});
-	// If the ModelLoader doesn't know how to load the model required for migration, it emits "migrationNotSupported".
-	// For example, this might be hit if another client has a newer ModelLoader and proposes a version our
-	// ModelLoader doesn't know about.
-	// However, this will never be hit in this demo since we have a finite set of models to support.  If the model
-	// code loader pulls in the appropriate model dynamically, this might also never be hit since all clients
-	// are theoretically referencing the same model library.
+	// If the loader doesn't know how to load the container code required for migration, it emits "migrationNotSupported".
+	// For example, this might be hit if another client has a newer loader and proposes a version our
+	// loader doesn't know about.
+	// However, this will never be hit in this demo since we have a finite set of container codes to support.  If the
+	// code loader pulls in the appropriate code dynamically, this might also never be hit since all clients
+	// are theoretically referencing the same code library.
 	migrator.events.on("migrationNotSupported", (version: string) => {
-		// To move forward, we would need to acquire a model loader capable of loading the given model, retry the
-		// load, and set up a new Migrator with the new model loader.
+		// To move forward, we would need to acquire a loader capable of loading the given code, retry the
+		// load, and set up a new Migrator with the new loader.
 		console.error(
-			`Tried to migrate to version ${version} which is not supported by the current ModelLoader`,
+			`Tried to migrate to version ${version} which is not supported by the current loader`,
 		);
 	});
 

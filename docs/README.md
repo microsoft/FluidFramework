@@ -1,355 +1,213 @@
-# fluidframework-docs
+# Website
 
-This is the code and content for <https://fluidframework.com>.
+This directory contains the code and content for <https://fluidframework.com>.
 
-The site is generated using [Hugo](https://gohugo.io/).
+The website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
-## Website quick start
+## Dependency installation
 
-To quickly get started previewing the website's contents locally, open the docs folder in a terminal and install the dependencies using npm.
+The Fluid Framework repository uses [pnpm](https://pnpm.io/) for dependency management.
+If you don't have `pnpm` installed, you will need to do so first.
 
-```bash
-npm i -g pnpm
-cd docs
-pnpm install
+```shell
+pnpm i
 ```
 
-Then, start the server.
+## Local Development
 
-```bash
+There are two options for local testing.
+
+### `build:generate-content` and `start`
+
+The easiest way to get started testing the website is to leverage Docusaurus's `start` functionality.
+This command starts a local development server and opens up a browser window.
+Most changes are reflected live without having to restart the server.
+
+Before you can use this, you'll need to ensure our API documentation has been built.
+So start by running:
+
+```shell
+npm run build:generate-content
+```
+
+Then, run:
+
+```shell
 npm start
 ```
 
-Open <http://localhost:1313> to preview the site.
+#### Limitations
 
-### API documentation and Playground
+The following functionality will not work in this mode.
+Instead, you will need to [build](#build) and [serve](#serve)
 
-The steps above won't include API documentation (the TSDoc JSON files) by default.
+##### Search
 
-To include generated API documentation in your local preview, you can run a complete build from the repo root.
-Then run the `build:api` script from this directory.
+Our current offline search implementation does not work in this mode.
+It requires running a full build to run its indexing.
+To test search, you will need to use the [`build` and `serve`](#build-and-serve) workflow instead.
 
-```bash
-npm run build:api
-```
+### `build` and `serve`
 
-Alternatively, you can skip the complete repo build by downloading the latest API docs and Playground files with the `download` script.
+The second option, which is substantially slower, leverages the same build that our build pipelines use to generate our production site.
+First, run:
 
-```bash
-npm run download
-```
-
-> Note that the `download` script will **overwrite any locally built API docs.**
-
-## Building the documentation
-
-To build the website and run other repo-wide documentation generation, run the `build` script.
-The output will be in the `public/` folder.
-
-```bash
+```shell
 npm run build
 ```
 
-To strictly build the website (and omit documentation generation steps elsewhere in the repo), you can instead run the `build:website` script.
+This command generates static content into the `build` directory and can be served using any static contents hosting service.
+This includes the generation of API documentation contents.
 
-```bash
-npm run build:website
+To _just_ run content generation steps, run `build:generate-content`.
+To _just_ build the static site (without rebuilding the API documentation), run `build:site`.
+
+Then, run:
+
+```shell
+npm run serve
 ```
 
-To strictly run documentation generation for the remainder of the repo (everything not under `/docs`), you can instead run the `build:repo-docs` script.
+Note: the Docusaurus build is fairly slow.
+If you don't need to test search, it is recommended to run `npm start` instead.
+This is faster, and will watch for content changes and update automatically.
+You will still need to build the API documentation first.
 
-```bash
-npm run build:repo-docs
+### Local API docs build
+
+To include repo-local API documentation when building the site locally, you will first need to do the following:
+
+1. Build the code from the root of the repo.
+2. Create a `.env` file in this directory with the following contents:
+    ```
+    LOCAL_API_DOCS=true
+    ```
+
+So long as the `LOCAL_API_DOCS` environment variable is set to `true`, local API documentation will be included when building the site.
+To remove the local API docs, simply remove the above variable or set it to `false`, `npm run clean` and rebuild as needed.
+
+## Writing site documentation
+
+For details about authoring documentation content in Docusaurus, see [here](https://docusaurus.io/docs/create-doc).
+
+### File organization
+
+```
+|--- docs (Current version documentation)
+|--- versioned_docs (previous and future version documentation)
+|    |---version-x (version *x* documentation)
+|    |---version-local (special directory in which repo-local API docs are generated and can be previewed when building the site locally)
+|--- src
+|    |--- components (React components available to other site documents, pages, and components)
+|    |--- css (CSS modules available to other site documents, pages, and components)
+|    |--- pages (Unversioned site contents)
+|    |--- theme (Theme component / page overrides)
 ```
 
-## Building the documentation locally
+### MDX
 
-To build the website and run other repo-wide documentation generation, first run the `build` script in the root of the repo.
-This will generate local api docs in the `_api-extractor-temp` directory.
+MDX syntax (supported by Docusaurus) is powerful.
+But there is a subset of standard Markdown syntax that is not supported.
+For example, any HTML-like syntax will _always_ be treated as JSX syntax, so standard embedded HTML patterns don't work.
+Most of the time, this isn't an issue, since substituting JSX syntax is generally fine.
+With some exceptions.
 
-```bash
-npm run build
+#### Leveraging React components
+
+For an overview of how to leverage React components in MDX documentation, see [here](https://docusaurus.io/docs/markdown-features/react).
+
+##### Adding React components
+
+React components should be saved under `src/components/...`.
+They can be imported in other components, pages, and documents via `@site/src/components/...`.
+
+#### Comments
+
+A common pattern for adding inline comments in `.md` files looks like:
+
+```md
+<!-- I am a comment -->
 ```
 
-Once the local api docs is generated, run the `build:local` script.
-The output will be in the `public/` folder.
+The replacement syntax to use in `.mdx` files would be:
 
-```bash
-npm run build:local
+```mdx
+{/* I am a comment */}
 ```
 
-Note that this calls the `local-api-rollup` script which simulates the `download` process in the regular build.
-However, instead of downloading the api content, the `_doc-models` directory is populated by copying the models from `_api-extractor-temp`.
-The local api content from `_api-extractor-temp` is copied to `_doc-models/local`.
+(just like you would do in a JSX context!)
 
+#### Custom Heading IDs
 
-### Drafts
+In GitHub-flavored Markdown, you can assign a custom anchor ID to a heading by appending `{#<id>}` to the heading text.
+E.g.,
 
-Work-in-progress documents that are not ready for public consumption can be safely added by annotating them with the `draft` flag in their frontmatter.
+```markdown
+# Foo {#bar}
+```
 
+Because curly braces are interpreted specially by JSX, this syntax doesn't work as is in `.mdx` documents.
+Instead, you'll need to escape the opening brace to prevent MDX from attempting to process the syntax as JSX.
+E.g.,
+
+```markdown
+# Foo \{#bar}
+```
+
+See the following Docusaurus issue for more context: <https://github.com/facebook/docusaurus/issues/9155>.
+
+### Mermaid
+
+Docusaurus has built-in support for [mermaid](https://mermaid.js.org/) diagrams.
+We recommend leveraging these when possible over alternatives (ascii art, binary image files, SVG, etc.).
+
+Rationale:
+
+-   Docusaurus will ensure consistent styling
+-   Non-binary source, directly in the document.
+
+For more details about leveraging Mermaid diagrams in Docusaurus, see [here](https://docusaurus.io/docs/markdown-features/diagrams).
+
+### Best practices
+
+#### Markdown
+
+##### Links
+
+Generally, it is recommended to include file extensions in links when possible.
+E.g., prefer `[foo](./foo.mdx)` over `[foo](./foo)`.
+
+-   Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links.
+    See: <https://docusaurus.io/docs/markdown-features/links>
+
+#### Assets
+
+##### Images
+
+When adding image assets for use in the website, please follow the instructions outlined [here](https://github.com/microsoft/FluidFramework/wiki/Uploading-images-for-the-website-to-Azure-blob-storage).
+Namely, avoid adding binary files like images to the GitHub repo.
+Instead, upload them to our Azure blob storage, and reference by URL.
+E.g., <https://storage.fluidframework.com/static/images/website/brainstorm-example.png>
+
+Images may only be uploaded by Microsoft Fluid team members.
+If you do not have the appropriate permissions, but would like to contribute to our documentation, please reach out to us [here](https://github.com/microsoft/FluidFramework/issues/new/choose).
+
+##### YouTube Videos
+
+To meet our privacy requirements, it is important that we avoid embedding content that will collect cookies.
+To ensure this, please never embed YouTube videos using their standard embed format.
+Instead, be sure to leverage `https://www.youtube-nocookie.com/`.
+
+To make this easy, we have a `YoutubeVideo` component under `@site/src/components/youtubeVideo` that can be used to embed a specified video ID using the correct settings.
 Example:
 
-```markdown
----
-title: "Foo"
-draft: true
----
+```mdx
+import { YoutubeVideo } from "@site/src/components/youtubeVideo";
+
+...
+
+<YoutubeVideo videoId="foo" className="my-styling" />
 ```
-
-Such documents will be disregarded by the build (by default) and will not be published.
-
-Drafts are a good option for making incremental progress on a document via pull requests before being ready to actually publish for the world to see.
-
-For more documentation on this Hugo feature, see [here](https://gohugo.io/getting-started/usage/#draft-future-and-expired-content).
-
-#### Previewing drafts locally
-
-As noted above, the `build` script won't build `draft` content.
-To build this content and preview it locally, you can run the build with the `--buildDrafts` flag.
-
-```bash
-npm run build -- --buildDrafts
-```
-
-### Future Content
-
-Hugo also supports creating content to be published at some future, pre-defined date and time.
-
-> Note: we currently do not have a workflow for pre-publishing website content.
-> These docs are here as a placeholder until we enable such functionality.
-
-For more documentation on this Hugo feature, see [here](https://gohugo.io/getting-started/usage/#draft-future-and-expired-content).
-
-#### Previewing future content locally
-
-To build content and preview future content locally, you can run the build with the `--buildFuture` flag.
-
-```bash
-npm run build -- --buildFuture
-```
-
-### API documentation
-
-Building API documentation locally requires an extra step to generate the content from the source.
-
-To build everything, you can use [fluid-build](../build-tools/packages/build-cli/README.md#running-these-tools-command-line) from the repository root, and specify `-s build:docs`.
-
-E.g.
-
-```bash
-fluid-build -t build -t build:docs --all
-```
-
-### Understanding the API documentation build pipeline
-
-If you encounter problems updating or building the API docs, it can be helpful to have a high-level understanding of how it gets built.
-The steps are as follows:
-
-1. Root: `build:fast`
-    1. Compile the code, generating TypeScript definitions, etc.
-1. Root: `build:docs`
-    1. Run [API-Extractor](https://api-extractor.com/) in each package to extract documentation info in a `JSON` format.
-        - The output is placed in a folder `_api-extractor-temp` in each package's directory.
-    1. The `JSON` is also copied from each package up to a shared `_api-extractor-temp` directory under the repository root.
-1. `/docs`: `build`
-    1. Run [markdown-magic](#markdown-magic) to update some shared content in the source `Markdown` files (both in the `docs` directory and throughout the rest of the repo).
-    1. Run [api-documenter](#api-documenter) to transform `JSON`-formatted API reports generated by `API-Extractor` into `Markdown`-formatted documentation.
-        - The generated `Markdown` is placed under `/docs/content/apis`.
-    1. Run `Hugo` to build the site itself. The generated output is placed at `/docs/public/apis`.
-1. `/docs`: `start`
-    1. Run the `Hugo` server to host the site at <http://localhost:1313>.
-
-To investigate incorrect output, you can check the intermediate outputs (`JSON`, `Markdown`, `HTML`) at these locations to narrow down where the error is occurring.
-
-## Tools
-
-The following are tools used by this package.
-
-### Markdown Magic
-
-We use a tool called [markdown-magic](https://github.com/DavidWells/markdown-magic/) to generate and embed contents in `Markdown` content throughout our repo.
-This includes website contents, package READMEs, etc.
-
-This tool is highly extensible, and new functionality can be added pretty simply by modifying `./md-magic.config.js`.
-
-### API-Markdown-Documenter
-
-We use an internal tool, [@fluid-tools/api-markdown-documenter](../tools/api-markdown-documenter/README.md), to process API reports generated by `API Extractor` and generate `Markdown`-formatted API documentation.
-
-The invocation script for this tool is `./api-markdown-documenter.js`.
-
-## Creating new content
-
-In order to create new documentation content, you will need to either generate new content manually by creating new files, or by generating them using the `hugo` command as shown below:
-
--   Static `Markdown` document: `npm run hugo -- new docs/concepts/flux-capacitor.md`
--   Blog post: `npm run hugo -- new posts/fluid-everywhere.md`
-
-### Content guidelines
-
-Try to use `Markdown` as much as possible.
-You can embed `HTML` in `Markdown`, but we recommended sticking to `Markdown` and [shortcodes](#shortcodes)/partials.
-
-## Menus
-
-Menus are mainly managed in `config.yml` but depending on the menu, the sub headers might be driven by the content in the repo (pages or data files).
-
-### Main menu (top menu)
-
-The top menu is configured in the `config.yml` file and can look like this:
-
-```yaml
-menu:
-    main:
-        - name: "Docs"
-          url: "/docs/"
-          weight: -90
-        - name: "API"
-          url: "/apis/"
-          weight: -80
-        - name: "Blog"
-          url: "/posts/"
-          weight: -50
-```
-
-### Docs menu
-
-The docs menu is implemented in the theme's `_partial/docNav.html` and is using the `config.yml` to find the headers and then uses the area attribute of each sub section (sub folders in the content folder) to populate the pages displayed in the menu.
-
-Here is an example of what `config.yml` could contain:
-
-```yaml
-menu:
-    docs:
-        - identifier: "get-started"
-          name: "Get Started"
-          weight: -500
-        - identifier: "concepts"
-          name: "Main concepts"
-          weight: -300
-        - identifier: "faq"
-          name: "FAQ"
-          url: "/docs/faq/"
-          weight: -100
-```
-
-Those are headers for the Docs menu, they each have a `name` field which is used to display the header in the menu.
-They also have an `identifier` key which is used to map content with matching `area` field (often set to cascade within a sub folder).
-Finally, you have a `weight` field that is used to decide the positioning of each item in the menu.
-The lighter an item is, the higher it goes in order (closer to the top).
-
-### API menu
-
-FluidFramework.com's Logical Hierarchy is defined in `packages.json` within the `data` folder. It's structured around two main concepts; FluidFramework and Service Clients.
-
-#### Concepts
-
-- **FluidFramework**: The core uber package with sub-categories like `Audience`, `Container`, and `DDSes`. Each containing the APIs which should be exposed for that concept.
-- **Service Clients**: Packages connecting with FluidFramework (e.g., `@fluidframework/azure-client`).
-
-#### Structure
-
-- **FluidFramework**: FluidFramework is split up into groupings which is then divided into the sub-categories; Classes, Enums, Interfaces and Types. The sub-categories contain the APIs that should be exposed in the Logical Hierarchy.
-- **Service Clients**: Lists integration packages for the framework.
-
-### Table of Contents
-
-Some template pages include a table of contents (TOC) of the page.
-This is generated automatically by reading the headers.
-
-### Social action
-
-There is a menu with actions such as tweeting the page, subscribing to the feed, asking questions etc...
-This is driven from the theme and the information for the accounts should be in the config.
-
-## Writing Markdown content
-
-Please refer to the following guidelines when writing new `Markdown` content for the website.
-
-> Remember that we prefer `Markdown` over `HTML` contents whenever possible, but you may embed `HTML` in your `Markdown` contents as needed.
-
-### Linking to other documents
-
-Standard [Markdown links](https://www.markdownguide.org/basic-syntax#links) are supported in our `Hugo` ecosystem.
-When linking to external webpages, this is the syntax we recommend.
-
-When linking to other documents on the website, however, we recommend either using the built-in [`relref`](#relref) shortcode, or one of our [custom shortcode templates](#custom-shortcode-templates).
-These are designed to reduce boilerplate and be more tolerant to future changes to the website.
-
-## Shortcodes
-
-[Shortcodes](https://gohugo.io/content-management/shortcodes/) are custom functions that can be called from within the `Markdown` or `HTML` to insert specific content.
-
-### Built-in shortcode templates
-
-`Hugo` comes with a large suite of built-in shortcode templates that can be used when writing documentation.
-The complete list can be found [here](https://gohugo.io/content-management/shortcodes/#use-hugos-built-in-shortcodes).
-
-We will call out a few here in more detail because we recommend using them, and expect them to be used frequently.
-
-#### `relref`
-
-The [`relref` shortcode](https://gohugo.io/content-management/shortcodes/#ref-and-relref) is useful for linking to other pages on the website.
-It accepts a file-name / partial file-path (and optional heading ID), and generates a relative path link to that document.
-
-> Note: we recommend using `relref` over `ref`, as `ref` will generate an absolute url link, and won't work nicely when previewing the site locally.
-
-Using `relref` is a great option when adding links between documents on the website, as it is more tolerant of file-wise changes made over time.
-
-##### `relref` example
-
-`Markdown` like the following:
-https://fluidframework.com/docs/build/containers/
-
-```markdown
-For more details, see [Creating a container]({{< relref "containers.md#creating-a-container" >}}).
-```
-
-will generate something like:
-
-```markdown
-For more details, see <a href="/docs/build/containers/#creating-a-container">Creating a container</a>.
-```
-
-### Custom shortcode templates
-
-We have a series of premade shortcode templates that we use throughout our website content.
-These can be found under `layouts/shortcodes`.
-
-#### `apiref`
-
-When linking to the API docs for a class, interface, etc., we recommend using our `apiref` shortcode, rather than writing a manual link.
-
-This has a few of benefits:
-
-1. The shortcode is configured to understand our API documentation configuration, so it is better equipped to deal with file paths, etc.
-1. The generated link is formatted as a `<code>` block automatically.
-1. It reduces boilerplate.
-
-The shortcode accepts a single argument: the name of the API item being referenced.
-
-> Note that this will only work correctly for `package`, `class`, `interface`, and `namespace`/`module` items, as they are the only items for which individual `.md` files are generated for.
-> Contents like `parameters`, `methods`, etc. are rendered as sub-headings in their parent item's documents.
-
-This shortcode can be found in `layouts/shortcodes/apiref.html`.
-
-##### `apiref` example
-
-`Markdown` like the following:
-
-```markdown
-The {{< apiref "fluid-static" "FluidContainer" "class" >}} class can be used to...
-```
-
-will generate something like:
-
-```markdown
-The <a href="{{ relref /docs/apis/fluid-static/ifluidcontainer-interface.md }}"><code>FluidContainer</code></a> class can be used to...
-```
-
-## Working on the template
-
-The site theme/template lives in `themes/thxvscode`.
 
 ## Scripts
 
@@ -362,34 +220,40 @@ The following npm scripts are supported in this directory:
 
 | Script | Description |
 |--------|-------------|
-| `build` | Build the site. Outputs to `public/` by default. |
-| `build:api` | `npm run build:api-documentation` |
-| `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
-| `build:local` | `concurrently npm:build:local:api npm:build:md-magic && npm run hugo` |
-| `build:local:api` | Build the site, including repo-local API documentation. Outputs to `public/` by default. |
-| `build:local:api-documentation` | `node ./api-markdown-documenter/index.js true` |
-| `build:local:rollup` | `node ./local-api-rollup.js` |
-| `build:md-magic` | Updates generated content in Markdown files. |
-| `build:md-magic:code` | `node markdown-magic-code.js` |
-| `build:repo-docs` | `npm run build:md-magic:code` |
-| `ci:build` | `npm run download && npm run build` |
-| `ci:linkcheck` | `start-server-and-test ci:start http://localhost:1313 linkcheck:full` |
-| `ci:start` | `http-server ./public --port 1313 --silent` |
-| `clean` | Remove all generated files. |
-| `download:api` | Download the latest API JSON files from `main` locally. |
-| `format` | `npm run prettier:fix` |
-| `hugo` | Run the local copy of Hugo. |
-| `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |
-| `linkcheck:fast` | Checks all internal site links and reports the results to the terminal. |
-| `linkcheck:full` | Checks all internal _and external_ site links and reports the results to the terminal. |
-| `lint` | `npm run markdownlint && npm run prettier` |
-| `lint:fix` | `npm run markdownlint:fix && npm run prettier:fix` |
-| `markdownlint` | `markdownlint-cli2` |
-| `markdownlint:fix` | `markdownlint-cli2-fix` |
-| `prettier` | `prettier --check . --ignore-path ../.prettierignore` |
-| `prettier:fix` | `prettier --write . --ignore-path ../.prettierignore` |
-| `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
-| `start-with-azure-emulation` | `swa start public --api-location api` |
+| `build` | Build everything: the API documentation, the website, the tests, etc. |
+| `build:api-documentation` | Download API model artifacts and generate API documentation. |
+| `prebuild:docusaurus` | Runs pre-site build metadata generation. |
+| `build:docusaurus` | Build the website with Docusaurus. |
+| `build:generate-content` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
+| `build:markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
+| `build:site` | Build the site, including API documentation. |
+| `build:test` | TSC build of the test code as a sanity check. |
+| `check-links` | Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`. |
+| `ci:check-links` | `check-links` variant for CI. Serves the site before running checks. |
+| `clean` | Clean up generated artifacts (build output, etc.). |
+| `clean:api-documentation` | Clean up generate API documentation content. |
+| `clean:doc-models` | Clean up downloaded API model artifacts. |
+| `clean:docusaurus` | Run Docusaurus's "clean". |
+| `clean:test` | Clean up generated test output |
+| `clean:versions-json` | Clean up generated `versions.json` file. |
+| `download-doc-models` | Download API model artifacts published from our release branches. |
+| `eslint` | Run `eslint`. |
+| `eslint:fix` | Run `eslint` with auto-fix enabled. |
+| `format` | Fix formatting issues with `prettier`. |
+| `generate-api-documentation` | Generate API documentation from downloaded API model artifacts. |
+| `generate-versions` | `dotenv -- node ./infra/generate-versions.mjs` |
+| `lint` | Check for linter violations. |
+| `lint:fix` | Auto-fix linter violations. |
+| `preinstall` | Ensure developer is using `pnpm`. |
+| `prettier` | Check for formatting issues with `prettier`. |
+| `prettier:fix` | Fix formatting issues with `prettier`. |
+| `rebuild` | Clean up existing generated artifacts and re-run the build. |
+| `serve` | Serves the built website using Docusaurus. |
+| `serve-with-azure-emulation` | Serves the built website using Docusaurus, including Azure service emulation for our Azure functions. |
+| `prestart` | Runs pre-site build metadata generation. |
+| `start` | Runs the website in watch mode with Docusaurus. |
+| `pretest` | Install necessary `playwright` dependencies before running tests. |
+| `test` | Run tests using `playwright` |
 
 <!-- prettier-ignore-end -->
 

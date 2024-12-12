@@ -112,7 +112,7 @@ export namespace InternalTypes {
 		key: TKey,
 		datastoreHandle: StateDatastoreHandle<TKey, TValue>,
 	) => {
-		value?: TValue;
+		initialData?: { value: TValue; allowableUpdateLatencyMs: number | undefined };
 		manager: StateValue<TManager>;
 	});
 

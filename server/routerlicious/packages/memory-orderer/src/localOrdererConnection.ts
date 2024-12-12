@@ -129,7 +129,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
 			});
 		}
 
-		const boxcar: IBoxcarMessage = {
+		const boxcar: Required<IBoxcarMessage> = {
 			contents: messages,
 			documentId: this.documentId,
 			tenantId: this.tenantId,

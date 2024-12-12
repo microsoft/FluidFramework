@@ -71,9 +71,23 @@ const usageErrorMessage = "Empty file summary creation isn't supported in this d
 const containerCloseAndDisposeUsageErrors = [
 	{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
 ];
-const ContainerCloseUsageError: ExpectedEvents = {
+const ContainerStateEventsOrErrors: ExpectedEvents = {
 	routerlicious: containerCloseAndDisposeUsageErrors,
 	tinylicious: containerCloseAndDisposeUsageErrors,
+	odsp: [
+		{
+			eventName: "fluid:telemetry:OdspDriver:createNewEmptyFile_end",
+			containerAttachState: "Detached",
+		},
+		{
+			eventName: "fluid:telemetry:OdspDriver:uploadSummary_end",
+			containerAttachState: "Attaching",
+		},
+		{
+			eventName: "fluid:telemetry:OdspDriver:renameFile_end",
+			containerAttachState: "Attaching",
+		},
+	],
 };
 
 describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
@@ -85,7 +99,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
-		// Currently FRS does not support blob API.
+		// Currently, AFR does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -281,7 +295,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	beforeEach("getTestObjectProvider", async function () {
 		testPersistedCache = new TestPersistedCache();
 		provider = getTestObjectProvider({ persistedCache: testPersistedCache });
-		// Currently FRS does not support blob API.
+		// Currently AFR does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -444,7 +458,7 @@ function serializationTests({
 			for (const summarizeProtocolTree of [undefined, true, false]) {
 				itExpects(
 					`works in detached container. summarizeProtocolTree: ${summarizeProtocolTree}`,
-					ContainerCloseUsageError,
+					ContainerStateEventsOrErrors,
 					async function () {
 						const loader = provider.makeTestLoader({
 							...testContainerConfig,
@@ -611,7 +625,7 @@ function serializationTests({
 
 			itExpects(
 				"redirect table saved in snapshot",
-				ContainerCloseUsageError,
+				ContainerStateEventsOrErrors,
 				async function () {
 					// test with and without offline load enabled
 					const offlineCfg = {
@@ -687,7 +701,7 @@ function serializationTests({
 
 			itExpects(
 				"serialize/rehydrate then attach",
-				ContainerCloseUsageError,
+				ContainerStateEventsOrErrors,
 				async function () {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,
@@ -741,7 +755,7 @@ function serializationTests({
 
 			itExpects(
 				"serialize/rehydrate multiple times then attach",
-				ContainerCloseUsageError,
+				ContainerStateEventsOrErrors,
 				async function () {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,

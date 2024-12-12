@@ -500,7 +500,7 @@ function comparePosetElements<T>(a: T, b: T, realizer: Realizer<T>): PosetCompar
 	for (const extension of realizer) {
 		const aIndex = extension.get(a);
 		const bIndex = extension.get(b);
-		assert(aIndex !== undefined && bIndex !== undefined, "Invalid realizer");
+		assert(aIndex !== undefined && bIndex !== undefined, 0xa72 /* Invalid realizer */);
 		if (aIndex < bIndex) {
 			hasLessThanResult = true;
 		} else if (aIndex > bIndex) {

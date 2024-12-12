@@ -20,6 +20,8 @@ permissions:
 
 jobs:
 
+  # Build the website (including API documentation).
+  # Publish the build artifact for subsequent jobs to leverage.
   build_site:
     runs-on: ubuntu-latest
     name: Build site
@@ -36,15 +38,16 @@ jobs:
       - name: Build site artifact
         run: |
           pnpm i --frozen-lockfile
-          npm run ci:build
+          npm run build
       - name: Upload site artifact
         # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
         with:
           name: fluidframework-site
-          path: docs/public
+          path: docs/build
           retention-days: 3
 
+  # Run linter checks against the website content and infrastructure.
   lint:
     runs-on: ubuntu-latest
     name: pnpm lint
@@ -63,6 +66,35 @@ jobs:
           pnpm i --frozen-lockfile
           pnpm lint
 
+  # Run the website's tests.
+  test:
+    runs-on: ubuntu-latest
+    name: 🧪 Website Tests
+    needs: build_site
+    steps:
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        with:
+          submodules: false
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
+      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "pnpm"
+          cache-dependency-path: docs/pnpm-lock.yaml
+
+      - name: Download site artifact
+         # release notes: https://github.com/actions/download-artifact/releases/tag/v4.1.8
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
+        with:
+          name: fluidframework-site
+          path: docs/build
+      - name: Install dependencies
+        run: "pnpm i --frozen-lockfile"
+      - name: Run tests
+        run: "npm run test"
+
+  # Run the link checker against the website.
+  # Publish the results to the PR as a comment.
   broken_link_check:
     runs-on: ubuntu-latest
     name: 🔗 Broken Link Check
@@ -85,7 +117,7 @@ jobs:
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
         with:
           name: fluidframework-site
-          path: docs/public
+          path: docs/build
       - name: Install dependencies
         run: "pnpm i --frozen-lockfile"
       - name: Check for broken links
@@ -93,7 +125,7 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          pnpm run ci:linkcheck | tee ./results/linkcheck-output.txt
+          pnpm run ci:check-links | tee ./results/linkcheck-output.txt
 
       - name: Save PR number
         run: echo ${{ github.event.number }} > ./results/pr

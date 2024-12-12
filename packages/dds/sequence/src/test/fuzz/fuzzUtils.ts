@@ -24,9 +24,9 @@ import {
 	type Serializable,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { PropertySet, Side } from "@fluidframework/merge-tree/internal";
+import { PropertySet, Side, type AdjustParams } from "@fluidframework/merge-tree/internal";
 
-import type { SequenceInterval, SharedStringClass } from "../../index.js";
+import type { MapLike, SequenceInterval, SharedStringClass } from "../../index.js";
 import { type IIntervalCollection } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
@@ -66,6 +66,11 @@ export interface RemoveRange extends RangeSpec {
 export interface AnnotateRange extends RangeSpec {
 	type: "annotateRange";
 	props: { key: string; value?: Serializable<any> }[];
+}
+
+export interface AnnotateAdjustRange extends RangeSpec {
+	type: "annotateAdjustRange";
+	adjust: { key: string; value: AdjustParams }[];
 }
 
 export interface ObliterateRange extends RangeSpec {
@@ -115,7 +120,12 @@ export interface RevertibleWeights {
 
 export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
 export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
-export type TextOperation = AddText | RemoveRange | AnnotateRange | ObliterateRange;
+export type TextOperation =
+	| AddText
+	| RemoveRange
+	| AnnotateRange
+	| AnnotateAdjustRange
+	| ObliterateRange;
 
 export type ClientOperation = IntervalOperation | TextOperation;
 
@@ -244,6 +254,13 @@ export function makeReducer(
 			}
 			client.channel.annotateRange(start, end, propertySet);
 		},
+		annotateAdjustRange: async ({ client }, { start, end, adjust }) => {
+			const adjustRange: MapLike<AdjustParams> = {};
+			for (const { key, value } of adjust) {
+				adjustRange[key] = value;
+			}
+			client.channel.annotateAdjustRange(start, end, adjustRange);
+		},
 		obliterateRange: async ({ client }, { start, end }) => {
 			client.channel.obliterateRange(start, end);
 		},
@@ -338,6 +355,23 @@ export function createSharedStringGeneratorOperations(
 		};
 	}
 
+	async function annotateAdjustRange(state: ClientOpState): Promise<AnnotateAdjustRange> {
+		const { random } = state;
+		const key = random.pick(options.propertyNamePool);
+		const max = random.pick([undefined, random.integer(-10, 100)]);
+		const min = random.pick([undefined, random.integer(-100, 10)]);
+		const value: AdjustParams = {
+			delta: random.integer(-5, 5),
+			max,
+			min: (min ?? max ?? 0) > (max ?? 0) ? undefined : min,
+		};
+		return {
+			type: "annotateAdjustRange",
+			...exclusiveRange(state),
+			adjust: [{ key, value }],
+		};
+	}
+
 	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
 		return { type: "removeRange", ...exclusiveRange(state) };
 	}
@@ -360,6 +394,7 @@ export function createSharedStringGeneratorOperations(
 		addText,
 		obliterateRange,
 		annotateRange,
+		annotateAdjustRange,
 		removeRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
@@ -368,6 +403,11 @@ export function createSharedStringGeneratorOperations(
 	};
 }
 
+function setSharedStringRuntimeOptions(runtime: IFluidDataStoreRuntime) {
+	runtime.options.intervalStickinessEnabled = true;
+	runtime.options.mergeTreeEnableObliterate = true;
+	runtime.options.mergeTreeEnableAnnotateAdjust = true;
+}
 export class SharedStringFuzzFactory extends SharedStringFactory {
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -375,14 +415,12 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedStringClass> {
-		runtime.options.intervalStickinessEnabled = true;
-		runtime.options.mergeTreeEnableObliterate = true;
+		setSharedStringRuntimeOptions(runtime);
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedStringClass {
-		document.options.intervalStickinessEnabled = true;
-		document.options.mergeTreeEnableObliterate = true;
+		setSharedStringRuntimeOptions(document);
 		return super.create(document, id);
 	}
 }

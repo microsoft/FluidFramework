@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listeners, Listenable, Off } from "@fluidframework/core-interfaces";
+
 import type { ValueManager } from "./internalTypes.js";
 import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
-import type { Events, ISubscribable } from "@fluidframework/presence/internal/events";
-import { createEmitter } from "@fluidframework/presence/internal/events";
+import type { JsonTypeWith } from "@fluidframework/presence/internal/core-interfaces";
 import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
 import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 
@@ -37,23 +39,43 @@ export interface NotificationsManagerEvents {
  * @sealed
  * @alpha
  */
-export interface NotificationSubscribable<
-	E extends InternalUtilityTypes.NotificationEvents<E>,
+export interface NotificationListenable<
+	TListeners extends InternalUtilityTypes.NotificationListeners<TListeners>,
 > {
 	/**
 	 * Register a notification listener.
 	 * @param notificationName - the name of the notification
-	 * @param listener - the handler to run when the notification is received from other client
-	 * @returns a function which will deregister the listener when run. This function
-	 * has undefined behavior if called more than once.
+	 * @param listener - The listener function to run when the notification is fired.
+	 * @returns A {@link @fluidframework/core-interfaces#Off | function} which will deregister the listener when called.
+	 * Calling the deregistration function more than once will have no effect.
+	 *
+	 * Listeners may also be deregistered by passing the listener to {@link NotificationListenable.off | off()}.
+	 * @remarks Registering the exact same `listener` object for the same notification more than once will throw an error.
+	 * If registering the same listener for the same notification multiple times is desired, consider using a wrapper function for the second subscription.
 	 */
-	on<K extends keyof InternalUtilityTypes.NotificationEvents<E>>(
+	on<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(
 		notificationName: K,
 		listener: (
 			sender: ISessionClient,
-			...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>
+			...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>
 		) => void,
-	): () => void;
+	): Off;
+
+	/**
+	 * Deregister notification listener.
+	 * @param notificationName - The name of the notification.
+	 * @param listener - The listener function to remove from the current set of notification listeners.
+	 * @remarks If `listener` is not currently registered, this method will have no effect.
+	 *
+	 * Listeners may also be deregistered by calling the {@link @fluidframework/core-interfaces#Off | deregistration function} returned when they are {@link NotificationListenable.on | registered}.
+	 */
+	off<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(
+		notificationName: K,
+		listener: (
+			sender: ISessionClient,
+			...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>
+		) => void,
+	): void;
 }
 
 /**
@@ -62,8 +84,10 @@ export interface NotificationSubscribable<
  * @sealed
  * @alpha
  */
-export type NotificationSubscriptions<E extends InternalUtilityTypes.NotificationEvents<E>> = {
-	[K in string & keyof InternalUtilityTypes.NotificationEvents<E>]: (
+export type NotificationSubscriptions<
+	E extends InternalUtilityTypes.NotificationListeners<E>,
+> = {
+	[K in string & keyof InternalUtilityTypes.NotificationListeners<E>]: (
 		sender: ISessionClient,
 		...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>
 	) => void;
@@ -75,13 +99,13 @@ export type NotificationSubscriptions<E extends InternalUtilityTypes.Notificatio
  * @sealed
  * @alpha
  */
-export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationEvents<E>> {
+export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationListeners<E>> {
 	/**
 	 * Emits a notification with the specified name and arguments, notifying all clients.
 	 * @param notificationName - the name of the notification to fire
 	 * @param args - the arguments sent with the notification
 	 */
-	broadcast<K extends string & keyof InternalUtilityTypes.NotificationEvents<E>>(
+	broadcast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(
 		notificationName: K,
 		...args: Parameters<E[K]>
 	): void;
@@ -92,7 +116,7 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
 	 * @param targetClient - the single client to notify
 	 * @param args - the arguments sent with the notification
 	 */
-	unicast<K extends string & keyof InternalUtilityTypes.NotificationEvents<E>>(
+	unicast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(
 		notificationName: K,
 		targetClient: ISessionClient,
 		...args: Parameters<E[K]>
@@ -108,11 +132,13 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
  * @sealed
  * @alpha
  */
-export interface NotificationsManager<T extends InternalUtilityTypes.NotificationEvents<T>> {
+export interface NotificationsManager<
+	T extends InternalUtilityTypes.NotificationListeners<T>,
+> {
 	/**
 	 * Events for Notifications manager.
 	 */
-	readonly events: ISubscribable<NotificationsManagerEvents>;
+	readonly events: Listenable<NotificationsManagerEvents>;
 
 	/**
 	 * Send notifications to other clients.
@@ -122,7 +148,7 @@ export interface NotificationsManager<T extends InternalUtilityTypes.Notificatio
 	/**
 	 * Provides subscription to notifications from other clients.
 	 */
-	readonly notifications: NotificationSubscribable<T>;
+	readonly notifications: NotificationListenable<T>;
 }
 
 /**
@@ -132,7 +158,7 @@ export interface NotificationsManager<T extends InternalUtilityTypes.Notificatio
 const recordKeys = Object.keys as <K extends string>(o: Partial<Record<K, unknown>>) => K[];
 
 class NotificationsManagerImpl<
-	T extends InternalUtilityTypes.NotificationEvents<T>,
+	T extends InternalUtilityTypes.NotificationListeners<T>,
 	Key extends string,
 > implements
 		NotificationsManager<T>,
@@ -147,28 +173,36 @@ class NotificationsManagerImpl<
 		broadcast: (name, ...args) => {
 			this.datastore.localUpdate(
 				this.key,
-				// @ts-expect-error TODO
-				{ rev: 0, timestamp: 0, value: { name, args: [...args] }, ignoreUnmonitored: true },
-				true,
+				{
+					rev: 0,
+					timestamp: 0,
+					value: { name, args: [...(args as JsonTypeWith<never>[])] },
+					ignoreUnmonitored: true,
+				},
+				// This is a notification, so we want to send it immediately.
+				{ allowableUpdateLatencyMs: 0 },
 			);
 		},
 		unicast: (name, targetClient, ...args) => {
 			this.datastore.localUpdate(
 				this.key,
-				// @ts-expect-error TODO
-				{ rev: 0, timestamp: 0, value: { name, args: [...args] }, ignoreUnmonitored: true },
-				targetClient,
+				{
+					rev: 0,
+					timestamp: 0,
+					value: { name, args: [...(args as JsonTypeWith<never>[])] },
+					ignoreUnmonitored: true,
+				},
+				// This is a notification, so we want to send it immediately.
+				{ allowableUpdateLatencyMs: 0, targetClientId: targetClient.getConnectionId() },
 			);
 		},
 	};
 
 	// Workaround for types
-	private readonly notificationsInternal =
-		// @ts-expect-error TODO
-		createEmitter<NotificationSubscriptions<T>>();
+	private readonly notificationsInternal = createEmitter<NotificationSubscriptions<T>>();
 
 	// @ts-expect-error TODO
-	public readonly notifications: NotificationSubscribable<T> = this.notificationsInternal;
+	public readonly notifications: NotificationListenable<T> = this.notificationsInternal;
 
 	public constructor(
 		private readonly key: Key,
@@ -182,7 +216,7 @@ class NotificationsManagerImpl<
 		for (const subscriptionName of recordKeys(initialSubscriptions)) {
 			// Lingering Event typing issues with Notifications specialization requires
 			// this cast. The only thing that really matters is that name is a string.
-			const name = subscriptionName as keyof Events<NotificationSubscriptions<T>>;
+			const name = subscriptionName as keyof Listeners<NotificationSubscriptions<T>>;
 			const value = initialSubscriptions[subscriptionName];
 			// This check should not be needed while using exactOptionalPropertyTypes, but
 			// typescript appears to ignore that with Partial<>. Good to be defensive
@@ -198,7 +232,7 @@ class NotificationsManagerImpl<
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): void {
-		const eventName = value.value.name as keyof Events<NotificationSubscriptions<T>>;
+		const eventName = value.value.name as keyof Listeners<NotificationSubscriptions<T>>;
 		if (this.notificationsInternal.hasListeners(eventName)) {
 			// Without schema validation, we don't know that the args are the correct type.
 			// For now we assume the user is sending the correct types and there is no corruption along the way.
@@ -227,7 +261,7 @@ class NotificationsManagerImpl<
  * @alpha
  */
 export function Notifications<
-	T extends InternalUtilityTypes.NotificationEvents<T>,
+	T extends InternalUtilityTypes.NotificationListeners<T>,
 	Key extends string = string,
 >(
 	initialSubscriptions: Partial<NotificationSubscriptions<T>>,

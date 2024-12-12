@@ -9,28 +9,31 @@
  * They are not currently intended for use in production scenarios.
  */
 
-export type {
-	DataTransformationCallback,
+export {
+	CompositeEntryPoint,
+	IEntryPointPiece,
+	loadCompositeRuntime,
+} from "./compositeRuntime/index.js";
+export {
 	IAcceptedMigrationDetails,
-	IImportExportModel,
-	IMigratableModel,
 	IMigrationTool,
 	IMigrationToolEvents,
+	MigrationState,
+	migrationToolEntryPointPiece,
+	MigrationToolFactory,
+} from "./migrationTool/index.js";
+export {
+	DataTransformationCallback,
+	getModelAndMigrationToolFromContainer,
+	IImportExportModel,
+	IMigratableModel,
 	IMigrator,
 	IMigratorEvents,
 	IVersionedModel,
-	MigrationState,
-} from "./interfaces/index.js";
-export { MigrationToolFactory } from "./migrationTool.js";
-export { Migrator } from "./migrator.js";
+	Migrator,
+} from "./migrator/index.js";
 export {
-	CreateModelCallback,
-	IAttachedMigratableModel,
-	IDetachedMigratableModel,
-	IMigratableModelContainerRuntimeEntryPoint,
-	IMigratableModelLoader,
-	instantiateMigratableRuntime,
-	MigratableModelLoader,
-	MigratableSessionStorageModelLoader,
-	MigratableTinyliciousModelLoader,
-} from "./modelLoader/index.js";
+	ISimpleLoader,
+	SessionStorageSimpleLoader,
+	SimpleLoader,
+} from "./simpleLoader/index.js";

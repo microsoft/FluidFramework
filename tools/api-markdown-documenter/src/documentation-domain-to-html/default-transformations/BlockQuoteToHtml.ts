@@ -8,6 +8,7 @@
  * Licensed under the MIT License.
  */
 import type { Element as HastElement } from "hast";
+
 import type { BlockQuoteNode } from "../../index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformChildrenUnderTag } from "../Utilities.js";
