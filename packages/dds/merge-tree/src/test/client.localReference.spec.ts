@@ -17,7 +17,7 @@ import {
 	setValidateRefCount,
 } from "../localReference.js";
 import { getSlideToSegoff } from "../mergeTree.js";
-import { toRemovalInfo, type ISegment, type ISegmentLeaf } from "../mergeTreeNodes.js";
+import { toRemovalInfo, type ISegmentLeaf } from "../mergeTreeNodes.js";
 import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { DetachedReferencePosition } from "../referencePositions.js";
@@ -32,7 +32,7 @@ function getSlideOnRemoveReferencePosition(
 	pos: number,
 	op: ISequencedDocumentMessage,
 ): {
-	segment: ISegment | undefined;
+	segment: ISegmentLeaf | undefined;
 	offset: number | undefined;
 } {
 	let segoff = client.getContainingSegment<ISegmentLeaf>(pos, {

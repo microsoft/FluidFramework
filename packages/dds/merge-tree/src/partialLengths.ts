@@ -14,7 +14,7 @@ import {
 	IMergeNode,
 	IMoveInfo,
 	IRemovalInfo,
-	ISegment,
+	ISegmentLeaf,
 	compareNumbers,
 	seqLTE,
 	toMoveInfo,
@@ -504,7 +504,7 @@ export class PartialSequenceLengths {
 	 */
 	static accumulateMoveOverlapForExisting(
 		segmentLen: number,
-		segment: ISegment,
+		segment: ISegmentLeaf,
 		firstGte: PartialSequenceLength,
 		clientIds: number[],
 	): void {
@@ -537,7 +537,7 @@ export class PartialSequenceLengths {
 	 * segment
 	 */
 	private static getMoveOverlapForExisting(
-		segment: ISegment,
+		segment: ISegmentLeaf,
 		obliterateOverlapLen: number,
 		clientIds: number[],
 	): RedBlackTree<number, IOverlapClient> {
@@ -558,7 +558,7 @@ export class PartialSequenceLengths {
 	}
 
 	private static updatePartialsAfterInsertion(
-		segment: ISegment,
+		segment: ISegmentLeaf,
 		segmentLen: number,
 		remoteObliteratedLen: number | undefined,
 		obliterateOverlapLen: number = segmentLen,
@@ -638,7 +638,7 @@ export class PartialSequenceLengths {
 	 */
 	private static insertSegment(
 		combinedPartialLengths: PartialSequenceLengths,
-		segment: ISegment,
+		segment: ISegmentLeaf,
 		removalInfo?: IRemovalInfo,
 		moveInfo?: IMoveInfo,
 	): void {

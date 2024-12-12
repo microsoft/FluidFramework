@@ -322,8 +322,8 @@ export interface ISegmentAction<TClientData> {
  * @internal
  */
 export interface ISegmentChanges {
-	next?: ISegment;
-	replaceCurrent?: ISegment;
+	next?: ISegmentInternal;
+	replaceCurrent?: ISegmentInternal;
 }
 /**
  * @internal
@@ -361,8 +361,12 @@ export interface NodeAction<TClientData> {
  * @internal
  */
 export interface InsertContext {
-	candidateSegment?: ISegment;
-	leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
+	candidateSegment?: ISegmentInternal;
+	leaf: (
+		segment: ISegmentInternal | undefined,
+		pos: number,
+		ic: InsertContext,
+	) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
 
@@ -433,7 +437,7 @@ export class MergeBlock implements IMergeNodeCommon {
 	 */
 	public leftmostTiles: Readonly<MapLike<Marker>>;
 
-	isLeaf(): this is ISegment {
+	isLeaf(): this is ISegmentInternal {
 		return false;
 	}
 
