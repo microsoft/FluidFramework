@@ -54,13 +54,26 @@ export type {
 	ReplaceIEventThisPlaceHolder,
 	FluidObject, // Linked in doc comment
 	FluidObjectProviderKeys, // Used by FluidObject
+	// The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`.
+	// eslint-disable-next-line import/export
+	Listeners,
+	// The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`.
+	// eslint-disable-next-line import/export
+	IsListener,
+	// The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`.
+	// eslint-disable-next-line import/export
+	Listenable,
+	//  The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`.
+	// eslint-disable-next-line import/export
+	Off,
 } from "@fluidframework/core-interfaces";
 
 export type { isFluidHandle } from "@fluidframework/runtime-utils";
 
 // Let the tree package manage its own API surface.
 // Note: this only surfaces the `@public, @beta and @alpha` API items from the tree package.
-// eslint-disable-next-line no-restricted-syntax, import/no-internal-modules
+// This reexports all non-conflicting APIs from `@fluidframework/tree`. The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`.
+// eslint-disable-next-line no-restricted-syntax, import/no-internal-modules, import/export
 export * from "@fluidframework/tree/alpha";
 
 // End of basic public+beta+alpha exports - nothing above this line should
