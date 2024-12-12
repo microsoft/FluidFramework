@@ -161,6 +161,10 @@ export class ViewSchema {
 			this.viewSchemaAsStored,
 			stored,
 		)) {
+			if (!canView && !canUpgrade) {
+				break;
+			}
+
 			switch (discrepancy.mismatch) {
 				case "nodeKind": {
 					const viewNodeSchema = this.viewSchemaAsStored.nodeSchema.get(
@@ -217,9 +221,6 @@ export class ViewSchema {
 				}
 				// No default
 			}
-
-			// We could consider early exiting for many incompatibilities, but in practice that shouldn't be a common scenario
-			// (most of the time, well-formed apps will have either allowRead or allowUpgrade be true)
 		}
 
 		return {

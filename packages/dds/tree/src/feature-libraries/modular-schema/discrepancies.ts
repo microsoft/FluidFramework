@@ -93,7 +93,7 @@ export interface FieldDiscrepancyLocation {
  * A discrepancy in the allowed types of a field.
  *
  * @remarks
- * This reports the symmetric different of allowed types in view/stored to enable more efficient checks for compatibility
+ * This reports the symmetric difference of allowed types in view/stored to enable more efficient checks for compatibility
  */
 export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	mismatch: "allowedTypes";

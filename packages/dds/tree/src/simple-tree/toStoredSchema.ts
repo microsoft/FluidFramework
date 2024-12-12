@@ -20,7 +20,7 @@ import {
 	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
-import { brand, fail, isReadonlyArray } from "../util/index.js";
+import { brand, fail, getOrCreate, isReadonlyArray } from "../util/index.js";
 import { NodeKind, type TreeNodeSchema } from "./core/index.js";
 import {
 	FieldKind,
@@ -39,32 +39,29 @@ const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
  */
 export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
-	const cached = viewToStoredCache.get(root);
-	if (cached !== undefined) {
-		return cached;
-	}
+	return getOrCreate(viewToStoredCache, root, () => {
+		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
+		walkFieldSchema(root, {
+			node(schema) {
+				if (nodeSchema.has(brand(schema.identifier))) {
+					// Use JSON.stringify to quote and escape identifier string.
+					throw new UsageError(
+						`Multiple schema encountered with the identifier ${JSON.stringify(
+							schema.identifier,
+						)}. Remove or rename them to avoid the collision.`,
+					);
+				}
+				nodeSchema.set(brand(schema.identifier), getStoredSchema(schema));
+			},
+		});
 
-	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
-	walkFieldSchema(root, {
-		node(schema) {
-			if (nodeSchema.has(brand(schema.identifier))) {
-				// Use JSON.stringify to quote and escape identifier string.
-				throw new UsageError(
-					`Multiple schema encountered with the identifier ${JSON.stringify(
-						schema.identifier,
-					)}. Remove or rename them to avoid the collision.`,
-				);
-			}
-			nodeSchema.set(brand(schema.identifier), getStoredSchema(schema));
-		},
+		const result: TreeStoredSchema = {
+			nodeSchema,
+			rootFieldSchema: convertField(root),
+		};
+		viewToStoredCache.set(root, result);
+		return result;
 	});
-
-	const result: TreeStoredSchema = {
-		nodeSchema,
-		rootFieldSchema: convertField(root),
-	};
-	viewToStoredCache.set(root, result);
-	return result;
 }
 
 /**

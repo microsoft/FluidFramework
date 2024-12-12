@@ -49,7 +49,6 @@ import {
 } from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
-import { walkFieldSchema } from "./walkFieldSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -524,21 +523,13 @@ function assertUniqueKeys<
 export function createUnknownOptionalFieldPolicy(
 	schema: ImplicitFieldSchema,
 ): SchemaPolicy["allowUnknownOptionalFields"] {
-	const identifierToObjectSchema = new Map<
-		string,
-		ObjectNodeSchema & ObjectNodeSchemaInternalData
-	>();
-
-	walkFieldSchema(schema, {
-		node: (nodeSchema: TreeNodeSchema) => {
-			if (isObjectNodeSchema(nodeSchema)) {
-				identifierToObjectSchema.set(nodeSchema.identifier, nodeSchema);
-			}
-		},
-	});
-
+	const context = getUnhydratedContext(schema);
 	return (identifier) => {
-		const nodeSchema = identifierToObjectSchema.get(identifier);
-		return nodeSchema?.allowUnknownOptionalFields ?? false;
+		const storedSchema = context.schema.get(identifier);
+		return (
+			storedSchema !== undefined &&
+			isObjectNodeSchema(storedSchema) &&
+			storedSchema.allowUnknownOptionalFields
+		);
 	};
 }

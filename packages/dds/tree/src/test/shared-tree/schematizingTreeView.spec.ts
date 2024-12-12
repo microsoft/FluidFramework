@@ -245,6 +245,74 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(viewGeneralized.root.address, "123 Main St");
 	});
 
+	it("Calling moveToEnd on a more specific schema preserves a node's optional fields that were unknown to that schema", () => {
+		const factorySpecific = new SchemaFactoryAlpha(undefined);
+		const factoryGeneral = new SchemaFactoryAlpha(undefined);
+		class PersonGeneralized extends factorySpecific.object("Person", {
+			name: factoryGeneral.string,
+			age: factoryGeneral.number,
+			address: factoryGeneral.optional(factoryGeneral.string),
+		}) {}
+		class PersonSpecific extends factorySpecific.object(
+			"Person",
+			{
+				name: factorySpecific.string,
+				age: factorySpecific.number,
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		const peopleConfig = new TreeViewConfiguration({
+			schema: factorySpecific.array(PersonSpecific),
+		});
+		const peopleGeneralizedConfig = new TreeViewConfiguration({
+			schema: factoryGeneral.array(PersonGeneralized),
+		});
+		const checkout = checkoutWithInitialTree(peopleGeneralizedConfig, [
+			new PersonGeneralized({ name: "Alice", age: 42, address: "123 Main St" }),
+			new PersonGeneralized({ name: "Bob", age: 24 }),
+		]);
+		const viewSpecific = new SchematizingSimpleTreeView(
+			checkout,
+			peopleConfig,
+			new MockNodeKeyManager(),
+		);
+
+		assert.deepEqual(viewSpecific.compatibility, {
+			canView: true,
+			canUpgrade: false,
+			isEquivalent: false,
+			canInitialize: false,
+		});
+
+		viewSpecific.root.moveRangeToEnd(0, 1);
+
+		// To the view that doesn't have "address" in its schema, the node appears as if it doesn't
+		// have an address...
+		assert.equal(Object.keys(viewSpecific.root[1]).length, 2);
+		assert.equal(viewSpecific.root[1].name, "Alice");
+		assert.equal(viewSpecific.root[1].age, 42);
+		viewSpecific.dispose();
+
+		const viewGeneralized = new SchematizingSimpleTreeView(
+			checkout,
+			peopleGeneralizedConfig,
+			new MockNodeKeyManager(),
+		);
+		assert.deepEqual(viewGeneralized.compatibility, {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+			canInitialize: false,
+		});
+
+		// ...however, despite that client making an edit to Alice, the field is preserved via the move APIs.
+		assert.equal(Object.keys(viewGeneralized.root[1]).length, 3);
+		assert.equal(viewGeneralized.root[1].name, "Alice");
+		assert.equal(viewGeneralized.root[1].age, 42);
+		assert.equal(viewGeneralized.root[1].address, "123 Main St");
+	});
+
 	it("Open upgradable document, then upgrade schema", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
 		const view = new SchematizingSimpleTreeView(

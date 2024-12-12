@@ -132,25 +132,19 @@ export interface SchemaFactoryObjectOptions {
 	 * function clonePerson(a: PersonView): PersonView {
 	 * 	return new PersonView({ name: a.name });
 	 * }
-	 * // Then the alleged clone wouldn't actually clone the entire person, it would drop the nickname.
+	 * // ...or even like this:
+	 * function clonePerson(a: PersonView): PersonView {
+	 *  return new PersonView({ ...a})
+	 * }
+	 * // Then the alleged clone wouldn't actually clone the entire person in either case, it would drop the nickname.
 	 * ```
 	 *
 	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
 	 * {@link TreeAlpha.(importVerbose:2)|import}/{@link TreeAlpha.(exportVerbose:2)|export} APIs with persistent keys.
 	 *
-	 * @privateRemarks
-	 * Implementation-wise, operations which operate on an entire node (such as moving it within a field or across fields) will not encounter the
-	 * problem of dropping data in lower layers of `SharedTree` (rebaser, encoding, etc.) as they are view schema agnostic.
-	 * Writing code which leverages this such as
-	 *
-	 * ```typescript
-	 * const someElement = mySchemaArray[0];
-	 * mySchemaArray.removeAt(0);
-	 * mySchemaArray.insertAtEnd(someElement);
-	 * ```
-	 *
-	 * does not currently work, but if we support move-like patterns in the future, it would be good to update the public remarks above to highlight
-	 * this fact.
+	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter
+	 * this problem as SharedTree's implementation stores the entire node in its lower layers. It's only when application code
+	 * reaches into a node (either by accessing its fields, spreading it, or some other means) that this problem arises.
 	 */
 	allowUnknownOptionalFields?: boolean;
 }
