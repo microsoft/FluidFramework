@@ -37,6 +37,7 @@ import {
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
+	type NodeSchemaMetadata,
 } from "../schemaTypes.js";
 import { inPrototypeChain } from "../core/index.js";
 import type {
@@ -46,6 +47,7 @@ import type {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaBoth,
+	TreeNode,
 } from "../core/index.js";
 import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
 import {
@@ -395,6 +397,8 @@ export class SchemaFactory<
 	>;
 
 	/**
+	 * {@link SchemaFactory.map} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return `TreeNodeSchemaBoth`, however TypeScript gives an error if one of the overloads implicitly up-casts the return type of the implementation.
 	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
@@ -427,7 +431,7 @@ export class SchemaFactory<
 				undefined
 			>;
 		}
-		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
+		// To actually have type safety, assign to the type this method should return before implicitly up-casting when returning.
 		const out: TreeNodeSchemaBoth<
 			string,
 			NodeKind.Map,
@@ -543,6 +547,8 @@ export class SchemaFactory<
 	>;
 
 	/**
+	 * {@link SchemaFactory.array} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
 	 */
@@ -889,4 +895,73 @@ export function markSchemaMostDerived(schema: TreeNodeSchema): void {
 	}
 
 	(schema as typeof TreeNodeValid & TreeNodeSchema).markMostDerived();
+}
+
+/**
+ * Binds metadata to a node schema.
+ * @remarks Accomplishes this by creating a new subclass with the specified metadata, strongly typed.
+ *
+ * @param nodeSchema - The node schema to bind metadata to.
+ * @param metadata - The metadata to bind to the node schema.
+ *
+ * @example
+ *
+ * ```typescript
+ * class Point extends withMetadata(
+ * 	schemaFactory.object("point", { x: schemaFactory.number, y: schemaFactory.number }),
+ * 	{
+ * 		description: "A point in 2D space",
+ * 		custom: {
+ * 			... // Your custom metadata properties here
+ * 		},
+ * 	}
+ * ) {}
+ * ```
+ *
+ * @alpha
+ */
+export function withMetadata<
+	TNewCustomMetadata = unknown,
+	TName extends string = string,
+	TKind extends NodeKind = NodeKind,
+	TNode extends TreeNode = TreeNode,
+	TInsertable = never,
+	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
+	TConstructorExtra = never,
+>(
+	nodeSchema: TreeNodeSchemaClass<
+		TName,
+		TKind,
+		TNode,
+		TInsertable,
+		ImplicitlyConstructable,
+		Info,
+		TConstructorExtra
+	>,
+	metadata: NodeSchemaMetadata<TNewCustomMetadata>,
+): TreeNodeSchemaClass<
+	TName,
+	TKind,
+	TNode,
+	TInsertable,
+	ImplicitlyConstructable,
+	Info,
+	TConstructorExtra,
+	TNewCustomMetadata
+> {
+	class Derived extends nodeSchema {
+		public static readonly metadata: NodeSchemaMetadata<TNewCustomMetadata> | undefined =
+			metadata;
+	}
+	return Derived as unknown as TreeNodeSchemaClass<
+		TName,
+		TKind,
+		TNode,
+		TInsertable,
+		ImplicitlyConstructable,
+		Info,
+		TConstructorExtra,
+		TNewCustomMetadata
+	>;
 }

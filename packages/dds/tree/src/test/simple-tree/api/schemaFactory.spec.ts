@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockFluidDataStoreRuntime,
@@ -36,6 +36,7 @@ import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
+	withMetadata,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import type {
@@ -363,7 +364,7 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("Field Metadata", () => {
+		it("Field schema metadata", () => {
 			const schemaFactory = new SchemaFactory("com.example");
 			const barMetadata = {
 				description: "Bar",
@@ -460,7 +461,7 @@ describe("schemaFactory", () => {
 		);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
-		const item = stuff[0];
+		const item = stuff[0] ?? oob();
 		const s: string = item.text;
 		assert.equal(s, "hi");
 	});
@@ -1026,6 +1027,31 @@ describe("schemaFactory", () => {
 		assert.deepEqual(getKeys(obj), ["a"]);
 		assert.deepEqual(getKeys(arr), [0]);
 		assert.deepEqual(getKeys(mapNode), ["x"]);
+	});
+
+	it("withMetadata", () => {
+		const factory = new SchemaFactory("");
+
+		const fooMetadata = {
+			description: "An array of numbers",
+			custom: {
+				baz: true,
+			},
+		};
+
+		class Foo extends withMetadata(factory.array("Foo", factory.number), fooMetadata) {}
+
+		assert.deepEqual(Foo.metadata, fooMetadata);
+
+		// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+		const description = Foo.metadata.description;
+		const baz = Foo.metadata.custom.baz;
+
+		// Ensure we can construct a node from a schema with metadata.
+		const constructed = new Foo([42, 37]);
+
+		// Ensure we can hydrate data using a schema with metadata.
+		const hydrated = hydrate(Foo, [42, 37]);
 	});
 });
 

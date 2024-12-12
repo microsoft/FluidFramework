@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeLeafValue } from "../schemaTypes.js";
+import type { NodeSchemaMetadata, TreeLeafValue } from "../schemaTypes.js";
 import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
 
 /**
@@ -27,11 +27,30 @@ export type TreeNodeSchema<
 	TBuild = never,
 	ImplicitlyConstructable extends boolean = boolean,
 	Info = unknown,
+	TCustomMetadata = unknown,
 > =
 	| (TNode extends TreeNode
-			? TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
+			? TreeNodeSchemaClass<
+					Name,
+					Kind,
+					TNode,
+					TBuild,
+					ImplicitlyConstructable,
+					Info,
+					never,
+					TCustomMetadata
+				>
 			: never)
-	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
+	| TreeNodeSchemaNonClass<
+			Name,
+			Kind,
+			TNode,
+			TBuild,
+			ImplicitlyConstructable,
+			Info,
+			never,
+			TCustomMetadata
+	  >;
 
 /**
  * Schema which is not a class.
@@ -49,7 +68,15 @@ export type TreeNodeSchemaNonClass<
 	ImplicitlyConstructable extends boolean = boolean,
 	Info = unknown,
 	TConstructorExtra = never,
-> = TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info, TInsertable> &
+	TCustomMetadata = unknown,
+> = TreeNodeSchemaCore<
+	Name,
+	Kind,
+	ImplicitlyConstructable,
+	Info,
+	TInsertable,
+	TCustomMetadata
+> &
 	(undefined extends TConstructorExtra
 		? {
 				/**
@@ -119,7 +146,15 @@ export type TreeNodeSchemaClass<
 	ImplicitlyConstructable extends boolean = boolean,
 	Info = unknown,
 	TConstructorExtra = never,
-> = TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info, TInsertable> &
+	TCustomMetadata = unknown,
+> = TreeNodeSchemaCore<
+	Name,
+	Kind,
+	ImplicitlyConstructable,
+	Info,
+	TInsertable,
+	TCustomMetadata
+> &
 	(undefined extends TConstructorExtra
 		? {
 				/**
@@ -157,6 +192,7 @@ export type TreeNodeSchemaBoth<
 	ImplicitlyConstructable extends boolean = boolean,
 	Info = unknown,
 	TConstructorExtra = never,
+	TCustomMetadata = unknown,
 > = TreeNodeSchemaClass<
 	Name,
 	Kind,
@@ -164,7 +200,8 @@ export type TreeNodeSchemaBoth<
 	TInsertable,
 	ImplicitlyConstructable,
 	Info,
-	TConstructorExtra
+	TConstructorExtra,
+	TCustomMetadata
 > &
 	TreeNodeSchemaNonClass<
 		Name,
@@ -173,7 +210,8 @@ export type TreeNodeSchemaBoth<
 		TInsertable,
 		ImplicitlyConstructable,
 		Info,
-		TConstructorExtra
+		TConstructorExtra,
+		TCustomMetadata
 	>;
 
 /**
@@ -188,6 +226,7 @@ export interface TreeNodeSchemaCore<
 	out ImplicitlyConstructable extends boolean,
 	out Info = unknown,
 	out TInsertable = never,
+	out TCustomMetadata = unknown,
 > {
 	/**
 	 * Unique (within a document's schema) identifier used to associate nodes with their schema.
@@ -243,6 +282,11 @@ export interface TreeNodeSchemaCore<
 	 * @system
 	 */
 	readonly childTypes: ReadonlySet<TreeNodeSchema>;
+
+	/**
+	 * User-provided {@link NodeSchemaMetadata} for this schema.
+	 */
+	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
 
 	/**
 	 * Constructs an instance of this node type.
