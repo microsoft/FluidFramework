@@ -474,6 +474,8 @@ export interface IContainerRuntimeOptions {
 	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
 	 * and then sent them as a single batch at the end of the turn.
 	 * By default, flush mode is TurnBased.
+	 *
+	 * @deprecated Only the default value TurnBased is supported. This option will be removed in the future.
 	 */
 	readonly flushMode?: FlushMode;
 	/**
