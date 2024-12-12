@@ -15,7 +15,7 @@ import {
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
@@ -235,7 +235,7 @@ export interface ITestContainerConfig {
 	registry?: ChannelFactoryRegistry;
 
 	/** Container runtime options for the container instance */
-	runtimeOptions?: IContainerRuntimeOptions;
+	runtimeOptions?: IContainerRuntimeOptionsInternal;
 
 	/** Whether this runtime should be instantiated using a mixed-in attributor class */
 	enableAttribution?: boolean;
