@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject } from "@fluidframework/aqueduct/internal";
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	AttachState,
 	DisconnectReason,
