@@ -170,13 +170,13 @@ For more details about leveraging Mermaid diagrams in Docusaurus, see [here](htt
 
 ### Documents vs Pages
 
-*Documents* and *Pages* are distinct concepts in Docusaurus.
+_Documents_ and _Pages_ are distinct concepts in Docusaurus.
 For an overview of each, see: [Documents](https://docusaurus.io/docs/docs-introduction) and [Pages](https://docusaurus.io/docs/creating-pages).
 
 Some primary distinctions:
 
-1. *Documents* live under `docs` and `versioned_docs`. *Pages* live under `src/pages`.
-1. *Documents* are versioned. *Pages* are not.
+1. _Documents_ live under `docs` and `versioned_docs`. _Pages_ live under `src/pages`.
+1. _Documents_ are versioned. _Pages_ are not.
 
 ### The Sidebar
 
@@ -186,10 +186,10 @@ The site's "current" version sidebar is configured via `sidebars.ts`.
 
 Sidebars for other versions are configured via `versioned_sidebars/version-<version-id>.json`.
 
-- Versioned sidebars do not yet support JS/TS file formats.
-  See <https://github.com/facebook/docusaurus/issues/10407>.
+-   Versioned sidebars do not yet support JS/TS file formats.
+    See <https://github.com/facebook/docusaurus/issues/10407>.
 
-Note that sidebars are configured for documents under `docs` and `versioned_docs`; they do not apply to unversioned *Pages*.
+Note that sidebars are configured for documents under `docs` and `versioned_docs`; they do not apply to unversioned _Pages_.
 
 ### Documentation Versioning
 
@@ -200,8 +200,8 @@ This documentation is intended to be kept up-to-date with the most recent releas
 
 For now, this means we publish documentation (including generated API documentation) for versions `1.x` and `2.x`.
 
-- We also support generating API documentation for the local repo code in local development only.
-  See [Local API docs build](#local-api-docs-build), but these are not intended to be published.
+-   We also support generating API documentation for the local repo code in local development only.
+    See [Local API docs build](#local-api-docs-build), but these are not intended to be published.
 
 #### Why Only Major Versions?
 
@@ -220,12 +220,12 @@ If not, attempting to build the site after following the below steps will fail.
 
 1. Run `npx --no-install docusaurus docs:version v<*current*-major-version-number>` from the root of this directory.
    E.g., `... docusaurus docs:version v2` when prepping for `v3` documentation.
-   - This will "freeze" the existing "current" version documentation, copying it into `versioned_docs` under the specified version ID.
-   - This will also generate a sidebar configuration for the frozen version under `versioned_sidebars`.
+    - This will "freeze" the existing "current" version documentation, copying it into `versioned_docs` under the specified version ID.
+    - This will also generate a sidebar configuration for the frozen version under `versioned_sidebars`.
 1. Update `config/docs-versions.mjs` to update the version ID for the "current" version, and add the newly frozen version to the `otherVersions` list.
    This will automatically update aspects of the site, including:
-   1. Which versions of the API documentation are generated during the build
-   1. The version selection drop-down in the site header
+    1. Which versions of the API documentation are generated during the build
+    1. The version selection drop-down in the site header
 
 ### Best practices
 
