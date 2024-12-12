@@ -148,10 +148,10 @@
 		"merge-async": true,
 		"report-dir": "nyc/report",
 		"reporter": [
-			"cobertura",
 			"clover",
-			"json-summary",
+			"cobertura",
 			"html",
+			"json-summary",
 			"text"
 		],
 		"temp-directory": "nyc/.nyc_output"
