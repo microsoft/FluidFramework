@@ -689,12 +689,6 @@ extends:
                 value: $(Build.SourcesDirectory)/tools/telemetry-generator
                 readonly: true
               steps:
-              - template: /tools/pipelines/templates/include-use-node-version.yml@self
-              - template: /tools/pipelines/templates/include-install.yml@self
-                parameters:
-                  packageManager: '${{ parameters.packageManager }}'
-                  buildDirectory: '$(absolutePathToTelemetryGenerator)'
-                  packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                 parameters:
                   devFeedUrl: $(ado-feeds-dev)

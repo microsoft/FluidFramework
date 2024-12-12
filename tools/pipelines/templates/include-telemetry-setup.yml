@@ -35,7 +35,11 @@ steps:
   - checkout: self
     clean: true
 
-- template: include-use-node-version.yml
+- template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+- template: include-install-pnpm.yml
+  parameters:
+    buildDirectory: ${{ parameters.pathToTelemetryGenerator }}
 
 - task: Bash@3
   displayName: Print parameter/variable values for template
