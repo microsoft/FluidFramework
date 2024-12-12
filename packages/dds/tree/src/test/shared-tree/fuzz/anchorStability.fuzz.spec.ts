@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	type DDSFuzzHarnessEvents,
@@ -95,7 +95,7 @@ describe("Fuzz - anchor stability", () => {
 			validateConsistency: () => {},
 		};
 
-		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		const emitter = createEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			const tree = viewFromState(initialState, initialState.clients[0]).checkout;
 			tree.transaction.start();
@@ -165,7 +165,7 @@ describe("Fuzz - anchor stability", () => {
 			validateConsistency: () => {},
 		};
 
-		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		const emitter = createEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			// Kludge: we force schematization and synchronization here to ensure that the clients all have the same
 			// starting tree as opposed to isomorphic copies.

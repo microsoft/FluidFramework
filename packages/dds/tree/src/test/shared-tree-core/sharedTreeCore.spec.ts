@@ -5,8 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IEvent } from "@fluidframework/core-interfaces";
+import { IsoBuffer, CustomEventEmitter } from "@fluid-internal/client-utils";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
@@ -630,13 +629,16 @@ describe("SharedTreeCore", () => {
 		);
 	}
 
-	interface MockSummarizableEvents extends IEvent {
-		(event: "loaded", listener: (blobContents?: string) => void): void;
-		(event: "summarize" | "summarizeAttached" | "summarizeAsync" | "gcRequested"): void;
+	interface MockSummarizableEvents {
+		loaded(blobContents?: string): void;
+		summarize(): void;
+		summarizeAttached(): void;
+		summarizeAsync(): void;
+		gcRequested(): void;
 	}
 
 	class MockSummarizable
-		extends TypedEventEmitter<MockSummarizableEvents>
+		extends CustomEventEmitter<MockSummarizableEvents>
 		implements Summarizable
 	{
 		public static readonly blobKey = "MockIndexBlobKey";
@@ -652,7 +654,7 @@ describe("SharedTreeCore", () => {
 		): Promise<void> {
 			if (await services.contains(MockSummarizable.blobKey)) {
 				const blob = await services.readBlob(MockSummarizable.blobKey);
-				const blobContents = parse(IsoBuffer.from(blob).toString());
+				const blobContents = parse(IsoBuffer.from(blob).toString()) as string | undefined;
 				this.emit("loaded", blobContents);
 			} else {
 				this.emit("loaded");
