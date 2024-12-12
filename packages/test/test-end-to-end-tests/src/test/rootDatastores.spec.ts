@@ -187,6 +187,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			assert.equal(aliasResult6, "AlreadyAliased");
 		});
 
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 		it(
 			"Trying to create multiple datastores aliased to the same value on the same client " +
 				"will always return the same datastore",
@@ -326,6 +327,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 
 	describe("Aliasing with summary", () => {
 		const alias = "alias";
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 		it(
 			"Assign multiple data stores to the same alias, first write wins, " +
 				"different containers from snapshot",

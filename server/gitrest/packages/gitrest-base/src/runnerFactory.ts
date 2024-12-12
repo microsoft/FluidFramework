@@ -31,6 +31,7 @@ export class GitrestResources implements core.IResources {
 		public readonly port: string | number,
 		public readonly fileSystemManagerFactories: IFileSystemManagerFactories,
 		public readonly repositoryManagerFactory: IRepositoryManagerFactory,
+		public readonly startupCheck: core.IReadinessCheck,
 		public readonly enableOptimizedInitialSummary?: boolean,
 		public readonly readinessCheck?: core.IReadinessCheck,
 	) {
@@ -39,7 +40,10 @@ export class GitrestResources implements core.IResources {
 	}
 
 	public async dispose(): Promise<void> {
-		return;
+		// Dispose the ephemeral file system manager factories that use Redis
+		if (this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory?.dispose) {
+			await this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory.dispose();
+		}
 	}
 }
 
@@ -58,12 +62,14 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			config,
 			fileSystemManagerFactories,
 		);
+		const startupCheck = new services.StartupCheck();
 
 		return new GitrestResources(
 			config,
 			port,
 			fileSystemManagerFactories,
 			repositoryManagerFactory,
+			startupCheck,
 			undefined,
 			customizations?.readinessCheck,
 		);
@@ -151,6 +157,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			"git:apiMetricsSamplingPeriod",
 		);
 		const enableSlimGitInit: boolean = config.get("git:enableSlimGitInit") ?? false;
+		const maxBlobSizeBytes: number | undefined = config.get("git:maxBlobSizeBytes");
 
 		if (gitLibrary === "isomorphic-git") {
 			return new IsomorphicGitManagerFactory(
@@ -161,6 +168,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 				enableRepositoryManagerMetrics,
 				enableSlimGitInit,
 				apiMetricsSamplingPeriod,
+				maxBlobSizeBytes,
 			);
 		}
 		throw new Error("Invalid git library name.");
@@ -175,6 +183,7 @@ export class GitrestRunnerFactory implements core.IRunnerFactory<GitrestResource
 			resources.port,
 			resources.fileSystemManagerFactories,
 			resources.repositoryManagerFactory,
+			resources.startupCheck,
 			resources.readinessCheck,
 		);
 	}

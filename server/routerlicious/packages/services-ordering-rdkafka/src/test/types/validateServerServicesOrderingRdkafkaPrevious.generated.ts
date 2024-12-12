@@ -153,6 +153,7 @@ declare function get_old_ClassDeclaration_RdkafkaConsumer():
 declare function use_current_ClassDeclaration_RdkafkaConsumer(
     use: TypeOnly<current.RdkafkaConsumer>): void;
 use_current_ClassDeclaration_RdkafkaConsumer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_RdkafkaConsumer());
 
 /*

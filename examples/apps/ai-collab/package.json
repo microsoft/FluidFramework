@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/ai-collab",
-	"version": "2.4.0",
+	"version": "2.12.0",
 	"private": true,
 	"description": "Example app that showcases the experimental package for AI collaboration in Fluid-based applications.",
 	"homepage": "https://fluidframework.com",
@@ -16,7 +16,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/esm/package.json ./lib",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib next-env.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -26,48 +26,24 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"next:build": "next build",
-		"next:dev": "next dev",
-		"next:start": "next start",
+		"start": "next dev",
 		"start:server": "tinylicious"
 	},
-	"c8": {
-		"all": true,
-		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
-		],
-		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"dist/**/*.*js"
-		],
-		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
-		"temp-directory": "nyc/.nyc_output"
-	},
-	"dependencies": {},
 	"devDependencies": {
 		"@azure/identity": "^4.4.1",
 		"@azure/msal-browser": "^3.25.0",
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@emotion/react": "^11.13.3",
 		"@emotion/styled": "^11.13.0",
-		"@fluid-experimental/ai-collab": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.48.0",
+		"@fluid-tools/build-cli": "^0.51.0",
+		"@fluidframework/ai-collab": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.48.0",
-		"@fluidframework/devtools": "workspace:^",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/devtools": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@fluidframework/odsp-client": "workspace:~",
-		"@fluidframework/tinylicious-client": "workspace:^",
+		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"@iconify/react": "^5.0.2",
 		"@microsoft/microsoft-graph-client": "^3.0.7",
@@ -77,16 +53,12 @@
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
 		"@types/uuid": "^9.0.2",
-		"c8": "^8.0.1",
-		"concurrently": "^8.2.1",
-		"copyfiles": "^2.4.1",
-		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
-		"fluid-framework": "workspace:^",
-		"moment": "^2.21.0",
+		"fluid-framework": "workspace:~",
 		"mui": "^0.0.1",
 		"next": "^14.2.8",
 		"notistack": "^3.0.1",
+		"openai": "^4.67.3",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"rimraf": "^4.4.0",
@@ -97,6 +69,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }

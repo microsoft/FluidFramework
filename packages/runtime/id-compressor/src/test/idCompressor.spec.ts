@@ -1378,7 +1378,7 @@ function createNetworkTestFunction(
 			const hasCapacity = typeof testOrCapacity === "number";
 			const capacity = hasCapacity ? testOrCapacity : undefined;
 			const network = new IdCompressorTestNetwork(capacity);
-			(hasCapacity ? test ?? fail("test must be defined") : testOrCapacity)(network);
+			(hasCapacity ? (test ?? fail("test must be defined")) : testOrCapacity)(network);
 			if (validateAfter) {
 				network.deliverOperations(DestinationClient.All);
 				network.assertNetworkState();

@@ -32,7 +32,7 @@ import {
 import { EditorView } from "prosemirror-view";
 import React, { useEffect, useRef } from "react";
 
-import { nodeTypeKey } from "./fluidBridge.js";
+import { nodeTypeKey, stackTypeBegin, stackTypeEnd, stackTypeKey } from "./fluidBridge.js";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager.js";
 
 function insertMarkers(
@@ -44,10 +44,12 @@ function insertMarkers(
 	const endMarkerProps = {};
 	endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	endMarkerProps[nodeTypeKey] = nodeType;
+	endMarkerProps[stackTypeKey] = stackTypeEnd;
 
 	const beginMarkerProps = {};
 	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	beginMarkerProps[nodeTypeKey] = nodeType;
+	beginMarkerProps[stackTypeKey] = stackTypeBegin;
 
 	text.insertMarker(position, ReferenceType.Simple, beginMarkerProps);
 	text.insertMarker(position + 1, ReferenceType.Simple, endMarkerProps);

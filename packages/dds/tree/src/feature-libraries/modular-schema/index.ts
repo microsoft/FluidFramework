@@ -74,4 +74,7 @@ export type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
-export { getAllowedContentIncompatibilities, isRepoSuperset } from "./discrepancies.js";
+export {
+	getAllowedContentDiscrepancies,
+	isRepoSuperset,
+} from "./discrepancies.js";

@@ -63,6 +63,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 	timeoutAwait,
+	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
@@ -114,7 +115,10 @@ const getPendingOps = async (
 
 	await testObjectProvider.ensureSynchronized();
 	await testObjectProvider.opProcessingController.pauseProcessing(container);
-	assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+	const deltaManagerInternal = toIDeltaManagerFull(
+		toDeltaManagerInternal(dataStore.runtime.deltaManager),
+	);
+	assert(deltaManagerInternal.outbound.paused);
 
 	await cb(container, dataStore);
 
@@ -1276,7 +1280,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.ok(serializedClientId);
 
 			await provider.opProcessingController.pauseProcessing(container);
-			assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+			const deltaManagerFull = toIDeltaManagerFull(
+				toDeltaManagerInternal(dataStore.runtime.deltaManager),
+			);
+			assert(deltaManagerFull.outbound.paused);
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
@@ -1479,7 +1486,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 
 			await provider.opProcessingController.pauseProcessing(container2);
-			assert(toDeltaManagerInternal(dataStore2.runtime.deltaManager).outbound.paused);
+			const deltaManagerFull = toIDeltaManagerFull(
+				toDeltaManagerInternal(dataStore2.runtime.deltaManager),
+			);
+			assert(deltaManagerFull.outbound.paused);
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 			const morePendingOps = await container2.getPendingLocalState?.();
@@ -1603,14 +1613,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		ac.abort();
 		const pendingOps = await pendingOpsP;
 
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		await provider.ensureSynchronized();
-		assert.strictEqual(
-			bufferToString(await map2.get("blob handle").get(), "utf8"),
-			"blob contents",
-		);
+		// we are able to load from the pending ops even though we abort
+		await loadOffline(testContainerConfig, provider, { url }, pendingOps);
 	});
 
 	it("close while uploading multiple blob", async function () {
@@ -1644,6 +1648,14 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("load offline with blob redirect table", async function () {
+		// TODO: AB#22741: Re-enable "load offline with blob redirect table"
+		if (
+			provider.driver.type === "odsp" ||
+			(provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs")
+		) {
+			this.skip();
+		}
+
 		const container = await loader.resolve({ url });
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
@@ -1862,6 +1874,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
 	it("works with summary while offline", async function () {
+		// TODO: AB#22740: Re-enable "works with summary while offline" on ODSP
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
+
 		map1.set("test op 1", "test op 1");
 		await waitForSummary(provider, container1, testContainerConfig);
 
@@ -1924,7 +1941,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		)) as IContainerExperimental;
 
 		// pause outgoing ops so we can detect dropped stashed changes
-		await container.deltaManager.outbound.pause();
+		await toIDeltaManagerFull(container.deltaManager).outbound.pause();
 		let pendingState: string | undefined;
 		let pendingStateP;
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
@@ -2008,7 +2025,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("applies stashed ops with no saved ops", async function () {
-		// TODO: This test is consistently failing when ran against FRS. See ADO:7968
+		// TODO: This test is consistently failing when ran against AFR. See ADO:7968
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -2196,6 +2213,11 @@ describeCompat(
 				},
 			],
 			async function () {
+				// AB#14900, 20297: this test is extremely flaky on Tinylicious and causing noise.
+				// Skip it for now until above items are resolved.
+				if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+					this.skip();
+				}
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
 					testContainerConfig_noSummarizer,
@@ -2221,7 +2243,7 @@ describeCompat(
 						},
 						pendingLocalState,
 					);
-					await container.deltaManager.outbound.pause();
+					await toIDeltaManagerFull(container.deltaManager).outbound.pause();
 					container.connect();
 
 					// Wait for the container to connect, and then pause the inbound queue
@@ -2230,7 +2252,7 @@ describeCompat(
 						reject: true,
 						errorMsg: `${loggingId} didn't connect in time`,
 					});
-					await container.deltaManager.inbound.pause();
+					await toIDeltaManagerFull(container.deltaManager).inbound.pause();
 
 					// Now this container should submit the op when we resume the outbound queue
 					return container;
@@ -2246,39 +2268,36 @@ describeCompat(
 				const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 				const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
+				const container2DeltaManager = toIDeltaManagerFull(container2.deltaManager);
+				const container3DeltaManager = toIDeltaManagerFull(container3.deltaManager);
 				// Here's the "in parallel" part - resume both outbound queues at the same time,
 				// and then resume both inbound queues once the outbound queues are idle (done sending).
 				const allSentP = Promise.all([
 					timeoutPromise<unknown>(
 						(resolve) => {
-							container2.deltaManager.outbound.once("idle", resolve);
+							container2DeltaManager.outbound.once("idle", resolve);
 						},
 						{ errorMsg: "container2 outbound queue never reached idle state" },
 					),
 					timeoutPromise<unknown>(
 						(resolve) => {
-							container3.deltaManager.outbound.once("idle", resolve);
+							container3DeltaManager.outbound.once("idle", resolve);
 						},
 						{ errorMsg: "container3 outbound queue never reached idle state" },
 					),
 				]);
-				container2.deltaManager.outbound.resume();
-				container3.deltaManager.outbound.resume();
+				container2DeltaManager.outbound.resume();
+				container3DeltaManager.outbound.resume();
 				await allSentP;
-				container2.deltaManager.inbound.resume();
-				container3.deltaManager.inbound.resume();
+				container2DeltaManager.inbound.resume();
+				container3DeltaManager.inbound.resume();
 
 				// At this point, both rehydrated containers should have submitted the same Counter op.
 				// ContainerRuntime will use PSM and BatchTracker and it will play out like this:
 				// - One will win the race and get their op sequenced first.
 				// - Then the other will close with Forked Container Error when it sees that ack - with matching batchId but from a different client
-				// - All other clients (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will ignore it.
+				// - Each other client (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will close.
 				await provider.ensureSynchronized();
-
-				// Container1 is not used directly in this test, but is present and observing the session,
-				// so we can double-check eventual consistency - the container should have closed and the op should not have been duplicated
-				assert(container1.closed, "container1 should be closed");
-				assert.strictEqual(counter1.value, incrementValue);
 
 				// Both containers will close with the correct value for the counter.
 				// The container whose op is sequenced first will close with "Duplicate batch" error
@@ -2287,8 +2306,25 @@ describeCompat(
 				// when it sees the winner's batch come in.
 				assert(container2.closed, "container2 should be closed");
 				assert(container3.closed, "container3 should be closed");
-				assert.strictEqual(counter2.value, incrementValue);
-				assert.strictEqual(counter3.value, incrementValue);
+				assert.strictEqual(
+					counter2.value,
+					incrementValue,
+					"container2 should have incremented to 3 (at least locally)",
+				);
+				assert.strictEqual(
+					counter3.value,
+					incrementValue,
+					"container3 should have incremented to 3 (at least locally)",
+				);
+
+				// Container1 is not used directly in this test, but is present and observing the session,
+				// so we can double-check eventual consistency - the container should have closed when processing the duplicate (after applying the first)
+				assert(container1.closed, "container1 should be closed");
+				assert.strictEqual(
+					counter1.value,
+					incrementValue,
+					"container1 should have incremented to 3 before closing",
+				);
 			},
 		);
 

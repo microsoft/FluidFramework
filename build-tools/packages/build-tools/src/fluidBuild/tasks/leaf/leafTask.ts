@@ -7,8 +7,8 @@ import * as assert from "assert";
 import crypto from "crypto";
 import * as path from "path";
 import { AsyncPriorityQueue } from "async";
-import chalk from "chalk";
 import registerDebug from "debug";
+import chalk from "picocolors";
 
 import { existsSync } from "node:fs";
 import { readFile, stat, unlink, writeFile } from "node:fs/promises";
@@ -190,12 +190,7 @@ export abstract class LeafTask extends Task {
 			console.error(this.getExecErrors(ret));
 			return this.execDone(startTime, BuildResult.Failed);
 		}
-		if (
-			ret.stderr &&
-			// tsc-multi writes to stderr even when there are no errors, so this condition excludes that case as a workaround.
-			// Otherwise fluid-build spams warnings for all tsc-multi tasks.
-			!ret.stderr.includes("Found 0 errors")
-		) {
+		if (ret.stderr) {
 			// no error code but still error messages, treat them is non fatal warnings
 			console.warn(`${this.node.pkg.nameColored}: warning during command '${this.command}'`);
 			console.warn(this.getExecErrors(ret));

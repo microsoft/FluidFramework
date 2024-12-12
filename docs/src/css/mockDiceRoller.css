@@ -1,0 +1,39 @@
+.ffcom-dice-roller-card {
+	min-width: 300px;
+	box-sizing: border-box;
+	margin: 2px;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.ffcom-dice-roller-card-nav-bar {
+	box-sizing: border-box;
+
+	color: black;
+	background: #ffffff;
+	border: 1px solid #e1e1e1;
+	border-radius: 5px;
+	padding: 5px;
+}
+
+.ffcom-dice-image {
+	width: 200px;
+}
+
+.ffcom-roll-button {
+	width: 118px;
+	height: 48px;
+
+	background: #0078d4;
+	border-style: none;
+	border-radius: 8px;
+
+	cursor: pointer;
+}
+
+.ffcom-roll-button-label {
+	font-size: 15px;
+	color: #ffffff;
+}

@@ -14,7 +14,7 @@ import {
 import type { Format } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
-import { toStoredSchema } from "../toFlexSchema.js";
+import { toStoredSchema } from "../toStoredSchema.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 import { ViewSchema } from "./view.js";
 

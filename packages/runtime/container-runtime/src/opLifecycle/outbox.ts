@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { OutboundContainerRuntimeMessage } from "../messageTypes.js";
 import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
@@ -28,6 +29,8 @@ import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
 import { OpSplitter } from "./opSplitter.js";
+// eslint-disable-next-line unused-imports/no-unused-imports -- Used by "@link" comment annotation below
+import { ensureContentsDeserialized } from "./remoteMessageProcessor.js";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
@@ -52,6 +55,14 @@ export interface IOutboxParameters {
 	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
+}
+
+/**
+ * Before submitting an op to the Outbox, its contents must be serialized using this function.
+ * @remarks - The deserialization on process happens via the function {@link ensureContentsDeserialized}.
+ */
+export function serializeOpContents(contents: OutboundContainerRuntimeMessage): string {
+	return JSON.stringify(contents);
 }
 
 /**
@@ -132,6 +143,18 @@ export class Outbox {
 
 	public get messageCount(): number {
 		return this.mainBatch.length + this.blobAttachBatch.length + this.idAllocationBatch.length;
+	}
+
+	public get mainBatchMessageCount(): number {
+		return this.mainBatch.length;
+	}
+
+	public get blobAttachBatchMessageCount(): number {
+		return this.blobAttachBatch.length;
+	}
+
+	public get idAllocationBatchMessageCount(): number {
+		return this.idAllocationBatch.length;
 	}
 
 	public get isEmpty(): boolean {

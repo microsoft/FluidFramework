@@ -74,7 +74,8 @@ data:
                 {{- range $i, $tenant := .Values.kafka.customRestartOnKafkaErrorCodes }}
                 {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
                 {{- end }}
-            ]
+            ],
+            "seekTimeoutAfterPause": {{ .Values.kafka.seekTimeoutAfterPause }}
         },
         "zookeeper": {
             "endpoint": "{{ .Values.zookeeper.url }}"
@@ -243,7 +244,22 @@ data:
             "checkpointTimeIntervalMsec": 1000,
             "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }},
             "logSavedOpsTimeIntervalMs": {{ .Values.scriptorium.logSavedOpsTimeIntervalMs }},
-            "opsCountTelemetryEnabled": {{ .Values.scriptorium.opsCountTelemetryEnabled }}
+            "opsCountTelemetryEnabled": {{ .Values.scriptorium.opsCountTelemetryEnabled }},
+            "circuitBreakerEnabled": {{ .Values.scriptorium.circuitBreakerEnabled }},
+            "circuitBreakerOptions": {
+                "errorThresholdPercentage": {{ .Values.scriptorium.circuitBreakerOptions.errorThresholdPercentage }},
+                "resetTimeout": {{ .Values.scriptorium.circuitBreakerOptions.resetTimeout }},
+                "timeout": {{ .Values.scriptorium.circuitBreakerOptions.timeout }},
+                "rollingCountTimeout": {{ .Values.scriptorium.circuitBreakerOptions.rollingCountTimeout }},
+                "rollingCountBuckets": {{ .Values.scriptorium.circuitBreakerOptions.rollingCountBuckets }},
+                "fallbackToRestartTimeoutMs": {{ .Values.scriptorium.circuitBreakerOptions.fallbackToRestartTimeoutMs }},
+                "filterOnErrors": [
+                    {{- $lastIndex := sub (len .Values.scriptorium.circuitBreakerOptions.filterOnErrors) 1}}
+                    {{- range $i, $error := .Values.scriptorium.circuitBreakerOptions.filterOnErrors }}
+                    {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                    {{- end }}
+                ]
+            }
         },
         "riddler": {
             "port": 5000

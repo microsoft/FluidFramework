@@ -1,6 +1,6 @@
 {
-	"name": "@fluid-experimental/ai-collab",
-	"version": "2.4.0",
+	"name": "@fluidframework/ai-collab",
+	"version": "2.12.0",
 	"description": "Experimental package to simplify integrating AI into Fluid-based applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,11 +15,21 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
+				"types": "./dist/public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -34,7 +44,12 @@
 			}
 		}
 	},
+	"main": "lib/index.js",
+	"types": "lib/public.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
@@ -47,8 +62,12 @@
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"check:exports:cjs:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json",
 		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
+		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
+		"check:exports:esm:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json",
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
+		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -61,22 +80,26 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "echo \"TESTS ARE CURRENTLY FAILING. SKIPPING RUN.;\" # mocha --recursive \"dist/test/**/*.spec.js\"",
-		"test:mocha:esm": "echo \"TESTS ARE CURRENTLY FAILING. SKIPPING RUN.;\" # mocha --recursive \"lib/test/**/*.spec.js\"",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.js\"",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"typetests:gen": "flub generate typetests --dir . -v",
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -87,17 +110,25 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
+		"openai": "^4.67.3",
+		"typechat": "^0.1.1",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.16.4",
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.48.0",
+		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.48.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
@@ -108,11 +139,22 @@
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:esnext": [
+				"...",
+				"typetests:gen"
+			],
+			"tsc": [
+				"...",
+				"typetests:gen"
+			]
+		}
 	},
 	"typeValidation": {
 		"disabled": true,

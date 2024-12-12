@@ -17,6 +17,7 @@ import * as riddlerApp from "../../riddler/app";
 import Sinon from "sinon";
 import { ITenantDocument } from "../../riddler";
 import { TenantKeyGenerator } from "@fluidframework/server-services-utils";
+import { StartupCheck } from "@fluidframework/server-services-shared";
 
 const documentsCollectionName = "testDocuments";
 const deltasCollectionName = "testDeltas";
@@ -27,7 +28,7 @@ class TestSecretManager implements ISecretManager {
 	constructor(private readonly encryptionKey: string) {}
 
 	public getLatestKeyVersion(): EncryptionKeyVersion {
-		return undefined;
+		return EncryptionKeyVersion.key2022;
 	}
 
 	public decryptSecret(encryptedSecret: string): string {
@@ -91,6 +92,7 @@ describe("Routerlicious", () => {
 					const testFetchTenantKeyMetricIntervalMs = 60000;
 					const testRiddlerStorageRequestMetricIntervalMs = 60000;
 					const tenantKeyGenerator = new TenantKeyGenerator();
+					const startupCheck = new StartupCheck();
 
 					app = riddlerApp.create(
 						defaultTenantsCollection,
@@ -102,6 +104,7 @@ describe("Routerlicious", () => {
 						testFetchTenantKeyMetricIntervalMs,
 						testRiddlerStorageRequestMetricIntervalMs,
 						tenantKeyGenerator,
+						startupCheck,
 					);
 					supertest = request(app);
 				});

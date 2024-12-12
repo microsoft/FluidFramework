@@ -13,7 +13,8 @@ jobs:
     - name: version
       value: $[stageDependencies.build.build.outputs['SetVersion.version']]
     steps:
-    - template: include-install-build-tools.yml
+    - template: /tools/pipelines/templates/include-use-node-version.yml@self
+    - template: /tools/pipelines/templates/include-install-build-tools.yml@self
       parameters:
         buildDirectory: ${{ parameters.buildDirectory }}
 
@@ -23,6 +24,7 @@ jobs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
+          set -eu -o pipefail
           mkdir generate_release_reports
           flub release report -g client -o generate_release_reports --baseFileName manifest
 
@@ -32,6 +34,7 @@ jobs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
+          set -eu -o pipefail
           mkdir upload_release_reports
           flub release report-unreleased --version $(version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)'
 

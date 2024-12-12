@@ -53,7 +53,6 @@ export { getApiExports } from "./typescriptApi.js";
 export { createPullRequest, getCommitInfo, pullRequestExists } from "./github.js";
 export {
 	getRanges,
-	PackageVersionList,
 	ReleaseRanges,
 	ReleaseReport,
 	ReportKind,

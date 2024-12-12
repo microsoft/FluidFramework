@@ -20,7 +20,7 @@ export {
 } from "./redisSocketIoAdapter";
 export { decodeHeader, RestLessServer } from "./restLessServer";
 export { run, runService } from "./runner";
-export { runnerHttpServerStop } from "./runnerUtils";
+export { runnerHttpServerStop, closeRedisClientConnections } from "./runnerUtils";
 export { SocketIoAdapterCreator } from "./socketIoServer";
 export { DocumentStorage } from "./storage";
 export {
@@ -37,3 +37,4 @@ export {
 export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";
 export { createHealthCheckEndpoints } from "./healthCheckEndpoints";
+export { StartupCheck } from "./startupChecker";

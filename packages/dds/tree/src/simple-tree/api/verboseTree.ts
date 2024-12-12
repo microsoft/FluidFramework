@@ -38,7 +38,7 @@ import {
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 import {
-	customFromCursorInner,
+	customFromCursor,
 	type CustomTreeNode,
 	type CustomTreeValue,
 	type EncodeOptions,
@@ -53,6 +53,7 @@ import { getUnhydratedContext } from "../createContext.js";
  * @privateRemarks
  * This can store all possible simple trees,
  * but it can not store all possible trees representable by our internal representations like FlexTree and JsonableTree.
+ * @alpha
  */
 export type VerboseTree<THandle = IFluidHandle> =
 	| VerboseTreeNode<THandle>
@@ -82,6 +83,7 @@ export type VerboseTree<THandle = IFluidHandle> =
  * Unlike `JsonableTree`, leaf nodes are not boxed into node objects, and instead have their schema inferred from the value.
  * Additionally, sequence fields can only occur on a node that has a single sequence field (with the empty key)
  * replicating the behavior of simple-tree ArrayNodes.
+ * @alpha
  */
 export interface VerboseTreeNode<THandle = IFluidHandle> {
 	/**
@@ -109,6 +111,7 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
 
 /**
  * Options for how to interpret a `VerboseTree<TCustom>` when schema information is available.
+ * @alpha
  */
 export interface ParseOptions<TCustom> {
 	/**
@@ -341,7 +344,7 @@ function verboseFromCursorInner<TCustom>(
 	options: Required<EncodeOptions<TCustom>>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): VerboseTree<TCustom> {
-	const fields = customFromCursorInner(reader, options, schema, verboseFromCursorInner);
+	const fields = customFromCursor(reader, options, schema, verboseFromCursorInner);
 	const nodeSchema = schema.get(reader.type) ?? fail("missing schema for type in cursor");
 	if (nodeSchema.kind === NodeKind.Leaf) {
 		return fields as CustomTreeValue<TCustom>;

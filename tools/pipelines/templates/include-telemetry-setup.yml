@@ -42,6 +42,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
+      set -eu -o pipefail
       echo "
       Parameters:
         pathToTelemetryGenerator=${{ parameters.pathToTelemetryGenerator }}
@@ -56,6 +57,8 @@ steps:
     workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
     # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
     script: |
+      set -eu -o pipefail
+
       echo Initialize package
       npm init --yes
 
@@ -97,5 +100,6 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
     script: |
+      set -eu -o pipefail
       npm i;
       npm run build:compile;

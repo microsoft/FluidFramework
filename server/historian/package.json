@@ -43,10 +43,10 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.44.0",
+		"@fluid-tools/build-cli": "^0.49.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@fluidframework/build-tools": "^0.49.0",
+		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@types/compression": "0.0.36",
 		"@types/cors": "^2.8.4",
 		"@types/debug": "^4.1.5",

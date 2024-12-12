@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.4.0",
+	"version": "2.12.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -147,16 +147,16 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.16.4",
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
-		"@fluid-tools/build-cli": "^0.48.0",
+		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.48.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@~2.3.0",
+		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.11.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
@@ -177,20 +177,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IMergeTreeDeltaOpArgs": {
-				"backCompat": false
-			},
-			"TypeAlias_IMergeTreeDeltaOp": {
-				"backCompat": false
-			},
-			"Interface_IMergeTreeGroupMsg": {
-				"backCompat": false
-			},
-			"TypeAlias_IMergeTreeOp": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

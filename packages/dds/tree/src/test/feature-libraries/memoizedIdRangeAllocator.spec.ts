@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { ChangesetLocalId, RevisionTag } from "../../core/index.js";
 import { MemoizedIdRangeAllocator } from "../../feature-libraries/index.js";

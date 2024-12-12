@@ -35,8 +35,8 @@ import * as app from "./app";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 
 export class NexusRunner implements IRunner {
-	private server: IWebServer;
-	private runningDeferred: Deferred<void>;
+	private server?: IWebServer;
+	private runningDeferred?: Deferred<void>;
 	private stopped: boolean = false;
 	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.NexusRunner);
 
@@ -53,6 +53,7 @@ export class NexusRunner implements IRunner {
 		private readonly storage: IDocumentStorage,
 		private readonly clientManager: IClientManager,
 		private readonly metricClientConfig: any,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
@@ -70,7 +71,7 @@ export class NexusRunner implements IRunner {
 		this.runningDeferred = new Deferred<void>();
 
 		// Create an HTTP server with a request listener for health endpoints.
-		const nexus = app.create(this.config, this.readinessCheck);
+		const nexus = app.create(this.config, this.startupCheck, this.readinessCheck);
 		nexus.set("port", this.port);
 		this.server = this.serverFactory.create(nexus);
 
@@ -91,6 +92,10 @@ export class NexusRunner implements IRunner {
 			const isSignalUsageCountingEnabled = this.config.get(
 				"usage:signalUsageCountingEnabled",
 			);
+
+			if (!this.server.webSocketServer) {
+				throw new Error("WebSocket server is not initialized");
+			}
 
 			// Register all the socket.io stuff
 			configureWebSocketServices(
@@ -141,6 +146,9 @@ export class NexusRunner implements IRunner {
 
 		this.stopped = false;
 
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 
@@ -235,8 +243,8 @@ export class NexusRunner implements IRunner {
 	 * Event listener for HTTP server "listening" event.
 	 */
 	private onListening() {
-		const addr = this.server.httpServer.address();
-		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+		const addr = this.server?.httpServer?.address();
+		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
 		winston.info(`Listening on ${bind}`);
 		Lumberjack.info(`Listening on ${bind}`);
 	}

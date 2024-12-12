@@ -22,13 +22,13 @@ import {
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
 	IGetPendingLocalStateProps,
-	IHostLoader,
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
 	isFluidCodeDetails,
 	IDeltaManager,
 	ReadOnlyInfo,
+	type ILoader,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -67,6 +67,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	type ConnectionMode,
+	type IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -394,7 +395,7 @@ export class Container
 					// to return container, so ignore this value and use undefined for opsBeforeReturn
 					const mode: IContainerLoadMode = pendingLocalState
 						? { ...(loadMode ?? defaultMode), opsBeforeReturn: undefined }
-						: loadMode ?? defaultMode;
+						: (loadMode ?? defaultMode);
 
 					const onClosed = (err?: ICriticalContainerError): void => {
 						// pre-0.58 error message: containerClosedWithoutErrorDuringLoad
@@ -602,7 +603,7 @@ export class Container
 	 * During initialization we pause the inbound queues. We track this state to ensure we only call resume once
 	 */
 	private inboundQueuePausedFromInit = true;
-	private firstConnection = true;
+	private connectionCount = 0;
 	private readonly connectionTransitionTimes: number[] = [];
 	private _loadedFromVersion: IVersion | undefined;
 	private _dirtyContainer = false;
@@ -716,6 +717,14 @@ export class Container
 	 */
 	public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
 		return this._loadedCodeDetails;
+	}
+
+	/**
+	 * Get the package info for the code details that were used to load the container.
+	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined otherwise
+	 */
+	public getContainerPackageInfo?(): IContainerPackageInfo | undefined {
+		return getPackageName(this._loadedCodeDetails);
 	}
 
 	private _loadedModule: IFluidModuleWithDetails | undefined;
@@ -1319,7 +1328,7 @@ export class Container
 					) => {
 						try {
 							assert(
-								this.deltaManager.inbound.length === 0,
+								this._deltaManager.inbound.length === 0,
 								0x0d6 /* "Inbound queue should be empty when attaching" */,
 							);
 							return combineAppAndProtocolSummary(
@@ -1523,13 +1532,13 @@ export class Container
 		const codeDetails = this.getCodeDetailsFromQuorum();
 
 		await Promise.all([
-			this.deltaManager.inbound.pause(),
-			this.deltaManager.inboundSignal.pause(),
+			this._deltaManager.inbound.pause(),
+			this._deltaManager.inboundSignal.pause(),
 		]);
 
 		if ((await this.satisfies(codeDetails)) === true) {
-			this.deltaManager.inbound.resume();
-			this.deltaManager.inboundSignal.resume();
+			this._deltaManager.inbound.resume();
+			this._deltaManager.inboundSignal.resume();
 			return;
 		}
 
@@ -1719,7 +1728,7 @@ export class Container
 			codeDetails,
 			baseSnapshotTree,
 			// give runtime a dummy value so it knows we're loading from a stash blob
-			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
+			pendingLocalState ? (pendingLocalState?.pendingRuntimeState ?? {}) : undefined,
 			isInstanceOfISnapshot(baseSnapshot) ? baseSnapshot : undefined,
 		);
 
@@ -2148,7 +2157,6 @@ export class Container
 		const duration = time - this.connectionTransitionTimes[oldState];
 
 		let durationFromDisconnected: number | undefined;
-		let connectionInitiationReason: string | undefined;
 		let autoReconnect: ReconnectMode | undefined;
 		let checkpointSequenceNumber: number | undefined;
 		let opsBehind: number | undefined;
@@ -2167,7 +2175,6 @@ export class Container
 					opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
 				}
 			}
-			connectionInitiationReason = this.firstConnection ? "InitialConnect" : "AutoReconnect";
 		}
 
 		this.mc.logger.sendPerformanceEvent(
@@ -2177,7 +2184,7 @@ export class Container
 				duration,
 				durationFromDisconnected,
 				reason: reason?.text,
-				connectionInitiationReason,
+				connectionCount: this.connectionCount,
 				pendingClientId: this.connectionStateHandler.pendingClientId,
 				clientId: this.connectionStateHandler.clientId,
 				autoReconnect,
@@ -2187,6 +2194,7 @@ export class Container
 					this.lastVisible === undefined ? undefined : performance.now() - this.lastVisible,
 				checkpointSequenceNumber,
 				quorumSize: this._protocolHandler?.quorum.getMembers().size,
+				audienceSize: this._protocolHandler?.audience.getMembers().size,
 				isDirty: this.isDirty,
 				...this._deltaManager.connectionProps,
 			},
@@ -2194,7 +2202,7 @@ export class Container
 		);
 
 		if (value === ConnectionState.Connected) {
-			this.firstConnection = false;
+			this.connectionCount++;
 		}
 	}
 
@@ -2395,7 +2403,7 @@ export class Container
 
 		// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
 		// are set. Global requests will still go directly to the loader
-		const maybeLoader: FluidObject<IHostLoader> = this.scope;
+		const maybeLoader: FluidObject<ILoader> = this.scope;
 		const loader = new RelativeLoader(this, maybeLoader.ILoader);
 
 		const loadCodeResult = await PerformanceEvent.timedExecAsync(

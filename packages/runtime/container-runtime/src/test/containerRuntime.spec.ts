@@ -30,6 +30,7 @@ import {
 	type IVersion,
 	type FetchSource,
 	type IDocumentAttributes,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	ISummaryTreeWithStats,
@@ -40,6 +41,8 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
+	type IRuntimeMessageCollection,
+	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
@@ -64,13 +67,12 @@ import {
 	IContainerRuntimeOptions,
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
+	getSingleUseLegacyLogCallback,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
-	type ContainerRuntimeGCMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
-	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
@@ -82,14 +84,9 @@ import {
 import {
 	ISummaryCancellationToken,
 	neverCancelledSummaryToken,
+	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
-
-// Type test:
-const outboundMessage: OutboundContainerRuntimeMessage =
-	{} as unknown as OutboundContainerRuntimeMessage;
-// @ts-expect-error Outbound type should not include compat behavior
-(() => {})(outboundMessage.compatDetails);
 
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
@@ -144,6 +141,22 @@ function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
 	);
 }
 
+function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime): void {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	(containerRuntime as any).channelCollection = {
+		setConnectionState: (_connected: boolean, _clientId?: string) => {},
+		// Pass data store op right back to ContainerRuntime
+		reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+			submitDataStoreOp(
+				containerRuntime,
+				envelope.address,
+				envelope.contents,
+				localOpMetadata,
+			);
+		},
+	} as ChannelCollection;
+}
+
 describe("Runtime", () => {
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -195,6 +208,7 @@ describe("Runtime", () => {
 			logger = new MockLogger(),
 			mockStorage = defaultMockStorage,
 			loadedFromVersion,
+			baseSnapshot,
 		} = params;
 
 		const mockContext = {
@@ -222,6 +236,7 @@ describe("Runtime", () => {
 			clientId,
 			connected: true,
 			storage: mockStorage as IDocumentStorageService,
+			baseSnapshot,
 		} satisfies Partial<IContainerContext>;
 
 		// Update the delta manager's last message which is used for validation during summarization.
@@ -365,19 +380,7 @@ describe("Runtime", () => {
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 
-					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-					(containerRuntime as any).channelCollection = {
-						setConnectionState: (_connected: boolean, _clientId?: string) => {},
-						// Pass data store op right back to ContainerRuntime
-						reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-							submitDataStoreOp(
-								containerRuntime,
-								envelope.address,
-								envelope.contents,
-								localOpMetadata,
-							);
-						},
-					} as ChannelCollection;
+					defineResubmitAndSetConnectionState(containerRuntime);
 
 					changeConnectionState(containerRuntime, false, mockClientId);
 
@@ -610,19 +613,7 @@ describe("Runtime", () => {
 					});
 
 					it("Resubmitting batch preserves original batches", async () => {
-						// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-						(containerRuntime as any).channelCollection = {
-							setConnectionState: (_connected: boolean, _clientId?: string) => {},
-							// Pass data store op right back to ContainerRuntime
-							reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-								submitDataStoreOp(
-									containerRuntime,
-									envelope.address,
-									envelope.contents,
-									localOpMetadata,
-								);
-							},
-						} as ChannelCollection;
+						defineResubmitAndSetConnectionState(containerRuntime);
 
 						changeConnectionState(containerRuntime, false, fakeClientId);
 
@@ -874,7 +865,7 @@ describe("Runtime", () => {
 			const getMockChannelCollection = (): ChannelCollection => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
-					process: (..._args) => {},
+					processMessages: (..._args) => {},
 					setConnectionState: (..._args) => {},
 				} as ChannelCollection;
 			};
@@ -924,6 +915,7 @@ describe("Runtime", () => {
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
 				pendingStateManager.onFlushBatch([{ referenceSequenceNumber: 0 }], 1);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, should ` +
 					"generate telemetry event and throw an error that closes the container",
@@ -957,6 +949,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} / 2 connection state changes, with pending state, should ` +
 					"generate telemetry event but not throw an error that closes the container",
@@ -981,6 +974,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, with ` +
 					"feature disabled, should not generate telemetry event nor throw an error that closes the container",
@@ -1003,6 +997,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} connection state changes, with no pending state, should ` +
 					"not generate telemetry event nor throw an error that closes the container",
@@ -1024,6 +1019,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
 					"processing local op, should not generate telemetry event nor throw an error that closes the container",
@@ -1059,6 +1055,7 @@ describe("Runtime", () => {
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
 					"processing remote op and local chunked op, should generate telemetry event and throw an error that closes the container",
@@ -1124,7 +1121,7 @@ describe("Runtime", () => {
 			);
 		});
 
-		describe("[DEPRECATED] Future op type compatibility", () => {
+		describe("Unrecognized types not supported", () => {
 			let containerRuntime: ContainerRuntime;
 			beforeEach(async () => {
 				containerRuntime = await ContainerRuntime.loadRuntime({
@@ -1137,37 +1134,6 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-			});
-
-			it("can submit op compat behavior (temporarily still available for GC op)", async () => {
-				// Create a container runtime type where the submit method is public. This makes it easier to test
-				// submission and processing of ops. The other option is to send data store or alias ops whose
-				// processing requires creation of data store context and runtime as well.
-				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
-					submit(
-						containerRuntimeMessage: OutboundContainerRuntimeMessage,
-						localOpMetadata: unknown,
-						metadata: Record<string, unknown> | undefined,
-					): void;
-				};
-				const containerRuntimeWithSubmit =
-					containerRuntime as unknown as ContainerRuntimeWithSubmit;
-
-				const gcMessageWithDeprecatedCompatDetails: ContainerRuntimeGCMessage = {
-					type: ContainerMessageType.GC,
-					contents: { type: "Sweep", deletedNodeIds: [] },
-					compatDetails: { behavior: "Ignore" },
-				};
-
-				assert.doesNotThrow(
-					() =>
-						containerRuntimeWithSubmit.submit(
-							gcMessageWithDeprecatedCompatDetails,
-							undefined,
-							undefined,
-						),
-					"Cannot submit container runtime message with compatDetails",
-				);
 			});
 
 			/** Overwrites channelCollection property and exposes private submit function with modified typing */
@@ -1198,7 +1164,7 @@ describe("Runtime", () => {
 				return patched;
 			}
 
-			it("Op with unrecognized type and 'Ignore' compat behavior is ignored by resubmit", async () => {
+			it("Op with unrecognized type is ignored by resubmit", async () => {
 				const patchedContainerRuntime = patchContainerRuntime();
 
 				changeConnectionState(patchedContainerRuntime, false, mockClientId);
@@ -1208,7 +1174,6 @@ describe("Runtime", () => {
 				patchedContainerRuntime.submit({
 					type: "FUTURE_TYPE" as any,
 					contents: "3",
-					compatDetails: { behavior: "Ignore" }, // This op should be ignored by resubmit
 				});
 				submitDataStoreOp(patchedContainerRuntime, "4", "test");
 
@@ -1226,34 +1191,8 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
-					Record<string, unknown> = {
-					type: "FROM_THE_FUTURE",
-					contents: "Hello",
-					compatDetails: { behavior: "Ignore" },
-				};
-
-				const packedOp: Omit<
-					ISequencedDocumentMessage,
-					"term" | "clientSequenceNumber" | "referenceSequenceNumber" | "timestamp"
-				> = {
-					contents: JSON.stringify(futureRuntimeMessage),
-					type: MessageType.Operation,
-					sequenceNumber: 123,
-					clientId: "someClientId",
-					minimumSequenceNumber: 0,
-				};
-				assert.throws(
-					() =>
-						containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */),
-					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-					"Ops with unrecognized type and 'Ignore' compat behavior should fail to process",
-				);
-			});
-
-			it("process remote op with unrecognized type and no compat behavior", async () => {
-				const futureRuntimeMessage = {
+			it("process remote op with unrecognized type", async () => {
+				const futureRuntimeMessage: Record<string, unknown> = {
 					type: "FROM_THE_FUTURE",
 					contents: "Hello",
 				};
@@ -1272,11 +1211,10 @@ describe("Runtime", () => {
 					() =>
 						containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */),
 					(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-					"Ops with unrecognized type and no specified compat behavior should fail to process",
+					"Ops with unrecognized type should fail to process",
 				);
 			});
 		});
-
 		describe("Supports mixin classes", () => {
 			it("new loadRuntime method works", async () => {
 				const makeMixin = <T>(
@@ -2132,9 +2070,83 @@ describe("Runtime", () => {
 					);
 				});
 			});
+
+			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
+				// Duplicate Batch Detection requires OfflineLoad enabled
+				const settings_enableOfflineLoad = { "Fluid.Container.enableOfflineLoad": true };
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({
+						settings: settings_enableOfflineLoad,
+					}) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Add batchId1 to DuplicateBatchDetected via ContainerRuntime.process,
+				// and get its serialized representation from summarizing
+				containerRuntime.process(
+					{
+						sequenceNumber: 123,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						metadata: { batchId: "batchId1" },
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					false,
+				);
+				const { summary } = await containerRuntime.summarize({ fullTree: true });
+				const blob = summary.tree[recentBatchInfoBlobName];
+				assert(blob.type === SummaryType.Blob, "Expected blob");
+				assert.equal(blob.content, '[[123,"batchId1"]]', "Expected single batchId mapping");
+
+				// Load a new ContainerRuntime with the serialized DuplicateBatchDetector state.
+				const mockStorage = {
+					// Hardcode readblob fn to return the blob contents put in the summary
+					readBlob: async (_id) => stringToBuffer(blob.content as string, "utf8"),
+				};
+				const containerRuntime2 = await ContainerRuntime.loadRuntime({
+					context: getMockContext({
+						settings: settings_enableOfflineLoad,
+						baseSnapshot: {
+							trees: {},
+							blobs: { [recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage" },
+						},
+						mockStorage,
+					}) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Process an op with a duplicate batchId to what was loaded with
+				assert.throws(
+					() => {
+						containerRuntime2.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						);
+					},
+					(e: any) => e.message === "Duplicate batch - The same batch was sequenced twice",
+					"Expected duplicate batch detected after loading with recentBatchInfo",
+				);
+			});
 		});
 
 		describe("Load Partial Snapshot with datastores with GroupId", () => {
+			const sandbox = createSandbox();
 			let snapshotWithContents: ISnapshot;
 			let blobContents: Map<string, ArrayBuffer>;
 			let ops: ISequencedDocumentMessage[];
@@ -2257,8 +2269,8 @@ describe("Runtime", () => {
 				logger.clear();
 			});
 
-			function createSnapshot(addMissindDatasore: boolean, setGroupId: boolean = true) {
-				if (addMissindDatasore) {
+			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true) {
+				if (addMissingDatastore) {
 					snapshotTree.trees[".channels"].trees.missingDataStore = {
 						blobs: { ".component": "id" },
 						trees: {
@@ -2514,34 +2526,41 @@ describe("Runtime", () => {
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
-				// Add ops to this context.
-				const messages = [
+				const envelopes: ISequencedMessageEnvelope[] = [
 					{ sequenceNumber: 1 },
 					{ sequenceNumber: 2 },
 					{ sequenceNumber: 3 },
 					{ sequenceNumber: 4 },
-				];
-				// eslint-disable-next-line @typescript-eslint/dot-notation
-				missingDataStoreContext["pending"] = messages as ISequencedDocumentMessage[];
+				] as unknown as ISequencedMessageEnvelope[];
+				envelopes.forEach((envelope) => {
+					missingDataStoreContext.processMessages({
+						envelope,
+						messagesContent: [
+							{ contents: "message", localOpMetadata: undefined, clientSequenceNumber: 1 },
+						],
+						local: false,
+					});
+				});
 
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
 				(containerContext.deltaManager as any).lastSequenceNumber = 2;
 
 				let opsProcessed = 0;
 				let opsStart: number | undefined;
-				missingDataStoreRuntime.process = (
-					message: ISequencedDocumentMessage,
-					local: boolean,
-					localOpMetadata,
-				) => {
+				const processMessagesStub = (messageCollection: IRuntimeMessageCollection) => {
 					if (opsProcessed === 0) {
-						opsStart = message.sequenceNumber;
+						opsStart = messageCollection.envelope.sequenceNumber;
 					}
-					opsProcessed++;
+					opsProcessed += messageCollection.messagesContent.length;
 				};
+				const stub = sandbox
+					.stub(missingDataStoreRuntime, "processMessages")
+					.callsFake(processMessagesStub);
 				await assert.doesNotReject(async () => {
 					await containerRuntime.resolveHandle({ url: "/missingDataStore" });
 				}, "resolveHandle should work fine");
+
+				stub.restore();
 
 				assert(opsProcessed === 2, "only 2 ops should be processed with seq number 3 and 4");
 				assert(opsStart === 3, "first op processed should have seq number 3");
@@ -2550,40 +2569,25 @@ describe("Runtime", () => {
 
 		it("Only log legacy codepath once", async () => {
 			const mockLogger = new MockLogger();
-			const containerRuntime = await ContainerRuntime.loadRuntime({
-				context: getMockContext({ logger: mockLogger }) as IContainerContext,
-				registryEntries: [],
-				existing: false,
-				provideEntryPoint: mockProvideEntryPoint,
-			});
-			mockLogger.clear();
 
-			const json = JSON.stringify({ hello: "world" });
-			const messageBase = { contents: json, clientId: "CLIENT_ID" };
-
-			// This message won't trigger the legacy op log
-			containerRuntime.process(
-				{
-					...messageBase,
-					contents: {},
-					sequenceNumber: 1,
-				} as unknown as ISequencedDocumentMessage,
-				false /* local */,
+			let legacyLogger = getSingleUseLegacyLogCallback(
+				createChildLogger({ logger: mockLogger }),
+				"someType",
 			);
 			assert.equal(mockLogger.events.length, 0, "Expected no event logged");
 
-			// This message should trigger the legacy op log
-			containerRuntime.process(
-				{ ...messageBase, sequenceNumber: 2 } as unknown as ISequencedDocumentMessage,
-				false /* local */,
+			legacyLogger = getSingleUseLegacyLogCallback(
+				createChildLogger({ logger: mockLogger }),
+				"someType",
 			);
+			legacyLogger("codePath1");
 			mockLogger.assertMatch([{ eventName: "LegacyMessageFormat" }]);
 
-			// This message would trigger the legacy op log, except we already logged once
-			containerRuntime.process(
-				{ ...messageBase, sequenceNumber: 3 } as unknown as ISequencedDocumentMessage,
-				false /* local */,
+			legacyLogger = getSingleUseLegacyLogCallback(
+				createChildLogger({ logger: mockLogger }),
+				"someType",
 			);
+			legacyLogger("codePath2");
 			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
 		});
 
@@ -2714,19 +2718,22 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 1,
-							signalsLost: 0,
-							outOfOrderSignals: 0,
+							sent: 1,
+							lost: 0,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 0,
-							outOfOrderSignals: 0,
+							sent: 100,
+							lost: 0,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 					],
 					"Signal latency telemetry should be logged after 100 signals",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -2741,9 +2748,12 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 2,
+							expectedSequenceNumber: 2,
+							clientBroadcastSignalSequenceNumber: 4,
 						},
 					],
 					"SignalLost telemetry should be logged when signal is dropped",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -2758,10 +2768,12 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 1,
+							expectedSequenceNumber: 2,
+							clientBroadcastSignalSequenceNumber: 3,
 						},
 					],
 					"SignalLost telemetry should be logged when signal is dropped",
-					undefined,
+					/* inlineDetailsProp = */ true,
 					false,
 				);
 
@@ -2815,9 +2827,12 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 1,
+							expectedSequenceNumber: 1,
+							clientBroadcastSignalSequenceNumber: 2,
 						},
 					],
 					"SignalLost telemetry should be logged when signal is dropped",
+					/* inlineDetailsProp = */ true,
 				);
 
 				dropSignals(2);
@@ -2829,28 +2844,19 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 2,
+							expectedSequenceNumber: 3,
+							clientBroadcastSignalSequenceNumber: 5,
 						},
 					],
 					"SignalLost telemetry should be logged when signal is dropped",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
-			it("ignores in-flight signals on disconnect/reconnect", () => {
+			it("ignores signals sent before disconnect and resets stats on reconnect", () => {
 				// Define resubmit and setConnectionState on channel collection
 				// This is needed to submit test data store ops
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				(containerRuntime as any).channelCollection = {
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
-					// Pass data store op right back to ContainerRuntime
-					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-						submitDataStoreOp(
-							containerRuntime,
-							envelope.address,
-							envelope.contents,
-							localOpMetadata,
-						);
-					},
-				} as ChannelCollection;
+				defineResubmitAndSetConnectionState(containerRuntime);
 
 				sendSignals(4);
 
@@ -2891,17 +2897,70 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 97, // 101 (tracked latency signal) - 5 (earliest sent signal on reconnect) + 1 = 97
-							signalsLost: 0,
-							outOfOrderSignals: 0,
+							sent: 97, // 101 (tracked latency signal) - 5 (earliest sent signal on reconnect) + 1 = 97
+							lost: 0,
+							outOfOrder: 0,
 							reconnectCount: 1,
 						},
 					],
 					"SignalLatency telemetry should be logged with correct reconnect count",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
-			it("counts both relative and abosolute lost signal counts", () => {
+			it("ignores signals sent while disconnected and resets stats on reconnect", () => {
+				// SETUP - define resubmit and setConnectionState on channel collection.
+				// This is needed to submit test data store ops. Once defined, submit a test data store op
+				// so that message is queued in PendingStateManager and reconnect count is increased.
+				defineResubmitAndSetConnectionState(containerRuntime);
+				// Send and process an initial signal to prime the system.
+				submitDataStoreOp(containerRuntime, "1", "test");
+				sendSignals(1); // 1st signal (#1)
+				processSubmittedSignals(1);
+
+				// ACT - Disconnect client and send signals while disconnected.
+				// Reconnect client and continue sending signals.
+				changeConnectionState(containerRuntime, false, mockClientId);
+				// Send and drop 150 signals (#2 to #151)
+				sendSignals(150);
+				dropSignals(150);
+				changeConnectionState(containerRuntime, true, mockClientId);
+				// Send and process 100 signals (#152 to #251)
+				// This should include tracked latency signal (#251)
+				sendSignals(100);
+				processSubmittedSignals(100);
+
+				// VERIFY - SignalLatency telemetry should be logged with correct reconnect count
+				// No error events should be logged for signals sent before disconnect
+				logger.assertMatchNone(
+					[
+						{
+							eventName: "ContainerRuntime:SignalOutOfOrder",
+						},
+						{
+							eventName: "ContainerRuntime:SignalLost",
+						},
+					],
+					"SignalOutOfOrder/SignalLost telemetry should not be logged on reconnect",
+					/* inlineDetailsProp = */ true,
+					/* clearEventsAfterCheck = */ false,
+				);
+				logger.assertMatch(
+					[
+						{
+							eventName: "ContainerRuntime:SignalLatency",
+							sent: 50, // 201 (tracked latency signal) - 152 (earliest sent signal on reconnect) + 1 = 50
+							lost: 0,
+							outOfOrder: 0,
+							reconnectCount: 1,
+						},
+					],
+					"SignalLatency telemetry should be logged with correct reconnect count",
+					/* inlineDetailsProp = */ true,
+				);
+			});
+
+			it("counts both relative and absolute lost signal counts", () => {
 				sendSignals(60);
 				processSubmittedSignals(10);
 				dropSignals(1);
@@ -2912,9 +2971,12 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 1,
+							expectedSequenceNumber: 11,
+							clientBroadcastSignalSequenceNumber: 12,
 						},
 					],
 					"SignalLost telemetry should log relative lost signal count when a signal is dropped",
+					/* inlineDetailsProp = */ true,
 				);
 
 				dropSignals(5);
@@ -2930,19 +2992,25 @@ describe("Runtime", () => {
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 5,
+							expectedSequenceNumber: 51,
+							clientBroadcastSignalSequenceNumber: 56,
 						},
 						{
 							eventName: "ContainerRuntime:SignalLost",
 							signalsLost: 4,
+							expectedSequenceNumber: 86,
+							clientBroadcastSignalSequenceNumber: 90,
 						},
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 10,
-							outOfOrderSignals: 0,
+							sent: 100,
+							lost: 10,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 					],
 					"SignalLost telemetry should log relative lost signal count and SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -2972,18 +3040,21 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 101,
-							signalsLost: 20,
-							outOfOrderSignals: 0,
+							sent: 101,
+							lost: 20,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 1,
-							outOfOrderSignals: 0,
+							sent: 100,
+							lost: 1,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 					],
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -3013,12 +3084,14 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 201,
-							signalsLost: 26,
-							outOfOrderSignals: 0,
+							sent: 201,
+							lost: 26,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 					],
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -3033,12 +3106,14 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 10,
-							outOfOrderSignals: 0,
+							sent: 100,
+							lost: 10,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 					],
 					"SignalLatency telemetry should log correct amount of sent and lost signals",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 
@@ -3064,21 +3139,24 @@ describe("Runtime", () => {
 					[
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 1,
-							outOfOrderSignals: 0,
+							sent: 100,
+							lost: 1,
+							outOfOrder: 0,
+							reconnectCount: 0,
 						},
 						{
 							eventName: "ContainerRuntime:SignalOutOfOrder",
 						},
 						{
 							eventName: "ContainerRuntime:SignalLatency",
-							signalsSent: 100,
-							signalsLost: 0,
-							outOfOrderSignals: 1,
+							sent: 100,
+							lost: 0,
+							outOfOrder: 1,
+							reconnectCount: 0,
 						},
 					],
 					"SignalLatency telemetry should log absolute lost signal count for each batch of 100 signals and SignalOutOfOrder event",
+					/* inlineDetailsProp = */ true,
 				);
 			});
 			describe("multi-client", () => {
@@ -3140,12 +3218,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 					sendSignals(1); //               1 outstanding including 1 tracked signals (#101); one targeted
 					processSubmittedSignals(1); //   0 outstanding; none tracked
@@ -3155,12 +3235,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 
 					// Repeat the same for remote runtime which recevied targeted signal
@@ -3174,12 +3256,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 
 					sendRemoteSignals(1);
@@ -3190,12 +3274,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 				});
 				it("can detect dropped signal while ignoring non-self targeted signal in signalLatency telemetry", () => {
@@ -3224,12 +3310,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 10,
-								outOfOrderSignals: 5,
+								sent: 100,
+								lost: 10,
+								outOfOrder: 5,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 				});
 
@@ -3253,12 +3341,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 
 					sendSignals(1); //             	     1 outstanding including 1 tracked signals (#101); one targeted
@@ -3270,12 +3360,14 @@ describe("Runtime", () => {
 						[
 							{
 								eventName: "ContainerRuntime:SignalLatency",
-								signalsSent: 100,
-								signalsLost: 0,
-								outOfOrderSignals: 0,
+								sent: 100,
+								lost: 0,
+								outOfOrder: 0,
+								reconnectCount: 0,
 							},
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
+						/* inlineDetailsProp = */ true,
 					);
 				});
 			});

@@ -933,6 +933,7 @@ describe("ConnectionStateHandler Tests", () => {
 		);
 	});
 
+	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 	it(
 		"Should wait for client 1 to leave before moving to connected state(Client 3) when client 2 " +
 			"got disconnected from connected state",
@@ -1000,6 +1001,7 @@ describe("ConnectionStateHandler Tests", () => {
 		},
 	);
 
+	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 	it(
 		"Should wait for client 1 timeout before moving to connected state(Client 3) when client 2 " +
 			"got disconnected from connected state",
@@ -1075,6 +1077,7 @@ describe("ConnectionStateHandler Tests", () => {
 		},
 	);
 
+	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 	it(
 		"Client 3 should wait for client 2(which got disconnected without sending any ops) to leave " +
 			"when client 2 already waited on client 1",
@@ -1148,6 +1151,7 @@ describe("ConnectionStateHandler Tests", () => {
 		},
 	);
 
+	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 	it("test 'read' reconnect & races ", async () => {
 		connectionStateHandler = createHandler(
 			false, // connectedRaisedWhenCaughtUp,

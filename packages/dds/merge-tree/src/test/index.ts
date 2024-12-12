@@ -39,7 +39,12 @@ export {
 	runMergeTreeOperationRunner,
 	TestOperation,
 } from "./mergeTreeOperationRunner.js";
-export { LRUSegment, MergeTree } from "../mergeTree.js";
+export {
+	LRUSegment,
+	MergeTree,
+	IMergeTreeOptions,
+	IMergeTreeOptionsInternal,
+} from "../mergeTree.js";
 export { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 export { SnapshotLegacy } from "../snapshotlegacy.js";
 export {
@@ -90,7 +95,6 @@ export {
 	Marker,
 	matchProperties,
 	maxReferencePosition,
-	MergeNode,
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaOperationTypes,
 	MergeTreeDeltaRevertible,
@@ -116,7 +120,6 @@ export {
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
 	SegmentGroup,
-	SegmentGroupCollection,
 	SortedSegmentSet,
 	SortedSegmentSetItem,
 	SortedSet,

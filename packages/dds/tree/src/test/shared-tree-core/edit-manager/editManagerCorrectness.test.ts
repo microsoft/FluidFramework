@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
@@ -508,7 +508,7 @@ export function testCorrectness() {
 					assert.deepEqual([], manager.getLocalCommits());
 				});
 
-				it("local branches do not prevent and are not perturbed by fast-forwarding", () => {
+				it("nested local branches do not prevent and are not perturbed by fast-forwarding", () => {
 					const { manager } = testChangeEditManagerFactory({});
 					const forkA = manager.localBranch.fork();
 					const local1 = applyLocalCommit(manager, [], 1);
@@ -553,6 +553,27 @@ export function testCorrectness() {
 					forkD.dispose();
 					// A fork with no earlier and no later forks
 					forkC.dispose();
+				});
+
+				it("local branches with commits that branch off of the trunk head are retained ", () => {
+					// This is a regression test for the following scenario:
+					//   (r) <- trunk
+					//    |└─(1)─(2) <- local
+					//    └─(3) <- fork
+					//
+					// Fast-forwarding commits (1) and (2) should not advance the sequence number associated with the fork branch.
+					// If it did, then (r) would be dropped when the sequence number is advanced to 2 and the fork would become disconnected from the graph.
+					// This would cause it to error thereafter when trying to rebase onto or merge with the local branch.
+					const { manager } = testChangeEditManagerFactory({});
+					const fork = manager.localBranch.fork();
+					const forkCommit = applyBranchCommit(fork);
+					const commit1 = applyLocalCommit(manager);
+					manager.addSequencedChange(commit1, brand(1), brand(0));
+					const commit2 = applyLocalCommit(manager);
+					manager.addSequencedChange(commit2, brand(2), brand(1));
+					manager.advanceMinimumSequenceNumber(brand(2));
+					manager.localBranch.merge(fork);
+					assert.equal(manager.localBranch.getHead().revision, forkCommit.revision);
 				});
 			});
 
@@ -692,8 +713,16 @@ function applyLocalCommit(
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
 ): Commit<TestChange> {
+	return applyBranchCommit(manager.localBranch, inputContext, intention);
+}
+
+function applyBranchCommit(
+	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
+	inputContext: readonly number[] = [],
+	intention: number | number[] = [],
+): Commit<TestChange> {
 	const revision = mintRevisionTag();
-	const [_, commit] = manager.localBranch.apply({
+	const [_, commit] = branch.apply({
 		change: TestChange.mint(inputContext, intention),
 		revision,
 	});
@@ -720,7 +749,7 @@ function trackTrimmed(
 	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
 ): ReadonlySet<RevisionTag> {
 	const trimmedCommits = new Set<RevisionTag>();
-	branch.on("ancestryTrimmed", (trimmedRevisions) => {
+	branch.events.on("ancestryTrimmed", (trimmedRevisions) => {
 		trimmedRevisions.forEach((revision) => trimmedCommits.add(revision));
 	});
 	return trimmedCommits;

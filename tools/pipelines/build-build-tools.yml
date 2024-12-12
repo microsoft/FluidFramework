@@ -114,11 +114,8 @@ extends:
     - test:copyresults
     taskLint: true
     taskLintName: ci:eslint
-    poolBuild: NewLarge-linux-1ES
+    poolBuild: Large-eastus2
     checkoutSubmodules: true
     taskBundleAnalysis: false
     checks:
-    - syncpack:deps
-    - syncpack:versions
-    - generate:packageList
-    - check:format
+    - checks

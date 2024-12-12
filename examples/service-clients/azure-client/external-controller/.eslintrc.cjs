@@ -17,5 +17,12 @@ module.exports = {
 		// Incompatible with formatter
 		// TODO: this can be removed once the eslint config is updated to version 5.4.0 or greater.
 		"@typescript-eslint/brace-style": "off",
+
+		"import/no-internal-modules": [
+			"error",
+			{
+				"allow": ["*/index.js", "@fluidframework/presence/alpha"],
+			},
+		],
 	},
 };

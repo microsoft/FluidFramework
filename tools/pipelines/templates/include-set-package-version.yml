@@ -56,6 +56,7 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
+      set -eu -o pipefail
       # expect lerna.json and package.json be in the current working directory
 
       echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
@@ -78,6 +79,7 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
+        set -eu -o pipefail
         # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.
         flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists
 
@@ -100,6 +102,8 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
+      # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+      # even in an error case
       grep -r -e "\^2.0.0-internal.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
       if [[ $? == 0 ]]; then
         echo "##vso[task.logissue type=error]Fluid internal versions shouldn't use caret dependencies"
@@ -114,6 +118,8 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
+      # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+      # even in an error case
       grep -r -e "\^2.0.0-dev.\d*.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
       if [[ $? == 0 ]]; then
         echo "##vso[task.logissue type=error]Fluid internal dev versions shouldn't use caret dependencies"

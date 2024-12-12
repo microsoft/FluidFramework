@@ -180,7 +180,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 
 		service.on("metadataUpdate", handler);
 
-		socket.emit("signal", signalMessage1);
+		socket.emit("signal", signalMessage1, joinSessionResponse.id);
 		assert(eventRaised, "event2 should have been raised");
 		service.off("metadataUpdate", handler);
 

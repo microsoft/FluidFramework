@@ -80,6 +80,44 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
 }
 
 /**
+ * Returns the last element of an array, or `undefined` if the array has no elements.
+ * @param array - The array to get the last element from.
+ * @remarks
+ * If the type of the array has been narrowed by e.g. {@link hasSome | hasSome(array)} or {@link hasSingle | hasOne(array)} then the return type will be `T` rather than `T | undefined`.
+ */
+export function getLast<T>(array: readonly [T, ...T[]]): T;
+export function getLast<T>(array: { [index: number]: T; length: number }): T | undefined;
+export function getLast<T>(array: { [index: number]: T; length: number }): T | undefined {
+	return array[array.length - 1];
+}
+
+/**
+ * Returns true if and only if the given array has at least one element.
+ * @param array - The array to check.
+ * @remarks
+ * If `array` contains at least one element, its type will be narrowed and can benefit from improved typing from e.g. `array[0]` and {@link getLast | getLast(array)}.
+ * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options, since the return type of `array[0]` will be `T` rather than `T | undefined`.
+ */
+export function hasSome<T>(array: T[]): array is [T, ...T[]];
+export function hasSome<T>(array: readonly T[]): array is readonly [T, ...T[]];
+export function hasSome<T>(array: readonly T[]): array is [T, ...T[]] {
+	return array.length > 0;
+}
+
+/**
+ * Returns true if and only if the given array has exactly one element.
+ * @param array - The array to check.
+ * @remarks
+ * If `array` contains exactly one element, its type will be narrowed and can benefit from improved typing from e.g. `array[0]` and {@link getLast | getLast(array)}.
+ * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options, since the return type of `array[0]` will be `T` rather than `T | undefined`.
+ */
+export function hasSingle<T>(array: T[]): array is [T];
+export function hasSingle<T>(array: readonly T[]): array is readonly [T];
+export function hasSingle<T>(array: readonly T[]): array is [T] {
+	return array.length === 1;
+}
+
+/**
  * Compares two sets using callbacks.
  * Early returns on first false comparison.
  *
@@ -105,18 +143,26 @@ export function compareSets<T>({
 }): boolean {
 	for (const item of a.keys()) {
 		if (!b.has(item)) {
-			if (aExtra && !aExtra(item)) {
+			if (aExtra !== undefined) {
+				if (!aExtra(item)) {
+					return false;
+				}
+			} else {
 				return false;
 			}
 		} else {
-			if (same && !same(item)) {
+			if (same !== undefined && !same(item)) {
 				return false;
 			}
 		}
 	}
 	for (const item of b.keys()) {
 		if (!a.has(item)) {
-			if (bExtra && !bExtra(item)) {
+			if (bExtra !== undefined) {
+				if (!bExtra(item)) {
+					return false;
+				}
+			} else {
 				return false;
 			}
 		}
@@ -219,19 +265,24 @@ export function count(iterable: Iterable<unknown>): number {
 
 /**
  * Use for Json compatible data.
+ *
+ * @typeparam TExtra - Type permitted in addition to the normal JSON types.
+ * Commonly used for to allow {@link @fluidframework/core-interfaces#IFluidHandle} within the otherwise JSON compatible content.
+ *
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
  * @alpha
  */
-export type JsonCompatible =
+export type JsonCompatible<TExtra = never> =
 	| string
 	| number
 	| boolean
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
-	| JsonCompatible[]
-	| JsonCompatibleObject;
+	| JsonCompatible<TExtra>[]
+	| JsonCompatibleObject<TExtra>
+	| TExtra;
 
 /**
  * Use for Json object compatible data.
@@ -240,7 +291,7 @@ export type JsonCompatible =
  * but instead mostly restricts access to it.
  * @alpha
  */
-export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
+export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompatible<TExtra> };
 
 /**
  * Use for readonly view of Json compatible data.

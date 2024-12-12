@@ -730,6 +730,7 @@ describeCompat(
 				);
 			});
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Rehydrate container, don't load a data store and then load after container attachment. Make changes to " +
 					"dds from rehydrated container and check reflection of changes in other container",
@@ -787,6 +788,7 @@ describeCompat(
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Rehydrate container, create but don't load a data store. Attach rehydrated container and load " +
 					"container 2 from another loader. Then load the created dataStore from container 2, make changes to dds " +
@@ -916,6 +918,7 @@ describeCompat(
 				assert.strictEqual(dds2FromRC.id, dds2.id, "Both dds id should match");
 			});
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Container rehydration with not bounded dds handle stored in root of bound dataStore. The not bounded dds " +
 					"also stores handle not bounded data store",
@@ -972,6 +975,7 @@ describeCompat(
 				},
 			);
 
+			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
 				"Container rehydration with not bounded data store handle stored in root of bound dataStore. " +
 					"The not bounded data store also stores handle not bounded dds",

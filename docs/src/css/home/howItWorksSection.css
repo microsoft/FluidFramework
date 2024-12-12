@@ -1,0 +1,102 @@
+.ffcom-how-it-works-section-body {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-bottom: 2%;
+	gap: 15px;
+}
+
+.ffcom-how-it-works-section-code-body {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: space-evenly;
+	gap: 10px;
+}
+
+.ffcom-how-it-works-code-column {
+	/* Code column should occupy more horizontal space than the dice cards. */
+	flex-grow: 2;
+	max-width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+.ffcom-how-it-works-output-column {
+	/* Dice cards column should occupy less horizontal space than the code. */
+	flex-grow: 1;
+	max-width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+.ffcom-how-it-works-dice-cards {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
+	gap: 15px;
+}
+
+.ffcom-how-it-works-column-label {
+	font-family: "Segoe UI";
+	font-style: normal;
+	font-weight: 400;
+	font-size: 16px;
+	line-height: 25px;
+	text-align: center;
+	letter-spacing: -0.02em;
+	color: #000000;
+}
+
+.ffcom-how-it-works-code-card-body {
+	width: 100%;
+	box-sizing: border-box;
+	background: #ffffff;
+	border: 1px solid #e1e1e1;
+	border-radius: 5px;
+}
+
+.ffcom-how-it-works-code-card-text {
+	max-height: 600px;
+	width: 100%;
+	overflow: auto;
+	font-family: "Segoe UI";
+	font-style: normal;
+	font-weight: 350;
+	font-size: 16px;
+	line-height: 25px;
+	letter-spacing: -0.02em;
+	color: #000000;
+	margin-bottom: 0px;
+}
+
+.ffcom-how-it-works-try-samples-row {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-evenly;
+	flex-wrap: wrap;
+	padding-top: 15px;
+}
+
+.ffcom-how-it-works-try-samples-link {
+	cursor: pointer;
+	font-family: "Segoe UI";
+	font-style: normal;
+	font-weight: 600;
+	font-size: 14px;
+	line-height: 20px;
+	color: #2a446f;
+	border-bottom: 1px solid #2a446f;
+}
+
+.ffcom-how-it-works-try-samples-link:hover {
+	text-decoration: none;
+	color: inherit;
+}

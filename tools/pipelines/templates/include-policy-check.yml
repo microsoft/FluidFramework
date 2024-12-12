@@ -28,7 +28,7 @@ stages:
 - stage: run_checks
   dependsOn: [] # Has no prereqs
   displayName: Policy checks
-  pool: Small-1ES
+  pool: Small-eastus2
   jobs:
   - job:
     displayName: Run checks
@@ -44,7 +44,9 @@ stages:
       inputs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
-        script: ${{ parameters.dependencyInstallCommand }}
+        script: |
+          set -eu -o pipefail
+          ${{ parameters.dependencyInstallCommand }}
 
     - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
       - ${{ each check in parameters.checks }}:
@@ -61,6 +63,8 @@ stages:
         inputs:
           targetType: 'inline'
           script: |
+            # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+            # even in an error case
             git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
             if [ `cat git_status.log | wc -l` != "0" ]; then
               cat git_status.log

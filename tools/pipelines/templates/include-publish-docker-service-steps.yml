@@ -9,7 +9,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small-1ES
+  default: Small-eastus2
 
 - name: containerRegistry
   type: string
@@ -48,6 +48,7 @@ jobs:
           inputs:
             targetType: 'inline'
             script: |
+              set -eu -o pipefail
               'docker pull ${{ parameters.containerTag }}'
 
         - task: Docker@1

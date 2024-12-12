@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-common",
-	"version": "2.4.0",
+	"version": "2.12.0",
 	"description": "common functions used in properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -70,11 +70,11 @@
 		"traverse": "0.6.6"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.48.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/chai": "^4.0.0",
 		"@types/debug": "^4.1.5",
@@ -93,7 +93,7 @@
 		"nock": "^13.3.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^17.0.1",
+		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

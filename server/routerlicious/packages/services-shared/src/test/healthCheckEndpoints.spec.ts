@@ -6,7 +6,7 @@
 import request from "supertest";
 import express from "express";
 import { createHealthCheckEndpoints } from "../healthCheckEndpoints";
-import { StartupChecker } from "../startupChecker";
+import { StartupCheck } from "../startupChecker";
 import { TestReadinessCheck, TestCheck } from "@fluidframework/server-test-utils";
 
 describe("Health Check Endpoints", () => {
@@ -15,6 +15,7 @@ describe("Health Check Endpoints", () => {
 	let readinessCheck: TestReadinessCheck;
 	let testCheck: TestCheck;
 	let testCheckWithException: TestCheck;
+	let startupCheck: StartupCheck;
 
 	const setupApp = (useReadinessCheck = false) => {
 		app = express();
@@ -22,8 +23,12 @@ describe("Health Check Endpoints", () => {
 		testCheckWithException = new TestCheck();
 		const checks = [testCheck, testCheckWithException];
 		readinessCheck = useReadinessCheck ? new TestReadinessCheck(checks) : undefined;
-		const healthCheckEndpoints = createHealthCheckEndpoints("testService", readinessCheck);
-		StartupChecker.instance["isReady"] = false;
+		startupCheck = new StartupCheck();
+		const healthCheckEndpoints = createHealthCheckEndpoints(
+			"testService",
+			startupCheck,
+			readinessCheck,
+		);
 		app.use(healthCheckEndpoints);
 		supertest = request(app);
 	};
@@ -36,13 +41,15 @@ describe("Health Check Endpoints", () => {
 				setupApp(useReadinessCheck);
 			});
 			it("should return 200 for /startup when startup is complete", async () => {
-				StartupChecker.instance.setReady();
+				if (startupCheck.setReady) {
+					startupCheck.setReady();
+				}
 				const req = supertest.get("/startup");
 				await req.expect(200);
 			});
-			it("should return 500 for /startup when startup is not complete", async () => {
+			it("should return 503 for /startup when startup is not complete", async () => {
 				const req = supertest.get("/startup");
-				await req.expect(500);
+				await req.expect(503);
 			});
 			it("should return 200 for /ping", async () => {
 				const req = supertest.get("/ping");

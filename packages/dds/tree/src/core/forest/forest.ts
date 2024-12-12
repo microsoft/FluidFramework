@@ -5,11 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { Listenable } from "../../events/index.js";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
 	type Anchor,
 	type AnchorSet,
+	type AnnouncedVisitor,
 	type DetachedField,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
@@ -58,7 +59,12 @@ export interface ForestEvents {
  *
  * When invalidating, all outstanding cursors must be freed or cleared.
  */
-export interface IForestSubscription extends Listenable<ForestEvents> {
+export interface IForestSubscription {
+	/**
+	 * Events for this forest.
+	 */
+	readonly events: Listenable<ForestEvents>;
+
 	/**
 	 * Set of anchors this forest is tracking.
 	 *
@@ -128,6 +134,16 @@ export interface IForestSubscription extends Listenable<ForestEvents> {
 	 * This means no nodes under any detached field, not just the special document root one.
 	 */
 	readonly isEmpty: boolean;
+
+	/**
+	 * Obtains and registers an {@link AnnouncedVisitor} that responds to changes on the forest.
+	 */
+	registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void;
+
+	/**
+	 * Deregister the given visitor so that it stops responding to updates
+	 */
+	deregisterAnnouncedVisitor(visitor: () => AnnouncedVisitor): void;
 }
 
 /**

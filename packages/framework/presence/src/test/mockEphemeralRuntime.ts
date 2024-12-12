@@ -6,40 +6,61 @@
 import { strict as assert } from "node:assert";
 
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
-import { MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
+import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
+import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ClientConnectionId } from "../baseTypes.js";
 import type { IEphemeralRuntime } from "../internalTypes.js";
 
-/**
- * Creates a mock {@link @fluidframework/protocol-definitions#IQuorumClients} for testing.
- */
-export function makeMockQuorum(clientIds: string[]): IQuorumClients {
-	const clients = new Map<string, ISequencedClient>();
+type ClientData = [string, IClient];
+
+function buildClientDataArray(clientIds: string[], numWriteClients: number): ClientData[] {
+	const clients: ClientData[] = [];
 	for (const [index, clientId] of clientIds.entries()) {
 		// eslint-disable-next-line unicorn/prefer-code-point
 		const stringId = String.fromCharCode(index + 65);
 		const name = stringId.repeat(10);
 		const userId = `${name}@microsoft.com`;
-		const email = userId;
 		const user = {
 			id: userId,
-			name,
-			email,
 		};
-		clients.set(clientId, {
-			client: {
-				mode: "write",
+		clients.push([
+			clientId,
+			{
+				mode: index < numWriteClients ? "write" : "read",
 				details: { capabilities: { interactive: true } },
 				permission: [],
 				user,
 				scopes: [],
 			},
-			sequenceNumber: 10 * index,
-		});
+		]);
 	}
-	return new MockQuorumClients(...clients.entries());
+	return clients;
+}
+
+/**
+ * Creates a mock {@link @fluidframework/protocol-definitions#IQuorumClients} for testing.
+ */
+function makeMockQuorum(clients: ClientData[]): MockQuorumClients {
+	return new MockQuorumClients(
+		...clients
+			.filter(([, client]) => client.mode === "write")
+			.map(([clientId, client], index): [string, Partial<ISequencedClient>] => [
+				clientId,
+				{ client, sequenceNumber: 10 * index },
+			]),
+	);
+}
+
+/**
+ * Creates a mock {@link @fluidframework/container-definitions#IAudience} for testing.
+ */
+function makeMockAudience(clients: ClientData[]): MockAudience {
+	const audience = new MockAudience();
+	for (const [clientId, client] of clients) {
+		audience.addMember(clientId, client);
+	}
+	return audience;
 }
 
 /**
@@ -47,12 +68,15 @@ export function makeMockQuorum(clientIds: string[]): IQuorumClients {
  */
 export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public logger?: ITelemetryBaseLogger;
-	public readonly quorum: IQuorumClients;
+	public readonly quorum: MockQuorumClients;
+	public readonly audience: MockAudience;
 
 	public readonly listeners: {
 		connected: ((clientId: ClientConnectionId) => void)[];
+		disconnected: (() => void)[];
 	} = {
 		connected: [],
+		disconnected: [],
 	};
 	private isSupportedEvent(event: string): event is keyof typeof this.listeners {
 		return event in this.listeners;
@@ -65,16 +89,15 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		if (logger !== undefined) {
 			this.logger = logger;
 		}
-		const quorum = makeMockQuorum([
-			"client0",
-			"client1",
-			"client2",
-			"client3",
-			"client4",
-			"client5",
-		]);
-		this.quorum = quorum;
-		this.getQuorum = () => quorum;
+
+		const clientsData = buildClientDataArray(
+			["client0", "client1", "client2", "client3", "client4", "client5", "client6", "client7"],
+			/* count of write clients (in quorum) */ 6,
+		);
+		this.quorum = makeMockQuorum(clientsData);
+		this.getQuorum = () => this.quorum;
+		this.audience = makeMockAudience(clientsData);
+		this.getAudience = () => this.audience;
 		this.on = (
 			event: string,
 			listener: (...args: any[]) => void,
@@ -113,6 +136,15 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		);
 	}
 
+	public removeMember(clientId: ClientConnectionId): void {
+		const client = this.audience.getMember(clientId);
+		assert(client !== undefined, `Attempting to remove unknown connection: ${clientId}`);
+		if (client.mode === "write") {
+			this.quorum.removeMember(clientId);
+		}
+		this.audience.removeMember(clientId);
+	}
+
 	// #region IEphemeralRuntime
 
 	public clientId: string | undefined;
@@ -125,6 +157,8 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	): any => {
 		throw new Error("IEphemeralRuntime.off method not implemented.");
 	};
+
+	public getAudience: () => ReturnType<IEphemeralRuntime["getAudience"]>;
 
 	public getQuorum: () => ReturnType<IEphemeralRuntime["getQuorum"]>;
 

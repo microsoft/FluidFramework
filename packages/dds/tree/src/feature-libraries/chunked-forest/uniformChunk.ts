@@ -14,11 +14,14 @@ import {
 	type TreeValue,
 	type UpPath,
 	type Value,
+	type ChunkedCursor,
+	type TreeChunk,
+	cursorChunk,
+	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, fail } from "../../util/index.js";
+import { ReferenceCountedBase, fail, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
-import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -517,12 +520,12 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 
 	public firstField(): boolean {
 		const fieldsArray = this.nodeInfo(CursorLocationType.Nodes).shape.fieldsArray;
-		if (fieldsArray.length === 0) {
+		if (!hasSome(fieldsArray)) {
 			return false;
 		}
 		this.indexOfField = 0;
 		this.mode = CursorLocationType.Fields;
-		const fields = fieldsArray[0] ?? oob();
+		const fields = fieldsArray[0];
 		this.fieldKey = fields[0];
 		return true;
 	}
@@ -533,7 +536,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.indexOfField =
 			fieldInfo === undefined
 				? fieldMap.size
-				: fieldInfo.indexOfParentField ?? fail("children should have parents");
+				: (fieldInfo.indexOfParentField ?? fail("children should have parents"));
 		this.fieldKey = key;
 		this.mode = CursorLocationType.Fields;
 	}

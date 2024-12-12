@@ -376,6 +376,24 @@ declare type old_as_current_for_Interface_IProvideFluidDataStoreRegistry = requi
 declare type current_as_old_for_Interface_IProvideFluidDataStoreRegistry = requireAssignableTo<TypeOnly<current.IProvideFluidDataStoreRegistry>, TypeOnly<old.IProvideFluidDataStoreRegistry>>
 
 /*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IRuntimeMessageCollection": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IRuntimeMessageCollection = requireAssignableTo<TypeOnly<current.IRuntimeMessageCollection>, TypeOnly<old.IRuntimeMessageCollection>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IRuntimeMessagesContent": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IRuntimeMessagesContent = requireAssignableTo<TypeOnly<current.IRuntimeMessagesContent>, TypeOnly<old.IRuntimeMessagesContent>>
+
+/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -686,6 +704,24 @@ declare type current_as_old_for_TypeAlias_InboundAttachMessage = requireAssignab
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_ISequencedMessageEnvelope": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ISequencedMessageEnvelope = requireAssignableTo<TypeOnly<old.ISequencedMessageEnvelope>, TypeOnly<current.ISequencedMessageEnvelope>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ISequencedMessageEnvelope": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ISequencedMessageEnvelope = requireAssignableTo<TypeOnly<current.ISequencedMessageEnvelope>, TypeOnly<old.ISequencedMessageEnvelope>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_NamedFluidDataStoreRegistryEntries": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntries = requireAssignableTo<TypeOnly<old.NamedFluidDataStoreRegistryEntries>, TypeOnly<current.NamedFluidDataStoreRegistryEntries>>
@@ -716,6 +752,24 @@ declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntry = req
  * "TypeAlias_NamedFluidDataStoreRegistryEntry": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry = requireAssignableTo<TypeOnly<current.NamedFluidDataStoreRegistryEntry>, TypeOnly<old.NamedFluidDataStoreRegistryEntry>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_NamedFluidDataStoreRegistryEntry2": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 = requireAssignableTo<TypeOnly<old.NamedFluidDataStoreRegistryEntry2>, TypeOnly<current.NamedFluidDataStoreRegistryEntry2>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_NamedFluidDataStoreRegistryEntry2": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 = requireAssignableTo<TypeOnly<current.NamedFluidDataStoreRegistryEntry2>, TypeOnly<old.NamedFluidDataStoreRegistryEntry2>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

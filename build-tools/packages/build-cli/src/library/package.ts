@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
 	InterdependencyRange,
@@ -28,12 +28,14 @@ import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
 import { readJson, readJsonSync } from "fs-extra/esm";
+import JSON5 from "json5";
 import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
 import type { Index } from "npm-check-updates/build/src/types/IndexType.js";
 import type { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec.js";
 import * as semver from "semver";
 
+import type { TsConfigJson } from "type-fest";
 import {
 	AllPackagesSelectionCriteria,
 	PackageSelectionCriteria,
@@ -344,7 +346,8 @@ export async function isReleased(
 	version: string,
 	log?: Logger,
 ): Promise<boolean> {
-	await context.gitRepo.fetchTags();
+	const gitRepo = await context.getGitRepository();
+	await gitRepo.gitClient.fetch(["--tags"]);
 
 	const tagName = generateReleaseGitTagName(releaseGroupOrPackage, version);
 	if (typeof releaseGroupOrPackage === "string" && isReleaseGroup(releaseGroupOrPackage)) {
@@ -353,8 +356,8 @@ export async function isReleased(
 	}
 
 	log?.verbose(`Checking for tag '${tagName}'`);
-	const rawTag = await context.gitRepo.getTags(tagName);
-	return rawTag.trim() === tagName;
+	const rawTag = await gitRepo.gitClient.tags({ list: tagName });
+	return rawTag.all?.[0] === tagName;
 }
 
 /**
@@ -935,4 +938,19 @@ export function getTarballName(pkg: PackageJson | string): string {
  */
 export function getFullTarballName(pkg: PackageJson): string {
 	return `${getTarballName(pkg)}-${pkg?.version ?? 0}.tgz`;
+}
+
+/**
+ * Reads and parses the `package.json` file in the current directory.
+ * Use this function if you prefer the CLI command not to be implemented as `PackageCommand`command.
+ */
+export async function readPackageJson(): Promise<PackageJson> {
+	const packageJson = await readFile("./package.json", { encoding: "utf8" });
+	return JSON.parse(packageJson) as PackageJson;
+}
+
+// Reads and parses the `tsconfig.json` file in the current directory.
+export async function readTsConfig(): Promise<TsConfigJson> {
+	const tsConfigContent = await readFile("./tsconfig.json", { encoding: "utf8" });
+	return JSON5.parse(tsConfigContent);
 }

@@ -671,8 +671,7 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 
 					process.stdout.write(
 						`Stress loop: ${++iterations} iterations completed - Total Elapsed: ${(
-							(Date.now() - start) /
-							1000
+							(Date.now() - start) / 1000
 						).toFixed(2)}s\n`,
 					);
 				}

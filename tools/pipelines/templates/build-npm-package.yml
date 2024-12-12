@@ -53,7 +53,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Small-1ES
+  default: Small-eastus2
 
 - name: preCG
   type: stepList
@@ -133,6 +133,11 @@ parameters:
 # Indicates if tests should be run with code coverage analysis.
 - name: testCoverage
   type: boolean
+
+# Indicates if we should report the code coverage comparison and report metrics on the PR.
+- name: reportCodeCoverageComparison
+  type: boolean
+  default: false
 
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
@@ -229,6 +234,9 @@ extends:
                   targetType: inline
                   workingDirectory: '${{ parameters.buildDirectory }}'
                   script: |
+                    # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+                    # even in an error case
+
                     # Show all task group conditions
 
                     echo "
@@ -353,7 +361,18 @@ extends:
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
-                          testCoverage: ${{ parameters.testCoverage }}
+                          # Don't run with coverage if the task is a PR and the task is a tinylicious service and stress test. We don't include coverage for these tests in our baseline coverage stats, so we don't need to run them with coverage here too.
+                          testCoverage: ${{
+                            and(
+                              parameters.testCoverage,
+                              or(
+                                ne(variables['Build.Reason'], 'PullRequest'),
+                                and(
+                                  not(contains(taskTestStep, 'realsvc:tinylicious')),
+                                  not(contains(taskTestStep, 'stress:tinylicious'))
+                                )
+                              )
+                            )}}
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                     - task: Bash@3
@@ -363,6 +382,7 @@ extends:
                       inputs:
                         targetType: inline
                         script: |
+                          set -eu -o pipefail
                           PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
                           if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
                             echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
@@ -386,6 +406,7 @@ extends:
                           targetType: 'inline'
                           workingDirectory: '${{ parameters.buildDirectory }}'
                           script: |
+                            set -eu -o pipefail
                             test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
                       - task: Bash@3
                         displayName: Patch Coverage Results
@@ -394,6 +415,7 @@ extends:
                           targetType: 'inline'
                           workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
                           script: |
+                            set -eu -o pipefail
                             sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
                       - task: PublishCodeCoverageResults@2
                         displayName: Publish Code Coverage
@@ -407,6 +429,33 @@ extends:
                         inputs:
                           sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
                           targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                      - task: Bash@3
+                        displayName: Report Code Coverage Comparison
+                        condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
+                        continueOnError: false
+                        env:
+                          ADO_API_TOKEN: '$(System.AccessToken)'
+                          GITHUB_API_TOKEN: '$(githubPublicRepoSecret)'
+                          TARGET_BRANCH_NAME: '$(targetBranchName)'
+                          ADO_BUILD_ID: '$(Build.BuildId)'
+                          GITHUB_PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
+                          GITHUB_REPOSITORY_NAME: '$(Build.Repository.Name)'
+                          ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
+                          ADO_CI_BUILD_DEFINITION_ID_PR: 11
+                        inputs:
+                          targetType: inline
+                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          script: |
+                            set -eu -o pipefail
+                            echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
+                            echo "Github PR number: $GITHUB_PR_NUMBER"
+                            echo "ADO Build Number: $ADO_BUILD_ID"
+                            echo "Target Branch Name: $TARGET_BRANCH_NAME"
+                            echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
+                            echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
+                            echo "Running code coverage comparison"
+                            flub report codeCoverage --verbose
+
 
                   # Process test result, include publishing and logging
                   - template: /tools/pipelines/templates/include-process-test-results.yml@self
@@ -471,6 +520,7 @@ extends:
                           targetType: inline
                           workingDirectory: '${{ parameters.buildDirectory }}'
                           script: |
+                            set -eu -o pipefail
                             echo "Build Directory is ${{ parameters.buildDirectory }}";
                             BUNDLE_SIZE_TESTS_DIR="${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests";
                             echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
@@ -487,6 +537,7 @@ extends:
                           targetType: inline
                           workingDirectory: $(absolutePathToTelemetryGenerator)
                           script: |
+                            set -eu -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
                             ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
@@ -523,6 +574,7 @@ extends:
                     targetType: inline
                     workingDirectory: '${{ parameters.buildDirectory }}'
                     script: |
+                      set -eu -o pipefail
                       git checkout HEAD -- pnpm-lock.yaml
 
                 # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
@@ -532,6 +584,7 @@ extends:
                     targetType: inline
                     workingDirectory: '${{ parameters.buildDirectory }}'
                     script: |
+                      set -eu -o pipefail
                       pnpm store prune
 
               - task: Bash@3
@@ -539,6 +592,8 @@ extends:
                 inputs:
                   targetType: inline
                   script: |
+                    # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+                    # even in an error case
                     git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
                     if [ `cat git_status.log | wc -l` != "0" ]; then
                       cat git_status.log
@@ -576,12 +631,13 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
+                # Publish the Code Coverage artifact in this format as it is easier for devs to find coverage html for each file.
                 - ${{ if eq(parameters.testCoverage, true) }}:
                   - output: pipelineArtifact
                     displayName: Publish Artifacts - code-coverage
-                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'), ne(variables['Build.Reason'], 'PullRequest'))
+                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                     targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-                    artifactName: codeCoverageAnalysis
+                    artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
                     sbomEnabled: false
                     publishLocation: pipeline
 
@@ -623,7 +679,7 @@ extends:
           jobs:
             - job: upload_run_telemetry
               displayName: Upload pipeline run telemetry to Kusto
-              pool: Small-1ES
+              pool: Small-eastus2
               variables:
               - group: ado-feeds
               - name: pipelineTelemetryWorkdir
@@ -647,6 +703,7 @@ extends:
                 inputs:
                   targetType: inline
                   script: |
+                    set -eu -o pipefail
                     echo "Creating work folder '$WORK_FOLDER'";
                     mkdir -p $WORK_FOLDER;
 
@@ -663,6 +720,7 @@ extends:
                   targetType: inline
                   workingDirectory: $(absolutePathToTelemetryGenerator)
                   script: |
+                    set -eu -o pipefail
                     echo "Listing files in '$WORK_FOLDER'"
                     ls -laR $WORK_FOLDER;
                     node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";

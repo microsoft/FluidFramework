@@ -5,6 +5,7 @@
 
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
+import { describe, it } from "mocha";
 
 import { FluidReleaseMachine as machine } from "../../machines/fluidReleaseMachine.js";
 
@@ -104,7 +105,7 @@ describe("FluidReleaseMachine", () => {
 		const startingState = `DoPatchRelease`;
 
 		walkExits(startingState, states);
-		expect([...states]).to.be.equalTo(expectedPatchPath);
+		expect([...states]).to.deep.equal(expectedPatchPath);
 	});
 
 	it("DoMinorRelease path matches expected", () => {
@@ -112,14 +113,14 @@ describe("FluidReleaseMachine", () => {
 		const startingState = `DoMinorRelease`;
 
 		walkExits(startingState, states);
-		expect([...states]).to.be.equalTo(expectedMinorPath);
+		expect([...states]).to.deep.equal(expectedMinorPath);
 	});
 
 	it("DoMajorRelease path matches expected", () => {
 		const states = new Set<string>();
 		const startingState = `DoMajorRelease`;
 		walkExits(startingState, states);
-		expect([...states]).to.be.equalTo(expectedMajorPath);
+		expect([...states]).to.deep.equal(expectedMajorPath);
 	});
 
 	describe("All states with a success action have a failure action", () => {
@@ -137,12 +138,12 @@ describe("FluidReleaseMachine", () => {
 
 			if (!state.startsWith("Do") || requiresBothActions.has(state)) {
 				it(state, () => {
-					expect(exits).to.be.equalTo(["failure", "success"]);
+					expect(exits).to.deep.equal(["failure", "success"]);
 				});
 			} else {
 				// Do* actions are not required to have a failure action
 				it(state, () => {
-					expect(exits).to.be.equalTo(["success"]);
+					expect(exits).to.deep.equal(["success"]);
 				});
 			}
 		}

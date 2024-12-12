@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -13,17 +13,18 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import {
+	cursorFromInsertable,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
+	type InsertableField,
+	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
-	cursorFromInsertableTreeField,
 	validateUsageError,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
@@ -40,10 +41,10 @@ const configGeneralized2 = new TreeViewConfiguration({
 
 function checkoutWithInitialTree(
 	viewConfig: TreeViewConfiguration,
-	unhydratedInitialTree: InsertableTreeFieldFromImplicitField,
+	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
 	nodeKeyManager = new MockNodeKeyManager(),
 ): TreeCheckout {
-	const initialTree = cursorFromInsertableTreeField(
+	const initialTree = cursorFromInsertable<UnsafeUnknownSchema>(
 		viewConfig.schema,
 		unhydratedInitialTree,
 		nodeKeyManager,
@@ -264,17 +265,70 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(redoStack.length, 1);
 	});
 
-	it("schemaChanged event", () => {
-		const content = {
-			schema: toStoredSchema([]),
-			initialTree: undefined,
-		};
-		const checkout = checkoutWithContent(content);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
-		const log: string[] = [];
-		view.events.on("schemaChanged", () => log.push("changed"));
-		assert.deepEqual(log, []);
-		view.upgradeSchema();
-		assert.deepEqual(log, ["changed"]);
+	describe("events", () => {
+		it("schemaChanged", () => {
+			const content = {
+				schema: toStoredSchema([]),
+				initialTree: undefined,
+			};
+			const checkout = checkoutWithContent(content);
+			const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+			const log: string[] = [];
+			view.events.on("schemaChanged", () => log.push("changed"));
+			assert.deepEqual(log, []);
+			view.upgradeSchema();
+			assert.deepEqual(log, ["changed"]);
+		});
+
+		it("emits changed events for local edits", () => {
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			const checkout = checkoutWithContent(emptyContent);
+			const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+
+			let localChanges = 0;
+
+			const unsubscribe = view.events.on("changed", (data) => {
+				if (data.isLocal) {
+					localChanges++;
+				}
+			});
+
+			insert(checkout, 0, "a");
+			assert.equal(localChanges, 1);
+			unsubscribe();
+		});
+
+		it("does not emit changed events for rebases", () => {
+			const stringArraySchema = schema.array([schema.string]);
+			const stringArrayStoredSchema = toStoredSchema(stringArraySchema);
+			const stringArrayContent = {
+				schema: stringArrayStoredSchema,
+				initialTree: cursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
+			};
+			const checkout = checkoutWithContent(stringArrayContent);
+			const main = new SchematizingSimpleTreeView(
+				checkout,
+				new TreeViewConfiguration({ schema: stringArraySchema }),
+				new MockNodeKeyManager(),
+			);
+			const branch = main.fork();
+			const mainRoot = main.root;
+			const branchRoot = branch.root;
+
+			mainRoot.insertAt(0, "a");
+			assert.deepEqual([...mainRoot], ["a", "a", "b", "c"]);
+
+			let changes = 0;
+			branch.events.on("changed", (data) => {
+				changes++;
+			});
+
+			branch.rebaseOnto(main);
+			assert.deepEqual([...branchRoot], ["a", "a", "b", "c"]);
+			assert.equal(changes, 0);
+		});
 	});
 });

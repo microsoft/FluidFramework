@@ -13,6 +13,7 @@ import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
 import { IHistorianResourcesCustomizations } from "./customizations";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -21,10 +22,12 @@ export class HistorianResources implements core.IResources {
 		public readonly config: Provider,
 		public readonly port: string | number,
 		public readonly riddler: historianServices.ITenantService,
-		public readonly storageNameRetriever: core.IStorageNameRetriever,
+		public readonly storageNameRetriever: core.IStorageNameRetriever | undefined,
 		public readonly restTenantThrottlers: Map<string, core.IThrottler>,
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly documentManager: core.IDocumentManager,
+		public readonly startupCheck: core.IReadinessCheck,
+		public readonly redisClientConnectionManagers: utils.IRedisClientConnectionManager[],
 		public readonly cache?: historianServices.RedisCache,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public readonly denyList?: historianServices.IDenyList,
@@ -36,7 +39,7 @@ export class HistorianResources implements core.IResources {
 	}
 
 	public async dispose(): Promise<void> {
-		return;
+		await closeRedisClientConnections(this.redisClientConnectionManagers);
 	}
 }
 
@@ -46,6 +49,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		customizations: IHistorianResourcesCustomizations,
 	): Promise<HistorianResources> {
 		const redisConfig = config.get("redis");
+		// List of Redis client connection managers that need to be closed on dispose
+		const redisClientConnectionManagers: utils.IRedisClientConnectionManager[] = [];
 		const redisClientConnectionManager = customizations?.redisClientConnectionManager
 			? customizations.redisClientConnectionManager
 			: new RedisClientConnectionManager(
@@ -54,6 +59,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 					redisConfig.enableClustering,
 					redisConfig.slotsRefreshTimeout,
 			  );
+		redisClientConnectionManagers.push(redisClientConnectionManager);
 
 		const redisParams = {
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
@@ -94,6 +100,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
 				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 
 		const redisParamsForThrottling = {
 			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
@@ -188,17 +195,16 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			? customizations?.storageNameRetriever ?? new services.StorageNameRetriever()
 			: undefined;
 
+		const port = normalizePort(process.env.PORT || "3000");
 		const tenantManager: core.ITenantManager = new services.TenantManager(
 			riddlerEndpoint,
-			undefined /* internalHistorianUrl */,
+			"http://invalid-api-use" /* internalHistorianUrl (explicitly invalid to avoid circular reference) */,
 		);
 		const documentManager: core.IDocumentManager = new services.DocumentManager(
 			alfredEndpoint,
 			tenantManager,
 			gitCache,
 		);
-
-		const port = normalizePort(process.env.PORT || "3000");
 
 		// Token revocation
 		const revokedTokenChecker: core.IRevokedTokenChecker | undefined =
@@ -208,6 +214,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const denyList: historianServices.IDenyList = new historianServices.DenyList(
 			denyListConfig,
 		);
+		const startupCheck = new StartupCheck();
 
 		return new HistorianResources(
 			config,
@@ -217,6 +224,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			restTenantThrottlers,
 			restClusterThrottlers,
 			documentManager,
+			startupCheck,
+			redisClientConnectionManagers,
 			gitCache,
 			revokedTokenChecker,
 			denyList,
@@ -237,6 +246,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.restTenantThrottlers,
 			resources.restClusterThrottlers,
 			resources.documentManager,
+			resources.startupCheck,
 			resources.cache,
 			resources.revokedTokenChecker,
 			resources.denyList,

@@ -63,6 +63,23 @@ export interface FlubConfig {
 	 * Configuration for the `generate:releaseNotes` command.
 	 */
 	releaseNotes?: ReleaseNotesConfig;
+
+	/**
+	 * Configuration for `release report` command
+	 */
+	releaseReport?: ReleaseReportConfig;
+}
+
+/**
+ * Configuration for the `release report` command. If this configuration is not present in the config, the
+ * `release report` command will report an error.
+ */
+export interface ReleaseReportConfig {
+	/**
+	 * Each key in the `legacyCompatInterval` object represents a specific release group or package name as string,
+	 * and the associated value is a number that defines the legacy compatibility interval for that group.
+	 */
+	legacyCompatInterval: Record<ReleaseGroup | string, number>;
 }
 
 /**
@@ -347,7 +364,7 @@ export function getFlubConfig(configPath: string, noCache = false): FlubConfig {
 	const config = configResult?.config as FlubConfig | undefined;
 
 	if (config === undefined) {
-		throw new Error("No flub configuration found.");
+		throw new Error(`No flub configuration found (configPath='${configPath}').`);
 	}
 
 	// Only version 1 of the config is supported. If any other value is provided, throw an error.

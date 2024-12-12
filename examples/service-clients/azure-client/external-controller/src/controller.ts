@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules
 import { IValueChanged } from "@fluidframework/map/internal";
 import events_pkg from "events_pkg";
 

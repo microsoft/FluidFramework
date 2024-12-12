@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { type AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import type { DDSFuzzTestState, Client } from "@fluid-private/test-dds-utils";
@@ -189,7 +189,7 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
  */
 export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 	const parentNode = fieldEdit.parentNodePath
-		? navigateToNode(tree, fieldEdit.parentNodePath) ?? tree.root
+		? (navigateToNode(tree, fieldEdit.parentNodePath) ?? tree.root)
 		: tree.root;
 
 	if (!Tree.is(parentNode, tree.currentSchema)) {
@@ -340,7 +340,7 @@ export function applyTransactionBoundary(
 			unreachableCase(boundary);
 	}
 
-	if (!checkout.transaction.inProgress()) {
+	if (!checkout.transaction.isInProgress()) {
 		// Transaction is complete, so merge the changes into the root view and clean up the fork from the state.
 		state.transactionViews.delete(state.client.channel);
 		const rootView = viewFromState(state);

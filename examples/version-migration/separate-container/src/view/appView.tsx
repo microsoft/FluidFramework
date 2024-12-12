@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import type { IMigrationTool } from "@fluid-example/migration-tools/internal";
+import type { IMigrator } from "@fluid-example/migration-tools/internal";
 import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
@@ -13,9 +12,8 @@ import { InventoryListView } from "./inventoryView.js";
 
 export interface IInventoryListAppViewProps {
 	model: IInventoryListAppModel;
-	// TODO: All we really want here is a "readonly" indicator - maybe don't need the full IMigrationTool interface.
-	// Would maybe be better to grab that info from the Migrator rather than the MigrationTool anyway?
-	migrationTool: IMigrationTool;
+	// TODO: All we really want here is a "readonly" indicator - maybe don't need the full IMigrator interface.
+	migrator: IMigrator;
 }
 
 /**
@@ -27,26 +25,26 @@ export interface IInventoryListAppViewProps {
 export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 	props: IInventoryListAppViewProps,
 ) => {
-	const { model, migrationTool } = props;
+	const { model, migrator } = props;
 
 	const [disableInput, setDisableInput] = useState<boolean>(
-		migrationTool.migrationState !== "collaborating",
+		migrator.migrationState !== "collaborating",
 	);
 
 	useEffect(() => {
 		const migrationStateChangedHandler = (): void => {
-			setDisableInput(migrationTool.migrationState !== "collaborating");
+			setDisableInput(migrator.migrationState !== "collaborating");
 		};
-		migrationTool.events.on("stopping", migrationStateChangedHandler);
-		migrationTool.events.on("migrating", migrationStateChangedHandler);
-		migrationTool.events.on("migrated", migrationStateChangedHandler);
+		migrator.events.on("stopping", migrationStateChangedHandler);
+		migrator.events.on("migrating", migrationStateChangedHandler);
+		migrator.events.on("migrated", migrationStateChangedHandler);
 		migrationStateChangedHandler();
 		return () => {
-			migrationTool.events.off("stopping", migrationStateChangedHandler);
-			migrationTool.events.off("migrating", migrationStateChangedHandler);
-			migrationTool.events.off("migrated", migrationStateChangedHandler);
+			migrator.events.off("stopping", migrationStateChangedHandler);
+			migrator.events.off("migrating", migrationStateChangedHandler);
+			migrator.events.off("migrated", migrationStateChangedHandler);
 		};
-	}, [migrationTool]);
+	}, [migrator]);
 
 	return <InventoryListView inventoryList={model.inventoryList} disabled={disableInput} />;
 };

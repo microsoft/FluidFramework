@@ -97,18 +97,6 @@ export interface ReferencePosition {
 	 */
 	getOffset(): number;
 
-	/**
-	 * @param newProps - Properties to add to this reference.
-	 * @remarks Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
-	 * to ensure broadcast happens if that is desired.
-	 *
-	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
-	 *
-	 * @privateRemarks This interface is used by both marker segments and local reference positions. We will remove
-	 * this function from segments, but keep it on local reference positions for now. So it has been added to local reference
-	 * positions, and must be removed here to not apply to marker segments.
-	 */
-	addProperties(newProps: PropertySet): void;
 	isLeaf(): this is ISegment;
 }
 

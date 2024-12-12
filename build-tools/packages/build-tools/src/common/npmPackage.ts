@@ -6,9 +6,9 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import * as path from "node:path";
 import { queue } from "async";
-import * as chalk from "chalk";
 import detectIndent from "detect-indent";
 import { readJsonSync, writeJson, writeJsonSync } from "fs-extra";
+import chalk from "picocolors";
 import sortPackageJson from "sort-package-json";
 
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
@@ -72,24 +72,27 @@ interface PackageDependency {
 	depClass: "prod" | "dev" | "peer";
 }
 
+/**
+ * @deprecated Should not be used outside the build-tools package.
+ */
 export class Package {
 	private static packageCount: number = 0;
 	private static readonly chalkColor = [
-		chalk.default.red,
-		chalk.default.green,
-		chalk.default.yellow,
-		chalk.default.blue,
-		chalk.default.magenta,
-		chalk.default.cyan,
-		chalk.default.white,
-		chalk.default.grey,
-		chalk.default.redBright,
-		chalk.default.greenBright,
-		chalk.default.yellowBright,
-		chalk.default.blueBright,
-		chalk.default.magentaBright,
-		chalk.default.cyanBright,
-		chalk.default.whiteBright,
+		chalk.red,
+		chalk.green,
+		chalk.yellow,
+		chalk.blue,
+		chalk.magenta,
+		chalk.cyan,
+		chalk.white,
+		chalk.gray,
+		chalk.redBright,
+		chalk.greenBright,
+		chalk.yellowBright,
+		chalk.blueBright,
+		chalk.magentaBright,
+		chalk.cyanBright,
+		chalk.whiteBright,
 	];
 
 	private _packageJson: PackageJson;
@@ -230,7 +233,7 @@ export class Package {
 
 	public get installCommand(): string {
 		return this.packageManager === "pnpm"
-			? "pnpm i"
+			? "pnpm i --no-frozen-lockfile"
 			: this.packageManager === "yarn"
 				? "npm run install-strict"
 				: "npm i";
@@ -505,6 +508,8 @@ export class Packages {
  * The package.json is always sorted using sort-package-json.
  *
  * @internal
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export function updatePackageJsonFile(
 	packagePath: string,
@@ -526,6 +531,8 @@ export function updatePackageJsonFile(
  * indentation.
  *
  * @internal
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export function readPackageJsonAndIndent(
 	pathToJson: string,
@@ -556,6 +563,8 @@ function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: str
  * The package.json is always sorted using sort-package-json.
  *
  * @internal
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export async function updatePackageJsonFileAsync(
 	packagePath: string,

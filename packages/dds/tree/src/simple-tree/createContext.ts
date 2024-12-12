@@ -7,7 +7,7 @@ import { defaultSchemaPolicy } from "../feature-libraries/index.js";
 import { getOrCreate } from "../util/index.js";
 import { Context, UnhydratedContext } from "./core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
-import { toStoredSchema } from "./toFlexSchema.js";
+import { toStoredSchema } from "./toStoredSchema.js";
 
 const contextCache: WeakMap<ImplicitFieldSchema, Context> = new WeakMap();
 

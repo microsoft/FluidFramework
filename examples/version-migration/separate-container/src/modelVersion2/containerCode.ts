@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import {
-	type IMigratableModel,
-	instantiateMigratableRuntime,
-	// eslint-disable-next-line import/no-internal-modules
+	CompositeEntryPoint,
+	loadCompositeRuntime,
+	makeMigratorEntryPointPiece,
 } from "@fluid-example/migration-tools/internal";
 import type {
 	IContainer,
@@ -16,14 +15,36 @@ import type {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+import type { IMigratableModel } from "../migratableModel.js";
 
-import { InventoryListAppModel } from "./appModel.js";
-import { InventoryListInstantiationFactory } from "./inventoryList.js";
+import { modelEntryPointPiece } from "./modelEntryPointPiece.js";
 
-const inventoryListId = "default-inventory-list";
+/**
+ * Helper function for casting the container's entrypoint to the expected type.  Does a little extra
+ * type checking for added safety.
+ */
+const getModelFromContainer = async <ModelType>(container: IContainer): Promise<ModelType> => {
+	const entryPoint = (await container.getEntryPoint()) as {
+		model: ModelType;
+	};
+
+	// If the user tries to use this with an incompatible container runtime, we want to give them
+	// a comprehensible error message.  So distrust the type by default and do some basic type checking.
+	// TODO: Now that this all lives in the container code we can probably make some stronger type assumptions.
+	if (typeof entryPoint.model !== "object") {
+		throw new TypeError("Incompatible container runtime: doesn't provide model");
+	}
+
+	return entryPoint.model;
+};
+
+// TODO: Can/should we access the model more directly than going through the IContainer?
+const exportDataCallback = async (container: IContainer): Promise<unknown> => {
+	// TODO: verify IMigratableModel
+	const exportModel = await getModelFromContainer<IMigratableModel>(container);
+	return exportModel.exportData();
+};
 
 /**
  * @internal
@@ -33,9 +54,6 @@ export class InventoryListContainerRuntimeFactory implements IRuntimeFactory {
 		return this;
 	}
 
-	private readonly registryEntries = new Map([
-		InventoryListInstantiationFactory.registryEntry,
-	]);
 	private readonly runtimeOptions: IContainerRuntimeOptions | undefined;
 	/**
 	 * Constructor for the factory. Supports a test mode which spawns the summarizer instantly.
@@ -55,37 +73,10 @@ export class InventoryListContainerRuntimeFactory implements IRuntimeFactory {
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const runtime = await instantiateMigratableRuntime(
-			context,
-			existing,
-			this.registryEntries,
-			this.createModel,
-			this.runtimeOptions,
-		);
-
-		if (!existing) {
-			await this.containerInitializingFirstTime(runtime);
-		}
-
-		return runtime;
+		const compositeEntryPoint = new CompositeEntryPoint();
+		compositeEntryPoint.addEntryPointPiece(modelEntryPointPiece);
+		const migratorEntryPointPiece = makeMigratorEntryPointPiece(exportDataCallback);
+		compositeEntryPoint.addEntryPointPiece(migratorEntryPointPiece);
+		return loadCompositeRuntime(context, existing, compositeEntryPoint, this.runtimeOptions);
 	}
-
-	private readonly containerInitializingFirstTime = async (
-		runtime: IContainerRuntime,
-	): Promise<void> => {
-		const inventoryList = await runtime.createDataStore(
-			InventoryListInstantiationFactory.type,
-		);
-		await inventoryList.trySetAlias(inventoryListId);
-	};
-
-	private readonly createModel = async (
-		runtime: IContainerRuntime,
-		container: IContainer,
-	): Promise<IInventoryListAppModel & IMigratableModel> => {
-		return new InventoryListAppModel(
-			await getDataStoreEntryPoint<IInventoryList>(runtime, inventoryListId),
-			container,
-		);
-	};
 }

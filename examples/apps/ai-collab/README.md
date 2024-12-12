@@ -1,23 +1,48 @@
 # @fluid-example/ai-collab
 
-WIP
+This is an example app that showcases the `@fluidframework/ai-collab` package to interact with an LLM (Large Language
+Model).
 
-## Known Issues and Limitations
+By default it uses Tinylicious as the server, but you can also use SharePoint embedded.
+Steps to do that are detailed below.
 
-WIP
+<!--
+NOTE: deliberately skipping the use of AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER) in this package
+because it uses a non-standard flow (local npm script to start tinylicious, and uses NextJS with a different URL)
+-->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
+## Pre-requisites
 
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+In order for the app to showcase the LLM interaction, you need to provide an OpenAI API key.
+Copy the `.env.example` file, rename the copy to `.env`, and replace the value of the `OPEN_AI_KEY` variable with your
+API key.
+Note that the app leverages the gpt-o4 model and thus an API key for a paid account is required.
+If you provide an API key for a free account, the app will still render, but requesting AI assistance will fail.
 
-**NOTE: This package is an example leveraging the [Fluid Framework](https://fluidframework.com).**
-**It is intended only as an example, and is not intended for public use.**
-**We make no stability guarantees regarding this library and its APIs.**
+## Getting Started
 
-<!-- prettier-ignore-end -->
+You can run this example using the following steps:
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
+1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
+    - For an even faster build, you can add the package name to the build command, like this:
+      `pnpm run build:fast --nolint @fluid-example/ai-collab`
+1. Start a Tinylicious server by running `pnpm start:server` from this directory.
+1. In a separate terminal also from this directory, run `pnpm next:dev` and open http://localhost:3000/ in a
+    web browser to see the app running.
+
+### Using SharePoint embedded instead of tinylicious
+
+1. Go to [page.tsx](src/app/page.tsx), look for comment
+`// Uncomment the import line that corresponds to the server you want to use`, comment the line for tinylicious and
+uncomment the line for SharePoint Embedded.
+1. In the same `.env` file you created in the pre-requisites section, set the correct values for the following variables:
+
+- `NEXT_PUBLIC_SPE_CLIENT_ID`
+- `NEXT_PUBLIC_SPE_CONTAINER_TYPE_ID`
+- `NEXT_PUBLIC_SPE_ENTRA_TENANT_ID`
+
+You can get all of them through the [SharePoint Embedded for Visual Studio Code extension](https://learn.microsoft.com/en-us/sharepoint/dev/embedded/getting-started/spembedded-for-vscode).
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 

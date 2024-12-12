@@ -10,7 +10,13 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { TreeViewConfiguration, SchemaFactory, type TreeView } from "@fluidframework/tree";
-import { SharedTree, Tree, TreeStatus, type Revertible } from "@fluidframework/tree/internal";
+import {
+	asTreeViewAlpha,
+	SharedTree,
+	Tree,
+	TreeStatus,
+	type Revertible,
+} from "@fluidframework/tree/internal";
 import type { AxiosResponse } from "axios";
 
 import {
@@ -214,8 +220,10 @@ for (const testOpts of testMatrix) {
 				it("can handle undo/redo and transactions", async () => {
 					const { container } = await client.createContainer(schema, "2");
 					await container.attach();
-					const view = container.initialObjects.tree1.viewWith(
-						new TreeViewConfiguration({ schema: User, enableSchemaValidation: true }),
+					const view = asTreeViewAlpha(
+						container.initialObjects.tree1.viewWith(
+							new TreeViewConfiguration({ schema: User, enableSchemaValidation: true }),
+						),
 					);
 
 					view.initialize(
@@ -229,7 +237,7 @@ for (const testOpts of testMatrix) {
 					const user = view.root;
 					// Capture the Revertible so that changes can be undone
 					let revertible: Revertible | undefined;
-					view.events.on("commitApplied", (_, getRevertible) => {
+					view.events.on("changed", (_, getRevertible) => {
 						assert(getRevertible !== undefined);
 						revertible = getRevertible();
 					});

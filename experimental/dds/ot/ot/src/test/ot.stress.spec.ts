@@ -253,8 +253,7 @@ describe("SharedOT", () => {
 				if (now - lastStatus > 5000) {
 					process.stdout.write(
 						`Stress loop: ${iterations} iterations completed - Total Elapsed: ${(
-							(Date.now() - start) /
-							1000
+							(Date.now() - start) / 1000
 						).toFixed(2)}s\n`,
 					);
 					lastStatus = now;

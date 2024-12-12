@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
@@ -57,20 +57,20 @@ import {
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
-	cursorFromInsertableTreeField,
 	forestWithContent,
 	mintRevisionTag,
 	testIdCompressor,
 	type SharedTreeWithConnectionStateSetter,
 } from "../../utils.js";
 import {
+	cursorFromInsertable,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
@@ -108,7 +108,7 @@ class HasIdentifier extends schemaFactory.object("parent", {
 }) {}
 
 function getIdentifierEncodingContext(id: string) {
-	const initialTree = cursorFromInsertableTreeField(
+	const initialTree = cursorFromInsertable(
 		HasIdentifier,
 		new HasIdentifier({ identifier: id }),
 		new MockNodeKeyManager(),

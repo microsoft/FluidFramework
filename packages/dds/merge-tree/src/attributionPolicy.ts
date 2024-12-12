@@ -152,7 +152,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 				const shouldAttributeAnnotate =
 					op.type === MergeTreeDeltaType.ANNOTATE &&
 					// Only attribute annotations which change the tracked property
-					op.props[propName] !== undefined &&
+					(op.props?.[propName] !== undefined || op.adjust?.[propName] !== undefined) &&
 					(isLocal || (propertyDeltas !== undefined && propName in propertyDeltas));
 
 				if (shouldAttributeInsert || shouldAttributeAnnotate) {

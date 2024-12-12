@@ -167,6 +167,39 @@ export async function createOrUpdateCommentOnPr(
 }
 
 /**
+ * Retrieves body of the comment if commentIdentifier identifies the comment.
+ *
+ * @param github - Details about the GitHub repo and auth to use.
+ * @param prNumber - Pull request number.
+ * @param commentIdentifier - unique identifier for the comment to be updated.
+ *
+ * @returns body of the comment identified by commentIdentifier.
+ */
+export async function getCommentBody(
+	{ owner, repo, token }: GitHubProps,
+	prNumber: number,
+	commentIdentifier: string,
+): Promise<string | undefined> {
+	const octokit = new Octokit({ auth: token });
+
+	// List of review comments for the pull request
+	const { data: comments } = await octokit.pulls.listReviews({
+		owner,
+		repo,
+		pull_number: prNumber,
+	});
+
+	let commentBody: string | undefined;
+	// Check the comments to find the comment with the identifier.
+	for (const comment of comments) {
+		if (comment.body.startsWith(commentIdentifier)) {
+			return comment.body;
+		}
+	}
+	return undefined;
+}
+
+/**
  * Api to get the changed file paths in a PR. The paths are relative to the root of the repo.
  * @param github - Details about the GitHub repo and auth to use.
  * @param prNumber - Pr number for which the changed files paths are to be fetched

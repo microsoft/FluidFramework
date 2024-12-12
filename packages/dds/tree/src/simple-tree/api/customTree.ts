@@ -11,8 +11,12 @@ import {
 	EmptyKey,
 	forEachField,
 	inCursorField,
+	LeafNodeStoredSchema,
 	mapCursorField,
+	ObjectNodeStoredSchema,
 	type ITreeCursor,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import type { TreeLeafValue } from "../schemaTypes.js";
@@ -25,9 +29,11 @@ import {
 	stringSchema,
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
+import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
 
 /**
  * Options for how to encode a tree.
+ * @alpha
  */
 export interface EncodeOptions<TCustom> {
 	/**
@@ -62,7 +68,7 @@ export type CustomTreeNode<TChild> = TChild[] | { [key: string]: TChild };
 /**
  * Builds an {@link CustomTree} from a cursor in Nodes mode.
  */
-export function customFromCursorInner<TChild, THandle>(
+export function customFromCursor<TChild, THandle>(
 	reader: ITreeCursor,
 	options: Required<EncodeOptions<THandle>>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
@@ -80,15 +86,15 @@ export function customFromCursorInner<TChild, THandle>(
 		case booleanSchema.identifier:
 		case nullSchema.identifier:
 		case stringSchema.identifier:
-			assert(reader.value !== undefined, "out of schema: missing value");
-			assert(!isFluidHandle(reader.value), "out of schema: unexpected FluidHandle");
+			assert(reader.value !== undefined, 0xa50 /* out of schema: missing value */);
+			assert(!isFluidHandle(reader.value), 0xa51 /* out of schema: unexpected FluidHandle */);
 			return reader.value;
 		case handleSchema.identifier:
-			assert(reader.value !== undefined, "out of schema: missing value");
-			assert(isFluidHandle(reader.value), "out of schema: expected FluidHandle");
+			assert(reader.value !== undefined, 0xa52 /* out of schema: missing value */);
+			assert(isFluidHandle(reader.value), 0xa53 /* out of schema: expected FluidHandle */);
 			return options.valueConverter(reader.value);
 		default: {
-			assert(reader.value === undefined, "out of schema: unexpected value");
+			assert(reader.value === undefined, 0xa54 /* out of schema: unexpected value */);
 			if (nodeSchema.kind === NodeKind.Array) {
 				const fields = inCursorField(reader, EmptyKey, () =>
 					mapCursorField(reader, () => childHandler(reader, options, schema)),
@@ -102,8 +108,8 @@ export function customFromCursorInner<TChild, THandle>(
 						const storedKey = reader.getFieldKey();
 						const key =
 							isObjectNodeSchema(nodeSchema) && !options.useStoredKeys
-								? nodeSchema.storedKeyToPropertyKey.get(storedKey) ??
-									fail("missing property key")
+								? (nodeSchema.storedKeyToPropertyKey.get(storedKey) ??
+									fail("missing property key"))
 								: storedKey;
 						// Length is checked above.
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -114,6 +120,69 @@ export function customFromCursorInner<TChild, THandle>(
 				});
 				return fields;
 			}
+		}
+	}
+}
+
+/**
+ * Builds an {@link CustomTree} from a cursor in Nodes mode.
+ * @remarks
+ * Uses stored keys and stored schema.
+ */
+export function customFromCursorStored<TChild>(
+	reader: ITreeCursor,
+	schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
+	childHandler: (
+		reader: ITreeCursor,
+		schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
+	) => TChild,
+): CustomTree<TChild, IFluidHandle> {
+	const type = reader.type;
+	const nodeSchema = schema.get(type) ?? fail("missing schema for type in cursor");
+
+	if (nodeSchema instanceof LeafNodeStoredSchema) {
+		assert(valueSchemaAllows(nodeSchema.leafValue, reader.value), "invalid value");
+		return reader.value;
+	}
+
+	assert(reader.value === undefined, "out of schema: unexpected value");
+
+	const arrayTypes = tryStoredSchemaAsArray(nodeSchema);
+	if (arrayTypes !== undefined) {
+		const field = inCursorField(reader, EmptyKey, () =>
+			mapCursorField(reader, () => childHandler(reader, schema)),
+		);
+		return field;
+	}
+
+	const fields: Record<string, TChild> = {};
+	forEachField(reader, () => {
+		const children = mapCursorField(reader, () => childHandler(reader, schema));
+		if (children.length === 1) {
+			const storedKey = reader.getFieldKey();
+			// Length is checked above.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			fields[storedKey] = children[0]!;
+		} else {
+			assert(children.length === 0, "invalid children number");
+		}
+	});
+	return fields;
+}
+
+/**
+ * Assumes `schema` corresponds to a simple-tree schema.
+ * If it is an array schema, returns the allowed types for the array field.
+ * Otherwise returns `undefined`.
+ */
+export function tryStoredSchemaAsArray(
+	schema: TreeNodeStoredSchema,
+): ReadonlySet<string> | undefined {
+	if (schema instanceof ObjectNodeStoredSchema) {
+		const empty = schema.getFieldSchema(EmptyKey);
+		if (empty.kind === FieldKinds.sequence.identifier) {
+			assert(schema.objectNodeFields.size === 1, "invalid schema");
+			return empty.types;
 		}
 	}
 }

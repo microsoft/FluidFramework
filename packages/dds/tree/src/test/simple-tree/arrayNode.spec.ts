@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { describeHydration, hydrate } from "./utils.js";
 import {
@@ -849,18 +849,26 @@ describe("ArrayNode", () => {
 				public foo(): void {}
 			}
 			const _fromIterable: Schema = new Schema([]);
-			// TODO: AB#8043: support omitting parameter
-			// const _fromUndefined: Schema = new Schema(undefined);
-			// const _fromNothing: Schema = new Schema();
+			const _fromUndefined: Schema = new Schema(undefined);
+			const _fromNothing: Schema = new Schema();
 		});
 
 		it("create - NonClass", () => {
 			const Schema = schemaFactory.array(schemaFactory.number);
 			type Schema = NodeFromSchema<typeof Schema>;
 			const _fromIterable: Schema = Schema.create([]);
-			// TODO: AB#8043: support omitting parameter
-			// const _fromUndefined: Schema = Schema.create(undefined);
-			// const _fromNothing: Schema = Schema.create();
+			const _fromUndefined: Schema = Schema.create(undefined);
+			const _fromNothing: Schema = Schema.create();
+		});
+
+		it("constructor - recursive empty", () => {
+			class Schema extends schemaFactory.arrayRecursive("x", [() => Schema]) {
+				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
+				public foo(): void {}
+			}
+			const _fromIterable: Schema = new Schema([]);
+			const _fromUndefined: Schema = new Schema(undefined);
+			const _fromNothing: Schema = new Schema();
 		});
 
 		describe("implicit construction", () => {

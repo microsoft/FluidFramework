@@ -39,4 +39,9 @@ export interface IReadinessCheck {
 	 * Whether the service/functionality is ready for use.
 	 */
 	isReady(): Promise<IReadinessStatus>;
+
+	/**
+	 * Sets the service/functionality as ready.
+	 */
+	setReady?(): void;
 }

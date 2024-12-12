@@ -14,6 +14,7 @@ import {
 	reservedRangeLabelsKey,
 	SequencePlace,
 	addProperties,
+	copyPropertiesAndManager,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -38,10 +39,7 @@ export class Interval implements ISerializableInterval {
 	/***/
 	public auxProps: PropertySet[] | undefined;
 
-	/**
-	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 */
-	public readonly propertyManager: PropertiesManager = new PropertiesManager();
+	public propertyManager?: PropertiesManager;
 
 	constructor(
 		public start: number,
@@ -173,19 +171,6 @@ export class Interval implements ISerializableInterval {
 	}
 
 	/**
-	 * {@inheritDoc ISerializableInterval.addProperties}
-	 */
-	public addProperties(
-		newProps: PropertySet,
-		collaborating: boolean = false,
-		seq?: number,
-	): PropertySet | undefined {
-		if (newProps) {
-			return this.propertyManager.addProperties(this.properties, newProps, seq, collaborating);
-		}
-	}
-
-	/**
 	 * {@inheritDoc IInterval.modify}
 	 */
 	public modify(
@@ -200,21 +185,15 @@ export class Interval implements ISerializableInterval {
 			);
 		}
 
-		const startPos = typeof start === "number" ? start : start?.pos ?? this.start;
-		const endPos = typeof end === "number" ? end : end?.pos ?? this.end;
+		const startPos = typeof start === "number" ? start : (start?.pos ?? this.start);
+		const endPos = typeof end === "number" ? end : (end?.pos ?? this.end);
 
 		if (this.start === startPos && this.end === endPos) {
 			// Return undefined to indicate that no change is necessary.
 			return;
 		}
 		const newInterval = new Interval(startPos, endPos);
-		if (this.properties) {
-			this.propertyManager.copyTo(
-				this.properties,
-				newInterval.properties,
-				newInterval.propertyManager,
-			);
-		}
+		copyPropertiesAndManager(this, newInterval);
 		return newInterval;
 	}
 }
