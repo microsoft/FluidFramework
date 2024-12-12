@@ -74,7 +74,6 @@ export function depthFirstNodeWalk(
 
 		// walk the leaves if we reached them
 		if (start !== undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			for (let i = start.index; i !== -1 && i !== childCount; i += increment) {
 				// the above loop ensures start is a leaf or undefined, so all children
 				// will be leaves if start exits, so the cast is safe
