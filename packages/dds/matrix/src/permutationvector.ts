@@ -18,6 +18,7 @@ import {
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 	ISegment,
+	ISegmentInternal,
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
 	type IMergeTreeInsertMsg,
@@ -200,7 +201,7 @@ export class PermutationVector extends Client {
 		pos: number,
 		op: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
 	): number | undefined {
-		const { segment, offset } = this.getContainingSegment(pos, {
+		const { segment, offset } = this.getContainingSegment<ISegmentInternal>(pos, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
 		});

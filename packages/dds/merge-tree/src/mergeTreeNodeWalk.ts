@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type MergeBlock, IMergeNode, ISegment } from "./mergeTreeNodes.js";
+import { type ISegmentLeaf, type MergeBlock, IMergeNode } from "./mergeTreeNodes.js";
 
 export const LeafAction = {
 	Exit: false,
@@ -38,7 +38,7 @@ export function depthFirstNodeWalk(
 	startBlock: MergeBlock,
 	startChild: IMergeNode | undefined,
 	downAction?: (node: IMergeNode) => NodeAction,
-	leafActionOverride?: (seg: ISegment) => LeafAction,
+	leafActionOverride?: (seg: ISegmentLeaf) => LeafAction,
 	upAction?: (block: MergeBlock) => void,
 	forward: boolean = true,
 ): boolean {
@@ -74,10 +74,11 @@ export function depthFirstNodeWalk(
 
 		// walk the leaves if we reached them
 		if (start !== undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			for (let i = start.index; i !== -1 && i !== childCount; i += increment) {
 				// the above loop ensures start is a leaf or undefined, so all children
 				// will be leaves if start exits, so the cast is safe
-				if (leafAction(block.children[i] as ISegment) === LeafAction.Exit) {
+				if (leafAction(block.children[i] as ISegmentLeaf) === LeafAction.Exit) {
 					exit = true;
 					break;
 				}
@@ -122,7 +123,7 @@ export function depthFirstNodeWalk(
  */
 export function forwardExcursion(
 	startNode: IMergeNode,
-	leafAction: (seg: ISegment) => boolean | undefined,
+	leafAction: (seg: ISegmentLeaf) => boolean | undefined,
 ): boolean {
 	if (startNode.parent === undefined) {
 		return true;
@@ -145,7 +146,7 @@ export function forwardExcursion(
  */
 export function backwardExcursion(
 	startNode: IMergeNode,
-	leafAction: (seg: ISegment) => boolean | undefined,
+	leafAction: (seg: ISegmentLeaf) => boolean | undefined,
 ): boolean {
 	if (startNode.parent === undefined) {
 		return true;
@@ -171,7 +172,7 @@ export function backwardExcursion(
  */
 export function walkAllChildSegments(
 	startBlock: MergeBlock,
-	leafAction: (segment: ISegment) => boolean | undefined | void,
+	leafAction: (segment: ISegmentLeaf) => boolean | undefined | void,
 ): boolean {
 	if (startBlock.childCount === 0) {
 		return true;
