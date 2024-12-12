@@ -168,8 +168,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -3666,8 +3666,8 @@ importers:
         version: 4.4.0(supports-color@8.1.1)
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -4660,8 +4660,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -4755,9 +4755,6 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^5.0.0
         version: 5.0.0
-      '@fluidframework/task-manager':
-        specifier: workspace:~
-        version: link:../../../packages/dds/task-manager
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -4766,8 +4763,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -4890,8 +4887,8 @@ importers:
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.97.1)
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -5308,6 +5305,9 @@ importers:
       '@fluidframework/driver-utils':
         specifier: workspace:~
         version: link:../../../packages/loader/driver-utils
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/local-driver
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
@@ -5326,6 +5326,9 @@ importers:
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
+      '@fluidframework/server-local-server':
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/task-manager':
         specifier: workspace:~
         version: link:../../../packages/dds/task-manager
@@ -5993,8 +5996,8 @@ importers:
         version: 0.6.6
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -6225,8 +6228,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -6443,8 +6446,8 @@ importers:
         version: 1.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -6552,8 +6555,8 @@ importers:
         version: link:../../../../packages/dds/shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -6649,8 +6652,8 @@ importers:
         version: 1.0.2
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -6743,8 +6746,8 @@ importers:
         version: link:../../../packages/dds/shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -6873,8 +6876,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7003,8 +7006,8 @@ importers:
         version: link:../../../packages/dds/shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7073,8 +7076,8 @@ importers:
         version: link:../../../packages/dds/shared-summary-block
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7143,8 +7146,8 @@ importers:
         version: 18.3.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7240,8 +7243,8 @@ importers:
         version: 2.4.11
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7364,8 +7367,8 @@ importers:
         version: link:../driver-definitions
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7412,8 +7415,8 @@ importers:
   packages/common/core-interfaces:
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7460,8 +7463,8 @@ importers:
   packages/common/core-utils:
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7545,8 +7548,8 @@ importers:
         version: link:../core-interfaces
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7612,8 +7615,8 @@ importers:
         version: link:../shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7715,8 +7718,8 @@ importers:
         version: link:../shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7815,8 +7818,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -7930,8 +7933,8 @@ importers:
         version: 1.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -8063,8 +8066,8 @@ importers:
         version: 1.14.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -8196,8 +8199,8 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -8317,8 +8320,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -8423,8 +8426,8 @@ importers:
         version: link:../shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -8523,8 +8526,8 @@ importers:
         version: link:../shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -8638,8 +8641,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -8777,8 +8780,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -8886,8 +8889,8 @@ importers:
         version: link:../shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -9001,8 +9004,8 @@ importers:
         version: link:../shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -9122,8 +9125,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -9240,8 +9243,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -9376,8 +9379,8 @@ importers:
         version: 1.4.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -9443,8 +9446,8 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -9531,8 +9534,8 @@ importers:
         version: 6.1.5
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -9607,8 +9610,8 @@ importers:
         version: link:../replay-driver
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -9701,8 +9704,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -9816,8 +9819,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -9901,8 +9904,8 @@ importers:
         version: link:../../common/driver-definitions
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -9968,8 +9971,8 @@ importers:
         version: link:../odsp-driver-definitions
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -10053,8 +10056,8 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -10144,8 +10147,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -10244,8 +10247,8 @@ importers:
         version: 0.12.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -10335,8 +10338,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -10438,8 +10441,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -10511,8 +10514,8 @@ importers:
         version: 3.24.0
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -10626,8 +10629,8 @@ importers:
         version: link:../synthesize
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -10735,8 +10738,8 @@ importers:
         version: 0.2.0
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -10823,8 +10826,8 @@ importers:
         version: 1.2.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -10917,8 +10920,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -11035,8 +11038,8 @@ importers:
         version: link:../../dds/shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -11096,8 +11099,8 @@ importers:
         version: link:../../dds/sequence
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -11202,8 +11205,8 @@ importers:
         version: link:../../dds/tree
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -11290,8 +11293,8 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -11381,8 +11384,8 @@ importers:
         version: link:../../common/driver-definitions
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -11475,8 +11478,8 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -11566,8 +11569,8 @@ importers:
         version: link:../../runtime/runtime-utils
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -11645,8 +11648,8 @@ importers:
         version: link:../../common/core-utils
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -11739,8 +11742,8 @@ importers:
         version: link:../../dds/sequence
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -11857,8 +11860,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -11972,8 +11975,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -12063,8 +12066,8 @@ importers:
         version: link:../driver-utils
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -12154,8 +12157,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -12260,8 +12263,8 @@ importers:
         version: link:../runtime-definitions
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -12342,8 +12345,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -12436,8 +12439,8 @@ importers:
         version: link:../runtime-definitions
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -12500,8 +12503,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -12594,8 +12597,8 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -12673,8 +12676,8 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -12794,8 +12797,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -12903,8 +12906,8 @@ importers:
         version: link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -13284,8 +13287,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -13387,8 +13390,8 @@ importers:
         version: link:../../drivers/tinylicious-driver
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -13715,8 +13718,8 @@ importers:
         version: 0.5.21
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -13891,8 +13894,8 @@ importers:
         version: 1.0.3
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -13970,8 +13973,8 @@ importers:
         version: link:../../common/driver-definitions
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -14073,8 +14076,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -14336,8 +14339,8 @@ importers:
         version: 2.1.0
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -14599,8 +14602,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -14771,8 +14774,8 @@ importers:
         version: 7.6.3
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -14926,8 +14929,8 @@ importers:
         version: link:../../../framework/fluid-static
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -15255,8 +15258,8 @@ importers:
         version: link:../../../dds/tree
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -15581,8 +15584,8 @@ importers:
         version: 2.14.1(react-dom@18.3.1)(react@18.3.1)
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -15853,8 +15856,8 @@ importers:
         version: 17.7.2
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -16007,8 +16010,8 @@ importers:
         version: 1.1.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -16074,8 +16077,8 @@ importers:
         version: 3.0.0
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -16162,8 +16165,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -16268,8 +16271,8 @@ importers:
         version: 4.1.2
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.16.4
-        version: 0.16.4
+        specifier: ^0.17.1
+        version: 0.17.1
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
@@ -16395,12 +16398,12 @@ packages:
     resolution: {integrity: sha512-Jh15/qVmrLGhkKJBdXlK1+9tY4lZruYjsgkDFj08ZmDiWVBLJcqkok7Z0/R0In+i1rScBpJlSvrTS2Lm41Pbnw==}
     dev: true
 
-  /@arethetypeswrong/cli@0.16.4:
-    resolution: {integrity: sha512-qMmdVlJon5FtA+ahn0c1oAVNxiq4xW5lqFiTZ21XHIeVwAVIQ+uRz4UEivqRMsjVV1grzRgJSKqaOrq1MvlVyQ==}
+  /@arethetypeswrong/cli@0.17.1:
+    resolution: {integrity: sha512-WNKTcC7lqWmbRWWku3Xz0hl7zj9szoGzx7gcGaZPxszKcMPiRnKsiLbxMpf1FzA6myIjE1yalqxNCJ0UkCWTXQ==}
     engines: {node: '>=18'}
     hasBin: true
     dependencies:
-      '@arethetypeswrong/core': 0.16.4
+      '@arethetypeswrong/core': 0.17.1
       chalk: 4.1.2
       cli-table3: 0.6.5
       commander: 10.0.1
@@ -16409,8 +16412,8 @@ packages:
       semver: 7.6.3
     dev: true
 
-  /@arethetypeswrong/core@0.16.4:
-    resolution: {integrity: sha512-RI3HXgSuKTfcBf1hSEg1P9/cOvmI0flsMm6/QL3L3wju4AlHDqd55JFPfXs4pzgEAgy5L9pul4/HPPz99x2GvA==}
+  /@arethetypeswrong/core@0.17.1:
+    resolution: {integrity: sha512-NgEuyO/D79q2K6lVoSLmRX2YzKNlh2LHU+no3AVkpY4gA20zEhp129KUV1W6jMnbmpRm3xAxF+v3myZ/eFixnA==}
     engines: {node: '>=18'}
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
