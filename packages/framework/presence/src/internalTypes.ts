@@ -5,11 +5,10 @@
 
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { IRuntimeInternal } from "@fluidframework/presence/internal/container-definitions/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { ClientSessionId, ISessionClient } from "./presence.js";
-
-import type { IRuntimeInternal } from "@fluidframework/presence/internal/container-definitions/internal";
+import type { ClientSessionId, ISessionClient } from "./sessionClientTypes.js";
 
 /**
  * @internal
@@ -20,15 +19,6 @@ export interface ClientRecord<TValue extends InternalTypes.ValueDirectoryOrState
 	// See https://github.com/microsoft/TypeScript/issues/42810.
 	[ClientSessionId: ClientSessionId]: TValue;
 }
-
-/**
- * Object.entries retyped to support branded string-based keys.
- *
- * @internal
- */
-export const brandedObjectEntries = Object.entries as <K extends string, T>(
-	o: Record<K, T>,
-) => [K, T][];
 
 /**
  * This interface is a subset of (IContainerRuntime & IRuntimeInternal) and

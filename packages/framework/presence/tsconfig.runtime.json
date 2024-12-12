@@ -1,0 +1,17 @@
+{
+	"extends": "./tsconfig.base.json",
+	"include": ["src/**/*"],
+	"exclude": [
+		"src/**/types.ts",
+		"src/**/*Types.*ts",
+		"src/presence.ts",
+		"src/container-definitions/**/*",
+		"src/core-interfaces/**/*",
+		"src/test/**/*",
+	],
+	"references": [
+		{
+			"path": "./tsconfig.types.json",
+		},
+	],
+}

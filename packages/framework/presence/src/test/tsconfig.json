@@ -13,7 +13,7 @@
 	},
 	"references": [
 		{
-			"path": "../..",
+			"path": "../../tsconfig.runtime.json",
 		},
 	],
 }
