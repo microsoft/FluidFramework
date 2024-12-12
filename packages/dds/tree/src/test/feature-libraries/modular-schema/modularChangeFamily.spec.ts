@@ -148,7 +148,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
 	isEmpty: (change) => false,
-	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0]]),
+	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0, 0]]),
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
 };
@@ -1428,7 +1428,7 @@ describe("ModularChangeFamily", () => {
 				["with constraint", inlineRevision(rootChange3, tag1), context],
 				[
 					"with violated constraint",
-					inlineRevision({ ...buildChangeset([]), constraintViolationCount: 42 }, tag1),
+					inlineRevision({ ...buildChangeset([]), inputConstraintViolationCount: 42 }, tag1),
 					context,
 				],
 				[
@@ -1636,6 +1636,6 @@ function buildChangeset(edits: EditDescription[]): ModularChangeset {
 function buildExistsConstraint(path: UpPath): ModularChangeset {
 	const edits: ModularChangeset[] = [];
 	const editor = family.buildEditor((taggedChange) => edits.push(taggedChange.change));
-	editor.addNodeExistsConstraint(path, mintRevisionTag());
+	editor.addInputNodeExistsConstraint(path, mintRevisionTag());
 	return edits[0];
 }
