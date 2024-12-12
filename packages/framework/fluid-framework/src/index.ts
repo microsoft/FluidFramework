@@ -54,26 +54,23 @@ export type {
 	ReplaceIEventThisPlaceHolder,
 	FluidObject, // Linked in doc comment
 	FluidObjectProviderKeys, // Used by FluidObject
-	// The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`.
-	// eslint-disable-next-line import/export
+	/* eslint-disable import/export -- The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`. */
 	Listeners,
-	// The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`.
-	// eslint-disable-next-line import/export
 	IsListener,
-	// The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`.
-	// eslint-disable-next-line import/export
 	Listenable,
-	//  The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`.
-	// eslint-disable-next-line import/export
 	Off,
+	/* eslint-enable import/export */
 } from "@fluidframework/core-interfaces";
 
 export type { isFluidHandle } from "@fluidframework/runtime-utils";
 
 // Let the tree package manage its own API surface.
 // Note: this only surfaces the `@public, @beta and @alpha` API items from the tree package.
-// This reexports all non-conflicting APIs from `@fluidframework/tree`. The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`.
-// eslint-disable-next-line no-restricted-syntax, import/no-internal-modules, import/export
+/* eslint-disable-next-line
+	no-restricted-syntax,
+	import/no-internal-modules,
+	import/export -- This re-exports all non-conflicting APIs from `@fluidframework/tree`. In cases where * exports conflict with named exports, the named exports take precedence, triggering the `import/export` lint warning (which is intentionally disabled here). This approach ensures that the non-deprecated versions of the event APIs from `@fluidframework/core-interfaces`(provided as named exports) replace the deprecated ones from `@fluidframework/tree`. The preferred versions of the event APIs are those exported via `@fluidframework/core-interfaces`.
+	*/
 export * from "@fluidframework/tree/alpha";
 
 // End of basic public+beta+alpha exports - nothing above this line should
