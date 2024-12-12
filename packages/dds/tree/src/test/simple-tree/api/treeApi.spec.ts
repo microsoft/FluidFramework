@@ -46,6 +46,7 @@ import { testSimpleTrees } from "../../testTrees.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { TreeAlpha } from "../../../shared-tree/index.js";
+import { SchemaFactoryAlpha } from "../../schemaFactoryAlpha.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -1301,6 +1302,36 @@ describe("treeNodeApi", () => {
 					});
 				}
 			}
+
+			describe("with misaligned view and stored schema", () => {
+				it("does not preserve additional optional fields", () => {
+					// (because stored keys are not being used, see analogous test in roundtrip-stored)
+					const sf1 = new SchemaFactoryAlpha("com.example");
+					const sf2 = new SchemaFactoryAlpha("com.example");
+					class Point2D extends sf1.object(
+						"Point",
+						{
+							x: sf1.number,
+							y: sf1.number,
+						},
+						{ allowUnknownOptionalFields: true },
+					) {}
+					class Point3D extends sf2.object("Point", {
+						x: sf2.number,
+						y: sf2.number,
+						z: sf2.optional(sf2.number),
+					}) {}
+
+					const testTree = new Point3D({ x: 1, y: 2, z: 3 });
+					const exported = TreeAlpha.exportVerbose(testTree);
+
+					// TODO:AB#26720 The error here should be more clear.
+					assert.throws(
+						() => TreeAlpha.importVerbose(Point2D, exported),
+						/missing field info/,
+					);
+				});
+			});
 		});
 
 		describe("roundtrip-stored", () => {
@@ -1320,6 +1351,59 @@ describe("treeNodeApi", () => {
 					});
 				}
 			}
+
+			describe("with misaligned view and stored schema", () => {
+				const sf1 = new SchemaFactoryAlpha("com.example");
+				class Point3D extends sf1.object("Point", {
+					x: sf1.number,
+					y: sf1.number,
+					z: sf1.optional(sf1.number),
+				}) {}
+
+				it("preserves additional allowed optional fields", () => {
+					const sf2 = new SchemaFactoryAlpha("com.example");
+
+					class Point2D extends sf2.object(
+						"Point",
+						{
+							x: sf2.number,
+							y: sf2.number,
+						},
+						{ allowUnknownOptionalFields: true },
+					) {}
+					const testTree = new Point3D({ x: 1, y: 2, z: 3 });
+					const exported = TreeAlpha.exportVerbose(testTree, { useStoredKeys: true });
+					const imported = TreeAlpha.importVerbose(Point2D, exported, { useStoredKeys: true });
+					const exported2 = TreeAlpha.exportVerbose(imported, { useStoredKeys: true });
+					const imported2 = TreeAlpha.importVerbose(Point3D, exported2, {
+						useStoredKeys: true,
+					});
+					assert.deepEqual(exported, exported2);
+					assert.deepEqual(Object.keys(imported), ["x", "y"]);
+					assert.deepEqual(Object.keys(imported2), ["x", "y", "z"]);
+					assert.equal(imported2.z, 3);
+				});
+
+				it("errors on additional disallowed optional fields", () => {
+					const sf2 = new SchemaFactoryAlpha("com.example");
+
+					class Point2D extends sf2.object(
+						"Point",
+						{
+							x: sf2.number,
+							y: sf2.number,
+						},
+						{ allowUnknownOptionalFields: false },
+					) {}
+					const testTree = new Point3D({ x: 1, y: 2, z: 3 });
+					const exported = TreeAlpha.exportVerbose(testTree, { useStoredKeys: true });
+
+					assert.throws(
+						() => TreeAlpha.importVerbose(Point2D, exported, { useStoredKeys: true }),
+						/Tree does not conform to schema./,
+					);
+				});
+			});
 		});
 	});
 
