@@ -15,6 +15,7 @@ import {
 	takeAsync as take,
 	type SaveInfo,
 } from '@fluid-private/stochastic-test-utils';
+import { DisconnectReason } from '@fluidframework/container-definitions/internal';
 import { expect } from 'chai';
 
 import { fail } from '../../Common.js';
@@ -85,7 +86,7 @@ export async function performFuzzActions(
 			leave: async (state, operation) => {
 				const { index, isObserver } = operation;
 				const treeList = isObserver ? state.passiveCollaborators : state.activeCollaborators;
-				treeList[index].container.close();
+				treeList[index].container.close(DisconnectReason.Expected);
 				treeList.splice(index, 1);
 				return state;
 			},
