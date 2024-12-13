@@ -58,12 +58,12 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly crossFieldKeys: CrossFieldKeyTable;
 	/**
 	 * The number of constraint violations that apply to the input context of the changeset, i.e., before this change is applied.
-	 * If this count is > 0, it will prevent the changeset from being applied.
+	 * If this count is greater than 0, it will prevent the changeset from being applied.
 	 */
 	readonly constraintViolationCount?: number;
 	/**
 	 * The number of constraint violations that apply to the inverse of the changeset, i.e., when the inverse of this
-	 * changeset is applied. If this count is > 0, it will prevent the changeset from being reverted or undone.
+	 * changeset is applied. If this count is greater than 0, it will prevent the changeset from being reverted or undone.
 	 */
 	readonly inverseConstraintViolationCount?: number;
 	readonly builds?: ChangeAtomIdBTree<TreeChunk>;
