@@ -5,7 +5,7 @@
 
 import { browser } from "../Globals.js";
 
-import { formatDevtoolsScriptMessageForLogging } from "./Logging.js";
+import { runDevtoolsScript } from "./DevtoolsScriptContent.js";
 
 /**
  * This module is the extension's Devtools Script.
@@ -21,19 +21,5 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging.js";
  * see {@link https://developer.chrome.com/docs/extensions/mv3/devtools/#content-script-to-devtools | here}.
  */
 
-console.log(formatDevtoolsScriptMessageForLogging("Initializing Devtools Script."));
-
-// When our extension view is launched, open the root visualization view.
-browser.devtools.panels.create(
-	"Fluid Framework Devtools",
-	"icons/icon_32.png",
-	"devtools/rootView.html",
-	(panel) => {
-		panel.onShown.addListener((window) => {
-			console.log(formatDevtoolsScriptMessageForLogging("Devtools view shown."));
-		});
-		panel.onHidden.addListener(() => {
-			console.log(formatDevtoolsScriptMessageForLogging("Devtools view hidden."));
-		});
-	},
-);
+// Tests assume this just calls "runDevtoolsScript": any changes to the body of this module should be made to "run", or may require updates to the tests.
+runDevtoolsScript(browser);

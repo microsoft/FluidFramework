@@ -22,7 +22,7 @@ import { IAttributionCollection } from "./attributionCollection.js";
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { ISegmentLeaf } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
 import {
@@ -208,7 +208,7 @@ export class SnapshotV1 {
 		};
 
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
-		const pushSeg = (segment?: ISegment): void => {
+		const pushSeg = (segment?: ISegmentLeaf): void => {
 			if (segment) {
 				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
@@ -221,8 +221,8 @@ export class SnapshotV1 {
 			}
 		};
 
-		let prev: ISegment | undefined;
-		const extractSegment = (segment: ISegment): boolean => {
+		let prev: ISegmentLeaf | undefined;
+		const extractSegment = (segment: ISegmentLeaf): boolean => {
 			// Elide segments that do not need to be included in the snapshot.  A segment may be elided if
 			// either condition is true:
 			//   a) The segment has not yet been ACKed.  We do not need to snapshot unACKed segments because

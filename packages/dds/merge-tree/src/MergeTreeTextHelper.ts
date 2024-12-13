@@ -5,7 +5,7 @@
 
 import { IIntegerRange } from "./client.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { ISegmentLeaf } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
 import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
 
@@ -56,7 +56,7 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 }
 
 function gatherText(
-	segment: ISegment,
+	segment: ISegmentLeaf,
 	pos: number,
 	refSeq: number,
 	clientId: number,

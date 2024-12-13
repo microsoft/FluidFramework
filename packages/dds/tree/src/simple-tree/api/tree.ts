@@ -12,6 +12,10 @@ import type {
 	RevertibleFactory,
 } from "../../core/index.js";
 
+// This is referenced by doc comments.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+import type { TreeAlpha } from "../../shared-tree/index.js";
+
 import {
 	type ImplicitFieldSchema,
 	type InsertableField,
@@ -31,6 +35,7 @@ import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+
 /**
  * A tree from which a {@link TreeView} can be created.
  *
@@ -41,6 +46,7 @@ import { walkFieldSchema } from "../walkFieldSchema.js";
  * Maybe rename "exportJsonSchema" to align on "concise" terminology.
  * Ensure schema exporting APIs here align and reference APIs for exporting view schema to the same formats (which should include stored vs property key choice).
  * Make sure users of independentView can use these export APIs (maybe provide a reference back to the ViewableTree from the TreeView to accomplish that).
+ * Some of these APIs are on ISharedTree and can get moved here.
  * @system @sealed @public
  */
 export interface ViewableTree {
