@@ -5,7 +5,7 @@
 		"rootDir": ".",
 		"outDir": "./dist",
 		"paths": {
-			"@fluid-tools/api-markdown-documenter": ["../src"],
+			"@fluid-tools/api-markdown-documenter": [".."],
 		},
 		"noEmit": true,
 	},
