@@ -427,7 +427,7 @@ export interface ITrackingGroup {
     unlink(trackable: Trackable): boolean;
 }
 
-// @alpha @sealed
+// @alpha @sealed @deprecated
 export class LocalReferenceCollection {
     [Symbol.iterator](): {
         next(): IteratorResult<LocalReferencePosition>;

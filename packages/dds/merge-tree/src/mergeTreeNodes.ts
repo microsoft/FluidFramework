@@ -14,6 +14,7 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "./constants.js";
+// eslint-disable-next-line import/no-deprecated
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
@@ -63,6 +64,7 @@ export type ISegmentInternal = Omit<ISegment, keyof IRemovalInfo | keyof IMoveIn
 	Partial<IMergeNodeCommon> &
 	Partial<IRemovalInfo> &
 	Partial<IMoveInfo> & {
+		// eslint-disable-next-line import/no-deprecated
 		localRefs?: LocalReferenceCollection;
 	};
 
@@ -291,6 +293,7 @@ export interface ISegment {
 	 * Local references added to this segment.
 	 * @deprecated - This property will be removed in 2.20 with no replacement.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	localRefs?: LocalReferenceCollection;
 	/**
 	 * Properties that have been added to this segment via annotation.
@@ -625,6 +628,7 @@ export abstract class BaseSegment implements ISegment {
 	/**
 	 * @deprecated - This property will be removed in 2.20 with no replacement.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public localRefs?: LocalReferenceCollection;
 	public abstract readonly type: string;
 	/**
@@ -731,6 +735,7 @@ export abstract class BaseSegment implements ISegment {
 	public append(other: ISegment): void {
 		// Note: Must call 'appendLocalRefs' before modifying this segment's length as
 		//       'this.cachedLength' is used to adjust the offsets of the local refs.
+		// eslint-disable-next-line import/no-deprecated
 		LocalReferenceCollection.append(this, other);
 		if (this.attribution) {
 			assert(

@@ -34,7 +34,8 @@ The following properties are deprecated on ISegment and its implementations:
 - seq
 - wasMovedOnInsert
 
-Additionally, the following interfaces are also deprecated, and will become internal:
+Additionally, the following types are also deprecated, and will become internal:
 - IMergeNodeCommon
 - IMoveInfo
 - IRemovalInfo
+- LocalReferenceCollection

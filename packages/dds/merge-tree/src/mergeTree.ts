@@ -20,6 +20,7 @@ import {
 } from "./constants.js";
 import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	LocalReferenceCollection,
 	LocalReferencePosition,
 	SlidingPreference,
@@ -886,7 +887,9 @@ export class MergeTree {
 	 */
 	private slideAckedRemovedSegmentReferences(segments: ISegmentLeaf[]): void {
 		// References are slid in groups to preserve their order.
+		// eslint-disable-next-line import/no-deprecated
 		let currentForwardSlideGroup: LocalReferenceCollection[] = [];
+		// eslint-disable-next-line import/no-deprecated
 		let currentBackwardSlideGroup: LocalReferenceCollection[] = [];
 
 		let currentForwardMaybeEndpoint: "start" | "end" | undefined;
@@ -900,6 +903,7 @@ export class MergeTree {
 		const slideGroup = (
 			currentSlideDestination: ISegmentLeaf | undefined,
 			currentSlideIsForward: boolean | undefined,
+			// eslint-disable-next-line import/no-deprecated
 			currentSlideGroup: LocalReferenceCollection[],
 			pred: (ref: LocalReferencePosition) => boolean,
 			maybeEndpoint: "start" | "end" | undefined,
@@ -924,6 +928,7 @@ export class MergeTree {
 
 			if (maybeEndpoint) {
 				const endpoint = maybeEndpoint === "start" ? this.startOfTree : this.endOfTree;
+				// eslint-disable-next-line import/no-deprecated
 				const localRefs = LocalReferenceCollection.setOrGet(endpoint);
 				if (currentSlideIsForward) {
 					localRefs.addBeforeTombstones(...endpointRefsToAdd);
@@ -943,6 +948,7 @@ export class MergeTree {
 					}
 				}
 			} else {
+				// eslint-disable-next-line import/no-deprecated
 				const localRefs = LocalReferenceCollection.setOrGet(currentSlideDestination);
 				if (currentSlideIsForward) {
 					localRefs.addBeforeTombstones(...nonEndpointRefsToAdd);
@@ -956,11 +962,13 @@ export class MergeTree {
 			segment: ISegmentLeaf,
 			currentSlideDestination: ISegmentLeaf | undefined,
 			currentSlideIsForward: boolean | undefined,
+			// eslint-disable-next-line import/no-deprecated
 			currentSlideGroup: LocalReferenceCollection[],
 			pred: (ref: LocalReferencePosition) => boolean,
 			slidingPreference: SlidingPreference,
 			currentMaybeEndpoint: "start" | "end" | undefined,
 			reassign: (
+				// eslint-disable-next-line import/no-deprecated
 				localRefs: LocalReferenceCollection,
 				slideToSegment: ISegmentLeaf | undefined,
 				slideIsForward: boolean,
@@ -2520,6 +2528,7 @@ export class MergeTree {
 			segment = _segment;
 		}
 
+		// eslint-disable-next-line import/no-deprecated
 		const localRefs = LocalReferenceCollection.setOrGet(segment);
 
 		const segRef = localRefs.createLocalRef(

@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { LocalClientId } from "./constants.js";
+// eslint-disable-next-line import/no-deprecated
 import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
@@ -72,6 +73,7 @@ abstract class BaseEndpointSegment {
 
 	abstract get ordinal(): string;
 
+	// eslint-disable-next-line import/no-deprecated
 	localRefs?: LocalReferenceCollection;
 
 	/*
