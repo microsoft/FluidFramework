@@ -5,6 +5,7 @@
 
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import {
+	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	ContainerRuntime,
 	FluidDataStoreRegistry,
 	type IContainerRuntimeOptions,
@@ -97,11 +98,13 @@ export class BaseContainerRuntimeFactory
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
 	}
 
+	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
 		await this.containerInitializingFirstTime(runtime);
 		await this.containerHasInitialized(runtime);
 	}
 
+	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
 		await this.containerHasInitialized(runtime);
 	}
@@ -109,6 +112,7 @@ export class BaseContainerRuntimeFactory
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
+		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	): Promise<ContainerRuntime> {
 		const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
 		if (this.dependencyContainer) {
@@ -119,6 +123,7 @@ export class BaseContainerRuntimeFactory
 			scope.IFluidDependencySynthesizer = dc;
 		}
 
+		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 		return ContainerRuntime.loadRuntime({
 			context,
 			existing,
