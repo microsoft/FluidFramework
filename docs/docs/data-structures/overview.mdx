@@ -9,8 +9,7 @@ who've used common data structures before.
 
 :::note
 
-This article assumes that you are familiar with
-[Introducing distributed data structures](/docs/build/dds).
+This article assumes that you are familiar with [Introducing distributed data structures](../build/dds.mdx).
 
 :::
 
@@ -41,14 +40,14 @@ Below we've enumerated the data structures and described when they may be most u
 
 ## SharedTree
 
-[SharedTree](./tree) is a hierarchical data structure that looks and feels like simple JavaScript objects.
-It is a tree of data with complex nodes, including maps that work similarly to [SharedMap](#sharedmap), and several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](../concepts/handles).
+[SharedTree](./tree.mdx) is a hierarchical data structure that looks and feels like simple JavaScript objects.
+It is a tree of data with complex nodes, including maps that work similarly to [SharedMap](#sharedmap), and several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](../concepts/handles.mdx).
 
 This is the recommended data structure for any new development.
 
 ## SharedMap
 
-[SharedMap](./map) is a basic key-value data structure.
+[SharedMap](./map.mdx) is a basic key-value data structure.
 It is optimistic and uses a last-writer-wins merge policy.
 Although the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
 
@@ -62,7 +61,7 @@ Although the value of a pair can be a complex object, the value of any given pai
 
 ## SharedString
 
-The [SharedString](./string) DDS is used for unstructured text data that can be collaboratively edited. It is optimistic.
+The [SharedString](./string.md) DDS is used for unstructured text data that can be collaboratively edited. It is optimistic.
 
 ## Consensus data structures
 
@@ -85,7 +84,7 @@ Typical scenarios require the connected clients to "agree" on some course of act
 
 ## DDS Deprecation
 
-[SharedTree](./tree) is an incredibly flexible DDS that allows developers to represent a variety of data models (primitives, objects, lists, maps in any nested orientation).
+[SharedTree](./tree.mdx) is an incredibly flexible DDS that allows developers to represent a variety of data models (primitives, objects, lists, maps in any nested orientation).
 Due to this flexibility, it can also support features of various other DDSes in the Fluid repertoire.
 As SharedTree becomes more feature-rich, we plan to start reducing support for other DDSes that offer a sub-set of the functionality.
 This process takes the form of a deprecation journey for some of our existing DDSes, but rest assured, we will provide enough runway and support to migrate away from deprecated DDSes.
