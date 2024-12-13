@@ -35,6 +35,7 @@ WORKDIR /usr/src/server
 COPY package*.json ./
 COPY pnpm*.yaml ./
 COPY scripts/*.* ./scripts/
+COPY .npmrc ./
 COPY patches/*.* ./patches/
 
 COPY packages/gitresources/package*.json packages/gitresources/

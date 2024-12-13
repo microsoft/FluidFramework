@@ -15,6 +15,7 @@ WORKDIR /home/node/server
 COPY package*.json ./
 COPY pnpm*.yaml ./
 COPY scripts/*.* ./scripts/
+COPY .npmrc ./
 
 COPY packages/gitrest/package*.json packages/gitrest/
 COPY packages/gitrest-base/package*.json packages/gitrest-base/
