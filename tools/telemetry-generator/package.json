@@ -29,8 +29,8 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluidframework/core-interfaces": "^2.11.0",
 		"@fluid-internal/test-driver-definitions": "^2.11.0",
+		"@fluidframework/core-interfaces": "^2.11.0",
 		"@oclif/core": "^4.0.30",
 		"applicationinsights": "^2.4.1"
 	},
