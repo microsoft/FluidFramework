@@ -12,7 +12,9 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
 	IMergeNode,
+	// eslint-disable-next-line import/no-deprecated
 	IMoveInfo,
+	// eslint-disable-next-line import/no-deprecated
 	IRemovalInfo,
 	ISegmentLeaf,
 	compareNumbers,
@@ -639,7 +641,9 @@ export class PartialSequenceLengths {
 	private static insertSegment(
 		combinedPartialLengths: PartialSequenceLengths,
 		segment: ISegmentLeaf,
+		// eslint-disable-next-line import/no-deprecated
 		removalInfo?: IRemovalInfo,
+		// eslint-disable-next-line import/no-deprecated
 		moveInfo?: IMoveInfo,
 	): void {
 		const removalIsLocal =
