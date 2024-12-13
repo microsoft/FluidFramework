@@ -68,6 +68,7 @@ import {
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
+	type IContainerRuntimeOptionsInternal,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
@@ -1124,14 +1125,15 @@ describe("Runtime", () => {
 		describe("Unrecognized types not supported", () => {
 			let containerRuntime: ContainerRuntime;
 			beforeEach(async () => {
+				const runtimeOptions: IContainerRuntimeOptionsInternal = {
+					enableGroupedBatching: false,
+				};
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
-					runtimeOptions: {
-						enableGroupedBatching: false,
-					},
+					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
@@ -1416,7 +1418,7 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: false,
 				explicitSchemaControl: false,
-			} satisfies IContainerRuntimeOptions;
+			} satisfies IContainerRuntimeOptionsInternal;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
 			it("Container load stats", async () => {
@@ -2601,15 +2603,16 @@ describe("Runtime", () => {
 				runtimes = new Map<string, ContainerRuntime>();
 				logger = new MockLogger();
 				droppedSignals = [];
+				const runtimeOptions: IContainerRuntimeOptionsInternal = {
+					enableGroupedBatching: false,
+					flushMode: FlushMode.TurnBased,
+				};
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
-					runtimeOptions: {
-						enableGroupedBatching: false,
-						flushMode: FlushMode.TurnBased,
-					},
+					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 				// Assert that clientId is not undefined
@@ -3174,6 +3177,10 @@ describe("Runtime", () => {
 
 				beforeEach(async () => {
 					remoteLogger = new MockLogger();
+					const runtimeOptions: IContainerRuntimeOptionsInternal = {
+						enableGroupedBatching: false,
+						flushMode: FlushMode.TurnBased,
+					};
 					remoteContainerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext(
 							{ logger: remoteLogger },
@@ -3182,10 +3189,7 @@ describe("Runtime", () => {
 						registryEntries: [],
 						existing: false,
 						requestHandler: undefined,
-						runtimeOptions: {
-							enableGroupedBatching: false,
-							flushMode: FlushMode.TurnBased,
-						},
+						runtimeOptions,
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 					// Assert that clientId is not undefined

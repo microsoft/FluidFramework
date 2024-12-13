@@ -11,6 +11,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import {
 	toIDeltaManagerFull,
@@ -19,17 +20,19 @@ import {
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 
-const testContainerConfig: ITestContainerConfig = {
-	runtimeOptions: {
-		enableGroupedBatching: true,
-		summaryOptions: {
-			initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without thi
-			summaryConfigOverrides: {
-				...DefaultSummaryConfiguration,
-				...{ maxOps: 10, initialSummarizerDelayMs: 0, minIdleTime: 10, maxIdleTime: 10 },
-			},
+const runtimeOptions: IContainerRuntimeOptionsInternal = {
+	enableGroupedBatching: true,
+	summaryOptions: {
+		initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without thi
+		summaryConfigOverrides: {
+			...DefaultSummaryConfiguration,
+			...{ maxOps: 10, initialSummarizerDelayMs: 0, minIdleTime: 10, maxIdleTime: 10 },
 		},
 	},
+};
+
+const testContainerConfig: ITestContainerConfig = {
+	runtimeOptions,
 };
 
 type Patch<T, U> = Omit<T, keyof U> & U;
