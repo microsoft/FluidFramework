@@ -863,6 +863,9 @@ export async function loadContainerRuntime(
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
+ *
+ * @deprecated - To be removed from the Legacy-Alpha API in early 2025. Use the loadContainerRuntime function and interfaces IContainerRuntime / IRuntime instead.
+ *
  * @legacy
  * @alpha
  */
