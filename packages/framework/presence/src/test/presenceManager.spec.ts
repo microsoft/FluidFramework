@@ -133,6 +133,8 @@ describe("Presence", () => {
 					>;
 				}
 
+				// Simulates receiving join messages from the attendee signal information provided
+				// Returns a list of attendees that were announced via `attendeeJoined` event.
 				function simulateAttendeeJoin(
 					attendeeSignalInfo: IAttendeeSignalInfo[],
 				): ISessionClient[] {
