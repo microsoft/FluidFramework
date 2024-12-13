@@ -26,7 +26,7 @@ module.exports = {
 			// Rules only for test files
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
-				// Disabling for now
+				// TODO: AB#26776 - See if we can use imports instead. Disabling for now.
 				"@typescript-eslint/no-require-imports": "off",
 				"@typescript-eslint/no-var-requires": "off",
 				"import/no-internal-modules": "off",
