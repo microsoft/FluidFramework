@@ -531,17 +531,21 @@ extends:
                     echo "Size after: $sizeAfter";
                   workingDirectory: ${{ parameters.buildDirectory }}
 
-
-              - task: 1ES.PublishPipelineArtifact@1
-                inputs:
-                  targetPath: '${{ parameters.buildDirectory }}'
-                  artifact: buildOutput
-                  parallel: true
-                  parallelCount: 8
+              - script: |
+                  echo "Preparing nested lib/dist directories and their contents for publishing..."
+                  find '${{ parameters.buildDirectory }}' -type d \( -name "lib" -o -name "dist" \) > directories_to_publish.txt
+                  tar --create --gzip --file nested_lib_dist.tar.gz -T directories_to_publish.txt
+                displayName: Archive Nested Lib/Dist Directories and Their Contents
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
+                - output: pipelineArtifact
+                  displayName: Publish Artifact - nested_lib_dist
+                  targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist.tar.gz
+                  artifactName: nested_lib_dist
+                  publishLocation: pipeline
+
                 - ${{ if ne(parameters.taskPack, false) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - pack
@@ -591,12 +595,20 @@ extends:
                 readonly: true
             steps:
               # Setup
-              - checkout: none
+              - checkout: self
+                clean: true
+                lfs: '${{ parameters.checkoutSubmodules }}'
+                submodules: '${{ parameters.checkoutSubmodules }}'
 
               - task: DownloadPipelineArtifact@2
                 inputs:
-                  artifact: buildOutput
-                  targetPath: '${{ parameters.buildDirectory }}'
+                  artifact: nested_lib_dist
+                  targetPath: $(Build.SourcesDirectory)/nested_lib_dist.tar.gz
+
+              - script: |
+                  echo "Extracting nested lib/dist directories and their contents..."
+                  tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
+                displayName: Extract Nested Lib/Dist Directories and Their Contents
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
@@ -731,12 +743,20 @@ extends:
                   readonly: true
               steps:
                 # Setup
-                - checkout: none
+                - checkout: self
+                  clean: true
+                  lfs: '${{ parameters.checkoutSubmodules }}'
+                  submodules: '${{ parameters.checkoutSubmodules }}'
 
                 - task: DownloadPipelineArtifact@2
                   inputs:
-                    artifact: buildOutput
-                    targetPath: '${{ parameters.buildDirectory }}'
+                    artifact: nested_lib_dist
+                    targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist.tar.gz
+
+                - script: |
+                    echo "Extracting nested lib/dist directories and their contents..."
+                    tar --extract --gzip --file $(Build.ArtifactStagingDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
+                  displayName: Extract Nested Lib/Dist Directories and Their Contents
 
                 - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
