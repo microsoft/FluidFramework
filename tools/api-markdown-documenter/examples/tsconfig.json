@@ -3,7 +3,6 @@
 	"include": ["./*.ts"],
 	"compilerOptions": {
 		"rootDir": ".",
-		"outDir": "./dist",
 		"paths": {
 			"@fluid-tools/api-markdown-documenter": [".."],
 		},
