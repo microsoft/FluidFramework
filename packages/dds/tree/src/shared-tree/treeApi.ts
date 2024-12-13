@@ -477,7 +477,6 @@ function runTransactionInCheckout<TResult>(
 				unreachableCase(constraint.type);
 		}
 	}
-
 	let result: ReturnType<typeof transaction>;
 	try {
 		result = transaction();
@@ -489,10 +488,9 @@ function runTransactionInCheckout<TResult>(
 
 	if (result === rollback) {
 		checkout.transaction.abort();
-		return result;
+	} else {
+		checkout.transaction.commit();
 	}
-
-	checkout.transaction.commit();
 
 	return result;
 }
