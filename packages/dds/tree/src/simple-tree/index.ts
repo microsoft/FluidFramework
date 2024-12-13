@@ -35,6 +35,7 @@ export {
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
+	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
@@ -172,6 +173,7 @@ export {
 	type ObjectFromSchemaRecord,
 	type TreeObjectNode,
 	setField,
+	createUnknownOptionalFieldPolicy,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export {

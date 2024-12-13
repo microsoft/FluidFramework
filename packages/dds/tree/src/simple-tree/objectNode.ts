@@ -6,7 +6,7 @@
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { FieldKey } from "../core/index.js";
+import type { FieldKey, SchemaPolicy } from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexTreeField,
@@ -43,7 +43,11 @@ import {
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
 import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
-import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
+import {
+	isObjectNodeSchema,
+	type ObjectNodeSchema,
+	type ObjectNodeSchemaInternalData,
+} from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
 
@@ -332,6 +336,7 @@ export function objectSchema<
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
+	allowUnknownOptionalFields: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData {
@@ -372,6 +377,7 @@ export function objectSchema<
 			]),
 		);
 		public static readonly identifierFieldKeys: readonly FieldKey[] = identifierFieldKeys;
+		public static readonly allowUnknownOptionalFields: boolean = allowUnknownOptionalFields;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -514,4 +520,22 @@ function assertUniqueKeys<
 		}
 		derivedStoredKeys.add(storedKey);
 	}
+}
+
+/**
+ * Creates a policy for allowing unknown optional fields on an object node which delegates to the policy defined
+ * on the object node's internal schema data.
+ */
+export function createUnknownOptionalFieldPolicy(
+	schema: ImplicitFieldSchema,
+): SchemaPolicy["allowUnknownOptionalFields"] {
+	const context = getUnhydratedContext(schema);
+	return (identifier) => {
+		const storedSchema = context.schema.get(identifier);
+		return (
+			storedSchema !== undefined &&
+			isObjectNodeSchema(storedSchema) &&
+			storedSchema.allowUnknownOptionalFields
+		);
+	};
 }

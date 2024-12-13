@@ -58,6 +58,11 @@ export interface ObjectNodeSchemaInternalData {
 	 * Stored keys which hold identifiers.
 	 */
 	readonly identifierFieldKeys: readonly FieldKey[];
+
+	/**
+	 * Whether to tolerate (and preserve) additional unknown optional fields in instances of this object node.
+	 */
+	readonly allowUnknownOptionalFields: boolean;
 }
 
 export const ObjectNodeSchema = {
