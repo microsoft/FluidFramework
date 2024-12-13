@@ -100,7 +100,7 @@ steps:
       pnpm install -w @ff-internal/aria-logger;
 
 - task: Bash@3
-  displayName: 'Prepare telemetry-generator'
+  displayName: 'Install dependencies for telemetry-generator'
   retryCountOnTaskFailure: 1
   inputs:
     targetType: 'inline'
@@ -108,4 +108,10 @@ steps:
     script: |
       set -eu -o pipefail
       pnpm i;
-      npm run build:compile;
+
+- task: Npm@1
+  displayName: 'Build telemetry-generator'
+  inputs:
+    command: 'custom'
+    workingDir: ${{ parameters.pathToTelemetryGenerator }}
+    customCommand: run build:compile
