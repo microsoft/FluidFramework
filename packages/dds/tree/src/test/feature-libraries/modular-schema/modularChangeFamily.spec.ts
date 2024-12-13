@@ -1428,7 +1428,7 @@ describe("ModularChangeFamily", () => {
 				["with constraint", inlineRevision(rootChange3, tag1), context],
 				[
 					"with violated constraint",
-					inlineRevision({ ...buildChangeset([]), inputConstraintViolationCount: 42 }, tag1),
+					inlineRevision({ ...buildChangeset([]), constraintViolationCount: 42 }, tag1),
 					context,
 				],
 				[
@@ -1636,6 +1636,6 @@ function buildChangeset(edits: EditDescription[]): ModularChangeset {
 function buildExistsConstraint(path: UpPath): ModularChangeset {
 	const edits: ModularChangeset[] = [];
 	const editor = family.buildEditor((taggedChange) => edits.push(taggedChange.change));
-	editor.addInputNodeExistsConstraint(path, mintRevisionTag());
+	editor.addNodeExistsConstraint(path, mintRevisionTag());
 	return edits[0];
 }

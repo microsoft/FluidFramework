@@ -66,8 +66,7 @@ type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 export const EncodedNodeChangeset = Type.Object(
 	{
 		fieldChanges: Type.Optional(EncodedFieldChangeMap),
-		inputNodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
-		outputNodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
+		nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
 	},
 	noAdditionalProps,
 );

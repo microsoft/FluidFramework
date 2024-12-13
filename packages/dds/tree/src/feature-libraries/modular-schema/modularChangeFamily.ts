@@ -654,16 +654,16 @@ export class ModularChangeFamily
 		// change2: a node-exists constraint on that node.
 		// This is currently enforced by the fact that constraints which apply to the input context are included first in the composition.
 		// If that weren't the case, we would need to rebase the status of the constraint backward over the changes from change1.
-		const inputNodeExistsConstraint =
-			change1.inputNodeExistsConstraint ?? change2.inputNodeExistsConstraint;
-		const outputNodeExistsConstraint =
-			change1.outputNodeExistsConstraint ?? change2.outputNodeExistsConstraint;
+		const nodeExistsConstraint = change1.nodeExistsConstraint ?? change2.nodeExistsConstraint;
 
 		// WARNING: this composition logic assumes that we never make compositions of the following form:
-		// change1: an output-node-exists constraint on a node
+		// change1: an inverse-node-exists constraint on a node
 		// change2: a changeset that impacts the existence of that node
-		// This is currently enforced by the fact that constraints which apply to the output context are included last in the composition.
+		// This is currently enforced by the fact that constraints which apply to the inverse are included last in the composition.
 		// If that weren't the case, we would need to rebase the status of the constraint forward over the changes from change2.
+		const inverseNodeExistsConstraint =
+			change1.inverseNodeExistsConstraint ?? change2.inverseNodeExistsConstraint;
+
 		const composedFieldChanges = this.composeFieldMaps(
 			change1.fieldChanges,
 			change2.fieldChanges,
@@ -679,12 +679,12 @@ export class ModularChangeFamily
 			composedNodeChange.fieldChanges = composedFieldChanges;
 		}
 
-		if (inputNodeExistsConstraint !== undefined) {
-			composedNodeChange.inputNodeExistsConstraint = inputNodeExistsConstraint;
+		if (nodeExistsConstraint !== undefined) {
+			composedNodeChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
-		if (outputNodeExistsConstraint !== undefined) {
-			composedNodeChange.outputNodeExistsConstraint = outputNodeExistsConstraint;
+		if (inverseNodeExistsConstraint !== undefined) {
+			composedNodeChange.inverseNodeExistsConstraint = inverseNodeExistsConstraint;
 		}
 
 		return composedNodeChange;
@@ -795,7 +795,8 @@ export class ModularChangeFamily
 			crossFieldKeys,
 			maxId: genId.getMaxId(),
 			revisions: revInfos,
-			inputConstraintViolationCount: change.change.inputConstraintViolationCount,
+			constraintViolationCount: change.change.inverseConstraintViolationCount,
+			inverseConstraintViolationCount: change.change.constraintViolationCount,
 			destroys,
 		});
 	}
@@ -852,16 +853,17 @@ export class ModularChangeFamily
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
-		// If the node has an input constraint, it should be inverted to an output constraint. This ensure that if the
+		// If the node has a constraint, it should be inverted to an inverse constraint. This ensure that if the
 		// inverse is inverted again, the original input constraint will be restored.
-		if (change.inputNodeExistsConstraint !== undefined) {
-			inverse.outputNodeExistsConstraint = change.inputNodeExistsConstraint;
+		if (change.nodeExistsConstraint !== undefined) {
+			inverse.inverseNodeExistsConstraint = change.nodeExistsConstraint;
 		}
 
-		// The output constraint of a node is the constraint that should apply when the a change is undone. So, it
-		// should become the input constraint in the inverse.
-		if (change.outputNodeExistsConstraint !== undefined) {
-			inverse.inputNodeExistsConstraint = change.outputNodeExistsConstraint;
+		// The inverse constraint of a node is the constraint that should apply when the a change is inverted. So, it
+		// should become the constraint in the inverse. If this constraint is violated when applying the inverse,
+		// it will be discarded.
+		if (change.inverseNodeExistsConstraint !== undefined) {
+			inverse.nodeExistsConstraint = change.inverseNodeExistsConstraint;
 		}
 
 		if (change.fieldChanges !== undefined) {
@@ -933,16 +935,16 @@ export class ModularChangeFamily
 			genId,
 		);
 
-		const inputConstraintState = newConstraintState(change.inputConstraintViolationCount ?? 0);
-		const outputConstraintState = newConstraintState(
-			change.outputConstraintViolationCount ?? 0,
+		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
+		const inverseConstraintState = newConstraintState(
+			change.inverseConstraintViolationCount ?? 0,
 		);
 		this.updateConstraintsForFields(
 			rebasedFields,
 			NodeAttachState.Attached,
 			NodeAttachState.Attached,
-			inputConstraintState,
-			outputConstraintState,
+			constraintState,
+			inverseConstraintState,
 			rebasedNodes,
 		);
 
@@ -954,8 +956,8 @@ export class ModularChangeFamily
 			crossFieldKeys: crossFieldTable.rebasedCrossFieldKeys,
 			maxId: idState.maxId,
 			revisions: change.revisions,
-			inputConstraintViolationCount: inputConstraintState.violationCount,
-			outputConstraintViolationCount: outputConstraintState.violationCount,
+			constraintViolationCount: constraintState.violationCount,
+			inverseConstraintViolationCount: inverseConstraintState.violationCount,
 			builds: change.builds,
 			destroys: change.destroys,
 			refreshers: change.refreshers,
@@ -1391,12 +1393,12 @@ export class ModularChangeFamily
 			rebasedChange.fieldChanges = fieldChanges;
 		}
 
-		if (change?.inputNodeExistsConstraint !== undefined) {
-			rebasedChange.inputNodeExistsConstraint = change.inputNodeExistsConstraint;
+		if (change?.nodeExistsConstraint !== undefined) {
+			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
 		}
 
-		if (change?.outputNodeExistsConstraint !== undefined) {
-			rebasedChange.outputNodeExistsConstraint = change.outputNodeExistsConstraint;
+		if (change?.inverseNodeExistsConstraint !== undefined) {
+			rebasedChange.inverseNodeExistsConstraint = change.inverseNodeExistsConstraint;
 		}
 
 		setInChangeAtomIdMap(crossFieldTable.baseToRebasedNodeId, baseId, newId);
@@ -1407,8 +1409,8 @@ export class ModularChangeFamily
 		fields: FieldChangeMap,
 		parentInputAttachState: NodeAttachState,
 		parentOutputAttachState: NodeAttachState,
-		inputConstraintState: ConstraintState,
-		outputConstraintState: ConstraintState,
+		constraintState: ConstraintState,
+		inverseConstraintState: ConstraintState,
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
 	): void {
 		for (const field of fields.values()) {
@@ -1429,8 +1431,8 @@ export class ModularChangeFamily
 					inputAttachState,
 					outputAttachState,
 					nodes,
-					inputConstraintState,
-					outputConstraintState,
+					constraintState,
+					inverseConstraintState,
 				);
 			}
 		}
@@ -1441,28 +1443,28 @@ export class ModularChangeFamily
 		inputAttachState: NodeAttachState,
 		outputAttachState: NodeAttachState,
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
-		inputConstraintState: ConstraintState,
-		outputConstraintState: ConstraintState,
+		constraintState: ConstraintState,
+		inverseConstraintState: ConstraintState,
 	): void {
 		const node = nodes.get([nodeId.revision, nodeId.localId]) ?? fail("Unknown node ID");
-		if (node.inputNodeExistsConstraint !== undefined) {
+		if (node.nodeExistsConstraint !== undefined) {
 			const isNowViolated = inputAttachState === NodeAttachState.Detached;
-			if (node.inputNodeExistsConstraint.violated !== isNowViolated) {
-				node.inputNodeExistsConstraint = {
-					...node.inputNodeExistsConstraint,
+			if (node.nodeExistsConstraint.violated !== isNowViolated) {
+				node.nodeExistsConstraint = {
+					...node.nodeExistsConstraint,
 					violated: isNowViolated,
 				};
-				inputConstraintState.violationCount += isNowViolated ? 1 : -1;
+				constraintState.violationCount += isNowViolated ? 1 : -1;
 			}
 		}
-		if (node.outputNodeExistsConstraint !== undefined) {
+		if (node.inverseNodeExistsConstraint !== undefined) {
 			const isNowViolated = outputAttachState === NodeAttachState.Detached;
-			if (node.outputNodeExistsConstraint.violated !== isNowViolated) {
-				node.outputNodeExistsConstraint = {
-					...node.outputNodeExistsConstraint,
+			if (node.inverseNodeExistsConstraint.violated !== isNowViolated) {
+				node.inverseNodeExistsConstraint = {
+					...node.inverseNodeExistsConstraint,
 					violated: isNowViolated,
 				};
-				outputConstraintState.violationCount += isNowViolated ? 1 : -1;
+				inverseConstraintState.violationCount += isNowViolated ? 1 : -1;
 			}
 		}
 
@@ -1471,8 +1473,8 @@ export class ModularChangeFamily
 				node.fieldChanges,
 				inputAttachState,
 				outputAttachState,
-				inputConstraintState,
-				outputConstraintState,
+				constraintState,
+				inverseConstraintState,
 				nodes,
 			);
 		}
@@ -1973,7 +1975,8 @@ export function updateRefreshers(
 		nodeChanges,
 		maxId,
 		revisions,
-		inputConstraintViolationCount,
+		constraintViolationCount,
+		inverseConstraintViolationCount,
 		builds,
 		destroys,
 	} = change;
@@ -1986,7 +1989,8 @@ export function updateRefreshers(
 		crossFieldKeys: change.crossFieldKeys,
 		maxId: maxId as number,
 		revisions,
-		inputConstraintViolationCount,
+		constraintViolationCount,
+		inverseConstraintViolationCount,
 		builds,
 		destroys,
 		refreshers,
@@ -2130,8 +2134,8 @@ export function rebaseRevisionMetadataFromInfo(
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 	return (
 		change.fieldChanges === undefined &&
-		change.inputNodeExistsConstraint === undefined &&
-		change.outputNodeExistsConstraint === undefined
+		change.nodeExistsConstraint === undefined &&
+		change.inverseNodeExistsConstraint === undefined
 	);
 }
 
@@ -2574,8 +2578,8 @@ function makeModularChangeset(
 		crossFieldKeys?: CrossFieldKeyTable;
 		maxId: number;
 		revisions?: readonly RevisionInfo[];
-		inputConstraintViolationCount?: number;
-		outputConstraintViolationCount?: number;
+		constraintViolationCount?: number;
+		inverseConstraintViolationCount?: number;
 		builds?: ChangeAtomIdBTree<TreeChunk>;
 		destroys?: ChangeAtomIdBTree<number>;
 		refreshers?: ChangeAtomIdBTree<TreeChunk>;
@@ -2597,17 +2601,14 @@ function makeModularChangeset(
 	if (props.maxId >= 0) {
 		changeset.maxId = brand(props.maxId);
 	}
-	if (
-		props.inputConstraintViolationCount !== undefined &&
-		props.inputConstraintViolationCount > 0
-	) {
-		changeset.inputConstraintViolationCount = props.inputConstraintViolationCount;
+	if (props.constraintViolationCount !== undefined && props.constraintViolationCount > 0) {
+		changeset.constraintViolationCount = props.constraintViolationCount;
 	}
 	if (
-		props.outputConstraintViolationCount !== undefined &&
-		props.outputConstraintViolationCount > 0
+		props.inverseConstraintViolationCount !== undefined &&
+		props.inverseConstraintViolationCount > 0
 	) {
-		changeset.outputConstraintViolationCount = props.outputConstraintViolationCount;
+		changeset.inverseConstraintViolationCount = props.inverseConstraintViolationCount;
 	}
 	if (props.builds !== undefined && props.builds.size > 0) {
 		changeset.builds = props.builds;
@@ -2763,9 +2764,9 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		return brand(this.idAllocator.allocate(count));
 	}
 
-	public addInputNodeExistsConstraint(path: UpPath, revision: RevisionTag): void {
+	public addNodeExistsConstraint(path: UpPath, revision: RevisionTag): void {
 		const nodeChange: NodeChangeset = {
-			inputNodeExistsConstraint: { violated: false },
+			nodeExistsConstraint: { violated: false },
 		};
 
 		this.applyChange(
@@ -2784,9 +2785,9 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		);
 	}
 
-	public addOutputNodeExistsConstraint(path: UpPath, revision: RevisionTag): void {
+	public addInverseNodeExistsConstraint(path: UpPath, revision: RevisionTag): void {
 		const nodeChange: NodeChangeset = {
-			outputNodeExistsConstraint: { violated: false },
+			inverseNodeExistsConstraint: { violated: false },
 		};
 
 		this.applyChange(
@@ -3201,7 +3202,7 @@ function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>)
 }
 
 function hasConflicts(change: ModularChangeset): boolean {
-	return (change.inputConstraintViolationCount ?? 0) > 0;
+	return (change.constraintViolationCount ?? 0) > 0;
 }
 
 export function newCrossFieldKeyTable(): CrossFieldKeyTable {

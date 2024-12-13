@@ -58,12 +58,14 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly crossFieldKeys: CrossFieldKeyTable;
 	/**
 	 * The number of constraint violations that apply to the input context of the changeset, i.e., before this change is applied.
+	 * If this count is > 0, it will prevent the changeset from being applied.
 	 */
-	readonly inputConstraintViolationCount?: number;
+	readonly constraintViolationCount?: number;
 	/**
-	 * The number of constraint violations that apply to the output context of the changeset, i.e., after this change is applied.
+	 * The number of constraint violations that apply to the inverse of the changeset, i.e., when the inverse of this
+	 * changeset is applied. If this count is > 0, it will prevent the changeset from being reverted or undone.
 	 */
-	readonly outputConstraintViolationCount?: number;
+	readonly inverseConstraintViolationCount?: number;
 	readonly builds?: ChangeAtomIdBTree<TreeChunk>;
 	readonly destroys?: ChangeAtomIdBTree<number>;
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
@@ -104,8 +106,10 @@ export interface NodeExistsConstraint {
  * Changeset for a subtree rooted at a specific node.
  */
 export interface NodeChangeset extends HasFieldChanges {
-	inputNodeExistsConstraint?: NodeExistsConstraint;
-	outputNodeExistsConstraint?: NodeExistsConstraint;
+	/** Keeps track of whether node exists constraint has been violated by this change */
+	nodeExistsConstraint?: NodeExistsConstraint;
+	/** Keeps track of whether node exists constraint will be violated when this change is inverted */
+	inverseNodeExistsConstraint?: NodeExistsConstraint;
 }
 
 export type NodeId = ChangeAtomId;

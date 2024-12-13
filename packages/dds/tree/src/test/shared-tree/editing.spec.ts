@@ -2690,7 +2690,7 @@ describe("Editing", () => {
 				tree2.transaction.start();
 				// Put existence constraint on child field of a
 				// Constraint should be not be violated after undo
-				tree2.editor.addInputNodeExistsConstraint({
+				tree2.editor.addNodeExistsConstraint({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
@@ -2738,7 +2738,7 @@ describe("Editing", () => {
 				tree2.transaction.start();
 
 				// Put existence constraint on child of A
-				tree2.editor.addInputNodeExistsConstraint({
+				tree2.editor.addNodeExistsConstraint({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
@@ -2779,7 +2779,7 @@ describe("Editing", () => {
 				};
 
 				// Put an existence constraint on D
-				tree2.editor.addInputNodeExistsConstraint(dPath);
+				tree2.editor.addNodeExistsConstraint(dPath);
 				const tree2RootSequence = tree2.editor.sequenceField(rootField);
 				// Should not be inserted because D has been concurrently removed
 				tree2RootSequence.insert(
@@ -2826,7 +2826,7 @@ describe("Editing", () => {
 				optional.set(undefined, false);
 
 				tree2.transaction.start();
-				tree2.editor.addInputNodeExistsConstraint({
+				tree2.editor.addNodeExistsConstraint({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
@@ -2863,7 +2863,7 @@ describe("Editing", () => {
 				undoStack.pop()?.revert();
 
 				tree2.transaction.start();
-				tree2.editor.addInputNodeExistsConstraint({
+				tree2.editor.addNodeExistsConstraint({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
@@ -2895,7 +2895,7 @@ describe("Editing", () => {
 				// Insert "b" after "a" with constraint that "a" exists.
 				// State should be: ["a", "b"]
 				tree.transaction.start();
-				tree.editor.addInputNodeExistsConstraint(rootNode);
+				tree.editor.addNodeExistsConstraint(rootNode);
 				const rootSequence = tree.editor.sequenceField(rootField);
 				rootSequence.insert(
 					1,
@@ -2933,7 +2933,7 @@ describe("Editing", () => {
 					cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "a" }),
 				);
 
-				tree.editor.addInputNodeExistsConstraint({
+				tree.editor.addNodeExistsConstraint({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
@@ -2978,7 +2978,7 @@ describe("Editing", () => {
 				optional.set(undefined, false);
 
 				tree2.transaction.start();
-				tree2.editor.addInputNodeExistsConstraint({
+				tree2.editor.addNodeExistsConstraint({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
@@ -3026,7 +3026,7 @@ describe("Editing", () => {
 					cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "a" }),
 				);
 
-				tree2.editor.addInputNodeExistsConstraint({
+				tree2.editor.addNodeExistsConstraint({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
@@ -3076,7 +3076,7 @@ describe("Editing", () => {
 				tree.transaction.commit();
 
 				tree2.transaction.start();
-				tree2.editor.addInputNodeExistsConstraint({
+				tree2.editor.addNodeExistsConstraint({
 					parent: firstPath,
 					parentField: brand("foo"),
 					parentIndex: 0,
@@ -3127,7 +3127,7 @@ describe("Editing", () => {
 				// Put a constraint on "a" existing and insert "b" if it does
 				// a's ancestor will be removed so this insert should be dropped
 				tree2.transaction.start();
-				tree2.editor.addInputNodeExistsConstraint({
+				tree2.editor.addNodeExistsConstraint({
 					parent: firstPath,
 					parentField: brand("foo"),
 					parentIndex: 0,
@@ -3146,65 +3146,114 @@ describe("Editing", () => {
 			});
 		});
 
-		describe("Revert preconditions", () => {
-			it("revert constraint not violated by interim change", () => {
+		describe("Inverse preconditions", () => {
+			it("inverse constraint not violated by interim change", () => {
 				const tree = makeTreeFromJson({ foo: "A" });
 				const stack = createTestUndoRedoStacks(tree.events);
 
+				// Make transaction on a branch that does the following:
+				// 1. Changes value of "foo" to "B".
+				// 2. Adds inverse constraint on existence of node "B" on field "foo".
 				tree.transaction.start();
 				tree.editor
 					.valueField({ parent: rootNode, field: brand("foo") })
 					.set(singleJsonCursor("B"));
-				tree.editor.addUndoNodeExistsConstraint({
+				tree.editor.addInverseNodeExistsConstraint({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
 				});
 				tree.transaction.commit();
-
 				expectJsonTree(tree, [{ foo: "B" }]);
 
-				const changed42To43 = stack.undoStack[0] ?? fail("Missing undo");
+				const changedFooAtoB = stack.undoStack[0] ?? fail("Missing undo");
 
-				// This change should not violate the constraint in the revert
+				// This change should not violate the constraint in the inverse because it is changing
+				// a different node on filed "bar".
 				tree.editor
 					.optionalField({ parent: rootNode, field: brand("bar") })
 					.set(singleJsonCursor("C"), true);
 
 				// This revert should apply since its constraint has not been violated
-				changed42To43.revert();
+				changedFooAtoB.revert();
 				expectJsonTree(tree, [{ foo: "A", bar: "C" }]);
 
 				stack.unsubscribe();
 			});
 
-			it("revert constraint violated by interim change", () => {
+			it("inverse constraint violated by interim change", () => {
 				const tree = makeTreeFromJson({ foo: "A" });
 				const stack = createTestUndoRedoStacks(tree.events);
 
+				// Make transaction on a branch that does the following:
+				// 1. Changes value of "foo" to "B".
+				// 2. Adds inverse constraint on existence of node "B" on field "foo".
 				tree.transaction.start();
 				tree.editor
 					.valueField({ parent: rootNode, field: brand("foo") })
 					.set(singleJsonCursor("B"));
-				tree.editor.addUndoNodeExistsConstraint({
+				tree.editor.addInverseNodeExistsConstraint({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
 				});
 				tree.transaction.commit();
-
 				expectJsonTree(tree, [{ foo: "B" }]);
 
-				const changed42To43 = stack.undoStack[0] ?? fail("Missing undo");
+				const changedFooAtoB = stack.undoStack[0] ?? fail("Missing undo");
 
-				// This change should violate the constraint in the revert
+				// This change should violate the inverse constraint because it changes the
+				// node "B" to "C" on field "foo".
 				tree.editor
 					.valueField({ parent: rootNode, field: brand("foo") })
 					.set(singleJsonCursor("C"));
 
-				// This revert should do nothing since its constraint has been violated
-				changed42To43.revert();
+				// This revert should do nothing since its constraint has been violated.
+				changedFooAtoB.revert();
 				expectJsonTree(tree, [{ foo: "C" }]);
+
+				stack.unsubscribe();
+			});
+
+			it("inverse constraint violated by rebased changes", () => {
+				const tree = makeTreeFromJson({ foo: "A", bar: "old" });
+				const branch = tree.branch();
+
+				// Make transaction on a branch that does the following:
+				// 1. Changes value of "bar" to "new".
+				// 2. Adds inverse constraint on existence of node "A" on field "foo".
+				branch.transaction.start();
+				branch.editor
+					.valueField({ parent: rootNode, field: brand("bar") })
+					.set(singleJsonCursor("new"));
+				branch.editor.addInverseNodeExistsConstraint({
+					parent: rootNode,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				branch.transaction.commit();
+				expectJsonTree(branch, [{ foo: "A", bar: "new" }]);
+
+				// This change replaces the node "A" on field "foo" to "C" which would violate
+				// the undo constraint on the branch transaction when the branch is rebased into tree.
+				tree.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(singleJsonCursor("C"));
+				branch.rebaseOnto(tree);
+
+				const stack = createTestUndoRedoStacks(tree.events);
+				// This is done after the rebase so that the rebased transaction is at the tip of the branch
+				// and doesn't go through any more rebases. This validates the scenario where an inverse is
+				// directly applied without any rebases.
+				tree.merge(branch);
+				const changedBarOldToNew = stack.undoStack[0] ?? fail("Missing undo");
+
+				expectJsonTree(tree, [{ foo: "C", bar: "new" }]);
+
+				// The inverse constraint will be violated and so the revert will not be applied, leaving the value
+				// of "bar" at "new"
+				changedBarOldToNew.revert();
+				expectJsonTree(tree, [{ foo: "C", bar: "new" }]);
 
 				stack.unsubscribe();
 			});
@@ -3219,7 +3268,7 @@ describe("Editing", () => {
 
 			// This transaction will be conflicted after rebasing since the previous edit deletes the constrained node.
 			tree2.transaction.start();
-			tree2.editor.addInputNodeExistsConstraint({
+			tree2.editor.addNodeExistsConstraint({
 				parent: undefined,
 				parentField: rootFieldKey,
 				parentIndex: 0,
