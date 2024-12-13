@@ -97,24 +97,10 @@ describe("Presence", () => {
 				// initialization, but should go unnoticed by the presence manager
 				// until there is a join signal related to it.
 				const rejoinAttendeeConnectionId = "client7";
+				let initialAttendeeSignal: ReturnType<typeof generateBasicClientJoin>;
+				let rejoinAttendeeSignal: ReturnType<typeof generateBasicClientJoin>;
 
-				const initialAttendeeSignal = generateBasicClientJoin(clock.now - 50, {
-					averageLatency: 50,
-					clientSessionId: attendeeSessionId,
-					clientConnectionId: initialAttendeeConnectionId,
-					updateProviders: ["client2"],
-				});
-
-				const rejoinAttendeeSignal = generateBasicClientJoin(clock.now - 20, {
-					averageLatency: 20,
-					clientSessionId: attendeeSessionId, // Same session id
-					clientConnectionId: rejoinAttendeeConnectionId, // Different connection id
-					connectionOrder: 1,
-					updateProviders: ["client2"],
-					priorClientToSessionId:
-						initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
-				});
-
+				// Processes join signals and returns the attendees that were announced via `attendeeJoined`
 				function processJoinSignals(
 					signals: ReturnType<typeof generateBasicClientJoin>[],
 				): ISessionClient[] {
@@ -158,6 +144,23 @@ describe("Presence", () => {
 				beforeEach(() => {
 					// Ignore submitted signals
 					runtime.submitSignal = () => {};
+
+					initialAttendeeSignal = generateBasicClientJoin(clock.now - 50, {
+						averageLatency: 50,
+						clientSessionId: attendeeSessionId,
+						clientConnectionId: initialAttendeeConnectionId,
+						updateProviders: ["client2"],
+					});
+
+					rejoinAttendeeSignal = generateBasicClientJoin(clock.now - 20, {
+						averageLatency: 20,
+						clientSessionId: attendeeSessionId, // Same session id
+						clientConnectionId: rejoinAttendeeConnectionId, // Different connection id
+						connectionOrder: 1,
+						updateProviders: ["client2"],
+						priorClientToSessionId:
+							initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
+					});
 				});
 
 				it("is not announced via `attendeeDisconnected` when unknown connection is removed", () => {
@@ -393,6 +396,7 @@ describe("Presence", () => {
 							verifyAttendee(
 								disconnectedAttendee,
 								initialAttendeeConnectionId,
+								attendeeSessionId,
 								SessionClientStatus.Disconnected,
 							);
 						});
