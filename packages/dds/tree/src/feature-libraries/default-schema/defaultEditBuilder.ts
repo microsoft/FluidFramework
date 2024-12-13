@@ -164,13 +164,13 @@ export interface IDefaultEditBuilder {
 	 * Add a constraint that the node at the given path must exist.
 	 * @param path - The path to the node that must exist.
 	 */
-	addInputNodeExistsConstraint(path: UpPath): void;
+	addNodeExistsConstraint(path: UpPath): void;
 
 	/**
-	 * Add a constraint that the node at the given path must exist when undoing a change.
-	 * @param path - The path to the node that must exist when undoing a change.
+	 * Add a constraint that the node at the given path must exist when inverting a change.
+	 * @param path - The path to the node that must exist when inverting a change.
 	 */
-	addUndoNodeExistsConstraint(path: UpPath): void;
+	addInverseNodeExistsConstraint(path: UpPath): void;
 }
 
 /**
@@ -196,12 +196,12 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		this.modularBuilder.exitTransaction();
 	}
 
-	public addInputNodeExistsConstraint(path: UpPath): void {
-		this.modularBuilder.addInputNodeExistsConstraint(path, this.mintRevisionTag());
+	public addNodeExistsConstraint(path: UpPath): void {
+		this.modularBuilder.addNodeExistsConstraint(path, this.mintRevisionTag());
 	}
 
-	public addUndoNodeExistsConstraint(path: UpPath): void {
-		this.modularBuilder.addOutputNodeExistsConstraint(path, this.mintRevisionTag());
+	public addInverseNodeExistsConstraint(path: UpPath): void {
+		this.modularBuilder.addInverseNodeExistsConstraint(path, this.mintRevisionTag());
 	}
 
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder<ITreeCursorSynchronous> {
