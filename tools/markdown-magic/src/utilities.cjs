@@ -45,7 +45,7 @@ const readTemplate = (templateFileName, headingOffset = 0) => {
  * @param {string} filePath - Path to the file being read.
  * @param {number | undefined} startLine - (optional) First line from the target file to be embedded (inclusive).
  * Default: Start from the first line of the file..
- * Constraints are the same as those for the `end` parameter to
+ * Constraints are the same as those for the `start` parameter to
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice#parameters | Array.slice}
  * @param {number | undefined} endLine - (optional) Line of the target file at which to end the embedded range (exclusive).
  * Default: Include through the last line of the file.
