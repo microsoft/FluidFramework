@@ -34,7 +34,7 @@ The following properties are deprecated on ISegment and its implementations:
 - seq
 - wasMovedOnInsert
 
-Additionally, the following types are also deprecated, and will become internal:
+Additionally, the following types are also deprecated, and will become internal (i.e. users of the Fluid Framework will not have access to them):
 - IMergeNodeCommon
 - IMoveInfo
 - IRemovalInfo
