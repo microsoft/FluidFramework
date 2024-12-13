@@ -44,11 +44,18 @@ export {
 } from "./treeApi.js";
 
 export {
+	type AbortTransaction,
+	type AbortTransactionExt,
+	type ContinueTransaction,
+	type ContinueTransactionExt,
 	type TransactionConstraint,
 	type NodeInDocumentConstraint,
 	type RunTransactionParams,
-	type RunTransactionResult,
-	type TransactionResult,
+	type RunTransactionParamsExt,
+	type RunTransactionSucceeded,
+	type RunTransactionSucceededExt,
+	type RunTransactionFailed,
+	type RunTransactionFailedExt,
 	rollback,
 } from "./transactionTypes.js";
 

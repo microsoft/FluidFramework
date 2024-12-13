@@ -34,34 +34,96 @@ export interface NodeInDocumentConstraint {
 }
 
 /**
- * The status of a transaction on the tree view.
+ * The successful outcome of a transaction, i.e. the transaction should continue.
  * @alpha
  */
-export interface TransactionResult<TResult> {
+export interface ContinueTransaction {
+	/** The successful outcome indicating the rest of the transaction should continue */
+	readonly result: "continue";
 	/**
-	 * The value returned by the inner `transaction` function or the special {@link RunTransaction.rollback | rollback value}
-	 * (`Tree.runTransaction.rollback`) which means that the transaction was aborted.
+	 * An optional list of {@link TransactionConstraint | constraints} that are checked just before undoing the
+	 * transaction.
+	 * If any of the constraints are not met after the transaction delegate is called, it will throw an error.
+	 * If any of the constraints are not met after the inverse of the transaction has been ordered by the service,
+	 * it will be rolled back on this client and ignored by all other clients.
 	 */
-	readonly result: TResult | typeof rollback;
-
 	readonly undoPreconditions?: readonly TransactionConstraint[];
+}
+/**
+ * The failed outcome of a transaction, i.e. the transaction should abort.
+ * @alpha
+ */
+export interface AbortTransaction {
+	/** The failed outcome indicating the rest of the transaction should abort and any changes should be rolled back */
+	readonly result: "abort";
+}
+
+/**
+ * The extended successful outcome of a transaction, i.e. the transaction should continue.
+ * @alpha
+ */
+export interface ContinueTransactionExt<TSuccessValue> extends ContinueTransaction {
+	/** The user defined return value on successfully completing the transaction */
+	readonly returnValue: TSuccessValue;
+}
+/**
+ * The extended failed outcome of a transaction, i.e. the transaction should abort.
+ * @alpha
+ */
+export interface AbortTransactionExt<TFailureValue> extends AbortTransaction {
+	/** The user defined return value on failing the transaction */
+	readonly returnValue: TFailureValue;
+}
+
+/**
+ * The successful return value of the runTransaction API, i.e., the transaction succeeded.
+ * @alpha
+ */
+export interface RunTransactionSucceeded {
+	/** Property indicating that the transaction was successful */
+	readonly success: true;
+}
+/**
+ * The failed return value of the runTransaction API, i.e., the transaction failed.
+ * @alpha
+ */
+export interface RunTransactionFailed {
+	/** Property indicating that the transaction failed */
+	readonly success: false;
+}
+
+/**
+ * The extended successful return value of the runTransaction API, i.e., the transaction succeeded.
+ * @alpha
+ */
+export interface RunTransactionSucceededExt<TSuccessValue> extends RunTransactionSucceeded {
+	/** The user defined return value on successfully completing the transaction */
+	readonly returnValue: TSuccessValue;
+}
+/**
+ * The extended failed return value of the runTransaction API, i.e., the transaction failed.
+ * @alpha
+ */
+export interface RunTransactionFailedExt<TFailureValue> extends RunTransactionFailed {
+	/** The user defined return value on failing the transaction */
+	readonly returnValue: TFailureValue;
 }
 
 /**
  * Parameters for running a transaction on the tree view that applies one or more edits to the tree as a single atomic unit.
  * @alpha
  */
-export interface RunTransactionParams<TResult> {
+export interface RunTransactionParams {
 	/**
 	 * The function to run as the body of the transaction.
 	 * @returns The result of the transaction. The user provided result (TResult) can either be returned directly or
-	 * as part of the `TransactionResult` object which can include other properties.
+	 * as part of the `TransactionOutcome` object which can include other properties.
 	 * It could return nothing (TResult == void) to indicate a successful transaction.
 	 *
 	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value}
 	 * (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
 	 */
-	readonly transaction: () => TransactionResult<TResult> | TResult;
+	readonly transaction: () => ContinueTransaction | AbortTransaction;
 	/**
 	 * An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
 	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
@@ -72,13 +134,27 @@ export interface RunTransactionParams<TResult> {
 }
 
 /**
- * The status of a transaction on the tree view.
+ * Parameters for running a transaction on the tree view that applies one or more edits to the tree as a single atomic unit.
  * @alpha
  */
-export interface RunTransactionResult<TResult> {
+export interface RunTransactionParamsExt<TSuccessValue, TFailureValue> {
 	/**
-	 * The value returned by the inner `transaction` function or the special {@link RunTransaction.rollback | rollback value}
-	 * (`Tree.runTransaction.rollback`) which means that the transaction was aborted.
+	 * The function to run as the body of the transaction.
+	 * @returns The result of the transaction. The user provided result (TResult) can either be returned directly or
+	 * as part of the `TransactionOutcome` object which can include other properties.
+	 * It could return nothing (TResult == void) to indicate a successful transaction.
+	 *
+	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value}
+	 * (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
 	 */
-	readonly result: TResult | typeof rollback | undefined;
+	readonly transaction: () =>
+		| ContinueTransactionExt<TSuccessValue>
+		| AbortTransactionExt<TFailureValue>;
+	/**
+	 * An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
+	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on
+	 * this client and ignored by all other clients.
+	 */
+	readonly preconditions?: readonly TransactionConstraint[];
 }
