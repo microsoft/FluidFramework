@@ -13,6 +13,20 @@ If you don't have `pnpm` installed, you will need to do so first.
 pnpm i
 ```
 
+## Optional Packages
+
+If you would like to include consent management functionality in your local development environment,
+you can install the `@wcp/wcp-consent` package. This package is used for handling user consent
+in certain scenarios. To install it, run:
+
+```shell
+pnpm i -w @wcp/wcp-consent
+```
+
+For details on how to authenticate and procure a PAT to use this package, please refer to the internal documentation.
+
+````
+
 ## Local Development
 
 There are two options for local testing.
@@ -28,7 +42,7 @@ So start by running:
 
 ```shell
 npm run build:generate-content
-```
+````
 
 Then, run:
 
@@ -244,6 +258,7 @@ The following npm scripts are supported in this directory:
 | `generate-versions` | `dotenv -- node ./infra/generate-versions.mjs` |
 | `lint` | Check for linter violations. |
 | `lint:fix` | Auto-fix linter violations. |
+| `postinstall` | `node scripts/install.js` |
 | `preinstall` | Ensure developer is using `pnpm`. |
 | `prettier` | Check for formatting issues with `prettier`. |
 | `prettier:fix` | Fix formatting issues with `prettier`. |

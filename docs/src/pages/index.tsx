@@ -8,6 +8,7 @@ import React, { Suspense } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import appInsights from "../appInsights";
+import CookieBanner from "../components/cookieBanner";
 
 if (typeof window !== "undefined") {
 	const userId = localStorage.getItem("userId") ?? uuidv4();
@@ -31,7 +32,9 @@ import { Homepage } from "@site/src/components/home";
 export default function Home(): React.ReactElement {
 	return (
 		<Layout>
-			<Suspense fallback={<div />}></Suspense>
+			<Suspense>
+				<CookieBanner/>
+			</Suspense>
 			<Homepage />
 		</Layout>
 	);
