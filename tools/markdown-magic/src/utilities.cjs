@@ -28,11 +28,7 @@ const readTemplate = (templateFileName, headingOffset = 0) => {
 		);
 	}
 
-	const unmodifiedContents = fs
-		.readFileSync(path.resolve(templatesDirectoryPath, templateFileName), {
-			encoding: "utf-8",
-		})
-		.trim();
+	const unmodifiedContents = readFile(path.resolve(templatesDirectoryPath, templateFileName));
 
 	if (headingOffset === 0) {
 		return unmodifiedContents;
@@ -41,6 +37,29 @@ const readTemplate = (templateFileName, headingOffset = 0) => {
 	const headingOffsetString = "#".repeat(headingOffset);
 	return unmodifiedContents.replace(/(^#)/gm, `$1${headingOffsetString}`);
 };
+
+
+/**
+ * Reads contents of the target file within the provided (optional) line boundaries.
+ *
+ * @param {string} filePath - Path to the file being read.
+ * @param {number | undefined} startLine - (optional) First line from the target file to be embedded (inclusive).
+ * Default: 0.
+ * Constraints are the same as those for the `end` parameter to
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice#parameters | Array.slice}
+ * @param {number | undefined} endLine - (optional) Line of the target file at which to end the embedded range (exclusive).
+ * Default: <file-line-count> + 1.
+ * Constraints are the same as those for the `end` parameter to
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice#parameters | Array.slice}
+ */
+function readFile(filePath, startLine, endLine) {
+	let fileContents = fs.readFileSync(filePath, "utf8");
+	if (startLine || endLine) {
+		const split = fileContents.split(/\r?\n/);
+		fileContents = split.slice(startLine, endLine).join("\n");
+	}
+	return fileContents.trim();
+}
 
 /**
  * Resolves the provided relative path from its document path.
@@ -265,6 +284,7 @@ module.exports = {
 	isPublic,
 	parseBooleanOption,
 	parseHeadingOptions,
+	readFile,
 	readTemplate,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
