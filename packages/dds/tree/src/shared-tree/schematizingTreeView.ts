@@ -58,11 +58,15 @@ import {
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
-import {
-	type RunTransactionParams,
-	type RunTransactionResult,
-	type TransactionConstraint,
-	rollback,
+import type {
+	AbortTransactionExt,
+	ContinueTransactionExt,
+	RunTransactionFailed,
+	RunTransactionFailedExt,
+	RunTransactionParams,
+	RunTransactionParamsExt,
+	RunTransactionSucceeded,
+	RunTransactionSucceededExt,
 } from "./transactionTypes.js";
 
 /**
@@ -225,9 +229,19 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
 	 */
-	public runTransaction<TResult>(
-		params: RunTransactionParams<TResult>,
-	): RunTransactionResult<TResult> {
+	public runTransaction<TSuccessValue, TFailureValue>(
+		params: RunTransactionParamsExt<TSuccessValue, TFailureValue>,
+	): RunTransactionSucceededExt<TSuccessValue> | RunTransactionFailedExt<TFailureValue>;
+	public runTransaction(
+		params: RunTransactionParams,
+	): RunTransactionSucceeded | RunTransactionFailed;
+	public runTransaction<TSuccessValue, TFailureValue>(
+		params: RunTransactionParams | RunTransactionParamsExt<TSuccessValue, TFailureValue>,
+	):
+		| RunTransactionSucceeded
+		| RunTransactionFailed
+		| RunTransactionSucceededExt<TSuccessValue>
+		| RunTransactionFailedExt<TFailureValue> {
 		this.checkout.transaction.start();
 		const preconditions = params.preconditions ?? [];
 		for (const constraint of preconditions) {
@@ -250,28 +264,18 @@ export class SchematizingSimpleTreeView<
 			}
 		}
 
-		let result: TResult | typeof rollback | undefined;
-		let undoPreconditions: readonly TransactionConstraint[] | undefined;
-		const transactionResult = params.transaction();
-		if (transactionResult !== null && typeof transactionResult === "object") {
-			if ("undoPreconditions" in transactionResult) {
-				undoPreconditions = transactionResult.undoPreconditions;
-				assert(undoPreconditions !== undefined, "undoPreconditions should not be undefined");
-			}
-			if ("result" in transactionResult) {
-				result = transactionResult.result;
-			}
-		} else {
-			result = transactionResult;
-		}
-
-		if (result === rollback) {
-			this.checkout.transaction.abort();
-		} else {
+		const transactionOutcome = params.transaction();
+		if (transactionOutcome.result === "continue") {
 			this.checkout.transaction.commit();
+			const returnValue = (transactionOutcome as ContinueTransactionExt<TSuccessValue>)
+				.returnValue;
+			return returnValue !== undefined ? { success: true, returnValue } : { success: true };
+		} else {
+			this.checkout.transaction.abort();
+			const returnValue = (transactionOutcome as AbortTransactionExt<TFailureValue>)
+				.returnValue;
+			return returnValue !== undefined ? { success: false, returnValue } : { success: false };
 		}
-
-		return { result };
 	}
 
 	private ensureUndisposed(): void {

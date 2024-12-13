@@ -5,6 +5,16 @@
 ```ts
 
 // @alpha
+export interface AbortTransaction {
+    readonly result: "abort";
+}
+
+// @alpha
+export interface AbortTransactionExt<TFailureValue> extends AbortTransaction {
+    readonly returnValue: TFailureValue;
+}
+
+// @alpha
 export function adaptEnum<TScope extends string, const TEnum extends Record<string, string | number>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => TValue extends unknown ? TreeNode & {
     readonly value: TValue;
 } : never) & { readonly [Property in keyof TEnum]: TreeNodeSchemaClass<ScopedSchemaName<TScope, TEnum[Property]>, NodeKind.Object, TreeNode & {
@@ -64,6 +74,17 @@ export function comparePersistedSchema(persisted: JsonCompatible, view: Implicit
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
 };
+
+// @alpha
+export interface ContinueTransaction {
+    readonly result: "continue";
+    readonly undoPreconditions?: readonly TransactionConstraint[];
+}
+
+// @alpha
+export interface ContinueTransactionExt<TSuccessValue> extends ContinueTransaction {
+    readonly returnValue: TSuccessValue;
+}
 
 // @alpha
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
@@ -586,14 +607,35 @@ export interface RunTransaction {
 }
 
 // @alpha
-export interface RunTransactionParams<TResult> {
-    readonly preconditions?: readonly TransactionConstraint[];
-    readonly transaction: () => TransactionResult<TResult> | TResult;
+export interface RunTransactionFailed {
+    readonly success: false;
 }
 
 // @alpha
-export interface RunTransactionResult<TResult> {
-    readonly result: TResult | typeof rollback | undefined;
+export interface RunTransactionFailedExt<TFailureValue> extends RunTransactionFailed {
+    readonly returnValue: TFailureValue;
+}
+
+// @alpha
+export interface RunTransactionParams {
+    readonly preconditions?: readonly TransactionConstraint[];
+    readonly transaction: () => ContinueTransaction | AbortTransaction;
+}
+
+// @alpha
+export interface RunTransactionParamsExt<TSuccessValue, TFailureValue> {
+    readonly preconditions?: readonly TransactionConstraint[];
+    readonly transaction: () => ContinueTransactionExt<TSuccessValue> | AbortTransactionExt<TFailureValue>;
+}
+
+// @alpha
+export interface RunTransactionSucceeded {
+    readonly success: true;
+}
+
+// @alpha
+export interface RunTransactionSucceededExt<TSuccessValue> extends RunTransactionSucceeded {
+    readonly returnValue: TSuccessValue;
 }
 
 // @public @sealed
@@ -686,13 +728,6 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
-
-// @alpha
-export interface TransactionResult<TResult> {
-    readonly result: TResult | typeof rollback;
-    // (undocumented)
-    readonly undoPreconditions?: readonly TransactionConstraint[];
-}
 
 // @public
 export const Tree: TreeApi;
@@ -942,7 +977,9 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
-    runTransaction<TResult>(params: RunTransactionParams<TResult>): RunTransactionResult<TResult>;
+    runTransaction<TSuccessValue, TFailureValue>(params: RunTransactionParamsExt<TSuccessValue, TFailureValue>): RunTransactionSucceededExt<TSuccessValue> | RunTransactionFailedExt<TFailureValue>;
+    // (undocumented)
+    runTransaction(params: RunTransactionParams): RunTransactionSucceeded | RunTransactionFailed;
 }
 
 // @public @sealed

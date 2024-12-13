@@ -374,90 +374,88 @@ describe("treeApi", () => {
 		});
 
 		describe("view.runTransaction - transaction() return values", () => {
-			it("1. success (empty return)", () => {
+			it("success", () => {
 				const view = getTestObjectView();
 				const runTransactionResult = view.runTransaction({
 					transaction: () => {
-						view.root.content = 100;
+						view.root.content = 43;
+						return { result: "continue" };
 					},
 				});
-				assert.equal(view.root.content, 100);
-				assert.equal(runTransactionResult.result, undefined);
+				assert.equal(view.root.content, 43);
+				assert.equal(runTransactionResult.success, true);
 			});
 
-			it("2. success + user defined value", () => {
-				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction<number>({
-					transaction: () => {
-						view.root.content = 100;
-						return view.root.content;
-					},
-				});
-				assert.equal(runTransactionResult.result, 100);
-			});
-
-			it("3. success + undo precondition", () => {
+			it("success + user defined value", () => {
 				const view = getTestObjectView();
 				const runTransactionResult = view.runTransaction({
 					transaction: () => {
-						view.root.content = 100;
-						return { undoPreconditions: [{ type: "nodeInDocument", node: view.root }] };
+						view.root.content = 43;
+						return { result: "continue", returnValue: view.root.content };
 					},
 				});
-				assert.equal(runTransactionResult.result, undefined);
+				assert.equal(view.root.content, 43);
+				assert.equal(runTransactionResult.success, true);
+				assert.equal(runTransactionResult.returnValue, 43);
 			});
 
-			it("4. success + user defined value + undo precondition", () => {
+			it("success + undo precondition", () => {
 				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction<number>({
+				const runTransactionResult = view.runTransaction({
 					transaction: () => {
-						view.root.content = 100;
+						view.root.content = 43;
 						return {
-							result: view.root.content,
+							result: "continue",
 							undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
 						};
 					},
 				});
-				assert.equal(runTransactionResult.result, 100);
+				assert.equal(view.root.content, 43);
+				assert.equal(runTransactionResult.success, true);
 			});
 
-			it("5. rollback", () => {
+			it("success + user defined value + undo precondition", () => {
 				const view = getTestObjectView();
 				const runTransactionResult = view.runTransaction({
 					transaction: () => {
-						view.root.content = 100;
-						return Tree.runTransaction.rollback;
-					},
-				});
-				assert.equal(view.root.content, 42);
-				assert.equal(runTransactionResult.result, Tree.runTransaction.rollback);
-			});
-
-			it("6. rollback in return object", () => {
-				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction<number>({
-					transaction: () => {
-						view.root.content = 100;
-						return { result: Tree.runTransaction.rollback };
-					},
-				});
-				assert.equal(view.root.content, 42);
-				assert.equal(runTransactionResult.result, Tree.runTransaction.rollback);
-			});
-
-			it("7. rollback + undo precondition", () => {
-				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction({
-					transaction: () => {
-						view.root.content = 100;
+						view.root.content = 43;
 						return {
-							result: Tree.runTransaction.rollback,
+							result: "continue",
+							returnValue: view.root.content,
 							undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
 						};
 					},
 				});
+				assert.equal(view.root.content, 43);
+				assert.equal(runTransactionResult.success, true);
+				assert.equal(runTransactionResult.returnValue, 43);
+			});
+
+			it("rollback", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction({
+					transaction: () => {
+						view.root.content = 43;
+						return { result: "abort" };
+					},
+				});
 				assert.equal(view.root.content, 42);
-				assert.equal(runTransactionResult.result, Tree.runTransaction.rollback);
+				assert.equal(runTransactionResult.success, false);
+			});
+
+			it("rollback + user defined value", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction({
+					transaction: () => {
+						view.root.content = 43;
+						return { result: "abort", returnValue: view.root.content };
+					},
+				});
+				assert.equal(runTransactionResult.success, false);
+				// Note that this is the value that was set before the transaction was rolled back.
+				assert.equal(runTransactionResult.returnValue, 43);
+				// After the transaction is rolled back, the value is reverted to the original value.
+				assert.equal(view.root.content, 42);
 			});
 		});
 
@@ -467,6 +465,7 @@ describe("treeApi", () => {
 				view.runTransaction({
 					transaction: () => {
 						view.root.content = 43;
+						return { result: "continue" };
 					},
 				});
 				assert.equal(view.root.content, 43);
@@ -477,7 +476,7 @@ describe("treeApi", () => {
 				view.runTransaction({
 					transaction: () => {
 						view.root.content = 43;
-						return { result: Tree.runTransaction.rollback };
+						return { result: "abort" };
 					},
 				});
 				assert.equal(view.root.content, 42);
@@ -511,6 +510,7 @@ describe("treeApi", () => {
 					transaction: () => {
 						view.root.content = 43;
 						view.root.content = 44;
+						return { result: "continue" };
 					},
 				});
 				assert.equal(view.root.content, 44);
@@ -532,6 +532,7 @@ describe("treeApi", () => {
 					view.runTransaction({
 						transaction: () => {
 							view.root.content = 43;
+							return { result: "continue" };
 						},
 						preconditions: [{ type: "nodeInDocument", node: childB }],
 					});
@@ -560,6 +561,7 @@ describe("treeApi", () => {
 				viewB.runTransaction({
 					transaction: () => {
 						viewB.root.content = 43;
+						return { result: "continue" };
 					},
 					preconditions: [{ type: "nodeInDocument", node: childB }],
 				});
