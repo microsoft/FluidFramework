@@ -95,7 +95,9 @@ steps:
     workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
     script: |
       set -eu -o pipefail
-      pnpm install @ff-internal/aria-logger;
+      # The telemetry-generator package is the root of its workspace so we do want to install this for the workspace
+      # root with '-w'. Without it, the install will complain and fail.
+      pnpm install -w @ff-internal/aria-logger;
 
 - task: Bash@3
   displayName: 'Prepare telemetry-generator'
