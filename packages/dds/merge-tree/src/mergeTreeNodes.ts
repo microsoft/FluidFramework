@@ -212,17 +212,11 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 		0x86d /* movedClientIds, movedSeq, wasMovedOnInsert, and movedSeqs should all be either set or not set */,
 	);
 }
-
 /**
- * A segment representing a portion of the merge tree.
- * Segments are leaf nodes of the merge tree and contain data.
- * @legacy
- * @alpha
+ * @deprecated - do
+ * @system
  */
-export interface ISegment {
-	readonly type: string;
-
-	readonly trackingCollection: TrackingGroupCollection;
+export interface ISegmentDeprecated {
 	/**
 	 * Whether or not this segment is a special segment denoting the start or
 	 * end of the tree
@@ -234,27 +228,6 @@ export interface ISegment {
 	 * @deprecated - This property will be removed in 2.20 with no replacement.
 	 */
 	readonly endpointType?: "start" | "end";
-
-	/**
-	 * The length of the contents of the node.
-	 */
-	cachedLength: number;
-	/**
-	 * Stores attribution keys associated with offsets of this segment.
-	 * This data is only persisted if MergeTree's `attributions.track` flag is set to true.
-	 * Pending segments (i.e. ones that only exist locally and haven't been acked by the server) also have
-	 * `attribution === undefined` until ack.
-	 *
-	 * Keys can be used opaquely with an IAttributor or a container runtime that provides attribution.
-	 * @remarks There are plans to make the shape of the data stored extensible in a couple ways:
-	 *
-	 * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
-	 * content but keeping the old attribution information).
-	 *
-	 * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
-	 * or only attribute certain property modifications, etc.)
-	 */
-	attribution?: IAttributionCollection<AttributionKey>;
 
 	/**
 	 * Local seq at which this segment was inserted.
@@ -295,19 +268,6 @@ export interface ISegment {
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	localRefs?: LocalReferenceCollection;
-	/**
-	 * Properties that have been added to this segment via annotation.
-	 */
-	properties?: PropertySet;
-
-	clone(): ISegment;
-	canAppend(segment: ISegment): boolean;
-	append(segment: ISegment): void;
-	splitAt(pos: number): ISegment | undefined;
-	// Changing this to something other than any would break consumers.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	toJSONObject(): any;
-	isLeaf(): this is ISegment;
 
 	/**
 	 * {@inheritDoc @fluidframework/merge-tree#IMergeNodeCommon.index}
@@ -361,6 +321,52 @@ export interface ISegment {
 	 * @deprecated - This property will be removed in 2.20 with no replacement.
 	 */
 	wasMovedOnInsert?: boolean;
+}
+/**
+ * A segment representing a portion of the merge tree.
+ * Segments are leaf nodes of the merge tree and contain data.
+ * @legacy
+ * @alpha
+ */
+export interface ISegment extends ISegmentDeprecated {
+	readonly type: string;
+
+	readonly trackingCollection: TrackingGroupCollection;
+
+	/**
+	 * The length of the contents of the node.
+	 */
+	cachedLength: number;
+	/**
+	 * Stores attribution keys associated with offsets of this segment.
+	 * This data is only persisted if MergeTree's `attributions.track` flag is set to true.
+	 * Pending segments (i.e. ones that only exist locally and haven't been acked by the server) also have
+	 * `attribution === undefined` until ack.
+	 *
+	 * Keys can be used opaquely with an IAttributor or a container runtime that provides attribution.
+	 * @remarks There are plans to make the shape of the data stored extensible in a couple ways:
+	 *
+	 * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
+	 * content but keeping the old attribution information).
+	 *
+	 * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
+	 * or only attribute certain property modifications, etc.)
+	 */
+	attribution?: IAttributionCollection<AttributionKey>;
+
+	/**
+	 * Properties that have been added to this segment via annotation.
+	 */
+	properties?: PropertySet;
+
+	clone(): ISegment;
+	canAppend(segment: ISegment): boolean;
+	append(segment: ISegment): void;
+	splitAt(pos: number): ISegment | undefined;
+	// Changing this to something other than any would break consumers.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	toJSONObject(): any;
+	isLeaf(): this is ISegment;
 }
 
 /**
