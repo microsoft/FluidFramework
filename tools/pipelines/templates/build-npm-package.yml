@@ -533,9 +533,18 @@ extends:
 
               - script: |
                   echo "Preparing nested lib/dist directories and their contents for publishing..."
-                  find '${{ parameters.buildDirectory }}' -type d \( -name "lib" -o -name "dist" \) > directories_to_publish.txt
+                  find . -type d \( -name "lib" -o -name "dist" \) > directories_to_publish.txt
+                  cat directories_to_publish.txt
                   tar --create --gzip --file nested_lib_dist.tar.gz -T directories_to_publish.txt
                 displayName: Archive Nested Lib/Dist Directories and Their Contents
+                workingDirectory: ${{ parameters.buildDirectory }}
+
+              - task: CopyFiles@2
+                displayName: Copy nested_lib_dist to artifact staging directory
+                inputs:
+                  sourceFolder: ${{ parameters.buildDirectory }}
+                  contents: nested_lib_dist.tar.gz
+                  targetFolder: $(Build.ArtifactStagingDirectory)
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -603,7 +612,7 @@ extends:
               - task: DownloadPipelineArtifact@2
                 inputs:
                   artifact: nested_lib_dist
-                  targetPath: $(Build.SourcesDirectory)/nested_lib_dist.tar.gz
+                  targetPath: $(Build.SourcesDirectory)
 
               - script: |
                   echo "Extracting nested lib/dist directories and their contents..."
@@ -751,11 +760,11 @@ extends:
                 - task: DownloadPipelineArtifact@2
                   inputs:
                     artifact: nested_lib_dist
-                    targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist.tar.gz
+                    targetPath: $(Build.SourcesDirectory)
 
                 - script: |
                     echo "Extracting nested lib/dist directories and their contents..."
-                    tar --extract --gzip --file $(Build.ArtifactStagingDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
+                    tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
                   displayName: Extract Nested Lib/Dist Directories and Their Contents
 
                 - template: /tools/pipelines/templates/include-use-node-version.yml@self
