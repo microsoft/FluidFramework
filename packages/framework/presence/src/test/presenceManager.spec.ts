@@ -98,8 +98,28 @@ describe("Presence", () => {
 				// until there is a join signal related to it.
 				const rejoinAttendeeConnectionId = "client7";
 
-				let initialAttendeeSignalInfo: IAttendeeSignalInfo;
-				let rejoinAttendeeSignalInfo: IAttendeeSignalInfo;
+				const initialAttendeeSignalInfo: IAttendeeSignalInfo = {
+					clientSessionId: attendeeSessionId,
+					clientConnectionId: initialAttendeeConnectionId,
+					fixedTime: clock.now - 50,
+					averageLatency: 50,
+					updateProviders: ["client2"],
+				};
+				const rejoinAttendeeSignalInfo: IAttendeeSignalInfo = {
+					clientSessionId: attendeeSessionId,
+					clientConnectionId: rejoinAttendeeConnectionId,
+					fixedTime: clock.now - 20,
+					averageLatency: 20,
+					connectionOrder: 1,
+					updateProviders: ["client2"],
+					priorClientToSessionId: {
+						[initialAttendeeConnectionId]: {
+							rev: 0,
+							timestamp: initialAttendeeSignalInfo.fixedTime,
+							value: attendeeSessionId,
+						},
+					},
+				};
 				interface IAttendeeSignalInfo {
 					clientSessionId: string;
 					clientConnectionId: ClientConnectionId;
@@ -157,29 +177,6 @@ describe("Presence", () => {
 				beforeEach(() => {
 					// Ignore submitted signals
 					runtime.submitSignal = () => {};
-					initialAttendeeSignalInfo = {
-						clientSessionId: attendeeSessionId,
-						clientConnectionId: initialAttendeeConnectionId,
-						fixedTime: clock.now - 50,
-						averageLatency: 50,
-						updateProviders: ["client2"],
-					};
-
-					rejoinAttendeeSignalInfo = {
-						clientSessionId: attendeeSessionId,
-						clientConnectionId: rejoinAttendeeConnectionId,
-						fixedTime: clock.now - 20,
-						averageLatency: 20,
-						connectionOrder: 1,
-						updateProviders: ["client2"],
-						priorClientToSessionId: {
-							[initialAttendeeConnectionId]: {
-								rev: 0,
-								timestamp: initialAttendeeSignalInfo.fixedTime,
-								value: attendeeSessionId,
-							},
-						},
-					};
 				});
 
 				it("is not announced via `attendeeDisconnected` when unknown connection is removed", () => {
