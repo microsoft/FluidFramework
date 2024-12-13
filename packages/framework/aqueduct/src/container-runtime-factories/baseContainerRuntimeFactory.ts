@@ -98,17 +98,45 @@ export class BaseContainerRuntimeFactory
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
 	}
 
+	/**
+	 * @deprecated - Use the overload taking in an IContainerRuntime
+	 */
 	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
+	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void>;
+	public async instantiateFirstTime(
+		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
+		runtime: IContainerRuntime | ContainerRuntime,
+	): Promise<void> {
 		await this.containerInitializingFirstTime(runtime);
 		await this.containerHasInitialized(runtime);
 	}
 
+	/**
+	 * @deprecated - Use the overload taking in an IContainerRuntime
+	 */
 	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-	public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
+	public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
+	public async instantiateFromExisting(runtime: IContainerRuntime): Promise<void>;
+	public async instantiateFromExisting(
+		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
+		runtime: IContainerRuntime | ContainerRuntime,
+	): Promise<void> {
 		await this.containerHasInitialized(runtime);
 	}
 
+	/**
+	 * @deprecated - Use the overload that returns an IContainerRuntime & IRuntime
+	 */
+	public async preInitialize(
+		context: IContainerContext,
+		existing: boolean,
+		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
+	): Promise<ContainerRuntime>;
+	public async preInitialize(
+		context: IContainerContext,
+		existing: boolean,
+	): Promise<IContainerRuntime>;
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
