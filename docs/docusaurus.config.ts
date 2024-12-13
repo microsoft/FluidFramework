@@ -70,7 +70,9 @@ const config: Config = {
 		defaultLocale: "en",
 		locales: ["en"],
 	},
-	trailingSlash: false,
+	// TODO: consider re-enabling after the following issue is resolved:
+	// <https://github.com/Azure/static-web-apps/issues/1036>
+	// trailingSlash: false,
 	plugins: ["docusaurus-plugin-sass"],
 	presets: [
 		[
