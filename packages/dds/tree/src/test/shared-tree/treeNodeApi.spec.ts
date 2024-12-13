@@ -34,7 +34,7 @@ import {
 
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
-import { fail, type requireAssignableTo } from "../../util/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { runTransaction } from "../../shared-tree/treeApi.js";
 
