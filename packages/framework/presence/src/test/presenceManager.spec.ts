@@ -109,12 +109,11 @@ describe("Presence", () => {
 						joinedAttendees.push(attendee);
 					});
 
-					afterCleanUp.push(cleanUpListener);
-
 					for (const signal of signals) {
 						presence.processSignal("", signal, false);
 					}
 
+					cleanUpListener();
 					return joinedAttendees;
 				}
 
