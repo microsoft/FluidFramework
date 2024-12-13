@@ -370,7 +370,7 @@ export interface ISegment {
  */
 export function segmentIsRemoved(segment: ISegment): boolean {
 	const leaf: ISegmentLeaf = segment;
-	return leaf.removedSeg !== undefined;
+	return leaf.removedSeq !== undefined;
 }
 
 /**
