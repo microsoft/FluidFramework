@@ -613,7 +613,7 @@ extends:
                 parameters:
                   packageManager: '${{ parameters.packageManager }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
-                  packageManagerInstallCommand: 'pnpm install --no-frozen-lockfile'
+                  packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
               - task: DownloadPipelineArtifact@2
                 inputs:
@@ -761,7 +761,7 @@ extends:
                   parameters:
                     packageManager: '${{ parameters.packageManager }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
-                    packageManagerInstallCommand: 'pnpm install --no-frozen-lockfile'
+                    packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
                 - task: DownloadPipelineArtifact@2
                   inputs:
