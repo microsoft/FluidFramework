@@ -8,7 +8,7 @@
 
 The ContainerRuntime class is now deprecated
 
-The class `ContainerRuntime` is deprecated and will not longer be exported started in version 2.20.0.
+The class `ContainerRuntime` is deprecated and will no longer be exported starting in version 2.20.0.
 Additionally, function signatures on `BaseContainerRuntimeFactory` have been updated from using the type `ContainerRuntime` to using `IContainerRuntime`.
 
 There are two possible migration paths to stop using `ContainerRuntime`:

@@ -99,7 +99,7 @@ export class BaseContainerRuntimeFactory
 	}
 
 	/**
-	 * @deprecated - Use the overload taking in an IContainerRuntime
+	 * @deprecated Use the overload taking in an IContainerRuntime
 	 */
 	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
@@ -113,7 +113,7 @@ export class BaseContainerRuntimeFactory
 	}
 
 	/**
-	 * @deprecated - Use the overload taking in an IContainerRuntime
+	 * @deprecated Use the overload taking in an IContainerRuntime
 	 */
 	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
@@ -126,7 +126,7 @@ export class BaseContainerRuntimeFactory
 	}
 
 	/**
-	 * @deprecated - Use the overload that returns an IContainerRuntime & IRuntime
+	 * @deprecated Use the overload that returns an IContainerRuntime & IRuntime
 	 */
 	public async preInitialize(
 		context: IContainerContext,
