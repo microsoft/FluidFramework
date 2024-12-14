@@ -602,6 +602,14 @@ extends:
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
 
+              - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+              - template: /tools/pipelines/templates/include-install.yml@self
+                parameters:
+                  packageManager: '${{ parameters.packageManager }}'
+                  buildDirectory: '${{ parameters.buildDirectory }}'
+                  packageManagerInstallCommand: 'pnpm install --no-frozen-lockfile'
+
               - task: DownloadPipelineArtifact@2
                 inputs:
                   artifact: nested_lib_dist
@@ -611,14 +619,6 @@ extends:
                   echo "Extracting nested lib/dist directories and their contents..."
                   tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
                 displayName: Extract Nested Lib/Dist Directories and Their Contents
-
-              - template: /tools/pipelines/templates/include-use-node-version.yml@self
-
-              - template: /tools/pipelines/templates/include-install.yml@self
-                parameters:
-                  packageManager: '${{ parameters.packageManager }}'
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  packageManagerInstallCommand: 'pnpm install --no-frozen-lockfile'
 
               # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
               - script: |
@@ -750,6 +750,14 @@ extends:
                   lfs: '${{ parameters.checkoutSubmodules }}'
                   submodules: '${{ parameters.checkoutSubmodules }}'
 
+                - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+                - template: /tools/pipelines/templates/include-install.yml@self
+                  parameters:
+                    packageManager: '${{ parameters.packageManager }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    packageManagerInstallCommand: 'pnpm install --no-frozen-lockfile'
+
                 - task: DownloadPipelineArtifact@2
                   inputs:
                     artifact: nested_lib_dist
@@ -759,14 +767,6 @@ extends:
                     echo "Extracting nested lib/dist directories and their contents..."
                     tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
                   displayName: Extract Nested Lib/Dist Directories and Their Contents
-
-                - template: /tools/pipelines/templates/include-use-node-version.yml@self
-
-                - template: /tools/pipelines/templates/include-install.yml@self
-                  parameters:
-                    packageManager: '${{ parameters.packageManager }}'
-                    buildDirectory: '${{ parameters.buildDirectory }}'
-                    packageManagerInstallCommand: 'pnpm install --no-frozen-lockfile'
 
                 # Test
 
