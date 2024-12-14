@@ -34,8 +34,8 @@ export {
 export { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 export {
 	createDetachedLocalReferencePosition,
-	LocalReferenceCollection,
 	LocalReferencePosition,
+	LocalReferenceCollection,
 	SlidingPreference,
 } from "./localReference.js";
 export {
@@ -65,6 +65,7 @@ export {
 	IRemovalInfo,
 	segmentIsRemoved,
 	ISegment,
+	ISegmentDeprecated,
 	ISegmentAction,
 	Marker,
 	reservedMarkerIdKey,

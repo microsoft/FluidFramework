@@ -44,8 +44,6 @@ export abstract class BaseSegment implements ISegment {
     // @deprecated (undocumented)
     localMovedSeq?: number;
     // @deprecated (undocumented)
-    localRefs?: LocalReferenceCollection;
-    // @deprecated (undocumented)
     localRemovedSeq?: number;
     // @deprecated (undocumented)
     localSeq?: number;
@@ -353,27 +351,44 @@ export interface IRemovalInfo {
 }
 
 // @alpha
-export interface ISegment {
+export interface ISegment extends ISegmentDeprecated {
     // (undocumented)
     append(segment: ISegment): void;
     attribution?: IAttributionCollection<AttributionKey>;
     cachedLength: number;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
-    // @deprecated
-    clientId: number;
     // (undocumented)
     clone(): ISegment;
+    // (undocumented)
+    isLeaf(): this is ISegment;
+    properties?: PropertySet;
+    // (undocumented)
+    splitAt(pos: number): ISegment | undefined;
+    // (undocumented)
+    toJSONObject(): any;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
+    // (undocumented)
+    readonly type: string;
+}
+
+// @alpha (undocumented)
+export interface ISegmentAction<TClientData> {
+    // (undocumented)
+    (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum: TClientData): boolean;
+}
+
+// @alpha @deprecated (undocumented)
+export interface ISegmentDeprecated {
+    // @deprecated
+    clientId: number;
     // @deprecated
     readonly endpointType?: "start" | "end";
     // @deprecated
     index: number;
-    // (undocumented)
-    isLeaf(): this is ISegment;
     // @deprecated
     localMovedSeq?: number;
-    // @deprecated
-    localRefs?: LocalReferenceCollection;
     // @deprecated
     localRemovedSeq?: number;
     // @deprecated
@@ -388,29 +403,14 @@ export interface ISegment {
     moveDst?: ReferencePosition;
     // @deprecated
     ordinal: string;
-    properties?: PropertySet;
     // @deprecated
     removedClientIds?: number[];
     // @deprecated
     removedSeq?: number;
     // @deprecated
     seq?: number;
-    // (undocumented)
-    splitAt(pos: number): ISegment | undefined;
-    // (undocumented)
-    toJSONObject(): any;
-    // (undocumented)
-    readonly trackingCollection: TrackingGroupCollection;
-    // (undocumented)
-    readonly type: string;
     // @deprecated
     wasMovedOnInsert?: boolean;
-}
-
-// @alpha (undocumented)
-export interface ISegmentAction<TClientData> {
-    // (undocumented)
-    (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum: TClientData): boolean;
 }
 
 // @alpha (undocumented)
@@ -425,29 +425,6 @@ export interface ITrackingGroup {
     tracked: readonly Trackable[];
     // (undocumented)
     unlink(trackable: Trackable): boolean;
-}
-
-// @alpha @sealed @deprecated
-export class LocalReferenceCollection {
-    [Symbol.iterator](): {
-        next(): IteratorResult<LocalReferencePosition>;
-        [Symbol.iterator](): IterableIterator<LocalReferencePosition>;
-    };
-    addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    addLocalRef(lref: LocalReferencePosition, offset: number): void;
-    // (undocumented)
-    static append(seg1: ISegment, seg2: ISegment): void;
-    append(other: LocalReferenceCollection): void;
-    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    get empty(): boolean;
-    has(lref: ReferencePosition): boolean;
-    isAfterTombstone(lref: LocalReferencePosition): boolean;
-    removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
-    // (undocumented)
-    static setOrGet(segment: ISegment): LocalReferenceCollection;
-    split(offset: number, splitSeg: ISegment): void;
-    walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
 }
 
 // @alpha @sealed (undocumented)

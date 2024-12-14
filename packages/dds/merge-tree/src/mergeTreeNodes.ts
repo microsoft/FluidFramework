@@ -64,7 +64,10 @@ export type ISegmentInternal = Omit<ISegment, keyof IRemovalInfo | keyof IMoveIn
 	Partial<IMergeNodeCommon> &
 	Partial<IRemovalInfo> &
 	Partial<IMoveInfo> & {
-		// eslint-disable-next-line import/no-deprecated
+		/**
+		 * Local references added to this segment.
+		 * @deprecated - This property will be removed in 2.20 with no replacement.
+		 */
 		localRefs?: LocalReferenceCollection;
 	};
 
@@ -215,6 +218,8 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 /**
  * @deprecated - do
  * @system
+ * @legacy
+ * @alpha
  */
 export interface ISegmentDeprecated {
 	/**
@@ -244,7 +249,7 @@ export interface ISegmentDeprecated {
 	 * UnassignedSequenceNumber. However, if another client concurrently removes the same segment, `removedSeq`
 	 * will be updated to the seq at which that client removed this segment.
 	 *
-	 * Like {@link ISegment.localSeq}, this field is cleared once the local removal of the segment is acked.
+	 * Like {@link ISegmentDeprecated.localSeq}, this field is cleared once the local removal of the segment is acked.
 	 *
 	 * @privateRemarks
 	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
@@ -262,12 +267,6 @@ export interface ISegmentDeprecated {
 	 * @deprecated - This property will be removed in 2.20 with no replacement.
 	 */
 	clientId: number;
-	/**
-	 * Local references added to this segment.
-	 * @deprecated - This property will be removed in 2.20 with no replacement.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	localRefs?: LocalReferenceCollection;
 
 	/**
 	 * {@inheritDoc @fluidframework/merge-tree#IMergeNodeCommon.index}
@@ -628,11 +627,6 @@ export abstract class BaseSegment implements ISegment {
 	public attribution?: IAttributionCollection<AttributionKey>;
 
 	public properties?: PropertySet;
-	/**
-	 * @deprecated - This property will be removed in 2.20 with no replacement.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	public localRefs?: LocalReferenceCollection;
 	public abstract readonly type: string;
 	/**
 	 * @deprecated - This property will be removed in 2.20 with no replacement.
@@ -907,7 +901,7 @@ export class CollaborationWindow {
 	 *     { localSeq: 1, seq: UnassignedSequenceNumber, text: "C" },
 	 * ]
 	 * ```
-	 * (note that {@link ISegment.localSeq} tracks the localSeq at which a segment was inserted)
+	 * (note that {@link ISegmentDeprecated.localSeq} tracks the localSeq at which a segment was inserted)
 	 *
 	 * Suppose the client then disconnects and reconnects before any of its insertions are acked. The reconnect flow will necessitate
 	 * that the client regenerates and resubmits ops based on its current segment state as well as the original op that was sent.
