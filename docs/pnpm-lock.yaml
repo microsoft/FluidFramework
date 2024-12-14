@@ -14,16 +14,15 @@ importers:
       '@microsoft/applicationinsights-web':
         specifier: ^3.3.4
         version: 3.3.4(tslib@2.8.1)
+      '@wcp/wcp-consent':
+        specifier: ^1.1.0
+        version: 1.1.0
       history:
         specifier: ^5.3.0
         version: 5.3.0
       uuid:
         specifier: ^11.0.3
         version: 11.0.3
-    optionalDependencies:
-      '@wcp/wcp-consent':
-        specifier: 1.1.0
-        version: 1.1.0
     devDependencies:
       '@azure/static-web-apps-cli':
         specifier: ^2.0.1
@@ -5701,9 +5700,7 @@ packages:
 
   /@wcp/wcp-consent@1.1.0:
     resolution: {integrity: sha1-PmkIvQrJbgv/05MLg66C1R9hfew=}
-    requiresBuild: true
     dev: false
-    optional: true
 
   /@webassemblyjs/ast@1.14.1:
     resolution: {integrity: sha512-nuBEDgQfm1ccRp/8bCQrx1frohyufl4JlbMMZ4P1wpeOfDhF6FQkxZJ1b/e+PLwr6X1Nhw6OLme5usuBWYBvuQ==}

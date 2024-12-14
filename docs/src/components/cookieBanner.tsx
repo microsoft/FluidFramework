@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-// / <reference types="@wcp/wcp-consent" />
-
+/// <reference types="@wcp/wcp-consent" />
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import React, { useEffect, useState } from "react";
 
@@ -13,62 +12,56 @@ declare global {
   }
 }
 
-
 const CookieBanner = (): React.ReactElement => {
-	const { siteConfig } = useDocusaurusContext();
-  const isConsentEnabled = true;
-  const [isWcpPackageAvailable, setIsWcpPackageAvailable] = useState(false);
+  const { siteConfig } = useDocusaurusContext();
+  const [wcpPackageAvailable, setWcpPackageAvailable] = useState<boolean>(false);
+  const MockCookieBanner =  () => {
+    return(
+      <div id="cookie-banner-test"
+        style={{ backgroundColor: "#f1f1f1", padding: "10px", textAlign: "center" }}
+      >
+       <p>
+         This site uses cookies to improve your experience. By continuing to use this
+         site, you consent to the use of cookies.
+       </p>
+       <button onClick={() => alert("Cookies Accepted!")}>Accept</button>
+       <button onClick={() => alert("Cookies Declined!")}>Decline</button>
+     </div>
+    )};
 
   useEffect(() => {
-    if(!isConsentEnabled){
-      return;
-    }
-
-    if ( typeof window !== "undefined" && typeof WcpConsent !== "undefined") {
+    if (typeof window !== "undefined") {
       console.log("Initializing WcpConsent");
-      setIsWcpPackageAvailable(true);
 
-
-      let siteConsent: WcpConsent.SiteConsent;
-
-      WcpConsent.init(
-        "en-US",
-        "cookie-banner",
-        (err, _siteConsent) => {
-          if (err) {
-            console.error("WcpConsent initialization error", err);
-          } else {
-            siteConsent = _siteConsent!;
-            console.log("Initial consent", siteConsent.getConsent());
+      try {
+        let siteConsent: WcpConsent.SiteConsent;
+        WcpConsent?.init(
+          "en-US",
+          "cookie-banner",
+          (err, _siteConsent) => {
+            if (err) {
+              console.error("WcpConsent initialization error", err);
+            } else {
+              siteConsent = _siteConsent!;
+              console.log("Initial consent", siteConsent.getConsent());
+            }
+          },
+          (newConsent: Record<WcpConsent.consentCategories, boolean>) => {
+            console.log("Consent changed", newConsent);
           }
-        },
-        (newConsent: Record<WcpConsent.consentCategories, boolean>) => {
-          console.log("Consent changed", newConsent);
-        }
-      );
+        );
+        setWcpPackageAvailable(true);
+      } catch (error) {
+        console.error("Error initializing WcpConsent", error);
+      }
+
     }
-  }, [isConsentEnabled]);
 
-  console.log("isConsentEnabled", isConsentEnabled);
-  console.log("isWcpPackageAvailable", isWcpPackageAvailable);
+  }, [wcpPackageAvailable]);
+  return (
+    wcpPackageAvailable ?  <div id="cookie-banner"></div> : <MockCookieBanner />
 
-	if (!isConsentEnabled || !isWcpPackageAvailable) {
-		return (
-			<div
-				id="cookie-banner-test"
-				style={{ backgroundColor: "#f1f1f1", padding: "10px", textAlign: "center" }}
-			>
-				<p>
-					This site uses cookies to improve your experience. By continuing to use this
-					site, you consent to the use of cookies.
-				</p>
-				<button onClick={() => alert("Cookies Accepted!")}>Accept</button>
-				<button onClick={() => alert("Cookies Declined!")}>Decline</button>
-			</div>
-		);
-	}
-	// Render the cookie banner if the consent library is available
-	return <div id="cookie-banner"></div>;
+  );
 };
 
 export default CookieBanner;

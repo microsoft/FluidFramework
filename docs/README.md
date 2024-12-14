@@ -316,7 +316,6 @@ The following npm scripts are supported in this directory:
 | `generate-versions` | `dotenv -- node ./infra/generate-versions.mjs` |
 | `lint` | Check for linter violations. |
 | `lint:fix` | Auto-fix linter violations. |
-| `postinstall` | `node scripts/install.js` |
 | `preinstall` | Ensure developer is using `pnpm`. |
 | `prettier` | Check for formatting issues with `prettier`. |
 | `prettier:fix` | Fix formatting issues with `prettier`. |
