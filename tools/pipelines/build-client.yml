@@ -209,6 +209,7 @@ extends:
     - { name: "ci:test:jest", jobName: "JestTest" }
     - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest" }
     - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest" }
+    - { name: "check:are-the-types-wrong", jobName: "AreTheTypesWrong" }
     coverageTests:
     - { name: "ci:test:mocha", jobName: "MochaTest" }
     - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest" }
