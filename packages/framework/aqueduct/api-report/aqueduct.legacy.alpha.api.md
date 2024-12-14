@@ -12,16 +12,13 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // @deprecated (undocumented)
     instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
-    // (undocumented)
     instantiateFirstTime(runtime: IContainerRuntime): Promise<void>;
     // @deprecated (undocumented)
     instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
-    // (undocumented)
     instantiateFromExisting(runtime: IContainerRuntime): Promise<void>;
     // @deprecated (undocumented)
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
-    // (undocumented)
-    preInitialize(context: IContainerContext, existing: boolean): Promise<IContainerRuntime>;
+    preInitialize(context: IContainerContext, existing: boolean): Promise<IContainerRuntime & IRuntime>;
 }
 
 // @alpha
