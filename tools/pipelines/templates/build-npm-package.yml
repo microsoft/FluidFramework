@@ -101,6 +101,10 @@ parameters:
   type: string
   default: npm
 
+- name: runWebpack
+  type: boolean
+  default: false
+
 # Parameter for modifying the 'types' field in the package.json.
 # If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
 - name: packageTypesOverride
@@ -354,12 +358,13 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
-              - task: Npm@1
-                displayName: 'npm run webpack'
-                inputs:
-                  command: custom
-                  workingDir: '${{ parameters.buildDirectory }}'
-                  customCommand: 'run webpack'
+              - ${{ if eq(parameters.runWebpack, true) }}:
+                - task: Npm@1
+                  displayName: 'npm run webpack'
+                  inputs:
+                    command: custom
+                    workingDir: '${{ parameters.buildDirectory }}'
+                    customCommand: 'run webpack'
 
               # Pack
               - ${{ if ne(parameters.taskPack, false) }}:
