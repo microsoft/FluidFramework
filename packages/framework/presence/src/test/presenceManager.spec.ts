@@ -178,13 +178,12 @@ describe("Presence", () => {
 					it('first time is announced via `attendeeJoined` with status "Connected"', () => {
 						// Act - simulate join message from client
 						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
-
 						// Verify
-						assert.ok(
-							joinedAttendees.length === 1 && joinedAttendees[0] !== undefined,
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
 							"Expected exactly one attendee to be announced",
 						);
-
 						verifyAttendee(joinedAttendees[0], initialAttendeeConnectionId, attendeeSessionId);
 					});
 
@@ -196,11 +195,11 @@ describe("Presence", () => {
 						const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
 
 						// Verify
-						assert.ok(
-							joinedAttendees.length === 1 && joinedAttendees[0] !== undefined,
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
 							"Expected exactly one attendee to be announced",
 						);
-
 						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
 
@@ -209,8 +208,9 @@ describe("Presence", () => {
 						const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
 
 						// Verify
-						assert.ok(
-							joinedAttendees.length === 1 && joinedAttendees[0] !== undefined,
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
 							"Expected exactly one attendee to be announced",
 						);
 
@@ -225,8 +225,9 @@ describe("Presence", () => {
 						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
 
 						// Verify
-						assert.ok(
-							joinedAttendees.length === 1 && joinedAttendees[0] !== undefined,
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
 							"Expected exactly one attendee to be announced",
 						);
 
@@ -239,8 +240,9 @@ describe("Presence", () => {
 
 						// Act - simulate join message from client
 						const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
-						assert.ok(
-							joinedAttendees.length === 1 && joinedAttendees[0] !== undefined,
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
 							"Expected exactly one attendee to be announced",
 						);
 
@@ -272,8 +274,9 @@ describe("Presence", () => {
 						const joinedAttendees = processJoinSignals([collateralAttendeeSignal]);
 
 						// Verify - only the rejoining attendee is announced
-						assert.ok(
-							joinedAttendees.length === 1 && joinedAttendees[0] !== undefined,
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
 							"Expected exactly one attendee to be announced",
 						);
 
