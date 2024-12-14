@@ -945,7 +945,7 @@ export class ContainerRuntime
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableGroupedBatching = true,
 			explicitSchemaControl = false,
-		} = runtimeOptions as IContainerRuntimeOptionsInternal;
+		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
 
@@ -1124,7 +1124,7 @@ export class ContainerRuntime
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};
 
-		// Make sure we've got all the options including internal ones (even though we have to cast back to IContainerRuntimeOptions below)
+		// Make sure we've got all the options including internal ones
 		const internalRuntimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>> = {
 			summaryOptions,
 			gcOptions,
@@ -1521,7 +1521,10 @@ export class ContainerRuntime
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
-		runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
+		runtimeOptions: Readonly<
+			Required<Omit<IContainerRuntimeOptions, "flushMode" | "enableGroupedBatching">> &
+				IContainerRuntimeOptions // Let flushMode and enabledGroupedBatching be optional now since they're soon to be removed
+		>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
@@ -1566,7 +1569,12 @@ export class ContainerRuntime
 			snapshotWithContents,
 		} = context;
 
-		this.runtimeOptions = runtimeOptions;
+		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object
+		this.runtimeOptions = {
+			flushMode: defaultFlushMode,
+			enableGroupedBatching: true,
+			...runtimeOptions,
+		};
 
 		this.logger = createChildLogger({ logger: this.baseLogger });
 		this.mc = createChildMonitoringContext({
