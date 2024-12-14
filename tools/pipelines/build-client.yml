@@ -100,7 +100,7 @@ trigger:
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
-    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/build-npm-client-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -161,7 +161,7 @@ pr:
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
-    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/build-npm-client-package.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -178,7 +178,7 @@ variables:
       buildNumberInPatch: ''
 
 extends:
-  template: /tools/pipelines/templates/build-npm-package.yml@self
+  template: /tools/pipelines/templates/build-npm-client-package.yml@self
   parameters:
     publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
