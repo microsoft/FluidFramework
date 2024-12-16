@@ -109,15 +109,3 @@ steps:
     command: 'custom'
     workingDir: ${{ parameters.pathToTelemetryGenerator }}
     customCommand: run build:compile
-
-- task: Bash@3
-  displayName: 'Install aria-logger'
-  retryCountOnTaskFailure: 1
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
-    script: |
-      set -eu -o pipefail
-      # The telemetry-generator package is the root of its workspace so we do want to install this for the workspace
-      # root with '-w'. Without it, the install will complain and fail.
-      pnpm install -w @ff-internal/aria-logger;
