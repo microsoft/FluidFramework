@@ -98,11 +98,21 @@ export class BaseContainerRuntimeFactory
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
 	}
 
+	/**
+	 * Called the one time the container is created, and not on any subsequent load.
+	 * i.e. only when it's initialized on the client that first created it
+	 * @param runtime - The runtime for the container being initialized
+	 */
 	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
 		await this.containerInitializingFirstTime(runtime);
 		await this.containerHasInitialized(runtime);
 	}
 
+	/**
+	 * Called every time the container runtime is loaded for an existing container.
+	 * i.e. every time it's initialized _except_ for when it is first created
+	 * @param runtime - The runtime for the container being initialized
+	 */
 	public async instantiateFromExisting(runtime: IContainerRuntime): Promise<void> {
 		await this.containerHasInitialized(runtime);
 	}
