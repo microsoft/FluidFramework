@@ -396,7 +396,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	): void {
 		let localInserts = 0;
 		let localRemoves = 0;
-		walkAllChildSegments(this._mergeTree.root, (seg) => {
+		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentLeaf) => {
 			if (seg.seq === UnassignedSequenceNumber) {
 				localInserts++;
 			}

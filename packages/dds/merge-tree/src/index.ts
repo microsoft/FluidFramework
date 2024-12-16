@@ -63,6 +63,7 @@ export {
 	IMergeNodeCommon,
 	IMoveInfo,
 	IRemovalInfo,
+	segmentIsRemoved,
 	ISegment,
 	ISegmentAction,
 	Marker,
