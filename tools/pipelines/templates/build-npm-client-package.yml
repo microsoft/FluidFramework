@@ -358,6 +358,22 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
+              - script: |
+                  echo "Preparing nested lib/dist directories (excluding node_modules) for publishing..."
+                  find . -type d \( -name "lib" -o -name "dist" \) ! -path "*/node_modules/*" > directories_to_publish.txt
+                  echo "Directories to publish:"
+                  cat directories_to_publish.txt
+                  tar --create --gzip --file nested_lib_dist.tar.gz -T directories_to_publish.txt
+                displayName: Archive Nested Lib/Dist Directories and Their Contents
+                workingDirectory: ${{ parameters.buildDirectory }}
+
+              - task: CopyFiles@2
+                displayName: Copy nested_lib_dist to artifact staging directory
+                inputs:
+                  sourceFolder: ${{ parameters.buildDirectory }}
+                  contents: nested_lib_dist.tar.gz
+                  targetFolder: $(Build.ArtifactStagingDirectory)
+
               - ${{ if eq(parameters.runWebpack, true) }}:
                 - task: Npm@1
                   displayName: 'npm run webpack'
@@ -394,7 +410,7 @@ extends:
                   # Copy files so all artifacts we publish end up under the same parent folder.
                   # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
                   - task: CopyFiles@2
-                    displayName: Copy _api-extractor-temp files to artifact staging directory
+                    displayName: Copy bundleAnalysis files to artifact staging directory
                     inputs:
                       sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
@@ -507,42 +523,6 @@ extends:
               # This additional build step is used to run step not part of the main build. In build client pipeline,
               # this is used to inject telemetry key file and upload built devtools extension.
               - ${{ parameters.additionalBuildSteps }}
-
-              - task: Bash@3
-                displayName: Prune node_modules
-                condition: always()
-                continueOnError: true
-                inputs:
-                  targetType: inline
-                  script: |
-                    sizeBefore=$(du -sh . | awk '{print $1}');
-                    echo "Size before: $sizeBefore";
-
-                    if [ -d "./node_modules" ]; then
-                      mv ./node_modules "$(Agent.TempDirectory)"
-                    else
-                      echo "node_modules directory not found."
-                    fi
-
-                    find . -type d -name 'node_modules' -exec rm -rf {} +
-                    sizeAfter=$(du -sh . | awk '{print $1}');
-                    echo "Size after: $sizeAfter";
-                  workingDirectory: ${{ parameters.buildDirectory }}
-
-              - script: |
-                  echo "Preparing nested lib/dist directories and their contents for publishing..."
-                  find . -type d \( -name "lib" -o -name "dist" \) > directories_to_publish.txt
-                  cat directories_to_publish.txt
-                  tar --create --gzip --file nested_lib_dist.tar.gz -T directories_to_publish.txt
-                displayName: Archive Nested Lib/Dist Directories and Their Contents
-                workingDirectory: ${{ parameters.buildDirectory }}
-
-              - task: CopyFiles@2
-                displayName: Copy nested_lib_dist to artifact staging directory
-                inputs:
-                  sourceFolder: ${{ parameters.buildDirectory }}
-                  contents: nested_lib_dist.tar.gz
-                  targetFolder: $(Build.ArtifactStagingDirectory)
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)

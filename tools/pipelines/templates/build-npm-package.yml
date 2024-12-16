@@ -479,7 +479,7 @@ extends:
                   # Copy files so all artifacts we publish end up under the same parent folder.
                   # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
                   - task: CopyFiles@2
-                    displayName: Copy _api-extractor-temp files to artifact staging directory
+                    displayName: Copy bundleAnalysis files to artifact staging directory
                     inputs:
                       sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
