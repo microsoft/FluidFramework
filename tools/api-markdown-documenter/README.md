@@ -84,12 +84,11 @@ const apiModel = await loadModel({
 	modelDirectoryPath,
 });
 
-const transformConfig = {
+await MarkdownRenderer.renderApiModel({
 	apiModel,
 	uriRoot: ".",
-};
-
-await MarkdownRenderer.renderApiModel(transformConfig, {}, { outputDirectoryPath });
+	outputDirectoryPath,
+});
 ```
 
 <!-- prettier-ignore-end -->

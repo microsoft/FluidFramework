@@ -13,9 +13,8 @@ const apiModel = await loadModel({
 	modelDirectoryPath,
 });
 
-const transformConfig = {
+await HtmlRenderer.renderApiModel({
 	apiModel,
 	uriRoot: ".",
-};
-
-await HtmlRenderer.renderApiModel(transformConfig, {}, { outputDirectoryPath });
+	outputDirectoryPath,
+});
