@@ -12,12 +12,12 @@ import { BaseCommand } from "../../library/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default class RunBundlestats extends BaseCommand<typeof RunBundlestats> {
+export default class Bundlestats extends BaseCommand<typeof Bundlestats> {
 	static readonly description =
 		`Generate a report from input bundle stats collected through the collect bundleStats command.`;
 
-	static readonly deprecated =
-		'The "run bundleStats" command is deprecated. Please use "publish bundleStats" instead.';
+	static readonly aliases = ["run:bundleStats"];
+	static readonly deprecateAliases = true;
 
 	static readonly flags = {
 		dangerfile: Flags.file({
