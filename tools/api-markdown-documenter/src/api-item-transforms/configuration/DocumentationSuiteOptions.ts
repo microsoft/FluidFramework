@@ -12,7 +12,6 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import {
-	type ApiMemberKind,
 	getQualifiedApiItemName,
 	getUnscopedPackageName,
 	getSafeFilenameForName,
@@ -20,6 +19,8 @@ import {
 	getSingleLineExcerptText,
 	isDeprecated,
 	getReleaseTag,
+	type DeepRequired,
+	getApiItemKind,
 } from "../../utilities/index.js";
 
 /**
@@ -151,7 +152,7 @@ export interface DocumentationSuiteOptions {
 	/**
 	 * {@link HierarchyConfig} to use for the provided API item.
 	 */
-	hierarchyOptions?: HierarchyConfig | ((apiItem: ApiItem) => HierarchyConfig);
+	readonly hierarchyOptions?: HierarchyConfig | ((apiItem: ApiItem) => HierarchyConfig);
 
 	/**
 	 * Optionally provide an override for the URI base used in links generated for the provided `ApiItem`.
@@ -229,6 +230,96 @@ export interface DocumentationSuiteOptions {
 }
 
 /**
+ * Default {@link SectionHierarchyOptions.headingText}.
+ *
+ * Uses the item's qualified API name, but is handled differently for the following items:
+ *
+ * - Model: Uses "index".
+ *
+ * - Package: Uses the unscoped package name.
+ */
+function defaultHeadingText(apiItem: ApiItem): string {
+	const kind = getApiItemKind(apiItem);
+	switch (kind) {
+		case ApiItemKind.Model: {
+			return "API Overview";
+		}
+		case ApiItemKind.CallSignature:
+		case ApiItemKind.ConstructSignature:
+		case ApiItemKind.IndexSignature: {
+			// For signature items, the display-name is not particularly useful information
+			// ("(constructor)", "(call)", etc.).
+			// Instead, we will use a cleaned up variation on the type signature.
+			const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
+			return trimTrailingSemicolon(excerpt);
+		}
+		default: {
+			return apiItem.displayName;
+		}
+	}
+}
+
+const defaultSectionHierarchyConfig: DeepRequired<SectionHierarchyConfig> = {
+	kind: HierarchyKind.Section,
+	headingText: defaultHeadingText,
+}
+
+/**
+ * Default {@link DocumentHierarchyOptions.documentName} for non-folder hierarchy documents.
+ *
+ * Uses the item's qualified API name, but is handled differently for the following items:
+ *
+ * - Model: Uses "index".
+ *
+ * - Package: Uses the unscoped package name.
+ */
+function defaultDocumentName(apiItem: ApiItem): string {
+	const kind = getApiItemKind(apiItem);
+	switch (kind) {
+		case ApiItemKind.Model: {
+			return "model";
+		}
+		case ApiItemKind.Package: {
+			return getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage));
+		}
+		default: {
+			// TODO: append item kind postfix
+			return getQualifiedApiItemName(apiItem);
+		}
+	}
+}
+
+const defaultDocumentHierarchyConfig: DeepRequired<DocumentHierarchyConfig> = {
+	kind: HierarchyKind.Document,
+	headingText: defaultHeadingText,
+	documentName: defaultDocumentName,
+}
+
+function defaultFolderName(apiItem: ApiItem): string {
+	const kind = getApiItemKind(apiItem);
+	switch (kind) {
+		case ApiItemKind.Model: {
+			return "model";
+		}
+		case ApiItemKind.Package: {
+			return getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage));
+		}
+		default: {
+			// TODO: append item kind postfix
+			return getQualifiedApiItemName(apiItem);
+		}
+	}
+}
+
+const defaultFolderHierarchyConfig: DeepRequired<FolderHierarchyConfig> = {
+	kind: HierarchyKind.Folder,
+	headingText: defaultHeadingText,
+	documentPlacement: "inside",
+	documentName: "index", // Documents for items that get their own folder are always named "index" by default.
+	folderName: defaultFolderName,
+}
+
+/**
  * Contains a list of default documentation transformations, used by {@link DocumentationSuiteOptions}.
  *
  * @public
@@ -236,50 +327,26 @@ export interface DocumentationSuiteOptions {
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DefaultDocumentationSuiteOptions {
 	/**
-	 * Default {@link DocumentationSuiteOptions.documentBoundaries}.
-	 *
-	 * Generates separate documents for the following API item kinds:
-	 *
-	 * - Class
-	 *
-	 * - Interface
-	 *
-	 * - Namespace
+	 * Default {@link DocumentationSuiteOptions.hierarchyOptions}.
 	 */
-	export const defaultDocumentBoundaries: ApiMemberKind[] = [
-		ApiItemKind.Class,
-		ApiItemKind.Interface,
-		ApiItemKind.Namespace,
-	];
+	export function defaultHierarchyOptions(apiItem: ApiItem): HierarchyConfig {
+		const kind = getApiItemKind(apiItem);
 
-	/**
-	 * Default {@link DocumentationSuiteOptions.hierarchyBoundaries}.
-	 *
-	 * Creates sub-directories for the following API item kinds:
-	 *
-	 * - Namespace
-	 */
-	export const defaultHierarchyBoundaries: ApiMemberKind[] = [ApiItemKind.Namespace];
-
-	/**
-	 * Default {@link DocumentationSuiteOptions.getFileNameForItem}.
-	 *
-	 * Uses the item's qualified API name, but is handled differently for the following items:
-	 *
-	 * - Model: Uses "index".
-	 *
-	 * - Package: Uses the unscoped package name.
-	 */
-	export function defaultGetFileNameForItem(apiItem: ApiItem): string {
-		switch (apiItem.kind) {
-			case ApiItemKind.Model: {
-				return "index";
-			}
+		// TODO: audit these
+		switch (kind) {
+			case ApiItemKind.Namespace:
 			case ApiItemKind.Package: {
-				return getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage));
+				return defaultFolderHierarchyConfig;
+			}
+			case ApiItemKind.Class:
+			case ApiItemKind.Interface:
+			case ApiItemKind.EntryPoint:
+			case ApiItemKind.Model:
+			case ApiItemKind.TypeAlias: {
+				return defaultDocumentHierarchyConfig;
 			}
 			default: {
-				return getQualifiedApiItemName(apiItem);
+				return defaultSectionHierarchyConfig;
 			}
 		}
 	}
@@ -291,31 +358,6 @@ export namespace DefaultDocumentationSuiteOptions {
 	 */
 	export function defaultGetUriBaseOverrideForItem(): string | undefined {
 		return undefined;
-	}
-
-	/**
-	 * Default {@link DocumentationSuiteOptions.getHeadingTextForItem}.
-	 *
-	 * Uses the item's `displayName`, except for `Model` items, in which case the text "API Overview" is displayed.
-	 */
-	export function defaultGetHeadingTextForItem(apiItem: ApiItem): string {
-		switch (apiItem.kind) {
-			case ApiItemKind.Model: {
-				return "API Overview";
-			}
-			case ApiItemKind.CallSignature:
-			case ApiItemKind.ConstructSignature:
-			case ApiItemKind.IndexSignature: {
-				// For signature items, the display-name is not particularly useful information
-				// ("(constructor)", "(call)", etc.).
-				// Instead, we will use a cleaned up variation on the type signature.
-				const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
-				return trimTrailingSemicolon(excerpt);
-			}
-			default: {
-				return apiItem.displayName;
-			}
-		}
 	}
 
 	/**
@@ -382,7 +424,8 @@ export namespace DefaultDocumentationSuiteOptions {
 /**
  * Default {@link DocumentationSuiteOptions} value.
  */
-const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
+const defaultDocumentationSuiteOptions: DeepRequired<DocumentationSuiteOptions> = {
+	hierarchyOptions: DefaultDocumentationSuiteOptions.defaultHierarchyOptions,
 	includeTopLevelDocumentHeading: true,
 	includeBreadcrumb: true,
 	getUriBaseOverrideForItem: DefaultDocumentationSuiteOptions.defaultGetUriBaseOverrideForItem,
@@ -398,7 +441,7 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
  */
 export function getDocumentationSuiteOptionsWithDefaults(
 	inputOptions: DocumentationSuiteOptions,
-): Required<DocumentationSuiteOptions> {
+): DeepRequired<DocumentationSuiteOptions> {
 	return {
 		...defaultDocumentationSuiteOptions,
 		...inputOptions,
