@@ -30,12 +30,7 @@ parameters:
 - name: taskTest
   type: object
   default:
-  - { name: "ci:test", jobName: "CiTest" }
-
-- name: coverageTests
-  type: object
-  default:
-  - { name: "ci:test", jobName: "CiTest" }
+  - ci:test
 
 # A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
 # Used to avoid the force merge limit of 100 result files.
@@ -100,10 +95,6 @@ parameters:
 - name: packageManager
   type: string
   default: npm
-
-- name: runWebpack
-  type: boolean
-  default: false
 
 # Parameter for modifying the 'types' field in the package.json.
 # If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
@@ -358,13 +349,119 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
-              - ${{ if eq(parameters.runWebpack, true) }}:
-                - task: Npm@1
-                  displayName: 'npm run webpack'
-                  inputs:
-                    command: custom
-                    workingDir: '${{ parameters.buildDirectory }}'
-                    customCommand: 'run webpack'
+              # Test
+              - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
+                  # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
+                  - script: |
+                      echo "##vso[task.setvariable variable=startTest]true"
+                    displayName: Start Test
+
+                  - ${{ each taskTestStep in parameters.taskTest }}:
+                      - template: /tools/pipelines/templates/include-test-task.yml@self
+                        parameters:
+                          taskTestStep: '${{ taskTestStep }}'
+                          buildDirectory: '${{ parameters.buildDirectory }}'
+                          # Don't run with coverage if the task is a PR and the task is a tinylicious service and stress test. We don't include coverage for these tests in our baseline coverage stats, so we don't need to run them with coverage here too.
+                          testCoverage: ${{
+                            and(
+                              parameters.testCoverage,
+                              or(
+                                ne(variables['Build.Reason'], 'PullRequest'),
+                                and(
+                                  not(contains(taskTestStep, 'realsvc:tinylicious')),
+                                  not(contains(taskTestStep, 'stress:tinylicious'))
+                                )
+                              )
+                            )}}
+
+                  - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
+                    - task: Bash@3
+                      displayName: Upload tinylicious log
+                      condition: always()
+                      continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+                      inputs:
+                        targetType: inline
+                        script: |
+                          set -eu -o pipefail
+                          PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
+                          if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
+                            echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
+                            echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
+                          else
+                            echo "##vso[task.logissue type=warning]Failed to upload tinylicious log file ('$PATH_TO_TINYLICIOUS_LOG' not found).";
+                          fi
+
+                    # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
+                    # that is now part of templateContext.outputs below.
+
+                  # Test - Upload coverage results
+                  # Some webpacked file using externals introduce file name with quotes in them
+                  # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
+                  # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
+                  - ${{ if parameters.testCoverage }}:
+                      - task: Bash@3
+                        displayName: Check for nyc/report directory
+                        condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                        inputs:
+                          targetType: 'inline'
+                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          script: |
+                            set -eu -o pipefail
+                            test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
+                      - task: Bash@3
+                        displayName: Patch Coverage Results
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        inputs:
+                          targetType: 'inline'
+                          workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
+                          script: |
+                            set -eu -o pipefail
+                            sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+                      - task: PublishCodeCoverageResults@2
+                        displayName: Publish Code Coverage
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        inputs:
+                          summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+                          failIfCoverageEmpty: true
+                      - task: CopyFiles@2
+                        displayName: Copy code coverage report to artifact staging directory
+                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                        inputs:
+                          sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
+                          targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                      - task: Bash@3
+                        displayName: Report Code Coverage Comparison
+                        condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
+                        continueOnError: false
+                        env:
+                          ADO_API_TOKEN: '$(System.AccessToken)'
+                          GITHUB_API_TOKEN: '$(githubPublicRepoSecret)'
+                          TARGET_BRANCH_NAME: '$(targetBranchName)'
+                          ADO_BUILD_ID: '$(Build.BuildId)'
+                          GITHUB_PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
+                          GITHUB_REPOSITORY_NAME: '$(Build.Repository.Name)'
+                          ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
+                          ADO_CI_BUILD_DEFINITION_ID_PR: 11
+                        inputs:
+                          targetType: inline
+                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          script: |
+                            set -eu -o pipefail
+                            echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
+                            echo "Github PR number: $GITHUB_PR_NUMBER"
+                            echo "ADO Build Number: $ADO_BUILD_ID"
+                            echo "Target Branch Name: $TARGET_BRANCH_NAME"
+                            echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
+                            echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
+                            echo "Running code coverage comparison"
+                            flub report codeCoverage --verbose
+
+
+                  # Process test result, include publishing and logging
+                  - template: /tools/pipelines/templates/include-process-test-results.yml@self
+                    parameters:
+                      buildDirectory: '${{ parameters.buildDirectory }}'
+                      testResultDirs: '${{ parameters.testResultDirs }}'
 
               # Pack
               - ${{ if ne(parameters.taskPack, false) }}:
@@ -508,51 +605,9 @@ extends:
               # this is used to inject telemetry key file and upload built devtools extension.
               - ${{ parameters.additionalBuildSteps }}
 
-              - task: Bash@3
-                displayName: Prune node_modules
-                condition: always()
-                continueOnError: true
-                inputs:
-                  targetType: inline
-                  script: |
-                    sizeBefore=$(du -sh . | awk '{print $1}');
-                    echo "Size before: $sizeBefore";
-
-                    if [ -d "./node_modules" ]; then
-                      mv ./node_modules "$(Agent.TempDirectory)"
-                    else
-                      echo "node_modules directory not found."
-                    fi
-
-                    find . -type d -name 'node_modules' -exec rm -rf {} +
-                    sizeAfter=$(du -sh . | awk '{print $1}');
-                    echo "Size after: $sizeAfter";
-                  workingDirectory: ${{ parameters.buildDirectory }}
-
-              - script: |
-                  echo "Preparing nested lib/dist directories and their contents for publishing..."
-                  find . -type d \( -name "lib" -o -name "dist" \) > directories_to_publish.txt
-                  cat directories_to_publish.txt
-                  tar --create --gzip --file nested_lib_dist.tar.gz -T directories_to_publish.txt
-                displayName: Archive Nested Lib/Dist Directories and Their Contents
-                workingDirectory: ${{ parameters.buildDirectory }}
-
-              - task: CopyFiles@2
-                displayName: Copy nested_lib_dist to artifact staging directory
-                inputs:
-                  sourceFolder: ${{ parameters.buildDirectory }}
-                  contents: nested_lib_dist.tar.gz
-                  targetFolder: $(Build.ArtifactStagingDirectory)
-
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
-                - output: pipelineArtifact
-                  displayName: Publish Artifact - nested_lib_dist
-                  targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist.tar.gz
-                  artifactName: nested_lib_dist
-                  publishLocation: pipeline
-
                 - ${{ if ne(parameters.taskPack, false) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - pack
@@ -576,6 +631,16 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
+                # Publish the Code Coverage artifact in this format as it is easier for devs to find coverage html for each file.
+                - ${{ if eq(parameters.testCoverage, true) }}:
+                  - output: pipelineArtifact
+                    displayName: Publish Artifacts - code-coverage
+                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                    targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                    artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
+                    sbomEnabled: false
+                    publishLocation: pipeline
+
                 - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - _api-extractor-temp
@@ -583,240 +648,6 @@ extends:
                       artifactName: _api-extractor-temp
                       sbomEnabled: false
                       publishLocation: pipeline
-
-          - job: Coverage_tests
-            displayName: "Coverage tests"
-            dependsOn: build
-            variables:
-              - group: ado-feeds
-              - group: storage-vars
-              - name: releaseBuildVar
-                value: '$[variables.releaseBuild]'
-              - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-                - name: targetBranchName
-                  value: $(System.PullRequest.TargetBranch)
-              # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
-              # used in a few places in the pipeline to push custom telemetry to Kusto.
-              - name: absolutePathToTelemetryGenerator
-                value: $(Build.SourcesDirectory)/tools/telemetry-generator
-                readonly: true
-            steps:
-              # Setup
-              - checkout: self
-                clean: true
-                lfs: '${{ parameters.checkoutSubmodules }}'
-                submodules: '${{ parameters.checkoutSubmodules }}'
-
-              - template: /tools/pipelines/templates/include-use-node-version.yml@self
-
-              - template: /tools/pipelines/templates/include-install.yml@self
-                parameters:
-                  packageManager: '${{ parameters.packageManager }}'
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
-
-              - task: DownloadPipelineArtifact@2
-                inputs:
-                  artifact: nested_lib_dist
-                  targetPath: $(Build.SourcesDirectory)
-
-              - script: |
-                  echo "Extracting nested lib/dist directories and their contents..."
-                  tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
-                displayName: Extract Nested Lib/Dist Directories and Their Contents
-
-              # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
-              - script: |
-                  echo "##vso[task.setvariable variable=startTest]true"
-                displayName: Start Test
-
-              - ${{ each test in parameters.coverageTests }}:
-                - template: /tools/pipelines/templates/include-test-task.yml@self
-                  parameters:
-                    taskTestStep: '${{ test.name }}:coverage'
-                    buildDirectory: '${{ parameters.buildDirectory }}'
-
-              - task: Npm@1
-                displayName: 'npm run test:copyresults'
-                inputs:
-                  command: custom
-                  workingDir: '${{ parameters.buildDirectory }}'
-                  customCommand: 'run test:copyresults'
-
-              # Test - Upload coverage results
-              # Some webpacked file using externals introduce file name with quotes in them
-              # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
-              # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
-              - template: /tools/pipelines/templates/include-install-build-tools.yml@self
-                parameters:
-                  buildDirectory: ${{ parameters.buildDirectory }}
-                  buildToolsVersionToInstall: repo
-                  pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
-
-              - task: Bash@3
-                displayName: Check for nyc/report directory
-                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-                inputs:
-                  targetType: 'inline'
-                  workingDirectory: '${{ parameters.buildDirectory }}'
-                  script: |
-                    set -eu -o pipefail
-                    test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
-
-              - task: Bash@3
-                displayName: Patch Coverage Results
-                condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                inputs:
-                  targetType: 'inline'
-                  workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
-                  script: |
-                    set -eu -o pipefail
-                    sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
-
-              - task: PublishCodeCoverageResults@2
-                displayName: Publish Code Coverage
-                condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                inputs:
-                  summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
-                  failIfCoverageEmpty: true
-              - task: CopyFiles@2
-                displayName: Copy code coverage report to artifact staging directory
-                condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                inputs:
-                  sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
-                  targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-              - task: Bash@3
-                displayName: Report Code Coverage Comparison
-                condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
-                continueOnError: false
-                env:
-                  ADO_API_TOKEN: '$(System.AccessToken)'
-                  GITHUB_API_TOKEN: '$(githubPublicRepoSecret)'
-                  TARGET_BRANCH_NAME: '$(targetBranchName)'
-                  ADO_BUILD_ID: '$(Build.BuildId)'
-                  GITHUB_PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
-                  GITHUB_REPOSITORY_NAME: '$(Build.Repository.Name)'
-                  ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
-                  ADO_CI_BUILD_DEFINITION_ID_PR: 11
-                inputs:
-                  targetType: inline
-                  workingDirectory: '${{ parameters.buildDirectory }}'
-                  script: |
-                    set -eu -o pipefail
-                    echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
-                    echo "Github PR number: $GITHUB_PR_NUMBER"
-                    echo "ADO Build Number: $ADO_BUILD_ID"
-                    echo "Target Branch Name: $TARGET_BRANCH_NAME"
-                    echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
-                    echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
-                    echo "Running code coverage comparison"
-                    flub report codeCoverage --verbose
-
-            # Process test result, include publishing and logging
-              - template: /tools/pipelines/templates/include-process-test-results.yml@self
-                parameters:
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  testResultDirs: '${{ parameters.testResultDirs }}'
-
-            templateContext:
-              outputParentDirectory: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-              outputs:
-                - ${{ if eq(parameters.testCoverage, true) }}:
-                      - output: pipelineArtifact
-                        displayName: Publish Artifacts - code-coverage
-                        condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                        targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-                        artifactName: '$(System.JobAttempt)'
-                        sbomEnabled: false
-                        publishLocation: pipeline
-
-          # Job - Tests
-          - ${{ each test in parameters.taskTest }}:
-            - job: Test_${{ test.jobName }}
-              displayName: "Run Task Test ${{ test.jobName }}"
-              dependsOn: build
-              variables:
-                - group: ado-feeds
-                - group: storage-vars
-                - name: releaseBuildVar
-                  value: '$[variables.releaseBuild]'
-                - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-                  - name: targetBranchName
-                    value: $(System.PullRequest.TargetBranch)
-                # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
-                # used in a few places in the pipeline to push custom telemetry to Kusto.
-                - name: absolutePathToTelemetryGenerator
-                  value: $(Build.SourcesDirectory)/tools/telemetry-generator
-                  readonly: true
-              steps:
-                # Setup
-                - checkout: self
-                  clean: true
-                  lfs: '${{ parameters.checkoutSubmodules }}'
-                  submodules: '${{ parameters.checkoutSubmodules }}'
-
-                - template: /tools/pipelines/templates/include-use-node-version.yml@self
-
-                - template: /tools/pipelines/templates/include-install.yml@self
-                  parameters:
-                    packageManager: '${{ parameters.packageManager }}'
-                    buildDirectory: '${{ parameters.buildDirectory }}'
-                    packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
-
-                - task: DownloadPipelineArtifact@2
-                  inputs:
-                    artifact: nested_lib_dist
-                    targetPath: $(Build.SourcesDirectory)
-
-                - script: |
-                    echo "Extracting nested lib/dist directories and their contents..."
-                    tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
-                  displayName: Extract Nested Lib/Dist Directories and Their Contents
-
-                # Test
-
-                # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
-                - script: |
-                    echo "##vso[task.setvariable variable=startTest]true"
-                  displayName: Start Test
-
-                - template: /tools/pipelines/templates/include-test-task.yml@self
-                  parameters:
-                    taskTestStep: '${{ test.name }}'
-                    buildDirectory: '${{ parameters.buildDirectory }}'
-
-                - task: Npm@1
-                  displayName: 'npm run test:copyresults'
-                  inputs:
-                    command: custom
-                    workingDir: '${{ parameters.buildDirectory }}'
-                    customCommand: 'run test:copyresults'
-
-                - ${{ if contains(test.name, 'tinylicious') }}:
-                  - task: Bash@3
-                    displayName: Upload tinylicious log
-                    condition: always()
-                    continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
-                    inputs:
-                      targetType: inline
-                      script: |
-                        set -eu -o pipefail
-                        PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
-                        if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
-                          echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
-                          echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
-                        else
-                          echo "##vso[task.logissue type=warning]Failed to upload tinylicious log file ('$PATH_TO_TINYLICIOUS_LOG' not found).";
-                        fi
-
-                  # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
-                  # that is now part of templateContext.outputs below.
-
-                # Process test result, include publishing and logging
-                - template: /tools/pipelines/templates/include-process-test-results.yml@self
-                  parameters:
-                    buildDirectory: '${{ parameters.buildDirectory }}'
-                    testResultDirs: '${{ parameters.testResultDirs }}'
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
