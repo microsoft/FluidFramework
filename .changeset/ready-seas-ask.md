@@ -1,5 +1,4 @@
 ---
-"fluid-framework": minor
 "@fluidframework/tree": minor
 ---
 ---
@@ -15,4 +14,4 @@ The following interfaces and types are now deprecated in `@fluidframework/tree`.
 - Listenable
 - Off
 
-These deprecated interfaces are planned for removal in the Fluid Framework 3.0 release.
+These deprecated interfaces are planned for removal from `@fluidframework/tree` package in Fluid Framework 3.0 release.

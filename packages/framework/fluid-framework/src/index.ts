@@ -69,7 +69,7 @@ export type { isFluidHandle } from "@fluidframework/runtime-utils";
 /* eslint-disable-next-line
 	no-restricted-syntax,
 	import/no-internal-modules,
-	import/export -- This re-exports all non-conflicting APIs from `@fluidframework/tree`. In cases where * exports conflict with named exports, the named exports take precedence, triggering the `import/export` lint warning (which is intentionally disabled here). This approach ensures that the non-deprecated versions of the event APIs from `@fluidframework/core-interfaces`(provided as named exports) replace the deprecated ones from `@fluidframework/tree`. The preferred versions of the event APIs are those exported via `@fluidframework/core-interfaces`.
+	import/export -- This re-exports all non-conflicting APIs from `@fluidframework/tree`. In cases where * exports conflict with named exports, the named exports take precedence per https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#sec-getexportednames. This does trigger the `import/export` lint warning (which is intentionally disabled here). This approach ensures that the non-deprecated versions of the event APIs from `@fluidframework/core-interfaces` (provided as named indirect exports) eclipse the deprecated ones from `@fluidframework/tree`. The preferred versions of the event APIs are those exported via `@fluidframework/core-interfaces`.
 	*/
 export * from "@fluidframework/tree/alpha";
 
