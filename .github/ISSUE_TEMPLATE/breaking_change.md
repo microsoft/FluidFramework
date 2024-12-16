@@ -1,7 +1,7 @@
 ---
 name: Breaking Change
 about: Track plans for a breaking change
-title: "Removal of ? in v2."
+title: "Removal of ? in v#.#"
 labels: "breaking change"
 assignees: ""
 ---
