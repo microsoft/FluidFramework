@@ -31,11 +31,11 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 		packageVersion: pkgVersion,
 	};
 
-	public get type() {
+	public get type(): string {
 		return ConsensusQueueFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return ConsensusQueueFactory.Attributes;
 	}
 
@@ -72,4 +72,5 @@ export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
  * @legacy
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
