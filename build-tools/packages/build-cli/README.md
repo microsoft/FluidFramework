@@ -51,7 +51,7 @@ USAGE
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
 * [`flub transform`](docs/transform.md) - Transform commands are used to transform code, docs, etc. into alternative forms.
 * [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
-* [`flub vnext`](docs/vnext.md) - Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.
+* [`flub vnext`](docs/vnext.md) - Vnext commands are new implementations of standard flub commands using new infrastructure.
 
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->

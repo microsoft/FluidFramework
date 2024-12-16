@@ -1,7 +1,7 @@
 `flub vnext`
 ============
 
-Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.
+Vnext commands are new implementations of standard flub commands using new infrastructure.
 
 * [`flub vnext check latestVersions VERSION RELEASE_GROUP`](#flub-vnext-check-latestversions-version-release_group)
 

@@ -247,6 +247,9 @@
 			},
 			"report": {
 				"description": "Report analysis about the codebase, like code coverage and bundle size measurements."
+			},
+			"vnext": {
+				"description": "Vnext commands are new implementations of standard flub commands using new infrastructure."
 			}
 		}
 	}

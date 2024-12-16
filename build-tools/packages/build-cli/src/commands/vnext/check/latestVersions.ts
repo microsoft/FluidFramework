@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import * as semver from "semver";
-import { findReleaseGroup, releaseGroupArg, semverArg } from "../../../args.js";
-import {
-	BaseCommandWithBuildProject,
-	getVersionsFromTags,
-	sortVersions,
-} from "../../../library/index.js";
+import { releaseGroupArg, semverArg } from "../../../args.js";
+import { BaseCommandWithBuildProject, getVersionsFromTags } from "../../../library/index.js";
 
 type MajorVersion = number;
 
@@ -35,14 +32,15 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 	public async run(): Promise<void> {
 		const { args } = this;
 		const buildProject = this.getBuildProject();
-		const releaseGroup = findReleaseGroup(args.release_group, buildProject);
-
-		const versionInput = args.version;
+		const releaseGroup = buildProject.releaseGroups.get(
+			args.release_group as ReleaseGroupName,
+		);
 
 		if (releaseGroup === undefined) {
 			this.error(`Package not found: ${args.release_group}`);
 		}
 
+		const versionInput = args.version;
 		const git = await buildProject.getGitRepository();
 		const versions = await getVersionsFromTags(releaseGroup, git);
 
@@ -52,20 +50,20 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 
 		// Filter out pre-release versions
 		const stableVersions = versions.filter((v) => {
-			return !isInternalVersionScheme(v.version);
+			return !isInternalVersionScheme(v);
 		});
 
 		// Sort the semver versions ordered from highest to lowest
-		const sortedByVersion = sortVersions(stableVersions, "version");
+		const sortedByVersion = stableVersions.sort((a, b) => semver.rcompare(a, b));
 
 		const inputMajorVersion: MajorVersion = semver.major(versionInput.version);
 
 		for (const v of sortedByVersion) {
-			const majorVersion: MajorVersion = semver.major(v.version);
+			const majorVersion: MajorVersion = semver.major(v);
 
 			// Since sortedByVersion is sorted, the first encountered version is the highest one
 			if (majorVersion === inputMajorVersion) {
-				if (v.version === versionInput.version) {
+				if (v === versionInput.version) {
 					// Check if the input version is the latest version for the major version
 					this.log(
 						`Version ${versionInput.version} is the latest version for major version ${majorVersion}`,
@@ -79,7 +77,7 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 
 				// If versions do not match on first major version encounter, then the input version is not the latest
 				this.log(
-					`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v.version}`,
+					`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v}`,
 				);
 				this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
 				this.log(`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`);

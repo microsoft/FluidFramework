@@ -13,6 +13,7 @@ import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
 import type { SetRequired } from "type-fest";
 
 import type { IReleaseGroup } from "@fluid-tools/build-infrastructure";
+import { getVersionsFromStrings } from "@fluid-tools/version-tools";
 import { parseISO } from "date-fns";
 import { CommandLogger } from "../logging.js";
 import { ReleaseGroup } from "../releaseGroups.js";
@@ -45,6 +46,19 @@ function getVersionFromTag(tag: string): string | undefined {
 }
 
 /**
+ * Get all version tags for a given prefix.
+ *
+ * @param git - The git repository.
+ * @param prefix - prefix to search for.
+ * @returns List of version tags.
+ */
+async function getVersionTags(git: SimpleGit, prefix: string): Promise<string[]> {
+	const raw_tags = git.tags(["--list", `${prefix}_v*`]);
+	const tags = await raw_tags;
+	return tags.all;
+}
+
+/**
  * Get all the versions for a release group. This function only considers the tags in the repo.
  *
  * @param git - The git repository.
@@ -54,40 +68,16 @@ function getVersionFromTag(tag: string): string | undefined {
 export async function getVersionsFromTags(
 	releaseGroup: IReleaseGroup,
 	git: Readonly<SimpleGit>,
-): Promise<VersionDetails[] | undefined> {
-	const prefix = PackageName.getUnscopedName(releaseGroup.name);
+): Promise<string[] | undefined> {
+	const tags = await getVersionTags(git, releaseGroup.name);
 
-	const tags = await git.tags(["--list", `${prefix}_v*`]);
-
-	const versions = new Map<string, Date>();
-
-	for (const tag of tags.all) {
-		const ver = getVersionFromTag(tag);
-		if (ver !== undefined && ver !== "" && ver !== null) {
-			// eslint-disable-next-line no-await-in-loop
-			const rawDate = await git.show([
-				// Suppress the diff output
-				"-s",
-				// ISO 8601 format
-				"--format=%cI",
-				// the git ref - a tag in this case
-				tag,
-			]);
-			const date = parseISO(rawDate.trim());
-			versions.set(ver, date);
-		}
-	}
-
-	if (versions.size === 0) {
+	if (tags.length === 0) {
 		return undefined;
 	}
 
-	const toReturn: VersionDetails[] = [];
-	for (const [version, date] of versions) {
-		toReturn.push({ version, date });
-	}
+	const versions = getVersionsFromStrings(releaseGroup.name, tags);
 
-	return toReturn;
+	return versions;
 }
 
 /**

@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IBuildProject,
-	IReleaseGroup,
-	ReleaseGroupName,
-} from "@fluid-tools/build-infrastructure";
 import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
@@ -53,16 +48,6 @@ export const releaseGroupArg = Args.custom({
 	required: true,
 	description: "The name of a release group.",
 });
-
-/**
- * Takes a release group name and searches the build project for it.
- */
-export const findReleaseGroup = (
-	name: string,
-	buildProject: IBuildProject,
-): IReleaseGroup | undefined => {
-	return buildProject.releaseGroups.get(name as ReleaseGroupName);
-};
 
 /**
  * Creates a CLI argument for semver versions. It's a factory function so that commands can override the properties more
