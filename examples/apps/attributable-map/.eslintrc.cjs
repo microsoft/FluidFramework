@@ -4,7 +4,11 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid"),
+		"prettier",
+		require.resolve("../../.eslintrc.cjs"),
+	],
 	rules: {
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},

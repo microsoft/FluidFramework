@@ -10,14 +10,14 @@ import {
 	IContainerContext,
 	IRuntime,
 	IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
+} from "@fluidframework/container-definitions/legacy";
 import {
 	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	ContainerRuntime,
 	IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/container-runtime/legacy";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/legacy";
 
 // eslint-disable-next-line import/no-deprecated
 const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
