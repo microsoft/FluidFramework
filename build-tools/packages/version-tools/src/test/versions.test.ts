@@ -7,7 +7,7 @@ import { assert, expect } from "chai";
 import * as semver from "semver";
 
 import { getVersionRange } from "../internalVersionScheme";
-import { getIsLatest, getSimpleVersion } from "../versions";
+import { getIsLatest, getSimpleVersion, getVersionsFromStrings } from "../versions";
 
 // Deliberately not sorted here; highest version is 0.59.3000
 const test_tags = [
@@ -157,5 +157,43 @@ describe("getIsLatest", () => {
 		});
 
 		assert.isFalse(getIsLatest("client", "1.2.3", post1_tags, true));
+	});
+});
+
+describe("getVersionsFromStrings", () => {
+	it("should return sorted versions for given prefix", () => {
+		const expected = [
+			"0.59.1000",
+			"0.59.1001",
+			"0.59.1001-62246",
+			"0.59.2000",
+			"0.59.2000-63294",
+			"0.59.2001",
+			"0.59.2002",
+			"0.59.3000",
+			"0.59.3000-66610",
+			"0.59.3000-67119",
+		];
+		const result = getVersionsFromStrings("client", test_tags);
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("should filter out versions with different prefix", () => {
+		const tags = [
+			"client_v0.59.1001",
+			"server_v0.59.2000",
+			"client_v0.59.3000",
+			"server_v0.59.1000",
+			"client_v0.59.2001",
+		];
+		const expected = ["0.59.1001", "0.59.2001", "0.59.3000"];
+		const result = getVersionsFromStrings("client", tags);
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("should return an empty array if no tags match the prefix", () => {
+		const tags = ["server_v0.59.1001", "server_v0.59.2000", "server_v0.59.3000"];
+		const result = getVersionsFromStrings("client", tags);
+		expect(result).to.deep.equal([]);
 	});
 });
