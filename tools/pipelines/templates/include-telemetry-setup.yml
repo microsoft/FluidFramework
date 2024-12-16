@@ -35,7 +35,11 @@ steps:
   - checkout: self
     clean: true
 
-- template: include-use-node-version.yml
+- template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+- template: include-install-pnpm.yml
+  parameters:
+    buildDirectory: ${{ parameters.pathToTelemetryGenerator }}
 
 - task: Bash@3
   displayName: Print parameter/variable values for template
@@ -63,6 +67,12 @@ steps:
       npm init --yes
 
       echo Generating .npmrc
+      echo "engine-strict=true" >> ./.npmrc
+      echo "frozen-lockfile=true" >> ./.npmrc
+      echo "strict-peer-dependencies=true" >> ./.npmrc
+      echo "# Don't use new lockfile format because component governance does not yet support it" >> ./.npmrc
+      echo "use-lockfile-v6=false" >> ./.npmrc
+
       echo "registry=https://registry.npmjs.org" >> ./.npmrc
       echo "always-auth=false" >> ./.npmrc
 
@@ -83,23 +93,31 @@ steps:
   inputs:
     workingFile: ${{ parameters.pathToTelemetryGenerator }}/.npmrc
 
-# Install logger package
-- task: Npm@1
-  displayName: 'npm install aria logger'
-  retryCountOnTaskFailure: 1
-  inputs:
-    workingDir: ${{ parameters.pathToTelemetryGenerator }}
-    command: 'custom'
-    customCommand: 'install @ff-internal/aria-logger'
-    customRegistry: 'useNpmrc'
-
 - task: Bash@3
-  displayName: 'Prepare telemetry-generator'
+  displayName: 'Install dependencies for telemetry-generator'
   retryCountOnTaskFailure: 1
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
     script: |
       set -eu -o pipefail
-      npm i;
-      npm run build:compile;
+      pnpm i;
+
+- task: Npm@1
+  displayName: 'Build telemetry-generator'
+  inputs:
+    command: 'custom'
+    workingDir: ${{ parameters.pathToTelemetryGenerator }}
+    customCommand: run build:compile
+
+- task: Bash@3
+  displayName: 'Install aria-logger'
+  retryCountOnTaskFailure: 1
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
+    script: |
+      set -eu -o pipefail
+      # The telemetry-generator package is the root of its workspace so we do want to install this for the workspace
+      # root with '-w'. Without it, the install will complain and fail.
+      pnpm install -w @ff-internal/aria-logger;
