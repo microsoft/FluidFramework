@@ -672,7 +672,7 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 			break;
 		case FieldKinds.forbidden.identifier:
 			kind = FieldKind.Optional;
-			assert(schema.types.size === 0, "invalid forbidden field");
+			assert(schema.types.size === 0, 0xa94 /* invalid forbidden field */);
 			break;
 		default:
 			fail("invalid field kind");
@@ -693,7 +693,10 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		return { kind: NodeKind.Object, fields };
 	}
 	if (schema instanceof MapNodeStoredSchema) {
-		assert(schema.mapFields.kind === FieldKinds.optional.identifier, "Invalid map schema");
+		assert(
+			schema.mapFields.kind === FieldKinds.optional.identifier,
+			0xa95 /* Invalid map schema */,
+		);
 		return { kind: NodeKind.Map, allowedTypes: schema.mapFields.types };
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
