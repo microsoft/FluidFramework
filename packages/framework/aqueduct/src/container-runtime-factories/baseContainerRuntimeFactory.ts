@@ -8,7 +8,6 @@ import type {
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	ContainerRuntime,
 	FluidDataStoreRegistry,
 	type IContainerRuntimeOptions,
@@ -104,7 +103,6 @@ export class BaseContainerRuntimeFactory
 	/**
 	 * @deprecated Use the overload taking in an IContainerRuntime
 	 */
-	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
 	/**
 	 * Called the one time the container is created, and not on any subsequent load.
@@ -113,7 +111,6 @@ export class BaseContainerRuntimeFactory
 	 */
 	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void>;
 	public async instantiateFirstTime(
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 		runtime: IContainerRuntime | ContainerRuntime,
 	): Promise<void> {
 		await this.containerInitializingFirstTime(runtime);
@@ -123,7 +120,6 @@ export class BaseContainerRuntimeFactory
 	/**
 	 * @deprecated Use the overload taking in an IContainerRuntime
 	 */
-	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
 	/**
 	 * Called every time the container runtime is loaded for an existing container.
@@ -132,7 +128,6 @@ export class BaseContainerRuntimeFactory
 	 */
 	public async instantiateFromExisting(runtime: IContainerRuntime): Promise<void>;
 	public async instantiateFromExisting(
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 		runtime: IContainerRuntime | ContainerRuntime,
 	): Promise<void> {
 		await this.containerHasInitialized(runtime);
@@ -144,7 +139,6 @@ export class BaseContainerRuntimeFactory
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	): Promise<ContainerRuntime>;
 	/**
 	 * Called at the start of initializing a container, to create the container runtime instance.
@@ -158,7 +152,6 @@ export class BaseContainerRuntimeFactory
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	): Promise<ContainerRuntime> {
 		const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
 		if (this.dependencyContainer) {
@@ -169,7 +162,6 @@ export class BaseContainerRuntimeFactory
 			scope.IFluidDependencySynthesizer = dc;
 		}
 
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 		return ContainerRuntime.loadRuntime({
 			context,
 			existing,

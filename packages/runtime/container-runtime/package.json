@@ -35,12 +35,12 @@
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
+				"types": "./lib/internal.d.ts",
+				"default": "./lib/internal.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/internal.d.ts",
+				"default": "./dist/internal.js"
 			}
 		},
 		"./internal/test/containerRuntime": {
