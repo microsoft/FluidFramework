@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
+
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { ValueManager } from "./internalTypes.js";
@@ -19,8 +22,6 @@ import type {
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/presence/internal/core-interfaces";
-import type { ISubscribable } from "@fluidframework/presence/internal/events";
-import { createEmitter } from "@fluidframework/presence/internal/events";
 import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
 import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 
@@ -280,7 +281,7 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	/**
 	 * Events for LatestMap value manager.
 	 */
-	readonly events: ISubscribable<LatestMapValueManagerEvents<T, Keys>>;
+	readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
 
 	/**
 	 * Controls for management of sending updates.

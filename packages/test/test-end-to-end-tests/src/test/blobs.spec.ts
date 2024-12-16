@@ -99,7 +99,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
-		// Currently FRS does not support blob API.
+		// Currently, AFR does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -295,7 +295,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	beforeEach("getTestObjectProvider", async function () {
 		testPersistedCache = new TestPersistedCache();
 		provider = getTestObjectProvider({ persistedCache: testPersistedCache });
-		// Currently FRS does not support blob API.
+		// Currently AFR does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}

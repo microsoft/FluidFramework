@@ -101,11 +101,11 @@ stages:
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
 
-  # stress tests frs
+  # stress tests AFR
   - template: templates/include-test-real-service.yml
     parameters:
       stageId: stress_tests_frs
-      stageDisplayName: Stress tests - frs
+      stageDisplayName: Stress tests - AFR
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
@@ -121,11 +121,11 @@ stages:
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
-  # stress tests frs canary
+  # stress tests AFR canary
   - template: templates/include-test-real-service.yml
     parameters:
       stageId: stress_tests_frs_canary
-      stageDisplayName: Stress tests - frs canary
+      stageDisplayName: Stress tests - AFR canary
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}

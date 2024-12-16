@@ -781,7 +781,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				context.ackHandle === undefined &&
 					context.proposalHandle === undefined &&
 					context.referenceSequenceNumber === 0,
-				"temporaryFileName should only be set for new file creation in the empty file create flow",
+				0xa88 /* temporaryFileName should only be set for new file creation in the empty file create flow */,
 			);
 
 			const renameResponse = await useCreateNewModule(this.logger, async (m) =>

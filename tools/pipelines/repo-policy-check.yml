@@ -20,6 +20,7 @@ variables:
   value: true
 - name: pnpmStorePath
   value: $(Pipeline.Workspace)/.pnpm-store
+- group: ado-feeds
 
 # The `resources` specify the location and version of the 1ES PT.
 resources:

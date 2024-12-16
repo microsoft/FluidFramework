@@ -74,11 +74,20 @@ function noopMiddleware(req: Request, res: Response, next: NextFunction) {
  * @internal
  */
 export function throttle(
-	throttler: IThrottler,
+	throttler?: IThrottler,
 	logger?: ILogger,
 	options?: Partial<IThrottleMiddlewareOptions>,
 	isHttpUsageCountingEnabled: boolean = false,
 ): RequestHandler {
+	if (!throttler) {
+		Lumberjack.warning(
+			"Throttle middleware created without a throttler: Replacing with no-op middleware.",
+			{
+				[CommonProperties.telemetryGroupName]: "throttling",
+			},
+		);
+		return noopMiddleware;
+	}
 	const throttleOptions = {
 		...defaultThrottleMiddlewareOptions,
 		...options,

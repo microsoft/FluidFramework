@@ -385,6 +385,15 @@ declare type old_as_current_for_Interface_IThrottlingWarning = requireAssignable
 declare type current_as_old_for_Interface_IThrottlingWarning = requireAssignableTo<TypeOnly<current.IThrottlingWarning>, TypeOnly<old.IThrottlingWarning>>
 
 /*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_Listenable": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_Listenable = requireAssignableTo<TypeOnly<current.Listenable<never>>, TypeOnly<old.Listenable<never>>>
+
+/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -551,6 +560,42 @@ declare type current_as_old_for_TypeAlias_IEventTransformer = requireAssignableT
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_IsListener": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_IsListener = requireAssignableTo<TypeOnly<old.IsListener<never>>, TypeOnly<current.IsListener<never>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IsListener": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_IsListener = requireAssignableTo<TypeOnly<current.IsListener<never>>, TypeOnly<old.IsListener<never>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_Listeners": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_Listeners = requireAssignableTo<TypeOnly<old.Listeners<never>>, TypeOnly<current.Listeners<never>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_Listeners": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_Listeners = requireAssignableTo<TypeOnly<current.Listeners<never>>, TypeOnly<old.Listeners<never>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_LogLevel": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_LogLevel = requireAssignableTo<TypeOnly<old.LogLevel>, TypeOnly<current.LogLevel>>
@@ -563,6 +608,24 @@ declare type old_as_current_for_TypeAlias_LogLevel = requireAssignableTo<TypeOnl
  * "TypeAlias_LogLevel": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_LogLevel = requireAssignableTo<TypeOnly<current.LogLevel>, TypeOnly<old.LogLevel>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_Off": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_Off = requireAssignableTo<TypeOnly<old.Off>, TypeOnly<current.Off>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_Off": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_Off = requireAssignableTo<TypeOnly<current.Off>, TypeOnly<old.Off>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

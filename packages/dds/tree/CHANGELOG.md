@@ -1,5 +1,30 @@
 # @fluidframework/tree
 
+## 2.11.0
+
+### Minor Changes
+
+-   Revertible objects can now be cloned using `RevertibleAlpha.clone()` ([#23044](https://github.com/microsoft/FluidFramework/pull/23044)) [5abfa015af](https://github.com/microsoft/FluidFramework/commit/5abfa015aff9d639d82830f3ad828324d5680bd7)
+
+    The `DisposableRevertible` interface has been replaced with `RevertibleAlpha`. The new `RevertibleAlpha` interface extends `Revertible` and includes a `clone(branch: TreeBranch)` method to facilitate cloning a Revertible to a specified target branch. The source branch where the `RevertibleAlpha` was created must share revision logs with the target branch where the `RevertibleAlpha` is being cloned. If this condition is not met, the operation will throw an error.
+
+-   Providing unused properties in object literals for building empty ObjectNodes no longer compiles ([#23162](https://github.com/microsoft/FluidFramework/pull/23162)) [dc3c30019e](https://github.com/microsoft/FluidFramework/commit/dc3c30019ef869b27b9468bff59f10434d3c5c68)
+
+    ObjectNodes with no fields will now emit a compiler error if constructed from an object literal with fields.
+    This matches the behavior of non-empty ObjectNodes which already gave errors when unexpected properties were provided.
+
+    ```typescript
+    class A extends schemaFactory.object("A", {}) {}
+    const a = new A({ thisDoesNotExist: 5 }); // This now errors.
+    ```
+
+-   The events library has been moved from the tree package ([#23141](https://github.com/microsoft/FluidFramework/pull/23141)) [cae07b5c8c](https://github.com/microsoft/FluidFramework/commit/cae07b5c8c7904184b5fbf8c677f302da19cc697)
+
+    In previous releases, the `@fluidframework/tree` package contained an internal events library. The events-related types and interfaces have been moved to
+    `@fluidframework/core-interfaces`, while the implementation has been relocated to `@fluid-internal/client-utils`. There are
+    no changes to how the events library is used; the relocation simply organizes the library into more appropriate
+    packages. This change should have no impact on developers using the Fluid Framework.
+
 ## 2.10.0
 
 ### Minor Changes

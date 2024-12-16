@@ -10,13 +10,10 @@ import {
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
 	type JsonableTree,
+	type ChunkedCursor,
 } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
-import type {
-	ChunkedCursor,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunk.js";
 import {
 	basicChunkTree,
 	basicOnlyChunkPolicy,

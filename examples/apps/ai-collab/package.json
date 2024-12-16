@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/ai-collab",
-	"version": "2.11.0",
+	"version": "2.12.0",
 	"private": true,
 	"description": "Example app that showcases the experimental package for AI collaboration in Fluid-based applications.",
 	"homepage": "https://fluidframework.com",
@@ -29,7 +29,6 @@
 		"start": "next dev",
 		"start:server": "tinylicious"
 	},
-	"dependencies": {},
 	"devDependencies": {
 		"@azure/identity": "^4.4.1",
 		"@azure/msal-browser": "^3.25.0",
@@ -42,7 +41,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/devtools": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
@@ -59,6 +58,7 @@
 		"mui": "^0.0.1",
 		"next": "^14.2.8",
 		"notistack": "^3.0.1",
+		"openai": "^4.67.3",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"rimraf": "^4.4.0",

@@ -22,15 +22,15 @@ import { ICache, IDenyList, ITenantService } from "./services";
 import * as app from "./app";
 
 export class HistorianRunner implements IRunner {
-	private server: IWebServer;
-	private runningDeferred: Deferred<void>;
+	private server: IWebServer | undefined;
+	private runningDeferred: Deferred<void> | undefined;
 
 	constructor(
 		private readonly serverFactory: IWebServerFactory,
 		private readonly config: Provider,
 		private readonly port: string | number,
 		private readonly riddler: ITenantService,
-		private readonly storageNameRetriever: IStorageNameRetriever,
+		private readonly storageNameRetriever: IStorageNameRetriever | undefined,
 		public readonly restTenantThrottlers: Map<string, IThrottler>,
 		public readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly documentManager: IDocumentManager,
@@ -82,15 +82,15 @@ export class HistorianRunner implements IRunner {
 	public stop(): Promise<void> {
 		// Close the underlying server and then resolve the runner once closed
 		this.server
-			.close()
+			?.close()
 			.then(() => {
-				this.runningDeferred.resolve();
+				this.runningDeferred?.resolve();
 			})
 			.catch((error) => {
-				this.runningDeferred.reject(error);
+				this.runningDeferred?.reject(error);
 			});
 
-		return this.runningDeferred.promise;
+		return this.runningDeferred?.promise ?? Promise.resolve();
 	}
 
 	/**
@@ -126,8 +126,8 @@ export class HistorianRunner implements IRunner {
 	 */
 
 	private onListening() {
-		const addr = this.server.httpServer.address();
-		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+		const addr = this.server?.httpServer?.address();
+		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
 		winston.info(`Listening on ${bind}`);
 		Lumberjack.info(`Listening on ${bind}`);
 	}

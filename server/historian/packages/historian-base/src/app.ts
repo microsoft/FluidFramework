@@ -31,7 +31,7 @@ import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./u
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	storageNameRetriever: IStorageNameRetriever,
+	storageNameRetriever: IStorageNameRetriever | undefined,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
@@ -69,6 +69,7 @@ export function create(
 				"historian",
 				(tokens, req, res) => {
 					const tenantId = getTenantIdFromRequest(req.params);
+					const authHeader = req.get("Authorization");
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
@@ -78,7 +79,7 @@ export function create(
 						[BaseTelemetryProperties.tenantId]: tenantId,
 						[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
 							tenantId,
-							req.get("Authorization"),
+							authHeader,
 						),
 					};
 					if (req.get(Constants.IsEphemeralContainer) !== undefined) {
