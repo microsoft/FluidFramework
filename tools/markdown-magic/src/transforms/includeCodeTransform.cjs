@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+const fs = require("fs");
 const {
 	formattedEmbeddedContentBody,
 	formattedSectionText,
@@ -26,11 +27,14 @@ const {
  * Default: Include through the last line of the file.
  * Constraints are the same as those for the `end` parameter to
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice#parameters | Array.slice}
+ * @param {string | undefined} options.language - The code language to use for syntax highlighting.
+ * E.g., "language=typescript" would yield a markdown codeblock starting with "\`\`\`typescript".
+ * Default: No language specified.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function includeTransform(content, options, config) {
-	const { path: relativeFilePath, start: startLineString, end: endLineString } = options;
+function includeCodeTransform(content, options, config) {
+	const { path: relativeFilePath, start: startLineString, end: endLineString, language } = options;
 	const { originalPath: documentFilePath } = config;
 
 	const startLine = startLineString === undefined ? undefined : Number.parseInt(startLineString);
@@ -46,7 +50,14 @@ function includeTransform(content, options, config) {
 
 	try {
 		const fileContents = readFile(resolvedFilePath, startLine, endLine);
-		const section = formattedSectionText(fileContents, /* headingOptions: */ undefined);
+
+		const codeBlock = [
+			`\`\`\`${language ?? ""}`,
+			fileContents,
+			"```",
+		].join("\n");
+
+		const section = formattedSectionText(codeBlock, /* headingOptions: */ undefined);
 
 		return formattedEmbeddedContentBody(section);
 	} catch (error) {
@@ -55,4 +66,4 @@ function includeTransform(content, options, config) {
 	}
 }
 
-module.exports = { includeTransform };
+module.exports = { includeCodeTransform };
