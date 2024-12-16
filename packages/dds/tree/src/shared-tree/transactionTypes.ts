@@ -54,7 +54,10 @@ export interface ContinueTransaction {
  * @alpha
  */
 export interface AbortTransaction {
-	/** The failed outcome indicating the rest of the transaction should abort and any changes should be rolled back */
+	/**
+	 * The failed outcome indicating the rest of the transaction should abort and any changes should be rolled back.
+	 * This will only fail the current transaction scope. Any transactions in the outer scope will still run.
+	 */
 	readonly result: "abort";
 }
 
@@ -116,12 +119,7 @@ export interface RunTransactionFailedExt<TFailureValue> extends RunTransactionFa
 export interface RunTransactionParams {
 	/**
 	 * The function to run as the body of the transaction.
-	 * @returns The result of the transaction. The user provided result (TResult) can either be returned directly or
-	 * as part of the `TransactionOutcome` object which can include other properties.
-	 * It could return nothing (TResult == void) to indicate a successful transaction.
-	 *
-	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value}
-	 * (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
+	 * @returns The result of the transaction indicating whether the transaction should continue or abort.
 	 */
 	readonly transaction: () => ContinueTransaction | AbortTransaction;
 	/**
@@ -140,12 +138,8 @@ export interface RunTransactionParams {
 export interface RunTransactionParamsExt<TSuccessValue, TFailureValue> {
 	/**
 	 * The function to run as the body of the transaction.
-	 * @returns The result of the transaction. The user provided result (TResult) can either be returned directly or
-	 * as part of the `TransactionOutcome` object which can include other properties.
-	 * It could return nothing (TResult == void) to indicate a successful transaction.
-	 *
-	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value}
-	 * (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
+	 * @returns The result of the transaction indicating whether the transaction should continue or abort. The user provided
+	 * return value will be returned along with the success or failure result.
 	 */
 	readonly transaction: () =>
 		| ContinueTransactionExt<TSuccessValue>
