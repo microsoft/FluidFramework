@@ -8,12 +8,12 @@ import type {
 	IVersionedModel,
 } from "@fluid-example/example-utils";
 import { ModelLoader, SameContainerMigrator } from "@fluid-example/example-utils";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
 import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
-} from "@fluidframework/tinylicious-driver/internal";
+} from "@fluidframework/tinylicious-driver/legacy";
 import React from "react";
 import ReactDOM from "react-dom";
 

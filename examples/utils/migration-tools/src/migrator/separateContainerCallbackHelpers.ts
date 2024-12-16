@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
 	createDetachedContainer,
 	type ILoaderProps,
-} from "@fluidframework/container-loader/internal";
+} from "@fluidframework/container-loader/legacy";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
 import type { MigrationCallback } from "./interfaces.js";

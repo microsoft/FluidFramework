@@ -8,22 +8,22 @@ import type {
 	IMigratorEntryPoint,
 	ImportDataCallback,
 	SeparateContainerMigrationResult,
-} from "@fluid-example/migration-tools/internal";
+} from "@fluid-example/migration-tools/alpha";
 import {
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
-} from "@fluid-example/migration-tools/internal";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+} from "@fluid-example/migration-tools/alpha";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
 	type ILoaderProps,
 	loadExistingContainer,
-} from "@fluidframework/container-loader/internal";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+} from "@fluidframework/container-loader/legacy";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
 import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
-} from "@fluidframework/tinylicious-driver/internal";
+} from "@fluidframework/tinylicious-driver/legacy";
 import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot, type Root } from "react-dom/client";

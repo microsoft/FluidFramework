@@ -4,13 +4,13 @@
  */
 
 import { ModelLoader } from "@fluid-example/example-utils";
-import { assert } from "@fluidframework/core-utils/internal";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
 import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
-} from "@fluidframework/tinylicious-driver/internal";
+} from "@fluidframework/tinylicious-driver/legacy";
 
 import { DemoCodeLoader as DemoCodeLoader1 } from "./demoCodeLoader1.js";
 import { DemoCodeLoader as DemoCodeLoader2 } from "./demoCodeLoader2.js";

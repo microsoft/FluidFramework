@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
+import { ICodeDetailsLoader } from "@fluidframework/container-definitions/legacy";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-internal-modules -- !!!: local-driver internal LocalSessionStorageDbFactory used in examples
+import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
-	LocalSessionStorageDbFactory,
 	createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver/internal";
+} from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { v4 as uuid } from "uuid";
 

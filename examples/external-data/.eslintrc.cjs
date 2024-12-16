@@ -10,6 +10,7 @@ module.exports = {
 		"plugin:react/recommended",
 		"plugin:react-hooks/recommended",
 		"prettier",
+		"../.eslintrc.cjs",
 	],
 	rules: {
 		"import/no-nodejs-modules": ["error", { allow: ["node:http"] }],

@@ -4,9 +4,10 @@
  */
 
 import { AzureClient, AzureLocalConnectionConfig } from "@fluidframework/azure-client";
+// eslint-disable-next-line import/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/legacy";
 
 import { generateTable } from "./data.js";
 import { Table } from "./tree/index.js";

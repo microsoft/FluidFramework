@@ -13,8 +13,7 @@ module.exports = {
 			"error",
 			{
 				allow: [
-					"@fluidframework/odsp-client/beta",
-					"@fluidframework/tree/alpha",
+					"@fluidframework/*/{beta,alpha,legacy}",
 
 					// NextJS requires reaching to its internal modules
 					"next/**",
@@ -23,9 +22,6 @@ module.exports = {
 					"@/actions/**",
 					"@/types/**",
 					"@/components/**",
-
-					// Experimental package APIs and exports are unknown, so allow any imports from them.
-					"@fluidframework/ai-collab/alpha",
 				],
 			},
 		],

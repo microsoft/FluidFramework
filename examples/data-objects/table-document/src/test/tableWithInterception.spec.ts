@@ -6,11 +6,12 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { PropertySet } from "@fluidframework/sequence/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/legacy";
+import { PropertySet } from "@fluidframework/sequence/legacy";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	// eslint-disable-next-line import/no-internal-modules -- #26906: `test-utils` internal used in examples (test)
 } from "@fluidframework/test-utils/internal";
 
 import { TableDocument } from "../document.js";
