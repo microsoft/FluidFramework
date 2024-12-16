@@ -42,6 +42,28 @@ import type { Logger } from "../Logging.js";
  */
 
 /**
+ * Represents "valid" API item kinds. I.e., not `None`.
+ *
+ * @public
+ */
+export type ValidApiItemKind = Omit<ApiItemKind, ApiItemKind.None>;
+
+
+/**
+ * Gets the {@link ValidApiItemKind} for the provided API item. Throws if the item's kind is "None".
+ */
+export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
+	switch (apiItem.kind) {
+		case ApiItemKind.None: {
+			throw new Error(`Encountered an API item with kind "None": "${apiItem.displayName}".`);
+		}
+		default:{
+			return apiItem.kind as ValidApiItemKind;
+		}
+	}
+}
+
+/**
  * Represents "member" API item kinds.
  * These are the kinds of items the system supports generally for rendering, file-system configuration, etc.
  *
@@ -61,6 +83,22 @@ export type ApiMemberKind = Omit<
 	ApiItemKind,
 	ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package
 >;
+
+/**
+ * Gets the {@link ApiMemberKind} for the provided API item. Throws if the item's kind is not a valid member kind.
+ */
+export function getApiMemberKind(apiItem: ApiItem): ApiMemberKind {
+	switch (apiItem.kind) {
+		case ApiItemKind.EntryPoint:
+		case ApiItemKind.Model:
+		case ApiItemKind.Package: {
+			throw new Error(`Expected API item to be a member kind, but got "${apiItem.kind}": "${apiItem.displayName}".`);
+		}
+		default:{
+			return getApiItemKind(apiItem) as ApiMemberKind;
+		}
+	}
+}
 
 /**
  * `ApiItem` union type representing function-like API kinds.
