@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+require('dotenv').config();
 import type { VersionOptions } from "@docusaurus/plugin-content-docs";
 import * as Preset from "@docusaurus/preset-classic";
 import type { Config } from "@docusaurus/types";
 import { themes as prismThemes } from "prism-react-renderer";
+
 
 import DocsVersions from "./config/docs-versions.mjs";
 
@@ -175,7 +176,8 @@ const config: Config = {
 		},
 	],
 	customFields: {
-		'WCP_CONSENT': process.env.WCP_CONSENT,
+		'INSTRUMENTATION_KEY': process.env.INSTRUMENTATION_KEY,
+		'APPLICATION_ID': process.env.APPLICATION_ID,
 	}
 };
 
