@@ -361,18 +361,6 @@ extends:
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
-                          # Don't run with coverage if the task is a PR and the task is a tinylicious service and stress test. We don't include coverage for these tests in our baseline coverage stats, so we don't need to run them with coverage here too.
-                          testCoverage: ${{
-                            and(
-                              parameters.testCoverage,
-                              or(
-                                ne(variables['Build.Reason'], 'PullRequest'),
-                                and(
-                                  not(contains(taskTestStep, 'realsvc:tinylicious')),
-                                  not(contains(taskTestStep, 'stress:tinylicious'))
-                                )
-                              )
-                            )}}
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                     - task: Bash@3
