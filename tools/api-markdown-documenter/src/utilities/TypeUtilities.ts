@@ -7,5 +7,5 @@
  * Recursive variant of the `Required<T>` utility type.
  */
 export type DeepRequired<T> = {
-	[K in keyof T]: DeepRequired<T[K]>
+	[K in keyof T]: DeepRequired<T[K]>;
 } & Required<T>;
