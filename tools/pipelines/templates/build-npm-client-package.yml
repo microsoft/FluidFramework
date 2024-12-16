@@ -358,12 +358,29 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
+              - ${{ if eq(parameters.runWebpack, true) }}:
+                - task: Npm@1
+                  displayName: 'npm run webpack'
+                  inputs:
+                    command: custom
+                    workingDir: '${{ parameters.buildDirectory }}'
+                    customCommand: 'run webpack'
+
               - script: |
                   echo "Preparing nested lib/dist directories (excluding node_modules) for publishing..."
                   find . -type d \( -name "lib" -o -name "dist" \) ! -path "*/node_modules/*" > directories_to_publish.txt
+
                   echo "Directories to publish:"
                   cat directories_to_publish.txt
+
+                  echo "Calculating size of directories to be archived..."
+                  du -ch $(cat directories_to_publish.txt) | grep total
+
+                  echo "Creating the tarball..."
                   tar --create --gzip --file nested_lib_dist.tar.gz -T directories_to_publish.txt
+
+                  echo "Tarball created. Inspecting its size..."
+                  ls -lh nested_lib_dist.tar.gz
                 displayName: Archive Nested Lib/Dist Directories and Their Contents
                 workingDirectory: ${{ parameters.buildDirectory }}
 
@@ -373,14 +390,6 @@ extends:
                   sourceFolder: ${{ parameters.buildDirectory }}
                   contents: nested_lib_dist.tar.gz
                   targetFolder: $(Build.ArtifactStagingDirectory)
-
-              - ${{ if eq(parameters.runWebpack, true) }}:
-                - task: Npm@1
-                  displayName: 'npm run webpack'
-                  inputs:
-                    command: custom
-                    workingDir: '${{ parameters.buildDirectory }}'
-                    customCommand: 'run webpack'
 
               # Pack
               - ${{ if ne(parameters.taskPack, false) }}:
