@@ -1571,7 +1571,6 @@ export class ContainerRuntime
 			enableGroupedBatching: true,
 			...runtimeOptions,
 		};
-
 		this.logger = createChildLogger({ logger: this.baseLogger });
 		this.mc = createChildMonitoringContext({
 			logger: this.logger,

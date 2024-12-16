@@ -1124,14 +1124,15 @@ describe("Runtime", () => {
 		describe("Unrecognized types not supported", () => {
 			let containerRuntime: ContainerRuntime;
 			beforeEach(async () => {
+				const runtimeOptions: IContainerRuntimeOptionsInternal = {
+					enableGroupedBatching: false,
+				};
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
-					runtimeOptions: {
-						enableGroupedBatching: false,
-					},
+					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
@@ -2588,14 +2589,15 @@ describe("Runtime", () => {
 				runtimes = new Map<string, ContainerRuntime>();
 				logger = new MockLogger();
 				droppedSignals = [];
+				const runtimeOptions: IContainerRuntimeOptionsInternal = {
+					enableGroupedBatching: false,
+				};
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
-					runtimeOptions: {
-						enableGroupedBatching: false,
-					},
+					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 				// Assert that clientId is not undefined
@@ -3160,6 +3162,9 @@ describe("Runtime", () => {
 
 				beforeEach(async () => {
 					remoteLogger = new MockLogger();
+					const runtimeOptions: IContainerRuntimeOptionsInternal = {
+						enableGroupedBatching: false,
+					};
 					remoteContainerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext(
 							{ logger: remoteLogger },
@@ -3168,9 +3173,7 @@ describe("Runtime", () => {
 						registryEntries: [],
 						existing: false,
 						requestHandler: undefined,
-						runtimeOptions: {
-							enableGroupedBatching: false,
-						},
+						runtimeOptions,
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 					// Assert that clientId is not undefined
