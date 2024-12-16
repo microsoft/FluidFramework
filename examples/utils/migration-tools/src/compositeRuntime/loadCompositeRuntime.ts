@@ -5,8 +5,8 @@
 
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
 import {
-	ContainerRuntime,
 	IContainerRuntimeOptions,
+	loadContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
@@ -89,7 +89,7 @@ export const loadCompositeRuntime = async (
 	compositeEntryPoint: CompositeEntryPoint,
 	runtimeOptions?: IContainerRuntimeOptions,
 ): Promise<IContainerRuntime & IRuntime> => {
-	const runtime = await ContainerRuntime.loadRuntime({
+	const runtime = await loadContainerRuntime({
 		context,
 		registryEntries: compositeEntryPoint.registryEntries,
 		provideEntryPoint: compositeEntryPoint.provideEntryPoint,
