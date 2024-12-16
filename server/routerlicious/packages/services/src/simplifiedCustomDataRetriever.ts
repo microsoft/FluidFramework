@@ -16,6 +16,6 @@ export class SimplifiedCustomDataRetriever implements ISimplifiedCustomDataRetri
 	public constructor() {}
 
 	public get(customData: ITenantCustomData): string {
-		return undefined;
+		return "";
 	}
 }
