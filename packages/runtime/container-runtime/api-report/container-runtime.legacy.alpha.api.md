@@ -342,8 +342,6 @@ export interface IContainerRuntimeOptions {
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableRuntimeIdCompressor?: IdCompressorMode;
     readonly explicitSchemaControl?: boolean;
-    // @deprecated
-    readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
