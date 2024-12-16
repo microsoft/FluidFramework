@@ -415,7 +415,6 @@ extends:
                       sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
-
                   # At this point we want to publish the artifact with the bundle size analysis,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
@@ -706,7 +705,7 @@ extends:
                         displayName: Publish Artifacts - code-coverage
                         condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                         targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-                        artifactName: '$(System.JobAttempt)'
+                        artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
                         sbomEnabled: false
                         publishLocation: pipeline
 
