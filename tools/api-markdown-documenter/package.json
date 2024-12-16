@@ -24,10 +24,11 @@
 	},
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"build": "concurrently npm:build:compile npm:lint && npm run build:readme && npm run build:docs",
+		"build": "concurrently npm:build:compile npm:lint && npm run build:examples && npm run build:readme && npm run build:docs",
 		"build-and-test": "npm run build && npm run test",
 		"build:compile": "npm run tsc",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
+		"build:examples": "tsc -p examples/tsconfig.json",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
 		"build:tsc": "npm run tsc",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
