@@ -12,7 +12,7 @@ The class `ContainerRuntime` is deprecated and will no longer be exported starti
 
 There are two possible migration paths to stop using `ContainerRuntime`:
 
-* When using it as a type, replace it with an interface like `IContainerRuntime` (or in rare cases, `IRuntime`)
+* When using it as a type, replace it with an interface like `IContainerRuntime`
 * When using the static function `ContainerRuntime.loadRuntime` replace it with the free function `loadContainerRuntime`.
 
 `BaseContainerRuntimeFactory` has some changes as well, since it exposed `ContainerRuntime` in several function signatures:
