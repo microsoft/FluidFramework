@@ -42,7 +42,7 @@ So start by running:
 
 ```shell
 npm run build:generate-content
-````
+```
 
 Then, run:
 

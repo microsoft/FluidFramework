@@ -8,7 +8,6 @@ import * as Preset from "@docusaurus/preset-classic";
 import type { Config } from "@docusaurus/types";
 import { themes as prismThemes } from "prism-react-renderer";
 
-
 import DocsVersions from "./config/docs-versions.mjs";
 
 const includeLocalApiDocs = process.env.LOCAL_API_DOCS === "true";
