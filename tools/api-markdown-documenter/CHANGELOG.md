@@ -2,11 +2,13 @@
 
 ## 0.18.0
 
-### Simplify the parameters given to `MarkdownRenderer` and `HtmlRenderer` methods.
+### ⚠ BREAKING CHANGES
+
+#### Simplify the parameters given to `MarkdownRenderer` and `HtmlRenderer` methods.
 
 Combines the separate "config" property bag parameters into a single "options" property bag for simplicity.
 
-#### Example
+##### Example
 
 Before:
 
