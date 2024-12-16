@@ -438,7 +438,9 @@ export class HorizontalRuleNode implements MultiLineDocumentationNode {
 
 declare namespace HtmlRenderer {
     export {
+        RenderApiModelAsHtmlOptions as RenderApiModelOptions,
         renderApiModelAsHtml as renderApiModel,
+        RenderDocumentsAsHtmlOptions as RenderDocumentsOptions,
         renderDocumentsAsHtml as renderDocuments,
         renderDocument,
         renderHtml
@@ -615,6 +617,10 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 export { ReleaseTag }
 
 // @public
+interface RenderApiModelAsHtmlOptions extends ApiItemTransformationConfiguration, RenderDocumentAsHtmlConfig, FileSystemConfiguration {
+}
+
+// @public
 function renderApiModelAsMarkdown(options: RenderApiModelAsMarkdownOptions): Promise<void>;
 
 // @public
@@ -629,6 +635,10 @@ function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfigur
 
 // @public @sealed
 export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConfig {
+}
+
+// @public
+interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfig, FileSystemConfiguration {
 }
 
 // @public
