@@ -1027,6 +1027,9 @@ importers:
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../../packages/dds/tree
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
