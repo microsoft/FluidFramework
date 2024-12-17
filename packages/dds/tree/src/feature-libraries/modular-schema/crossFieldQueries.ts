@@ -26,7 +26,11 @@ export function setInCrossFieldMap<T>(
 	count: number,
 	value: T,
 ): void {
-	const rangeMap = map.has(revision) ? (map.get(revision) as RangeMap<T>) : new RangeMap<T>();
+	let rangeMap = map.get(revision);
+	if (rangeMap === undefined) {
+		rangeMap = new RangeMap();
+		map.set(revision, rangeMap);
+	}
 	rangeMap.setInRange(id, count, value);
 }
 
