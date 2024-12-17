@@ -282,6 +282,62 @@ describe("Presence", () => {
 
 						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
+
+					it("as collateral with old connection info and connected is NOT announced via `attendeeJoined`", () => {
+						// Setup
+						const oldCollateralAttendeeConnectionId = "client9";
+						const newCollateralAttendeeConnectionId = "client10";
+
+						const rejoinSignal = generateBasicClientJoin(clock.now - 10, {
+							averageLatency: 40,
+							clientSessionId: "collateral-id",
+							clientConnectionId: newCollateralAttendeeConnectionId,
+							updateProviders: [initialAttendeeConnectionId],
+							connectionOrder: 1,
+						});
+
+						const responseSignal = generateBasicClientJoin(clock.now - 5, {
+							averageLatency: 20,
+							clientSessionId: attendeeSessionId,
+							clientConnectionId: initialAttendeeConnectionId,
+							priorClientToSessionId: {
+								...initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
+								[oldCollateralAttendeeConnectionId]: {
+									rev: 0,
+									timestamp: 0,
+									value: "collateral-id",
+								},
+							},
+						});
+
+						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
+
+						// Act - simulate join message from client
+						const rejoinAttendees = processJoinSignals([rejoinSignal]);
+						const responseAttendees = processJoinSignals([responseSignal]);
+
+						// Verify - only the rejoining attendee is announced
+						assert.strictEqual(
+							rejoinAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
+						assert.strictEqual(
+							responseAttendees.length,
+							0,
+							"Expected no attendees to be announced",
+						);
+						verifyAttendee(
+							rejoinAttendees[0],
+							newCollateralAttendeeConnectionId,
+							"collateral-id",
+						);
+					});
 				});
 
 				describe("that is already known", () => {
