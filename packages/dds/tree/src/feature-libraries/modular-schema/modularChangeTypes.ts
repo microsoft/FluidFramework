@@ -42,7 +42,7 @@ export interface ModularChangeset extends HasFieldChanges {
 
 	// XXX: Could this be merged with nodeAliases?
 	// XXX: Need to make sure whenever we split a range we also split the value of the range
-	readonly nodeRenames: CrossFieldRangeTable<NodeId>;
+	readonly nodeRenames: NodeRenameTable;
 
 	/**
 	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node.
@@ -67,6 +67,11 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly builds?: ChangeAtomIdBTree<TreeChunk>;
 	readonly destroys?: ChangeAtomIdBTree<number>;
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
+}
+
+export interface NodeRenameTable {
+	oldToNewId: CrossFieldRangeTable<ChangeAtomId>;
+	newToOldId: CrossFieldRangeTable<ChangeAtomId>;
 }
 
 export interface RootRange {

@@ -39,6 +39,7 @@ import {
 	getFieldsForCrossFieldKey,
 	getParentFieldId,
 	newCrossFieldKeyTable,
+	newNodeRenameTable,
 	newTupleBTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
@@ -77,7 +78,7 @@ function empty(): ModularChangeset {
 	return {
 		fieldChanges: new Map(),
 		nodeChanges: newTupleBTree(),
-		nodeRenames: newTupleBTree(),
+		nodeRenames: newNodeRenameTable(),
 		rootNodes: [],
 		nodeToParent: newTupleBTree(),
 		nodeAliases: newTupleBTree(),
@@ -136,7 +137,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 		nodeChanges,
 		fieldChanges,
 		rootNodes: [], // XXX
-		nodeRenames: newTupleBTree(), // XXX
+		nodeRenames: newNodeRenameTable(), // XXX
 		nodeToParent,
 		crossFieldKeys,
 		nodeAliases: newTupleBTree(),

@@ -762,7 +762,10 @@ export function getDetachId(effect: MoveMarkEffect): ChangeAtomId {
 export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {
 	const keys: CrossFieldKeyRange[] = [];
 	for (const mark of change) {
-		keys.push(...getCrossFieldKeysForMarkEffect(mark, mark.count));
+		const key = getCrossFieldKeysForMarkEffect(mark, mark.count);
+		if (key !== undefined) {
+			keys.push(key);
+		}
 	}
 
 	return keys;
@@ -771,16 +774,13 @@ export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {
 function getCrossFieldKeysForMarkEffect(
 	effect: MarkEffect,
 	count: number,
-): CrossFieldKeyRange[] {
+): CrossFieldKeyRange | undefined {
 	switch (effect.type) {
 		case "Insert":
-			// An insert behaves like a move where the source and destination are at the same location.
-			// An insert can become a move when after rebasing.
-			return [
-				[CrossFieldTarget.Source, effect.revision, effect.id, count],
-				[CrossFieldTarget.Destination, effect.revision, effect.id, count],
-			];
+			return [CrossFieldTarget.Destination, effect.revision, effect.id, count];
+		case "Remove":
+			return [CrossFieldTarget.Source, effect.revision, effect.id, count];
 		default:
-			return [];
+			return undefined;
 	}
 }

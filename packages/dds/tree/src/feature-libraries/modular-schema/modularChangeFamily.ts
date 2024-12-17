@@ -91,6 +91,7 @@ import type {
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
+	NodeRenameTable,
 	RootRange,
 	TupleBTree,
 } from "./modularChangeTypes.js";
@@ -239,7 +240,6 @@ export class ModularChangeFamily
 			change2,
 		);
 
-		// XXX: Roots
 		return makeModularChangeset({
 			fieldChanges,
 			nodeChanges,
@@ -268,7 +268,7 @@ export class ModularChangeFamily
 				nodeToParent: newTupleBTree(),
 				nodeAliases: newTupleBTree(),
 				crossFieldKeys: newTupleBTree(),
-				nodeRenames: newTupleBTree(),
+				nodeRenames: newNodeRenameTable(),
 			};
 		} else if (hasConflicts(change1)) {
 			return change2;
@@ -297,16 +297,14 @@ export class ModularChangeFamily
 		const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(
 			mergeBTrees(change1.nodeAliases, change2.nodeAliases),
 		);
-		const composednodeRenames: CrossFieldRangeTable<NodeId> = mergeBTrees(
-			change1.nodeRenames,
-			change2.nodeRenames,
-		);
+
+		const composedNodeRenames = mergeRenameTables(change1.nodeRenames, change2.nodeRenames);
 
 		const crossFieldTable = newComposeTable(
 			change1,
 			change2,
 			composedNodeToParent,
-			composednodeRenames,
+			composedNodeRenames,
 		);
 
 		const composedFields = this.composeFieldMaps(
@@ -336,7 +334,7 @@ export class ModularChangeFamily
 			nodeToParent: composedNodeToParent,
 			nodeAliases: composedNodeAliases,
 			crossFieldKeys: brand(composedCrossFieldKeys),
-			nodeRenames: composednodeRenames,
+			nodeRenames: composedNodeRenames,
 		};
 	}
 
@@ -737,7 +735,7 @@ export class ModularChangeFamily
 			originalFieldToContext: new Map(),
 			invertRevision: revisionForInvert,
 			invertedNodeToParent: brand(change.change.nodeToParent.clone()),
-			invertednodeRenames: brand(change.change.nodeRenames.clone()),
+			invertedNodeRenames: cloneRenameTable(change.change.nodeRenames),
 		};
 		const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 		const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
@@ -801,7 +799,7 @@ export class ModularChangeFamily
 			fieldChanges: invertedFields,
 			nodeChanges: invertedNodes,
 			nodeToParent: crossFieldTable.invertedNodeToParent,
-			nodeRenames: crossFieldTable.invertednodeRenames,
+			nodeRenames: crossFieldTable.invertedNodeRenames,
 			nodeAliases: change.change.nodeAliases,
 			crossFieldKeys,
 			maxId: genId.getMaxId(),
@@ -897,6 +895,7 @@ export class ModularChangeFamily
 			newChange: change,
 			baseChange: over.change,
 			baseFieldToContext: new Map(),
+			baseNodeRenames: over.change.nodeRenames,
 			baseToRebasedNodeId: newTupleBTree(),
 			rebasedFields: new Set(),
 			rebasedNodeToParent: brand(change.nodeToParent.clone()),
@@ -1530,12 +1529,7 @@ export class ModularChangeFamily
 			fieldChanges: updatedFields,
 			nodeChanges: updatedNodes,
 			nodeToParent: updatedNodeToParent,
-			nodeRenames: replaceCrossFieldKeyTableRevisions(
-				change.nodeRenames,
-				oldRevisions,
-				newRevision,
-				(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
-			),
+			nodeRenames: replaceRenameTableRevision(change.nodeRenames, oldRevisions, newRevision),
 
 			// We've updated all references to old node IDs, so we no longer need an alias table.
 			nodeAliases: newTupleBTree(),
@@ -1999,9 +1993,9 @@ export function intoDelta(
 		rootDelta.refreshers = copyDetachedNodes(change.refreshers);
 	}
 
-	if (change.nodeRenames.size > 0) {
+	if (change.nodeRenames.oldToNewId.size > 0) {
 		const renames: DetachedNodeRename[] = [];
-		for (const [[_, revision, id, count], newId] of change.nodeRenames.entries()) {
+		for (const [[_, revision, id, count], newId] of change.nodeRenames.oldToNewId.entries()) {
 			renames.push({
 				count,
 				oldId: makeDetachedNodeId(revision, id),
@@ -2136,7 +2130,7 @@ interface CrossFieldTable<TFieldData> {
 
 interface InvertTable extends CrossFieldTable<FieldChange> {
 	originalFieldToContext: Map<FieldChange, InvertContext>;
-	invertednodeRenames: CrossFieldRangeTable<NodeId>;
+	invertedNodeRenames: NodeRenameTable;
 	invertedNodeToParent: ChangeAtomIdBTree<FieldId>;
 	invertRevision: RevisionTag;
 }
@@ -2155,6 +2149,7 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	 * to the context for the field.
 	 */
 	readonly baseFieldToContext: Map<FieldChange, RebaseFieldContext>;
+	readonly baseNodeRenames: NodeRenameTable;
 	readonly baseToRebasedNodeId: ChangeAtomIdBTree<NodeId>;
 	readonly rebasedFields: Set<FieldChange>;
 	readonly rebasedNodeToParent: ChangeAtomIdBTree<FieldId>;
@@ -2191,7 +2186,7 @@ function newComposeTable(
 	baseChange: ModularChangeset,
 	newChange: ModularChangeset,
 	composedNodeToParent: ChangeAtomIdBTree<FieldId>,
-	composednodeRenames: CrossFieldRangeTable<NodeId>,
+	composednodeRenames: NodeRenameTable,
 ): ComposeTable {
 	return {
 		...newCrossFieldTable<FieldChange>(),
@@ -2202,7 +2197,7 @@ function newComposeTable(
 		newToBaseNodeId: newTupleBTree(),
 		composedNodes: new Set(),
 		composedNodeToParent,
-		composednodeRenames,
+		composedNodeRenames: composednodeRenames,
 		pendingCompositions: {
 			nodeIdsToCompose: [],
 			affectedBaseFields: newTupleBTree(),
@@ -2223,7 +2218,7 @@ interface ComposeTable extends CrossFieldTable<FieldChange> {
 	readonly newToBaseNodeId: ChangeAtomIdBTree<NodeId>;
 	readonly composedNodes: Set<NodeChangeset>;
 	readonly composedNodeToParent: ChangeAtomIdBTree<FieldId>;
-	readonly composednodeRenames: CrossFieldRangeTable<NodeId>;
+	readonly composedNodeRenames: NodeRenameTable;
 	readonly pendingCompositions: PendingCompositions;
 }
 
@@ -2286,16 +2281,14 @@ class InvertNodeManagerI implements InvertNodeManager {
 		nodeChange: NodeId | undefined,
 	): void {
 		// XXX: invertAttach should delete this entry?
-		setInCrossFieldRangeTable(
-			this.table.invertednodeRenames,
-			CrossFieldTarget.Source,
-			detachId.revision,
-			detachId.localId,
-			count,
+		renameNodes(
+			this.table.invertedNodeRenames,
+			detachId,
 			{
 				revision: this.table.invertRevision,
 				localId: detachId.localId,
 			},
+			count,
 		);
 
 		// XXX: Need to record something even if there is no node change
@@ -2338,7 +2331,8 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		nodeChange: NodeId | undefined,
 		fieldData: unknown,
 	): void {
-		setInCrossFieldMap(this.table.entries, baseDetachId, count, {
+		const baseAttachId = attachIdFromDetachId(this.table.baseNodeRenames, baseDetachId, count);
+		setInCrossFieldMap(this.table.entries, baseAttachId, count, {
 			nodeChange,
 			fieldData,
 		});
@@ -2346,16 +2340,16 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		if (this.allowInval) {
 			const baseFieldIds = getFieldsForCrossFieldKey(this.table.baseChange, [
 				CrossFieldTarget.Destination,
-				baseDetachId.revision,
-				baseDetachId.localId,
+				baseAttachId.revision,
+				baseAttachId.localId,
 				count,
 			]);
 
 			// XXX: Handle rebasing over a non-move detach
-			assert(
-				baseFieldIds.length > 0,
-				0x9c7 /* Cross field key not registered in base or new change */,
-			);
+			// assert(
+			// 	baseFieldIds.length > 0,
+			// 	0x9c7 /* Cross field key not registered in base or new change */,
+			// );
 
 			for (const baseFieldId of baseFieldIds) {
 				this.table.affectedBaseFields.set(
@@ -2384,19 +2378,13 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 	public composeBaseAttach(
 		baseAttachId: ChangeAtomId,
-		newDetachId: ChangeAtomId,
+		newDetachId: ChangeAtomId | undefined,
 		count: number,
-		newChanges: NodeId,
+		newChanges: NodeId | undefined,
 	): void {
-		// XXX: Instead of simply appending a rename entry, we should check if there are already renames and replace them
-		setInCrossFieldRangeTable(
-			this.table.composednodeRenames,
-			CrossFieldTarget.Source,
-			baseAttachId.revision,
-			baseAttachId.localId,
-			count,
-			newDetachId,
-		);
+		if (newDetachId !== undefined) {
+			renameNodes(this.table.composedNodeRenames, baseAttachId, newDetachId, count);
+		}
 		setInCrossFieldMap(this.table.entries, baseAttachId, count, {
 			currentId: baseAttachId,
 			newId: newDetachId,
@@ -2410,7 +2398,7 @@ function makeModularChangeset(
 		fieldChanges?: FieldChangeMap;
 		nodeChanges?: ChangeAtomIdBTree<NodeChangeset>;
 		rootNodes?: RootRange[];
-		nodeRenames?: CrossFieldRangeTable<NodeId>;
+		nodeRenames?: NodeRenameTable;
 		nodeToParent?: ChangeAtomIdBTree<FieldId>;
 		nodeAliases?: ChangeAtomIdBTree<NodeId>;
 		crossFieldKeys?: CrossFieldKeyTable;
@@ -2428,7 +2416,7 @@ function makeModularChangeset(
 		fieldChanges: props.fieldChanges ?? new Map(),
 		nodeChanges: props.nodeChanges ?? newTupleBTree(),
 		rootNodes: props.rootNodes ?? [],
-		nodeRenames: props.nodeRenames ?? newTupleBTree(),
+		nodeRenames: props.nodeRenames ?? newNodeRenameTable(),
 		nodeToParent: props.nodeToParent ?? newTupleBTree(),
 		nodeAliases: props.nodeAliases ?? newTupleBTree(),
 		crossFieldKeys: props.crossFieldKeys ?? newCrossFieldKeyTable(),
@@ -2525,7 +2513,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	): GlobalEditDescription {
 		return {
 			type: "global",
-			attaches: [{ count, attachId: { revision, localId: firstId }, nodeId }],
+			renames: [{ count, oldId: { revision, localId: firstId }, newId: nodeId }],
 			revision,
 		};
 	}
@@ -2574,6 +2562,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 					? makeModularChangeset({
 							maxId: this.idAllocator.getMaxId(),
 							builds: change.builds,
+							nodeRenames: renameTableFromRenameDescriptions(change.renames ?? []),
 							revisions: [{ revision: change.revision }],
 						})
 					: buildModularChangesetFromField({
@@ -2759,14 +2748,22 @@ export interface GlobalEditDescription {
 	type: "global";
 	revision: RevisionTag;
 	builds?: ChangeAtomIdBTree<TreeChunk>;
-	rootMoves?: RootRange[];
-	attaches?: AttachDescription[];
+	renames?: RenameDescription[];
 }
 
-export interface AttachDescription {
+export interface RenameDescription {
 	count: number;
-	attachId: ChangeAtomId;
-	nodeId: NodeId;
+	oldId: ChangeAtomId;
+	newId: ChangeAtomId;
+}
+
+function renameTableFromRenameDescriptions(renames: RenameDescription[]): NodeRenameTable {
+	const table = newNodeRenameTable();
+	for (const rename of renames) {
+		renameNodes(table, rename.oldId, rename.newId, rename.count);
+	}
+
+	return table;
 }
 
 /**
@@ -2973,13 +2970,12 @@ function getFirstIntersectingCrossFieldEntry<T>(
 	return entry;
 }
 
-function setInCrossFieldRangeTable<T>(
-	table: CrossFieldRangeTable<T>,
+function deleteCrossFieldRange(
+	table: CrossFieldRangeTable<unknown>,
 	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
 	id: ChangesetLocalId,
 	count: number,
-	value: T,
 ): void {
 	let entry = getFirstIntersectingCrossFieldEntry(table, [target, revision, id, count]);
 	const lastQueryId = id + count - 1;
@@ -3009,7 +3005,17 @@ function setInCrossFieldRangeTable<T>(
 			lastQueryId - nextId + 1,
 		]);
 	}
+}
 
+function setInCrossFieldRangeTable<T>(
+	table: CrossFieldRangeTable<T>,
+	target: CrossFieldTarget,
+	revision: RevisionTag | undefined,
+	id: ChangesetLocalId,
+	count: number,
+	value: T,
+): void {
+	deleteCrossFieldRange(table, target, revision, id, count);
 	table.set([target, revision, id, count], value);
 }
 
@@ -3078,7 +3084,7 @@ interface ModularChangesetContent {
 	fieldChanges: FieldChangeMap;
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
 	nodeToParent: ChangeAtomIdBTree<FieldId>;
-	nodeRenames: CrossFieldRangeTable<NodeId>;
+	nodeRenames: NodeRenameTable;
 	nodeAliases: ChangeAtomIdBTree<NodeId>;
 	crossFieldKeys: CrossFieldKeyTable;
 }
@@ -3096,4 +3102,166 @@ function setInChangeAtomIdMap<T>(map: ChangeAtomIdBTree<T>, id: ChangeAtomId, va
 
 function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
+}
+
+function attachIdFromDetachId(
+	renames: NodeRenameTable,
+	detachId: ChangeAtomId,
+	count: number,
+): ChangeAtomId {
+	const entry = getFirstIntersectingCrossFieldEntry(renames.oldToNewId, [
+		CrossFieldTarget.Source,
+		detachId.revision,
+		detachId.localId,
+		1,
+	]);
+
+	if (entry === undefined) {
+		return detachId;
+	}
+
+	const [[_target, _revision, id, entryCount], updatedId] = entry;
+	assert(
+		id === detachId.localId && entryCount === count,
+		"XXX: Handle the case where the ID range maps into multiple blocks",
+	);
+
+	return attachIdFromDetachId(renames, updatedId, count);
+}
+
+export function newNodeRenameTable(): NodeRenameTable {
+	return { newToOldId: newTupleBTree(), oldToNewId: newTupleBTree() };
+}
+
+function mergeRenameTables(
+	renames1: NodeRenameTable,
+	renames2: NodeRenameTable,
+): NodeRenameTable {
+	return {
+		oldToNewId: mergeBTrees(renames1.oldToNewId, renames2.oldToNewId),
+		newToOldId: mergeBTrees(renames1.newToOldId, renames2.newToOldId),
+	};
+}
+
+function cloneRenameTable(renames: NodeRenameTable): NodeRenameTable {
+	return {
+		oldToNewId: brand(renames.oldToNewId.clone()),
+		newToOldId: brand(renames.newToOldId.clone()),
+	};
+}
+
+function renameNodes(
+	renames: NodeRenameTable,
+	oldId: ChangeAtomId,
+	newId: ChangeAtomId,
+	count: number,
+): void {
+	const entryBefore = getFirstIntersectingCrossFieldEntry(renames.newToOldId, [
+		CrossFieldTarget.Source,
+		oldId.revision,
+		oldId.localId,
+		count,
+	]);
+
+	if (entryBefore !== undefined) {
+		const [[_target, _revision, entryId, entryCount], idBefore] = entryBefore;
+		assert(entryId === oldId.localId && entryCount === count, "XXX");
+
+		deleteCrossFieldRange(
+			renames.newToOldId,
+			CrossFieldTarget.Source,
+			oldId.revision,
+			oldId.localId,
+			count,
+		);
+
+		deleteCrossFieldRange(
+			renames.oldToNewId,
+			CrossFieldTarget.Source,
+			idBefore.revision,
+			idBefore.localId,
+			count,
+		);
+
+		// XXX: Do we need to make sure there's no entryAfter?
+		if (!areEqualChangeAtomIds(idBefore, newId)) {
+			renameNodes(renames, idBefore, newId, count);
+		}
+		return;
+	}
+
+	const entryAfter = getFirstIntersectingCrossFieldEntry(renames.oldToNewId, [
+		CrossFieldTarget.Source,
+		newId.revision,
+		newId.localId,
+		count,
+	]);
+
+	if (entryAfter !== undefined) {
+		const [[_target, _revision, entryId, entryCount], idAfter] = entryAfter;
+		assert(entryId === oldId.localId && entryCount === count, "XXX");
+
+		deleteCrossFieldRange(
+			renames.oldToNewId,
+			CrossFieldTarget.Source,
+			newId.revision,
+			newId.localId,
+			count,
+		);
+
+		deleteCrossFieldRange(
+			renames.newToOldId,
+			CrossFieldTarget.Source,
+			idAfter.revision,
+			idAfter.localId,
+			count,
+		);
+
+		// XXX: Do we need to make sure there's no entryBefore?
+		// We could just put this equality check at the beginning of renameNodes
+		if (!areEqualChangeAtomIds(idAfter, oldId)) {
+			renameNodes(renames, oldId, idAfter, count);
+		}
+		return;
+	}
+
+	setInCrossFieldRangeTable(
+		renames.oldToNewId,
+		CrossFieldTarget.Source,
+		oldId.revision,
+		oldId.localId,
+		count,
+		newId,
+	);
+
+	setInCrossFieldRangeTable(
+		renames.newToOldId,
+		CrossFieldTarget.Source,
+		newId.revision,
+		newId.localId,
+		count,
+		oldId,
+	);
+}
+
+function replaceRenameTableRevision(
+	renames: NodeRenameTable,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): NodeRenameTable {
+	const oldToNewId = replaceCrossFieldKeyTableRevisions(
+		renames.oldToNewId,
+		oldRevisions,
+		newRevision,
+		(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
+	);
+
+	const newToOldId = replaceCrossFieldKeyTableRevisions(
+		renames.newToOldId,
+		oldRevisions,
+		newRevision,
+		(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
+	);
+
+	return { oldToNewId, newToOldId };
 }

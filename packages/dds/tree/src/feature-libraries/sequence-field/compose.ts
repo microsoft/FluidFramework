@@ -85,40 +85,15 @@ function composeMarkLists(
 	const queue = new ComposeQueue(baseMarkList, newMarkList, moveEffects, revisionMetadata);
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
-		if (newMark === undefined) {
-			assert(
-				baseMark !== undefined,
-				0x4db /* Non-empty queue should not return two undefined marks */,
-			);
-			factory.push(
-				composeMark(baseMark, moveEffects, (node: NodeId) =>
-					composeChildChanges(node, undefined, composeChild),
-				),
-			);
-		} else {
-			// We only compose changesets that will not be further rebased.
-			// It is therefore safe to remove any intentions that have no impact in the context they apply to.
-			const settledNewMark = settleMark(newMark);
-			if (baseMark === undefined) {
-				factory.push(
-					composeMark(settledNewMark, moveEffects, (node: NodeId) =>
-						composeChildChanges(undefined, node, composeChild),
-					),
-				);
-			} else {
-				// Past this point, we are guaranteed that `settledNewMark` and `baseMark` have the same length and
-				// start at the same location in the revision after the base changes.
-				// They therefore refer to the same range for that revision.
-				const settledBaseMark = settleMark(baseMark);
-				const composedMark = composeMarks(
-					settledBaseMark,
-					settledNewMark,
-					composeChild,
-					moveEffects,
-				);
-				factory.push(composedMark);
-			}
-		}
+		const settledNewMark = settleMark(newMark);
+		const settledBaseMark = settleMark(baseMark);
+		const composedMark = composeMarks(
+			settledBaseMark,
+			settledNewMark,
+			composeChild,
+			moveEffects,
+		);
+		factory.push(composedMark);
 	}
 
 	return factory.list;
@@ -262,7 +237,7 @@ function handleNodeChanges(
 ): NodeId | undefined {
 	if (newMark.changes !== undefined) {
 		const baseSource = getAttach(baseMark);
-		let newId;
+		let newId: ChangeAtomId | undefined;
 		if (isMoveMark(newMark)) {
 			newId = getDetachId(newMark);
 		}
@@ -329,7 +304,7 @@ export class ComposeQueue {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
 		if (baseMark === undefined && newMark === undefined) {
-			return {};
+			fail("Should not pop when queue is empty");
 		} else if (baseMark === undefined) {
 			return this.dequeueNew();
 		} else if (newMark === undefined) {
@@ -430,8 +405,8 @@ export class ComposeQueue {
 }
 
 interface ComposeMarks {
-	baseMark?: Mark;
-	newMark?: Mark;
+	baseMark: Mark;
+	newMark: Mark;
 }
 
 function getMovedChangesFromMark(

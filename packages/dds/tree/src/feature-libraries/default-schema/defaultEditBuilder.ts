@@ -350,12 +350,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				[
 					{
 						type: "global",
-						rootMoves: [
+						renames: [
 							{
 								count,
-								idTransient: { localId: detachCellId },
-								idBefore: undefined,
-								idAfter: undefined,
+								oldId: { revision, localId: detachCellId },
+								newId: attachCellId,
 							},
 						],
 						revision,

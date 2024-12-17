@@ -36,7 +36,10 @@ import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 // eslint-disable-next-line import/no-internal-modules
-import { newTupleBTree } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	newNodeRenameTable,
+	newTupleBTree,
+} from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
 
@@ -75,7 +78,7 @@ describe("sharedTreeChangeCodec", () => {
 		const changeA: SequenceField.Changeset = [];
 		const dummyModularChangeSet: ModularChangeset = {
 			rootNodes: [],
-			nodeRenames: newTupleBTree(),
+			nodeRenames: newNodeRenameTable(),
 			nodeChanges: newTupleBTree(),
 			fieldChanges: new Map([
 				[brand("fA"), { fieldKind: sequence.identifier, change: brand(changeA) }],
