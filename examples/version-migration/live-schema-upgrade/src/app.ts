@@ -5,12 +5,12 @@
 
 import { ModelLoader } from "@fluid-example/example-utils";
 import { assert } from "@fluidframework/core-utils/legacy";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
+import { createRouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
 import {
-	InsecureTinyliciousTokenProvider,
-	InsecureTinyliciousUrlResolver,
-	createTinyliciousCreateNewRequest,
-} from "@fluidframework/tinylicious-driver/legacy";
+	createInsecureTinyliciousTestTokenProvider,
+	createInsecureTinyliciousTestUrlResolver,
+	createTinyliciousTestCreateNewRequest,
+} from "@fluidframework/tinylicious-driver/test-utils";
 
 import { DemoCodeLoader as DemoCodeLoader1 } from "./demoCodeLoader1.js";
 import { DemoCodeLoader as DemoCodeLoader2 } from "./demoCodeLoader2.js";
@@ -39,12 +39,12 @@ async function start() {
 	console.log("Starting app with model version", modelVersion);
 
 	const modelLoader = new ModelLoader<IDiceRollerAppModel>({
-		urlResolver: new InsecureTinyliciousUrlResolver(),
-		documentServiceFactory: new RouterliciousDocumentServiceFactory(
-			new InsecureTinyliciousTokenProvider(),
+		urlResolver: createInsecureTinyliciousTestUrlResolver(),
+		documentServiceFactory: createRouterliciousDocumentServiceFactory(
+			createInsecureTinyliciousTestTokenProvider(),
 		),
 		codeLoader: modelVersion === "1.0" ? new DemoCodeLoader1() : new DemoCodeLoader2(),
-		generateCreateNewRequest: createTinyliciousCreateNewRequest,
+		generateCreateNewRequest: createTinyliciousTestCreateNewRequest,
 	});
 
 	let id: string;

@@ -8,12 +8,12 @@ import type {
 	IVersionedModel,
 } from "@fluid-example/example-utils";
 import { ModelLoader, SameContainerMigrator } from "@fluid-example/example-utils";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
+import { createRouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
 import {
-	InsecureTinyliciousTokenProvider,
-	InsecureTinyliciousUrlResolver,
-	createTinyliciousCreateNewRequest,
-} from "@fluidframework/tinylicious-driver/legacy";
+	createInsecureTinyliciousTestTokenProvider,
+	createInsecureTinyliciousTestUrlResolver,
+	createTinyliciousTestCreateNewRequest,
+} from "@fluidframework/tinylicious-driver/test-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -66,12 +66,12 @@ async function start(): Promise<void> {
 	// in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
 	// (unknown) container version.  So the ModelLoader would be replaced by whatever the consistent request call
 	const modelLoader = new ModelLoader<IInventoryListAppModel>({
-		urlResolver: new InsecureTinyliciousUrlResolver(),
-		documentServiceFactory: new RouterliciousDocumentServiceFactory(
-			new InsecureTinyliciousTokenProvider(),
+		urlResolver: createInsecureTinyliciousTestUrlResolver(),
+		documentServiceFactory: createRouterliciousDocumentServiceFactory(
+			createInsecureTinyliciousTestTokenProvider(),
 		),
 		codeLoader: new DemoCodeLoader(),
-		generateCreateNewRequest: createTinyliciousCreateNewRequest,
+		generateCreateNewRequest: createTinyliciousTestCreateNewRequest,
 	});
 
 	let id: string;
