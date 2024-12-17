@@ -3,16 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerContext } from "@fluidframework/container-definitions/internal";
-// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IRuntime } from "@fluidframework/container-definitions/internal";
+import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { LoadContainerRuntimeParams } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
-	type FluidObject,
-	type IRequest,
-	type IResponse,
-} from "@fluidframework/core-interfaces";
+import { type FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IContainerRuntimeBase,
@@ -45,89 +40,61 @@ export async function getRuntimeAttributor(
 }
 
 /**
- * Mixes in logic to load and store runtime-based attribution functionality.
+ * Loads the ContainerRuntime with the ability to load and store runtime-based attribution functionality.
  *
  * Existing documents without stored attributor will not start storing attribution information. We only create the attributor
  * if its tracking is enabled and we are creating a new document.
- * @param Base - base class, inherits from FluidAttributorRuntime
+ *
  * @internal
  */
-export const mixinAttributor = (
-	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-	Base: typeof ContainerRuntime = ContainerRuntime,
-	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-): typeof ContainerRuntime =>
-	class ContainerRuntimeWithAttributor extends Base {
-		public static async loadRuntime(params: {
-			context: IContainerContext;
-			registryEntries: NamedFluidDataStoreRegistryEntries;
-			existing: boolean;
-			runtimeOptions?: IContainerRuntimeOptions;
-			containerScope?: FluidObject;
-			// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-			containerRuntimeCtor?: typeof ContainerRuntime;
-			/**
-			 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-			 */
-			requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-			provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-			// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-		}): Promise<ContainerRuntime> {
-			const {
-				context,
-				registryEntries,
-				existing,
-				requestHandler,
-				provideEntryPoint,
-				runtimeOptions,
-				containerScope,
-				// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-				containerRuntimeCtor = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime,
-			} = params;
+export async function loadRuntimeWithAttribution(
+	params: LoadContainerRuntimeParams,
+): Promise<IContainerRuntime & IRuntime> {
+	const {
+		context,
+		registryEntries,
+		existing,
+		requestHandler,
+		provideEntryPoint,
+		runtimeOptions,
+		containerScope,
+	} = params;
 
-			const mc = loggerToMonitoringContext(context.taggedLogger);
-			const factory = new RuntimeAttributorFactory();
-			const registryEntriesCopy: NamedFluidDataStoreRegistryEntries = [
-				...registryEntries,
-				[RuntimeAttributorFactory.type, Promise.resolve(factory)],
-			];
-			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
-			if (shouldTrackAttribution) {
-				const { options } = context;
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				(options.attribution ??= {}).track = true;
-			}
+	const mc = loggerToMonitoringContext(context.taggedLogger);
+	const factory = new RuntimeAttributorFactory();
+	const registryEntriesCopy: NamedFluidDataStoreRegistryEntries = [
+		...registryEntries,
+		[RuntimeAttributorFactory.type, Promise.resolve(factory)],
+	];
+	const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
+	if (shouldTrackAttribution) {
+		const { options } = context;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		(options.attribution ??= {}).track = true;
+	}
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			const runtime = (await Base.loadRuntime({
-				context,
-				registryEntries: registryEntriesCopy,
-				requestHandler,
-				provideEntryPoint,
-				runtimeOptions,
-				containerScope,
-				existing,
-				containerRuntimeCtor,
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} as any)) as ContainerRuntimeWithAttributor;
+	const runtime = await loadContainerRuntime({
+		context,
+		registryEntries: registryEntriesCopy,
+		requestHandler,
+		provideEntryPoint,
+		runtimeOptions,
+		containerScope,
+		existing,
+	});
 
-			let runtimeAttributor: IRuntimeAttributor | undefined;
-			if (shouldTrackAttribution) {
-				if (existing) {
-					runtimeAttributor = await getRuntimeAttributor(runtime);
-				} else {
-					const datastore = await runtime.createDataStore(RuntimeAttributorFactory.type);
-					const result = await datastore.trySetAlias(attributorDataStoreAlias);
-					assert(
-						result === "Success",
-						0xa1b /* Failed to set alias for attributor data store */,
-					);
-					runtimeAttributor = (await datastore.entryPoint.get()) as IRuntimeAttributor;
-					assert(runtimeAttributor !== undefined, 0xa1c /* Attributor should be defined */);
-				}
-			}
-
-			return runtime;
+	let runtimeAttributor: IRuntimeAttributor | undefined;
+	if (shouldTrackAttribution) {
+		if (existing) {
+			runtimeAttributor = await getRuntimeAttributor(runtime);
+		} else {
+			const datastore = await runtime.createDataStore(RuntimeAttributorFactory.type);
+			const result = await datastore.trySetAlias(attributorDataStoreAlias);
+			assert(result === "Success", 0xa1b /* Failed to set alias for attributor data store */);
+			runtimeAttributor = (await datastore.entryPoint.get()) as IRuntimeAttributor;
+			assert(runtimeAttributor !== undefined, 0xa1c /* Attributor should be defined */);
 		}
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-	} as unknown as typeof ContainerRuntime;
+	}
+
+	return runtime;
+}

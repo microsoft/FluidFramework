@@ -22,7 +22,10 @@ import { SharedCell } from "@fluidframework/cell/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 
 // ContainerRuntime API
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerRuntime,
+	loadContainerRuntime,
+} from "@fluidframework/container-runtime/internal";
 
 // Data Runtime API
 import * as counter from "@fluidframework/counter/internal";
@@ -59,6 +62,7 @@ import {
 	loadPackage,
 	versionHasMovedSparsedMatrix,
 } from "./versionUtils.js";
+import { loadRuntimeWithAttribution } from "@fluid-experimental/attributor";
 
 /* eslint-enable import/order */
 
@@ -104,7 +108,7 @@ export const ensurePackageInstalled = async (
 		force,
 	);
 	await Promise.all([
-		loadContainerRuntime(baseVersion, version),
+		loadContainerRuntimeToCache(baseVersion, version),
 		loadDataRuntime(baseVersion, version),
 		loadLoader(baseVersion, version),
 		loadDriver(baseVersion, version),
@@ -136,6 +140,8 @@ export const ContainerRuntimeApi = {
 	version: pkgVersion,
 	BaseContainerRuntimeFactory,
 	ContainerRuntime,
+	loadContainerRuntime,
+	loadRuntimeWithAttribution,
 	/**
 	 * @remarks - The API for constructing this factory has recently changed. Use `createContainerRuntimeFactoryWithDefaultDataStore`
 	 * to construct safely across versions.
@@ -205,7 +211,7 @@ async function loadLoader(baseVersion: string, requested?: number | string): Pro
 	}
 }
 
-async function loadContainerRuntime(
+async function loadContainerRuntimeToCache(
 	baseVersion: string,
 	requested?: number | string,
 ): Promise<void> {
@@ -216,21 +222,25 @@ async function loadContainerRuntime(
 
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!containerRuntimeCache.has(version)) {
-		const [containerRuntimePkg, aqueductPkg] = await Promise.all([
+		const [containerRuntimePkg, aqueductPkg, attributorPkg] = await Promise.all([
 			loadPackage(modulePath, "@fluidframework/container-runtime"),
 			loadPackage(modulePath, "@fluidframework/aqueduct"),
+			loadPackage(modulePath, "@fluidframework/attributor"),
 		]);
 
 		/* eslint-disable @typescript-eslint/no-shadow */
-		const { ContainerRuntime } = containerRuntimePkg;
+		const { ContainerRuntime, loadContainerRuntime } = containerRuntimePkg;
 		const { BaseContainerRuntimeFactory, ContainerRuntimeFactoryWithDefaultDataStore } =
 			aqueductPkg;
+		const { loadRuntimeWithAttribution } = attributorPkg;
 		/* eslint-enable @typescript-eslint/no-shadow */
 
 		const containerRuntime = {
 			version,
 			BaseContainerRuntimeFactory,
 			ContainerRuntime,
+			loadContainerRuntime,
+			loadRuntimeWithAttribution,
 			ContainerRuntimeFactoryWithDefaultDataStore,
 		};
 		containerRuntimeCache.set(version, containerRuntime);

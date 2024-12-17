@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { mixinAttributor } from "@fluid-experimental/attributor";
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import {
@@ -235,11 +234,11 @@ export async function getVersionedTestObjectProviderFromApis(
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
 	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
-		const runtimeCtor =
+		const loadRuntimeFn =
 			containerOptions?.enableAttribution === true
-				? mixinAttributor(apis.containerRuntime.ContainerRuntime)
-				: apis.containerRuntime.ContainerRuntime;
-		const factoryCtor = createTestContainerRuntimeFactory(runtimeCtor);
+				? apis.containerRuntime.loadRuntimeWithAttribution
+				: apis.containerRuntime.loadContainerRuntime;
+		const factoryCtor = createTestContainerRuntimeFactory(loadRuntimeFn);
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
@@ -350,7 +349,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
 		const factoryCtor = createTestContainerRuntimeFactory(
-			apis.containerRuntime.ContainerRuntime,
+			apis.containerRuntime.loadContainerRuntime,
 		);
 		return new factoryCtor(
 			TestDataObjectType,
@@ -374,7 +373,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			"containerRuntimeForLoading must be defined",
 		);
 		const factoryCtor = createTestContainerRuntimeFactory(
-			apis.containerRuntimeForLoading.ContainerRuntime,
+			apis.containerRuntimeForLoading.loadContainerRuntime,
 		);
 		return new factoryCtor(
 			TestDataObjectType,

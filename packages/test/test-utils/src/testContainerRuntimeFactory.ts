@@ -15,8 +15,12 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import {
+	// FluidObject,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
+// import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
@@ -26,7 +30,7 @@ import {
 } from "@fluidframework/request-handler/internal";
 import {
 	IFluidDataStoreFactory,
-	NamedFluidDataStoreRegistryEntries,
+	// NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
@@ -35,42 +39,62 @@ interface backCompat_IFluidRouter {
 	request(request: IRequest): Promise<IResponse>;
 }
 
-const backCompat_DefaultRouteRequestHandler = (defaultRootId: string) => {
-	return async (request: IRequest, runtime: IContainerRuntime) => {
-		const parser = RequestParser.create(request);
-		if (parser.pathParts.length === 0) {
-			return (
-				runtime as any as Required<FluidObject<IFluidHandleContext>>
-			).IFluidHandleContext.resolveHandle({
-				url: `/${defaultRootId}${parser.query}`,
-				headers: request.headers,
-			});
-		}
-		return undefined; // continue search
-	};
-};
+// const backCompat_DefaultRouteRequestHandler = (defaultRootId: string) => {
+// 	return async (request: IRequest, runtime: IContainerRuntime) => {
+// 		const parser = RequestParser.create(request);
+// 		if (parser.pathParts.length === 0) {
+// 			return (
+// 				runtime as any as Required<FluidObject<IFluidHandleContext>>
+// 			).IFluidHandleContext.resolveHandle({
+// 				url: `/${defaultRootId}${parser.query}`,
+// 				headers: request.headers,
+// 			});
+// 		}
+// 		return undefined; // continue search
+// 	};
+// };
 
-interface backCompat_ContainerRuntime {
-	load(
-		context: IContainerContext,
-		registryEntries: NamedFluidDataStoreRegistryEntries,
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-		runtimeOptions?: IContainerRuntimeOptionsInternal,
-		containerScope?: FluidObject,
-		existing?: boolean,
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-		containerRuntimeCtor?: typeof ContainerRuntime,
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-	): Promise<ContainerRuntime>;
-}
+// interface backCompat_ContainerRuntime {
+// 	load(
+// 		context: IContainerContext,
+// 		registryEntries: NamedFluidDataStoreRegistryEntries,
+// 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+// 		runtimeOptions?: IContainerRuntimeOptions,
+// 		containerScope?: FluidObject,
+// 		existing?: boolean,
+// 		containerRuntimeCtor?: typeof ContainerRuntime,
+// 	): Promise<ContainerRuntime>;
+// }
+
+//* TODO: Add an adapter for callers to have a way to get loadFn from old runtimes
+//* (use this logic below)
+
+// if (containerRuntimeCtor.loadRuntime === undefined) {
+// 	// Note: We use the deprecated `load` from v1.X here to allow for cross-major version compat testing.
+// 	// Can be removed when we no longer support v1.X.
+// 	return (containerRuntimeCtor as any as backCompat_ContainerRuntime).load(
+// 		context,
+// 		[
+// 			["default", Promise.resolve(this.dataStoreFactory)],
+// 			[this.type, Promise.resolve(this.dataStoreFactory)],
+// 		],
+// 		// eslint-disable-next-line import/no-deprecated
+// 		buildRuntimeRequestHandler(
+// 			backCompat_DefaultRouteRequestHandler("default"),
+// 			...this.requestHandlers,
+// 		),
+// 		this.runtimeOptions,
+// 		context.scope,
+// 		existing,
+// 	);
+// }
 
 /**
  * Create a container runtime factory class that allows you to set runtime options
  * @internal
  */
 export const createTestContainerRuntimeFactory = (
-	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-	containerRuntimeCtor: typeof ContainerRuntime,
+	loadFn: (LoadContainerRuntimeParams) => Promise<IContainerRuntime & IRuntime>,
 ) => {
 	return class extends RuntimeFactoryHelper {
 		constructor(
@@ -129,25 +153,6 @@ export const createTestContainerRuntimeFactory = (
 			context: IContainerContext,
 			existing: boolean,
 		): Promise<IRuntime & IContainerRuntime> {
-			if (containerRuntimeCtor.loadRuntime === undefined) {
-				// Note: We use the deprecated `load` from v1.X here to allow for cross-major version compat testing.
-				// Can be removed when we no longer support v1.X.
-				return (containerRuntimeCtor as any as backCompat_ContainerRuntime).load(
-					context,
-					[
-						["default", Promise.resolve(this.dataStoreFactory)],
-						[this.type, Promise.resolve(this.dataStoreFactory)],
-					],
-					// eslint-disable-next-line import/no-deprecated
-					buildRuntimeRequestHandler(
-						backCompat_DefaultRouteRequestHandler("default"),
-						...this.requestHandlers,
-					),
-					this.runtimeOptions,
-					context.scope,
-					existing,
-				);
-			}
 			const provideEntryPoint = async (runtime: IContainerRuntime) => {
 				const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
 				if (entryPoint === undefined) {
@@ -167,7 +172,7 @@ export const createTestContainerRuntimeFactory = (
 				}
 				return undefined; // continue search
 			};
-			return containerRuntimeCtor.loadRuntime({
+			return loadFn({
 				context,
 				registryEntries: [
 					["default", Promise.resolve(this.dataStoreFactory)],
@@ -190,5 +195,6 @@ export const createTestContainerRuntimeFactory = (
  * A container runtime factory that allows you to set runtime options
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-export const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(ContainerRuntime);
+export const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(
+	ContainerRuntime.loadRuntime,
+);
