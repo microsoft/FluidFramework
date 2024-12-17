@@ -11,14 +11,11 @@ import {
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import {
-	ContainerRuntime,
-	IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 
-const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
+const containerRuntimeWithAttribution = mixinAttributor();
 
 /**
  * ModelContainerRuntimeFactoryWithAttribution is an abstract class that gives a basic structure for container runtime initialization with attributor enabled.
