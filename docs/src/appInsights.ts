@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import siteConfig from "@generated/docusaurus.config"
 import { ReactPlugin } from "@microsoft/applicationinsights-react-js";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import siteConfig from "@generated/docusaurus.config"
 const reactPlugin = new ReactPlugin();
 
 const appInsights = new ApplicationInsights({

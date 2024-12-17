@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import appInsights from "@site/src/appInsights";
 import CookieBanner from "@site/src/components/cookieBanner";
+import { Homepage } from "@site/src/components/home";
 
 if (typeof window !== "undefined") {
 	const userId = localStorage.getItem("userId") ?? uuidv4();
@@ -19,12 +20,7 @@ if (typeof window !== "undefined") {
 
 	let pageRoute = currentUrl;
 	pageRoute = currentUrl ?? window.location.href;
-	appInsights.trackPageView({ name: pageRoute });
 }
-
-appInsights.trackEvent({ name: "UserActivity", properties: { action: "Viewed Page" } });
-
-import { Homepage } from "@site/src/components/home";
 
 /**
  * The website homepage root (including the header and footer injected by Docusaurus).

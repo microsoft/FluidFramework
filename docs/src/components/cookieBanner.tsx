@@ -13,7 +13,7 @@ import React, { useEffect, useState } from "react";
 const CookieBanner = (): React.ReactElement => {
   const { siteConfig } = useDocusaurusContext();
   const [wcpPackageAvailable, setWcpPackageAvailable] = useState<boolean>(false);
-  const MockCookieBanner =  () => {
+  const MockCookieBanner =  (): React.ReactElement => {
     return(
       <div id="cookie-banner-test"
         style={{ backgroundColor: "#f1f1f1", padding: "10px", textAlign: "center" }}
@@ -36,11 +36,11 @@ const CookieBanner = (): React.ReactElement => {
         WcpConsent?.init(
           "en-US",
           "cookie-banner",
-          (err, _siteConsent) => {
+          (err: Error | undefined, _siteConsent) => {
             if (err) {
               console.error("WcpConsent initialization error", err);
-            } else {
-              siteConsent = _siteConsent!;
+            } else if(_siteConsent !== undefined) {
+              siteConsent = _siteConsent;
               console.log("Initial consent", siteConsent.getConsent());
             }
           },
@@ -57,7 +57,7 @@ const CookieBanner = (): React.ReactElement => {
 
   }, [wcpPackageAvailable]);
   return (
-    wcpPackageAvailable ?  <div id="cookie-banner"></div> : <MockCookieBanner />
+    wcpPackageAvailable === true  ?  <div id="cookie-banner"></div> : <MockCookieBanner />
 
   );
 };
