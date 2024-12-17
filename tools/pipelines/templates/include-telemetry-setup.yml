@@ -118,6 +118,6 @@ steps:
     workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
     script: |
       set -eu -o pipefail
-      # The telemetry-generator package is the root of its workspace so we do want to install this for the workspace
-      # root with '-w'. Without it, the install will complain and fail.
-      pnpm install -w @ff-internal/aria-logger;
+      # Install globally so we don't change any package.json or lockfiles, to avoid issues with the
+      # extraneous modified files check.
+      pnpm add -g @ff-internal/aria-logger;
