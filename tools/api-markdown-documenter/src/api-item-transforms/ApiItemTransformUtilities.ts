@@ -9,12 +9,13 @@ import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-
 
 import type { Heading } from "../Heading.js";
 import type { Link } from "../Link.js";
-import { getQualifiedApiItemName, getReleaseTag } from "../utilities/index.js";
+import { getQualifiedApiItemName, getReleaseTag, getValueOrDerived, type DeepRequired } from "../utilities/index.js";
 
-import type {
-	ApiItemTransformationConfiguration,
-	DocumentBoundaries,
-	HierarchyBoundaries,
+import {
+	HierarchyKind,
+	type ApiItemTransformationConfiguration,
+	type DocumentBoundaries,
+	type HierarchyBoundaries,
 } from "./configuration/index.js";
 
 /**
@@ -268,7 +269,7 @@ export function getHeadingForApiItem(
  */
 function getHeadingIdForApiItem(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: DeepRequired<ApiItemTransformationConfiguration>,
 ): string {
 	let baseName: string | undefined;
 	const apiItemKind: ApiItemKind = apiItem.kind;
@@ -295,7 +296,7 @@ function getHeadingIdForApiItem(
 }
 
 /**
- * Gets the "filted" parent of the provided API item.
+ * Gets the "filtered" parent of the provided API item.
  *
  * @remarks This logic specifically skips items of the following kinds:
  *
@@ -315,16 +316,16 @@ function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
 
 /**
  * Gets the ancestral hierarchy of the provided API item by walking up the parentage graph and emitting any items
- * matching the `includePredecate` until it reaches an item that matches the `breakPredecate`.
+ * matching the `includePredicate` until it reaches an item that matches the `breakPredicate`.
  *
  * @remarks Notes:
  *
- * - This will not include the provided item itself, even if it matches the `includePredecate`.
+ * - This will not include the provided item itself, even if it matches the `includePredicate`.
  *
- * - This will not include the item matching the `breakPredecate`, even if they match the `includePredecate`.
+ * - This will not include the item matching the `breakPredicate`, even if they match the `includePredicate`.
  *
  * @param apiItem - The API item whose ancestral hierarchy is being queried.
- * @param includePredecate - Predicate to determine which items in the hierarchy should be preserved in the
+ * @param includePredicate - Predicate to determine which items in the hierarchy should be preserved in the
  * returned list. The provided API item will not be included in the output, even if it would be included by this.
  * @param breakPredicate - Predicate to determine when to break from the traversal and return.
  * The item matching this predicate will not be included, even if it would be included by `includePredicate`.
@@ -333,7 +334,7 @@ function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
  */
 export function getAncestralHierarchy(
 	apiItem: ApiItem,
-	includePredecate: (apiItem: ApiItem) => boolean,
+	includePredicate: (apiItem: ApiItem) => boolean,
 	breakPredicate?: (apiItem: ApiItem) => boolean,
 ): ApiItem[] {
 	const matches: ApiItem[] = [];
@@ -343,7 +344,7 @@ export function getAncestralHierarchy(
 		hierarchyItem !== undefined &&
 		(breakPredicate === undefined || !breakPredicate(hierarchyItem))
 	) {
-		if (includePredecate(hierarchyItem)) {
+		if (includePredicate(hierarchyItem)) {
 			matches.push(hierarchyItem);
 		}
 		hierarchyItem = getFilteredParent(hierarchyItem);
@@ -352,99 +353,20 @@ export function getAncestralHierarchy(
 }
 
 /**
- * Determines whether or not the specified API item kind is one that should be rendered to its own document.
- *
- * @remarks This is essentially a wrapper around {@link DocumentationSuiteOptions.documentBoundaries}, but also enforces
- * system-wide invariants.
- *
- * Namely...
- *
- * - `Model` and `Package` items are *always* rendered to their own documents, regardless of the specified boundaries.
- *
- * - `EntryPoint` items are *never* rendered to their own documents (as they are completely ignored by this system),
- * regardless of the specified boundaries.
- *
- * @param kind - The kind of API item.
- * @param documentBoundaries - See {@link DocumentBoundaries}
- *
- * @returns `true` if the item should be rendered to its own document. `false` otherwise.
- */
-export function doesItemKindRequireOwnDocument(
-	kind: ApiItemKind,
-	documentBoundaries: DocumentBoundaries,
-): boolean {
-	if (
-		kind === ApiItemKind.EntryPoint ||
-		kind === ApiItemKind.Model ||
-		kind === ApiItemKind.Package
-	) {
-		return true;
-	}
-	return documentBoundaries.includes(kind);
-}
-
-/**
- * Determines whether or not the specified API item is one that should be rendered to its own document.
- *
- * @remarks
- *
- * This is essentially a wrapper around {@link DocumentationSuiteOptions.hierarchyBoundaries}, but also enforces
- * system-wide invariants.
- *
- * Namely...
- *
- * - `Package` items are *always* rendered to their own documents, regardless of the specified boundaries.
- *
- * - `EntryPoint` items are *never* rendered to their own documents (as they are completely ignored by this system),
- * regardless of the specified boundaries.
+ * Determines whether or not the specified API item is one that should be rendered to its own document
+ * (as opposed to being rendered to a section under some ancestor item's document).
  *
  * @param apiItem - The API being queried.
- * @param documentBoundaries - See {@link DocumentBoundaries}
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @public
  */
 export function doesItemRequireOwnDocument(
 	apiItem: ApiItem,
-	documentBoundaries: DocumentBoundaries,
+	config: DeepRequired<ApiItemTransformationConfiguration>,
 ): boolean {
-	return doesItemKindRequireOwnDocument(apiItem.kind, documentBoundaries);
-}
-
-/**
- * Determines whether or not the specified API item kind is one that should generate directory-wise hierarchy
- * in the resulting documentation suite.
- * I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
- *
- * @remarks
- *
- * This is essentially a wrapper around {@link DocumentationSuiteOptions.hierarchyBoundaries}, but also enforces
- * system-wide invariants.
- *
- * Namely...
- *
- * - `Package` items are *always* rendered to their own documents, regardless of the specified boundaries.
- *
- * - `EntryPoint` items are *never* rendered to their own documents (as they are completely ignored by this system),
- * regardless of the specified boundaries.
- *
- * @param kind - The kind of API item.
- * @param hierarchyBoundaries - See {@link HierarchyBoundaries}
- *
- * @returns `true` if the item should contribute to directory-wise hierarchy in the output. `false` otherwise.
- */
-function doesItemKindGenerateHierarchy(
-	kind: ApiItemKind,
-	hierarchyBoundaries: HierarchyBoundaries,
-): boolean {
-	if (kind === ApiItemKind.Package) {
-		return true;
-	}
-	if (kind === ApiItemKind.EntryPoint) {
-		// The same API item within a package can be included in multiple entry-points, so it doesn't make sense to
-		// include it in generated hierarchy.
-		return false;
-	}
-	return hierarchyBoundaries.includes(kind);
+	const hierarchy = getValueOrDerived(config.hierarchy, apiItem);
+	return hierarchy.kind !== HierarchyKind.Section;
 }
 
 /**
@@ -452,16 +374,25 @@ function doesItemKindGenerateHierarchy(
  * in the resulting documentation suite.
  * I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
  *
- * @remarks This is based on the item's `kind`. See {@link doesItemKindGenerateHierarchy}.
+ * @remarks
+ * `EntryPoint` items are *never* rendered to their own documents (as they are completely ignored by this system),
+ * regardless of the specified boundaries.
  *
  * @param apiItem - The API item being queried.
- * @param hierarchyBoundaries - See {@link HierarchyBoundaries}
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 function doesItemGenerateHierarchy(
 	apiItem: ApiItem,
-	hierarchyBoundaries: HierarchyBoundaries,
+	config: DeepRequired<ApiItemTransformationConfiguration>,
 ): boolean {
-	return doesItemKindGenerateHierarchy(apiItem.kind, hierarchyBoundaries);
+	if (apiItem.kind === ApiItemKind.EntryPoint) {
+		// The same API item within a package can be included in multiple entry-points, so it doesn't make sense to
+		// include it in generated hierarchy.
+		return false;
+	}
+
+	const hierarchy = getValueOrDerived(config.hierarchy, apiItem);
+	return hierarchy.kind === HierarchyKind.Folder;
 }
 
 /**

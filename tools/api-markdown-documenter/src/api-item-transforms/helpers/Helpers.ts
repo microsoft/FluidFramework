@@ -997,7 +997,7 @@ export function createChildDetailsSection(
 		// (i.e. it does not get rendered to its own document).
 		// Also only render the section if it actually has contents to render (to avoid empty headings).
 		if (
-			!doesItemKindRequireOwnDocument(childItem.itemKind, config.documentBoundaries) &&
+			!doesItemRequireOwnDocument(childItem.itemKind, config) &&
 			childItem.items.length > 0
 		) {
 			const childContents: DocumentationNode[] = [];

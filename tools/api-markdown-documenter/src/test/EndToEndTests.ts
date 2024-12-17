@@ -5,25 +5,44 @@
 
 import Path from "node:path";
 
-import type { ApiModel } from "@microsoft/api-extractor-model";
+import {
+	ApiItemContainerMixin,
+	ApiItemKind,
+	type ApiItem,
+	type ApiModel,
+} from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 import type { Suite } from "mocha";
 
-import { loadModel } from "../LoadModel.js";
 import {
+	ApiItemUtilities,
+	loadModel,
+	type DocumentNode,
+	FolderDocumentPlacement,
+	HierarchyKind,
 	transformApiModel,
+	type HierarchyConfig,
+	type DeepRequired,
+	type MarkdownRenderer,
+	type HtmlRenderer,
 	type ApiItemTransformationConfiguration,
-} from "../api-item-transforms/index.js";
-import type { DocumentNode } from "../documentation-domain/index.js";
+} from "../index.js";
+
+/**
+ * Supported render configuration types.
+ */
+export type RenderConfig =
+	| MarkdownRenderer.RenderDocumentsOptions
+	| HtmlRenderer.RenderDocumentsOptions;
 
 /**
  * End-to-end snapshot test configuration.
  *
  * @remarks Generates a test suite with a test for each combination of API Model and test configuration.
  */
-export interface EndToEndSuiteConfig<TRenderConfig> {
+export interface EndToEndSuiteConfig<TRenderConfig extends RenderConfig> {
 	/**
 	 * Name of the outer test suite.
 	 */
@@ -49,11 +68,7 @@ export interface EndToEndSuiteConfig<TRenderConfig> {
 	 * The end-to-end test scenario to run against the API model.
 	 * Writes the output to the specified directory for snapshot comparison.
 	 */
-	render(
-		document: DocumentNode,
-		renderConfig: TRenderConfig,
-		outputDirectoryPath: string,
-	): Promise<void>;
+	render(document: DocumentNode, config: TRenderConfig): Promise<void>;
 
 	/**
 	 * The models to test.
@@ -84,21 +99,17 @@ export interface ApiModelTestOptions {
 /**
  * API Item transformation options for a test.
  */
-export interface EndToEndTestConfig<TRenderConfig> {
+export interface EndToEndTestConfig<TRenderConfig extends RenderConfig> {
 	/**
 	 * Test name
 	 */
 	readonly testName: string;
 
 	/**
-	 * The transformation configuration to use.
+	 * Transformation / render configuration
 	 */
-	readonly transformConfig: Omit<ApiItemTransformationConfiguration, "apiModel">;
-
-	/**
-	 * Render configuration.
-	 */
-	readonly renderConfig: TRenderConfig;
+	readonly renderConfig: Omit<ApiItemTransformationConfiguration, "apiModel"> &
+		Omit<TRenderConfig, "outputDirectoryPath">;
 }
 
 /**
@@ -112,7 +123,7 @@ export interface EndToEndTestConfig<TRenderConfig> {
  *
  * - Snapshot test comparing the final rendered output against checked-in snapshots.
  */
-export function endToEndTests<TRenderConfig>(
+export function endToEndTests<const TRenderConfig extends RenderConfig>(
 	suiteConfig: EndToEndSuiteConfig<TRenderConfig>,
 ): Suite {
 	return describe(suiteConfig.suiteName, () => {
@@ -125,13 +136,7 @@ export function endToEndTests<TRenderConfig>(
 				});
 
 				for (const testConfig of suiteConfig.testConfigs) {
-					const {
-						testName,
-						transformConfig: partialTransformConfig,
-						renderConfig,
-					} = testConfig;
-
-					const testOutputPath = Path.join(modelName, testName);
+					const testOutputPath = Path.join(modelName, testConfig.testName);
 					const temporaryDirectoryPath = Path.resolve(
 						suiteConfig.temporaryOutputDirectoryPath,
 						testOutputPath,
@@ -141,19 +146,20 @@ export function endToEndTests<TRenderConfig>(
 						testOutputPath,
 					);
 
-					describe(testName, () => {
-						let apiItemTransformConfig: ApiItemTransformationConfiguration;
+					describe(testConfig.testName, () => {
+						let config: ApiItemTransformationConfiguration & TRenderConfig;
 						before(async () => {
-							apiItemTransformConfig = {
-								...partialTransformConfig,
+							config = {
+								...testConfig.renderConfig,
 								apiModel,
-							};
+								outputDirectoryPath: temporaryDirectoryPath,
+							} as unknown as ApiItemTransformationConfiguration & TRenderConfig;
 						});
 
 						// Run a sanity check to ensure that the suite did not generate multiple documents with the same
 						// output file path. This either indicates a bug in the system, or an bad configuration.
 						it("Ensure no duplicate file paths", () => {
-							const documents = transformApiModel(apiItemTransformConfig);
+							const documents = transformApiModel(config);
 
 							const pathMap = new Map<string, DocumentNode>();
 							for (const document of documents) {
@@ -176,15 +182,11 @@ export function endToEndTests<TRenderConfig>(
 							// Clear any existing test_temp data
 							await FileSystem.ensureEmptyFolderAsync(temporaryDirectoryPath);
 
-							const documents = transformApiModel(apiItemTransformConfig);
+							const documents = transformApiModel(config);
 
 							await Promise.all(
 								documents.map(async (document) =>
-									suiteConfig.render(
-										document,
-										renderConfig,
-										temporaryDirectoryPath,
-									),
+									suiteConfig.render(document, config),
 								),
 							);
 
@@ -198,6 +200,87 @@ export function endToEndTests<TRenderConfig>(
 			});
 		}
 	});
+}
+
+/**
+ * Test hierarchy configs
+ */
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace HierarchyConfigs {
+	/**
+	 * "Flat" hierarchy: Packages get their own documents, and all descendent API items are rendered as sections under that document.
+	 * @remarks Results in a small number of documents, but can lead to relatively large documents.
+	 */
+	export const flat = (apiItem: ApiItem): DeepRequired<HierarchyConfig> => {
+		const kind = ApiItemUtilities.getApiItemKind(apiItem);
+
+		switch (kind) {
+			case ApiItemKind.Package: {
+				return {
+					kind: HierarchyKind.Document,
+					documentName: ApiItemUtilities.getFileSafeNameForApiItem(apiItem),
+					headingText: apiItem.displayName,
+				};
+			}
+			default: {
+				return {
+					kind: HierarchyKind.Section,
+					headingText: apiItem.displayName,
+				};
+			}
+		}
+	};
+
+	/**
+	 * "Sparse" hierarchy: Packages yield folder hierarchy, and all descendent items get their own document under that folder.
+	 * @remarks Leads to many documents, but each document is likely to be relatively small.
+	 */
+	export const sparse = (apiItem: ApiItem): DeepRequired<HierarchyConfig> => {
+		const kind = ApiItemUtilities.getApiItemKind(apiItem);
+
+		switch (kind) {
+			case ApiItemKind.Package: {
+				const name = ApiItemUtilities.getFileSafeNameForApiItem(apiItem);
+				return {
+					kind: HierarchyKind.Folder,
+					documentPlacement: FolderDocumentPlacement.Outside,
+					documentName: name,
+					folderName: name,
+					headingText: apiItem.displayName,
+				};
+			}
+			default: {
+				return {
+					kind: HierarchyKind.Document,
+					headingText: apiItem.displayName,
+					documentName: apiItem.displayName,
+				};
+			}
+		}
+	};
+
+	/**
+	 * "Deep" hierarchy: All "parent" API items generate hierarchy. All other items are rendered as documents under their parent hierarchy.
+	 * @remarks Leads to many documents, but each document is likely to be relatively small.
+	 */
+	export const deep = (apiItem: ApiItem): DeepRequired<HierarchyConfig> => {
+		if (ApiItemContainerMixin.isBaseClassOf(apiItem)) {
+			const name = ApiItemUtilities.getFileSafeNameForApiItem(apiItem);
+			return {
+				kind: HierarchyKind.Folder,
+				documentPlacement: FolderDocumentPlacement.Inside,
+				documentName: name,
+				folderName: name,
+				headingText: apiItem.displayName,
+			};
+		} else {
+			return {
+				kind: HierarchyKind.Document,
+				headingText: apiItem.displayName,
+				documentName: apiItem.displayName,
+			};
+		}
+	};
 }
 
 /**

@@ -46,7 +46,7 @@ import type { Logger } from "../Logging.js";
  *
  * @public
  */
-export type ValidApiItemKind = Omit<ApiItemKind, ApiItemKind.None>;
+export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
 
 /**
  * Gets the {@link ValidApiItemKind} for the provided API item. Throws if the item's kind is "None".
@@ -545,9 +545,18 @@ export function getConciseSignature(apiItem: ApiItem): string {
 }
 
 /**
+ * Gets a filename-safe representation of the API item's display name.
+ */
+export function getFileSafeNameForApiItem(apiItem: ApiItem): string {
+	return apiItem.kind === ApiItemKind.Package
+		? getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage))
+		: getSafeFilenameForName(apiItem.displayName);
+}
+
+/**
  * Converts bad filename characters to underscores.
  */
-export function getSafeFilenameForName(apiItemName: string): string {
+function getSafeFilenameForName(apiItemName: string): string {
 	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
 	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
 

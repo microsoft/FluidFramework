@@ -6,14 +6,14 @@
 import * as Path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
+import { ReleaseTag } from "@microsoft/api-extractor-model";
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
-import type { DocumentNode } from "../documentation-domain/index.js";
-import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "../renderers/index.js";
+import { type DocumentNode, HtmlRenderer } from "../index.js";
 
 import {
 	endToEndTests,
+	HierarchyConfigs,
 	type ApiModelTestOptions,
 	type EndToEndTestConfig,
 } from "./EndToEndTests.js";
@@ -50,16 +50,15 @@ const apiModels: ApiModelTestOptions[] = [
 	// TODO: add other models
 ];
 
-const testConfigs: EndToEndTestConfig<RenderDocumentAsHtmlConfig>[] = [
+const testConfigs: EndToEndTestConfig<HtmlRenderer.RenderDocumentsOptions>[] = [
 	/**
-	 * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
+	 * A sample "default" configuration, which renders every item kind under a package to the package parent document.
 	 */
 	{
 		testName: "default-config",
-		transformConfig: {
+		renderConfig: {
 			uriRoot: ".",
 		},
-		renderConfig: {},
 	},
 
 	/**
@@ -67,15 +66,13 @@ const testConfigs: EndToEndTestConfig<RenderDocumentAsHtmlConfig>[] = [
 	 */
 	{
 		testName: "flat-config",
-		transformConfig: {
+		renderConfig: {
 			uriRoot: "docs",
 			includeBreadcrumb: true,
 			includeTopLevelDocumentHeading: false,
-			documentBoundaries: [], // Render everything to package documents
-			hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+			hierarchy: HierarchyConfigs.flat,
 			minimumReleaseLevel: ReleaseTag.Beta, // Only include `@public` and `beta` items in the docs suite
 		},
-		renderConfig: {},
 	},
 
 	/**
@@ -83,34 +80,29 @@ const testConfigs: EndToEndTestConfig<RenderDocumentAsHtmlConfig>[] = [
 	 */
 	{
 		testName: "sparse-config",
-		transformConfig: {
+		renderConfig: {
 			uriRoot: "docs",
 			includeBreadcrumb: false,
 			includeTopLevelDocumentHeading: true,
-			// Render everything to its own document
-			documentBoundaries: [
-				ApiItemKind.CallSignature,
-				ApiItemKind.Class,
-				ApiItemKind.ConstructSignature,
-				ApiItemKind.Constructor,
-				ApiItemKind.Enum,
-				ApiItemKind.EnumMember,
-				ApiItemKind.Function,
-				ApiItemKind.IndexSignature,
-				ApiItemKind.Interface,
-				ApiItemKind.Method,
-				ApiItemKind.MethodSignature,
-				ApiItemKind.Namespace,
-				ApiItemKind.Property,
-				ApiItemKind.PropertySignature,
-				ApiItemKind.TypeAlias,
-				ApiItemKind.Variable,
-			],
-			hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+			hierarchy: HierarchyConfigs.sparse,
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
 			skipPackage: (apiPackage) => apiPackage.name === "test-suite-b", // Skip test-suite-b package
+			startingHeadingLevel: 2,
 		},
+	},
+
+	/**
+	 * A sample "deep" configuration, which generates folder hierarchy for any "container" API items.
+	 */
+	{
+		testName: "sparse-config",
 		renderConfig: {
+			uriRoot: "docs",
+			includeBreadcrumb: false,
+			includeTopLevelDocumentHeading: true,
+			hierarchy: HierarchyConfigs.sparse,
+			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
+			skipPackage: (apiPackage) => apiPackage.name === "test-suite-b", // Skip test-suite-b package
 			startingHeadingLevel: 2,
 		},
 	},
@@ -118,19 +110,18 @@ const testConfigs: EndToEndTestConfig<RenderDocumentAsHtmlConfig>[] = [
 
 async function renderDocumentToFile(
 	document: DocumentNode,
-	renderConfig: RenderDocumentAsHtmlConfig,
-	outputDirectoryPath: string,
+	renderConfig: HtmlRenderer.RenderDocumentsOptions,
 ): Promise<void> {
-	const renderedDocument = renderDocumentAsHtml(document, renderConfig);
+	const renderedDocument = HtmlRenderer.renderDocument(document, renderConfig);
 
-	const filePath = Path.join(outputDirectoryPath, `${document.documentPath}.html`);
+	const filePath = Path.join(renderConfig.outputDirectoryPath, `${document.documentPath}.html`);
 	await FileSystem.writeFileAsync(filePath, renderedDocument, {
 		convertLineEndings: NewlineKind.Lf,
 		ensureFolderExists: true,
 	});
 }
 
-endToEndTests<RenderDocumentAsHtmlConfig>({
+endToEndTests<HtmlRenderer.RenderDocumentsOptions>({
 	suiteName: "Markdown End-to-End Tests",
 	temporaryOutputDirectoryPath: testTemporaryDirectoryPath,
 	snapshotsDirectoryPath,

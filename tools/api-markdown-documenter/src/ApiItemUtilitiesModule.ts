@@ -16,10 +16,12 @@ export {
 } from "./api-item-transforms/index.js";
 export {
 	ancestryHasModifierTag,
+	getApiItemKind,
 	getCustomBlockComments,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
+	getFileSafeNameForApiItem,
 	getModifiers,
 	getModifierTags,
 	getQualifiedApiItemName,

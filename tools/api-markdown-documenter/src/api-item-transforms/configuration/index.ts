@@ -8,13 +8,23 @@ export {
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./Configuration.js";
 export {
-	// Consumers should not use this, it exists externally for documentation purposes only.
 	type DefaultDocumentationSuiteOptions,
-	type DocumentBoundaries,
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteOptionsWithDefaults,
-	type HierarchyBoundaries,
 } from "./DocumentationSuiteOptions.js";
+export {
+	HierarchyKind,
+	type HierarchyConfigBase,
+	type SectionHierarchyOptions,
+	type SectionHierarchyConfig,
+	type DocumentHierarchyOptions,
+	type DocumentHierarchyConfig,
+	FolderDocumentPlacement,
+	type FolderHierarchyOptions,
+	type FolderHierarchyConfig,
+	type HierarchyConfig,
+	defaultHierarchyConfig,
+} from "./HierarchyOptions.js";
 export {
 	type ApiItemTransformationOptions,
 	getApiItemTransformationOptionsWithDefaults,
