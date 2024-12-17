@@ -122,7 +122,7 @@ export function create(
 	/**
 	 * Updates the keyless access setting for the given tenant
 	 */
-	router.put("/tenants/:id/keylessaccess", (request, response) => {
+	router.put("/tenants/:id/keylessAccess", (request, response) => {
 		const tenantId = request.params.id;
 		const enableKeylessAccess = request.body.enableKeylessAccess
 			? request.body.enableKeylessAccess

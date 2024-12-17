@@ -295,10 +295,10 @@ export class TenantManager {
 		}));
 	}
 
-	private createPrivateTenantKeys(
+	private async createPrivateTenantKeys(
 		tenantId: string,
 		latestKeyVersion: EncryptionKeyVersion,
-	): ITenantPrivateKeys {
+	): Promise<ITenantPrivateKeys> {
 		const privateTenantKey = this.tenantKeyGenerator.generateTenantKey();
 		const encryptedPrivateTenantKey = this.secretManager.encryptSecret(
 			privateTenantKey,
@@ -334,6 +334,8 @@ export class TenantManager {
 			secondaryKey: encryptedPrivateSecondaryTenantKey,
 			secondaryKeyNextRotationTime: now + 24 * 60 * 60, // 24 hours from now
 		};
+		// Set the key to use in the cache, this changes based on the rotation time
+		await this.cache?.set(`${this.getRedisKeyPrefix(tenantId, true)}:keyToUse`, "primary");
 
 		return privateKeys;
 	}
@@ -372,7 +374,7 @@ export class TenantManager {
 
 		let privateKeys: ITenantPrivateKeys | undefined;
 		if (isKeylessTenant) {
-			privateKeys = this.createPrivateTenantKeys(tenantId, latestKeyVersion);
+			privateKeys = await this.createPrivateTenantKeys(tenantId, latestKeyVersion);
 		}
 
 		// New tenant keys will be encrypted with incoming key version.
@@ -425,12 +427,13 @@ export class TenantManager {
 		let privateKeys: ITenantPrivateKeys | undefined;
 		// If the tenant is being converted to a keyless tenant, generate new private keys, otherwise update them to be undefined
 		if (enableKeylessAccess) {
-			privateKeys = this.createPrivateTenantKeys(tenantId, latestKeyVersion);
+			privateKeys = await this.createPrivateTenantKeys(tenantId, latestKeyVersion);
 		}
 
 		await this.runWithDatabaseRequestCounter(async () =>
 			this.tenantRepository.update({ _id: tenantId }, { privateKeys }, null),
 		);
+		await this.deleteKeyFromCache(tenantId, true /* deletePrivateKeys */);
 		const tenantDocument = await this.getTenantDocument(tenantId);
 		if (tenantDocument === undefined) {
 			Lumberjack.error("Could not find tenantId after updating keyless access policy.", {
@@ -487,6 +490,68 @@ export class TenantManager {
 		return tenantDocument.customData;
 	}
 
+	// This method returns the private keys in the order they should be used to validate/sign tokens
+	private async returnPrivateKeysInOrder(
+		tenantId: string,
+		privateKeys: ITenantPrivateKeys,
+		lumberProperties: any,
+	): Promise<ITenantKeys> {
+		const currKeyInUse = await this.cache?.get(
+			`${this.getRedisKeyPrefix(tenantId, true)}:keyToUse`,
+		);
+		// If the key to use is not found in the cache, return the keys in the order they are stored in the database
+		if (!currKeyInUse) {
+			Lumberjack.error("Could not find the current key to use in cache", lumberProperties);
+			await this.cache?.set(`${this.getRedisKeyPrefix(tenantId, true)}:keyToUse`, "primary");
+			return {
+				key1: privateKeys.key,
+				key2: privateKeys.secondaryKey,
+			};
+		}
+		const now = Math.round(new Date().getTime() / 1000);
+
+		// Determine which key to use as "key1" based on rotation time
+		if (
+			currKeyInUse === "primary" &&
+			Math.abs(now - privateKeys.keyNextRotationTime) <= 60 * 60
+		) {
+			Lumberjack.info(
+				`Primary private key is due to be rotated in the next hour for tenant id ${tenantId}, using the secondary key as key1`,
+				lumberProperties,
+			);
+			await this.cache?.set(
+				`${this.getRedisKeyPrefix(tenantId, true)}:keyToUse`,
+				"secondary",
+			);
+			return {
+				key1: privateKeys.secondaryKey,
+				key2: privateKeys.key,
+			};
+		}
+
+		if (
+			currKeyInUse === "secondary" &&
+			Math.abs(now - privateKeys.secondaryKeyNextRotationTime) <= 60 * 60
+		) {
+			Lumberjack.info(
+				`Secondary private key is due to be rotated in the next hour for tenant id ${tenantId}, using the primary key as key1`,
+				lumberProperties,
+			);
+			await this.cache?.set(`${this.getRedisKeyPrefix(tenantId, true)}:keyToUse`, "primary");
+			return {
+				key1: privateKeys.key,
+				key2: privateKeys.secondaryKey,
+			};
+		}
+
+		Lumberjack.info(`Using the ${currKeyInUse} key to use as key1`, lumberProperties);
+		const keys: ITenantKeys = {
+			key1: currKeyInUse === "primary" ? privateKeys.key : privateKeys.secondaryKey,
+			key2: currKeyInUse === "primary" ? privateKeys.secondaryKey : privateKeys.key,
+		};
+		return keys;
+	}
+
 	private async getPrivateTenantKeys(
 		tenantId: string,
 		includeDisabledTenant = false,
@@ -515,10 +580,12 @@ export class TenantManager {
 						// If both decrypted tenant keys are null, it means it hits this case,
 						// then we should read from database and set new values in cache.
 						if (tenantKeys.key || tenantKeys.secondaryKey) {
-							return {
-								key1: tenantKeys.key,
-								key2: tenantKeys.secondaryKey,
-							};
+							const privateKeysInOrder = await this.returnPrivateKeysInOrder(
+								tenantId,
+								tenantKeys,
+								lumberProperties,
+							);
+							return privateKeysInOrder;
 						}
 						Lumberjack.info(
 							"Retrieved from cache but both decrypted tenant keys are null.",
@@ -552,22 +619,7 @@ export class TenantManager {
 				throw new NetworkError(404, `Private keys are missing for tenant id ${tenantId}`);
 			}
 
-			let privateKeys = tenantDocument.privateKeys;
-
-			// TODO: Implement key selection based on rotation time
-			// const privateKeyNextRotationTime = tenantDocument.privateKey.keyNextRotationTime;
-			// const privateSecondaryKeyNextRotationTime = tenantDocument.privateSecondaryKey.keyNextRotationTime;
-			// const now = Math.round(new Date().getTime() / 1000);
-
-			// // Determine which key to use as "key1" based on rotation time
-			// if (Math.abs(now - privateKeyNextRotationTime) <= 60 * 60) {
-			// 	Lumberjack.info(`Primary private key is due to be rotated in the next hour for tenant id ${tenantId}, using the secondary key as key1`, lumberProperties);
-			// 	[privateKey1, privateKey2] = [privateKey2, privateKey1];
-			// } else if (Math.abs(now - privateSecondaryKeyNextRotationTime) <= 60 * 60) {
-			// 	Lumberjack.info(`Secondary private key is due to be rotated in the next hour for tenant id ${tenantId}, using the primary key as key1`, lumberProperties);
-			// } else {
-			// 	Lumberjack.info(`Neither private keys are due to be rotated in the next hour for tenant id ${tenantId}, using the primary key as key1`, lumberProperties);
-			// }
+			const privateKeys = tenantDocument.privateKeys;
 
 			const encryptedTenantKey1 = privateKeys.key;
 			const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
@@ -613,10 +665,12 @@ export class TenantManager {
 				await this.setKeyInCache(tenantId, cacheKeys, true /* setPrivateKeys */);
 			}
 
-			return {
-				key1: tenantKey1,
-				key2: tenantKey2,
-			};
+			const privateKeysInOrder = await this.returnPrivateKeysInOrder(
+				tenantId,
+				privateKeys,
+				lumberProperties,
+			);
+			return privateKeysInOrder;
 		} catch (error) {
 			Lumberjack.error(`Error getting tenant keys.`, lumberProperties, error);
 			throw error;
@@ -733,10 +787,10 @@ export class TenantManager {
 		bypassCache = false,
 		getPrivateKeys = false,
 	): Promise<ITenantKeys> {
-		if (getPrivateKeys) {
-			return await this.getPrivateTenantKeys(tenantId, includeDisabledTenant, bypassCache);
-		}
-		return await this.getPublicTenantKeys(tenantId, includeDisabledTenant, bypassCache);
+		const keys = getPrivateKeys
+			? await this.getPrivateTenantKeys(tenantId, includeDisabledTenant, bypassCache)
+			: await this.getPublicTenantKeys(tenantId, includeDisabledTenant, bypassCache);
+		return keys;
 	}
 
 	/**
