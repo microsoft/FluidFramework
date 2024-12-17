@@ -45,6 +45,7 @@
 		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/presence": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"@iconify/react": "^5.0.2",
 		"@microsoft/microsoft-graph-client": "^3.0.7",

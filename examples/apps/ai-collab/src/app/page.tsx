@@ -17,12 +17,11 @@ import {
 	Typography,
 } from "@mui/material";
 import type { IFluidContainer, TreeView } from "fluid-framework";
-import React, { useEffect, useState } from "react";
+import React, { createContext, useEffect, useState } from "react";
 
-import { buildUserPresence, type UserPresence } from "./presence";
+import { PresenceManager } from "./presence";
 
 import { TaskGroup } from "@/components/TaskGroup";
-import { UserPresenceGroup } from "@/components/UserPresenceGroup";
 import {
 	CONTAINER_SCHEMA,
 	INITIAL_APP_STATE,
@@ -36,6 +35,7 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 // Uncomment the import line that corresponds to the server you want to use
 // import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe"; // eslint-disable-line import/order
 import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious"; // eslint-disable-line import/order
+import { UserPresenceGroup } from "@/components/UserPresenceGroup";
 
 export async function createAndInitializeContainer(): Promise<
 	IFluidContainer<typeof CONTAINER_SCHEMA>
@@ -51,7 +51,7 @@ export async function createAndInitializeContainer(): Promise<
 export default function TasksListPage(): JSX.Element {
 	const [selectedTaskGroup, setSelectedTaskGroup] = useState<SharedTreeTaskGroup>();
 	const [treeView, setTreeView] = useState<TreeView<typeof SharedTreeAppState>>();
-	const [userPresenceGroup, setUserPresenceGroup] = useState<UserPresence>();
+	const [presenceManagerContext, setPresenceManagerContext] = useState<PresenceManager>();
 
 	const { container, isFluidInitialized, data } = useFluidContainerNextJs(
 		containerIdFromUrl(),
@@ -64,9 +64,8 @@ export default function TasksListPage(): JSX.Element {
 			setTreeView(_treeView);
 
 			const presence = acquirePresenceViaDataObject(fluidContainer.initialObjects.presence);
-			const _userPresenceGroup = buildUserPresence(presence);
-			setUserPresenceGroup(_userPresenceGroup);
-
+			const presenceManagerContext: PresenceManager = new PresenceManager(presence);
+			setPresenceManagerContext(presenceManagerContext);
 			return { sharedTree: _treeView };
 		},
 	);
@@ -89,7 +88,9 @@ export default function TasksListPage(): JSX.Element {
 			sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
 			maxWidth={false}
 		>
-			{userPresenceGroup && <UserPresenceGroup userPresenceGroup={userPresenceGroup} />}
+			{presenceManagerContext && (
+				<UserPresenceGroup presenceManager={presenceManagerContext} />
+			)}
 			<Typography variant="h2" sx={{ my: 3 }}>
 				My Work Items
 			</Typography>
