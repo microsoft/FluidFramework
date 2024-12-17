@@ -485,8 +485,12 @@ describe("Presence", () => {
 						});
 						it.skip("updates stale attendees status to 'Disconnected", () => {
 							// Setup
-							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
-							assert(knownAttendee.getConnectionStatus() === SessionClientStatus.Connected);
+							assert.ok(knownAttendee, "No attendee was set in beforeEach");
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Known attendee is not connected",
+							);
 
 							// Act - disconnect & reconnect local client
 							runtime.emit("disconnected"); // Simulate local client disconnect
@@ -495,9 +499,57 @@ describe("Presence", () => {
 
 							// Verify - stale attendee should still be connected after 15 seconds
 							clock.tick(15001);
-							assert(knownAttendee.getConnectionStatus() === SessionClientStatus.Connected);
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Stale attendee should still be connected",
+							);
 
 							// Verify - stale attendee should be disconnected after 30 seconds
+							clock.tick(15001);
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Disconnected,
+								"Stale attendee has wrong status",
+							);
+						});
+
+						it.skip("updates stale attendees status to 'Disconnected' afer multiple reconnects", () => {
+							// Setup
+							assert.ok(knownAttendee, "No attendee was set in beforeEach");
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Known attendee is not connected",
+							);
+
+							// Act - disconnect & reconnect local client
+							runtime.emit("disconnected"); // Simulate local client disconnect
+							clock.tick(1000);
+							runtime.emit("connected", rejoinAttendeeConnectionId); // Sinulate local client reconnect with new connection id
+
+							// Verify - stale attendee should still be connected after 15 seconds
+							clock.tick(15001);
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Stale attendee should still be connected",
+							);
+
+							// Act - disconnect & reconnect local client
+							runtime.emit("disconnected"); // Simulate local client disconnect
+							clock.tick(1000);
+							runtime.emit("connected", rejoinAttendeeConnectionId); // Sinulate local client reconnect with new connection id
+
+							// Verify - stale attendee should still be connected after 15 seconds
+							clock.tick(15001);
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Stale attendee should still be connected",
+							);
+
+							// Verify - stale attendee
 							clock.tick(15001);
 							assert.equal(
 								knownAttendee.getConnectionStatus(),
