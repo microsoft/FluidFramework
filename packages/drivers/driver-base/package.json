@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-base",
-	"version": "2.12.0",
+	"version": "2.13.0",
 	"description": "Shared driver code for Fluid driver implementations",
 	"homepage": "https://fluidframework.com",
 	"repository": {
