@@ -400,7 +400,7 @@ extends:
                 displayName: Copy nested_lib_dist to artifact staging directory
                 inputs:
                   sourceFolder: ${{ parameters.buildDirectory }}/nested_lib_dist
-                  targetFolder: $(Build.ArtifactStagingDirectory)
+                  targetFolder: $(Build.ArtifactStagingDirectory)/nested_lib_dist
 
               # Pack
               - ${{ if ne(parameters.taskPack, false) }}:
