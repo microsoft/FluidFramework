@@ -2,13 +2,7 @@
 
 ## 2.12.0
 
-### Minor Changes
-
--   IContainerRuntimeOptions.enableGroupedBatching is now deprecated ([#23260](https://github.com/microsoft/FluidFramework/pull/23260)) [49d8e75e5c](https://github.com/microsoft/FluidFramework/commit/49d8e75e5cad12205aed15850db72c1ad21513c3)
-
-    The `IContainerRuntimeOptions.enableGroupedBatching` property is deprecated and will be removed in version 2.20.0. This will mean that the grouped batching feature can no longer be disabled. In versions 2.20.0 and beyond, grouped batching is required for the proper functioning of the Fluid Framework.
-
-    The sole case where grouped batching will be disabled is for compatibility with older v1 clients, and this will be implemented without any need for the configurable `IContainerRuntimeOptions.enableGroupedBatching` option.
+Dependency updates only.
 
 ## 2.11.0
 
