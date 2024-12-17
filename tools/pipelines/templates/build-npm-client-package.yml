@@ -621,7 +621,7 @@ extends:
 
               - script: |
                   echo "Extracting nested lib/dist directories and their contents..."
-                  tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
+                  tar --extract --gzip --file $(Build.SourcesDirectory)/nested_lib_dist.tar.gz --directory $(Build.SourcesDirectory)
                 displayName: Extract Nested Lib/Dist Directories and Their Contents
 
               # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
@@ -778,6 +778,14 @@ extends:
                 - script: |
                     echo "##vso[task.setvariable variable=startTest]true"
                   displayName: Start Test
+
+                - ${{ if contains(test.name, 'jest') }}:
+                  - task: Npm@1
+                    displayName: 'Run build for jest tests'
+                    inputs:
+                      command: custom
+                      workingDir: '${{ parameters.buildDirectory }}'
+                      customCommand: 'run ci:build'
 
                 - template: /tools/pipelines/templates/include-test-task.yml@self
                   parameters:
