@@ -31,7 +31,7 @@
     ): Promise<IContainer> {}
     ```
 
-    `ILoadExistingContainerProps` are the properties that needs to be supplied to the above API which contains props like
+    `ILoadExistingContainerProps` are the properties that need to be supplied to the above API and include props like
     URL Resolver, IDocumentServiceFactory, etc., which were earlier used to create the `Loader` object.
 
     ##### Use `rehydrateDetachedContainer` to create a detached container from a serializedState of another container
