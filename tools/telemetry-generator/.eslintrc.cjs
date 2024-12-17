@@ -21,4 +21,16 @@ module.exports = {
 		// This package is exclusively used in a Node.js context
 		"import/no-nodejs-modules": "off",
 	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				// TODO: AB#26776 - See if we can use imports instead. Disabling for now.
+				"@typescript-eslint/no-require-imports": "off",
+				"@typescript-eslint/no-var-requires": "off",
+				"import/no-internal-modules": "off",
+			},
+		},
+	],
 };

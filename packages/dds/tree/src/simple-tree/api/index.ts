@@ -17,7 +17,11 @@ export {
 	type TreeBranchEvents,
 	asTreeViewAlpha,
 } from "./tree.js";
-export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
+export {
+	SchemaFactory,
+	type ScopedSchemaName,
+	type SchemaFactoryObjectOptions,
+} from "./schemaFactory.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
@@ -90,7 +94,13 @@ export {
 	verboseFromCursor,
 } from "./verboseTree.js";
 
-export type { EncodeOptions } from "./customTree.js";
+export {
+	type EncodeOptions,
+	customFromCursorStored,
+	type CustomTreeNode,
+	type CustomTreeValue,
+	tryStoredSchemaAsArray,
+} from "./customTree.js";
 
 export { type ConciseTree, conciseFromCursor } from "./conciseTree.js";
 

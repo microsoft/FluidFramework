@@ -22,14 +22,14 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./legacy": {
+		"./test-utils": {
 			"import": {
-				"types": "./lib/legacy.d.ts",
-				"default": "./lib/index.js"
+				"types": "./lib/testUtils.d.ts",
+				"default": "./lib/testUtils.js"
 			},
 			"require": {
-				"types": "./dist/legacy.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/testUtils.d.ts",
+				"default": "./dist/testUtils.js"
 			}
 		},
 		"./internal": {
@@ -50,9 +50,6 @@
 		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
-		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
-		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
-		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor.legacy.json",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
@@ -64,15 +61,12 @@
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
-		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
-		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
+		"check:exports:cjs:testUtils": "api-extractor run --config api-extractor/api-extractor-lint-testUtils.cjs.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
+		"check:exports:esm:testUtils": "api-extractor run --config api-extractor/api-extractor-lint-testUtils.esm.json",
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
-		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
-		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
@@ -100,7 +94,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.16.4",
+		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.51.0",

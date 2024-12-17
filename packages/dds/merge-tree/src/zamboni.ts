@@ -11,7 +11,7 @@ import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
 	IMergeNode,
-	ISegment,
+	ISegmentLeaf,
 	Marker,
 	MaxNodesInBlock,
 	seqLTE,
@@ -136,7 +136,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree): void {
 	// The previous segment is tracked while scouring for the purposes of merging adjacent segments
 	// when possible.
-	let prevSegment: ISegment | undefined;
+	let prevSegment: ISegmentLeaf | undefined;
 	for (let k = 0; k < node.childCount; k++) {
 		// TODO Non null asserting, why is this not null?
 		const childNode = node.children[k]!;
