@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+// NOTE: this file isn't recognized by eslint automatically in this location.
+// Packages that want to leverage it should extend from it in their local
+// `.eslintrc.cjs` and normally after other configurations; so that these
+// rules get priority.
+
 module.exports = {
 	rules: {
 		/**
