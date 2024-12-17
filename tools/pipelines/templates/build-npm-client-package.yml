@@ -377,29 +377,29 @@ extends:
                   echo "Preparing nested lib/dist directories for publishing..."
 
                   # Ensure the nested_lib_dist directory exists and navigate to it
-                  mkdir -p ${{ parameters.buildDirectory }}/nested_lib_dist
-                  cd ${{ parameters.buildDirectory }}/nested_lib_dist
+                  mkdir -p nested_lib_dist
 
                   # Find all lib/dist directories, excluding those in node_modules
-                  find ${{ parameters.buildDirectory }} -type d \( -name "lib" -o -name "dist" \) ! -path "*/node_modules/*" > directories_to_publish.txt
+                  find ${{ parameters.buildDirectory }} -type d \( -name "lib" -o -name "dist" \) ! -path "*/node_modules/*" > nested_lib_dist/directories_to_publish.txt
+                  find ${{ parameters.buildDirectory }} -type f \( -name "*.tsbuildinfo" -o -name "*.build.log" \) >> nested_lib_dist/directories_to_publish.txt
 
                   echo "Directories to publish:"
-                  cat directories_to_publish.txt
+                  cat nested_lib_dist/directories_to_publish.txt
 
                   # Calculate the size of the directories to be archived
                   echo "Calculating size of directories to be archived..."
-                  du -ch $(cat directories_to_publish.txt) | grep total
+                  du -ch $(cat nested_lib_dist/directories_to_publish.txt) | grep total
 
                   # Create the tarball in the nested_lib_dist folder
                   echo "Creating the tarball in the nested_lib_dist folder..."
-                  tar --create --gzip --file nested_lib_dist.tar.gz -T directories_to_publish.txt
+                  tar --create --gzip --file nested_lib_dist/nested_lib_dist.tar.gz -T directories_to_publish.txt
 
                   # Clean up temporary files
-                  rm -rf directories_to_publish.txt
+                  rm -rf nested_lib_dist/directories_to_publish.txt
 
                   # Verify tarball size
                   echo "Tarball created. Inspecting its size..."
-                  ls -lh nested_lib_dist.tar.gz
+                  ls -lh nested_lib_dist/nested_lib_dist.tar.gz
                 displayName: Archive Nested Lib/Dist Directories and Their Contents
                 workingDirectory: ${{ parameters.buildDirectory }}
 
