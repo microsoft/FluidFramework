@@ -100,6 +100,46 @@ describe("Presence", () => {
 				let initialAttendeeSignal: ReturnType<typeof generateBasicClientJoin>;
 				let rejoinAttendeeSignal: ReturnType<typeof generateBasicClientJoin>;
 
+				// Processes join signals and returns the attendees that were announced via `attendeeJoined`
+				function processJoinSignals(
+					signals: ReturnType<typeof generateBasicClientJoin>[],
+				): ISessionClient[] {
+					const joinedAttendees: ISessionClient[] = [];
+					const cleanUpListener = presence.events.on("attendeeJoined", (attendee) => {
+						joinedAttendees.push(attendee);
+					});
+
+					for (const signal of signals) {
+						presence.processSignal("", signal, false);
+					}
+
+					cleanUpListener();
+					return joinedAttendees;
+				}
+
+				function verifyAttendee(
+					actualAttendee: ISessionClient,
+					expectedConnectionId: ClientConnectionId,
+					expectedSessionId: string,
+					expectedConnectionStatus: SessionClientStatus = SessionClientStatus.Connected,
+				): void {
+					assert.equal(
+						actualAttendee.sessionId,
+						expectedSessionId,
+						"Attendee has wrong session id",
+					);
+					assert.equal(
+						actualAttendee.getConnectionId(),
+						expectedConnectionId,
+						"Attendee has wrong client connection id",
+					);
+					assert.equal(
+						actualAttendee.getConnectionStatus(),
+						expectedConnectionStatus,
+						`Attendee connection status is not ${expectedConnectionStatus}`,
+					);
+				}
+
 				beforeEach(() => {
 					// Ignore submitted signals
 					runtime.submitSignal = () => {};
@@ -135,43 +175,16 @@ describe("Presence", () => {
 				});
 
 				describe("that is joining", () => {
-					let newAttendee: ISessionClient | undefined;
-
-					beforeEach(() => {
-						newAttendee = undefined;
-						afterCleanUp.push(
-							presence.events.on("attendeeJoined", (attendee) => {
-								assert(newAttendee === undefined, "Only one attendee should be announced");
-								newAttendee = attendee;
-							}),
-						);
-					});
-
-					function verifyNewAttendee(expectedConnectionId: ClientConnectionId): void {
-						assert(newAttendee !== undefined, "No attendee was announced");
-						assert.equal(
-							newAttendee.sessionId,
-							attendeeSessionId,
-							"Attendee has wrong session id",
-						);
-						assert.equal(
-							newAttendee.getConnectionId(),
-							expectedConnectionId,
-							"Attendee has wrong client connection id",
-						);
-						assert.equal(
-							newAttendee.getConnectionStatus(),
-							SessionClientStatus.Connected,
-							"Attendee connection status is not Connected",
-						);
-					}
-
 					it('first time is announced via `attendeeJoined` with status "Connected"', () => {
 						// Act - simulate join message from client
-						presence.processSignal("", initialAttendeeSignal, false);
-
+						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
 						// Verify
-						verifyNewAttendee(initialAttendeeConnectionId);
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
+						verifyAttendee(joinedAttendees[0], initialAttendeeConnectionId, attendeeSessionId);
 					});
 
 					it('second time is announced once via `attendeeJoined` with status "Connected" when prior is unknown', () => {
@@ -179,18 +192,29 @@ describe("Presence", () => {
 						runtime.removeMember(initialAttendeeConnectionId);
 
 						// Act - simulate join message from client
-						presence.processSignal("", rejoinAttendeeSignal, false);
+						const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
 
 						// Verify
-						verifyNewAttendee(rejoinAttendeeConnectionId);
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
+						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
 
 					it('second time is announced once via `attendeeJoined` with status "Connected" when prior is still connected', () => {
 						// Act - simulate join message from client
-						presence.processSignal("", rejoinAttendeeSignal, false);
+						const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
 
 						// Verify
-						verifyNewAttendee(rejoinAttendeeConnectionId);
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
+
+						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
 
 					it('first time is announced via `attendeeJoined` with status "Connected" even if unknown to audience', () => {
@@ -198,10 +222,16 @@ describe("Presence", () => {
 						runtime.removeMember(initialAttendeeConnectionId);
 
 						// Act - simulate join message from client
-						presence.processSignal("", initialAttendeeSignal, false);
+						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
 
 						// Verify
-						verifyNewAttendee(initialAttendeeConnectionId);
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
+
+						verifyAttendee(joinedAttendees[0], initialAttendeeConnectionId, attendeeSessionId);
 					});
 
 					it('second time is announced once via `attendeeJoined` with status "Connected" even if most recent unknown to audience', () => {
@@ -209,10 +239,14 @@ describe("Presence", () => {
 						runtime.removeMember(rejoinAttendeeConnectionId);
 
 						// Act - simulate join message from client
-						presence.processSignal("", rejoinAttendeeSignal, false);
+						const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
 
-						// Verify
-						verifyNewAttendee(rejoinAttendeeConnectionId);
+						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
 
 					it("as collateral and disconnected is NOT announced via `attendeeJoined`", () => {
@@ -237,10 +271,16 @@ describe("Presence", () => {
 						runtime.removeMember(collateralAttendeeConnectionId);
 
 						// Act - simulate join message from client
-						presence.processSignal("", collateralAttendeeSignal, false);
+						const joinedAttendees = processJoinSignals([collateralAttendeeSignal]);
 
-						// Verify only the rejoining attendee is announced
-						verifyNewAttendee(rejoinAttendeeConnectionId);
+						// Verify - only the rejoining attendee is announced
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
+
+						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
 				});
 
@@ -248,14 +288,13 @@ describe("Presence", () => {
 					let knownAttendee: ISessionClient | undefined;
 
 					beforeEach(() => {
-						const removeListener = presence.events.on("attendeeJoined", (attendee) => {
-							knownAttendee = attendee;
-						});
-
-						// Setup - simulate join message from client
-						presence.processSignal("", initialAttendeeSignal, false);
-						assert(knownAttendee !== undefined, "No attendee was announced in setup");
-						removeListener();
+						// Setup known attendee
+						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
+						assert(
+							joinedAttendees.length === 1,
+							"Expected exactly one attendee to be announced",
+						);
+						knownAttendee = joinedAttendees[0];
 					});
 
 					it('is NOT announced when "rejoined" with same connection (duplicate signal)', () => {
@@ -268,9 +307,8 @@ describe("Presence", () => {
 						);
 
 						clock.tick(10);
-
 						// Act & Verify - simulate duplicate join message from client
-						presence.processSignal("", initialAttendeeSignal, false);
+						processJoinSignals([initialAttendeeSignal]);
 					});
 
 					// To retain symmetry across Joined and Disconnected events, do not announce
@@ -283,9 +321,8 @@ describe("Presence", () => {
 								assert.fail("No attendee should be announced in join processing");
 							}),
 						);
-
-						// Act - simulate join message from client
-						presence.processSignal("", rejoinAttendeeSignal, false);
+						// Act & Verify - simulate rejoin message from client
+						processJoinSignals([rejoinAttendeeSignal]);
 					});
 
 					for (const [status, setup] of [
@@ -358,20 +395,11 @@ describe("Presence", () => {
 								disconnectedAttendee !== undefined,
 								"No attendee was disconnected during `removeMember`",
 							);
-							assert.equal(
-								disconnectedAttendee.sessionId,
-								knownAttendee.sessionId,
-								"Disconnected attendee has wrong session id",
-							);
-							assert.equal(
-								disconnectedAttendee.getConnectionId(),
+							verifyAttendee(
+								disconnectedAttendee,
 								initialAttendeeConnectionId,
-								"Disconnected attendee has wrong client connection id",
-							);
-							assert.equal(
-								disconnectedAttendee.getConnectionStatus(),
+								attendeeSessionId,
 								SessionClientStatus.Disconnected,
-								"Disconnected attendee has wrong status",
 							);
 						});
 
@@ -407,20 +435,20 @@ describe("Presence", () => {
 				describe("that is rejoining", () => {
 					let priorAttendee: ISessionClient | undefined;
 					beforeEach(() => {
-						const removeListener = presence.events.on("attendeeJoined", (attendee) => {
-							priorAttendee = attendee;
-						});
-
-						// Setup - simulate join message from client
-						presence.processSignal("", initialAttendeeSignal, false);
-						assert(priorAttendee !== undefined, "No attendee was announced in setup");
-						removeListener();
+						// Setup prior attendee
+						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
+						assert(
+							joinedAttendees.length === 1 && joinedAttendees[0] !== undefined,
+							"Expected exactly one attendee to be announced",
+						);
+						priorAttendee = joinedAttendees[0];
 
 						// Disconnect the attendee
 						runtime.removeMember(initialAttendeeConnectionId);
 					});
 
 					it("is NOT announced when rejoined with same connection (duplicate signal)", () => {
+						// Setup
 						afterCleanUp.push(
 							presence.events.on("attendeeJoined", (attendee) => {
 								assert.fail(
@@ -430,9 +458,8 @@ describe("Presence", () => {
 						);
 
 						clock.tick(10);
-
 						// Act & Verify - simulate duplicate join message from client
-						presence.processSignal("", initialAttendeeSignal, false);
+						processJoinSignals([initialAttendeeSignal]);
 					});
 
 					it("is announced when rejoined with different connection and current information is updated", () => {
@@ -442,20 +469,10 @@ describe("Presence", () => {
 						clock.tick(20);
 
 						// Act - simulate new join message from same client (without disconnect)
-						presence.processSignal("", rejoinAttendeeSignal, false);
+						processJoinSignals([rejoinAttendeeSignal]);
 
-						// Verify
-						// Session id is unchanged
-						assert.equal(
-							priorAttendee.sessionId,
-							attendeeSessionId,
-							"Attendee has wrong session id",
-						);
-						// Current connection id is updated
-						assert(
-							priorAttendee.getConnectionId() === rejoinAttendeeConnectionId,
-							"Attendee does not have updated client connection id",
-						);
+						// Verify - session id is unchanged and connection id is updated
+						verifyAttendee(priorAttendee, rejoinAttendeeConnectionId, attendeeSessionId);
 						// Attendee is available via new connection id
 						const attendeeViaUpdatedId = presence.getAttendee(rejoinAttendeeConnectionId);
 						assert.equal(
