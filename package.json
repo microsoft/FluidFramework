@@ -28,7 +28,7 @@
 		"build:gendocs:server:routerlicious": "copyfiles \"server/routerlicious/**/*.api.json\" ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
 		"build:readme": "markdown-magic --files \"**/*.md\" !docs",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
-		"bundle-analysis:run": "flub publish:bundleStats --dangerfile build-tools/packages/build-cli/lib/library/dangerfile.cjs",
+		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/library/dangerfile.cjs",
 		"changeset": "flub changeset add --releaseGroup client",
 		"check:are-the-types-wrong": "fluid-build --task check:are-the-types-wrong",
 		"check:format:repo": "biome check .",
