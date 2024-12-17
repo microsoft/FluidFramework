@@ -5,7 +5,6 @@
 
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	ContainerRuntime,
 	FluidDataStoreRegistry,
 	type IContainerRuntimeOptions,
@@ -127,7 +126,6 @@ export class BaseContainerRuntimeFactory
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	): Promise<ContainerRuntime> {
 		const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
 		if (this.dependencyContainer) {
@@ -138,7 +136,6 @@ export class BaseContainerRuntimeFactory
 			scope.IFluidDependencySynthesizer = dc;
 		}
 
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 		return ContainerRuntime.loadRuntime({
 			context,
 			existing,
