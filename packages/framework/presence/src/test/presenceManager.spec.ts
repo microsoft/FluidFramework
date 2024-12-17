@@ -485,6 +485,28 @@ describe("Presence", () => {
 								clientToDisconnect,
 							);
 						});
+
+						it("updates stale attendees status to 'Disconnected", () => {
+							// Setup
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+							assert(knownAttendee.getConnectionStatus() === SessionClientStatus.Connected);
+
+							// Act - remove client connection id
+							runtime.emit("disconnected");
+							clock.tick(1000);
+							runtime.emit("connected", rejoinAttendeeConnectionId);
+							// Verify - stale attendee should still be connected after 15 seconds
+							clock.tick(15001);
+							assert(knownAttendee.getConnectionStatus() === SessionClientStatus.Connected);
+
+							// Verify - stale attendee should be disconnected after 30 seconds
+							clock.tick(15001);
+							assert.equal(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Disconnected,
+								"Stale attendee has wrong status",
+							);
+						});
 					});
 				});
 
