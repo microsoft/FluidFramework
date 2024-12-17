@@ -537,3 +537,29 @@ export function capitalize<S extends string>(s: S): Capitalize<S> {
 export function compareStrings<T extends string>(a: T, b: T): number {
 	return a > b ? 1 : a === b ? 0 : -1;
 }
+
+/**
+ * Defines a property on an object that is lazily initialized and cached.
+ * @remarks This is useful for properties that are expensive to compute and it is not guaranteed that they will be accessed.
+ * This function initially defines a getter on the object, but after first read it replaces the getter with a value property.
+ * @param obj - The object on which to define the property.
+ * @param key - The key of the property to define.
+ * @param get - The function (called either once or not at all) to compute the value of the property.
+ * @returns `obj`, typed such that it has the new property.
+ * This allows for the new property to be read off of `obj` in a type-safe manner after calling this function.
+ */
+export function defineLazyCachedProperty<
+	T extends object,
+	K extends string | number | symbol,
+	V,
+>(obj: T, key: K, get: () => V): typeof obj & { [P in K]: V } {
+	Reflect.defineProperty(obj, key, {
+		get() {
+			const value = get();
+			Reflect.defineProperty(obj, key, { value });
+			return value;
+		},
+		configurable: true,
+	});
+	return obj as typeof obj & { [P in K]: V };
+}

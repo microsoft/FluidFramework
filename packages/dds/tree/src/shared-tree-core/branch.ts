@@ -24,7 +24,7 @@ import {
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { createEmitter } from "@fluid-internal/client-utils";
 
-import { hasSome } from "../util/index.js";
+import { hasSome, defineLazyCachedProperty } from "../util/index.js";
 
 /**
  * Describes a change to a `SharedTreeBranch`. Each of the following event types provides a `change` which contains the net change to the branch (or is undefined if there was no net change):
@@ -303,14 +303,15 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		const sourceCommits = rebaseResult.commits.sourceCommits;
 		assert(hasSome(sourceCommits), 0xa86 /* Expected source commits in non no-op merge */);
 		const { rebaser } = this.changeFamily;
-		const changeEvent = {
-			type: "append",
-			kind: CommitKind.Default,
-			get change(): TaggedChange<TChange> {
-				return makeAnonChange(rebaser.compose(sourceCommits));
-			},
-			newCommits: sourceCommits,
-		} as const;
+		const changeEvent = defineLazyCachedProperty(
+			{
+				type: "append",
+				kind: CommitKind.Default,
+				newCommits: sourceCommits,
+			} as const,
+			"change",
+			() => makeAnonChange(rebaser.compose(sourceCommits)),
+		);
 
 		this.#events.emit("beforeChange", changeEvent);
 		this.head = rebaseResult.newSourceHead;
