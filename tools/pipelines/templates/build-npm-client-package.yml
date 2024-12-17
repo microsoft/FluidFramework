@@ -366,13 +366,6 @@ extends:
                     workingDir: '${{ parameters.buildDirectory }}'
                     customCommand: 'run webpack'
 
-              - task: Npm@1
-                displayName: npm run jest before lib/dist archiving
-                inputs:
-                  command: 'custom'
-                  workingDir: ${{ parameters.buildDirectory }}
-                  customCommand: 'run ci:test:jest'
-
               - script: |
                   echo "Preparing nested lib/dist directories for publishing..."
 
@@ -392,7 +385,7 @@ extends:
 
                   # Create the tarball in the nested_lib_dist folder
                   echo "Creating the tarball in the nested_lib_dist folder..."
-                  tar --create --gzip --file nested_lib_dist/nested_lib_dist.tar.gz -T directories_to_publish.txt
+                  tar --create --gzip --file nested_lib_dist/nested_lib_dist.tar.gz -T nested_lib_dist/directories_to_publish.txt
 
                   # Clean up temporary files
                   rm -rf nested_lib_dist/directories_to_publish.txt
@@ -409,12 +402,6 @@ extends:
                   sourceFolder: ${{ parameters.buildDirectory }}/nested_lib_dist
                   targetFolder: $(Build.ArtifactStagingDirectory)/nested_lib_dist
 
-              - task: Npm@1
-                displayName: npm run jest after lib/dist archiving
-                inputs:
-                  command: 'custom'
-                  workingDir: ${{ parameters.buildDirectory }}
-                  customCommand: 'run ci:test:jest'
               # Pack
               - ${{ if ne(parameters.taskPack, false) }}:
                   - task: Bash@3
