@@ -120,4 +120,5 @@ steps:
       set -eu -o pipefail
       # Install globally so we don't change any package.json or lockfiles, to avoid issues with the
       # extraneous modified files check.
+      pnpm setup; # Temporarily here for testing
       pnpm add -g @ff-internal/aria-logger;
