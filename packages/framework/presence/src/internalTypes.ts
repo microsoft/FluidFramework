@@ -4,6 +4,7 @@
  */
 
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
@@ -41,9 +42,19 @@ export const brandedObjectEntries = Object.entries as <K extends string, T>(
  */
 export type IEphemeralRuntime = Pick<
 	(IContainerRuntime & IRuntimeInternal) | IFluidDataStoreRuntime,
-	"clientId" | "connected" | "getAudience" | "getQuorum" | "off" | "on" | "submitSignal"
+	"clientId" | "connected" | "getAudience" | "getQuorum" | "submitSignal"
 > &
-	Partial<Pick<IFluidDataStoreRuntime, "logger">>;
+	Partial<Pick<IFluidDataStoreRuntime, "logger">> &
+	IEventProvider<EphemeralRuntimeEvents>;
+
+/**
+ * Events emitted by {@link IEphemeralRuntime}.
+ * @internal
+ */
+export interface EphemeralRuntimeEvents extends IEvent {
+	(event: "connected", listener: (clientId: string) => void): void;
+	(event: "disconnected", listener: () => void): void;
+}
 
 /**
  * @internal

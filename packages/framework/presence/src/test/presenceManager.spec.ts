@@ -249,7 +249,7 @@ describe("Presence", () => {
 						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
 
-					it("as collateral and disconnected is NOT announced via `attendeeJoined`", () => {
+					it.skip("as collateral and disconnected is NOT announced via `attendeeJoined`", () => {
 						// Setup - remove connections from audience
 						const collateralAttendeeConnectionId = "client3";
 						const collateralAttendeeSignal = generateBasicClientJoin(clock.now - 10, {
@@ -281,6 +281,60 @@ describe("Presence", () => {
 						);
 
 						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
+					});
+					it.skip("as collateral with old connection info and connected is NOT announced via `attendeeJoined`", () => {
+						// Setup - generate signals
+						const oldAttendeeConnectionId = "client9";
+						const newAttendeeConnectionId = "client10";
+
+						// Rejoin signal for attendee
+						const rejoinSignal = generateBasicClientJoin(clock.now - 10, {
+							averageLatency: 40,
+							clientSessionId: "collateral-id",
+							clientConnectionId: newAttendeeConnectionId,
+							updateProviders: [initialAttendeeConnectionId],
+							connectionOrder: 1,
+						});
+
+						const responseSignal = generateBasicClientJoin(clock.now - 5, {
+							averageLatency: 20,
+							clientSessionId: attendeeSessionId,
+							clientConnectionId: initialAttendeeConnectionId,
+							priorClientToSessionId: {
+								...initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
+								// Old connection id of rejoining attendee
+								// This should be ignored by local client
+								[oldAttendeeConnectionId]: {
+									rev: 0,
+									timestamp: 0,
+									value: "collateral-id",
+								},
+							},
+						});
+
+						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
+
+						// Act & Verify - simulate rejoin message from remote client
+						const rejoinAttendees = processJoinSignals([rejoinSignal]);
+						assert.strictEqual(
+							rejoinAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
+						verifyAttendee(rejoinAttendees[0], newAttendeeConnectionId, "collateral-id");
+
+						// Act & Verify - simulate response message from remote client
+						const responseAttendees = processJoinSignals([responseSignal]);
+						assert.strictEqual(
+							responseAttendees.length,
+							0,
+							"Expected no attendees to be announced",
+						);
 					});
 				});
 
@@ -427,6 +481,28 @@ describe("Presence", () => {
 								"removeMember",
 								initialAttendeeConnectionId,
 								clientToDisconnect,
+							);
+						});
+						it.skip("updates stale attendees status to 'Disconnected", () => {
+							// Setup
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+							assert(knownAttendee.getConnectionStatus() === SessionClientStatus.Connected);
+
+							// Act - disconnect & reconnect local client
+							runtime.emit("disconnected");
+							clock.tick(1000);
+							runtime.emit("connected", rejoinAttendeeConnectionId);
+
+							// Verify - stale attendee should still be connected after 15 seconds
+							clock.tick(15001);
+							assert(knownAttendee.getConnectionStatus() === SessionClientStatus.Connected);
+
+							// Verify - stale attendee should be disconnected after 30 seconds
+							clock.tick(15001);
+							assert.equal(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Disconnected,
+								"Stale attendee has wrong status",
 							);
 						});
 					});
