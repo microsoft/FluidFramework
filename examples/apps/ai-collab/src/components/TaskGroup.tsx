@@ -11,7 +11,6 @@ import {
 	type Revertible,
 	type RevertibleFactory,
 	type TreeBranchFork,
-	type TreeView,
 	type TreeViewAlpha,
 } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
@@ -27,6 +26,7 @@ import {
 	TextField,
 	Typography,
 } from "@mui/material";
+import { type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
 
@@ -52,63 +52,6 @@ export function TaskGroup(props: {
 	const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
 	const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
 
-	/**
-	 * Undo / Redo stacks of {@link Revertible} objects maintained for local branches.
-	 */
-	const [undoStack, setUndoStack] = useState<Revertible[]>([]);
-	const [redoStack, setRedoStack] = useState<Revertible[]>([]);
-
-	useEffect(() => {
-		function onDispose(disposed: Revertible): void {
-			setRedoStack((currentRedoStack) => {
-				const redoIndex = currentRedoStack.indexOf(disposed);
-				if (redoIndex === -1) {
-					setUndoStack((currentUndoStack) => {
-						const undoIndex = currentUndoStack.indexOf(disposed);
-						if (undoIndex !== -1) {
-							const newUndoStack = [...currentUndoStack];
-							newUndoStack.splice(undoIndex, 1);
-							return newUndoStack;
-						}
-						return currentUndoStack;
-					});
-					return currentRedoStack;
-				}
-				const newRedoStack = [...currentRedoStack];
-				newRedoStack.splice(redoIndex, 1);
-				return newRedoStack;
-			});
-		}
-
-		function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactory): void {
-			if (getRevertible !== undefined) {
-				const revertible = getRevertible(onDispose);
-				if (commit.kind === CommitKind.Undo) {
-					setRedoStack((current) => [...current, revertible]);
-				} else {
-					setUndoStack((current) => [...current, revertible]);
-				}
-			}
-		}
-
-		const unsubscribeFromChangedEvent = props.treeView.events.on("commitApplied", onNewCommit);
-
-		return () => {
-			unsubscribeFromChangedEvent();
-			const disposeStack = (stack: Revertible[]): void => {
-				for (const revertible of stack) {
-					try {
-						revertible.dispose();
-					} catch (error) {
-						console.error("Failed to dispose Revertible", error);
-					}
-				}
-			};
-			disposeStack(undoStack);
-			disposeStack(redoStack);
-		};
-	}, [props.treeView.events, undoStack, redoStack]);
-
 	const [popoverAnchor, setPopoverAnchor] = useState<HTMLButtonElement | undefined>(undefined);
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 	const [llmBranchData, setLlmBranchData] = useState<{
@@ -119,7 +62,52 @@ export function TaskGroup(props: {
 		newBranchTargetNode: SharedTreeTaskGroup;
 	}>();
 
+	/**
+	 * Stores {@link Revertible} objects that can be used to revert changes to the shared tree.
+	 */
+	const [undoStack, setUndoStack] = useState<Revertible[]>([]);
+	const [redoStack, setRedoStack] = useState<Revertible[]>([]);
+
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTaskGroup, logId: "TaskGroup" });
+
+	// TODO: Remove this.
+	console.log("undoStack:", undoStack);
+	console.log("redoStack:", redoStack);
+
+	useEffect(() => {
+		function onRevertibleDispose(disposed: Revertible): void {
+			const redoIndex = redoStack.indexOf(disposed);
+			if (redoIndex === -1) {
+				const undoIndex = undoStack.indexOf(disposed);
+				if (undoIndex !== -1) {
+					setUndoStack((currUndoStack) => {
+						const newUndoStack = [...currUndoStack];
+						newUndoStack.splice(undoIndex, 1);
+						return newUndoStack;
+					});
+				}
+			} else {
+				setRedoStack((currRedostack) => {
+					const newRedoStack = [...currRedostack];
+					newRedoStack.splice(redoIndex, 1);
+					return newRedoStack;
+				});
+			}
+		}
+
+		function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactory): void {
+			if (getRevertible !== undefined) {
+				const revertible = getRevertible(onRevertibleDispose);
+				if (commit.kind === CommitKind.Undo) {
+					setRedoStack((current) => [...current, revertible]);
+				} else {
+					setUndoStack((current) => [...current, revertible]);
+				}
+			}
+		}
+
+		props.treeView.events.on("commitApplied", onNewCommit);
+	}, [props.treeView.events, undoStack, redoStack]);
 
 	return (
 		<Card
