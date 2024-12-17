@@ -91,7 +91,13 @@ export function create(
 	router.get("/tenants/:id/keys", (request, response) => {
 		const tenantId = request.params.id;
 		const includeDisabledTenant = getIncludeDisabledFlag(request);
-		const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant);
+		const getPrivateKeys = getPrivateKeysFlag(request);
+		const tenantP = manager.getTenantKeys(
+			tenantId,
+			includeDisabledTenant,
+			false,
+			getPrivateKeys,
+		);
 		handleResponse(tenantP, response);
 	});
 
@@ -114,6 +120,18 @@ export function create(
 	});
 
 	/**
+	 * Updates the keyless access setting for the given tenant
+	 */
+	router.put("/tenants/:id/keylessaccess", (request, response) => {
+		const tenantId = request.params.id;
+		const enableKeylessAccess = request.body.enableKeylessAccess
+			? request.body.enableKeylessAccess
+			: null;
+		const storageP = manager.updateKeylessAccessPolicy(tenantId, enableKeylessAccess);
+		handleResponse(storageP, response);
+	});
+
+	/**
 	 * Updates the customData for the given tenant
 	 */
 	router.put("/tenants/:id/customData", (request, response) => {
@@ -128,7 +146,8 @@ export function create(
 	router.put("/tenants/:id/key", (request, response) => {
 		const tenantId = request.params.id;
 		const keyName = request.body.keyName as string;
-		const refreshKeyP = manager.refreshTenantKey(tenantId, keyName);
+		const refreshPrivateKey = request.body.refreshPrivateKey as boolean;
+		const refreshKeyP = manager.refreshTenantKey(tenantId, keyName, refreshPrivateKey);
 		handleResponse(refreshKeyP, response);
 	});
 
@@ -142,11 +161,15 @@ export function create(
 		const tenantCustomData: ITenantCustomData = request.body.customData
 			? request.body.customData
 			: {};
+		const tenantKeylessAccessPolicy = request.body.keylessAccessPolicy
+			? request.body.keylessAccessPolicy
+			: null;
 		const tenantP = manager.createTenant(
 			tenantId,
 			tenantStorage,
 			tenantOrderer,
 			tenantCustomData,
+			tenantKeylessAccessPolicy,
 		);
 		handleResponse(tenantP, response);
 	});
@@ -167,6 +190,11 @@ export function create(
 	function getIncludeDisabledFlag(request): boolean {
 		const includeDisabledRaw = request.query.includeDisabledTenant as string;
 		return includeDisabledRaw?.toLowerCase() === "true";
+	}
+
+	function getPrivateKeysFlag(request): boolean {
+		const getPrivateKeys = request.query.getPrivateKeys as string;
+		return getPrivateKeys?.toLowerCase() === "true";
 	}
 
 	return router;

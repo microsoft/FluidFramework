@@ -115,6 +115,20 @@ export interface ITenant {
 	orderer: ITenantOrderer;
 }
 
+// Key maps to the Enum Key1 and secondaryKey maps to the Enum Key2
+export interface ITenantPrivateKeys {
+	key: string;
+	secondaryKey: string;
+	// Time in seconds when the key will be rotated
+	keyNextRotationTime: number;
+	// Time in seconds when the secondary key will be rotated
+	secondaryKeyNextRotationTime: number;
+}
+
+export interface IEncryptedPrivateTenantKeys extends ITenantPrivateKeys {
+	encryptionKeyVersion?: EncryptionKeyVersion;
+}
+
 /**
  * @internal
  */
@@ -148,7 +162,11 @@ export interface ITenantManager {
 	/**
 	 * Retrieves the key for the given tenant. This is a privileged op and should be used with care.
 	 */
-	getKey(tenantId: string): Promise<string>;
+	getKey(
+		tenantId: string,
+		includeDisabledTenant?: boolean,
+		getPrivateKeys?: boolean,
+	): Promise<string>;
 }
 
 /**

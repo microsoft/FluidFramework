@@ -33,6 +33,18 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 
+interface IKeylessTokenClaims extends ITokenClaims {
+	/**
+	 * Identifies if the token is for Keyless Access or not.
+	 */
+	fluidRelayKeylessAccess?: boolean;
+}
+
+export function isKeylessFluidAccessClaimEnabled(token: string): boolean {
+	const claims = decode(token) as IKeylessTokenClaims;
+	return claims?.fluidRelayKeylessAccess === true;
+}
+
 /**
  * Validates a JWT token to authorize routerlicious.
  * @returns decoded claims.
@@ -44,8 +56,8 @@ export function validateTokenClaims(
 	documentId: string,
 	tenantId: string,
 	requireDocumentId = true,
-): ITokenClaims {
-	const claims = decode(token) as ITokenClaims;
+): IKeylessTokenClaims {
+	const claims = decode(token) as IKeylessTokenClaims;
 	if (!claims) {
 		throw new NetworkError(403, "Missing token claims.");
 	}
@@ -70,18 +82,29 @@ export function validateTokenClaims(
  * But it can be used by other services to validate the document creator identity upon creating a document.
  * @internal
  */
-export function getCreationToken(
+export async function getCreationToken(
+	tenantManager: ITenantManager,
 	token: string,
-	key: string,
+	requestTenantId: string,
 	documentId: string,
 	lifetime = 5 * 60,
 ) {
+	const tokenClaims = decode(token) as IKeylessTokenClaims;
+	const { tenantId, user, jti, ver, fluidRelayKeylessAccess } = tokenClaims;
+	const key = await tenantManager.getKey(requestTenantId, false, fluidRelayKeylessAccess);
 	// Current time in seconds
-	const tokenClaims = decode(token) as ITokenClaims;
 
-	const { tenantId, user, jti, ver } = tokenClaims;
-
-	return generateToken(tenantId, documentId, key, [], user, lifetime, ver, jti);
+	return generateToken(
+		tenantId,
+		documentId,
+		key,
+		[],
+		user,
+		lifetime,
+		ver,
+		jti,
+		fluidRelayKeylessAccess,
+	);
 }
 
 /**
@@ -99,6 +122,7 @@ export function generateToken(
 	lifetime: number = 60 * 60,
 	ver: string = "1.0",
 	jti: string = uuid(),
+	fluidRelayKeylessAccess = false,
 ): string {
 	let userClaim = user ? user : generateUser();
 	if (userClaim.id === "" || userClaim.id === undefined) {
@@ -108,7 +132,7 @@ export function generateToken(
 	// Current time in seconds
 	const now = Math.round(new Date().getTime() / 1000);
 
-	const claims: ITokenClaims = {
+	const claims: IKeylessTokenClaims = {
 		documentId,
 		scopes,
 		tenantId,
@@ -116,6 +140,7 @@ export function generateToken(
 		iat: now,
 		exp: now + lifetime,
 		ver,
+		fluidRelayKeylessAccess,
 	};
 
 	return sign(claims, key, { jwtid: jti });
@@ -365,9 +390,9 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 			);
 		}
 
-		let claims: ITokenClaims;
+		let claims: IKeylessTokenClaims;
 		try {
-			claims = decode(token) as ITokenClaims;
+			claims = decode(token) as IKeylessTokenClaims;
 		} catch {
 			return respondWithNetworkError(response, new NetworkError(401, "Invalid token."));
 		}
