@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-require('dotenv').config();
+import dotenv from 'dotenv';
 import type { VersionOptions } from "@docusaurus/plugin-content-docs";
 import * as Preset from "@docusaurus/preset-classic";
 import type { Config } from "@docusaurus/types";
@@ -10,6 +10,7 @@ import { themes as prismThemes } from "prism-react-renderer";
 
 import DocsVersions from "./config/docs-versions.mjs";
 
+dotenv.config();
 const includeLocalApiDocs = process.env.LOCAL_API_DOCS === "true";
 
 const githubUrl = "https://github.com/microsoft/FluidFramework";

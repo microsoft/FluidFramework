@@ -15,17 +15,18 @@ pnpm i
 
 ## Optional Packages
 
+### @wcp/wcp-consent
 If you would like to include consent management functionality in your local development environment,
-you can install the `@wcp/wcp-consent` package. This package is used for handling user consent
+you can install the MS-internal `@wcp/wcp-consent` package, refer [here](https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/wcp/privacy/wcp-cookie-consent-api) for documentation. This package is used for handling user consent
 in certain scenarios. To install it, run:
 
 ```shell
 pnpm i -w @wcp/wcp-consent
 ```
 
-For details on how to authenticate and procure a PAT to use this package, please refer to the internal documentation.
+For details on how to authenticate and procure a PAT to use this package, please refer to the [MS-internal documentation](https://1essharedassets.visualstudio.com/1esPkgs/_artifacts/feed/WebCompliance@Release/Npm/@wcp%2Fwcp-consent/overview/1.1.0).
 
-````
+```
 
 ## Local Development
 

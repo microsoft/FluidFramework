@@ -6,12 +6,10 @@
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import React, { useEffect, useState } from "react";
 
-declare global {
-  interface Window {
-    WcpConsent?: typeof WcpConsent;
-  }
-}
-
+/**
+ * Renders the cookie banner using the WcpConsent package if available, otherwise a mock cookie banner.
+ * @returns A React element representing the cookie banner.
+ */
 const CookieBanner = (): React.ReactElement => {
   const { siteConfig } = useDocusaurusContext();
   const [wcpPackageAvailable, setWcpPackageAvailable] = useState<boolean>(false);

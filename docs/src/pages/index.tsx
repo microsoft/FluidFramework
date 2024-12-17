@@ -7,8 +7,8 @@ import Layout from "@theme/Layout";
 import React, { Suspense } from "react";
 import { v4 as uuidv4 } from "uuid";
 
-import appInsights from "../appInsights";
-import CookieBanner from "../components/cookieBanner";
+import appInsights from "@site/src/appInsights";
+import CookieBanner from "@site/src/components/cookieBanner";
 
 if (typeof window !== "undefined") {
 	const userId = localStorage.getItem("userId") ?? uuidv4();
