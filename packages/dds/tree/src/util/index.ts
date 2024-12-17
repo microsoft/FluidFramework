@@ -93,6 +93,7 @@ export {
 	getLast,
 	hasSome,
 	hasSingle,
+	defineLazyCachedProperty,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
