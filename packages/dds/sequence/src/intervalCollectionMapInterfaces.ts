@@ -4,6 +4,11 @@
  */
 
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
+import type {
+	Listenable,
+	IEmitter,
+	HasListeners,
+} from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
@@ -179,9 +184,21 @@ export interface IIntervalCollectionType<T extends ISerializableInterval> {
 }
 
 export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
-	(
-		event: "valueChanged" | "create",
-		listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void,
+	valueChanged(
+		changed: IValueChanged,
+		local: boolean,
+		target: IEventThisPlaceHolder | ISequencedDocumentMessage | undefined,
+		emitter: Listenable<ISharedDefaultMapEvents> &
+			IEmitter<ISharedDefaultMapEvents> &
+			HasListeners<ISharedDefaultMapEvents>,
+	): void;
+	create(
+		changed: IValueChanged,
+		local: boolean,
+		target: IEventThisPlaceHolder | undefined,
+		emitter: Listenable<ISharedDefaultMapEvents> &
+			IEmitter<ISharedDefaultMapEvents> &
+			HasListeners<ISharedDefaultMapEvents>,
 	): void;
 }
 
