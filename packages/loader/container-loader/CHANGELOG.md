@@ -42,7 +42,7 @@
     ): Promise<IContainer> {}
     ```
 
-    `IRehydrateDetachedContainerProps` are the properties that needs to be supplied to the above API which contains props like
+    `IRehydrateDetachedContainerProps` are the properties that need to be supplied to the above API and include props like
     URL Resolver, IDocumentServiceFactory, etc., which were earlier used to create the `Loader` object.
 
     ##### Note on `ICreateAndLoadContainerProps`.
