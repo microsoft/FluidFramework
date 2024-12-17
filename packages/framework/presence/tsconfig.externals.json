@@ -1,0 +1,8 @@
+{
+	"extends": "./tsconfig.base.json",
+	"include": ["src/container-definitions/**/*", "src/core-interfaces/**/*"],
+	"exclude": ["src/test/**/*"],
+	"compilerOptions": {
+		"emitDeclarationOnly": true,
+	},
+}

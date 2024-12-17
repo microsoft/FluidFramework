@@ -4,14 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { BroadcastControlSettings } from "./broadcastControls.js";
-import { brandedObjectEntries } from "./internalTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
-import type { ClientSessionId, ISessionClient } from "./presence.js";
+import { brandedObjectEntries } from "./internalUtils.js";
 import type {
 	ClientUpdateEntry,
 	RuntimeLocalUpdateOptions,
@@ -23,6 +23,7 @@ import {
 	mergeUntrackedDatastore,
 	mergeValueDirectory,
 } from "./presenceStates.js";
+import type { ClientSessionId, ISessionClient } from "./sessionClientTypes.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
@@ -30,8 +31,6 @@ import type {
 	PresenceStatesSchema,
 	PresenceWorkspaceAddress,
 } from "./types.js";
-
-import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 interface PresenceWorkspaceEntry<TSchema extends PresenceStatesSchema> {
 	public: PresenceStates<TSchema>;

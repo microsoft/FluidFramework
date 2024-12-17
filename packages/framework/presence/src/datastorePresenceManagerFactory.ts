@@ -9,14 +9,13 @@
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { BasicDataStoreFactory, LoadableFluidObject } from "./datastoreSupport.js";
 import type { IPresence } from "./presence.js";
 import { createPresenceManager } from "./presenceManager.js";
-
-import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 
 function assertSignalMessageIsValid(
 	message: IInboundSignalMessage | IExtensionMessage,

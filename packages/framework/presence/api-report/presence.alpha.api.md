@@ -222,13 +222,13 @@ export type PresenceWorkspaceAddress = `${string}:${string}`;
 export type PresenceWorkspaceEntry<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
 
 // @alpha
-export const SessionClientStatus: {
+export type SessionClientStatus = "Connected" | "Disconnected";
+
+// @alpha
+export const SessionClientStatusEnum: {
     readonly Connected: "Connected";
     readonly Disconnected: "Disconnected";
 };
-
-// @alpha
-export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof SessionClientStatus];
 
 // @alpha @sealed
 export interface ValueMap<K extends string | number, V> {

@@ -9,14 +9,14 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { IPresence, PresenceEvents } from "./presence.js";
+import type { PresenceStatesInternal } from "./presenceStates.js";
+import { SessionClientStatusEnum } from "./sessionClient.js";
 import type {
 	ClientSessionId,
-	IPresence,
 	ISessionClient,
-	PresenceEvents,
-} from "./presence.js";
-import { SessionClientStatus } from "./presence.js";
-import type { PresenceStatesInternal } from "./presenceStates.js";
+	SessionClientStatus,
+} from "./sessionClientTypes.js";
 import type { PresenceStates, PresenceStatesSchema } from "./types.js";
 
 /**
@@ -45,8 +45,8 @@ class SessionClient implements ISessionClient {
 	) {
 		this.connectionStatus =
 			connectionId === undefined
-				? SessionClientStatus.Disconnected
-				: SessionClientStatus.Connected;
+				? SessionClientStatusEnum.Disconnected
+				: SessionClientStatusEnum.Connected;
 	}
 
 	public getConnectionId(): ClientConnectionId {
@@ -62,11 +62,11 @@ class SessionClient implements ISessionClient {
 
 	public setConnectionId(connectionId: ClientConnectionId): void {
 		this.connectionId = connectionId;
-		this.connectionStatus = SessionClientStatus.Connected;
+		this.connectionStatus = SessionClientStatusEnum.Connected;
 	}
 
 	public setDisconnected(): void {
-		this.connectionStatus = SessionClientStatus.Disconnected;
+		this.connectionStatus = SessionClientStatusEnum.Disconnected;
 	}
 }
 
@@ -153,7 +153,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 
 			if (isAttendeeConnected) {
 				connectedAttendees.add(attendee);
-				if (attendee.getConnectionStatus() === SessionClientStatus.Disconnected) {
+				if (attendee.getConnectionStatus() === SessionClientStatusEnum.Disconnected) {
 					attendee.setConnectionId(clientConnectionId);
 				}
 				if (isNew) {
@@ -202,7 +202,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		// If the last known connectionID is different from the connection ID being removed, the attendee has reconnected,
 		// therefore we should not change the attendee connection status or emit a disconnect event.
 		const attendeeReconnected = attendee.getConnectionId() !== clientConnectionId;
-		const connected = attendee.getConnectionStatus() === SessionClientStatus.Connected;
+		const connected = attendee.getConnectionStatus() === SessionClientStatusEnum.Connected;
 		if (!attendeeReconnected && connected) {
 			attendee.setDisconnected();
 			this.events.emit("attendeeDisconnected", attendee);
