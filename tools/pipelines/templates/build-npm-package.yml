@@ -373,7 +373,7 @@ extends:
                       command: custom
                       workingDir: '${{ parameters.buildDirectory }}'
                       customCommand: 'run bundle-analysis:collect'
-a
+
                   # At this point we want to publish the artifact with the bundle size analysis,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
