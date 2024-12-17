@@ -7,6 +7,7 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
+import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 
@@ -52,7 +53,7 @@ export type IEphemeralRuntime = Pick<
  * @internal
  */
 export interface EphemeralRuntimeEvents extends IEvent {
-	(event: "connected", listener: (clientId: string) => void): void;
+	(event: "connected", listener: (clientId: ClientConnectionId) => void): void;
 	(event: "disconnected", listener: () => void): void;
 }
 

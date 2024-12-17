@@ -489,9 +489,9 @@ describe("Presence", () => {
 							assert(knownAttendee.getConnectionStatus() === SessionClientStatus.Connected);
 
 							// Act - disconnect & reconnect local client
-							runtime.emit("disconnected");
+							runtime.emit("disconnected"); // Simulate local client disconnect
 							clock.tick(1000);
-							runtime.emit("connected", rejoinAttendeeConnectionId);
+							runtime.emit("connected", rejoinAttendeeConnectionId); // Sinulate local client reconnect with new connection id
 
 							// Verify - stale attendee should still be connected after 15 seconds
 							clock.tick(15001);
