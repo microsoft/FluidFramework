@@ -2504,20 +2504,6 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		};
 	}
 
-	// XXX: Document
-	public linkAttach(
-		firstId: ChangesetLocalId,
-		count: number,
-		revision: RevisionTag,
-		nodeId: NodeId,
-	): GlobalEditDescription {
-		return {
-			type: "global",
-			renames: [{ count, oldId: { revision, localId: firstId }, newId: nodeId }],
-			revision,
-		};
-	}
-
 	/**
 	 * Adds a change to the edit builder
 	 * @param field - the field which is being edited
