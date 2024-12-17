@@ -24,7 +24,7 @@ in certain scenarios. To install it, run:
 pnpm i -w @wcp/wcp-consent
 ```
 
-For details on how to authenticate and procure a PAT to use this package, please refer to the [MS-internal documentation](https://1essharedassets.visualstudio.com/1esPkgs/_artifacts/feed/WebCompliance@Release/Npm/@wcp%2Fwcp-consent/overview/1.1.0).
+For details on how to authenticate and procure a PAT to use this package, please refer to the [MS-internal documentation](https://1essharedassets.visualstudio.com/1esPkgs/_artifacts/feed/WebCompliance@Release/Npm/@wcp%2Fwcp-consent/overview/1.1.0). Set `NPM_PAT` and `NPM_EMAIL` to the appropriate values in the .env in this folder.
 
 ```
 
