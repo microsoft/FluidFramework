@@ -33,9 +33,10 @@ WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY package*.json ./
-COPY pnpm*.yaml ./
+COPY pnpm*.yaml ./s
 COPY scripts/*.* ./scripts/
 COPY patches/*.* ./patches/
+COPY .npmrc ./
 
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
@@ -63,7 +64,8 @@ RUN corepack enable
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
-RUN pnpm install --unsafe-perm
+# Needs to set --no-frozen-lockfile since npmrc requires it if there are resolution changes, and the package dependencies don't exactly match
+RUN pnpm install --unsafe-perm --no-frozen-lockfile
 
 # And now copy over our actual code and build
 COPY . .
