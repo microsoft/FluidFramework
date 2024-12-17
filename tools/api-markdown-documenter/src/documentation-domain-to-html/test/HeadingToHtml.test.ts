@@ -10,6 +10,7 @@
 import { h } from "hastscript";
 
 import { HeadingNode } from "../../documentation-domain/index.js";
+
 import { assertTransformation } from "./Utilities.js";
 
 describe("HeadingNode -> Html", () => {

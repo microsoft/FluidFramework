@@ -92,7 +92,14 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 }
 
 /**
- * Creates a Routerlicious {@link @fluidframework/core-interfaces#IRequest}.
+ * Creates an insecure Tinylicious URL resolver for testing purposes with localhost port 7070.
+ */
+export function createInsecureTinyliciousTestUrlResolver(): IUrlResolver {
+	return new InsecureTinyliciousUrlResolver();
+}
+
+/**
+ * Creates a Tinylicious {@link @fluidframework/core-interfaces#IRequest}.
  * @internal
  */
 export const createTinyliciousCreateNewRequest = (documentId?: string): IRequest => ({
@@ -101,3 +108,8 @@ export const createTinyliciousCreateNewRequest = (documentId?: string): IRequest
 		[DriverHeader.createNew]: true,
 	},
 });
+
+/**
+ * Creates a Tinylicious {@link @fluidframework/core-interfaces#IRequest} for testing purposes.
+ */
+export const createTinyliciousTestCreateNewRequest = createTinyliciousCreateNewRequest;

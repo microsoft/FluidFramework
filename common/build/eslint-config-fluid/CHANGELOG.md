@@ -1,6 +1,14 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## [5.5.2](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.5.2)
+## [5.6.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.6.0)
+
+### New config for use with Biome linter
+
+A new strict-biome config is available that disables all rules that Biome's recommended config includes.
+This config is intended to be used in projects that use both eslint and Biome for linting.
+This config is considered experimental.
+
+### Auto-fix behavior change for @typescript-eslint/consistent-type-exports
 
 Update auto-fix policy for `@typescript-eslint/consistent-type-exports` to prefer inline `type` annotations, rather than splitting exports into type-only and non-type-only groups.
 This makes it easier to tell at a glance how the auto-fix changes affect individual exports when a list of exports is large.

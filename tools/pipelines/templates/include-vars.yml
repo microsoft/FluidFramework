@@ -21,6 +21,7 @@ parameters:
 
 variables:
 - group: prague-key-vault
+- group: ado-feeds
 - name: skipComponentGovernanceDetection
   value: true
 - name: testBuild

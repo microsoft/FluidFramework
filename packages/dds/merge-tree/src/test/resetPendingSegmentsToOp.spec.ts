@@ -9,7 +9,12 @@ import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { Marker, SegmentGroup, reservedMarkerIdKey } from "../mergeTreeNodes.js";
+import {
+	Marker,
+	SegmentGroup,
+	reservedMarkerIdKey,
+	type ISegmentLeaf,
+} from "../mergeTreeNodes.js";
 import { IMergeTreeOp, ReferenceType } from "../ops.js";
 import { clone } from "../properties.js";
 import { TextSegment } from "../textSegment.js";
@@ -233,7 +238,7 @@ describe("resetPendingSegmentsToOp", () => {
 				prop1: "foo",
 			});
 			assert(insertOp);
-			const { segment } = client.getContainingSegment(0);
+			const { segment } = client.getContainingSegment<ISegmentLeaf>(0);
 			assert(segment !== undefined && Marker.is(segment));
 			client.annotateMarker(segment, { prop2: "bar" });
 
@@ -245,7 +250,7 @@ describe("resetPendingSegmentsToOp", () => {
 			);
 			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
-			const { segment: otherSegment } = otherClient.getContainingSegment(0);
+			const { segment: otherSegment } = otherClient.getContainingSegment<ISegmentLeaf>(0);
 			assert(otherSegment !== undefined && Marker.is(otherSegment));
 			// `clone` here is because properties use a Object.create(null); to compare strict equal the prototype chain
 			// should therefore not include Object.
@@ -268,7 +273,7 @@ describe("resetPendingSegmentsToOp", () => {
 			);
 			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
-			const { segment: otherSegment } = otherClient.getContainingSegment(0);
+			const { segment: otherSegment } = otherClient.getContainingSegment<ISegmentLeaf>(0);
 			assert(otherSegment !== undefined && TextSegment.is(otherSegment));
 			assert.deepStrictEqual(otherSegment.properties, clone({ prop1: "foo" }));
 		});
@@ -286,7 +291,7 @@ describe("resetPendingSegmentsToOp", () => {
 			);
 			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
-			const { segment: otherSegment } = otherClient.getContainingSegment(0);
+			const { segment: otherSegment } = otherClient.getContainingSegment<ISegmentLeaf>(0);
 			assert(otherSegment !== undefined && TextSegment.is(otherSegment));
 			assert.deepStrictEqual(otherSegment.properties, undefined);
 		});

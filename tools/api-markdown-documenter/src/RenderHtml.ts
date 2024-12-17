@@ -7,14 +7,23 @@ import * as Path from "node:path";
 
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
+import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
 import {
 	type ApiItemTransformationConfiguration,
 	transformApiModel,
 } from "./api-item-transforms/index.js";
-import { type DocumentNode } from "./documentation-domain/index.js";
-import { type Logger } from "./Logging.js";
+import type { DocumentNode } from "./documentation-domain/index.js";
 import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "./renderers/index.js";
-import { type FileSystemConfiguration } from "./FileSystemConfiguration.js";
+
+/**
+ * API Model HTML rendering options.
+ *
+ * @public
+ */
+export interface RenderApiModelAsHtmlOptions
+	extends ApiItemTransformationConfiguration,
+		RenderDocumentAsHtmlConfig,
+		FileSystemConfiguration {}
 
 /**
  * Renders the provided model and its contents, and writes each document to a file on disk.
@@ -37,19 +46,20 @@ import { type FileSystemConfiguration } from "./FileSystemConfiguration.js";
  *
  * @alpha
  */
-export async function renderApiModelAsHtml(
-	transformConfig: Omit<ApiItemTransformationConfiguration, "logger">,
-	renderConfig: Omit<RenderDocumentAsHtmlConfig, "logger">,
-	fileSystemConfig: FileSystemConfiguration,
-	logger?: Logger,
-): Promise<void> {
-	const documents = transformApiModel({
-		...transformConfig,
-		logger,
-	});
+export async function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions): Promise<void> {
+	const documents = transformApiModel(options);
 
-	return renderDocumentsAsHtml(documents, renderConfig, fileSystemConfig, logger);
+	return renderDocumentsAsHtml(documents, options);
 }
+
+/**
+ * Options for rendering {@link DocumentNode}s as HTML.
+ *
+ * @public
+ */
+export interface RenderDocumentsAsHtmlOptions
+	extends RenderDocumentAsHtmlConfig,
+		FileSystemConfiguration {}
 
 /**
  * Renders the provided documents using HTML syntax, and writes each document to a file on disk.
@@ -64,11 +74,9 @@ export async function renderApiModelAsHtml(
  */
 export async function renderDocumentsAsHtml(
 	documents: DocumentNode[],
-	renderConfig: Omit<RenderDocumentAsHtmlConfig, "logger">,
-	fileSystemConfig: FileSystemConfiguration,
-	logger?: Logger,
+	options: RenderDocumentsAsHtmlOptions,
 ): Promise<void> {
-	const { outputDirectoryPath, newlineKind } = fileSystemConfig;
+	const { logger, newlineKind, outputDirectoryPath } = options;
 
 	logger?.verbose("Rendering documents as HTML and writing to disk...");
 
@@ -76,10 +84,7 @@ export async function renderDocumentsAsHtml(
 
 	await Promise.all(
 		documents.map(async (document) => {
-			const renderedDocument = renderDocumentAsHtml(document, {
-				...renderConfig,
-				logger,
-			});
+			const renderedDocument = renderDocumentAsHtml(document, options);
 
 			const filePath = Path.join(outputDirectoryPath, `${document.documentPath}.html`);
 			await FileSystem.writeFileAsync(filePath, renderedDocument, {

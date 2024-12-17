@@ -5,7 +5,7 @@ sidebar_position: 3
 
 import { MockDiceRollerSample } from "@site/src/components/mockDiceRoller";
 
-In this walkthrough, you'll learn about using the Fluid Framework by examining the DiceRoller application at https://github.com/microsoft/FluidHelloWorld. To get started, go through the [Quick Start](./quick-start) guide.
+In this walkthrough, you'll learn about using the Fluid Framework by examining the DiceRoller application at https://github.com/microsoft/FluidHelloWorld. To get started, go through the [Quick Start](./quick-start.mdx) guide.
 
 <MockDiceRollerSample
 	style={{
@@ -31,7 +31,7 @@ All of the work in this demo will be done in the [app.js](https://github.com/mic
 
 Start by creating a new instance of the Tinylicious client. Tinylicious is the Fluid Framework's local testing server, and a client is responsible for creating and loading containers.
 
-The app creates Fluid containers using a schema that defines a set of _initial objects_ that will be available in the container. Learn more about initial objects in [Data modeling](../build/data-modeling).
+The app creates Fluid containers using a schema that defines a set of _initial objects_ that will be available in the container. Learn more about initial objects in [Data modeling](../build/data-modeling.mdx).
 
 Lastly, `root` defines the HTML element that the Dice will render on.
 
@@ -49,7 +49,7 @@ const root = document.getElementById("content");
 
 :::note
 
-To create a Fluid application that can be deployed to Azure, check out the [Azure Fluid Relay](../deployment/azure-frs).
+To create a Fluid application that can be deployed to Azure, check out the [Azure Fluid Relay](../deployment/azure-fluid-relay.mdx).
 
 :::
 

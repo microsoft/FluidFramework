@@ -216,18 +216,21 @@ describe("Schema Discrepancies", () => {
 			[
 				{
 					identifier: undefined,
+					fieldKey: undefined,
 					mismatch: "fieldKind",
 					view: "Optional",
 					stored: "Value",
 				},
 				{
 					identifier: testTreeNodeIdentifier,
+					fieldKey: undefined,
 					mismatch: "allowedTypes",
 					view: [],
 					stored: ["string"],
 				},
 				{
 					identifier: testTreeNodeIdentifier,
+					fieldKey: undefined,
 					mismatch: "fieldKind",
 					view: "Value",
 					stored: "Optional",
@@ -240,6 +243,7 @@ describe("Schema Discrepancies", () => {
 			[
 				{
 					identifier: testTreeNodeIdentifier,
+					fieldKey: undefined,
 					mismatch: "allowedTypes",
 					view: ["number"],
 					stored: ["array"],
@@ -349,19 +353,22 @@ describe("Schema Discrepancies", () => {
 					mismatch: "fields",
 					differences: [
 						{
-							identifier: "x",
+							fieldKey: "x",
+							identifier: testTreeNodeIdentifier,
 							mismatch: "allowedTypes",
 							view: ["number"],
 							stored: ["string"],
 						},
 						{
-							identifier: "x",
+							fieldKey: "x",
+							identifier: testTreeNodeIdentifier,
 							mismatch: "fieldKind",
 							view: "Value",
 							stored: "Optional",
 						},
 						{
-							identifier: "y",
+							fieldKey: "y",
+							identifier: testTreeNodeIdentifier,
 							mismatch: "fieldKind",
 							view: "Forbidden",
 							stored: "Optional",
@@ -443,6 +450,7 @@ describe("Schema Discrepancies", () => {
 			assert.deepEqual(Array.from(getAllowedContentDiscrepancies(neverTree, mapNodeSchema)), [
 				{
 					identifier: testTreeNodeIdentifier,
+					fieldKey: undefined,
 					mismatch: "allowedTypes",
 					view: [],
 					stored: ["number"],
@@ -457,7 +465,8 @@ describe("Schema Discrepancies", () => {
 						mismatch: "fields",
 						differences: [
 							{
-								identifier: "x",
+								identifier: testTreeNodeIdentifier,
+								fieldKey: "x",
 								mismatch: "allowedTypes",
 								view: [],
 								stored: ["number"],
@@ -498,7 +507,8 @@ describe("Schema Discrepancies", () => {
 						mismatch: "fields",
 						differences: [
 							{
-								identifier: "x",
+								identifier: testTreeNodeIdentifier,
+								fieldKey: "x",
 								mismatch: "fieldKind",
 								view: "Forbidden",
 								stored: "Value",
@@ -516,13 +526,15 @@ describe("Schema Discrepancies", () => {
 						mismatch: "fields",
 						differences: [
 							{
-								identifier: "x",
+								identifier: testTreeNodeIdentifier,
+								fieldKey: "x",
 								mismatch: "allowedTypes",
 								view: [],
 								stored: ["number"],
 							},
 							{
-								identifier: "x",
+								identifier: testTreeNodeIdentifier,
+								fieldKey: "x",
 								mismatch: "fieldKind",
 								view: "Forbidden",
 								stored: "Value",

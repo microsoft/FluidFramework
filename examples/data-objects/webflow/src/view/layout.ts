@@ -7,7 +7,10 @@
 import assert from "assert";
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { MergeTreeMaintenanceType } from "@fluidframework/merge-tree/internal";
+import {
+	MergeTreeMaintenanceType,
+	segmentIsRemoved,
+} from "@fluidframework/merge-tree/internal";
 import {
 	ISegment,
 	LocalReferencePosition,
@@ -309,7 +312,7 @@ export class Layout extends EventEmitter {
 		);
 
 		// Must not request a formatter for a removed segment.
-		assert.strictEqual(segment.removedSeq, undefined);
+		assert.strictEqual(segmentIsRemoved(segment), false);
 
 		// If we've checkpointed this segment previously, we can potentially reuse our previous state to
 		// minimize damage to the DOM.
@@ -421,7 +424,7 @@ export class Layout extends EventEmitter {
 
 	public nodeToSegment(node: Node): ISegment {
 		const seg = this.nodeToSegmentMap.get(node);
-		return seg && (seg.removedSeq === undefined ? seg : undefined);
+		return seg && (!segmentIsRemoved(seg) ? seg : undefined);
 	}
 
 	public segmentAndOffsetToNodeAndOffset(segment: ISegment, offset: number) {
@@ -609,7 +612,7 @@ export class Layout extends EventEmitter {
 
 		// If the segment was removed, promptly remove any DOM nodes it emitted.
 		for (const { segment } of e.ranges) {
-			if (segment.removedSeq) {
+			if (segmentIsRemoved(segment)) {
 				this.removeSegment(segment);
 			}
 		}

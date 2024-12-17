@@ -10,7 +10,7 @@ DDSes are low-level data structures, while Data Objects are composed of DDSes an
 used to organize DDSes into semantically meaningful groupings for your scenario, as well as
 providing an API surface to your app's data. However, many Fluid applications will use only DDSes.
 
-There are a number of shared objects built into the Fluid Framework. See [Distributed data structures](/docs/data-structures/overview) for more information.
+There are a number of shared objects built into the Fluid Framework. See [Distributed data structures](../data-structures/overview.mdx) for more information.
 
 DDSes automatically ensure that each client has access to the same state. They're called _distributed data structures_
 because they are similar to data structures used commonly when programming, like strings, maps/dictionaries, and
@@ -40,7 +40,7 @@ that the merge behavior should match what users intend or expect as they are edi
 In Fluid, the merge behavior is defined by the DDS. The simplest merge strategy, employed by key-value distributed data
 structures like SharedMap, is _last writer wins_ (LWW). With this merge strategy, when multiple clients write different
 values to the same key, the value that was written last will overwrite the others. Refer to the
-[documentation for each DDS](/docs/data-structures/overview) for more details about the merge
+[documentation for each DDS](../data-structures/overview.mdx) for more details about the merge
 strategy it uses.
 
 ## Performance characteristics
@@ -50,7 +50,7 @@ generally fall into two broad categories: _optimistic_ and _consensus-based_.
 
 :::note[See also]
 
--   [Fluid Framework architecture](../concepts/architecture)
+-   [Fluid Framework architecture](../concepts/architecture.mdx)
 
 :::
 
@@ -106,11 +106,11 @@ When storing a DDS within another DDS, your code must store its handle, not the 
 see [Using handles to store and retrieve shared objects][handles-example].
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
-see [Fluid handles](../concepts/handles).
+see [Fluid handles](../concepts/handles.mdx).
 
 :::note
 
-If you are considering storing a DDS within another DDS in order to give your app's data a hierarchical structure, consider using a [SharedTree](/docs/data-structures/tree) DDS instead.
+If you are considering storing a DDS within another DDS in order to give your app's data a hierarchical structure, consider using a [SharedTree](../data-structures/tree.mdx) DDS instead.
 
 :::
 
@@ -194,15 +194,15 @@ When you have more than one shape in your data model, you could create a _array_
 These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
 -   [SharedMap][] -- a basic key-value distributed data structure.
--   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](../concepts/handles).
+-   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](../concepts/handles.mdx).
 
 ### Array-like data
 
--   Array nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](../concepts/handles).
+-   Array nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](../concepts/handles.mdx).
 
 ### Object data
 
--   Object nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](../concepts/handles).
+-   Object nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles](../concepts/handles.mdx).
 
 ### Specialized data structures
 

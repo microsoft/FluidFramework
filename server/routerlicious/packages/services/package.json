@@ -112,6 +112,9 @@
 		"broken": {
 			"ClassDeclaration_MongoDb": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_WebServer": {
+				"backCompat": false
 			}
 		}
 	}

@@ -699,6 +699,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						);
 
 						if (filteredMsgs.length > 0) {
+							// This ternary is needed for signal-based layer compat tests to pass,
+							// specifically the layer version combination where you have an old loader and the most recent driver layer.
+							// Old loader doesn't send or receive batched signals (ISignalMessage[]),
+							// so only individual ISignalMessage's should be passed when there's one element for backcompat.
 							listener(filteredMsgs.length === 1 ? filteredMsgs[0] : filteredMsgs, documentId);
 						}
 					},

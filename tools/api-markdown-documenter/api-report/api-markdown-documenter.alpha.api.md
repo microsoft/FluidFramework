@@ -5,15 +5,15 @@
 ```ts
 
 import { ApiCallSignature } from '@microsoft/api-extractor-model';
-import { ApiClass } from '@microsoft/api-extractor-model';
+import type { ApiClass } from '@microsoft/api-extractor-model';
 import { ApiConstructor } from '@microsoft/api-extractor-model';
 import { ApiConstructSignature } from '@microsoft/api-extractor-model';
 import { ApiEntryPoint } from '@microsoft/api-extractor-model';
-import { ApiEnum } from '@microsoft/api-extractor-model';
-import { ApiEnumMember } from '@microsoft/api-extractor-model';
+import type { ApiEnum } from '@microsoft/api-extractor-model';
+import type { ApiEnumMember } from '@microsoft/api-extractor-model';
 import { ApiFunction } from '@microsoft/api-extractor-model';
 import { ApiIndexSignature } from '@microsoft/api-extractor-model';
-import { ApiInterface } from '@microsoft/api-extractor-model';
+import type { ApiInterface } from '@microsoft/api-extractor-model';
 import { ApiItem } from '@microsoft/api-extractor-model';
 import { ApiItemKind } from '@microsoft/api-extractor-model';
 import { ApiMethod } from '@microsoft/api-extractor-model';
@@ -21,9 +21,9 @@ import { ApiMethodSignature } from '@microsoft/api-extractor-model';
 import { ApiModel } from '@microsoft/api-extractor-model';
 import { ApiNamespace } from '@microsoft/api-extractor-model';
 import { ApiPackage } from '@microsoft/api-extractor-model';
-import { ApiPropertyItem } from '@microsoft/api-extractor-model';
-import { ApiTypeAlias } from '@microsoft/api-extractor-model';
-import { ApiVariable } from '@microsoft/api-extractor-model';
+import type { ApiPropertyItem } from '@microsoft/api-extractor-model';
+import type { ApiTypeAlias } from '@microsoft/api-extractor-model';
+import type { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
@@ -438,7 +438,9 @@ export class HorizontalRuleNode implements MultiLineDocumentationNode {
 
 declare namespace HtmlRenderer {
     export {
+        RenderApiModelAsHtmlOptions as RenderApiModelOptions,
         renderApiModelAsHtml as renderApiModel,
+        RenderDocumentsAsHtmlOptions as RenderDocumentsOptions,
         renderDocumentsAsHtml as renderDocuments,
         renderDocument,
         renderHtml
@@ -560,7 +562,9 @@ export interface MarkdownRenderContext extends TextFormatting {
 
 declare namespace MarkdownRenderer {
     export {
+        RenderApiModelAsMarkdownOptions as RenderApiModelOptions,
         renderApiModelAsMarkdown as renderApiModel,
+        RenderDocumentsAsMarkdownOptions as RenderDocumentsOptions,
         renderDocumentsAsMarkdown as renderDocuments,
         renderDocument_2 as renderDocument,
         renderNode,
@@ -613,10 +617,18 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 export { ReleaseTag }
 
 // @alpha
-function renderApiModelAsHtml(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<RenderDocumentAsHtmlConfig, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions): Promise<void>;
 
 // @public
-function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+interface RenderApiModelAsHtmlOptions extends ApiItemTransformationConfiguration, RenderDocumentAsHtmlConfig, FileSystemConfiguration {
+}
+
+// @public
+function renderApiModelAsMarkdown(options: RenderApiModelAsMarkdownOptions): Promise<void>;
+
+// @public
+interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationConfiguration, MarkdownRenderConfiguration, FileSystemConfiguration {
+}
 
 // @public
 function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfig): string;
@@ -629,10 +641,18 @@ export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConf
 }
 
 // @alpha
-function renderDocumentsAsHtml(documents: DocumentNode[], renderConfig: Omit<RenderDocumentAsHtmlConfig, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+function renderDocumentsAsHtml(documents: DocumentNode[], options: RenderDocumentsAsHtmlOptions): Promise<void>;
 
 // @public
-function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfig, FileSystemConfiguration {
+}
+
+// @public
+function renderDocumentsAsMarkdown(documents: DocumentNode[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
+
+// @public
+interface RenderDocumentsAsMarkdownOptions extends MarkdownRenderConfiguration, FileSystemConfiguration {
+}
 
 // @public
 function renderHtml(html: Nodes, { prettyFormatting }: {

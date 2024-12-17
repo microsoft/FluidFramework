@@ -154,6 +154,14 @@ describe("mock-customer-service", () => {
 
 		await closeServer(_externalDataService);
 		await closeServer(_customerService);
+
+		// Something about shutting down the servers after each test and then starting new ones on the same ports before
+		// running the next test is causing issues where the second test to run gets an "other side closed" message when
+		// it tries to issue its first request to the services. This does not happen on Node18 but does on Node20.
+		// I couldn't figure out why, but letting the JS turn end here before the test runs seems to fix it.
+		await new Promise<void>((resolve) => {
+			setTimeout(resolve, 0);
+		});
 	});
 
 	// We have omitted `@types/supertest` due to cross-package build issue.

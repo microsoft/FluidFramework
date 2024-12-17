@@ -37,7 +37,6 @@ export {
 } from "./nestedMap.js";
 export { addToNestedSet, type NestedSet, nestedSetContains } from "./nestedSet.js";
 export { type OffsetList, OffsetListFactory } from "./offsetList.js";
-export { TransactionResult } from "./transactionResult.js";
 export type {
 	areSafelyAssignable,
 	Contravariant,

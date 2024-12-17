@@ -1,5 +1,16 @@
 # @fluid-internal/client-utils
 
+## 2.11.0
+
+### Minor Changes
+
+-   The events library has been moved from the tree package ([#23141](https://github.com/microsoft/FluidFramework/pull/23141)) [cae07b5c8c](https://github.com/microsoft/FluidFramework/commit/cae07b5c8c7904184b5fbf8c677f302da19cc697)
+
+    In previous releases, the `@fluidframework/tree` package contained an internal events library. The events-related types and interfaces have been moved to
+    `@fluidframework/core-interfaces`, while the implementation has been relocated to `@fluid-internal/client-utils`. There are
+    no changes to how the events library is used; the relocation simply organizes the library into more appropriate
+    packages. This change should have no impact on developers using the Fluid Framework.
+
 ## 2.10.0
 
 Dependency updates only.

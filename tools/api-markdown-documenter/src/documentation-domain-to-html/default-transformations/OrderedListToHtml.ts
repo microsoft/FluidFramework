@@ -9,6 +9,7 @@
  */
 import type { Element as HastElement } from "hast";
 import { h } from "hastscript";
+
 import type { OrderedListNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformListChildren } from "../Utilities.js";

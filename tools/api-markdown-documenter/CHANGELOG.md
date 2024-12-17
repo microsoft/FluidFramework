@@ -1,5 +1,62 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.18.0
+
+### ⚠ BREAKING CHANGES
+
+#### Simplify the parameters given to `MarkdownRenderer` and `HtmlRenderer` methods.
+
+Combines the separate "config" property bag parameters into a single "options" property bag for simplicity.
+
+##### Example
+
+Before:
+
+```typescript
+import { loadModel, MarkdownRenderer } from "@fluid-tools/api-markdown-documenter";
+
+const modelDirectoryPath = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
+const outputDirectoryPath = "<YOUR-OUTPUT-DIRECTORY-PATH>";
+
+// Create the API Model from our API reports
+const apiModel = await loadModel({
+	modelDirectoryPath,
+});
+
+const transformConfig = {
+	apiModel,
+	uriRoot: ".",
+};
+
+await MarkdownRenderer.renderApiModel(transformConfig, {}, { outputDirectoryPath });
+```
+
+After:
+
+```typescript
+import { loadModel, MarkdownRenderer } from "@fluid-tools/api-markdown-documenter";
+
+const modelDirectoryPath = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
+const outputDirectoryPath = "<YOUR-OUTPUT-DIRECTORY-PATH>";
+
+// Create the API Model from our API reports
+const apiModel = await loadModel({
+	modelDirectoryPath,
+});
+
+await MarkdownRenderer.renderApiModel({
+	apiModel,
+	uriRoot: ".",
+	outputDirectoryPath,
+});
+```
+
+## 0.17.3
+
+-   Fixes an issue where directories generated for API items configured to yield directory-wise hierarchy (via the `hierarchyBoundaries` option) would be generated with names that differed from their corresponding document names.
+    -   Longer term, it would be nice to make the relationship between directory names and document names less intertwined, but for now there are aspects of the system that rely on the two being the same, and this invariant was being violated.
+        So, for now, this is considered a bug fix.
+
 ## 0.17.2
 
 -   Fixes an issue with generated Markdown heading ID overrides where ID contents were not being properly escaped.
