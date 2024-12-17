@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/shared-summary-block",
-	"version": "2.12.0",
+	"version": "2.12.1",
 	"description": "A DDS that does not generate ops but is part of summary",
 	"homepage": "https://fluidframework.com",
 	"repository": {
