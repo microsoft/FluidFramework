@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 import type { VersionOptions } from "@docusaurus/plugin-content-docs";
 import * as Preset from "@docusaurus/preset-classic";
 import type { Config } from "@docusaurus/types";
@@ -176,9 +176,9 @@ const config: Config = {
 		},
 	],
 	customFields: {
-		'INSTRUMENTATION_KEY': process.env.INSTRUMENTATION_KEY,
-		'APPLICATION_ID': process.env.APPLICATION_ID,
-	}
+		INSTRUMENTATION_KEY: process.env.INSTRUMENTATION_KEY,
+		APPLICATION_ID: process.env.APPLICATION_ID,
+	},
 };
 
 export default config;

@@ -29,7 +29,7 @@ export default function Home(): React.ReactElement {
 	return (
 		<Layout>
 			<Suspense>
-				<CookieBanner/>
+				<CookieBanner />
 			</Suspense>
 			<Homepage />
 		</Layout>
