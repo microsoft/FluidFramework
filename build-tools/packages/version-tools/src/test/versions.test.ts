@@ -162,19 +162,31 @@ describe("getIsLatest", () => {
 
 describe("getVersionsFromStrings", () => {
 	it("should return sorted versions for given prefix", () => {
+		const tags = [
+			"client_v0.59.1001-62246",
+			"client_v0.59.2000-63294",
+			"client_v0.59.2002",
+			"client_v0.59.1000",
+			"client_v0.59.3000-67119",
+			"client_v0.59.3000",
+			"client_v0.59.2001",
+			"client_v0.59.3000-66610",
+			"client_v0.59.2000",
+			"client_v0.59.1001",
+		];
 		const expected = [
 			"0.59.1000",
-			"0.59.1001",
 			"0.59.1001-62246",
-			"0.59.2000",
+			"0.59.1001",
 			"0.59.2000-63294",
+			"0.59.2000",
 			"0.59.2001",
 			"0.59.2002",
-			"0.59.3000",
 			"0.59.3000-66610",
 			"0.59.3000-67119",
+			"0.59.3000",
 		];
-		const result = getVersionsFromStrings("client", test_tags);
+		const result = getVersionsFromStrings("client", tags);
 		expect(result).to.deep.equal(expected);
 	});
 
