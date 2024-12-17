@@ -24,7 +24,10 @@ import {
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces.js";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils.js";
 
-function createConnectedCollection(id: string, runtimeFactory: MockContainerRuntimeFactory): ConsensusQueue {
+function createConnectedCollection(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+): ConsensusQueue {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
@@ -46,7 +49,10 @@ function createLocalCollection(id: string): ConsensusQueue {
 function createCollectionForReconnection(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactoryForReconnection,
-): { collection: IConsensusOrderedCollection; containerRuntime: MockContainerRuntimeForReconnection } {
+): {
+	collection: IConsensusOrderedCollection;
+	containerRuntime: MockContainerRuntimeForReconnection;
+} {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
@@ -61,23 +67,22 @@ function createCollectionForReconnection(
 }
 
 describe("ConsensusOrderedCollection", () => {
-	/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 	function generate(
-		input: any[],
-		output: any[],
+		input: unknown[],
+		output: unknown[],
 		creator: () => ConsensusOrderedCollection,
 		processMessages: () => void,
 	): void {
 		let testCollection: ConsensusOrderedCollection;
 
-		async function removeItem(): Promise<any> {
+		async function removeItem(): Promise<unknown> {
 			const resP = acquireAndComplete(testCollection);
 			processMessages();
 			setImmediate(() => processMessages());
 			return resP;
 		}
 
-		async function waitAndRemoveItem(): Promise<any> {
+		async function waitAndRemoveItem(): Promise<unknown> {
 			processMessages();
 			const resP = waitAcquireAndComplete(testCollection);
 			processMessages();
@@ -113,8 +118,8 @@ describe("ConsensusOrderedCollection", () => {
 				assert(handle, "Need an actual handle to test this case");
 				await addItem(handle);
 
-				const acquiredValue = await removeItem();
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				const acquiredValue = (await removeItem()) as IFluidHandleInternal;
+
 				assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
 				const dataStore = (await handle.get()) as ConsensusQueue;
 				assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
@@ -136,7 +141,7 @@ describe("ConsensusOrderedCollection", () => {
 
 			it("Can wait for data", async () => {
 				let added = false;
-				let res: any;
+				let res: unknown;
 				const p = testCollection.waitAndAcquire(async (value) => {
 					assert(added, "Wait resolved before value is added");
 					res = value;
@@ -178,7 +183,7 @@ describe("ConsensusOrderedCollection", () => {
 				};
 				testCollection.on("add", addListener);
 
-				const acquireListener = (value):void => {
+				const acquireListener = (value): void => {
 					assert.strictEqual(value, output[removeCount], "Remove event value not matched");
 					removeCount += 1;
 				};
@@ -211,9 +216,8 @@ describe("ConsensusOrderedCollection", () => {
 			it("can clone object value", async () => {
 				const obj = { x: 1 };
 				await addItem(obj);
-				const result = await removeItem();
+				const result = (await removeItem()) as { x: number };
 				assert.notStrictEqual(result, obj);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(result.x, 1);
 			});
 		});
@@ -282,7 +286,7 @@ describe("ConsensusOrderedCollection", () => {
 			// client.
 			let addedValue: string = "";
 			let newlyAdded: boolean = false;
-			testCollection2.on("add", (value: any, added: boolean) => {
+			testCollection2.on("add", (value: string, added: boolean) => {
 				addedValue = value;
 				newlyAdded = added;
 			});
@@ -311,13 +315,13 @@ describe("ConsensusOrderedCollection", () => {
 			// client.
 			let acquiredValue: string = "";
 			let acquiredClientId: string | undefined = "";
-			testCollection2.on("acquire", (value: any, clientId?: string) => {
+			testCollection2.on("acquire", (value: string, clientId?: string) => {
 				acquiredValue = value;
 				acquiredClientId = clientId;
 			});
 
 			// Acquire the previously added value.
-			let res: any;
+			let res: unknown;
 			const resultP = testCollection1.acquire(async (value) => {
 				res = value;
 				return ConsensusResult.Complete;
@@ -356,7 +360,7 @@ describe("ConsensusOrderedCollection", () => {
 			// remote client.
 			let addedValue: string = "";
 			let newlyAdded: boolean = false;
-			testCollection2.on("add", (value: any, added: boolean) => {
+			testCollection2.on("add", (value: string, added: boolean) => {
 				addedValue = value;
 				newlyAdded = added;
 			});
@@ -379,10 +383,7 @@ describe("ConsensusOrderedCollection", () => {
 			assert.equal(addedValue, testValue, "The remote client did not receive the added value");
 			assert.equal(newlyAdded, true, "The remote client's value was not newly added");
 		});
-
 	});
-	/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
-
 
 	describe("Garbage Collection", () => {
 		class GCOrderedCollectionProvider implements IGCTestProvider {
@@ -399,13 +400,13 @@ describe("ConsensusOrderedCollection", () => {
 				);
 			}
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			private async addItem(item: any): Promise<void> {
+			private async addItem(item: unknown): Promise<void> {
 				const waitP = this.collection.add(item);
 				this.containerRuntimeFactory.processAllMessages();
 				return waitP;
 			}
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			private async removeItem(): Promise<any> {
+			private async removeItem(): Promise<unknown> {
 				const resP = acquireAndComplete(this.collection);
 				this.containerRuntimeFactory.processAllMessages();
 				setImmediate(() => this.containerRuntimeFactory.processAllMessages());

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
@@ -78,7 +77,7 @@ type IConsensusOrderedCollectionOperation<T> =
 	| IConsensusOrderedCollectionReleaseOperation;
 
 /**
- * The type of the resolve function to call after the local operation is ack'd
+ * The type of the resolve function to call after the local operation is acknowledged.
  */
 type PendingResolve<T> = (value: IConsensusOrderedCollectionValue<T> | undefined) => void;
 
@@ -102,6 +101,7 @@ const idForLocalUnattachedClient = undefined;
  * @alpha
  */
 
+// TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class ConsensusOrderedCollection<T = any>
 	extends SharedObject<IConsensusOrderedCollectionEvents<T>>
