@@ -38,3 +38,6 @@ tsdoc-metadata.json
 
 # TODO: This can be removed once the `flub add changeset` command no longer creates the UPCOMING file.
 UPCOMING.md
+
+# Ignore the nested lib dist folder
+nested_lib_dist
