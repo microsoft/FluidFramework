@@ -317,25 +317,25 @@ describe("Presence", () => {
 							"Expected exactly one attendee to be announced",
 						);
 
-						// Act - simulate join message from client
+						// Act & Verify - simulate rejoin message from remote client
 						const rejoinAttendees = processJoinSignals([rejoinSignal]);
-						const responseAttendees = processJoinSignals([responseSignal]);
-
-						// Verify - only the rejoining attendee is announced
 						assert.strictEqual(
 							rejoinAttendees.length,
 							1,
 							"Expected exactly one attendee to be announced",
 						);
-						assert.strictEqual(
-							responseAttendees.length,
-							0,
-							"Expected no attendees to be announced",
-						);
 						verifyAttendee(
 							rejoinAttendees[0],
 							newCollateralAttendeeConnectionId,
 							"collateral-id",
+						);
+
+						// Act & Verify - simulate response message from remote client
+						const responseAttendees = processJoinSignals([responseSignal]);
+						assert.strictEqual(
+							responseAttendees.length,
+							0,
+							"Expected no attendees to be announced",
 						);
 					});
 				});
