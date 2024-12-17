@@ -136,7 +136,7 @@ describe("Presence", () => {
 					assert.equal(
 						actualAttendee.getConnectionStatus(),
 						expectedConnectionStatus,
-						"Attendee connection status is not Connected",
+						`Attendee connection status is not ${expectedConnectionStatus}`,
 					);
 				}
 
