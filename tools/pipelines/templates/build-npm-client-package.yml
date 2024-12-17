@@ -366,27 +366,6 @@ extends:
                     workingDir: '${{ parameters.buildDirectory }}'
                     customCommand: 'run webpack'
 
-              - task: Bash@3
-                displayName: Prune node_modules
-                condition: always()
-                continueOnError: true
-                inputs:
-                  targetType: inline
-                  script: |
-                    sizeBefore=$(du -sh . | awk '{print $1}');
-                    echo "Size before: $sizeBefore";
-
-                    if [ -d "./node_modules" ]; then
-                      mv ./node_modules "$(Agent.TempDirectory)"
-                    else
-                      echo "node_modules directory not found."
-                    fi
-
-                    find . -type d -name 'node_modules' -exec rm -rf {} +
-                    sizeAfter=$(du -sh . | awk '{print $1}');
-                    echo "Size after: $sizeAfter";
-                  workingDirectory: ${{ parameters.buildDirectory }}
-
               - script: |
                   echo "Preparing nested lib/dist directories (excluding node_modules) for publishing..."
                   find . -type d \( -name "lib" -o -name "dist" \) ! -path "*/node_modules/*" > directories_to_publish.txt
@@ -397,19 +376,19 @@ extends:
                   echo "Calculating size of directories to be archived..."
                   du -ch $(cat directories_to_publish.txt) | grep total
 
-                  echo "Creating the tarball..."
-                  tar --create --gzip --file nested_lib_dist.tar.gz -T directories_to_publish.txt
+                  echo "Creating the tarball in the nested_lib_dist folder..."
+                  mkdir -p ${{ parameters.buildDirectory }}/nested_lib_dist
+                  tar --create --gzip --file ${{ parameters.buildDirectory }}/nested_lib_dist/nested_lib_dist.tar.gz -T directories_to_publish.txt
 
                   echo "Tarball created. Inspecting its size..."
-                  ls -lh nested_lib_dist.tar.gz
+                  ls -lh ${{ parameters.buildDirectory }}/nested_lib_dist/nested_lib_dist.tar.gz
                 displayName: Archive Nested Lib/Dist Directories and Their Contents
                 workingDirectory: ${{ parameters.buildDirectory }}
 
               - task: CopyFiles@2
                 displayName: Copy nested_lib_dist to artifact staging directory
                 inputs:
-                  sourceFolder: ${{ parameters.buildDirectory }}
-                  contents: nested_lib_dist.tar.gz
+                  sourceFolder: ${{ parameters.buildDirectory }}/nested_lib_dist
                   targetFolder: $(Build.ArtifactStagingDirectory)
 
               # Pack
@@ -558,7 +537,7 @@ extends:
               outputs:
                 - output: pipelineArtifact
                   displayName: Publish Artifact - nested_lib_dist
-                  targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist.tar.gz
+                  targetPath: $(Build.ArtifactStagingDirectory)/nested_lib_dist
                   artifactName: nested_lib_dist
                   publishLocation: pipeline
 
