@@ -315,9 +315,6 @@ module.exports = {
 		],
 		// Exclusion per handler
 		handlerExclusions: {
-			"extraneous-lockfiles": [
-				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
-			],
 			"fluid-build-tasks-eslint": [
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/snapshots/package.json",
@@ -373,9 +370,6 @@ module.exports = {
 			"npm-package-metadata-and-sorting": [
 				// The root package.json is not checked temporarily due to AB#8640
 				"^package.json",
-			],
-			"package-lockfiles-npm-version": [
-				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"npm-package-json-prettier": [
 				// This rule is temporarily disabled for all projects while we update the repo to use different formatting

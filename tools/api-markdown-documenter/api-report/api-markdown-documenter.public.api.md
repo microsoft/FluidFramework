@@ -438,7 +438,9 @@ export class HorizontalRuleNode implements MultiLineDocumentationNode {
 
 declare namespace HtmlRenderer {
     export {
+        RenderApiModelAsHtmlOptions as RenderApiModelOptions,
         renderApiModelAsHtml as renderApiModel,
+        RenderDocumentsAsHtmlOptions as RenderDocumentsOptions,
         renderDocumentsAsHtml as renderDocuments,
         renderDocument,
         renderHtml
@@ -538,7 +540,9 @@ export interface MarkdownRenderContext extends TextFormatting {
 
 declare namespace MarkdownRenderer {
     export {
+        RenderApiModelAsMarkdownOptions as RenderApiModelOptions,
         renderApiModelAsMarkdown as renderApiModel,
+        RenderDocumentsAsMarkdownOptions as RenderDocumentsOptions,
         renderDocumentsAsMarkdown as renderDocuments,
         renderDocument_2 as renderDocument,
         renderNode,
@@ -591,7 +595,15 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 export { ReleaseTag }
 
 // @public
-function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+interface RenderApiModelAsHtmlOptions extends ApiItemTransformationConfiguration, RenderDocumentAsHtmlConfig, FileSystemConfiguration {
+}
+
+// @public
+function renderApiModelAsMarkdown(options: RenderApiModelAsMarkdownOptions): Promise<void>;
+
+// @public
+interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationConfiguration, MarkdownRenderConfiguration, FileSystemConfiguration {
+}
 
 // @public
 function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfig): string;
@@ -604,7 +616,15 @@ export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConf
 }
 
 // @public
-function renderDocumentsAsMarkdown(documents: DocumentNode[], renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
+interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfig, FileSystemConfiguration {
+}
+
+// @public
+function renderDocumentsAsMarkdown(documents: DocumentNode[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
+
+// @public
+interface RenderDocumentsAsMarkdownOptions extends MarkdownRenderConfiguration, FileSystemConfiguration {
+}
 
 // @public
 function renderHtml(html: Nodes, { prettyFormatting }: {

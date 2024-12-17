@@ -492,7 +492,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 			let revision: RevisionTag | undefined;
 			if (event.type === "rebase") {
-				assert(hasSome(event.newCommits), "Expected new commit for non no-op change event");
+				assert(
+					hasSome(event.newCommits),
+					0xa96 /* Expected new commit for non no-op change event */,
+				);
 				revision = getLast(event.newCommits).revision;
 			} else {
 				revision = event.change.revision;
