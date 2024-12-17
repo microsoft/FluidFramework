@@ -49,17 +49,20 @@ export class SchemaFactoryAlpha<
 	public override object<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		fields: T,
-		options?: SchemaFactoryObjectOptions,
+		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 		object & InsertableObjectFromSchemaRecord<T>,
 		true,
-		T
+		T,
+		never,
+		TCustomMetadata
 	> {
 		return objectSchema(
 			this.scoped2(name),
@@ -76,15 +79,18 @@ export class SchemaFactoryAlpha<
 	public override objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		t: T,
-		options?: SchemaFactoryObjectOptions,
-	): ReturnType<typeof this.baseKludge.objectRecursive<Name, T>> {
+		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
+	): ReturnType<typeof this.baseKludge.objectRecursive<Name, T, TCustomMetadata>> {
 		return this.object(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 			options,
-		) as unknown as ReturnType<typeof this.baseKludge.objectRecursive<Name, T>>;
+		) as unknown as ReturnType<
+			typeof this.baseKludge.objectRecursive<Name, T, TCustomMetadata>
+		>;
 	}
 }
