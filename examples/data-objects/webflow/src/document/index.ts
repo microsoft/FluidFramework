@@ -12,7 +12,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules -- #26905: `merge-tree` internals used in examples
 } from "@fluidframework/merge-tree/internal";
 import { IMergeTreeRemoveMsg, refGetTileLabels } from "@fluidframework/merge-tree/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #26905: `sequence` internals used in examples
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
 import { reservedTileLabelsKey } from "@fluidframework/sequence/internal";
 import {
 	ISegment,
