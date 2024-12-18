@@ -94,7 +94,6 @@ declare namespace ApiItemUtilities {
         getDefaultValueBlock,
         getDeprecatedBlock,
         getExampleBlocks,
-        getFileSafeNameForApiItem,
         getModifiers,
         getModifierTags,
         getQualifiedApiItemName,
@@ -310,7 +309,7 @@ export interface DocumentHierarchyConfiguration extends DocumentationHierarchyCo
 
 // @public
 export interface DocumentHierarchyProperties extends SectionHierarchyProperties {
-    readonly documentName: string | ((apiItem: ApiItem) => string);
+    readonly documentName?: string | undefined | ((apiItem: ApiItem) => string | undefined);
 }
 
 // @public
@@ -384,7 +383,7 @@ export interface FolderHierarchyConfiguration extends DocumentationHierarchyConf
 // @public
 export interface FolderHierarchyProperties extends DocumentHierarchyProperties {
     readonly documentPlacement: FolderDocumentPlacement | ((apiItem: ApiItem) => FolderDocumentPlacement);
-    readonly folderName: string | ((apiItem: ApiItem) => string);
+    readonly folderName: string | undefined | ((apiItem: ApiItem) => string | undefined);
 }
 
 // @public
@@ -404,9 +403,6 @@ function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
 function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
-
-// @public
-function getFileSafeNameForApiItem(apiItem: ApiItem): string;
 
 // @public
 function getHeadingForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingLevel?: number): Heading;

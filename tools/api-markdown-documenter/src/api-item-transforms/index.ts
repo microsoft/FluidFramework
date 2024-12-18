@@ -11,7 +11,6 @@ export {
 	doesItemRequireOwnDocument,
 	doesItemKindRequireOwnDocument,
 	filterItems,
-	getFilteredParent,
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	shouldItemBeIncluded,

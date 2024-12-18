@@ -58,12 +58,9 @@ import {
 	getReturnsBlock,
 	getApiItemKind,
 	type ValidApiItemKind,
-} from "../../utilities/index.js";
-import {
-	doesItemKindRequireOwnDocument,
 	getFilteredParent,
-	getLinkForApiItem,
-} from "../ApiItemTransformUtilities.js";
+} from "../../utilities/index.js";
+import { doesItemKindRequireOwnDocument, getLinkForApiItem } from "../ApiItemTransformUtilities.js";
 import { transformTsdocSection } from "../TsdocNodeTransforms.js";
 import { getTsdocNodeTransformationOptions } from "../Utilities.js";
 import { HierarchyKind, type ApiItemTransformationConfiguration } from "../configuration/index.js";

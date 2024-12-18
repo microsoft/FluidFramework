@@ -21,7 +21,6 @@ export {
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
-	getFileSafeNameForApiItem,
 	getModifiers,
 	getModifierTags,
 	getQualifiedApiItemName,

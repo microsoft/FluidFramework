@@ -6,8 +6,6 @@
 import { type ApiDeclaredItem, type ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
 import {
-	getQualifiedApiItemName,
-	getFileSafeNameForApiItem,
 	getSingleLineExcerptText,
 	getApiItemKind,
 	type ValidApiItemKind,
@@ -82,8 +80,9 @@ export interface SectionHierarchyConfiguration
 export interface DocumentHierarchyProperties extends SectionHierarchyProperties {
 	/**
 	 * Document name to use for the API item.
+	 * @remarks `undefined` indicates that the system default should be used.
 	 */
-	readonly documentName: string | ((apiItem: ApiItem) => string);
+	readonly documentName?: string | undefined | ((apiItem: ApiItem) => string | undefined);
 }
 
 /**
@@ -131,8 +130,9 @@ export interface FolderHierarchyProperties extends DocumentHierarchyProperties {
 
 	/**
 	 * Folder name to use for the API item.
+	 * @remarks `undefined` indicates that the system default should be used.
 	 */
-	readonly folderName: string | ((apiItem: ApiItem) => string);
+	readonly folderName: string | undefined | ((apiItem: ApiItem) => string | undefined);
 }
 
 /**
@@ -198,22 +198,21 @@ export const defaultSectionHierarchyConfig: SectionHierarchyConfiguration = {
 /**
  * Default {@link DocumentHierarchyProperties.documentName} for non-folder hierarchy documents.
  *
- * Uses the item's qualified API name, but is handled differently for the following items:
+ * Uses the item's scoped and qualified API name, but is handled differently for the following items:
  *
- * - Package: Uses the unscoped package name.
+ * - Model: "index"
  *
  * @privateRemarks Exported for testing purposes.
  */
-export function defaultDocumentName(apiItem: ApiItem): string {
+export function defaultDocumentName(apiItem: ApiItem): string | undefined {
 	const kind = getApiItemKind(apiItem);
 	switch (kind) {
-		case ApiItemKind.Package: {
-			return getFileSafeNameForApiItem(apiItem);
+		case ApiItemKind.Model: {
+			return "index";
 		}
 		default: {
-			const base = getQualifiedApiItemName(apiItem);
-			const postfix = apiItem.kind.toLocaleLowerCase();
-			return `${base}-${postfix}`;
+			// Let the system generate a unique name that accounts for folder hierarchy.
+			return undefined;
 		}
 	}
 }
@@ -231,10 +230,9 @@ export const defaultDocumentHierarchyConfig: DocumentHierarchyConfiguration = {
 /**
  * Default {@link SectionHierarchyConfiguration} used by the system.
  *
- * @remarks Default folder name is the same as the default document name.
  * @privateRemarks Exported for testing purposes.
  */
-export const defaultFolderName = defaultDocumentName;
+export const defaultFolderName = undefined;
 
 /**
  * Default {@link FolderHierarchyConfiguration} used by the system.
@@ -243,8 +241,8 @@ export const defaultFolderName = defaultDocumentName;
 export const defaultFolderHierarchyConfig: FolderHierarchyConfiguration = {
 	kind: HierarchyKind.Folder,
 	headingText: defaultHeadingText,
-	documentPlacement: FolderDocumentPlacement.Outside, // TODO
 	documentName: defaultDocumentName,
+	documentPlacement: FolderDocumentPlacement.Outside, // TODO
 	// documentName: "index", // Documents for items that get their own folder are always named "index" by default.
 	folderName: defaultFolderName,
 };
@@ -266,7 +264,9 @@ export type HierarchyConfiguration = {
 	/**
 	 * Hierarchy configuration for the `Model` API item kind.
 	 *
-	 * @remarks Always its own document. Never introduces folder hierarchy.
+	 * @remarks
+	 * Always its own document. Never introduces folder hierarchy.
+	 * This is an important invariant, as it ensures that there is always at least one document in the output.
 	 */
 	[ApiItemKind.Model]: DocumentHierarchyConfiguration;
 

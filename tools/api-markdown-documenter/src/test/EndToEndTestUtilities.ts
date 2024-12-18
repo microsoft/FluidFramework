@@ -16,7 +16,6 @@ import {
 	defaultHeadingText,
 	defaultDocumentHierarchyConfig,
 	defaultFolderName,
-	defaultDocumentName,
 } from "../api-item-transforms/index.js";
 import {
 	FolderDocumentPlacement,
@@ -54,7 +53,6 @@ export namespace HierarchyConfigs {
 	const outsideFolderConfig: FolderHierarchyConfiguration = {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Outside,
-		documentName: defaultDocumentName,
 		folderName: defaultFolderName,
 		headingText: (apiItem) => apiItem.displayName,
 	};

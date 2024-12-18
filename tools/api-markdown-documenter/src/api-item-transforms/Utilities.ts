@@ -45,7 +45,7 @@ export function createDocument(
 	return new DocumentNode({
 		apiItem: documentItem,
 		children: contents,
-		documentPath: getDocumentPathForApiItem(documentItem, config),
+		documentPath: getDocumentPathForApiItem(documentItem, config.hierarchy),
 	});
 }
 
