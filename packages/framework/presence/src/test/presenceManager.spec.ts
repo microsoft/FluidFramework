@@ -294,6 +294,13 @@ describe("Presence", () => {
 							clientConnectionId: newAttendeeConnectionId,
 							updateProviders: [initialAttendeeConnectionId],
 							connectionOrder: 1,
+							priorClientToSessionId:  {
+								[oldAttendeeConnectionId]: {
+									rev: 0,
+									timestamp: 0,
+									value: "collateral-id",
+								},
+							}
 						});
 
 						const responseSignal = generateBasicClientJoin(clock.now - 5, {
@@ -312,6 +319,7 @@ describe("Presence", () => {
 							},
 						});
 
+						// Process initial join signal so initial attendee is known
 						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
 						assert.strictEqual(
 							joinedAttendees.length,
@@ -335,6 +343,8 @@ describe("Presence", () => {
 							0,
 							"Expected no attendees to be announced",
 						);
+						// Verify attendee information remains unchanged
+						verifyAttendee(rejoinAttendees[0], newAttendeeConnectionId, "collateral-id");
 					});
 				});
 
