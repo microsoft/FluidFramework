@@ -383,7 +383,7 @@ export class SchematizingSimpleTreeView<
 
 	// #region Branching
 
-	public fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TRootSchema> {
+	public fork(): ReturnType<TreeBranch["fork"]> & SchematizingSimpleTreeView<TRootSchema> {
 		return this.checkout.branch().viewWith(this.config);
 	}
 

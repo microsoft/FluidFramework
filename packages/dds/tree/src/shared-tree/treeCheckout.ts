@@ -73,6 +73,7 @@ import type {
 	UnsafeUnknownSchema,
 	ViewableTree,
 	TreeBranch,
+	TreeChangeEvents,
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
@@ -342,6 +343,8 @@ export interface RevertMetrics {
 export class TreeCheckout implements ITreeCheckoutFork {
 	public disposed = false;
 
+	private readonly editLock: EditLock;
+
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
@@ -432,6 +435,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			},
 		);
 
+		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
+
 		branch.events.on("afterChange", (event) => {
 			// The following logic allows revertibles to be generated for the change.
 			// Currently only appends (including merges and transaction commits) are supported.
@@ -484,6 +489,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	private readonly onAfterChange = (event: SharedTreeBranchChange<SharedTreeChange>): void => {
+		this.editLock.lock();
 		this.#events.emit("beforeBatch", event);
 		if (event.change !== undefined) {
 			const revision =
@@ -521,6 +527,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			}
 		}
 		this.#events.emit("afterBatch");
+		this.editLock.unlock();
 		if (event.type === "append") {
 			event.newCommits.forEach((commit) => this.validateCommit(commit));
 		}
@@ -665,7 +672,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	public get editor(): ISharedTreeEditor {
 		this.checkNotDisposed();
-		return this.#transaction.activeBranchEditor;
+		return this.editLock.editor;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -692,6 +699,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
+		this.editLock.checkUnlocked("Branching");
 		const anchors = new AnchorSet();
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
@@ -720,6 +728,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		checkout.checkNotDisposed(
 			"The source of the branch rebase has been disposed and cannot be rebased.",
 		);
+		this.editLock.checkUnlocked("Rebasing");
 		assert(
 			!checkout.transaction.isInProgress(),
 			0x9af /* A view cannot be rebased while it has a pending transaction */,
@@ -748,6 +757,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		checkout.checkNotDisposed(
 			"The source of the branch merge has been disposed and cannot be merged.",
 		);
+		this.editLock.checkUnlocked("Merging");
 		assert(
 			!this.transaction.isInProgress(),
 			0x9b0 /* Views cannot be merged into a view while it has a pending transaction */,
@@ -768,6 +778,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public dispose(): void {
+		this.editLock.checkUnlocked("Disposing a view");
 		this[disposeSymbol]();
 	}
 
@@ -954,4 +965,104 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	// #endregion Commit Validation
+}
+
+/**
+ * A helper class that assists {@link TreeCheckout} in preventing functionality from being used while the tree is in the middle of being edited.
+ */
+class EditLock {
+	/**
+	 * Edits the tree by calling the methods of the editor passed into the {@link EditLock} constructor.
+	 * @remarks Edits will throw an error if the lock is currently locked.
+	 */
+	public editor: ISharedTreeEditor;
+	private locked = false;
+
+	/**
+	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.
+	 * Use {@link EditLock.editor} in place of the original editor to ensure that changes are monitored.
+	 */
+	public constructor(editor: ISharedTreeEditor) {
+		const checkLock = (): void => this.checkUnlocked("Editing the tree");
+		this.editor = {
+			get schema() {
+				return editor.schema;
+			},
+			valueField(...fieldArgs) {
+				const valueField = editor.valueField(...fieldArgs);
+				return {
+					set(...editArgs) {
+						checkLock();
+						valueField.set(...editArgs);
+					},
+				};
+			},
+			optionalField(...fieldArgs) {
+				const optionalField = editor.optionalField(...fieldArgs);
+				return {
+					set(...editArgs) {
+						checkLock();
+						optionalField.set(...editArgs);
+					},
+				};
+			},
+			sequenceField(...fieldArgs) {
+				const sequenceField = editor.sequenceField(...fieldArgs);
+				return {
+					insert(...editArgs) {
+						checkLock();
+						sequenceField.insert(...editArgs);
+					},
+					remove(...editArgs) {
+						checkLock();
+						sequenceField.remove(...editArgs);
+					},
+				};
+			},
+			move(...moveArgs) {
+				checkLock();
+				editor.move(...moveArgs);
+			},
+			addNodeExistsConstraint(path) {
+				editor.addNodeExistsConstraint(path);
+			},
+		};
+	}
+
+	/**
+	 * Prevent further changes from being made to {@link EditLock.editor} until {@link EditLock.unlock} is called.
+	 * @remarks May only be called when the lock is not already locked.
+	 */
+	public lock(): void {
+		if (this.locked) {
+			debugger;
+		}
+		assert(!this.locked, "Checkout has already been locked");
+		this.locked = true;
+	}
+
+	/**
+	 * Throws an error if the lock is currently locked.
+	 * @param action - The current action being performed by the user.
+	 * This must start with a capital letter, as it shows up as the first part of the error message and we want it to look nice.
+	 */
+	public checkUnlocked<T extends string>(action: T extends Capitalize<T> ? T : never): void {
+		if (this.locked) {
+			// These type assertions ensure that the event name strings used here match the actual event names
+			const nodeChanged: keyof TreeChangeEvents = "nodeChanged";
+			const treeChanged: keyof TreeChangeEvents = "treeChanged";
+			throw new UsageError(
+				`${action} is forbidden during a ${nodeChanged} or ${treeChanged} event`,
+			);
+		}
+	}
+
+	/**
+	 * Allow changes to be made to {@link EditLock.editor} again.
+	 * @remarks May only be called when the lock is currently locked.
+	 */
+	public unlock(): void {
+		assert(this.locked, "Checkout has not been locked");
+		this.locked = false;
+	}
 }
