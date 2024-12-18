@@ -2192,7 +2192,7 @@ describeCompat(
 			},
 		);
 
-		itExpects.only(
+		itExpects(
 			`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
 				// All containers close: contianer1, container2, container3
@@ -2323,6 +2323,7 @@ describeCompat(
 				);
 			},
 		);
+
 		itExpects(
 			`Single-Threaded Forks: Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
 			[
