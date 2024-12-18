@@ -17,7 +17,7 @@ import {
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICache, IDenyList, ITenantService } from "./services";
+import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 import * as app from "./app";
 
 export class HistorianRunner implements IRunner {
@@ -39,6 +39,7 @@ export class HistorianRunner implements IRunner {
 		private readonly denyList?: IDenyList,
 		private readonly ephemeralDocumentTTLSec?: number,
 		private readonly readinessCheck?: IReadinessCheck,
+		private readonly simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -58,6 +59,7 @@ export class HistorianRunner implements IRunner {
 			this.denyList,
 			this.ephemeralDocumentTTLSec,
 			this.readinessCheck,
+			this.simplifiedCustomDataRetriever,
 		);
 		historian.set("port", this.port);
 
