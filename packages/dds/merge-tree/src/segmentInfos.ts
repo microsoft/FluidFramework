@@ -62,10 +62,10 @@ export const hasInsertionInfo = (
 	maybe: Partial<IInsertionInfo> | undefined,
 ): maybe is IInsertionInfo => toInsertionInfo(maybe) !== undefined;
 
-export const assertInsertionInfo: (
-	maybe: Partial<IInsertionInfo>,
-) => asserts maybe is IInsertionInfo = (maybe) =>
-	assert(hasInsertionInfo(maybe), "must be insertionInfo");
+export const assertInsertionInfo: <T extends Partial<IInsertionInfo> | undefined>(
+	maybe: Partial<IInsertionInfo> | T,
+) => asserts maybe is IInsertionInfo | Exclude<T, Partial<IInsertionInfo>> = (maybe) =>
+	assert(maybe === undefined || hasInsertionInfo(maybe), "must be insertionInfo");
 
 /**
  * Contains removal information associated to an {@link ISegment}.
@@ -112,11 +112,10 @@ export const hasRemovalInfo = (
 	maybe: Partial<IRemovalInfo> | undefined,
 ): maybe is IRemovalInfo => toRemovalInfo(maybe) !== undefined;
 
-export const assertRemovalInfo: (
-	maybe: Partial<IRemovalInfo>,
-) => asserts maybe is IRemovalInfo = (maybe) =>
-	assert(hasRemovalInfo(maybe), "must be removalInfo");
-
+export const assertRemovalInfo: <T extends Partial<IRemovalInfo> | undefined>(
+	maybe: Partial<IRemovalInfo> | T,
+) => asserts maybe is IRemovalInfo | Exclude<T, Partial<IRemovalInfo>> = (maybe) =>
+	assert(maybe === undefined || hasRemovalInfo(maybe), "must be IRemovalInfo");
 /**
  * Tracks information about when and where this segment was moved to.
  *
@@ -201,10 +200,14 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 export const hasMoveInfo = (maybe: Partial<IMoveInfo> | undefined): maybe is IMoveInfo =>
 	toMoveInfo(maybe) !== undefined;
 
-export const assertMoveInfo: (maybe: Partial<IMoveInfo>) => asserts maybe is IMoveInfo = (
-	maybe,
-) => assert(hasMoveInfo(maybe), "must be MoveInfo");
+export const assertMoveInfo: <T extends Partial<IMoveInfo> | undefined>(
+	maybe: Partial<IMoveInfo> | T,
+) => asserts maybe is IMoveInfo | Exclude<T, Partial<IMoveInfo>> = (maybe) =>
+	assert(maybe === undefined || hasMoveInfo(maybe), "must be IMoveInfo");
 
+/**
+ * @internal
+ */
 export type SegmentInfo = IInsertionInfo | IMoveInfo | IRemovalInfo;
 
 export type SegmentWithInfo<T extends SegmentInfo> = ISegmentInternal & T;

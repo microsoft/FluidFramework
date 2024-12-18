@@ -4,10 +4,10 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
 
 import type {
 	IAcceptedMigrationDetails,
