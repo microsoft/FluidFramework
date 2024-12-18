@@ -17,9 +17,11 @@ import sinon from "sinon";
 import {
 	type ITenantKeyGenerator,
 	TenantKeyGenerator,
+	generateToken,
 } from "@fluidframework/server-services-utils";
 import assert from "assert";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 
 class TestSecretManager implements ISecretManager {
 	constructor() {}
@@ -130,6 +132,32 @@ const tenantWithKeyless: ITenantDocument = {
 		secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
 	},
 };
+
+const keylessAccessTokenClaims = {
+	documentId: "documentId",
+	tenantId: "cordflasher-dolphin",
+	scopes: [ScopeType.DocRead, ScopeType.DocWrite],
+	user: {
+		id: "user1",
+	},
+	iat: Math.round(new Date().getTime() / 1000),
+	exp: Math.round(new Date().getTime() / 1000) + 3600,
+	ver: "1.0",
+	jti: "jti",
+	fluidRelayKeylessAccess: true,
+};
+
+// const accessTokenClaims = {
+// 	documentId: "documentId",
+// 	tenantId: "cordflasher-dolphin",
+// 	scopes: [ScopeType.DocRead, ScopeType.DocWrite],
+// 	user: {
+// 		id: "user1",
+// 	},
+// 	iat: Math.round(new Date().getTime() / 1000),
+// 	exp: Math.round(new Date().getTime() / 1000) + 3600,
+// 	ver: "1.0",
+// };
 
 describe("TenantManager", () => {
 	let tenantManager: TenantManager;
@@ -314,6 +342,178 @@ describe("TenantManager", () => {
 			const keys = await tenantManager.getTenantKeys("cordflasher-dolphin");
 			assert.strictEqual(keys.key1, expectedKeys.key1);
 			assert.strictEqual(keys.key2, expectedKeys.key2);
+		});
+	});
+
+	describe("refreshTenantKey", () => {
+		it("Should throw a 404 the tenant does not have private keys and private keys are requested", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutKeyless);
+			const keysP = tenantManager.refreshTenantKey("cordflasher-dolphin", "key1", true);
+			await assert.rejects(keysP, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 404);
+				assert.strictEqual(
+					err.message,
+					`Private keys are missing for tenant id cordflasher-dolphin`,
+				);
+				return true;
+			});
+		});
+
+		it("Should refresh private tenant keys but return an empty string", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			sandbox.stub(tenantRepository, "update").resolves();
+			const keys = await tenantManager.refreshTenantKey("cordflasher-dolphin", "key1", true);
+			assert.strictEqual(keys.key1, "");
+			assert.strictEqual(keys.key2, "");
+		});
+
+		it("Should refresh shared tenant keys", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			sandbox.stub(tenantRepository, "update").resolves();
+			const updatedKey1 = await tenantManager.refreshTenantKey("cordflasher-dolphin", "key1");
+			assert.notStrictEqual(updatedKey1.key1, tenantWithKeyless.key);
+			assert.strictEqual(updatedKey1.key2, tenantWithKeyless.secondaryKey);
+
+			const updatedKey2 = await tenantManager.refreshTenantKey("cordflasher-dolphin", "key2");
+			assert.strictEqual(updatedKey2.key1, tenantWithKeyless.key);
+			assert.notStrictEqual(updatedKey2.key2, tenantWithKeyless.secondaryKey);
+		});
+	});
+
+	describe("validateToken", () => {
+		it("Should validate a token using private keys when fluidRelayKeylessAccess claim is true", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			const tokenKey1 = generateToken(
+				keylessAccessTokenClaims.tenantId,
+				keylessAccessTokenClaims.documentId,
+				tenantWithKeyless.privateKeys!.key,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+				undefined,
+				keylessAccessTokenClaims.fluidRelayKeylessAccess,
+			);
+			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
+			await assert.doesNotReject(validationPKey1);
+
+			const tokenKey2 = generateToken(
+				keylessAccessTokenClaims.tenantId,
+				keylessAccessTokenClaims.documentId,
+				tenantWithKeyless.privateKeys!.secondaryKey,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+				undefined,
+				keylessAccessTokenClaims.fluidRelayKeylessAccess,
+			);
+			const validationPKey2 = tenantManager.validateToken("cordflasher-dolphin", tokenKey2);
+			await assert.doesNotReject(validationPKey2);
+		});
+
+		it("Should validate a token using shared keys when fluidRelayKeylessAccess claim is missing/false", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			const tokenKey1 = generateToken(
+				keylessAccessTokenClaims.tenantId,
+				keylessAccessTokenClaims.documentId,
+				tenantWithKeyless.key,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+			);
+			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
+			await assert.doesNotReject(validationPKey1);
+
+			const tokenKey2 = generateToken(
+				keylessAccessTokenClaims.tenantId,
+				keylessAccessTokenClaims.documentId,
+				tenantWithKeyless.secondaryKey,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+			);
+			const validationPKey2 = tenantManager.validateToken("cordflasher-dolphin", tokenKey2);
+			await assert.doesNotReject(validationPKey2);
+		});
+
+		it("Should fail validation with private keys when validating token signed using shared keys and fluidRelayKeylessAccess is true", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			const tokenKey1 = generateToken(
+				keylessAccessTokenClaims.tenantId,
+				keylessAccessTokenClaims.documentId,
+				tenantWithKeyless.key,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+				undefined,
+				keylessAccessTokenClaims.fluidRelayKeylessAccess,
+			);
+			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
+			await assert.rejects(validationPKey1, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 403);
+				return true;
+			});
+
+			const tokenKey2 = generateToken(
+				keylessAccessTokenClaims.tenantId,
+				keylessAccessTokenClaims.documentId,
+				tenantWithKeyless.secondaryKey,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+				undefined,
+				keylessAccessTokenClaims.fluidRelayKeylessAccess,
+			);
+			const validationPKey2 = tenantManager.validateToken("cordflasher-dolphin", tokenKey2);
+			await assert.rejects(validationPKey2, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 403);
+				return true;
+			});
+		});
+
+		it("Should fail validation with shared keys when validating token signed using private keys and fluidRelayKeylessAccess is false/missing", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			const tokenKey1 = generateToken(
+				keylessAccessTokenClaims.tenantId,
+				keylessAccessTokenClaims.documentId,
+				tenantWithKeyless.privateKeys!.key,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+				undefined,
+			);
+			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
+			await assert.rejects(validationPKey1, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 403);
+				return true;
+			});
+
+			const tokenKey2 = generateToken(
+				keylessAccessTokenClaims.tenantId,
+				keylessAccessTokenClaims.documentId,
+				tenantWithKeyless.privateKeys!.secondaryKey,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+				undefined,
+			);
+			const validationPKey2 = tenantManager.validateToken("cordflasher-dolphin", tokenKey2);
+			await assert.rejects(validationPKey2, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 403);
+				return true;
+			});
 		});
 	});
 });

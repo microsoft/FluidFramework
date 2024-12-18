@@ -767,7 +767,7 @@ export class TenantManager {
 		}
 
 		if (refreshPrivateKey) {
-			const keyNextRotationTime = Math.round(new Date().getTime() / 1000) + 24 * 60 * 60;
+			const newKeyNextRotationTime = Math.round(new Date().getTime() / 1000) + 24 * 60 * 60;
 			const existingPrivateKeys = tenantDocument.privateKeys;
 			if (!existingPrivateKeys) {
 				Lumberjack.error(`Private keys are missing for tenant id ${tenantId}`, {
@@ -781,11 +781,11 @@ export class TenantManager {
 							key: existingPrivateKeys.key,
 							keyNextRotationTime: existingPrivateKeys.keyNextRotationTime,
 							secondaryKey: encryptedNewTenantKey,
-							secondaryKeyNextRotationTime: keyNextRotationTime,
+							secondaryKeyNextRotationTime: newKeyNextRotationTime,
 					  }
 					: {
 							key: encryptedNewTenantKey,
-							keyNextRotationTime,
+							keyNextRotationTime: newKeyNextRotationTime,
 							secondaryKey: existingPrivateKeys.secondaryKey,
 							secondaryKeyNextRotationTime:
 								existingPrivateKeys.secondaryKeyNextRotationTime,
