@@ -17,7 +17,7 @@ import {
 	Typography,
 } from "@mui/material";
 import type { IFluidContainer, TreeView } from "fluid-framework";
-import React, { createContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { PresenceManager } from "./presence";
 

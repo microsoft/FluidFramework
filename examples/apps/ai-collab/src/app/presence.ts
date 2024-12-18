@@ -101,7 +101,6 @@ export class PresenceManager {
 	getUserInfo(sessionList: ISessionClient<ClientSessionId>[]) {
 		const userInfoList: User[] = [];
 
-		console.log("sessionList", sessionList);
 		for (const sessionClient of sessionList) {
 			// If local user or remote user is connected, then only add it to the list
 			try {
