@@ -364,6 +364,24 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 */
 	getContainerPackageInfo?(): IContainerPackageInfo | undefined;
 
+	//* Copilot's opinion :P
+	// readonly status: {
+	// 	readonly connected: boolean;
+	// 	readonly readonly: boolean;
+	// 	readonly dirty: boolean;
+	// 	readonly attached: boolean;
+	// 	readonly version: string | undefined;
+	// 	readonly audience: IAudience;
+	// 	readonly clientId: string | undefined;
+	// 	readonly connectionState: ConnectionState;
+	// 	readonly resolvedUrl: IResolvedUrl | undefined;
+	// 	readonly attachState: AttachState;
+	// 	readonly codeDetails: IFluidCodeDetails | undefined;
+	// 	readonly loadedCodeDetails: IFluidCodeDetails | undefined;
+	// 	readonly packageInfo: IContainerPackageInfo | undefined;
+	// 	readonly containerMetadata: Record<string, string>;
+	// }
+
 	/**
 	 * Returns true if the container has been closed and/or disposed, otherwise false.
 	 */
