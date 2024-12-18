@@ -101,10 +101,6 @@ parameters:
   type: string
   default: npm
 
-- name: runWebpack
-  type: boolean
-  default: false
-
 # Parameter for modifying the 'types' field in the package.json.
 # If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
 - name: packageTypesOverride
@@ -358,13 +354,12 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
-              - ${{ if eq(parameters.runWebpack, true) }}:
-                - task: Npm@1
-                  displayName: 'npm run webpack'
-                  inputs:
-                    command: custom
-                    workingDir: '${{ parameters.buildDirectory }}'
-                    customCommand: 'run webpack'
+              - task: Npm@1
+                displayName: 'npm run webpack'
+                inputs:
+                  command: custom
+                  workingDir: '${{ parameters.buildDirectory }}'
+                  customCommand: 'run webpack'
 
               - script: |
                   echo "Preparing nested lib/dist directories for publishing..."
@@ -434,6 +429,7 @@ extends:
                     inputs:
                       sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
+
 
                   # At this point we want to publish the artifact with the bundle size analysis,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
