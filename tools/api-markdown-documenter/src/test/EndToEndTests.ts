@@ -22,7 +22,6 @@ import {
 	transformApiModel,
 	type MarkdownRenderer,
 	type HtmlRenderer,
-	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
 	type FolderHierarchyConfig,
 	type SectionHierarchyConfig,
@@ -145,13 +144,13 @@ export function endToEndTests<const TRenderConfig extends RenderConfig>(
 					);
 
 					describe(testConfig.testName, () => {
-						let config: ApiItemTransformationConfiguration & TRenderConfig;
+						let config: ApiItemTransformationOptions & TRenderConfig;
 						before(async () => {
 							config = {
 								...testConfig.renderConfig,
 								apiModel,
 								outputDirectoryPath: temporaryDirectoryPath,
-							} as unknown as ApiItemTransformationConfiguration & TRenderConfig;
+							} as unknown as ApiItemTransformationOptions & TRenderConfig;
 						});
 
 						// Run a sanity check to ensure that the suite did not generate multiple documents with the same
