@@ -120,13 +120,8 @@ export {
 } from "./brandedMap.js";
 
 export {
-	getFirstEntryFromRangeMap,
-	getFromRangeMap,
-	type RangeEntry,
-	type RangeMap,
+	RangeMap,
 	type RangeQueryResult,
-	setInRangeMap,
-	deleteFromRangeMap,
 } from "./rangeMap.js";
 
 export {
