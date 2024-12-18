@@ -100,10 +100,10 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
     readonly closed: boolean;
+    readonly closedWithError?: ICriticalContainerError | undefined;
     connect(): void;
     readonly connectionState: ConnectionState;
     containerMetadata: Record<string, string>;
-    readonly criticalError?: ICriticalContainerError;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     dispose(error?: ICriticalContainerError): void;

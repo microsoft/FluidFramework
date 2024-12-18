@@ -5,7 +5,7 @@
 "section": feature
 ---
 
-IContainer.criticalError added to access which error closed the container
+IContainer.closedWithError added to access which error closed the container
 
 Once the container is closed or disposed with an error, this property will be set to that error.
 

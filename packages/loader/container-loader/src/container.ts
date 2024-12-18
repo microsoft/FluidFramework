@@ -580,11 +580,11 @@ export class Container
 	}
 
 	/**
-	 * Critical/fatal error that caused the container to close or dispose.
+	 * The error that caused the container to close or dispose.
 	 *
 	 * @remarks If the container is closed and then disposed, both with errors given, this will expose the close error only.
 	 */
-	public get criticalError(): ICriticalContainerError | undefined {
+	public get closedWithError(): ICriticalContainerError | undefined {
 		return this._criticalError;
 	}
 	private _criticalError?: ICriticalContainerError;
@@ -1197,12 +1197,11 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "disposed";
-			// Corner cases that are expressed imprecisely here: When disposing with an error...
-			// - If we closed with an error, _criticalError doesn't expose the dispose error.
-			// - If we closed without an error, _criticalError doesn't distinguish whether this error came from close or dispose.
-			if (this._criticalError === undefined) {
-				this._criticalError = error;
-			}
+			// Corner cases that are expressed imprecisely here:
+			// When disposing with an error...
+			// - if we closed with an error, _criticalError doesn't expose the dispose error.
+			// - if we closed without an error, _criticalError doesn't distinguish whether this error came from close or dispose.
+			this._criticalError ??= error;
 			this._lifecycleEvents.emit("disposed");
 		}
 	}
