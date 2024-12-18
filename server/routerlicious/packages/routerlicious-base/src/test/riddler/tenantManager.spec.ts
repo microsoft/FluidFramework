@@ -477,7 +477,7 @@ describe("TenantManager", () => {
 				keylessAccessTokenClaims.user,
 				undefined,
 				keylessAccessTokenClaims.ver,
-				undefined
+				undefined,
 			);
 			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
 			await assert.rejects(validationPKey1, (err) => {
@@ -494,7 +494,7 @@ describe("TenantManager", () => {
 				keylessAccessTokenClaims.user,
 				undefined,
 				keylessAccessTokenClaims.ver,
-				undefined
+				undefined,
 			);
 			const validationPKey2 = tenantManager.validateToken("cordflasher-dolphin", tokenKey2);
 			await assert.rejects(validationPKey2, (err) => {
