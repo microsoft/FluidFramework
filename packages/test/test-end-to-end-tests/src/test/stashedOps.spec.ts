@@ -2192,141 +2192,143 @@ describeCompat(
 			},
 		);
 
-		itExpects(
-			`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
-			[
-				// All containers close: contianer1, container2, container3
-				// container2 or container3 (the loser of the race) will close with "Forked Container Error",
-				// The other two will close with "Duplicate batch"
-				// Due to the race condition, we can't specify the order of the different errors here.
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "error",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "error",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "error",
-				},
-			],
-			async function () {
-				// AB#14900, 20297: this test is extremely flaky on Tinylicious and causing noise.
-				// Skip it for now until above items are resolved.
-				if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
-					this.skip();
-				}
-				const incrementValue = 3;
-				const pendingLocalState = await getPendingOps(
-					testContainerConfig_noSummarizer,
-					provider,
-					false, // Don't send ops from first container instance before closing
-					async (c, d) => {
-						const counter = await d.getSharedObject<SharedCounter>(counterId);
-						// Include an ID Allocation op to get coverage of the special logic around these ops as well
-						getIdCompressor(counter).generateCompressedId();
-						counter.increment(incrementValue);
+		for (let i = 0; i < 2; i++) {
+			itExpects.only(
+				`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
+				[
+					// All containers close: contianer1, container2, container3
+					// container2 or container3 (the loser of the race) will close with "Forked Container Error",
+					// The other two will close with "Duplicate batch"
+					// Due to the race condition, we can't specify the order of the different errors here.
+					{
+						eventName: "fluid:telemetry:Container:ContainerClose",
+						category: "error",
 					},
-				);
-
-				async function rehydrateConnectAndPause(loggingId: string) {
-					// Rehydrate and immediately pause outbound to ensure we don't send the ops yet
-					// Container won't be connected yet, so no race here.
-					const container = await loader.resolve(
-						{
-							url,
-							headers: {
-								[LoaderHeader.loadMode]: { deltaConnection: "none" },
-							} satisfies Partial<ILoaderHeader>,
+					{
+						eventName: "fluid:telemetry:Container:ContainerClose",
+						category: "error",
+					},
+					{
+						eventName: "fluid:telemetry:Container:ContainerClose",
+						category: "error",
+					},
+				],
+				async function () {
+					// AB#14900, 20297: this test is extremely flaky on Tinylicious and causing noise.
+					// Skip it for now until above items are resolved.
+					// if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+					// 	this.skip();
+					// }
+					const incrementValue = 3;
+					const pendingLocalState = await getPendingOps(
+						testContainerConfig_noSummarizer,
+						provider,
+						false, // Don't send ops from first container instance before closing
+						async (c, d) => {
+							const counter = await d.getSharedObject<SharedCounter>(counterId);
+							// Include an ID Allocation op to get coverage of the special logic around these ops as well
+							getIdCompressor(counter).generateCompressedId();
+							counter.increment(incrementValue);
 						},
-						pendingLocalState,
 					);
-					await toIDeltaManagerFull(container.deltaManager).outbound.pause();
-					container.connect();
 
-					// Wait for the container to connect, and then pause the inbound queue
-					// This order matters - we need to process our inbound join op to finish connecting!
-					await waitForContainerConnection(container, true /* failOnContainerClose */, {
-						reject: true,
-						errorMsg: `${loggingId} didn't connect in time`,
-					});
-					await toIDeltaManagerFull(container.deltaManager).inbound.pause();
+					async function rehydrateConnectAndPause(loggingId: string) {
+						// Rehydrate and immediately pause outbound to ensure we don't send the ops yet
+						// Container won't be connected yet, so no race here.
+						const container = await loader.resolve(
+							{
+								url,
+								headers: {
+									[LoaderHeader.loadMode]: { deltaConnection: "none" },
+								} satisfies Partial<ILoaderHeader>,
+							},
+							pendingLocalState,
+						);
+						await toIDeltaManagerFull(container.deltaManager).outbound.pause();
+						container.connect();
 
-					// Now this container should submit the op when we resume the outbound queue
-					return container;
-				}
+						// Wait for the container to connect, and then pause the inbound queue
+						// This order matters - we need to process our inbound join op to finish connecting!
+						await waitForContainerConnection(container, true /* failOnContainerClose */, {
+							reject: true,
+							errorMsg: `${loggingId} didn't connect in time`,
+						});
+						await toIDeltaManagerFull(container.deltaManager).inbound.pause();
 
-				// Rehydrate twice, waiting for each to connect but blocking outgoing for both, to avoid submitting any ops yet
-				const container2 = await rehydrateConnectAndPause("container2");
-				const container3 = await rehydrateConnectAndPause("container3");
+						// Now this container should submit the op when we resume the outbound queue
+						return container;
+					}
 
-				// Get these before any containers close
-				const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-				const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
-				const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
-				const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
+					// Rehydrate twice, waiting for each to connect but blocking outgoing for both, to avoid submitting any ops yet
+					const container2 = await rehydrateConnectAndPause("container2");
+					const container3 = await rehydrateConnectAndPause("container3");
 
-				const container2DeltaManager = toIDeltaManagerFull(container2.deltaManager);
-				const container3DeltaManager = toIDeltaManagerFull(container3.deltaManager);
-				// Here's the "in parallel" part - resume both outbound queues at the same time,
-				// and then resume both inbound queues once the outbound queues are idle (done sending).
-				const allSentP = Promise.all([
-					timeoutPromise<unknown>(
-						(resolve) => {
-							container2DeltaManager.outbound.once("idle", resolve);
-						},
-						{ errorMsg: "container2 outbound queue never reached idle state" },
-					),
-					timeoutPromise<unknown>(
-						(resolve) => {
-							container3DeltaManager.outbound.once("idle", resolve);
-						},
-						{ errorMsg: "container3 outbound queue never reached idle state" },
-					),
-				]);
-				container2DeltaManager.outbound.resume();
-				container3DeltaManager.outbound.resume();
-				await allSentP;
-				container2DeltaManager.inbound.resume();
-				container3DeltaManager.inbound.resume();
+					// Get these before any containers close
+					const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+					const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+					const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+					const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-				// At this point, both rehydrated containers should have submitted the same Counter op.
-				// ContainerRuntime will use PSM and BatchTracker and it will play out like this:
-				// - One will win the race and get their op sequenced first.
-				// - Then the other will close with Forked Container Error when it sees that ack - with matching batchId but from a different client
-				// - Each other client (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will close.
-				await provider.ensureSynchronized();
+					const container2DeltaManager = toIDeltaManagerFull(container2.deltaManager);
+					const container3DeltaManager = toIDeltaManagerFull(container3.deltaManager);
+					// Here's the "in parallel" part - resume both outbound queues at the same time,
+					// and then resume both inbound queues once the outbound queues are idle (done sending).
+					const allSentP = Promise.all([
+						timeoutPromise<unknown>(
+							(resolve) => {
+								container2DeltaManager.outbound.once("idle", resolve);
+							},
+							{ errorMsg: "container2 outbound queue never reached idle state" },
+						),
+						timeoutPromise<unknown>(
+							(resolve) => {
+								container3DeltaManager.outbound.once("idle", resolve);
+							},
+							{ errorMsg: "container3 outbound queue never reached idle state" },
+						),
+					]);
+					container2DeltaManager.outbound.resume();
+					container3DeltaManager.outbound.resume();
+					await allSentP;
+					container2DeltaManager.inbound.resume();
+					container3DeltaManager.inbound.resume();
 
-				// Both containers will close with the correct value for the counter.
-				// The container whose op is sequenced first will close with "Duplicate batch" error
-				// when it sees the other container's batch come in.
-				// The other container (that loses the race to be sequenced) will close with "Forked Container Error"
-				// when it sees the winner's batch come in.
-				assert(container2.closed, "container2 should be closed");
-				assert(container3.closed, "container3 should be closed");
-				assert.strictEqual(
-					counter2.value,
-					incrementValue,
-					"container2 should have incremented to 3 (at least locally)",
-				);
-				assert.strictEqual(
-					counter3.value,
-					incrementValue,
-					"container3 should have incremented to 3 (at least locally)",
-				);
+					// At this point, both rehydrated containers should have submitted the same Counter op.
+					// ContainerRuntime will use PSM and BatchTracker and it will play out like this:
+					// - One will win the race and get their op sequenced first.
+					// - Then the other will close with Forked Container Error when it sees that ack - with matching batchId but from a different client
+					// - Each other client (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will close.
+					await provider.ensureSynchronized();
 
-				// Container1 is not used directly in this test, but is present and observing the session,
-				// so we can double-check eventual consistency - the container should have closed when processing the duplicate (after applying the first)
-				assert(container1.closed, "container1 should be closed");
-				assert.strictEqual(
-					counter1.value,
-					incrementValue,
-					"container1 should have incremented to 3 before closing",
-				);
-			},
-		);
+					// Both containers will close with the correct value for the counter.
+					// The container whose op is sequenced first will close with "Duplicate batch" error
+					// when it sees the other container's batch come in.
+					// The other container (that loses the race to be sequenced) will close with "Forked Container Error"
+					// when it sees the winner's batch come in.
+					assert(container2.closed, "container2 should be closed");
+					assert(container3.closed, "container3 should be closed");
+					assert.strictEqual(
+						counter2.value,
+						incrementValue,
+						"container2 should have incremented to 3 (at least locally)",
+					);
+					assert.strictEqual(
+						counter3.value,
+						incrementValue,
+						"container3 should have incremented to 3 (at least locally)",
+					);
+
+					// Container1 is not used directly in this test, but is present and observing the session,
+					// so we can double-check eventual consistency - the container should have closed when processing the duplicate (after applying the first)
+					assert(container1.closed, "container1 should be closed");
+					assert.strictEqual(
+						counter1.value,
+						incrementValue,
+						"container1 should have incremented to 3 before closing",
+					);
+				},
+			);
+		}
 
 		itExpects(
 			`Single-Threaded Forks: Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
