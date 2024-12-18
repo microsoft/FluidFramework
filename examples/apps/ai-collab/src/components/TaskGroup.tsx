@@ -10,7 +10,16 @@ import {
 	type Difference,
 	SharedTreeBranchManager,
 } from "@fluidframework/ai-collab/alpha";
-import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
+import {
+	CommitKind,
+	RevertibleStatus,
+	TreeAlpha,
+	type CommitMetadata,
+	type Revertible,
+	type RevertibleFactory,
+	type TreeBranch,
+	type TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -26,7 +35,7 @@ import {
 } from "@mui/material";
 import { type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { TaskCard } from "./TaskCard";
 
@@ -59,7 +68,90 @@ export function TaskGroup(props: {
 		newBranchTargetNode: SharedTreeTaskGroup;
 	}>();
 
+	const [undoStack, setUndoStack] = useState<Revertible[]>([]);
+	const [redoStack, setRedoStack] = useState<Revertible[]>([]);
+
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTaskGroup, logId: "TaskGroup" });
+
+	/**
+	 * Create undo and redo stacks of {@link Revertible}.
+	 */
+	useEffect(() => {
+		function onRevertibleDisposed(disposed: Revertible): void {
+			const redoIndex = redoStack.indexOf(disposed);
+			if (redoIndex === -1) {
+				const undoIndex = undoStack.indexOf(disposed);
+				if (undoIndex !== -1) {
+					setUndoStack((currUndoStack) => {
+						const newUndoStack = [...currUndoStack];
+						newUndoStack.splice(undoIndex, 1);
+						return newUndoStack;
+					});
+				}
+			} else {
+				setRedoStack((currRedostack) => {
+					const newRedoStack = [...currRedostack];
+					newRedoStack.splice(redoIndex, 1);
+					return newRedoStack;
+				});
+			}
+		}
+
+		/**
+		 * Instead of application developer manually managing the life cycle of the {@link Revertible} instances,
+		 * example app stores upto `MAX_STACK_SIZE` number of {@link Revertible} instances in the undo and redo stacks.
+		 * When the stack size exceeds `MAX_STACK_SIZE`, the oldest {@link Revertible} instance is disposed.
+		 * @param stack - The primary stack that the {@link Revertible} instance is being added to.
+		 * @param setstack - The setter function for the primary stack.
+		 */
+		function maintainStackSize(
+			stack: Revertible[],
+			setStack: React.Dispatch<React.SetStateAction<Revertible[]>>,
+		): void {
+			const MAX_STACK_SIZE = 5;
+
+			if (stack.length > MAX_STACK_SIZE) {
+				console.log("Stack size exceeded! Disposing oldest revertible.");
+				const oldestRevertible = stack[0];
+				if (oldestRevertible) {
+					if (oldestRevertible.status !== RevertibleStatus.Disposed) {
+						oldestRevertible.dispose();
+					}
+					// Use functional updates to ensure we're working with the latest state
+					setStack((currentStack) => {
+						const newStack = currentStack.filter((item) => item !== oldestRevertible);
+						return newStack;
+					});
+				}
+			}
+		}
+
+		const handleCommitApplied = props.treeView.events.on(
+			"commitApplied",
+			(commit: CommitMetadata, getRevertible?: RevertibleFactory) => {
+				if (getRevertible !== undefined) {
+					const revertible = getRevertible(onRevertibleDisposed);
+					if (commit.kind === CommitKind.Undo) {
+						setRedoStack((current) => {
+							const newStack = [...current, revertible];
+							maintainStackSize(newStack, setRedoStack);
+							return newStack;
+						});
+					} else {
+						setUndoStack((current) => {
+							const newStack = [...current, revertible];
+							maintainStackSize(newStack, setUndoStack);
+							return newStack;
+						});
+					}
+				}
+			},
+		);
+
+		return () => {
+			handleCommitApplied();
+		};
+	}, [props.treeView.events, undoStack, redoStack]);
 
 	/**
 	 * Helper function for ai collaboration which creates a new branch from the current {@link SharedTreeAppState}
@@ -243,6 +335,34 @@ export function TaskGroup(props: {
 						differences={llmBranchData.differences}
 						newBranchTargetNode={llmBranchData.newBranchTargetNode}
 					></TaskGroupDiffModal>
+				)}
+
+				{undoStack.length > 0 && (
+					<Button
+						variant="contained"
+						color="error"
+						onClick={() => {
+							const revertible = undoStack[undoStack.length - 1];
+							revertible?.revert();
+							undoStack.pop();
+						}}
+					>
+						Undo
+					</Button>
+				)}
+
+				{redoStack.length > 0 && (
+					<Button
+						variant="contained"
+						color="info"
+						onClick={() => {
+							const revertible = redoStack[redoStack.length - 1];
+							revertible?.revert();
+							redoStack.pop();
+						}}
+					>
+						Redo
+					</Button>
 				)}
 
 				<Button
