@@ -2495,9 +2495,9 @@ export class Container
 		if (
 			supportedFeaturesForRuntime &&
 			!checkLayerCompatibility(
-				supportedFeaturesForRuntime,
 				this.requiredFeaturesFromRuntime,
 				this.generation,
+				supportedFeaturesForRuntime,
 			)
 		) {
 			const error = new UsageError("Loader version is not compatible with Runtime", {

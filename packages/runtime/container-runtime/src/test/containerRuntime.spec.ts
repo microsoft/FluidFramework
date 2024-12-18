@@ -56,6 +56,7 @@ import {
 	isFluidError,
 	isILoggingError,
 	mixinMonitoringContext,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockAudience,
@@ -73,7 +74,6 @@ import {
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
-	type IContainerRuntimeOptionsInternal,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
@@ -82,6 +82,7 @@ import {
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
+import { pkgVersion } from "../packageVersion.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -271,6 +272,145 @@ describe("Runtime", () => {
 	});
 
 	describe("Container Runtime", () => {
+		describe.only("Layer compatibility", () => {
+			type ContainerRuntimeWithPrivates = Omit<
+				ContainerRuntime,
+				"validateLoaderCompatibility" | "requiredFeaturesFromLoader"
+			> & {
+				requiredFeaturesFromLoader: string[];
+				validateLoaderCompatibility(
+					loaderSupportedFeatures?: ReadonlyMap<string, unknown>,
+					loaderVersion?: string,
+				): void;
+			};
+
+			const loaderVersion = "1.0.0";
+
+			let error: ICriticalContainerError | undefined;
+			const closeFn = (e?: ICriticalContainerError): void => {
+				error = e;
+			};
+
+			function getContainerContext(
+				loaderSupportedFeatures: Map<string, unknown>,
+			): IContainerContext {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				return {
+					...getMockContext(),
+					closeFn,
+					supportedFeatures: loaderSupportedFeatures,
+					pkgVersion: loaderVersion,
+				} as IContainerContext;
+			}
+
+			it("Runtime is compatible with Loader layer", async () => {
+				const loaderSupportedFeatures = new Map([["minSupportedGeneration", 1]]);
+				await assert.doesNotReject(
+					async () =>
+						ContainerRuntime.loadRuntime({
+							context: getContainerContext(loaderSupportedFeatures),
+							registryEntries: [],
+							existing: false,
+							provideEntryPoint: mockProvideEntryPoint,
+						}),
+					"Runtime should be compatible with Loader layer",
+				);
+				assert.strictEqual(error, undefined, "No error should have been thrown");
+			});
+
+			it("Runtime generation is not compatible with Loader layer", async () => {
+				const minSupportedGeneration = 2;
+				const loaderSupportedFeatures = new Map([
+					["minSupportedGeneration", minSupportedGeneration],
+				]);
+				await assert.rejects(
+					async () =>
+						ContainerRuntime.loadRuntime({
+							context: getContainerContext(loaderSupportedFeatures),
+							registryEntries: [],
+							existing: false,
+							provideEntryPoint: mockProvideEntryPoint,
+						}),
+					"Runtime should be compatible with Loader layer",
+				);
+				assert(error !== undefined, "An error should have been thrown");
+				assert.strictEqual(
+					error.errorType,
+					FluidErrorTypes.usageError,
+					"Error type should be usageError",
+				);
+				const properties = (error as UsageError).getTelemetryProperties();
+				assert.strictEqual(
+					properties.runtimeVersion,
+					pkgVersion,
+					"Runtime version not as expected",
+				);
+				assert.strictEqual(
+					properties.loaderVersion,
+					loaderVersion,
+					"Loader version not as expected",
+				);
+				assert.strictEqual(
+					properties.runtimeGeneration,
+					1,
+					"Runtime generation not as expected",
+				);
+				assert.strictEqual(
+					properties.minSupportedGeneration,
+					minSupportedGeneration,
+					"Min supported generation not as expected",
+				);
+			});
+
+			it("Runtime features are not compatible with Loader layer", async () => {
+				const minSupportedGeneration = 1;
+				const loaderSupportedFeatures = new Map([
+					["minSupportedGeneration", minSupportedGeneration],
+				]);
+
+				const runtime = (await ContainerRuntime.loadRuntime({
+					context: getContainerContext(loaderSupportedFeatures),
+					registryEntries: [],
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as ContainerRuntimeWithPrivates;
+
+				runtime.requiredFeaturesFromLoader = ["feature1"];
+				assert.throws(
+					() => runtime.validateLoaderCompatibility(loaderSupportedFeatures, loaderVersion),
+					(e: Error) => e.message === "Runtime is not compatible with Loader",
+				);
+
+				assert(error !== undefined, "An error should have been thrown");
+				assert.strictEqual(
+					error.errorType,
+					FluidErrorTypes.usageError,
+					"Error type should be usageError",
+				);
+				const properties = (error as UsageError).getTelemetryProperties();
+				assert.strictEqual(
+					properties.runtimeVersion,
+					pkgVersion,
+					"Runtime version not as expected",
+				);
+				assert.strictEqual(
+					properties.loaderVersion,
+					loaderVersion,
+					"Loader version not as expected",
+				);
+				assert.strictEqual(
+					properties.runtimeGeneration,
+					1,
+					"Runtime generation not as expected",
+				);
+				assert.strictEqual(
+					properties.minSupportedGeneration,
+					minSupportedGeneration,
+					"Min supported generation not as expected",
+				);
+			});
+		});
+
 		describe("IdCompressor", () => {
 			it("finalizes idRange on attach", async () => {
 				const logger = new MockLogger();
@@ -279,6 +419,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -314,14 +455,13 @@ describe("Runtime", () => {
 			});
 
 			it("Override default flush mode using options", async () => {
-				const runtimeOptions: IContainerRuntimeOptionsInternal = {
-					flushMode: FlushMode.Immediate,
-				};
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions,
+					runtimeOptions: {
+						flushMode: FlushMode.Immediate,
+					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
@@ -340,7 +480,9 @@ describe("Runtime", () => {
 					}) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions: {},
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
@@ -387,7 +529,9 @@ describe("Runtime", () => {
 						}) as IContainerContext,
 						registryEntries: [],
 						existing: false,
-						runtimeOptions: {},
+						runtimeOptions: {
+							flushMode: FlushMode.TurnBased,
+						},
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 
@@ -504,20 +648,18 @@ describe("Runtime", () => {
 
 					beforeEach(async () => {
 						mockContext = getMockContextForOrderSequentially();
-						const runtimeOptions: IContainerRuntimeOptionsInternal = {
-							summaryOptions: {
-								summaryConfigOverrides: {
-									state: "disabled",
-								},
-							},
-							flushMode,
-						};
-
 						containerRuntime = await ContainerRuntime.loadRuntime({
 							context: mockContext as IContainerContext,
 							registryEntries: [],
 							existing: false,
-							runtimeOptions,
+							runtimeOptions: {
+								summaryOptions: {
+									summaryConfigOverrides: {
+										state: "disabled",
+									},
+								},
+								flushMode,
+							},
 							provideEntryPoint: mockProvideEntryPoint,
 						});
 						containerErrors.length = 0;
@@ -723,17 +865,16 @@ describe("Runtime", () => {
 					});
 
 					beforeEach(async () => {
-						const runtimeOptions: IContainerRuntimeOptionsInternal = {
-							summaryOptions: {
-								summaryConfigOverrides: { state: "disabled" },
-							},
-							flushMode,
-						};
 						containerRuntime = await ContainerRuntime.loadRuntime({
 							context: getMockContextForOrderSequentially() as IContainerContext,
 							registryEntries: [],
 							existing: false,
-							runtimeOptions,
+							runtimeOptions: {
+								summaryOptions: {
+									summaryConfigOverrides: { state: "disabled" },
+								},
+								flushMode,
+							},
 							provideEntryPoint: mockProvideEntryPoint,
 						});
 						containerErrors.length = 0;
@@ -1166,15 +1307,14 @@ describe("Runtime", () => {
 		describe("Unrecognized types not supported", () => {
 			let containerRuntime: ContainerRuntime;
 			beforeEach(async () => {
-				const runtimeOptions: IContainerRuntimeOptionsInternal = {
-					enableGroupedBatching: false,
-				};
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
-					runtimeOptions,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
@@ -1442,7 +1582,7 @@ describe("Runtime", () => {
 				mockLogger = new MockLogger();
 			});
 
-			const runtimeOptions: IContainerRuntimeOptionsInternal = {
+			const runtimeOptions = {
 				compressionOptions: {
 					minimumBatchSizeInBytes: 1024 * 1024,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -1452,7 +1592,7 @@ describe("Runtime", () => {
 				enableGroupedBatching: true,
 			};
 
-			const defaultRuntimeOptions: IContainerRuntimeOptionsInternal = {
+			const defaultRuntimeOptions = {
 				summaryOptions: {},
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
@@ -1466,7 +1606,7 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
-			};
+			} satisfies IContainerRuntimeOptions;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
 			it("Container load stats", async () => {
@@ -1540,24 +1680,24 @@ describe("Runtime", () => {
 				};
 			};
 
-			const runtimeOptions: IContainerRuntimeOptionsInternal = {
-				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
-			};
-
-			for (const features of [
+			[
 				undefined,
 				new Map([["referenceSequenceNumbers", false]]),
 				new Map([
 					["other", true],
 					["feature", true],
 				]),
-			]) {
+			];
+			)
+			{
 				it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
 					const runtime = await ContainerRuntime.loadRuntime({
 						context: localGetMockContext(features) as IContainerContext,
 						registryEntries: [],
 						existing: false,
-						runtimeOptions,
+						runtimeOptions: {
+							flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+						},
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 
@@ -1578,7 +1718,9 @@ describe("Runtime", () => {
 					) as IContainerContext,
 					registryEntries: [],
 					existing: false,
-					runtimeOptions,
+					runtimeOptions: {
+						flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
@@ -1890,6 +2032,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1928,6 +2071,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1976,6 +2120,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2029,6 +2174,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2050,6 +2196,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2104,6 +2251,7 @@ describe("Runtime", () => {
 						registryEntries: [],
 						existing: false,
 						runtimeOptions: {
+							flushMode: FlushMode.TurnBased,
 							enableRuntimeIdCompressor: "on",
 						},
 						provideEntryPoint: mockProvideEntryPoint,
@@ -2153,6 +2301,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2191,6 +2340,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2408,6 +2558,7 @@ describe("Runtime", () => {
 					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
 					existing: true,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2436,6 +2587,7 @@ describe("Runtime", () => {
 					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
 					existing: true,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2484,6 +2636,7 @@ describe("Runtime", () => {
 					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
 					existing: true,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2544,6 +2697,7 @@ describe("Runtime", () => {
 					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
 					existing: true,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2587,6 +2741,7 @@ describe("Runtime", () => {
 					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
 					existing: true,
 					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -2676,15 +2831,15 @@ describe("Runtime", () => {
 				runtimes = new Map<string, ContainerRuntime>();
 				logger = new MockLogger();
 				droppedSignals = [];
-				const runtimeOptions: IContainerRuntimeOptionsInternal = {
-					enableGroupedBatching: false,
-				};
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
-					runtimeOptions,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+						flushMode: FlushMode.TurnBased,
+					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 				// Assert that clientId is not undefined
@@ -3249,9 +3404,6 @@ describe("Runtime", () => {
 
 				beforeEach(async () => {
 					remoteLogger = new MockLogger();
-					const runtimeOptions: IContainerRuntimeOptionsInternal = {
-						enableGroupedBatching: false,
-					};
 					remoteContainerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext(
 							{ logger: remoteLogger },
@@ -3260,7 +3412,10 @@ describe("Runtime", () => {
 						registryEntries: [],
 						existing: false,
 						requestHandler: undefined,
-						runtimeOptions,
+						runtimeOptions: {
+							enableGroupedBatching: false,
+							flushMode: FlushMode.TurnBased,
+						},
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 					// Assert that clientId is not undefined
