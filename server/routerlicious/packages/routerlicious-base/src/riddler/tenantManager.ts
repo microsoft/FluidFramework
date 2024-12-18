@@ -552,140 +552,17 @@ export class TenantManager {
 		return keys;
 	}
 
-	private async getPrivateTenantKeys(
+	private async getTenantKeysHelper(
 		tenantId: string,
 		includeDisabledTenant = false,
 		bypassCache = false,
+		getPrivateKeys = false,
 	): Promise<ITenantKeys> {
 		const lumberProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			includeDisabledTenant,
 			bypassCache,
-			getPrivateKeys: true,
-		};
-		try {
-			if (!bypassCache && this.isCacheEnabled) {
-				// Read from cache first
-				try {
-					const cachedKey = await this.getKeyFromCache(
-						tenantId,
-						true /* getPrivateKeys */,
-					);
-					if (cachedKey) {
-						const tenantKeys = this.decryptCachedKeys(
-							cachedKey,
-							true /* decryptPrivateKeys */,
-						) as ITenantPrivateKeys;
-						// This is an edge case where the used encryption key is not valid.
-						// If both decrypted tenant keys are null, it means it hits this case,
-						// then we should read from database and set new values in cache.
-						if (tenantKeys.key || tenantKeys.secondaryKey) {
-							const privateKeysInOrder = await this.returnPrivateKeysInOrder(
-								tenantId,
-								tenantKeys,
-								lumberProperties,
-							);
-							return privateKeysInOrder;
-						}
-						Lumberjack.info(
-							"Retrieved from cache but both decrypted tenant keys are null.",
-							lumberProperties,
-						);
-					}
-				} catch (error) {
-					// Catch if there is an error reading from redis so we can continue to use the database
-					Lumberjack.error(
-						`Error getting tenant keys from cache. Falling back to database.`,
-						{ [BaseTelemetryProperties.tenantId]: tenantId },
-						error,
-					);
-				}
-			}
-
-			// Read from database if keys aren't found in the cache
-			const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
-			if (!tenantDocument) {
-				winston.error(`No tenant found when retrieving keys for tenant id ${tenantId}`);
-				Lumberjack.error(`No tenant found when retrieving keys for tenant id ${tenantId}`, {
-					[BaseTelemetryProperties.tenantId]: tenantId,
-				});
-				throw new NetworkError(403, `Tenant, ${tenantId}, does not exist.`);
-			}
-
-			if (!tenantDocument.privateKeys) {
-				Lumberjack.error(`Private keys are missing for tenant id ${tenantId}`, {
-					[BaseTelemetryProperties.tenantId]: tenantId,
-				});
-				throw new NetworkError(404, `Private keys are missing for tenant id ${tenantId}`);
-			}
-
-			const privateKeys = tenantDocument.privateKeys;
-
-			const encryptedTenantKey1 = privateKeys.key;
-			const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
-			const tenantKey1 = this.secretManager.decryptSecret(
-				encryptedTenantKey1,
-				encryptionKeyVersion,
-			);
-
-			if (tenantKey1 == null) {
-				winston.error("Tenant key1 decryption failed.");
-				Lumberjack.error("Tenant key1 decryption failed.", lumberProperties);
-				throw new NetworkError(500, "Tenant key1 decryption failed.");
-			}
-
-			const encryptedTenantKey2 = privateKeys.secondaryKey;
-			const tenantKey2 = encryptedTenantKey2
-				? this.secretManager.decryptSecret(encryptedTenantKey2, encryptionKeyVersion)
-				: "";
-
-			// Tenant key 2 decryption returns null
-			if (tenantKey2 == null) {
-				winston.error("Tenant key2 decryption failed");
-				Lumberjack.error("Tenant key2 decryption failed.", lumberProperties);
-				throw new NetworkError(500, "Tenant key2 decryption failed.");
-			}
-
-			// If it looks like there is key2, but decrypted key == ""
-			if (!encryptedTenantKey2 || tenantKey2 === "") {
-				winston.info("Tenant key2 doesn't exist.");
-				Lumberjack.info("Tenant key2 doesn't exist.", lumberProperties);
-			}
-
-			if (!bypassCache && this.isCacheEnabled) {
-				const cacheKeys: IEncryptedPrivateTenantKeys = {
-					key: encryptedTenantKey1,
-					keyNextRotationTime: privateKeys.keyNextRotationTime,
-					secondaryKey: encryptedTenantKey2,
-					secondaryKeyNextRotationTime: privateKeys.secondaryKeyNextRotationTime,
-				};
-				if (encryptionKeyVersion) {
-					cacheKeys.encryptionKeyVersion = encryptionKeyVersion;
-				}
-				await this.setKeyInCache(tenantId, cacheKeys, true /* setPrivateKeys */);
-			}
-
-			const privateKeysInOrder = await this.returnPrivateKeysInOrder(
-				tenantId,
-				privateKeys,
-				lumberProperties,
-			);
-			return privateKeysInOrder;
-		} catch (error) {
-			Lumberjack.error(`Error getting tenant keys.`, lumberProperties, error);
-			throw error;
-		}
-	}
-
-	private async getPublicTenantKeys(
-		tenantId: string,
-		includeDisabledTenant = false,
-		bypassCache = false,
-	): Promise<ITenantKeys> {
-		const lumberProperties = {
-			[BaseTelemetryProperties.tenantId]: tenantId,
-			includeDisabledTenant,
-			bypassCache,
+			getPrivateKeys,
 		};
 		try {
 			if (!bypassCache && this.isCacheEnabled) {
@@ -693,12 +570,25 @@ export class TenantManager {
 				try {
 					const cachedKey = await this.getKeyFromCache(tenantId);
 					if (cachedKey) {
-						const tenantKeys = this.decryptCachedKeys(cachedKey) as ITenantKeys;
+						let tenantKeys = this.decryptCachedKeys(cachedKey, getPrivateKeys);
 						// This is an edge case where the used encryption key is not valid.
 						// If both decrypted tenant keys are null, it means it hits this case,
 						// then we should read from database and set new values in cache.
-						if (tenantKeys.key1 || tenantKeys.key2) {
-							return tenantKeys;
+						if (getPrivateKeys) {
+							tenantKeys = tenantKeys as ITenantPrivateKeys;
+							if (tenantKeys.key || tenantKeys.secondaryKey) {
+								const privateKeysInOrder = await this.returnPrivateKeysInOrder(
+									tenantId,
+									tenantKeys,
+									lumberProperties,
+								);
+								return privateKeysInOrder;
+							}
+						} else {
+							tenantKeys = tenantKeys as ITenantKeys;
+							if (tenantKeys.key1 || tenantKeys.key2) {
+								return tenantKeys;
+							}
 						}
 						Lumberjack.info(
 							"Retrieved from cache but both decrypted tenant keys are null.",
@@ -726,7 +616,20 @@ export class TenantManager {
 				throw new NetworkError(403, `Tenant, ${tenantId}, does not exist.`);
 			}
 
-			const encryptedTenantKey1 = tenantDocument.key;
+			if (getPrivateKeys && !tenantDocument.privateKeys) {
+				Lumberjack.error(`Private keys are missing for tenant id ${tenantId}`, {
+					[BaseTelemetryProperties.tenantId]: tenantId,
+				});
+				throw new NetworkError(404, `Private keys are missing for tenant id ${tenantId}`);
+			}
+
+			let encryptedTenantKey1: string;
+			if (getPrivateKeys && tenantDocument.privateKeys) {
+				encryptedTenantKey1 = tenantDocument.privateKeys.key;
+			} else {
+				encryptedTenantKey1 = tenantDocument.key;
+			}
+
 			const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
 			const tenantKey1 = this.secretManager.decryptSecret(
 				encryptedTenantKey1,
@@ -739,7 +642,13 @@ export class TenantManager {
 				throw new NetworkError(500, "Tenant key1 decryption failed.");
 			}
 
-			const encryptedTenantKey2 = tenantDocument.secondaryKey;
+			let encryptedTenantKey2: string;
+			if (getPrivateKeys && tenantDocument.privateKeys) {
+				encryptedTenantKey2 = tenantDocument.privateKeys.secondaryKey;
+			} else {
+				encryptedTenantKey2 = tenantDocument.secondaryKey;
+			}
+
 			const tenantKey2 = encryptedTenantKey2
 				? this.secretManager.decryptSecret(encryptedTenantKey2, encryptionKeyVersion)
 				: "";
@@ -758,16 +667,35 @@ export class TenantManager {
 			}
 
 			if (!bypassCache && this.isCacheEnabled) {
-				const cacheKeys: IEncryptedTenantKeys = {
-					key1: encryptedTenantKey1,
-					key2: encryptedTenantKey2,
-				};
+				let cacheKeys: IEncryptedTenantKeys | IEncryptedPrivateTenantKeys;
+				if (getPrivateKeys && tenantDocument.privateKeys) {
+					cacheKeys = {
+						key: encryptedTenantKey1,
+						keyNextRotationTime: tenantDocument.privateKeys.keyNextRotationTime,
+						secondaryKey: encryptedTenantKey2,
+						secondaryKeyNextRotationTime:
+							tenantDocument.privateKeys.secondaryKeyNextRotationTime,
+					};
+				} else {
+					cacheKeys = {
+						key1: encryptedTenantKey1,
+						key2: encryptedTenantKey2,
+					};
+				}
 				if (encryptionKeyVersion) {
 					cacheKeys.encryptionKeyVersion = encryptionKeyVersion;
 				}
-				await this.setKeyInCache(tenantId, cacheKeys);
+				await this.setKeyInCache(tenantId, cacheKeys, getPrivateKeys);
 			}
 
+			if (getPrivateKeys && tenantDocument.privateKeys) {
+				const privateKeysInOrder = await this.returnPrivateKeysInOrder(
+					tenantId,
+					tenantDocument.privateKeys,
+					lumberProperties,
+				);
+				return privateKeysInOrder;
+			}
 			return {
 				key1: tenantKey1,
 				key2: tenantKey2,
@@ -787,9 +715,12 @@ export class TenantManager {
 		bypassCache = false,
 		getPrivateKeys = false,
 	): Promise<ITenantKeys> {
-		const keys = getPrivateKeys
-			? await this.getPrivateTenantKeys(tenantId, includeDisabledTenant, bypassCache)
-			: await this.getPublicTenantKeys(tenantId, includeDisabledTenant, bypassCache);
+		const keys = await this.getTenantKeysHelper(
+			tenantId,
+			includeDisabledTenant,
+			bypassCache,
+			getPrivateKeys,
+		);
 		return keys;
 	}
 

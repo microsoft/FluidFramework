@@ -1,6 +1,16 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { TenantManager } from "../../riddler/tenantManager";
 import { ITenantRepository } from "../../riddler/mongoTenantRepository";
-import { ISecretManager, ICache, EncryptionKeyVersion, type ITenantPrivateKeys } from "@fluidframework/server-services-core";
+import {
+	ISecretManager,
+	ICache,
+	EncryptionKeyVersion,
+	type ITenantPrivateKeys,
+} from "@fluidframework/server-services-core";
 import { ITenantKeyGenerator, TenantKeyGenerator } from "@fluidframework/server-services-utils";
 import { TestCache } from "@fluidframework/server-test-utils";
 import Sinon from "sinon";
@@ -65,10 +75,14 @@ describe("TenantManager", () => {
 				secondaryKey: "efgh",
 				keyNextRotationTime: Math.round(new Date().getTime() / 1000),
 				secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
-			}
+			};
 			const expectedKeys = { key1: "efgh", key2: "abcd" };
 			Sinon.stub(cache, "get").resolves("primary");
-			const orderedKeys = await tenantManager['returnPrivateKeysInOrder']("1234", privateTenantKeys, {});
+			const orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
+				"1234",
+				privateTenantKeys,
+				{},
+			);
 			assert.strictEqual(orderedKeys.key1, expectedKeys.key1);
 			assert.strictEqual(orderedKeys.key2, expectedKeys.key2);
 		});
@@ -79,10 +93,14 @@ describe("TenantManager", () => {
 				secondaryKey: "efgh",
 				keyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
 				secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000),
-			}
+			};
 			const expectedKeys = { key1: "abcd", key2: "efgh" };
 			Sinon.stub(cache, "get").resolves("secondary");
-			const orderedKeys = await tenantManager['returnPrivateKeysInOrder']("1234", privateTenantKeys, {});
+			const orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
+				"1234",
+				privateTenantKeys,
+				{},
+			);
 			assert.strictEqual(orderedKeys.key1, expectedKeys.key1);
 			assert.strictEqual(orderedKeys.key2, expectedKeys.key2);
 		});
@@ -93,10 +111,14 @@ describe("TenantManager", () => {
 				secondaryKey: "efgh",
 				keyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
 				secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000),
-			}
+			};
 			const expectedKeys = { key1: "abcd", key2: "efgh" };
 			Sinon.stub(cache, "get").resolves(null);
-			const orderedKeys = await tenantManager['returnPrivateKeysInOrder']("1234", privateTenantKeys, {});
+			const orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
+				"1234",
+				privateTenantKeys,
+				{},
+			);
 			assert.strictEqual(orderedKeys.key1, expectedKeys.key1);
 			assert.strictEqual(orderedKeys.key2, expectedKeys.key2);
 		});
@@ -107,10 +129,14 @@ describe("TenantManager", () => {
 				secondaryKey: "efgh",
 				keyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
 				secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
-			}
+			};
 			let expectedKeys = { key1: "abcd", key2: "efgh" };
 			Sinon.stub(cache, "get").resolves("primary");
-			let orderedKeys = await tenantManager['returnPrivateKeysInOrder']("1234", privateTenantKeys, {});
+			let orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
+				"1234",
+				privateTenantKeys,
+				{},
+			);
 			assert.strictEqual(orderedKeys.key1, expectedKeys.key1);
 			assert.strictEqual(orderedKeys.key2, expectedKeys.key2);
 
@@ -118,7 +144,11 @@ describe("TenantManager", () => {
 			Sinon.restore();
 			expectedKeys = { key1: "efgh", key2: "abcd" };
 			Sinon.stub(cache, "get").resolves("secondary");
-			orderedKeys = await tenantManager['returnPrivateKeysInOrder']("1234", privateTenantKeys, {});
+			orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
+				"1234",
+				privateTenantKeys,
+				{},
+			);
 			assert.strictEqual(orderedKeys.key1, expectedKeys.key1);
 			assert.strictEqual(orderedKeys.key2, expectedKeys.key2);
 		});
