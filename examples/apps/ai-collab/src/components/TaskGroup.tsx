@@ -4,17 +4,21 @@
  */
 
 import {
-	CommitKind,
 	aiCollab,
 	type AiCollabErrorResponse,
 	type AiCollabSuccessResponse,
-	type CommitMetadata,
-	type Revertible,
-	type RevertibleFactory,
 	type Difference,
 	SharedTreeBranchManager,
 } from "@fluidframework/ai-collab/alpha";
-import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
+import {
+	CommitKind,
+	TreeAlpha,
+	type CommitMetadata,
+	type Revertible,
+	type RevertibleFactory,
+	type TreeBranch,
+	type TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
 import { LoadingButton } from "@mui/lab";
 import {
@@ -63,19 +67,17 @@ export function TaskGroup(props: {
 		newBranchTargetNode: SharedTreeTaskGroup;
 	}>();
 
-	/**
-	 * Stores {@link Revertible} objects that can be used to revert changes to the shared tree.
-	 */
 	const [undoStack, setUndoStack] = useState<Revertible[]>([]);
 	const [redoStack, setRedoStack] = useState<Revertible[]>([]);
 
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTaskGroup, logId: "TaskGroup" });
 
-	// TODO: Remove this.
-	console.log("undoStack:", undoStack);
-	console.log("redoStack:", redoStack);
-
+	/**
+	 * Helper function to create undo and redo stacks composed of {@link Revertible}
+	 */
 	useEffect(() => {
+		const MAX_STACK_SIZE = 10;
+
 		function onRevertibleDispose(disposed: Revertible): void {
 			const redoIndex = redoStack.indexOf(disposed);
 			if (redoIndex === -1) {
@@ -96,18 +98,42 @@ export function TaskGroup(props: {
 			}
 		}
 
-		function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactory): void {
-			if (getRevertible !== undefined) {
-				const revertible = getRevertible(onRevertibleDispose);
-				if (commit.kind === CommitKind.Undo) {
-					setRedoStack((current) => [...current, revertible]);
-				} else {
-					setUndoStack((current) => [...current, revertible]);
-				}
+		function maintainStackSize(
+			stack: Revertible[],
+			setStack: React.Dispatch<React.SetStateAction<Revertible[]>>,
+		): void {
+			if (stack.length > MAX_STACK_SIZE) {
+				const oldestRevertible = stack[0];
+				oldestRevertible?.dispose();
+				setStack((currentStack) => currentStack.slice(1));
 			}
 		}
 
-		props.treeView.events.on("commitApplied", onNewCommit);
+		const unsubscribe = props.treeView.events.on(
+			"commitApplied",
+			(commit: CommitMetadata, getRevertible?: RevertibleFactory) => {
+				if (getRevertible !== undefined) {
+					const revertible = getRevertible(onRevertibleDispose);
+					if (commit.kind === CommitKind.Undo) {
+						setRedoStack((current) => {
+							const newStack = [...current, revertible];
+							maintainStackSize(newStack, setRedoStack);
+							return newStack;
+						});
+					} else {
+						setUndoStack((current) => {
+							const newStack = [...current, revertible];
+							maintainStackSize(newStack, setUndoStack);
+							return newStack;
+						});
+					}
+				}
+			},
+		);
+
+		return () => {
+			unsubscribe();
+		};
 	}, [props.treeView.events, undoStack, redoStack]);
 
 	/**
@@ -294,6 +320,34 @@ export function TaskGroup(props: {
 					></TaskGroupDiffModal>
 				)}
 
+				{undoStack.length > 0 && (
+					<Button
+						variant="contained"
+						color="primary"
+						onClick={() => {
+							const revertible = undoStack[undoStack.length - 1];
+							revertible?.revert();
+							undoStack.pop();
+						}}
+					>
+						Undo
+					</Button>
+				)}
+
+				{redoStack.length > 0 && (
+					<Button
+						variant="contained"
+						color="success"
+						onClick={() => {
+							const revertible = redoStack[redoStack.length - 1];
+							revertible?.revert();
+							redoStack.pop();
+						}}
+					>
+						Redo
+					</Button>
+				)}
+
 				<Button
 					variant="contained"
 					color="success"
@@ -310,30 +364,6 @@ export function TaskGroup(props: {
 				>
 					New Task
 				</Button>
-
-				{undoStack.length > 0 && (
-					<Button
-						variant="contained"
-						color="error"
-						onClick={() => {
-							undoStack.pop()?.revert();
-						}}
-					>
-						Undo
-					</Button>
-				)}
-
-				{redoStack.length > 0 && (
-					<Button
-						variant="contained"
-						color="success"
-						onClick={() => {
-							redoStack.pop()?.revert();
-						}}
-					>
-						Redo
-					</Button>
-				)}
 
 				{popoverAnchor && (
 					<Popover
