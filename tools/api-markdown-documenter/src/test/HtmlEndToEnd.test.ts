@@ -51,7 +51,7 @@ const testConfigs = new Map<
 			uriRoot: "docs",
 			includeBreadcrumb: true,
 			includeTopLevelDocumentHeading: false,
-			hierarchy: HierarchyConfigs.sparse,
+			hierarchy: HierarchyConfigs.flat,
 			minimumReleaseLevel: ReleaseTag.Beta, // Only include `@public` and `beta` items in the docs suite
 		},
 	],
@@ -69,6 +69,8 @@ const testConfigs = new Map<
 			startingHeadingLevel: 2,
 		},
 	],
+
+	// TODO: deep config
 ]);
 
 describe("HTML end-to-end tests", () => {

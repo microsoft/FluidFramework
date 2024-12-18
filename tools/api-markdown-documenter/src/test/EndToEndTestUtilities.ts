@@ -79,7 +79,7 @@ export namespace HierarchyConfigs {
 	 * @remarks Results in a small number of documents, but can lead to relatively large documents.
 	 */
 	export const flat: Partial<HierarchyConfiguration> = {
-		[ApiItemKind.Package]: outsideFolderConfig,
+		[ApiItemKind.Package]: defaultDocumentConfig,
 
 		[ApiItemKind.CallSignature]: defaultSectionConfig,
 		[ApiItemKind.Class]: defaultSectionConfig,
@@ -92,6 +92,7 @@ export namespace HierarchyConfigs {
 		[ApiItemKind.Interface]: defaultSectionConfig,
 		[ApiItemKind.Method]: defaultSectionConfig,
 		[ApiItemKind.MethodSignature]: defaultSectionConfig,
+		[ApiItemKind.Namespace]: defaultSectionConfig,
 		[ApiItemKind.Property]: defaultSectionConfig,
 		[ApiItemKind.PropertySignature]: defaultSectionConfig,
 		[ApiItemKind.TypeAlias]: defaultSectionConfig,
