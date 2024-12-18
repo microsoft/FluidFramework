@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { PropertySet } from "@fluidframework/sequence/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/legacy";
+import { PropertySet } from "@fluidframework/sequence/legacy";
 
 import { TableDocument } from "../document.js";
 import { ITable, TableDocumentItem } from "../table.js";
