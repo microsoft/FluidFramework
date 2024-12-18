@@ -63,6 +63,7 @@ export {
 	IMergeNodeCommon,
 	IMoveInfo,
 	IRemovalInfo,
+	IInsertionInfo,
 	segmentIsRemoved,
 	ISegment,
 	ISegmentDeprecated,

@@ -60,13 +60,17 @@ export interface IMergeNodeCommon {
  *
  * @internal
  */
-export type ISegmentInternal = Omit<ISegment, keyof IRemovalInfo | keyof IMoveInfo> &
-	Partial<IMergeNodeCommon> &
+export type ISegmentInternal = Omit<ISegment, keyof ISegmentDeprecated> &
+	IMergeNodeCommon &
+	Partial<IInsertionInfo> &
 	Partial<IRemovalInfo> &
 	Partial<IMoveInfo> & {
 		/**
+		 * Short clientId for the client that inserted this segment.
+		 */
+		clientId: number;
+		/**
 		 * Local references added to this segment.
-		 * @deprecated - This property will be removed in 2.20 with no replacement.
 		 */
 		localRefs?: LocalReferenceCollection;
 	};
@@ -93,6 +97,48 @@ export type ISegmentLeaf = ISegmentInternal & {
 	prevObliterateByInserter?: ObliterateInfo;
 };
 export type IMergeNode = MergeBlock | ISegmentLeaf;
+
+/**
+ * @internal
+ */
+export interface IInsertionInfo {
+	/**
+	 * Local seq at which this segment was inserted.
+	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
+	 * Once the segment is acked, this field is cleared.
+	 *
+	 * @privateRemarks
+	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
+	 */
+	localSeq?: number;
+	/**
+	 * Seq at which this segment was inserted.
+	 * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
+	 */
+	seq: number;
+
+	/**
+	 * Whether or not this segment is a special segment denoting the start or
+	 * end of the tree
+	 *
+	 * Endpoint segments are imaginary segments positioned immediately before or
+	 * after the tree. These segments cannot be referenced by regular operations
+	 * and exist primarily as a bucket for local references to slide onto during
+	 * deletion of regular segments.
+	 */
+	readonly endpointType?: "start" | "end";
+}
+
+/**
+ * Returns the insertion information for a segment.
+ */
+export function toInsertionInfo(
+	maybe: Partial<IInsertionInfo> | undefined,
+): IInsertionInfo | undefined {
+	if (maybe?.seq !== undefined) {
+		return maybe as IInsertionInfo;
+	}
+}
 
 /**
  * Contains removal information associated to an {@link ISegment}.
@@ -497,9 +543,6 @@ export interface SegmentGroup<S extends ISegmentInternal = ISegmentInternal> {
  * @internal
  */
 export const MaxNodesInBlock = 8;
-/**
- * @internal
- */
 export class MergeBlock implements IMergeNodeCommon {
 	public children: IMergeNode[];
 	public needsScour?: boolean;
@@ -521,7 +564,7 @@ export class MergeBlock implements IMergeNodeCommon {
 	 */
 	public leftmostTiles: Readonly<MapLike<Marker>>;
 
-	isLeaf(): this is ISegmentInternal {
+	isLeaf(): this is ISegmentLeaf {
 		return false;
 	}
 
