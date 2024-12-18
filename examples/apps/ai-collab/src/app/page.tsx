@@ -5,6 +5,7 @@
 
 "use client";
 
+import { acquirePresenceViaDataObject } from "@fluidframework/presence/alpha";
 import {
 	Box,
 	Button,
@@ -17,6 +18,8 @@ import {
 } from "@mui/material";
 import type { IFluidContainer, TreeView } from "fluid-framework";
 import React, { useEffect, useState } from "react";
+
+import { PresenceManager } from "./presence";
 
 import { TaskGroup } from "@/components/TaskGroup";
 import {
@@ -32,6 +35,7 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 // Uncomment the import line that corresponds to the server you want to use
 // import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe"; // eslint-disable-line import/order
 import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious"; // eslint-disable-line import/order
+import { UserPresenceGroup } from "@/components/UserPresenceGroup";
 
 export async function createAndInitializeContainer(): Promise<
 	IFluidContainer<typeof CONTAINER_SCHEMA>
@@ -47,6 +51,7 @@ export async function createAndInitializeContainer(): Promise<
 export default function TasksListPage(): JSX.Element {
 	const [selectedTaskGroup, setSelectedTaskGroup] = useState<SharedTreeTaskGroup>();
 	const [treeView, setTreeView] = useState<TreeView<typeof SharedTreeAppState>>();
+	const [presenceManagerContext, setPresenceManagerContext] = useState<PresenceManager>();
 
 	const { container, isFluidInitialized, data } = useFluidContainerNextJs(
 		containerIdFromUrl(),
@@ -57,6 +62,10 @@ export default function TasksListPage(): JSX.Element {
 		(fluidContainer) => {
 			const _treeView = fluidContainer.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 			setTreeView(_treeView);
+
+			const presence = acquirePresenceViaDataObject(fluidContainer.initialObjects.presence);
+			const presenceManagerContext: PresenceManager = new PresenceManager(presence);
+			setPresenceManagerContext(presenceManagerContext);
 			return { sharedTree: _treeView };
 		},
 	);
@@ -79,6 +88,9 @@ export default function TasksListPage(): JSX.Element {
 			sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
 			maxWidth={false}
 		>
+			{presenceManagerContext && (
+				<UserPresenceGroup presenceManager={presenceManagerContext} />
+			)}
 			<Typography variant="h2" sx={{ my: 3 }}>
 				My Work Items
 			</Typography>

@@ -5,7 +5,7 @@
 
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
-import { start } from "@/infra/authHelper"; // eslint-disable-line import/no-internal-modules
+import { start } from "@/infra/authHelper";
 
 const { client, getShareLink, containerId: _containerId } = await start();
 
