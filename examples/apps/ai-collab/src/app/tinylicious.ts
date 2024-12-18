@@ -5,8 +5,6 @@
 
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import { IFluidContainer, type ContainerSchema } from "fluid-framework";
-import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 const tinyliciousClient = new TinyliciousClient({});
 
@@ -27,20 +25,6 @@ export async function createContainer<T extends ContainerSchema>(
 	containerSchema: T,
 ): Promise<IFluidContainer<T>> {
 	const { container } = await tinyliciousClient.createContainer(containerSchema, "2");
-	const baseLogger = createChildLogger();
-
-	// Wrap telemetry logger for use with Devtools
-	const devtoolsLogger = createDevtoolsLogger(baseLogger);
-	// Initialize Devtools
-	initializeDevtools({
-		logger: devtoolsLogger,
-		initialContainers: [
-			{
-				container,
-				containerKey: "ai collab container",
-			},
-		],
-	});
 	return container;
 }
 
