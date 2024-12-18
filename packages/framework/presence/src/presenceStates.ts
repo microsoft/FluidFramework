@@ -10,7 +10,8 @@ import type { BroadcastControlSettings } from "./broadcastControls.js";
 import { RequiredBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
-import { brandedObjectEntries } from "./internalTypes.js";
+import type { RecordEntryTypes } from "./internalUtils.js";
+import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
 import { handleFromDatastore } from "./stateDatastore.js";
@@ -211,11 +212,12 @@ export function mergeUntrackedDatastore(
 	datastore: ValueElementMap<PresenceStatesSchema>,
 	timeModifier: number,
 ): void {
-	if (!(key in datastore)) {
-		datastore[key] = {};
-	}
-	const localAllKnownState = datastore[key];
-	for (const [clientSessionId, value] of brandedObjectEntries(remoteAllKnownState)) {
+	const localAllKnownState = getOrCreateRecord(
+		datastore,
+		key,
+		(): RecordEntryTypes<typeof datastore> => ({}),
+	);
+	for (const [clientSessionId, value] of objectEntries(remoteAllKnownState)) {
 		if (!("ignoreUnmonitored" in value)) {
 			localAllKnownState[clientSessionId] = mergeValueDirectory(
 				localAllKnownState[clientSessionId],
@@ -344,7 +346,9 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		clientId: ClientSessionId,
 		value: Exclude<MapSchemaElement<TSchema, "initialData", Key>, undefined>["value"],
 	): void {
-		const allKnownState = this.datastore[key];
+		// Callers my only use `key`s that are part of `this.datastore`.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const allKnownState = this.datastore[key]!;
 		allKnownState[clientId] = mergeValueDirectory(allKnownState[clientId], value, 0);
 	}
 
@@ -412,7 +416,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
 			if (key in this.nodes) {
 				const node = unbrandIVM(this.nodes[key]);
-				for (const [clientSessionId, value] of brandedObjectEntries(remoteAllKnownState)) {
+				for (const [clientSessionId, value] of objectEntries(remoteAllKnownState)) {
 					const client = this.runtime.lookupClient(clientSessionId);
 					node.update(client, received, value);
 				}
