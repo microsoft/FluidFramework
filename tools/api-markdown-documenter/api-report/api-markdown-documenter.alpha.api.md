@@ -48,7 +48,7 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public
-export interface ApiItemTransformationConfiguration extends ApiItemTransformationOptions, DocumentationSuiteOptions, ConfigurationBase {
+export interface ApiItemTransformationConfiguration extends ApiItemTransformationOptions, DocumentationSuiteOptions, LoggingConfiguration {
     apiModel: ApiModel;
     readonly uriRoot: string;
 }
@@ -141,11 +141,6 @@ export class CodeSpanNode extends DocumentationParentNodeBase<SingleLineDocument
     static readonly Empty: CodeSpanNode;
     get singleLine(): true;
     readonly type = DocumentationNodeType.CodeSpan;
-}
-
-// @public
-export interface ConfigurationBase {
-    readonly logger?: Logger;
 }
 
 // @public
@@ -508,7 +503,7 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
 export function lintApiModel(configuration: LintApiModelConfiguration): Promise<LinterErrors | undefined>;
 
 // @beta
-export interface LintApiModelConfiguration extends ConfigurationBase {
+export interface LintApiModelConfiguration extends LoggingConfiguration {
     apiModel: ApiModel;
 }
 
@@ -530,7 +525,7 @@ export interface LinterReferenceError {
 export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 
 // @public
-export interface LoadModelOptions extends ConfigurationBase {
+export interface LoadModelOptions extends LoggingConfiguration {
     readonly modelDirectoryPath: string;
 }
 
@@ -544,10 +539,15 @@ export interface Logger {
 }
 
 // @public
+export interface LoggingConfiguration {
+    readonly logger?: Logger;
+}
+
+// @public
 export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
 
 // @public
-export interface MarkdownRenderConfiguration extends ConfigurationBase {
+export interface MarkdownRenderConfiguration extends LoggingConfiguration {
     readonly customRenderers?: MarkdownRenderers;
     readonly startingHeadingLevel?: number;
 }
@@ -773,7 +773,7 @@ export interface TextFormatting {
 }
 
 // @public
-export interface ToHtmlConfig extends ConfigurationBase {
+export interface ToHtmlConfig extends LoggingConfiguration {
     readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
     readonly rootFormatting?: TextFormatting;
