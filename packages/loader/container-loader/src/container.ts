@@ -992,8 +992,9 @@ export class Container
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
 		// Whether the combined summary tree has been forced on by either the supportedFeatures flag by the service or the the loader option or the monitoring context
-		const enableSummarizeProtocolTree =
-			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2")
+		const enableSummarizeProtocolTree = this.mc.config.getBoolean(
+			"Fluid.Container.summarizeProtocolTree2",
+		);
 
 		this.detachedBlobStorage =
 			detachedBlobStorage ??
