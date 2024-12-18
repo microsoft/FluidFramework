@@ -16,15 +16,10 @@ import {
 	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
-import {
-	Marker,
-	seqLTE,
-	toMoveInfo,
-	toRemovalInfo,
-	type ISegmentLeaf,
-} from "../mergeTreeNodes.js";
+import { Marker, seqLTE, type ISegmentLeaf } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 import { PropertySet, matchProperties } from "../properties.js";
+import { toMoveInfo, toRemovalInfo } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";

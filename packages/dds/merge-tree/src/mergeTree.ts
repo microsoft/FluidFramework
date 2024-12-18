@@ -47,10 +47,6 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
 	IMergeNode,
-	// eslint-disable-next-line import/no-deprecated
-	IMoveInfo,
-	// eslint-disable-next-line import/no-deprecated
-	IRemovalInfo,
 	ISegmentAction,
 	ISegmentChanges,
 	ISegmentLeaf,
@@ -62,8 +58,6 @@ import {
 	SegmentGroup,
 	reservedMarkerIdKey,
 	seqLTE,
-	toMoveInfo,
-	toRemovalInfo,
 	type ISegmentInternal,
 	// eslint-disable-next-line import/no-deprecated
 	type ObliterateInfo,
@@ -93,6 +87,14 @@ import {
 // eslint-disable-next-line import/no-deprecated
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 // eslint-disable-next-line import/no-deprecated
+import {
+	toMoveInfo,
+	toRemovalInfo,
+	// eslint-disable-next-line import/no-deprecated
+	type IMoveInfo,
+	// eslint-disable-next-line import/no-deprecated
+	type IRemovalInfo,
+} from "./segmentInfos.js";
 import {
 	copyPropertiesAndManager,
 	PropertiesManager,

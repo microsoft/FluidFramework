@@ -15,10 +15,9 @@ import {
 	Marker,
 	MaxNodesInBlock,
 	seqLTE,
-	toMoveInfo,
-	toRemovalInfo,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
+import { toRemovalInfo, toMoveInfo } from "./segmentInfos.js";
 
 export const zamboniSegmentsMax = 2;
 function underflow(node: MergeBlock): boolean {
