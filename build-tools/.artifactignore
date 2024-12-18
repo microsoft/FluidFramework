@@ -1,3 +1,0 @@
-# files and folders that should be ignored when replicating repository in build pipeline.
-.git
-**/node_modules
