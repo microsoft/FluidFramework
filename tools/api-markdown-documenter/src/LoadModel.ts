@@ -15,15 +15,15 @@ import {
 import type { DocComment, DocInheritDocTag } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
 
-import type { ConfigurationBase } from "./ConfigurationBase.js";
 import { defaultConsoleLogger, type Logger } from "./Logging.js";
+import type { LoggingOptions } from "./LoggingOptions.js";
 
 /**
  * {@link loadModel} options.
  *
  * @public
  */
-export interface LoadModelOptions extends ConfigurationBase {
+export interface LoadModelOptions extends LoggingOptions {
 	/**
 	 * Path to the API model directory.
 	 * I.e., the directory containing the set of `.api.json` files that comprise the API model.

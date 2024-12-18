@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { ConfigurationBase } from "../../../ConfigurationBase.js";
 import { defaultConsoleLogger } from "../../../Logging.js";
+import type { LoggingOptions } from "../../../LoggingOptions.js";
 
 import type { Renderers } from "./RenderOptions.js";
 
@@ -13,7 +13,7 @@ import type { Renderers } from "./RenderOptions.js";
  *
  * @public
  */
-export interface RenderConfiguration extends ConfigurationBase {
+export interface RenderConfiguration extends LoggingOptions {
 	/**
 	 * User-specified renderers.
 	 *

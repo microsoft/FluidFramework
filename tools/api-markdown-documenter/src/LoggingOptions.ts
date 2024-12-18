@@ -6,13 +6,11 @@
 import type { Logger } from "./Logging.js";
 
 /**
- * Common base interface for configuration interfaces.
- *
- * @privateRemarks TODO: Re-express as "WithLogger" instead of "ConfigurationBase"
+ * Common base interface for configurations that take a logger.
  *
  * @public
  */
-export interface ConfigurationBase {
+export interface LoggingOptions {
 	/**
 	 * Optional receiver of system log data.
 	 *

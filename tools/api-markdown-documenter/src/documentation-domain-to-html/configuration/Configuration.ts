@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { ConfigurationBase } from "../../ConfigurationBase.js";
 import { defaultConsoleLogger } from "../../Logging.js";
+import type { LoggingOptions } from "../../LoggingOptions.js";
 import type { TextFormatting } from "../../documentation-domain/index.js";
 
 import type { Transformations } from "./Transformation.js";
@@ -14,7 +14,7 @@ import type { Transformations } from "./Transformation.js";
  *
  * @public
  */
-export interface TransformationConfig extends ConfigurationBase {
+export interface TransformationConfig extends LoggingOptions {
 	/**
 	 * User-specified transformations.
 	 *
