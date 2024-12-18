@@ -604,17 +604,23 @@ export abstract class BaseSegment implements ISegment {
 		// eslint-disable-next-line unicorn/prefer-code-point
 		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 
-		leafSegment.removedClientIds = this.removedClientIds?.slice();
-		leafSegment.removedSeq = this.removedSeq;
-		leafSegment.localRemovedSeq = this.localRemovedSeq;
-		leafSegment.seq = this.seq;
-		leafSegment.localSeq = this.localSeq;
-		leafSegment.clientId = this.clientId;
-		leafSegment.movedClientIds = this.movedClientIds?.slice();
-		leafSegment.movedSeq = this.movedSeq;
-		leafSegment.movedSeqs = this.movedSeqs?.slice();
-		leafSegment.localMovedSeq = this.localMovedSeq;
-		leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
+		if (hasInsertionInfo(this)) {
+			leafSegment.seq = this.seq;
+			leafSegment.localSeq = this.localSeq;
+			leafSegment.clientId = this.clientId;
+		}
+		if (hasRemovalInfo(this)) {
+			leafSegment.removedClientIds = [...this.removedClientIds];
+			leafSegment.removedSeq = this.removedSeq;
+			leafSegment.localRemovedSeq = this.localRemovedSeq;
+		}
+		if (hasMoveInfo(this)) {
+			leafSegment.movedClientIds = [...this.movedClientIds];
+			leafSegment.movedSeq = this.movedSeq;
+			leafSegment.movedSeqs = [...this.movedSeqs];
+			leafSegment.localMovedSeq = this.localMovedSeq;
+			leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
+		}
 
 		this.trackingCollection.copyTo(leafSegment);
 		if (this.attribution) {
@@ -798,7 +804,7 @@ export class CollaborationWindow {
 	 *     { localSeq: 1, seq: UnassignedSequenceNumber, text: "C" },
 	 * ]
 	 * ```
-	 * (note that {@link ISegment.localSeq} tracks the localSeq at which a segment was inserted)
+	 * (note that {@link IInsertionInfo.localSeq} tracks the localSeq at which a segment was inserted)
 	 *
 	 * Suppose the client then disconnects and reconnects before any of its insertions are acked. The reconnect flow will necessitate
 	 * that the client regenerates and resubmits ops based on its current segment state as well as the original op that was sent.

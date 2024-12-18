@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { ISegmentInternal } from "./mergeTreeNodes.js";
+import type { ISegment, ISegmentInternal } from "./mergeTreeNodes.js";
 import type { ReferencePosition } from "./referencePositions.js";
 
 /**
@@ -37,18 +37,19 @@ export interface IInsertionInfo {
  * Returns the insertion information for a segment.
  */
 export function toInsertionInfo(
-	maybe: Partial<IInsertionInfo> | undefined,
+	maybe: ISegment | Partial<IInsertionInfo> | undefined,
 ): IInsertionInfo | undefined {
-	if (maybe?.clientId !== undefined && maybe?.seq !== undefined) {
+	const maybeInserted = maybe as Partial<IInsertionInfo> | undefined;
+	if (maybeInserted?.clientId !== undefined && maybeInserted?.seq !== undefined) {
 		return maybe as IInsertionInfo;
 	}
 	assert(
-		maybe?.clientId === undefined && maybe?.seq === undefined,
+		maybeInserted?.clientId === undefined && maybeInserted?.seq === undefined,
 		"both clientId and seq should be set or not set",
 	);
 }
 export const hasInsertionInfo = (
-	maybe: Partial<IInsertionInfo> | undefined,
+	maybe: ISegment | Partial<IInsertionInfo> | undefined,
 ): maybe is IInsertionInfo => toInsertionInfo(maybe) !== undefined;
 
 export const assertInsertionInfo: <T extends Partial<IInsertionInfo> | undefined>(
@@ -86,19 +87,20 @@ export interface IRemovalInfo {
  * @internal
  */
 export function toRemovalInfo(
-	maybe: Partial<IRemovalInfo> | undefined,
+	maybe: ISegment | Partial<IRemovalInfo> | undefined,
 ): IRemovalInfo | undefined {
-	if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
+	const maybeRemoved = maybe as Partial<IRemovalInfo> | undefined;
+	if (maybeRemoved?.removedClientIds !== undefined && maybeRemoved?.removedSeq !== undefined) {
 		return maybe as IRemovalInfo;
 	}
 	assert(
-		maybe?.removedClientIds === undefined && maybe?.removedSeq === undefined,
+		maybeRemoved?.removedClientIds === undefined && maybeRemoved?.removedSeq === undefined,
 		0x2bf /* "both removedClientIds and removedSeq should be set or not set" */,
 	);
 }
 
 export const hasRemovalInfo = (
-	maybe: Partial<IRemovalInfo> | undefined,
+	maybe: ISegment | Partial<IRemovalInfo> | undefined,
 ): maybe is IRemovalInfo => toRemovalInfo(maybe) !== undefined;
 
 export const assertRemovalInfo: <T extends Partial<IRemovalInfo> | undefined>(
@@ -173,21 +175,25 @@ export interface IMoveInfo {
 	wasMovedOnInsert: boolean;
 }
 
-export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {
-	if (maybe?.movedClientIds !== undefined && maybe?.movedSeq !== undefined) {
+export function toMoveInfo(
+	maybe: ISegment | Partial<IMoveInfo> | undefined,
+): IMoveInfo | undefined {
+	const maybeMoved = maybe as Partial<IMoveInfo> | undefined;
+	if (maybeMoved?.movedClientIds !== undefined && maybeMoved?.movedSeq !== undefined) {
 		return maybe as IMoveInfo;
 	}
 	assert(
-		maybe?.movedClientIds === undefined &&
-			maybe?.movedSeq === undefined &&
-			maybe?.movedSeqs === undefined &&
-			maybe?.wasMovedOnInsert === undefined,
+		maybeMoved?.movedClientIds === undefined &&
+			maybeMoved?.movedSeq === undefined &&
+			maybeMoved?.movedSeqs === undefined &&
+			maybeMoved?.wasMovedOnInsert === undefined,
 		0x86d /* movedClientIds, movedSeq, wasMovedOnInsert, and movedSeqs should all be either set or not set */,
 	);
 }
 
-export const hasMoveInfo = (maybe: Partial<IMoveInfo> | undefined): maybe is IMoveInfo =>
-	toMoveInfo(maybe) !== undefined;
+export const hasMoveInfo = (
+	maybe: ISegment | Partial<IMoveInfo> | undefined,
+): maybe is IMoveInfo => toMoveInfo(maybe) !== undefined;
 
 export const assertMoveInfo: <T extends Partial<IMoveInfo> | undefined>(
 	maybe: Partial<IMoveInfo> | T,
