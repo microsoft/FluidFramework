@@ -137,7 +137,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly options: Record<string | number, any>;
     orderSequentially<T>(callback: () => T): T;
     // (undocumented)
-    readonly pkgVersion = "2.5.0";
+    readonly pkgVersion = "2.13.0";
     process({ ...messageCopy }: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;

@@ -1514,18 +1514,44 @@ export class ContainerRuntime
 	 */
 	private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>;
 	public readonly pkgVersion = pkgVersion;
-	// The current generation of the Runtime layer. This is used to ensure compatibility between the Runtime and
-	// other layers.
+	/**
+	 * The current generation of the Runtime layer. This is used to ensure compatibility between the Runtime and
+	 * other layers.
+	 */
 	private readonly generation = 1;
-	// A list of features required by the Runtime layer to be supported by the Loader layer.
+	/** A list of features required by the Runtime layer to be supported by the Loader layer. */
 	private readonly requiredFeaturesFromLoader: string[] = [];
-	// A list of features supported by the Runtime layer advertised to the Loader layer.
+	/** A list of features supported by the Runtime layer advertised to the Loader layer. */
 	private readonly supportedFeaturesForLoader: ReadonlyMap<string, unknown> = new Map([
 		/* This is the minimum generation of the Loader this Runtime supports. */
 		["minSupportedGeneration", 1],
 	]);
 	public get supportedFeatures(): ReadonlyMap<string, unknown> {
 		return this.supportedFeaturesForLoader;
+	}
+	private validateLoaderCompatibility(
+		loaderSupportedFeatures?: ReadonlyMap<string, unknown>,
+		loaderVersion?: string,
+	): void {
+		if (
+			loaderSupportedFeatures &&
+			!checkLayerCompatibility(
+				this.requiredFeaturesFromLoader,
+				this.generation,
+				loaderSupportedFeatures,
+			)
+		) {
+			const error = new UsageError("Runtime is not compatible with Loader", {
+				runtimeVersion: pkgVersion,
+				loaderVersion,
+				runtimeGeneration: this.generation,
+				minSupportedGeneration: loaderSupportedFeatures.get(
+					"minSupportedGeneration",
+				) as number,
+			});
+			this.closeFn(error);
+			throw error;
+		}
 	}
 
 	/***/
@@ -1584,29 +1610,22 @@ export class ContainerRuntime
 			snapshotWithContents,
 		} = context;
 
+		this.clientDetails = clientDetails;
+		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
+
+		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
+		this.disposeFn = disposeFn ?? closeFn;
+		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
+		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
+
+		this.validateLoaderCompatibility(supportedFeatures, context.pkgVersion);
+
 		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object
 		this.runtimeOptions = {
 			flushMode: defaultFlushMode,
 			enableGroupedBatching: true,
 			...runtimeOptions,
 		};
-		if (
-			supportedFeatures &&
-			!checkLayerCompatibility(
-				this.requiredFeaturesFromLoader,
-				this.generation,
-				supportedFeatures,
-			)
-		) {
-			const error = new UsageError("Runtime version is not compatible with Loader", {
-				runtimeVersion: pkgVersion,
-				loaderVersion: context.pkgVersion,
-				runtimeGeneration: this.generation,
-				minSupportedGeneration: supportedFeatures.get("minSupportedGeneration") as number,
-			});
-			closeFn(error);
-			throw error;
-		}
 
 		this.logger = createChildLogger({ logger: this.baseLogger });
 		this.mc = createChildMonitoringContext({
@@ -1638,8 +1657,6 @@ export class ContainerRuntime
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
 		// Values are generally expected to be set from the runtime side.
 		this.options = options ?? {};
-		this.clientDetails = clientDetails;
-		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 		this._getClientId = () => context.clientId;
 		this._getAttachState = () => context.attachState;
@@ -1656,11 +1673,6 @@ export class ContainerRuntime
 		// customer should observe dirty state on the runtime (the owner of dirty state) directly, rather than on the IContainer.
 		this.on("dirty", () => context.updateDirtyContainerState(true));
 		this.on("saved", () => context.updateDirtyContainerState(false));
-
-		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
-		this.disposeFn = disposeFn ?? closeFn;
-		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
-		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,

@@ -8,7 +8,7 @@ export { compareArrays } from "./compare.js";
 export { delay } from "./delay.js";
 export type { IComparer, IHeapNode } from "./heap.js";
 export { Heap, NumberComparer } from "./heap.js";
-export { checkLayerCompatibility } from "./layerCompat.js";
+export { checkLayerCompatibility, type LayerCompatCheckResult } from "./layerCompat.js";
 export { Lazy, LazyPromise } from "./lazy.js";
 export type { PromiseCacheExpiry, PromiseCacheOptions } from "./promiseCache.js";
 export { PromiseCache } from "./promiseCache.js";
