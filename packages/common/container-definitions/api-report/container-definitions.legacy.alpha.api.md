@@ -103,6 +103,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     connect(): void;
     readonly connectionState: ConnectionState;
     containerMetadata: Record<string, string>;
+    readonly criticalError?: ICriticalContainerError;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     dispose(error?: ICriticalContainerError): void;
