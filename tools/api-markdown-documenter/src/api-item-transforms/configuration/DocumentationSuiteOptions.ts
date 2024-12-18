@@ -35,7 +35,7 @@ export interface DocumentationSuiteOptions {
 	 * @remarks If you will be rendering the document contents into some other document content that will inject its
 	 * own root heading, this can be used to omit that heading from what is rendered by this system.
 	 */
-	includeTopLevelDocumentHeading?: boolean;
+	readonly includeTopLevelDocumentHeading?: boolean;
 
 	/**
 	 * Whether or not to include a navigation breadcrumb at the top of rendered documents.
@@ -44,7 +44,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @remarks Note: `Model` items will never have a breadcrumb rendered, even if this is specified.
 	 */
-	includeBreadcrumb?: boolean;
+	readonly includeBreadcrumb?: boolean;
 
 	/**
 	 * {@link HierarchyConfig} to use for the provided API item.
@@ -65,7 +65,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue Always use the default URI base.
 	 */
-	getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
+	readonly getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
 
 	/**
 	 * Generate link text for the provided `ApiItem`.
@@ -76,7 +76,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem}
 	 */
-	getLinkTextForItem?: (apiItem: ApiItem) => string;
+	readonly getLinkTextForItem?: (apiItem: ApiItem) => string;
 
 	/**
 	 * Generate a list of "alerts" to display in API items tables for a given API item.
@@ -87,7 +87,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetAlertsForItem}
 	 */
-	getAlertsForItem?: (apiItem: ApiItem) => string[];
+	readonly getAlertsForItem?: (apiItem: ApiItem) => string[];
 
 	/**
 	 * Whether or not the provided `ApiPackage` should be skipped during documentation generation.
@@ -100,7 +100,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue No packages are skipped.
 	 */
-	skipPackage?: (apiPackage: ApiPackage) => boolean;
+	readonly skipPackage?: (apiPackage: ApiPackage) => boolean;
 
 	/**
 	 * Minimal release scope to include in generated documentation suite.
@@ -123,8 +123,23 @@ export interface DocumentationSuiteOptions {
 	 * releaseLevel: ReleaseTag.Beta
 	 * ```
 	 */
-	minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
+	readonly minimumReleaseLevel?: Exclude<ReleaseTag, ReleaseTag.None>;
 }
+
+/**
+ * Complete configuration documentation suite generation via the API Item -\> Documentation Domain transformation.
+ *
+ * @public
+ */
+export type DocumentationSuiteConfiguration = Omit<
+	Required<DocumentationSuiteOptions>,
+	"hierarchy"
+> & {
+	/**
+	 * {@inheritDoc DocumentationSuiteOptions.hierarchy}
+	 */
+	readonly hierarchy: Required<HierarchyOptions>;
+};
 
 /**
  * Contains a list of default documentation transformations, used by {@link DocumentationSuiteOptions}.
@@ -168,7 +183,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.getHeadingTextForItem}.
+	 * Default {@link DocumentationSuiteOptions.getAlertsForItem}.
 	 *
 	 * Generates alerts for the following tags, if found:
 	 *
@@ -221,13 +236,13 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
  * Gets a complete {@link DocumentationSuiteOptions} using the provided partial configuration, and filling
  * in the remainder with the documented defaults.
  */
-export function getDocumentationSuiteOptionsWithDefaults(
+export function getDocumentationSuiteConfigurationWithDefaults(
 	inputOptions: DocumentationSuiteOptions,
-): Required<DocumentationSuiteOptions> {
+): DocumentationSuiteConfiguration {
 	const hierarchy: Required<HierarchyOptions> = {
 		...defaultHierarchyOptions,
 		...inputOptions.hierarchy,
-	}
+	};
 	return {
 		...defaultDocumentationSuiteOptions,
 		...inputOptions,

@@ -8,6 +8,8 @@ import type { Logger } from "./Logging.js";
 /**
  * Common base interface for configuration interfaces.
  *
+ * @privateRemarks TODO: Re-express as "WithLogger" instead of "ConfigurationBase"
+ *
  * @public
  */
 export interface ConfigurationBase {

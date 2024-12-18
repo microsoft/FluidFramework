@@ -95,7 +95,7 @@ const testConfigs: EndToEndTestConfig<HtmlRenderer.RenderDocumentsOptions>[] = [
 	 * A sample "deep" configuration, which generates folder hierarchy for any "container" API items.
 	 */
 	{
-		testName: "sparse-config",
+		testName: "deep-config",
 		renderConfig: {
 			uriRoot: "docs",
 			includeBreadcrumb: false,

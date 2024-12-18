@@ -57,9 +57,11 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
  *
  * @remarks For any transformation not explicitly configured, a default will be used.
  *
+ * @privateRemarks TODO: re-express property names in terms of `ApiItemKind` for consistency.
+ *
  * @public
  */
-export interface ApiItemTransformationOptions {
+export interface ApiItemTransformations {
 	/**
 	 * Generates the default layout used by all default API item transformations.
 	 *
@@ -71,7 +73,7 @@ export interface ApiItemTransformationOptions {
 	 *
 	 * @returns The list of {@link SectionNode}s that comprise the top-level section body for the API item.
 	 */
-	createDefaultLayout?: (
+	readonly createDefaultLayout?: (
 		apiItem: ApiItem,
 		childSections: SectionNode[] | undefined,
 		config: Required<ApiItemTransformationConfiguration>,
@@ -80,17 +82,17 @@ export interface ApiItemTransformationOptions {
 	/**
 	 * Transformation to generate a {@link SectionNode} for a `Call Signature`.
 	 */
-	transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
+	readonly transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for a `Class`.
 	 */
-	transformApiClass?: TransformApiItemWithChildren<ApiClass>;
+	readonly transformApiClass?: TransformApiItemWithChildren<ApiClass>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for a `Constructor`.
 	 */
-	transformApiConstructor?: TransformApiItemWithoutChildren<
+	readonly transformApiConstructor?: TransformApiItemWithoutChildren<
 		ApiConstructSignature | ApiConstructor
 	>;
 
@@ -102,37 +104,37 @@ export interface ApiItemTransformationOptions {
 	 * Note: for packages that have a single entry-point, this content will be bubbled up to the generated
 	 * package-level document to reduce unecessary indirection in the generated suite.
 	 */
-	transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
+	readonly transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for an `Enum`.
 	 */
-	transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
+	readonly transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for an `Enum Member` (flag).
 	 */
-	transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
+	readonly transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for a `Function`.
 	 */
-	transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
+	readonly transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for an `Index Signature`.
 	 */
-	transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
+	readonly transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for an `Interface`.
 	 */
-	transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
+	readonly transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for a `Method`.
 	 */
-	transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
+	readonly transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for an `ApiModel`.
@@ -143,33 +145,33 @@ export interface ApiItemTransformationOptions {
 	 * and `Package` items specially. We never render `Package` child details directly to the `Model` document.
 	 * These are always rendered to separate documents from each other.
 	 */
-	transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
+	readonly transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for a `Namespace`.
 	 */
-	transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
+	readonly transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for a `Property`.
 	 */
-	transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
+	readonly transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for a `Type Alias`.
 	 */
-	transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
+	readonly transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for an `Variable`.
 	 */
-	transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
+	readonly transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
 }
 
 /**
  * The default {@link ApiItemTransformationConfiguration}.
  */
-const defaultApiItemTransformationOptions: Required<ApiItemTransformationOptions> = {
+const defaultApiItemTransformationOptions: Required<ApiItemTransformations> = {
 	transformApiCallSignature: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	transformApiClass: DefaultTransformationImplementations.transformApiClass,
 	transformApiConstructor: DefaultTransformationImplementations.transformApiFunctionLike,
@@ -190,12 +192,12 @@ const defaultApiItemTransformationOptions: Required<ApiItemTransformationOptions
 };
 
 /**
- * Gets a complete {@link ApiItemTransformationOptions} using the provided partial configuration, and filling
+ * Gets a complete {@link ApiItemTransformations} using the provided partial configuration, and filling
  * in the remainder with the documented defaults.
  */
-export function getApiItemTransformationOptionsWithDefaults(
-	inputOptions: ApiItemTransformationOptions,
-): Required<ApiItemTransformationOptions> {
+export function getApiItemTransformationsWithDefaults(
+	inputOptions: ApiItemTransformations,
+): Required<ApiItemTransformations> {
 	return {
 		...defaultApiItemTransformationOptions,
 		...inputOptions,

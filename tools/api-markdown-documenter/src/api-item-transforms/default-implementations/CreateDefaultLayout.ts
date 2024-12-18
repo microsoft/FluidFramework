@@ -116,7 +116,7 @@ export function createDefaultLayout(
 
 	// Add heading to top of section only if this is being rendered to a parent item.
 	// Document items have their headings handled specially.
-	return doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
+	return doesItemRequireOwnDocument(apiItem, config.hierarchy)
 		? sections
 		: [wrapInSection(sections, getHeadingForApiItem(apiItem, config))];
 }

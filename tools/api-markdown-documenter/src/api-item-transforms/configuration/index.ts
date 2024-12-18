@@ -5,12 +5,15 @@
 
 export {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationConfigurationBase,
+	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./Configuration.js";
 export {
+	type DocumentationSuiteConfiguration,
 	type DefaultDocumentationSuiteOptions,
 	type DocumentationSuiteOptions,
-	getDocumentationSuiteOptionsWithDefaults,
+	getDocumentationSuiteConfigurationWithDefaults as getDocumentationSuiteOptionsWithDefaults,
 } from "./DocumentationSuiteOptions.js";
 export {
 	HierarchyKind,
@@ -23,11 +26,11 @@ export {
 	type FolderHierarchyOptions,
 	type FolderHierarchyConfig,
 	type HierarchyConfig,
-	defaultHierarchyConfig,
+	type HierarchyOptions,
 } from "./HierarchyOptions.js";
 export {
-	type ApiItemTransformationOptions,
-	getApiItemTransformationOptionsWithDefaults,
+	type ApiItemTransformations,
+	getApiItemTransformationsWithDefaults,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
-} from "./TransformationOptions.js";
+} from "./Transformations.js";

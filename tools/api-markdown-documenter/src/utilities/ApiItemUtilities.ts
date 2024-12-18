@@ -36,6 +36,7 @@ import {
 import { PackageName } from "@rushstack/node-core-library";
 
 import type { Logger } from "../Logging.js";
+import { getFilteredParent } from "../api-item-transforms/index.js";
 
 /**
  * This module contains general `ApiItem`-related types and utilities.
@@ -50,6 +51,8 @@ export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
 
 /**
  * Gets the {@link ValidApiItemKind} for the provided API item. Throws if the item's kind is "None".
+ *
+ * @public
  */
 export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
 	switch (apiItem.kind) {
@@ -78,7 +81,7 @@ export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
  *
  * @public
  */
-export type ApiMemberKind = Omit<
+export type ApiMemberKind = Exclude<
 	ApiItemKind,
 	ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package
 >;
@@ -263,10 +266,12 @@ export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
  * @public
  */
 export function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean {
-	return (
-		hasModifierTag(apiItem, tagName) ||
-		(apiItem.parent !== undefined && ancestryHasModifierTag(apiItem.parent, tagName))
-	);
+	if (hasModifierTag(apiItem, tagName)) {
+		return true;
+	}
+
+	const parent = getFilteredParent(apiItem);
+	return parent !== undefined && ancestryHasModifierTag(parent, tagName);
 }
 
 /**
@@ -546,6 +551,8 @@ export function getConciseSignature(apiItem: ApiItem): string {
 
 /**
  * Gets a filename-safe representation of the API item's display name.
+ *
+ * @public
  */
 export function getFileSafeNameForApiItem(apiItem: ApiItem): string {
 	return apiItem.kind === ApiItemKind.Package

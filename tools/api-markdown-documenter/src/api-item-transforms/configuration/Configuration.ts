@@ -9,23 +9,21 @@ import type { ConfigurationBase } from "../../ConfigurationBase.js";
 import { defaultConsoleLogger } from "../../Logging.js";
 
 import {
+	type DocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
-	getDocumentationSuiteOptionsWithDefaults,
+	getDocumentationSuiteConfigurationWithDefaults,
 } from "./DocumentationSuiteOptions.js";
 import {
-	type ApiItemTransformationOptions,
-	getApiItemTransformationOptionsWithDefaults,
-} from "./TransformationOptions.js";
+	type ApiItemTransformations,
+	getApiItemTransformationsWithDefaults,
+} from "./Transformations.js";
 
 /**
- * API Item transformation configuration.
+ * API Item transformation configuration base.
  *
  * @public
  */
-export interface ApiItemTransformationConfiguration
-	extends ApiItemTransformationOptions,
-		DocumentationSuiteOptions,
-		ConfigurationBase {
+export interface ApiItemTransformationConfigurationBase {
 	/**
 	 * API Model for which the documentation is being generated.
 	 * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
@@ -36,7 +34,7 @@ export interface ApiItemTransformationConfiguration
 	 *
 	 * If you need to generate a model from API reports on disk, see {@link loadModel}.
 	 */
-	apiModel: ApiModel;
+	readonly apiModel: ApiModel;
 
 	/**
 	 * Default root URI used when generating content links.
@@ -45,17 +43,39 @@ export interface ApiItemTransformationConfiguration
 }
 
 /**
+ * Partial API Item transformation options.
+ *
+ * @public
+ */
+export interface ApiItemTransformationOptions
+	extends ApiItemTransformationConfigurationBase,
+		ApiItemTransformations,
+		DocumentationSuiteOptions,
+		ConfigurationBase {}
+
+/**
+ * Complete API Item transformation configuration.
+ *
+ * @public
+ */
+export interface ApiItemTransformationConfiguration
+	extends ApiItemTransformationConfigurationBase,
+		Required<ApiItemTransformations>,
+		DocumentationSuiteConfiguration,
+		Required<ConfigurationBase> {}
+
+/**
  * Gets a complete {@link ApiItemTransformationConfiguration} using the provided partial configuration, and filling
  * in the remainder with the documented defaults.
  *
  * @public
  */
 export function getApiItemTransformationConfigurationWithDefaults(
-	inputOptions: ApiItemTransformationConfiguration,
+	inputOptions: ApiItemTransformationOptions,
 ): Required<ApiItemTransformationConfiguration> {
 	const logger = inputOptions.logger ?? defaultConsoleLogger;
-	const documentationSuiteOptions = getDocumentationSuiteOptionsWithDefaults(inputOptions);
-	const transformationOptions = getApiItemTransformationOptionsWithDefaults(inputOptions);
+	const documentationSuiteOptions = getDocumentationSuiteConfigurationWithDefaults(inputOptions);
+	const transformationOptions = getApiItemTransformationsWithDefaults(inputOptions);
 	return {
 		...documentationSuiteOptions,
 		...transformationOptions,

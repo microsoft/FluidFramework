@@ -48,43 +48,53 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public
-export interface ApiItemTransformationConfiguration extends ApiItemTransformationOptions, DocumentationSuiteOptions, ConfigurationBase {
-    apiModel: ApiModel;
+export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, Required<ApiItemTransformations>, DocumentationSuiteConfiguration, Required<ConfigurationBase> {
+}
+
+// @public
+export interface ApiItemTransformationConfigurationBase {
+    readonly apiModel: ApiModel;
     readonly uriRoot: string;
 }
 
 // @public
-export interface ApiItemTransformationOptions {
-    createDefaultLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
-    transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
-    transformApiClass?: TransformApiItemWithChildren<ApiClass>;
-    transformApiConstructor?: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
-    transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
-    transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
-    transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
-    transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
-    transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
-    transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
-    transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
-    transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
-    transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
-    transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
-    transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
-    transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
+export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, ApiItemTransformations, DocumentationSuiteOptions, ConfigurationBase {
+}
+
+// @public
+export interface ApiItemTransformations {
+    readonly createDefaultLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
+    readonly transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
+    readonly transformApiClass?: TransformApiItemWithChildren<ApiClass>;
+    readonly transformApiConstructor?: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
+    readonly transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
+    readonly transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
+    readonly transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
+    readonly transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
+    readonly transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
+    readonly transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
+    readonly transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
+    readonly transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
+    readonly transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
+    readonly transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
+    readonly transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
+    readonly transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
 }
 
 declare namespace ApiItemUtilities {
     export {
-        doesItemRequireOwnDocument,
+        doesItemKindRequireOwnDocument,
         filterItems,
         getHeadingForApiItem,
         getLinkForApiItem,
         shouldItemBeIncluded,
         ancestryHasModifierTag,
+        getApiItemKind,
         getCustomBlockComments,
         getDefaultValueBlock,
         getDeprecatedBlock,
         getExampleBlocks,
+        getFileSafeNameForApiItem,
         getModifiers,
         getModifierTags,
         getQualifiedApiItemName,
@@ -104,7 +114,7 @@ declare namespace ApiItemUtilities {
 export { ApiItemUtilities }
 
 // @public
-export type ApiMemberKind = Omit<ApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package>;
+export type ApiMemberKind = Exclude<ApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package>;
 
 export { ApiModel }
 
@@ -149,7 +159,7 @@ export interface ConfigurationBase {
 }
 
 // @public
-function createBreadcrumbParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode;
+function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode;
 
 // @public
 function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
@@ -186,11 +196,7 @@ export const defaultConsoleLogger: Logger;
 
 // @public
 export namespace DefaultDocumentationSuiteOptions {
-    const defaultDocumentBoundaries: ApiMemberKind[];
-    const defaultHierarchyBoundaries: ApiMemberKind[];
     export function defaultGetAlertsForItem(apiItem: ApiItem): string[];
-    export function defaultGetFileNameForItem(apiItem: ApiItem): string;
-    export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
     export function defaultGetUriBaseOverrideForItem(): string | undefined;
     export function defaultSkipPackage(): boolean;
@@ -279,22 +285,30 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 }
 
 // @public
+export type DocumentationSuiteConfiguration = Omit<Required<DocumentationSuiteOptions>, "hierarchy"> & {
+    readonly hierarchy: Required<HierarchyOptions>;
+};
+
+// @public
 export interface DocumentationSuiteOptions {
-    documentBoundaries?: DocumentBoundaries;
-    getAlertsForItem?: (apiItem: ApiItem) => string[];
-    getFileNameForItem?: (apiItem: ApiItem) => string;
-    getHeadingTextForItem?: (apiItem: ApiItem) => string;
-    getLinkTextForItem?: (apiItem: ApiItem) => string;
-    getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
-    hierarchyBoundaries?: HierarchyBoundaries;
-    includeBreadcrumb?: boolean;
-    includeTopLevelDocumentHeading?: boolean;
-    minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
-    skipPackage?: (apiPackage: ApiPackage) => boolean;
+    readonly getAlertsForItem?: (apiItem: ApiItem) => string[];
+    readonly getLinkTextForItem?: (apiItem: ApiItem) => string;
+    readonly getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
+    readonly hierarchy?: Partial<HierarchyOptions>;
+    readonly includeBreadcrumb?: boolean;
+    readonly includeTopLevelDocumentHeading?: boolean;
+    readonly minimumReleaseLevel?: Exclude<ReleaseTag, ReleaseTag.None>;
+    readonly skipPackage?: (apiPackage: ApiPackage) => boolean;
 }
 
 // @public
-export type DocumentBoundaries = ApiMemberKind[];
+export interface DocumentHierarchyConfig extends HierarchyConfigBase<HierarchyKind.Document>, DocumentHierarchyOptions {
+}
+
+// @public
+export interface DocumentHierarchyOptions extends SectionHierarchyOptions {
+    readonly documentName: string | ((apiItem: ApiItem) => string);
+}
 
 // @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
@@ -334,7 +348,7 @@ export namespace DocumentWriter {
 }
 
 // @public
-function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
+function doesItemKindRequireOwnDocument(apiItemKind: ValidApiItemKind, hierarchyConfig: Required<HierarchyOptions>): boolean;
 
 // @public
 export class FencedCodeBlockNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -348,14 +362,33 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase implements 
 // @public
 export interface FileSystemConfiguration {
     readonly newlineKind?: NewlineKind;
-    outputDirectoryPath: string;
+    readonly outputDirectoryPath: string;
 }
 
 // @public
 function filterItems(apiItems: readonly ApiItem[], config: Required<ApiItemTransformationConfiguration>): ApiItem[];
 
 // @public
-export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
+export enum FolderDocumentPlacement {
+    Inside = "inside",
+    Outside = "outside"
+}
+
+// @public
+export interface FolderHierarchyConfig extends HierarchyConfigBase<HierarchyKind.Folder>, FolderHierarchyOptions {
+}
+
+// @public
+export interface FolderHierarchyOptions extends DocumentHierarchyOptions {
+    readonly documentPlacement: FolderDocumentPlacement | ((apiItem: ApiItem) => FolderDocumentPlacement);
+    readonly folderName: string | ((apiItem: ApiItem) => string);
+}
+
+// @public
+function getApiItemKind(apiItem: ApiItem): ValidApiItemKind;
+
+// @public
+export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationOptions): Required<ApiItemTransformationConfiguration>;
 
 // @public
 function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, readonly DocSection[]>;
@@ -370,10 +403,13 @@ function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
-function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
+function getFileSafeNameForApiItem(apiItem: ApiItem): string;
 
 // @public
-function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, textOverride?: string): Link;
+function getHeadingForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingLevel?: number): Heading;
+
+// @public
+function getLinkForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, textOverride?: string): Link;
 
 // @public
 function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
@@ -423,7 +459,28 @@ export class HeadingNode extends DocumentationParentNodeBase<SingleLineDocumenta
 }
 
 // @public
-export type HierarchyBoundaries = ApiMemberKind[];
+export type HierarchyConfig = SectionHierarchyConfig | DocumentHierarchyConfig | FolderHierarchyConfig;
+
+// @public
+export interface HierarchyConfigBase<THierarchyKind extends HierarchyKind> {
+    readonly kind: THierarchyKind;
+}
+
+// @public
+export enum HierarchyKind {
+    Document = "document",
+    Folder = "folder",
+    Section = "section"
+}
+
+// @public
+export type HierarchyOptions = {
+    [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]: HierarchyConfig;
+} & {
+    [ApiItemKind.Model]: DocumentHierarchyConfig;
+    [ApiItemKind.Package]: FolderHierarchyConfig;
+    [ApiItemKind.EntryPoint]: SectionHierarchyConfig;
+};
 
 // @public
 export class HorizontalRuleNode implements MultiLineDocumentationNode {
@@ -595,14 +652,10 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 export { ReleaseTag }
 
 // @public
-interface RenderApiModelAsHtmlOptions extends ApiItemTransformationConfiguration, RenderDocumentAsHtmlConfig, FileSystemConfiguration {
-}
-
-// @public
 function renderApiModelAsMarkdown(options: RenderApiModelAsMarkdownOptions): Promise<void>;
 
 // @public
-interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationConfiguration, MarkdownRenderConfiguration, FileSystemConfiguration {
+interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, MarkdownRenderConfiguration, FileSystemConfiguration {
 }
 
 // @public
@@ -613,10 +666,6 @@ function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfigur
 
 // @public @sealed
 export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConfig {
-}
-
-// @public
-interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfig, FileSystemConfiguration {
 }
 
 // @public
@@ -641,6 +690,15 @@ function renderNode(node: DocumentationNode, writer: DocumentWriter, context: Ma
 
 // @public
 function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
+
+// @public
+export interface SectionHierarchyConfig extends HierarchyConfigBase<HierarchyKind.Section>, SectionHierarchyOptions {
+}
+
+// @public
+export interface SectionHierarchyOptions {
+    readonly headingText: string | ((apiItem: ApiItem) => string);
+}
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -774,7 +832,7 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: T
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
 
 // @public
-export function transformApiModel(transformConfig: ApiItemTransformationConfiguration): DocumentNode[];
+export function transformApiModel(transformConfig: ApiItemTransformationOptions): DocumentNode[];
 
 // @public
 export function transformTsdocNode(node: DocNode, contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocumentationNode | undefined;
@@ -790,6 +848,9 @@ export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDoc
 
 // @public
 export type UrlTarget = string;
+
+// @public
+export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
 
 // @public
 export const verboseConsoleLogger: Logger;

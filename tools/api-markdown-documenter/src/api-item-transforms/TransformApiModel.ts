@@ -12,6 +12,7 @@ import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 import { createDocument } from "./Utilities.js";
 import {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
 import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers/index.js";
@@ -19,24 +20,11 @@ import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "
 /**
  * Renders the provided model and its contents to a series of {@link DocumentNode}s.
  *
- * @remarks
- *
- * Which API members get their own documents and which get written to the contents of their parent is
- * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
- *
- * The generated nodes' {@link DocumentNode.documentPath}s are determined by the provided output path and the
- * following configuration properties:
- *
- * - {@link DocumentationSuiteOptions.documentBoundaries}
- * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
- *
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
  *
  * @public
  */
-export function transformApiModel(
-	transformConfig: ApiItemTransformationConfiguration,
-): DocumentNode[] {
+export function transformApiModel(transformConfig: ApiItemTransformationOptions): DocumentNode[] {
 	const completeConfig = getApiItemTransformationConfigurationWithDefaults(transformConfig);
 	const { apiModel, logger, skipPackage } = completeConfig;
 
@@ -134,17 +122,14 @@ export function transformApiModel(
  * @param apiItem - The API item in question.
  * @param config - See {@link ApiItemTransformationConfiguration}
  */
-function getDocumentItems(
-	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
-): ApiItem[] {
-	const { documentBoundaries } = config;
+function getDocumentItems(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ApiItem[] {
+	const { hierarchy } = config;
 
 	const result: ApiItem[] = [];
 	for (const childItem of apiItem.members) {
 		if (
 			shouldItemBeIncluded(childItem, config) &&
-			doesItemRequireOwnDocument(childItem, documentBoundaries)
+			doesItemRequireOwnDocument(childItem, hierarchy)
 		) {
 			result.push(childItem);
 		}
@@ -163,7 +148,7 @@ function getDocumentItems(
  */
 function createDocumentForApiModel(
 	apiModel: ApiModel,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
 	const { logger, transformApiModel: createModelBodySections } = config;
 
@@ -194,7 +179,7 @@ function createDocumentForApiModel(
 function createDocumentForSingleEntryPointPackage(
 	apiPackage: ApiPackage,
 	apiEntryPoint: ApiEntryPoint,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
 	const { includeBreadcrumb, logger, transformApiEntryPoint } = config;
 

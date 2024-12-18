@@ -9,18 +9,22 @@
 
 export {
 	doesItemRequireOwnDocument,
+	doesItemKindRequireOwnDocument,
 	filterItems,
+	getFilteredParent,
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";
 export {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationConfigurationBase,
 	type ApiItemTransformationOptions,
+	type ApiItemTransformations,
 	type DefaultDocumentationSuiteOptions,
-	defaultHierarchyConfig,
 	type DocumentHierarchyConfig,
 	type DocumentHierarchyOptions,
+	type DocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
 	FolderDocumentPlacement,
 	type FolderHierarchyConfig,
@@ -29,6 +33,7 @@ export {
 	type HierarchyConfig,
 	type HierarchyConfigBase,
 	HierarchyKind,
+	type HierarchyOptions,
 	type SectionHierarchyConfig,
 	type SectionHierarchyOptions,
 	type TransformApiItemWithChildren,

@@ -8,7 +8,7 @@ import type { DocDeclarationReference } from "@microsoft/tsdoc";
 
 import type { Link } from "../Link.js";
 import { DocumentNode, type SectionNode } from "../documentation-domain/index.js";
-import { resolveSymbolicReference } from "../utilities/index.js";
+import { getApiItemKind, getValueOrDerived, resolveSymbolicReference } from "../utilities/index.js";
 
 import {
 	getDocumentPathForApiItem,
@@ -31,11 +31,15 @@ import { wrapInSection } from "./helpers/index.js";
 export function createDocument(
 	documentItem: ApiItem,
 	sections: SectionNode[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
+	const documentItemKind = getApiItemKind(documentItem);
+	const documentHierarchy = config.hierarchy[documentItemKind];
+	const title = getValueOrDerived(documentHierarchy.headingText, documentItem);
+
 	// Wrap sections in a root section if top-level heading is requested.
 	const contents = config.includeTopLevelDocumentHeading
-		? [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })]
+		? [wrapInSection(sections, { title })]
 		: sections;
 
 	return new DocumentNode({

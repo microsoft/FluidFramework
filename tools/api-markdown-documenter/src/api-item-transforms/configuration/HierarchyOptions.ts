@@ -43,6 +43,8 @@ export enum HierarchyKind {
  * @remarks
  * Not intended for external use.
  * Only exists to share common properties between hierarchy configuration types.
+ *
+ * @public
  */
 export interface HierarchyConfigBase<THierarchyKind extends HierarchyKind> {
 	/**
@@ -77,7 +79,7 @@ export interface SectionHierarchyConfig
  *
  * @public
  */
-export interface DocumentHierarchyOptions {
+export interface DocumentHierarchyOptions extends SectionHierarchyOptions {
 	/**
 	 * Document name to use for the API item.
 	 */
@@ -91,7 +93,6 @@ export interface DocumentHierarchyOptions {
  */
 export interface DocumentHierarchyConfig
 	extends HierarchyConfigBase<HierarchyKind.Document>,
-		SectionHierarchyOptions,
 		DocumentHierarchyOptions {}
 
 /**
@@ -118,7 +119,7 @@ export enum FolderDocumentPlacement {
  *
  * @public
  */
-export interface FolderHierarchyOptions {
+export interface FolderHierarchyOptions extends DocumentHierarchyOptions {
 	/**
 	 * Placement of the API item's document relative to its generated folder.
 	 * `inside`: The document is placed inside its folder.
@@ -141,12 +142,12 @@ export interface FolderHierarchyOptions {
  */
 export interface FolderHierarchyConfig
 	extends HierarchyConfigBase<HierarchyKind.Folder>,
-		SectionHierarchyOptions,
-		DocumentHierarchyOptions,
 		FolderHierarchyOptions {}
 
 /**
  * API item hierarchy configuration.
+ *
+ * @public
  */
 export type HierarchyConfig =
 	| SectionHierarchyConfig
@@ -202,8 +203,9 @@ function defaultDocumentName(apiItem: ApiItem): string {
 			return getFileSafeNameForApiItem(apiItem);
 		}
 		default: {
-			// TODO: append item kind postfix
-			return getQualifiedApiItemName(apiItem);
+			const base = getQualifiedApiItemName(apiItem);
+			const postfix = apiItem.kind.toLocaleLowerCase();
+			return `${base}-${postfix}`;
 		}
 	}
 }
@@ -214,36 +216,31 @@ const defaultDocumentHierarchyConfig: DocumentHierarchyConfig = {
 	documentName: defaultDocumentName,
 };
 
-function defaultFolderName(apiItem: ApiItem): string {
-	const kind = getApiItemKind(apiItem);
-	switch (kind) {
-		case ApiItemKind.Package: {
-			return getFileSafeNameForApiItem(apiItem);
-		}
-		default: {
-			// TODO: append item kind postfix
-			return getQualifiedApiItemName(apiItem);
-		}
-	}
-}
+// Default folder name is the same as the default document name.
+const defaultFolderName = defaultDocumentName;
 
 const defaultFolderHierarchyConfig: FolderHierarchyConfig = {
 	kind: HierarchyKind.Folder,
 	headingText: defaultHeadingText,
-	documentPlacement: FolderDocumentPlacement.Inside,
-	documentName: "index", // Documents for items that get their own folder are always named "index" by default.
+	documentPlacement: FolderDocumentPlacement.Outside, // TODO
+	documentName: defaultDocumentName,
+	// documentName: "index", // Documents for items that get their own folder are always named "index" by default.
 	folderName: defaultFolderName,
 };
 
-
 /**
  * Hierarchy options by API item kind.
+ *
+ * @public
  */
 export type HierarchyOptions = {
 	/**
 	 * Hierarchy configuration for the API item kind.
 	 */
-	[Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]: HierarchyConfig;
+	[Kind in Exclude<
+		ValidApiItemKind,
+		ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package
+	>]: HierarchyConfig;
 } & {
 	/**
 	 * Hierarchy configuration for the `Model` API item kind.
@@ -260,8 +257,13 @@ export type HierarchyOptions = {
 	 */
 	[ApiItemKind.Package]: FolderHierarchyConfig;
 
-	// TODO: Allow entry-point configuration?
-}
+	/**
+	 * Hierarchy configuration for the `EntryPoint` API item kind.
+	 *
+	 * @remarks Always a section under the parent (package) document.
+	 */
+	[ApiItemKind.EntryPoint]: SectionHierarchyConfig;
+};
 
 /**
  * Default {@link HierarchyOptions}.
@@ -279,15 +281,16 @@ export const defaultHierarchyOptions: HierarchyOptions = {
 
 	// Items that get their own document, but do not introduce folder hierarchy:
 	[ApiItemKind.Class]: defaultDocumentHierarchyConfig,
-	[ApiItemKind.Enum]: defaultDocumentHierarchyConfig,
+	[ApiItemKind.Enum]: defaultSectionHierarchyConfig, // TODO: DocumentHierarchyConfig
 	[ApiItemKind.Interface]: defaultDocumentHierarchyConfig,
-	[ApiItemKind.TypeAlias]: defaultDocumentHierarchyConfig,
+	[ApiItemKind.TypeAlias]: defaultSectionHierarchyConfig, // TODO: DocumentHierarchyConfig
 
 	// Items that get a section under the document representing an ancestor of the API item:
 	[ApiItemKind.CallSignature]: defaultSectionHierarchyConfig,
 	[ApiItemKind.Constructor]: defaultSectionHierarchyConfig,
 	[ApiItemKind.ConstructSignature]: defaultSectionHierarchyConfig,
 	[ApiItemKind.EnumMember]: defaultSectionHierarchyConfig,
+	[ApiItemKind.EntryPoint]: defaultSectionHierarchyConfig,
 	[ApiItemKind.Function]: defaultSectionHierarchyConfig,
 	[ApiItemKind.IndexSignature]: defaultSectionHierarchyConfig,
 	[ApiItemKind.Method]: defaultSectionHierarchyConfig,
@@ -295,29 +298,4 @@ export const defaultHierarchyOptions: HierarchyOptions = {
 	[ApiItemKind.Property]: defaultSectionHierarchyConfig,
 	[ApiItemKind.PropertySignature]: defaultSectionHierarchyConfig,
 	[ApiItemKind.Variable]: defaultSectionHierarchyConfig,
-}
-
-/**
- * Default {@link DocumentationSuiteOptions.hierarchyOptions}.
- */
-export const defaultHierarchyConfig = (apiItem: ApiItem): HierarchyConfig => {
-	const kind = getApiItemKind(apiItem);
-
-	// TODO: audit these
-	switch (kind) {
-		case ApiItemKind.Namespace:
-		case ApiItemKind.Package: {
-			return defaultFolderHierarchyConfig;
-		}
-		case ApiItemKind.Class:
-		case ApiItemKind.Interface:
-		case ApiItemKind.EntryPoint:
-		case ApiItemKind.Model:
-		case ApiItemKind.TypeAlias: {
-			return defaultDocumentHierarchyConfig;
-		}
-		default: {
-			return defaultSectionHierarchyConfig;
-		}
-	}
 };
