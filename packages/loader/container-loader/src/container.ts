@@ -584,6 +584,15 @@ export class Container
 		return this._lifecycleState === "disposing" || this._lifecycleState === "disposed";
 	}
 
+	private _closedWithError?: ICriticalContainerError;
+
+	public get closedWithError(): ICriticalContainerError | undefined {
+		if (this.closed) {
+			return this._closedWithError;
+		}
+		return undefined;
+	}
+
 	private readonly storageAdapter: ContainerStorageAdapter;
 
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
@@ -1133,6 +1142,7 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "closed";
+			this._closedWithError = error;
 
 			// There is no user for summarizer, so we need to ensure dispose is called
 			if (this.client.details.type === summarizerClientType) {
@@ -1190,6 +1200,10 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "disposed";
+			//* Double-check this logic
+			if (this._closedWithError === undefined) {
+				this._closedWithError = error;
+			}
 			this._lifecycleEvents.emit("disposed");
 		}
 	}
