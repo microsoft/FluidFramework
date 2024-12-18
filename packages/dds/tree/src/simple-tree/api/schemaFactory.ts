@@ -103,6 +103,8 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 
 /**
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema
+ *
+ * @alpha
  */
 export interface SchemaFactoryObjectOptions {
 	/**
@@ -791,7 +793,17 @@ export class SchemaFactory<
 	public objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
-	>(name: Name, t: T) {
+	>(
+		name: Name,
+		t: T,
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Object,
+		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
+		object & InsertableObjectFromSchemaRecordUnsafe<T>,
+		false,
+		T
+	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,

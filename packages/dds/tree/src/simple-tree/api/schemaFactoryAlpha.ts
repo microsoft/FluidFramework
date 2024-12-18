@@ -3,24 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import type { ScopedSchemaName, InsertableObjectFromSchemaRecord } from "../internalTypes.js";
-import {
-	SchemaFactory,
-	type SchemaFactoryObjectOptions,
-	type TreeNodeSchemaClass,
-	type NodeKind,
-	type Unenforced,
-	type ImplicitFieldSchema,
-} from "../simple-tree/index.js";
+import type {
+	ScopedSchemaName,
+	InsertableObjectFromSchemaRecord,
+	TreeObjectNodeUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+	// Adding these unused imports makes the generated d.ts file produced by TypeScript stop breaking API-Extractor's rollup generation.
+	// Without this import, TypeScript generates inline `import("../..")` statements in the d.ts file,
+	// which API-Extractor leaves as is when generating the rollup, leaving them pointing at the wrong directory.
+	// API-Extractor issue: https://github.com/microsoft/rushstack/issues/4507
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+	FieldHasDefaultUnsafe,
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+	InsertableTreeFieldFromImplicitFieldUnsafe,
+} from "../../internalTypes.js";
+import { SchemaFactory, type SchemaFactoryObjectOptions } from "./schemaFactory.js";
+import type { ImplicitFieldSchema } from "../schemaTypes.js";
 // eslint-disable-next-line import/no-internal-modules
-import { defaultSchemaFactoryObjectOptions } from "../simple-tree/api/schemaFactory.js";
+import { defaultSchemaFactoryObjectOptions } from "./schemaFactory.js";
 // eslint-disable-next-line import/no-internal-modules
-import { type TreeObjectNode, objectSchema } from "../simple-tree/objectNode.js";
-import type { RestrictiveStringRecord } from "../util/index.js";
+import { type TreeObjectNode, objectSchema } from "../objectNode.js";
+import type { RestrictiveStringRecord } from "../../util/index.js";
+import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
+import type { Unenforced } from "./typesUnsafe.js";
 
 /**
  * Copy of {@link SchemaFactory} with additional alpha APIs.
  *
+ * @alpha
  * @privateRemarks
  * Not currently exported to the public API surface as doing so produces errors in API-extractor.
  *
@@ -71,7 +81,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritdoc SchemaFactory.objectRecursive}
 	 */
 	public override objectRecursive<
 		const Name extends TName,
@@ -80,7 +90,14 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		t: T,
 		options?: SchemaFactoryObjectOptions,
-	): ReturnType<typeof this.baseKludge.objectRecursive<Name, T>> {
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Object,
+		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
+		object & InsertableObjectFromSchemaRecordUnsafe<T>,
+		false,
+		T
+	> {
 		return this.object(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
