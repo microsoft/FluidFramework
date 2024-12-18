@@ -452,8 +452,8 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (ESM-lib;no build)",
 			"env": {
-				"fluid__test__driver": "r11s", //values: local, t9s, r11s, odsp,
-				"fluid__test__r11sEndpointName": "frs", //values: frs, docker
+				"fluid__test__driver": "t9s", //values: local, t9s, r11s, odsp,
+				// "fluid__test__r11sEndpointName": "frs", //values: frs, docker
 				"FLUID_TEST_VERBOSE": "1",
 			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",

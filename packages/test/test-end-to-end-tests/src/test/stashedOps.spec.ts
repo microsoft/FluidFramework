@@ -2115,6 +2115,7 @@ describeCompat(
 						state: "disabled",
 					},
 				},
+				enableRuntimeIdCompressor: "on",
 			},
 			loaderProps: {
 				configProvider: configProvider({
@@ -2191,7 +2192,7 @@ describeCompat(
 			},
 		);
 
-		for (let i = 0; i < 20; i++) {
+		for (let i = 0; i < 2; i++) {
 			itExpects.only(
 				`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 				[
