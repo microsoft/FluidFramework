@@ -154,7 +154,7 @@ function createDocumentForApiModel(
 
 	logger.verbose(`Generating API Model document...`);
 
-	// Note: We don't render the breadcrumb for Model document, as it is always the root of the file hierarchical
+	// Note: We don't render the breadcrumb for Model document, as it is always the root of the file hierarchy.
 
 	// Render body contents
 	const sections = createModelBodySections(apiModel, config);
@@ -232,7 +232,7 @@ function createDocumentForMultiEntryPointPackage(
 		sections.push(wrapInSection([createBreadcrumbParagraph(apiPackage, config)]));
 	}
 
-	// Render list of entry-points
+	// Render list of links to entry-points, each of which will get its own document.
 	const renderedEntryPointList = createEntryPointList(apiEntryPoints, config);
 	if (renderedEntryPointList !== undefined) {
 		sections.push(
