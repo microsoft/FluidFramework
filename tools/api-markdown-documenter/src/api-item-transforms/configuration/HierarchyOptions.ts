@@ -260,9 +260,10 @@ export type HierarchyOptions = {
 	/**
 	 * Hierarchy configuration for the `EntryPoint` API item kind.
 	 *
-	 * @remarks Always a section under the parent (package) document.
+	 * @remarks Always its own document, adjacent to the package document.
+	 * @privateRemarks TODO: Make this fully configurable - there is no real reason for this policy to be baked in.
 	 */
-	[ApiItemKind.EntryPoint]: SectionHierarchyConfig;
+	[ApiItemKind.EntryPoint]: DocumentHierarchyConfig;
 };
 
 /**
@@ -282,6 +283,7 @@ export const defaultHierarchyOptions: HierarchyOptions = {
 	// Items that get their own document, but do not introduce folder hierarchy:
 	[ApiItemKind.Class]: defaultDocumentHierarchyConfig,
 	[ApiItemKind.Enum]: defaultSectionHierarchyConfig, // TODO: DocumentHierarchyConfig
+	[ApiItemKind.EntryPoint]: defaultDocumentHierarchyConfig,
 	[ApiItemKind.Interface]: defaultDocumentHierarchyConfig,
 	[ApiItemKind.TypeAlias]: defaultSectionHierarchyConfig, // TODO: DocumentHierarchyConfig
 
@@ -290,7 +292,6 @@ export const defaultHierarchyOptions: HierarchyOptions = {
 	[ApiItemKind.Constructor]: defaultSectionHierarchyConfig,
 	[ApiItemKind.ConstructSignature]: defaultSectionHierarchyConfig,
 	[ApiItemKind.EnumMember]: defaultSectionHierarchyConfig,
-	[ApiItemKind.EntryPoint]: defaultSectionHierarchyConfig,
 	[ApiItemKind.Function]: defaultSectionHierarchyConfig,
 	[ApiItemKind.IndexSignature]: defaultSectionHierarchyConfig,
 	[ApiItemKind.Method]: defaultSectionHierarchyConfig,

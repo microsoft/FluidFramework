@@ -479,7 +479,7 @@ export type HierarchyOptions = {
 } & {
     [ApiItemKind.Model]: DocumentHierarchyConfig;
     [ApiItemKind.Package]: FolderHierarchyConfig;
-    [ApiItemKind.EntryPoint]: SectionHierarchyConfig;
+    [ApiItemKind.EntryPoint]: DocumentHierarchyConfig;
 };
 
 // @public
