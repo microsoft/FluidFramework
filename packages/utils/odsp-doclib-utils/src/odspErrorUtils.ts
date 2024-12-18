@@ -161,7 +161,6 @@ function isOdspErrorResponse(x: any): x is OdspErrorResponse {
  */
 export function tryParseErrorResponse(
 	response: string | undefined,
-	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
 ): { success: true; errorResponse: OdspErrorResponse } | { success: false } {
 	try {
 		if (response !== undefined) {

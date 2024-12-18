@@ -18,6 +18,9 @@ import {
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
+// This import is required for intellisense in @link doc comments on mouseover in VSCode.
+// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+import type { TreeAlpha } from "../../shared-tree/index.js";
 
 import {
 	booleanSchema,
@@ -74,6 +77,7 @@ import type {
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { TreeNodeValid } from "../treeNodeValid.js";
 import { isLazy } from "../flexList.js";
+
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -96,6 +100,58 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 			unreachableCase(value);
 	}
 }
+
+/**
+ * Options when declaring an {@link SchemaFactory.object|object node}'s schema
+ */
+export interface SchemaFactoryObjectOptions {
+	/**
+	 * Opt in to viewing documents which have unknown optional fields for this object's identifier, i.e. optional fields
+	 * in the document schema which are not present in this object schema declaration.
+	 *
+	 * @defaultValue `false`
+	 * @remarks
+	 * The advantage of enabling this option is that it allows an application ecosystem with staged rollout to more quickly
+	 * upgrade documents to include schema for new optional features.
+	 *
+	 * However, it does come with trade-offs that applications should weigh carefully when it comes to interactions between
+	 * code and documents.
+	 * When opening such documents, the API presented is still determined by the view schema.
+	 * This can have implications on the behavior of edits or code which uses portions of the view schema,
+	 * since this may inadvertently drop data which is present in those optional fields in the document schema.
+	 *
+	 * Consider the following example:
+	 *
+	 * ```typescript
+	 * const sf = new SchemaFactory("com.example");
+	 * class PersonView extends sf.object("Person", { name: sf.string }, { allowUnknownOptionalFields: true }) {}
+	 * class PersonStored extends sf.object("Person", { name: sf.string, nickname: sf.optional(sf.string) }) {}
+	 *
+	 * // Say we have a document which uses `PersonStored` in its schema, and application code constructs
+	 * // a tree view using `PersonView`. If the application for some reason had implemented a function like this:
+	 * function clonePerson(a: PersonView): PersonView {
+	 * 	return new PersonView({ name: a.name });
+	 * }
+	 * // ...or even like this:
+	 * function clonePerson(a: PersonView): PersonView {
+	 *  return new PersonView({ ...a})
+	 * }
+	 * // Then the alleged clone wouldn't actually clone the entire person in either case, it would drop the nickname.
+	 * ```
+	 *
+	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
+	 * {@link TreeAlpha.(importVerbose:2)|import}/{@link TreeAlpha.(exportVerbose:2)|export} APIs with persistent keys.
+	 *
+	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter
+	 * this problem as SharedTree's implementation stores the entire node in its lower layers. It's only when application code
+	 * reaches into a node (either by accessing its fields, spreading it, or some other means) that this problem arises.
+	 */
+	allowUnknownOptionalFields?: boolean;
+}
+
+export const defaultSchemaFactoryObjectOptions: Required<SchemaFactoryObjectOptions> = {
+	allowUnknownOptionalFields: false,
+};
 
 /**
  * The name of a schema produced by {@link SchemaFactory}, including its optional scope prefix.
@@ -333,7 +389,12 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		return objectSchema(this.scoped(name), fields, true);
+		return objectSchema(
+			this.scoped(name),
+			fields,
+			true,
+			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
+		);
 	}
 
 	/**

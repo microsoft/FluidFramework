@@ -228,6 +228,7 @@ export function setValidateRefCount(
  *
  * @legacy
  * @alpha
+ * @deprecated - This class will be removed in 2.20 with no replacement.
  */
 export class LocalReferenceCollection {
 	public static append(seg1: ISegment, seg2: ISegment): void {
