@@ -93,6 +93,7 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
  * @sealed @beta
  */
 export const TreeBeta: {
+	test2(): void;
 	/**
 	 * Register an event listener on the given node.
 	 * @param node - The node whose events should be subscribed to.
@@ -143,6 +144,7 @@ export const TreeBeta: {
 	// 	},
 	// ): TreeFieldFromImplicitField<TSchema>;
 } = {
+	test2(): void {},
 	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
 		node: TNode,
 		eventName: K,
