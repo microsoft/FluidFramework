@@ -466,7 +466,7 @@ export type HierarchyConfiguration = {
     [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]: DocumentationHierarchyConfiguration;
 } & {
     [ApiItemKind.Model]: DocumentHierarchyConfiguration;
-    [ApiItemKind.Package]: FolderHierarchyConfiguration;
+    [ApiItemKind.Package]: DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
     [ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
 };
 

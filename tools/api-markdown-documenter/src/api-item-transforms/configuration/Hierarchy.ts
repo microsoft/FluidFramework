@@ -252,16 +252,24 @@ export type HierarchyConfiguration = {
 	/**
 	 * Hierarchy configuration for the `Package` API item kind.
 	 *
-	 * @remarks Always introduces folder hierarchy.
-	 * @privateRemarks TODO: Make this fully configurable - there is no real reason for this policy to be baked in.
+	 * @remarks Must be either a folder or document hierarchy configuration.
+	 *
+	 * @privateRemarks
+	 * TODO: Allow all hierarchy configurations for packages.
+	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
-	[ApiItemKind.Package]: FolderHierarchyConfiguration;
+	[ApiItemKind.Package]: DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
 
 	/**
 	 * Hierarchy configuration for the `EntryPoint` API item kind.
 	 *
-	 * @remarks Always its own document, adjacent to the package document.
-	 * @privateRemarks TODO: Make this fully configurable - there is no real reason for this policy to be baked in.
+	 * @remarks
+	 * Always its own document, adjacent to the package document.
+	 * When a package only has a single entrypoint, this is skipped entirely and entrypoint children are rendered directly to the package document.
+	 *
+	 * @privateRemarks
+	 * TODO: Allow all hierarchy configurations for packages.
+	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
 	[ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
 };
