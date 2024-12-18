@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
+import type { ISegmentInternal } from "./mergeTreeNodes.js";
 import type { ReferencePosition } from "./referencePositions.js";
 
 /**
@@ -61,9 +62,10 @@ export const hasInsertionInfo = (
 	maybe: Partial<IInsertionInfo> | undefined,
 ): maybe is IInsertionInfo => toInsertionInfo(maybe) !== undefined;
 
-export const assertInsertionInfo = (
+export const assertInsertionInfo: (
 	maybe: Partial<IInsertionInfo>,
-): asserts maybe is IInsertionInfo => assert(hasInsertionInfo(maybe), "must be insertionInfo");
+) => asserts maybe is IInsertionInfo = (maybe) =>
+	assert(hasInsertionInfo(maybe), "must be insertionInfo");
 
 /**
  * Contains removal information associated to an {@link ISegment}.
@@ -110,9 +112,10 @@ export const hasRemovalInfo = (
 	maybe: Partial<IRemovalInfo> | undefined,
 ): maybe is IRemovalInfo => toRemovalInfo(maybe) !== undefined;
 
-export const assertRemovalInfo = (
+export const assertRemovalInfo: (
 	maybe: Partial<IRemovalInfo>,
-): asserts maybe is IRemovalInfo => assert(hasRemovalInfo(maybe), "must be removalInfo");
+) => asserts maybe is IRemovalInfo = (maybe) =>
+	assert(hasRemovalInfo(maybe), "must be removalInfo");
 
 /**
  * Tracks information about when and where this segment was moved to.
@@ -198,5 +201,15 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 export const hasMoveInfo = (maybe: Partial<IMoveInfo> | undefined): maybe is IMoveInfo =>
 	toMoveInfo(maybe) !== undefined;
 
-export const assertMoveInfo = (maybe: Partial<IMoveInfo>): asserts maybe is IMoveInfo =>
-	assert(hasMoveInfo(maybe), "must be MoveInfo");
+export const assertMoveInfo: (maybe: Partial<IMoveInfo>) => asserts maybe is IMoveInfo = (
+	maybe,
+) => assert(hasMoveInfo(maybe), "must be MoveInfo");
+
+export type SegmentInfo = IInsertionInfo | IMoveInfo | IRemovalInfo;
+
+export type SegmentWithInfo<T extends SegmentInfo> = ISegmentInternal & T;
+
+export const setSegmentInfo = <T extends SegmentInfo>(
+	info: T,
+	maybe: ISegmentInternal,
+): SegmentWithInfo<T> => Object.assign(maybe, info);

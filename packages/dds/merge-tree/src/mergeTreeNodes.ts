@@ -29,7 +29,16 @@ import {
 // eslint-disable-next-line import/no-deprecated
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 // eslint-disable-next-line import/no-deprecated
-import type { IMoveInfo, IRemovalInfo } from "./segmentInfos.js";
+import {
+	hasInsertionInfo,
+	hasMoveInfo,
+	hasRemovalInfo,
+	type IInsertionInfo,
+	// eslint-disable-next-line import/no-deprecated
+	type IMoveInfo,
+	// eslint-disable-next-line import/no-deprecated
+	type IRemovalInfo,
+} from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
 
 /**
@@ -61,13 +70,13 @@ export interface IMergeNodeCommon {
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
-export type ISegmentInternal = Omit<ISegment, keyof IRemovalInfo | keyof IMoveInfo> &
-	Partial<IMergeNodeCommon> &
+export type ISegmentInternal = Omit<
+	ISegment,
 	// eslint-disable-next-line import/no-deprecated
-	Partial<IRemovalInfo> &
+	keyof IRemovalInfo | keyof IMoveInfo
+> &
 	// eslint-disable-next-line import/no-deprecated
-	Partial<IMoveInfo> & {
+	Partial<IInsertionInfo & IRemovalInfo & IMoveInfo & IMergeNodeCommon> & {
 		// eslint-disable-next-line import/no-deprecated
 		localRefs?: LocalReferenceCollection;
 	};
@@ -149,18 +158,6 @@ export interface ISegment {
 	 */
 	localSeq?: number;
 	/**
-	 * Local seq at which this segment was removed. If this is defined, `removedSeq` will initially be set to
-	 * UnassignedSequenceNumber. However, if another client concurrently removes the same segment, `removedSeq`
-	 * will be updated to the seq at which that client removed this segment.
-	 *
-	 * Like {@link ISegment.localSeq}, this field is cleared once the local removal of the segment is acked.
-	 *
-	 * @privateRemarks
-	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
-	 * @deprecated - This property will be removed in 2.20 with no replacement.
-	 */
-	localRemovedSeq?: number;
-	/**
 	 * Seq at which this segment was inserted.
 	 * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
 	 * @deprecated - This property will be removed in 2.20 with no replacement.
@@ -202,6 +199,18 @@ export interface ISegment {
 	 */
 	ordinal: string;
 
+	/**
+	 * Local seq at which this segment was removed. If this is defined, `removedSeq` will initially be set to
+	 * UnassignedSequenceNumber. However, if another client concurrently removes the same segment, `removedSeq`
+	 * will be updated to the seq at which that client removed this segment.
+	 *
+	 * Like {@link ISegment.localSeq}, this field is cleared once the local removal of the segment is acked.
+	 *
+	 * @privateRemarks
+	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	localRemovedSeq?: number;
 	/**
 	 * {@inheritDoc @fluidframework/merge-tree#IRemovalInfo.removedSeq}
 	 * @deprecated - This property will be removed in 2.20 with no replacement.
@@ -537,18 +546,24 @@ export abstract class BaseSegment implements ISegment {
 		return true;
 	}
 
-	protected cloneInto(b: ISegment): void {
-		b.clientId = this.clientId;
+	protected cloneInto(seg: ISegment): void {
+		const b: ISegmentLeaf = seg;
+		if (hasInsertionInfo(this)) {
+			b.clientId = this.clientId;
+			b.seq = this.seq;
+		}
 		// TODO: deep clone properties
 		b.properties = clone(this.properties);
-		b.removedClientIds = this.removedClientIds?.slice();
-		// TODO: copy removed client overlap and branch removal info
-		b.removedSeq = this.removedSeq;
-		b.movedClientIds = this.movedClientIds?.slice();
-		b.movedSeq = this.movedSeq;
-		b.movedSeqs = this.movedSeqs;
-		b.wasMovedOnInsert = this.wasMovedOnInsert;
-		b.seq = this.seq;
+		if (hasRemovalInfo(this)) {
+			b.removedSeq = this.removedSeq;
+			b.removedClientIds = [...this.removedClientIds];
+		}
+		if (hasMoveInfo(this)) {
+			b.movedSeq = this.movedSeq;
+			b.movedSeqs = [...this.movedSeqs];
+			b.wasMovedOnInsert = this.wasMovedOnInsert;
+			b.movedClientIds = [...this.movedClientIds];
+		}
 		b.attribution = this.attribution?.clone();
 	}
 

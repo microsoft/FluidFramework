@@ -16,8 +16,15 @@ import {
 	seqLTE,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
-import { toRemovalInfo, toMoveInfo, IRemovalInfo, IMoveInfo } from "./segmentInfos.js";
+import {
+	toRemovalInfo,
+	toMoveInfo,
+	// eslint-disable-next-line import/no-deprecated
+	IRemovalInfo,
+	// eslint-disable-next-line import/no-deprecated
+	IMoveInfo,
+	assertInsertionInfo,
+} from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
@@ -503,6 +510,7 @@ export class PartialSequenceLengths {
 		firstGte: PartialSequenceLength,
 		clientIds: number[],
 	): void {
+		assertInsertionInfo(segment);
 		const nonInsertingClientIds = clientIds.filter((id) => id !== segment.clientId);
 
 		PartialSequenceLengths.accumulateMoveClientOverlap(
@@ -536,6 +544,7 @@ export class PartialSequenceLengths {
 		obliterateOverlapLen: number,
 		clientIds: number[],
 	): RedBlackTree<number, IOverlapClient> {
+		assertInsertionInfo(segment);
 		const nonInsertingClientIds = clientIds.filter((id) => id !== segment.clientId);
 		const overlapObliterateClients = PartialSequenceLengths.getOverlapClients(
 			nonInsertingClientIds,
@@ -639,6 +648,8 @@ export class PartialSequenceLengths {
 		// eslint-disable-next-line import/no-deprecated
 		moveInfo?: IMoveInfo,
 	): void {
+		assertInsertionInfo(segment);
+
 		const removalIsLocal =
 			!!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
 		const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
@@ -647,7 +658,7 @@ export class PartialSequenceLengths {
 			(!!removalInfo && removalIsLocal && (!moveInfo || moveIsLocal)) ||
 			(!!moveInfo && moveIsLocal && (!removalInfo || removalIsLocal));
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq!;
+		let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq;
 		let segmentLen = segment.cachedLength;
 		let clientId = segment.clientId;
 		let removeClientOverlap: number[] | undefined;
