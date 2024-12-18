@@ -9,9 +9,9 @@ import {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/legacy";
 import { Loader } from "@fluidframework/container-loader/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #!!!: `fluid-static` internal used in examples
+// eslint-disable-next-line import/no-internal-modules -- #26986: `fluid-static` internal used in examples
 import { createDOProviderContainerRuntimeFactory } from "@fluidframework/fluid-static/internal";
-// eslint-disable-next-line import/no-internal-modules -- #!!!: local-driver internal used in examples
+// eslint-disable-next-line import/no-internal-modules -- #26987: `local-driver` internal used in examples
 import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
 	LocalDocumentServiceFactory,

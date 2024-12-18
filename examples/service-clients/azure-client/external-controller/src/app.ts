@@ -16,7 +16,7 @@ import {
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #!!!: `test-runtime-utils` internal used in example
+// eslint-disable-next-line import/no-internal-modules -- #26985: `test-runtime-utils` internal used in example
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema } from "fluid-framework";
 import { IFluidContainer } from "fluid-framework";
