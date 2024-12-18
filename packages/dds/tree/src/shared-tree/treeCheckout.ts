@@ -395,7 +395,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		/** Optional logger for telemetry. */
 		private readonly logger?: ITelemetryLoggerExt,
 		private readonly breaker: Breakable = new Breakable("TreeCheckout"),
-		private readonly disposeForksAfterTransaction?: boolean,
+		private readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = new SquashingTransactionStack(
 			branch,
@@ -412,12 +412,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			() => {
 				// Keep track of all the forks created during the transaction so that we can dispose them when the transaction ends.
 				// This is a policy decision that we think is useful for the user, but it is not necessary for correctness.
-				const forks = new Set<TreeCheckout>();
+				const forks: Set<TreeCheckout> = new Set<TreeCheckout>();
+				let onForkUnSubscribe: () => void | undefined;
 				const onDisposeUnSubscribes: (() => void)[] = [];
-				const onForkUnSubscribe = onForkTransitive(this, (fork) => {
-					forks.add(fork);
-					onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
-				});
+
+				if (this.disposeForksAfterTransaction !== false) {
+					onForkUnSubscribe = onForkTransitive(this, (fork) => {
+						forks.add(fork);
+						onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
+					});
+				}
 				// When each transaction is started, take a snapshot of the current state of removed roots
 				const removedRootsSnapshot = this.removedRoots.clone();
 				return (result) => {
@@ -426,9 +430,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					}
 					if (this.disposeForksAfterTransaction !== false) {
 						forks.forEach((fork) => fork.dispose());
+						onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+						onForkUnSubscribe();
 					}
-					onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
-					onForkUnSubscribe();
 				};
 			},
 		);
@@ -717,6 +721,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.removedRoots.clone(),
 			this.logger,
 			this.breaker,
+			this.disposeForksAfterTransaction,
 		);
 		this.events.emit("fork", checkout);
 		return checkout;

@@ -129,7 +129,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
+import type {
+	SharedTreeOptions,
+	SharedTreeOptionsInternal,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
@@ -511,10 +515,11 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
 	 */
 	public constructor(
-		private readonly onCreate: (tree: SharedTree) => void,
-		private readonly onLoad?: (tree: SharedTree) => void,
+		protected readonly onCreate: (tree: SharedTree) => void,
+		protected readonly onLoad?: (tree: SharedTree) => void,
+		options: SharedTreeOptionsInternal = { jsonValidator: typeboxValidator },
 	) {
-		super({ jsonValidator: typeboxValidator });
+		super(options);
 	}
 
 	public override async load(
