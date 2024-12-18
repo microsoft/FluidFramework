@@ -633,12 +633,10 @@ export class TenantManager {
 				throw new NetworkError(404, `Private keys are missing for tenant id ${tenantId}`);
 			}
 
-			let encryptedTenantKey1: string;
-			if (getPrivateKeys && tenantDocument.privateKeys) {
-				encryptedTenantKey1 = tenantDocument.privateKeys.key;
-			} else {
-				encryptedTenantKey1 = tenantDocument.key;
-			}
+			const encryptedTenantKey1 =
+				getPrivateKeys && tenantDocument.privateKeys
+					? tenantDocument.privateKeys.key
+					: tenantDocument.key;
 
 			const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
 			const tenantKey1 = this.secretManager.decryptSecret(
@@ -652,12 +650,10 @@ export class TenantManager {
 				throw new NetworkError(500, "Tenant key1 decryption failed.");
 			}
 
-			let encryptedTenantKey2: string;
-			if (getPrivateKeys && tenantDocument.privateKeys) {
-				encryptedTenantKey2 = tenantDocument.privateKeys.secondaryKey;
-			} else {
-				encryptedTenantKey2 = tenantDocument.secondaryKey;
-			}
+			const encryptedTenantKey2 =
+				getPrivateKeys && tenantDocument.privateKeys
+					? tenantDocument.privateKeys.secondaryKey
+					: tenantDocument.secondaryKey;
 
 			const tenantKey2 = encryptedTenantKey2
 				? this.secretManager.decryptSecret(encryptedTenantKey2, encryptionKeyVersion)
@@ -677,21 +673,19 @@ export class TenantManager {
 			}
 
 			if (!bypassCache && this.isCacheEnabled) {
-				let cacheKeys: IEncryptedTenantKeys | IEncryptedPrivateTenantKeys;
-				if (getPrivateKeys && tenantDocument.privateKeys) {
-					cacheKeys = {
-						key: encryptedTenantKey1,
-						keyNextRotationTime: tenantDocument.privateKeys.keyNextRotationTime,
-						secondaryKey: encryptedTenantKey2,
-						secondaryKeyNextRotationTime:
-							tenantDocument.privateKeys.secondaryKeyNextRotationTime,
-					};
-				} else {
-					cacheKeys = {
-						key1: encryptedTenantKey1,
-						key2: encryptedTenantKey2,
-					};
-				}
+				const cacheKeys: IEncryptedTenantKeys | IEncryptedPrivateTenantKeys =
+					getPrivateKeys && tenantDocument.privateKeys
+						? {
+								key: encryptedTenantKey1,
+								keyNextRotationTime: tenantDocument.privateKeys.keyNextRotationTime,
+								secondaryKey: encryptedTenantKey2,
+								secondaryKeyNextRotationTime:
+									tenantDocument.privateKeys.secondaryKeyNextRotationTime,
+						  }
+						: {
+								key1: encryptedTenantKey1,
+								key2: encryptedTenantKey2,
+						  };
 				if (encryptionKeyVersion) {
 					cacheKeys.encryptionKeyVersion = encryptionKeyVersion;
 				}
