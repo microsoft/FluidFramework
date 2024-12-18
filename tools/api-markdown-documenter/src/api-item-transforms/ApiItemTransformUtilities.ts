@@ -5,12 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
+import { type ApiItem, type ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import type { Heading } from "../Heading.js";
 import type { Link } from "../Link.js";
 import {
 	getApiItemKind,
+	getFilteredParent,
 	getQualifiedApiItemName,
 	getReleaseTag,
 	getValueOrDerived,
@@ -280,25 +281,6 @@ function getHeadingIdForApiItem(
 	}
 
 	return `${baseName}-${apiItemKind.toLowerCase()}`;
-}
-
-/**
- * Gets the "filtered" parent of the provided API item.
- *
- * @remarks This logic specifically skips items of the following kinds:
- *
- * - EntryPoint: skipped because any given Package item will have exactly 1 EntryPoint child with current version of
- * API-Extractor, making this redundant in the hierarchy. We may need to revisit this in the future if/when
- * API-Extractor adds support for multiple entrypoints.
- *
- * @param apiItem - The API item whose filtered parent will be returned.
- */
-export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
-	const parent = apiItem.parent;
-	if (parent?.kind === ApiItemKind.EntryPoint) {
-		return parent.parent;
-	}
-	return parent;
 }
 
 /**

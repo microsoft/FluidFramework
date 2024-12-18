@@ -36,10 +36,10 @@ import {
 import { PackageName } from "@rushstack/node-core-library";
 
 import type { Logger } from "../Logging.js";
-import { getFilteredParent } from "../api-item-transforms/index.js";
 
 /**
  * This module contains general `ApiItem`-related types and utilities.
+ * @remarks Note: the utilities here should not require any specific context or configuration.
  */
 
 /**
@@ -162,6 +162,25 @@ export enum ApiModifier {
 	 * tag. This item may not to be overridden by implementing types.
 	 */
 	Sealed = "sealed",
+}
+
+/**
+ * Gets the "filtered" parent of the provided API item.
+ *
+ * @remarks This logic specifically skips items of the following kinds:
+ *
+ * - EntryPoint: skipped because any given Package item will have exactly 1 EntryPoint child with current version of
+ * API-Extractor, making this redundant in the hierarchy. We may need to revisit this in the future if/when
+ * API-Extractor adds support for multiple entrypoints.
+ *
+ * @param apiItem - The API item whose filtered parent will be returned.
+ */
+export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
+	const parent = apiItem.parent;
+	if (parent?.kind === ApiItemKind.EntryPoint) {
+		return parent.parent;
+	}
+	return parent;
 }
 
 /**
