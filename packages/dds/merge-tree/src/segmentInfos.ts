@@ -31,17 +31,6 @@ export interface IInsertionInfo {
 	 * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
 	 */
 	seq: number;
-
-	/**
-	 * Whether or not this segment is a special segment denoting the start or
-	 * end of the tree
-	 *
-	 * Endpoint segments are imaginary segments positioned immediately before or
-	 * after the tree. These segments cannot be referenced by regular operations
-	 * and exist primarily as a bucket for local references to slide onto during
-	 * deletion of regular segments.
-	 */
-	readonly endpointType?: "start" | "end";
 }
 
 /**
