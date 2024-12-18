@@ -161,15 +161,15 @@ export function create(
 		const tenantCustomData: ITenantCustomData = request.body.customData
 			? request.body.customData
 			: {};
-		const tenantKeylessAccessPolicy = request.body.keylessAccessPolicy
-			? request.body.keylessAccessPolicy
+		const enableKeylessAccess = request.body.enableKeylessAccess
+			? request.body.enableKeylessAccess
 			: null;
 		const tenantP = manager.createTenant(
 			tenantId,
 			tenantStorage,
 			tenantOrderer,
 			tenantCustomData,
-			tenantKeylessAccessPolicy,
+			enableKeylessAccess,
 		);
 		handleResponse(tenantP, response);
 	});

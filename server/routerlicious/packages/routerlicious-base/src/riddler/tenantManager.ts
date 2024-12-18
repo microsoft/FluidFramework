@@ -277,6 +277,7 @@ export class TenantManager {
 			storage: tenant.storage,
 			customData: tenant.customData,
 			scheduledDeletionTime: tenant.scheduledDeletionTime,
+			isKeylessAccessEnabled: tenant.privateKeys ? true : false,
 		};
 	}
 
@@ -292,6 +293,7 @@ export class TenantManager {
 			storage: tenant.storage,
 			customData: tenant.customData,
 			scheduledDeletionTime: tenant.scheduledDeletionTime,
+			isKeylessAccessEnabled: tenant.privateKeys ? true : false,
 		}));
 	}
 
@@ -348,7 +350,7 @@ export class TenantManager {
 		storage: ITenantStorage,
 		orderer: ITenantOrderer,
 		customData: ITenantCustomData,
-		isKeylessTenant = false,
+		enableKeylessAccess = false,
 	): Promise<ITenantConfig & { key: string }> {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 
@@ -373,7 +375,7 @@ export class TenantManager {
 		}
 
 		let privateKeys: ITenantPrivateKeys | undefined;
-		if (isKeylessTenant) {
+		if (enableKeylessAccess) {
 			privateKeys = await this.createPrivateTenantKeys(tenantId, latestKeyVersion);
 		}
 
@@ -422,7 +424,7 @@ export class TenantManager {
 	public async updateKeylessAccessPolicy(
 		tenantId: string,
 		enableKeylessAccess: boolean,
-	): Promise<void> {
+	): Promise<ITenantConfig> {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 		let privateKeys: ITenantPrivateKeys | undefined;
 		// If the tenant is being converted to a keyless tenant, generate new private keys, otherwise update them to be undefined
@@ -441,6 +443,14 @@ export class TenantManager {
 			});
 			throw new NetworkError(404, `Could not find updated tenant: ${tenantId}`);
 		}
+		return {
+			id: tenantDocument._id,
+			orderer: tenantDocument.orderer,
+			storage: tenantDocument.storage,
+			customData: tenantDocument.customData,
+			scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
+			isKeylessAccessEnabled: tenantDocument.privateKeys ? true : false,
+		};
 	}
 
 	/**

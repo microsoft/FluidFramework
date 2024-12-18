@@ -20,6 +20,9 @@ export interface ITenantConfig {
 	// Timestamp of when this tenant will be hard deleted.
 	// The tenant is soft deleted if a deletion timestamp is present.
 	scheduledDeletionTime?: string;
+
+	// Indicates if keyless access is enabled for this tenant.
+	isKeylessAccessEnabled?: boolean;
 }
 
 /**
