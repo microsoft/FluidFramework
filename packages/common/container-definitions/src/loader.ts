@@ -379,7 +379,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 *
 	 * @remarks If the container is closed and then disposed, both with errors given, this will expose the close error only.
 	 */
-	readonly criticalError?: ICriticalContainerError;
+	readonly criticalError?: ICriticalContainerError | undefined;
 
 	/**
 	 * Whether or not there are any local changes that have not been saved.
