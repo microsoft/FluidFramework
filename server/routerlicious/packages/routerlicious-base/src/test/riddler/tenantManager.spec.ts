@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { TenantManager, type ITenantDocument } from "../../riddler/tenantManager";
 import { ITenantRepository } from "../../riddler/mongoTenantRepository";
 import {
@@ -6,9 +11,12 @@ import {
 	EncryptionKeyVersion,
 	type ITenantPrivateKeys,
 } from "@fluidframework/server-services-core";
-import { ITenantKeyGenerator, TenantKeyGenerator } from "@fluidframework/server-services-utils";
 import { TestCache } from "@fluidframework/server-test-utils";
 import sinon from "sinon";
+import {
+	type ITenantKeyGenerator,
+	TenantKeyGenerator,
+} from "@fluidframework/server-services-utils";
 import assert from "assert";
 
 class TestSecretManager implements ISecretManager {
@@ -48,15 +56,17 @@ class TestTenantRepository implements ITenantRepository {
 describe("TenantManager", () => {
 	let tenantManager: TenantManager;
 	let tenantRepository: ITenantRepository;
-	let secretManager: ISecretManager = new TestSecretManager();
+	let secretManager: ISecretManager;
 	let cache: ICache;
-	let tenantKeyGenerator: ITenantKeyGenerator = new TenantKeyGenerator();
+	let tenantKeyGenerator: ITenantKeyGenerator;
 	let sandbox: sinon.SinonSandbox;
 
 	beforeEach(() => {
 		sandbox = sinon.createSandbox();
 		tenantRepository = new TestTenantRepository();
 		cache = new TestCache();
+		secretManager = new TestSecretManager();
+		tenantKeyGenerator = new TenantKeyGenerator();
 
 		tenantManager = new TenantManager(
 			tenantRepository,
@@ -64,8 +74,8 @@ describe("TenantManager", () => {
 			"defaultHistorianUrl",
 			"defaultInternalHistorianUrl",
 			secretManager,
-			1000,
-			1000,
+			0,
+			0,
 			tenantKeyGenerator,
 			cache,
 		);
