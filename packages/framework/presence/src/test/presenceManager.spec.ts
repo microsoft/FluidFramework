@@ -294,13 +294,13 @@ describe("Presence", () => {
 							clientConnectionId: newAttendeeConnectionId,
 							updateProviders: [initialAttendeeConnectionId],
 							connectionOrder: 1,
-							priorClientToSessionId:  {
+							priorClientToSessionId: {
 								[oldAttendeeConnectionId]: {
 									rev: 0,
 									timestamp: 0,
 									value: "collateral-id",
 								},
-							}
+							},
 						});
 
 						const responseSignal = generateBasicClientJoin(clock.now - 5, {
@@ -503,9 +503,9 @@ describe("Presence", () => {
 							);
 
 							// Act - disconnect & reconnect local client
-							runtime.emit("disconnected"); // Simulate local client disconnect
+							runtime.disconnect(); // Simulate local client disconnect
 							clock.tick(1000);
-							runtime.emit("connected", rejoinAttendeeConnectionId); // Sinulate local client reconnect with new connection id
+							runtime.connect(rejoinAttendeeConnectionId); // Sinulate local client reconnect with new connection id
 
 							// Verify - stale attendee should still be connected after 15 seconds
 							clock.tick(15001);
@@ -534,9 +534,9 @@ describe("Presence", () => {
 							);
 
 							// Act - disconnect & reconnect local client
-							runtime.emit("disconnected"); // Simulate local client disconnect
+							runtime.disconnect(); // Simulate local client disconnect
 							clock.tick(1000);
-							runtime.emit("connected", rejoinAttendeeConnectionId); // Sinulate local client reconnect with new connection id
+							runtime.connect(rejoinAttendeeConnectionId); // Sinulate local client reconnect with new connection id
 
 							// Verify - stale attendee should still be connected after 15 seconds
 							clock.tick(15001);
@@ -547,9 +547,9 @@ describe("Presence", () => {
 							);
 
 							// Act - disconnect & reconnect local client
-							runtime.emit("disconnected"); // Simulate local client disconnect
+							runtime.disconnect(); // Simulate local client disconnect
 							clock.tick(1000);
-							runtime.emit("connected", rejoinAttendeeConnectionId); // Sinulate local client reconnect with new connection id
+							runtime.connect("client7"); // Sinulate local client reconnect with new connection id
 
 							// Verify - stale attendee should still be connected after 15 seconds
 							clock.tick(15001);

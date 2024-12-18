@@ -116,6 +116,17 @@ export class MockEphemeralRuntime
 		this.audience.removeMember(clientId);
 	}
 
+	public connect(clientId: string): void {
+		this.clientId = clientId;
+		this.emit("connected", this.clientId);
+		this.connected = true;
+	}
+
+	public disconnect(): void {
+		this.emit("disconnected");
+		this.connected = false;
+	}
+
 	// #region IEphemeralRuntime
 
 	public clientId: string | undefined;
