@@ -128,6 +128,7 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+// eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage, RelativeLoader } from "./loader.js";
 import {
 	serializeMemoryDetachedBlobStorage,
