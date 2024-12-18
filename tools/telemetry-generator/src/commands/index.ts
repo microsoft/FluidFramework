@@ -6,7 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
+import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { Command, Flags } from "@oclif/core";
 
 import { ConsoleLogger } from "../logger";
