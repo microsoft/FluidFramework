@@ -27,7 +27,7 @@ export {
 	type FolderHierarchyConfiguration,
 	type DocumentationHierarchyConfiguration,
 	type HierarchyConfiguration,
-} from "./HierarchyOptions.js";
+} from "./Hierarchy.js";
 export {
 	type ApiItemTransformations,
 	getApiItemTransformationsWithDefaults,

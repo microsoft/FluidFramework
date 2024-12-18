@@ -13,7 +13,7 @@ import {
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteConfigurationWithDefaults,
 } from "./DocumentationSuiteOptions.js";
-import { getHierarchyOptionsWithDefaults } from "./HierarchyOptions.js";
+import { getHierarchyOptionsWithDefaults } from "./Hierarchy.js";
 import {
 	type ApiItemTransformations,
 	getApiItemTransformationsWithDefaults,

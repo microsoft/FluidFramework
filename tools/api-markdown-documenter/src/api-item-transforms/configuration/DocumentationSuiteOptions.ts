@@ -18,7 +18,7 @@ import {
 	getReleaseTag,
 } from "../../utilities/index.js";
 
-import { defaultHierarchyConfiguration, type HierarchyConfiguration } from "./HierarchyOptions.js";
+import { defaultHierarchyConfiguration, type HierarchyConfiguration } from "./Hierarchy.js";
 import { trimTrailingSemicolon } from "./Utilities.js";
 
 /**
