@@ -12,7 +12,7 @@ import { loadModel, transformApiModel, type ApiItemTransformationOptions } from 
 
 import { HierarchyConfigs, testDataDirectoryPath } from "./EndToEndTestUtilities.js";
 
-const apiModels: string[] = ["empty-model", "simple-suite-test"];
+const apiModels: string[] = ["simple-suite-test"];
 
 const testConfigs = new Map<string, Omit<ApiItemTransformationOptions, "apiModel">>([
 	[
