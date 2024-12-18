@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
+const { importInternalModulesAllowed } = require("../../.eslintrc.data.cjs");
+
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/recommended"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
+		"prettier",
+		"../../.eslintrc.cjs",
+	],
 	parserOptions: {
 		project: ["./tsconfig.json"],
 	},
@@ -12,9 +18,7 @@ module.exports = {
 		"import/no-internal-modules": [
 			"error",
 			{
-				allow: [
-					"@fluidframework/*/{beta,alpha,legacy}",
-
+				allow: importInternalModulesAllowed.concat([
 					// NextJS requires reaching to its internal modules
 					"next/**",
 
@@ -22,7 +26,7 @@ module.exports = {
 					"@/actions/**",
 					"@/types/**",
 					"@/components/**",
-				],
+				]),
 			},
 		],
 		// This is an example/test app; all its dependencies are dev dependencies so as not to pollute the lockfile

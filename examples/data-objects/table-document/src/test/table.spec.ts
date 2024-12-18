@@ -9,7 +9,6 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-	// eslint-disable-next-line import/no-internal-modules -- #26906: `test-utils` internal used in examples (test)
 } from "@fluidframework/test-utils/internal";
 
 import { TableDocument } from "../document.js";

@@ -5,7 +5,7 @@
 
 import { ICodeDetailsLoader } from "@fluidframework/container-definitions/legacy";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-internal-modules -- !!!: local-driver internal LocalSessionStorageDbFactory used in examples
+// eslint-disable-next-line import/no-internal-modules -- #!!!: `local-driver` internal LocalSessionStorageDbFactory used in examples
 import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
 	LocalDocumentServiceFactory,
