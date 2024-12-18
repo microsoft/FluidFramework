@@ -269,44 +269,37 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		// Prepare initial map content from initial state
 		{
 			const clientSessionId = this.runtime.clientSessionId;
+			// Empty record does not satisfy the type, but nodes will post loop.
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			const nodes = {} as MapEntries<TSchema>;
 			let anyInitialValues = false;
+			const newValues: { [key: string]: InternalTypes.ValueDirectoryOrState<unknown> } = {};
 			let cumulativeAllowableUpdateLatencyMs: number | undefined;
-			// eslint-disable-next-line unicorn/no-array-reduce
-			const initial = Object.entries(initialContent).reduce(
-				(acc, [key, nodeFactory]) => {
-					const newNodeData = nodeFactory(key, handleFromDatastore(this));
-					acc.nodes[key as keyof TSchema] = newNodeData.manager;
-					if ("initialData" in newNodeData) {
-						const { value, allowableUpdateLatencyMs } = newNodeData.initialData;
-						acc.datastore[key] = acc.datastore[key] ?? {};
-						acc.datastore[key][clientSessionId] = value;
-						acc.newValues[key] = value;
-						if (allowableUpdateLatencyMs !== undefined) {
-							cumulativeAllowableUpdateLatencyMs =
-								cumulativeAllowableUpdateLatencyMs === undefined
-									? allowableUpdateLatencyMs
-									: Math.min(cumulativeAllowableUpdateLatencyMs, allowableUpdateLatencyMs);
-						}
-						anyInitialValues = true;
+			for (const [key, nodeFactory] of Object.entries(initialContent)) {
+				const newNodeData = nodeFactory(key, handleFromDatastore(this));
+				nodes[key as keyof TSchema] = newNodeData.manager;
+				if ("initialData" in newNodeData) {
+					const { value, allowableUpdateLatencyMs } = newNodeData.initialData;
+					datastore[key] ??= {};
+					datastore[key][clientSessionId] = value;
+					newValues[key] = value;
+					if (allowableUpdateLatencyMs !== undefined) {
+						cumulativeAllowableUpdateLatencyMs =
+							cumulativeAllowableUpdateLatencyMs === undefined
+								? allowableUpdateLatencyMs
+								: Math.min(cumulativeAllowableUpdateLatencyMs, allowableUpdateLatencyMs);
 					}
-					return acc;
-				},
-				{
-					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-					nodes: {} as MapEntries<TSchema>,
-					datastore,
-					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-					newValues: {} as { [key: string]: InternalTypes.ValueDirectoryOrState<unknown> },
-				},
-			);
-			this.nodes = initial.nodes;
+					anyInitialValues = true;
+				}
+			}
+			this.nodes = nodes;
 			// props is the public view of nodes that limits the entries types to
 			// the public interface of the value manager with an additional type
 			// filter that beguiles the type system. So just reinterpret cast.
 			this.props = this.nodes as unknown as PresenceStates<TSchema>["props"];
 
 			if (anyInitialValues) {
-				this.runtime.localUpdate(initial.newValues, {
+				this.runtime.localUpdate(newValues, {
 					allowableUpdateLatencyMs:
 						cumulativeAllowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
 				});
