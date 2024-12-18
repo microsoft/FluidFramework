@@ -7,36 +7,14 @@ import Path from "node:path";
 
 import { ReleaseTag, type ApiModel } from "@microsoft/api-extractor-model";
 
-import { loadModel, MarkdownRenderer } from "../index.js";
+import { checkForDuplicateDocumentPaths } from "../api-item-transforms/index.js";
+import { loadModel, transformApiModel, type ApiItemTransformationOptions } from "../index.js";
 
-import {
-	compareDocumentationSuiteSnapshot,
-	HierarchyConfigs,
-	snapshotsDirectoryPath as snapshotsDirectoryPathBase,
-	testDataDirectoryPath,
-	testTemporaryDirectoryPath as testTemporaryDirectoryPathBase,
-} from "./EndToEndTestUtilities.js";
+import { HierarchyConfigs, testDataDirectoryPath } from "./EndToEndTestUtilities.js";
 
-/**
- * Temp directory under which all tests that generate files will output their contents.
- */
-const testTemporaryDirectoryPath = Path.resolve(testTemporaryDirectoryPathBase, "markdown");
+const apiModels: string[] = ["empty-model", "simple-suite-test"];
 
-/**
- * Snapshot directory to which generated test data will be copied.
- * Relative to lib/test
- */
-const snapshotsDirectoryPath = Path.resolve(snapshotsDirectoryPathBase, "markdown");
-
-const apiModels: string[] = [
-	// TODO: empty model
-	"simple-suite-test",
-];
-
-const testConfigs = new Map<
-	string,
-	Omit<MarkdownRenderer.RenderApiModelOptions, "apiModel" | "outputDirectoryPath">
->([
+const testConfigs = new Map<string, Omit<ApiItemTransformationOptions, "apiModel">>([
 	[
 		"default-config",
 		{
@@ -66,12 +44,11 @@ const testConfigs = new Map<
 			hierarchy: HierarchyConfigs.sparse,
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
 			skipPackage: (apiPackage) => apiPackage.name === "test-suite-b", // Skip test-suite-b package
-			startingHeadingLevel: 2,
 		},
 	],
 ]);
 
-describe("Markdown end-to-end tests", () => {
+describe("API item transformation end-to-end tests", () => {
 	for (const modelName of apiModels) {
 		// Input directory for the model
 		const modelDirectoryPath = Path.join(testDataDirectoryPath, modelName);
@@ -83,23 +60,14 @@ describe("Markdown end-to-end tests", () => {
 			});
 
 			for (const [configName, inputConfig] of testConfigs) {
-				const temporaryOutputPath = Path.join(
-					testTemporaryDirectoryPath,
-					modelName,
-					configName,
-				);
-				const snapshotPath = Path.join(snapshotsDirectoryPath, modelName, configName);
-
 				it(configName, async () => {
-					const options: MarkdownRenderer.RenderApiModelOptions = {
+					const options: ApiItemTransformationOptions = {
 						...inputConfig,
 						apiModel,
-						outputDirectoryPath: temporaryOutputPath,
 					};
 
-					await MarkdownRenderer.renderApiModel(options);
-
-					await compareDocumentationSuiteSnapshot(snapshotPath, temporaryOutputPath);
+					const documents = transformApiModel(options);
+					checkForDuplicateDocumentPaths(documents);
 				});
 			}
 		});

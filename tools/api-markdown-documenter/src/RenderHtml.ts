@@ -54,7 +54,7 @@ export interface RenderDocumentsAsHtmlOptions
  * @alpha
  */
 export async function renderDocumentsAsHtml(
-	documents: DocumentNode[],
+	documents: readonly DocumentNode[],
 	options: RenderDocumentsAsHtmlOptions,
 ): Promise<void> {
 	const { logger, newlineKind, outputDirectoryPath } = options;

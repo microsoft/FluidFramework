@@ -56,7 +56,7 @@ export interface RenderDocumentsAsMarkdownOptions
  * @public
  */
 export async function renderDocumentsAsMarkdown(
-	documents: DocumentNode[],
+	documents: readonly DocumentNode[],
 	options: RenderDocumentsAsMarkdownOptions,
 ): Promise<void> {
 	const { logger, newlineKind, outputDirectoryPath } = options;

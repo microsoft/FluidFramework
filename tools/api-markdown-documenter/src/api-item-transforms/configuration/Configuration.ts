@@ -72,7 +72,7 @@ export interface ApiItemTransformationConfiguration
  */
 export function getApiItemTransformationConfigurationWithDefaults(
 	inputOptions: ApiItemTransformationOptions,
-): Required<ApiItemTransformationConfiguration> {
+): ApiItemTransformationConfiguration {
 	const logger = inputOptions.logger ?? defaultConsoleLogger;
 	const documentationSuiteOptions = getDocumentationSuiteConfigurationWithDefaults(inputOptions);
 	const transformationOptions = getApiItemTransformationsWithDefaults(inputOptions);
