@@ -103,7 +103,7 @@
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@2.11.0",
+		"@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@2.12.0",
 		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/jest": "29.5.3",
