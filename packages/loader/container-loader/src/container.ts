@@ -585,9 +585,9 @@ export class Container
 	 * @remarks If the container is closed and then disposed, both with errors given, this will expose the close error only.
 	 */
 	public get closedWithError(): ICriticalContainerError | undefined {
-		return this._criticalError;
+		return this._closedWithError;
 	}
-	private _criticalError?: ICriticalContainerError;
+	private _closedWithError?: ICriticalContainerError;
 
 	private readonly storageAdapter: ContainerStorageAdapter;
 
@@ -1138,7 +1138,7 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "closed";
-			this._criticalError = error;
+			this._closedWithError = error;
 
 			// There is no user for summarizer, so we need to ensure dispose is called
 			if (this.client.details.type === summarizerClientType) {
@@ -1160,9 +1160,9 @@ export class Container
 				this.mc.logger.sendTelemetryEvent(
 					{
 						eventName: "ContainerDispose",
-						// Use error category if there's an error, unless we already closed with an error (i.e. _criticalError is set)
+						// Use error category if there's an error, unless we already closed with an error (i.e. _closedWithError is set)
 						category:
-							error !== undefined && this._criticalError === undefined ? "error" : "generic",
+							error !== undefined && this._closedWithError === undefined ? "error" : "generic",
 					},
 					error,
 				);
@@ -1199,9 +1199,9 @@ export class Container
 			this._lifecycleState = "disposed";
 			// Corner cases that are expressed imprecisely here:
 			// When disposing with an error...
-			// - if we closed with an error, _criticalError doesn't expose the dispose error.
-			// - if we closed without an error, _criticalError doesn't distinguish whether this error came from close or dispose.
-			this._criticalError ??= error;
+			// - if we closed with an error, _closedWithError doesn't expose the dispose error.
+			// - if we closed without an error, _closedWithError doesn't distinguish whether this error came from close or dispose.
+			this._closedWithError ??= error;
 			this._lifecycleEvents.emit("disposed");
 		}
 	}
