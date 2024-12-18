@@ -452,9 +452,11 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (ESM-lib;no build)",
 			"env": {
-				"fluid__test__driver": "t9s", //values: local, t9s, r11s, odsp,
-				// "fluid__test__r11sEndpointName": "frs", //values: frs, docker
-				"FLUID_TEST_VERBOSE": "1",
+				// "fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
+				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
+				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
 			"stopOnEntry": false,
@@ -482,22 +484,9 @@
 				"**/node_modules/semver/classes/semver.js",
 			],
 			"outFiles": [
-				// This config avoids loading dependent packages' test files, while using the same technique
-				// as the "Debug Current Mocha Test (*)" config to load source maps for test files in the current
-				// package.
-				// This reduces the number of source files VSCode needs to load to debug the e2e tests
-				// considerably, which decreases the time it takes to start debugging.
-				"${workspaceFolder}/**/lib/**/!(*.spec,*.test,*.tests).js",
 				"${fileDirname}/../../lib/**/*.js",
 				"${fileDirname}/../../../lib/**/*.js",
 				"${fileDirname}/../../../../lib/**/*.js",
-				// e2e tests load ESM modules since test-end-to-end-tests specifies "type": "module" in its package.json.
-				// This ensures that source maps are loaded for those files as well (e.g. so putting a breakpoint in
-				// containerRuntime.ts while debugging a test in test-end-to-end-tests works)
-				"${workspaceFolder}/**/lib/**/!(*.spec,*.test,*.tests).mjs",
-				"${fileDirname}/../../lib/**/*.mjs",
-				"${fileDirname}/../../../lib/**/*.mjs",
-				"${fileDirname}/../../../../lib/**/*.mjs",
 			],
 		},
 		{
