@@ -2115,12 +2115,12 @@ describeCompat(
 						state: "disabled",
 					},
 				},
-				enableRuntimeIdCompressor: "on",
 			},
 			loaderProps: {
 				configProvider: configProvider({
 					"Fluid.Container.enableOfflineLoad": true,
 					"Fluid.Sequence.intervalStickinessEnabled": true,
+					// "Fluid.ContainerRuntime.IdCompressorEnabled": false,
 				}),
 			},
 		};
@@ -2192,7 +2192,7 @@ describeCompat(
 			},
 		);
 
-		for (let i = 0; i < 2; i++) {
+		for (let i = 0; i < 20; i++) {
 			itExpects.only(
 				`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 				[
@@ -2214,6 +2214,16 @@ describeCompat(
 					},
 				],
 				async function () {
+					container1.on("closed", (error) => {
+						// console.log(`~~~~~~~~ ${counter1.value} ~~~~~~~~`);
+						if (counter1.value === 0) {
+							console.error(error ?? new Error("BOOM"));
+						} else {
+							console.log(`~~~~~~~~ ${counter1.value} ~~~~~~~~`);
+							console.error(error ?? new Error("BOOM"));
+						}
+					});
+
 					// AB#14900, 20297: this test is extremely flaky on Tinylicious and causing noise.
 					// Skip it for now until above items are resolved.
 					// if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {

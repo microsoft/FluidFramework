@@ -15,7 +15,6 @@
 			],
 			"group": {
 				"kind": "build",
-				"isDefault": true,
 			},
 			"problemMatcher": [
 				{
@@ -59,7 +58,10 @@
 				"--vscode",
 				"${fileDirname}",
 			],
-			"group": "build",
+			"group": {
+				"kind": "build",
+				"isDefault": true,
+			},
 			"problemMatcher": [
 				{
 					"base": "$tsc",
