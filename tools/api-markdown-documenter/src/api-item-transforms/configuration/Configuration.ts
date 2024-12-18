@@ -13,6 +13,7 @@ import {
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteConfigurationWithDefaults,
 } from "./DocumentationSuiteOptions.js";
+import { getHierarchyOptionsWithDefaults } from "./HierarchyOptions.js";
 import {
 	type ApiItemTransformations,
 	getApiItemTransformationsWithDefaults,
@@ -74,6 +75,7 @@ export function getApiItemTransformationConfigurationWithDefaults(
 	inputOptions: ApiItemTransformationOptions,
 ): ApiItemTransformationConfiguration {
 	const logger = inputOptions.logger ?? defaultConsoleLogger;
+	const hierarchy = getHierarchyOptionsWithDefaults(inputOptions?.hierarchy);
 	const documentationSuiteOptions = getDocumentationSuiteConfigurationWithDefaults(inputOptions);
 	const transformationOptions = getApiItemTransformationsWithDefaults(inputOptions);
 	return {
@@ -81,6 +83,7 @@ export function getApiItemTransformationConfigurationWithDefaults(
 		...transformationOptions,
 		apiModel: inputOptions.apiModel,
 		uriRoot: inputOptions.uriRoot,
+		hierarchy,
 		logger,
 	};
 }

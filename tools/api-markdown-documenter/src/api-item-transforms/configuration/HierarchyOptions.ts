@@ -300,3 +300,13 @@ export const defaultHierarchyOptions: HierarchyOptions = {
 	[ApiItemKind.PropertySignature]: defaultSectionHierarchyConfig,
 	[ApiItemKind.Variable]: defaultSectionHierarchyConfig,
 };
+
+/**
+ * Gets a complete {@link HierarchyOptions} using the provided partial configuration, and filling
+ * in the remainder with defaults.
+ */
+export function getHierarchyOptionsWithDefaults(
+	inputOptions: Partial<HierarchyOptions> | undefined,
+): HierarchyOptions {
+	return { ...defaultHierarchyOptions, ...inputOptions };
+}
