@@ -147,18 +147,6 @@ const keylessAccessTokenClaims = {
 	fluidRelayKeylessAccess: true,
 };
 
-// const accessTokenClaims = {
-// 	documentId: "documentId",
-// 	tenantId: "cordflasher-dolphin",
-// 	scopes: [ScopeType.DocRead, ScopeType.DocWrite],
-// 	user: {
-// 		id: "user1",
-// 	},
-// 	iat: Math.round(new Date().getTime() / 1000),
-// 	exp: Math.round(new Date().getTime() / 1000) + 3600,
-// 	ver: "1.0",
-// };
-
 describe("TenantManager", () => {
 	let tenantManager: TenantManager;
 	let tenantRepository: ITenantRepository;
@@ -489,7 +477,7 @@ describe("TenantManager", () => {
 				keylessAccessTokenClaims.user,
 				undefined,
 				keylessAccessTokenClaims.ver,
-				undefined,
+				undefined
 			);
 			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
 			await assert.rejects(validationPKey1, (err) => {
@@ -506,7 +494,7 @@ describe("TenantManager", () => {
 				keylessAccessTokenClaims.user,
 				undefined,
 				keylessAccessTokenClaims.ver,
-				undefined,
+				undefined
 			);
 			const validationPKey2 = tenantManager.validateToken("cordflasher-dolphin", tokenKey2);
 			await assert.rejects(validationPKey2, (err) => {
