@@ -13,6 +13,23 @@ If you don't have `pnpm` installed, you will need to do so first.
 pnpm i
 ```
 
+## Optional Packages
+
+### @wcp/wcp-consent
+
+This packages is used in production and does not have much relevance for local development.
+If you're a Microsoft engineer would like to include consent management functionality in
+your local environment, you can install the MS-internal `@wcp/wcp-consent` package, refer
+[here](https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/wcp/privacy/wcp-cookie-consent-api) for documentation. To install it, run:
+
+```shell
+pnpm i -w @wcp/wcp-consent
+```
+
+For details on how to authenticate and procure a PAT to use this package, please refer to the [MS-internal documentation](https://1essharedassets.visualstudio.com/1esPkgs/_artifacts/feed/WebCompliance@Release/Npm/@wcp%2Fwcp-consent/overview/1.1.0).
+
+````
+
 ## Local Development
 
 There are two options for local testing.
@@ -28,7 +45,7 @@ So start by running:
 
 ```shell
 npm run build:generate-content
-```
+````
 
 Then, run:
 
