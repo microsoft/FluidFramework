@@ -108,6 +108,7 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
  * @legacy
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IConsensusOrderedCollection<T = any>
 	extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
 	/**
@@ -152,6 +153,7 @@ export interface ISnapshotable<T> {
  * @legacy
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IOrderedCollection<T = any> extends ISnapshotable<T> {
 	/**
 	 * Adds a value to the collection
