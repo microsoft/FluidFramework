@@ -13,12 +13,12 @@ import { compare } from "dir-compare";
 
 import {
 	ApiItemUtilities,
-	type DocumentHierarchyConfig,
+	type DocumentHierarchyConfiguration,
 	FolderDocumentPlacement,
 	HierarchyKind,
-	type HierarchyOptions,
-	type FolderHierarchyConfig,
-	type SectionHierarchyConfig,
+	type HierarchyConfiguration,
+	type FolderHierarchyConfiguration,
+	type SectionHierarchyConfiguration,
 } from "../index.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
@@ -47,18 +47,18 @@ export const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "t
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace HierarchyConfigs {
-	const defaultSectionConfig: SectionHierarchyConfig = {
+	const defaultSectionConfig: SectionHierarchyConfiguration = {
 		kind: HierarchyKind.Section,
 		headingText: (apiItem) => apiItem.displayName,
 	};
 
-	const defaultDocumentConfig: DocumentHierarchyConfig = {
+	const defaultDocumentConfig: DocumentHierarchyConfiguration = {
 		kind: HierarchyKind.Document,
 		documentName: (apiItem) => ApiItemUtilities.getFileSafeNameForApiItem(apiItem),
 		headingText: (apiItem) => apiItem.displayName,
 	};
 
-	const outsideFolderConfig: FolderHierarchyConfig = {
+	const outsideFolderConfig: FolderHierarchyConfiguration = {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Outside,
 		documentName: (apiItem) => ApiItemUtilities.getFileSafeNameForApiItem(apiItem),
@@ -66,7 +66,7 @@ export namespace HierarchyConfigs {
 		headingText: (apiItem) => apiItem.displayName,
 	};
 
-	const insideFolderConfig: FolderHierarchyConfig = {
+	const insideFolderConfig: FolderHierarchyConfiguration = {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Inside,
 		documentName: "index",
@@ -78,7 +78,7 @@ export namespace HierarchyConfigs {
 	 * "Flat" hierarchy: Packages get their own documents, and all descendent API items are rendered as sections under that document.
 	 * @remarks Results in a small number of documents, but can lead to relatively large documents.
 	 */
-	export const flat: Partial<HierarchyOptions> = {
+	export const flat: Partial<HierarchyConfiguration> = {
 		[ApiItemKind.Package]: outsideFolderConfig,
 
 		[ApiItemKind.CallSignature]: defaultSectionConfig,
@@ -102,7 +102,7 @@ export namespace HierarchyConfigs {
 	 * "Sparse" hierarchy: Packages yield folder hierarchy, and all descendent items get their own document under that folder.
 	 * @remarks Leads to many documents, but each document is likely to be relatively small.
 	 */
-	export const sparse: Partial<HierarchyOptions> = {
+	export const sparse: Partial<HierarchyConfiguration> = {
 		[ApiItemKind.Package]: outsideFolderConfig,
 
 		[ApiItemKind.CallSignature]: defaultDocumentConfig,
@@ -127,7 +127,7 @@ export namespace HierarchyConfigs {
 	 * "Deep" hierarchy: All "parent" API items generate hierarchy. All other items are rendered as documents under their parent hierarchy.
 	 * @remarks Leads to many documents, but each document is likely to be relatively small.
 	 */
-	export const deep: Partial<HierarchyOptions> = {
+	export const deep: Partial<HierarchyConfiguration> = {
 		// Items that introduce folder hierarchy:
 		[ApiItemKind.Namespace]: insideFolderConfig,
 		[ApiItemKind.Package]: insideFolderConfig,

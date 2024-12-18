@@ -198,6 +198,14 @@ export namespace DefaultDocumentationSuiteOptions {
 }
 
 // @public
+export type DocumentationHierarchyConfiguration = SectionHierarchyConfiguration | DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
+
+// @public
+export interface DocumentationHierarchyConfigurationBase<THierarchyKind extends HierarchyKind> {
+    readonly kind: THierarchyKind;
+}
+
+// @public
 export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TValue>, DocumentationNode {
     readonly isLiteral: true;
     readonly isParent: false;
@@ -281,7 +289,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 
 // @public
 export type DocumentationSuiteConfiguration = Omit<Required<DocumentationSuiteOptions>, "hierarchy"> & {
-    readonly hierarchy: Required<HierarchyOptions>;
+    readonly hierarchy: Required<HierarchyConfiguration>;
 };
 
 // @public
@@ -289,7 +297,7 @@ export interface DocumentationSuiteOptions {
     readonly getAlertsForItem?: (apiItem: ApiItem) => string[];
     readonly getLinkTextForItem?: (apiItem: ApiItem) => string;
     readonly getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
-    readonly hierarchy?: Partial<HierarchyOptions>;
+    readonly hierarchy?: Partial<HierarchyConfiguration>;
     readonly includeBreadcrumb?: boolean;
     readonly includeTopLevelDocumentHeading?: boolean;
     readonly minimumReleaseLevel?: Exclude<ReleaseTag, ReleaseTag.None>;
@@ -297,11 +305,11 @@ export interface DocumentationSuiteOptions {
 }
 
 // @public
-export interface DocumentHierarchyConfig extends HierarchyConfigBase<HierarchyKind.Document>, DocumentHierarchyOptions {
+export interface DocumentHierarchyConfiguration extends DocumentationHierarchyConfigurationBase<HierarchyKind.Document>, DocumentHierarchyProperties {
 }
 
 // @public
-export interface DocumentHierarchyOptions extends SectionHierarchyOptions {
+export interface DocumentHierarchyProperties extends SectionHierarchyProperties {
     readonly documentName: string | ((apiItem: ApiItem) => string);
 }
 
@@ -343,7 +351,7 @@ export namespace DocumentWriter {
 }
 
 // @public
-function doesItemKindRequireOwnDocument(apiItemKind: ValidApiItemKind, hierarchyConfig: Required<HierarchyOptions>): boolean;
+function doesItemKindRequireOwnDocument(apiItemKind: ValidApiItemKind, hierarchyConfig: Required<HierarchyConfiguration>): boolean;
 
 // @public
 export class FencedCodeBlockNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -370,11 +378,11 @@ export enum FolderDocumentPlacement {
 }
 
 // @public
-export interface FolderHierarchyConfig extends HierarchyConfigBase<HierarchyKind.Folder>, FolderHierarchyOptions {
+export interface FolderHierarchyConfiguration extends DocumentationHierarchyConfigurationBase<HierarchyKind.Folder>, FolderHierarchyProperties {
 }
 
 // @public
-export interface FolderHierarchyOptions extends DocumentHierarchyOptions {
+export interface FolderHierarchyProperties extends DocumentHierarchyProperties {
     readonly documentPlacement: FolderDocumentPlacement | ((apiItem: ApiItem) => FolderDocumentPlacement);
     readonly folderName: string | ((apiItem: ApiItem) => string);
 }
@@ -454,12 +462,13 @@ export class HeadingNode extends DocumentationParentNodeBase<SingleLineDocumenta
 }
 
 // @public
-export type HierarchyConfig = SectionHierarchyConfig | DocumentHierarchyConfig | FolderHierarchyConfig;
-
-// @public
-export interface HierarchyConfigBase<THierarchyKind extends HierarchyKind> {
-    readonly kind: THierarchyKind;
-}
+export type HierarchyConfiguration = {
+    [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]: DocumentationHierarchyConfiguration;
+} & {
+    [ApiItemKind.Model]: DocumentHierarchyConfiguration;
+    [ApiItemKind.Package]: FolderHierarchyConfiguration;
+    [ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
+};
 
 // @public
 export enum HierarchyKind {
@@ -467,15 +476,6 @@ export enum HierarchyKind {
     Folder = "folder",
     Section = "section"
 }
-
-// @public
-export type HierarchyOptions = {
-    [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]: HierarchyConfig;
-} & {
-    [ApiItemKind.Model]: DocumentHierarchyConfig;
-    [ApiItemKind.Package]: FolderHierarchyConfig;
-    [ApiItemKind.EntryPoint]: DocumentHierarchyConfig;
-};
 
 // @public
 export class HorizontalRuleNode implements MultiLineDocumentationNode {
@@ -692,11 +692,11 @@ function renderNode(node: DocumentationNode, writer: DocumentWriter, context: Ma
 function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public
-export interface SectionHierarchyConfig extends HierarchyConfigBase<HierarchyKind.Section>, SectionHierarchyOptions {
+export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase<HierarchyKind.Section>, SectionHierarchyProperties {
 }
 
 // @public
-export interface SectionHierarchyOptions {
+export interface SectionHierarchyProperties {
     readonly headingText: string | ((apiItem: ApiItem) => string);
 }
 

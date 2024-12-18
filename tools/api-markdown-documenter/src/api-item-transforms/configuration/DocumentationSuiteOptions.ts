@@ -18,7 +18,7 @@ import {
 	getReleaseTag,
 } from "../../utilities/index.js";
 
-import { defaultHierarchyOptions, type HierarchyOptions } from "./HierarchyOptions.js";
+import { defaultHierarchyConfiguration, type HierarchyConfiguration } from "./HierarchyOptions.js";
 import { trimTrailingSemicolon } from "./Utilities.js";
 
 /**
@@ -47,9 +47,9 @@ export interface DocumentationSuiteOptions {
 	readonly includeBreadcrumb?: boolean;
 
 	/**
-	 * {@link HierarchyConfig} to use for the provided API item.
+	 * {@link HierarchyConfiguration} to use for the provided API item.
 	 */
-	readonly hierarchy?: Partial<HierarchyOptions>;
+	readonly hierarchy?: Partial<HierarchyConfiguration>;
 
 	/**
 	 * Optionally provide an override for the URI base used in links generated for the provided `ApiItem`.
@@ -138,7 +138,7 @@ export type DocumentationSuiteConfiguration = Omit<
 	/**
 	 * {@inheritDoc DocumentationSuiteOptions.hierarchy}
 	 */
-	readonly hierarchy: Required<HierarchyOptions>;
+	readonly hierarchy: Required<HierarchyConfiguration>;
 };
 
 /**
@@ -222,7 +222,7 @@ export namespace DefaultDocumentationSuiteOptions {
  * Default {@link DocumentationSuiteOptions} value.
  */
 const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
-	hierarchy: defaultHierarchyOptions,
+	hierarchy: defaultHierarchyConfiguration,
 	includeTopLevelDocumentHeading: true,
 	includeBreadcrumb: true,
 	getUriBaseOverrideForItem: DefaultDocumentationSuiteOptions.defaultGetUriBaseOverrideForItem,
@@ -239,8 +239,8 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
 export function getDocumentationSuiteConfigurationWithDefaults(
 	inputOptions: DocumentationSuiteOptions,
 ): DocumentationSuiteConfiguration {
-	const hierarchy: Required<HierarchyOptions> = {
-		...defaultHierarchyOptions,
+	const hierarchy: Required<HierarchyConfiguration> = {
+		...defaultHierarchyConfiguration,
 		...inputOptions.hierarchy,
 	};
 	return {

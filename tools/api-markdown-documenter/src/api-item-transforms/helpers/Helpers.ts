@@ -383,7 +383,7 @@ export function createExcerptSpanWithHyperlinks(
  *
  * @remarks Displayed as a ` > `-separated list of hierarchical page links.
  * 1 for each element in the provided item's ancestry for which a separate document is generated
- * (see {@link HierarchyOptions}).
+ * (see {@link HierarchyConfiguration}).
  *
  * @param apiItem - The API item whose ancestry will be used to generate the breadcrumb.
  * @param config - See {@link ApiItemTransformationConfiguration}.

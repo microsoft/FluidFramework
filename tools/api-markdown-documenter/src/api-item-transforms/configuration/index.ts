@@ -17,16 +17,16 @@ export {
 } from "./DocumentationSuiteOptions.js";
 export {
 	HierarchyKind,
-	type HierarchyConfigBase,
-	type SectionHierarchyOptions,
-	type SectionHierarchyConfig,
-	type DocumentHierarchyOptions,
-	type DocumentHierarchyConfig,
+	type DocumentationHierarchyConfigurationBase,
+	type SectionHierarchyProperties,
+	type SectionHierarchyConfiguration,
+	type DocumentHierarchyProperties,
+	type DocumentHierarchyConfiguration,
 	FolderDocumentPlacement,
-	type FolderHierarchyOptions,
-	type FolderHierarchyConfig,
-	type HierarchyConfig,
-	type HierarchyOptions,
+	type FolderHierarchyProperties,
+	type FolderHierarchyConfiguration,
+	type DocumentationHierarchyConfiguration,
+	type HierarchyConfiguration,
 } from "./HierarchyOptions.js";
 export {
 	type ApiItemTransformations,

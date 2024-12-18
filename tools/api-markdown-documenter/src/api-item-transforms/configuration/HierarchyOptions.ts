@@ -38,7 +38,7 @@ export enum HierarchyKind {
 }
 
 /**
- * {@link HierarchyConfig} base interface.
+ * {@link DocumentationHierarchyConfiguration} base interface.
  *
  * @remarks
  * Not intended for external use.
@@ -46,7 +46,7 @@ export enum HierarchyKind {
  *
  * @public
  */
-export interface HierarchyConfigBase<THierarchyKind extends HierarchyKind> {
+export interface DocumentationHierarchyConfigurationBase<THierarchyKind extends HierarchyKind> {
 	/**
 	 * {@inheritDoc HierarchyKind}
 	 */
@@ -54,11 +54,11 @@ export interface HierarchyConfigBase<THierarchyKind extends HierarchyKind> {
 }
 
 /**
- * {@link HierarchyKind.Section} hierarchy configuration options.
+ * {@link HierarchyKind.Section} hierarchy configuration properties.
  *
  * @public
  */
-export interface SectionHierarchyOptions {
+export interface SectionHierarchyProperties {
 	/**
 	 * Heading text to use for the API item.
 	 */
@@ -70,16 +70,16 @@ export interface SectionHierarchyOptions {
  *
  * @public
  */
-export interface SectionHierarchyConfig
-	extends HierarchyConfigBase<HierarchyKind.Section>,
-		SectionHierarchyOptions {}
+export interface SectionHierarchyConfiguration
+	extends DocumentationHierarchyConfigurationBase<HierarchyKind.Section>,
+		SectionHierarchyProperties {}
 
 /**
- * {@link HierarchyKind.Document} hierarchy configuration options.
+ * {@link HierarchyKind.Document} hierarchy configuration properties.
  *
  * @public
  */
-export interface DocumentHierarchyOptions extends SectionHierarchyOptions {
+export interface DocumentHierarchyProperties extends SectionHierarchyProperties {
 	/**
 	 * Document name to use for the API item.
 	 */
@@ -91,14 +91,14 @@ export interface DocumentHierarchyOptions extends SectionHierarchyOptions {
  *
  * @public
  */
-export interface DocumentHierarchyConfig
-	extends HierarchyConfigBase<HierarchyKind.Document>,
-		DocumentHierarchyOptions {}
+export interface DocumentHierarchyConfiguration
+	extends DocumentationHierarchyConfigurationBase<HierarchyKind.Document>,
+		DocumentHierarchyProperties {}
 
 /**
  * Placement of the API item's document relative to its generated folder.
  *
- * @remarks Used by {@link FolderHierarchyOptions}.
+ * @remarks Used by {@link FolderHierarchyProperties}.
  *
  * @public
  */
@@ -115,11 +115,11 @@ export enum FolderDocumentPlacement {
 }
 
 /**
- * {@link HierarchyKind.Document} hierarchy configuration options.
+ * {@link HierarchyKind.Document} hierarchy configuration properties.
  *
  * @public
  */
-export interface FolderHierarchyOptions extends DocumentHierarchyOptions {
+export interface FolderHierarchyProperties extends DocumentHierarchyProperties {
 	/**
 	 * Placement of the API item's document relative to its generated folder.
 	 * `inside`: The document is placed inside its folder.
@@ -140,22 +140,22 @@ export interface FolderHierarchyOptions extends DocumentHierarchyOptions {
  *
  * @public
  */
-export interface FolderHierarchyConfig
-	extends HierarchyConfigBase<HierarchyKind.Folder>,
-		FolderHierarchyOptions {}
+export interface FolderHierarchyConfiguration
+	extends DocumentationHierarchyConfigurationBase<HierarchyKind.Folder>,
+		FolderHierarchyProperties {}
 
 /**
  * API item hierarchy configuration.
  *
  * @public
  */
-export type HierarchyConfig =
-	| SectionHierarchyConfig
-	| DocumentHierarchyConfig
-	| FolderHierarchyConfig;
+export type DocumentationHierarchyConfiguration =
+	| SectionHierarchyConfiguration
+	| DocumentHierarchyConfiguration
+	| FolderHierarchyConfiguration;
 
 /**
- * Default {@link SectionHierarchyOptions.headingText}.
+ * Default {@link SectionHierarchyProperties.headingText}.
  *
  * Uses the item's qualified API name, but is handled differently for the following items:
  *
@@ -184,13 +184,13 @@ function defaultHeadingText(apiItem: ApiItem): string {
 	}
 }
 
-const defaultSectionHierarchyConfig: SectionHierarchyConfig = {
+const defaultSectionHierarchyConfig: SectionHierarchyConfiguration = {
 	kind: HierarchyKind.Section,
 	headingText: defaultHeadingText,
 };
 
 /**
- * Default {@link DocumentHierarchyOptions.documentName} for non-folder hierarchy documents.
+ * Default {@link DocumentHierarchyProperties.documentName} for non-folder hierarchy documents.
  *
  * Uses the item's qualified API name, but is handled differently for the following items:
  *
@@ -210,7 +210,7 @@ function defaultDocumentName(apiItem: ApiItem): string {
 	}
 }
 
-const defaultDocumentHierarchyConfig: DocumentHierarchyConfig = {
+const defaultDocumentHierarchyConfig: DocumentHierarchyConfiguration = {
 	kind: HierarchyKind.Document,
 	headingText: defaultHeadingText,
 	documentName: defaultDocumentName,
@@ -219,7 +219,7 @@ const defaultDocumentHierarchyConfig: DocumentHierarchyConfig = {
 // Default folder name is the same as the default document name.
 const defaultFolderName = defaultDocumentName;
 
-const defaultFolderHierarchyConfig: FolderHierarchyConfig = {
+const defaultFolderHierarchyConfig: FolderHierarchyConfiguration = {
 	kind: HierarchyKind.Folder,
 	headingText: defaultHeadingText,
 	documentPlacement: FolderDocumentPlacement.Outside, // TODO
@@ -233,21 +233,21 @@ const defaultFolderHierarchyConfig: FolderHierarchyConfig = {
  *
  * @public
  */
-export type HierarchyOptions = {
+export type HierarchyConfiguration = {
 	/**
 	 * Hierarchy configuration for the API item kind.
 	 */
 	[Kind in Exclude<
 		ValidApiItemKind,
 		ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package
-	>]: HierarchyConfig;
+	>]: DocumentationHierarchyConfiguration;
 } & {
 	/**
 	 * Hierarchy configuration for the `Model` API item kind.
 	 *
 	 * @remarks Always its own document. Never introduces folder hierarchy.
 	 */
-	[ApiItemKind.Model]: DocumentHierarchyConfig;
+	[ApiItemKind.Model]: DocumentHierarchyConfiguration;
 
 	/**
 	 * Hierarchy configuration for the `Package` API item kind.
@@ -255,7 +255,7 @@ export type HierarchyOptions = {
 	 * @remarks Always introduces folder hierarchy.
 	 * @privateRemarks TODO: Make this fully configurable - there is no real reason for this policy to be baked in.
 	 */
-	[ApiItemKind.Package]: FolderHierarchyConfig;
+	[ApiItemKind.Package]: FolderHierarchyConfiguration;
 
 	/**
 	 * Hierarchy configuration for the `EntryPoint` API item kind.
@@ -263,13 +263,18 @@ export type HierarchyOptions = {
 	 * @remarks Always its own document, adjacent to the package document.
 	 * @privateRemarks TODO: Make this fully configurable - there is no real reason for this policy to be baked in.
 	 */
-	[ApiItemKind.EntryPoint]: DocumentHierarchyConfig;
+	[ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
 };
 
 /**
- * Default {@link HierarchyOptions}.
+ * Partial {@link HierarchyConfiguration} provided as user input.
  */
-export const defaultHierarchyOptions: HierarchyOptions = {
+export type HierarchyOptions = Partial<HierarchyConfiguration>;
+
+/**
+ * Default {@link HierarchyConfiguration}.
+ */
+export const defaultHierarchyConfiguration: HierarchyConfiguration = {
 	[ApiItemKind.Model]: {
 		kind: HierarchyKind.Document,
 		headingText: "API Overview",
@@ -302,11 +307,11 @@ export const defaultHierarchyOptions: HierarchyOptions = {
 };
 
 /**
- * Gets a complete {@link HierarchyOptions} using the provided partial configuration, and filling
+ * Gets a complete {@link HierarchyConfiguration} using the provided partial configuration, and filling
  * in the remainder with defaults.
  */
 export function getHierarchyOptionsWithDefaults(
-	inputOptions: Partial<HierarchyOptions> | undefined,
-): HierarchyOptions {
-	return { ...defaultHierarchyOptions, ...inputOptions };
+	inputOptions: HierarchyOptions | undefined,
+): HierarchyConfiguration {
+	return { ...defaultHierarchyConfiguration, ...inputOptions };
 }

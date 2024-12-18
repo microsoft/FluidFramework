@@ -21,10 +21,10 @@ import {
 	FolderDocumentPlacement,
 	HierarchyKind,
 	type ApiItemTransformationConfiguration,
-	type DocumentHierarchyConfig,
-	type FolderHierarchyConfig,
-	type HierarchyConfig,
-	type HierarchyOptions,
+	type DocumentHierarchyConfiguration,
+	type FolderHierarchyConfiguration,
+	type DocumentationHierarchyConfiguration,
+	type HierarchyConfiguration,
 } from "./configuration/index.js";
 
 /**
@@ -34,7 +34,9 @@ import {
 /**
  * API item paired with its hierarchy config.
  */
-export interface ApiItemWithHierarchy<THierarchy extends HierarchyConfig = HierarchyConfig> {
+export interface ApiItemWithHierarchy<
+	THierarchy extends DocumentationHierarchyConfiguration = DocumentationHierarchyConfiguration,
+> {
 	readonly apiItem: ApiItem;
 	readonly hierarchy: THierarchy;
 }
@@ -47,12 +49,12 @@ export interface ApiItemWithHierarchy<THierarchy extends HierarchyConfig = Hiera
  * as well as for generating links.
  *
  * @param apiItem - The API item for which we are generating a file path.
- * @param hierarchyConfig - See {@link HierarchyOptions}
+ * @param hierarchyConfig - See {@link HierarchyConfiguration}
  */
 function getFirstAncestorWithOwnDocument(
 	apiItem: ApiItem,
-	hierarchyConfig: Required<HierarchyOptions>,
-): ApiItemWithHierarchy<DocumentHierarchyConfig | FolderHierarchyConfig> {
+	hierarchyConfig: Required<HierarchyConfiguration>,
+): ApiItemWithHierarchy<DocumentHierarchyConfiguration | FolderHierarchyConfiguration> {
 	// Walk parentage until we reach an item kind that gets rendered to its own document.
 	// That is the document we will target with the generated link.
 	let hierarchyItem: ApiItem = apiItem;
@@ -310,7 +312,7 @@ export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
  */
 export function doesItemKindRequireOwnDocument(
 	apiItemKind: ValidApiItemKind,
-	hierarchyConfig: Required<HierarchyOptions>,
+	hierarchyConfig: Required<HierarchyConfiguration>,
 ): boolean {
 	const hierarchy = hierarchyConfig[apiItemKind];
 	return hierarchy.kind !== HierarchyKind.Section;
@@ -325,7 +327,7 @@ export function doesItemKindRequireOwnDocument(
  */
 export function doesItemRequireOwnDocument(
 	apiItem: ApiItem,
-	hierarchyConfig: Required<HierarchyOptions>,
+	hierarchyConfig: Required<HierarchyConfiguration>,
 ): boolean {
 	const itemKind = getApiItemKind(apiItem);
 	return doesItemKindRequireOwnDocument(itemKind, hierarchyConfig);
