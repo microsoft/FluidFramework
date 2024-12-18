@@ -2115,7 +2115,6 @@ describeCompat(
 						state: "disabled",
 					},
 				},
-				enableRuntimeIdCompressor: "on",
 			},
 			loaderProps: {
 				configProvider: configProvider({
@@ -2406,7 +2405,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				},
 			},
-			enableRuntimeIdCompressor: "on",
 		},
 		loaderProps: {
 			configProvider: configProvider({
