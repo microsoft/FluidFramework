@@ -61,6 +61,10 @@ import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js"
  */
 export const TreeAlpha: {
 	/**
+	 * Test
+	 */
+	test(): void;
+	/**
 	 * Retrieve the {@link TreeBranch | branch}, if any, for the given node.
 	 * @param node - The node to query
 	 * @remarks If the node has already been inserted into the tree, this will return the branch associated with that node's {@link TreeView | view}.
@@ -239,6 +243,7 @@ export const TreeAlpha: {
 		options: { idCompressor?: IIdCompressor } & ICodecOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 } = {
+	test(): void {},
 	branch(node: TreeNode): TreeBranch | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
