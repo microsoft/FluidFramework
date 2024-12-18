@@ -718,7 +718,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 				"IContainerRuntime should send dispose event on container dispose",
 			);
 			assert.strictEqual(
-				container.criticalError?.message,
+				container.closedWithError?.message,
 				"dispose error",
 				"Expected the error that disposed the container",
 			);
@@ -757,7 +757,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
 			assert.strictEqual(runtimeDispose, 1, "IContainerRuntime should send dispose event");
 			assert.strictEqual(
-				container.criticalError?.message,
+				container.closedWithError?.message,
 				"close error",
 				"Expected the error that closed the container (not the dispose one)",
 			);
@@ -765,7 +765,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	);
 
 	itExpects(
-		"Closing (no error) then disposing (with error) container should set criticalError properly",
+		"Closing (no error) then disposing (with error) container should set closedWithError properly",
 		[
 			{ eventName: "fluid:telemetry:Container:ContainerClose", category: "generic" },
 			{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "error" },
@@ -776,7 +776,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			container.dispose(new DataCorruptionError("dispose error", {}));
 
 			assert.strictEqual(
-				container.criticalError?.message,
+				container.closedWithError?.message,
 				"dispose error",
 				"Expected the error that disposed the container",
 			);
@@ -784,7 +784,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	);
 
 	itExpects(
-		"Closing (with error) then disposing (no error) container should set criticalError properly",
+		"Closing (with error) then disposing (no error) container should set closedWithError properly",
 		[
 			{ eventName: "fluid:telemetry:Container:ContainerClose", category: "error" },
 			{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "generic" },
@@ -795,7 +795,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			container.dispose();
 
 			assert.strictEqual(
-				container.criticalError?.message,
+				container.closedWithError?.message,
 				"close error",
 				"Expected the error that closed the container",
 			);

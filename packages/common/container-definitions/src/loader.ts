@@ -375,11 +375,11 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	readonly disposed?: boolean;
 
 	/**
-	 * Critical/fatal error that caused the container to close or dispose.
+	 * The error that caused the container to close or dispose.
 	 *
 	 * @remarks If the container is closed and then disposed, both with errors given, this will expose the close error only.
 	 */
-	readonly criticalError?: ICriticalContainerError | undefined;
+	readonly closedWithError?: ICriticalContainerError | undefined;
 
 	/**
 	 * Whether or not there are any local changes that have not been saved.
