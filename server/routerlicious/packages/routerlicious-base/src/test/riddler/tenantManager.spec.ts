@@ -1,9 +1,4 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
-import { TenantManager } from "../../riddler/tenantManager";
+import { TenantManager, type ITenantDocument } from "../../riddler/tenantManager";
 import { ITenantRepository } from "../../riddler/mongoTenantRepository";
 import {
 	ISecretManager,
@@ -13,9 +8,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { ITenantKeyGenerator, TenantKeyGenerator } from "@fluidframework/server-services-utils";
 import { TestCache } from "@fluidframework/server-test-utils";
-import Sinon from "sinon";
-// import { NetworkError } from "@fluidframework/server-services-client";
-// import * as jwt from "jsonwebtoken";
+import sinon from "sinon";
 import assert from "assert";
 
 class TestSecretManager implements ISecretManager {
@@ -34,21 +27,35 @@ class TestSecretManager implements ISecretManager {
 	}
 }
 
+class TestTenantRepository implements ITenantRepository {
+	find(query: any, sort: any, limit?: number, skip?: number): Promise<ITenantDocument[]> {
+		throw new Error("Method not implemented.");
+	}
+	findOne(query: any, options?: any): Promise<ITenantDocument | null> {
+		throw new Error("Method not implemented.");
+	}
+	update(filter: any, set: any, addToSet: any, options?: any): Promise<void> {
+		throw new Error("Method not implemented.");
+	}
+	insertOne(value: ITenantDocument): Promise<any> {
+		throw new Error("Method not implemented.");
+	}
+	deleteOne(filter: any): Promise<any> {
+		throw new Error("Method not implemented.");
+	}
+}
+
 describe("TenantManager", () => {
 	let tenantManager: TenantManager;
 	let tenantRepository: ITenantRepository;
 	let secretManager: ISecretManager = new TestSecretManager();
 	let cache: ICache;
 	let tenantKeyGenerator: ITenantKeyGenerator = new TenantKeyGenerator();
+	let sandbox: sinon.SinonSandbox;
 
 	beforeEach(() => {
-		tenantRepository = {
-			insertOne: Sinon.stub(),
-			update: Sinon.stub(),
-			findOne: Sinon.stub(),
-			deleteOne: Sinon.stub(),
-			find: Sinon.stub(),
-		} as unknown as ITenantRepository;
+		sandbox = sinon.createSandbox();
+		tenantRepository = new TestTenantRepository();
 		cache = new TestCache();
 
 		tenantManager = new TenantManager(
@@ -65,7 +72,7 @@ describe("TenantManager", () => {
 	});
 
 	afterEach(() => {
-		Sinon.restore();
+		sandbox.restore();
 	});
 
 	describe("returnPrivateKeysInOrder", () => {
@@ -77,7 +84,7 @@ describe("TenantManager", () => {
 				secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
 			};
 			const expectedKeys = { key1: "efgh", key2: "abcd" };
-			Sinon.stub(cache, "get").resolves("primary");
+			sandbox.stub(cache, "get").resolves("primary");
 			const orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -95,7 +102,7 @@ describe("TenantManager", () => {
 				secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000),
 			};
 			const expectedKeys = { key1: "abcd", key2: "efgh" };
-			Sinon.stub(cache, "get").resolves("secondary");
+			sandbox.stub(cache, "get").resolves("secondary");
 			const orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -113,7 +120,7 @@ describe("TenantManager", () => {
 				secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000),
 			};
 			const expectedKeys = { key1: "abcd", key2: "efgh" };
-			Sinon.stub(cache, "get").resolves(null);
+			sandbox.stub(cache, "get").resolves(null);
 			const orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -131,7 +138,7 @@ describe("TenantManager", () => {
 				secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
 			};
 			let expectedKeys = { key1: "abcd", key2: "efgh" };
-			Sinon.stub(cache, "get").resolves("primary");
+			const cacheStub = sandbox.stub(cache, "get").resolves("primary");
 			let orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -141,9 +148,9 @@ describe("TenantManager", () => {
 			assert.strictEqual(orderedKeys.key2, expectedKeys.key2);
 
 			// Restore the stub and test with secondary key
-			Sinon.restore();
+			cacheStub.restore();
 			expectedKeys = { key1: "efgh", key2: "abcd" };
-			Sinon.stub(cache, "get").resolves("secondary");
+			sandbox.stub(cache, "get").resolves("secondary");
 			orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
