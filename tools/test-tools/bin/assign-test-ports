@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 const mod = require("../dist/assignTestPorts.js");
+const nconf = require("nconf");
+
+nconf.argv().env().defaults({
+	'package-manager': 'pnpm'
+});
 
 const firstArg = process.argv[2];
 
@@ -12,6 +17,14 @@ if (firstArg === "--help" || firstArg === "-h" || (firstArg !== undefined && !Nu
 		"The port mapping file is written to the OS' temporary storage folder (e.g. /tmp/testportmap.json)."
 	);
 	process.exit(0);
+}
+
+// Note: we support using lerna to resolve package info as the LTS branch still has some lerna usage at the time of writing.
+// Once we no longer need to support any FF branches using lerna, this logic can be removed.
+const packageManager = nconf.get('package-manager');
+if (!['lerna', 'pnpm'].includes(packageManager)) {
+	console.error(`Unsupported package manager: ${packageManager}. Please select one of 'lerna' or 'pnpm'.`);
+	process.exit(1);
 }
 
 // We used to hardcode port 8081 as the initial one

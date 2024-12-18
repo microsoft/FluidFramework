@@ -30,6 +30,9 @@
 		"test": "mocha",
 		"tsc": "tsc"
 	},
+	"dependencies": {
+		"nconf": "^0.12.1"
+	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
