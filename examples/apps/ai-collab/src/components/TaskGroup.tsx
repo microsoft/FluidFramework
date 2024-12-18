@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/ai-collab/alpha";
 import {
 	CommitKind,
+	RevertibleStatus,
 	TreeAlpha,
 	type CommitMetadata,
 	type Revertible,
@@ -73,12 +74,10 @@ export function TaskGroup(props: {
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTaskGroup, logId: "TaskGroup" });
 
 	/**
-	 * Helper function to create undo and redo stacks composed of {@link Revertible}
+	 * Create undo and redo stacks of {@link Revertible}.
 	 */
 	useEffect(() => {
-		const MAX_STACK_SIZE = 10;
-
-		function onRevertibleDispose(disposed: Revertible): void {
+		function onRevertibleDisposed(disposed: Revertible): void {
 			const redoIndex = redoStack.indexOf(disposed);
 			if (redoIndex === -1) {
 				const undoIndex = undoStack.indexOf(disposed);
@@ -98,22 +97,40 @@ export function TaskGroup(props: {
 			}
 		}
 
+		/**
+		 * Instead of application developer manually managing the life cycle of the {@link Revertible} instances,
+		 * example app stores upto `MAX_STACK_SIZE` number of {@link Revertible} instances in the undo and redo stacks.
+		 * When the stack size exceeds `MAX_STACK_SIZE`, the oldest {@link Revertible} instance is disposed.
+		 * @param stack - The primary stack that the {@link Revertible} instance is being added to.
+		 * @param setstack - The setter function for the primary stack.
+		 */
 		function maintainStackSize(
 			stack: Revertible[],
 			setStack: React.Dispatch<React.SetStateAction<Revertible[]>>,
 		): void {
+			const MAX_STACK_SIZE = 5;
+
 			if (stack.length > MAX_STACK_SIZE) {
+				console.log("Stack size exceeded! Disposing oldest revertible.");
 				const oldestRevertible = stack[0];
-				oldestRevertible?.dispose();
-				setStack((currentStack) => currentStack.slice(1));
+				if (oldestRevertible) {
+					if (oldestRevertible.status !== RevertibleStatus.Disposed) {
+						oldestRevertible.dispose();
+					}
+					// Use functional updates to ensure we're working with the latest state
+					setStack((currentStack) => {
+						const newStack = currentStack.filter((item) => item !== oldestRevertible);
+						return newStack;
+					});
+				}
 			}
 		}
 
-		const unsubscribe = props.treeView.events.on(
+		const handleCommitApplied = props.treeView.events.on(
 			"commitApplied",
 			(commit: CommitMetadata, getRevertible?: RevertibleFactory) => {
 				if (getRevertible !== undefined) {
-					const revertible = getRevertible(onRevertibleDispose);
+					const revertible = getRevertible(onRevertibleDisposed);
 					if (commit.kind === CommitKind.Undo) {
 						setRedoStack((current) => {
 							const newStack = [...current, revertible];
@@ -132,7 +149,7 @@ export function TaskGroup(props: {
 		);
 
 		return () => {
-			unsubscribe();
+			handleCommitApplied();
 		};
 	}, [props.treeView.events, undoStack, redoStack]);
 
@@ -323,7 +340,7 @@ export function TaskGroup(props: {
 				{undoStack.length > 0 && (
 					<Button
 						variant="contained"
-						color="primary"
+						color="error"
 						onClick={() => {
 							const revertible = undoStack[undoStack.length - 1];
 							revertible?.revert();
@@ -337,7 +354,7 @@ export function TaskGroup(props: {
 				{redoStack.length > 0 && (
 					<Button
 						variant="contained"
-						color="success"
+						color="info"
 						onClick={() => {
 							const revertible = redoStack[redoStack.length - 1];
 							revertible?.revert();
