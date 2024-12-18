@@ -584,14 +584,15 @@ export class Container
 		return this._lifecycleState === "disposing" || this._lifecycleState === "disposed";
 	}
 
-	private _closedWithError?: ICriticalContainerError;
-
-	public get closedWithError(): ICriticalContainerError | undefined {
-		if (this.closed) {
-			return this._closedWithError;
-		}
-		return undefined;
+	/**
+	 * Critical/fatal error that caused the container to close or dispose.
+	 *
+	 * @remarks If the container is closed and then disposed, both with errors given, this will expose the close error only.
+	 */
+	public get criticalError(): ICriticalContainerError | undefined {
+		return this._criticalError;
 	}
+	private _criticalError?: ICriticalContainerError;
 
 	private readonly storageAdapter: ContainerStorageAdapter;
 
@@ -1142,7 +1143,7 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "closed";
-			this._closedWithError = error;
+			this._criticalError = error;
 
 			// There is no user for summarizer, so we need to ensure dispose is called
 			if (this.client.details.type === summarizerClientType) {
@@ -1164,8 +1165,9 @@ export class Container
 				this.mc.logger.sendTelemetryEvent(
 					{
 						eventName: "ContainerDispose",
-						// Only log error if container isn't closed
-						category: !this.closed && error !== undefined ? "error" : "generic",
+						// Use error category if there's an error, unless we already closed with an error (i.e. _criticalError is set)
+						category:
+							error !== undefined && this._criticalError === undefined ? "error" : "generic",
 					},
 					error,
 				);
@@ -1200,9 +1202,11 @@ export class Container
 			}
 		} finally {
 			this._lifecycleState = "disposed";
-			//* Double-check this logic
-			if (this._closedWithError === undefined) {
-				this._closedWithError = error;
+			// Corner cases that are expressed imprecisely here: When disposing with an error...
+			// - If we closed with an error, _criticalError doesn't expose the dispose error.
+			// - If we closed without an error, _criticalError doesn't distinguish whether this error came from close or dispose.
+			if (this._criticalError === undefined) {
+				this._criticalError = error;
 			}
 			this._lifecycleEvents.emit("disposed");
 		}
