@@ -12,13 +12,17 @@ import { expect } from "chai";
 import { compare } from "dir-compare";
 
 import {
-	ApiItemUtilities,
-	type DocumentHierarchyConfiguration,
+	defaultSectionHierarchyConfig,
+	defaultHeadingText,
+	defaultDocumentHierarchyConfig,
+	defaultFolderName,
+	defaultDocumentName,
+} from "../api-item-transforms/index.js";
+import {
 	FolderDocumentPlacement,
 	HierarchyKind,
 	type HierarchyConfiguration,
 	type FolderHierarchyConfiguration,
-	type SectionHierarchyConfiguration,
 } from "../index.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
@@ -47,22 +51,11 @@ export const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "t
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace HierarchyConfigs {
-	const defaultSectionConfig: SectionHierarchyConfiguration = {
-		kind: HierarchyKind.Section,
-		headingText: (apiItem) => apiItem.displayName,
-	};
-
-	const defaultDocumentConfig: DocumentHierarchyConfiguration = {
-		kind: HierarchyKind.Document,
-		documentName: (apiItem) => ApiItemUtilities.getFileSafeNameForApiItem(apiItem),
-		headingText: (apiItem) => apiItem.displayName,
-	};
-
 	const outsideFolderConfig: FolderHierarchyConfiguration = {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Outside,
-		documentName: (apiItem) => ApiItemUtilities.getFileSafeNameForApiItem(apiItem),
-		folderName: (apiItem) => ApiItemUtilities.getFileSafeNameForApiItem(apiItem),
+		documentName: defaultDocumentName,
+		folderName: defaultFolderName,
 		headingText: (apiItem) => apiItem.displayName,
 	};
 
@@ -70,8 +63,8 @@ export namespace HierarchyConfigs {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Inside,
 		documentName: "index",
-		folderName: (apiItem) => ApiItemUtilities.getFileSafeNameForApiItem(apiItem),
-		headingText: (apiItem) => apiItem.displayName,
+		folderName: defaultFolderName,
+		headingText: defaultHeadingText,
 	};
 
 	/**
@@ -79,24 +72,24 @@ export namespace HierarchyConfigs {
 	 * @remarks Results in a small number of documents, but can lead to relatively large documents.
 	 */
 	export const flat: Partial<HierarchyConfiguration> = {
-		[ApiItemKind.Package]: defaultDocumentConfig,
+		[ApiItemKind.Package]: defaultDocumentHierarchyConfig,
 
-		[ApiItemKind.CallSignature]: defaultSectionConfig,
-		[ApiItemKind.Class]: defaultSectionConfig,
-		[ApiItemKind.Constructor]: defaultSectionConfig,
-		[ApiItemKind.ConstructSignature]: defaultSectionConfig,
-		[ApiItemKind.Enum]: defaultSectionConfig,
-		[ApiItemKind.EnumMember]: defaultSectionConfig,
-		[ApiItemKind.Function]: defaultSectionConfig,
-		[ApiItemKind.IndexSignature]: defaultSectionConfig,
-		[ApiItemKind.Interface]: defaultSectionConfig,
-		[ApiItemKind.Method]: defaultSectionConfig,
-		[ApiItemKind.MethodSignature]: defaultSectionConfig,
-		[ApiItemKind.Namespace]: defaultSectionConfig,
-		[ApiItemKind.Property]: defaultSectionConfig,
-		[ApiItemKind.PropertySignature]: defaultSectionConfig,
-		[ApiItemKind.TypeAlias]: defaultSectionConfig,
-		[ApiItemKind.Variable]: defaultSectionConfig,
+		[ApiItemKind.CallSignature]: defaultSectionHierarchyConfig,
+		[ApiItemKind.Class]: defaultSectionHierarchyConfig,
+		[ApiItemKind.Constructor]: defaultSectionHierarchyConfig,
+		[ApiItemKind.ConstructSignature]: defaultSectionHierarchyConfig,
+		[ApiItemKind.Enum]: defaultSectionHierarchyConfig,
+		[ApiItemKind.EnumMember]: defaultSectionHierarchyConfig,
+		[ApiItemKind.Function]: defaultSectionHierarchyConfig,
+		[ApiItemKind.IndexSignature]: defaultSectionHierarchyConfig,
+		[ApiItemKind.Interface]: defaultSectionHierarchyConfig,
+		[ApiItemKind.Method]: defaultSectionHierarchyConfig,
+		[ApiItemKind.MethodSignature]: defaultSectionHierarchyConfig,
+		[ApiItemKind.Namespace]: defaultSectionHierarchyConfig,
+		[ApiItemKind.Property]: defaultSectionHierarchyConfig,
+		[ApiItemKind.PropertySignature]: defaultSectionHierarchyConfig,
+		[ApiItemKind.TypeAlias]: defaultSectionHierarchyConfig,
+		[ApiItemKind.Variable]: defaultSectionHierarchyConfig,
 	};
 
 	/**
@@ -106,22 +99,22 @@ export namespace HierarchyConfigs {
 	export const sparse: Partial<HierarchyConfiguration> = {
 		[ApiItemKind.Package]: outsideFolderConfig,
 
-		[ApiItemKind.CallSignature]: defaultDocumentConfig,
-		[ApiItemKind.Class]: defaultDocumentConfig,
-		[ApiItemKind.Constructor]: defaultDocumentConfig,
-		[ApiItemKind.ConstructSignature]: defaultDocumentConfig,
-		[ApiItemKind.Enum]: defaultDocumentConfig,
-		[ApiItemKind.EnumMember]: defaultDocumentConfig,
-		[ApiItemKind.Function]: defaultDocumentConfig,
-		[ApiItemKind.IndexSignature]: defaultDocumentConfig,
-		[ApiItemKind.Interface]: defaultDocumentConfig,
-		[ApiItemKind.Method]: defaultDocumentConfig,
-		[ApiItemKind.MethodSignature]: defaultDocumentConfig,
-		[ApiItemKind.Namespace]: defaultDocumentConfig,
-		[ApiItemKind.Property]: defaultDocumentConfig,
-		[ApiItemKind.PropertySignature]: defaultDocumentConfig,
-		[ApiItemKind.TypeAlias]: defaultDocumentConfig,
-		[ApiItemKind.Variable]: defaultDocumentConfig,
+		[ApiItemKind.CallSignature]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Class]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Constructor]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.ConstructSignature]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Enum]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.EnumMember]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Function]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.IndexSignature]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Interface]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Method]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.MethodSignature]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Namespace]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Property]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.PropertySignature]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.TypeAlias]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Variable]: defaultDocumentHierarchyConfig,
 	};
 
 	/**
@@ -138,17 +131,17 @@ export namespace HierarchyConfigs {
 		[ApiItemKind.TypeAlias]: insideFolderConfig,
 
 		// Items that get their own document, but do not introduce folder hierarchy:
-		[ApiItemKind.CallSignature]: defaultDocumentConfig,
-		[ApiItemKind.Constructor]: defaultDocumentConfig,
-		[ApiItemKind.ConstructSignature]: defaultDocumentConfig,
-		[ApiItemKind.EnumMember]: defaultDocumentConfig,
-		[ApiItemKind.Function]: defaultDocumentConfig,
-		[ApiItemKind.IndexSignature]: defaultDocumentConfig,
-		[ApiItemKind.Method]: defaultDocumentConfig,
-		[ApiItemKind.MethodSignature]: defaultDocumentConfig,
-		[ApiItemKind.Property]: defaultDocumentConfig,
-		[ApiItemKind.PropertySignature]: defaultDocumentConfig,
-		[ApiItemKind.Variable]: defaultDocumentConfig,
+		[ApiItemKind.CallSignature]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Constructor]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.ConstructSignature]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.EnumMember]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Function]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.IndexSignature]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Method]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.MethodSignature]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Property]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.PropertySignature]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.Variable]: defaultDocumentHierarchyConfig,
 	};
 }
 

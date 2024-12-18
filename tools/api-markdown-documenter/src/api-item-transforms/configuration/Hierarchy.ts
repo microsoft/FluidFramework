@@ -159,11 +159,13 @@ export type DocumentationHierarchyConfiguration =
  *
  * Uses the item's qualified API name, but is handled differently for the following items:
  *
- * - Model: Uses "index".
+ * - CallSignature, ConstructSignature, IndexSignature: Uses a cleaned up variation on the type signature.
  *
- * - Package: Uses the unscoped package name.
+ * - Model: Uses "API Overview".
+ *
+ * @privateRemarks Exported for testing purposes.
  */
-function defaultHeadingText(apiItem: ApiItem): string {
+export function defaultHeadingText(apiItem: ApiItem): string {
 	const kind = getApiItemKind(apiItem);
 	switch (kind) {
 		case ApiItemKind.Model: {
@@ -184,7 +186,11 @@ function defaultHeadingText(apiItem: ApiItem): string {
 	}
 }
 
-const defaultSectionHierarchyConfig: SectionHierarchyConfiguration = {
+/**
+ * Default {@link SectionHierarchyConfiguration} used by the system.
+ * @privateRemarks Exported for testing purposes.
+ */
+export const defaultSectionHierarchyConfig: SectionHierarchyConfiguration = {
 	kind: HierarchyKind.Section,
 	headingText: defaultHeadingText,
 };
@@ -195,8 +201,10 @@ const defaultSectionHierarchyConfig: SectionHierarchyConfiguration = {
  * Uses the item's qualified API name, but is handled differently for the following items:
  *
  * - Package: Uses the unscoped package name.
+ *
+ * @privateRemarks Exported for testing purposes.
  */
-function defaultDocumentName(apiItem: ApiItem): string {
+export function defaultDocumentName(apiItem: ApiItem): string {
 	const kind = getApiItemKind(apiItem);
 	switch (kind) {
 		case ApiItemKind.Package: {
@@ -210,16 +218,29 @@ function defaultDocumentName(apiItem: ApiItem): string {
 	}
 }
 
-const defaultDocumentHierarchyConfig: DocumentHierarchyConfiguration = {
+/**
+ * Default {@link DocumentHierarchyConfiguration} used by the system.
+ * @privateRemarks Exported for testing purposes.
+ */
+export const defaultDocumentHierarchyConfig: DocumentHierarchyConfiguration = {
 	kind: HierarchyKind.Document,
 	headingText: defaultHeadingText,
 	documentName: defaultDocumentName,
 };
 
-// Default folder name is the same as the default document name.
-const defaultFolderName = defaultDocumentName;
+/**
+ * Default {@link SectionHierarchyConfiguration} used by the system.
+ *
+ * @remarks Default folder name is the same as the default document name.
+ * @privateRemarks Exported for testing purposes.
+ */
+export const defaultFolderName = defaultDocumentName;
 
-const defaultFolderHierarchyConfig: FolderHierarchyConfiguration = {
+/**
+ * Default {@link FolderHierarchyConfiguration} used by the system.
+ * @privateRemarks Exported for testing purposes.
+ */
+export const defaultFolderHierarchyConfig: FolderHierarchyConfiguration = {
 	kind: HierarchyKind.Folder,
 	headingText: defaultHeadingText,
 	documentPlacement: FolderDocumentPlacement.Outside, // TODO
