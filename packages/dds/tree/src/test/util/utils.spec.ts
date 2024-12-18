@@ -5,7 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { capitalize, mapIterable, transformObjectMap } from "../../util/index.js";
+import {
+	capitalize,
+	defineLazyCachedProperty,
+	mapIterable,
+	transformObjectMap,
+} from "../../util/index.js";
 import { benchmark } from "@fluid-tools/benchmark";
 
 describe("Utils", () => {
@@ -49,5 +54,20 @@ describe("Utils", () => {
 		benchmarkFn: () => {
 			const m = new Map(mapIterable(testMap, ([k, v]) => [k, v] as const));
 		},
+	});
+
+	it("defineLazyCachedProperty", () => {
+		const obj = {};
+		let count = 0;
+		const objWithProperty = defineLazyCachedProperty(obj, "prop", () => {
+			count += 1;
+			return 3;
+		});
+
+		assert.equal(count, 0);
+		assert.equal(objWithProperty.prop, 3);
+		assert.equal(count, 1);
+		assert.equal(objWithProperty.prop, 3);
+		assert.equal(count, 1);
 	});
 });

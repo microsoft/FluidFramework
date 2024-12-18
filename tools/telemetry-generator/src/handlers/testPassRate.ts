@@ -11,6 +11,7 @@
  * @param logger - An ITelemetryBufferedLogger. Call its send() method to write the output telemetry events.
  */
 module.exports = function handler(fileData, logger): void {
+	// eslint-disable-next-line @rushstack/no-new-null -- External API can return an actual null
 	if (fileData.resultSummary === null || fileData.resultSummary === undefined) {
 		console.log(`Could not locate test result info.`);
 		return;
