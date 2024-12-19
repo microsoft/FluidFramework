@@ -113,3 +113,7 @@ export interface IDenyList {
 	 */
 	isDenied(tenantId: string, documentId: string): boolean;
 }
+
+export interface ISimplifiedCustomDataRetriever {
+	get(customData: ITenantCustomData): string;
+}
