@@ -10,5 +10,5 @@
 //   - Export '__dirname' from a .cjs file in the same directory.
 //
 // Note that *.cjs files are always CommonJS, but can be imported from ESM.
-// eslint-disable-next-line unicorn/prefer-module
+
 export const _dirname = __dirname;

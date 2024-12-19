@@ -168,7 +168,7 @@ const newMessage = (
 	contents,
 	compression: undefined,
 	// TODO: It should already be the case that we're not modifying any metadata, not clear if/why this shallow clone should be required.
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 	metadata:
 		originalMessage.metadata === undefined
 			? undefined

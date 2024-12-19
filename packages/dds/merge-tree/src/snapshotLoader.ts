@@ -20,7 +20,6 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
@@ -39,7 +38,7 @@ export class SnapshotLoader {
 
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
-		// eslint-disable-next-line import/no-deprecated
+
 		private readonly client: Client,
 		private readonly mergeTree: MergeTree,
 		logger: ITelemetryLoggerExt,
