@@ -838,7 +838,7 @@ export class ConnectionManager implements IConnectionManager {
 		connection.dispose({
 			...reason.error,
 			name: "disconnectFromDeltaStream",
-			message: reason.disconnectReason ?? DisconnectReason.Unknown
+			message: reason.disconnectReason ?? DisconnectReason.Unknown,
 		});
 
 		this.props.disconnectHandler(reason);

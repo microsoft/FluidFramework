@@ -32,7 +32,7 @@ export enum ReconnectMode {
 export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {
 	text: string;
 	error?: T;
-	disconnectReason?: DisconnectReason
+	disconnectReason?: DisconnectReason;
 }
 
 /**
