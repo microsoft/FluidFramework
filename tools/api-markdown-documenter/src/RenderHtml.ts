@@ -13,7 +13,7 @@ import {
 	transformApiModel,
 } from "./api-item-transforms/index.js";
 import type { DocumentNode } from "./documentation-domain/index.js";
-import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "./renderers/index.js";
+import { type RenderDocumentAsHtmlConfiguration, renderDocumentAsHtml } from "./renderers/index.js";
 
 /**
  * API Model HTML rendering options.
@@ -22,7 +22,7 @@ import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "./rendere
  */
 export interface RenderApiModelAsHtmlOptions
 	extends ApiItemTransformationConfiguration,
-		RenderDocumentAsHtmlConfig,
+		RenderDocumentAsHtmlConfiguration,
 		FileSystemConfiguration {}
 
 /**
@@ -58,7 +58,7 @@ export async function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions)
  * @public
  */
 export interface RenderDocumentsAsHtmlOptions
-	extends RenderDocumentAsHtmlConfig,
+	extends RenderDocumentAsHtmlConfiguration,
 		FileSystemConfiguration {}
 
 /**

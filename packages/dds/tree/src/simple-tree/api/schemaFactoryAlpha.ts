@@ -3,37 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import type { ScopedSchemaName, InsertableObjectFromSchemaRecord } from "../internalTypes.js";
-import {
-	SchemaFactory,
-	type SchemaFactoryObjectOptions,
-	type TreeNodeSchemaClass,
-	type NodeKind,
-	type Unenforced,
-	type ImplicitFieldSchema,
-} from "../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { defaultSchemaFactoryObjectOptions } from "../simple-tree/api/schemaFactory.js";
-// eslint-disable-next-line import/no-internal-modules
-import { type TreeObjectNode, objectSchema } from "../simple-tree/objectNode.js";
-import type { RestrictiveStringRecord } from "../util/index.js";
+import type {
+	ScopedSchemaName,
+	InsertableObjectFromSchemaRecord,
+	TreeObjectNodeUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+} from "../../internalTypes.js";
+import { SchemaFactory, type SchemaFactoryObjectOptions } from "./schemaFactory.js";
+import type { ImplicitFieldSchema } from "../schemaTypes.js";
+import { defaultSchemaFactoryObjectOptions } from "./schemaFactory.js";
+import { type TreeObjectNode, objectSchema } from "../objectNode.js";
+import type { RestrictiveStringRecord } from "../../util/index.js";
+import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
+import type { Unenforced } from "./typesUnsafe.js";
 
 /**
- * Copy of {@link SchemaFactory} with additional alpha APIs.
+ * {@link SchemaFactory} with additional alpha APIs.
  *
+ * @alpha
  * @privateRemarks
- * Not currently exported to the public API surface as doing so produces errors in API-extractor.
  *
- * Can be removed once additional object node features are deemed stable and on the base class.
+ * Some private methods on `SchemaFactory` are intentionally duplicated here to avoid increasing their exposure to `protected`.
+ * If we were to do so, they would be exposed on the public API surface of `SchemaFactory`.
  */
 export class SchemaFactoryAlpha<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
 > extends SchemaFactory<TScope, TName> {
-	// TS has trouble with subclassing schema factory and produces errors in the definition of objectRecursive without
-	// explicit type annotations saying the return type is "the same as the parent class". There's not a great way to do
-	// that AFAICT without using an instantiation expression, but `super` is unsupported in such expressions.
-	private readonly baseKludge: SchemaFactory<TScope, TName> = this;
 	private scoped2<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
 		return (
 			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
@@ -71,7 +67,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritdoc SchemaFactory.objectRecursive}
 	 */
 	public override objectRecursive<
 		const Name extends TName,
@@ -80,11 +76,26 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		t: T,
 		options?: SchemaFactoryObjectOptions,
-	): ReturnType<typeof this.baseKludge.objectRecursive<Name, T>> {
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Object,
+		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
+		object & InsertableObjectFromSchemaRecordUnsafe<T>,
+		false,
+		T
+	> {
+		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 			options,
-		) as unknown as ReturnType<typeof this.baseKludge.objectRecursive<Name, T>>;
+		) as unknown as TreeNodeSchemaClass<
+			TScopedName,
+			NodeKind.Object,
+			TreeObjectNodeUnsafe<T, TScopedName>,
+			object & InsertableObjectFromSchemaRecordUnsafe<T>,
+			false,
+			T
+		>;
 	}
 }

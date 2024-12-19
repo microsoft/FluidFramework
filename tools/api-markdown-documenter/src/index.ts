@@ -38,13 +38,13 @@ export {
 	documentationNodesToHtml,
 	type Transformation as ToHtmlTransformation,
 	type Transformations as ToHtmlTransformations,
-	type TransformationConfig as ToHtmlConfig,
+	type TransformationConfiguration as ToHtmlConfiguration,
 	type TransformationContext as ToHtmlContext,
 } from "./documentation-domain-to-html/index.js";
 export {
 	DocumentWriter,
-	type RenderDocumentAsHtmlConfig,
-	type RenderHtmlConfig,
+	type RenderDocumentAsHtmlConfiguration,
+	type RenderHtmlConfiguration,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type MarkdownRenderConfiguration,
