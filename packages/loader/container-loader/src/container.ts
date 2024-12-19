@@ -38,7 +38,12 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
-import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	checkLayerCompatibility,
+	isPromiseLike,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import {
 	IClient,
 	IClientDetails,
@@ -162,6 +167,12 @@ const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
+
+/**
+ * The current generation of the Loader. This is used to determine compatibility between other layers.
+ * @internal
+ */
+export const currentLoaderGeneration = 1;
 
 /**
  * @internal
@@ -495,6 +506,59 @@ export class Container
 	private readonly mc: MonitoringContext;
 
 	/**
+	 * The current generation of the Loader layer. This is used to ensure compatibility between the Loader and
+	 * other layers.
+	 */
+	private readonly generation = currentLoaderGeneration;
+	/**
+	 * A list of features that the Runtime layer is required to support to be compatible with this Loader.
+	 */
+	private readonly requiredFeaturesFromRuntime: string[] = [];
+	/**
+	 * A list of features supported by the Loader layer. This is exposed to the Runtime layer which uses
+	 * it to determine if the Loader is compatible with the Runtime.
+	 */
+	private readonly supportedFeaturesForRuntime: Map<string, unknown> = new Map([
+		/**
+		 * This version of the loader accepts `referenceSequenceNumber`, provided by the container runtime,
+		 * as a parameter to the `submitBatchFn` and `submitSummaryFn` functions.
+		 * This is then used to set the reference sequence numbers of the submitted ops in the DeltaManager.
+		 */
+		["referenceSequenceNumbers", true],
+	]);
+	private validateRuntimeCompatibility(
+		runtimeSupportedFeatures?: ReadonlyMap<string, unknown>,
+		runtimeVersion?: string,
+	): void {
+		if (runtimeSupportedFeatures === undefined) {
+			return;
+		}
+
+		const result = checkLayerCompatibility(
+			this.requiredFeaturesFromRuntime,
+			this.generation,
+			runtimeSupportedFeatures,
+		);
+		if (!result.compatible) {
+			const error = new UsageError("Runtime is not compatible with Loader", {
+				loaderVersion: pkgVersion,
+				runtimeVersion,
+				loaderGeneration: this.generation,
+				minSupportedGeneration: runtimeSupportedFeatures.get(
+					"minSupportedGeneration",
+				) as number,
+				isGenerationCompatible: result.generationCompatible,
+				unsupportedFeatures:
+					result.unsupportedFeatures.length === 0
+						? undefined
+						: JSON.stringify(result.unsupportedFeatures),
+			});
+			this.close(error);
+			throw error;
+		}
+	}
+
+	/**
 	 * Used by the RelativeLoader to spawn a new Container for the same document.  Used to create the summarizing client.
 	 */
 	public readonly clone: (
@@ -802,6 +866,9 @@ export class Container
 			detachedBlobStorage,
 			protocolHandlerBuilder,
 		} = createProps;
+
+		/* This is the minimum generation of the Runtime this Loader supports. */
+		this.supportedFeaturesForRuntime.set("minSupportedGeneration", 1);
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
@@ -2456,16 +2523,22 @@ export class Container
 			() => this.connected,
 			this._deltaManager.clientDetails,
 			existing,
+			this.supportedFeaturesForRuntime,
 			this.subLogger,
 			pendingLocalState,
 			snapshot,
 		);
 
-		this._runtime = await PerformanceEvent.timedExecAsync(
+		const runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
 			{ eventName: "InstantiateRuntime" },
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
+
+		this.validateRuntimeCompatibility(runtime.supportedFeatures, runtime.pkgVersion);
+
+		this._runtime = runtime;
+
 		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;
