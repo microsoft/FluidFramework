@@ -10,7 +10,11 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	LoaderHeader,
+	DisconnectReason,
+} from "@fluidframework/container-definitions/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
@@ -183,8 +187,8 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 
 		// Close the old summarizer and container so that we can summarize th new container.
 		summarizer.close();
-		container.close();
-		mainContainer.close();
+		container.close(DisconnectReason.Expected);
+		mainContainer.close(DisconnectReason.Expected);
 
 		// Unreference datastore B
 		mainDataStore2._root.delete("dataStoreB");

@@ -5,7 +5,10 @@
 
 import * as fs from "fs";
 
-import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	DisconnectReason,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import {
 	loadExistingContainer,
 	type ILoaderProps,
@@ -150,7 +153,7 @@ export async function createContainerAndExecute(
 			try {
 				return await fluidFileConverter.execute(container, options);
 			} finally {
-				container.dispose();
+				container.dispose(DisconnectReason.Expected);
 			}
 		});
 	};

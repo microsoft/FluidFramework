@@ -13,7 +13,10 @@ import {
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
 } from "@fluid-example/migration-tools/alpha";
-import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import {
+	DisconnectReason,
+	type IContainer,
+} from "@fluidframework/container-definitions/legacy";
 import {
 	type ILoaderProps,
 	loadExistingContainer,
@@ -156,7 +159,7 @@ const setupContainer = async (
 	);
 	migrator.events.on("migrated", () => {
 		const newContainerId = migrator.migrationResult as SeparateContainerMigrationResult;
-		container.dispose();
+		container.dispose(DisconnectReason.Expected);
 		setupContainer(newContainerId).catch(console.error);
 	});
 

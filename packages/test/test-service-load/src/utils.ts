@@ -14,7 +14,11 @@ import {
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
 } from "@fluid-private/test-drivers";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	DisconnectReason,
+	IContainer,
+	IFluidCodeDetails,
+} from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
 	// eslint-disable-next-line import/no-deprecated
@@ -137,7 +141,7 @@ export async function initialize(
 	await container.attach(request);
 	assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
 	const resolvedUrl = container.resolvedUrl;
-	container.dispose();
+	container.dispose(DisconnectReason.Expected);
 
 	if ((testConfig.detachedBlobCount ?? 0) > 0 && testDriver.type === "odsp") {
 		const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);

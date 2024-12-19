@@ -6,7 +6,10 @@
 import type { ISameContainerMigrationTool } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import {
+	DisconnectReason,
+	type IContainer,
+} from "@fluidframework/container-definitions/legacy";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
@@ -82,7 +85,7 @@ export class InventoryListAppModel
 	}
 
 	public close() {
-		this.container.close();
+		this.container.close(DisconnectReason.Expected);
 	}
 
 	public readonly DEBUG_summarizeOnDemand = () => {
