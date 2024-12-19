@@ -35,4 +35,4 @@ if (!['lerna', 'pnpm'].includes(packageManager)) {
 const initialPortString = firstArg ?? "9000";
 
 const initialPort = Number.parseInt(initialPortString, 10);
-mod.writePortMapFile(initialPort);
+mod.writePortMapFile(initialPort, packageManager);
