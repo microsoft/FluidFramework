@@ -578,7 +578,7 @@ export class TenantManager {
 			if (!bypassCache && this.isCacheEnabled) {
 				// Read from cache first
 				try {
-					const cachedKey = await this.getKeyFromCache(tenantId);
+					const cachedKey = await this.getKeyFromCache(tenantId, getPrivateKeys);
 					if (cachedKey) {
 						let tenantKeys = this.decryptCachedKeys(cachedKey, getPrivateKeys);
 						// This is an edge case where the used encryption key is not valid.
@@ -693,9 +693,17 @@ export class TenantManager {
 			}
 
 			if (getPrivateKeys && tenantDocument.privateKeys) {
+				// Return the decrypted private keys in the order they should be used to validate/sign tokens
+				const privateTenantKeys: ITenantPrivateKeys = {
+					key: tenantKey1,
+					keyNextRotationTime: tenantDocument.privateKeys.keyNextRotationTime,
+					secondaryKey: tenantKey2,
+					secondaryKeyNextRotationTime:
+						tenantDocument.privateKeys.secondaryKeyNextRotationTime,
+				};
 				const privateKeysInOrder = await this.returnPrivateKeysInOrder(
 					tenantId,
-					tenantDocument.privateKeys,
+					privateTenantKeys,
 					lumberProperties,
 				);
 				return privateKeysInOrder;

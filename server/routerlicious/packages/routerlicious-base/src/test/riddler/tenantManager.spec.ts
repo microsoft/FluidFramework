@@ -323,6 +323,15 @@ describe("TenantManager", () => {
 			);
 			assert.strictEqual(keys.key1, expectedKeys.key1);
 			assert.strictEqual(keys.key2, expectedKeys.key2);
+
+			const cachedKeys = await tenantManager.getTenantKeys(
+				"cordflasher-dolphin",
+				false,
+				false,
+				true,
+			);
+			assert.strictEqual(cachedKeys.key1, expectedKeys.key1);
+			assert.strictEqual(cachedKeys.key2, expectedKeys.key2);
 		});
 
 		it("Should return the shared keys when the tenant has private keys and getPrivateKeys is false", async () => {
