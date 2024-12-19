@@ -18,7 +18,7 @@ import {
 	getReleaseTag,
 } from "../../utilities/index.js";
 
-import { defaultHierarchyConfiguration, type HierarchyConfiguration } from "./Hierarchy.js";
+import { defaultHierarchyConfiguration, getHierarchyOptionsWithDefaults, type HierarchyConfiguration } from "./Hierarchy.js";
 import { trimTrailingSemicolon } from "./Utilities.js";
 
 /**
@@ -237,15 +237,12 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
  * in the remainder with the documented defaults.
  */
 export function getDocumentationSuiteConfigurationWithDefaults(
-	inputOptions: DocumentationSuiteOptions,
+	options: DocumentationSuiteOptions,
 ): DocumentationSuiteConfiguration {
-	const hierarchy: Required<HierarchyConfiguration> = {
-		...defaultHierarchyConfiguration,
-		...inputOptions.hierarchy,
-	};
+	const hierarchy: HierarchyConfiguration = getHierarchyOptionsWithDefaults(options.hierarchy);
 	return {
 		...defaultDocumentationSuiteOptions,
-		...inputOptions,
+		...options,
 		hierarchy,
 	};
 }

@@ -433,7 +433,7 @@ export function doesItemRequireOwnDocument(
  */
 export function shouldItemBeIncluded(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): boolean {
 	const releaseTag = getReleaseTag(apiItem);
 	if (releaseTag === undefined || releaseTag === ReleaseTag.None) {
@@ -464,7 +464,7 @@ export function shouldItemBeIncluded(
  */
 export function filterItems(
 	apiItems: readonly ApiItem[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): ApiItem[] {
 	return apiItems.filter((member) => shouldItemBeIncluded(member, config));
 }
@@ -479,7 +479,7 @@ export function filterItems(
  */
 export function filterChildMembers(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): ApiItem[] {
 	return filterItems(apiItem.members, config);
 }

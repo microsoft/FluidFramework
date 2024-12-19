@@ -13,15 +13,17 @@ import {
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteConfigurationWithDefaults,
 } from "./DocumentationSuiteOptions.js";
-import { getHierarchyOptionsWithDefaults } from "./Hierarchy.js";
 import {
 	type ApiItemTransformations,
 	getApiItemTransformationsWithDefaults,
 } from "./Transformations.js";
 
 /**
- * API Item transformation configuration base.
+ * Shared base type for {@link ApiItemTransformationConfiguration} and {@link ApiItemTransformationOptions}.
  *
+ * @remarks Not intended to be used directly.
+ *
+ * @sealed
  * @public
  */
 export interface ApiItemTransformationConfigurationBase {
@@ -44,26 +46,30 @@ export interface ApiItemTransformationConfigurationBase {
 }
 
 /**
- * Partial API Item transformation options.
+ * System configuration for API Item transformation functionality.
  *
- * @public
- */
-export interface ApiItemTransformationOptions
-	extends ApiItemTransformationConfigurationBase,
-		ApiItemTransformations,
-		DocumentationSuiteOptions,
-		LoggingConfiguration {}
-
-/**
- * Complete API Item transformation configuration.
+ * @privateRemarks
+ * TODO: ideally this type should not appear in the public API.
+ * Users should only need {@link ApiItemTransformationOptions}.
  *
  * @public
  */
 export interface ApiItemTransformationConfiguration
 	extends ApiItemTransformationConfigurationBase,
-		Required<ApiItemTransformations>,
+		ApiItemTransformations,
 		DocumentationSuiteConfiguration,
 		Required<LoggingConfiguration> {}
+
+/**
+ * Input options for API Item transformation APIs.
+ *
+ * @public
+ */
+export interface ApiItemTransformationOptions
+	extends ApiItemTransformationConfigurationBase,
+		Partial<ApiItemTransformations>,
+		DocumentationSuiteOptions,
+		LoggingConfiguration {}
 
 /**
  * Gets a complete {@link ApiItemTransformationConfiguration} using the provided partial configuration, and filling
@@ -72,18 +78,16 @@ export interface ApiItemTransformationConfiguration
  * @public
  */
 export function getApiItemTransformationConfigurationWithDefaults(
-	inputOptions: ApiItemTransformationOptions,
+	options: ApiItemTransformationOptions,
 ): ApiItemTransformationConfiguration {
-	const logger = inputOptions.logger ?? defaultConsoleLogger;
-	const hierarchy = getHierarchyOptionsWithDefaults(inputOptions?.hierarchy);
-	const documentationSuiteOptions = getDocumentationSuiteConfigurationWithDefaults(inputOptions);
-	const transformationOptions = getApiItemTransformationsWithDefaults(inputOptions);
+	const logger = options.logger ?? defaultConsoleLogger;
+	const documentationSuiteOptions = getDocumentationSuiteConfigurationWithDefaults(options);
+	const transformations = getApiItemTransformationsWithDefaults(options);
 	return {
 		...documentationSuiteOptions,
-		...transformationOptions,
-		apiModel: inputOptions.apiModel,
-		uriRoot: inputOptions.uriRoot,
-		hierarchy,
+		...transformations,
+		apiModel: options.apiModel,
+		uriRoot: options.uriRoot,
 		logger,
 	};
 }
