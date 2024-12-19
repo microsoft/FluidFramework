@@ -24,7 +24,7 @@ export interface RenderHtmlConfig {
 	 * Whether or not to render the generated HTML "pretty", human-readable formatting.
 	 * @defaultValue `true`
 	 */
-	prettyFormatting?: boolean;
+	readonly prettyFormatting?: boolean;
 }
 
 /**
