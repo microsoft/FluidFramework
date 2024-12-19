@@ -169,6 +169,12 @@ const savedContainerEvent = "saved";
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 /**
+ * The current generation of the Loader. This is used to determine compatibility between other layers.
+ * @internal
+ */
+export const currentLoaderGeneration = 1;
+
+/**
  * @internal
  */
 export interface IContainerLoadProps {
@@ -499,12 +505,19 @@ export class Container
 
 	private readonly mc: MonitoringContext;
 
-	// The current generation of the Loader layer. This is used to ensure compatibility between the Loader and
-	// other layers.
-	private readonly generation = 1;
-	// A list of features required by the Loader layer to be supported by the Runtime layer.
+	/**
+	 * The current generation of the Loader layer. This is used to ensure compatibility between the Loader and
+	 * other layers.
+	 */
+	private readonly generation = currentLoaderGeneration;
+	/**
+	 * A list of features that the Runtime layer is required to support to be compatible with this Loader.
+	 */
 	private readonly requiredFeaturesFromRuntime: string[] = [];
-	// A list of features supported by the Loader layer advertised to the Runtime layer.
+	/**
+	 * A list of features supported by the Loader layer. This is exposed to the Runtime layer which uses
+	 * it to determine if the Loader is compatible with the Runtime.
+	 */
 	private readonly supportedFeaturesForRuntime: Map<string, unknown> = new Map([
 		/**
 		 * This version of the loader accepts `referenceSequenceNumber`, provided by the container runtime,
@@ -513,6 +526,37 @@ export class Container
 		 */
 		["referenceSequenceNumbers", true],
 	]);
+	private validateRuntimeCompatibility(
+		runtimeSupportedFeatures?: ReadonlyMap<string, unknown>,
+		runtimeVersion?: string,
+	): void {
+		if (runtimeSupportedFeatures === undefined) {
+			return;
+		}
+
+		const result = checkLayerCompatibility(
+			this.requiredFeaturesFromRuntime,
+			this.generation,
+			runtimeSupportedFeatures,
+		);
+		if (!result.compatible) {
+			const error = new UsageError("Runtime is not compatible with Loader", {
+				loaderVersion: pkgVersion,
+				runtimeVersion,
+				loaderGeneration: this.generation,
+				minSupportedGeneration: runtimeSupportedFeatures.get(
+					"minSupportedGeneration",
+				) as number,
+				isGenerationCompatible: result.generationCompatible,
+				unsupportedFeatures:
+					result.unsupportedFeatures.length === 0
+						? undefined
+						: JSON.stringify(result.unsupportedFeatures),
+			});
+			this.close(error);
+			throw error;
+		}
+	}
 
 	/**
 	 * Used by the RelativeLoader to spawn a new Container for the same document.  Used to create the summarizing client.
@@ -2491,26 +2535,7 @@ export class Container
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
 
-		const supportedFeaturesForRuntime = runtime.supportedFeatures;
-		if (
-			supportedFeaturesForRuntime &&
-			!checkLayerCompatibility(
-				this.requiredFeaturesFromRuntime,
-				this.generation,
-				supportedFeaturesForRuntime,
-			)
-		) {
-			const error = new UsageError("Loader version is not compatible with Runtime", {
-				loaderVersion: pkgVersion,
-				runtimeVersion: runtime.pkgVersion,
-				runtimeGeneration: this.generation,
-				minSupportedGeneration: supportedFeaturesForRuntime.get(
-					"minSupportedGeneration",
-				) as number,
-			});
-			this.close(error);
-			throw error;
-		}
+		this.validateRuntimeCompatibility(runtime.supportedFeatures, runtime.pkgVersion);
 
 		this._runtime = runtime;
 

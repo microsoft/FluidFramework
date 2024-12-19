@@ -710,6 +710,12 @@ export const defaultPendingOpsRetryDelayMs = 1000;
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
+ * The current generation of the Runtime. This is used to determine compatibility between other layers.
+ * @internal
+ */
+export const currentRuntimeGeneration = 1;
+
+/**
  * Checks whether a message.type is one of the values in ContainerMessageType
  */
 export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean {
@@ -1540,10 +1546,15 @@ export class ContainerRuntime
 	 * The current generation of the Runtime layer. This is used to ensure compatibility between the Runtime and
 	 * other layers.
 	 */
-	private readonly generation = 1;
-	/** A list of features required by the Runtime layer to be supported by the Loader layer. */
+	private readonly generation = currentRuntimeGeneration;
+	/**
+	 * A list of features that the Loader layer is required to support to be compatible with this Runtime.
+	 */
 	private readonly requiredFeaturesFromLoader: string[] = [];
-	/** A list of features supported by the Runtime layer advertised to the Loader layer. */
+	/**
+	 * A list of features supported by the Runtime layer. This is exposed to the Loader layer which uses
+	 * it to determine if the Runtime is compatible with the Loader.
+	 */
 	private readonly supportedFeaturesForLoader: ReadonlyMap<string, unknown> = new Map([
 		/* This is the minimum generation of the Loader this Runtime supports. */
 		["minSupportedGeneration", 1],
@@ -1555,14 +1566,16 @@ export class ContainerRuntime
 		loaderSupportedFeatures?: ReadonlyMap<string, unknown>,
 		loaderVersion?: string,
 	): void {
-		if (
-			loaderSupportedFeatures &&
-			!checkLayerCompatibility(
-				this.requiredFeaturesFromLoader,
-				this.generation,
-				loaderSupportedFeatures,
-			)
-		) {
+		if (loaderSupportedFeatures === undefined) {
+			return;
+		}
+
+		const result = checkLayerCompatibility(
+			this.requiredFeaturesFromLoader,
+			this.generation,
+			loaderSupportedFeatures,
+		);
+		if (!result.compatible) {
 			const error = new UsageError("Runtime is not compatible with Loader", {
 				runtimeVersion: pkgVersion,
 				loaderVersion,
@@ -1570,6 +1583,11 @@ export class ContainerRuntime
 				minSupportedGeneration: loaderSupportedFeatures.get(
 					"minSupportedGeneration",
 				) as number,
+				isGenerationCompatible: result.generationCompatible,
+				unsupportedFeatures:
+					result.unsupportedFeatures.length === 0
+						? undefined
+						: JSON.stringify(result.unsupportedFeatures),
 			});
 			this.closeFn(error);
 			throw error;
