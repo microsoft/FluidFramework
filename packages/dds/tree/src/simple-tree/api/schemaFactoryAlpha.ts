@@ -69,6 +69,7 @@ export class SchemaFactoryAlpha<
 			true,
 			options?.allowUnknownOptionalFields ??
 				defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
+			options?.metadata,
 		);
 	}
 

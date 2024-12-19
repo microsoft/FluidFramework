@@ -155,11 +155,10 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	allowUnknownOptionalFields?: boolean;
 }
 
-export const defaultSchemaFactoryObjectOptions: Required<
-	Omit<SchemaFactoryObjectOptions, "metadata">
-> = {
+export const defaultSchemaFactoryObjectOptions = {
 	allowUnknownOptionalFields: false,
-};
+	metadata: undefined,
+} satisfies SchemaFactoryObjectOptions;
 
 /**
  * The name of a schema produced by {@link SchemaFactory}, including its optional scope prefix.
@@ -386,27 +385,23 @@ export class SchemaFactory<
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		fields: T,
-		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 		object & InsertableObjectFromSchemaRecord<T>,
 		true,
-		T,
-		never,
-		TCustomMetadata
+		T
 	> {
 		return objectSchema(
 			this.scoped(name),
 			fields,
 			true,
 			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
-			options?.metadata,
+			defaultSchemaFactoryObjectOptions.metadata,
 		);
 	}
 
@@ -852,35 +847,28 @@ export class SchemaFactory<
 	public objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
-		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		t: T,
-		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
 		object & InsertableObjectFromSchemaRecordUnsafe<T>,
 		false,
-		T,
-		never,
-		TCustomMetadata
+		T
 	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
-			options,
 		) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
 			TreeObjectNodeUnsafe<T, TScopedName>,
 			object & InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
-			T,
-			never,
-			TCustomMetadata
+			T
 		>;
 	}
 

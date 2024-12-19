@@ -15,6 +15,7 @@ import {
 
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
+	SchemaFactoryAlpha,
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeArrayNode,
@@ -364,7 +365,7 @@ describe("schemaFactory", () => {
 		});
 
 		it("Node schema metadata", () => {
-			const factory = new SchemaFactory("");
+			const factory = new SchemaFactoryAlpha("");
 
 			const fooMetadata = {
 				description: "An object called Foo",

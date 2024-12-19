@@ -8,6 +8,7 @@ import {
 	getJsonSchema,
 	NodeKind,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	type JsonTreeSchema,
 } from "../../../simple-tree/index.js";
 
@@ -230,7 +231,7 @@ describe("getJsonSchema", () => {
 	});
 
 	it("Object schema", () => {
-		const schemaFactory = new SchemaFactory("test");
+		const schemaFactory = new SchemaFactoryAlpha("test");
 		const Schema = schemaFactory.object(
 			"object",
 			{

@@ -22,6 +22,7 @@ import {
 	type FlexListToUnion,
 	type ApplyKindInput,
 	type NodeBuilderData,
+	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,
@@ -458,7 +459,7 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("Node schema metadata", () => {
-			const factory = new SchemaFactory("");
+			const factory = new SchemaFactoryAlpha("");
 
 			class Foo extends factory.objectRecursive(
 				"Foo",
