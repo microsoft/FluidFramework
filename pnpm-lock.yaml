@@ -1018,15 +1018,33 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
+      '@fluidframework/devtools':
+        specifier: workspace:~
+        version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/driver-definitions
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-static
+      '@fluidframework/presence':
+        specifier: workspace:~
+        version: link:../../../packages/framework/presence
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../../packages/utils/telemetry-utils
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/test-runtime-utils
+      axios:
+        specifier: ^1.7.7
+        version: 1.7.9(debug@4.4.0)
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
@@ -1097,6 +1115,9 @@ importers:
       source-map-loader:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.97.1)
+      start-server-and-test:
+        specifier: ^2.0.3
+        version: 2.0.8
       tinylicious:
         specifier: ^5.0.0
         version: 5.0.0
