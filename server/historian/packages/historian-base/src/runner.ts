@@ -11,6 +11,7 @@ import {
 	IRunner,
 	IRevokedTokenChecker,
 	IStorageNameRetriever,
+	ISimplifiedCustomDataRetriever,
 	IDocumentManager,
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
@@ -39,6 +40,7 @@ export class HistorianRunner implements IRunner {
 		private readonly denyList?: IDenyList,
 		private readonly ephemeralDocumentTTLSec?: number,
 		private readonly readinessCheck?: IReadinessCheck,
+		private readonly simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -58,6 +60,7 @@ export class HistorianRunner implements IRunner {
 			this.denyList,
 			this.ephemeralDocumentTTLSec,
 			this.readinessCheck,
+			this.simplifiedCustomDataRetriever,
 		);
 		historian.set("port", this.port);
 

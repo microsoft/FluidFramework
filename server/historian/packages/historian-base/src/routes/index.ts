@@ -5,6 +5,7 @@
 
 import {
 	IStorageNameRetriever,
+	ISimplifiedCustomDataRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
@@ -52,6 +53,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): IRoutes {
 	const commonRouteParams: CommonRouteParams = [
 		config,

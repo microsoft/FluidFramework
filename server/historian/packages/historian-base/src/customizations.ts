@@ -5,6 +5,7 @@
 
 import {
 	IStorageNameRetriever,
+	ISimplifiedCustomDataRetriever,
 	IRevokedTokenChecker,
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
@@ -16,4 +17,5 @@ export interface IHistorianResourcesCustomizations {
 	redisClientConnectionManager?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
 	readinessCheck?: IReadinessCheck;
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 }

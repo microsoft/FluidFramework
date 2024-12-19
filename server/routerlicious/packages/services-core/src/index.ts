@@ -127,6 +127,7 @@ export {
 	ICollaborationSessionManager,
 	ICollaborationSessionTracker,
 } from "./collabSession";
+export { ISimplifiedCustomDataRetriever } from "./simplifiedCustomDataRetriever";
 export { IStorageNameAllocator } from "./storageNameAllocator";
 export { IStorageNameRetriever } from "./storageNameRetriever";
 export {
