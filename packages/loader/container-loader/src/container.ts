@@ -579,6 +579,11 @@ export class Container
 		return this._lifecycleState === "disposing" || this._lifecycleState === "disposed";
 	}
 
+	public get closedWithError(): ICriticalContainerError | undefined {
+		return this._closedWithError;
+	}
+	private _closedWithError?: ICriticalContainerError;
+
 	private readonly storageAdapter: ContainerStorageAdapter;
 
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
@@ -1108,6 +1113,7 @@ export class Container
 				);
 
 				this._lifecycleState = "closing";
+				this._closedWithError = error;
 
 				// Back-compat for Old driver
 				if (this.service?.off !== undefined) {
@@ -1149,8 +1155,13 @@ export class Container
 				this.mc.logger.sendTelemetryEvent(
 					{
 						eventName: "ContainerDispose",
-						// Only log error if container isn't closed
-						category: !this.closed && error !== undefined ? "error" : "generic",
+						// Use error category if there's an error, unless we already closed with an error (i.e. _closedWithError is set)
+						category:
+							error !== undefined && this._closedWithError === undefined ? "error" : "generic",
+						details: {
+							closedWithErrorType: this._closedWithError?.errorType,
+							closedWithErrorMessage: this._closedWithError?.message,
+						},
 					},
 					error,
 				);
@@ -1158,6 +1169,10 @@ export class Container
 				// ! Progressing from "closed" to "disposing" is not allowed
 				if (this._lifecycleState !== "closed") {
 					this._lifecycleState = "disposing";
+
+					// Only set _closedWithError if we're "disposing and closing" all at once
+					// (disposing from a non-closed state)
+					this._closedWithError = error;
 				}
 
 				this._protocolHandler?.close();
