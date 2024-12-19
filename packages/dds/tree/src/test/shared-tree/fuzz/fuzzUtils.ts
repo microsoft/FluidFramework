@@ -156,12 +156,13 @@ export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 	public constructor(
 		protected override readonly onCreate: (tree: SharedTree) => void,
 		protected override readonly onLoad?: (tree: SharedTree) => void,
-		options: SharedTreeOptionsInternal = {
+		options: SharedTreeOptionsInternal = {},
+	) {
+		super(onCreate, onLoad, {
+			...options,
 			jsonValidator: typeboxValidator,
 			disposeForksAfterTransaction: false,
-		},
-	) {
-		super(onCreate, onLoad, options);
+		});
 	}
 }
 

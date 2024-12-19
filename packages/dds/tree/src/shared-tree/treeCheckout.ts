@@ -410,29 +410,20 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				return tagChange(change, revision);
 			},
 			() => {
-				// Keep track of all the forks created during the transaction so that we can dispose them when the transaction ends.
-				// This is a policy decision that we think is useful for the user, but it is not necessary for correctness.
-				const forks: Set<TreeCheckout> = new Set<TreeCheckout>();
-				let onForkUnSubscribe: () => void | undefined;
-				const onDisposeUnSubscribes: (() => void)[] = [];
-
-				if (this.disposeForksAfterTransaction !== false) {
-					onForkUnSubscribe = onForkTransitive(this, (fork) => {
-						forks.add(fork);
-						onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
-					});
-				}
+				const forkDisposalInfo = this.disposeForksAfterTransaction
+					? collectForksForDisposal(this)
+					: undefined;
 				// When each transaction is started, take a snapshot of the current state of removed roots
 				const removedRootsSnapshot = this.removedRoots.clone();
 				return (result) => {
 					if (result === TransactionResult.Abort) {
 						this.removedRoots = removedRootsSnapshot;
 					}
-					if (this.disposeForksAfterTransaction !== false) {
-						forks.forEach((fork) => fork.dispose());
-						onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
-						onForkUnSubscribe();
-					}
+					const disposeForks =
+						this.disposeForksAfterTransaction && forkDisposalInfo !== undefined
+							? disposeCollectedForks(forkDisposalInfo)
+							: undefined;
+					disposeForks?.();
 				};
 			},
 		);
@@ -921,4 +912,32 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			event.type === "rebase"
 		);
 	}
+}
+
+function disposeCollectedForks(forkDisposalInfo: ForkDisposalInfo): () => void {
+	let disposed = false;
+
+	return () => {
+		assert(!disposed, "Forks may only be disposed once");
+		forkDisposalInfo.forks.forEach((fork) => fork.dispose());
+		forkDisposalInfo.onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+		forkDisposalInfo.onForkUnSubscribe();
+		disposed = true;
+	};
+}
+
+interface ForkDisposalInfo {
+	forks: Set<TreeCheckout>;
+	onDisposeUnSubscribes: (() => void)[];
+	onForkUnSubscribe: () => void;
+}
+function collectForksForDisposal(checkout: TreeCheckout): ForkDisposalInfo {
+	const forks = new Set<TreeCheckout>();
+	const onDisposeUnSubscribes: (() => void)[] = [];
+	const onForkUnSubscribe = onForkTransitive(checkout, (fork) => {
+		forks.add(fork);
+		onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
+	});
+
+	return { forks, onDisposeUnSubscribes, onForkUnSubscribe };
 }

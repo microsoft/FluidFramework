@@ -517,9 +517,9 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 	public constructor(
 		protected readonly onCreate: (tree: SharedTree) => void,
 		protected readonly onLoad?: (tree: SharedTree) => void,
-		options: SharedTreeOptionsInternal = { jsonValidator: typeboxValidator },
+		options: SharedTreeOptionsInternal = {},
 	) {
-		super(options);
+		super({ ...options, jsonValidator: typeboxValidator });
 	}
 
 	public override async load(
