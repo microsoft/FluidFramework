@@ -145,7 +145,7 @@ const keylessAccessTokenClaims = {
 	exp: Math.round(new Date().getTime() / 1000) + 3600,
 	ver: "1.0",
 	jti: "jti",
-	fluidRelayKeylessAccess: true,
+	isKeylessAccessToken: true,
 };
 
 describe("TenantManager", () => {
@@ -430,7 +430,7 @@ describe("TenantManager", () => {
 	});
 
 	describe("validateToken", () => {
-		it("Should validate a token using private keys when fluidRelayKeylessAccess claim is true", async () => {
+		it("Should validate a token using private keys when isKeylessAccessToken claim is true", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
 			const tokenKey1 = generateToken(
 				keylessAccessTokenClaims.tenantId,
@@ -441,7 +441,7 @@ describe("TenantManager", () => {
 				undefined,
 				keylessAccessTokenClaims.ver,
 				undefined,
-				keylessAccessTokenClaims.fluidRelayKeylessAccess,
+				keylessAccessTokenClaims.isKeylessAccessToken,
 			);
 			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
 			await assert.doesNotReject(validationPKey1);
@@ -455,13 +455,13 @@ describe("TenantManager", () => {
 				undefined,
 				keylessAccessTokenClaims.ver,
 				undefined,
-				keylessAccessTokenClaims.fluidRelayKeylessAccess,
+				keylessAccessTokenClaims.isKeylessAccessToken,
 			);
 			const validationPKey2 = tenantManager.validateToken("cordflasher-dolphin", tokenKey2);
 			await assert.doesNotReject(validationPKey2);
 		});
 
-		it("Should validate a token using shared keys when fluidRelayKeylessAccess claim is missing/false", async () => {
+		it("Should validate a token using shared keys when isKeylessAccessToken claim is missing/false", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
 			const tokenKey1 = generateToken(
 				keylessAccessTokenClaims.tenantId,
@@ -488,7 +488,7 @@ describe("TenantManager", () => {
 			await assert.doesNotReject(validationPKey2);
 		});
 
-		it("Should fail validation with private keys when validating token signed using shared keys and fluidRelayKeylessAccess is true", async () => {
+		it("Should fail validation with private keys when validating token signed using shared keys and isKeylessAccessToken is true", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
 			const tokenKey1 = generateToken(
 				keylessAccessTokenClaims.tenantId,
@@ -499,7 +499,7 @@ describe("TenantManager", () => {
 				undefined,
 				keylessAccessTokenClaims.ver,
 				undefined,
-				keylessAccessTokenClaims.fluidRelayKeylessAccess,
+				keylessAccessTokenClaims.isKeylessAccessToken,
 			);
 			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
 			await assert.rejects(validationPKey1, (err) => {
@@ -517,7 +517,7 @@ describe("TenantManager", () => {
 				undefined,
 				keylessAccessTokenClaims.ver,
 				undefined,
-				keylessAccessTokenClaims.fluidRelayKeylessAccess,
+				keylessAccessTokenClaims.isKeylessAccessToken,
 			);
 			const validationPKey2 = tenantManager.validateToken("cordflasher-dolphin", tokenKey2);
 			await assert.rejects(validationPKey2, (err) => {
@@ -527,7 +527,7 @@ describe("TenantManager", () => {
 			});
 		});
 
-		it("Should fail validation with shared keys when validating token signed using private keys and fluidRelayKeylessAccess is false/missing", async () => {
+		it("Should fail validation with shared keys when validating token signed using private keys and isKeylessAccessToken is false/missing", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
 			const tokenKey1 = generateToken(
 				keylessAccessTokenClaims.tenantId,

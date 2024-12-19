@@ -145,7 +145,6 @@ export class TenantManager {
 		bypassCache = false,
 	): Promise<void> {
 		const isKeylessAccessValidation = isKeylessFluidAccessClaimEnabled(token);
-		console.log("isKeylessAccessValidation", isKeylessAccessValidation);
 		const tenantKeys = await this.getTenantKeys(
 			tenantId,
 			includeDisabledTenant,

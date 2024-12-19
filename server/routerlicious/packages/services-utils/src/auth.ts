@@ -37,12 +37,16 @@ interface IKeylessTokenClaims extends ITokenClaims {
 	/**
 	 * Identifies if the token is for Keyless Access or not.
 	 */
-	fluidRelayKeylessAccess?: boolean;
+	isKeylessAccessToken: boolean;
 }
 
 export function isKeylessFluidAccessClaimEnabled(token: string): boolean {
-	const claims = decode(token) as IKeylessTokenClaims;
-	return claims?.fluidRelayKeylessAccess === true;
+	const claims = decode(token) as ITokenClaims;
+	return isKeylessTokenClaims(claims);
+}
+
+function isKeylessTokenClaims(claims: ITokenClaims): claims is IKeylessTokenClaims {
+	return "isKeylessAccessToken" in claims && claims.isKeylessAccessToken === true;
 }
 
 /**
@@ -56,8 +60,8 @@ export function validateTokenClaims(
 	documentId: string,
 	tenantId: string,
 	requireDocumentId = true,
-): IKeylessTokenClaims {
-	const claims = decode(token) as IKeylessTokenClaims;
+): ITokenClaims {
+	const claims = decode(token) as ITokenClaims;
 	if (!claims) {
 		throw new NetworkError(403, "Missing token claims.");
 	}
@@ -89,9 +93,10 @@ export async function getCreationToken(
 	documentId: string,
 	lifetime = 5 * 60,
 ) {
-	const tokenClaims = decode(token) as IKeylessTokenClaims;
-	const { tenantId, user, jti, ver, fluidRelayKeylessAccess } = tokenClaims;
-	const key = await tenantManager.getKey(requestTenantId, false, fluidRelayKeylessAccess);
+	const tokenClaims = decode(token) as ITokenClaims;
+	const { tenantId, user, jti, ver } = tokenClaims;
+	let isKeylessAccessToken = isKeylessTokenClaims(tokenClaims);
+	const key = await tenantManager.getKey(requestTenantId, false, isKeylessAccessToken);
 	// Current time in seconds
 
 	return generateToken(
@@ -103,7 +108,7 @@ export async function getCreationToken(
 		lifetime,
 		ver,
 		jti,
-		fluidRelayKeylessAccess,
+		isKeylessAccessToken,
 	);
 }
 
@@ -122,7 +127,7 @@ export function generateToken(
 	lifetime: number = 60 * 60,
 	ver: string = "1.0",
 	jti: string = uuid(),
-	fluidRelayKeylessAccess = false,
+	isKeylessAccessToken = false,
 ): string {
 	let userClaim = user ? user : generateUser();
 	if (userClaim.id === "" || userClaim.id === undefined) {
@@ -140,7 +145,7 @@ export function generateToken(
 		iat: now,
 		exp: now + lifetime,
 		ver,
-		fluidRelayKeylessAccess,
+		isKeylessAccessToken,
 	};
 
 	return sign(claims, key, { jwtid: jti });
@@ -390,9 +395,9 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 			);
 		}
 
-		let claims: IKeylessTokenClaims;
+		let claims: ITokenClaims;
 		try {
-			claims = decode(token) as IKeylessTokenClaims;
+			claims = decode(token) as ITokenClaims;
 		} catch {
 			return respondWithNetworkError(response, new NetworkError(401, "Invalid token."));
 		}
