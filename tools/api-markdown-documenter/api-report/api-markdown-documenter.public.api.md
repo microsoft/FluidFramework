@@ -358,7 +358,7 @@ export interface FileSystemConfiguration {
 function filterItems(apiItems: readonly ApiItem[], config: ApiItemTransformationConfiguration): ApiItem[];
 
 // @public
-export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationOptions): ApiItemTransformationConfiguration;
+export function getApiItemTransformationConfigurationWithDefaults(options: ApiItemTransformationOptions): ApiItemTransformationConfiguration;
 
 // @public
 function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, readonly DocSection[]>;

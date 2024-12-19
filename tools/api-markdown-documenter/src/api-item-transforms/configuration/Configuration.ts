@@ -77,16 +77,16 @@ export interface ApiItemTransformationOptions
  * @public
  */
 export function getApiItemTransformationConfigurationWithDefaults(
-	inputOptions: ApiItemTransformationOptions,
+	options: ApiItemTransformationOptions,
 ): ApiItemTransformationConfiguration {
-	const logger = inputOptions.logger ?? defaultConsoleLogger;
-	const documentationSuiteOptions = getDocumentationSuiteOptionsWithDefaults(inputOptions);
-	const transformationOptions = getApiItemTransformationsWithDefaults(inputOptions);
+	const logger = options.logger ?? defaultConsoleLogger;
+	const documentationSuiteOptions = getDocumentationSuiteOptionsWithDefaults(options);
+	const transformations = getApiItemTransformationsWithDefaults(options);
 	return {
 		...documentationSuiteOptions,
-		...transformationOptions,
-		apiModel: inputOptions.apiModel,
-		uriRoot: inputOptions.uriRoot,
+		...transformations,
+		apiModel: options.apiModel,
+		uriRoot: options.uriRoot,
 		logger,
 	};
 }
