@@ -910,8 +910,15 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 }
 
-// Keeps track of all new forks created until the returned function is invoked, which will dispose all of those forks
-// The returned function may only be called once
+/**
+ * Keeps track of all new forks created until the returned function is invoked, which will dispose all of those for.
+ * The returned function may only be called once.
+ *
+ * @param checkout - The tree checkout for which you want to monitor forks for disposal.
+ * @returns a function which can be called to dispose all of the tracked forks.
+ */
+// ks
+//
 function trackForksForDisposal(checkout: TreeCheckout): () => void {
 	const forks = new Set<TreeCheckout>();
 	const onDisposeUnSubscribes: (() => void)[] = [];
