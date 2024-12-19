@@ -19,12 +19,7 @@ import {
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
 import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-
-/**
- * A special object that signifies when a SharedTree {@link RunTransaction | transaction} should "roll back".
- * @public
- */
-export const rollback = Symbol("SharedTree Transaction Rollback");
+import { rollback, type TransactionConstraint } from "./transactionTypes.js";
 
 /**
  * A function which runs a transaction in a SharedTree.
@@ -379,28 +374,6 @@ export const treeApi: TreeApi = {
 		return false;
 	},
 };
-
-/**
- * A requirement for a SharedTree transaction to succeed.
- * @remarks Transaction constraints are useful for validating that the state of the tree meets some requirement when a transaction runs.
- * In general, when running a transaction a client can validate their tree state in whatever way they wish and decide to either proceed with the transaction or not.
- * However, they cannot know what the tree state will be when the transaction is _sequenced_.
- * There may have been any number of edits from other clients that get sequenced before the transaction is eventually sequenced.
- * Constraints provide a way to validate the tree state after the transaction has been sequenced and abort the transaction if the constraints are not met.
- * All clients will validate the constraints of a transaction when it is sequenced, so all clients will agree on whether the transaction succeeds or not.
- * @public
- */
-export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more constraint types here
-
-/**
- * A transaction {@link TransactionConstraint | constraint} which requires that the given node exists in the tree.
- * @remarks The node must be in the document (its {@link TreeStatus | status} must be {@link TreeStatus.InDocument | InDocument}) to qualify as "existing".
- * @public
- */
-export interface NodeInDocumentConstraint {
-	readonly type: "nodeInDocument";
-	readonly node: TreeNode;
-}
 
 // TODO: Add more constraint types here
 

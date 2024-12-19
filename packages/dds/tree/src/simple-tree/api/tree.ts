@@ -12,9 +12,17 @@ import type {
 	RevertibleFactory,
 } from "../../core/index.js";
 
-// This is referenced by doc comments.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
-import type { TreeAlpha } from "../../shared-tree/index.js";
+import type {
+	RunTransactionFailed,
+	RunTransactionFailedExt,
+	RunTransactionParams,
+	RunTransactionParamsExt,
+	RunTransactionSucceeded,
+	RunTransactionSucceededExt,
+	// This is referenced by doc comments.
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+	TreeAlpha,
+} from "../../shared-tree/index.js";
 
 import {
 	type ImplicitFieldSchema,
@@ -35,7 +43,6 @@ import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-
 /**
  * A tree from which a {@link TreeView} can be created.
  *
@@ -542,6 +549,15 @@ export interface TreeViewAlpha<
 
 	// Override the base branch method to return a typed view rather than merely a branch.
 	fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
+
+	/**
+	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param params - The parameters for the transaction.
+	 */
+	runTransaction<TSuccessValue, TFailureValue>(
+		params: RunTransactionParamsExt<TSuccessValue, TFailureValue>,
+	): RunTransactionSucceededExt<TSuccessValue> | RunTransactionFailedExt<TFailureValue>;
+	runTransaction(params: RunTransactionParams): RunTransactionSucceeded | RunTransactionFailed;
 }
 
 /**
