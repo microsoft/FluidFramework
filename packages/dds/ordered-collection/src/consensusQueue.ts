@@ -35,6 +35,7 @@ class SnapshotableQueue<T> extends SnapshotableArray<T> implements IOrderedColle
  * @legacy
  * @alpha
  */
+// TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {
 	/**

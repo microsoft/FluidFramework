@@ -399,13 +399,13 @@ describe("ConsensusOrderedCollection", () => {
 					this.containerRuntimeFactory,
 				);
 			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 			private async addItem(item: unknown): Promise<void> {
 				const waitP = this.collection.add(item);
 				this.containerRuntimeFactory.processAllMessages();
 				return waitP;
 			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 			private async removeItem(): Promise<unknown> {
 				const resP = acquireAndComplete(this.collection);
 				this.containerRuntimeFactory.processAllMessages();

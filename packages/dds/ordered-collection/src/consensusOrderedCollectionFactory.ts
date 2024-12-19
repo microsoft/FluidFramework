@@ -72,5 +72,6 @@ export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
  * @legacy
  * @alpha
  */
+// TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;

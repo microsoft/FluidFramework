@@ -108,6 +108,7 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
  * @legacy
  * @alpha
  */
+// TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IConsensusOrderedCollection<T = any>
 	extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
@@ -153,6 +154,7 @@ export interface ISnapshotable<T> {
  * @legacy
  * @alpha
  */
+// TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IOrderedCollection<T = any> extends ISnapshotable<T> {
 	/**
