@@ -410,8 +410,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				return tagChange(change, revision);
 			},
 			() => {
-				const forkDisposalInfo = this.disposeForksAfterTransaction
-					? collectForksForDisposal(this)
+				const disposeForks = this.disposeForksAfterTransaction
+					? trackForksForDisposal(this)
 					: undefined;
 				// When each transaction is started, take a snapshot of the current state of removed roots
 				const removedRootsSnapshot = this.removedRoots.clone();
@@ -419,10 +419,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					if (result === TransactionResult.Abort) {
 						this.removedRoots = removedRootsSnapshot;
 					}
-					const disposeForks =
-						this.disposeForksAfterTransaction && forkDisposalInfo !== undefined
-							? disposeCollectedForks(forkDisposalInfo)
-							: undefined;
 					disposeForks?.();
 				};
 			},
@@ -914,30 +910,21 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 }
 
-function disposeCollectedForks(forkDisposalInfo: ForkDisposalInfo): () => void {
-	let disposed = false;
-
-	return () => {
-		assert(!disposed, "Forks may only be disposed once");
-		forkDisposalInfo.forks.forEach((fork) => fork.dispose());
-		forkDisposalInfo.onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
-		forkDisposalInfo.onForkUnSubscribe();
-		disposed = true;
-	};
-}
-
-interface ForkDisposalInfo {
-	forks: Set<TreeCheckout>;
-	onDisposeUnSubscribes: (() => void)[];
-	onForkUnSubscribe: () => void;
-}
-function collectForksForDisposal(checkout: TreeCheckout): ForkDisposalInfo {
+// Keeps track of all new forks created until the returned function is invoked, which will dispose all of those forks
+// The returned function may only be called once
+function trackForksForDisposal(checkout: TreeCheckout): () => void {
 	const forks = new Set<TreeCheckout>();
 	const onDisposeUnSubscribes: (() => void)[] = [];
 	const onForkUnSubscribe = onForkTransitive(checkout, (fork) => {
 		forks.add(fork);
 		onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
 	});
-
-	return { forks, onDisposeUnSubscribes, onForkUnSubscribe };
+	let disposed = false;
+	return () => {
+		assert(!disposed, "Forks may only be disposed once");
+		forks.forEach((fork) => fork.dispose());
+		onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+		onForkUnSubscribe();
+		disposed = true;
+	};
 }
