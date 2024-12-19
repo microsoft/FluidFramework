@@ -54,6 +54,10 @@ export type {
 	ReplaceIEventThisPlaceHolder,
 	FluidObject, // Linked in doc comment
 	FluidObjectProviderKeys, // Used by FluidObject
+	IsListener,
+	Listeners,
+	Listenable,
+	Off,
 } from "@fluidframework/core-interfaces";
 
 export type { isFluidHandle } from "@fluidframework/runtime-utils";
@@ -61,7 +65,7 @@ export type { isFluidHandle } from "@fluidframework/runtime-utils";
 // Let the tree package manage its own API surface.
 // Note: this only surfaces the `@public, @beta and @alpha` API items from the tree package.
 // eslint-disable-next-line no-restricted-syntax, import/no-internal-modules
-export * from "@fluidframework/tree/alpha";
+export * from "@fluidframework/tree/internal/alpha-apis";
 
 // End of basic public+beta+alpha exports - nothing above this line should
 // depend on an /internal path.
