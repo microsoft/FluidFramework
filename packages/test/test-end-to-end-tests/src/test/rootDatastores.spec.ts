@@ -61,9 +61,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 	const runtimeOf = (dataObject: ITestFluidObject): IContainerRuntime =>
 		dataObject.context.containerRuntime as IContainerRuntime;
 
-	const createDataStoreWithProps = async (dataObject: ITestFluidObject, id: string) =>
-		runtimeOf(dataObject)._createDataStoreWithProps(packageName, {}, id);
-
 	/**
 	 * Gets an aliased data store with the given id. Throws an error if the data store cannot be retrieved.
 	 */
@@ -77,14 +74,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 		}
 		return dataStore;
 	}
-
-	describe("Legacy APIs", () => {
-		it("Datastore creation with legacy API returns datastore which can be aliased", async () => {
-			const ds = await createDataStoreWithProps(dataObject1, "1");
-			const aliasResult = await ds.trySetAlias("2");
-			assert.equal(aliasResult, "Success");
-		});
-	});
 
 	describe("Aliasing", () => {
 		const alias = "alias";
