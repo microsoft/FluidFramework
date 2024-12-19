@@ -61,7 +61,7 @@ export {
 	type MarkdownRenderers,
 	type MarkdownRenderConfiguration,
 } from "./renderers/index.js";
-export type { LoggingOptions } from "./LoggingOptions.js";
+export type { LoggingConfiguration } from "./LoggingConfiguration.js";
 export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
 export type { Heading } from "./Heading.js";
 export type { Link, UrlTarget } from "./Link.js";

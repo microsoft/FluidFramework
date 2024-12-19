@@ -23,7 +23,7 @@ import {
 } from "@microsoft/tsdoc";
 
 import { defaultConsoleLogger } from "./Logging.js";
-import type { LoggingOptions } from "./LoggingOptions.js";
+import type { LoggingConfiguration } from "./LoggingConfiguration.js";
 import { resolveSymbolicReference } from "./utilities/index.js";
 
 /**
@@ -31,7 +31,7 @@ import { resolveSymbolicReference } from "./utilities/index.js";
  *
  * @beta
  */
-export interface LintApiModelConfiguration extends LoggingOptions {
+export interface LintApiModelConfiguration extends LoggingConfiguration {
 	/**
 	 * The API model to lint.
 	 */

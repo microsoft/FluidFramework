@@ -21,7 +21,7 @@ import {
 } from "@microsoft/tsdoc";
 
 import type { Link } from "../Link.js";
-import type { LoggingOptions } from "../LoggingOptions.js";
+import type { LoggingConfiguration } from "../LoggingConfiguration.js";
 import {
 	CodeSpanNode,
 	type DocumentationNode,
@@ -70,7 +70,7 @@ export function transformTsdocNode(
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface TsdocNodeTransformOptions extends LoggingOptions {
+export interface TsdocNodeTransformOptions extends LoggingConfiguration {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */

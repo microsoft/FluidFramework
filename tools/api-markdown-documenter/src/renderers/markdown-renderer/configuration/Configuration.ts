@@ -4,7 +4,7 @@
  */
 
 import { defaultConsoleLogger } from "../../../Logging.js";
-import type { LoggingOptions } from "../../../LoggingOptions.js";
+import type { LoggingConfiguration } from "../../../LoggingConfiguration.js";
 
 import type { Renderers } from "./RenderOptions.js";
 
@@ -13,7 +13,7 @@ import type { Renderers } from "./RenderOptions.js";
  *
  * @public
  */
-export interface RenderConfiguration extends LoggingOptions {
+export interface RenderConfiguration extends LoggingConfiguration {
 	/**
 	 * User-specified renderers.
 	 *

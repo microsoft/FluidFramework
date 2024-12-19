@@ -4,7 +4,7 @@
  */
 
 import { defaultConsoleLogger } from "../../Logging.js";
-import type { LoggingOptions } from "../../LoggingOptions.js";
+import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
 import type { TextFormatting } from "../../documentation-domain/index.js";
 
 import type { Transformations } from "./Transformation.js";
@@ -14,7 +14,7 @@ import type { Transformations } from "./Transformation.js";
  *
  * @public
  */
-export interface TransformationConfig extends LoggingOptions {
+export interface TransformationConfig extends LoggingConfiguration {
 	/**
 	 * User-specified transformations.
 	 *

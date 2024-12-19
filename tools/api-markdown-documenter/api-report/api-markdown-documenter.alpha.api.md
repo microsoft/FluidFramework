@@ -48,7 +48,7 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public
-export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, Required<ApiItemTransformations>, DocumentationSuiteConfiguration, Required<LoggingOptions> {
+export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, Required<ApiItemTransformations>, DocumentationSuiteConfiguration, Required<LoggingConfiguration> {
 }
 
 // @public
@@ -58,7 +58,7 @@ export interface ApiItemTransformationConfigurationBase {
 }
 
 // @public
-export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, ApiItemTransformations, DocumentationSuiteOptions, LoggingOptions {
+export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, ApiItemTransformations, DocumentationSuiteOptions, LoggingConfiguration {
 }
 
 // @public
@@ -556,7 +556,7 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
 export function lintApiModel(configuration: LintApiModelConfiguration): Promise<LinterErrors | undefined>;
 
 // @beta
-export interface LintApiModelConfiguration extends LoggingOptions {
+export interface LintApiModelConfiguration extends LoggingConfiguration {
     apiModel: ApiModel;
 }
 
@@ -578,7 +578,7 @@ export interface LinterReferenceError {
 export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 
 // @public
-export interface LoadModelOptions extends LoggingOptions {
+export interface LoadModelOptions extends LoggingConfiguration {
     readonly modelDirectoryPath: string;
 }
 
@@ -592,15 +592,15 @@ export interface Logger {
 }
 
 // @public
-export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
-
-// @public
-export interface LoggingOptions {
+export interface LoggingConfiguration {
     readonly logger?: Logger;
 }
 
 // @public
-export interface MarkdownRenderConfiguration extends LoggingOptions {
+export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
+
+// @public
+export interface MarkdownRenderConfiguration extends LoggingConfiguration {
     readonly customRenderers?: MarkdownRenderers;
     readonly startingHeadingLevel?: number;
 }
@@ -835,7 +835,7 @@ export interface TextFormatting {
 }
 
 // @public
-export interface ToHtmlConfig extends LoggingOptions {
+export interface ToHtmlConfig extends LoggingConfiguration {
     readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
     readonly rootFormatting?: TextFormatting;
