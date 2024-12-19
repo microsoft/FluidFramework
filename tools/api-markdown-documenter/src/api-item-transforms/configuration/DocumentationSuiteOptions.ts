@@ -102,7 +102,7 @@ export interface DocumentationSuiteOptions {
 	 * @remarks If you will be rendering the document contents into some other document content that will inject its
 	 * own root heading, this can be used to omit that heading from what is rendered by this system.
 	 */
-	includeTopLevelDocumentHeading?: boolean;
+	readonly includeTopLevelDocumentHeading?: boolean;
 
 	/**
 	 * Whether or not to include a navigation breadcrumb at the top of rendered documents.
@@ -111,21 +111,21 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @remarks Note: `Model` items will never have a breadcrumb rendered, even if this is specfied.
 	 */
-	includeBreadcrumb?: boolean;
+	readonly includeBreadcrumb?: boolean;
 
 	/**
 	 * See {@link DocumentBoundaries}.
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultDocumentBoundaries}
 	 */
-	documentBoundaries?: DocumentBoundaries;
+	readonly documentBoundaries?: DocumentBoundaries;
 
 	/**
 	 * See {@link HierarchyBoundaries}.
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultHierarchyBoundaries}
 	 */
-	hierarchyBoundaries?: HierarchyBoundaries;
+	readonly hierarchyBoundaries?: HierarchyBoundaries;
 
 	/**
 	 * Generate a file name for the provided `ApiItem`.
@@ -148,7 +148,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetFileNameForItem}
 	 */
-	getFileNameForItem?: (apiItem: ApiItem) => string;
+	readonly getFileNameForItem?: (apiItem: ApiItem) => string;
 
 	/**
 	 * Optionally provide an override for the URI base used in links generated for the provided `ApiItem`.
@@ -164,7 +164,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue Always use the default URI base.
 	 */
-	getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
+	readonly getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
 
 	/**
 	 * Generate heading text for the provided `ApiItem`.
@@ -175,7 +175,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetHeadingTextForItem}
 	 */
-	getHeadingTextForItem?: (apiItem: ApiItem) => string;
+	readonly getHeadingTextForItem?: (apiItem: ApiItem) => string;
 
 	/**
 	 * Generate link text for the provided `ApiItem`.
@@ -186,7 +186,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem}
 	 */
-	getLinkTextForItem?: (apiItem: ApiItem) => string;
+	readonly getLinkTextForItem?: (apiItem: ApiItem) => string;
 
 	/**
 	 * Generate a list of "alerts" to display in API items tables for a given API item.
@@ -197,7 +197,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetAlertsForItem}
 	 */
-	getAlertsForItem?: (apiItem: ApiItem) => string[];
+	readonly getAlertsForItem?: (apiItem: ApiItem) => string[];
 
 	/**
 	 * Whether or not the provided `ApiPackage` should be skipped during documentation generation.
@@ -210,7 +210,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue No packages are skipped.
 	 */
-	skipPackage?: (apiPackage: ApiPackage) => boolean;
+	readonly skipPackage?: (apiPackage: ApiPackage) => boolean;
 
 	/**
 	 * Minimal release scope to include in generated documentation suite.
@@ -233,7 +233,7 @@ export interface DocumentationSuiteOptions {
 	 * releaseLevel: ReleaseTag.Beta
 	 * ```
 	 */
-	minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
+	readonly minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
 }
 
 /**

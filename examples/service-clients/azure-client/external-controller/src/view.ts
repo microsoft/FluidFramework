@@ -125,7 +125,6 @@ function addLogEntry(logDiv: HTMLDivElement, entry: string): void {
 
 function makePresenceView(
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
-	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
 	presenceConfig?: { presence: IPresence; lastRoll: LatestValueManager<DiceValues> },
 	audience?: IAzureAudience,
 ): HTMLDivElement {
@@ -199,7 +198,6 @@ function makePresenceView(
 export function makeAppView(
 	diceRollerControllers: IDiceRollerController[],
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
-	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
 	presenceConfig?: { presence: IPresence; lastRoll: LatestValueManager<DiceValues> },
 	audience?: IAzureAudience,
 ): HTMLDivElement {

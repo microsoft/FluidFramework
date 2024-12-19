@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import { assert } from "@fluidframework/core-utils/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
@@ -14,6 +12,7 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "./constants.js";
+// eslint-disable-next-line import/no-deprecated
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
@@ -25,15 +24,14 @@ import {
 	refGetTileLabels,
 	refTypeIncludesFlag,
 } from "./referencePositions.js";
-// eslint-disable-next-line import/no-deprecated
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
-// eslint-disable-next-line import/no-deprecated
 import { PropertiesManager } from "./segmentPropertiesManager.js";
 
 /**
  * Common properties for a node in a merge tree.
  * @legacy
  * @alpha
+ * @deprecated - This interface will be removed in 2.20 with no replacement.
  */
 export interface IMergeNodeCommon {
 	/**
@@ -58,9 +56,13 @@ export interface IMergeNodeCommon {
  *
  * @internal
  */
-export type ISegmentInternal = ISegment & {
-	localRefs?: LocalReferenceCollection;
-};
+export type ISegmentInternal = Omit<ISegment, keyof IRemovalInfo | keyof IMoveInfo> &
+	Partial<IMergeNodeCommon> &
+	Partial<IRemovalInfo> &
+	Partial<IMoveInfo> & {
+		// eslint-disable-next-line import/no-deprecated
+		localRefs?: LocalReferenceCollection;
+	};
 
 /**
  * We use tiered interface to control visibility of segment properties.
@@ -72,9 +74,9 @@ export type ISegmentInternal = ISegment & {
  */
 export type ISegmentLeaf = ISegmentInternal & {
 	parent?: MergeBlock;
-	// eslint-disable-next-line import/no-deprecated
+
 	segmentGroups?: SegmentGroupCollection;
-	// eslint-disable-next-line import/no-deprecated
+
 	propertyManager?: PropertiesManager;
 	/**
 	 * If a segment is inserted into an obliterated range,
@@ -89,6 +91,7 @@ export type IMergeNode = MergeBlock | ISegmentLeaf;
  * Contains removal information associated to an {@link ISegment}.
  * @legacy
  * @alpha
+ * @deprecated - This interface will be removed in 2.20 with no replacement.
  */
 export interface IRemovalInfo {
 	/**
@@ -133,6 +136,7 @@ export function toRemovalInfo(
  * in the future, when moves _are_ supported.
  * @legacy
  * @alpha
+ * @deprecated - This interface will be removed in 2.20 with no replacement.
  */
 export interface IMoveInfo {
 	/**
@@ -211,7 +215,7 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
  * @legacy
  * @alpha
  */
-export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
+export interface ISegment {
 	readonly type: string;
 
 	readonly trackingCollection: TrackingGroupCollection;
@@ -223,6 +227,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * after the tree. These segments cannot be referenced by regular operations
 	 * and exist primarily as a bucket for local references to slide onto during
 	 * deletion of regular segments.
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
 	 */
 	readonly endpointType?: "start" | "end";
 
@@ -254,6 +259,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 *
 	 * @privateRemarks
 	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
 	 */
 	localSeq?: number;
 	/**
@@ -265,20 +271,25 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 *
 	 * @privateRemarks
 	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
 	 */
 	localRemovedSeq?: number;
 	/**
 	 * Seq at which this segment was inserted.
 	 * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
 	 */
 	seq?: number;
 	/**
 	 * Short clientId for the client that inserted this segment.
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
 	 */
 	clientId: number;
 	/**
 	 * Local references added to this segment.
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	localRefs?: LocalReferenceCollection;
 	/**
 	 * Properties that have been added to this segment via annotation.
@@ -292,6 +303,70 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	// Changing this to something other than any would break consumers.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	toJSONObject(): any;
+	isLeaf(): this is ISegment;
+
+	/**
+	 * {@inheritDoc @fluidframework/merge-tree#IMergeNodeCommon.index}
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	index: number;
+	/**
+	 * {@inheritDoc @fluidframework/merge-tree#IMergeNodeCommon.ordinal}
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	ordinal: string;
+
+	/**
+	 * {@inheritDoc @fluidframework/merge-tree#IRemovalInfo.removedSeq}
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	removedSeq?: number;
+	/**
+	 * {@inheritDoc @fluidframework/merge-tree#IRemovalInfo.removedClientIds}
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	removedClientIds?: number[];
+	/**
+	 * {@inheritDoc @fluidframework/merge-tree#IMoveInfo.localMovedSeq}
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	localMovedSeq?: number;
+	/**
+	 * {@inheritDoc @fluidframework/merge-tree#IMoveInfo.movedSeq}
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	movedSeq?: number;
+
+	/**
+	 * {@inheritDoc @fluidframework/merge-tree#IMoveInfo.movedSeqs}
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	movedSeqs?: number[];
+	/**
+	 * {@inheritDoc @fluidframework/merge-tree#IMoveInfo.moveDst}
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	moveDst?: ReferencePosition;
+	/**
+	 * {@inheritDoc @fluidframework/merge-tree#IMoveInfo.movedClientIds}
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	movedClientIds?: number[];
+	/**
+	 * {@inheritDoc @fluidframework/merge-tree#IMoveInfo.wasMovedOnInsert}
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	wasMovedOnInsert?: boolean;
+}
+
+/**
+ * Determine if a segment has been removed.
+ * @legacy
+ * @alpha
+ */
+export function segmentIsRemoved(segment: ISegment): boolean {
+	const leaf: ISegmentLeaf = segment;
+	return leaf.removedSeq !== undefined;
 }
 
 /**
@@ -322,8 +397,8 @@ export interface ISegmentAction<TClientData> {
  * @internal
  */
 export interface ISegmentChanges {
-	next?: ISegment;
-	replaceCurrent?: ISegment;
+	next?: ISegmentInternal;
+	replaceCurrent?: ISegmentInternal;
 }
 /**
  * @internal
@@ -361,8 +436,12 @@ export interface NodeAction<TClientData> {
  * @internal
  */
 export interface InsertContext {
-	candidateSegment?: ISegment;
-	leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
+	candidateSegment?: ISegmentInternal;
+	leaf: (
+		segment: ISegmentInternal | undefined,
+		pos: number,
+		ic: InsertContext,
+	) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
 
@@ -433,7 +512,7 @@ export class MergeBlock implements IMergeNodeCommon {
 	 */
 	public leftmostTiles: Readonly<MapLike<Marker>>;
 
-	isLeaf(): this is ISegment {
+	isLeaf(): this is ISegmentInternal {
 		return false;
 	}
 
@@ -490,15 +569,45 @@ export function seqLTE(seq: number, minOrRefSeq: number): boolean {
  * @alpha
  */
 export abstract class BaseSegment implements ISegment {
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public clientId: number = LocalClientId;
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public seq: number = UniversalSequenceNumber;
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public removedSeq?: number;
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public removedClientIds?: number[];
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public movedSeq?: number;
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public movedSeqs?: number[];
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public movedClientIds?: number[];
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public wasMovedOnInsert?: boolean | undefined;
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public index: number = 0;
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public ordinal: string = "";
 	public cachedLength: number = 0;
 
@@ -509,10 +618,23 @@ export abstract class BaseSegment implements ISegment {
 	public attribution?: IAttributionCollection<AttributionKey>;
 
 	public properties?: PropertySet;
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public localRefs?: LocalReferenceCollection;
 	public abstract readonly type: string;
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public localSeq?: number;
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public localRemovedSeq?: number;
+	/**
+	 * @deprecated - This property will be removed in 2.20 with no replacement.
+	 */
 	public localMovedSeq?: number;
 
 	public constructor(properties?: PropertySet) {
@@ -606,6 +728,7 @@ export abstract class BaseSegment implements ISegment {
 	public append(other: ISegment): void {
 		// Note: Must call 'appendLocalRefs' before modifying this segment's length as
 		//       'this.cachedLength' is used to adjust the offsets of the local refs.
+		// eslint-disable-next-line import/no-deprecated
 		LocalReferenceCollection.append(this, other);
 		if (this.attribution) {
 			assert(

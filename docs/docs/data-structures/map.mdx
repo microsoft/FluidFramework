@@ -16,15 +16,15 @@ For example, in a traditional `Map`, setting a key would only set it on the loca
 -   You must only store the following as values in a `SharedMap`:
     -   _Plain objects_ -- those that are safely JSON-serializable.
         If you store class instances, for example, then data synchronization will not work as expected.
-    -   [Handles](/docs/concepts/handles) to other Fluid DDSes
+    -   [Handles](../concepts/handles.mdx) to other Fluid DDSes
 -   When storing objects as values in a SharedMap, changes to the object will be synchronized whole-for-whole.
     This means that individual changes to the properties of an object are not merged during synchronization.
     If you need this behavior you should store individual properties in the SharedMap instead of full objects.
-    See [Picking the right data structure](../build/dds#picking-the-right-data-structure) for more information.
+    See [Picking the right data structure](../build/dds.mdx#picking-the-right-data-structure) for more information.
 
 :::
 
-For additional background on DDSes and a general overview of their design, see [Introducing distributed data structures](../build/dds).
+For additional background on DDSes and a general overview of their design, see [Introducing distributed data structures](../build/dds.mdx).
 
 ## Usage
 
@@ -43,8 +43,8 @@ npm install fluid-framework
 The `FluidContainer` provides a container schema for defining which DDSes you would like to load from it.
 It provides two separate fields for establishing an initial roster of objects and dynamically creating new ones.
 
--   For general guidance on using the `ContainerSchema`, please see [Data modeling](../build/data-modeling).
--   For guidance on how to create/load a container using a service-specific client, please see [Containers - Creating and loading](../build/containers#creating--connecting).
+-   For general guidance on using the `ContainerSchema`, please see [Data modeling](../build/data-modeling.mdx).
+-   For guidance on how to create/load a container using a service-specific client, please see [Containers - Creating and loading](../build/containers.mdx#creating--connecting).
 
 Let's take a look at how you would specifically use the `ContainerSchema` for `SharedMap`.
 
@@ -91,7 +91,7 @@ const { container, services } = await client.getContainer(id, schema);
 const newMap = await container.create(SharedMap); // Create a new SharedMap
 ```
 
-Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from your initial objects above. The only caveat here is that you will need to maintain a pointer to your newly created object. To store it in another `SharedMap`, please see the [Storing shared objects](#storing-shared-objects) section below and for general guidance on storing DDS references as handles, please see [Using handles to store and retrieve shared objects](../build/data-modeling#using-handles-to-store-and-retrieve-shared-objects).
+Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from your initial objects above. The only caveat here is that you will need to maintain a pointer to your newly created object. To store it in another `SharedMap`, please see the [Storing shared objects](#storing-shared-objects) section below and for general guidance on storing DDS references as handles, please see [Using handles to store and retrieve shared objects](../build/data-modeling.mdx#using-handles-to-store-and-retrieve-shared-objects).
 
 ### API
 
@@ -196,7 +196,7 @@ Because the local `set` call causes the `valueChanged` event to be sent, and you
 
 ### Storing objects
 
-Storing objects in a `SharedMap` is very similar to storing primitives. However, one thing to note is that all values in `SharedMap` are merged using a last writer wins (LWW) strategy. This means that if multiple clients are writing values to the same key, whoever made the last update will "win" and overwrite the others. While this is fine for primitives, you should be mindful when storing objects in `SharedMaps` if you are looking for individual fields within the object to be independently modified. See [Picking the right data structure](../build/dds#picking-the-right-data-structure) for more information.
+Storing objects in a `SharedMap` is very similar to storing primitives. However, one thing to note is that all values in `SharedMap` are merged using a last writer wins (LWW) strategy. This means that if multiple clients are writing values to the same key, whoever made the last update will "win" and overwrite the others. While this is fine for primitives, you should be mindful when storing objects in `SharedMaps` if you are looking for individual fields within the object to be independently modified. See [Picking the right data structure](../build/dds.mdx#picking-the-right-data-structure) for more information.
 
 :::warning
 
@@ -321,9 +321,9 @@ One way to think about this is that each value stored into the `SharedMap` is th
 
 One of the powerful features of DDSes is that they are nestable. A DDS can be stored in another DDS allowing you to dynamically set up your data hierarchy as best fits your application needs.
 
-When storing a DDS within another DDS, you must store its [handle](../build/data-modeling#using-handles-to-store-and-retrieve-shared-objects), not the DDS itself. Similarly, when retrieving DDSes nested within other DDSes, you need to first get the object's handle and then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
+When storing a DDS within another DDS, you must store its [handle](../build/data-modeling.mdx#using-handles-to-store-and-retrieve-shared-objects), not the DDS itself. Similarly, when retrieving DDSes nested within other DDSes, you need to first get the object's handle and then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
-That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles, see [Fluid handles](/docs/concepts/handles).
+That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles, see [Fluid handles](../concepts/handles.mdx).
 
 The following example demonstrates nesting DDSes using `SharedMap`. You specify an initial SharedMap as part of the `initialObjects` in the `ContainerSchema` and add the `SharedMap` type to `dynamicObjectTypes`.
 

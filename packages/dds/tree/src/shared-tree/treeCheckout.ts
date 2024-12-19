@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	HasListeners,
-	IEmitter,
-	Listenable,
-} from "@fluidframework/core-interfaces/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
@@ -63,7 +59,7 @@ import {
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
-import { Breakable, disposeSymbol, fail, getLast, hasSome } from "../util/index.js";
+import { Breakable, disposeSymbol, fail, getOrCreate } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -77,6 +73,7 @@ import type {
 	UnsafeUnknownSchema,
 	ViewableTree,
 	TreeBranch,
+	TreeChangeEvents,
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
@@ -86,21 +83,23 @@ import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.
 export interface CheckoutEvents {
 	/**
 	 * The view is currently in a consistent state, but a batch of changes is about to be processed.
-	 * @remarks After this event fires, it is safe to access the FlexTree, Forest and AnchorSet again until {@link CheckoutEvents.afterBatch} fires.
-	 * @param appendedCommits - Any commits that were appended to the checkout's branch in order to produce the changes in this batch.
+	 * @remarks Once this event fires, it is not safe to access the FlexTree, Forest and AnchorSet again until the corresponding {@link CheckoutEvents.afterBatch} fires.
+	 * Every call to `beforeBatch` will be followed by a corresponding call to `afterBatch` (before any more calls to `beforeBatch`).
+	 * @param change - The {@link SharedTreeBranchChange | change} to the checkout's active branch that is about to be processed.
 	 * May be empty if the changes were produced by e.g. a rebase or the initial loading of the document.
 	 */
-	beforeBatch(appendedCommits: readonly GraphCommit<SharedTreeChange>[]): void;
+	beforeBatch(change: SharedTreeBranchChange<SharedTreeChange>): void;
 
 	/**
 	 * A batch of changes has finished processing and the view is in a consistent state.
 	 * @remarks It is once again safe to access the FlexTree, Forest and AnchorSet.
-	 * @param appendedCommits - Any commits that were appended to the checkout's branch in order to produce the changes in this batch.
-	 * May be empty if the changes were produced by e.g. a rebase or the initial loading of the document.
+	 *
+	 * While every call to `beforeBatch` will be followed by a corresponding call to `afterBatch`, the converse is not true.
+	 * This event may be fired without a preceding `beforeBatch` event if the checkout's branch and forest were directly updated via e.g. a summary load rather than via normal application of changes.
 	 * @remarks
 	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
 	 */
-	afterBatch(appendedCommits: readonly GraphCommit<SharedTreeChange>[]): void;
+	afterBatch(): void;
 
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
@@ -269,9 +268,6 @@ export function createTreeCheckout(
 		schema?: TreeStoredSchemaRepository;
 		forest?: IEditableForest;
 		fieldBatchCodec?: FieldBatchCodec;
-		events?: Listenable<CheckoutEvents> &
-			IEmitter<CheckoutEvents> &
-			HasListeners<CheckoutEvents>;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		logger?: ITelemetryLoggerExt;
@@ -302,7 +298,6 @@ export function createTreeCheckout(
 			changeFamily,
 			() => idCompressor.generateCompressedId(),
 		);
-	const events = args?.events ?? createEmitter();
 
 	return new TreeCheckout(
 		branch,
@@ -310,7 +305,6 @@ export function createTreeCheckout(
 		changeFamily,
 		schema,
 		forest,
-		events,
 		mintRevisionTag,
 		revisionTagCodec,
 		idCompressor,
@@ -349,6 +343,8 @@ export interface RevertMetrics {
 export class TreeCheckout implements ITreeCheckoutFork {
 	public disposed = false;
 
+	private readonly editLock: EditLock;
+
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
@@ -372,6 +368,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 */
 	public static readonly revertTelemetryEventName = "RevertRevertible";
 
+	readonly #events = createEmitter<CheckoutEvents>();
+	public events: Listenable<CheckoutEvents> = this.#events;
+
 	public constructor(
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		/** True if and only if this checkout is for a forked branch and not the "main branch" of the tree. */
@@ -379,9 +378,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
-		public readonly events: Listenable<CheckoutEvents> &
-			IEmitter<CheckoutEvents> &
-			HasListeners<CheckoutEvents>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
@@ -418,8 +414,18 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				// When each transaction is started, take a snapshot of the current state of removed roots
 				const removedRootsSnapshot = this.removedRoots.clone();
 				return (result) => {
-					if (result === TransactionResult.Abort) {
-						this.removedRoots = removedRootsSnapshot;
+					switch (result) {
+						case TransactionResult.Abort:
+							this.removedRoots = removedRootsSnapshot;
+							break;
+						case TransactionResult.Commit:
+							if (!this.transaction.isInProgress()) {
+								// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
+								this.validateCommit(this.#transaction.branch.getHead());
+							}
+							break;
+						default:
+							unreachableCase(result);
 					}
 
 					forks.forEach((fork) => fork.dispose());
@@ -428,6 +434,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				};
 			},
 		);
+
+		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 
 		branch.events.on("afterChange", (event) => {
 			// The following logic allows revertibles to be generated for the change.
@@ -467,36 +475,27 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							};
 
 					let withinEventContext = true;
-					this.events.emit("changed", { isLocal: true, kind }, getRevertible);
+					this.#events.emit("changed", { isLocal: true, kind }, getRevertible);
 					withinEventContext = false;
 				}
 			} else if (this.isRemoteChangeEvent(event)) {
 				// TODO: figure out how to plumb through commit kind info for remote changes
-				this.events.emit("changed", { isLocal: false, kind: CommitKind.Default });
+				this.#events.emit("changed", { isLocal: false, kind: CommitKind.Default });
 			}
 		});
 
-		this.#transaction.activeBranchEvents.on("beforeChange", this.onBeforeChange);
+		this.#transaction.activeBranchEvents.on("afterChange", this.onAfterChange);
 		this.#transaction.activeBranchEvents.on("ancestryTrimmed", this.onAncestryTrimmed);
 	}
 
-	private readonly onBeforeChange = (
-		event: SharedTreeBranchChange<SharedTreeChange>,
-	): void => {
-		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
-		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
-		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
-		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
+	private readonly onAfterChange = (event: SharedTreeBranchChange<SharedTreeChange>): void => {
+		this.editLock.lock();
+		this.#events.emit("beforeBatch", event);
 		if (event.change !== undefined) {
-			this.events.emit("beforeBatch", event.type === "append" ? event.newCommits : []);
-
-			let revision: RevisionTag | undefined;
-			if (event.type === "rebase") {
-				assert(hasSome(event.newCommits), "Expected new commit for non no-op change event");
-				revision = getLast(event.newCommits).revision;
-			} else {
-				revision = event.change.revision;
-			}
+			const revision =
+				event.type === "rebase"
+					? this.#transaction.activeBranch.getHead().revision
+					: event.change.revision;
 
 			// Conflicts due to schema will be empty and thus are not applied.
 			for (const change of event.change.change.changes) {
@@ -526,7 +525,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					fail("Unknown Shared Tree change type.");
 				}
 			}
-			this.events.emit("afterBatch", event.type === "append" ? event.newCommits : []);
+		}
+		this.#events.emit("afterBatch");
+		this.editLock.unlock();
+		if (event.type === "append") {
+			event.newCommits.forEach((commit) => this.validateCommit(commit));
 		}
 	};
 
@@ -669,7 +672,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	public get editor(): ISharedTreeEditor {
 		this.checkNotDisposed();
-		return this.#transaction.activeBranchEditor;
+		return this.editLock.editor;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -696,6 +699,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
+		this.editLock.checkUnlocked("Branching");
 		const anchors = new AnchorSet();
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
@@ -706,7 +710,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.changeFamily,
 			storedSchema,
 			forest,
-			createEmitter(),
 			this.mintRevisionTag,
 			this.revisionTagCodec,
 			this.idCompressor,
@@ -714,7 +717,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.logger,
 			this.breaker,
 		);
-		this.events.emit("fork", checkout);
+		this.#events.emit("fork", checkout);
 		return checkout;
 	}
 
@@ -725,6 +728,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		checkout.checkNotDisposed(
 			"The source of the branch rebase has been disposed and cannot be rebased.",
 		);
+		this.editLock.checkUnlocked("Rebasing");
 		assert(
 			!checkout.transaction.isInProgress(),
 			0x9af /* A view cannot be rebased while it has a pending transaction */,
@@ -753,6 +757,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		checkout.checkNotDisposed(
 			"The source of the branch merge has been disposed and cannot be merged.",
 		);
+		this.editLock.checkUnlocked("Merging");
 		assert(
 			!this.transaction.isInProgress(),
 			0x9b0 /* Views cannot be merged into a view while it has a pending transaction */,
@@ -773,6 +778,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public dispose(): void {
+		this.editLock.checkUnlocked("Disposing a view");
 		this[disposeSymbol]();
 	}
 
@@ -787,7 +793,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		for (const view of this.views) {
 			view.dispose();
 		}
-		this.events.emit("dispose");
+		this.#events.emit("dispose");
 	}
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
@@ -808,11 +814,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	/**
-	 * This sets the tip revision as the latest relevant revision for any removed roots that are loaded from a summary.
-	 * This needs to be called right after loading {@link this.removedRoots} from a summary to allow loaded data to be garbage collected.
+	 * This must be called on the root/main checkout after loading from a summary.
+	 * @remarks This pattern is necessary because the EditManager skips the normal process of applying commits to branches when loading a summary.
+	 * Instead, it simply {@link SharedTreeBranch#setHead | mutates} the branches directly which does not propagate the typical events throughout the rest of the system.
 	 */
-	public setTipRevisionForLoadedData(revision: RevisionTag): void {
-		this.removedRoots.setRevisionsForLoadedData(revision);
+	public load(): void {
+		// Set the tip revision as the latest relevant revision for any removed roots that are loaded from a summary - this allows them to be garbage collected later.
+		// When a load happens, the head of the trunk and the head of the local/main branch must be the same (this is enforced by SharedTree).
+		this.removedRoots.setRevisionsForLoadedData(this.#transaction.branch.getHead().revision);
+		// The content of the checkout (e.g. the forest) has (maybe) changed, so fire an afterBatch event.
+		this.#events.emit("afterBatch");
 	}
 
 	private purgeRevertibles(): void {
@@ -911,5 +922,147 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			// No other rebases are allowed on the main branch, so we can use this to detect remote changes.
 			event.type === "rebase"
 		);
+	}
+
+	// #region Commit Validation
+
+	/** Used to maintain the contract of {@link onCommitValid}(). */
+	#validatedCommits = new WeakMap<
+		GraphCommit<SharedTreeChange>,
+		((commit: GraphCommit<SharedTreeChange>) => void)[] | true
+	>();
+
+	/**
+	 * Registers a function to be called when the given commit is validated.
+	 * @remarks A commit is validated by the checkout after it has been applied to the checkout's state (e.g. it has an effect on the forest).
+	 * If the commit applies successfully (i.e. it does not raise any unexpected errors), the commit is considered valid and the registered function is called.
+	 * If the commit does not apply successfully (because it causes an unexpected error), the function is not called (and the checkout will left in an error state).
+	 *
+	 * If the commit has already been validated when this function is called, the function is called immediately and this function returns `true`.
+	 * Otherwise, the function is registered to be called later and this function returns `false`.
+	 */
+	public onCommitValid(
+		commit: GraphCommit<SharedTreeChange>,
+		fn: (commit: GraphCommit<SharedTreeChange>) => void,
+	): boolean {
+		const validated = getOrCreate(this.#validatedCommits, commit, () => []);
+		if (validated === true) {
+			fn(commit);
+			return true;
+		}
+
+		validated.push(fn);
+		return false;
+	}
+
+	/** Mark the given commit as "validated" according to the contract of {@link onCommitValid}(). */
+	private validateCommit(commit: GraphCommit<SharedTreeChange>): void {
+		const validated = getOrCreate(this.#validatedCommits, commit, () => []);
+		if (validated !== true) {
+			validated.forEach((fn) => fn(commit));
+			this.#validatedCommits.set(commit, true);
+		}
+	}
+
+	// #endregion Commit Validation
+}
+
+/**
+ * A helper class that assists {@link TreeCheckout} in preventing functionality from being used while the tree is in the middle of being edited.
+ */
+class EditLock {
+	/**
+	 * Edits the tree by calling the methods of the editor passed into the {@link EditLock} constructor.
+	 * @remarks Edits will throw an error if the lock is currently locked.
+	 */
+	public editor: ISharedTreeEditor;
+	private locked = false;
+
+	/**
+	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.
+	 * Use {@link EditLock.editor} in place of the original editor to ensure that changes are monitored.
+	 */
+	public constructor(editor: ISharedTreeEditor) {
+		const checkLock = (): void => this.checkUnlocked("Editing the tree");
+		this.editor = {
+			get schema() {
+				return editor.schema;
+			},
+			valueField(...fieldArgs) {
+				const valueField = editor.valueField(...fieldArgs);
+				return {
+					set(...editArgs) {
+						checkLock();
+						valueField.set(...editArgs);
+					},
+				};
+			},
+			optionalField(...fieldArgs) {
+				const optionalField = editor.optionalField(...fieldArgs);
+				return {
+					set(...editArgs) {
+						checkLock();
+						optionalField.set(...editArgs);
+					},
+				};
+			},
+			sequenceField(...fieldArgs) {
+				const sequenceField = editor.sequenceField(...fieldArgs);
+				return {
+					insert(...editArgs) {
+						checkLock();
+						sequenceField.insert(...editArgs);
+					},
+					remove(...editArgs) {
+						checkLock();
+						sequenceField.remove(...editArgs);
+					},
+				};
+			},
+			move(...moveArgs) {
+				checkLock();
+				editor.move(...moveArgs);
+			},
+			addNodeExistsConstraint(path) {
+				editor.addNodeExistsConstraint(path);
+			},
+		};
+	}
+
+	/**
+	 * Prevent further changes from being made to {@link EditLock.editor} until {@link EditLock.unlock} is called.
+	 * @remarks May only be called when the lock is not already locked.
+	 */
+	public lock(): void {
+		if (this.locked) {
+			debugger;
+		}
+		assert(!this.locked, "Checkout has already been locked");
+		this.locked = true;
+	}
+
+	/**
+	 * Throws an error if the lock is currently locked.
+	 * @param action - The current action being performed by the user.
+	 * This must start with a capital letter, as it shows up as the first part of the error message and we want it to look nice.
+	 */
+	public checkUnlocked<T extends string>(action: T extends Capitalize<T> ? T : never): void {
+		if (this.locked) {
+			// These type assertions ensure that the event name strings used here match the actual event names
+			const nodeChanged: keyof TreeChangeEvents = "nodeChanged";
+			const treeChanged: keyof TreeChangeEvents = "treeChanged";
+			throw new UsageError(
+				`${action} is forbidden during a ${nodeChanged} or ${treeChanged} event`,
+			);
+		}
+	}
+
+	/**
+	 * Allow changes to be made to {@link EditLock.editor} again.
+	 * @remarks May only be called when the lock is currently locked.
+	 */
+	public unlock(): void {
+		assert(this.locked, "Checkout has not been locked");
+		this.locked = false;
 	}
 }

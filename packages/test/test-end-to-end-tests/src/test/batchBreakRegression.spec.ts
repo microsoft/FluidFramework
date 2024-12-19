@@ -12,7 +12,7 @@ import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { DisconnectReason } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
-	IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
@@ -48,7 +48,7 @@ async function runAndValidateBatch(
 	provider: ITestObjectProvider,
 	proxyDsf: IDocumentServiceFactory,
 	timeout: number,
-	runtimeOptions?: IContainerRuntimeOptions,
+	runtimeOptions?: IContainerRuntimeOptionsInternal,
 ) {
 	let containerUrl: string | undefined;
 	{

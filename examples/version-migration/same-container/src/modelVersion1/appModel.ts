@@ -6,12 +6,9 @@
 import type { ISameContainerMigrationTool } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	DisconnectReason,
-	type IContainer,
-} from "@fluidframework/container-definitions/internal";
+import { DisconnectReason, type IContainer } from "@fluidframework/container-definitions/legacy";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";
 import type {

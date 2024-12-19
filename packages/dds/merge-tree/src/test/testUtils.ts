@@ -15,7 +15,7 @@ import {
 	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegment, Marker } from "../mergeTreeNodes.js";
+import { MergeBlock, ISegmentLeaf, Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import {
 	PartialSequenceLengths,
@@ -110,7 +110,7 @@ export function insertText({
 interface InsertSegmentsArgs {
 	mergeTree: MergeTree;
 	pos: number;
-	segments: ISegment[];
+	segments: ISegmentLeaf[];
 	refSeq: number;
 	clientId: number;
 	seq: number;
@@ -234,7 +234,7 @@ function getPartialLengths(
 
 	let actualLen = 0;
 
-	const isInserted = (segment: ISegment): boolean =>
+	const isInserted = (segment: ISegmentLeaf): boolean =>
 		segment.seq === undefined ||
 		(segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
 		(localSeq !== undefined &&
@@ -242,7 +242,7 @@ function getPartialLengths(
 			segment.localSeq !== undefined &&
 			segment.localSeq <= localSeq);
 
-	const isRemoved = (segment: ISegment): boolean =>
+	const isRemoved = (segment: ISegmentLeaf): boolean =>
 		segment.removedSeq !== undefined &&
 		((localSeq !== undefined &&
 			segment.removedSeq === UnassignedSequenceNumber &&
@@ -250,7 +250,7 @@ function getPartialLengths(
 			segment.localRemovedSeq <= localSeq) ||
 			(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq <= seq));
 
-	const isMoved = (segment: ISegment): boolean =>
+	const isMoved = (segment: ISegmentLeaf): boolean =>
 		segment.movedSeq !== undefined &&
 		((localSeq !== undefined &&
 			segment.movedSeq === UnassignedSequenceNumber &&

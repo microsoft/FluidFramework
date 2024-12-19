@@ -12,7 +12,7 @@ import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { ISegment, SegmentGroup, toMoveInfo, toRemovalInfo } from "../mergeTreeNodes.js";
+import { ISegmentLeaf, SegmentGroup, toMoveInfo, toRemovalInfo } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
@@ -72,7 +72,6 @@ export const annotateRange: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	// eslint-disable-next-line unicorn/prefer-ternary
 	if (random.bool()) {
 		return client.annotateRangeLocal(opStart, opEnd, {
 			[random.integer(1, 5)]: client.longClientId,
@@ -96,7 +95,7 @@ export const insertAtRefPos: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	const segs: ISegment[] = [];
+	const segs: ISegmentLeaf[] = [];
 	// gather all the segments at the pos, including removed segments
 	walkAllChildSegments(client.mergeTree.root, (seg) => {
 		const pos = client.getPosition(seg);

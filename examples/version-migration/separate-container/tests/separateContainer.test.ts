@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrator } from "@fluid-example/migration-tools/internal";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { ISequencedClient } from "@fluidframework/driver-definitions/internal";
+import type { IMigrator } from "@fluid-example/migration-tools/alpha";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type { ISequencedClient } from "@fluidframework/driver-definitions/legacy";
 
 import { globals } from "../jest.config.cjs";
 
@@ -129,10 +129,8 @@ describe("separate-container migration", () => {
 			await page.evaluate(async () => {
 				// This is reaching a bit, but we just need to watch it for test purposes.
 				const leftQuorum = (
-					(window["migrators"] as IMigrator[])[0].currentModel as unknown as {
-						container: IContainer;
-					}
-				).container.getQuorum();
+					(window["containers"] as IContainer[])[0] as unknown as IContainer
+				).getQuorum();
 				const alreadyHasSummarizer = [...leftQuorum.getMembers().values()].some(
 					(sequencedClient) => sequencedClient.client.details.type === "summarizer",
 				);
@@ -159,14 +157,16 @@ describe("separate-container migration", () => {
 
 			// Get a promise that will resolve when both sides have finished migration
 			const migrationP = page.evaluate(async () => {
-				const migrationPs = (window["migrators"] as IMigrator[]).map(async (migrator) => {
+				for (const container of window["containers"] as IContainer[]) {
 					// Since we expect this to run before the button click below, nothing should have migrated.
 					// However, we are getting flaky errors and want to rule out the possibility that the puppeteer interaction
 					// is somehow permitting these to occur out of order.  Throwing here will cause the returned migrationP
-					// promise to immediately reject (since Promise.all rejects as soon as the first rejection occurs).
-					if (migrator.currentModel.version !== "one") {
+					// promise to immediately reject.
+					if (container.getSpecifiedCodeDetails()?.package !== "one") {
 						throw new Error("Unexpected early migration!");
 					}
+				}
+				const migrationPs = (window["migrators"] as IMigrator[]).map(async (migrator) => {
 					return new Promise<void>((resolve) => {
 						migrator.events.once("migrated", resolve);
 					});

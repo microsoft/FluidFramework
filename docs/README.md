@@ -168,6 +168,64 @@ Rationale:
 
 For more details about leveraging Mermaid diagrams in Docusaurus, see [here](https://docusaurus.io/docs/markdown-features/diagrams).
 
+### Documents vs Pages
+
+_Documents_ and _Pages_ are distinct concepts in Docusaurus.
+For an overview of each, see: [Documents](https://docusaurus.io/docs/docs-introduction) and [Pages](https://docusaurus.io/docs/creating-pages).
+
+Some primary distinctions:
+
+1. _Documents_ live under `docs` and `versioned_docs`. _Pages_ live under `src/pages`.
+1. _Documents_ are versioned. _Pages_ are not.
+
+### The Sidebar
+
+For an overview of how to configure sidebars in Docusaurus, see [here](https://docusaurus.io/docs/sidebar).
+
+The site's "current" version sidebar is configured via `sidebars.ts`.
+
+Sidebars for other versions are configured via `versioned_sidebars/version-<version-id>.json`.
+
+-   Versioned sidebars do not yet support JS/TS file formats.
+    See <https://github.com/facebook/docusaurus/issues/10407>.
+
+Note that sidebars are configured for documents under `docs` and `versioned_docs`; they do not apply to unversioned _Pages_.
+
+### Documentation Versioning
+
+For an overview of Docusaurus's versioning functionality, see [here](https://docusaurus.io/docs/versioning).
+
+We currently offer versioned documentation for each of our supported major versions.
+This documentation is intended to be kept up-to-date with the most recent release of each major version series.
+
+For now, this means we publish documentation (including generated API documentation) for versions `1.x` and `2.x`.
+
+-   We also support generating API documentation for the local repo code in local development only.
+    See [Local API docs build](#local-api-docs-build), but these are not intended to be published.
+
+#### Why Only Major Versions?
+
+We aim to keep the number of concurrently maintained site versions minimized, for a number of reasons:
+
+1. Developer overhead - the more versions of the docs we offer, the more work we take on to keep documentation for supported versions up to date.
+2. User overhead - the more versions we offer, the more users have to think about when they engage with our website.
+3. Build performance - Docusaurus's build isn't fast. The more versions we add to our suite, the longer our build times become.
+
+#### Updating the Site Version
+
+These steps are based on Docusaurus's tutorial [here](https://docusaurus.io/docs/versioning#tutorials).
+
+Note: generating the API documentation for the new "current" version will fail if the release branch for that version has not yet been created.
+
+1. Run `npx --no-install docusaurus docs:version v<current-major-version-number>` from the root of this directory.
+   E.g., `... docusaurus docs:version v2` when prepping for `v3` documentation.
+    - This will copy the contents of `docs` into `versioned_docs` under the specified version ID.
+    - This will also generate a sidebar configuration for the copied version under `versioned_sidebars`.
+1. Update `config/docs-versions.mjs` to update the version ID for the "current" version, and add the newly frozen version to the `otherVersions` list.
+   This will automatically update aspects of the site, including:
+    1. Which versions of the API documentation are generated during the build
+    1. The version selection drop-down in the site header
+
 ### Best practices
 
 #### Markdown
