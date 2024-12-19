@@ -13,11 +13,12 @@ import { LocalReferenceCollection, LocalReferencePosition } from "./localReferen
 import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import { toRemovalInfo, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { type ISegmentLeaf } from "./mergeTreeNodes.js";
 import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
 import { DetachedReferencePosition } from "./referencePositions.js";
+import { toRemovalInfo } from "./segmentInfos.js";
 
 /**
  * @legacy

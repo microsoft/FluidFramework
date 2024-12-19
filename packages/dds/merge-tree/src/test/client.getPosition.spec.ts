@@ -7,7 +7,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ISegmentLeaf } from "../mergeTreeNodes.js";
+import { segmentIsRemoved, type ISegmentLeaf } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
@@ -38,7 +38,7 @@ describe("client.getPosition", () => {
 
 	it("Deleted Segment", () => {
 		client.removeRangeLocal(segPos, segPos + 1);
-		assert.notStrictEqual(segment.removedSeq, undefined);
+		assert.strictEqual(segmentIsRemoved(segment), true);
 		const pos = client.getPosition(segment);
 		assert.strictEqual(pos, segPos);
 	});
@@ -57,7 +57,7 @@ describe("client.getPosition", () => {
 				),
 			);
 		}
-		assert.notStrictEqual(segment.removedSeq, undefined);
+		assert.strictEqual(segmentIsRemoved(segment), true);
 
 		const pos = client.getPosition(segment);
 		assert.strictEqual(pos, -1);
