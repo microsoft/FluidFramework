@@ -71,7 +71,7 @@ await MarkdownRenderer.renderApiModel({
 
 #### Separate input "options" types and system "configuration" types
 
-This library had an inconsistent mix of `Partial` and `Required` types to represent partial user input parameters and "complete" configurations needed by the system to function.
+This library has an inconsistent mix of `Partial` and `Required` types to represent partial user input parameters and "complete" configurations needed by the system to function.
 
 This version of the library attempts to align its APIs with the following conventions:
 
