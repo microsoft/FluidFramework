@@ -41,6 +41,7 @@ import { apiItemToSections } from "../TransformApiItem.js";
 import { transformApiModel } from "../TransformApiModel.js";
 import {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "../configuration/index.js";
 import { betaWarningSpan, wrapInSection } from "../helpers/index.js";
@@ -48,7 +49,7 @@ import { betaWarningSpan, wrapInSection } from "../helpers/index.js";
 /**
  * Sample "default" configuration.
  */
-const defaultPartialConfig: Omit<ApiItemTransformationConfiguration, "apiModel"> = {
+const defaultPartialConfig: Omit<ApiItemTransformationOptions, "apiModel"> = {
 	uriRoot: ".",
 };
 
@@ -114,9 +115,9 @@ function findApiMember(
  * Creates a config for testing.
  */
 function createConfig(
-	partialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">,
+	partialConfig: Omit<ApiItemTransformationOptions, "apiModel">,
 	apiModel: ApiModel,
-): Required<ApiItemTransformationConfiguration> {
+): ApiItemTransformationConfiguration {
 	return getApiItemTransformationConfigurationWithDefaults({
 		...partialConfig,
 		apiModel,

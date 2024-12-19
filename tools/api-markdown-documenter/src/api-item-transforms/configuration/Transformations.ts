@@ -57,9 +57,11 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
  *
  * @remarks For any transformation not explicitly configured, a default will be used.
  *
+ * @privateRemarks TODO: re-express property names in terms of `ApiItemKind` for consistency.
+ *
  * @public
  */
-export interface ApiItemTransformationOptions {
+export interface ApiItemTransformations {
 	/**
 	 * Generates the default layout used by all default API item transformations.
 	 *
@@ -169,7 +171,7 @@ export interface ApiItemTransformationOptions {
 /**
  * The default {@link ApiItemTransformationConfiguration}.
  */
-const defaultApiItemTransformationOptions: Required<ApiItemTransformationOptions> = {
+const defaultApiItemTransformationOptions: Required<ApiItemTransformations> = {
 	transformApiCallSignature: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	transformApiClass: DefaultTransformationImplementations.transformApiClass,
 	transformApiConstructor: DefaultTransformationImplementations.transformApiFunctionLike,
@@ -190,12 +192,12 @@ const defaultApiItemTransformationOptions: Required<ApiItemTransformationOptions
 };
 
 /**
- * Gets a complete {@link ApiItemTransformationOptions} using the provided partial configuration, and filling
+ * Gets a complete {@link ApiItemTransformations} using the provided partial configuration, and filling
  * in the remainder with the documented defaults.
  */
-export function getApiItemTransformationOptionsWithDefaults(
-	inputOptions: ApiItemTransformationOptions,
-): Required<ApiItemTransformationOptions> {
+export function getApiItemTransformationsWithDefaults(
+	inputOptions: ApiItemTransformations,
+): Required<ApiItemTransformations> {
 	return {
 		...defaultApiItemTransformationOptions,
 		...inputOptions,

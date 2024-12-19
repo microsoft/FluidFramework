@@ -9,23 +9,22 @@ import { defaultConsoleLogger } from "../../Logging.js";
 import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
 
 import {
+	type DocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
-	getDocumentationSuiteOptionsWithDefaults,
+	getDocumentationSuiteConfigurationWithDefaults,
 } from "./DocumentationSuiteOptions.js";
+import { getHierarchyOptionsWithDefaults } from "./Hierarchy.js";
 import {
-	type ApiItemTransformationOptions,
-	getApiItemTransformationOptionsWithDefaults,
-} from "./TransformationOptions.js";
+	type ApiItemTransformations,
+	getApiItemTransformationsWithDefaults,
+} from "./Transformations.js";
 
 /**
- * API Item transformation configuration.
+ * API Item transformation configuration base.
  *
  * @public
  */
-export interface ApiItemTransformationConfiguration
-	extends ApiItemTransformationOptions,
-		DocumentationSuiteOptions,
-		LoggingConfiguration {
+export interface ApiItemTransformationConfigurationBase {
 	/**
 	 * API Model for which the documentation is being generated.
 	 * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
@@ -45,22 +44,46 @@ export interface ApiItemTransformationConfiguration
 }
 
 /**
+ * Partial API Item transformation options.
+ *
+ * @public
+ */
+export interface ApiItemTransformationOptions
+	extends ApiItemTransformationConfigurationBase,
+		ApiItemTransformations,
+		DocumentationSuiteOptions,
+		LoggingConfiguration {}
+
+/**
+ * Complete API Item transformation configuration.
+ *
+ * @public
+ */
+export interface ApiItemTransformationConfiguration
+	extends ApiItemTransformationConfigurationBase,
+		Required<ApiItemTransformations>,
+		DocumentationSuiteConfiguration,
+		Required<LoggingConfiguration> {}
+
+/**
  * Gets a complete {@link ApiItemTransformationConfiguration} using the provided partial configuration, and filling
  * in the remainder with the documented defaults.
  *
  * @public
  */
 export function getApiItemTransformationConfigurationWithDefaults(
-	inputOptions: ApiItemTransformationConfiguration,
-): Required<ApiItemTransformationConfiguration> {
+	inputOptions: ApiItemTransformationOptions,
+): ApiItemTransformationConfiguration {
 	const logger = inputOptions.logger ?? defaultConsoleLogger;
-	const documentationSuiteOptions = getDocumentationSuiteOptionsWithDefaults(inputOptions);
-	const transformationOptions = getApiItemTransformationOptionsWithDefaults(inputOptions);
+	const hierarchy = getHierarchyOptionsWithDefaults(inputOptions?.hierarchy);
+	const documentationSuiteOptions = getDocumentationSuiteConfigurationWithDefaults(inputOptions);
+	const transformationOptions = getApiItemTransformationsWithDefaults(inputOptions);
 	return {
 		...documentationSuiteOptions,
 		...transformationOptions,
 		apiModel: inputOptions.apiModel,
 		uriRoot: inputOptions.uriRoot,
+		hierarchy,
 		logger,
 	};
 }
