@@ -85,7 +85,7 @@ export class RestGitService {
 			defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
 		}
 		if (this.simplifiedCustomData) {
-			defaultHeaders[Constants.simplifiedCustomData] = this.simplifiedCustomData;
+			defaultHeaders[Constants.SimplifiedCustomData] = this.simplifiedCustomData;
 		}
 
 		// We set the flag only for ephemeral containers
