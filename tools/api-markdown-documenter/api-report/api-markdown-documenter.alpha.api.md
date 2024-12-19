@@ -48,13 +48,21 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public
-export interface ApiItemTransformationConfiguration extends ApiItemTransformationOptions, DocumentationSuiteOptions, LoggingConfiguration {
+export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, Required<ApiItemTransformations>, DocumentationSuiteConfiguration, Required<LoggingConfiguration> {
+}
+
+// @public
+export interface ApiItemTransformationConfigurationBase {
     readonly apiModel: ApiModel;
     readonly uriRoot: string;
 }
 
 // @public
-export interface ApiItemTransformationOptions {
+export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, ApiItemTransformations, DocumentationSuiteOptions, LoggingConfiguration {
+}
+
+// @public
+export interface ApiItemTransformations {
     readonly createDefaultLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
     readonly transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
     readonly transformApiClass?: TransformApiItemWithChildren<ApiClass>;
@@ -75,12 +83,13 @@ export interface ApiItemTransformationOptions {
 
 declare namespace ApiItemUtilities {
     export {
-        doesItemRequireOwnDocument,
+        doesItemKindRequireOwnDocument,
         filterItems,
         getHeadingForApiItem,
         getLinkForApiItem,
         shouldItemBeIncluded,
         ancestryHasModifierTag,
+        getApiItemKind,
         getCustomBlockComments,
         getDefaultValueBlock,
         getDeprecatedBlock,
@@ -104,7 +113,7 @@ declare namespace ApiItemUtilities {
 export { ApiItemUtilities }
 
 // @public
-export type ApiMemberKind = Omit<ApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package>;
+export type ApiMemberKind = Exclude<ApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package>;
 
 export { ApiModel }
 
@@ -144,7 +153,7 @@ export class CodeSpanNode extends DocumentationParentNodeBase<SingleLineDocument
 }
 
 // @public
-function createBreadcrumbParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode;
+function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode;
 
 // @public
 function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
@@ -181,14 +190,18 @@ export const defaultConsoleLogger: Logger;
 
 // @public
 export namespace DefaultDocumentationSuiteOptions {
-    const defaultDocumentBoundaries: ApiMemberKind[];
-    const defaultHierarchyBoundaries: ApiMemberKind[];
     export function defaultGetAlertsForItem(apiItem: ApiItem): string[];
-    export function defaultGetFileNameForItem(apiItem: ApiItem): string;
-    export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
     export function defaultGetUriBaseOverrideForItem(): string | undefined;
     export function defaultSkipPackage(): boolean;
+}
+
+// @public
+export type DocumentationHierarchyConfiguration = SectionHierarchyConfiguration | DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
+
+// @public
+export interface DocumentationHierarchyConfigurationBase<THierarchyKind extends HierarchyKind> {
+    readonly kind: THierarchyKind;
 }
 
 // @public
@@ -274,22 +287,30 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 }
 
 // @public
+export type DocumentationSuiteConfiguration = Omit<Required<DocumentationSuiteOptions>, "hierarchy"> & {
+    readonly hierarchy: Required<HierarchyConfiguration>;
+};
+
+// @public
 export interface DocumentationSuiteOptions {
-    readonly documentBoundaries?: DocumentBoundaries;
     readonly getAlertsForItem?: (apiItem: ApiItem) => string[];
-    readonly getFileNameForItem?: (apiItem: ApiItem) => string;
-    readonly getHeadingTextForItem?: (apiItem: ApiItem) => string;
     readonly getLinkTextForItem?: (apiItem: ApiItem) => string;
     readonly getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
-    readonly hierarchyBoundaries?: HierarchyBoundaries;
+    readonly hierarchy?: Partial<HierarchyConfiguration>;
     readonly includeBreadcrumb?: boolean;
     readonly includeTopLevelDocumentHeading?: boolean;
-    readonly minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
+    readonly minimumReleaseLevel?: Exclude<ReleaseTag, ReleaseTag.None>;
     readonly skipPackage?: (apiPackage: ApiPackage) => boolean;
 }
 
 // @public
-export type DocumentBoundaries = ApiMemberKind[];
+export interface DocumentHierarchyConfiguration extends DocumentationHierarchyConfigurationBase<HierarchyKind.Document>, DocumentHierarchyProperties {
+}
+
+// @public
+export interface DocumentHierarchyProperties extends SectionHierarchyProperties {
+    readonly documentName?: string | undefined | ((apiItem: ApiItem) => string | undefined);
+}
 
 // @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
@@ -329,7 +350,7 @@ export namespace DocumentWriter {
 }
 
 // @public
-function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
+function doesItemKindRequireOwnDocument(apiItemKind: ValidApiItemKind, hierarchyConfig: Required<HierarchyConfiguration>): boolean;
 
 // @public
 export class FencedCodeBlockNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -343,14 +364,33 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase implements 
 // @public
 export interface FileSystemConfiguration {
     readonly newlineKind?: NewlineKind;
-    outputDirectoryPath: string;
+    readonly outputDirectoryPath: string;
 }
 
 // @public
 function filterItems(apiItems: readonly ApiItem[], config: Required<ApiItemTransformationConfiguration>): ApiItem[];
 
 // @public
-export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
+export enum FolderDocumentPlacement {
+    Inside = "inside",
+    Outside = "outside"
+}
+
+// @public
+export interface FolderHierarchyConfiguration extends DocumentationHierarchyConfigurationBase<HierarchyKind.Folder>, FolderHierarchyProperties {
+}
+
+// @public
+export interface FolderHierarchyProperties extends DocumentHierarchyProperties {
+    readonly documentPlacement: FolderDocumentPlacement | ((apiItem: ApiItem) => FolderDocumentPlacement);
+    readonly folderName: string | undefined | ((apiItem: ApiItem) => string | undefined);
+}
+
+// @public
+function getApiItemKind(apiItem: ApiItem): ValidApiItemKind;
+
+// @public
+export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationOptions): ApiItemTransformationConfiguration;
 
 // @public
 function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, readonly DocSection[]>;
@@ -365,10 +405,10 @@ function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
-function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
+function getHeadingForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingLevel?: number): Heading;
 
 // @public
-function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, textOverride?: string): Link;
+function getLinkForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, textOverride?: string): Link;
 
 // @public
 function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
@@ -418,7 +458,20 @@ export class HeadingNode extends DocumentationParentNodeBase<SingleLineDocumenta
 }
 
 // @public
-export type HierarchyBoundaries = ApiMemberKind[];
+export type HierarchyConfiguration = {
+    [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]: DocumentationHierarchyConfiguration;
+} & {
+    [ApiItemKind.Model]: DocumentHierarchyConfiguration;
+    [ApiItemKind.Package]: DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
+    [ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
+};
+
+// @public
+export enum HierarchyKind {
+    Document = "document",
+    Folder = "folder",
+    Section = "section"
+}
 
 // @public
 export class HorizontalRuleNode implements MultiLineDocumentationNode {
@@ -619,15 +672,15 @@ export { ReleaseTag }
 // @alpha
 function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions): Promise<void>;
 
-// @public
-interface RenderApiModelAsHtmlOptions extends ApiItemTransformationConfiguration, RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
+// @alpha
+interface RenderApiModelAsHtmlOptions extends ApiItemTransformationOptions, RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
 // @public
 function renderApiModelAsMarkdown(options: RenderApiModelAsMarkdownOptions): Promise<void>;
 
 // @public
-interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationConfiguration, MarkdownRenderConfiguration, FileSystemConfiguration {
+interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, MarkdownRenderConfiguration, FileSystemConfiguration {
 }
 
 // @public
@@ -641,14 +694,14 @@ export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, 
 }
 
 // @alpha
-function renderDocumentsAsHtml(documents: DocumentNode[], options: RenderDocumentsAsHtmlOptions): Promise<void>;
+function renderDocumentsAsHtml(documents: readonly DocumentNode[], options: RenderDocumentsAsHtmlOptions): Promise<void>;
 
-// @public
+// @alpha
 interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
 // @public
-function renderDocumentsAsMarkdown(documents: DocumentNode[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
+function renderDocumentsAsMarkdown(documents: readonly DocumentNode[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
 
 // @public
 interface RenderDocumentsAsMarkdownOptions extends MarkdownRenderConfiguration, FileSystemConfiguration {
@@ -667,6 +720,15 @@ function renderNode(node: DocumentationNode, writer: DocumentWriter, context: Ma
 
 // @public
 function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
+
+// @public
+export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase<HierarchyKind.Section>, SectionHierarchyProperties {
+}
+
+// @public
+export interface SectionHierarchyProperties {
+    readonly headingText: string | ((apiItem: ApiItem) => string);
+}
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -800,7 +862,7 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: T
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
 
 // @public
-export function transformApiModel(transformConfig: ApiItemTransformationConfiguration): DocumentNode[];
+export function transformApiModel(transformConfig: ApiItemTransformationOptions): DocumentNode[];
 
 // @public
 export function transformTsdocNode(node: DocNode, contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocumentationNode | undefined;
@@ -816,6 +878,9 @@ export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDoc
 
 // @public
 export type UrlTarget = string;
+
+// @public
+export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
 
 // @public
 export const verboseConsoleLogger: Logger;

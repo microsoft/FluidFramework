@@ -43,7 +43,7 @@ import { createChildDetailsSection, createMemberTables } from "../helpers/index.
  *
  * - namespaces
  *
- * Details (for any types not rendered to their own documents - see {@link DocumentationSuiteOptions.documentBoundaries})
+ * Details (for any types not rendered to their own documents - see {@link ApiItemTransformationOptions.hierarchy})
  *
  * - interfaces
  *

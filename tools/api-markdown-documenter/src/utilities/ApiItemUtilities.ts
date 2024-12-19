@@ -39,7 +39,31 @@ import type { Logger } from "../Logging.js";
 
 /**
  * This module contains general `ApiItem`-related types and utilities.
+ * @remarks Note: the utilities here should not require any specific context or configuration.
  */
+
+/**
+ * Represents "valid" API item kinds. I.e., not `None`.
+ *
+ * @public
+ */
+export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
+
+/**
+ * Gets the {@link ValidApiItemKind} for the provided API item. Throws if the item's kind is "None".
+ *
+ * @public
+ */
+export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
+	switch (apiItem.kind) {
+		case ApiItemKind.None: {
+			throw new Error(`Encountered an API item with kind "None": "${apiItem.displayName}".`);
+		}
+		default: {
+			return apiItem.kind as ValidApiItemKind;
+		}
+	}
+}
 
 /**
  * Represents "member" API item kinds.
@@ -57,10 +81,28 @@ import type { Logger } from "../Logging.js";
  *
  * @public
  */
-export type ApiMemberKind = Omit<
+export type ApiMemberKind = Exclude<
 	ApiItemKind,
 	ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package
 >;
+
+/**
+ * Gets the {@link ApiMemberKind} for the provided API item. Throws if the item's kind is not a valid member kind.
+ */
+export function getApiMemberKind(apiItem: ApiItem): ApiMemberKind {
+	switch (apiItem.kind) {
+		case ApiItemKind.EntryPoint:
+		case ApiItemKind.Model:
+		case ApiItemKind.Package: {
+			throw new Error(
+				`Expected API item to be a member kind, but got "${apiItem.kind}": "${apiItem.displayName}".`,
+			);
+		}
+		default: {
+			return getApiItemKind(apiItem) as ApiMemberKind;
+		}
+	}
+}
 
 /**
  * `ApiItem` union type representing function-like API kinds.
@@ -123,6 +165,48 @@ export enum ApiModifier {
 }
 
 /**
+ * Gets the "filtered" parent of the provided API item.
+ *
+ * @remarks This logic specifically skips items of the following kinds:
+ *
+ * - EntryPoint: skipped because any given Package item will have exactly 1 EntryPoint child with current version of
+ * API-Extractor, making this redundant in the hierarchy. We may need to revisit this in the future if/when
+ * API-Extractor adds support for multiple entrypoints.
+ *
+ * @param apiItem - The API item whose filtered parent will be returned.
+ */
+export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
+	const parent = apiItem.parent;
+	if (parent?.kind === ApiItemKind.EntryPoint) {
+		return parent.parent;
+	}
+	return parent;
+}
+
+/**
+ * Converts bad filename characters to underscores.
+ */
+function getSafeFilenameForName(apiItemName: string): string {
+	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
+	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
+
+	// Note: This can introduce naming collisions.
+	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
+	// https://github.com/microsoft/rushstack/issues/1308
+	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
+}
+
+/**
+ * Gets a filename-safe representation of the API item's display name.
+ */
+function getFileSafeNameForApiItem(apiItem: ApiItem): string {
+	return apiItem.kind === ApiItemKind.Package
+		? getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage))
+		: getSafeFilenameForName(apiItem.displayName);
+}
+
+// TODO: rename to be a bit more specific
+/**
  * Adjusts the name of the item as needed.
  * Accounts for method overloads by adding a suffix such as "myMethod_2".
  *
@@ -131,7 +215,7 @@ export enum ApiModifier {
  * @public
  */
 export function getQualifiedApiItemName(apiItem: ApiItem): string {
-	let qualifiedName: string = getSafeFilenameForName(apiItem.displayName);
+	let qualifiedName: string = getFileSafeNameForApiItem(apiItem);
 	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
 		// Subtract one for compatibility with earlier releases of API Documenter.
 		// (This will get revamped when we fix GitHub issue #1308)
@@ -224,10 +308,12 @@ export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
  * @public
  */
 export function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean {
-	return (
-		hasModifierTag(apiItem, tagName) ||
-		(apiItem.parent !== undefined && ancestryHasModifierTag(apiItem.parent, tagName))
-	);
+	if (hasModifierTag(apiItem, tagName)) {
+		return true;
+	}
+
+	const parent = getFilteredParent(apiItem);
+	return parent !== undefined && ancestryHasModifierTag(parent, tagName);
 }
 
 /**
@@ -503,19 +589,6 @@ export function getConciseSignature(apiItem: ApiItem): string {
 		return `${apiItem.displayName}(${apiItem.parameters.map((x) => x.name).join(", ")})`;
 	}
 	return apiItem.displayName;
-}
-
-/**
- * Converts bad filename characters to underscores.
- */
-export function getSafeFilenameForName(apiItemName: string): string {
-	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
-	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
-
-	// Note: This can introduce naming collisions.
-	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
-	// https://github.com/microsoft/rushstack/issues/1308
-	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
 }
 
 /**
