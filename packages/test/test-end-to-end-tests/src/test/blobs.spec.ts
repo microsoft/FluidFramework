@@ -18,6 +18,7 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -244,16 +245,18 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 				this.skip();
 			}
 
+			const runtimeOptions: IContainerRuntimeOptionsInternal = {
+				...testContainerConfig.runtimeOptions,
+				compressionOptions: {
+					minimumBatchSizeInBytes: 1,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				enableGroupedBatching,
+			};
+
 			const container = await provider.makeTestContainer({
 				...testContainerConfig,
-				runtimeOptions: {
-					...testContainerConfig.runtimeOptions,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 1,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					enableGroupedBatching,
-				},
+				runtimeOptions,
 			});
 
 			const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);

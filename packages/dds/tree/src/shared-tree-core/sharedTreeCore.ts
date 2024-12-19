@@ -45,7 +45,7 @@ import {
 	breakingClass,
 } from "../util/index.js";
 
-import { getChangeReplaceType, type SharedTreeBranch } from "./branch.js";
+import type { SharedTreeBranch } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
 import type { SeqNumber } from "./editManagerFormat.js";
@@ -95,13 +95,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 */
 	public get editor(): TEditor {
 		return this.getLocalBranch().editor;
-	}
-
-	/**
-	 * Gets the revision at the head of the trunk.
-	 */
-	protected get trunkHeadRevision(): RevisionTag {
-		return this.editManager.getTrunkHead().revision;
 	}
 
 	/**
@@ -189,14 +182,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
 				this.commitEnricher.processChange(change);
 			}
-		});
-		this.editManager.localBranch.events.on("afterChange", (change) => {
-			if (
-				change.type === "append" ||
-				(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
-			) {
+			if (change.type === "append") {
 				for (const commit of change.newCommits) {
-					this.submitCommit(commit, this.schemaAndPolicy);
+					this.submitCommit(commit, this.schemaAndPolicy, false);
 				}
 			}
 		});
@@ -269,6 +257,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
+		assert(
+			this.editManager.localBranch.getHead() === this.editManager.getTrunkHead(),
+			"All local changes should be applied to the trunk before loading from summary",
+		);
 		const [editManagerSummarizer, ...summarizables] = this.summarizables;
 		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services);
 		const loadSummarizables = summarizables.map(async (s) =>
@@ -316,7 +308,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	protected submitCommit(
 		commit: GraphCommit<TChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
-		isResubmit = false,
+		isResubmit: boolean,
 	): void {
 		assert(
 			this.isAttached() === (this.detachedRevision === undefined),
@@ -380,9 +372,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	/**
-	 * @returns the head commit of the root local branch
-	 */
 	protected getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
 		return this.editManager.localBranch;
 	}

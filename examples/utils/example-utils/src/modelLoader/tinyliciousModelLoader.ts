@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
+import { ICodeDetailsLoader } from "@fluidframework/container-definitions/legacy";
 import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+} from "@fluidframework/driver-definitions/legacy";
+import { createRouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
 import {
-	InsecureTinyliciousTokenProvider,
-	InsecureTinyliciousUrlResolver,
-	createTinyliciousCreateNewRequest,
-} from "@fluidframework/tinylicious-driver/internal";
+	createInsecureTinyliciousTestTokenProvider,
+	createInsecureTinyliciousTestUrlResolver,
+	createTinyliciousTestCreateNewRequest,
+} from "@fluidframework/tinylicious-driver/test-utils";
 
 import { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { ModelLoader } from "./modelLoader.js";
@@ -23,9 +23,9 @@ class TinyliciousService {
 	public readonly urlResolver: IUrlResolver;
 
 	constructor(tinyliciousPort?: number) {
-		const tokenProvider = new InsecureTinyliciousTokenProvider();
-		this.urlResolver = new InsecureTinyliciousUrlResolver(tinyliciousPort);
-		this.documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
+		const tokenProvider = createInsecureTinyliciousTestTokenProvider();
+		this.urlResolver = createInsecureTinyliciousTestUrlResolver();
+		this.documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
 	}
 }
 
@@ -41,7 +41,7 @@ export class TinyliciousModelLoader<ModelType> implements IModelLoader<ModelType
 			urlResolver: this.tinyliciousService.urlResolver,
 			documentServiceFactory: this.tinyliciousService.documentServiceFactory,
 			codeLoader,
-			generateCreateNewRequest: createTinyliciousCreateNewRequest,
+			generateCreateNewRequest: createTinyliciousTestCreateNewRequest,
 		});
 	}
 

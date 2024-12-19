@@ -20,11 +20,10 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { ISegmentLeaf } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
 import {
 	IJSONSegmentWithMergeInfo,
@@ -39,7 +38,7 @@ export class SnapshotLoader {
 
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
-		// eslint-disable-next-line import/no-deprecated
+
 		private readonly client: Client,
 		private readonly mergeTree: MergeTree,
 		logger: ITelemetryLoggerExt,
@@ -96,8 +95,8 @@ export class SnapshotLoader {
 
 	private readonly specToSegment = (
 		spec: IJSONSegment | IJSONSegmentWithMergeInfo,
-	): ISegment => {
-		let seg: ISegment;
+	): ISegmentLeaf => {
+		let seg: ISegmentLeaf;
 
 		if (hasMergeInfo(spec)) {
 			seg = this.client.specToSegment(spec.json);
@@ -207,7 +206,7 @@ export class SnapshotLoader {
 		}
 
 		let chunksWithAttribution = chunk1.attribution === undefined ? 0 : 1;
-		const segs: ISegment[] = [];
+		const segs: ISegmentLeaf[] = [];
 		let lengthSofar = chunk1.length;
 		for (
 			let chunkIndex = 1;
@@ -244,7 +243,7 @@ export class SnapshotLoader {
 
 		// Helper to insert segments at the end of the MergeTree.
 		const mergeTree = this.mergeTree;
-		const append = (segments: ISegment[], cli: number, seq: number): void => {
+		const append = (segments: ISegmentLeaf[], cli: number, seq: number): void => {
 			mergeTree.insertSegments(
 				mergeTree.root.cachedLength ?? 0,
 				segments,
@@ -256,7 +255,7 @@ export class SnapshotLoader {
 		};
 
 		// Helpers to batch-insert segments that are below the min seq
-		const batch: ISegment[] = [];
+		const batch: ISegmentLeaf[] = [];
 		const flushBatch = (): void => {
 			if (batch.length > 0) {
 				append(batch, NonCollabClient, UniversalSequenceNumber);
@@ -280,7 +279,7 @@ export class SnapshotLoader {
 		flushBatch();
 	}
 
-	private extractAttribution(segments: ISegment[], chunk: MergeTreeChunkV1): void {
+	private extractAttribution(segments: ISegmentLeaf[], chunk: MergeTreeChunkV1): void {
 		if (chunk.attribution) {
 			const { attributionPolicy } = this.mergeTree;
 			if (attributionPolicy === undefined) {
