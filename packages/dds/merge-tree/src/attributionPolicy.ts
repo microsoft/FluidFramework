@@ -8,9 +8,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { AttributionCollection } from "./attributionCollection.js";
-// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
-// eslint-disable-next-line import/no-deprecated
 import { AttributionPolicy } from "./mergeTree.js";
 import {
 	IMergeTreeDeltaCallbackArgs,
@@ -29,13 +27,13 @@ interface AttributionCallbacks {
 	delta: (
 		opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
-		// eslint-disable-next-line import/no-deprecated
+
 		client: Client,
 	) => void;
 	maintenance: (
 		maintenanceArgs: IMergeTreeMaintenanceCallbackArgs,
 		opArgs: IMergeTreeDeltaOpArgs | undefined,
-		// eslint-disable-next-line import/no-deprecated
+
 		client: Client,
 	) => void;
 }
@@ -43,11 +41,9 @@ interface AttributionCallbacks {
 function createAttributionPolicyFromCallbacks({
 	delta,
 	maintenance,
-	// eslint-disable-next-line import/no-deprecated
 }: AttributionCallbacks): AttributionPolicy {
 	let unsubscribe: undefined | (() => void);
 	return {
-		// eslint-disable-next-line import/no-deprecated
 		attach: (client: Client): void => {
 			assert(unsubscribe === undefined, 0x557 /* cannot attach to multiple clients at once */);
 
@@ -87,7 +83,6 @@ const ensureAttributionCollectionCallbacks: AttributionCallbacks = {
 };
 
 const getAttributionKey = (
-	// eslint-disable-next-line import/no-deprecated
 	client: Client,
 	msg: ISequencedDocumentMessage | undefined,
 ): AttributionKey => {
@@ -206,7 +201,7 @@ function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): Attributi
  * Creates an {@link AttributionPolicy} which only tracks initial insertion of content.
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
+
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 	return createAttributionPolicyFromCallbacks(
 		combineMergeTreeCallbacks([
@@ -236,7 +231,6 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
  */
 export function createPropertyTrackingAttributionPolicyFactory(
 	...propNames: string[]
-	// eslint-disable-next-line import/no-deprecated
 ): () => AttributionPolicy {
 	return () =>
 		createAttributionPolicyFromCallbacks(
@@ -255,7 +249,6 @@ export function createPropertyTrackingAttributionPolicyFactory(
  */
 export function createPropertyTrackingAndInsertionAttributionPolicyFactory(
 	...propNames: string[]
-	// eslint-disable-next-line import/no-deprecated
 ): () => AttributionPolicy {
 	return () =>
 		createAttributionPolicyFromCallbacks(
