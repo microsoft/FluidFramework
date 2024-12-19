@@ -282,6 +282,76 @@ describe("Presence", () => {
 
 						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
+
+					it.skip("as collateral with old connection info and connected is NOT announced via `attendeeJoined`", () => {
+						// Setup - generate signals
+
+						// Both connection Id's unkonwn to audience
+						const oldAttendeeConnectionId = "client9";
+						const newAttendeeConnectionId = "client10";
+
+						// Rejoin signal for the collateral attendee unknown to audience
+						const rejoinSignal = generateBasicClientJoin(clock.now - 10, {
+							averageLatency: 40,
+							clientSessionId: "collateral-id",
+							clientConnectionId: newAttendeeConnectionId,
+							updateProviders: [initialAttendeeConnectionId],
+							connectionOrder: 1,
+							priorClientToSessionId: {
+								[oldAttendeeConnectionId]: {
+									rev: 0,
+									timestamp: 0,
+									value: "collateral-id",
+								},
+							},
+						});
+
+						// Response signal sent by the initial attendee responding to the collateral attendees rejoin signal
+						const responseSignal = generateBasicClientJoin(clock.now - 5, {
+							averageLatency: 20,
+							clientSessionId: attendeeSessionId,
+							clientConnectionId: initialAttendeeConnectionId,
+							priorClientToSessionId: {
+								...initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
+								// Old connection id of rejoining attendee
+								// This should be ignored by local client
+								[oldAttendeeConnectionId]: {
+									rev: 0,
+									timestamp: 0,
+									value: "collateral-id",
+								},
+							},
+						});
+
+						// Process initial join signal so initial attendee is known
+						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
+						assert.strictEqual(
+							joinedAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
+
+						// Simulate rejoin message from remote client
+						const rejoinAttendees = processJoinSignals([rejoinSignal]);
+						// Confirm that rejoining attendee is announced so we can verify it remains the same after response
+						assert.strictEqual(
+							rejoinAttendees.length,
+							1,
+							"Expected exactly one attendee to be announced",
+						);
+
+						// Act - simulate response message from remote client
+						const responseAttendees = processJoinSignals([responseSignal]);
+
+						// Verify - No collateral attendee should be announced by response signal and rejoined attendee information should remain unchanged
+						assert.strictEqual(
+							responseAttendees.length,
+							0,
+							"Expected no attendees to be announced",
+						);
+						// Check attendee information remains unchanged
+						verifyAttendee(rejoinAttendees[0], newAttendeeConnectionId, "collateral-id");
+					});
 				});
 
 				describe("that is already known", () => {
@@ -373,30 +443,33 @@ describe("Presence", () => {
 					}
 
 					describe("and has their connection removed", () => {
-						it("is announced via `attendeeDisconnected`", () => {
+						let disconnectedAttendees: ISessionClient[];
+						beforeEach(() => {
 							// Setup
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
-							let disconnectedAttendee: ISessionClient | undefined;
+							disconnectedAttendees = [];
 							afterCleanUp.push(
 								presence.events.on("attendeeDisconnected", (attendee) => {
-									assert(
-										disconnectedAttendee === undefined,
-										"Only one attendee should be disconnected",
-									);
-									disconnectedAttendee = attendee;
+									disconnectedAttendees.push(attendee);
 								}),
 							);
-
+						});
+						it("is announced via `attendeeDisconnected`", () => {
 							// Act - remove client connection id
 							runtime.removeMember(initialAttendeeConnectionId);
 
 							// Verify
+							assert.strictEqual(
+								disconnectedAttendees.length,
+								1,
+								"Exactly one attendee should be announced as disconnected",
+							);
 							assert(
-								disconnectedAttendee !== undefined,
+								disconnectedAttendees[0] !== undefined,
 								"No attendee was disconnected during `removeMember`",
 							);
 							verifyAttendee(
-								disconnectedAttendee,
+								disconnectedAttendees[0],
 								initialAttendeeConnectionId,
 								attendeeSessionId,
 								SessionClientStatus.Disconnected,
@@ -405,7 +478,6 @@ describe("Presence", () => {
 
 						it('is not announced via `attendeeDisconnected` when already "Disconnected"', () => {
 							// Setup
-
 							const clientToDisconnect = runtime.audience.getMember(
 								initialAttendeeConnectionId,
 							);
@@ -427,6 +499,131 @@ describe("Presence", () => {
 								"removeMember",
 								initialAttendeeConnectionId,
 								clientToDisconnect,
+							);
+						});
+
+						it.skip("updates stale attendee status to 'Disconnected' after 30s delay upon reconnection", () => {
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+
+							// Act - disconnect & reconnect local client
+							runtime.disconnect(); // Simulate local client disconnect
+							clock.tick(1000);
+							runtime.connect("client6"); // Simulate local client reconnect with new connection id
+
+							// Verify - stale attendee should still be 'Connected' after 15 seconds
+							clock.tick(15_001);
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Stale attendee should still be 'Connected' after 15s",
+							);
+
+							// Verify - stale attendee should be 'Disconnected' after 30 seconds and announced via `attendeeDisconnected`
+							clock.tick(15_001);
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Disconnected,
+								"Stale attendee should be 'Disconnected' 30s after reconnection",
+							);
+							assert.strictEqual(
+								disconnectedAttendees.length,
+								1,
+								"Exactly one attendee should be announced as disconnected",
+							);
+						});
+
+						it.skip("does not update stale attendee status if local client does not reconnect", () => {
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+
+							// Act - disconnect local client
+							runtime.disconnect();
+
+							// Verify - stale attendee should still be 'Connected' after 30 seconds
+							clock.tick(30_001);
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Stale attendee should still be 'Connected' after 30s",
+							);
+						});
+
+						it.skip("does not update stale attendee status if local client reconnection lasts less than 30s", () => {
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+
+							// Act - disconnect, reconnect for 15 second, then disconnect local client again
+							runtime.disconnect(); // First disconnect
+							clock.tick(1000);
+							runtime.connect("client6"); // Reconnect
+							clock.tick(15_001); // Wait 15 seconds
+							runtime.disconnect(); // Disconnect again
+							clock.tick(15_001); // Wait another 15 seconds (30s total since reconnection)
+
+							// Verify - stale attendee should still be 'Connected' after 30s post-reconnection
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Stale attendee should still be 'Connected' after 30s",
+							);
+						});
+
+						it.skip("does not update attendee status to 'Disconnected' if stale attendee becomes active", () => {
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+
+							// Act - disconnect, reconnect, then process rejoin signal from known attendee after 15s
+							runtime.disconnect();
+							clock.tick(1000);
+							runtime.connect("client6");
+							clock.tick(15_001);
+							processJoinSignals([rejoinAttendeeSignal]);
+							clock.tick(15_001);
+
+							// Verify
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Active attendee should still be 'Connected' 30s after reconnection",
+							);
+						});
+
+						it.skip("updates stale attendee status to 'Disconnected' only 30s after most recent reconnection", () => {
+							// Setup
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Known attendee is not connected",
+							);
+
+							// Act - disconnect & reconnect local client multiple times with 15s delay
+							runtime.disconnect();
+							clock.tick(1000);
+							runtime.connect("client6");
+
+							clock.tick(15_001);
+
+							runtime.disconnect();
+							clock.tick(1000);
+							runtime.connect("client7");
+
+							// Verify - stale attendee should still be connected after 15 seconds
+							clock.tick(15_001);
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Stale attendee should still be connected",
+							);
+
+							// Verify - stale attendee should be disconnected after 30 seconds
+							clock.tick(15_001);
+							assert.equal(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Disconnected,
+								"Stale attendee has wrong status",
+							);
+							assert.strictEqual(
+								disconnectedAttendees.length,
+								1,
+								"Exactly one attendee should be announced as disconnected",
 							);
 						});
 					});
