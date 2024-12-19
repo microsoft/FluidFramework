@@ -46,10 +46,6 @@ import {
 	BlockAction,
 	CollaborationWindow,
 	IMergeNode,
-	// eslint-disable-next-line import/no-deprecated
-	IMoveInfo,
-	// eslint-disable-next-line import/no-deprecated
-	IRemovalInfo,
 	ISegmentAction,
 	ISegmentChanges,
 	ISegmentLeaf,
@@ -60,8 +56,6 @@ import {
 	SegmentGroup,
 	reservedMarkerIdKey,
 	seqLTE,
-	toMoveInfo,
-	toRemovalInfo,
 	type ISegmentInternal,
 	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
@@ -89,6 +83,18 @@ import {
 } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
+	isMoved,
+	isRemoved,
+	toMoveInfo,
+	toRemovalInfo,
+	type IInsertionInfo,
+	// eslint-disable-next-line import/no-deprecated
+	type IMoveInfo,
+	// eslint-disable-next-line import/no-deprecated
+	type IRemovalInfo,
+	type SegmentWithInfo,
+} from "./segmentInfos.js";
+import {
 	copyPropertiesAndManager,
 	PropertiesManager,
 	PropertiesRollback,
@@ -106,16 +112,6 @@ function markSegmentMoved(seg: ISegmentLeaf, moveInfo: IMoveInfo): void {
 	seg.movedSeq = moveInfo.movedSeq;
 	seg.localMovedSeq = moveInfo.localMovedSeq;
 	seg.wasMovedOnInsert = moveInfo.wasMovedOnInsert;
-}
-
-// eslint-disable-next-line import/no-deprecated
-function isMoved(segment: ISegmentLeaf): segment is ISegmentLeaf & IMoveInfo {
-	return toMoveInfo(segment) !== undefined;
-}
-
-// eslint-disable-next-line import/no-deprecated
-function isRemoved(segment: ISegmentLeaf): segment is ISegmentLeaf & IRemovalInfo {
-	return toRemovalInfo(segment) !== undefined;
 }
 
 // eslint-disable-next-line import/no-deprecated
@@ -713,7 +709,7 @@ export class MergeTree {
 		return index;
 	}
 
-	public reloadFromSegments(segments: ISegmentLeaf[]): void {
+	public reloadFromSegments(segments: SegmentWithInfo<IInsertionInfo>[]): void {
 		// This code assumes that a later call to `startCollaboration()` will initialize partial lengths.
 		assert(
 			!this.collabWindow.collaborating,

@@ -12,8 +12,9 @@ import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { ISegmentLeaf, SegmentGroup, toMoveInfo, toRemovalInfo } from "../mergeTreeNodes.js";
+import { ISegmentLeaf, SegmentGroup } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { toMoveInfo, toRemovalInfo } from "../segmentInfos.js";
 import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 

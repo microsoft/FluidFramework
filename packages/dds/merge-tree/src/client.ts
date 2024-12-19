@@ -49,7 +49,6 @@ import {
 	Marker,
 	SegmentGroup,
 	compareStrings,
-	toMoveInfo,
 } from "./mergeTreeNodes.js";
 import {
 	createAdjustRangeOp,
@@ -82,6 +81,7 @@ import {
 } from "./ops.js";
 import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
+import { toMoveInfo } from "./segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
