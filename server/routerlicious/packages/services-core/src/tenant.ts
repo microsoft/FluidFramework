@@ -22,7 +22,7 @@ export interface ITenantConfig {
 	scheduledDeletionTime?: string;
 
 	// Indicates if keyless access is enabled for this tenant.
-	isKeylessAccessEnabled?: boolean;
+	enableKeylessAccess?: boolean;
 }
 
 /**

@@ -277,7 +277,7 @@ export class TenantManager {
 			storage: tenant.storage,
 			customData: tenant.customData,
 			scheduledDeletionTime: tenant.scheduledDeletionTime,
-			isKeylessAccessEnabled: tenant.privateKeys ? true : false,
+			enableKeylessAccess: tenant.privateKeys ? true : false,
 		};
 	}
 
@@ -293,7 +293,7 @@ export class TenantManager {
 			storage: tenant.storage,
 			customData: tenant.customData,
 			scheduledDeletionTime: tenant.scheduledDeletionTime,
-			isKeylessAccessEnabled: tenant.privateKeys ? true : false,
+			enableKeylessAccess: tenant.privateKeys ? true : false,
 		}));
 	}
 
@@ -449,7 +449,7 @@ export class TenantManager {
 			storage: tenantDocument.storage,
 			customData: tenantDocument.customData,
 			scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
-			isKeylessAccessEnabled: tenantDocument.privateKeys ? true : false,
+			enableKeylessAccess: tenantDocument.privateKeys ? true : false,
 		};
 	}
 

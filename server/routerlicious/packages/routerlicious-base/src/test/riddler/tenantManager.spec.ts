@@ -380,7 +380,7 @@ describe("TenantManager", () => {
 	});
 
 	describe("updateKeylessAccessPolicy", () => {
-		it("Should have isKeylessAccessEnabled set to true when policy is enabled", async () => {
+		it("Should have enableKeylessAccess set to true when policy is enabled", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
 			sandbox.stub(tenantRepository, "update").resolves();
 
@@ -389,11 +389,11 @@ describe("TenantManager", () => {
 				true,
 			);
 
-			assert.notStrictEqual(updatedTenant.isKeylessAccessEnabled, undefined);
-			assert.strictEqual(updatedTenant.isKeylessAccessEnabled, true);
+			assert.notStrictEqual(updatedTenant.enableKeylessAccess, undefined);
+			assert.strictEqual(updatedTenant.enableKeylessAccess, true);
 		});
 
-		it("Should have isKeylessAccessEnabled set to false when policy is disabled", async () => {
+		it("Should have enableKeylessAccess set to false when policy is disabled", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutKeyless);
 			sandbox.stub(tenantRepository, "update").resolves();
 
@@ -402,30 +402,30 @@ describe("TenantManager", () => {
 				false,
 			);
 
-			assert.notStrictEqual(updatedTenant.isKeylessAccessEnabled, undefined);
-			assert.strictEqual(updatedTenant.isKeylessAccessEnabled, false);
+			assert.notStrictEqual(updatedTenant.enableKeylessAccess, undefined);
+			assert.strictEqual(updatedTenant.enableKeylessAccess, false);
 		});
 	});
 
 	describe("getTenant", () => {
-		it("Should have isKeylessAccessEnabled set to true keyless access it enabled", async () => {
+		it("Should have enableKeylessAccess set to true keyless access it enabled", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
 			sandbox.stub(tenantRepository, "update").resolves();
 
 			const tenant: ITenantConfig = await tenantManager.getTenant("cordflasher-dolphin");
 
-			assert.notStrictEqual(tenant.isKeylessAccessEnabled, undefined);
-			assert.strictEqual(tenant.isKeylessAccessEnabled, true);
+			assert.notStrictEqual(tenant.enableKeylessAccess, undefined);
+			assert.strictEqual(tenant.enableKeylessAccess, true);
 		});
 
-		it("Should have isKeylessAccessEnabled set to false when policy is disabled", async () => {
+		it("Should have enableKeylessAccess set to false when policy is disabled", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutKeyless);
 			sandbox.stub(tenantRepository, "update").resolves();
 
 			const tenant: ITenantConfig = await tenantManager.getTenant("cordflasher-dolphin");
 
-			assert.notStrictEqual(tenant.isKeylessAccessEnabled, undefined);
-			assert.strictEqual(tenant.isKeylessAccessEnabled, false);
+			assert.notStrictEqual(tenant.enableKeylessAccess, undefined);
+			assert.strictEqual(tenant.enableKeylessAccess, false);
 		});
 	});
 
