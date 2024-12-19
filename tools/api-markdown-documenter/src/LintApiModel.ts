@@ -35,7 +35,7 @@ export interface LintApiModelConfiguration extends LoggingConfiguration {
 	/**
 	 * The API model to lint.
 	 */
-	apiModel: ApiModel;
+	readonly apiModel: ApiModel;
 }
 
 /**

@@ -15,6 +15,17 @@ Combines the separate "config" property bag parameters into a single "options" p
 -   `RenderHtmlConfig` -> `RenderHtmlConfiguration`
 -   `ToHtmlConfig` -> `ToHtmlConfiguration`
 
+#### Configuration properties made `readonly`
+
+-   `ApiItemTransformationConfiguration`
+-   `ApiItemTransformationOptions`
+-   `DocumentationSuiteOptions`
+-   `HtmlRenderer.RenderHtmlConfig`
+-   `LintApiModelConfiguration`
+-   `MarkdownRenderer.Renderers`
+-   `MarkdownRenderer.RenderContext`
+-   `ToHtmlTransformations`
+
 ##### Example
 
 Before:
