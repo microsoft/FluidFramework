@@ -579,11 +579,6 @@ export class Container
 		return this._lifecycleState === "disposing" || this._lifecycleState === "disposed";
 	}
 
-	/**
-	 * The error that caused the container to close or dispose.
-	 *
-	 * @remarks If the container is closed and then disposed, both with errors given, this will expose the close error only.
-	 */
 	public get closedWithError(): ICriticalContainerError | undefined {
 		return this._closedWithError;
 	}
@@ -1163,6 +1158,10 @@ export class Container
 						// Use error category if there's an error, unless we already closed with an error (i.e. _closedWithError is set)
 						category:
 							error !== undefined && this._closedWithError === undefined ? "error" : "generic",
+						details: {
+							closedWithErrorType: this._closedWithError?.errorType,
+							closedWithErrorMessage: this._closedWithError?.message,
+						},
 					},
 					error,
 				);
@@ -1170,13 +1169,11 @@ export class Container
 				// ! Progressing from "closed" to "disposing" is not allowed
 				if (this._lifecycleState !== "closed") {
 					this._lifecycleState = "disposing";
-				}
 
-				// Corner cases that are expressed imprecisely here:
-				// When disposing with an error after the Container is already closed...
-				// - if we closed with an error, _closedWithError doesn't expose the dispose error.
-				// - if we closed without an error, _closedWithError doesn't distinguish whether this error came from close or dispose.
-				this._closedWithError ??= error;
+					// Only set _closedWithError if we're "disposing and closing" all at once
+					// (disposing from a non-closed state)
+					this._closedWithError = error;
+				}
 
 				this._protocolHandler?.close();
 

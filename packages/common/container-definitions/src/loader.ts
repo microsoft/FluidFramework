@@ -377,7 +377,8 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	/**
 	 * The error that caused the container to close or dispose.
 	 *
-	 * @remarks If the container is closed and then disposed, both with errors given, this will expose the close error only.
+	 * @remarks If the container is closed first and then later disposed,
+	 * this will be the error from the close (even if undefined), not the dispose.
 	 */
 	readonly closedWithError?: ICriticalContainerError | undefined;
 
