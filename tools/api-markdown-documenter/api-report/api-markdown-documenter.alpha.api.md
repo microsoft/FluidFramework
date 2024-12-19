@@ -282,9 +282,6 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 }
 
 // @public
-export type DocumentationSuiteConfiguration = Required<DocumentationSuiteOptions>;
-
-// @public
 export interface DocumentationSuiteOptions {
     readonly documentBoundaries?: DocumentBoundaries;
     readonly getAlertsForItem?: (apiItem: ApiItem) => string[];

@@ -13,7 +13,6 @@ export {
 	// Consumers should not use this, it exists externally for documentation purposes only.
 	type DefaultDocumentationSuiteOptions,
 	type DocumentBoundaries,
-	type DocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteOptionsWithDefaults,
 	type HierarchyBoundaries,
