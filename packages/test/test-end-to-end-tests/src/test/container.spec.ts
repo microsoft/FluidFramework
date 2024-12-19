@@ -765,7 +765,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	);
 
 	itExpects(
-		"Closing (no error) then disposing (with error) container should set closedWithError properly",
+		"Closing (no error) then disposing (with error) container leaves closedWithError unset",
 		[
 			{ eventName: "fluid:telemetry:Container:ContainerClose", category: "generic" },
 			{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "error" },
@@ -776,9 +776,9 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			container.dispose(new DataCorruptionError("dispose error", {}));
 
 			assert.strictEqual(
-				container.closedWithError?.message,
-				"dispose error",
-				"Expected the error that disposed the container",
+				container.closedWithError,
+				undefined,
+				"Expected undefined since the container was closed without error",
 			);
 		},
 	);
