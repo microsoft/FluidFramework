@@ -118,7 +118,7 @@ The `allowableUpdateLatencyMs` property configures how long a local update may b
 
 Notifications are never queued; they effectively always have an `allowableUpdateLatencyMs` of 0. However, they may be grouped with other updates that were already queued.
 
-Note that due to throttling, clients receiving updates may not see updates for all values set by another. For example,
+Note that due to throttling, clients will not receive updates for every intermediate value set by another client. For example,
 with `Latest*ValueManagers`, the only value sent is the value at the time the outgoing grouped message is sent. Previous
 values set by the client will not be broadcast or seen by other clients.
 
