@@ -21,4 +21,4 @@ export {
 	getApiItemTransformationOptionsWithDefaults,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
-} from "./TransformationOptions.js";
+} from "./Transformations.js";

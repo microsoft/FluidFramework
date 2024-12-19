@@ -15,7 +15,7 @@ import {
 import {
 	type ApiItemTransformations,
 	getApiItemTransformationOptionsWithDefaults,
-} from "./TransformationOptions.js";
+} from "./Transformations.js";
 
 /**
  * API Item transformation configuration.
