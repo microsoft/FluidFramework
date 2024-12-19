@@ -138,6 +138,7 @@ export {
 } from "./taskMessages";
 export {
 	EncryptionKeyVersion,
+	IEncryptedPrivateTenantKeys,
 	IEncryptedTenantKeys,
 	ITenant,
 	ITenantConfig,
@@ -147,6 +148,7 @@ export {
 	ITenantManager,
 	ITenantOrderer,
 	ITenantStorage,
+	ITenantPrivateKeys,
 	KeyName,
 } from "./tenant";
 export {
