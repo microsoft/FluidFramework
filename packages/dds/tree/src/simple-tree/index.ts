@@ -35,6 +35,7 @@ export {
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 	type ValidateRecursiveSchema,

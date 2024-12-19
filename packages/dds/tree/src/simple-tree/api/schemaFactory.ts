@@ -103,11 +103,14 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 
 /**
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema
+ *
+ * @alpha
  */
 export interface SchemaFactoryObjectOptions {
 	/**
-	 * Opt in to viewing documents which have unknown optional fields for this object's identifier, i.e. optional fields
-	 * in the document schema which are not present in this object schema declaration.
+	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
+	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
+	 * that has upgraded the document's schema to include those optional fields.
 	 *
 	 * @defaultValue `false`
 	 * @remarks
@@ -787,11 +790,20 @@ export class SchemaFactory<
 	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
 	 * which otherwise gets reported at sometimes incorrect source locations that vary based on incremental builds.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
-	>(name: Name, t: T) {
+	>(
+		name: Name,
+		t: T,
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Object,
+		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
+		object & InsertableObjectFromSchemaRecordUnsafe<T>,
+		false,
+		T
+	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,

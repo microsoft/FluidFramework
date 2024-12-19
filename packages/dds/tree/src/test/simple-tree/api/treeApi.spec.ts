@@ -20,6 +20,7 @@ import {
 	isTreeNode,
 	type NodeFromSchema,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
@@ -46,7 +47,6 @@ import { testSimpleTrees } from "../../testTrees.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { TreeAlpha } from "../../../shared-tree/index.js";
-import { SchemaFactoryAlpha } from "../../schemaFactoryAlpha.js";
 
 const schema = new SchemaFactory("com.example");
 

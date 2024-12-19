@@ -15,6 +15,7 @@ import {
 import {
 	cursorFromInsertable,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
@@ -29,7 +30,6 @@ import {
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
 import type { TreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
-import { SchemaFactoryAlpha } from "../schemaFactoryAlpha.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
