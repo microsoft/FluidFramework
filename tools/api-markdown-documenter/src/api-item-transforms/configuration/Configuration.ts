@@ -46,6 +46,10 @@ export interface ApiItemTransformationConfigurationBase {
 /**
  * System configuration for API Item transformation functionality.
  *
+ * @privateRemarks
+ * TODO: ideally this type should not appear in the public API.
+ * Users should only need {@link ApiItemTransformationOptions}.
+ *
  * @public
  */
 export interface ApiItemTransformationConfiguration
