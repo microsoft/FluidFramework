@@ -10,7 +10,7 @@ import { toHtml as toHtmlString } from "hast-util-to-html";
 import type { DocumentNode } from "../../documentation-domain/index.js";
 import {
 	documentToHtml,
-	type TransformationConfig,
+	type TransformationConfiguration,
 } from "../../documentation-domain-to-html/index.js";
 
 /**
@@ -33,7 +33,7 @@ export interface RenderHtmlConfig {
  * @sealed
  * @public
  */
-export interface RenderDocumentConfig extends TransformationConfig, RenderHtmlConfig {}
+export interface RenderDocumentConfig extends TransformationConfiguration, RenderHtmlConfig {}
 
 /**
  * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a string.

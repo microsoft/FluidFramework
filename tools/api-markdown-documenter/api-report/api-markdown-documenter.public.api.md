@@ -220,13 +220,13 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
 }
 
 // @public
-export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfig): Nodes[];
+export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfiguration): Nodes[];
 
 // @public
 export function documentationNodesToHtml(nodes: DocumentationNode[], transformationContext: ToHtmlContext): Nodes[];
 
 // @public
-export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfig): Nodes;
+export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfiguration): Nodes;
 
 // @public
 export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
@@ -308,7 +308,7 @@ export interface DocumentNodeProps {
 }
 
 // @public
-export function documentToHtml(document: DocumentNode, config: ToHtmlConfig): Root;
+export function documentToHtml(document: DocumentNode, config: ToHtmlConfiguration): Root;
 
 // @public
 export interface DocumentWriter {
@@ -612,7 +612,7 @@ function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConf
 function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfiguration): string;
 
 // @public @sealed
-export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConfig {
+export interface RenderDocumentAsHtmlConfig extends ToHtmlConfiguration, RenderHtmlConfig {
 }
 
 // @public
@@ -745,7 +745,7 @@ export interface TextFormatting {
 }
 
 // @public
-export interface ToHtmlConfig extends LoggingConfiguration {
+export interface ToHtmlConfiguration extends LoggingConfiguration {
     readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
     readonly rootFormatting?: TextFormatting;
