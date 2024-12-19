@@ -24,6 +24,7 @@ WORKDIR /home/node/server
 COPY package*.json ./
 COPY pnpm*.yaml ./
 COPY scripts/*.* ./scripts/
+COPY .npmrc ./
 
 COPY packages/historian/package.json packages/historian/
 COPY packages/historian-base/package.json packages/historian-base/
