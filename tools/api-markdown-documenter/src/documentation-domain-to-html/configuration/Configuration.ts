@@ -14,7 +14,7 @@ import type { Transformations } from "./Transformation.js";
  *
  * @public
  */
-export interface TransformationConfig extends LoggingConfiguration {
+export interface TransformationConfiguration extends LoggingConfiguration {
 	/**
 	 * User-specified transformations.
 	 *
@@ -47,12 +47,12 @@ export interface TransformationConfig extends LoggingConfiguration {
 }
 
 /**
- * Gets a complete {@link TransformationConfig} using the provided partial configuration, and filling
+ * Gets a complete {@link TransformationConfiguration} using the provided partial configuration, and filling
  * in the remainder with the documented defaults.
  */
 export function getConfigurationWithDefaults(
-	inputConfig: Partial<TransformationConfig> | undefined,
-): TransformationConfig {
+	inputConfig: Partial<TransformationConfiguration> | undefined,
+): TransformationConfiguration {
 	const logger = inputConfig?.logger ?? defaultConsoleLogger;
 	const startingHeadingLevel = inputConfig?.startingHeadingLevel ?? 1;
 	return {

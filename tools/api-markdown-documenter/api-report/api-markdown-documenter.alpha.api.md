@@ -233,13 +233,13 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
 }
 
 // @public
-export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfig): Nodes[];
+export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfiguration): Nodes[];
 
 // @public
 export function documentationNodesToHtml(nodes: DocumentationNode[], transformationContext: ToHtmlContext): Nodes[];
 
 // @public
-export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfig): Nodes;
+export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfiguration): Nodes;
 
 // @public
 export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
@@ -329,7 +329,7 @@ export interface DocumentNodeProps {
 }
 
 // @public
-export function documentToHtml(document: DocumentNode, config: ToHtmlConfig): Root;
+export function documentToHtml(document: DocumentNode, config: ToHtmlConfiguration): Root;
 
 // @public
 export interface DocumentWriter {
@@ -673,7 +673,7 @@ export { ReleaseTag }
 function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions): Promise<void>;
 
 // @alpha
-interface RenderApiModelAsHtmlOptions extends ApiItemTransformationOptions, RenderDocumentAsHtmlConfig, FileSystemConfiguration {
+interface RenderApiModelAsHtmlOptions extends ApiItemTransformationOptions, RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
 // @public
@@ -684,20 +684,20 @@ interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, 
 }
 
 // @public
-function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfig): string;
+function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfiguration): string;
 
 // @public
 function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfiguration): string;
 
 // @public @sealed
-export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConfig {
+export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, RenderHtmlConfiguration {
 }
 
 // @alpha
 function renderDocumentsAsHtml(documents: readonly DocumentNode[], options: RenderDocumentsAsHtmlOptions): Promise<void>;
 
 // @alpha
-interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfig, FileSystemConfiguration {
+interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
 // @public
@@ -708,12 +708,10 @@ interface RenderDocumentsAsMarkdownOptions extends MarkdownRenderConfiguration, 
 }
 
 // @public
-function renderHtml(html: Nodes, { prettyFormatting }: {
-    prettyFormatting?: boolean;
-}): string;
+function renderHtml(html: Nodes, config: RenderHtmlConfiguration): string;
 
 // @public @sealed
-export interface RenderHtmlConfig {
+export interface RenderHtmlConfiguration {
     readonly prettyFormatting?: boolean;
 }
 
@@ -835,7 +833,7 @@ export interface TextFormatting {
 }
 
 // @public
-export interface ToHtmlConfig extends LoggingConfiguration {
+export interface ToHtmlConfiguration extends LoggingConfiguration {
     readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
     readonly rootFormatting?: TextFormatting;

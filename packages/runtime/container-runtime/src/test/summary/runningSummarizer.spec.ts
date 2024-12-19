@@ -305,7 +305,6 @@ describe("Runtime", () => {
 			};
 
 			before(() => {
-				// eslint-disable-next-line import/no-named-as-default-member
 				clock = sinon.useFakeTimers();
 			});
 
