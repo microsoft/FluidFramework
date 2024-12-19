@@ -194,7 +194,7 @@ const defaultApiItemTransformationOptions: ApiItemTransformations = {
  * in the remainder with the documented defaults.
  */
 export function getApiItemTransformationsWithDefaults(
-	options: Partial<ApiItemTransformations>,
+	options?: Partial<ApiItemTransformations>,
 ): ApiItemTransformations {
 	return {
 		...defaultApiItemTransformationOptions,
