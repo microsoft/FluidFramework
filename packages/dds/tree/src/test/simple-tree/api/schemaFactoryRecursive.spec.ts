@@ -614,7 +614,7 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("Node schema metadata", () => {
-			const factory = new SchemaFactory("");
+			const factory = new SchemaFactoryAlpha("");
 
 			class Foo extends factory.objectRecursive("Foo", {
 				fooList: sf.arrayRecursive("FooList", [() => Foo]),
@@ -680,7 +680,7 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("Node schema metadata", () => {
-			const factory = new SchemaFactory("");
+			const factory = new SchemaFactoryAlpha("");
 
 			class Foo extends factory.objectRecursive("Foo", {
 				fooList: sf.arrayRecursive("FooList", [() => Foo]),

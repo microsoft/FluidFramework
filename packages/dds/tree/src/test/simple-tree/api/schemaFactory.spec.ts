@@ -569,7 +569,7 @@ describe("schemaFactory", () => {
 		});
 
 		it("Node schema metadata", () => {
-			const factory = new SchemaFactory("");
+			const factory = new SchemaFactoryAlpha("");
 
 			const fooMetadata = {
 				description: "An array of numbers",
@@ -578,7 +578,7 @@ describe("schemaFactory", () => {
 				},
 			};
 
-			class Foo extends factory.array("Foo", factory.number, { metadata: fooMetadata }) {}
+			class Foo extends factory.arrayAlpha("Foo", factory.number, { metadata: fooMetadata }) {}
 
 			assert.deepEqual(Foo.metadata, fooMetadata);
 
@@ -644,7 +644,7 @@ describe("schemaFactory", () => {
 		});
 
 		it("Node schema metadata", () => {
-			const factory = new SchemaFactory("");
+			const factory = new SchemaFactoryAlpha("");
 
 			const fooMetadata = {
 				description: "A map of numbers",
@@ -653,7 +653,7 @@ describe("schemaFactory", () => {
 				},
 			};
 
-			class Foo extends factory.map("Foo", factory.number, { metadata: fooMetadata }) {}
+			class Foo extends factory.mapAlpha("Foo", factory.number, { metadata: fooMetadata }) {}
 
 			assert.deepEqual(Foo.metadata, fooMetadata);
 

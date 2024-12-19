@@ -126,8 +126,8 @@ describe("getJsonSchema", () => {
 	});
 
 	it("Array schema", () => {
-		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.array("array", schemaFactory.string, {
+		const schemaFactory = new SchemaFactoryAlpha("test");
+		const Schema = schemaFactory.arrayAlpha("array", schemaFactory.string, {
 			metadata: {
 				description: "An array of strings",
 			},
@@ -169,8 +169,8 @@ describe("getJsonSchema", () => {
 	});
 
 	it("Map schema", () => {
-		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.map("map", schemaFactory.string, {
+		const schemaFactory = new SchemaFactoryAlpha("test");
+		const Schema = schemaFactory.mapAlpha("map", schemaFactory.string, {
 			metadata: {
 				description: "A map containing strings",
 			},
