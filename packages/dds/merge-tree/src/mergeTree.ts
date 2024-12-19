@@ -88,12 +88,16 @@ import {
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 // eslint-disable-next-line import/no-deprecated
 import {
+	hasMoveInfo,
+	hasRemovalInfo,
 	toMoveInfo,
 	toRemovalInfo,
+	type IInsertionInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IRemovalInfo,
+	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import {
 	copyPropertiesAndManager,
@@ -116,16 +120,6 @@ function markSegmentMoved(seg: ISegmentLeaf, moveInfo: IMoveInfo): void {
 }
 
 // eslint-disable-next-line import/no-deprecated
-function isMoved(segment: ISegmentLeaf): segment is ISegmentLeaf & IMoveInfo {
-	return toMoveInfo(segment) !== undefined;
-}
-
-// eslint-disable-next-line import/no-deprecated
-function isRemoved(segment: ISegmentLeaf): segment is ISegmentLeaf & IRemovalInfo {
-	return toRemovalInfo(segment) !== undefined;
-}
-
-// eslint-disable-next-line import/no-deprecated
 function isRemovedAndAcked(segment: ISegmentLeaf): segment is ISegmentLeaf & IRemovalInfo {
 	const removalInfo = toRemovalInfo(segment);
 	return removalInfo !== undefined && removalInfo.removedSeq !== UnassignedSequenceNumber;
@@ -142,7 +136,7 @@ function isRemovedAndAckedOrMovedAndAcked(segment: ISegmentLeaf): boolean {
 }
 
 function isRemovedOrMoved(segment: ISegmentLeaf): boolean {
-	return isRemoved(segment) || isMoved(segment);
+	return hasRemovalInfo(segment) || hasMoveInfo(segment);
 }
 
 function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undefined {
@@ -725,7 +719,7 @@ export class MergeTree {
 		return index;
 	}
 
-	public reloadFromSegments(segments: ISegmentLeaf[]): void {
+	public reloadFromSegments(segments: SegmentWithInfo<IInsertionInfo>[]): void {
 		// This code assumes that a later call to `startCollaboration()` will initialize partial lengths.
 		assert(
 			!this.collabWindow.collaborating,
@@ -1421,8 +1415,8 @@ export class MergeTree {
 	public getMarkerFromId(id: string): Marker | undefined {
 		const marker = this.idToMarker.get(id);
 		return marker === undefined ||
-			isRemoved(marker) ||
-			(isMoved(marker) && marker.moveDst === undefined)
+			hasRemovalInfo(marker) ||
+			(hasMoveInfo(marker) && marker.moveDst === undefined)
 			? undefined
 			: marker;
 	}
@@ -2574,7 +2568,7 @@ export class MergeTree {
 				// Slide past all segments that are not also remotely removed
 				affectedSegments.remove(segmentToSlide);
 				affectedSegments.insertAfter(lastLocalSegment, segmentToSlide.data);
-			} else if (isRemoved(segmentToSlide.data)) {
+			} else if (hasRemovalInfo(segmentToSlide.data)) {
 				assert(
 					segmentToSlide.data.localRemovedSeq !== undefined,
 					0x54d /* Removed segment that hasnt had its removal acked should be locally removed */,
@@ -2680,7 +2674,7 @@ export class MergeTree {
 			}
 		};
 		walkAllChildSegments(this.root, (seg) => {
-			if (isRemoved(seg) || seg.seq === UnassignedSequenceNumber) {
+			if (hasRemovalInfo(seg) || seg.seq === UnassignedSequenceNumber) {
 				if (isRemovedAndAcked(seg)) {
 					rangeContainsRemoteRemovedSegs = true;
 				}
