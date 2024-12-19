@@ -72,7 +72,6 @@ export const annotateRange: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	// eslint-disable-next-line unicorn/prefer-ternary
 	if (random.bool()) {
 		return client.annotateRangeLocal(opStart, opEnd, {
 			[random.integer(1, 5)]: client.longClientId,
