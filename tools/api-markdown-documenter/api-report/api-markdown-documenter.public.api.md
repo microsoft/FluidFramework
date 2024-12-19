@@ -585,8 +585,8 @@ export interface MarkdownRenderConfiguration extends LoggingConfiguration {
 
 // @public
 export interface MarkdownRenderContext extends TextFormatting {
-    customRenderers?: MarkdownRenderers;
-    headingLevel: number;
+    readonly customRenderers?: MarkdownRenderers;
+    readonly headingLevel: number;
     readonly insideCodeBlock?: boolean;
     readonly insideTable?: boolean;
 }
@@ -606,7 +606,7 @@ export { MarkdownRenderer }
 
 // @public
 export interface MarkdownRenderers {
-    [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
+    readonly [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
 }
 
 // @public
@@ -678,7 +678,7 @@ function renderHtml(html: Nodes, { prettyFormatting }: {
 
 // @public @sealed
 export interface RenderHtmlConfig {
-    prettyFormatting?: boolean;
+    readonly prettyFormatting?: boolean;
 }
 
 // @public
@@ -818,7 +818,7 @@ export type ToHtmlTransformation = (node: DocumentationNode, context: ToHtmlCont
 
 // @public
 export interface ToHtmlTransformations {
-    [documentationNodeKind: string]: ToHtmlTransformation;
+    readonly [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public
