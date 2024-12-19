@@ -36,7 +36,7 @@ import {
 } from "../../library/index.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
-import { getTypesPathFromPackage } from "../../library/packageExports.js";
+import { getExportPathFromPackage } from "../../library/packageExports.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import/no-internal-modules
 import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGeneration.js";
@@ -196,6 +196,17 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 /**
  * Tries to find the path to types for a given API level, falling back to another API level (typically public) if the
  * requested one is not found. The paths returned are relative to the package.
+ *
+ * @remarks
+ * This implementation loosely follows TypeScript's process for finding types as described at
+ * {@link https://www.typescriptlang.org/docs/handbook/modules/reference.html#packagejson-main-and-types}. If an export
+ * map is found, the `types` and `typings` field are ignored. If an export map is not found, then the `types`/`typings`
+ * fields will be used as a fallback _only_ for the public API level (which corresponds to the default export).
+ *
+ * Importantly, this code _does not_ implement falling back to the `main` field when `types` and `typings` are missing,
+ * nor does it look up types from DefinitelyTyped (i.e. \@types/* packages). This fallback logic is not needed for our
+ * packages because we always specify types explicitly in the types field, and types are always included in our packages
+ * (as opposed to a separate \@types package).
  */
 function getTypesPathWithFallback(
 	packageJson: PackageJson,
@@ -203,24 +214,35 @@ function getTypesPathWithFallback(
 	log: Logger,
 	fallbackEntrypoint?: ApiLevel,
 ): { typesPath: string; entrypointUsed: ApiLevel } {
+	const getTypesPath = (level: ApiLevel): string | undefined => {
+		if (packageJson.exports === undefined) {
+			if (level === ApiLevel.public) {
+				log.verbose(
+					`${packageJson.name}: No export map found. Using the types/typings field value.`,
+				);
+				return packageJson.types ?? packageJson.typings;
+			}
+			return undefined;
+		}
+		return getExportPathFromPackage(packageJson, level, ["types"], log);
+	};
+
 	let chosenEntrypoint: ApiLevel = entrypoint;
-	// First try the requested paths, but fall back to public otherwise if configured.
-	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, entrypoint, log);
+
+	let typesPath = getTypesPath(entrypoint);
+
+	if (typesPath === undefined && fallbackEntrypoint !== undefined) {
+		typesPath = getTypesPath(fallbackEntrypoint);
+		chosenEntrypoint = fallbackEntrypoint;
+	}
 
 	if (typesPath === undefined) {
-		// Try the public types if configured to do so. If public types are found adjust the level accordingly.
-		typesPath =
-			fallbackEntrypoint === undefined
-				? undefined
-				: getTypesPathFromPackage(packageJson, fallbackEntrypoint, log);
-		chosenEntrypoint = fallbackEntrypoint ?? entrypoint;
-		if (typesPath === undefined) {
-			throw new Error(
-				`${packageJson.name}: No type definitions found for "${chosenEntrypoint}" API level.`,
-			);
-		}
+		throw new Error(
+			`${packageJson.name}: No type definitions found for "${chosenEntrypoint}" API level.`,
+		);
 	}
-	return { typesPath: typesPath, entrypointUsed: chosenEntrypoint };
+
+	return { typesPath, entrypointUsed: chosenEntrypoint };
 }
 
 /**
