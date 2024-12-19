@@ -110,7 +110,7 @@ Notifications API is partially implemented. All messages are always broadcast ev
 
 Notifications are fundamentally unreliable at this time as there are no built-in acknowledgements nor retained state. To prevent most common loss of notifications, always check for connection before sending.
 
-### Throttling/grouping
+### Throttling / Grouping
 
 Presence updates are grouped together and throttled to prevent flooding the network with messages when presence values are rapidly updated. This means the presence infrastructure will not immediately broadcast updates but will broadcast them after a configurable delay.
 
