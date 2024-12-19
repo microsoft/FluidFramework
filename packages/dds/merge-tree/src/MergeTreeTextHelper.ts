@@ -6,7 +6,6 @@
 import { IIntegerRange } from "./client.js";
 import { MergeTree } from "./mergeTree.js";
 import { ISegmentLeaf } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
 import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
 
 interface ITextAccumulator {
@@ -15,7 +14,6 @@ interface ITextAccumulator {
 	parallelArrays?: boolean;
 }
 
-// eslint-disable-next-line import/no-deprecated
 export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	constructor(private readonly mergeTree: MergeTree) {}
 

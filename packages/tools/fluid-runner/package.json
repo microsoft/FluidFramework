@@ -79,7 +79,7 @@
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp outputFolder",
 		"eslint": "eslint --format stylish src \"bin/*\"",
-		"eslint:fix": "npm run eslint -- --fix --fix-type problem,suggestion,layout",
+		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
