@@ -12,17 +12,8 @@ import {
 	IContainerContext,
 } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
-	ConfigTypes,
-	FluidObject,
-	IConfigProviderBase,
-	IResponse,
-} from "@fluidframework/core-interfaces";
-import {
-	FluidErrorTypes,
-	ISignalEnvelope,
-	type IErrorBase,
-} from "@fluidframework/core-interfaces/internal";
+import { ConfigTypes, FluidObject, IResponse } from "@fluidframework/core-interfaces";
+import { ISignalEnvelope, type IErrorBase } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -55,7 +46,6 @@ import {
 	isFluidError,
 	isILoggingError,
 	mixinMonitoringContext,
-	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockAudience,
@@ -81,7 +71,6 @@ import {
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
-import { pkgVersion } from "../packageVersion.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -93,6 +82,8 @@ import {
 	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
+
+import { configProvider, getMockContainerContext } from "./mockContainerContext.js";
 
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
@@ -163,15 +154,13 @@ function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime)
 	} as ChannelCollection;
 }
 
-describe("Runtime", () => {
-	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-		getRawConfig: (name: string): ConfigTypes => settings[name],
-	});
+const mockClientId = "mockClientId";
 
+describe("Runtime", () => {
+	let clock: SinonFakeTimers;
 	let submittedOps: any[] = [];
 	let submittedSignals: ISignalEnvelopeWithClientIds[] = [];
 	let opFakeSequenceNumber = 1;
-	let clock: SinonFakeTimers;
 
 	before(() => {
 		clock = useFakeTimers();
@@ -191,14 +180,10 @@ describe("Runtime", () => {
 		clock.restore();
 	});
 
-	const mockClientId = "mockClientId";
+	const mockProvideEntryPoint = async () => ({
+		myProp: "myValue",
+	});
 
-	// Mock the storage layer so "submitSummary" works.
-	const defaultMockStorage: Partial<IDocumentStorageService> = {
-		uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext) => {
-			return "fakeHandle";
-		},
-	};
 	const getMockContext = (
 		params: {
 			settings?: Record<string, ConfigTypes>;
@@ -209,200 +194,27 @@ describe("Runtime", () => {
 		} = {},
 		clientId: string = mockClientId,
 	): Partial<IContainerContext> => {
-		const {
-			settings = {},
-			logger = new MockLogger(),
-			mockStorage = defaultMockStorage,
-			loadedFromVersion,
-			baseSnapshot,
-		} = params;
-
-		const mockContext = {
-			attachState: AttachState.Attached,
-			deltaManager: new MockDeltaManager(),
-			audience: new MockAudience(),
-			quorum: new MockQuorumClients(),
-			taggedLogger: mixinMonitoringContext(logger, configProvider(settings)).logger,
-			clientDetails: { capabilities: { interactive: true } },
-			closeFn: (_error?: ICriticalContainerError): void => {},
-			updateDirtyContainerState: (_dirty: boolean) => {},
-			getLoadedFromVersion: () => loadedFromVersion,
-			submitFn: (_type: MessageType, contents: any, _batch: boolean, metadata?: unknown) => {
-				submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
-				return opFakeSequenceNumber++;
-			},
-			submitSignalFn: (content: unknown, targetClientId?: string) => {
-				assert(isSignalEnvelope(content), "Invalid signal envelope");
-				submittedSignals.push({
-					envelope: content,
-					clientId,
-					targetClientId,
-				}); // Note: this object shape is for testing only. Not representative of real signals.
+		return getMockContainerContext(
+			{
+				...params,
+				submitFn: (_type: MessageType, contents: any, _batch: boolean, metadata?: unknown) => {
+					submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
+					return opFakeSequenceNumber++;
+				},
+				submitSignalFn: (content: unknown, targetClientId?: string) => {
+					assert(isSignalEnvelope(content), "Invalid signal envelope");
+					submittedSignals.push({
+						envelope: content,
+						clientId,
+						targetClientId,
+					}); // Note: this object shape is for testing only. Not representative of real signals.
+				},
 			},
 			clientId,
-			connected: true,
-			storage: mockStorage as IDocumentStorageService,
-			baseSnapshot,
-		} satisfies Partial<IContainerContext>;
-
-		// Update the delta manager's last message which is used for validation during summarization.
-		mockContext.deltaManager.lastMessage = {
-			clientId: mockClientId,
-			type: MessageType.Operation,
-			sequenceNumber: 0,
-			timestamp: Date.now(),
-			minimumSequenceNumber: 0,
-			referenceSequenceNumber: 0,
-			clientSequenceNumber: 0,
-			contents: undefined,
-		};
-		return mockContext;
+		);
 	};
 
-	const mockProvideEntryPoint = async () => ({
-		myProp: "myValue",
-	});
-
 	describe("Container Runtime", () => {
-		describe.only("Layer compatibility", () => {
-			type ContainerRuntimeWithPrivates = Omit<
-				ContainerRuntime,
-				"validateLoaderCompatibility" | "requiredFeaturesFromLoader"
-			> & {
-				requiredFeaturesFromLoader: string[];
-				validateLoaderCompatibility(
-					loaderSupportedFeatures?: ReadonlyMap<string, unknown>,
-					loaderVersion?: string,
-				): void;
-			};
-
-			const loaderVersion = "1.0.0";
-
-			let error: ICriticalContainerError | undefined;
-			const closeFn = (e?: ICriticalContainerError): void => {
-				error = e;
-			};
-
-			function getContainerContext(
-				loaderSupportedFeatures: Map<string, unknown>,
-			): IContainerContext {
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				return {
-					...getMockContext(),
-					closeFn,
-					supportedFeatures: loaderSupportedFeatures,
-					pkgVersion: loaderVersion,
-				} as IContainerContext;
-			}
-
-			it("Runtime is compatible with Loader layer", async () => {
-				const loaderSupportedFeatures = new Map([["minSupportedGeneration", 1]]);
-				await assert.doesNotReject(
-					async () =>
-						ContainerRuntime.loadRuntime({
-							context: getContainerContext(loaderSupportedFeatures),
-							registryEntries: [],
-							existing: false,
-							provideEntryPoint: mockProvideEntryPoint,
-						}),
-					"Runtime should be compatible with Loader layer",
-				);
-				assert.strictEqual(error, undefined, "No error should have been thrown");
-			});
-
-			it("Runtime generation is not compatible with Loader layer", async () => {
-				const minSupportedGeneration = 2;
-				const loaderSupportedFeatures = new Map([
-					["minSupportedGeneration", minSupportedGeneration],
-				]);
-				await assert.rejects(
-					async () =>
-						ContainerRuntime.loadRuntime({
-							context: getContainerContext(loaderSupportedFeatures),
-							registryEntries: [],
-							existing: false,
-							provideEntryPoint: mockProvideEntryPoint,
-						}),
-					"Runtime should be compatible with Loader layer",
-				);
-				assert(error !== undefined, "An error should have been thrown");
-				assert.strictEqual(
-					error.errorType,
-					FluidErrorTypes.usageError,
-					"Error type should be usageError",
-				);
-				const properties = (error as UsageError).getTelemetryProperties();
-				assert.strictEqual(
-					properties.runtimeVersion,
-					pkgVersion,
-					"Runtime version not as expected",
-				);
-				assert.strictEqual(
-					properties.loaderVersion,
-					loaderVersion,
-					"Loader version not as expected",
-				);
-				assert.strictEqual(
-					properties.runtimeGeneration,
-					1,
-					"Runtime generation not as expected",
-				);
-				assert.strictEqual(
-					properties.minSupportedGeneration,
-					minSupportedGeneration,
-					"Min supported generation not as expected",
-				);
-			});
-
-			it("Runtime features are not compatible with Loader layer", async () => {
-				const minSupportedGeneration = 1;
-				const loaderSupportedFeatures = new Map([
-					["minSupportedGeneration", minSupportedGeneration],
-				]);
-
-				const runtime = (await ContainerRuntime.loadRuntime({
-					context: getContainerContext(loaderSupportedFeatures),
-					registryEntries: [],
-					existing: false,
-					provideEntryPoint: mockProvideEntryPoint,
-				})) as unknown as ContainerRuntimeWithPrivates;
-
-				runtime.requiredFeaturesFromLoader = ["feature1"];
-				assert.throws(
-					() => runtime.validateLoaderCompatibility(loaderSupportedFeatures, loaderVersion),
-					(e: Error) => e.message === "Runtime is not compatible with Loader",
-				);
-
-				assert(error !== undefined, "An error should have been thrown");
-				assert.strictEqual(
-					error.errorType,
-					FluidErrorTypes.usageError,
-					"Error type should be usageError",
-				);
-				const properties = (error as UsageError).getTelemetryProperties();
-				assert.strictEqual(
-					properties.runtimeVersion,
-					pkgVersion,
-					"Runtime version not as expected",
-				);
-				assert.strictEqual(
-					properties.loaderVersion,
-					loaderVersion,
-					"Loader version not as expected",
-				);
-				assert.strictEqual(
-					properties.runtimeGeneration,
-					1,
-					"Runtime generation not as expected",
-				);
-				assert.strictEqual(
-					properties.minSupportedGeneration,
-					minSupportedGeneration,
-					"Min supported generation not as expected",
-				);
-			});
-		});
-
 		describe("IdCompressor", () => {
 			it("finalizes idRange on attach", async () => {
 				const logger = new MockLogger();
