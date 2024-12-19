@@ -407,6 +407,8 @@ export class SchemaFactory<
 	/**
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
+	 * @param allowedTypes - The types that may appear as values in the map.
+	 *
 	 * @remarks
 	 * The unique identifier for this Map is defined as a function of the provided types.
 	 * It is still scoped to this SchemaBuilder, but multiple calls with the same arguments will return the same schema object, providing somewhat structural typing.
@@ -443,6 +445,7 @@ export class SchemaFactory<
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param allowedTypes - The types that may appear as values in the map.
 	 *
 	 * @example
 	 * ```typescript
@@ -546,6 +549,8 @@ export class SchemaFactory<
 	/**
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
 	 *
+	 * @param allowedTypes - The types that may appear in the array.
+	 *
 	 * @remarks
 	 * The identifier for this Array is defined as a function of the provided types.
 	 * It is still scoped to this SchemaFactory, but multiple calls with the same arguments will return the same schema object, providing somewhat structural typing.
@@ -592,7 +597,7 @@ export class SchemaFactory<
 	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
-	 * @param allowedTypes - The types of nodes that may appear as values in the map.
+	 * @param allowedTypes - The types that may appear in the array.
 	 *
 	 * @example
 	 * ```typescript

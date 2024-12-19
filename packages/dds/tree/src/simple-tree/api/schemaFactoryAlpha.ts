@@ -128,7 +128,7 @@ export class SchemaFactoryAlpha<
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
-	 * @param allowedTypes - The types of nodes that may appear as values in the map.
+	 * @param allowedTypes - The types that may appear as values in the map.
 	 * @param options - Additional options for the schema.
 	 *
 	 * @example
@@ -195,7 +195,7 @@ export class SchemaFactoryAlpha<
 	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
-	 * @param allowedTypes - The types of nodes that may appear in the array.
+	 * @param allowedTypes - The types that may appear in the array.
 	 * @param options - Additional options for the schema.
 	 *
 	 * @example
