@@ -49,7 +49,7 @@ export { ApiItemKind }
 
 // @public
 export interface ApiItemTransformationConfiguration extends ApiItemTransformations, DocumentationSuiteOptions, LoggingConfiguration {
-    apiModel: ApiModel;
+    readonly apiModel: ApiModel;
     readonly uriRoot: string;
 }
 

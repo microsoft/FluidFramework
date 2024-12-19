@@ -16,6 +16,7 @@ Combines the separate "config" property bag parameters into a single "options" p
 #### Interface properties made `readonly`
 
 -   `ApiItemTransformations`
+-   `ApiItemTransformationConfiguration`
 
 ##### Example
 
