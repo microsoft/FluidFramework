@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import { assert } from "@fluidframework/core-utils/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
@@ -26,9 +24,7 @@ import {
 	refGetTileLabels,
 	refTypeIncludesFlag,
 } from "./referencePositions.js";
-// eslint-disable-next-line import/no-deprecated
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
-// eslint-disable-next-line import/no-deprecated
 import { PropertiesManager } from "./segmentPropertiesManager.js";
 
 /**
@@ -78,9 +74,9 @@ export type ISegmentInternal = Omit<ISegment, keyof IRemovalInfo | keyof IMoveIn
  */
 export type ISegmentLeaf = ISegmentInternal & {
 	parent?: MergeBlock;
-	// eslint-disable-next-line import/no-deprecated
+
 	segmentGroups?: SegmentGroupCollection;
-	// eslint-disable-next-line import/no-deprecated
+
 	propertyManager?: PropertiesManager;
 	/**
 	 * If a segment is inserted into an obliterated range,

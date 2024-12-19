@@ -10,14 +10,22 @@ Combines the separate "config" property bag parameters into a single "options" p
 
 #### Type-renames
 
--   `ConfigurationBase` -> `LoggingConfiguration`.
--   `ApiItemTransformationOptions` -> `ApiItemTransformations`
+-   `ConfigurationBase` -> `LoggingConfiguration`
+-   `RenderDocumentAsHtmlConfig` -> `RenderDocumentAsHtmlConfiguration`
+-   `RenderHtmlConfig` -> `RenderHtmlConfiguration`
+-   `ToHtmlConfig` -> `ToHtmlConfiguration`
 
-#### Interface properties made `readonly`
+#### Configuration properties made `readonly`
 
 -   `ApiItemTransformations`
 -   `ApiItemTransformationConfiguration`
+-   `ApiItemTransformationOptions`
 -   `DocumentationSuiteOptions`
+-   `HtmlRenderer.RenderHtmlConfig`
+-   `LintApiModelConfiguration`
+-   `MarkdownRenderer.Renderers`
+-   `MarkdownRenderer.RenderContext`
+-   `ToHtmlTransformations`
 
 ##### Example
 

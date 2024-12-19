@@ -220,13 +220,13 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
 }
 
 // @public
-export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfig): Nodes[];
+export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfiguration): Nodes[];
 
 // @public
 export function documentationNodesToHtml(nodes: DocumentationNode[], transformationContext: ToHtmlContext): Nodes[];
 
 // @public
-export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfig): Nodes;
+export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfiguration): Nodes;
 
 // @public
 export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
@@ -311,7 +311,7 @@ export interface DocumentNodeProps {
 }
 
 // @public
-export function documentToHtml(document: DocumentNode, config: ToHtmlConfig): Root;
+export function documentToHtml(document: DocumentNode, config: ToHtmlConfiguration): Root;
 
 // @public
 export interface DocumentWriter {
@@ -507,7 +507,7 @@ export function lintApiModel(configuration: LintApiModelConfiguration): Promise<
 
 // @beta
 export interface LintApiModelConfiguration extends LoggingConfiguration {
-    apiModel: ApiModel;
+    readonly apiModel: ApiModel;
 }
 
 // @beta
@@ -557,8 +557,8 @@ export interface MarkdownRenderConfiguration extends LoggingConfiguration {
 
 // @public
 export interface MarkdownRenderContext extends TextFormatting {
-    customRenderers?: MarkdownRenderers;
-    headingLevel: number;
+    readonly customRenderers?: MarkdownRenderers;
+    readonly headingLevel: number;
     readonly insideCodeBlock?: boolean;
     readonly insideTable?: boolean;
 }
@@ -578,7 +578,7 @@ export { MarkdownRenderer }
 
 // @public
 export interface MarkdownRenderers {
-    [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
+    readonly [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
 }
 
 // @public
@@ -623,7 +623,7 @@ export { ReleaseTag }
 function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions): Promise<void>;
 
 // @public
-interface RenderApiModelAsHtmlOptions extends ApiItemTransformationConfiguration, RenderDocumentAsHtmlConfig, FileSystemConfiguration {
+interface RenderApiModelAsHtmlOptions extends ApiItemTransformationConfiguration, RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
 // @public
@@ -634,20 +634,20 @@ interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationConfigura
 }
 
 // @public
-function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfig): string;
+function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfiguration): string;
 
 // @public
 function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfiguration): string;
 
 // @public @sealed
-export interface RenderDocumentAsHtmlConfig extends ToHtmlConfig, RenderHtmlConfig {
+export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, RenderHtmlConfiguration {
 }
 
 // @alpha
 function renderDocumentsAsHtml(documents: DocumentNode[], options: RenderDocumentsAsHtmlOptions): Promise<void>;
 
 // @public
-interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfig, FileSystemConfiguration {
+interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
 // @public
@@ -658,13 +658,11 @@ interface RenderDocumentsAsMarkdownOptions extends MarkdownRenderConfiguration, 
 }
 
 // @public
-function renderHtml(html: Nodes, { prettyFormatting }: {
-    prettyFormatting?: boolean;
-}): string;
+function renderHtml(html: Nodes, config: RenderHtmlConfiguration): string;
 
 // @public @sealed
-export interface RenderHtmlConfig {
-    prettyFormatting?: boolean;
+export interface RenderHtmlConfiguration {
+    readonly prettyFormatting?: boolean;
 }
 
 // @public
@@ -776,7 +774,7 @@ export interface TextFormatting {
 }
 
 // @public
-export interface ToHtmlConfig extends LoggingConfiguration {
+export interface ToHtmlConfiguration extends LoggingConfiguration {
     readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
     readonly rootFormatting?: TextFormatting;
@@ -795,7 +793,7 @@ export type ToHtmlTransformation = (node: DocumentationNode, context: ToHtmlCont
 
 // @public
 export interface ToHtmlTransformations {
-    [documentationNodeKind: string]: ToHtmlTransformation;
+    readonly [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public

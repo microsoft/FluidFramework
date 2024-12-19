@@ -103,7 +103,7 @@ class ScheduleManagerCore {
 			// Set the batch flag to false on the last message to indicate the end of the send batch
 			const lastMessage = messages[messages.length - 1];
 			// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 			lastMessage.metadata = { ...(lastMessage.metadata as any), batch: false };
 		});
 
@@ -303,7 +303,7 @@ class ScheduleManagerCore {
 			);
 			this.pauseSequenceNumber = message.sequenceNumber;
 			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 			this.currentBatchClientId = message.clientId as string;
 			// Start of the batch
 			// Only pause processing if queue has no other ops!
