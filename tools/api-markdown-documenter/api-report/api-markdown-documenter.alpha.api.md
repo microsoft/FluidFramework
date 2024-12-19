@@ -275,17 +275,17 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 
 // @public
 export interface DocumentationSuiteOptions {
-    documentBoundaries?: DocumentBoundaries;
-    getAlertsForItem?: (apiItem: ApiItem) => string[];
-    getFileNameForItem?: (apiItem: ApiItem) => string;
-    getHeadingTextForItem?: (apiItem: ApiItem) => string;
-    getLinkTextForItem?: (apiItem: ApiItem) => string;
-    getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
-    hierarchyBoundaries?: HierarchyBoundaries;
-    includeBreadcrumb?: boolean;
-    includeTopLevelDocumentHeading?: boolean;
-    minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
-    skipPackage?: (apiPackage: ApiPackage) => boolean;
+    readonly documentBoundaries?: DocumentBoundaries;
+    readonly getAlertsForItem?: (apiItem: ApiItem) => string[];
+    readonly getFileNameForItem?: (apiItem: ApiItem) => string;
+    readonly getHeadingTextForItem?: (apiItem: ApiItem) => string;
+    readonly getLinkTextForItem?: (apiItem: ApiItem) => string;
+    readonly getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
+    readonly hierarchyBoundaries?: HierarchyBoundaries;
+    readonly includeBreadcrumb?: boolean;
+    readonly includeTopLevelDocumentHeading?: boolean;
+    readonly minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
+    readonly skipPackage?: (apiPackage: ApiPackage) => boolean;
 }
 
 // @public

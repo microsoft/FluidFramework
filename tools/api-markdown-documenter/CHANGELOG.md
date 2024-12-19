@@ -17,6 +17,7 @@ Combines the separate "config" property bag parameters into a single "options" p
 
 -   `ApiItemTransformations`
 -   `ApiItemTransformationConfiguration`
+-   `DocumentationSuiteOptions`
 
 ##### Example
 
