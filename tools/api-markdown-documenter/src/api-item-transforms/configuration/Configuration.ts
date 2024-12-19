@@ -36,7 +36,7 @@ export interface ApiItemTransformationConfiguration
 	 *
 	 * If you need to generate a model from API reports on disk, see {@link loadModel}.
 	 */
-	apiModel: ApiModel;
+	readonly apiModel: ApiModel;
 
 	/**
 	 * Default root URI used when generating content links.
