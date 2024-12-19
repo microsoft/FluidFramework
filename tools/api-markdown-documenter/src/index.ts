@@ -15,6 +15,8 @@
 
 export {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationConfigurationBase,
+	type ApiItemTransformationOptions,
 	type ApiItemTransformations,
 	type DocumentationSuiteConfiguration,
 	type DefaultDocumentationSuiteOptions,

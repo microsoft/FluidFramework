@@ -12,6 +12,7 @@ import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 import { createDocument } from "./Utilities.js";
 import {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
 import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers/index.js";
@@ -30,15 +31,13 @@ import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "
  * - {@link DocumentationSuiteOptions.documentBoundaries}
  * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
  *
- * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
+ * @param options - Options for transforming API items into {@link DocumentationNode}s.
  *
  * @public
  */
-export function transformApiModel(
-	transformConfig: ApiItemTransformationConfiguration,
-): DocumentNode[] {
-	const completeConfig = getApiItemTransformationConfigurationWithDefaults(transformConfig);
-	const { apiModel, logger, skipPackage } = completeConfig;
+export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[] {
+	const config = getApiItemTransformationConfigurationWithDefaults(options);
+	const { apiModel, logger, skipPackage } = config;
 
 	logger.verbose(`Generating documentation for API Model...`);
 
@@ -48,7 +47,7 @@ export function transformApiModel(
 	const documents: Map<ApiItem, DocumentNode> = new Map<ApiItem, DocumentNode>();
 
 	// Always render Model document (this is the "root" of the generated documentation suite).
-	documents.set(apiModel, createDocumentForApiModel(apiModel, completeConfig));
+	documents.set(apiModel, createDocumentForApiModel(apiModel, config));
 
 	const packages = apiModel.packages;
 
@@ -85,13 +84,13 @@ export function transformApiModel(
 
 			documents.set(
 				packageItem,
-				createDocumentForSingleEntryPointPackage(packageItem, entryPoint, completeConfig),
+				createDocumentForSingleEntryPointPackage(packageItem, entryPoint, config),
 			);
 
-			const packageDocumentItems = getDocumentItems(entryPoint, completeConfig);
+			const packageDocumentItems = getDocumentItems(entryPoint, config);
 			for (const apiItem of packageDocumentItems) {
 				if (!documents.has(apiItem)) {
-					documents.set(apiItem, apiItemToDocument(apiItem, completeConfig));
+					documents.set(apiItem, apiItemToDocument(apiItem, config));
 				}
 			}
 		} else {
@@ -100,23 +99,16 @@ export function transformApiModel(
 
 			documents.set(
 				packageItem,
-				createDocumentForMultiEntryPointPackage(
-					packageItem,
-					packageEntryPoints,
-					completeConfig,
-				),
+				createDocumentForMultiEntryPointPackage(packageItem, packageEntryPoints, config),
 			);
 
 			for (const entryPoint of packageEntryPoints) {
-				documents.set(
-					entryPoint,
-					createDocumentForApiEntryPoint(entryPoint, completeConfig),
-				);
+				documents.set(entryPoint, createDocumentForApiEntryPoint(entryPoint, config));
 
-				const packageDocumentItems = getDocumentItems(entryPoint, completeConfig);
+				const packageDocumentItems = getDocumentItems(entryPoint, config);
 				for (const apiItem of packageDocumentItems) {
 					if (!documents.has(apiItem)) {
-						documents.set(apiItem, apiItemToDocument(apiItem, completeConfig));
+						documents.set(apiItem, apiItemToDocument(apiItem, config));
 					}
 				}
 			}
@@ -134,10 +126,7 @@ export function transformApiModel(
  * @param apiItem - The API item in question.
  * @param config - See {@link ApiItemTransformationConfiguration}
  */
-function getDocumentItems(
-	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
-): ApiItem[] {
+function getDocumentItems(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ApiItem[] {
 	const { documentBoundaries } = config;
 
 	const result: ApiItem[] = [];
@@ -163,7 +152,7 @@ function getDocumentItems(
  */
 function createDocumentForApiModel(
 	apiModel: ApiModel,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
 	const { logger, transformApiModel: createModelBodySections } = config;
 
@@ -194,7 +183,7 @@ function createDocumentForApiModel(
 function createDocumentForSingleEntryPointPackage(
 	apiPackage: ApiPackage,
 	apiEntryPoint: ApiEntryPoint,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
 	const { includeBreadcrumb, logger, transformApiEntryPoint } = config;
 
@@ -234,7 +223,7 @@ function createDocumentForSingleEntryPointPackage(
 function createDocumentForMultiEntryPointPackage(
 	apiPackage: ApiPackage,
 	apiEntryPoints: readonly ApiEntryPoint[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
 	const { includeBreadcrumb, logger } = config;
 

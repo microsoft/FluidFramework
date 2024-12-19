@@ -5,6 +5,8 @@
 
 export {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationConfigurationBase,
+	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./Configuration.js";
 export {
@@ -18,7 +20,7 @@ export {
 } from "./DocumentationSuiteOptions.js";
 export {
 	type ApiItemTransformations,
-	getApiItemTransformationOptionsWithDefaults,
+	getApiItemTransformationsWithDefaults as getApiItemTransformationOptionsWithDefaults,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 } from "./Transformations.js";
