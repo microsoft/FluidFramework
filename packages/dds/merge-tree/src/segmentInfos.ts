@@ -34,28 +34,46 @@ export interface IInsertionInfo {
 }
 
 /**
- * Returns the insertion information for a segment.
+ * Converts a segment-like object to an insertion info object if possible.
+ *
+ * @param segmentLike - The segment-like object to convert.
+ * @returns The insertion info object if the conversion is possible, otherwise undefined.
  */
 export function toInsertionInfo(
-	maybe: ISegmentInternal | Partial<IInsertionInfo> | undefined,
+	segmentLike: ISegmentInternal | Partial<IInsertionInfo> | undefined,
 ): IInsertionInfo | undefined {
-	const maybeInserted = maybe as Partial<IInsertionInfo> | undefined;
-	if (maybeInserted?.clientId !== undefined && maybeInserted?.seq !== undefined) {
-		return maybe as IInsertionInfo;
+	const maybe = segmentLike as Partial<IInsertionInfo> | undefined;
+	if (maybe?.clientId !== undefined && maybe?.seq !== undefined) {
+		return segmentLike as IInsertionInfo;
 	}
 	assert(
-		maybeInserted?.clientId === undefined && maybeInserted?.seq === undefined,
+		maybe?.clientId === undefined && maybe?.seq === undefined,
 		"both clientId and seq should be set or not set",
 	);
 }
-export const hasInsertionInfo = (
-	maybe: ISegmentInternal | Partial<IInsertionInfo> | undefined,
-): maybe is IInsertionInfo => toInsertionInfo(maybe) !== undefined;
 
-export const assertInsertionInfo: <T extends Partial<IInsertionInfo> | undefined>(
-	maybe: ISegmentInternal | Partial<IInsertionInfo> | T,
-) => asserts maybe is IInsertionInfo | Exclude<T, Partial<IInsertionInfo>> = (maybe) =>
-	assert(maybe === undefined || hasInsertionInfo(maybe), "must be insertionInfo");
+/**
+ * A type-guard which determines if the segment has insertion info, and
+ * returns true if it does, along with applying strong typing.
+ *
+ * @param segmentLike - The segment-like object to check.
+ * @returns True if the segment has insertion info, otherwise false.
+ */
+export const isInserted = (
+	segmentLike: ISegmentInternal | Partial<IInsertionInfo> | undefined,
+): segmentLike is IInsertionInfo => toInsertionInfo(segmentLike) !== undefined;
+
+/**
+ * Asserts that the segment has insertion info. Usage of this function should not produce a user facing error.
+ *
+ * @param segmentLike - The segment-like object to check.
+ * @throws Will throw an error if the segment does not have insertion info.
+ */
+export const assertInserted: <T extends Partial<IInsertionInfo> | undefined>(
+	segmentLike: ISegmentInternal | Partial<IInsertionInfo> | T,
+) => asserts segmentLike is IInsertionInfo | Exclude<T, Partial<IInsertionInfo>> = (
+	segmentLike,
+) => assert(segmentLike === undefined || isInserted(segmentLike), "must be insertionInfo");
 
 /**
  * Contains removal information associated to an {@link ISegment}.
@@ -82,31 +100,46 @@ export interface IRemovalInfo {
 }
 
 /**
- * Returns the removal information for a segment.
+ * Converts a segment-like object to a removal info object if possible.
  *
- * @internal
+ * @param segmentLike - The segment-like object to convert.
+ * @returns The removal info object if the conversion is possible, otherwise undefined.
  */
 export function toRemovalInfo(
-	maybe: ISegmentInternal | Partial<IRemovalInfo> | undefined,
+	segmentLike: ISegmentInternal | Partial<IRemovalInfo> | undefined,
 ): IRemovalInfo | undefined {
-	const maybeRemoved = maybe as Partial<IRemovalInfo> | undefined;
-	if (maybeRemoved?.removedClientIds !== undefined && maybeRemoved?.removedSeq !== undefined) {
-		return maybe as IRemovalInfo;
+	const maybe = segmentLike as Partial<IRemovalInfo> | undefined;
+	if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
+		return segmentLike as IRemovalInfo;
 	}
 	assert(
-		maybeRemoved?.removedClientIds === undefined && maybeRemoved?.removedSeq === undefined,
+		maybe?.removedClientIds === undefined && maybe?.removedSeq === undefined,
 		0x2bf /* "both removedClientIds and removedSeq should be set or not set" */,
 	);
 }
 
-export const hasRemovalInfo = (
-	maybe: ISegmentInternal | Partial<IRemovalInfo> | undefined,
-): maybe is IRemovalInfo => toRemovalInfo(maybe) !== undefined;
+/**
+ * A type-guard which determines if the segment has removal info, and
+ * returns true if it does, along with applying strong typing.
+ *
+ * @param segmentLike - The segment-like object to check.
+ * @returns True if the segment has removal info, otherwise false.
+ */
+export const isRemoved = (
+	segmentLike: ISegmentInternal | Partial<IRemovalInfo> | undefined,
+): segmentLike is IRemovalInfo => toRemovalInfo(segmentLike) !== undefined;
 
-export const assertRemovalInfo: <T extends Partial<IRemovalInfo> | undefined>(
-	maybe: ISegmentInternal | Partial<IRemovalInfo> | T,
-) => asserts maybe is IRemovalInfo | Exclude<T, Partial<IRemovalInfo>> = (maybe) =>
-	assert(maybe === undefined || hasRemovalInfo(maybe), "must be IRemovalInfo");
+/**
+ * Asserts that the segment has removal info. Usage of this function should not produce a user facing error.
+ *
+ * @param segmentLike - The segment-like object to check.
+ * @throws Will throw an error if the segment does not have removal info.
+ */
+export const assertRemoved: <T extends Partial<IRemovalInfo> | undefined>(
+	segmentLike: ISegmentInternal | Partial<IRemovalInfo> | T,
+) => asserts segmentLike is IRemovalInfo | Exclude<T, Partial<IRemovalInfo>> = (segmentLike) =>
+	assert(segmentLike === undefined || isRemoved(segmentLike), "must be removalInfo");
+
 /**
  * Tracks information about when and where this segment was moved to.
  *
@@ -176,35 +209,62 @@ export interface IMoveInfo {
 }
 
 export function toMoveInfo(
-	maybe: ISegmentInternal | Partial<IMoveInfo> | undefined,
+	segmentLike: ISegmentInternal | Partial<IMoveInfo> | undefined,
 ): IMoveInfo | undefined {
-	const maybeMoved = maybe as Partial<IMoveInfo> | undefined;
-	if (maybeMoved?.movedClientIds !== undefined && maybeMoved?.movedSeq !== undefined) {
+	const maybe = segmentLike as Partial<IMoveInfo> | undefined;
+	if (maybe?.movedClientIds !== undefined && maybe?.movedSeq !== undefined) {
 		return maybe as IMoveInfo;
 	}
 	assert(
-		maybeMoved?.movedClientIds === undefined &&
-			maybeMoved?.movedSeq === undefined &&
-			maybeMoved?.movedSeqs === undefined &&
-			maybeMoved?.wasMovedOnInsert === undefined,
+		maybe?.movedClientIds === undefined &&
+			maybe?.movedSeq === undefined &&
+			maybe?.movedSeqs === undefined &&
+			maybe?.wasMovedOnInsert === undefined,
 		0x86d /* movedClientIds, movedSeq, wasMovedOnInsert, and movedSeqs should all be either set or not set */,
 	);
 }
 
-export const hasMoveInfo = (
-	maybe: ISegmentInternal | Partial<IMoveInfo> | undefined,
-): maybe is IMoveInfo => toMoveInfo(maybe) !== undefined;
+/**
+ * A type-guard which determines if the segment has move info, and
+ * returns true if it does, along with applying strong typing.
+ *
+ * @param segmentLike - The segment-like object to check.
+ * @returns True if the segment has move info, otherwise false.
+ */
+export const isMoved = (
+	segmentLike: ISegmentInternal | Partial<IMoveInfo> | undefined,
+): segmentLike is IMoveInfo => toMoveInfo(segmentLike) !== undefined;
 
-export const assertMoveInfo: <T extends Partial<IMoveInfo> | undefined>(
-	maybe: ISegmentInternal | Partial<IMoveInfo> | T,
-) => asserts maybe is IMoveInfo | Exclude<T, Partial<IMoveInfo>> = (maybe) =>
-	assert(maybe === undefined || hasMoveInfo(maybe), "must be IMoveInfo");
+/**
+ * Asserts that the segment has move info. Usage of this function should not produce a user facing error.
+ *
+ * @param segmentLike - The segment-like object to check.
+ * @throws Will throw an error if the segment does not have move info.
+ */
+export const assertMoved: <T extends Partial<IMoveInfo> | undefined>(
+	segmentLike: ISegmentInternal | Partial<IMoveInfo> | T,
+) => asserts segmentLike is IMoveInfo | Exclude<T, Partial<IMoveInfo>> = (segmentLike) =>
+	assert(segmentLike === undefined || isMoved(segmentLike), "must be moveInfo");
 
+/**
+ * A union type representing any segment info.
+ */
 export type SegmentInfo = IInsertionInfo | IMoveInfo | IRemovalInfo;
 
+/**
+ * A type representing a segment with additional info.
+ *
+ */
 export type SegmentWithInfo<T extends SegmentInfo> = ISegmentLeaf & T;
 
-export const setSegmentInfo = <T extends SegmentInfo>(
+/**
+ * Overwrites the segment info on a segment-like object.
+ *
+ * @param segmentLike - The segment-like object to set the info on.
+ * @param info - The segment info to overwrite.
+ * @returns The segment-like object with the info set.
+ */
+export const overwriteInfo = <T extends SegmentInfo>(
+	segmentLike: ISegmentLeaf,
 	info: T,
-	maybe: ISegmentLeaf,
-): SegmentWithInfo<T> => Object.assign(maybe, info);
+): SegmentWithInfo<T> => Object.assign(segmentLike, info);

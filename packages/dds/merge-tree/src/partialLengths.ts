@@ -23,7 +23,7 @@ import {
 	IRemovalInfo,
 	// eslint-disable-next-line import/no-deprecated
 	IMoveInfo,
-	assertInsertionInfo,
+	assertInserted,
 } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 
@@ -510,7 +510,7 @@ export class PartialSequenceLengths {
 		firstGte: PartialSequenceLength,
 		clientIds: number[],
 	): void {
-		assertInsertionInfo(segment);
+		assertInserted(segment);
 		const nonInsertingClientIds = clientIds.filter((id) => id !== segment.clientId);
 
 		PartialSequenceLengths.accumulateMoveClientOverlap(
@@ -544,7 +544,7 @@ export class PartialSequenceLengths {
 		obliterateOverlapLen: number,
 		clientIds: number[],
 	): RedBlackTree<number, IOverlapClient> {
-		assertInsertionInfo(segment);
+		assertInserted(segment);
 		const nonInsertingClientIds = clientIds.filter((id) => id !== segment.clientId);
 		const overlapObliterateClients = PartialSequenceLengths.getOverlapClients(
 			nonInsertingClientIds,
@@ -648,7 +648,7 @@ export class PartialSequenceLengths {
 		// eslint-disable-next-line import/no-deprecated
 		moveInfo?: IMoveInfo,
 	): void {
-		assertInsertionInfo(segment);
+		assertInserted(segment);
 
 		const removalIsLocal =
 			!!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;

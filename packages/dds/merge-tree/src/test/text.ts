@@ -8,7 +8,7 @@ import { MergeTree } from "../mergeTree.js";
 import { Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { reservedTileLabelsKey } from "../referencePositions.js";
-import { setSegmentInfo, type IInsertionInfo, type SegmentWithInfo } from "../segmentInfos.js";
+import { overwriteInfo, type IInsertionInfo, type SegmentWithInfo } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 const defaultInsertionInfo: IInsertionInfo = {
@@ -45,14 +45,12 @@ export function loadSegments(
 			if (paragraph.includes("Chapter") || paragraph.includes("PRIDE AND PREJ")) {
 				if (pgMarker) {
 					pgMarker.properties = { header: 2 };
-					segments.push(
-						setSegmentInfo<IInsertionInfo>(defaultInsertionInfo, new TextSegment(paragraph)),
-					);
+					segments.push(overwriteInfo(new TextSegment(paragraph), defaultInsertionInfo));
 				} else {
 					segments.push(
-						setSegmentInfo<IInsertionInfo>(
-							defaultInsertionInfo,
+						overwriteInfo(
 							TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }),
+							defaultInsertionInfo,
 						),
 					);
 				}
@@ -63,31 +61,26 @@ export function loadSegments(
 					if (i & 1) {
 						if (emphStrings[i].length > 0) {
 							segments.push(
-								setSegmentInfo<IInsertionInfo>(
-									defaultInsertionInfo,
+								overwriteInfo(
 									TextSegment.make(emphStrings[i], { fontStyle: "italic" }),
+									defaultInsertionInfo,
 								),
 							);
 						}
 					} else {
 						if (emphStrings[i].length > 0) {
 							segments.push(
-								setSegmentInfo<IInsertionInfo>(
-									defaultInsertionInfo,
-									new TextSegment(emphStrings[i]),
-								),
+								overwriteInfo(new TextSegment(emphStrings[i]), defaultInsertionInfo),
 							);
 						}
 					}
 				}
 			}
 		} else {
-			segments.push(
-				setSegmentInfo<IInsertionInfo>(defaultInsertionInfo, new TextSegment(paragraph)),
-			);
+			segments.push(overwriteInfo(new TextSegment(paragraph), defaultInsertionInfo));
 		}
 		if (pgMarker) {
-			segments.push(setSegmentInfo<IInsertionInfo>(defaultInsertionInfo, pgMarker));
+			segments.push(overwriteInfo(pgMarker, defaultInsertionInfo));
 		}
 	}
 

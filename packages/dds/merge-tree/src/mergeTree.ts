@@ -83,8 +83,8 @@ import {
 } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
-	hasMoveInfo,
-	hasRemovalInfo,
+	isMoved,
+	isRemoved,
 	toMoveInfo,
 	toRemovalInfo,
 	type IInsertionInfo,
@@ -131,7 +131,7 @@ function isRemovedAndAckedOrMovedAndAcked(segment: ISegmentLeaf): boolean {
 }
 
 function isRemovedOrMoved(segment: ISegmentLeaf): boolean {
-	return hasRemovalInfo(segment) || hasMoveInfo(segment);
+	return isRemoved(segment) || isMoved(segment);
 }
 
 function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undefined {
@@ -1403,8 +1403,8 @@ export class MergeTree {
 	public getMarkerFromId(id: string): Marker | undefined {
 		const marker = this.idToMarker.get(id);
 		return marker === undefined ||
-			hasRemovalInfo(marker) ||
-			(hasMoveInfo(marker) && marker.moveDst === undefined)
+			isRemoved(marker) ||
+			(isMoved(marker) && marker.moveDst === undefined)
 			? undefined
 			: marker;
 	}
@@ -2556,7 +2556,7 @@ export class MergeTree {
 				// Slide past all segments that are not also remotely removed
 				affectedSegments.remove(segmentToSlide);
 				affectedSegments.insertAfter(lastLocalSegment, segmentToSlide.data);
-			} else if (hasRemovalInfo(segmentToSlide.data)) {
+			} else if (isRemoved(segmentToSlide.data)) {
 				assert(
 					segmentToSlide.data.localRemovedSeq !== undefined,
 					0x54d /* Removed segment that hasnt had its removal acked should be locally removed */,
@@ -2662,7 +2662,7 @@ export class MergeTree {
 			}
 		};
 		walkAllChildSegments(this.root, (seg) => {
-			if (hasRemovalInfo(seg) || seg.seq === UnassignedSequenceNumber) {
+			if (isRemoved(seg) || seg.seq === UnassignedSequenceNumber) {
 				if (isRemovedAndAcked(seg)) {
 					rangeContainsRemoteRemovedSegs = true;
 				}

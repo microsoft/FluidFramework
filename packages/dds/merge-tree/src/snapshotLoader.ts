@@ -28,7 +28,7 @@ import { IJSONSegment } from "./ops.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	IRemovalInfo,
-	setSegmentInfo,
+	overwriteInfo,
 	type IInsertionInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
@@ -106,16 +106,13 @@ export class SnapshotLoader {
 		spec: IJSONSegment | IJSONSegmentWithMergeInfo,
 	): SegmentWithInfo<IInsertionInfo> => {
 		if (hasMergeInfo(spec)) {
-			const seg = setSegmentInfo<IInsertionInfo>(
-				{
-					clientId:
-						spec.client === undefined
-							? NonCollabClient
-							: this.client.getOrAddShortClientId(spec.client),
-					seq: spec.seq ?? UniversalSequenceNumber,
-				},
-				this.client.specToSegment(spec.json),
-			);
+			const seg = overwriteInfo<IInsertionInfo>(this.client.specToSegment(spec.json), {
+				clientId:
+					spec.client === undefined
+						? NonCollabClient
+						: this.client.getOrAddShortClientId(spec.client),
+				seq: spec.seq ?? UniversalSequenceNumber,
+			});
 
 			if (spec.removedSeq !== undefined) {
 				// this format had a bug where it didn't store all the overlap clients
@@ -128,44 +125,36 @@ export class SnapshotLoader {
 				}
 				assert(spec.removedClientIds !== undefined, "must have removedClient ids");
 				// eslint-disable-next-line import/no-deprecated
-				setSegmentInfo<IRemovalInfo>(
-					{
-						removedSeq: spec.removedSeq,
-						removedClientIds: spec.removedClientIds?.map((id) =>
-							this.client.getOrAddShortClientId(id),
-						),
-					},
-					seg,
-				);
+				overwriteInfo<IRemovalInfo>(seg, {
+					removedSeq: spec.removedSeq,
+					removedClientIds: spec.removedClientIds.map((id) =>
+						this.client.getOrAddShortClientId(id),
+					),
+				});
 			}
 			if (spec.movedSeq !== undefined) {
 				assert(
 					spec.movedClientIds !== undefined && spec.movedSeqs !== undefined,
-					"must have removedClient ids",
+					"must have movedIds ids",
 				);
 				// eslint-disable-next-line import/no-deprecated
-				setSegmentInfo<IMoveInfo>(
-					{
-						movedSeq: spec.movedSeq,
-						movedSeqs: spec.movedSeqs,
-						movedClientIds: spec.movedClientIds.map((id) =>
-							this.client.getOrAddShortClientId(id),
-						),
-						wasMovedOnInsert: false,
-					},
-					seg,
-				);
+				overwriteInfo<IMoveInfo>(seg, {
+					movedSeq: spec.movedSeq,
+					movedSeqs: spec.movedSeqs,
+					movedClientIds: spec.movedClientIds.map((id) =>
+						this.client.getOrAddShortClientId(id),
+					),
+					// BUG? This isn't persisted
+					wasMovedOnInsert: false,
+				});
 			}
 
 			return seg;
 		}
-		return setSegmentInfo(
-			{
-				seq: UniversalSequenceNumber,
-				clientId: NonCollabClient,
-			},
-			this.client.specToSegment(spec),
-		);
+		return overwriteInfo(this.client.specToSegment(spec), {
+			seq: UniversalSequenceNumber,
+			clientId: NonCollabClient,
+		});
 	};
 
 	private loadHeader(header: string): MergeTreeChunkV1 {

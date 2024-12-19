@@ -25,7 +25,7 @@ import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import { ISegmentLeaf } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
-import { assertInsertionInfo } from "./segmentInfos.js";
+import { assertInserted } from "./segmentInfos.js";
 import {
 	IJSONSegmentWithMergeInfo,
 	JsonSegmentSpecs,
@@ -224,7 +224,7 @@ export class SnapshotV1 {
 
 		let prev: ISegmentLeaf | undefined;
 		const extractSegment = (segment: ISegmentLeaf): boolean => {
-			assertInsertionInfo(segment);
+			assertInserted(segment);
 			// Elide segments that do not need to be included in the snapshot.  A segment may be elided if
 			// either condition is true:
 			//   a) The segment has not yet been ACKed.  We do not need to snapshot unACKed segments because

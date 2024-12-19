@@ -126,7 +126,6 @@ export {
 export {
 	IMoveInfo,
 	IRemovalInfo,
-	toRemovalInfo,
 } from "./segmentInfos.js";
 export {
 	PropsOrAdjust,

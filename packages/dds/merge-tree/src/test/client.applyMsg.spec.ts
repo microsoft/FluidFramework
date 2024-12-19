@@ -16,7 +16,7 @@ import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegmentLeaf, SegmentGroup } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
-import { assertInsertionInfo, assertRemovalInfo } from "../segmentInfos.js";
+import { assertInserted, assertRemoved } from "../segmentInfos.js";
 import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -88,7 +88,7 @@ describe("client.applyMsg", () => {
 				switch (i % 6) {
 					case 0:
 					case 5: {
-						assertRemovalInfo(seg);
+						assertRemoved(seg);
 						assert.equal(
 							seg.removedSeq,
 							msg.sequenceNumber,
@@ -99,7 +99,7 @@ describe("client.applyMsg", () => {
 
 					case 1:
 					case 4: {
-						assertInsertionInfo(seg);
+						assertInserted(seg);
 						assert.equal(seg.seq, msg.sequenceNumber, "inserted segment has unexpected id");
 						break;
 					}
