@@ -40,11 +40,24 @@ export type { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.j
 export {
 	treeApi as Tree,
 	type TreeApi,
+	type RunTransaction,
+} from "./treeApi.js";
+
+export {
+	type AbortTransaction,
+	type AbortTransactionExt,
+	type ContinueTransaction,
+	type ContinueTransactionExt,
 	type TransactionConstraint,
 	type NodeInDocumentConstraint,
-	type RunTransaction,
+	type RunTransactionParams,
+	type RunTransactionParamsExt,
+	type RunTransactionSucceeded,
+	type RunTransactionSucceededExt,
+	type RunTransactionFailed,
+	type RunTransactionFailedExt,
 	rollback,
-} from "./treeApi.js";
+} from "./transactionTypes.js";
 
 export { TreeAlpha } from "./treeApiAlpha.js";
 
