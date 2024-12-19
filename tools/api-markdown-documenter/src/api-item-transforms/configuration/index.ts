@@ -16,7 +16,7 @@ export {
 	type HierarchyBoundaries,
 } from "./DocumentationSuiteOptions.js";
 export {
-	type ApiItemTransformationOptions,
+	type ApiItemTransformations,
 	getApiItemTransformationOptionsWithDefaults,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,

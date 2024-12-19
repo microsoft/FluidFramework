@@ -48,13 +48,13 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public
-export interface ApiItemTransformationConfiguration extends ApiItemTransformationOptions, DocumentationSuiteOptions, LoggingConfiguration {
+export interface ApiItemTransformationConfiguration extends ApiItemTransformations, DocumentationSuiteOptions, LoggingConfiguration {
     apiModel: ApiModel;
     readonly uriRoot: string;
 }
 
 // @public
-export interface ApiItemTransformationOptions {
+export interface ApiItemTransformations {
     createDefaultLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
     transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
     transformApiClass?: TransformApiItemWithChildren<ApiClass>;

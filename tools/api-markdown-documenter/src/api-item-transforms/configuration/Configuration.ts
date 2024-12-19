@@ -13,7 +13,7 @@ import {
 	getDocumentationSuiteOptionsWithDefaults,
 } from "./DocumentationSuiteOptions.js";
 import {
-	type ApiItemTransformationOptions,
+	type ApiItemTransformations,
 	getApiItemTransformationOptionsWithDefaults,
 } from "./TransformationOptions.js";
 
@@ -23,7 +23,7 @@ import {
  * @public
  */
 export interface ApiItemTransformationConfiguration
-	extends ApiItemTransformationOptions,
+	extends ApiItemTransformations,
 		DocumentationSuiteOptions,
 		LoggingConfiguration {
 	/**
