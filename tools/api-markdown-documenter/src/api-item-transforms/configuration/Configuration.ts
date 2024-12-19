@@ -44,7 +44,7 @@ export interface ApiItemTransformationConfigurationBase {
 }
 
 /**
- * API Item transformation configuration.
+ * System configuration for API Item transformation functionality.
  *
  * @public
  */
@@ -55,7 +55,7 @@ export interface ApiItemTransformationConfiguration
 		Required<LoggingConfiguration> {}
 
 /**
- * API Item transformation configuration.
+ * Input options for API Item transformation APIs.
  *
  * @public
  */
