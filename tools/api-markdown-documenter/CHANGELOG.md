@@ -12,6 +12,8 @@ Combines the separate "config" property bag parameters into a single "options" p
 
 -   `ConfigurationBase` -> `LoggingConfiguration`.
 -   `ToHtmlConfig` -> `ToHtmlConfiguration`
+-   `RenderDocumentAsHtmlConfig` -> `RenderDocumentAsHtmlConfiguration`,
+-   `RenderHtmlConfig` -> `RenderHtmlConfiguration`,
 
 ##### Example
 

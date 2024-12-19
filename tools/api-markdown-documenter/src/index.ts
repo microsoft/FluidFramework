@@ -43,8 +43,8 @@ export {
 } from "./documentation-domain-to-html/index.js";
 export {
 	DocumentWriter,
-	type RenderDocumentAsHtmlConfig,
-	type RenderHtmlConfig,
+	type RenderDocumentAsHtmlConfiguration,
+	type RenderHtmlConfiguration,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type MarkdownRenderConfiguration,

@@ -595,7 +595,7 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 export { ReleaseTag }
 
 // @public
-interface RenderApiModelAsHtmlOptions extends ApiItemTransformationConfiguration, RenderDocumentAsHtmlConfig, FileSystemConfiguration {
+interface RenderApiModelAsHtmlOptions extends ApiItemTransformationConfiguration, RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
 // @public
@@ -606,17 +606,17 @@ interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationConfigura
 }
 
 // @public
-function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfig): string;
+function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfiguration): string;
 
 // @public
 function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfiguration): string;
 
 // @public @sealed
-export interface RenderDocumentAsHtmlConfig extends ToHtmlConfiguration, RenderHtmlConfig {
+export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, RenderHtmlConfiguration {
 }
 
 // @public
-interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfig, FileSystemConfiguration {
+interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
 // @public
@@ -627,12 +627,10 @@ interface RenderDocumentsAsMarkdownOptions extends MarkdownRenderConfiguration, 
 }
 
 // @public
-function renderHtml(html: Nodes, { prettyFormatting }: {
-    prettyFormatting?: boolean;
-}): string;
+function renderHtml(html: Nodes, config: RenderHtmlConfiguration): string;
 
 // @public @sealed
-export interface RenderHtmlConfig {
+export interface RenderHtmlConfiguration {
     prettyFormatting?: boolean;
 }
 
