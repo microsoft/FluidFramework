@@ -1,0 +1,46 @@
+---
+title: Node Types
+sidebar_position: 2
+---
+
+The following leaf node types are available:
+
+-   **boolean**: Works identically to a JavaScript boolean.
+-   **number**: Works identically to a JavaScript JavaScript number.
+-   **string**: Works identically to a JavaScript string.
+-   **null**: Works identically to a JavaScript null.
+-   **FluidHandle**: A handle to a Fluid DDS or Data Object in the current container. For more information about handles see [Handles](../../concepts/handles.mdx).
+
+The following subsections describe the available internal node types.
+
+## Object Nodes
+
+An object node is a TypeScript-like object with one or more named child properties. The object node's properties can in principle be any of the node types including internal node types; but typically the schema for the `SharedTree` that your code defines will specify for any object node a specific set of properties and node types of each. A `SharedTree` can have many object nodes at various places in the tree and they do not all have to conform to the same schema. Your schema can specify different properties for different object nodes. The schema also specifies whether a child property is required or optional, and it can assign a union datatype to any property. For example, a property could be either number or string.
+
+## Map Nodes
+
+A map node is a set of zero or more key-value pairs similar to a JavaScript Map object, but the keys can only be strings. The schema for the `SharedTree` that your code defines will specify the possible node types that can be values of the keys. It can specify that all node types are allowed or only a subset. There is no way to specify different subsets of node types for different keys.
+
+The schema for a map node cannot specify particular key names, nor can it specify a maximum or minimum number of key-value pairs.
+
+## Array Nodes
+
+An array node is an indexed sequence of zero or more values like a JavaScript array. In principle, values can be any of the node types, but the schema that your code defines will specify what subset of those types can be the values of any given array item.
+
+## Type Guard
+
+When your code needs to process nodes only of a certain type and it has a reference to an object of an unknown type, you can use the `Tree.is()` method to test for the desired type as in the following examples.
+
+```typescript
+Tree.is(someNode: SharedTreeNode, nodeType: TreeNodeSchema | T): boolean
+```
+
+Returns `true` if `someNode` is of type `nodeType`. Note that `T` is a type that is derived from a call of one of the `SchemaFactory` methods; `object()`, `map()`, or `array()`. Here are examples:
+
+```typescript
+if (Tree.is(myNode, Note)) {
+	// Code here that processes Note nodes.
+}
+```
+
+For another example, see the `Tree.parent()` method.
