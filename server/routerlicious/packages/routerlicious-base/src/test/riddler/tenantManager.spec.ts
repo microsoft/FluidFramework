@@ -312,7 +312,7 @@ describe("TenantManager", () => {
 			});
 		});
 
-		it("Should return the private keys when the tenant has private keys and getPrivateKeys is true", async () => {
+		it("Should return the private keys when the tenant has private keys and usePrivateKeys is true", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
 			const expectedKeys = { key1: "key1", key2: "key2" };
 			const keys = await tenantManager.getTenantKeys(
@@ -334,7 +334,7 @@ describe("TenantManager", () => {
 			assert.strictEqual(cachedKeys.key2, expectedKeys.key2);
 		});
 
-		it("Should return the shared keys when the tenant has private keys and getPrivateKeys is false", async () => {
+		it("Should return the shared keys when the tenant has private keys and usePrivateKeys is false", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
 			const expectedKeys = { key1: "abcd", key2: "efgh" };
 			const keys = await tenantManager.getTenantKeys("cordflasher-dolphin");

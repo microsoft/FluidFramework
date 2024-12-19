@@ -570,25 +570,25 @@ export class TenantManager {
 		tenantId: string,
 		includeDisabledTenant = false,
 		bypassCache = false,
-		getPrivateKeys = false,
+		usePrivateKeys = false,
 	): Promise<ITenantKeys> {
 		const lumberProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			includeDisabledTenant,
 			bypassCache,
-			getPrivateKeys,
+			usePrivateKeys,
 		};
 		try {
 			if (!bypassCache && this.isCacheEnabled) {
 				// Read from cache first
 				try {
-					const cachedKey = await this.getKeyFromCache(tenantId, getPrivateKeys);
+					const cachedKey = await this.getKeyFromCache(tenantId, usePrivateKeys);
 					if (cachedKey) {
-						let tenantKeys = this.decryptCachedKeys(cachedKey, getPrivateKeys);
+						let tenantKeys = this.decryptCachedKeys(cachedKey, usePrivateKeys);
 						// This is an edge case where the used encryption key is not valid.
 						// If both decrypted tenant keys are null, it means it hits this case,
 						// then we should read from database and set new values in cache.
-						if (getPrivateKeys) {
+						if (usePrivateKeys) {
 							tenantKeys = tenantKeys as ITenantPrivateKeys;
 							if (tenantKeys.key || tenantKeys.secondaryKey) {
 								const privateKeysInOrder = await this.returnPrivateKeysInOrder(
@@ -630,7 +630,7 @@ export class TenantManager {
 				throw new NetworkError(403, `Tenant, ${tenantId}, does not exist.`);
 			}
 
-			if (getPrivateKeys && !tenantDocument.privateKeys) {
+			if (usePrivateKeys && !tenantDocument.privateKeys) {
 				Lumberjack.error(`Private keys are missing for tenant id ${tenantId}`, {
 					[BaseTelemetryProperties.tenantId]: tenantId,
 				});
@@ -638,7 +638,7 @@ export class TenantManager {
 			}
 
 			const encryptedTenantKey1 =
-				getPrivateKeys && tenantDocument.privateKeys
+				usePrivateKeys && tenantDocument.privateKeys
 					? tenantDocument.privateKeys.key
 					: tenantDocument.key;
 
@@ -655,7 +655,7 @@ export class TenantManager {
 			}
 
 			const encryptedTenantKey2 =
-				getPrivateKeys && tenantDocument.privateKeys
+				usePrivateKeys && tenantDocument.privateKeys
 					? tenantDocument.privateKeys.secondaryKey
 					: tenantDocument.secondaryKey;
 
@@ -678,7 +678,7 @@ export class TenantManager {
 
 			if (!bypassCache && this.isCacheEnabled) {
 				const cacheKeys: IEncryptedTenantKeys | IEncryptedPrivateTenantKeys =
-					getPrivateKeys && tenantDocument.privateKeys
+					usePrivateKeys && tenantDocument.privateKeys
 						? {
 								key: encryptedTenantKey1,
 								keyNextRotationTime: tenantDocument.privateKeys.keyNextRotationTime,
@@ -693,10 +693,10 @@ export class TenantManager {
 				if (encryptionKeyVersion) {
 					cacheKeys.encryptionKeyVersion = encryptionKeyVersion;
 				}
-				await this.setKeyInCache(tenantId, cacheKeys, getPrivateKeys);
+				await this.setKeyInCache(tenantId, cacheKeys, usePrivateKeys);
 			}
 
-			if (getPrivateKeys && tenantDocument.privateKeys) {
+			if (usePrivateKeys && tenantDocument.privateKeys) {
 				// Return the decrypted private keys in the order they should be used to validate/sign tokens
 				const privateTenantKeys: ITenantPrivateKeys = {
 					key: tenantKey1,
@@ -729,13 +729,13 @@ export class TenantManager {
 		tenantId: string,
 		includeDisabledTenant = false,
 		bypassCache = false,
-		getPrivateKeys = false,
+		usePrivateKeys = false,
 	): Promise<ITenantKeys> {
 		const keys = await this.getTenantKeysHelper(
 			tenantId,
 			includeDisabledTenant,
 			bypassCache,
-			getPrivateKeys,
+			usePrivateKeys,
 		);
 		return keys;
 	}
@@ -1137,11 +1137,11 @@ export class TenantManager {
 
 	private async getKeyFromCache(
 		tenantId: string,
-		getPrivateKeys = false,
+		usePrivateKeys = false,
 	): Promise<string | undefined> {
 		try {
 			const cachedKey = await this.runWithCacheRequestCounter(
-				async () => this.cache?.get(this.getRedisKeyPrefix(tenantId, getPrivateKeys)),
+				async () => this.cache?.get(this.getRedisKeyPrefix(tenantId, usePrivateKeys)),
 			);
 
 			if (cachedKey == null) {

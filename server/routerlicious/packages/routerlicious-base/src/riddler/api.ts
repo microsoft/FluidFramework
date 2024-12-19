@@ -91,12 +91,12 @@ export function create(
 	router.get("/tenants/:id/keys", (request, response) => {
 		const tenantId = request.params.id;
 		const includeDisabledTenant = getIncludeDisabledFlag(request);
-		const getPrivateKeys = getPrivateKeysFlag(request);
+		const usePrivateKeys = getUsePrivateKeysFlag(request);
 		const tenantP = manager.getTenantKeys(
 			tenantId,
 			includeDisabledTenant,
 			false /* bypassCache */,
-			getPrivateKeys,
+			usePrivateKeys,
 		);
 		handleResponse(tenantP, response);
 	});
@@ -192,9 +192,9 @@ export function create(
 		return includeDisabledRaw?.toLowerCase() === "true";
 	}
 
-	function getPrivateKeysFlag(request): boolean {
-		const getPrivateKeys = request.query.getPrivateKeys as string;
-		return getPrivateKeys?.toLowerCase() === "true";
+	function getUsePrivateKeysFlag(request): boolean {
+		const usePrivateKeys = request.query.usePrivateKeys as string;
+		return usePrivateKeys?.toLowerCase() === "true";
 	}
 
 	return router;
