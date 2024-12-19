@@ -22,6 +22,7 @@ import {
  *
  * @remarks Not intended to be used directly.
  *
+ * @sealed
  * @public
  */
 export interface ApiItemTransformationConfigurationBase {

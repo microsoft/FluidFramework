@@ -51,7 +51,7 @@ export { ApiItemKind }
 export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, ApiItemTransformations, Required<DocumentationSuiteOptions>, Required<LoggingConfiguration> {
 }
 
-// @public
+// @public @sealed
 export interface ApiItemTransformationConfigurationBase {
     readonly apiModel: ApiModel;
     readonly uriRoot: string;
