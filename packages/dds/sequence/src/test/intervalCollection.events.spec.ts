@@ -259,7 +259,7 @@ describe("SharedString interval collection event spec", () => {
 					const [{ interval, previousInterval, previousEndpoints, local, op, slide }] =
 						eventLog;
 					assert.deepEqual(interval, { start: 0, end: 1 });
-					const segment = previousInterval.start.getSegment();
+					const segment = previousInterval.end.getSegment();
 					assert(segment !== undefined);
 					assert(segmentIsRemoved(segment) === false);
 					assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
@@ -484,7 +484,7 @@ describe("SharedString interval collection event spec", () => {
 					const [{ interval, previousInterval, previousEndpoints, local, slide }] = eventLog;
 					assert.deepEqual(interval, { start: 0, end: 1 });
 					assert(previousInterval !== undefined);
-					const segment = previousInterval.start.getSegment();
+					const segment = previousInterval.end.getSegment();
 					assert(segment !== undefined);
 					assert(segmentIsRemoved(segment) === false);
 					assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
