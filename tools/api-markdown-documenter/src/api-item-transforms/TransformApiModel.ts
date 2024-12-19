@@ -253,7 +253,7 @@ function createDocumentForMultiEntryPointPackage(
 
 function createDocumentForApiEntryPoint(
 	apiEntryPoint: ApiEntryPoint,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
 	const { includeBreadcrumb, logger, transformApiEntryPoint } = config;
 

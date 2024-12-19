@@ -37,7 +37,7 @@ import type { ApiItemTransformationConfiguration } from "./Configuration.js";
  */
 export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	generateChildSection: (apiItem: ApiItem) => SectionNode[],
 ) => SectionNode[];
 
@@ -49,7 +49,7 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
  */
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ) => SectionNode[];
 
 /**
@@ -74,7 +74,7 @@ export interface ApiItemTransformations {
 	readonly createDefaultLayout: (
 		apiItem: ApiItem,
 		childSections: SectionNode[] | undefined,
-		config: Required<ApiItemTransformationConfiguration>,
+		config: ApiItemTransformationConfiguration,
 	) => SectionNode[];
 
 	/**
