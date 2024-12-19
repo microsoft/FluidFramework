@@ -52,7 +52,7 @@ import { createBreadcrumbParagraph, wrapInSection } from "./helpers/index.js";
  */
 export function apiItemToDocument(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
 	if (apiItem.kind === ApiItemKind.None) {
 		throw new Error(`Encountered API item "${apiItem.displayName}" with a kind of "None".`);
@@ -110,7 +110,7 @@ export function apiItemToDocument(
  */
 export function apiItemToSections(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode[] {
 	if (apiItem.kind === ApiItemKind.None) {
 		throw new Error(`Encountered API item "${apiItem.displayName}" with a kind of "None".`);

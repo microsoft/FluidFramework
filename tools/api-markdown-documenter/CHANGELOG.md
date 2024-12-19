@@ -8,24 +8,6 @@
 
 Combines the separate "config" property bag parameters into a single "options" property bag for simplicity.
 
-#### Type-renames
-
--   `ConfigurationBase` -> `LoggingConfiguration`
--   `RenderDocumentAsHtmlConfig` -> `RenderDocumentAsHtmlConfiguration`
--   `RenderHtmlConfig` -> `RenderHtmlConfiguration`
--   `ToHtmlConfig` -> `ToHtmlConfiguration`
-
-#### Configuration properties made `readonly`
-
--   `ApiItemTransformationConfiguration`
--   `ApiItemTransformationOptions`
--   `DocumentationSuiteOptions`
--   `HtmlRenderer.RenderHtmlConfig`
--   `LintApiModelConfiguration`
--   `MarkdownRenderer.Renderers`
--   `MarkdownRenderer.RenderContext`
--   `ToHtmlTransformations`
-
 ##### Example
 
 Before:
@@ -68,6 +50,42 @@ await MarkdownRenderer.renderApiModel({
 	outputDirectoryPath,
 });
 ```
+
+#### Type-renames
+
+-   `ApiItemTransformationOptions` -> `ApiItemTransformations`
+-   `ConfigurationBase` -> `LoggingConfiguration`
+-   `RenderDocumentAsHtmlConfig` -> `RenderDocumentAsHtmlConfiguration`
+-   `RenderHtmlConfig` -> `RenderHtmlConfiguration`
+-   `ToHtmlConfig` -> `ToHtmlConfiguration`
+
+#### Configuration properties made `readonly`
+
+-   `ApiItemTransformations`
+-   `ApiItemTransformationConfiguration`
+-   `DocumentationSuiteOptions`
+-   `HtmlRenderer.RenderHtmlConfig`
+-   `LintApiModelConfiguration`
+-   `MarkdownRenderer.Renderers`
+-   `MarkdownRenderer.RenderContext`
+-   `ToHtmlTransformations`
+
+#### Separate input "options" types and system "configuration" types
+
+This library has an inconsistent mix of `Partial` and `Required` types to represent partial user input parameters and "complete" configurations needed by the system to function.
+
+This version of the library attempts to align its APIs with the following conventions:
+
+-   Naming:
+    -   "Options": refers to user-provided API parameters, which may be incomplete.
+    -   "Configuration": refers to the "complete" sets of parameters needed by system functionality.
+-   Typing:
+    -   When possible, "configuration" types will be declared with all properties required.
+    -   When possible, "options" types will be declared as `Partial<FooConfiguration>`. When not possible, they will be declared as separate types.
+
+##### Affected types
+
+-   `ApiTransformationConfiguration` -> `ApiTransformationOptions` (user input) and `ApiTransformationConfiguration` (derived system configuration).
 
 ## 0.17.3
 

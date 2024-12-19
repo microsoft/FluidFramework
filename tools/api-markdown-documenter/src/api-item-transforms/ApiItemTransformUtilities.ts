@@ -66,7 +66,7 @@ function getFirstAncestorWithOwnDocument(
  */
 export function getLinkForApiItem(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	textOverride?: string,
 ): Link {
 	const text = textOverride ?? config.getLinkTextForItem(apiItem);
@@ -89,7 +89,7 @@ export function getLinkForApiItem(
  */
 function getLinkUrlForApiItem(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): string {
 	const uriBase = config.getUriBaseOverrideForItem(apiItem) ?? config.uriRoot;
 	let documentPath = getApiItemPath(apiItem, config).join("/");
@@ -126,7 +126,7 @@ function getLinkUrlForApiItem(
  */
 export function getDocumentPathForApiItem(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): string {
 	const pathSegments = getApiItemPath(apiItem, config);
 	return Path.join(...pathSegments);
@@ -138,10 +138,7 @@ export function getDocumentPathForApiItem(
  * @param apiItem - The API item for which we are generating a file path.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-function getApiItemPath(
-	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
-): string[] {
+function getApiItemPath(apiItem: ApiItem, config: ApiItemTransformationConfiguration): string[] {
 	const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
 	const fileName = getDocumentNameForApiItem(apiItem, config);
@@ -175,7 +172,7 @@ function getApiItemPath(
  */
 function getDocumentNameForApiItem(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): string {
 	const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
@@ -234,7 +231,7 @@ function getDocumentNameForApiItem(
  */
 export function getHeadingForApiItem(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	headingLevel?: number,
 ): Heading {
 	// Don't generate an ID for the root heading
@@ -268,7 +265,7 @@ export function getHeadingForApiItem(
  */
 function getHeadingIdForApiItem(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): string {
 	let baseName: string | undefined;
 	const apiItemKind: ApiItemKind = apiItem.kind;
@@ -508,7 +505,7 @@ function doesItemGenerateHierarchy(
  */
 export function shouldItemBeIncluded(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): boolean {
 	const releaseTag = getReleaseTag(apiItem);
 	if (releaseTag === undefined || releaseTag === ReleaseTag.None) {
@@ -539,7 +536,7 @@ export function shouldItemBeIncluded(
  */
 export function filterItems(
 	apiItems: readonly ApiItem[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): ApiItem[] {
 	return apiItems.filter((member) => shouldItemBeIncluded(member, config));
 }
@@ -554,7 +551,7 @@ export function filterItems(
  */
 export function filterChildMembers(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): ApiItem[] {
 	return filterItems(apiItem.members, config);
 }
