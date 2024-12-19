@@ -95,7 +95,7 @@ export function create(
 		const tenantP = manager.getTenantKeys(
 			tenantId,
 			includeDisabledTenant,
-			false,
+			false, /* bypassCache */
 			getPrivateKeys,
 		);
 		handleResponse(tenantP, response);
