@@ -15,9 +15,21 @@ export {
 } from "./core/index.js";
 
 export type {
+	/**
+	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+	 */
 	Listeners,
+	/**
+	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+	 */
 	IsListener,
+	/**
+	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+	 */
 	Listenable,
+	/**
+	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+	 */
 	Off,
 } from "@fluidframework/core-interfaces";
 
