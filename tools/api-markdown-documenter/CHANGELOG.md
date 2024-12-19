@@ -13,6 +13,10 @@ Combines the separate "config" property bag parameters into a single "options" p
 -   `ConfigurationBase` -> `LoggingConfiguration`.
 -   `ApiItemTransformationOptions` -> `ApiItemTransformations`
 
+#### Interface properties made `readonly`
+
+-   `ApiItemTransformations`
+
 ##### Example
 
 Before:

@@ -55,22 +55,22 @@ export interface ApiItemTransformationConfiguration extends ApiItemTransformatio
 
 // @public
 export interface ApiItemTransformations {
-    createDefaultLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
-    transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
-    transformApiClass?: TransformApiItemWithChildren<ApiClass>;
-    transformApiConstructor?: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
-    transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
-    transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
-    transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
-    transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
-    transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
-    transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
-    transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
-    transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
-    transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
-    transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
-    transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
-    transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
+    readonly createDefaultLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
+    readonly transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
+    readonly transformApiClass?: TransformApiItemWithChildren<ApiClass>;
+    readonly transformApiConstructor?: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
+    readonly transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
+    readonly transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
+    readonly transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
+    readonly transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
+    readonly transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
+    readonly transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
+    readonly transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
+    readonly transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
+    readonly transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
+    readonly transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
+    readonly transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
+    readonly transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
 }
 
 declare namespace ApiItemUtilities {
