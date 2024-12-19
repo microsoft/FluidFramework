@@ -9,9 +9,12 @@ import type {
 	TreeObjectNodeUnsafe,
 	InsertableObjectFromSchemaRecordUnsafe,
 } from "../../internalTypes.js";
-import { SchemaFactory, type SchemaFactoryObjectOptions } from "./schemaFactory.js";
+import {
+	defaultSchemaFactoryObjectOptions,
+	SchemaFactory,
+	type SchemaFactoryObjectOptions,
+} from "./schemaFactory.js";
 import type { ImplicitFieldSchema } from "../schemaTypes.js";
-import { defaultSchemaFactoryObjectOptions } from "./schemaFactory.js";
 import { type TreeObjectNode, objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
@@ -45,17 +48,20 @@ export class SchemaFactoryAlpha<
 	public override object<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		fields: T,
-		options?: SchemaFactoryObjectOptions,
+		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 		object & InsertableObjectFromSchemaRecord<T>,
 		true,
-		T
+		T,
+		never,
+		TCustomMetadata
 	> {
 		return objectSchema(
 			this.scoped2(name),
@@ -72,17 +78,20 @@ export class SchemaFactoryAlpha<
 	public override objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		t: T,
-		options?: SchemaFactoryObjectOptions,
+		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
 		object & InsertableObjectFromSchemaRecordUnsafe<T>,
 		false,
-		T
+		T,
+		never,
+		TCustomMetadata
 	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
@@ -95,7 +104,9 @@ export class SchemaFactoryAlpha<
 			TreeObjectNodeUnsafe<T, TScopedName>,
 			object & InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
-			T
+			T,
+			never,
+			TCustomMetadata
 		>;
 	}
 }

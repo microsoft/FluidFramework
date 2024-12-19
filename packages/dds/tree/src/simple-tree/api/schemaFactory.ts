@@ -40,6 +40,8 @@ import {
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
+	type NodeSchemaMetadata,
+	type NodeSchemaOptions,
 } from "../schemaTypes.js";
 import { inPrototypeChain } from "../core/index.js";
 import type {
@@ -106,7 +108,8 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
  *
  * @alpha
  */
-export interface SchemaFactoryObjectOptions {
+export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
@@ -152,7 +155,9 @@ export interface SchemaFactoryObjectOptions {
 	allowUnknownOptionalFields?: boolean;
 }
 
-export const defaultSchemaFactoryObjectOptions: Required<SchemaFactoryObjectOptions> = {
+export const defaultSchemaFactoryObjectOptions: Required<
+	Omit<SchemaFactoryObjectOptions, "metadata">
+> = {
 	allowUnknownOptionalFields: false,
 };
 
@@ -381,22 +386,27 @@ export class SchemaFactory<
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		fields: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 		object & InsertableObjectFromSchemaRecord<T>,
 		true,
-		T
+		T,
+		never,
+		TCustomMetadata
 	> {
 		return objectSchema(
 			this.scoped(name),
 			fields,
 			true,
 			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
+			options?.metadata,
 		);
 	}
 
@@ -445,9 +455,14 @@ export class SchemaFactory<
 	 * class NamedMap extends factory.map("name", factory.number) {}
 	 * ```
 	 */
-	public map<Name extends TName, const T extends ImplicitAllowedTypes>(
+	public map<
+		Name extends TName,
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
 		name: Name,
 		allowedTypes: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
@@ -455,18 +470,22 @@ export class SchemaFactory<
 		MapNodeInsertableData<T>,
 		true,
 		T,
-		undefined
+		undefined,
+		TCustomMetadata
 	>;
 
 	/**
+	 * {@link SchemaFactory.map} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return `TreeNodeSchemaBoth`, however TypeScript gives an error if one of the overloads implicitly up-casts the return type of the implementation.
 	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
 	 * and the implementation is type safe, and forcing an unsafe typing instead.
 	 */
-	public map<const T extends ImplicitAllowedTypes>(
+	public map<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchema<string, NodeKind.Map, TreeMapNode<T>, MapNodeInsertableData<T>, true, T> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -480,6 +499,7 @@ export class SchemaFactory<
 						nameOrAllowedTypes as T,
 						false,
 						true,
+						options?.metadata,
 					) as TreeNodeSchema,
 			) as TreeNodeSchemaBoth<
 				string,
@@ -488,7 +508,8 @@ export class SchemaFactory<
 				MapNodeInsertableData<T>,
 				true,
 				T,
-				undefined
+				undefined,
+				TCustomMetadata
 			>;
 		}
 		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
@@ -499,8 +520,15 @@ export class SchemaFactory<
 			MapNodeInsertableData<T>,
 			true,
 			T,
-			undefined
-		> = this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
+			undefined,
+			TCustomMetadata
+		> = this.namedMap(
+			nameOrAllowedTypes as TName,
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+		);
 		return out;
 	}
 
@@ -513,11 +541,13 @@ export class SchemaFactory<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
+		TCustomMetadata = unknown,
 	>(
 		name: Name,
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
+		metadata: NodeSchemaMetadata<TCustomMetadata> | undefined,
 	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
@@ -525,7 +555,8 @@ export class SchemaFactory<
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T,
-		undefined
+		undefined,
+		TCustomMetadata
 	> {
 		return mapSchema(
 			this.scoped(name),
@@ -533,6 +564,7 @@ export class SchemaFactory<
 			implicitlyConstructable,
 			// The current policy is customizable nodes don't get fake prototypes.
 			!customizable,
+			metadata,
 		);
 	}
 
@@ -593,9 +625,14 @@ export class SchemaFactory<
 	 *
 	 * {@label NAMED}
 	 */
-	public array<const Name extends TName, const T extends ImplicitAllowedTypes>(
+	public array<
+		const Name extends TName,
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
 		name: Name,
 		allowedTypes: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
@@ -603,29 +640,34 @@ export class SchemaFactory<
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
 		T,
-		undefined
+		undefined,
+		TCustomMetadata
 	>;
 
 	/**
+	 * {@link SchemaFactory.array} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
 	 */
-	public array<const T extends ImplicitAllowedTypes>(
+	public array<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, string>,
 		NodeKind.Array,
 		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
-		T
+		T,
+		TCustomMetadata
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Array", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
-				this.namedArray(fullName, nameOrAllowedTypes as T, false, true),
+				this.namedArray(fullName, nameOrAllowedTypes as T, false, true, options?.metadata),
 			) as TreeNodeSchemaClass<
 				ScopedSchemaName<TScope, string>,
 				NodeKind.Array,
@@ -633,7 +675,8 @@ export class SchemaFactory<
 				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 				true,
 				T,
-				undefined
+				undefined,
+				TCustomMetadata
 			>;
 		}
 		const out: TreeNodeSchemaBoth<
@@ -643,8 +686,15 @@ export class SchemaFactory<
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			true,
 			T,
-			undefined
-		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
+			undefined,
+			TCustomMetadata
+		> = this.namedArray(
+			nameOrAllowedTypes as TName,
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+		);
 		return out;
 	}
 
@@ -661,11 +711,13 @@ export class SchemaFactory<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
+		metadata: NodeSchemaMetadata<TCustomMetadata> | undefined,
 	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
@@ -673,9 +725,16 @@ export class SchemaFactory<
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
 		T,
-		undefined
+		undefined,
+		TCustomMetadata
 	> {
-		return arraySchema(this.scoped(name), allowedTypes, implicitlyConstructable, customizable);
+		return arraySchema(
+			this.scoped(name),
+			allowedTypes,
+			implicitlyConstructable,
+			customizable,
+			metadata,
+		);
 	}
 
 	/**
@@ -793,28 +852,35 @@ export class SchemaFactory<
 	public objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		t: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
 		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
 		object & InsertableObjectFromSchemaRecordUnsafe<T>,
 		false,
-		T
+		T,
+		never,
+		TCustomMetadata
 	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
+			options,
 		) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
 			TreeObjectNodeUnsafe<T, TScopedName>,
 			object & InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
-			T
+			T,
+			never,
+			TCustomMetadata
 		>;
 	}
 
@@ -829,12 +895,14 @@ export class SchemaFactory<
 	public arrayRecursive<
 		const Name extends TName,
 		const T extends Unenforced<ImplicitAllowedTypes>,
-	>(name: Name, allowedTypes: T) {
+		const TCustomMetadata = unknown,
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		const RecursiveArray = this.namedArray(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
 			false,
+			options?.metadata,
 		);
 
 		return RecursiveArray as TreeNodeSchemaClass<
@@ -857,7 +925,8 @@ export class SchemaFactory<
 			},
 			false,
 			T,
-			undefined
+			undefined,
+			TCustomMetadata
 		>;
 	}
 
@@ -869,10 +938,11 @@ export class SchemaFactory<
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(
-		name: Name,
-		allowedTypes: T,
-	) {
+	public mapRecursive<
+		Name extends TName,
+		const T extends Unenforced<ImplicitAllowedTypes>,
+		const TCustomMetadata = unknown,
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		const MapSchema = this.namedMap(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -880,6 +950,7 @@ export class SchemaFactory<
 			// Setting this (implicitlyConstructable) to true seems to work ok currently, but not for other node kinds.
 			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			false,
+			options?.metadata,
 		);
 
 		return MapSchema as TreeNodeSchemaClass<
@@ -911,7 +982,8 @@ export class SchemaFactory<
 			  },
 			false,
 			T,
-			undefined
+			undefined,
+			TCustomMetadata
 		>;
 	}
 }
