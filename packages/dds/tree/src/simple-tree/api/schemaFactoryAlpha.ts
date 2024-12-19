@@ -23,9 +23,8 @@ import type { Unenforced } from "./typesUnsafe.js";
  * @alpha
  * @privateRemarks
  *
- * Defining this class separately allows correct API isolation of alpha APIs (method signatures) on SchemaFactory.
- * Prefer defining duplicate private methods in `SchemaFactoryAlpha` rather than increasing their exposure, as `protected`
- * APIs on `SchemaFactory` will be exposed to the public API surface.
+ * Some private methods on `SchemaFactory` are intentionally duplicated here to avoid increasing their exposure to `protected`.
+ * If we were to do so, they would be exposed on the public API surface of `SchemaFactory`.
  */
 export class SchemaFactoryAlpha<
 	out TScope extends string | undefined = string | undefined,

@@ -47,7 +47,7 @@ class Circle extends factory.object("Circle", {
 }, { allowUnknownOptionalFields: true }) {}
 ```
 
-When they go to deploy this newer version of the application, they could opt to start upgrading documents as soon as the newer code rolled out and the older code would still be able to open up (and collaborate on) documents using the newer schema version.
+When they go to deploy this newer version of the application, they could opt to start upgrading documents as soon as the newer code is rolled out, and the older code would still be able to open up (and collaborate on) documents using the newer schema version.
 Note that it's only important that the old *application code* elected to allow opening documents with unknown optional fields.
 This policy is not persisted into documents in any form, so applications are free to modify it at any point.
 

@@ -108,8 +108,9 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
  */
 export interface SchemaFactoryObjectOptions {
 	/**
-	 * Opt in to viewing documents which have unknown optional fields for this object's identifier, i.e. optional fields
-	 * in the document schema which are not present in this object schema declaration.
+	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
+	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
+	 * that has upgraded the document's schema to include those optional fields.
 	 *
 	 * @defaultValue `false`
 	 * @remarks
