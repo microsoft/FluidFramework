@@ -18,6 +18,7 @@ export {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformations,
 	type DefaultDocumentationSuiteOptions,
+	type DocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
 	type DocumentBoundaries,
 	getApiItemTransformationConfigurationWithDefaults,
