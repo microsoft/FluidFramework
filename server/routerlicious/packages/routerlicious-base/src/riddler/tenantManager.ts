@@ -145,6 +145,7 @@ export class TenantManager {
 		bypassCache = false,
 	): Promise<void> {
 		const isKeylessAccessValidation = isKeylessFluidAccessClaimEnabled(token);
+		console.log("isKeylessAccessValidation", isKeylessAccessValidation);
 		const tenantKeys = await this.getTenantKeys(
 			tenantId,
 			includeDisabledTenant,
@@ -521,6 +522,7 @@ export class TenantManager {
 		const now = Math.round(new Date().getTime() / 1000);
 
 		// Determine which key to use as "key1" based on rotation time
+		// If the key being used as key1 is the primary key and it is due to be rotated in the next hour, use the secondary key as key1
 		if (
 			currKeyInUse === "primary" &&
 			Math.abs(now - privateKeys.keyNextRotationTime) <= 60 * 60
@@ -539,6 +541,7 @@ export class TenantManager {
 			};
 		}
 
+		// If the key being used as key1 is the secondary key and it is due to be rotated in the next hour, use the primary key as key1
 		if (
 			currKeyInUse === "secondary" &&
 			Math.abs(now - privateKeys.secondaryKeyNextRotationTime) <= 60 * 60
@@ -554,6 +557,7 @@ export class TenantManager {
 			};
 		}
 
+		// If none of the keys are due to be rotated in the next hour, use the key that is currently being used as key1
 		Lumberjack.info(`Using the ${currKeyInUse} key to use as key1`, lumberProperties);
 		const keys: ITenantKeys = {
 			key1: currKeyInUse === "primary" ? privateKeys.key : privateKeys.secondaryKey,
