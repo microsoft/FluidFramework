@@ -917,8 +917,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
  * @param checkout - The tree checkout for which you want to monitor forks for disposal.
  * @returns a function which can be called to dispose all of the tracked forks.
  */
-// ks
-//
 function trackForksForDisposal(checkout: TreeCheckout): () => void {
 	const forks = new Set<TreeCheckout>();
 	const onDisposeUnSubscribes: (() => void)[] = [];
