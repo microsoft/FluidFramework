@@ -64,6 +64,8 @@ export {
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SchemaFactoryObjectOptions,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeChangeEvents,

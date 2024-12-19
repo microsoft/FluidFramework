@@ -65,7 +65,7 @@ export interface Renderers {
 	 * @param writer - The writing context to render into.
 	 * @param context - Recursive contextual state.
 	 */
-	[documentationNodeKind: string]: (
+	readonly [documentationNodeKind: string]: (
 		node: DocumentationNode,
 		writer: DocumentWriter,
 		context: RenderContext,

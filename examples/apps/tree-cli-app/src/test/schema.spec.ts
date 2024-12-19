@@ -13,7 +13,6 @@ import {
 	type ICodecOptions,
 	type ImplicitFieldSchema,
 	type JsonCompatible,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/alpha";
 
 import { List } from "../schema.js";
