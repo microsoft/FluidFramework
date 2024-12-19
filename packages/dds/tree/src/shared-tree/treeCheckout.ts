@@ -272,6 +272,7 @@ export function createTreeCheckout(
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		logger?: ITelemetryLoggerExt;
 		breaker?: Breakable;
+		disposeForksAfterTransaction?: boolean;
 	},
 ): TreeCheckout {
 	const forest = args?.forest ?? buildForest();
@@ -311,6 +312,7 @@ export function createTreeCheckout(
 		args?.removedRoots,
 		args?.logger,
 		args?.breaker,
+		args?.disposeForksAfterTransaction,
 	);
 }
 
@@ -389,6 +391,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		/** Optional logger for telemetry. */
 		private readonly logger?: ITelemetryLoggerExt,
 		private readonly breaker: Breakable = new Breakable("TreeCheckout"),
+		private readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = new SquashingTransactionStack(
 			branch,
@@ -403,14 +406,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				return tagChange(change, revision);
 			},
 			() => {
-				// Keep track of all the forks created during the transaction so that we can dispose them when the transaction ends.
-				// This is a policy decision that we think is useful for the user, but it is not necessary for correctness.
-				const forks = new Set<TreeCheckout>();
-				const onDisposeUnSubscribes: (() => void)[] = [];
-				const onForkUnSubscribe = onForkTransitive(this, (fork) => {
-					forks.add(fork);
-					onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
-				});
+				const disposeForks = this.disposeForksAfterTransaction
+					? trackForksForDisposal(this)
+					: undefined;
 				// When each transaction is started, take a snapshot of the current state of removed roots
 				const removedRootsSnapshot = this.removedRoots.clone();
 				return (result) => {
@@ -427,10 +425,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						default:
 							unreachableCase(result);
 					}
-
-					forks.forEach((fork) => fork.dispose());
-					onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
-					onForkUnSubscribe();
+					disposeForks?.();
 				};
 			},
 		);
@@ -716,6 +711,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.removedRoots.clone(),
 			this.logger,
 			this.breaker,
+			this.disposeForksAfterTransaction,
 		);
 		this.#events.emit("fork", checkout);
 		return checkout;
@@ -1065,4 +1061,28 @@ class EditLock {
 		assert(this.locked, "Checkout has not been locked");
 		this.locked = false;
 	}
+}
+
+/**
+ * Keeps track of all new forks created until the returned function is invoked, which will dispose all of those for.
+ * The returned function may only be called once.
+ *
+ * @param checkout - The tree checkout for which you want to monitor forks for disposal.
+ * @returns a function which can be called to dispose all of the tracked forks.
+ */
+function trackForksForDisposal(checkout: TreeCheckout): () => void {
+	const forks = new Set<TreeCheckout>();
+	const onDisposeUnSubscribes: (() => void)[] = [];
+	const onForkUnSubscribe = onForkTransitive(checkout, (fork) => {
+		forks.add(fork);
+		onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
+	});
+	let disposed = false;
+	return () => {
+		assert(!disposed, "Forks may only be disposed once");
+		forks.forEach((fork) => fork.dispose());
+		onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+		onForkUnSubscribe();
+		disposed = true;
+	};
 }
