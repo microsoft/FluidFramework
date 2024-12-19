@@ -53,6 +53,7 @@ await MarkdownRenderer.renderApiModel({
 
 #### Type-renames
 
+-   `ApiItemTransformationOptions` -> `ApiItemTransformations`
 -   `ConfigurationBase` -> `LoggingConfiguration`
 -   `RenderDocumentAsHtmlConfig` -> `RenderDocumentAsHtmlConfiguration`
 -   `RenderHtmlConfig` -> `RenderHtmlConfiguration`
