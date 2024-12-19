@@ -8,6 +8,10 @@
 
 Combines the separate "config" property bag parameters into a single "options" property bag for simplicity.
 
+#### Type-renames
+
+-   `ConfigurationBase` -\> `LoggingConfiguration`.
+
 ##### Example
 
 Before:
