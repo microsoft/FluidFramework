@@ -252,7 +252,6 @@ export type SegmentInfo = IInsertionInfo | IMoveInfo | IRemovalInfo;
 
 /**
  * A type representing a segment with additional info.
- *
  */
 export type SegmentWithInfo<T extends SegmentInfo> = ISegmentLeaf & T;
 

@@ -261,7 +261,7 @@ describe("SharedString interval collection event spec", () => {
 					assert.deepEqual(interval, { start: 0, end: 1 });
 					const segment = previousInterval.end.getSegment();
 					assert(segment !== undefined);
-					assert(segmentIsRemoved(segment) === false);
+					assert(segmentIsRemoved(segment) === true);
 					assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
 					assert.equal(local, true);
 					assert.equal(op, undefined);
@@ -281,7 +281,8 @@ describe("SharedString interval collection event spec", () => {
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					const segment = previousInterval.start.getSegment();
 					assert(segment !== undefined);
-					assert(segmentIsRemoved(segment) === false); // Note: this isn't 4 because we're interpreting the segment+offset from the current view.
+					assert(segmentIsRemoved(segment) === true);
+					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);
 					assert.equal((op?.contents as { type?: unknown }).type, "act");
@@ -301,7 +302,8 @@ describe("SharedString interval collection event spec", () => {
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					const segment = previousInterval.start.getSegment();
 					assert(segment !== undefined);
-					assert(segmentIsRemoved(segment) === false); // Note: this isn't 4 because we're interpreting the segment+offset from the current view.
+					assert(segmentIsRemoved(segment) === true);
+					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);
 					assert.equal((op?.contents as { type?: unknown }).type, "act");
@@ -486,7 +488,7 @@ describe("SharedString interval collection event spec", () => {
 					assert(previousInterval !== undefined);
 					const segment = previousInterval.end.getSegment();
 					assert(segment !== undefined);
-					assert(segmentIsRemoved(segment) === false);
+					assert(segmentIsRemoved(segment) === true);
 					assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
 					assert.equal(local, true);
 					assert.equal(slide, true);
@@ -505,7 +507,7 @@ describe("SharedString interval collection event spec", () => {
 					assert(previousInterval !== undefined);
 					const segment = previousInterval.start.getSegment();
 					assert(segment !== undefined);
-					assert(segmentIsRemoved(segment) === false);
+					assert(segmentIsRemoved(segment) === true);
 					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);
@@ -525,7 +527,8 @@ describe("SharedString interval collection event spec", () => {
 					assert(previousInterval !== undefined);
 					const segment = previousInterval.start.getSegment();
 					assert(segment !== undefined);
-					assert(segmentIsRemoved(segment) === false); // Note: this isn't 4 because we're interpreting the segment+offset from the current view.
+					assert(segmentIsRemoved(segment) === true);
+					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
 					assert.equal(local, true);
 					assert.equal(slide, true);
