@@ -83,7 +83,7 @@ import { createParametersSummaryTable, createTypeParametersSummaryTable } from "
  */
 export function createSignatureSection(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
 	if (apiItem instanceof ApiDeclaredItem) {
 		const signatureExcerpt = apiItem.getExcerptWithModifiers();
@@ -123,7 +123,7 @@ export function createSignatureSection(
  */
 export function createSeeAlsoSection(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
 	const seeBlocks = getSeeBlocks(apiItem);
 	if (seeBlocks === undefined || seeBlocks.length === 0) {
@@ -154,7 +154,7 @@ export function createSeeAlsoSection(
  */
 export function createHeritageTypesParagraph(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): ParagraphNode | undefined {
 	const { logger } = config;
 
@@ -244,7 +244,7 @@ export function createHeritageTypesParagraph(
  */
 function createTypeSpan(
 	excerpt: Excerpt,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SpanNode | undefined {
 	if (!excerpt.isEmpty) {
 		const renderedLabel = SpanNode.createFromPlainText(`Type: `, { bold: true });
@@ -268,7 +268,7 @@ function createTypeSpan(
 function createHeritageTypeListSpan(
 	heritageTypes: readonly HeritageType[],
 	label: string,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SpanNode | undefined {
 	if (heritageTypes.length > 0) {
 		const renderedLabel = SpanNode.createFromPlainText(`${label}: `, { bold: true });
@@ -308,7 +308,7 @@ function createHeritageTypeListSpan(
 export function createTypeParametersSection(
 	typeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode {
 	const typeParametersTable = createTypeParametersSummaryTable(
 		typeParameters,
@@ -337,7 +337,7 @@ export function createTypeParametersSection(
  */
 export function createExcerptSpanWithHyperlinks(
 	excerpt: Excerpt,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SingleLineSpanNode | undefined {
 	if (excerpt.isEmpty) {
 		return undefined;
@@ -391,7 +391,7 @@ export function createExcerptSpanWithHyperlinks(
  */
 export function createBreadcrumbParagraph(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): ParagraphNode {
 	// Get ordered ancestry of document items
 	const ancestry = getAncestralHierarchy(apiItem, (hierarchyItem) =>
@@ -448,7 +448,7 @@ export const betaWarningSpan = SpanNode.createFromPlainText(betaWarningText, { b
  */
 export function createSummaryParagraph(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): ParagraphNode | undefined {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 	return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
@@ -471,7 +471,7 @@ export function createSummaryParagraph(
  */
 export function createRemarksSection(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
 	if (
 		!(apiItem instanceof ApiDocumentedItem) ||
@@ -509,7 +509,7 @@ export function createRemarksSection(
  */
 export function createThrowsSection(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	headingText: string = "Throws",
 ): SectionNode | undefined {
 	const throwsBlocks = getThrowsBlocks(apiItem);
@@ -544,7 +544,7 @@ export function createThrowsSection(
  */
 export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): ParagraphNode | undefined {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
@@ -585,7 +585,7 @@ export function createDeprecationNoticeSection(
  */
 export function createExamplesSection(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	headingText: string = "Examples",
 ): SectionNode | undefined {
 	const exampleBlocks = getExampleBlocks(apiItem);
@@ -691,7 +691,7 @@ interface ExampleProperties {
  */
 function createExampleSection(
 	example: ExampleProperties,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode {
 	const { logger } = config;
 
@@ -875,7 +875,7 @@ function stripTitleFromParagraph(
  */
 export function createParametersSection(
 	apiFunctionLike: ApiFunctionLike,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
 	if (apiFunctionLike.parameters.length === 0) {
 		return undefined;
@@ -905,7 +905,7 @@ export function createParametersSection(
  */
 export function createReturnsSection(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
 	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
 
@@ -987,7 +987,7 @@ export interface ChildSectionProperties {
  */
 export function createChildDetailsSection(
 	childItems: readonly ChildSectionProperties[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	createChildContent: (apiItem) => DocumentationNode[],
 ): SectionNode[] | undefined {
 	const sections: SectionNode[] = [];
@@ -1032,7 +1032,7 @@ export function wrapInSection(nodes: DocumentationNode[], heading?: Heading): Se
  */
 export function createEntryPointList(
 	apiEntryPoints: readonly ApiEntryPoint[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): UnorderedListNode | undefined {
 	if (apiEntryPoints.length === 0) {
 		return undefined;

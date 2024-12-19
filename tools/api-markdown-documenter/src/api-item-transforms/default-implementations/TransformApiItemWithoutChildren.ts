@@ -13,7 +13,7 @@ import type { ApiItemTransformationConfiguration } from "../configuration/index.
  */
 export function transformApiItemWithoutChildren(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode[] {
 	// Items without children don't have much information to provide other than the default
 	// rendered details.

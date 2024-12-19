@@ -9,7 +9,7 @@ import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
 import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
 import {
-	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 	transformApiModel,
 } from "./api-item-transforms/index.js";
 import type { DocumentNode } from "./documentation-domain/index.js";
@@ -21,7 +21,7 @@ import { type MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./re
  * @public
  */
 export interface RenderApiModelAsMarkdownOptions
-	extends ApiItemTransformationConfiguration,
+	extends ApiItemTransformationOptions,
 		MarkdownRenderConfiguration,
 		FileSystemConfiguration {}
 

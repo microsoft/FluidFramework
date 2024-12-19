@@ -61,7 +61,7 @@ import { createChildDetailsSection, createMemberTables } from "../helpers/index.
  */
 export function transformApiClass(
 	apiClass: ApiClass,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const sections: SectionNode[] = [];

@@ -5,6 +5,8 @@
 
 export {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationConfigurationBase,
+	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./Configuration.js";
 export {
@@ -16,8 +18,8 @@ export {
 	type HierarchyBoundaries,
 } from "./DocumentationSuiteOptions.js";
 export {
-	type ApiItemTransformationOptions,
-	getApiItemTransformationOptionsWithDefaults,
+	type ApiItemTransformations,
+	getApiItemTransformationsWithDefaults as getApiItemTransformationOptionsWithDefaults,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
-} from "./TransformationOptions.js";
+} from "./Transformations.js";

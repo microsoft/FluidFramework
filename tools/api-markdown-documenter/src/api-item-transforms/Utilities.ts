@@ -31,7 +31,7 @@ import { wrapInSection } from "./helpers/index.js";
 export function createDocument(
 	documentItem: ApiItem,
 	sections: SectionNode[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
 	// Wrap sections in a root section if top-level heading is requested.
 	const contents = config.includeTopLevelDocumentHeading
@@ -55,7 +55,7 @@ export function createDocument(
  */
 export function getTsdocNodeTransformationOptions(
 	contextApiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TsdocNodeTransformOptions {
 	return {
 		contextApiItem,
@@ -75,7 +75,7 @@ export function getTsdocNodeTransformationOptions(
 function resolveSymbolicLink(
 	contextApiItem: ApiItem,
 	codeDestination: DocDeclarationReference,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): Link | undefined {
 	const { apiModel, logger } = config;
 
