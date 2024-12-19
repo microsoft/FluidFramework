@@ -10,10 +10,10 @@ Combines the separate "config" property bag parameters into a single "options" p
 
 #### Type-renames
 
--   `ConfigurationBase` -> `LoggingConfiguration`.
+-   `ConfigurationBase` -> `LoggingConfiguration`
+-   `RenderDocumentAsHtmlConfig` -> `RenderDocumentAsHtmlConfiguration`
+-   `RenderHtmlConfig` -> `RenderHtmlConfiguration`
 -   `ToHtmlConfig` -> `ToHtmlConfiguration`
--   `RenderDocumentAsHtmlConfig` -> `RenderDocumentAsHtmlConfiguration`,
--   `RenderHtmlConfig` -> `RenderHtmlConfiguration`,
 
 ##### Example
 
