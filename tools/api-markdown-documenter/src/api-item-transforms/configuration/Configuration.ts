@@ -5,8 +5,8 @@
 
 import type { ApiModel } from "@microsoft/api-extractor-model";
 
-import type { ConfigurationBase } from "../../ConfigurationBase.js";
 import { defaultConsoleLogger } from "../../Logging.js";
+import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
 
 import {
 	type DocumentationSuiteOptions,
@@ -25,7 +25,7 @@ import {
 export interface ApiItemTransformationConfiguration
 	extends ApiItemTransformationOptions,
 		DocumentationSuiteOptions,
-		ConfigurationBase {
+		LoggingConfiguration {
 	/**
 	 * API Model for which the documentation is being generated.
 	 * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
@@ -36,7 +36,7 @@ export interface ApiItemTransformationConfiguration
 	 *
 	 * If you need to generate a model from API reports on disk, see {@link loadModel}.
 	 */
-	apiModel: ApiModel;
+	readonly apiModel: ApiModel;
 
 	/**
 	 * Default root URI used when generating content links.

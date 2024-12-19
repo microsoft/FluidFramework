@@ -5,11 +5,11 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { ISegment, ISegmentInternal } from "./mergeTreeNodes.js";
+import type { ISegmentInternal, ISegmentLeaf } from "./mergeTreeNodes.js";
 import type { ReferencePosition } from "./referencePositions.js";
 
 /**
- * @internal
+ * Contains insertion information associated to an {@link ISegment}.
  */
 export interface IInsertionInfo {
 	/**
@@ -37,7 +37,7 @@ export interface IInsertionInfo {
  * Returns the insertion information for a segment.
  */
 export function toInsertionInfo(
-	maybe: ISegment | Partial<IInsertionInfo> | undefined,
+	maybe: ISegmentInternal | Partial<IInsertionInfo> | undefined,
 ): IInsertionInfo | undefined {
 	const maybeInserted = maybe as Partial<IInsertionInfo> | undefined;
 	if (maybeInserted?.clientId !== undefined && maybeInserted?.seq !== undefined) {
@@ -49,11 +49,11 @@ export function toInsertionInfo(
 	);
 }
 export const hasInsertionInfo = (
-	maybe: ISegment | Partial<IInsertionInfo> | undefined,
+	maybe: ISegmentInternal | Partial<IInsertionInfo> | undefined,
 ): maybe is IInsertionInfo => toInsertionInfo(maybe) !== undefined;
 
 export const assertInsertionInfo: <T extends Partial<IInsertionInfo> | undefined>(
-	maybe: Partial<IInsertionInfo> | T,
+	maybe: ISegmentInternal | Partial<IInsertionInfo> | T,
 ) => asserts maybe is IInsertionInfo | Exclude<T, Partial<IInsertionInfo>> = (maybe) =>
 	assert(maybe === undefined || hasInsertionInfo(maybe), "must be insertionInfo");
 
@@ -87,7 +87,7 @@ export interface IRemovalInfo {
  * @internal
  */
 export function toRemovalInfo(
-	maybe: ISegment | Partial<IRemovalInfo> | undefined,
+	maybe: ISegmentInternal | Partial<IRemovalInfo> | undefined,
 ): IRemovalInfo | undefined {
 	const maybeRemoved = maybe as Partial<IRemovalInfo> | undefined;
 	if (maybeRemoved?.removedClientIds !== undefined && maybeRemoved?.removedSeq !== undefined) {
@@ -100,11 +100,11 @@ export function toRemovalInfo(
 }
 
 export const hasRemovalInfo = (
-	maybe: ISegment | Partial<IRemovalInfo> | undefined,
+	maybe: ISegmentInternal | Partial<IRemovalInfo> | undefined,
 ): maybe is IRemovalInfo => toRemovalInfo(maybe) !== undefined;
 
 export const assertRemovalInfo: <T extends Partial<IRemovalInfo> | undefined>(
-	maybe: Partial<IRemovalInfo> | T,
+	maybe: ISegmentInternal | Partial<IRemovalInfo> | T,
 ) => asserts maybe is IRemovalInfo | Exclude<T, Partial<IRemovalInfo>> = (maybe) =>
 	assert(maybe === undefined || hasRemovalInfo(maybe), "must be IRemovalInfo");
 /**
@@ -176,7 +176,7 @@ export interface IMoveInfo {
 }
 
 export function toMoveInfo(
-	maybe: ISegment | Partial<IMoveInfo> | undefined,
+	maybe: ISegmentInternal | Partial<IMoveInfo> | undefined,
 ): IMoveInfo | undefined {
 	const maybeMoved = maybe as Partial<IMoveInfo> | undefined;
 	if (maybeMoved?.movedClientIds !== undefined && maybeMoved?.movedSeq !== undefined) {
@@ -192,22 +192,19 @@ export function toMoveInfo(
 }
 
 export const hasMoveInfo = (
-	maybe: ISegment | Partial<IMoveInfo> | undefined,
+	maybe: ISegmentInternal | Partial<IMoveInfo> | undefined,
 ): maybe is IMoveInfo => toMoveInfo(maybe) !== undefined;
 
 export const assertMoveInfo: <T extends Partial<IMoveInfo> | undefined>(
-	maybe: Partial<IMoveInfo> | T,
+	maybe: ISegmentInternal | Partial<IMoveInfo> | T,
 ) => asserts maybe is IMoveInfo | Exclude<T, Partial<IMoveInfo>> = (maybe) =>
 	assert(maybe === undefined || hasMoveInfo(maybe), "must be IMoveInfo");
 
-/**
- * @internal
- */
 export type SegmentInfo = IInsertionInfo | IMoveInfo | IRemovalInfo;
 
-export type SegmentWithInfo<T extends SegmentInfo> = ISegmentInternal & T;
+export type SegmentWithInfo<T extends SegmentInfo> = ISegmentLeaf & T;
 
 export const setSegmentInfo = <T extends SegmentInfo>(
 	info: T,
-	maybe: ISegmentInternal,
+	maybe: ISegmentLeaf,
 ): SegmentWithInfo<T> => Object.assign(maybe, info);

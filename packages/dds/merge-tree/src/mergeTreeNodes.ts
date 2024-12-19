@@ -74,12 +74,10 @@ export type ISegmentInternal = Omit<
 	ISegment,
 	// eslint-disable-next-line import/no-deprecated
 	keyof IRemovalInfo | keyof IMoveInfo
-> &
+> & {
 	// eslint-disable-next-line import/no-deprecated
-	Partial<IInsertionInfo & IRemovalInfo & IMoveInfo & IMergeNodeCommon> & {
-		// eslint-disable-next-line import/no-deprecated
-		localRefs?: LocalReferenceCollection;
-	};
+	localRefs?: LocalReferenceCollection;
+};
 
 /**
  * We use tiered interface to control visibility of segment properties.
@@ -89,19 +87,20 @@ export type ISegmentInternal = Omit<
  * someday we may split tree leaves from segments, but for now they are the same
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
-export type ISegmentLeaf = ISegmentInternal & {
-	parent?: MergeBlock;
-	// eslint-disable-next-line import/no-deprecated
-	segmentGroups?: SegmentGroupCollection;
-	// eslint-disable-next-line import/no-deprecated
-	propertyManager?: PropertiesManager;
-	/**
-	 * If a segment is inserted into an obliterated range,
-	 * but the newest obliteration of that range was by the inserting client,
-	 * then the segment is not obliterated because it is aware of the latest obliteration.
-	 */
-	prevObliterateByInserter?: ObliterateInfo;
-};
+export type ISegmentLeaf = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
+	Partial<IInsertionInfo & IRemovalInfo & IMoveInfo & IMergeNodeCommon> & {
+		parent?: MergeBlock;
+		// eslint-disable-next-line import/no-deprecated
+		segmentGroups?: SegmentGroupCollection;
+		// eslint-disable-next-line import/no-deprecated
+		propertyManager?: PropertiesManager;
+		/**
+		 * If a segment is inserted into an obliterated range,
+		 * but the newest obliteration of that range was by the inserting client,
+		 * then the segment is not obliterated because it is aware of the latest obliteration.
+		 */
+		prevObliterateByInserter?: ObliterateInfo;
+	};
 export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
@@ -804,7 +803,7 @@ export class CollaborationWindow {
 	 *     { localSeq: 1, seq: UnassignedSequenceNumber, text: "C" },
 	 * ]
 	 * ```
-	 * (note that {@link IInsertionInfo.localSeq} tracks the localSeq at which a segment was inserted)
+	 * (note that localSeq tracks the localSeq at which a segment was inserted)
 	 *
 	 * Suppose the client then disconnects and reconnects before any of its insertions are acked. The reconnect flow will necessitate
 	 * that the client regenerates and resubmits ops based on its current segment state as well as the original op that was sent.

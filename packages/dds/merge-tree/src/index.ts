@@ -124,7 +124,6 @@ export {
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
 export {
-	IInsertionInfo,
 	IMoveInfo,
 	IRemovalInfo,
 	toRemovalInfo,

@@ -48,29 +48,29 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public
-export interface ApiItemTransformationConfiguration extends ApiItemTransformationOptions, DocumentationSuiteOptions, ConfigurationBase {
-    apiModel: ApiModel;
+export interface ApiItemTransformationConfiguration extends ApiItemTransformationOptions, DocumentationSuiteOptions, LoggingConfiguration {
+    readonly apiModel: ApiModel;
     readonly uriRoot: string;
 }
 
 // @public
 export interface ApiItemTransformationOptions {
-    createDefaultLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
-    transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
-    transformApiClass?: TransformApiItemWithChildren<ApiClass>;
-    transformApiConstructor?: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
-    transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
-    transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
-    transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
-    transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
-    transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
-    transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
-    transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
-    transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
-    transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
-    transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
-    transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
-    transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
+    readonly createDefaultLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
+    readonly transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
+    readonly transformApiClass?: TransformApiItemWithChildren<ApiClass>;
+    readonly transformApiConstructor?: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
+    readonly transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
+    readonly transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
+    readonly transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
+    readonly transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
+    readonly transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
+    readonly transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
+    readonly transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
+    readonly transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
+    readonly transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
+    readonly transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
+    readonly transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
+    readonly transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
 }
 
 declare namespace ApiItemUtilities {
@@ -141,11 +141,6 @@ export class CodeSpanNode extends DocumentationParentNodeBase<SingleLineDocument
     static readonly Empty: CodeSpanNode;
     get singleLine(): true;
     readonly type = DocumentationNodeType.CodeSpan;
-}
-
-// @public
-export interface ConfigurationBase {
-    readonly logger?: Logger;
 }
 
 // @public
@@ -280,17 +275,17 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 
 // @public
 export interface DocumentationSuiteOptions {
-    documentBoundaries?: DocumentBoundaries;
-    getAlertsForItem?: (apiItem: ApiItem) => string[];
-    getFileNameForItem?: (apiItem: ApiItem) => string;
-    getHeadingTextForItem?: (apiItem: ApiItem) => string;
-    getLinkTextForItem?: (apiItem: ApiItem) => string;
-    getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
-    hierarchyBoundaries?: HierarchyBoundaries;
-    includeBreadcrumb?: boolean;
-    includeTopLevelDocumentHeading?: boolean;
-    minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
-    skipPackage?: (apiPackage: ApiPackage) => boolean;
+    readonly documentBoundaries?: DocumentBoundaries;
+    readonly getAlertsForItem?: (apiItem: ApiItem) => string[];
+    readonly getFileNameForItem?: (apiItem: ApiItem) => string;
+    readonly getHeadingTextForItem?: (apiItem: ApiItem) => string;
+    readonly getLinkTextForItem?: (apiItem: ApiItem) => string;
+    readonly getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
+    readonly hierarchyBoundaries?: HierarchyBoundaries;
+    readonly includeBreadcrumb?: boolean;
+    readonly includeTopLevelDocumentHeading?: boolean;
+    readonly minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
+    readonly skipPackage?: (apiPackage: ApiPackage) => boolean;
 }
 
 // @public
@@ -508,8 +503,8 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
 export function lintApiModel(configuration: LintApiModelConfiguration): Promise<LinterErrors | undefined>;
 
 // @beta
-export interface LintApiModelConfiguration extends ConfigurationBase {
-    apiModel: ApiModel;
+export interface LintApiModelConfiguration extends LoggingConfiguration {
+    readonly apiModel: ApiModel;
 }
 
 // @beta
@@ -530,7 +525,7 @@ export interface LinterReferenceError {
 export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 
 // @public
-export interface LoadModelOptions extends ConfigurationBase {
+export interface LoadModelOptions extends LoggingConfiguration {
     readonly modelDirectoryPath: string;
 }
 
@@ -544,18 +539,23 @@ export interface Logger {
 }
 
 // @public
+export interface LoggingConfiguration {
+    readonly logger?: Logger;
+}
+
+// @public
 export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
 
 // @public
-export interface MarkdownRenderConfiguration extends ConfigurationBase {
+export interface MarkdownRenderConfiguration extends LoggingConfiguration {
     readonly customRenderers?: MarkdownRenderers;
     readonly startingHeadingLevel?: number;
 }
 
 // @public
 export interface MarkdownRenderContext extends TextFormatting {
-    customRenderers?: MarkdownRenderers;
-    headingLevel: number;
+    readonly customRenderers?: MarkdownRenderers;
+    readonly headingLevel: number;
     readonly insideCodeBlock?: boolean;
     readonly insideTable?: boolean;
 }
@@ -575,7 +575,7 @@ export { MarkdownRenderer }
 
 // @public
 export interface MarkdownRenderers {
-    [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
+    readonly [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
 }
 
 // @public
@@ -661,7 +661,7 @@ function renderHtml(html: Nodes, { prettyFormatting }: {
 
 // @public @sealed
 export interface RenderHtmlConfig {
-    prettyFormatting?: boolean;
+    readonly prettyFormatting?: boolean;
 }
 
 // @public
@@ -773,7 +773,7 @@ export interface TextFormatting {
 }
 
 // @public
-export interface ToHtmlConfig extends ConfigurationBase {
+export interface ToHtmlConfig extends LoggingConfiguration {
     readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
     readonly rootFormatting?: TextFormatting;
@@ -792,7 +792,7 @@ export type ToHtmlTransformation = (node: DocumentationNode, context: ToHtmlCont
 
 // @public
 export interface ToHtmlTransformations {
-    [documentationNodeKind: string]: ToHtmlTransformation;
+    readonly [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public
