@@ -16,7 +16,6 @@ export interface IInsertionInfo {
 	 * Short clientId for the client that inserted this segment.
 	 */
 	clientId: number;
-
 	/**
 	 * Local seq at which this segment was inserted.
 	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
