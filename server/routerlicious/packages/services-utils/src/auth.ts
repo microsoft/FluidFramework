@@ -95,7 +95,7 @@ export async function getCreationToken(
 ) {
 	const tokenClaims = decode(token) as ITokenClaims;
 	const { tenantId, user, jti, ver } = tokenClaims;
-	let isKeylessAccessToken = isKeylessTokenClaims(tokenClaims);
+	const isKeylessAccessToken = isKeylessTokenClaims(tokenClaims);
 	const key = await tenantManager.getKey(requestTenantId, false, isKeylessAccessToken);
 	// Current time in seconds
 
