@@ -128,7 +128,8 @@ You can configure the grouping and throttling behavior using the `allowableUpdat
 
 ```ts
 // Configure a states workspace
-const stateWorkspace = presence.getStates("app:v1states",
+const stateWorkspace = presence.getStates(
+	"app:v1states",
 	{
 		// This value manager has an allowable latency of 100ms.
 		position: Latest({ x: 0, y: 0 }, { allowableUpdateLatencyMs: 100 }),
@@ -137,7 +138,7 @@ const stateWorkspace = presence.getStates("app:v1states",
 	},
 	// Specify the default for all value managers in this workspace to 200ms,
 	// overriding the default value of 60ms.
-	{ allowableUpdateLatencyMs: 200 }
+	{ allowableUpdateLatencyMs: 200 },
 );
 
 // Temporarily set count updates to send as soon as possible
