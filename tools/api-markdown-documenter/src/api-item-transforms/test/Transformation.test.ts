@@ -136,7 +136,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig(defaultPartialConfig, model);
 
-		const result = config.transformApiVariable(apiVariable, config);
+		const result = config.transformations[ApiItemKind.Variable](apiVariable, config);
 
 		const expected = [
 			wrapInSection(
@@ -173,7 +173,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig(defaultPartialConfig, model);
 
-		const result = config.transformApiFunction(apiFunction, config);
+		const result = config.transformations[ApiItemKind.Function](apiFunction, config);
 
 		const expected = [
 			wrapInSection(
@@ -308,8 +308,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig(defaultPartialConfig, model);
 
-		const result = config.transformApiInterface(apiInterface, config, (childItem) =>
-			apiItemToSections(childItem, config),
+		const result = config.transformations[ApiItemKind.Interface](
+			apiInterface,
+			config,
+			(childItem) => apiItemToSections(childItem, config),
 		);
 
 		const expected: DocumentationNode[] = [
@@ -424,8 +426,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 			model,
 		);
 
-		const result = config.transformApiNamespace(apiNamespace, config, (childItem) =>
-			apiItemToSections(childItem, config),
+		const result = config.transformations[ApiItemKind.Namespace](
+			apiNamespace,
+			config,
+			(childItem) => apiItemToSections(childItem, config),
 		);
 
 		// Note: the namespace being processed includes 3 const variables:

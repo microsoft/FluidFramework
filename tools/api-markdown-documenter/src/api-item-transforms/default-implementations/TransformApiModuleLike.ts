@@ -213,5 +213,5 @@ export function transformApiModuleLike(
 		}
 	}
 
-	return config.createDefaultLayout(apiItem, children, config);
+	return config.transformations.createDefaultLayout(apiItem, children, config);
 }

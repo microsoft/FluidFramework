@@ -17,5 +17,5 @@ export function transformApiItemWithoutChildren(
 ): SectionNode[] {
 	// Items without children don't have much information to provide other than the default
 	// rendered details.
-	return config.createDefaultLayout(apiItem, undefined, config);
+	return config.transformations.createDefaultLayout(apiItem, undefined, config);
 }

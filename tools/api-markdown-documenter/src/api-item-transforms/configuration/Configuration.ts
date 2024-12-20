@@ -55,9 +55,13 @@ export interface ApiItemTransformationConfigurationBase {
  */
 export interface ApiItemTransformationConfiguration
 	extends ApiItemTransformationConfigurationBase,
-		ApiItemTransformations,
 		Required<DocumentationSuiteOptions>,
-		Required<LoggingConfiguration> {}
+		Required<LoggingConfiguration> {
+	/**
+	 * {@inheritDoc ApiItemTransformations}
+	 */
+	readonly transformations: ApiItemTransformations;
+}
 
 /**
  * Input options for API Item transformation APIs.
@@ -66,9 +70,13 @@ export interface ApiItemTransformationConfiguration
  */
 export interface ApiItemTransformationOptions
 	extends ApiItemTransformationConfigurationBase,
-		Partial<ApiItemTransformations>,
 		DocumentationSuiteOptions,
-		LoggingConfiguration {}
+		LoggingConfiguration {
+	/**
+	 * Optional overrides for the default transformations.
+	 */
+	readonly transformations?: Partial<ApiItemTransformations>;
+}
 
 /**
  * Gets a complete {@link ApiItemTransformationConfiguration} using the provided partial configuration, and filling
@@ -81,10 +89,10 @@ export function getApiItemTransformationConfigurationWithDefaults(
 ): ApiItemTransformationConfiguration {
 	const logger = options.logger ?? defaultConsoleLogger;
 	const documentationSuiteOptions = getDocumentationSuiteOptionsWithDefaults(options);
-	const transformations = getApiItemTransformationsWithDefaults(options);
+	const transformations = getApiItemTransformationsWithDefaults(options?.transformations);
 	return {
 		...documentationSuiteOptions,
-		...transformations,
+		transformations,
 		apiModel: options.apiModel,
 		uriRoot: options.uriRoot,
 		logger,

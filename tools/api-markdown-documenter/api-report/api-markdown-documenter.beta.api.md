@@ -5,15 +5,15 @@
 ```ts
 
 import { ApiCallSignature } from '@microsoft/api-extractor-model';
-import type { ApiClass } from '@microsoft/api-extractor-model';
+import { ApiClass } from '@microsoft/api-extractor-model';
 import { ApiConstructor } from '@microsoft/api-extractor-model';
 import { ApiConstructSignature } from '@microsoft/api-extractor-model';
 import { ApiEntryPoint } from '@microsoft/api-extractor-model';
-import type { ApiEnum } from '@microsoft/api-extractor-model';
-import type { ApiEnumMember } from '@microsoft/api-extractor-model';
+import { ApiEnum } from '@microsoft/api-extractor-model';
+import { ApiEnumMember } from '@microsoft/api-extractor-model';
 import { ApiFunction } from '@microsoft/api-extractor-model';
 import { ApiIndexSignature } from '@microsoft/api-extractor-model';
-import type { ApiInterface } from '@microsoft/api-extractor-model';
+import { ApiInterface } from '@microsoft/api-extractor-model';
 import { ApiItem } from '@microsoft/api-extractor-model';
 import { ApiItemKind } from '@microsoft/api-extractor-model';
 import { ApiMethod } from '@microsoft/api-extractor-model';
@@ -21,9 +21,10 @@ import { ApiMethodSignature } from '@microsoft/api-extractor-model';
 import { ApiModel } from '@microsoft/api-extractor-model';
 import { ApiNamespace } from '@microsoft/api-extractor-model';
 import { ApiPackage } from '@microsoft/api-extractor-model';
-import type { ApiPropertyItem } from '@microsoft/api-extractor-model';
-import type { ApiTypeAlias } from '@microsoft/api-extractor-model';
-import type { ApiVariable } from '@microsoft/api-extractor-model';
+import { ApiProperty } from '@microsoft/api-extractor-model';
+import { ApiPropertySignature } from '@microsoft/api-extractor-model';
+import { ApiTypeAlias } from '@microsoft/api-extractor-model';
+import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
@@ -48,7 +49,8 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public
-export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, ApiItemTransformations, Required<DocumentationSuiteOptions>, Required<LoggingConfiguration> {
+export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, Required<DocumentationSuiteOptions>, Required<LoggingConfiguration> {
+    readonly transformations: ApiItemTransformations;
 }
 
 // @public @sealed
@@ -58,27 +60,47 @@ export interface ApiItemTransformationConfigurationBase {
 }
 
 // @public
-export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, Partial<ApiItemTransformations>, DocumentationSuiteOptions, LoggingConfiguration {
+export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, DocumentationSuiteOptions, LoggingConfiguration {
+    readonly transformations?: Partial<ApiItemTransformations>;
 }
 
 // @public
 export interface ApiItemTransformations {
+    // (undocumented)
+    readonly [ApiItemKind.CallSignature]: TransformApiItemWithoutChildren<ApiCallSignature>;
+    // (undocumented)
+    readonly [ApiItemKind.Class]: TransformApiItemWithChildren<ApiClass>;
+    // (undocumented)
+    readonly [ApiItemKind.Constructor]: TransformApiItemWithoutChildren<ApiConstructor>;
+    // (undocumented)
+    readonly [ApiItemKind.ConstructSignature]: TransformApiItemWithoutChildren<ApiConstructSignature>;
     readonly createDefaultLayout: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: ApiItemTransformationConfiguration) => SectionNode[];
-    readonly transformApiCallSignature: TransformApiItemWithoutChildren<ApiCallSignature>;
-    readonly transformApiClass: TransformApiItemWithChildren<ApiClass>;
-    readonly transformApiConstructor: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
-    readonly transformApiEntryPoint: TransformApiItemWithChildren<ApiEntryPoint>;
-    readonly transformApiEnum: TransformApiItemWithChildren<ApiEnum>;
-    readonly transformApiEnumMember: TransformApiItemWithoutChildren<ApiEnumMember>;
-    readonly transformApiFunction: TransformApiItemWithoutChildren<ApiFunction>;
-    readonly transformApiIndexSignature: TransformApiItemWithoutChildren<ApiIndexSignature>;
-    readonly transformApiInterface: TransformApiItemWithChildren<ApiInterface>;
-    readonly transformApiMethod: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
-    readonly transformApiModel: TransformApiItemWithoutChildren<ApiModel>;
-    readonly transformApiNamespace: TransformApiItemWithChildren<ApiNamespace>;
-    readonly transformApiProperty: TransformApiItemWithoutChildren<ApiPropertyItem>;
-    readonly transformApiTypeAlias: TransformApiItemWithoutChildren<ApiTypeAlias>;
-    readonly transformApiVariable: TransformApiItemWithoutChildren<ApiVariable>;
+    readonly [ApiItemKind.EntryPoint]: TransformApiItemWithChildren<ApiEntryPoint>;
+    // (undocumented)
+    readonly [ApiItemKind.Enum]: TransformApiItemWithChildren<ApiEnum>;
+    // (undocumented)
+    readonly [ApiItemKind.EnumMember]: TransformApiItemWithoutChildren<ApiEnumMember>;
+    // (undocumented)
+    readonly [ApiItemKind.Function]: TransformApiItemWithoutChildren<ApiFunction>;
+    // (undocumented)
+    readonly [ApiItemKind.IndexSignature]: TransformApiItemWithoutChildren<ApiIndexSignature>;
+    // (undocumented)
+    readonly [ApiItemKind.Interface]: TransformApiItemWithChildren<ApiInterface>;
+    // (undocumented)
+    readonly [ApiItemKind.Method]: TransformApiItemWithoutChildren<ApiMethod>;
+    // (undocumented)
+    readonly [ApiItemKind.MethodSignature]: TransformApiItemWithoutChildren<ApiMethodSignature>;
+    readonly [ApiItemKind.Model]: TransformApiItemWithoutChildren<ApiModel>;
+    // (undocumented)
+    readonly [ApiItemKind.Namespace]: TransformApiItemWithChildren<ApiNamespace>;
+    // (undocumented)
+    readonly [ApiItemKind.Property]: TransformApiItemWithoutChildren<ApiProperty>;
+    // (undocumented)
+    readonly [ApiItemKind.PropertySignature]: TransformApiItemWithoutChildren<ApiPropertySignature>;
+    // (undocumented)
+    readonly [ApiItemKind.TypeAlias]: TransformApiItemWithoutChildren<ApiTypeAlias>;
+    // (undocumented)
+    readonly [ApiItemKind.Variable]: TransformApiItemWithoutChildren<ApiVariable>;
 }
 
 declare namespace ApiItemUtilities {
