@@ -98,6 +98,7 @@ export function create(
 			cache,
 			denyList,
 			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
 		});
 		return service.createRef(params);
 	}
@@ -118,6 +119,7 @@ export function create(
 			cache,
 			denyList,
 			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
 		});
 		return service.updateRef(ref, params);
 	}

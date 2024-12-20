@@ -57,6 +57,7 @@ export function create(
 			cache,
 			denyList,
 			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
 		});
 		return service.createCommit(params);
 	}
