@@ -86,7 +86,13 @@ describe("Utils", () => {
 			const destination = {};
 			copyProperty(undefined, "a", destination);
 			copyProperty(source, "a", destination);
-			// `destination` should not have a property "a", even if the value of "a" is `undefined`
+			assert.equal(Reflect.has(destination, "a"), false);
+		});
+
+		it("does nothing if the property is present but undefined", () => {
+			const source = { a: undefined };
+			const destination = {};
+			copyProperty(source, "a", destination);
 			assert.equal(Reflect.has(destination, "a"), false);
 		});
 	});
