@@ -166,9 +166,26 @@ export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
 }
 
 /**
- * Converts invalid filename characters to underscores.
+ * Gets a qualified representation of the API item's display name, accounting for function/method overloads
+ * by adding a suffix (such as "myMethod_2") as needed to guarantee uniqueness.
  */
-function getFileSafeNameForName(apiItemName: string): string {
+function getQualifiedDisplayName(apiItem: ApiItem): string {
+	let qualifiedName: string = apiItem.displayName;
+	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
+		// Subtract one for compatibility with earlier releases of API Documenter.
+		// (This will get revamped when we fix GitHub issue #1308)
+		qualifiedName += `_${apiItem.overloadIndex - 1}`;
+	}
+	return qualifiedName;
+}
+
+/**
+ * Gets a filename-safe representation of the provided API item name.
+ *
+ * @remarks
+ * - Handles invalid filename characters.
+ */
+export function getFileSafeNameForApiItemName(apiItemName: string): string {
 	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
 	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
 
@@ -184,25 +201,16 @@ function getFileSafeNameForName(apiItemName: string): string {
  * @remarks
  * - Handles invalid filename characters.
  *
- * - Accounts for method overloads by adding a suffix (such as "myMethod_2").
+ * - Qualifies the API item's name, accounting for function/method overloads by adding a suffix (such as "myMethod_2")
+ * as needed to guarantee uniqueness.
  *
  * @param apiItem - The API item for which the qualified name is being queried.
  *
  * @public
  */
 export function getFileSafeNameForApiItem(apiItem: ApiItem): string {
-	const unqualifiedName: string =
-		apiItem.kind === ApiItemKind.Package
-			? getFileSafeNameForName(getUnscopedPackageName(apiItem as ApiPackage))
-			: getFileSafeNameForName(apiItem.displayName);
-
-	let qualifiedName: string = unqualifiedName;
-	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
-		// Subtract one for compatibility with earlier releases of API Documenter.
-		// (This will get revamped when we fix GitHub issue #1308)
-		qualifiedName += `_${apiItem.overloadIndex - 1}`;
-	}
-	return qualifiedName;
+	const qualifiedDisplayName = getQualifiedDisplayName(apiItem);
+	return getFileSafeNameForApiItemName(qualifiedDisplayName);
 }
 
 /**

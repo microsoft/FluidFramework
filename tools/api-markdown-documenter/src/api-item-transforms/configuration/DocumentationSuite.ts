@@ -13,12 +13,14 @@ import {
 
 import {
 	type ApiMemberKind,
-	getFileSafeNameForApiItem,
-	getConciseSignature,
-	getSingleLineExcerptText,
-	isDeprecated,
-	getReleaseTag,
 	getApiItemKind,
+	getConciseSignature,
+	getFileSafeNameForApiItem,
+	getFileSafeNameForApiItemName,
+	getReleaseTag,
+	getSingleLineExcerptText,
+	getUnscopedPackageName,
+	isDeprecated,
 } from "../../utilities/index.js";
 
 /**
@@ -274,12 +276,17 @@ export namespace DefaultDocumentationSuiteOptions {
 	 * Uses the item's qualified API name, but is handled differently for the following items:
 	 *
 	 * - Model: Uses "index".
+	 *
+	 * - Package: Uses the unscoped package name.
 	 */
 	export function defaultGetFileNameForItem(apiItem: ApiItem): string {
 		const itemKind = getApiItemKind(apiItem);
 		switch (itemKind) {
 			case ApiItemKind.Model: {
 				return "index";
+			}
+			case ApiItemKind.Package: {
+				return getFileSafeNameForApiItemName(getUnscopedPackageName(apiItem as ApiPackage));
 			}
 			default: {
 				return getFileSafeNameForApiItem(apiItem);
