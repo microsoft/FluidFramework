@@ -20,6 +20,7 @@ import {
 	getSingleLineExcerptText,
 	isDeprecated,
 	getReleaseTag,
+	getApiItemKind,
 } from "../../utilities/index.js";
 
 /**
@@ -279,7 +280,8 @@ export namespace DefaultDocumentationSuiteOptions {
 	 * - Package: Uses the unscoped package name.
 	 */
 	export function defaultGetFileNameForItem(apiItem: ApiItem): string {
-		switch (apiItem.kind) {
+		const itemKind = getApiItemKind(apiItem);
+		switch (itemKind) {
 			case ApiItemKind.Model: {
 				return "index";
 			}
@@ -307,7 +309,8 @@ export namespace DefaultDocumentationSuiteOptions {
 	 * Uses the item's `displayName`, except for `Model` items, in which case the text "API Overview" is displayed.
 	 */
 	export function defaultGetHeadingTextForItem(apiItem: ApiItem): string {
-		switch (apiItem.kind) {
+		const itemKind = getApiItemKind(apiItem);
+		switch (itemKind) {
 			case ApiItemKind.Model: {
 				return "API Overview";
 			}
@@ -332,7 +335,8 @@ export namespace DefaultDocumentationSuiteOptions {
 	 * Uses the item's signature, except for `Model` items, in which case the text "Packages" is displayed.
 	 */
 	export function defaultGetLinkTextForItem(apiItem: ApiItem): string {
-		switch (apiItem.kind) {
+		const itemKind = getApiItemKind(apiItem);
+		switch (itemKind) {
 			case ApiItemKind.Model: {
 				return "Packages";
 			}
