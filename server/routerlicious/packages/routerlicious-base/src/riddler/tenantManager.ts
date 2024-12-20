@@ -425,34 +425,65 @@ export class TenantManager {
 		enableKeylessAccess: boolean,
 	): Promise<ITenantConfig> {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
+		const tenantDocument = await this.getTenantDocument(tenantId);
+		if (tenantDocument === undefined) {
+			Lumberjack.error("Could not find tenantId.", {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+			});
+			throw new NetworkError(404, `Could not find tenant: ${tenantId}`);
+		}
+
 		let privateKeys: ITenantPrivateKeys | undefined;
-		// If the tenant is being converted to a keyless tenant, generate new private keys, otherwise update them to be undefined
 		if (enableKeylessAccess) {
+			// If the request is to enable keyless access and the tenant is already a keyless tenant, return the tenant config
+			if (tenantDocument.privateKeys) {
+				return {
+					id: tenantDocument._id,
+					orderer: tenantDocument.orderer,
+					storage: tenantDocument.storage,
+					customData: tenantDocument.customData,
+					scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
+					enableKeylessAccess: true,
+				};
+			}
+			// If the tenant is being converted to a keyless tenant, generate new private keys, otherwise update them to be undefined
 			privateKeys = (await this.createTenantKeys(
 				tenantId,
 				latestKeyVersion,
 				true /* createPrivateKeys */,
 			)) as ITenantPrivateKeys;
+		} else {
+			// If the request is to disable keyless access and the tenant is not a keyless tenant, return the tenant config
+			if (!tenantDocument.privateKeys) {
+				return {
+					id: tenantDocument._id,
+					orderer: tenantDocument.orderer,
+					storage: tenantDocument.storage,
+					customData: tenantDocument.customData,
+					scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
+					enableKeylessAccess: false,
+				};
+			}
 		}
 
 		await this.runWithDatabaseRequestCounter(async () =>
 			this.tenantRepository.update({ _id: tenantId }, { privateKeys }, null),
 		);
 		await this.deleteKeyFromCache(tenantId, true /* deletePrivateKeys */);
-		const tenantDocument = await this.getTenantDocument(tenantId);
-		if (tenantDocument === undefined) {
+		const updatedtenantDocument = await this.getTenantDocument(tenantId);
+		if (updatedtenantDocument === undefined) {
 			Lumberjack.error("Could not find tenantId after updating keyless access policy.", {
 				[BaseTelemetryProperties.tenantId]: tenantId,
 			});
 			throw new NetworkError(404, `Could not find updated tenant: ${tenantId}`);
 		}
 		return {
-			id: tenantDocument._id,
-			orderer: tenantDocument.orderer,
-			storage: tenantDocument.storage,
-			customData: tenantDocument.customData,
-			scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
-			enableKeylessAccess: tenantDocument.privateKeys ? true : false,
+			id: updatedtenantDocument._id,
+			orderer: updatedtenantDocument.orderer,
+			storage: updatedtenantDocument.storage,
+			customData: updatedtenantDocument.customData,
+			scheduledDeletionTime: updatedtenantDocument.scheduledDeletionTime,
+			enableKeylessAccess: updatedtenantDocument.privateKeys ? true : false,
 		};
 	}
 

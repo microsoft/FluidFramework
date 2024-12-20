@@ -380,9 +380,9 @@ describe("TenantManager", () => {
 	});
 
 	describe("updateKeylessAccessPolicy", () => {
-		it("Should have enableKeylessAccess set to true when policy is enabled", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
-			sandbox.stub(tenantRepository, "update").resolves();
+		it("Should have enableKeylessAccess set to true when policy is already enabled", async () => {
+			const findOneStub = sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
 
 			const updatedTenant: ITenantConfig = await tenantManager.updateKeylessAccessPolicy(
 				"cordflasher-dolphin",
@@ -391,11 +391,30 @@ describe("TenantManager", () => {
 
 			assert.notStrictEqual(updatedTenant.enableKeylessAccess, undefined);
 			assert.strictEqual(updatedTenant.enableKeylessAccess, true);
+			sandbox.assert.calledOnce(findOneStub);
+			sandbox.assert.notCalled(updateStub);
 		});
 
-		it("Should have enableKeylessAccess set to false when policy is disabled", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutKeyless);
-			sandbox.stub(tenantRepository, "update").resolves();
+		it("Should have enableKeylessAccess set to true when the request is to enable it and the policy is not enabled", async () => {
+			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne");
+			mongoFindOneStub.onFirstCall().resolves(tenantWithoutKeyless);
+			mongoFindOneStub.onSecondCall().resolves(tenantWithKeyless);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
+
+			const updatedTenant: ITenantConfig = await tenantManager.updateKeylessAccessPolicy(
+				"cordflasher-dolphin",
+				true,
+			);
+
+			assert.notStrictEqual(updatedTenant.enableKeylessAccess, undefined);
+			assert.strictEqual(updatedTenant.enableKeylessAccess, true);
+			sandbox.assert.calledTwice(mongoFindOneStub);
+			sandbox.assert.calledOnce(updateStub);
+		});
+
+		it("Should have enableKeylessAccess set to false when policy is already disabled", async () => {
+			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutKeyless);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
 
 			const updatedTenant: ITenantConfig = await tenantManager.updateKeylessAccessPolicy(
 				"cordflasher-dolphin",
@@ -404,6 +423,25 @@ describe("TenantManager", () => {
 
 			assert.notStrictEqual(updatedTenant.enableKeylessAccess, undefined);
 			assert.strictEqual(updatedTenant.enableKeylessAccess, false);
+			sandbox.assert.calledOnce(mongoFindOneStub);
+			sandbox.assert.notCalled(updateStub);
+		});
+
+		it("Should have enableKeylessAccess set to false when the request is to disable it and the policy is enabled", async () => {
+			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne");
+			mongoFindOneStub.onFirstCall().resolves(tenantWithKeyless);
+			mongoFindOneStub.onSecondCall().resolves(tenantWithoutKeyless);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
+
+			const updatedTenant: ITenantConfig = await tenantManager.updateKeylessAccessPolicy(
+				"cordflasher-dolphin",
+				false,
+			);
+
+			assert.notStrictEqual(updatedTenant.enableKeylessAccess, undefined);
+			assert.strictEqual(updatedTenant.enableKeylessAccess, false);
+			sandbox.assert.calledTwice(mongoFindOneStub);
+			sandbox.assert.calledOnce(updateStub);
 		});
 	});
 
