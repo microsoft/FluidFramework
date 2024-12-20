@@ -345,6 +345,7 @@ export function TaskGroup(props: {
 						variant="contained"
 						color="error"
 						onClick={() => {
+							// Getting the revertible before removing it from the undo stack allows the the item to remains in the stack if `revert()` fails.
 							const revertible = undoStack[undoStack.length - 1];
 							revertible?.revert();
 							undoStack.pop();
@@ -359,6 +360,7 @@ export function TaskGroup(props: {
 						variant="contained"
 						color="info"
 						onClick={() => {
+							// Getting the revertible before removing it from the redo stack allows the the item to remains in the stack if `revert()` fails.
 							const revertible = redoStack[redoStack.length - 1];
 							revertible?.revert();
 							redoStack.pop();
