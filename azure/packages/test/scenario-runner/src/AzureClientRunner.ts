@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { CustomEventEmitter } from "@fluid-internal/client-utils";
 import { AzureClient } from "@fluidframework/azure-client";
 
 import {
@@ -33,7 +33,7 @@ export interface AzureClientRunnerConfig {
 }
 export type AzureClientRunnerRunConfig = AzureClientRunnerConfig & IRunConfig;
 
-export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
+export class AzureClientRunner extends CustomEventEmitter<IRunnerEvents> implements IRunner {
 	private status: RunnerStatus = RunnerStatus.NotStarted;
 	constructor(private readonly c: AzureClientRunnerConfig) {
 		super();
