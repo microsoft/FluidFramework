@@ -135,7 +135,7 @@ export function TaskGroup(props: {
 		 *
 		 * @returns An event listener cleanup function
 		 */
-		const handleCommitApplied = props.treeView.events.on(
+		const treeEventHandler = props.treeView.events.on(
 			"commitApplied",
 			(commit: CommitMetadata, getRevertible?: RevertibleFactory) => {
 				if (getRevertible !== undefined) {
@@ -152,7 +152,7 @@ export function TaskGroup(props: {
 		);
 
 		return () => {
-			handleCommitApplied();
+			treeEventHandler();
 		};
 	}, [props.treeView.events, undoStack, redoStack]);
 
