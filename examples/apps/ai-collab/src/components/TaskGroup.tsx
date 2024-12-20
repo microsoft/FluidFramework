@@ -108,10 +108,10 @@ export function TaskGroup(props: {
 			stack: Revertible[],
 			setStack: React.Dispatch<React.SetStateAction<Revertible[]>>,
 		): void {
-			const MAX_STACK_SIZE = 5;
+			const MAX_STACK_SIZE = 50;
 
 			if (stack.length > MAX_STACK_SIZE) {
-				console.log("Stack size exceeded! Disposing oldest revertible.");
+				console.debug("Stack size exceeded! Disposing oldest revertible.");
 				const oldestRevertible = stack[0];
 				if (oldestRevertible) {
 					if (oldestRevertible.status !== RevertibleStatus.Disposed) {
@@ -126,6 +126,22 @@ export function TaskGroup(props: {
 			}
 		}
 
+		/**
+		 * Event handler that manages the undo/redo functionality for tree view commits.
+		 *
+		 * @param commit - Metadata about the commit being applied
+		 * @param getRevertible - Optional factory function that creates a Revertible object
+		 *
+		 * This handler:
+		 * 1. Creates a Revertible object when a commit is applied
+		 * 2. Adds the Revertible to either the undo or redo stack based on the commit type
+		 * 3. Maintains a maximum stack size (defined in `maintainStackSize` function)
+		 *
+		 * The Revertible objects allow operations to be undone/redone, with automatic cleanup
+		 * handled by the onRevertibleDisposed callback.
+		 *
+		 * @returns An event listener cleanup function
+		 */
 		const handleCommitApplied = props.treeView.events.on(
 			"commitApplied",
 			(commit: CommitMetadata, getRevertible?: RevertibleFactory) => {
