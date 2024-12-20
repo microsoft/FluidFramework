@@ -135,7 +135,7 @@ declare namespace ApiItemUtilities {
 export { ApiItemUtilities }
 
 // @public
-export type ApiMemberKind = Omit<ApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package>;
+export type ApiMemberKind = Exclude<ValidApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.Package>;
 
 export { ApiModel }
 
@@ -847,6 +847,9 @@ export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDoc
 
 // @public
 export type UrlTarget = string;
+
+// @public
+export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
 
 // @public
 export const verboseConsoleLogger: Logger;

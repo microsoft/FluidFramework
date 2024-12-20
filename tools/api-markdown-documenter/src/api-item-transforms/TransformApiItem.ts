@@ -25,6 +25,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import type { DocumentNode, SectionNode } from "../documentation-domain/index.js";
+import { getApiItemKind } from "../utilities/index.js";
 
 import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
 import { createDocument } from "./Utilities.js";
@@ -55,16 +56,14 @@ export function apiItemToDocument(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
-	if (apiItem.kind === ApiItemKind.None) {
-		throw new Error(`Encountered API item "${apiItem.displayName}" with a kind of "None".`);
-	}
+	const itemKind = getApiItemKind(apiItem);
 
 	if (
-		apiItem.kind === ApiItemKind.Model ||
-		apiItem.kind === ApiItemKind.Package ||
-		apiItem.kind === ApiItemKind.EntryPoint
+		itemKind === ApiItemKind.Model ||
+		itemKind === ApiItemKind.Package ||
+		itemKind === ApiItemKind.EntryPoint
 	) {
-		throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
+		throw new Error(`Provided API item kind must be handled specially: "${itemKind}".`);
 	}
 
 	if (!shouldItemBeIncluded(apiItem, config)) {
@@ -75,13 +74,13 @@ export function apiItemToDocument(
 
 	if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
 		throw new Error(
-			`"apiItemToDocument" called for an API item kind that is configured to not generate its own document. Provided item kind: "${apiItem.kind}".`,
+			`"apiItemToDocument" called for an API item kind that is not intended to be rendered to its own document. Provided item kind: "${itemKind}".`,
 		);
 	}
 
 	const logger = config.logger;
 
-	logger.verbose(`Generating document for ${apiItem.displayName} (${apiItem.kind})...`);
+	logger.verbose(`Generating document for ${apiItem.displayName} (${itemKind})...`);
 
 	const sections: SectionNode[] = [];
 
@@ -113,16 +112,14 @@ export function apiItemToSections(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): SectionNode[] {
-	if (apiItem.kind === ApiItemKind.None) {
-		throw new Error(`Encountered API item "${apiItem.displayName}" with a kind of "None".`);
-	}
+	const itemKind = getApiItemKind(apiItem);
 
 	if (
-		apiItem.kind === ApiItemKind.Model ||
-		apiItem.kind === ApiItemKind.Package ||
-		apiItem.kind === ApiItemKind.EntryPoint
+		itemKind === ApiItemKind.Model ||
+		itemKind === ApiItemKind.Package ||
+		itemKind === ApiItemKind.EntryPoint
 	) {
-		throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
+		throw new Error(`Provided API item kind must be handled specially: "${itemKind}".`);
 	}
 
 	if (!shouldItemBeIncluded(apiItem, config)) {
@@ -139,7 +136,7 @@ export function apiItemToSections(
 	logger.verbose(`Generating documentation section for ${apiItem.displayName}...`);
 
 	let sections: SectionNode[];
-	switch (apiItem.kind) {
+	switch (itemKind) {
 		case ApiItemKind.CallSignature: {
 			sections = transformations[ApiItemKind.CallSignature](
 				apiItem as ApiCallSignature,
@@ -252,7 +249,7 @@ export function apiItemToSections(
 		}
 
 		default: {
-			throw new Error(`Unrecognized API item kind: "${apiItem.kind}".`);
+			throw new Error(`Unrecognized API item kind: "${itemKind}".`);
 		}
 	}
 

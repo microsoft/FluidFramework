@@ -74,6 +74,7 @@ export {
 	type ApiModifier,
 	type ApiModuleLike,
 	type ApiSignatureLike,
+	type ValidApiItemKind,
 } from "./utilities/index.js";
 
 // #region Scoped exports
