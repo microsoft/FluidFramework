@@ -381,7 +381,9 @@ describe("TenantManager", () => {
 
 	describe("updateKeylessAccessPolicy", () => {
 		it("Should have enableKeylessAccess set to true when policy is already enabled", async () => {
-			const findOneStub = sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			const findOneStub = sandbox
+				.stub(tenantRepository, "findOne")
+				.resolves(tenantWithKeyless);
 			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
 
 			const updatedTenant: ITenantConfig = await tenantManager.updateKeylessAccessPolicy(
@@ -413,7 +415,9 @@ describe("TenantManager", () => {
 		});
 
 		it("Should have enableKeylessAccess set to false when policy is already disabled", async () => {
-			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutKeyless);
+			const mongoFindOneStub = sandbox
+				.stub(tenantRepository, "findOne")
+				.resolves(tenantWithoutKeyless);
 			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
 
 			const updatedTenant: ITenantConfig = await tenantManager.updateKeylessAccessPolicy(
