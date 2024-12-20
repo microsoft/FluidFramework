@@ -39,6 +39,7 @@ import type { Logger } from "../Logging.js";
 
 /**
  * This module contains general `ApiItem`-related types and utilities.
+ * @remarks Note: the utilities here should not require any specific context or configuration.
  */
 
 /**
