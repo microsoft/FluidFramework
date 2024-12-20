@@ -340,7 +340,7 @@ export function TaskGroup(props: {
 						treeView={llmBranchData.aiCollabBranch}
 						differences={llmBranchData.differences}
 						newBranchTargetNode={llmBranchData.newBranchTargetNode}
-					></TaskGroupDiffModal>
+					/>
 				)}
 
 				{undoStack.length > 0 && (
@@ -379,7 +379,7 @@ export function TaskGroup(props: {
 					variant="contained"
 					color="success"
 					onClick={() => {
-						props.sharedTreeTaskGroup.tasks.insertAtStart({
+						props.sharedTreeTaskGroup.tasks.insertAtEnd({
 							title: `New Task #${props.sharedTreeTaskGroup.tasks.length + 1}`,
 							description: "This is the new task. ",
 							priority: "low",
