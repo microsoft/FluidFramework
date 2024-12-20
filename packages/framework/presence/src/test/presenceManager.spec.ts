@@ -598,7 +598,7 @@ describe("Presence", () => {
 							);
 						});
 
-						it.skip("marks attendee with stale connection as active when attendee disconnects after local reconnection", () => {
+						it.skip("announces `attendeeDisconnected` once when remote client disconnects after local client reconnects", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
 							// Setup - initial attendee joins before local client disconnects
