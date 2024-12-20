@@ -149,7 +149,7 @@
 				"fluid__test__backCompat": "${input:backCompat}",
 				"fluid__test__r11sEndpointName": "${input:r11sEndpoint}",
 				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutput}",
-				//* "fluid__test__driver__frs": "...",
+				"fluid__test__driver__frs": "${input:fluid__test__driver__frs}",
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			"windows": {
@@ -247,6 +247,12 @@
 					"value": "docker",
 				},
 			],
+		},
+		{
+			"id": "fluid__test__driver__frs",
+			"description": "FRS Tenant info from our team key vault. Check your env vars after running getkeys",
+			"type": "promptString",
+			"password": true,
 		},
 		{
 			"id": "login__odsp__test__tenants",
