@@ -383,12 +383,72 @@ stages:
               key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
               path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
 
+        # Retrieve a tenant from the TRIPS tenant pool
+        # need to have some automated consent for the local flow
+        - task: AzureCLI@2
+          displayName: 'Set up and retrieve tenant credentials'
+          inputs:
+            azureSubscription: 'Fluid'
+            addSpnToEnvironment: true
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              set -eu -o pipefail
+
+              az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+              node -e "
+                const fetch = require('fetch');
+
+                const bearerToken = await fetch(
+                  "https://tdff5prd.office.net/v2.0/reservations/reserve?isSynthetic=false&durationMinutes=75",
+                  {
+                    method: "POST",
+                    body: JSON.stringify({
+                      "Resources": [
+                        {
+                          "name": "tenant1", // A user-assigned identifier for the specific resource
+                          "profileName": "FluidFrameworkTenantPool", // The type of the resource (i.e. pool name)
+                        },
+                      ],
+                      "ModuleName": "FFTestModule", // Metadata used for tracking the source of the request (can be anything)
+                      "Count": 1, // How many copies of the above resources to allocate for the reservation. Should almost always be 1
+                  }
+                );
+                const stringBearerToken = JSON.stringify(bearerToken);
+                // step 2: wait for resource hydration
+                // returns "Ready" or "Not Ready"
+                const status = await fetch(
+                  "https://tdff5prd.office.net/v2.0/reservations/current?isSynthetic=false&durationMinutes=75",
+                  {
+                    method: "GET",
+                    headers: {
+                      Authorization: `BEARER ${stringBearerToken}`,
+                    },
+                  },
+                );
+                const stringStatus = JSON.stringify(status);
+                // step 3: check out hydrated resource
+                const credentials = await fetch(
+                  `https://tdff5prd.office.net/v2.0/reservations/current/modules?moduleName=${moduleName}`,
+                  {
+                    method: "GET",
+                    headers: {
+                      Authorization: `BEARER ${stringBearerToken}`,
+                      // don't think this is right
+                      "TDF-ReservationClient": "odspTests",
+                    },
+                  },
+                );
+                const loginTenants = JSON.stringify(credentials);
+              "
+              echo "##vso[task.setvariable tenantCreds=loginTenants;issecret=true]Credentials saved"
+
         # run the test
         - task: Npm@1
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            ${{ parameters.env }}
+            login__odsp__test__tenants: $(tenantCreds)
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
