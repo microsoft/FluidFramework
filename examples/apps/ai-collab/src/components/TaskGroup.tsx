@@ -86,8 +86,7 @@ export function TaskGroup(props: {
 				const undoIndex = undoStack.indexOf(disposed);
 				if (undoIndex !== -1) {
 					setUndoStack((currUndoStack) => {
-						const newUndoStack = [...currUndoStack];
-						newUndoStack.splice(undoIndex, 1);
+						const newUndoStack = currUndoStack.toSpliced(undoIndex, 1);
 						return newUndoStack;
 					});
 				}
