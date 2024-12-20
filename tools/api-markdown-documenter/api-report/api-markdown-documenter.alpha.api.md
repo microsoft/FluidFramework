@@ -49,7 +49,7 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public
-export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, Required<DocumentationSuiteOptions>, Required<LoggingConfiguration> {
+export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, DocumentationSuiteConfiguration, Required<LoggingConfiguration> {
     readonly defaultSectionLayout: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: ApiItemTransformationConfiguration) => SectionNode[];
     readonly transformations: ApiItemTransformations;
 }
@@ -61,7 +61,7 @@ export interface ApiItemTransformationConfigurationBase {
 }
 
 // @public
-export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, DocumentationSuiteOptions, LoggingConfiguration {
+export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, Partial<DocumentationSuiteConfiguration>, LoggingConfiguration {
     readonly defaultSectionLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: ApiItemTransformationConfiguration) => SectionNode[];
     readonly transformations?: Partial<ApiItemTransformations>;
 }
@@ -305,18 +305,18 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 }
 
 // @public
-export interface DocumentationSuiteOptions {
-    readonly documentBoundaries?: DocumentBoundaries;
-    readonly getAlertsForItem?: (apiItem: ApiItem) => string[];
-    readonly getFileNameForItem?: (apiItem: ApiItem) => string;
-    readonly getHeadingTextForItem?: (apiItem: ApiItem) => string;
-    readonly getLinkTextForItem?: (apiItem: ApiItem) => string;
-    readonly getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
-    readonly hierarchyBoundaries?: HierarchyBoundaries;
-    readonly includeBreadcrumb?: boolean;
-    readonly includeTopLevelDocumentHeading?: boolean;
-    readonly minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
-    readonly skipPackage?: (apiPackage: ApiPackage) => boolean;
+export interface DocumentationSuiteConfiguration {
+    readonly documentBoundaries: DocumentBoundaries;
+    readonly getAlertsForItem: (apiItem: ApiItem) => string[];
+    readonly getFileNameForItem: (apiItem: ApiItem) => string;
+    readonly getHeadingTextForItem: (apiItem: ApiItem) => string;
+    readonly getLinkTextForItem: (apiItem: ApiItem) => string;
+    readonly getUriBaseOverrideForItem: (apiItem: ApiItem) => string | undefined;
+    readonly hierarchyBoundaries: HierarchyBoundaries;
+    readonly includeBreadcrumb: boolean;
+    readonly includeTopLevelDocumentHeading: boolean;
+    readonly minimumReleaseLevel: Omit<ReleaseTag, ReleaseTag.None>;
+    readonly skipPackage: (apiPackage: ApiPackage) => boolean;
 }
 
 // @public
