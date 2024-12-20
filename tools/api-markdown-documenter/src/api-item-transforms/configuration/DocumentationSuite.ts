@@ -14,8 +14,6 @@ import {
 import {
 	type ApiMemberKind,
 	getQualifiedApiItemName,
-	getUnscopedPackageName,
-	getSafeFilenameForName,
 	getConciseSignature,
 	getSingleLineExcerptText,
 	isDeprecated,
@@ -276,17 +274,12 @@ export namespace DefaultDocumentationSuiteOptions {
 	 * Uses the item's qualified API name, but is handled differently for the following items:
 	 *
 	 * - Model: Uses "index".
-	 *
-	 * - Package: Uses the unscoped package name.
 	 */
 	export function defaultGetFileNameForItem(apiItem: ApiItem): string {
 		const itemKind = getApiItemKind(apiItem);
 		switch (itemKind) {
 			case ApiItemKind.Model: {
 				return "index";
-			}
-			case ApiItemKind.Package: {
-				return getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage));
 			}
 			default: {
 				return getQualifiedApiItemName(apiItem);

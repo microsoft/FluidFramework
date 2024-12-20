@@ -147,6 +147,28 @@ export enum ApiModifier {
 }
 
 /**
+ * Converts invalid filename characters to underscores.
+ */
+function getFileSafeNameForName(apiItemName: string): string {
+	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
+	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
+
+	// Note: This can introduce naming collisions.
+	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
+	// https://github.com/microsoft/rushstack/issues/1308
+	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
+}
+
+/**
+ * Gets a filename-safe representation of the API item's display name.
+ */
+function getFileSafeNameForApiItem(apiItem: ApiItem): string {
+	return apiItem.kind === ApiItemKind.Package
+		? getFileSafeNameForName(getUnscopedPackageName(apiItem as ApiPackage))
+		: getFileSafeNameForName(apiItem.displayName);
+}
+
+/**
  * Adjusts the name of the item as needed.
  * Accounts for method overloads by adding a suffix such as "myMethod_2".
  *
@@ -155,7 +177,7 @@ export enum ApiModifier {
  * @public
  */
 export function getQualifiedApiItemName(apiItem: ApiItem): string {
-	let qualifiedName: string = getSafeFilenameForName(apiItem.displayName);
+	let qualifiedName: string = getFileSafeNameForApiItem(apiItem);
 	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
 		// Subtract one for compatibility with earlier releases of API Documenter.
 		// (This will get revamped when we fix GitHub issue #1308)
@@ -527,19 +549,6 @@ export function getConciseSignature(apiItem: ApiItem): string {
 		return `${apiItem.displayName}(${apiItem.parameters.map((x) => x.name).join(", ")})`;
 	}
 	return apiItem.displayName;
-}
-
-/**
- * Converts bad filename characters to underscores.
- */
-export function getSafeFilenameForName(apiItemName: string): string {
-	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
-	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
-
-	// Note: This can introduce naming collisions.
-	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
-	// https://github.com/microsoft/rushstack/issues/1308
-	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
 }
 
 /**
