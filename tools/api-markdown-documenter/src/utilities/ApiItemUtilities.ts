@@ -87,24 +87,6 @@ export type ApiMemberKind = Exclude<
 >;
 
 /**
- * Gets the {@link ApiMemberKind} for the provided API item. Throws if the item's kind is not a valid member kind.
- */
-export function getApiMemberKind(apiItem: ApiItem): ApiMemberKind {
-	switch (apiItem.kind) {
-		case ApiItemKind.EntryPoint:
-		case ApiItemKind.Model:
-		case ApiItemKind.Package: {
-			throw new Error(
-				`Expected API item to be a member kind, but got "${apiItem.kind}": "${apiItem.displayName}".`,
-			);
-		}
-		default: {
-			return getApiItemKind(apiItem) as ApiMemberKind;
-		}
-	}
-}
-
-/**
  * `ApiItem` union type representing function-like API kinds.
  *
  * @public
