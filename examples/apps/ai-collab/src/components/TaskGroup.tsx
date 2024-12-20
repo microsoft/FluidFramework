@@ -21,6 +21,7 @@ import {
 	type TreeViewAlpha,
 } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
+import { RedoRounded, UndoRounded } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
 import {
 	Box,
@@ -28,9 +29,11 @@ import {
 	Card,
 	Dialog,
 	Divider,
+	IconButton,
 	Popover,
 	Stack,
 	TextField,
+	Tooltip,
 	Typography,
 } from "@mui/material";
 import { type TreeView } from "fluid-framework";
@@ -341,33 +344,35 @@ export function TaskGroup(props: {
 				)}
 
 				{undoStack.length > 0 && (
-					<Button
-						variant="contained"
-						color="error"
-						onClick={() => {
-							// Getting the revertible before removing it from the undo stack allows the the item to remains in the stack if `revert()` fails.
-							const revertible = undoStack[undoStack.length - 1];
-							revertible?.revert();
-							undoStack.pop();
-						}}
-					>
-						Undo
-					</Button>
+					<Tooltip title="Undo">
+						<IconButton
+							color="error"
+							onClick={() => {
+								// Getting the revertible before removing it from the undo stack allows the the item to remains in the stack if `revert()` fails.
+								const revertible = undoStack[undoStack.length - 1];
+								revertible?.revert();
+								undoStack.pop();
+							}}
+						>
+							<UndoRounded />
+						</IconButton>
+					</Tooltip>
 				)}
 
 				{redoStack.length > 0 && (
-					<Button
-						variant="contained"
-						color="info"
-						onClick={() => {
-							// Getting the revertible before removing it from the redo stack allows the the item to remains in the stack if `revert()` fails.
-							const revertible = redoStack[redoStack.length - 1];
-							revertible?.revert();
-							redoStack.pop();
-						}}
-					>
-						Redo
-					</Button>
+					<Tooltip title="Redo">
+						<IconButton
+							color="info"
+							onClick={() => {
+								// Getting the revertible before removing it from the redo stack allows the the item to remains in the stack if `revert()` fails.
+								const revertible = redoStack[redoStack.length - 1];
+								revertible?.revert();
+								redoStack.pop();
+							}}
+						>
+							<RedoRounded />
+						</IconButton>
+					</Tooltip>
 				)}
 
 				<Button
