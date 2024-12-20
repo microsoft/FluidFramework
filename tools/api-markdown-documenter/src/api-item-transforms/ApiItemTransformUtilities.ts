@@ -438,6 +438,11 @@ function doesItemKindGenerateHierarchy(
 	kind: ValidApiItemKind,
 	hierarchyBoundaries: HierarchyBoundaries,
 ): boolean {
+	if (kind === ApiItemKind.Model) {
+		// Model items always yield a document, and never introduce hierarchy
+		return false;
+	}
+
 	if (kind === ApiItemKind.Package) {
 		return true;
 	}

@@ -44,6 +44,8 @@ import type { Logger } from "../Logging.js";
 
 /**
  * Represents "valid" API item kinds. I.e., not `None`.
+ *
+ * @public
  */
 export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
 
@@ -79,9 +81,9 @@ export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
  *
  * @public
  */
-export type ApiMemberKind = Omit<
-	ApiItemKind,
-	ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package
+export type ApiMemberKind = Exclude<
+	ValidApiItemKind,
+	ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.Package
 >;
 
 /**
