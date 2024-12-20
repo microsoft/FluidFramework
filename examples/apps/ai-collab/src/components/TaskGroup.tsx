@@ -105,7 +105,6 @@ export function TaskGroup(props: {
 		 * example app stores up to `MAX_STACK_SIZE` number of {@link Revertible} instances in each of the undo and redo stacks.
 		 * When the stack size exceeds `MAX_STACK_SIZE`, the oldest {@link Revertible} instance is disposed.
 		 * @param stack - The stack that the {@link Revertible} instance is being added to.
-		 * @param setstack - The setter function for the primary stack.
 		 */
 		function trimStackToMaxSize(stack: Revertible[]): Revertible[] {
 			const MAX_STACK_SIZE = 50;
