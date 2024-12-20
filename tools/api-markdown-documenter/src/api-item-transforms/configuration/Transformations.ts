@@ -57,6 +57,8 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 /**
  * Transformations for generating {@link DocumentationNode} trees from different kinds of API content.
  *
+ * @privateRemarks TODO: Make transformation for package items configurable
+ *
  * @public
  */
 export interface ApiItemTransformations {
@@ -119,7 +121,6 @@ const defaultApiItemTransformationOptions: ApiItemTransformations = {
 	[ApiItemKind.MethodSignature]: DefaultTransformationImplementations.transformApiFunctionLike,
 	[ApiItemKind.Model]: DefaultTransformationImplementations.transformApiModel,
 	[ApiItemKind.Namespace]: DefaultTransformationImplementations.transformApiNamespace,
-	// TODO: Make package transformation configurable
 	[ApiItemKind.Property]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	[ApiItemKind.PropertySignature]:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
