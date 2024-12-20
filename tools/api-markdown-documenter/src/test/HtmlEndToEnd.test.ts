@@ -67,7 +67,16 @@ const testConfigs = new Map<
 		},
 	],
 
-	// TODO: deep config
+	// A sample "deep" configuration.
+	// All "parent" API items generate hierarchy.
+	// All other items are rendered as documents under their parent hierarchy.
+	[
+		"deep-config",
+		{
+			uriRoot: ".",
+			hierarchy: HierarchyConfigs.deep,
+		},
+	],
 ]);
 
 describe("HTML end-to-end tests", () => {
