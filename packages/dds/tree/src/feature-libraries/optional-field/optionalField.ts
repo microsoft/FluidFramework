@@ -744,7 +744,7 @@ function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
 		const inputIndex = register === "self" ? 0 : undefined;
 		const outputIndex =
 			register === "self"
-				? // If the node starts out as not-removed, is it removed in the output context iff the field content is changed
+				? // If the node starts out as not-removed, it is removed in the output context iff the field content is changed
 					isFieldContentChanged
 					? undefined
 					: 0

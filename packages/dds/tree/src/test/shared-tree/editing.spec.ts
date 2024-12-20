@@ -3181,7 +3181,7 @@ describe("Editing", () => {
 				stack.unsubscribe();
 			});
 
-			it("inverse constraint violated by interim change", () => {
+			it("inverse constraint violated by a change between the original and the revert", () => {
 				const tree = makeTreeFromJson({ foo: "A" });
 				const stack = createTestUndoRedoStacks(tree.events);
 
@@ -3215,7 +3215,7 @@ describe("Editing", () => {
 				stack.unsubscribe();
 			});
 
-			it("inverse constraint violated by rebased changes", () => {
+			it("inverse constraint violated while rebasing the original change", () => {
 				const tree = makeTreeFromJson({ foo: "A", bar: "old" });
 				const branch = tree.branch();
 
