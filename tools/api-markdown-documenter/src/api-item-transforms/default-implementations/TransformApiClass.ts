@@ -15,7 +15,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import type { SectionNode } from "../../documentation-domain/index.js";
-import { ApiModifier, getScopedMemberNameForDiagnostics, isStatic } from "../../utilities/index.js";
+import { ApiModifier, getApiItemKind, getScopedMemberNameForDiagnostics, isStatic } from "../../utilities/index.js";
 import { filterChildMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
@@ -75,7 +75,8 @@ export function transformApiClass(
 		const indexSignatures: ApiIndexSignature[] = [];
 		const allMethods: ApiMethod[] = [];
 		for (const child of filteredChildren) {
-			switch (child.kind) {
+			const childKind = getApiItemKind(child);
+			switch (childKind) {
 				case ApiItemKind.Constructor: {
 					constructors.push(child as ApiConstructor);
 					break;
@@ -102,7 +103,7 @@ export function transformApiClass(
 							child.displayName
 						}" of Class "${getScopedMemberNameForDiagnostics(
 							apiClass,
-						)}" is of unsupported API item kind: "${child.kind}"`,
+						)}" is of unsupported API item kind: "${childKind}"`,
 					);
 					break;
 				}

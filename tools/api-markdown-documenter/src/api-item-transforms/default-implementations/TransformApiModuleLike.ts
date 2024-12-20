@@ -17,7 +17,7 @@ import {
 
 import type { SectionNode } from "../../documentation-domain/index.js";
 import type { ApiModuleLike } from "../../utilities/index.js";
-import { getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
+import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
 import { filterItems } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
@@ -77,7 +77,8 @@ export function transformApiModuleLike(
 		const enums: ApiEnum[] = [];
 		const variables: ApiVariable[] = [];
 		for (const child of filteredChildren) {
-			switch (child.kind) {
+			const childKind = getApiItemKind(child);
+			switch (childKind) {
 				case ApiItemKind.Interface: {
 					interfaces.push(child as ApiInterface);
 					break;
@@ -109,10 +110,10 @@ export function transformApiModuleLike(
 				default: {
 					config.logger?.error(
 						`Child item "${child.displayName}" of ${
-							apiItem.kind
+							childKind
 						} "${getScopedMemberNameForDiagnostics(
 							apiItem,
-						)}" is of unsupported API item kind: "${child.kind}"`,
+						)}" is of unsupported API item kind: "${childKind}"`,
 					);
 					break;
 				}

@@ -9,7 +9,7 @@ import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-
 
 import type { Heading } from "../Heading.js";
 import type { Link } from "../Link.js";
-import { getQualifiedApiItemName, getReleaseTag } from "../utilities/index.js";
+import { getQualifiedApiItemName, getReleaseTag, getApiItemKind, type ValidApiItemKind } from "../utilities/index.js";
 
 import type {
 	ApiItemTransformationConfiguration,
@@ -268,7 +268,7 @@ function getHeadingIdForApiItem(
 	config: ApiItemTransformationConfiguration,
 ): string {
 	let baseName: string | undefined;
-	const apiItemKind: ApiItemKind = apiItem.kind;
+	const apiItemKind = getApiItemKind(apiItem);
 
 	// Walk parentage up until we reach the ancestor into whose document we're being rendered.
 	// Generate ID information for everything back to that point
@@ -367,7 +367,7 @@ export function getAncestralHierarchy(
  * @returns `true` if the item should be rendered to its own document. `false` otherwise.
  */
 export function doesItemKindRequireOwnDocument(
-	kind: ApiItemKind,
+	kind: ValidApiItemKind,
 	documentBoundaries: DocumentBoundaries,
 ): boolean {
 	if (
@@ -404,7 +404,7 @@ export function doesItemRequireOwnDocument(
 	apiItem: ApiItem,
 	documentBoundaries: DocumentBoundaries,
 ): boolean {
-	return doesItemKindRequireOwnDocument(apiItem.kind, documentBoundaries);
+	return doesItemKindRequireOwnDocument(getApiItemKind(apiItem), documentBoundaries);
 }
 
 /**
@@ -430,7 +430,7 @@ export function doesItemRequireOwnDocument(
  * @returns `true` if the item should contribute to directory-wise hierarchy in the output. `false` otherwise.
  */
 function doesItemKindGenerateHierarchy(
-	kind: ApiItemKind,
+	kind: ValidApiItemKind,
 	hierarchyBoundaries: HierarchyBoundaries,
 ): boolean {
 	if (kind === ApiItemKind.Package) {
@@ -458,7 +458,7 @@ function doesItemGenerateHierarchy(
 	apiItem: ApiItem,
 	hierarchyBoundaries: HierarchyBoundaries,
 ): boolean {
-	return doesItemKindGenerateHierarchy(apiItem.kind, hierarchyBoundaries);
+	return doesItemKindGenerateHierarchy(getApiItemKind(apiItem), hierarchyBoundaries);
 }
 
 /**
