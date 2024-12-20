@@ -779,8 +779,11 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		],
 		async () => {
 			const container = await createConnectedContainer();
-			container.close();
-			container.dispose(new DataCorruptionError("dispose error", {}));
+			container.close(DisconnectReason.Expected);
+			container.dispose(
+				DisconnectReason.Expected,
+				new DataCorruptionError("dispose error", {}),
+			);
 
 			assert.strictEqual(
 				container.closedWithError,
@@ -798,8 +801,8 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		],
 		async () => {
 			const container = await createConnectedContainer();
-			container.close(new DataCorruptionError("close error", {}));
-			container.dispose();
+			container.close(DisconnectReason.Expected, new DataCorruptionError("close error", {}));
+			container.dispose(DisconnectReason.Expected);
 
 			assert.strictEqual(
 				container.closedWithError?.message,
