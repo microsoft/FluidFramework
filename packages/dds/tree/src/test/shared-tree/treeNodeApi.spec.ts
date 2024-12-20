@@ -10,6 +10,8 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import {
 	CheckoutFlexTreeView,
 	type TransactionConstraint,
+	type TransactionResult,
+	type TransactionResultExt,
 	Tree,
 	TreeAlpha,
 	type rollback,
@@ -374,23 +376,33 @@ describe("treeApi", () => {
 		});
 
 		describe("view.runTransaction:transaction() return values", () => {
-			it("implicit success, no return value", () => {
+			it("implicit success", () => {
 				const view = getTestObjectView();
 				const runTransactionResult = view.runTransaction(() => {
 					view.root.content = 43;
 				});
-				assert.equal(view.root.content, 43);
-				assert.equal(runTransactionResult.success, true);
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
 			});
 
-			it("explicit success with return value", () => {
+			it("explicit success", () => {
 				const view = getTestObjectView();
 				const runTransactionResult = view.runTransaction(() => {
 					view.root.content = 43;
 					return { rollback: false };
 				});
-				assert.equal(view.root.content, 43);
-				assert.equal(runTransactionResult.success, true);
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
 			});
 
 			it("rollback", () => {
@@ -399,8 +411,13 @@ describe("treeApi", () => {
 					view.root.content = 43;
 					return { rollback: true };
 				});
-				assert.equal(view.root.content, 42);
-				assert.equal(runTransactionResult.success, false);
+				assert.equal(view.root.content, 42, "The transaction did not rollback");
+				const expectedResult: TransactionResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
 			});
 
 			it("success + user defined value", () => {
@@ -409,9 +426,16 @@ describe("treeApi", () => {
 					view.root.content = 43;
 					return { value: view.root.content };
 				});
-				assert.equal(view.root.content, 43);
-				assert.equal(runTransactionResult.success, true);
-				assert.equal(runTransactionResult.value, 43);
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionResultExt<number, undefined> = {
+					success: true,
+					value: 43,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
 			});
 
 			it("rollback + user defined value", () => {
@@ -420,83 +444,18 @@ describe("treeApi", () => {
 					view.root.content = 43;
 					return { rollback: true, value: view.root.content };
 				});
-				assert.equal(runTransactionResult.success, false);
-				// Note that this is the value that was set before the transaction was rolled back.
-				assert.equal(runTransactionResult.value, 43);
-				// After the transaction is rolled back, the value is reverted to the original value.
-				assert.equal(view.root.content, 42);
-			});
-
-			it("success + undo precondition", () => {
-				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction(() => {
-					view.root.content = 43;
-					return {
-						undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
-					};
-				});
-				assert.equal(view.root.content, 43);
-				assert.equal(runTransactionResult.success, true);
-			});
-
-			it("rollback + undo precondition", () => {
-				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction(() => {
-					view.root.content = 43;
-					return {
-						rollback: true,
-						undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
-					};
-				});
-				assert.equal(view.root.content, 42);
-				assert.equal(runTransactionResult.success, false);
-			});
-
-			it("success + user defined value + undo precondition", () => {
-				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction(() => {
-					view.root.content = 43;
-					return {
-						value: view.root.content,
-						undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
-					};
-				});
-				assert.equal(view.root.content, 43);
-				assert.equal(runTransactionResult.success, true);
-				assert.equal(runTransactionResult.value, 43);
-			});
-
-			it("rollback + user defined value + undo precondition", () => {
-				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction(() => {
-					view.root.content = 43;
-					return {
-						rollback: true,
-						value: view.root.content,
-						undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
-					};
-				});
-				assert.equal(runTransactionResult.success, false);
-				// Note that this is the value that was set before the transaction was rolled back.
-				assert.equal(view.root.content, 42);
-				// After the transaction is rolled back, the value is reverted to the original value.
-				assert.equal(runTransactionResult.value, 43);
-			});
-
-			it("void return weirdness", () => {
-				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction(() => {
-					view.root.content = 43;
-					// As long as one of the properties matches in the return types, any properties can be added.
-					return {
-						value: 1,
-						rollback: true,
-						x: 5,
-						result: "continue",
-					};
-				});
-				assert.equal(view.root.content, 42);
-				assert.equal(runTransactionResult.success, false);
+				// The transaction is rolled back. So, the content is reverted to the original value.
+				assert.equal(view.root.content, 42, "The transaction did not rollback");
+				const expectedResult: TransactionResultExt<undefined, number> = {
+					success: false,
+					// Note that this is the value that was returned before the transaction was rolled back.
+					value: 43,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
 			});
 		});
 

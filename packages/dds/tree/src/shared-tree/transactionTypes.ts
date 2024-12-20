@@ -37,7 +37,7 @@ export interface NodeInDocumentConstraint {
  * The status of a the transaction callback in the {@link RunTransaction | RunTransaction} API.
  * @alpha
  */
-export type TransactionCallbackStatusExt<TSuccessValue, TFailureValue> = (
+export type TransactionCallbackStatusExt<TSuccessValue, TFailureValue> =
 	| {
 			/** Indicates that the transaction callback ran successfully. */
 			rollback?: false;
@@ -49,16 +49,12 @@ export type TransactionCallbackStatusExt<TSuccessValue, TFailureValue> = (
 			rollback: true;
 			/** The user defined value when the transaction failed. */
 			value: TFailureValue;
-	  }
-) & {
-	// Todo: For demonstration only. To be removed.
-	undoPreconditions?: readonly TransactionConstraint[];
-};
+	  };
 
 /**
  * The status of a the transaction callback in the {@link RunTransaction | RunTransaction} API. This is the
  * same as {@link TransactionCallbackStatusExt} but with the `value` field omitted. This is useful when
- * the user doesn't want to return any value from the transaction callback.
+ * the transaction callback doesn't need to return a value.
  * @alpha
  */
 export type TransactionCallbackStatus = Omit<
@@ -75,8 +71,6 @@ export interface TransactionResultSuccess<TSuccessValue> {
 	success: true;
 	/** The user defined value when the transaction was successful. */
 	value: TSuccessValue;
-	// Todo: For demonstration only. To be removed.
-	commitId?: string;
 }
 
 /**
@@ -100,8 +94,7 @@ export type TransactionResultExt<TSuccessValue, TFailureValue> =
 
 /**
  * The result of the {@link RunTransaction | RunTransaction} API. This is the same as {@link TransactionResultExt}
- * but with the `value` field omitted. This is useful when the user doesn't want to return any value from the
- * transaction.
+ * but with the `value` field omitted. This is useful when the transaction callback doesn't need to return a value.
  * @alpha
  */
 export type TransactionResult =

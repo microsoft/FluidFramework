@@ -585,7 +585,7 @@ export interface RunTransaction {
     readonly rollback: typeof rollback;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface RunTransactionParams {
     readonly preconditions?: readonly TransactionConstraint[];
 }
@@ -678,45 +678,37 @@ export function singletonSchema<TScope extends string, TName extends string | nu
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
-// @alpha (undocumented)
+// @alpha
 export type TransactionCallbackStatus = Omit<TransactionCallbackStatusExt<unknown, unknown>, "value">;
 
-// @alpha (undocumented)
-export type TransactionCallbackStatusExt<T, F> = ({
+// @alpha
+export type TransactionCallbackStatusExt<TSuccessValue, TFailureValue> = {
     rollback?: false;
-    value: T;
+    value: TSuccessValue;
 } | {
     rollback: true;
-    value: F;
-}) & {
-    undoPreconditions?: readonly TransactionConstraint[];
+    value: TFailureValue;
 };
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 
-// @alpha (undocumented)
+// @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
 
-// @alpha (undocumented)
-export type TransactionResultExt<T, F> = TransactionResultSuccess<T> | TransactionResultFailed<F>;
+// @alpha
+export type TransactionResultExt<TSuccessValue, TFailureValue> = TransactionResultSuccess<TSuccessValue> | TransactionResultFailed<TFailureValue>;
 
-// @alpha (undocumented)
-export interface TransactionResultFailed<F> {
-    // (undocumented)
+// @alpha
+export interface TransactionResultFailed<TFailureValue> {
     success: false;
-    // (undocumented)
-    value: F;
+    value: TFailureValue;
 }
 
-// @alpha (undocumented)
-export interface TransactionResultSuccess<T> {
-    // (undocumented)
-    commitId?: string;
-    // (undocumented)
+// @alpha
+export interface TransactionResultSuccess<TSuccessValue> {
     success: true;
-    // (undocumented)
-    value: T;
+    value: TSuccessValue;
 }
 
 // @public
