@@ -48,7 +48,7 @@ const testConfigs = new Map<string, Omit<ApiItemTransformationOptions, "apiModel
 	],
 ]);
 
-describe("API item transformation end-to-end tests", () => {
+describe("API model transformation end-to-end tests", () => {
 	for (const modelName of apiModels) {
 		// Input directory for the model
 		const modelDirectoryPath = Path.join(testDataDirectoryPath, modelName);
@@ -59,17 +59,19 @@ describe("API item transformation end-to-end tests", () => {
 				apiModel = await loadModel({ modelDirectoryPath });
 			});
 
-			for (const [configName, inputConfig] of testConfigs) {
-				it(configName, async () => {
-					const options: ApiItemTransformationOptions = {
-						...inputConfig,
-						apiModel,
-					};
+			describe("Ensure no duplicate document paths", () => {
+				for (const [configName, inputConfig] of testConfigs) {
+					it(configName, async () => {
+						const options: ApiItemTransformationOptions = {
+							...inputConfig,
+							apiModel,
+						};
 
-					const documents = transformApiModel(options);
-					checkForDuplicateDocumentPaths(documents);
-				});
-			}
+						const documents = transformApiModel(options);
+						checkForDuplicateDocumentPaths(documents);
+					});
+				}
+			});
 		});
 	}
 });
