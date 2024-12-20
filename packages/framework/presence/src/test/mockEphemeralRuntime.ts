@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 
@@ -64,28 +65,28 @@ function makeMockAudience(clients: ClientData[]): MockAudience {
 }
 
 /**
+ *
+ */
+interface MockEphemeralRuntimeEvents extends IEvent {
+	(event: "connected", listener: (clientId: string) => void): void;
+}
+
+/**
  * Mock ephemeral runtime for testing
  */
-export class MockEphemeralRuntime implements IEphemeralRuntime {
+export class MockEphemeralRuntime
+	extends TypedEventEmitter<MockEphemeralRuntimeEvents>
+	implements IEphemeralRuntime
+{
 	public logger?: ITelemetryBaseLogger;
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
-
-	public readonly listeners: {
-		connected: ((clientId: ClientConnectionId) => void)[];
-		disconnected: (() => void)[];
-	} = {
-		connected: [],
-		disconnected: [],
-	};
-	private isSupportedEvent(event: string): event is keyof typeof this.listeners {
-		return event in this.listeners;
-	}
 
 	public constructor(
 		logger?: ITelemetryBaseLogger,
 		public readonly signalsExpected: Parameters<IEphemeralRuntime["submitSignal"]>[] = [],
 	) {
+		super();
 		if (logger !== undefined) {
 			this.logger = logger;
 		}
@@ -98,29 +99,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		this.getQuorum = () => this.quorum;
 		this.audience = makeMockAudience(clientsData);
 		this.getAudience = () => this.audience;
-		this.on = (
-			event: string,
-			listener: (...args: any[]) => void,
-			// Events style eventing does not lend itself to union that
-			// IEphemeralRuntime is derived from, so we are using `any` here
-			// but meet the intent of the interface.
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		): any => {
-			if (!this.isSupportedEvent(event)) {
-				throw new Error(`Event ${event} is not supported`);
-			}
-			// Switch to allowing a single listener as commented when
-			// implementation uses a single "connected" listener.
-			// if (this.listeners[event]) {
-			// 	throw new Error(`Event ${event} already has a listener`);
-			// }
-			// this.listeners[event] = listener;
-			if (this.listeners[event].length > 1) {
-				throw new Error(`Event ${event} already has multiple listeners`);
-			}
-			this.listeners[event].push(listener);
-			return this;
-		};
 	}
 
 	public assertAllSignalsSubmitted(): void {
@@ -149,14 +127,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	public clientId: string | undefined;
 	public connected: boolean = false;
-
-	public on: IEphemeralRuntime["on"];
-
-	public off: IEphemeralRuntime["off"] = (
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	): any => {
-		throw new Error("IEphemeralRuntime.off method not implemented.");
-	};
 
 	public getAudience: () => ReturnType<IEphemeralRuntime["getAudience"]>;
 
