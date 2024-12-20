@@ -211,7 +211,7 @@ function createTypeParametersSection(typeParameters: readonly TypeParameter[], c
 export const defaultConsoleLogger: Logger;
 
 // @public
-export namespace DefaultDocumentationSuiteOptions {
+export namespace DefaultDocumentationSuiteConfiguration {
     export function defaultGetAlertsForItem(apiItem: ApiItem): string[];
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
     export function defaultGetUriBaseOverrideForItem(): string | undefined;
@@ -309,21 +309,21 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 }
 
 // @public
-export type DocumentationSuiteConfiguration = Omit<Required<DocumentationSuiteOptions>, "hierarchy"> & {
-    readonly hierarchy: Required<HierarchyConfiguration>;
-};
+export interface DocumentationSuiteConfiguration {
+    readonly getAlertsForItem: (apiItem: ApiItem) => string[];
+    readonly getLinkTextForItem: (apiItem: ApiItem) => string;
+    readonly getUriBaseOverrideForItem: (apiItem: ApiItem) => string | undefined;
+    readonly hierarchy: HierarchyConfiguration;
+    readonly includeBreadcrumb: boolean;
+    readonly includeTopLevelDocumentHeading: boolean;
+    readonly minimumReleaseLevel?: Exclude<ReleaseTag, ReleaseTag.None>;
+    readonly skipPackage: (apiPackage: ApiPackage) => boolean;
+}
 
 // @public
-export interface DocumentationSuiteOptions {
-    readonly getAlertsForItem?: (apiItem: ApiItem) => string[];
-    readonly getLinkTextForItem?: (apiItem: ApiItem) => string;
-    readonly getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
+export type DocumentationSuiteOptions = Omit<Partial<DocumentationSuiteConfiguration>, "hierarchy"> & {
     readonly hierarchy?: Partial<HierarchyConfiguration>;
-    readonly includeBreadcrumb?: boolean;
-    readonly includeTopLevelDocumentHeading?: boolean;
-    readonly minimumReleaseLevel?: Exclude<ReleaseTag, ReleaseTag.None>;
-    readonly skipPackage?: (apiPackage: ApiPackage) => boolean;
-}
+};
 
 // @public
 export interface DocumentHierarchyConfiguration extends DocumentationHierarchyConfigurationBase<HierarchyKind.Document>, DocumentHierarchyProperties {

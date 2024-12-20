@@ -20,7 +20,7 @@ export {
 	type ApiItemTransformationConfigurationBase,
 	type ApiItemTransformationOptions,
 	type ApiItemTransformations,
-	type DefaultDocumentationSuiteOptions,
+	type DefaultDocumentationSuiteConfiguration,
 	defaultDocumentHierarchyConfig,
 	defaultDocumentName,
 	defaultFolderName,

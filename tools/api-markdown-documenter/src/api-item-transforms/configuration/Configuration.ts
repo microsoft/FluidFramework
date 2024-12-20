@@ -14,7 +14,7 @@ import {
 	type DocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteConfigurationWithDefaults,
-} from "./DocumentationSuiteOptions.js";
+} from "./DocumentationSuite.js";
 import {
 	type ApiItemTransformations,
 	getApiItemTransformationsWithDefaults,

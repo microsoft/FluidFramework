@@ -11,10 +11,10 @@ export {
 } from "./Configuration.js";
 export {
 	type DocumentationSuiteConfiguration,
-	type DefaultDocumentationSuiteOptions,
+	type DefaultDocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteConfigurationWithDefaults as getDocumentationSuiteOptionsWithDefaults,
-} from "./DocumentationSuiteOptions.js";
+} from "./DocumentationSuite.js";
 export {
 	defaultDocumentHierarchyConfig,
 	defaultDocumentName,

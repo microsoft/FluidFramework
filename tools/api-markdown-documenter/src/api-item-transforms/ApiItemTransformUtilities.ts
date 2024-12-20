@@ -392,7 +392,7 @@ export function doesItemRequireOwnDocument(
 /**
  * Determines whether or not the specified API item should have documentation generated for it.
  * This is determined based on its release tag (or inherited release scope) compared to
- * {@link DocumentationSuiteOptions.minimumReleaseLevel}.
+ * {@link DocumentationSuiteConfiguration.minimumReleaseLevel}.
  *
  * @remarks
  *
@@ -456,7 +456,7 @@ export function shouldItemBeIncluded(
 /**
  * Filters and returns the provided list of `ApiItem`s to include only those desired by the user configuration.
  * This is determined based on its release tag (or inherited release scope) compared to
- * {@link DocumentationSuiteOptions.minimumReleaseLevel}.
+ * {@link DocumentationSuiteConfiguration.minimumReleaseLevel}.
  * @param apiItem - The API item being queried.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
@@ -472,7 +472,7 @@ export function filterItems(
 /**
  * Filters and returns the child members of the provided `apiItem` to include only those desired by the user configuration.
  * This is determined based on its release tag (or inherited release scope) compared to
- * {@link DocumentationSuiteOptions.minimumReleaseLevel}.
+ * {@link DocumentationSuiteConfiguration.minimumReleaseLevel}.
  * @remarks See {@link shouldItemBeIncluded} for more details.
  * @param apiItem - The API item being queried.
  * @param config - See {@link ApiItemTransformationConfiguration}.

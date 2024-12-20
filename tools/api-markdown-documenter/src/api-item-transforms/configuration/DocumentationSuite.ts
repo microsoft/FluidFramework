@@ -31,7 +31,7 @@ import { trimTrailingSemicolon } from "./Utilities.js";
  *
  * @public
  */
-export interface DocumentationSuiteOptions {
+export interface DocumentationSuiteConfiguration {
 	/**
 	 * Whether or not to include a top-level heading in rendered documents.
 	 *
@@ -40,7 +40,7 @@ export interface DocumentationSuiteOptions {
 	 * @remarks If you will be rendering the document contents into some other document content that will inject its
 	 * own root heading, this can be used to omit that heading from what is rendered by this system.
 	 */
-	readonly includeTopLevelDocumentHeading?: boolean;
+	readonly includeTopLevelDocumentHeading: boolean;
 
 	/**
 	 * Whether or not to include a navigation breadcrumb at the top of rendered documents.
@@ -49,12 +49,12 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @remarks Note: `Model` items will never have a breadcrumb rendered, even if this is specified.
 	 */
-	readonly includeBreadcrumb?: boolean;
+	readonly includeBreadcrumb: boolean;
 
 	/**
 	 * {@link HierarchyConfiguration} to use for the provided API item.
 	 */
-	readonly hierarchy?: Partial<HierarchyConfiguration>;
+	readonly hierarchy: HierarchyConfiguration;
 
 	/**
 	 * Optionally provide an override for the URI base used in links generated for the provided `ApiItem`.
@@ -70,7 +70,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue Always use the default URI base.
 	 */
-	readonly getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
+	readonly getUriBaseOverrideForItem: (apiItem: ApiItem) => string | undefined;
 
 	/**
 	 * Generate link text for the provided `ApiItem`.
@@ -79,9 +79,9 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @returns The text to use in the link to the API item.
 	 *
-	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem}
+	 * @defaultValue {@link DefaultDocumentationSuiteConfiguration.defaultGetLinkTextForItem}
 	 */
-	readonly getLinkTextForItem?: (apiItem: ApiItem) => string;
+	readonly getLinkTextForItem: (apiItem: ApiItem) => string;
 
 	/**
 	 * Generate a list of "alerts" to display in API items tables for a given API item.
@@ -90,9 +90,9 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @returns The list of "alert" strings to display.
 	 *
-	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetAlertsForItem}
+	 * @defaultValue {@link DefaultDocumentationSuiteConfiguration.defaultGetAlertsForItem}
 	 */
-	readonly getAlertsForItem?: (apiItem: ApiItem) => string[];
+	readonly getAlertsForItem: (apiItem: ApiItem) => string[];
 
 	/**
 	 * Whether or not the provided `ApiPackage` should be skipped during documentation generation.
@@ -105,7 +105,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue No packages are skipped.
 	 */
-	readonly skipPackage?: (apiPackage: ApiPackage) => boolean;
+	readonly skipPackage: (apiPackage: ApiPackage) => boolean;
 
 	/**
 	 * Minimal release scope to include in generated documentation suite.
@@ -136,14 +136,14 @@ export interface DocumentationSuiteOptions {
  *
  * @public
  */
-export type DocumentationSuiteConfiguration = Omit<
-	Required<DocumentationSuiteOptions>,
+export type DocumentationSuiteOptions = Omit<
+	Partial<DocumentationSuiteConfiguration>,
 	"hierarchy"
 > & {
 	/**
-	 * {@inheritDoc DocumentationSuiteOptions.hierarchy}
+	 * {@inheritDoc DocumentationSuiteConfiguration.hierarchy}
 	 */
-	readonly hierarchy: Required<HierarchyConfiguration>;
+	readonly hierarchy?: Partial<HierarchyConfiguration>;
 };
 
 /**
@@ -152,9 +152,9 @@ export type DocumentationSuiteConfiguration = Omit<
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
-export namespace DefaultDocumentationSuiteOptions {
+export namespace DefaultDocumentationSuiteConfiguration {
 	/**
-	 * Default {@link DocumentationSuiteOptions.getUriBaseOverrideForItem}.
+	 * Default {@link DocumentationSuiteConfiguration.getUriBaseOverrideForItem}.
 	 *
 	 * Always uses default URI base.
 	 */
@@ -163,7 +163,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.getLinkTextForItem}.
+	 * Default {@link DocumentationSuiteConfiguration.getLinkTextForItem}.
 	 *
 	 * Uses the item's signature, except for `Model` items, in which case the text "Packages" is displayed.
 	 */
@@ -189,7 +189,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.getAlertsForItem}.
+	 * Default {@link DocumentationSuiteConfiguration.getAlertsForItem}.
 	 *
 	 * Generates alerts for the following tags, if found:
 	 *
@@ -215,7 +215,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.skipPackage}.
+	 * Default {@link DocumentationSuiteConfiguration.skipPackage}.
 	 *
 	 * Unconditionally returns `false` (i.e. no packages will be filtered out).
 	 */
@@ -225,21 +225,22 @@ export namespace DefaultDocumentationSuiteOptions {
 }
 
 /**
- * Default {@link DocumentationSuiteOptions} value.
+ * Default {@link DocumentationSuiteConfiguration}.
  */
-const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
+const defaultDocumentationSuiteConfiguration: DocumentationSuiteConfiguration = {
 	hierarchy: defaultHierarchyConfiguration,
 	includeTopLevelDocumentHeading: true,
 	includeBreadcrumb: true,
-	getUriBaseOverrideForItem: DefaultDocumentationSuiteOptions.defaultGetUriBaseOverrideForItem,
-	getLinkTextForItem: DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem,
-	getAlertsForItem: DefaultDocumentationSuiteOptions.defaultGetAlertsForItem,
-	skipPackage: DefaultDocumentationSuiteOptions.defaultSkipPackage,
+	getUriBaseOverrideForItem:
+		DefaultDocumentationSuiteConfiguration.defaultGetUriBaseOverrideForItem,
+	getLinkTextForItem: DefaultDocumentationSuiteConfiguration.defaultGetLinkTextForItem,
+	getAlertsForItem: DefaultDocumentationSuiteConfiguration.defaultGetAlertsForItem,
+	skipPackage: DefaultDocumentationSuiteConfiguration.defaultSkipPackage,
 	minimumReleaseLevel: ReleaseTag.Internal, // Include everything in the input model
 };
 
 /**
- * Gets a complete {@link DocumentationSuiteOptions} using the provided partial configuration, and filling
+ * Gets a complete {@link DocumentationSuiteConfiguration} using the provided partial configuration, and filling
  * in the remainder with the documented defaults.
  */
 export function getDocumentationSuiteConfigurationWithDefaults(
@@ -247,7 +248,7 @@ export function getDocumentationSuiteConfigurationWithDefaults(
 ): DocumentationSuiteConfiguration {
 	const hierarchy: HierarchyConfiguration = getHierarchyOptionsWithDefaults(options.hierarchy);
 	return {
-		...defaultDocumentationSuiteOptions,
+		...defaultDocumentationSuiteConfiguration,
 		...options,
 		hierarchy,
 	};

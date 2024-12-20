@@ -18,7 +18,7 @@ export {
 	type ApiItemTransformationConfigurationBase,
 	type ApiItemTransformationOptions,
 	type ApiItemTransformations,
-	type DefaultDocumentationSuiteOptions,
+	type DefaultDocumentationSuiteConfiguration,
 	type DocumentHierarchyConfiguration,
 	type DocumentHierarchyProperties,
 	type DocumentationSuiteConfiguration,
