@@ -563,3 +563,49 @@ export function defineLazyCachedProperty<
 	});
 	return obj as typeof obj & { [P in K]: V };
 }
+
+/**
+ * Copies a given property from one object to another if and only if the property is defined.
+ * @param source - The object to copy the property from.
+ * If `source` is undefined or does not have the property defined, then this function will do nothing.
+ * @param property - The property to copy.
+ * @param destination - The object to copy the property to.
+ * @remarks This function is useful for copying properties from one object to another while minimizing the presence of `undefined` values.
+ * If `property` is not present on `source` - or if `property` is present, but has a value of `undefined` - then this function will not modify `destination`.
+ * This is different from doing `destination.foo = source.foo`, which would define a `"foo"` property on `destination` with the value `undefined`.
+ *
+ * If the type of `source` is known to have `property`, then this function asserts that the type of `destination` has `property` as well after the call.
+ *
+ * This function first reads the property value (if present) from `source` and then sets it on `destination`, as opposed to e.g. directly copying the property descriptor.
+ * @privateRemarks The first overload of this function allows auto-complete to suggest property names from `source`, but by having the second overload we still allow for arbitrary property names.
+ */
+export function copyPropertyIfDefined<S extends object, K extends keyof S, D extends object>(
+	source: S | undefined,
+	property: K,
+	destination: D,
+): asserts destination is K extends keyof S ? D & { [P in K]: S[K] } : D;
+export function copyPropertyIfDefined<
+	S extends object,
+	K extends string | number | symbol,
+	D extends object,
+>(
+	source: S | undefined,
+	property: K,
+	destination: D,
+): asserts destination is K extends keyof S ? D & { [P in K]: S[K] } : D;
+export function copyPropertyIfDefined<
+	S extends object,
+	K extends string | number | symbol,
+	D extends object,
+>(
+	source: S | undefined,
+	property: K,
+	destination: D,
+): asserts destination is K extends keyof S ? D & { [P in K]: S[K] } : D {
+	if (source !== undefined) {
+		const value = (source as { [P in K]?: unknown })[property];
+		if (value !== undefined) {
+			(destination as { [P in K]: unknown })[property] = value;
+		}
+	}
+}
