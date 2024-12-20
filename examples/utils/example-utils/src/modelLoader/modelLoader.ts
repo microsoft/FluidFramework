@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { type IContainer, LoaderHeader } from "@fluidframework/container-definitions/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26907: `container-loader` internal `loadContainerPaused` used in examples
+import { loadContainerPaused } from "@fluidframework/container-loader/internal";
 import {
 	createDetachedContainer,
 	ILoaderProps,
-	loadContainerPaused,
 	loadExistingContainer,
-} from "@fluidframework/container-loader/internal";
+} from "@fluidframework/container-loader/legacy";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
 import type { IDetachedModel, IModelLoader } from "./interfaces.js";

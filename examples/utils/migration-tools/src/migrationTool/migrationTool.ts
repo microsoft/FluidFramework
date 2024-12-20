@@ -10,21 +10,21 @@ import type {
 	IEventProvider,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
+} from "@fluidframework/datastore-definitions/legacy";
 import {
 	ConsensusRegisterCollection,
 	IConsensusRegisterCollection,
-} from "@fluidframework/register-collection/internal";
+} from "@fluidframework/register-collection/legacy";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/runtime-definitions/legacy";
 
 import type {
 	IAcceptedMigrationDetails,

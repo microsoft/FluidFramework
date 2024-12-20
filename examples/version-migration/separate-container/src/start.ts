@@ -8,22 +8,22 @@ import type {
 	IMigratorEntryPoint,
 	ImportDataCallback,
 	SeparateContainerMigrationResult,
-} from "@fluid-example/migration-tools/internal";
+} from "@fluid-example/migration-tools/alpha";
 import {
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
-} from "@fluid-example/migration-tools/internal";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+} from "@fluid-example/migration-tools/alpha";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
 	type ILoaderProps,
 	loadExistingContainer,
-} from "@fluidframework/container-loader/internal";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+} from "@fluidframework/container-loader/legacy";
+import { createRouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
 import {
-	InsecureTinyliciousTokenProvider,
-	InsecureTinyliciousUrlResolver,
-	createTinyliciousCreateNewRequest,
-} from "@fluidframework/tinylicious-driver/internal";
+	createInsecureTinyliciousTestTokenProvider,
+	createInsecureTinyliciousTestUrlResolver,
+	createTinyliciousTestCreateNewRequest,
+} from "@fluidframework/tinylicious-driver/test-utils";
 import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot, type Root } from "react-dom/client";
@@ -51,16 +51,16 @@ const isIInventoryListAppModel = (
 const getUrlForContainerId = (containerId: string): string => `/#${containerId}`;
 
 const loaderProps: ILoaderProps = {
-	urlResolver: new InsecureTinyliciousUrlResolver(),
-	documentServiceFactory: new RouterliciousDocumentServiceFactory(
-		new InsecureTinyliciousTokenProvider(),
+	urlResolver: createInsecureTinyliciousTestUrlResolver(),
+	documentServiceFactory: createRouterliciousDocumentServiceFactory(
+		createInsecureTinyliciousTestTokenProvider(),
 	),
 	codeLoader: new DemoCodeLoader(),
 };
 
 const createDetachedCallback = makeCreateDetachedContainerCallback(
 	loaderProps,
-	createTinyliciousCreateNewRequest,
+	createTinyliciousTestCreateNewRequest,
 );
 
 const importDataCallback: ImportDataCallback = async (

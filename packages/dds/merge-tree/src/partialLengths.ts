@@ -9,24 +9,24 @@ import { Property, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
 	IMergeNode,
-	// eslint-disable-next-line import/no-deprecated
-	IMoveInfo,
-	// eslint-disable-next-line import/no-deprecated
-	IRemovalInfo,
 	ISegmentLeaf,
 	compareNumbers,
 	seqLTE,
-	toMoveInfo,
-	toRemovalInfo,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
+import {
+	toRemovalInfo,
+	toMoveInfo,
+	// eslint-disable-next-line import/no-deprecated
+	IRemovalInfo,
+	// eslint-disable-next-line import/no-deprecated
+	IMoveInfo,
+	assertInserted,
+} from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 
-// eslint-disable-next-line import/no-deprecated
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
 	protected getKey(item: PartialSequenceLength): number {
 		return item.seq;
@@ -289,7 +289,7 @@ export class PartialSequenceLengths {
 	 */
 	public static combine(
 		block: MergeBlock,
-		// eslint-disable-next-line import/no-deprecated
+
 		collabWindow: CollaborationWindow,
 		recur = false,
 		computeLocalPartials = false,
@@ -378,7 +378,7 @@ export class PartialSequenceLengths {
 	 */
 	private static fromLeaves(
 		block: MergeBlock,
-		// eslint-disable-next-line import/no-deprecated
+
 		collabWindow: CollaborationWindow,
 		computeLocalPartials: boolean,
 	): PartialSequenceLengths {
@@ -510,6 +510,7 @@ export class PartialSequenceLengths {
 		firstGte: PartialSequenceLength,
 		clientIds: number[],
 	): void {
+		assertInserted(segment);
 		const nonInsertingClientIds = clientIds.filter((id) => id !== segment.clientId);
 
 		PartialSequenceLengths.accumulateMoveClientOverlap(
@@ -543,6 +544,7 @@ export class PartialSequenceLengths {
 		obliterateOverlapLen: number,
 		clientIds: number[],
 	): RedBlackTree<number, IOverlapClient> {
+		assertInserted(segment);
 		const nonInsertingClientIds = clientIds.filter((id) => id !== segment.clientId);
 		const overlapObliterateClients = PartialSequenceLengths.getOverlapClients(
 			nonInsertingClientIds,
@@ -646,6 +648,8 @@ export class PartialSequenceLengths {
 		// eslint-disable-next-line import/no-deprecated
 		moveInfo?: IMoveInfo,
 	): void {
+		assertInserted(segment);
+
 		const removalIsLocal =
 			!!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
 		const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
@@ -654,7 +658,7 @@ export class PartialSequenceLengths {
 			(!!removalInfo && removalIsLocal && (!moveInfo || moveIsLocal)) ||
 			(!!moveInfo && moveIsLocal && (!removalInfo || removalIsLocal));
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq!;
+		let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq;
 		let segmentLen = segment.cachedLength;
 		let clientId = segment.clientId;
 		let removeClientOverlap: number[] | undefined;
@@ -910,7 +914,7 @@ export class PartialSequenceLengths {
 		node: MergeBlock,
 		seq: number,
 		clientId: number,
-		// eslint-disable-next-line import/no-deprecated
+
 		collabWindow: CollaborationWindow,
 	): void {
 		let seqSeglen = 0;
@@ -1135,7 +1139,7 @@ export class PartialSequenceLengths {
 	}
 
 	// Clear away partial sums for sequence numbers earlier than the current window
-	// eslint-disable-next-line import/no-deprecated
+
 	private zamboni(segmentWindow: CollaborationWindow): void {
 		this.minLength += this.partialLengths.copyDown(segmentWindow.minSeq);
 		this.minSeq = segmentWindow.minSeq;

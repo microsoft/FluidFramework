@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrator, MigrationState } from "@fluid-example/migration-tools/internal";
+import type { IMigrator, MigrationState } from "@fluid-example/migration-tools/alpha";
 import React, { useEffect, useState } from "react";
 
 import type { IMigratableModel } from "../migratableModel.js";

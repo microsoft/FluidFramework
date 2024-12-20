@@ -1,5 +1,9 @@
 # @fluidframework/tree
 
+## 2.12.0
+
+Dependency updates only.
+
 ## 2.11.0
 
 ### Minor Changes

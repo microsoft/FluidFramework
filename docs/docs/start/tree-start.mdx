@@ -8,6 +8,16 @@ import { ApiLink } from "@site/src/components/shortLinks";
 `SharedTree` is a [distributed data structure](../data-structures/overview.mdx) that looks and feels like simple JavaScript objects with a type safe wrapper.
 This guide will walk you through the basics of creating, configuring, and interacting with a `SharedTree` in your application.
 
+## Installing SharedTree
+
+The `SharedTree` library can be found in the [fluid-framework](https://www.npmjs.com/package/fluid-framework) package (version 2.x).
+
+To get started, run the following from a terminal in your project folder:
+
+```bash
+npm install fluid-framework@latest
+```
+
 ## Creating a Tree
 
 A `SharedTree` can be created by defining a `ContainerSchema` with an initial object of type `SharedTree` and using this schema to create and load your container.
@@ -59,7 +69,7 @@ const schemaFactory = new SchemaFactory("some-schema-id-prob-a-uuid");
 ```
 
 `SchemaFactory` provides some methods for specifying collection types including `object()`, `array()`, and `map()`; and five primitive data types for specifying leaf nodes: `boolean`, `string`, `number`, `null`, and `handle`.
-See [schema definition](../data-structures/tree.mdx) for more info on the provided types.
+See [schema definition](../data-structures/tree/index.mdx#schema-definition) for more info on the provided types.
 
 You can define a schema by extending one of the built-in object types.
 As an example, let's write a schema for a todo list:
@@ -144,7 +154,7 @@ useEffect(() => {
 
 `nodeChanged` fires whenever one or more properties of the specified node change while `treeChanged` also fires whenever any node in its subtree changes.
 
-<ApiLink packageName="tree" apiName="TreeChangeEvents" apiType="interface">the API</ApiLink> docs for more details.
+See <ApiLink packageName="tree" apiName="TreeChangeEvents" apiType="interface">the API</ApiLink> docs for more details.
 
 ## Editing Tree Data
 
@@ -182,7 +192,7 @@ class TodoList extends schemaFactory.object("TodoList", {
 ```
 
 These methods are designed to merge well in collaborative settings without you having to think much about it.
-See [schema definition](../data-structures/tree.mdx) for more details on the built-in editing methods.
+See [schema definition](../data-structures/tree/index.mdx#schema-definition) for more details on the built-in editing methods.
 You can also read more about how these editing operations work in collaborative settings [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/merge-semantics.md).
 
 ### Grouping Edits into Transactions
@@ -201,7 +211,7 @@ Tree.runTransaction(myNode, (node) => {
 })
 ```
 
-See more information on transactions [here](../data-structures/tree.mdx).
+See more information on transactions [here](../data-structures/tree/index.mdx#transactions).
 
 ### Undoing and Redoing Edits
 
@@ -244,4 +254,4 @@ useEffect(() => {
 
 Note that any `Revertible`s obtained should be disposed of by the app author in order to free up the resources that are required to revert an edit.
 
-See [this blog post](https://devblogs.microsoft.com/microsoft365dev/fluid-framework-undo-redo-and-transactions-in-sharedtree/) or [undo redo support](../data-structures/tree.mdx) for more information.
+See [this blog post](https://devblogs.microsoft.com/microsoft365dev/fluid-framework-undo-redo-and-transactions-in-sharedtree/) or [undo redo support](../data-structures/tree/index.mdx) for more information.
