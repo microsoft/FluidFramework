@@ -960,7 +960,6 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusExt<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
-    // (undocumented)
     runTransaction(transaction: () => TransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
 }
 

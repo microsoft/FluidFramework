@@ -224,14 +224,15 @@ export class SchematizingSimpleTreeView<
 	}
 
 	/**
-	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The transaction callback to run.
-	 * @param params - The optional parameters for the transaction.
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
 	 */
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatusExt<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
+	 */
 	public runTransaction(
 		transaction: () => TransactionCallbackStatus | void,
 		params?: RunTransactionParams,
