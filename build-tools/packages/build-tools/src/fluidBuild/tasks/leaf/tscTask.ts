@@ -485,6 +485,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				const tsBuildInfo = await dep.readTsBuildInfo();
 				if (tsBuildInfo === undefined) {
 					// If any of the tsc task don't have build info, we can't track
+					this.traceError(`tsbuildinfo file not found for ${dep.name}: ${dep.command}`);
 					return undefined;
 				}
 				tsBuildInfoFiles.push(tsBuildInfo);
