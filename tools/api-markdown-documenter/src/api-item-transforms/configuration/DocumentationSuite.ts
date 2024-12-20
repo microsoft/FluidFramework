@@ -147,7 +147,7 @@ export type DocumentationSuiteOptions = Omit<
 };
 
 /**
- * Contains a list of default documentation transformations, used by {@link DocumentationSuiteOptions}.
+ * Contains a list of default {@link DocumentationSuiteConfiguration} functions.
  *
  * @public
  */
