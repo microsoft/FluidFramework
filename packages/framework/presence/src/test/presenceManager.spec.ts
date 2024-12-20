@@ -442,7 +442,7 @@ describe("Presence", () => {
 						});
 					}
 
-					describe("when local client disconnects", () => {
+					describe("and then local client disconnects", () => {
 						let disconnectedAttendees: ISessionClient[];
 						beforeEach(() => {
 							// Setup
