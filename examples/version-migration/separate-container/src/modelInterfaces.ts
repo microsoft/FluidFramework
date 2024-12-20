@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { SharedString } from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/legacy";
 
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface

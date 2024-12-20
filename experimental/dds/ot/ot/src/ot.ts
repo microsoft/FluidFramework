@@ -127,7 +127,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
 		this.sequencedOps.push({
 			seq: messageSeq,
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 			client: remoteClient as string,
 			op: remoteOp as TOp,
 		});

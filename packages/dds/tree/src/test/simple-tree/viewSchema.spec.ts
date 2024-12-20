@@ -16,8 +16,10 @@ import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 } from "../../simple-tree/index.js";
-import { createUnknownOptionalFieldPolicy } from "../../simple-tree/index.js";
-import { SchemaFactoryAlpha } from "../schemaFactoryAlpha.js";
+import {
+	createUnknownOptionalFieldPolicy,
+	SchemaFactoryAlpha,
+} from "../../simple-tree/index.js";
 
 const noAdapters: Adapters = {};
 const emptySchema: TreeStoredSchema = {

@@ -17,10 +17,11 @@ import {
 	setValidateRefCount,
 } from "../localReference.js";
 import { getSlideToSegoff } from "../mergeTree.js";
-import { toRemovalInfo, type ISegmentLeaf } from "../mergeTreeNodes.js";
+import { type ISegmentLeaf } from "../mergeTreeNodes.js";
 import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { DetachedReferencePosition } from "../referencePositions.js";
+import { toRemovalInfo } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";

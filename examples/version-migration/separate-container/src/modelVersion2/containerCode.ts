@@ -7,14 +7,14 @@ import {
 	CompositeEntryPoint,
 	loadCompositeRuntime,
 	makeMigratorEntryPointPiece,
-} from "@fluid-example/migration-tools/internal";
+} from "@fluid-example/migration-tools/alpha";
 import type {
 	IContainer,
 	IContainerContext,
 	IRuntime,
 	IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+} from "@fluidframework/container-definitions/legacy";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/legacy";
 
 import type { IMigratableModel } from "../migratableModel.js";
 
