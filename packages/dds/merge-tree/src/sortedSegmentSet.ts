@@ -5,7 +5,6 @@
 
 import { LocalReferencePosition } from "./localReference.js";
 import { ISegmentInternal } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
 import { SortedSet } from "./sortedSet.js";
 
 /**
@@ -28,7 +27,7 @@ export type SortedSegmentSetItem =
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
+
 export class SortedSegmentSet<
 	T extends SortedSegmentSetItem = ISegmentInternal,
 > extends SortedSet<T, string> {

@@ -54,7 +54,7 @@ import {
 export function createDefaultLayout(
 	apiItem: ApiItem,
 	itemSpecificContent: SectionNode[] | undefined,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 

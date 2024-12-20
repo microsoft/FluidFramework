@@ -10,7 +10,6 @@ import { LocalClientId } from "./constants.js";
 import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-// eslint-disable-next-line import/no-deprecated
 import { ISegment, ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
 
 /**

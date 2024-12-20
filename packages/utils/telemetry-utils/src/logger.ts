@@ -944,7 +944,6 @@ export const tagData = <
 			// The ternary form is less legible in this case.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (typeof value === "function") {
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 				pv[key] = () => {
 					return { tag, value: value() };
 				};

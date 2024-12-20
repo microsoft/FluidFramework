@@ -22,7 +22,6 @@ import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
  */
 export class FileDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
-	// eslint-disable-next-line import/namespace
 	implements IDocumentService
 {
 	constructor(

@@ -22,6 +22,7 @@ export {
 	type ScopedSchemaName,
 	type SchemaFactoryObjectOptions,
 } from "./schemaFactory.js";
+export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,

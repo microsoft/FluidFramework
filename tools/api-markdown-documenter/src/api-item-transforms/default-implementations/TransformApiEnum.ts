@@ -21,7 +21,7 @@ import { createMemberTables, wrapInSection } from "../helpers/index.js";
  */
 export function transformApiEnum(
 	apiEnum: ApiEnum,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const sections: SectionNode[] = [];

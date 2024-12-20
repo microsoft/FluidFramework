@@ -16,7 +16,9 @@ export {
 } from "./ApiItemTransformUtilities.js";
 export {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationConfigurationBase,
 	type ApiItemTransformationOptions,
+	type ApiItemTransformations,
 	type DefaultDocumentationSuiteOptions,
 	type DocumentationSuiteOptions,
 	type DocumentBoundaries,

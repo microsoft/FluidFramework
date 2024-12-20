@@ -13,7 +13,7 @@ import { createParametersSection, createReturnsSection } from "../helpers/index.
  */
 export function transformApiFunctionLike(
 	apiFunctionLike: ApiFunctionLike,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode[] {
 	const childSections: SectionNode[] = [];
 

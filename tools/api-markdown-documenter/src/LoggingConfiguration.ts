@@ -10,7 +10,7 @@ import type { Logger } from "./Logging.js";
  *
  * @public
  */
-export interface ConfigurationBase {
+export interface LoggingConfiguration {
 	/**
 	 * Optional receiver of system log data.
 	 *

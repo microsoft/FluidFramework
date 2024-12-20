@@ -77,10 +77,7 @@ class ActiveSession {
 
 // Format a number separating 3 digits by comma
 export const formatNumber = (num: number): string =>
-	// eslint-disable-next-line unicorn/no-unsafe-regex
-	num
-		.toString()
-		.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 function dumpStats(
 	map: Map<string, [number, number]>,
@@ -561,15 +558,14 @@ function processOp(
 			case ContainerMessageType.ChunkedOp: {
 				const chunk = runtimeMessage.contents as IChunkedOp;
 				// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 				if (!chunkMap.has(runtimeMessage.clientId as string)) {
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 					chunkMap.set(runtimeMessage.clientId as string, {
 						chunks: new Array<string>(chunk.totalChunks),
 						totalSize: 0,
 					});
 				}
-				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 				const value = chunkMap.get(runtimeMessage.clientId as string);
 				assert(value !== undefined, 0x2b8 /* "Chunk should be set in map" */);
 				const chunks = value.chunks;
@@ -590,7 +586,6 @@ function processOp(
 				} else {
 					return;
 				}
-				// eslint-disable-next-line no-fallthrough
 			}
 			case ContainerMessageType.IdAllocation:
 			case ContainerMessageType.FluidDataStoreOp:
@@ -793,7 +788,7 @@ function processQuorumMessages(
 	} else {
 		// message.clientId can be null
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 		session = sessionsInProgress.get(message.clientId as string);
 		if (session === undefined) {
 			session = sessionsInProgress.get(noClientName);

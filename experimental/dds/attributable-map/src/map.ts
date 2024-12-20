@@ -160,7 +160,7 @@ export class AttributableMapClass
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public entries(): IterableIterator<[string, any]> {
 		return this.kernel.entries();
 	}
@@ -170,7 +170,7 @@ export class AttributableMapClass
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public values(): IterableIterator<any> {
 		return this.kernel.values();
 	}
@@ -180,7 +180,7 @@ export class AttributableMapClass
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public [Symbol.iterator](): IterableIterator<[string, any]> {
 		return this.kernel.entries();
 	}
@@ -197,9 +197,8 @@ export class AttributableMapClass
 	 * @param callbackFn - Callback function
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
-		// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
 		this.kernel.forEach(callbackFn);
 	}
 
@@ -207,7 +206,7 @@ export class AttributableMapClass
 	 * {@inheritDoc ISharedMap.get}
 	 */
 	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public get<T = any>(key: string): T | undefined {
 		return this.kernel.get<T>(key);
 	}
