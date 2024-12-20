@@ -13,7 +13,7 @@ import { createSectionForApiItem } from "../default-implementations/index.js";
 import {
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteOptionsWithDefaults,
-} from "./DocumentationSuiteOptions.js";
+} from "./DocumentationSuite.js";
 import {
 	type ApiItemTransformations,
 	getApiItemTransformationsWithDefaults,

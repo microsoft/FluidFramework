@@ -15,7 +15,7 @@ export type {
 	DocumentBoundaries,
 	DocumentationSuiteOptions,
 	HierarchyBoundaries,
-} from "./DocumentationSuiteOptions.js";
+} from "./DocumentationSuite.js";
 export type {
 	ApiItemTransformations,
 	TransformApiItemWithChildren,
