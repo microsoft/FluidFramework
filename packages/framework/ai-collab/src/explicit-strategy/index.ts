@@ -17,7 +17,14 @@ import type {
 } from "openai/resources/index.mjs";
 import { z } from "zod";
 
-import type { OpenAiClientOptions, TokenLimits, TokenUsage } from "../aiCollabApi.js";
+import type {
+	AiCollabOptions,
+	Diff,
+	GenerateTreeEditsResponse,
+	OpenAiClientOptions,
+	TokenLimits,
+	TokenUsage,
+} from "../aiCollabApi.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
@@ -58,30 +65,14 @@ export interface GenerateTreeEditsOptions {
 	planningStep?: boolean;
 }
 
-interface GenerateTreeEditsSuccessResponse {
-	status: "success";
-	tokensUsed: TokenUsage;
-}
-
-interface GenerateTreeEditsErrorResponse {
-	status: "failure" | "partial-failure";
-	errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted";
-	tokensUsed: TokenUsage;
-}
-
 /**
- * Prompts the provided LLM client to generate valid tree edits.
- * Applies those edits to the provided tree branch before returning.
- *
- * @remarks
- * - Optional root nodes are not supported
- * - Primitive root nodes are not supported
- *
- * @internal
+ * The editLog is transformed into an array of Diff objects. Each Diff object includes
+ * an id, type (either "error" or "edit"), and description (either the error message or
+ * the edit explanation).
  */
 export async function generateTreeEdits(
-	options: GenerateTreeEditsOptions,
-): Promise<GenerateTreeEditsSuccessResponse | GenerateTreeEditsErrorResponse> {
+	options: AiCollabOptions,
+): Promise<GenerateTreeEditsResponse> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];
 	let editCount = 0;
@@ -171,14 +162,21 @@ export async function generateTreeEdits(
 		throw error;
 	}
 
+	// Transform editLog into diffs
+	const diffs: Diff[] = editLog.map((log, index) => ({
+		id: `diff-${index}`,
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+		type: log.error ? "error" : "edit",
+		description: log.error ?? log.edit.explanation ?? "No description available",
+	}));
 	if (options.dumpDebugLog ?? false) {
 		console.log(DEBUG_LOG.join("\n\n"));
 		DEBUG_LOG.length = 0;
 	}
-
 	return {
 		status: "success",
 		tokensUsed,
+		diffs,
 	};
 }
 
