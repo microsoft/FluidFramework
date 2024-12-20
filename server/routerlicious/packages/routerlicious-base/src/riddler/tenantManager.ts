@@ -142,7 +142,7 @@ export class TenantManager {
 
 	// Currently key and secondary are not optional, but this is to make sure we don't break anything if they are optional in the future
 	private isTenantKeyAccessEnabled(tenant: ITenantDocument): boolean {
-		return tenant.key && tenant.secondaryKey ? true : false;
+		return tenant.key || tenant.secondaryKey ? true : false;
 	}
 
 	/**
