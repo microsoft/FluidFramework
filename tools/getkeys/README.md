@@ -10,6 +10,7 @@ prague-secrets or WAC Bohemia security group.
 
 1. Install the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli), run `az login` and authenticate
    with your Microsoft corporate account.
+   - Choose Azure Subscription `Fluid` when prompted.
 2. In this folder, run `pnpm install`, then `npm start`.
 
 You should restart the console/shell after running the script (or for bash/zsh run `source ~/.bashrc` or `source ~/.zshrc`)
