@@ -140,6 +140,7 @@ export {
 	EncryptionKeyVersion,
 	IEncryptedPrivateTenantKeys,
 	IEncryptedTenantKeys,
+	IPlainTextAndEncryptedTenantKeys,
 	ITenant,
 	ITenantConfig,
 	ITenantConfigManager,

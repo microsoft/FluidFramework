@@ -6,6 +6,7 @@
 import {
 	EncryptionKeyVersion,
 	IEncryptedTenantKeys,
+	IPlainTextAndEncryptedTenantKeys,
 	ITenantConfig,
 	ITenantCustomData,
 	ITenantKeys,
@@ -297,16 +298,14 @@ export class TenantManager {
 		}));
 	}
 
-	private async createPrivateTenantKeys(
+	private async createTenantKeys(
 		tenantId: string,
 		latestKeyVersion: EncryptionKeyVersion,
-	): Promise<ITenantPrivateKeys> {
-		const privateTenantKey = this.tenantKeyGenerator.generateTenantKey();
-		const encryptedPrivateTenantKey = this.secretManager.encryptSecret(
-			privateTenantKey,
-			latestKeyVersion,
-		);
-		if (encryptedPrivateTenantKey == null) {
+		createPrivateKeys = false,
+	): Promise<IPlainTextAndEncryptedTenantKeys | ITenantPrivateKeys> {
+		const tenantKey = this.tenantKeyGenerator.generateTenantKey();
+		const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey, latestKeyVersion);
+		if (encryptedTenantKey == null) {
 			winston.error("Private tenant key encryption failed.");
 			Lumberjack.error("Private tenant key encryption failed.", {
 				[BaseTelemetryProperties.tenantId]: tenantId,
@@ -314,12 +313,12 @@ export class TenantManager {
 			throw new NetworkError(500, "Private tenant key encryption failed.");
 		}
 
-		const privateSecondaryTenantKey = this.tenantKeyGenerator.generateTenantKey();
-		const encryptedPrivateSecondaryTenantKey = this.secretManager.encryptSecret(
-			privateSecondaryTenantKey,
+		const secondaryTenantKey = this.tenantKeyGenerator.generateTenantKey();
+		const encryptedSecondaryTenantKey = this.secretManager.encryptSecret(
+			secondaryTenantKey,
 			latestKeyVersion,
 		);
-		if (encryptedPrivateSecondaryTenantKey == null) {
+		if (encryptedSecondaryTenantKey == null) {
 			winston.error("Private secondary tenant key encryption failed.");
 			Lumberjack.error("Private secondary tenant key encryption failed.", {
 				[BaseTelemetryProperties.tenantId]: tenantId,
@@ -327,19 +326,29 @@ export class TenantManager {
 			throw new NetworkError(500, "Private secondary tenant key encryption failed.");
 		}
 
-		// Current time in seconds
-		const now = Math.round(new Date().getTime() / 1000);
-		// Initial key rotation time is 12 hours from now, secondary key is 24 hours from now
-		const privateKeys: ITenantPrivateKeys = {
-			key: encryptedPrivateTenantKey,
-			keyNextRotationTime: now + (24 * 60 * 60) / 2, // 12 hours from now
-			secondaryKey: encryptedPrivateSecondaryTenantKey,
-			secondaryKeyNextRotationTime: now + 24 * 60 * 60, // 24 hours from now
-		};
-		// Set the key to use in the cache, this changes based on the rotation time
-		await this.cache?.set(`${this.getRedisKeyPrefix(tenantId, true)}:keyToUse`, "primary");
+		if (createPrivateKeys) {
+			// Current time in seconds
+			const now = Math.round(new Date().getTime() / 1000);
+			// Initial key rotation time is 12 hours from now, secondary key is 24 hours from now
+			const privateKeys: ITenantPrivateKeys = {
+				key: encryptedTenantKey,
+				keyNextRotationTime: now + (24 * 60 * 60) / 2, // 12 hours from now
+				secondaryKey: encryptedSecondaryTenantKey,
+				secondaryKeyNextRotationTime: now + 24 * 60 * 60, // 24 hours from now
+			};
+			// Set the key to use in the cache, this changes based on the rotation time
+			await this.cache?.set(`${this.getRedisKeyPrefix(tenantId, true)}:keyToUse`, "primary");
+			return privateKeys;
+		}
 
-		return privateKeys;
+		const tenantKeys: IPlainTextAndEncryptedTenantKeys = {
+			key1: tenantKey,
+			key2: secondaryTenantKey,
+			encryptedTenantKey1: encryptedTenantKey,
+			encryptedTenantKey2: encryptedSecondaryTenantKey,
+		};
+
+		return tenantKeys;
 	}
 
 	/**
@@ -353,30 +362,17 @@ export class TenantManager {
 		enableKeylessAccess = false,
 	): Promise<ITenantConfig & { key: string }> {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
-
-		const tenantKey1 = this.tenantKeyGenerator.generateTenantKey();
-		const encryptedTenantKey1 = this.secretManager.encryptSecret(tenantKey1, latestKeyVersion);
-		if (encryptedTenantKey1 == null) {
-			winston.error("Tenant key1 encryption failed.");
-			Lumberjack.error("Tenant key1 encryption failed.", {
-				[BaseTelemetryProperties.tenantId]: tenantId,
-			});
-			throw new NetworkError(500, "Tenant key1 encryption failed.");
-		}
-
-		const tenantKey2 = this.tenantKeyGenerator.generateTenantKey();
-		const encryptedTenantKey2 = this.secretManager.encryptSecret(tenantKey2, latestKeyVersion);
-		if (encryptedTenantKey2 == null) {
-			winston.error("Tenant key2 encryption failed.");
-			Lumberjack.error("Tenant key2 encryption failed.", {
-				[BaseTelemetryProperties.tenantId]: tenantId,
-			});
-			throw new NetworkError(500, "Tenant key2 encryption failed.");
-		}
-
+		const tenantKeys = (await this.createTenantKeys(
+			tenantId,
+			latestKeyVersion,
+		)) as IPlainTextAndEncryptedTenantKeys;
 		let privateKeys: ITenantPrivateKeys | undefined;
 		if (enableKeylessAccess) {
-			privateKeys = await this.createPrivateTenantKeys(tenantId, latestKeyVersion);
+			privateKeys = (await this.createTenantKeys(
+				tenantId,
+				latestKeyVersion,
+				true /* createPrivateKeys */,
+			)) as ITenantPrivateKeys;
 		}
 
 		// New tenant keys will be encrypted with incoming key version.
@@ -387,8 +383,8 @@ export class TenantManager {
 		const id = await this.runWithDatabaseRequestCounter(async () =>
 			this.tenantRepository.insertOne({
 				_id: tenantId,
-				key: encryptedTenantKey1,
-				secondaryKey: encryptedTenantKey2,
+				key: tenantKeys.encryptedTenantKey1,
+				secondaryKey: tenantKeys.encryptedTenantKey2,
 				orderer,
 				storage,
 				customData,
@@ -398,7 +394,10 @@ export class TenantManager {
 		);
 
 		const tenant = await this.getTenant(id);
-		return _.extend(tenant, { key: tenantKey1, secondaryKey: tenantKey2 });
+		return _.extend(tenant, {
+			key: tenantKeys.key1,
+			secondaryKey: tenantKeys.key2,
+		});
 	}
 
 	/**
@@ -429,7 +428,11 @@ export class TenantManager {
 		let privateKeys: ITenantPrivateKeys | undefined;
 		// If the tenant is being converted to a keyless tenant, generate new private keys, otherwise update them to be undefined
 		if (enableKeylessAccess) {
-			privateKeys = await this.createPrivateTenantKeys(tenantId, latestKeyVersion);
+			privateKeys = (await this.createTenantKeys(
+				tenantId,
+				latestKeyVersion,
+				true /* createPrivateKeys */,
+			)) as ITenantPrivateKeys;
 		}
 
 		await this.runWithDatabaseRequestCounter(async () =>

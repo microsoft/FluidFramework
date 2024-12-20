@@ -80,6 +80,11 @@ export interface ITenantKeys {
 	key2: string;
 }
 
+export interface IPlainTextAndEncryptedTenantKeys extends ITenantKeys {
+	encryptedTenantKey1: string;
+	encryptedTenantKey2: string;
+}
+
 /**
  * @internal
  */
