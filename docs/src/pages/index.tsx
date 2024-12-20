@@ -11,7 +11,7 @@ import appInsights from "@site/src/appInsights";
 import CookieBanner from "@site/src/components/cookieBanner";
 import { Homepage } from "@site/src/components/home";
 
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && appInsights) {
 	const userId = localStorage.getItem("userId") ?? uuidv4();
 	localStorage.setItem("userId", userId);
 	appInsights.context.user.id = userId;
