@@ -99,7 +99,7 @@ export function TaskGroup(props: {
 
 		/**
 		 * Instead of application developer manually managing the life cycle of the {@link Revertible} instances,
-		 * example app stores upto `MAX_STACK_SIZE` number of {@link Revertible} instances in the undo and redo stacks.
+		 * example app stores up to `MAX_STACK_SIZE` number of {@link Revertible} instances in each of the undo and redo stacks.
 		 * When the stack size exceeds `MAX_STACK_SIZE`, the oldest {@link Revertible} instance is disposed.
 		 * @param stack - The primary stack that the {@link Revertible} instance is being added to.
 		 * @param setstack - The setter function for the primary stack.
