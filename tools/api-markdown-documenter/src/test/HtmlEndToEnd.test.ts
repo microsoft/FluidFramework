@@ -28,10 +28,7 @@ const testTemporaryDirectoryPath = Path.resolve(testTemporaryDirectoryPathBase, 
  */
 const snapshotsDirectoryPath = Path.resolve(snapshotsDirectoryPathBase, "html");
 
-const apiModels: string[] = [
-	// TODO: empty model
-	"simple-suite-test",
-];
+const apiModels: string[] = ["simple-suite-test"];
 
 const testConfigs = new Map<
 	string,
