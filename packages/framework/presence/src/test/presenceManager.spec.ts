@@ -488,11 +488,11 @@ describe("Presence", () => {
 						it.skip("does not update stale attendee status if local client does not reconnect", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
-							// Act - disconnect local client and wait 60s
+							// Act - disconnect local client and advance timer
 							runtime.disconnect();
-							clock.tick(60_000);
+							clock.tick(600_000);
 
-							// Verify - stale attendee should still be 'Connected' after 30+ seconds
+							// Verify - stale attendee should still be 'Connected' if local client never reconnects
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Connected,
@@ -503,15 +503,15 @@ describe("Presence", () => {
 						it.skip("does not update stale attendee status if local client reconnection lasts less than 30s", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
-							// Act - disconnect, reconnect for 15 second, then disconnect local client again
+							// Act - disconnect, reconnect for 15 second, disconnect local client again, then advance timer
 							runtime.disconnect(); // First disconnect
 							clock.tick(1000);
 							runtime.connect("client6"); // Reconnect
 							clock.tick(15_000); // Advance 15 seconds
 							runtime.disconnect(); // Disconnect again
-							clock.tick(60_000); // Advance 60 seconds
+							clock.tick(600_000); // Advance 10 minutes
 
-							// Verify - stale attendee should still be 'Connected' after 30+ seconds post-reconnection
+							// Verify - stale attendee should still be 'Connected' if local client never reconnects for at least 30s
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Connected,
@@ -522,15 +522,15 @@ describe("Presence", () => {
 						it.skip("does not update attendee status to 'Disconnected' if stale attendee rejoins", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
-							// Act - disconnect, reconnect, then process rejoin signal from known attendee after 15s
+							// Act - disconnect, reconnect, process rejoin signal from known attendee after 15s, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
 							runtime.connect("client6");
 							clock.tick(15_000);
 							const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
-							clock.tick(60_000);
+							clock.tick(600_000);
 
-							// Verify - rejoining attendee should still be 'Connected' with no `attendeeJoined` announced 30+ seconds post-reconnection
+							// Verify - rejoining attendee should still be 'Connected' with no `attendeeJoined` announced
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Connected,
@@ -546,7 +546,7 @@ describe("Presence", () => {
 						it.skip("does not update attendee status to 'Disconnected' if stale attendee sends datastore update", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
-							// Act - disconnect, reconnect, process datatstore update signal from known attendee before 30s delay, then wait 60s
+							// Act - disconnect, reconnect, process datatstore update signal from known attendee before 30s delay, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
 							runtime.connect("client6");
@@ -570,9 +570,9 @@ describe("Presence", () => {
 								},
 								false,
 							);
-							clock.tick(60_000);
+							clock.tick(600_000);
 
-							// Verify - active attendee should still be 'Connected' with no `attendeeDisconnected` announced 30+ seconds post-reconnection
+							// Verify - active attendee should still be 'Connected' with no `attendeeDisconnected` announced
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Connected,
