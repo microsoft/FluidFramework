@@ -98,7 +98,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const blob = await storage.readBlob("header");
 		const rawContent = bufferToString(blob, "utf8");
-		this.global = this.local = this.serializer.parse(rawContent);
+		this.global = this.local = this.serializer.parse(rawContent) as TState;
 	}
 
 	protected onDisconnect() {}
