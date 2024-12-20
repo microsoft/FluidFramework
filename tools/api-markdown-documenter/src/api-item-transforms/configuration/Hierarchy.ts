@@ -296,11 +296,6 @@ export type HierarchyConfiguration = {
 };
 
 /**
- * Partial {@link HierarchyConfiguration} provided as user input.
- */
-export type HierarchyOptions = Partial<HierarchyConfiguration>;
-
-/**
  * Default {@link HierarchyConfiguration}.
  */
 export const defaultHierarchyConfiguration: HierarchyConfiguration = {
@@ -340,7 +335,7 @@ export const defaultHierarchyConfiguration: HierarchyConfiguration = {
  * in the remainder with defaults.
  */
 export function getHierarchyOptionsWithDefaults(
-	inputOptions: HierarchyOptions | undefined,
+	inputOptions?: Partial<HierarchyConfiguration>,
 ): HierarchyConfiguration {
 	return { ...defaultHierarchyConfiguration, ...inputOptions };
 }
