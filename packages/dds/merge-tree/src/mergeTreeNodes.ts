@@ -94,6 +94,16 @@ export type ISegmentLeaf = ISegmentInternal & // eslint-disable-next-line import
 		 * then the segment is not obliterated because it is aware of the latest obliteration.
 		 */
 		prevObliterateByInserter?: ObliterateInfo;
+		/**
+		 * Whether or not this segment is a special segment denoting the start or
+		 * end of the tree
+		 *
+		 * Endpoint segments are imaginary segments positioned immediately before or
+		 * after the tree. These segments cannot be referenced by regular operations
+		 * and exist primarily as a bucket for local references to slide onto during
+		 * deletion of regular segments.
+		 */
+		readonly endpointType?: "start" | "end";
 	};
 export type IMergeNode = MergeBlock | ISegmentLeaf;
 
@@ -539,25 +549,25 @@ export abstract class BaseSegment implements ISegment {
 		return true;
 	}
 
-	protected cloneInto(seg: ISegment): void {
-		const b: ISegmentLeaf = seg;
+	protected cloneInto(b: ISegment): void {
+		const seg: ISegmentLeaf = b;
 		if (isInserted(this)) {
-			b.clientId = this.clientId;
-			b.seq = this.seq;
+			seg.clientId = this.clientId;
+			seg.seq = this.seq;
 		}
 		// TODO: deep clone properties
-		b.properties = clone(this.properties);
+		seg.properties = clone(this.properties);
 		if (isRemoved(this)) {
-			b.removedSeq = this.removedSeq;
-			b.removedClientIds = [...this.removedClientIds];
+			seg.removedSeq = this.removedSeq;
+			seg.removedClientIds = [...this.removedClientIds];
 		}
 		if (isMoved(this)) {
-			b.movedSeq = this.movedSeq;
-			b.movedSeqs = [...this.movedSeqs];
-			b.wasMovedOnInsert = this.wasMovedOnInsert;
-			b.movedClientIds = [...this.movedClientIds];
+			seg.movedSeq = this.movedSeq;
+			seg.movedSeqs = [...this.movedSeqs];
+			seg.wasMovedOnInsert = this.wasMovedOnInsert;
+			seg.movedClientIds = [...this.movedClientIds];
 		}
-		b.attribution = this.attribution?.clone();
+		seg.attribution = this.attribution?.clone();
 	}
 
 	public canAppend(segment: ISegment): boolean {

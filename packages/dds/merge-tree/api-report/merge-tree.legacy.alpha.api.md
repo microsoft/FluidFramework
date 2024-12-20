@@ -32,7 +32,7 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     abstract clone(): ISegment;
     // (undocumented)
-    protected cloneInto(seg: ISegment): void;
+    protected cloneInto(b: ISegment): void;
     // (undocumented)
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
     // (undocumented)
