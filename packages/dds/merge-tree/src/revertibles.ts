@@ -13,7 +13,7 @@ import { LocalReferenceCollection, LocalReferencePosition } from "./localReferen
 import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import { type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { type ISegmentPrivate } from "./mergeTreeNodes.js";
 import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
@@ -244,7 +244,7 @@ export function discardMergeTreeDeltaRevertible(
 			t.trackingCollection.unlink(r.trackingGroup);
 			// remove untracked local references
 			if (t.trackingCollection.empty && !t.isLeaf()) {
-				const segment: ISegmentLeaf | undefined = t.getSegment();
+				const segment: ISegmentPrivate | undefined = t.getSegment();
 				segment?.localRefs?.removeLocalRef(t);
 			}
 		}
@@ -285,7 +285,7 @@ function revertLocalRemove(
 
 		assert(!tracked.isLeaf(), 0x3f4 /* removes must track local refs */);
 
-		const refSeg: ISegmentLeaf | undefined = tracked.getSegment();
+		const refSeg: ISegmentPrivate | undefined = tracked.getSegment();
 		let realPos = mergeTreeWithRevert.referencePositionToLocalPosition(tracked);
 
 		// References which are on EndOfStringSegment don't return detached for pos,
@@ -302,11 +302,12 @@ function revertLocalRemove(
 
 		const props = tracked.properties as RemoveSegmentRefProperties;
 		driver.insertFromSpec(realPos, props.segSpec);
-		const insertSegment: ISegmentLeaf | undefined = mergeTreeWithRevert.getContainingSegment(
-			realPos,
-			mergeTreeWithRevert.collabWindow.currentSeq,
-			mergeTreeWithRevert.collabWindow.clientId,
-		).segment;
+		const insertSegment: ISegmentPrivate | undefined =
+			mergeTreeWithRevert.getContainingSegment(
+				realPos,
+				mergeTreeWithRevert.collabWindow.currentSeq,
+				mergeTreeWithRevert.collabWindow.clientId,
+			).segment;
 		assert(insertSegment !== undefined, 0x3f5 /* insert segment must exist at position */);
 
 		const localSlideFilter = (lref: LocalReferencePosition): boolean =>
@@ -338,7 +339,7 @@ function revertLocalRemove(
 			insertSegment.parent!,
 			insertSegment,
 			undefined,
-			(seg: ISegmentLeaf) => {
+			(seg: ISegmentPrivate) => {
 				if (seg.localRefs?.empty === false) {
 					return seg.localRefs.walkReferences(refHandler, undefined, forward);
 				}
@@ -371,7 +372,7 @@ function revertLocalRemove(
 			tg.link(insertSegment);
 			tg.unlink(tracked);
 		}
-		const segment: ISegmentLeaf | undefined = tracked.getSegment();
+		const segment: ISegmentPrivate | undefined = tracked.getSegment();
 		segment?.localRefs?.removeLocalRef(tracked);
 	}
 }
@@ -392,7 +393,10 @@ function revertLocalAnnotate(
 	}
 }
 
-function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegmentLeaf): number {
+function getPosition(
+	mergeTreeWithRevert: MergeTreeWithRevert,
+	segment: ISegmentPrivate,
+): number {
 	return mergeTreeWithRevert.getPosition(
 		segment,
 		mergeTreeWithRevert.collabWindow.currentSeq,

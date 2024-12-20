@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { LocalReferencePosition } from "../localReference.js";
-import { ISegment, type ISegmentLeaf } from "../mergeTreeNodes.js";
+import { ISegment, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
 import { SortedSegmentSet, SortedSegmentSetItem } from "../sortedSegmentSet.js";
@@ -65,7 +65,7 @@ describe("SortedSegmentSet", () => {
 		const set = new SortedSegmentSet<{ segment: ISegment }>();
 		for (let i = 0; i < client.getLength(); i++) {
 			for (const pos of [i, client.getLength() - 1 - i]) {
-				const segment = client.getContainingSegment<ISegmentLeaf>(pos).segment;
+				const segment = client.getContainingSegment<ISegmentPrivate>(pos).segment;
 				assert(segment);
 				const item = { segment };
 				assert.equal(set.has(item), false);
@@ -81,7 +81,7 @@ describe("SortedSegmentSet", () => {
 		const set = new SortedSegmentSet();
 		for (let i = 0; i < client.getLength(); i++) {
 			for (const pos of [i, client.getLength() - 1 - i]) {
-				const segment = client.getContainingSegment<ISegmentLeaf>(pos).segment;
+				const segment = client.getContainingSegment<ISegmentPrivate>(pos).segment;
 				assert(segment);
 				set.addOrUpdate(segment);
 				assert.equal(set.has(segment), true);
@@ -99,7 +99,7 @@ describe("SortedSegmentSet", () => {
 		const set = new TrackingGroup();
 		for (let i = 0; i < client.getLength(); i++) {
 			for (const pos of [i, client.getLength() - 1 - i]) {
-				const segmentInfo = client.getContainingSegment<ISegmentLeaf>(pos);
+				const segmentInfo = client.getContainingSegment<ISegmentPrivate>(pos);
 				assert(segmentInfo?.segment);
 				const lref = client.createLocalReferencePosition(
 					segmentInfo.segment,

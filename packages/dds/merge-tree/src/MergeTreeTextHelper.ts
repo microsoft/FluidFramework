@@ -5,7 +5,7 @@
 
 import { IIntegerRange } from "./client.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegmentLeaf } from "./mergeTreeNodes.js";
+import { ISegmentPrivate } from "./mergeTreeNodes.js";
 import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
 
 interface ITextAccumulator {
@@ -54,7 +54,7 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 }
 
 function gatherText(
-	segment: ISegmentLeaf,
+	segment: ISegmentPrivate,
 	pos: number,
 	refSeq: number,
 	clientId: number,

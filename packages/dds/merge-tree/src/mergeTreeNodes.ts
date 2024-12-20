@@ -61,8 +61,11 @@ export interface IMergeNodeCommon {
  * like sequence and matrix.
  *
  * We use tiered interface to control visibility of segment properties.
- * This sits between ISegment and ISegmentLeaf. It should only expose
+ * This sits between ISegment and ISegmentPrivate. It should only expose
  * things tagged internal.
+ *
+ * Everything added here beyond ISegment should be optional to keep the ability
+ * to implicitly convert between the tiered interfaces.
  *
  * @internal
  */
@@ -80,10 +83,13 @@ export type ISegmentInternal = Omit<
  * This is the lowest interface and is not exported, it site below ISegment and ISegmentInternal.
  * It should only expose unexported things.
  *
+ * Everything added here beyond ISegmentInternal should be optional to keep the ability
+ * to implicitly convert between the tiered interfaces.
+ *
  * someday we may split tree leaves from segments, but for now they are the same
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
-export type ISegmentLeaf = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
+export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
 	Partial<IInsertionInfo & IRemovalInfo & IMoveInfo & IMergeNodeCommon> & {
 		parent?: MergeBlock;
 		segmentGroups?: SegmentGroupCollection;
@@ -105,7 +111,7 @@ export type ISegmentLeaf = ISegmentInternal & // eslint-disable-next-line import
 		 */
 		readonly endpointType?: "start" | "end";
 	};
-export type IMergeNode = MergeBlock | ISegmentLeaf;
+export type IMergeNode = MergeBlock | ISegmentPrivate;
 
 /**
  * A segment representing a portion of the merge tree.
@@ -263,7 +269,7 @@ export interface ISegment {
  * @alpha
  */
 export function segmentIsRemoved(segment: ISegment): boolean {
-	const leaf: ISegmentLeaf = segment;
+	const leaf: ISegmentPrivate = segment;
 	return leaf.removedSeq !== undefined;
 }
 
@@ -550,7 +556,7 @@ export abstract class BaseSegment implements ISegment {
 	}
 
 	protected cloneInto(b: ISegment): void {
-		const seg: ISegmentLeaf = b;
+		const seg: ISegmentPrivate = b;
 		if (isInserted(this)) {
 			seg.clientId = this.clientId;
 			seg.seq = this.seq;
@@ -589,14 +595,14 @@ export abstract class BaseSegment implements ISegment {
 			return undefined;
 		}
 
-		const leafSegment: ISegmentLeaf | undefined = this.createSplitSegmentAt(pos);
+		const leafSegment: ISegmentPrivate | undefined = this.createSplitSegmentAt(pos);
 
 		if (!leafSegment) {
 			return undefined;
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
-		const thisAsMergeSegment: ISegmentLeaf = this;
+		const thisAsMergeSegment: ISegmentPrivate = this;
 		leafSegment.parent = thisAsMergeSegment.parent;
 
 		// Give the leaf a temporary yet valid ordinal.
