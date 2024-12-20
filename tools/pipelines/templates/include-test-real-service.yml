@@ -388,7 +388,7 @@ stages:
         - task: AzureCLI@2
           displayName: 'Set up and retrieve tenant credentials'
           inputs:
-            azureSubscription: 'Fluid'
+            azureSubscription: 'Fluid Framework Tests'
             addSpnToEnvironment: true
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
