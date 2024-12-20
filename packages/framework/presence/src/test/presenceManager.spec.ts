@@ -460,7 +460,7 @@ describe("Presence", () => {
 							);
 						});
 
-						it.skip("updates status of attendee with stale connection to 'Disconnected' after 30s delay upon local reconnection", () => {
+						it.skip("updates status of attendee with stale connection after 30s delay upon local reconnection", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
 							// Act - disconnect & reconnect local client
@@ -524,7 +524,7 @@ describe("Presence", () => {
 							);
 						});
 
-						it.skip("does not update status of attendee with stale connection to 'Disconnected' if attendee rejoins", () => {
+						it.skip("does not update status of attendee with stale connection if attendee rejoins", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
 							// Setup - fail if attendee joined is announced
@@ -552,7 +552,7 @@ describe("Presence", () => {
 							);
 						});
 
-						it.skip("does not update status of attendee with stale connection to 'Disconnected' if attendee sends datastore update", () => {
+						it.skip("does not update status of attendee with stale connection if attendee sends datastore update", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
 							// Setup - fail if attendee joined is announced
@@ -631,7 +631,7 @@ describe("Presence", () => {
 							);
 						});
 
-						it.skip("updates status of attendee with stale connection to 'Disconnected' only 30s after most recent local reconnection", () => {
+						it.skip("updates status of attendee with stale connection only 30s after most recent local reconnection", () => {
 							// Setup
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 							assert.strictEqual(
