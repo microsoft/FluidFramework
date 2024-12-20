@@ -124,7 +124,6 @@ export {
 	SortedSegmentSetItem,
 	SortedSet,
 	TextSegment,
-	toRemovalInfo,
 	Trackable,
 	TrackingGroup,
 	TrackingGroupCollection,
