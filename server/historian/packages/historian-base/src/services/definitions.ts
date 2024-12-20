@@ -114,6 +114,11 @@ export interface IDenyList {
 	isDenied(tenantId: string, documentId: string): boolean;
 }
 
+/**
+ * Retrieves a subset of information from a Tenant's {@link ITenantCustomData}.
+ * The retrieved information is passed to the underlying storage service (e.g. Gitrest)
+ * in the "Simplified-Custom-Data" header.
+ */
 export interface ISimplifiedCustomDataRetriever {
 	get(customData: ITenantCustomData): string;
 }

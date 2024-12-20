@@ -39,7 +39,7 @@ export const Constants = Object.freeze({
 	generalRestCallThrottleIdPrefix: "generalRestCall",
 	IsEphemeralContainer: "Is-Ephemeral-Container",
 	isInitialSummary: "isInitialSummary",
-	SimplifiedCustomData: "SimplifiedCustomData",
+	SimplifiedCustomData: "Simplified-Custom-Data",
 });
 
 export function getTokenLifetimeInSec(token: string): number | undefined {

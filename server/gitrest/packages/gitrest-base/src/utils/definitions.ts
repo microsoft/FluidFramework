@@ -10,7 +10,7 @@ export enum Constants {
 	StorageRoutingIdHeader = "Storage-Routing-Id",
 	StorageNameHeader = "Storage-Name",
 	IsEphemeralContainer = "Is-Ephemeral-Container",
-	SimplifiedCustomDataHeader = "SimplifiedCustomData",
+	SimplifiedCustomDataHeader = "Simplified-Custom-Data",
 }
 
 export interface IStorageDirectoryConfig {
