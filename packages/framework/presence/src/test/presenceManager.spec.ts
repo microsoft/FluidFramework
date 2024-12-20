@@ -468,20 +468,20 @@ describe("Presence", () => {
 							clock.tick(1000);
 							runtime.connect("client6"); // Simulate local client reconnect with new connection id
 
-							// Verify - stale attendee should still be 'Connected' after 15 seconds
+							// Verify - attendee with stale connection should still be 'Connected' after 15 seconds
 							clock.tick(15_001);
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Connected,
-								"Stale attendee should still be 'Connected' after 15s",
+								"Attendee with stale connection should still be 'Connected' after 15s",
 							);
 
-							// Verify - stale attendee should be 'Disconnected' after 30 seconds and announced via `attendeeDisconnected`
+							// Verify - attendee with stale connection should be 'Disconnected' after 30 seconds and announced via `attendeeDisconnected`
 							clock.tick(15_001);
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Disconnected,
-								"Stale attendee should be 'Disconnected' 30s after reconnection",
+								"Attendee with stale connection should be 'Disconnected' 30s after reconnection",
 							);
 							assert.strictEqual(
 								disconnectedAttendees.length,
@@ -497,11 +497,11 @@ describe("Presence", () => {
 							runtime.disconnect();
 							clock.tick(600_000);
 
-							// Verify - stale attendee should still be 'Connected' if local client never reconnects
+							// Verify - attendee with stale connection should still be 'Connected' if local client never reconnects
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Connected,
-								"Stale attendee should still be 'Connected' after 30s",
+								"Attendee with stale connection should still be 'Connected' after 30s",
 							);
 						});
 
@@ -516,11 +516,11 @@ describe("Presence", () => {
 							runtime.disconnect(); // Disconnect again
 							clock.tick(600_000); // Advance 10 minutes
 
-							// Verify - stale attendee should still be 'Connected' if local client never reconnects for at least 30s
+							// Verify - attendee with stale connection should still be 'Connected' if local client never reconnects for at least 30s
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Connected,
-								"Stale attendee should still be 'Connected' after 30s",
+								"Attendee with stale connection should still be 'Connected' after 30s",
 							);
 						});
 
@@ -651,20 +651,20 @@ describe("Presence", () => {
 							clock.tick(1000);
 							runtime.connect("client7");
 
-							// Verify - stale attendee should still be connected after 15 seconds
+							// Verify - attendee with stale connection should still be connected after 15 seconds
 							clock.tick(15_001);
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Connected,
-								"Stale attendee should still be connected",
+								"Attendee with stale connection should still be connected",
 							);
 
-							// Verify - stale attendee should be disconnected after 30 seconds
+							// Verify - attendee with stale connection should be disconnected after 30 seconds
 							clock.tick(15_001);
 							assert.equal(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Disconnected,
-								"Stale attendee has wrong status",
+								"Attendee with stale connection has wrong status",
 							);
 							assert.strictEqual(
 								disconnectedAttendees.length,
