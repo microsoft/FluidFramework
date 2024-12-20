@@ -3158,7 +3158,7 @@ describe("Editing", () => {
 				tree.editor
 					.valueField({ parent: rootNode, field: brand("foo") })
 					.set(singleJsonCursor("B"));
-				tree.editor.addInverseNodeExistsConstraint({
+				tree.editor.addNodeExistsConstraintOnRevert({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
@@ -3192,7 +3192,7 @@ describe("Editing", () => {
 				tree.editor
 					.valueField({ parent: rootNode, field: brand("foo") })
 					.set(singleJsonCursor("B"));
-				tree.editor.addInverseNodeExistsConstraint({
+				tree.editor.addNodeExistsConstraintOnRevert({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
@@ -3226,7 +3226,7 @@ describe("Editing", () => {
 				branch.editor
 					.valueField({ parent: rootNode, field: brand("bar") })
 					.set(singleJsonCursor("new"));
-				branch.editor.addInverseNodeExistsConstraint({
+				branch.editor.addNodeExistsConstraintOnRevert({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,

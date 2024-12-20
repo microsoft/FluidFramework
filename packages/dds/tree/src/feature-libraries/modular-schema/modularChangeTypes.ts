@@ -62,10 +62,10 @@ export interface ModularChangeset extends HasFieldChanges {
 	 */
 	readonly constraintViolationCount?: number;
 	/**
-	 * The number of constraint violations that apply to the inverse of the changeset, i.e., when the inverse of this
-	 * changeset is applied. If this count is greater than 0, it will prevent the changeset from being reverted or undone.
+	 * The number of constraint violations that apply to the revert of the changeset. If this count is greater than 0, it will
+	 * prevent the changeset from being reverted or undone.
 	 */
-	readonly inverseConstraintViolationCount?: number;
+	readonly constraintViolationCountOnRevert?: number;
 	readonly builds?: ChangeAtomIdBTree<TreeChunk>;
 	readonly destroys?: ChangeAtomIdBTree<number>;
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
@@ -108,8 +108,8 @@ export interface NodeExistsConstraint {
 export interface NodeChangeset extends HasFieldChanges {
 	/** Keeps track of whether node exists constraint has been violated by this change */
 	nodeExistsConstraint?: NodeExistsConstraint;
-	/** Keeps track of whether node exists constraint will be violated when this change is inverted */
-	inverseNodeExistsConstraint?: NodeExistsConstraint;
+	/** Keeps track of whether node exists constraint will be violated when this change is reverted */
+	nodeExistsConstraintOnRevert?: NodeExistsConstraint;
 }
 
 export type NodeId = ChangeAtomId;

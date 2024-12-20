@@ -657,12 +657,12 @@ export class ModularChangeFamily
 		const nodeExistsConstraint = change1.nodeExistsConstraint ?? change2.nodeExistsConstraint;
 
 		// WARNING: this composition logic assumes that we never make compositions of the following form:
-		// change1: an inverse-node-exists constraint on a node
+		// change1: a node-exists-on-revert constraint on a node
 		// change2: a changeset that impacts the existence of that node
-		// This is currently enforced by the fact that constraints which apply to the inverse are included last in the composition.
+		// This is currently enforced by the fact that constraints which apply to the revert are included last in the composition.
 		// If that weren't the case, we would need to rebase the status of the constraint forward over the changes from change2.
-		const inverseNodeExistsConstraint =
-			change1.inverseNodeExistsConstraint ?? change2.inverseNodeExistsConstraint;
+		const nodeExistsConstraintOnRevert =
+			change1.nodeExistsConstraintOnRevert ?? change2.nodeExistsConstraintOnRevert;
 
 		const composedFieldChanges = this.composeFieldMaps(
 			change1.fieldChanges,
@@ -683,8 +683,8 @@ export class ModularChangeFamily
 			composedNodeChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
-		if (inverseNodeExistsConstraint !== undefined) {
-			composedNodeChange.inverseNodeExistsConstraint = inverseNodeExistsConstraint;
+		if (nodeExistsConstraintOnRevert !== undefined) {
+			composedNodeChange.nodeExistsConstraintOnRevert = nodeExistsConstraintOnRevert;
 		}
 
 		return composedNodeChange;
@@ -795,8 +795,8 @@ export class ModularChangeFamily
 			crossFieldKeys,
 			maxId: genId.getMaxId(),
 			revisions: revInfos,
-			constraintViolationCount: change.change.inverseConstraintViolationCount,
-			inverseConstraintViolationCount: change.change.constraintViolationCount,
+			constraintViolationCount: change.change.constraintViolationCountOnRevert,
+			constraintViolationCountOnRevert: change.change.constraintViolationCount,
 			destroys,
 		});
 	}
@@ -853,17 +853,17 @@ export class ModularChangeFamily
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
-		// If the node has a constraint, it should be inverted to an inverse constraint. This ensure that if the
-		// inverse is inverted again, the original input constraint will be restored.
+		// If the node has a constraint, it should be inverted to a node-exist-on-revert constraint. This ensure that if
+		// the inverse is inverted again, the original input constraint will be restored.
 		if (change.nodeExistsConstraint !== undefined) {
-			inverse.inverseNodeExistsConstraint = change.nodeExistsConstraint;
+			inverse.nodeExistsConstraintOnRevert = change.nodeExistsConstraint;
 		}
 
-		// The inverse constraint of a node is the constraint that should apply when the a change is inverted. So, it
-		// should become the constraint in the inverse. If this constraint is violated when applying the inverse,
+		// The node-exist-on-revert constraint of a node is the constraint that should apply when the a change is reverted.
+		// So, it should become the constraint in the inverse. If this constraint is violated when applying the inverse,
 		// it will be discarded.
-		if (change.inverseNodeExistsConstraint !== undefined) {
-			inverse.nodeExistsConstraint = change.inverseNodeExistsConstraint;
+		if (change.nodeExistsConstraintOnRevert !== undefined) {
+			inverse.nodeExistsConstraint = change.nodeExistsConstraintOnRevert;
 		}
 
 		if (change.fieldChanges !== undefined) {
@@ -936,15 +936,15 @@ export class ModularChangeFamily
 		);
 
 		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
-		const inverseConstraintState = newConstraintState(
-			change.inverseConstraintViolationCount ?? 0,
+		const revertConstraintState = newConstraintState(
+			change.constraintViolationCountOnRevert ?? 0,
 		);
 		this.updateConstraintsForFields(
 			rebasedFields,
 			NodeAttachState.Attached,
 			NodeAttachState.Attached,
 			constraintState,
-			inverseConstraintState,
+			revertConstraintState,
 			rebasedNodes,
 		);
 
@@ -957,7 +957,7 @@ export class ModularChangeFamily
 			maxId: idState.maxId,
 			revisions: change.revisions,
 			constraintViolationCount: constraintState.violationCount,
-			inverseConstraintViolationCount: inverseConstraintState.violationCount,
+			constraintViolationCountOnRevert: revertConstraintState.violationCount,
 			builds: change.builds,
 			destroys: change.destroys,
 			refreshers: change.refreshers,
@@ -1397,8 +1397,8 @@ export class ModularChangeFamily
 			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
 		}
 
-		if (change?.inverseNodeExistsConstraint !== undefined) {
-			rebasedChange.inverseNodeExistsConstraint = change.inverseNodeExistsConstraint;
+		if (change?.nodeExistsConstraintOnRevert !== undefined) {
+			rebasedChange.nodeExistsConstraintOnRevert = change.nodeExistsConstraintOnRevert;
 		}
 
 		setInChangeAtomIdMap(crossFieldTable.baseToRebasedNodeId, baseId, newId);
@@ -1410,7 +1410,7 @@ export class ModularChangeFamily
 		parentInputAttachState: NodeAttachState,
 		parentOutputAttachState: NodeAttachState,
 		constraintState: ConstraintState,
-		inverseConstraintState: ConstraintState,
+		revertConstraintState: ConstraintState,
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
 	): void {
 		for (const field of fields.values()) {
@@ -1432,7 +1432,7 @@ export class ModularChangeFamily
 					outputAttachState,
 					nodes,
 					constraintState,
-					inverseConstraintState,
+					revertConstraintState,
 				);
 			}
 		}
@@ -1444,7 +1444,7 @@ export class ModularChangeFamily
 		outputAttachState: NodeAttachState,
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
 		constraintState: ConstraintState,
-		inverseConstraintState: ConstraintState,
+		revertConstraintState: ConstraintState,
 	): void {
 		const node = nodes.get([nodeId.revision, nodeId.localId]) ?? fail("Unknown node ID");
 		if (node.nodeExistsConstraint !== undefined) {
@@ -1457,14 +1457,14 @@ export class ModularChangeFamily
 				constraintState.violationCount += isNowViolated ? 1 : -1;
 			}
 		}
-		if (node.inverseNodeExistsConstraint !== undefined) {
+		if (node.nodeExistsConstraintOnRevert !== undefined) {
 			const isNowViolated = outputAttachState === NodeAttachState.Detached;
-			if (node.inverseNodeExistsConstraint.violated !== isNowViolated) {
-				node.inverseNodeExistsConstraint = {
-					...node.inverseNodeExistsConstraint,
+			if (node.nodeExistsConstraintOnRevert.violated !== isNowViolated) {
+				node.nodeExistsConstraintOnRevert = {
+					...node.nodeExistsConstraintOnRevert,
 					violated: isNowViolated,
 				};
-				inverseConstraintState.violationCount += isNowViolated ? 1 : -1;
+				revertConstraintState.violationCount += isNowViolated ? 1 : -1;
 			}
 		}
 
@@ -1474,7 +1474,7 @@ export class ModularChangeFamily
 				inputAttachState,
 				outputAttachState,
 				constraintState,
-				inverseConstraintState,
+				revertConstraintState,
 				nodes,
 			);
 		}
@@ -1976,7 +1976,7 @@ export function updateRefreshers(
 		maxId,
 		revisions,
 		constraintViolationCount,
-		inverseConstraintViolationCount,
+		constraintViolationCountOnRevert,
 		builds,
 		destroys,
 	} = change;
@@ -1990,7 +1990,7 @@ export function updateRefreshers(
 		maxId: maxId as number,
 		revisions,
 		constraintViolationCount,
-		inverseConstraintViolationCount,
+		constraintViolationCountOnRevert,
 		builds,
 		destroys,
 		refreshers,
@@ -2135,7 +2135,7 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 	return (
 		change.fieldChanges === undefined &&
 		change.nodeExistsConstraint === undefined &&
-		change.inverseNodeExistsConstraint === undefined
+		change.nodeExistsConstraintOnRevert === undefined
 	);
 }
 
@@ -2579,7 +2579,7 @@ function makeModularChangeset(
 		maxId: number;
 		revisions?: readonly RevisionInfo[];
 		constraintViolationCount?: number;
-		inverseConstraintViolationCount?: number;
+		constraintViolationCountOnRevert?: number;
 		builds?: ChangeAtomIdBTree<TreeChunk>;
 		destroys?: ChangeAtomIdBTree<number>;
 		refreshers?: ChangeAtomIdBTree<TreeChunk>;
@@ -2605,10 +2605,10 @@ function makeModularChangeset(
 		changeset.constraintViolationCount = props.constraintViolationCount;
 	}
 	if (
-		props.inverseConstraintViolationCount !== undefined &&
-		props.inverseConstraintViolationCount > 0
+		props.constraintViolationCountOnRevert !== undefined &&
+		props.constraintViolationCountOnRevert > 0
 	) {
-		changeset.inverseConstraintViolationCount = props.inverseConstraintViolationCount;
+		changeset.constraintViolationCountOnRevert = props.constraintViolationCountOnRevert;
 	}
 	if (props.builds !== undefined && props.builds.size > 0) {
 		changeset.builds = props.builds;
@@ -2785,9 +2785,9 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		);
 	}
 
-	public addInverseNodeExistsConstraint(path: UpPath, revision: RevisionTag): void {
+	public addNodeExistsConstraintOnRevert(path: UpPath, revision: RevisionTag): void {
 		const nodeChange: NodeChangeset = {
-			inverseNodeExistsConstraint: { violated: false },
+			nodeExistsConstraintOnRevert: { violated: false },
 		};
 
 		this.applyChange(
