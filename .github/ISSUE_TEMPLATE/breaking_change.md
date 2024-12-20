@@ -8,7 +8,7 @@ assignees: ""
 
 ## Broken API or pattern
 
-<!-- Name the APIs involved specifically, etc. -->
+<!-- Name the APIs involved specifically, etc. Examples: `IContainerRuntimeOptions.flushMode` or Calling `AzureClient.createContainer` with compatibilityMode set to "1". -->
 
 **Preparation References**
 
