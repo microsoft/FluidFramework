@@ -161,23 +161,23 @@ function getFileSafeNameForName(apiItemName: string): string {
 
 /**
  * Gets a filename-safe representation of the API item's display name.
- */
-function getFileSafeNameForApiItem(apiItem: ApiItem): string {
-	return apiItem.kind === ApiItemKind.Package
-		? getFileSafeNameForName(getUnscopedPackageName(apiItem as ApiPackage))
-		: getFileSafeNameForName(apiItem.displayName);
-}
-
-/**
- * Adjusts the name of the item as needed.
- * Accounts for method overloads by adding a suffix such as "myMethod_2".
+ *
+ * @remarks
+ * - Handles invalid filename characters.
+ *
+ * - Accounts for method overloads by adding a suffix (such as "myMethod_2").
  *
  * @param apiItem - The API item for which the qualified name is being queried.
  *
  * @public
  */
-export function getQualifiedApiItemName(apiItem: ApiItem): string {
-	let qualifiedName: string = getFileSafeNameForApiItem(apiItem);
+export function getFileSafeNameForApiItem(apiItem: ApiItem): string {
+	const unqualifiedName: string =
+		apiItem.kind === ApiItemKind.Package
+			? getFileSafeNameForName(getUnscopedPackageName(apiItem as ApiPackage))
+			: getFileSafeNameForName(apiItem.displayName);
+
+	let qualifiedName: string = unqualifiedName;
 	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
 		// Subtract one for compatibility with earlier releases of API Documenter.
 		// (This will get revamped when we fix GitHub issue #1308)

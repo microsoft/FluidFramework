@@ -13,7 +13,7 @@ import {
 
 import {
 	type ApiMemberKind,
-	getQualifiedApiItemName,
+	getFileSafeNameForApiItem,
 	getConciseSignature,
 	getSingleLineExcerptText,
 	isDeprecated,
@@ -282,7 +282,7 @@ export namespace DefaultDocumentationSuiteOptions {
 				return "index";
 			}
 			default: {
-				return getQualifiedApiItemName(apiItem);
+				return getFileSafeNameForApiItem(apiItem);
 			}
 		}
 	}
