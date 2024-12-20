@@ -59,8 +59,6 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
  *
  * @privateRemarks TODO: Make transformation for package items configurable
  *
- * @privateRemarks TODO: re-express property names in terms of `ApiItemKind` for consistency.
- *
  * @public
  */
 export interface ApiItemTransformations {
