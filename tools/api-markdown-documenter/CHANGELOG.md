@@ -87,6 +87,18 @@ This version of the library attempts to align its APIs with the following conven
 
 -   `ApiTransformationConfiguration` -> `ApiTransformationOptions` (user input) and `ApiTransformationConfiguration` (derived system configuration).
 
+#### Updated structure of `ApiTransformationConfiguration` and `ApiItemTransformations`
+
+Updated the structure of `ApiTransformationConfiguration` to contain a `transformations` property of type `ApiItemTransformations`, rather than implementing that interface directly.
+
+Also updates `ApiItemTransformations` methods to be keyed off of `ApiItemKind`, rather than being individually named.
+
+E.g. A call like `config.transformApiMethod(...)` would become `config.transformations["Method"](...)`.
+
+This better aligns with similar transformational API surfaces in this library, like the renderers.
+
+The `createDefaultLayout` property of `ApiItemTransformations` now lives directly in `ApiTransformationConfiguration`, but has been renamed to `defaultSectionLayout`.
+
 ## 0.17.3
 
 -   Fixes an issue where directories generated for API items configured to yield directory-wise hierarchy (via the `hierarchyBoundaries` option) would be generated with names that differed from their corresponding document names.

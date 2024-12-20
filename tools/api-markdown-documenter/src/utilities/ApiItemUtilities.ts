@@ -50,9 +50,9 @@ import type { Logger } from "../Logging.js";
 export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
 
 /**
- * Gets the {@link ValidApiItemKind} for the provided API item. Throws if the item's kind is "None".
+ * Gets the {@link ValidApiItemKind} for the provided API item.
  *
- * @public
+ * @throws If the item's kind is "None".
  */
 export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
 	switch (apiItem.kind) {
@@ -60,7 +60,7 @@ export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
 			throw new Error(`Encountered an API item with kind "None": "${apiItem.displayName}".`);
 		}
 		default: {
-			return apiItem.kind as ValidApiItemKind;
+			return apiItem.kind;
 		}
 	}
 }
@@ -82,8 +82,8 @@ export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
  * @public
  */
 export type ApiMemberKind = Exclude<
-	ApiItemKind,
-	ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package
+	ValidApiItemKind,
+	ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.Package
 >;
 
 /**

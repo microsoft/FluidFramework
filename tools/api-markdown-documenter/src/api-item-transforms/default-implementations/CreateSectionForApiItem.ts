@@ -23,7 +23,7 @@ import {
 } from "../helpers/index.js";
 
 /**
- * Default content layout for all API items.
+ * Default {@link ApiItemTransformationConfiguration.defaultSectionLayout} implementation.
  *
  * @remarks Lays out the content in the following manner:
  *
@@ -51,7 +51,7 @@ import {
  * @param itemSpecificContent - API item-specific details to be included in the default layout.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function createDefaultLayout(
+export function createSectionForApiItem(
 	apiItem: ApiItem,
 	itemSpecificContent: SectionNode[] | undefined,
 	config: ApiItemTransformationConfiguration,

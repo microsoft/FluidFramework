@@ -16,9 +16,14 @@ import {
 	getSingleLineExcerptText,
 	isDeprecated,
 	getReleaseTag,
+	getApiItemKind,
 } from "../../utilities/index.js";
 
-import { defaultHierarchyConfiguration, getHierarchyOptionsWithDefaults, type HierarchyConfiguration } from "./Hierarchy.js";
+import {
+	defaultHierarchyConfiguration,
+	getHierarchyOptionsWithDefaults,
+	type HierarchyConfiguration,
+} from "./Hierarchy.js";
 import { trimTrailingSemicolon } from "./Utilities.js";
 
 /**
@@ -163,7 +168,8 @@ export namespace DefaultDocumentationSuiteOptions {
 	 * Uses the item's signature, except for `Model` items, in which case the text "Packages" is displayed.
 	 */
 	export function defaultGetLinkTextForItem(apiItem: ApiItem): string {
-		switch (apiItem.kind) {
+		const itemKind = getApiItemKind(apiItem);
+		switch (itemKind) {
 			case ApiItemKind.Model: {
 				return "Packages";
 			}

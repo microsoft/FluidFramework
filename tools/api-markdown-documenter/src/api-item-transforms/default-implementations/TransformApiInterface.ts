@@ -15,7 +15,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import type { SectionNode } from "../../documentation-domain/index.js";
-import { getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
+import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
 import { filterChildMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
@@ -69,7 +69,8 @@ export function transformApiInterface(
 		const indexSignatures: ApiIndexSignature[] = [];
 		const methods: ApiMethodSignature[] = [];
 		for (const child of filteredChildren) {
-			switch (child.kind) {
+			const childKind = getApiItemKind(child);
+			switch (childKind) {
 				case ApiItemKind.ConstructSignature: {
 					constructSignatures.push(child as ApiConstructSignature);
 					break;
@@ -97,7 +98,7 @@ export function transformApiInterface(
 							child.displayName
 						}" of Interface "${getScopedMemberNameForDiagnostics(
 							apiInterface,
-						)}" is of unsupported API item kind: "${child.kind}"`,
+						)}" is of unsupported API item kind: "${childKind}"`,
 					);
 					break;
 				}
@@ -194,5 +195,5 @@ export function transformApiInterface(
 		}
 	}
 
-	return config.createDefaultLayout(apiInterface, childSections, config);
+	return config.defaultSectionLayout(apiInterface, childSections, config);
 }

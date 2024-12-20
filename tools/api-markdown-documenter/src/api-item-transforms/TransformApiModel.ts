@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { ApiEntryPoint, ApiItem, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
+import {
+	ApiItemKind,
+	type ApiEntryPoint,
+	type ApiItem,
+	type ApiModel,
+	type ApiPackage,
+} from "@microsoft/api-extractor-model";
 
 import type { DocumentNode, SectionNode } from "../documentation-domain/index.js";
 
@@ -150,14 +156,14 @@ function createDocumentForApiModel(
 	apiModel: ApiModel,
 	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
-	const { logger, transformApiModel: createModelBodySections } = config;
+	const { logger, transformations } = config;
 
 	logger.verbose(`Generating API Model document...`);
 
 	// Note: We don't render the breadcrumb for Model document, as it is always the root of the file hierarchy.
 
 	// Render body contents
-	const sections = createModelBodySections(apiModel, config);
+	const sections = transformations[ApiItemKind.Model](apiModel, config);
 
 	logger.verbose(`API Model document rendered successfully.`);
 
@@ -181,7 +187,7 @@ function createDocumentForSingleEntryPointPackage(
 	apiEntryPoint: ApiEntryPoint,
 	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
-	const { includeBreadcrumb, logger, transformApiEntryPoint } = config;
+	const { includeBreadcrumb, logger, transformations } = config;
 
 	logger.verbose(`Generating ${apiPackage.name} package document...`);
 
@@ -193,12 +199,15 @@ function createDocumentForSingleEntryPointPackage(
 	}
 
 	// Render sub-sections for the single entry-point. We will bundle these with body comments from the package item.
-	const entryPointSections = transformApiEntryPoint(apiEntryPoint, config, (childItem) =>
-		apiItemToSections(childItem, config),
+	const entryPointSections = transformations[ApiItemKind.EntryPoint](
+		apiEntryPoint,
+		config,
+		(childItem) => apiItemToSections(childItem, config),
 	);
 
 	// Wrap entry-point contents with package-level docs
-	sections.push(...config.createDefaultLayout(apiPackage, entryPointSections, config));
+	// TODO: Make package transformation configurable
+	sections.push(...config.defaultSectionLayout(apiPackage, entryPointSections, config));
 
 	logger.verbose(`Package document rendered successfully.`);
 
@@ -251,7 +260,7 @@ function createDocumentForApiEntryPoint(
 	apiEntryPoint: ApiEntryPoint,
 	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
-	const { includeBreadcrumb, logger, transformApiEntryPoint } = config;
+	const { includeBreadcrumb, logger, transformations } = config;
 
 	logger.verbose(`Generating ${apiEntryPoint.displayName} API entry-point document...`);
 
@@ -264,7 +273,7 @@ function createDocumentForApiEntryPoint(
 
 	// Render body contents
 	sections.push(
-		...transformApiEntryPoint(apiEntryPoint, config, (childItem) =>
+		...transformations[ApiItemKind.EntryPoint](apiEntryPoint, config, (childItem) =>
 			apiItemToSections(childItem, config),
 		),
 	);

@@ -334,7 +334,7 @@ function getHeadingIdForApiItem(
 	config: ApiItemTransformationConfiguration,
 ): string {
 	let baseName: string | undefined;
-	const apiItemKind: ApiItemKind = apiItem.kind;
+	const apiItemKind = getApiItemKind(apiItem);
 
 	// Walk parentage up until we reach the ancestor into whose document we're being rendered.
 	// Generate ID information for everything back to that point

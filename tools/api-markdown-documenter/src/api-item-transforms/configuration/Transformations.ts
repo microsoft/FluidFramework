@@ -3,25 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ApiCallSignature,
-	ApiClass,
-	ApiConstructSignature,
-	ApiConstructor,
-	ApiEntryPoint,
-	ApiEnum,
-	ApiEnumMember,
-	ApiFunction,
-	ApiIndexSignature,
-	ApiInterface,
-	ApiItem,
-	ApiMethod,
-	ApiMethodSignature,
-	ApiModel,
-	ApiNamespace,
-	ApiPropertyItem,
-	ApiTypeAlias,
-	ApiVariable,
+import {
+	type ApiCallSignature,
+	type ApiClass,
+	type ApiConstructSignature,
+	type ApiConstructor,
+	type ApiEntryPoint,
+	type ApiEnum,
+	type ApiEnumMember,
+	type ApiFunction,
+	type ApiIndexSignature,
+	type ApiInterface,
+	type ApiItem,
+	ApiItemKind,
+	type ApiMethod,
+	type ApiMethodSignature,
+	type ApiModel,
+	type ApiNamespace,
+	type ApiProperty,
+	type ApiPropertySignature,
+	type ApiTypeAlias,
+	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
 import type { SectionNode } from "../../documentation-domain/index.js";
@@ -55,89 +57,37 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 /**
  * Transformations for generating {@link DocumentationNode} trees from different kinds of API content.
  *
- * @remarks For any transformation not explicitly configured, a default will be used.
+ * @privateRemarks TODO: Make transformation for package items configurable
  *
  * @privateRemarks TODO: re-express property names in terms of `ApiItemKind` for consistency.
  *
  * @public
  */
 export interface ApiItemTransformations {
-	/**
-	 * Generates the default layout used by all default API item transformations.
-	 *
-	 * @remarks
-	 *
-	 * Can be used to uniformly control the default content layout for all API item kinds.
-	 *
-	 * API item kind-specific details are passed in, and can be displayed as desired.
-	 *
-	 * @returns The list of {@link SectionNode}s that comprise the top-level section body for the API item.
-	 */
-	readonly createDefaultLayout: (
-		apiItem: ApiItem,
-		childSections: SectionNode[] | undefined,
-		config: ApiItemTransformationConfiguration,
-	) => SectionNode[];
+	readonly [ApiItemKind.CallSignature]: TransformApiItemWithoutChildren<ApiCallSignature>;
+	readonly [ApiItemKind.Class]: TransformApiItemWithChildren<ApiClass>;
+	readonly [ApiItemKind.Constructor]: TransformApiItemWithoutChildren<ApiConstructor>;
+	readonly [ApiItemKind.ConstructSignature]: TransformApiItemWithoutChildren<ApiConstructSignature>;
 
 	/**
-	 * Transformation to generate a {@link SectionNode} for a `Call Signature`.
-	 */
-	readonly transformApiCallSignature: TransformApiItemWithoutChildren<ApiCallSignature>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for a `Class`.
-	 */
-	readonly transformApiClass: TransformApiItemWithChildren<ApiClass>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for a `Constructor`.
-	 */
-	readonly transformApiConstructor: TransformApiItemWithoutChildren<
-		ApiConstructSignature | ApiConstructor
-	>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for a package `EntryPoint`.
+	 * `ApiEntryPoint` handler.
 	 *
 	 * @remarks
 	 *
 	 * Note: for packages that have a single entry-point, this content will be bubbled up to the generated
-	 * package-level document to reduce unecessary indirection in the generated suite.
+	 * package-level document to reduce unnecessary indirection in the generated suite.
 	 */
-	readonly transformApiEntryPoint: TransformApiItemWithChildren<ApiEntryPoint>;
+	readonly [ApiItemKind.EntryPoint]: TransformApiItemWithChildren<ApiEntryPoint>;
+	readonly [ApiItemKind.Enum]: TransformApiItemWithChildren<ApiEnum>;
+	readonly [ApiItemKind.EnumMember]: TransformApiItemWithoutChildren<ApiEnumMember>;
+	readonly [ApiItemKind.Function]: TransformApiItemWithoutChildren<ApiFunction>;
+	readonly [ApiItemKind.IndexSignature]: TransformApiItemWithoutChildren<ApiIndexSignature>;
+	readonly [ApiItemKind.Interface]: TransformApiItemWithChildren<ApiInterface>;
+	readonly [ApiItemKind.Method]: TransformApiItemWithoutChildren<ApiMethod>;
+	readonly [ApiItemKind.MethodSignature]: TransformApiItemWithoutChildren<ApiMethodSignature>;
 
 	/**
-	 * Transformation to generate a {@link SectionNode} for an `Enum`.
-	 */
-	readonly transformApiEnum: TransformApiItemWithChildren<ApiEnum>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for an `Enum Member` (flag).
-	 */
-	readonly transformApiEnumMember: TransformApiItemWithoutChildren<ApiEnumMember>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for a `Function`.
-	 */
-	readonly transformApiFunction: TransformApiItemWithoutChildren<ApiFunction>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for an `Index Signature`.
-	 */
-	readonly transformApiIndexSignature: TransformApiItemWithoutChildren<ApiIndexSignature>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for an `Interface`.
-	 */
-	readonly transformApiInterface: TransformApiItemWithChildren<ApiInterface>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for a `Method`.
-	 */
-	readonly transformApiMethod: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for an `ApiModel`.
+	 * `ApiModel` handler.
 	 *
 	 * @remarks
 	 *
@@ -145,50 +95,39 @@ export interface ApiItemTransformations {
 	 * and `Package` items specially. We never render `Package` child details directly to the `Model` document.
 	 * These are always rendered to separate documents from each other.
 	 */
-	readonly transformApiModel: TransformApiItemWithoutChildren<ApiModel>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for a `Namespace`.
-	 */
-	readonly transformApiNamespace: TransformApiItemWithChildren<ApiNamespace>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for a `Property`.
-	 */
-	readonly transformApiProperty: TransformApiItemWithoutChildren<ApiPropertyItem>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for a `Type Alias`.
-	 */
-	readonly transformApiTypeAlias: TransformApiItemWithoutChildren<ApiTypeAlias>;
-
-	/**
-	 * Transformation to generate a {@link SectionNode} for an `Variable`.
-	 */
-	readonly transformApiVariable: TransformApiItemWithoutChildren<ApiVariable>;
+	readonly [ApiItemKind.Model]: TransformApiItemWithoutChildren<ApiModel>;
+	readonly [ApiItemKind.Namespace]: TransformApiItemWithChildren<ApiNamespace>;
+	readonly [ApiItemKind.Property]: TransformApiItemWithoutChildren<ApiProperty>;
+	readonly [ApiItemKind.PropertySignature]: TransformApiItemWithoutChildren<ApiPropertySignature>;
+	readonly [ApiItemKind.TypeAlias]: TransformApiItemWithoutChildren<ApiTypeAlias>;
+	readonly [ApiItemKind.Variable]: TransformApiItemWithoutChildren<ApiVariable>;
 }
 
 /**
  * The default {@link ApiItemTransformationConfiguration}.
  */
 const defaultApiItemTransformationOptions: ApiItemTransformations = {
-	transformApiCallSignature: DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	transformApiClass: DefaultTransformationImplementations.transformApiClass,
-	transformApiConstructor: DefaultTransformationImplementations.transformApiFunctionLike,
-	transformApiEntryPoint: DefaultTransformationImplementations.transformApiEntryPoint,
-	transformApiEnum: DefaultTransformationImplementations.transformApiEnum,
-	transformApiEnumMember: DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	transformApiFunction: DefaultTransformationImplementations.transformApiFunctionLike,
-	transformApiIndexSignature:
+	[ApiItemKind.CallSignature]:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	transformApiInterface: DefaultTransformationImplementations.transformApiInterface,
-	transformApiMethod: DefaultTransformationImplementations.transformApiFunctionLike,
-	transformApiModel: DefaultTransformationImplementations.transformApiModel,
-	transformApiNamespace: DefaultTransformationImplementations.transformApiNamespace,
-	transformApiProperty: DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	transformApiTypeAlias: DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	transformApiVariable: DefaultTransformationImplementations.transformApiItemWithoutChildren,
-	createDefaultLayout: DefaultTransformationImplementations.createDefaultLayout,
+	[ApiItemKind.Class]: DefaultTransformationImplementations.transformApiClass,
+	[ApiItemKind.Constructor]: DefaultTransformationImplementations.transformApiFunctionLike,
+	[ApiItemKind.ConstructSignature]: DefaultTransformationImplementations.transformApiFunctionLike,
+	[ApiItemKind.EntryPoint]: DefaultTransformationImplementations.transformApiEntryPoint,
+	[ApiItemKind.Enum]: DefaultTransformationImplementations.transformApiEnum,
+	[ApiItemKind.EnumMember]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
+	[ApiItemKind.Function]: DefaultTransformationImplementations.transformApiFunctionLike,
+	[ApiItemKind.IndexSignature]:
+		DefaultTransformationImplementations.transformApiItemWithoutChildren,
+	[ApiItemKind.Interface]: DefaultTransformationImplementations.transformApiInterface,
+	[ApiItemKind.Method]: DefaultTransformationImplementations.transformApiFunctionLike,
+	[ApiItemKind.MethodSignature]: DefaultTransformationImplementations.transformApiFunctionLike,
+	[ApiItemKind.Model]: DefaultTransformationImplementations.transformApiModel,
+	[ApiItemKind.Namespace]: DefaultTransformationImplementations.transformApiNamespace,
+	[ApiItemKind.Property]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
+	[ApiItemKind.PropertySignature]:
+		DefaultTransformationImplementations.transformApiItemWithoutChildren,
+	[ApiItemKind.TypeAlias]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
+	[ApiItemKind.Variable]: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 };
 
 /**
@@ -199,48 +138,7 @@ export function getApiItemTransformationsWithDefaults(
 	options?: Partial<ApiItemTransformations>,
 ): ApiItemTransformations {
 	return {
-		transformApiCallSignature:
-			options?.transformApiCallSignature ??
-			defaultApiItemTransformationOptions.transformApiCallSignature,
-		transformApiClass:
-			options?.transformApiClass ?? defaultApiItemTransformationOptions.transformApiClass,
-		transformApiConstructor:
-			options?.transformApiConstructor ??
-			defaultApiItemTransformationOptions.transformApiConstructor,
-		transformApiEntryPoint:
-			options?.transformApiEntryPoint ??
-			defaultApiItemTransformationOptions.transformApiEntryPoint,
-		transformApiEnum:
-			options?.transformApiEnum ?? defaultApiItemTransformationOptions.transformApiEnum,
-		transformApiEnumMember:
-			options?.transformApiEnumMember ??
-			defaultApiItemTransformationOptions.transformApiEnumMember,
-		transformApiFunction:
-			options?.transformApiFunction ??
-			defaultApiItemTransformationOptions.transformApiFunction,
-		transformApiIndexSignature:
-			options?.transformApiIndexSignature ??
-			defaultApiItemTransformationOptions.transformApiIndexSignature,
-		transformApiInterface:
-			options?.transformApiInterface ??
-			defaultApiItemTransformationOptions.transformApiInterface,
-		transformApiMethod:
-			options?.transformApiMethod ?? defaultApiItemTransformationOptions.transformApiMethod,
-		transformApiModel:
-			options?.transformApiModel ?? defaultApiItemTransformationOptions.transformApiModel,
-		transformApiNamespace:
-			options?.transformApiNamespace ??
-			defaultApiItemTransformationOptions.transformApiNamespace,
-		transformApiProperty:
-			options?.transformApiProperty ??
-			defaultApiItemTransformationOptions.transformApiProperty,
-		transformApiTypeAlias:
-			options?.transformApiTypeAlias ??
-			defaultApiItemTransformationOptions.transformApiTypeAlias,
-		transformApiVariable:
-			options?.transformApiVariable ??
-			defaultApiItemTransformationOptions.transformApiVariable,
-		createDefaultLayout:
-			options?.createDefaultLayout ?? defaultApiItemTransformationOptions.createDefaultLayout,
+		...defaultApiItemTransformationOptions,
+		...options,
 	};
 }
