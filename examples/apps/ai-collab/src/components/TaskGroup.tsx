@@ -92,8 +92,7 @@ export function TaskGroup(props: {
 				}
 			} else {
 				setRedoStack((currRedostack) => {
-					const newRedoStack = [...currRedostack];
-					newRedoStack.splice(redoIndex, 1);
+					const newRedoStack = currRedostack.toSpliced(redoIndex, 1);
 					return newRedoStack;
 				});
 			}
@@ -112,12 +111,16 @@ export function TaskGroup(props: {
 				return stack;
 			}
 
-			const oldestRevertible = stack[0];
-			if (oldestRevertible?.status !== RevertibleStatus.Disposed) {
-				oldestRevertible?.dispose();
+			const itemsToRemove = stack.length - MAX_STACK_SIZE;
+			const itemsToDispose = stack.slice(0, itemsToRemove);
+
+			for (const revertible of itemsToDispose) {
+				if (revertible?.status !== RevertibleStatus.Disposed) {
+					revertible?.dispose();
+				}
 			}
 
-			return stack.slice(1);
+			return stack.slice(itemsToRemove);
 		}
 
 		/**
