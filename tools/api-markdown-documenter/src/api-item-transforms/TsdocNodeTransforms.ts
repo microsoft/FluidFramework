@@ -61,7 +61,7 @@ import type { ApiItemTransformationConfiguration } from "./configuration/index.j
 export function transformTsdocNode(
 	node: DocNode,
 	contextApiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentationNode | undefined {
 	const transformOptions = getTsdocNodeTransformationOptions(contextApiItem, config);
 	return _transformTsdocNode(node, transformOptions);
