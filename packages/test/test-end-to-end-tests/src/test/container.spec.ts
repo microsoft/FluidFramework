@@ -692,7 +692,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 				() => runtimeDispose++,
 			);
 
-			container.dispose(DisconnectReason.Expected, new DataCorruptionError("dispose error", {}));
+			container.dispose(
+				DisconnectReason.Expected,
+				new DataCorruptionError("dispose error", {}),
+			);
 			assert.strictEqual(
 				containerDisposed,
 				1,
@@ -751,7 +754,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			);
 
 			container.close(DisconnectReason.Expected, new DataCorruptionError("close error", {}));
-			container.dispose(DisconnectReason.Expected, new DataCorruptionError("dispose error", {}));
+			container.dispose(
+				DisconnectReason.Expected,
+				new DataCorruptionError("dispose error", {}),
+			);
 			assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
 			assert.strictEqual(containerClosed, 1, "Container should send closed event");
 			assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
