@@ -58,7 +58,7 @@ export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
 			throw new Error(`Encountered an API item with kind "None": "${apiItem.displayName}".`);
 		}
 		default: {
-			return apiItem.kind as ValidApiItemKind;
+			return apiItem.kind;
 		}
 	}
 }
