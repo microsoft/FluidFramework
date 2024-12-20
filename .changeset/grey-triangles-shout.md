@@ -7,13 +7,13 @@ section: tree
 
 Metadata can be associated with Node Schema
 
-Users of TreeView can now specify metadata when creating Node Schema.
+Users of TreeView can now specify metadata when creating Node Schema, via `SchemaFactoryAlpha`.
 This metadata may include system-understood properties like `description`.
 
 Example:
 
 ```typescript
-
+const schemaFactory = new SchemaFactoryAlpha(...);
 class Point extends schemaFactory.object("Point", {
 	x: schemaFactory.required(schemaFactory.number),
 	y: schemaFactory.required(schemaFactory.number),
@@ -48,6 +48,7 @@ interface AppMetadata {
 	searchIgnore?: boolean;
 }
 
+const schemaFactory = new SchemaFactoryAlpha(...);
 class Point extends schemaFactory.object("Point", {
 	x: schemaFactory.required(schemaFactory.number),
 	y: schemaFactory.required(schemaFactory.number),
