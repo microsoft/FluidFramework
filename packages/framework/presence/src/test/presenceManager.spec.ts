@@ -444,8 +444,8 @@ describe("Presence", () => {
 
 					// When local client disconnects, we lose the connectivity status updates for remote attendees in the session.
 					// Upon reconnect, we mark all remote attendees connections as "stale".
-					// Remote attendees with stale connections are given 30 seconds after local reconnection to show signs of life
-					// before their connection status set to "Disconnected".
+					// Remote attendees with stale connections are given 30 seconds after local reconnection to prove they are connected
+					// (e.g. being in audience, sending an update, (re)joining the session, etc.) before their connection status set to "Disconnected".
 					// If an attendee with a stale connection becomes active, their "stale" status is removed.
 					describe("and then local client disconnects", () => {
 						let disconnectedAttendees: ISessionClient[];
