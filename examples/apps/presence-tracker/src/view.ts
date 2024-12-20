@@ -20,8 +20,8 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	focusMessageDiv.id = "message-div";
 	focusMessageDiv.textContent = "Click to focus";
 	focusMessageDiv.style.position = "absolute";
-	focusMessageDiv.style.top = "10px";
-	focusMessageDiv.style.right = "10px";
+	focusMessageDiv.style.top = "50px";
+	focusMessageDiv.style.left = "10px";
 	focusMessageDiv.style.color = "red";
 	focusMessageDiv.style.fontWeight = "bold";
 	focusMessageDiv.style.fontSize = "18px";
@@ -31,16 +31,14 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	wrapperDiv.appendChild(focusMessageDiv);
 
 	const onFocusChanged = () => {
-		const currentUser = focusTracker.audience.getMyself()?.name;
+		focusDiv.innerHTML = getFocusPresencesString("</br>", focusTracker);
 		const focusPresences = focusTracker.getFocusPresences();
+		const session = focusTracker.presence.getMyself();
+		const hasFocus = focusPresences.get(session);
 
-		focusDiv.innerHTML = `
-            Current user: ${currentUser}</br>
-            ${getFocusPresencesString("</br>", focusTracker)}
-        `;
-
-		focusMessageDiv.style.display =
-			currentUser !== undefined && focusPresences.get(currentUser) === false ? "" : "none";
+		// hasFocus === undefined/true should hide the message (set to "none")
+		const display = hasFocus === false ? "" : "none";
+		focusMessageDiv.style.display = display;
 	};
 
 	onFocusChanged();
@@ -55,11 +53,11 @@ function getFocusPresencesString(
 ): string {
 	const focusString: string[] = [];
 
-	focusTracker.getFocusPresences().forEach((focus, userName) => {
-		const prefix = `User ${userName}:`;
-		if (focus === undefined) {
+	focusTracker.getFocusPresences().forEach((hasFocus, sessionClient) => {
+		const prefix = `User session ${sessionClient.sessionId}:`;
+		if (hasFocus === undefined) {
 			focusString.push(`${prefix} unknown focus`);
-		} else if (focus === true) {
+		} else if (hasFocus === true) {
 			focusString.push(`${prefix} has focus`);
 		} else {
 			focusString.push(`${prefix} missing focus`);
@@ -75,19 +73,40 @@ export function renderMousePresence(
 ) {
 	const onPositionChanged = () => {
 		div.innerHTML = "";
-		mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
-			if (focusTracker.getFocusPresences().get(userName) === true) {
+
+		for (const [sessionClient, mousePosition] of mouseTracker.getMousePresences()) {
+			if (focusTracker.getFocusPresences().get(sessionClient) === true) {
 				const posDiv = document.createElement("div");
-				posDiv.textContent = userName;
+				posDiv.textContent = `/${sessionClient.sessionId}`;
 				posDiv.style.position = "absolute";
 				posDiv.style.left = `${mousePosition.x}px`;
-				posDiv.style.top = `${mousePosition.y}px`;
+				posDiv.style.top = `${mousePosition.y - 6}px`;
 				posDiv.style.fontWeight = "bold";
 				div.appendChild(posDiv);
 			}
-		});
+		}
 	};
 
 	onPositionChanged();
 	mouseTracker.on("mousePositionChanged", onPositionChanged);
+}
+
+export function renderControlPanel(controlPanel: HTMLDivElement) {
+	controlPanel.style.paddingBottom = "10px";
+	const slider = document.createElement("input");
+	slider.type = "range";
+	slider.id = "mouse-latency";
+	slider.name = "mouse-latency";
+	slider.min = "0";
+	slider.max = "200";
+	slider.defaultValue = "60";
+	const sliderLabel = document.createElement("label");
+	sliderLabel.htmlFor = "mouse-latency";
+	sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;
+	controlPanel.appendChild(slider);
+	controlPanel.appendChild(sliderLabel);
+
+	slider.addEventListener("input", (evt) => {
+		sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;
+	});
 }

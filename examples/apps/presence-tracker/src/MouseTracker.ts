@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ISignaler } from "@fluid-experimental/data-objects";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IAzureAudience } from "@fluidframework/azure-client";
-import { IEvent } from "@fluidframework/core-interfaces";
-import { IMember } from "fluid-framework";
+import type { IEvent } from "@fluidframework/core-interfaces";
+import type {
+	IPresence,
+	ISessionClient,
+	LatestValueManager,
+	PresenceStates,
+} from "@fluidframework/presence/alpha";
+import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
 
 export interface IMouseTrackerEvents extends IEvent {
 	(event: "mousePositionChanged", listener: () => void): void;
@@ -18,98 +23,54 @@ export interface IMousePosition {
 	y: number;
 }
 
-export interface IMouseSignalPayload {
-	userId: string;
-	pos: IMousePosition;
-}
-
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
-	private static readonly mouseSignalType = "positionChanged";
-
-	/**
-	 * Local map of mouse position status for clients
-	 *
-	 * ```
-	 * Map<userId, Map<clientid, position>>
-	 * ```
-	 */
-	private readonly posMap = new Map<string, Map<string, IMousePosition>>();
-
-	private readonly onMouseSignalFn = (clientId: string, payload: IMouseSignalPayload) => {
-		const userId: string = payload.userId;
-		const position: IMousePosition = payload.pos;
-
-		let clientIdMap = this.posMap.get(userId);
-		if (clientIdMap === undefined) {
-			clientIdMap = new Map<string, IMousePosition>();
-			this.posMap.set(userId, clientIdMap);
-		}
-		clientIdMap.set(clientId, position);
-		this.emit("mousePositionChanged");
-	};
+	private readonly cursor: LatestValueManager<IMousePosition>;
 
 	constructor(
+		public readonly presence: IPresence,
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		statesWorkspace: PresenceStates<{}>,
 		public readonly audience: IAzureAudience,
-		private readonly signaler: ISignaler,
+		latencyInput: HTMLInputElement,
 	) {
 		super();
 
-		this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
-			const clientIdMap = this.posMap.get(member.id);
-			if (clientIdMap !== undefined) {
-				clientIdMap.delete(clientId);
-				if (clientIdMap.size === 0) {
-					this.posMap.delete(member.id);
-				}
-			}
+		statesWorkspace.add("cursor", Latest({ x: 0, y: 0 }));
+		this.cursor = statesWorkspace.props.cursor;
+
+		latencyInput.addEventListener("input", (e) => {
+			const target = e.target as HTMLInputElement;
+			this.cursor.controls.allowableUpdateLatencyMs = parseInt(target.value, 10);
+		});
+
+		this.presence.events.on("attendeeDisconnected", () => {
 			this.emit("mousePositionChanged");
 		});
 
-		this.signaler.on("error", (error) => {
-			this.emit("error", error);
+		this.cursor.events.on("updated", () => {
+			this.emit("mousePositionChanged");
 		});
-		this.signaler.onSignal(
-			MouseTracker.mouseSignalType,
-			(clientId: string, local: boolean, payload: IMouseSignalPayload) => {
-				this.onMouseSignalFn(clientId, payload);
-			},
-		);
+
 		window.addEventListener("mousemove", (e) => {
-			const position: IMousePosition = {
+			// Alert all connected clients that there has been a change to a client's mouse position
+			this.cursor.local = {
 				x: e.clientX,
 				y: e.clientY,
 			};
-			this.sendMouseSignal(position);
 		});
 	}
 
 	/**
-	 * Alert all connected clients that there has been a change to a client's mouse position
+	 * A map of connection IDs to mouse positions.
 	 */
-	private sendMouseSignal(position: IMousePosition) {
-		this.signaler.submitSignal(MouseTracker.mouseSignalType, {
-			userId: this.audience.getMyself()?.id,
-			pos: position,
-		});
-	}
+	public getMousePresences(): Map<ISessionClient, IMousePosition> {
+		const statuses: Map<ISessionClient, IMousePosition> = new Map();
 
-	public getMousePresences(): Map<string, IMousePosition> {
-		const statuses: Map<string, IMousePosition> = new Map<string, IMousePosition>();
-		this.audience.getMembers().forEach((member, userId) => {
-			member.connections.forEach((connection) => {
-				const position = this.getMousePresenceForUser(userId, connection.id);
-				if (position !== undefined) {
-					statuses.set(member.name, position);
-				}
-			});
-		});
+		for (const { client, value } of this.cursor.clientValues()) {
+			if (client.getConnectionStatus() === SessionClientStatus.Connected) {
+				statuses.set(client, value);
+			}
+		}
 		return statuses;
-	}
-
-	public getMousePresenceForUser(
-		userId: string,
-		clientId: string,
-	): IMousePosition | undefined {
-		return this.posMap.get(userId)?.get(clientId);
 	}
 }
