@@ -2025,38 +2025,40 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(counter1.value, 5);
 	});
 
-	it.only("applies stashed ops with no saved ops", async function () {
-		const version = await waitForSummary(provider, container1, testContainerConfig);
+	for (let i = 0; i < 100; i++) {
+		it.only("applies stashed ops with no saved ops", async function () {
+			const version = await waitForSummary(provider, container1, testContainerConfig);
 
-		// avoid our join op being saved
-		const headers: IRequestHeader = {
-			[LoaderHeader.loadMode]: { deltaConnection: "none" },
-			[LoaderHeader.version]: version,
-		};
-		const container: IContainerExperimental = await loader.resolve({ url, headers });
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
-		// generate ops with RSN === summary SN
-		map.set(testKey, testValue);
-		const stashBlob = await container.closeAndGetPendingLocalState?.();
-		assert(stashBlob);
-		const pendingState = JSON.parse(stashBlob);
+			// avoid our join op being saved
+			const headers: IRequestHeader = {
+				[LoaderHeader.loadMode]: { deltaConnection: "none" },
+				[LoaderHeader.version]: version,
+			};
+			const container: IContainerExperimental = await loader.resolve({ url, headers });
+			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+			// generate ops with RSN === summary SN
+			map.set(testKey, testValue);
+			const stashBlob = await container.closeAndGetPendingLocalState?.();
+			assert(stashBlob);
+			const pendingState = JSON.parse(stashBlob);
 
-		// make sure the container loaded from summary and we have no saved ops
-		assert.strictEqual(pendingState.savedOps.length, 0);
-		assert(
-			pendingState.pendingRuntimeState.pending.pendingStates[0].referenceSequenceNumber > 0,
-		);
+			// make sure the container loaded from summary and we have no saved ops
+			assert.strictEqual(pendingState.savedOps.length, 0);
+			assert(
+				pendingState.pendingRuntimeState.pending.pendingStates[0].referenceSequenceNumber > 0,
+			);
 
-		// load container with pending ops, which should resend the op not sent by previous container
-		const container2 = await loader.resolve({ url }, stashBlob);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
-		assert.strictEqual(map1.get(testKey), testValue);
-		assert.strictEqual(map2.get(testKey), testValue);
-	});
+			// load container with pending ops, which should resend the op not sent by previous container
+			const container2 = await loader.resolve({ url }, stashBlob);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+			await waitForContainerConnection(container2);
+			await provider.ensureSynchronized();
+			assert.strictEqual(map1.get(testKey), testValue);
+			assert.strictEqual(map2.get(testKey), testValue);
+		});
+	}
 });
 
 describeCompat(
