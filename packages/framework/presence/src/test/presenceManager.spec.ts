@@ -442,7 +442,7 @@ describe("Presence", () => {
 						});
 					}
 
-					describe("and has their connection removed", () => {
+					describe("when local client disconnects", () => {
 						let disconnectedAttendees: ISessionClient[];
 						beforeEach(() => {
 							// Setup
@@ -452,53 +452,6 @@ describe("Presence", () => {
 								presence.events.on("attendeeDisconnected", (attendee) => {
 									disconnectedAttendees.push(attendee);
 								}),
-							);
-						});
-						it("is announced via `attendeeDisconnected`", () => {
-							// Act - remove client connection id
-							runtime.removeMember(initialAttendeeConnectionId);
-
-							// Verify
-							assert.strictEqual(
-								disconnectedAttendees.length,
-								1,
-								"Exactly one attendee should be announced as disconnected",
-							);
-							assert(
-								disconnectedAttendees[0] !== undefined,
-								"No attendee was disconnected during `removeMember`",
-							);
-							verifyAttendee(
-								disconnectedAttendees[0],
-								initialAttendeeConnectionId,
-								attendeeSessionId,
-								SessionClientStatus.Disconnected,
-							);
-						});
-
-						it('is not announced via `attendeeDisconnected` when already "Disconnected"', () => {
-							// Setup
-							const clientToDisconnect = runtime.audience.getMember(
-								initialAttendeeConnectionId,
-							);
-							assert(clientToDisconnect !== undefined, "No client to disconnect");
-
-							// Remove client connection id
-							runtime.removeMember(initialAttendeeConnectionId);
-
-							afterCleanUp.push(
-								presence.events.on("attendeeDisconnected", (attendee) => {
-									assert.fail(
-										"`attendeeDisconnected` should not be emitted for already disconnected attendee",
-									);
-								}),
-							);
-
-							// Act & Verify - fake event to remove client connection id again
-							runtime.audience.emit(
-								"removeMember",
-								initialAttendeeConnectionId,
-								clientToDisconnect,
 							);
 						});
 
@@ -535,11 +488,11 @@ describe("Presence", () => {
 						it.skip("does not update stale attendee status if local client does not reconnect", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
-							// Act - disconnect local client
+							// Act - disconnect local client and wait 60s
 							runtime.disconnect();
+							clock.tick(60_000);
 
-							// Verify - stale attendee should still be 'Connected' after 30 seconds
-							clock.tick(30_001);
+							// Verify - stale attendee should still be 'Connected' after 30+ seconds
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Connected,
@@ -554,11 +507,11 @@ describe("Presence", () => {
 							runtime.disconnect(); // First disconnect
 							clock.tick(1000);
 							runtime.connect("client6"); // Reconnect
-							clock.tick(15_001); // Wait 15 seconds
+							clock.tick(15_000); // Advance 15 seconds
 							runtime.disconnect(); // Disconnect again
-							clock.tick(15_001); // Wait another 15 seconds (30s total since reconnection)
+							clock.tick(60_000); // Advance 60 seconds
 
-							// Verify - stale attendee should still be 'Connected' after 30s post-reconnection
+							// Verify - stale attendee should still be 'Connected' after 30+ seconds post-reconnection
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Connected,
@@ -566,22 +519,69 @@ describe("Presence", () => {
 							);
 						});
 
-						it.skip("does not update attendee status to 'Disconnected' if stale attendee becomes active", () => {
+						it.skip("does not update attendee status to 'Disconnected' if stale attendee rejoins", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
 							// Act - disconnect, reconnect, then process rejoin signal from known attendee after 15s
 							runtime.disconnect();
 							clock.tick(1000);
 							runtime.connect("client6");
-							clock.tick(15_001);
-							processJoinSignals([rejoinAttendeeSignal]);
-							clock.tick(15_001);
+							clock.tick(15_000);
+							const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
+							clock.tick(60_000);
 
-							// Verify
+							// Verify - rejoining attendee should still be 'Connected' with no `attendeeJoined` announced 30+ seconds post-reconnection
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Connected,
 								"Active attendee should still be 'Connected' 30s after reconnection",
+							);
+							assert.strictEqual(
+								joinedAttendees.length,
+								0,
+								"No `attendeeJoined` should be announced for rejoining attendee that's already 'Connected'",
+							);
+						});
+
+						it.skip("does not update attendee status to 'Disconnected' if stale attendee sends datastore update", () => {
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+
+							// Act - disconnect, reconnect, process datatstore update signal from known attendee before 30s delay, then wait 60s
+							runtime.disconnect();
+							clock.tick(1000);
+							runtime.connect("client6");
+							clock.tick(15_000);
+							presence.processSignal(
+								"",
+								{
+									type: "Pres:DatastoreUpdate",
+									content: {
+										sendTimestamp: clock.now - 10,
+										avgLatency: 20,
+										data: {
+											"system:presence": {
+												clientToSessionId:
+													initialAttendeeSignal.content.data["system:presence"]
+														.clientToSessionId,
+											},
+										},
+									},
+									clientId: initialAttendeeConnectionId,
+								},
+								false,
+							);
+							clock.tick(60_000);
+
+							// Verify - active attendee should still be 'Connected' with no `attendeeDisconnected` announced 30+ seconds post-reconnection
+							assert.strictEqual(
+								knownAttendee.getConnectionStatus(),
+								SessionClientStatus.Connected,
+								"Active attendee should still be 'Connected' 30s after reconnection",
+							);
+							assert.strictEqual(
+								disconnectedAttendees.length,
+								0,
+								"No `attendeeDisconnected` should be announced for known attendee that's still 'Connected'",
 							);
 						});
 
@@ -624,6 +624,65 @@ describe("Presence", () => {
 								disconnectedAttendees.length,
 								1,
 								"Exactly one attendee should be announced as disconnected",
+							);
+						});
+					});
+
+					describe("and has their connection removed", () => {
+						it("is announced via `attendeeDisconnected`", () => {
+							// Setup
+							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
+							let disconnectedAttendee: ISessionClient | undefined;
+							afterCleanUp.push(
+								presence.events.on("attendeeDisconnected", (attendee) => {
+									assert(
+										disconnectedAttendee === undefined,
+										"Only one attendee should be disconnected",
+									);
+									disconnectedAttendee = attendee;
+								}),
+							);
+
+							// Act - remove client connection id
+							runtime.removeMember(initialAttendeeConnectionId);
+
+							// Verify
+							assert(
+								disconnectedAttendee !== undefined,
+								"No attendee was disconnected during `removeMember`",
+							);
+							verifyAttendee(
+								disconnectedAttendee,
+								initialAttendeeConnectionId,
+								attendeeSessionId,
+								SessionClientStatus.Disconnected,
+							);
+						});
+
+						it('is not announced via `attendeeDisconnected` when already "Disconnected"', () => {
+							// Setup
+
+							const clientToDisconnect = runtime.audience.getMember(
+								initialAttendeeConnectionId,
+							);
+							assert(clientToDisconnect !== undefined, "No client to disconnect");
+
+							// Remove client connection id
+							runtime.removeMember(initialAttendeeConnectionId);
+
+							afterCleanUp.push(
+								presence.events.on("attendeeDisconnected", (attendee) => {
+									assert.fail(
+										"`attendeeDisconnected` should not be emitted for already disconnected attendee",
+									);
+								}),
+							);
+
+							// Act & Verify - fake event to remove client connection id again
+							runtime.audience.emit(
+								"removeMember",
+								initialAttendeeConnectionId,
+								clientToDisconnect,
 							);
 						});
 					});
