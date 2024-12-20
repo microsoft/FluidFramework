@@ -4,7 +4,6 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
 	IConnect,
@@ -641,8 +640,8 @@ export function configureWebSocketServices(
 
 		socket.on(
 			"disconnect_document",
-			async (clientId: string, documentId: string, err: IAnyDriverError) => {
-				Lumberjack.error("Client disconnected due to error", { clientId, documentId }, err);
+			async (clientId: string, documentId: string, disconnectReason: string) => {
+				Lumberjack.error("Client disconnected due to error", { clientId, documentId }, disconnectReason);
 			},
 		);
 	});
