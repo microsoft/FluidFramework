@@ -19,6 +19,7 @@ export {
 	generateUser,
 	getCreationToken,
 	getParam,
+	isKeylessFluidAccessClaimEnabled,
 	respondWithNetworkError,
 	validateTokenClaims,
 	verifyStorageToken,
