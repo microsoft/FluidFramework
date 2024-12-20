@@ -75,7 +75,7 @@ export type DocumentBoundaries = ApiMemberKind[];
  * the `Namespace` item.
  *
  * So for some namespace `Foo` with children `Bar` and `Baz` (assuming `Bar` and `Baz` are item kinds matching
- * the configured {@link DocumentationSuiteOptions.documentBoundaries}), the resulting file structure would look like the
+ * the configured {@link DocumentationSuiteConfiguration.documentBoundaries}), the resulting file structure would look like the
  * following:
  *
  * ```
@@ -94,7 +94,7 @@ export type HierarchyBoundaries = ApiMemberKind[];
  *
  * @public
  */
-export interface DocumentationSuiteOptions {
+export interface DocumentationSuiteConfiguration {
 	/**
 	 * Whether or not to include a top-level heading in rendered documents.
 	 *
@@ -103,7 +103,7 @@ export interface DocumentationSuiteOptions {
 	 * @remarks If you will be rendering the document contents into some other document content that will inject its
 	 * own root heading, this can be used to omit that heading from what is rendered by this system.
 	 */
-	readonly includeTopLevelDocumentHeading?: boolean;
+	readonly includeTopLevelDocumentHeading: boolean;
 
 	/**
 	 * Whether or not to include a navigation breadcrumb at the top of rendered documents.
@@ -112,21 +112,21 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @remarks Note: `Model` items will never have a breadcrumb rendered, even if this is specfied.
 	 */
-	readonly includeBreadcrumb?: boolean;
+	readonly includeBreadcrumb: boolean;
 
 	/**
 	 * See {@link DocumentBoundaries}.
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultDocumentBoundaries}
 	 */
-	readonly documentBoundaries?: DocumentBoundaries;
+	readonly documentBoundaries: DocumentBoundaries;
 
 	/**
 	 * See {@link HierarchyBoundaries}.
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultHierarchyBoundaries}
 	 */
-	readonly hierarchyBoundaries?: HierarchyBoundaries;
+	readonly hierarchyBoundaries: HierarchyBoundaries;
 
 	/**
 	 * Generate a file name for the provided `ApiItem`.
@@ -149,7 +149,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetFileNameForItem}
 	 */
-	readonly getFileNameForItem?: (apiItem: ApiItem) => string;
+	readonly getFileNameForItem: (apiItem: ApiItem) => string;
 
 	/**
 	 * Optionally provide an override for the URI base used in links generated for the provided `ApiItem`.
@@ -165,7 +165,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue Always use the default URI base.
 	 */
-	readonly getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
+	readonly getUriBaseOverrideForItem: (apiItem: ApiItem) => string | undefined;
 
 	/**
 	 * Generate heading text for the provided `ApiItem`.
@@ -176,7 +176,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetHeadingTextForItem}
 	 */
-	readonly getHeadingTextForItem?: (apiItem: ApiItem) => string;
+	readonly getHeadingTextForItem: (apiItem: ApiItem) => string;
 
 	/**
 	 * Generate link text for the provided `ApiItem`.
@@ -187,7 +187,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem}
 	 */
-	readonly getLinkTextForItem?: (apiItem: ApiItem) => string;
+	readonly getLinkTextForItem: (apiItem: ApiItem) => string;
 
 	/**
 	 * Generate a list of "alerts" to display in API items tables for a given API item.
@@ -198,7 +198,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetAlertsForItem}
 	 */
-	readonly getAlertsForItem?: (apiItem: ApiItem) => string[];
+	readonly getAlertsForItem: (apiItem: ApiItem) => string[];
 
 	/**
 	 * Whether or not the provided `ApiPackage` should be skipped during documentation generation.
@@ -211,7 +211,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue No packages are skipped.
 	 */
-	readonly skipPackage?: (apiPackage: ApiPackage) => boolean;
+	readonly skipPackage: (apiPackage: ApiPackage) => boolean;
 
 	/**
 	 * Minimal release scope to include in generated documentation suite.
@@ -234,18 +234,18 @@ export interface DocumentationSuiteOptions {
 	 * releaseLevel: ReleaseTag.Beta
 	 * ```
 	 */
-	readonly minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
+	readonly minimumReleaseLevel: Omit<ReleaseTag, ReleaseTag.None>;
 }
 
 /**
- * Contains a list of default documentation transformations, used by {@link DocumentationSuiteOptions}.
+ * Contains a list of default documentation transformations, used by {@link DocumentationSuiteConfiguration}.
  *
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DefaultDocumentationSuiteOptions {
 	/**
-	 * Default {@link DocumentationSuiteOptions.documentBoundaries}.
+	 * Default {@link DocumentationSuiteConfiguration.documentBoundaries}.
 	 *
 	 * Generates separate documents for the following API item kinds:
 	 *
@@ -262,7 +262,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	];
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.hierarchyBoundaries}.
+	 * Default {@link DocumentationSuiteConfiguration.hierarchyBoundaries}.
 	 *
 	 * Creates sub-directories for the following API item kinds:
 	 *
@@ -271,7 +271,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	export const defaultHierarchyBoundaries: ApiMemberKind[] = [ApiItemKind.Namespace];
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.getFileNameForItem}.
+	 * Default {@link DocumentationSuiteConfiguration.getFileNameForItem}.
 	 *
 	 * Uses the item's qualified API name, but is handled differently for the following items:
 	 *
@@ -295,7 +295,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.getUriBaseOverrideForItem}.
+	 * Default {@link DocumentationSuiteConfiguration.getUriBaseOverrideForItem}.
 	 *
 	 * Always uses default URI base.
 	 */
@@ -304,7 +304,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.getHeadingTextForItem}.
+	 * Default {@link DocumentationSuiteConfiguration.getHeadingTextForItem}.
 	 *
 	 * Uses the item's `displayName`, except for `Model` items, in which case the text "API Overview" is displayed.
 	 */
@@ -330,7 +330,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.getLinkTextForItem}.
+	 * Default {@link DocumentationSuiteConfiguration.getLinkTextForItem}.
 	 *
 	 * Uses the item's signature, except for `Model` items, in which case the text "Packages" is displayed.
 	 */
@@ -356,7 +356,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.getHeadingTextForItem}.
+	 * Default {@link DocumentationSuiteConfiguration.getHeadingTextForItem}.
 	 *
 	 * Generates alerts for the following tags, if found:
 	 *
@@ -382,7 +382,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.skipPackage}.
+	 * Default {@link DocumentationSuiteConfiguration.skipPackage}.
 	 *
 	 * Unconditionally returns `false` (i.e. no packages will be filtered out).
 	 */
@@ -392,9 +392,9 @@ export namespace DefaultDocumentationSuiteOptions {
 }
 
 /**
- * Default {@link DocumentationSuiteOptions} value.
+ * Default {@link DocumentationSuiteConfiguration}.
  */
-const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
+const defaultDocumentationSuiteConfiguration: DocumentationSuiteConfiguration = {
 	includeTopLevelDocumentHeading: true,
 	includeBreadcrumb: true,
 	documentBoundaries: DefaultDocumentationSuiteOptions.defaultDocumentBoundaries,
@@ -409,15 +409,15 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
 };
 
 /**
- * Gets a complete {@link DocumentationSuiteOptions} using the provided partial configuration, and filling
+ * Gets a complete {@link DocumentationSuiteConfiguration} using the provided partial configuration, and filling
  * in the remainder with the documented defaults.
  */
-export function getDocumentationSuiteOptionsWithDefaults(
-	inputOptions: DocumentationSuiteOptions,
-): Required<DocumentationSuiteOptions> {
+export function getDocumentationSuiteConfigurationWithDefaults(
+	options?: Partial<DocumentationSuiteConfiguration>,
+): DocumentationSuiteConfiguration {
 	return {
-		...defaultDocumentationSuiteOptions,
-		...inputOptions,
+		...defaultDocumentationSuiteConfiguration,
+		...options,
 	};
 }
 

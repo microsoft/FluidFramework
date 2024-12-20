@@ -11,8 +11,8 @@ import type { SectionNode } from "../../documentation-domain/index.js";
 import { createSectionForApiItem } from "../default-implementations/index.js";
 
 import {
-	type DocumentationSuiteOptions,
-	getDocumentationSuiteOptionsWithDefaults,
+	type DocumentationSuiteConfiguration,
+	getDocumentationSuiteConfigurationWithDefaults,
 } from "./DocumentationSuite.js";
 import {
 	type ApiItemTransformations,
@@ -57,7 +57,7 @@ export interface ApiItemTransformationConfigurationBase {
  */
 export interface ApiItemTransformationConfiguration
 	extends ApiItemTransformationConfigurationBase,
-		Required<DocumentationSuiteOptions>,
+		DocumentationSuiteConfiguration,
 		Required<LoggingConfiguration> {
 	/**
 	 * {@inheritDoc ApiItemTransformations}
@@ -89,7 +89,7 @@ export interface ApiItemTransformationConfiguration
  */
 export interface ApiItemTransformationOptions
 	extends ApiItemTransformationConfigurationBase,
-		DocumentationSuiteOptions,
+		Partial<DocumentationSuiteConfiguration>,
 		LoggingConfiguration {
 	/**
 	 * Optional overrides for the default transformations.
@@ -117,7 +117,7 @@ export function getApiItemTransformationConfigurationWithDefaults(
 ): ApiItemTransformationConfiguration {
 	const logger = options.logger ?? defaultConsoleLogger;
 	const defaultSectionLayout = options.defaultSectionLayout ?? createSectionForApiItem;
-	const documentationSuiteOptions = getDocumentationSuiteOptionsWithDefaults(options);
+	const documentationSuiteOptions = getDocumentationSuiteConfigurationWithDefaults(options);
 	const transformations = getApiItemTransformationsWithDefaults(options?.transformations);
 	return {
 		...documentationSuiteOptions,

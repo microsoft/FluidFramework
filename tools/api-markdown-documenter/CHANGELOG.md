@@ -86,6 +86,7 @@ This version of the library attempts to align its APIs with the following conven
 ##### Affected types
 
 -   `ApiTransformationConfiguration` -> `ApiTransformationOptions` (user input) and `ApiTransformationConfiguration` (derived system configuration).
+-   `DocumentationSuiteOptions` -> `DocumentationSuiteConfiguration` (user input is taken as `Partial<DocumentationSuiteConfiguration>`).
 
 #### Updated structure of `ApiTransformationConfiguration` and `ApiItemTransformations`
 

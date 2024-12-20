@@ -31,13 +31,13 @@ export interface RenderApiModelAsMarkdownOptions
  * @remarks
  *
  * Which API members get their own documents and which get written to the contents of their parent is
- * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
+ * determined by {@link DocumentationSuiteConfiguration.documentBoundaries}.
  *
  * The file paths under which the files will be generated is determined by the provided output path and the
  * following configuration properties:
  *
- * - {@link DocumentationSuiteOptions.documentBoundaries}
- * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
+ * - {@link DocumentationSuiteConfiguration.documentBoundaries}
+ * - {@link DocumentationSuiteConfiguration.hierarchyBoundaries}
  *
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
  * @param renderConfig - Configuration for rendering {@link DocumentNode}s as Markdown.

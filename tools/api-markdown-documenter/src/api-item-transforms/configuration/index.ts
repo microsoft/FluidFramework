@@ -13,7 +13,7 @@ export type {
 	// Consumers should not use this, it exists externally for documentation purposes only.
 	DefaultDocumentationSuiteOptions,
 	DocumentBoundaries,
-	DocumentationSuiteOptions,
+	DocumentationSuiteConfiguration,
 	HierarchyBoundaries,
 } from "./DocumentationSuite.js";
 export type {
