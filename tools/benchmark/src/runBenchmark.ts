@@ -244,7 +244,7 @@ export async function runBenchmarkAsync(
 			await doBatchAsync(
 				state.iterationsPerBatch,
 				args.benchmarkFnAsync,
-				args.beforeEachBatch,
+				args.beforeEachBatchAsync,
 			),
 		)
 	) {
@@ -277,9 +277,9 @@ function doBatch(
 async function doBatchAsync(
 	iterationCount: number,
 	f: () => Promise<unknown>,
-	beforeEachBatch: undefined | (() => void),
+	beforeEachBatchAsync: undefined | (() => Promise<void>),
 ): Promise<number> {
-	beforeEachBatch?.();
+	await beforeEachBatchAsync?.();
 	let i = iterationCount;
 	const before = timer.now();
 	while (i--) {
