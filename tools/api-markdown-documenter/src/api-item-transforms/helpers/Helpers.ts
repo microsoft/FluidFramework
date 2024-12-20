@@ -10,7 +10,6 @@ import {
 	type ApiEntryPoint,
 	ApiInterface,
 	type ApiItem,
-	type ApiItemKind,
 	ApiReturnTypeMixin,
 	ApiTypeParameterListMixin,
 	type Excerpt,
@@ -56,6 +55,7 @@ import {
 	getDeprecatedBlock,
 	getExampleBlocks,
 	getReturnsBlock,
+	type ValidApiItemKind,
 } from "../../utilities/index.js";
 import {
 	doesItemKindRequireOwnDocument,
@@ -960,7 +960,7 @@ export interface ChildSectionProperties {
 	/**
 	 * The API item kind of all child items.
 	 */
-	itemKind: ApiItemKind;
+	itemKind: ValidApiItemKind;
 
 	/**
 	 * The child items to be rendered.

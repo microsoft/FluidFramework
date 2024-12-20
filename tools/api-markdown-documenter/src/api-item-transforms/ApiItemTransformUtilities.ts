@@ -9,7 +9,12 @@ import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-
 
 import type { Heading } from "../Heading.js";
 import type { Link } from "../Link.js";
-import { getQualifiedApiItemName, getReleaseTag, getApiItemKind, type ValidApiItemKind } from "../utilities/index.js";
+import {
+	getQualifiedApiItemName,
+	getReleaseTag,
+	getApiItemKind,
+	type ValidApiItemKind,
+} from "../utilities/index.js";
 
 import type {
 	ApiItemTransformationConfiguration,
