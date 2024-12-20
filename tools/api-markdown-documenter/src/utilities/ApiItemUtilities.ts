@@ -147,6 +147,25 @@ export enum ApiModifier {
 }
 
 /**
+ * Gets the "filtered" parent of the provided API item.
+ *
+ * @remarks This logic specifically skips items of the following kinds:
+ *
+ * - EntryPoint: skipped because any given Package item will have exactly 1 EntryPoint child with current version of
+ * API-Extractor, making this redundant in the hierarchy. We may need to revisit this in the future if/when
+ * API-Extractor adds support for multiple entrypoints.
+ *
+ * @param apiItem - The API item whose filtered parent will be returned.
+ */
+export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
+	const parent = apiItem.parent;
+	if (parent?.kind === ApiItemKind.EntryPoint) {
+		return parent.parent;
+	}
+	return parent;
+}
+
+/**
  * Converts invalid filename characters to underscores.
  */
 function getFileSafeNameForName(apiItemName: string): string {
@@ -270,10 +289,12 @@ export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
  * @public
  */
 export function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean {
-	return (
-		hasModifierTag(apiItem, tagName) ||
-		(apiItem.parent !== undefined && ancestryHasModifierTag(apiItem.parent, tagName))
-	);
+	if (hasModifierTag(apiItem, tagName)) {
+		return true;
+	}
+
+	const parent = getFilteredParent(apiItem);
+	return parent !== undefined && ancestryHasModifierTag(parent, tagName);
 }
 
 /**
