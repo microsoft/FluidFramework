@@ -60,23 +60,6 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
  * @public
  */
 export interface ApiItemTransformations {
-	/**
-	 * Generates the default layout used by all default API item transformations.
-	 *
-	 * @remarks
-	 *
-	 * Can be used to uniformly control the default content layout for all API item kinds.
-	 *
-	 * API item kind-specific details are passed in, and can be displayed as desired.
-	 *
-	 * @returns The list of {@link SectionNode}s that comprise the top-level section body for the API item.
-	 */
-	readonly createDefaultLayout: (
-		apiItem: ApiItem,
-		childSections: SectionNode[] | undefined,
-		config: ApiItemTransformationConfiguration,
-	) => SectionNode[];
-
 	readonly [ApiItemKind.CallSignature]: TransformApiItemWithoutChildren<ApiCallSignature>;
 	readonly [ApiItemKind.Class]: TransformApiItemWithChildren<ApiClass>;
 	readonly [ApiItemKind.Constructor]: TransformApiItemWithoutChildren<ApiConstructor>;
@@ -120,7 +103,6 @@ export interface ApiItemTransformations {
  * The default {@link ApiItemTransformationConfiguration}.
  */
 const defaultApiItemTransformationOptions: ApiItemTransformations = {
-	createDefaultLayout: DefaultTransformationImplementations.createDefaultLayout,
 	[ApiItemKind.CallSignature]:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	[ApiItemKind.Class]: DefaultTransformationImplementations.transformApiClass,

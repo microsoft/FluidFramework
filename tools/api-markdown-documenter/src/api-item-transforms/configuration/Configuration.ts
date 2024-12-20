@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { ApiModel } from "@microsoft/api-extractor-model";
+import type { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
 
 import { defaultConsoleLogger } from "../../Logging.js";
 import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
+import type { SectionNode } from "../../documentation-domain/index.js";
+import { createSectionForApiItem } from "../default-implementations/index.js";
 
 import {
 	type DocumentationSuiteOptions,
@@ -61,6 +63,23 @@ export interface ApiItemTransformationConfiguration
 	 * {@inheritDoc ApiItemTransformations}
 	 */
 	readonly transformations: ApiItemTransformations;
+
+	/**
+	 * Generates the default section layout used by all default {@link ApiItemTransformations}.
+	 *
+	 * @remarks
+	 *
+	 * Can be used to uniformly control the default output layout for all API item kinds.
+	 *
+	 * API item kind-specific details are passed in, and can be displayed as desired.
+	 *
+	 * @returns The list of {@link SectionNode}s that comprise the top-level section body for the API item.
+	 */
+	readonly defaultSectionLayout: (
+		apiItem: ApiItem,
+		childSections: SectionNode[] | undefined,
+		config: ApiItemTransformationConfiguration,
+	) => SectionNode[];
 }
 
 /**
@@ -76,6 +95,15 @@ export interface ApiItemTransformationOptions
 	 * Optional overrides for the default transformations.
 	 */
 	readonly transformations?: Partial<ApiItemTransformations>;
+
+	/**
+	 * {@inheritDoc ApiItemTransformationConfiguration.defaultSectionLayout}
+	 */
+	readonly defaultSectionLayout?: (
+		apiItem: ApiItem,
+		childSections: SectionNode[] | undefined,
+		config: ApiItemTransformationConfiguration,
+	) => SectionNode[];
 }
 
 /**
@@ -88,6 +116,7 @@ export function getApiItemTransformationConfigurationWithDefaults(
 	options: ApiItemTransformationOptions,
 ): ApiItemTransformationConfiguration {
 	const logger = options.logger ?? defaultConsoleLogger;
+	const defaultSectionLayout = options.defaultSectionLayout ?? createSectionForApiItem;
 	const documentationSuiteOptions = getDocumentationSuiteOptionsWithDefaults(options);
 	const transformations = getApiItemTransformationsWithDefaults(options?.transformations);
 	return {
@@ -96,5 +125,6 @@ export function getApiItemTransformationConfigurationWithDefaults(
 		apiModel: options.apiModel,
 		uriRoot: options.uriRoot,
 		logger,
+		defaultSectionLayout,
 	};
 }

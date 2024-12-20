@@ -50,6 +50,7 @@ export { ApiItemKind }
 
 // @public
 export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, Required<DocumentationSuiteOptions>, Required<LoggingConfiguration> {
+    readonly defaultSectionLayout: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: ApiItemTransformationConfiguration) => SectionNode[];
     readonly transformations: ApiItemTransformations;
 }
 
@@ -61,6 +62,7 @@ export interface ApiItemTransformationConfigurationBase {
 
 // @public
 export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, DocumentationSuiteOptions, LoggingConfiguration {
+    readonly defaultSectionLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: ApiItemTransformationConfiguration) => SectionNode[];
     readonly transformations?: Partial<ApiItemTransformations>;
 }
 
@@ -74,7 +76,6 @@ export interface ApiItemTransformations {
     readonly [ApiItemKind.Constructor]: TransformApiItemWithoutChildren<ApiConstructor>;
     // (undocumented)
     readonly [ApiItemKind.ConstructSignature]: TransformApiItemWithoutChildren<ApiConstructSignature>;
-    readonly createDefaultLayout: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: ApiItemTransformationConfiguration) => SectionNode[];
     readonly [ApiItemKind.EntryPoint]: TransformApiItemWithChildren<ApiEntryPoint>;
     // (undocumented)
     readonly [ApiItemKind.Enum]: TransformApiItemWithChildren<ApiEnum>;

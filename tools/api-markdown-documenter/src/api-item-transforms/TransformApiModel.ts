@@ -211,7 +211,7 @@ function createDocumentForSingleEntryPointPackage(
 
 	// Wrap entry-point contents with package-level docs
 	// TODO: Make package transformation configurable
-	sections.push(...transformations.createDefaultLayout(apiPackage, entryPointSections, config));
+	sections.push(...config.defaultSectionLayout(apiPackage, entryPointSections, config));
 
 	logger.verbose(`Package document rendered successfully.`);
 
