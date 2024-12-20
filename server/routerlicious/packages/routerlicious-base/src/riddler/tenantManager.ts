@@ -136,6 +136,15 @@ export class TenantManager {
 		}
 	}
 
+	private isTenantKeylessAccessEnabled(tenant: ITenantDocument): boolean {
+		return tenant.privateKeys ? true : false;
+	}
+
+	// Currently key and secondary are not optional, but this is to make sure we don't break anything if they are optional in the future
+	private isTenantKeyAccessEnabled(tenant: ITenantDocument): boolean {
+		return tenant.key && tenant.secondaryKey ? true : false;
+	}
+
 	/**
 	 * Validates a tenant's API token
 	 */
@@ -278,7 +287,8 @@ export class TenantManager {
 			storage: tenant.storage,
 			customData: tenant.customData,
 			scheduledDeletionTime: tenant.scheduledDeletionTime,
-			enableKeylessAccess: tenant.privateKeys ? true : false,
+			enableKeylessAccess: this.isTenantKeylessAccessEnabled(tenant),
+			enableKeyAccess: this.isTenantKeyAccessEnabled(tenant),
 		};
 	}
 
@@ -294,7 +304,8 @@ export class TenantManager {
 			storage: tenant.storage,
 			customData: tenant.customData,
 			scheduledDeletionTime: tenant.scheduledDeletionTime,
-			enableKeylessAccess: tenant.privateKeys ? true : false,
+			enableKeylessAccess: this.isTenantKeylessAccessEnabled(tenant),
+			enableKeyAccess: this.isTenantKeyAccessEnabled(tenant),
 		}));
 	}
 
@@ -362,6 +373,7 @@ export class TenantManager {
 		enableKeylessAccess = false,
 	): Promise<ITenantConfig & { key: string }> {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
+		// TODO: Make shared tenant keys optional
 		const tenantKeys = (await this.createTenantKeys(
 			tenantId,
 			latestKeyVersion,
@@ -444,6 +456,7 @@ export class TenantManager {
 					customData: tenantDocument.customData,
 					scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
 					enableKeylessAccess: true,
+					enableKeyAccess: this.isTenantKeyAccessEnabled(tenantDocument),
 				};
 			}
 			// If the tenant is being converted to a keyless tenant, generate new private keys, otherwise update them to be undefined
@@ -462,14 +475,15 @@ export class TenantManager {
 					customData: tenantDocument.customData,
 					scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
 					enableKeylessAccess: false,
+					enableKeyAccess: this.isTenantKeyAccessEnabled(tenantDocument),
 				};
 			}
+			await this.deleteKeyFromCache(tenantId, true /* deletePrivateKeys */);
 		}
 
 		await this.runWithDatabaseRequestCounter(async () =>
 			this.tenantRepository.update({ _id: tenantId }, { privateKeys }, null),
 		);
-		await this.deleteKeyFromCache(tenantId, true /* deletePrivateKeys */);
 		const updatedtenantDocument = await this.getTenantDocument(tenantId);
 		if (updatedtenantDocument === undefined) {
 			Lumberjack.error("Could not find tenantId after updating keyless access policy.", {
@@ -483,7 +497,8 @@ export class TenantManager {
 			storage: updatedtenantDocument.storage,
 			customData: updatedtenantDocument.customData,
 			scheduledDeletionTime: updatedtenantDocument.scheduledDeletionTime,
-			enableKeylessAccess: updatedtenantDocument.privateKeys ? true : false,
+			enableKeylessAccess: this.isTenantKeylessAccessEnabled(updatedtenantDocument),
+			enableKeyAccess: this.isTenantKeyAccessEnabled(updatedtenantDocument),
 		};
 	}
 

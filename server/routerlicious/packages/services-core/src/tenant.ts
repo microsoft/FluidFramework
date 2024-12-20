@@ -17,12 +17,15 @@ export interface ITenantConfig {
 
 	customData: ITenantCustomData;
 
+	// Indicates if keyless access is enabled for this tenant.
+	enableKeylessAccess: boolean;
+
+	// Indicates if key access is enabled for this tenant.
+	enableKeyAccess: boolean;
+
 	// Timestamp of when this tenant will be hard deleted.
 	// The tenant is soft deleted if a deletion timestamp is present.
 	scheduledDeletionTime?: string;
-
-	// Indicates if keyless access is enabled for this tenant.
-	enableKeylessAccess?: boolean;
 }
 
 /**
