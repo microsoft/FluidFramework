@@ -373,111 +373,147 @@ describe("treeApi", () => {
 			});
 		});
 
-		describe("view.runTransaction - transaction() return values", () => {
-			it("success", () => {
+		describe("view.runTransaction:transaction() return values", () => {
+			it("implicit success, no return value", () => {
 				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction({
-					transaction: () => {
-						view.root.content = 43;
-						return { result: "continue" };
-					},
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
 				});
 				assert.equal(view.root.content, 43);
 				assert.equal(runTransactionResult.success, true);
 			});
 
-			it("success + user defined value", () => {
+			it("explicit success with return value", () => {
 				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction({
-					transaction: () => {
-						view.root.content = 43;
-						return { result: "continue", returnValue: view.root.content };
-					},
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: false };
 				});
 				assert.equal(view.root.content, 43);
 				assert.equal(runTransactionResult.success, true);
-				assert.equal(runTransactionResult.returnValue, 43);
-			});
-
-			it("success + undo precondition", () => {
-				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction({
-					transaction: () => {
-						view.root.content = 43;
-						return {
-							result: "continue",
-							undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
-						};
-					},
-				});
-				assert.equal(view.root.content, 43);
-				assert.equal(runTransactionResult.success, true);
-			});
-
-			it("success + user defined value + undo precondition", () => {
-				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction({
-					transaction: () => {
-						view.root.content = 43;
-						return {
-							result: "continue",
-							returnValue: view.root.content,
-							undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
-						};
-					},
-				});
-				assert.equal(view.root.content, 43);
-				assert.equal(runTransactionResult.success, true);
-				assert.equal(runTransactionResult.returnValue, 43);
 			});
 
 			it("rollback", () => {
 				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction({
-					transaction: () => {
-						view.root.content = 43;
-						return { result: "abort" };
-					},
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: true };
 				});
 				assert.equal(view.root.content, 42);
 				assert.equal(runTransactionResult.success, false);
 			});
 
+			it("success + user defined value", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { value: view.root.content };
+				});
+				assert.equal(view.root.content, 43);
+				assert.equal(runTransactionResult.success, true);
+				assert.equal(runTransactionResult.value, 43);
+			});
+
 			it("rollback + user defined value", () => {
 				const view = getTestObjectView();
-				const runTransactionResult = view.runTransaction({
-					transaction: () => {
-						view.root.content = 43;
-						return { result: "abort", returnValue: view.root.content };
-					},
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: true, value: view.root.content };
 				});
 				assert.equal(runTransactionResult.success, false);
 				// Note that this is the value that was set before the transaction was rolled back.
-				assert.equal(runTransactionResult.returnValue, 43);
+				assert.equal(runTransactionResult.value, 43);
 				// After the transaction is rolled back, the value is reverted to the original value.
 				assert.equal(view.root.content, 42);
+			});
+
+			it("success + undo precondition", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
+					};
+				});
+				assert.equal(view.root.content, 43);
+				assert.equal(runTransactionResult.success, true);
+			});
+
+			it("rollback + undo precondition", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						rollback: true,
+						undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
+					};
+				});
+				assert.equal(view.root.content, 42);
+				assert.equal(runTransactionResult.success, false);
+			});
+
+			it("success + user defined value + undo precondition", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						value: view.root.content,
+						undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
+					};
+				});
+				assert.equal(view.root.content, 43);
+				assert.equal(runTransactionResult.success, true);
+				assert.equal(runTransactionResult.value, 43);
+			});
+
+			it("rollback + user defined value + undo precondition", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						rollback: true,
+						value: view.root.content,
+						undoPreconditions: [{ type: "nodeInDocument", node: view.root }],
+					};
+				});
+				assert.equal(runTransactionResult.success, false);
+				// Note that this is the value that was set before the transaction was rolled back.
+				assert.equal(view.root.content, 42);
+				// After the transaction is rolled back, the value is reverted to the original value.
+				assert.equal(runTransactionResult.value, 43);
+			});
+
+			it("void return weirdness", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					// As long as one of the properties matches in the return types, any properties can be added.
+					return {
+						value: 1,
+						rollback: true,
+						x: 5,
+						result: "continue",
+					};
+				});
+				assert.equal(view.root.content, 42);
+				assert.equal(runTransactionResult.success, false);
 			});
 		});
 
 		describe("view.runTransaction API", () => {
 			it("runs transactions", () => {
 				const view = getTestObjectView();
-				view.runTransaction({
-					transaction: () => {
-						view.root.content = 43;
-						return { result: "continue" };
-					},
+				view.runTransaction(() => {
+					view.root.content = 43;
 				});
 				assert.equal(view.root.content, 43);
 			});
 
 			it("can be rolled back", () => {
 				const view = getTestObjectView();
-				view.runTransaction({
-					transaction: () => {
-						view.root.content = 43;
-						return { result: "abort" };
-					},
+				view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: true };
 				});
 				assert.equal(view.root.content, 42);
 			});
@@ -485,11 +521,9 @@ describe("treeApi", () => {
 			it("breaks the view on error", () => {
 				const view = getTestObjectView();
 				try {
-					view.runTransaction({
-						transaction: () => {
-							view.root.content = 43;
-							throw new Error("Oh no");
-						},
+					view.runTransaction(() => {
+						view.root.content = 43;
+						throw new Error("Oh no");
 					});
 				} catch (error) {
 					assert(error instanceof Error);
@@ -506,12 +540,9 @@ describe("treeApi", () => {
 					checkoutView.checkout.events,
 				);
 
-				view.runTransaction({
-					transaction: () => {
-						view.root.content = 43;
-						view.root.content = 44;
-						return { result: "continue" };
-					},
+				view.runTransaction(() => {
+					view.root.content = 43;
+					view.root.content = 44;
 				});
 				assert.equal(view.root.content, 44);
 				assert.equal(undoStack.length, 1);
@@ -529,13 +560,14 @@ describe("treeApi", () => {
 				// The node given to the constraint is deleted from the document, so the transaction can't possibly succeed even locally/optimistically
 				view.root.child = undefined;
 				assert.throws(() => {
-					view.runTransaction({
-						transaction: () => {
+					view.runTransaction(
+						() => {
 							view.root.content = 43;
-							return { result: "continue" };
 						},
-						preconditions: [{ type: "nodeInDocument", node: childB }],
-					});
+						{
+							preconditions: [{ type: "nodeInDocument", node: childB }],
+						},
+					);
 				});
 				assert.throws(() => view.root.content, "View should be broken");
 			});
@@ -558,13 +590,14 @@ describe("treeApi", () => {
 				// Tree B runs a transaction to change the root content to 43, but it should only succeed if the child node exists.
 				const childB = viewB.root.child;
 				assert(childB !== undefined);
-				viewB.runTransaction({
-					transaction: () => {
+				viewB.runTransaction(
+					() => {
 						viewB.root.content = 43;
-						return { result: "continue" };
 					},
-					preconditions: [{ type: "nodeInDocument", node: childB }],
-				});
+					{
+						preconditions: [{ type: "nodeInDocument", node: childB }],
+					},
+				);
 				// The transaction does apply optimistically...
 				assert.equal(viewA.root.content, 42);
 				assert.equal(viewB.root.content, 43);

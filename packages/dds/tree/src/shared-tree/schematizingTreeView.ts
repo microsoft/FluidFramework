@@ -59,14 +59,11 @@ import {
 	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
 import type {
-	AbortTransactionExt,
-	ContinueTransactionExt,
-	RunTransactionFailed,
-	RunTransactionFailedExt,
+	TransactionCallbackStatus,
+	TransactionCallbackStatusExt,
+	TransactionResult,
+	TransactionResultExt,
 	RunTransactionParams,
-	RunTransactionParamsExt,
-	RunTransactionSucceeded,
-	RunTransactionSucceededExt,
 } from "./transactionTypes.js";
 
 /**
@@ -228,22 +225,26 @@ export class SchematizingSimpleTreeView<
 
 	/**
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The transaction callback to run.
+	 * @param params - The optional parameters for the transaction.
 	 */
 	public runTransaction<TSuccessValue, TFailureValue>(
-		params: RunTransactionParamsExt<TSuccessValue, TFailureValue>,
-	): RunTransactionSucceededExt<TSuccessValue> | RunTransactionFailedExt<TFailureValue>;
+		transaction: () => TransactionCallbackStatusExt<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	public runTransaction(
-		params: RunTransactionParams,
-	): RunTransactionSucceeded | RunTransactionFailed;
+		transaction: () => TransactionCallbackStatus | void,
+		params?: RunTransactionParams,
+	): TransactionResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
-		params: RunTransactionParams | RunTransactionParamsExt<TSuccessValue, TFailureValue>,
-	):
-		| RunTransactionSucceeded
-		| RunTransactionFailed
-		| RunTransactionSucceededExt<TSuccessValue>
-		| RunTransactionFailedExt<TFailureValue> {
+		transaction: () =>
+			| TransactionCallbackStatusExt<TSuccessValue, TFailureValue>
+			| TransactionCallbackStatus
+			| void,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.checkout.transaction.start();
-		const preconditions = params.preconditions ?? [];
+		const preconditions = params?.preconditions ?? [];
 		for (const constraint of preconditions) {
 			switch (constraint.type) {
 				case "nodeInDocument": {
@@ -264,18 +265,23 @@ export class SchematizingSimpleTreeView<
 			}
 		}
 
-		const transactionOutcome = params.transaction();
-		if (transactionOutcome.result === "continue") {
-			this.checkout.transaction.commit();
-			const returnValue = (transactionOutcome as ContinueTransactionExt<TSuccessValue>)
-				.returnValue;
-			return returnValue !== undefined ? { success: true, returnValue } : { success: true };
-		} else {
+		const transactionCallbackStatus = transaction();
+		const rollback = transactionCallbackStatus?.rollback;
+		const value = (
+			transactionCallbackStatus as TransactionCallbackStatusExt<TSuccessValue, TFailureValue>
+		)?.value;
+
+		if (rollback === true) {
 			this.checkout.transaction.abort();
-			const returnValue = (transactionOutcome as AbortTransactionExt<TFailureValue>)
-				.returnValue;
-			return returnValue !== undefined ? { success: false, returnValue } : { success: false };
+			return value !== undefined
+				? { success: false, value: value as TFailureValue }
+				: { success: false };
 		}
+
+		this.checkout.transaction.commit();
+		return value !== undefined
+			? { success: true, value: value as TSuccessValue }
+			: { success: true };
 	}
 
 	private ensureUndisposed(): void {

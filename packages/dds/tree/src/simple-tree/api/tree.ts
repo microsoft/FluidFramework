@@ -13,12 +13,11 @@ import type {
 } from "../../core/index.js";
 
 import type {
-	RunTransactionFailed,
-	RunTransactionFailedExt,
 	RunTransactionParams,
-	RunTransactionParamsExt,
-	RunTransactionSucceeded,
-	RunTransactionSucceededExt,
+	TransactionCallbackStatus,
+	TransactionCallbackStatusExt,
+	TransactionResult,
+	TransactionResultExt,
 	// This is referenced by doc comments.
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	TreeAlpha,
@@ -552,12 +551,17 @@ export interface TreeViewAlpha<
 
 	/**
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param params - The parameters for the transaction.
+	 * @param transaction - The transaction callback to run.
+	 * @param params - The optional parameters for the transaction.
 	 */
 	runTransaction<TSuccessValue, TFailureValue>(
-		params: RunTransactionParamsExt<TSuccessValue, TFailureValue>,
-	): RunTransactionSucceededExt<TSuccessValue> | RunTransactionFailedExt<TFailureValue>;
-	runTransaction(params: RunTransactionParams): RunTransactionSucceeded | RunTransactionFailed;
+		transaction: () => TransactionCallbackStatusExt<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue>;
+	runTransaction(
+		transaction: () => TransactionCallbackStatus | void,
+		params?: RunTransactionParams,
+	): TransactionResult;
 }
 
 /**

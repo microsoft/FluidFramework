@@ -34,116 +34,85 @@ export interface NodeInDocumentConstraint {
 }
 
 /**
- * The successful outcome of a transaction, i.e. the transaction should continue.
+ * The status of a the transaction callback in the {@link RunTransaction | RunTransaction} API.
  * @alpha
  */
-export interface ContinueTransaction {
-	/** The successful outcome indicating the rest of the transaction should continue */
-	readonly result: "continue";
-	/**
-	 * An optional list of {@link TransactionConstraint | constraints} that are checked just before undoing the
-	 * transaction.
-	 * If any of the constraints are not met after the transaction delegate is called, it will throw an error.
-	 * If any of the constraints are not met after the inverse of the transaction has been ordered by the service,
-	 * it will be rolled back on this client and ignored by all other clients.
-	 */
-	readonly undoPreconditions?: readonly TransactionConstraint[];
-}
+export type TransactionCallbackStatusExt<TSuccessValue, TFailureValue> = (
+	| {
+			/** Indicates that the transaction callback ran successfully. */
+			rollback?: false;
+			/** The user defined value when the transaction ran successfully. */
+			value: TSuccessValue;
+	  }
+	| {
+			/** Indicates that the transaction callback failed and the transaction should be rolled back. */
+			rollback: true;
+			/** The user defined value when the transaction failed. */
+			value: TFailureValue;
+	  }
+) & {
+	// Todo: For demonstration only. To be removed.
+	undoPreconditions?: readonly TransactionConstraint[];
+};
+
 /**
- * The failed outcome of a transaction, i.e. the transaction should abort.
+ * The status of a the transaction callback in the {@link RunTransaction | RunTransaction} API. This is the
+ * same as {@link TransactionCallbackStatusExt} but with the `value` field omitted. This is useful when
+ * the user doesn't want to return any value from the transaction callback.
  * @alpha
  */
-export interface AbortTransaction {
-	/**
-	 * The failed outcome indicating the rest of the transaction should abort and any changes should be rolled back.
-	 * This will only fail the current transaction scope. Any transactions in the outer scope will still run.
-	 */
-	readonly result: "abort";
+export type TransactionCallbackStatus = Omit<
+	TransactionCallbackStatusExt<unknown, unknown>,
+	"value"
+>;
+
+/**
+ * The result of the {@link RunTransaction | RunTransaction} API when it was successful.
+ * @alpha
+ */
+export interface TransactionResultSuccess<TSuccessValue> {
+	/** Indicates that the transaction was successful. */
+	success: true;
+	/** The user defined value when the transaction was successful. */
+	value: TSuccessValue;
+	// Todo: For demonstration only. To be removed.
+	commitId?: string;
 }
 
 /**
- * The extended successful outcome of a transaction, i.e. the transaction should continue.
+ * The result of the {@link RunTransaction | RunTransaction} API when it failed.
  * @alpha
  */
-export interface ContinueTransactionExt<TSuccessValue> extends ContinueTransaction {
-	/** The user defined return value on successfully completing the transaction */
-	readonly returnValue: TSuccessValue;
-}
-/**
- * The extended failed outcome of a transaction, i.e. the transaction should abort.
- * @alpha
- */
-export interface AbortTransactionExt<TFailureValue> extends AbortTransaction {
-	/** The user defined return value on failing the transaction */
-	readonly returnValue: TFailureValue;
+export interface TransactionResultFailed<TFailureValue> {
+	/** Indicates that the transaction failed. */
+	success: false;
+	/** The user defined value when the transaction failed. */
+	value: TFailureValue;
 }
 
 /**
- * The successful return value of the runTransaction API, i.e., the transaction succeeded.
+ * The result of the {@link RunTransaction | RunTransaction} API.
  * @alpha
  */
-export interface RunTransactionSucceeded {
-	/** Property indicating that the transaction was successful */
-	readonly success: true;
-}
-/**
- * The failed return value of the runTransaction API, i.e., the transaction failed.
- * @alpha
- */
-export interface RunTransactionFailed {
-	/** Property indicating that the transaction failed */
-	readonly success: false;
-}
+export type TransactionResultExt<TSuccessValue, TFailureValue> =
+	| TransactionResultSuccess<TSuccessValue>
+	| TransactionResultFailed<TFailureValue>;
 
 /**
- * The extended successful return value of the runTransaction API, i.e., the transaction succeeded.
+ * The result of the {@link RunTransaction | RunTransaction} API. This is the same as {@link TransactionResultExt}
+ * but with the `value` field omitted. This is useful when the user doesn't want to return any value from the
+ * transaction.
  * @alpha
  */
-export interface RunTransactionSucceededExt<TSuccessValue> extends RunTransactionSucceeded {
-	/** The user defined return value on successfully completing the transaction */
-	readonly returnValue: TSuccessValue;
-}
-/**
- * The extended failed return value of the runTransaction API, i.e., the transaction failed.
- * @alpha
- */
-export interface RunTransactionFailedExt<TFailureValue> extends RunTransactionFailed {
-	/** The user defined return value on failing the transaction */
-	readonly returnValue: TFailureValue;
-}
+export type TransactionResult =
+	| Omit<TransactionResultSuccess<unknown>, "value">
+	| Omit<TransactionResultFailed<unknown>, "value">;
 
 /**
- * Parameters for running a transaction on the tree view that applies one or more edits to the tree as a single atomic unit.
+ * The parameters for the {@link RunTransaction | RunTransaction} API.
  * @alpha
  */
 export interface RunTransactionParams {
-	/**
-	 * The function to run as the body of the transaction.
-	 * @returns The result of the transaction indicating whether the transaction should continue or abort.
-	 */
-	readonly transaction: () => ContinueTransaction | AbortTransaction;
-	/**
-	 * An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
-	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
-	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on
-	 * this client and ignored by all other clients.
-	 */
-	readonly preconditions?: readonly TransactionConstraint[];
-}
-
-/**
- * Parameters for running a transaction on the tree view that applies one or more edits to the tree as a single atomic unit.
- * @alpha
- */
-export interface RunTransactionParamsExt<TSuccessValue, TFailureValue> {
-	/**
-	 * The function to run as the body of the transaction.
-	 * @returns The result of the transaction indicating whether the transaction should continue or abort. The user provided
-	 * return value will be returned along with the success or failure result.
-	 */
-	readonly transaction: () =>
-		| ContinueTransactionExt<TSuccessValue>
-		| AbortTransactionExt<TFailureValue>;
 	/**
 	 * An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
 	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.

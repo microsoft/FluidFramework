@@ -5,16 +5,6 @@
 ```ts
 
 // @alpha
-export interface AbortTransaction {
-    readonly result: "abort";
-}
-
-// @alpha
-export interface AbortTransactionExt<TFailureValue> extends AbortTransaction {
-    readonly returnValue: TFailureValue;
-}
-
-// @alpha
 export function adaptEnum<TScope extends string, const TEnum extends Record<string, string | number>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => TValue extends unknown ? TreeNode & {
     readonly value: TValue;
 } : never) & { readonly [Property in keyof TEnum]: TreeNodeSchemaClass<ScopedSchemaName<TScope, TEnum[Property]>, NodeKind.Object, TreeNode & {
@@ -111,17 +101,6 @@ export type ContainerAttachProps<T = unknown> = T;
 export interface ContainerSchema {
     readonly dynamicObjectTypes?: readonly SharedObjectKind[];
     readonly initialObjects: Record<string, SharedObjectKind>;
-}
-
-// @alpha
-export interface ContinueTransaction {
-    readonly result: "continue";
-    readonly undoPreconditions?: readonly TransactionConstraint[];
-}
-
-// @alpha
-export interface ContinueTransactionExt<TSuccessValue> extends ContinueTransaction {
-    readonly returnValue: TSuccessValue;
 }
 
 // @alpha
@@ -968,36 +947,9 @@ export interface RunTransaction {
     readonly rollback: typeof rollback;
 }
 
-// @alpha
-export interface RunTransactionFailed {
-    readonly success: false;
-}
-
-// @alpha
-export interface RunTransactionFailedExt<TFailureValue> extends RunTransactionFailed {
-    readonly returnValue: TFailureValue;
-}
-
-// @alpha
+// @alpha (undocumented)
 export interface RunTransactionParams {
     readonly preconditions?: readonly TransactionConstraint[];
-    readonly transaction: () => ContinueTransaction | AbortTransaction;
-}
-
-// @alpha
-export interface RunTransactionParamsExt<TSuccessValue, TFailureValue> {
-    readonly preconditions?: readonly TransactionConstraint[];
-    readonly transaction: () => ContinueTransactionExt<TSuccessValue> | AbortTransactionExt<TFailureValue>;
-}
-
-// @alpha
-export interface RunTransactionSucceeded {
-    readonly success: true;
-}
-
-// @alpha
-export interface RunTransactionSucceededExt<TSuccessValue> extends RunTransactionSucceeded {
-    readonly returnValue: TSuccessValue;
 }
 
 // @public @sealed
@@ -1107,8 +1059,46 @@ export interface Tagged<V, T extends string = string> {
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
+// @alpha (undocumented)
+export type TransactionCallbackStatus = Omit<TransactionCallbackStatusExt<unknown, unknown>, "value">;
+
+// @alpha (undocumented)
+export type TransactionCallbackStatusExt<T, F> = ({
+    rollback?: false;
+    value: T;
+} | {
+    rollback: true;
+    value: F;
+}) & {
+    undoPreconditions?: readonly TransactionConstraint[];
+};
+
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @alpha (undocumented)
+export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
+
+// @alpha (undocumented)
+export type TransactionResultExt<T, F> = TransactionResultSuccess<T> | TransactionResultFailed<F>;
+
+// @alpha (undocumented)
+export interface TransactionResultFailed<F> {
+    // (undocumented)
+    success: false;
+    // (undocumented)
+    value: F;
+}
+
+// @alpha (undocumented)
+export interface TransactionResultSuccess<T> {
+    // (undocumented)
+    commitId?: string;
+    // (undocumented)
+    success: true;
+    // (undocumented)
+    value: T;
+}
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
@@ -1361,9 +1351,9 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
-    runTransaction<TSuccessValue, TFailureValue>(params: RunTransactionParamsExt<TSuccessValue, TFailureValue>): RunTransactionSucceededExt<TSuccessValue> | RunTransactionFailedExt<TFailureValue>;
+    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusExt<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
     // (undocumented)
-    runTransaction(params: RunTransactionParams): RunTransactionSucceeded | RunTransactionFailed;
+    runTransaction(transaction: () => TransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
 }
 
 // @public @sealed
