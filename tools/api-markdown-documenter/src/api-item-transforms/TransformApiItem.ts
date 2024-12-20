@@ -18,7 +18,8 @@ import {
 	type ApiMethod,
 	type ApiMethodSignature,
 	type ApiNamespace,
-	type ApiPropertyItem,
+	type ApiProperty,
+	type ApiPropertySignature,
 	type ApiTypeAlias,
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
@@ -73,7 +74,7 @@ export function apiItemToDocument(
 
 	if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
 		throw new Error(
-			`"renderApiDocument" called for an API item kind that is not intended to be rendered to its own document. Provided item kind: "${itemKind}".`,
+			`"apiItemToDocument" called for an API item kind that is not intended to be rendered to its own document. Provided item kind: "${itemKind}".`,
 		);
 	}
 
@@ -127,93 +128,123 @@ export function apiItemToSections(
 		return [];
 	}
 
-	const logger = config.logger;
+	const { logger, transformations } = config;
 
-	logger.verbose(`Rendering section for ${apiItem.displayName}...`);
+	const transformChildren = (childItem: ApiItem): SectionNode[] =>
+		apiItemToSections(childItem, config);
+
+	logger.verbose(`Generating documentation section for ${apiItem.displayName}...`);
 
 	let sections: SectionNode[];
 	switch (itemKind) {
 		case ApiItemKind.CallSignature: {
-			sections = config.transformApiCallSignature(apiItem as ApiCallSignature, config);
+			sections = transformations[ApiItemKind.CallSignature](
+				apiItem as ApiCallSignature,
+				config,
+			);
 			break;
 		}
 
 		case ApiItemKind.Class: {
-			sections = config.transformApiClass(apiItem as ApiClass, config, (childItem) =>
-				apiItemToSections(childItem, config),
+			sections = transformations[ApiItemKind.Class](
+				apiItem as ApiClass,
+				config,
+				transformChildren,
 			);
 			break;
 		}
 
 		case ApiItemKind.ConstructSignature: {
-			sections = config.transformApiConstructor(apiItem as ApiConstructSignature, config);
+			sections = transformations[ApiItemKind.ConstructSignature](
+				apiItem as ApiConstructSignature,
+				config,
+			);
 			break;
 		}
 
 		case ApiItemKind.Constructor: {
-			sections = config.transformApiConstructor(apiItem as ApiConstructor, config);
+			sections = transformations[ApiItemKind.Constructor](apiItem as ApiConstructor, config);
 			break;
 		}
 
 		case ApiItemKind.Enum: {
-			sections = config.transformApiEnum(apiItem as ApiEnum, config, (childItem) =>
-				apiItemToSections(childItem, config),
+			sections = transformations[ApiItemKind.Enum](
+				apiItem as ApiEnum,
+				config,
+				transformChildren,
 			);
 			break;
 		}
 
 		case ApiItemKind.EnumMember: {
-			sections = config.transformApiEnumMember(apiItem as ApiEnumMember, config);
+			sections = transformations[ApiItemKind.EnumMember](apiItem as ApiEnumMember, config);
 			break;
 		}
 
 		case ApiItemKind.Function: {
-			sections = config.transformApiFunction(apiItem as ApiFunction, config);
+			sections = transformations[ApiItemKind.Function](apiItem as ApiFunction, config);
 			break;
 		}
 
 		case ApiItemKind.IndexSignature: {
-			sections = config.transformApiIndexSignature(apiItem as ApiIndexSignature, config);
+			sections = transformations[ApiItemKind.IndexSignature](
+				apiItem as ApiIndexSignature,
+				config,
+			);
 			break;
 		}
 
 		case ApiItemKind.Interface: {
-			sections = config.transformApiInterface(apiItem as ApiInterface, config, (childItem) =>
-				apiItemToSections(childItem, config),
+			sections = transformations[ApiItemKind.Interface](
+				apiItem as ApiInterface,
+				config,
+				transformChildren,
 			);
 			break;
 		}
 
 		case ApiItemKind.Method: {
-			sections = config.transformApiMethod(apiItem as ApiMethod, config);
+			sections = transformations[ApiItemKind.Method](apiItem as ApiMethod, config);
 			break;
 		}
 
 		case ApiItemKind.MethodSignature: {
-			sections = config.transformApiMethod(apiItem as ApiMethodSignature, config);
-			break;
-		}
-
-		case ApiItemKind.Namespace: {
-			sections = config.transformApiNamespace(apiItem as ApiNamespace, config, (childItem) =>
-				apiItemToSections(childItem, config),
+			sections = transformations[ApiItemKind.MethodSignature](
+				apiItem as ApiMethodSignature,
+				config,
 			);
 			break;
 		}
 
-		case ApiItemKind.Property:
+		case ApiItemKind.Namespace: {
+			sections = transformations[ApiItemKind.Namespace](
+				apiItem as ApiNamespace,
+				config,
+				transformChildren,
+			);
+			break;
+		}
+
+		case ApiItemKind.Property: {
+			sections = transformations[ApiItemKind.Property](apiItem as ApiProperty, config);
+			break;
+		}
+
 		case ApiItemKind.PropertySignature: {
-			sections = config.transformApiProperty(apiItem as ApiPropertyItem, config);
+			sections = transformations[ApiItemKind.PropertySignature](
+				apiItem as ApiPropertySignature,
+				config,
+			);
 			break;
 		}
 
 		case ApiItemKind.TypeAlias: {
-			sections = config.transformApiTypeAlias(apiItem as ApiTypeAlias, config);
+			sections = transformations[ApiItemKind.TypeAlias](apiItem as ApiTypeAlias, config);
 			break;
 		}
 
 		case ApiItemKind.Variable: {
-			sections = config.transformApiVariable(apiItem as ApiVariable, config);
+			sections = transformations[ApiItemKind.Variable](apiItem as ApiVariable, config);
 			break;
 		}
 
@@ -222,6 +253,6 @@ export function apiItemToSections(
 		}
 	}
 
-	logger.verbose(`${apiItem.displayName} section rendered successfully!`);
+	logger.verbose(`${apiItem.displayName} section generated successfully!`);
 	return sections;
 }

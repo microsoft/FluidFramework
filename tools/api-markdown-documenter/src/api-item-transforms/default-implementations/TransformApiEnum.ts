@@ -76,5 +76,5 @@ export function transformApiEnum(
 		}
 	}
 
-	return config.createDefaultLayout(apiEnum, sections, config);
+	return config.defaultSectionLayout(apiEnum, sections, config);
 }

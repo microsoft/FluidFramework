@@ -256,5 +256,5 @@ export function transformApiClass(
 		}
 	}
 
-	return config.createDefaultLayout(apiClass, sections, config);
+	return config.defaultSectionLayout(apiClass, sections, config);
 }

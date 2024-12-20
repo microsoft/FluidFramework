@@ -195,5 +195,5 @@ export function transformApiInterface(
 		}
 	}
 
-	return config.createDefaultLayout(apiInterface, childSections, config);
+	return config.defaultSectionLayout(apiInterface, childSections, config);
 }
