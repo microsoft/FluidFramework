@@ -11,7 +11,7 @@
 			"env": {
 				"fluid__test__driver": "local",
 				"fluid__test__backCompat": "${input:backCompat}",
-				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutputt}",
+				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutput}",
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			"windows": {
@@ -55,7 +55,7 @@
 			"env": {
 				"fluid__test__driver": "t9s",
 				"fluid__test__backCompat": "${input:backCompat}",
-				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutputt}",
+				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutput}",
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			"windows": {
@@ -109,8 +109,10 @@
 			"env": {
 				"fluid__test__driver": "odsp",
 				"fluid__test__backCompat": "${input:backCompat}",
-				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutputt}",
+				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutput}",
 				"fluid__test__odspEndpointName": "${input:odspEndpoint}",
+				"login__odsp__test__tenants": "${input:login__odsp__test__tenants}",
+				"login__microsoft__clientId": "${input:login__microsoft__clientId}",
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			"windows": {
@@ -146,7 +148,8 @@
 				"fluid__test__driver": "r11s",
 				"fluid__test__backCompat": "${input:backCompat}",
 				"fluid__test__r11sEndpointName": "${input:r11sEndpoint}",
-				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutputt}",
+				"FLUID_TEST_VERBOSE": "${input:verboseConsoleOutput}",
+				"fluid__test__driver__frs": "${input:fluid__test__driver__frs}",
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			"windows": {
@@ -208,7 +211,7 @@
 			],
 		},
 		{
-			"id": "verboseConsoleOutputt",
+			"id": "verboseConsoleOutput",
 			"description": "Show console output?",
 			"default": "",
 			"type": "pickString",
@@ -244,6 +247,24 @@
 					"value": "docker",
 				},
 			],
+		},
+		{
+			"id": "fluid__test__driver__frs",
+			"description": "FRS Tenant info from our team key vault. Check your env vars after running getkeys",
+			"type": "promptString",
+			"password": true,
+		},
+		{
+			"id": "login__odsp__test__tenants",
+			"description": "ODSP Tenant info from our team key vault. Check your env vars after running getkeys",
+			"type": "promptString",
+			"password": true,
+		},
+		{
+			"id": "login__microsoft__clientId",
+			"description": "Client ID for authenticating to test ODSP tenants. Check your env vars after running getkeys",
+			"type": "promptString",
+			"password": true,
 		},
 	],
 }
