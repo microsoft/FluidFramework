@@ -267,10 +267,12 @@ export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
  * @public
  */
 export function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean {
-	return (
-		hasModifierTag(apiItem, tagName) ||
-		(apiItem.parent !== undefined && ancestryHasModifierTag(apiItem.parent, tagName))
-	);
+	if (hasModifierTag(apiItem, tagName)) {
+		return true;
+	}
+
+	const parent = getFilteredParent(apiItem);
+	return parent !== undefined && ancestryHasModifierTag(parent, tagName);
 }
 
 /**
