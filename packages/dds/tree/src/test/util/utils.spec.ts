@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	capitalize,
+	copyProperty,
 	defineLazyCachedProperty,
 	mapIterable,
 	transformObjectMap,
@@ -69,5 +70,24 @@ describe("Utils", () => {
 		assert.equal(count, 1);
 		assert.equal(objWithProperty.prop, 3);
 		assert.equal(count, 1);
+	});
+
+	describe("copyProperty", () => {
+		it("copies a known property", () => {
+			const source = { a: 3 };
+			const destination = {};
+			copyProperty(source, "a", destination);
+			// `destination` should now be typed to have a property "a"
+			assert.equal(destination.a, 3);
+		});
+
+		it("does nothing if the property is not present", () => {
+			const source = {};
+			const destination = {};
+			copyProperty(undefined, "a", destination);
+			copyProperty(source, "a", destination);
+			// `destination` should not have a property "a", even if the value of "a" is `undefined`
+			assert.equal(Reflect.has(destination, "a"), false);
+		});
 	});
 });
