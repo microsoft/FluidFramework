@@ -10,7 +10,7 @@ import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-
 import type { Heading } from "../Heading.js";
 import type { Link } from "../Link.js";
 import {
-	getQualifiedApiItemName,
+	getFileSafeNameForApiItem,
 	getReleaseTag,
 	getApiItemKind,
 	type ValidApiItemKind,
@@ -280,7 +280,7 @@ function getHeadingIdForApiItem(
 	// Generate ID information for everything back to that point
 	let hierarchyItem = apiItem;
 	while (!doesItemRequireOwnDocument(hierarchyItem, config.documentBoundaries)) {
-		const qualifiedName = getQualifiedApiItemName(hierarchyItem);
+		const qualifiedName = getFileSafeNameForApiItem(hierarchyItem);
 
 		// Since we're walking up the tree, we'll build the string from the end for simplicity
 		baseName = baseName === undefined ? qualifiedName : `${qualifiedName}-${baseName}`;

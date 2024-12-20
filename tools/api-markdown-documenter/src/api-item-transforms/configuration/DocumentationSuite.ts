@@ -13,14 +13,14 @@ import {
 
 import {
 	type ApiMemberKind,
-	getQualifiedApiItemName,
-	getUnscopedPackageName,
-	getSafeFilenameForName,
-	getConciseSignature,
-	getSingleLineExcerptText,
-	isDeprecated,
-	getReleaseTag,
 	getApiItemKind,
+	getConciseSignature,
+	getFileSafeNameForApiItem,
+	getFileSafeNameForApiItemName,
+	getReleaseTag,
+	getSingleLineExcerptText,
+	getUnscopedPackageName,
+	isDeprecated,
 } from "../../utilities/index.js";
 
 /**
@@ -286,10 +286,10 @@ export namespace DefaultDocumentationSuiteOptions {
 				return "index";
 			}
 			case ApiItemKind.Package: {
-				return getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage));
+				return getFileSafeNameForApiItemName(getUnscopedPackageName(apiItem as ApiPackage));
 			}
 			default: {
-				return getQualifiedApiItemName(apiItem);
+				return getFileSafeNameForApiItem(apiItem);
 			}
 		}
 	}
