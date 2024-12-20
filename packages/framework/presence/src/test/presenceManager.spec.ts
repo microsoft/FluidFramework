@@ -610,7 +610,7 @@ describe("Presence", () => {
 							runtime.connect("client6");
 							clock.tick(15_001);
 							runtime.audience.removeMember(initialAttendeeConnectionId); // Remove remote client connection before 30s timeout
-							// Confirm that `attendeeDisconnected` is emitted for when active attendee disconnects
+							// Confirm that `attendeeDisconnected` is announced for when active attendee disconnects
 							assert.strictEqual(
 								disconnectedAttendees.length,
 								1,
@@ -618,7 +618,7 @@ describe("Presence", () => {
 							);
 							clock.tick(600_000);
 
-							// Verify - active attendee status should be 'Disconnected' and no other `attendeeDisconnected` should be emitted.
+							// Verify - active attendee status should be 'Disconnected' and no other `attendeeDisconnected` should be announced.
 							assert.strictEqual(
 								knownAttendee.getConnectionStatus(),
 								SessionClientStatus.Disconnected,
