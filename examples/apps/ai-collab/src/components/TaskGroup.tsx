@@ -104,26 +104,19 @@ export function TaskGroup(props: {
 		 * @param stack - The stack that the {@link Revertible} instance is being added to.
 		 * @param setstack - The setter function for the primary stack.
 		 */
-		function maintainStackSize(
-			stack: Revertible[],
-			setStack: React.Dispatch<React.SetStateAction<Revertible[]>>,
-		): void {
+		function trimStackToMaxSize(stack: Revertible[]): Revertible[] {
 			const MAX_STACK_SIZE = 50;
 
-			if (stack.length > MAX_STACK_SIZE) {
-				console.debug("Stack size exceeded! Disposing oldest revertible.");
-				const oldestRevertible = stack[0];
-				if (oldestRevertible) {
-					if (oldestRevertible.status !== RevertibleStatus.Disposed) {
-						oldestRevertible.dispose();
-					}
-					// Use functional updates to ensure we're working with the latest state
-					setStack((currentStack) => {
-						const newStack = currentStack.filter((item) => item !== oldestRevertible);
-						return newStack;
-					});
-				}
+			if (stack.length <= MAX_STACK_SIZE) {
+				return stack;
 			}
+
+			const oldestRevertible = stack[0];
+			if (oldestRevertible?.status !== RevertibleStatus.Disposed) {
+				oldestRevertible?.dispose();
+			}
+
+			return stack.slice(1);
 		}
 
 		/**
@@ -148,17 +141,11 @@ export function TaskGroup(props: {
 				if (getRevertible !== undefined) {
 					const revertible = getRevertible(onRevertibleDisposed);
 					if (commit.kind === CommitKind.Undo) {
-						setRedoStack((current) => {
-							const newStack = [...current, revertible];
-							maintainStackSize(newStack, setRedoStack);
-							return newStack;
-						});
+						const newRedoStack = trimStackToMaxSize([...redoStack, revertible]);
+						setRedoStack(newRedoStack);
 					} else {
-						setUndoStack((current) => {
-							const newStack = [...current, revertible];
-							maintainStackSize(newStack, setUndoStack);
-							return newStack;
-						});
+						const newUndoStack = trimStackToMaxSize([...undoStack, revertible]);
+						setUndoStack(newUndoStack);
 					}
 				}
 			},
