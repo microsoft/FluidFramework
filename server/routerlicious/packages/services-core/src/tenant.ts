@@ -176,7 +176,7 @@ export interface ITenantManager {
 	getKey(
 		tenantId: string,
 		includeDisabledTenant?: boolean,
-		getPrivateKeys?: boolean,
+		usePrivateKeys?: boolean,
 	): Promise<string>;
 }
 

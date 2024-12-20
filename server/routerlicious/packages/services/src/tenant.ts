@@ -179,7 +179,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 	public async getKey(
 		tenantId: string,
 		includeDisabledTenant = false,
-		getPrivateKeys = false,
+		usePrivateKeys = false,
 	): Promise<string> {
 		const restWrapper = new BasicRestWrapper(
 			undefined /* baseUrl */,
@@ -195,7 +195,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		);
 		const result = await restWrapper.get<core.ITenantKeys>(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/keys`,
-			{ includeDisabledTenant, getPrivateKeys },
+			{ includeDisabledTenant, usePrivateKeys },
 		);
 		return result.key1;
 	}
