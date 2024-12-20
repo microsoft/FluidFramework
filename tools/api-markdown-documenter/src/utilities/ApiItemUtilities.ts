@@ -43,6 +43,27 @@ import type { Logger } from "../Logging.js";
  */
 
 /**
+ * Represents "valid" API item kinds. I.e., not `None`.
+ */
+export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
+
+/**
+ * Gets the {@link ValidApiItemKind} for the provided API item.
+ *
+ * @throws If the item's kind is "None".
+ */
+export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
+	switch (apiItem.kind) {
+		case ApiItemKind.None: {
+			throw new Error(`Encountered an API item with kind "None": "${apiItem.displayName}".`);
+		}
+		default: {
+			return apiItem.kind as ValidApiItemKind;
+		}
+	}
+}
+
+/**
  * Represents "member" API item kinds.
  * These are the kinds of items the system supports generally for rendering, file-system configuration, etc.
  *
