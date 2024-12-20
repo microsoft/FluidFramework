@@ -48,29 +48,37 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public
-export interface ApiItemTransformationConfiguration extends ApiItemTransformationOptions, DocumentationSuiteOptions, LoggingConfiguration {
+export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, ApiItemTransformations, Required<DocumentationSuiteOptions>, Required<LoggingConfiguration> {
+}
+
+// @public @sealed
+export interface ApiItemTransformationConfigurationBase {
     readonly apiModel: ApiModel;
     readonly uriRoot: string;
 }
 
 // @public
-export interface ApiItemTransformationOptions {
-    readonly createDefaultLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
-    readonly transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
-    readonly transformApiClass?: TransformApiItemWithChildren<ApiClass>;
-    readonly transformApiConstructor?: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
-    readonly transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
-    readonly transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
-    readonly transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
-    readonly transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
-    readonly transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
-    readonly transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
-    readonly transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
-    readonly transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
-    readonly transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
-    readonly transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
-    readonly transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
-    readonly transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
+export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, Partial<ApiItemTransformations>, DocumentationSuiteOptions, LoggingConfiguration {
+}
+
+// @public
+export interface ApiItemTransformations {
+    readonly createDefaultLayout: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: ApiItemTransformationConfiguration) => SectionNode[];
+    readonly transformApiCallSignature: TransformApiItemWithoutChildren<ApiCallSignature>;
+    readonly transformApiClass: TransformApiItemWithChildren<ApiClass>;
+    readonly transformApiConstructor: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
+    readonly transformApiEntryPoint: TransformApiItemWithChildren<ApiEntryPoint>;
+    readonly transformApiEnum: TransformApiItemWithChildren<ApiEnum>;
+    readonly transformApiEnumMember: TransformApiItemWithoutChildren<ApiEnumMember>;
+    readonly transformApiFunction: TransformApiItemWithoutChildren<ApiFunction>;
+    readonly transformApiIndexSignature: TransformApiItemWithoutChildren<ApiIndexSignature>;
+    readonly transformApiInterface: TransformApiItemWithChildren<ApiInterface>;
+    readonly transformApiMethod: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
+    readonly transformApiModel: TransformApiItemWithoutChildren<ApiModel>;
+    readonly transformApiNamespace: TransformApiItemWithChildren<ApiNamespace>;
+    readonly transformApiProperty: TransformApiItemWithoutChildren<ApiPropertyItem>;
+    readonly transformApiTypeAlias: TransformApiItemWithoutChildren<ApiTypeAlias>;
+    readonly transformApiVariable: TransformApiItemWithoutChildren<ApiVariable>;
 }
 
 declare namespace ApiItemUtilities {
@@ -104,7 +112,7 @@ declare namespace ApiItemUtilities {
 export { ApiItemUtilities }
 
 // @public
-export type ApiMemberKind = Omit<ApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package>;
+export type ApiMemberKind = Exclude<ValidApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.Package>;
 
 export { ApiModel }
 
@@ -144,37 +152,37 @@ export class CodeSpanNode extends DocumentationParentNodeBase<SingleLineDocument
 }
 
 // @public
-function createBreadcrumbParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode;
+function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode;
 
 // @public
-function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
+function createDeprecationNoticeSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode | undefined;
 
 // @public
-function createExamplesSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
+function createExamplesSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): SectionNode | undefined;
 
 // @public
-function createParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createParametersSection(apiFunctionLike: ApiFunctionLike, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
-function createRemarksSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createRemarksSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
-function createReturnsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createReturnsSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
-function createSeeAlsoSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createSeeAlsoSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
-function createSignatureSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createSignatureSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
-function createSummaryParagraph(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
+function createSummaryParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode | undefined;
 
 // @public
-function createThrowsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
+function createThrowsSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): SectionNode | undefined;
 
 // @public
-function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode;
+function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode;
 
 // @public
 export const defaultConsoleLogger: Logger;
@@ -347,10 +355,10 @@ export interface FileSystemConfiguration {
 }
 
 // @public
-function filterItems(apiItems: readonly ApiItem[], config: Required<ApiItemTransformationConfiguration>): ApiItem[];
+function filterItems(apiItems: readonly ApiItem[], config: ApiItemTransformationConfiguration): ApiItem[];
 
 // @public
-export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
+export function getApiItemTransformationConfigurationWithDefaults(options: ApiItemTransformationOptions): ApiItemTransformationConfiguration;
 
 // @public
 function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, readonly DocSection[]>;
@@ -365,10 +373,10 @@ function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
-function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
+function getHeadingForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingLevel?: number): Heading;
 
 // @public
-function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, textOverride?: string): Link;
+function getLinkForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, textOverride?: string): Link;
 
 // @public
 function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
@@ -620,14 +628,14 @@ export { ReleaseTag }
 function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions): Promise<void>;
 
 // @public
-interface RenderApiModelAsHtmlOptions extends ApiItemTransformationConfiguration, RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
+interface RenderApiModelAsHtmlOptions extends ApiItemTransformationOptions, RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
 // @public
 function renderApiModelAsMarkdown(options: RenderApiModelAsMarkdownOptions): Promise<void>;
 
 // @public
-interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationConfiguration, MarkdownRenderConfiguration, FileSystemConfiguration {
+interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, MarkdownRenderConfiguration, FileSystemConfiguration {
 }
 
 // @public
@@ -679,7 +687,7 @@ export class SectionNode extends DocumentationParentNodeBase implements MultiLin
 }
 
 // @public
-function shouldItemBeIncluded(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): boolean;
+function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationConfiguration): boolean;
 
 // @public
 export interface SingleLineDocumentationNode<TData extends object = Data> extends DocumentationNode<TData> {
@@ -794,16 +802,16 @@ export interface ToHtmlTransformations {
 }
 
 // @public
-export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<ApiItemTransformationConfiguration>, generateChildSection: (apiItem: ApiItem) => SectionNode[]) => SectionNode[];
+export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration, generateChildSection: (apiItem: ApiItem) => SectionNode[]) => SectionNode[];
 
 // @public
-export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<ApiItemTransformationConfiguration>) => SectionNode[];
+export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration) => SectionNode[];
 
 // @public
-export function transformApiModel(transformConfig: ApiItemTransformationConfiguration): DocumentNode[];
+export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[];
 
 // @public
-export function transformTsdocNode(node: DocNode, contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocumentationNode | undefined;
+export function transformTsdocNode(node: DocNode, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): DocumentationNode | undefined;
 
 // @public
 export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDocumentationNode> implements MultiLineDocumentationNode {
@@ -816,6 +824,9 @@ export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDoc
 
 // @public
 export type UrlTarget = string;
+
+// @public
+export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
 
 // @public
 export const verboseConsoleLogger: Logger;

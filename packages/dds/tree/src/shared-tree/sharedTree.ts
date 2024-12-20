@@ -229,7 +229,7 @@ export class SharedTree
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
-		optionsParam: SharedTreeOptions,
+		optionsParam: SharedTreeOptionsInternal,
 		telemetryContextPrefix: string = "fluid_sharedTree_",
 	) {
 		if (runtime.idCompressor === undefined) {
@@ -333,6 +333,7 @@ export class SharedTree
 				chunkCompressionStrategy: options.treeEncodeType,
 				logger: this.logger,
 				breaker: this.breaker,
+				disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 			},
 		);
 
@@ -555,6 +556,9 @@ export type SharedTreeOptions = Partial<ICodecOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
+export interface SharedTreeOptionsInternal extends SharedTreeOptions {
+	disposeForksAfterTransaction?: boolean;
+}
 /**
  * Configuration options for SharedTree's internal tree storage.
  * @alpha
@@ -609,11 +613,12 @@ export enum ForestType {
 	Expensive = 2,
 }
 
-export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
+export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
+	disposeForksAfterTransaction: true,
 };
 
 /**
@@ -628,7 +633,7 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		packageVersion: "0.0.0",
 	};
 
-	public constructor(private readonly options: SharedTreeOptions = {}) {}
+	public constructor(private readonly options: SharedTreeOptionsInternal = {}) {}
 
 	public async load(
 		runtime: IFluidDataStoreRuntime,
