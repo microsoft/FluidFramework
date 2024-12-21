@@ -34,10 +34,10 @@ export interface NodeInDocumentConstraint {
 }
 
 /**
- * The status of a the transaction callback in the {@link RunTransaction | RunTransaction} API.
+ * The status of the transaction callback in the {@link RunTransaction | RunTransaction} API.
  * @alpha
  */
-export type TransactionCallbackStatusExt<TSuccessValue, TFailureValue> =
+export type TransactionCallbackStatus<TSuccessValue, TFailureValue> =
 	| {
 			/** Indicates that the transaction callback ran successfully. */
 			rollback?: false;
@@ -52,13 +52,12 @@ export type TransactionCallbackStatusExt<TSuccessValue, TFailureValue> =
 	  };
 
 /**
- * The status of a the transaction callback in the {@link RunTransaction | RunTransaction} API. This is the
- * same as {@link TransactionCallbackStatusExt} but with the `value` field omitted. This is useful when
- * the transaction callback doesn't need to return a value.
+ * The status of a the transaction callback in the {@link RunTransaction | RunTransaction} API where the transaction doesn't
+ * need to return a value. This is the same as {@link TransactionCallbackStatus} but with the `value` field omitted. This
  * @alpha
  */
-export type TransactionCallbackStatus = Omit<
-	TransactionCallbackStatusExt<unknown, unknown>,
+export type VoidTransactionCallbackStatus = Omit<
+	TransactionCallbackStatus<unknown, unknown>,
 	"value"
 >;
 

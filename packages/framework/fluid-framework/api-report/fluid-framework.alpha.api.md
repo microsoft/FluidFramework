@@ -1060,10 +1060,10 @@ export interface Tagged<V, T extends string = string> {
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 // @alpha
-export type TransactionCallbackStatus = Omit<TransactionCallbackStatusExt<unknown, unknown>, "value">;
+export type VoidTransactionCallbackStatus = Omit<TransactionCallbackStatus<unknown, unknown>, "value">;
 
 // @alpha
-export type TransactionCallbackStatusExt<TSuccessValue, TFailureValue> = {
+export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = {
     rollback?: false;
     value: TSuccessValue;
 } | {
@@ -1343,8 +1343,8 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
-    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusExt<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
-    runTransaction(transaction: () => TransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
+    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
+    runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
 }
 
 // @public @sealed

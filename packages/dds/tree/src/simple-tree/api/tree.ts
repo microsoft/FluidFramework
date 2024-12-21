@@ -14,8 +14,8 @@ import type {
 
 import type {
 	RunTransactionParams,
+	VoidTransactionCallbackStatus,
 	TransactionCallbackStatus,
-	TransactionCallbackStatusExt,
 	TransactionResult,
 	TransactionResultExt,
 	// This is referenced by doc comments.
@@ -552,16 +552,16 @@ export interface TreeViewAlpha<
 	/**
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction.
-	 * It should return a status object of {@link TransactionCallbackStatusExt | TransactionCallbackStatusExt } type.
-	 * It includes a "rollback" property which may be returned as "true" at any point during the transaction. This will
+	 * It should return a status object of {@link TransactionCallbackStatus | TransactionCallbackStatus } type.
+	 * It includes a "rollback" property which may be returned as true at any point during the transaction. This will
 	 * abort the transaction and discard any changes it made so far.
-	 * "rollback" can be set to true or left undefined to indicate that the body of the transaction has successfully run.
+	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
 	 * @returns A result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
 	 * - A "success" flag indicating whether the transaction was successful or not.
 	 * - The success of failure value as returned by the transaction function.
-	 * - This API will throw an error if the constraints are not met or something unexpected happens.
 	 * @remarks
+	 * This API will throw an error if the constraints are not met or something unexpected happens.
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
@@ -579,21 +579,21 @@ export interface TreeViewAlpha<
 	 * - Undo will undo the outermost transaction and all inner transactions.
 	 */
 	runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatusExt<TSuccessValue, TFailureValue>,
+		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	/**
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction. It may return the following:
 	 * - Nothing to indicate that the body of the transaction has successfully run.
-	 * - A status object of {@link TransactionCallbackStatus | TransactionCallbackStatus } type. It includes a "rollback" property which
-	 * may be returned as "true" at any point during the transaction. This will abort the transaction and discard any changes it made so
-	 * far. "rollback" can be set to true or left undefined to indicate that the body of the transaction has successfully run.
+	 * - A status object of {@link VoidTransactionCallbackStatus | VoidTransactionCallbackStatus } type. It includes a "rollback" property which
+	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
+	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
 	 * @returns A result object of {@link TransactionResult | TransactionResult} type. It includes a "success" flag indicating whether the
 	 * transaction was successful or not.
-	 * This API will throw an error if the constraints are not met or something unexpected happens.
 	 * @remarks
+	 * This API will throw an error if the constraints are not met or something unexpected happens.
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
@@ -611,7 +611,7 @@ export interface TreeViewAlpha<
 	 * - Undo will undo the outermost transaction and all inner transactions.
 	 */
 	runTransaction(
-		transaction: () => TransactionCallbackStatus | void,
+		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
 	): TransactionResult;
 }

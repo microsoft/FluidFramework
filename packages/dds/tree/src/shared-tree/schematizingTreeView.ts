@@ -59,8 +59,8 @@ import {
 	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
 import type {
+	VoidTransactionCallbackStatus,
 	TransactionCallbackStatus,
-	TransactionCallbackStatusExt,
 	TransactionResult,
 	TransactionResultExt,
 	RunTransactionParams,
@@ -227,20 +227,20 @@ export class SchematizingSimpleTreeView<
 	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
 	 */
 	public runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatusExt<TSuccessValue, TFailureValue>,
+		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	/**
 	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
 	 */
 	public runTransaction(
-		transaction: () => TransactionCallbackStatus | void,
+		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
 	): TransactionResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
-			| TransactionCallbackStatusExt<TSuccessValue, TFailureValue>
-			| TransactionCallbackStatus
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
@@ -269,7 +269,7 @@ export class SchematizingSimpleTreeView<
 		const transactionCallbackStatus = transaction();
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
-			transactionCallbackStatus as TransactionCallbackStatusExt<TSuccessValue, TFailureValue>
+			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
 		)?.value;
 
 		if (rollback === true) {
