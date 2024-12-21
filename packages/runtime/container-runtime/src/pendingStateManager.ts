@@ -134,7 +134,7 @@ function scrubAndStringify(
 /**
  * @returns The index where the strings diverge, and the character at that index in each string (or undefined if not applicable)
  */
-function findFirstCharacterMismatched(
+export function findFirstCharacterMismatched(
 	a: string,
 	b: string,
 ): [index: number, charA?: string, charB?: string] {
@@ -144,7 +144,13 @@ function findFirstCharacterMismatched(
 			return [i, a[i], b[i]];
 		}
 	}
-	return a.length === b.length ? [-1] : [minLength];
+
+	// Since we didn't return in the loop, the shorter string must be a prefix of the other.
+	// If they're the same length, return -1 to indicate they're identical.
+	// Otherwise, the next character of the longer one is where they differ. No need to return that next character.
+	return a.length === b.length
+		? [-1, undefined, undefined]
+		: [minLength, a[minLength], b[minLength]];
 }
 
 function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
