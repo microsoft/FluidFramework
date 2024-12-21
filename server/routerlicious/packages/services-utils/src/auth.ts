@@ -33,6 +33,22 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 
+interface IKeylessTokenClaims extends ITokenClaims {
+	/**
+	 * Identifies if the token is for Keyless Access or not.
+	 */
+	isKeylessAccessToken: boolean;
+}
+
+export function isKeylessFluidAccessClaimEnabled(token: string): boolean {
+	const claims = decode(token) as ITokenClaims;
+	return isKeylessTokenClaims(claims);
+}
+
+function isKeylessTokenClaims(claims: ITokenClaims): claims is IKeylessTokenClaims {
+	return "isKeylessAccessToken" in claims && claims.isKeylessAccessToken === true;
+}
+
 /**
  * Validates a JWT token to authorize routerlicious.
  * @returns decoded claims.
@@ -70,18 +86,30 @@ export function validateTokenClaims(
  * But it can be used by other services to validate the document creator identity upon creating a document.
  * @internal
  */
-export function getCreationToken(
+export async function getCreationToken(
+	tenantManager: ITenantManager,
 	token: string,
-	key: string,
+	requestTenantId: string,
 	documentId: string,
 	lifetime = 5 * 60,
 ) {
-	// Current time in seconds
 	const tokenClaims = decode(token) as ITokenClaims;
-
 	const { tenantId, user, jti, ver } = tokenClaims;
+	const isKeylessAccessToken = isKeylessTokenClaims(tokenClaims);
+	const key = await tenantManager.getKey(requestTenantId, false, isKeylessAccessToken);
+	// Current time in seconds
 
-	return generateToken(tenantId, documentId, key, [], user, lifetime, ver, jti);
+	return generateToken(
+		tenantId,
+		documentId,
+		key,
+		[],
+		user,
+		lifetime,
+		ver,
+		jti,
+		isKeylessAccessToken,
+	);
 }
 
 /**
@@ -99,6 +127,7 @@ export function generateToken(
 	lifetime: number = 60 * 60,
 	ver: string = "1.0",
 	jti: string = uuid(),
+	isKeylessAccessToken = false,
 ): string {
 	let userClaim = user ? user : generateUser();
 	if (userClaim.id === "" || userClaim.id === undefined) {
@@ -108,7 +137,7 @@ export function generateToken(
 	// Current time in seconds
 	const now = Math.round(new Date().getTime() / 1000);
 
-	const claims: ITokenClaims = {
+	const claims: IKeylessTokenClaims = {
 		documentId,
 		scopes,
 		tenantId,
@@ -116,6 +145,7 @@ export function generateToken(
 		iat: now,
 		exp: now + lifetime,
 		ver,
+		isKeylessAccessToken,
 	};
 
 	return sign(claims, key, { jwtid: jti });

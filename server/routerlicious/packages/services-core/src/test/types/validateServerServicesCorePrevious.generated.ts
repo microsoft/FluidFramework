@@ -2343,6 +2343,7 @@ declare function get_old_InterfaceDeclaration_ITenantConfig():
 declare function use_current_InterfaceDeclaration_ITenantConfig(
     use: TypeOnly<current.ITenantConfig>): void;
 use_current_InterfaceDeclaration_ITenantConfig(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITenantConfig());
 
 /*
