@@ -11,7 +11,10 @@ import {
 	makeSeparateContainerMigrationCallback,
 	type SeparateContainerMigrationResult,
 } from "@fluid-example/migration-tools/alpha";
-import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import {
+	DisconnectReason,
+	type IContainer,
+} from "@fluidframework/container-definitions/legacy";
 import {
 	loadExistingContainer,
 	type ILoaderProps,
@@ -195,7 +198,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		window["migrators"].push(migrator);
 		migrator.events.on("migrated", () => {
 			const newContainerId = migrator.migrationResult as SeparateContainerMigrationResult;
-			container.dispose();
+			container.dispose(DisconnectReason.Expected);
 			setupContainer(newContainerId).catch(console.error);
 		});
 

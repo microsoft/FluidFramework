@@ -6,6 +6,7 @@
 import {
 	IDeltaQueue,
 	IContainer,
+	DisconnectReason,
 	type IHostLoader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -198,7 +199,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	public reset() {
 		this.lastProposalSeqNum = 0;
 		for (const container of this.containers.keys()) {
-			container.close();
+			container.close(DisconnectReason.Expected);
 		}
 		this.containers.clear();
 

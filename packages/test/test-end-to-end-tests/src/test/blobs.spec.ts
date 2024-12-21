@@ -13,6 +13,7 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { DisconnectReason } from "@fluidframework/container-definitions/internal";
 import type { IDetachedBlobStorage } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
@@ -727,7 +728,7 @@ function serializationTests({
 					);
 
 					const snapshot = serializeContainer.serialize();
-					serializeContainer.close();
+					serializeContainer.close(DisconnectReason.Expected);
 					const rehydratedContainer =
 						await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
 
@@ -781,7 +782,7 @@ function serializationTests({
 					let snapshot;
 					for (const _ of Array(5)) {
 						snapshot = container.serialize();
-						container.close();
+						container.close(DisconnectReason.Expected);
 						container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
 					}
 
@@ -827,7 +828,7 @@ function serializationTests({
 				);
 
 				const snapshot = serializeContainer.serialize();
-				serializeContainer.close();
+				serializeContainer.close(DisconnectReason.Expected);
 
 				const loaderWithNoBlobStorage = provider.makeTestLoader(testContainerConfig);
 				await assert.rejects(

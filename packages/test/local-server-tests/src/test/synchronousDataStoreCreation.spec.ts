@@ -7,6 +7,7 @@ import { DataObject } from "@fluidframework/aqueduct/internal";
 import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	AttachState,
+	DisconnectReason,
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -235,7 +236,7 @@ describe("Scenario Test", () => {
 
 		const url = await container.getAbsoluteUrl("");
 		assert(url !== undefined, "container must have url");
-		container.dispose();
+		container.dispose(DisconnectReason.Expected);
 
 		{
 			const container2 = await loadExistingContainer({ ...loaderProps, request: { url } });
@@ -263,7 +264,7 @@ describe("Scenario Test", () => {
 					"unexpected childValue",
 				);
 			}
-			container2.dispose();
+			container2.dispose(DisconnectReason.Expected);
 		}
 	});
 });

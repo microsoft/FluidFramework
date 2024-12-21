@@ -4,7 +4,10 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import {
+	DisconnectReason,
+	type IContainer,
+} from "@fluidframework/container-definitions/legacy";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
@@ -162,7 +165,7 @@ export class Migrator implements IMigrator {
 				acceptedMigration.migrationSequenceNumber,
 			);
 			const exportedData = await this.exportDataCallback(sourceContainer);
-			sourceContainer.dispose();
+			sourceContainer.dispose(DisconnectReason.Expected);
 
 			// Exit early if someone else finished the migration while we were exporting.
 			if (this.migrationTool.migrationResult !== undefined) {

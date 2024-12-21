@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import {
+	DisconnectReason,
+	type IContainer,
+} from "@fluidframework/container-definitions/legacy";
 import {
 	createDetachedContainer,
 	type ILoaderProps,
@@ -88,7 +91,7 @@ export const makeSeparateContainerMigrationCallback = (
 			await createDetachedContainerCallback(version);
 		await importDataCallback(destinationContainer, exportedData);
 		const newContainerId = await attach();
-		destinationContainer.dispose();
+		destinationContainer.dispose(DisconnectReason.Expected);
 		return newContainerId;
 	};
 	return migrationCallback;

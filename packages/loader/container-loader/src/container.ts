@@ -28,6 +28,7 @@ import {
 	isFluidCodeDetails,
 	IDeltaManager,
 	ReadOnlyInfo,
+	DisconnectReason,
 	type ILoader,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -421,8 +422,8 @@ export class Container
 								// Note: We could only dispose the container instead of just close but that would
 								// the telemetry where users sometimes search for ContainerClose event to look
 								// for load failures. So not removing this at this time.
-								container.close(err);
-								container.dispose(err);
+								container.close(DisconnectReason.Unknown, err);
+								container.dispose(DisconnectReason.Unknown, err);
 								onClosed(err);
 							},
 						);
@@ -792,7 +793,7 @@ export class Container
 				},
 				error,
 			);
-			this.close(normalizeError(error));
+			this.close(DisconnectReason.Unknown, normalizeError(error));
 		});
 
 		const {
@@ -973,7 +974,7 @@ export class Container
 					this.clientsWhoShouldHaveLeft.add(clientId);
 				},
 				onCriticalError: (error: unknown) => {
-					this.close(normalizeError(error));
+					this.close(DisconnectReason.Unknown, normalizeError(error));
 				},
 			},
 			this.deltaManager,
@@ -1058,16 +1059,16 @@ export class Container
 		return this.protocolHandler.quorum;
 	}
 
-	public dispose(error?: ICriticalContainerError): void {
-		this.verifyClosedAfter(() => this._deltaManager.dispose(error));
+	public dispose(disconnectReason: DisconnectReason, error?: ICriticalContainerError): void {
+		this.verifyClosedAfter(() => this._deltaManager.dispose(disconnectReason, error));
 	}
 
-	public close(error?: ICriticalContainerError): void {
+	public close(disconnectReason: DisconnectReason, error?: ICriticalContainerError): void {
 		// 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
 		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
 		//    "closing" will lose that info (can also solve by tracking extra state).
-		this.verifyClosedAfter(() => this._deltaManager.close(error));
+		this.verifyClosedAfter(() => this._deltaManager.close(disconnectReason, error));
 	}
 
 	private verifyClosedAfterCalls = 0;
@@ -1137,7 +1138,7 @@ export class Container
 
 			// There is no user for summarizer, so we need to ensure dispose is called
 			if (this.client.details.type === summarizerClientType) {
-				this.dispose(error);
+				this.dispose(DisconnectReason.Unknown, error);
 			}
 		}
 	}
@@ -1214,7 +1215,7 @@ export class Container
 			notifyImminentClosure: true,
 			stopBlobAttachingSignal,
 		});
-		this.close();
+		this.close(DisconnectReason.Expected);
 		return pendingState;
 	}
 
@@ -1314,7 +1315,7 @@ export class Container
 
 					const normalizeErrorAndClose = (error: unknown): IFluidErrorBase => {
 						const newError = normalizeError(error);
-						this.close(newError);
+						this.close(DisconnectReason.Unknown, newError);
 						// add resolved URL on error object so that host has the ability to find this document and delete it
 						newError.addTelemetryProperties({
 							resolvedUrl: this.service?.resolvedUrl?.url,
@@ -1559,7 +1560,7 @@ export class Container
 
 		// pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
 		const error = new GenericError("Existing context does not satisfy incoming proposal");
-		this.close(error);
+		this.close(DisconnectReason.Unknown, error);
 	}
 
 	/**
@@ -1952,7 +1953,7 @@ export class Container
 				}
 				this.processCodeProposal().catch((error) => {
 					const normalizedError = normalizeError(error);
-					this.close(normalizedError);
+					this.close(DisconnectReason.Unknown, normalizedError);
 					throw error;
 				});
 			}
@@ -2272,7 +2273,7 @@ export class Container
 					undefined /* error */,
 					{ messageType: type },
 				);
-				this.close(newError);
+				this.close(DisconnectReason.Unknown, newError);
 				return -1;
 			}
 		}
@@ -2461,8 +2462,8 @@ export class Container
 			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 				this.submitBatch(batch, referenceSequenceNumber),
 			(content, targetClientId) => this.submitSignal(content, targetClientId),
-			(error?: ICriticalContainerError) => this.dispose(error),
-			(error?: ICriticalContainerError) => this.close(error),
+			(error?: ICriticalContainerError) => this.dispose(DisconnectReason.Unknown, error),
+			(error?: ICriticalContainerError) => this.close(DisconnectReason.Unknown, error),
 			this.updateDirtyContainerState,
 			this.getAbsoluteUrl,
 			() => this.resolvedUrl?.id,
