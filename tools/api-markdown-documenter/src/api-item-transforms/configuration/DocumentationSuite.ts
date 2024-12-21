@@ -20,9 +20,9 @@ import {
 } from "../../utilities/index.js";
 
 import {
-	defaultHierarchyConfiguration,
 	getHierarchyOptionsWithDefaults,
 	type HierarchyConfiguration,
+	type HierarchyOptions,
 } from "./Hierarchy.js";
 import { trimTrailingSemicolon } from "./Utilities.js";
 
@@ -143,7 +143,7 @@ export type DocumentationSuiteOptions = Omit<
 	/**
 	 * {@inheritDoc DocumentationSuiteConfiguration.hierarchy}
 	 */
-	readonly hierarchy?: Partial<HierarchyConfiguration>;
+	readonly hierarchy?: HierarchyOptions;
 };
 
 /**
@@ -227,8 +227,7 @@ export namespace DefaultDocumentationSuiteConfiguration {
 /**
  * Default {@link DocumentationSuiteConfiguration}.
  */
-const defaultDocumentationSuiteConfiguration: DocumentationSuiteConfiguration = {
-	hierarchy: defaultHierarchyConfiguration,
+const defaultDocumentationSuiteConfiguration: Omit<DocumentationSuiteConfiguration, "hierarchy"> = {
 	includeTopLevelDocumentHeading: true,
 	includeBreadcrumb: true,
 	getUriBaseOverrideForItem:

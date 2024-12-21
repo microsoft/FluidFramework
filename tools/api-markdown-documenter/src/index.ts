@@ -32,6 +32,7 @@ export {
 	type DocumentationHierarchyConfigurationBase,
 	HierarchyKind,
 	type HierarchyConfiguration,
+	type HierarchyOptions,
 	type SectionHierarchyConfiguration,
 	type SectionHierarchyProperties,
 	type TransformApiItemWithChildren,

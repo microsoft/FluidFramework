@@ -11,16 +11,11 @@ import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 
-import {
-	defaultSectionHierarchyConfig,
-	defaultHeadingText,
-	defaultDocumentHierarchyConfig,
-	defaultFolderName,
-} from "../api-item-transforms/index.js";
+import { defaultFolderHierarchyConfig } from "../api-item-transforms/index.js";
 import {
 	FolderDocumentPlacement,
 	HierarchyKind,
-	type HierarchyConfiguration,
+	type HierarchyOptions,
 	type FolderHierarchyConfiguration,
 } from "../index.js";
 
@@ -53,73 +48,73 @@ export namespace HierarchyConfigs {
 	const outsideFolderConfig: FolderHierarchyConfiguration = {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Outside,
-		folderName: defaultFolderName,
-		headingText: (apiItem) => apiItem.displayName,
+		folderName: defaultFolderHierarchyConfig.folderName,
+		headingText: defaultFolderHierarchyConfig.headingText,
 	};
 
 	const insideFolderConfig: FolderHierarchyConfiguration = {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Inside,
 		documentName: "index",
-		folderName: defaultFolderName,
-		headingText: defaultHeadingText,
+		folderName: defaultFolderHierarchyConfig.folderName,
+		headingText: defaultFolderHierarchyConfig.headingText,
 	};
 
 	/**
 	 * "Flat" hierarchy: Packages get their own documents, and all descendent API items are rendered as sections under that document.
 	 * @remarks Results in a small number of documents, but can lead to relatively large documents.
 	 */
-	export const flat: Partial<HierarchyConfiguration> = {
-		[ApiItemKind.Package]: defaultDocumentHierarchyConfig,
+	export const flat: HierarchyOptions = {
+		[ApiItemKind.Package]: HierarchyKind.Document,
 
-		[ApiItemKind.CallSignature]: defaultSectionHierarchyConfig,
-		[ApiItemKind.Class]: defaultSectionHierarchyConfig,
-		[ApiItemKind.Constructor]: defaultSectionHierarchyConfig,
-		[ApiItemKind.ConstructSignature]: defaultSectionHierarchyConfig,
-		[ApiItemKind.Enum]: defaultSectionHierarchyConfig,
-		[ApiItemKind.EnumMember]: defaultSectionHierarchyConfig,
-		[ApiItemKind.Function]: defaultSectionHierarchyConfig,
-		[ApiItemKind.IndexSignature]: defaultSectionHierarchyConfig,
-		[ApiItemKind.Interface]: defaultSectionHierarchyConfig,
-		[ApiItemKind.Method]: defaultSectionHierarchyConfig,
-		[ApiItemKind.MethodSignature]: defaultSectionHierarchyConfig,
-		[ApiItemKind.Namespace]: defaultSectionHierarchyConfig,
-		[ApiItemKind.Property]: defaultSectionHierarchyConfig,
-		[ApiItemKind.PropertySignature]: defaultSectionHierarchyConfig,
-		[ApiItemKind.TypeAlias]: defaultSectionHierarchyConfig,
-		[ApiItemKind.Variable]: defaultSectionHierarchyConfig,
+		[ApiItemKind.CallSignature]: HierarchyKind.Section,
+		[ApiItemKind.Class]: HierarchyKind.Section,
+		[ApiItemKind.Constructor]: HierarchyKind.Section,
+		[ApiItemKind.ConstructSignature]: HierarchyKind.Section,
+		[ApiItemKind.Enum]: HierarchyKind.Section,
+		[ApiItemKind.EnumMember]: HierarchyKind.Section,
+		[ApiItemKind.Function]: HierarchyKind.Section,
+		[ApiItemKind.IndexSignature]: HierarchyKind.Section,
+		[ApiItemKind.Interface]: HierarchyKind.Section,
+		[ApiItemKind.Method]: HierarchyKind.Section,
+		[ApiItemKind.MethodSignature]: HierarchyKind.Section,
+		[ApiItemKind.Namespace]: HierarchyKind.Section,
+		[ApiItemKind.Property]: HierarchyKind.Section,
+		[ApiItemKind.PropertySignature]: HierarchyKind.Section,
+		[ApiItemKind.TypeAlias]: HierarchyKind.Section,
+		[ApiItemKind.Variable]: HierarchyKind.Section,
 	};
 
 	/**
 	 * "Sparse" hierarchy: Packages yield folder hierarchy, and all descendent items get their own document under that folder.
 	 * @remarks Leads to many documents, but each document is likely to be relatively small.
 	 */
-	export const sparse: Partial<HierarchyConfiguration> = {
+	export const sparse: HierarchyOptions = {
 		[ApiItemKind.Package]: outsideFolderConfig,
 
-		[ApiItemKind.CallSignature]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Class]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Constructor]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.ConstructSignature]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Enum]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.EnumMember]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Function]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.IndexSignature]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Interface]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Method]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.MethodSignature]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Namespace]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Property]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.PropertySignature]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.TypeAlias]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Variable]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.CallSignature]: HierarchyKind.Document,
+		[ApiItemKind.Class]: HierarchyKind.Document,
+		[ApiItemKind.Constructor]: HierarchyKind.Document,
+		[ApiItemKind.ConstructSignature]: HierarchyKind.Document,
+		[ApiItemKind.Enum]: HierarchyKind.Document,
+		[ApiItemKind.EnumMember]: HierarchyKind.Document,
+		[ApiItemKind.Function]: HierarchyKind.Document,
+		[ApiItemKind.IndexSignature]: HierarchyKind.Document,
+		[ApiItemKind.Interface]: HierarchyKind.Document,
+		[ApiItemKind.Method]: HierarchyKind.Document,
+		[ApiItemKind.MethodSignature]: HierarchyKind.Document,
+		[ApiItemKind.Namespace]: HierarchyKind.Document,
+		[ApiItemKind.Property]: HierarchyKind.Document,
+		[ApiItemKind.PropertySignature]: HierarchyKind.Document,
+		[ApiItemKind.TypeAlias]: HierarchyKind.Document,
+		[ApiItemKind.Variable]: HierarchyKind.Document,
 	};
 
 	/**
 	 * "Deep" hierarchy: All "parent" API items generate hierarchy. All other items are rendered as documents under their parent hierarchy.
 	 * @remarks Leads to many documents, but each document is likely to be relatively small.
 	 */
-	export const deep: Partial<HierarchyConfiguration> = {
+	export const deep: HierarchyOptions = {
 		// Items that introduce folder hierarchy:
 		[ApiItemKind.Namespace]: insideFolderConfig,
 		[ApiItemKind.Package]: insideFolderConfig,
@@ -129,17 +124,17 @@ export namespace HierarchyConfigs {
 		[ApiItemKind.TypeAlias]: insideFolderConfig,
 
 		// Items that get their own document, but do not introduce folder hierarchy:
-		[ApiItemKind.CallSignature]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Constructor]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.ConstructSignature]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.EnumMember]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Function]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.IndexSignature]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Method]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.MethodSignature]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Property]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.PropertySignature]: defaultDocumentHierarchyConfig,
-		[ApiItemKind.Variable]: defaultDocumentHierarchyConfig,
+		[ApiItemKind.CallSignature]: HierarchyKind.Document,
+		[ApiItemKind.Constructor]: HierarchyKind.Document,
+		[ApiItemKind.ConstructSignature]: HierarchyKind.Document,
+		[ApiItemKind.EnumMember]: HierarchyKind.Document,
+		[ApiItemKind.Function]: HierarchyKind.Document,
+		[ApiItemKind.IndexSignature]: HierarchyKind.Document,
+		[ApiItemKind.Method]: HierarchyKind.Document,
+		[ApiItemKind.MethodSignature]: HierarchyKind.Document,
+		[ApiItemKind.Property]: HierarchyKind.Document,
+		[ApiItemKind.PropertySignature]: HierarchyKind.Document,
+		[ApiItemKind.Variable]: HierarchyKind.Document,
 	};
 }
 

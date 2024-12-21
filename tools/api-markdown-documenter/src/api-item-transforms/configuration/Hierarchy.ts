@@ -9,6 +9,7 @@ import {
 	getSingleLineExcerptText,
 	getApiItemKind,
 	type ValidApiItemKind,
+	type Mutable,
 } from "../../utilities/index.js";
 
 import { trimTrailingSemicolon } from "./Utilities.js";
@@ -162,10 +163,8 @@ export type DocumentationHierarchyConfiguration =
  * - CallSignature, ConstructSignature, IndexSignature: Uses a cleaned up variation on the type signature.
  *
  * - Model: Uses "API Overview".
- *
- * @privateRemarks Exported for testing purposes.
  */
-export function defaultHeadingText(apiItem: ApiItem): string {
+function defaultHeadingText(apiItem: ApiItem): string {
 	const kind = getApiItemKind(apiItem);
 	switch (kind) {
 		case ApiItemKind.Model: {
@@ -188,7 +187,6 @@ export function defaultHeadingText(apiItem: ApiItem): string {
 
 /**
  * Default {@link SectionHierarchyConfiguration} used by the system.
- * @privateRemarks Exported for testing purposes.
  */
 export const defaultSectionHierarchyConfig: SectionHierarchyConfiguration = {
 	kind: HierarchyKind.Section,
@@ -202,14 +200,15 @@ export const defaultSectionHierarchyConfig: SectionHierarchyConfiguration = {
  *
  * - Model: "index"
  *
- * @privateRemarks Exported for testing purposes.
+ * - Package: Use the unscoped package name.
  */
-export function defaultDocumentName(apiItem: ApiItem): string | undefined {
+function defaultDocumentName(apiItem: ApiItem): string | undefined {
 	const kind = getApiItemKind(apiItem);
 	switch (kind) {
 		case ApiItemKind.Model: {
 			return "index";
 		}
+		// TODO: package handler
 		default: {
 			// Let the system generate a unique name that accounts for folder hierarchy.
 			return undefined;
@@ -219,7 +218,6 @@ export function defaultDocumentName(apiItem: ApiItem): string | undefined {
 
 /**
  * Default {@link DocumentHierarchyConfiguration} used by the system.
- * @privateRemarks Exported for testing purposes.
  */
 export const defaultDocumentHierarchyConfig: DocumentHierarchyConfiguration = {
 	kind: HierarchyKind.Document,
@@ -229,14 +227,12 @@ export const defaultDocumentHierarchyConfig: DocumentHierarchyConfiguration = {
 
 /**
  * Default {@link SectionHierarchyConfiguration} used by the system.
- *
- * @privateRemarks Exported for testing purposes.
  */
-export const defaultFolderName = undefined;
+// TODO: package handler
+const defaultFolderName = undefined;
 
 /**
  * Default {@link FolderHierarchyConfiguration} used by the system.
- * @privateRemarks Exported for testing purposes.
  */
 export const defaultFolderHierarchyConfig: FolderHierarchyConfiguration = {
 	kind: HierarchyKind.Folder,
@@ -248,7 +244,7 @@ export const defaultFolderHierarchyConfig: FolderHierarchyConfiguration = {
 };
 
 /**
- * Hierarchy options by API item kind.
+ * Complete hierarchy configuration by API item kind.
  *
  * @public
  */
@@ -296,9 +292,68 @@ export type HierarchyConfiguration = {
 };
 
 /**
+ * Input hierarchy options by API item kind.
+ *
+ * @remarks
+ * For each option, you may provide 1 of 2 options:
+ *
+ * - {@link HierarchyKind}: the default configuration for that kind will be used.
+ *
+ * - A complete {@link DocumentationHierarchyConfiguration} to be used in place of any default.
+ *
+ * @public
+ */
+export type HierarchyOptions = {
+	/**
+	 * Hierarchy configuration for the API item kind.
+	 */
+	[Kind in Exclude<
+		ValidApiItemKind,
+		ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package
+	>]?: HierarchyKind | DocumentationHierarchyConfiguration;
+} & {
+	/**
+	 * Hierarchy configuration for the `Model` API item kind.
+	 *
+	 * @remarks
+	 * Always its own document. Never introduces folder hierarchy.
+	 * This is an important invariant, as it ensures that there is always at least one document in the output.
+	 */
+	[ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+
+	/**
+	 * Hierarchy configuration for the `Package` API item kind.
+	 *
+	 * @remarks Must be either a folder or document hierarchy configuration.
+	 *
+	 * @privateRemarks
+	 * TODO: Allow all hierarchy configurations for packages.
+	 * There isn't a real reason to restrict this, except the way the code is currently structured.
+	 */
+	[ApiItemKind.Package]?:
+		| HierarchyKind.Document
+		| HierarchyKind.Folder
+		| DocumentHierarchyConfiguration
+		| FolderHierarchyConfiguration;
+
+	/**
+	 * Hierarchy configuration for the `EntryPoint` API item kind.
+	 *
+	 * @remarks
+	 * Always its own document, adjacent to the package document.
+	 * When a package only has a single entrypoint, this is skipped entirely and entrypoint children are rendered directly to the package document.
+	 *
+	 * @privateRemarks
+	 * TODO: Allow all hierarchy configurations for packages.
+	 * There isn't a real reason to restrict this, except the way the code is currently structured.
+	 */
+	[ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+};
+
+/**
  * Default {@link HierarchyConfiguration}.
  */
-export const defaultHierarchyConfiguration: HierarchyConfiguration = {
+const defaultHierarchyConfiguration: HierarchyConfiguration = {
 	[ApiItemKind.Model]: {
 		kind: HierarchyKind.Document,
 		headingText: "API Overview",
@@ -331,11 +386,43 @@ export const defaultHierarchyConfiguration: HierarchyConfiguration = {
 };
 
 /**
+ * Maps an input option to a complete {@link DocumentationHierarchyConfiguration}.
+ */
+function getHierarchyConfiguration(
+	option: HierarchyKind | DocumentationHierarchyConfiguration,
+): DocumentationHierarchyConfiguration {
+	switch (option) {
+		case HierarchyKind.Section: {
+			return defaultSectionHierarchyConfig;
+		}
+		case HierarchyKind.Document: {
+			return defaultDocumentHierarchyConfig;
+		}
+		case HierarchyKind.Folder: {
+			return defaultFolderHierarchyConfig;
+		}
+		default: {
+			return option;
+		}
+	}
+}
+
+/**
  * Gets a complete {@link HierarchyConfiguration} using the provided partial configuration, and filling
  * in the remainder with defaults.
  */
 export function getHierarchyOptionsWithDefaults(
-	inputOptions?: Partial<HierarchyConfiguration>,
+	options?: HierarchyOptions,
 ): HierarchyConfiguration {
-	return { ...defaultHierarchyConfiguration, ...inputOptions };
+	if (options === undefined) {
+		return defaultHierarchyConfiguration;
+	}
+
+	const result: Mutable<HierarchyConfiguration> = { ...defaultHierarchyConfiguration };
+	for (const [key, maybeValue] of Object.entries(options)) {
+		if (maybeValue !== undefined) {
+			result[key] = getHierarchyConfiguration(maybeValue);
+		}
+	}
+	return result;
 }

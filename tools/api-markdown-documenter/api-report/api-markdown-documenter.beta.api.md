@@ -322,7 +322,7 @@ export interface DocumentationSuiteConfiguration {
 
 // @public
 export type DocumentationSuiteOptions = Omit<Partial<DocumentationSuiteConfiguration>, "hierarchy"> & {
-    readonly hierarchy?: Partial<HierarchyConfiguration>;
+    readonly hierarchy?: HierarchyOptions;
 };
 
 // @public
@@ -491,6 +491,15 @@ export enum HierarchyKind {
     Folder = "folder",
     Section = "section"
 }
+
+// @public
+export type HierarchyOptions = {
+    [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]?: HierarchyKind | DocumentationHierarchyConfiguration;
+} & {
+    [ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+    [ApiItemKind.Package]?: HierarchyKind.Document | HierarchyKind.Folder | DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
+    [ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+};
 
 // @public
 export class HorizontalRuleNode implements MultiLineDocumentationNode {

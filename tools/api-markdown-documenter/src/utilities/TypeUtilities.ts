@@ -4,6 +4,11 @@
  */
 
 /**
+ * Type that removes `readonly` from fields.
+ */
+export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+
+/**
  * Represents a value that can be either a direct value of type `T` or a function that returns a value of type `T` given some parameters.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
