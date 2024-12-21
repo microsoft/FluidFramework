@@ -213,6 +213,7 @@ export const defaultConsoleLogger: Logger;
 // @public
 export namespace DefaultDocumentationSuiteConfiguration {
     export function defaultGetAlertsForItem(apiItem: ApiItem): string[];
+    export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
     export function defaultGetUriBaseOverrideForItem(): string | undefined;
     export function defaultSkipPackage(): boolean;
@@ -311,6 +312,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 // @public
 export interface DocumentationSuiteConfiguration {
     readonly getAlertsForItem: (apiItem: ApiItem) => string[];
+    readonly getHeadingTextForItem: (apiItem: ApiItem) => string;
     readonly getLinkTextForItem: (apiItem: ApiItem) => string;
     readonly getUriBaseOverrideForItem: (apiItem: ApiItem) => string | undefined;
     readonly hierarchy: HierarchyConfiguration;
@@ -330,7 +332,7 @@ export interface DocumentHierarchyConfiguration extends DocumentationHierarchyCo
 }
 
 // @public
-export interface DocumentHierarchyProperties extends SectionHierarchyProperties {
+export interface DocumentHierarchyProperties {
     readonly documentName?: string | undefined | ((apiItem: ApiItem) => string | undefined);
 }
 
@@ -750,13 +752,7 @@ function renderNode(node: DocumentationNode, writer: DocumentWriter, context: Ma
 function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public
-export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase<HierarchyKind.Section>, SectionHierarchyProperties {
-}
-
-// @public
-export interface SectionHierarchyProperties {
-    readonly headingText: string | ((apiItem: ApiItem) => string);
-}
+export type SectionHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Section>;
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {

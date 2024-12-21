@@ -49,7 +49,6 @@ export namespace HierarchyConfigs {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Outside,
 		folderName: defaultFolderHierarchyConfig.folderName,
-		headingText: defaultFolderHierarchyConfig.headingText,
 	};
 
 	const insideFolderConfig: FolderHierarchyConfiguration = {
@@ -57,7 +56,6 @@ export namespace HierarchyConfigs {
 		documentPlacement: FolderDocumentPlacement.Inside,
 		documentName: "index",
 		folderName: defaultFolderHierarchyConfig.folderName,
-		headingText: defaultFolderHierarchyConfig.headingText,
 	};
 
 	/**

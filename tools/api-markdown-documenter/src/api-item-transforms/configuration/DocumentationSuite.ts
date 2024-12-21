@@ -73,6 +73,17 @@ export interface DocumentationSuiteConfiguration {
 	readonly getUriBaseOverrideForItem: (apiItem: ApiItem) => string | undefined;
 
 	/**
+	 * Generate heading text for the provided `ApiItem`.
+	 *
+	 * @param apiItem - The API item for which the heading is being generated.
+	 *
+	 * @returns The heading title for the API item.
+	 *
+	 * @defaultValue {@link DefaultDocumentationSuiteConfiguration.defaultGetHeadingTextForItem}
+	 */
+	readonly getHeadingTextForItem: (apiItem: ApiItem) => string;
+
+	/**
 	 * Generate link text for the provided `ApiItem`.
 	 *
 	 * @param apiItem - The API item for which the link is being generated.
@@ -163,6 +174,36 @@ export namespace DefaultDocumentationSuiteConfiguration {
 	}
 
 	/**
+	 * Default {@link DocumentationSuiteConfiguration.getHeadingTextForItem}.
+	 *
+	 * Uses the item's qualified API name, but is handled differently for the following items:
+	 *
+	 * - CallSignature, ConstructSignature, IndexSignature: Uses a cleaned up variation on the type signature.
+	 *
+	 * - Model: Uses "API Overview".
+	 */
+	export function defaultGetHeadingTextForItem(apiItem: ApiItem): string {
+		const kind = getApiItemKind(apiItem);
+		switch (kind) {
+			case ApiItemKind.Model: {
+				return "API Overview";
+			}
+			case ApiItemKind.CallSignature:
+			case ApiItemKind.ConstructSignature:
+			case ApiItemKind.IndexSignature: {
+				// For signature items, the display-name is not particularly useful information
+				// ("(constructor)", "(call)", etc.).
+				// Instead, we will use a cleaned up variation on the type signature.
+				const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
+				return trimTrailingSemicolon(excerpt);
+			}
+			default: {
+				return apiItem.displayName;
+			}
+		}
+	}
+
+	/**
 	 * Default {@link DocumentationSuiteConfiguration.getLinkTextForItem}.
 	 *
 	 * Uses the item's signature, except for `Model` items, in which case the text "Packages" is displayed.
@@ -232,6 +273,7 @@ const defaultDocumentationSuiteConfiguration: Omit<DocumentationSuiteConfigurati
 	includeBreadcrumb: true,
 	getUriBaseOverrideForItem:
 		DefaultDocumentationSuiteConfiguration.defaultGetUriBaseOverrideForItem,
+	getHeadingTextForItem: DefaultDocumentationSuiteConfiguration.defaultGetHeadingTextForItem,
 	getLinkTextForItem: DefaultDocumentationSuiteConfiguration.defaultGetLinkTextForItem,
 	getAlertsForItem: DefaultDocumentationSuiteConfiguration.defaultGetAlertsForItem,
 	skipPackage: DefaultDocumentationSuiteConfiguration.defaultSkipPackage,

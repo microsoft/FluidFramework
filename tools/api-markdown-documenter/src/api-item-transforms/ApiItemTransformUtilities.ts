@@ -292,22 +292,13 @@ export function getHeadingForApiItem(
 	const id = doesItemRequireOwnDocument(apiItem, config.hierarchy)
 		? undefined
 		: getHeadingIdForApiItem(apiItem, config);
-	const title = getHeadingTextForApiItem(apiItem, config);
+	const title = config.getHeadingTextForItem(apiItem);
 
 	return {
 		title,
 		id,
 		level: headingLevel,
 	};
-}
-
-function getHeadingTextForApiItem(
-	apiItem: ApiItem,
-	config: ApiItemTransformationConfiguration,
-): string {
-	const itemKind = getApiItemKind(apiItem);
-	const hierarchy = config.hierarchy[itemKind];
-	return getValueOrDerived(hierarchy.headingText, apiItem);
 }
 
 // TODO: this doesn't actually return `undefined` for own document. Verify and fix.

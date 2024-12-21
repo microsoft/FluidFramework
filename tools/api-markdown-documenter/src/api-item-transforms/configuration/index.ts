@@ -30,7 +30,6 @@ export {
 	type HierarchyOptions,
 	HierarchyKind,
 	type SectionHierarchyConfiguration,
-	type SectionHierarchyProperties,
 } from "./Hierarchy.js";
 export {
 	type ApiItemTransformations,

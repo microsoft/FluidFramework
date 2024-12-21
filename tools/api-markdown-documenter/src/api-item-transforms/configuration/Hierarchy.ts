@@ -3,16 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type ApiDeclaredItem, type ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
+import { type ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
-import {
-	getSingleLineExcerptText,
-	getApiItemKind,
-	type ValidApiItemKind,
-	type Mutable,
-} from "../../utilities/index.js";
-
-import { trimTrailingSemicolon } from "./Utilities.js";
+import { getApiItemKind, type ValidApiItemKind, type Mutable } from "../../utilities/index.js";
 
 /**
  * Kind of documentation suite hierarchy.
@@ -53,32 +46,19 @@ export interface DocumentationHierarchyConfigurationBase<THierarchyKind extends 
 }
 
 /**
- * {@link HierarchyKind.Section} hierarchy configuration properties.
- *
- * @public
- */
-export interface SectionHierarchyProperties {
-	/**
-	 * Heading text to use for the API item.
-	 */
-	readonly headingText: string | ((apiItem: ApiItem) => string);
-}
-
-/**
  * The corresponding API item will be placed in a section under the document representing an ancestor of the API item.
  *
  * @public
  */
-export interface SectionHierarchyConfiguration
-	extends DocumentationHierarchyConfigurationBase<HierarchyKind.Section>,
-		SectionHierarchyProperties {}
+export type SectionHierarchyConfiguration =
+	DocumentationHierarchyConfigurationBase<HierarchyKind.Section>;
 
 /**
  * {@link HierarchyKind.Document} hierarchy configuration properties.
  *
  * @public
  */
-export interface DocumentHierarchyProperties extends SectionHierarchyProperties {
+export interface DocumentHierarchyProperties {
 	/**
 	 * Document name to use for the API item.
 	 * @remarks `undefined` indicates that the system default should be used.
@@ -156,41 +136,10 @@ export type DocumentationHierarchyConfiguration =
 	| FolderHierarchyConfiguration;
 
 /**
- * Default {@link SectionHierarchyProperties.headingText}.
- *
- * Uses the item's qualified API name, but is handled differently for the following items:
- *
- * - CallSignature, ConstructSignature, IndexSignature: Uses a cleaned up variation on the type signature.
- *
- * - Model: Uses "API Overview".
- */
-function defaultHeadingText(apiItem: ApiItem): string {
-	const kind = getApiItemKind(apiItem);
-	switch (kind) {
-		case ApiItemKind.Model: {
-			return "API Overview";
-		}
-		case ApiItemKind.CallSignature:
-		case ApiItemKind.ConstructSignature:
-		case ApiItemKind.IndexSignature: {
-			// For signature items, the display-name is not particularly useful information
-			// ("(constructor)", "(call)", etc.).
-			// Instead, we will use a cleaned up variation on the type signature.
-			const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
-			return trimTrailingSemicolon(excerpt);
-		}
-		default: {
-			return apiItem.displayName;
-		}
-	}
-}
-
-/**
  * Default {@link SectionHierarchyConfiguration} used by the system.
  */
 export const defaultSectionHierarchyConfig: SectionHierarchyConfiguration = {
 	kind: HierarchyKind.Section,
-	headingText: defaultHeadingText,
 };
 
 /**
@@ -221,7 +170,6 @@ function defaultDocumentName(apiItem: ApiItem): string | undefined {
  */
 export const defaultDocumentHierarchyConfig: DocumentHierarchyConfiguration = {
 	kind: HierarchyKind.Document,
-	headingText: defaultHeadingText,
 	documentName: defaultDocumentName,
 };
 
@@ -236,7 +184,6 @@ const defaultFolderName = undefined;
  */
 export const defaultFolderHierarchyConfig: FolderHierarchyConfiguration = {
 	kind: HierarchyKind.Folder,
-	headingText: defaultHeadingText,
 	documentName: defaultDocumentName,
 	documentPlacement: FolderDocumentPlacement.Outside, // TODO
 	// documentName: "index", // Documents for items that get their own folder are always named "index" by default.
@@ -356,7 +303,6 @@ export type HierarchyOptions = {
 const defaultHierarchyConfiguration: HierarchyConfiguration = {
 	[ApiItemKind.Model]: {
 		kind: HierarchyKind.Document,
-		headingText: "API Overview",
 		documentName: "index",
 	},
 

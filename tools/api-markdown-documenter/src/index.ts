@@ -34,7 +34,6 @@ export {
 	type HierarchyConfiguration,
 	type HierarchyOptions,
 	type SectionHierarchyConfiguration,
-	type SectionHierarchyProperties,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 	transformApiModel,
