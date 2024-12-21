@@ -3,9 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { type ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
+import { type ApiItem, ApiItemKind, type ApiPackage } from "@microsoft/api-extractor-model";
 
-import { getApiItemKind, type ValidApiItemKind, type Mutable } from "../../utilities/index.js";
+import {
+	getApiItemKind,
+	type ValidApiItemKind,
+	type Mutable,
+	getFileSafeNameForApiItemName,
+	getUnscopedPackageName,
+} from "../../utilities/index.js";
 
 /**
  * Kind of documentation suite hierarchy.
@@ -145,6 +151,7 @@ export const defaultSectionHierarchyConfig: SectionHierarchyConfiguration = {
 /**
  * Default {@link DocumentHierarchyProperties.documentName} for non-folder hierarchy documents.
  *
+ * @remarks
  * Uses the item's scoped and qualified API name, but is handled differently for the following items:
  *
  * - Model: "index"
@@ -157,7 +164,9 @@ function defaultDocumentName(apiItem: ApiItem): string | undefined {
 		case ApiItemKind.Model: {
 			return "index";
 		}
-		// TODO: package handler
+		case ApiItemKind.Package: {
+			return getFileSafeNameForApiItemName(getUnscopedPackageName(apiItem as ApiPackage));
+		}
 		default: {
 			// Let the system generate a unique name that accounts for folder hierarchy.
 			return undefined;
@@ -174,10 +183,25 @@ export const defaultDocumentHierarchyConfig: DocumentHierarchyConfiguration = {
 };
 
 /**
- * Default {@link SectionHierarchyConfiguration} used by the system.
+ * Default {@link DocumentHierarchyProperties.documentName} for non-folder hierarchy documents.
+ *
+ * @remarks
+ * Uses the item's scoped and qualified API name, but is handled differently for the following items:
+ *
+ * - Package: Use the unscoped package name.
  */
-// TODO: package handler
-const defaultFolderName = undefined;
+function defaultFolderName(apiItem: ApiItem): string | undefined {
+	const kind = getApiItemKind(apiItem);
+	switch (kind) {
+		case ApiItemKind.Package: {
+			return getFileSafeNameForApiItemName(getUnscopedPackageName(apiItem as ApiPackage));
+		}
+		default: {
+			// Let the system generate a unique name that accounts for folder hierarchy.
+			return undefined;
+		}
+	}
+}
 
 /**
  * Default {@link FolderHierarchyConfiguration} used by the system.
@@ -334,7 +358,7 @@ const defaultHierarchyConfiguration: HierarchyConfiguration = {
 /**
  * Maps an input option to a complete {@link DocumentationHierarchyConfiguration}.
  */
-function getHierarchyConfiguration(
+function mapHierarchyOption(
 	option: HierarchyKind | DocumentationHierarchyConfiguration,
 ): DocumentationHierarchyConfiguration {
 	switch (option) {
@@ -367,7 +391,7 @@ export function getHierarchyOptionsWithDefaults(
 	const result: Mutable<HierarchyConfiguration> = { ...defaultHierarchyConfiguration };
 	for (const [key, maybeValue] of Object.entries(options)) {
 		if (maybeValue !== undefined) {
-			result[key] = getHierarchyConfiguration(maybeValue);
+			result[key] = mapHierarchyOption(maybeValue);
 		}
 	}
 	return result;
