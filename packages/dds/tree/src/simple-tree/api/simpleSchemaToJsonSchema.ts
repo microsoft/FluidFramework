@@ -6,7 +6,7 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ValueSchema } from "../../core/index.js";
-import { getOrCreate, hasSingle, type Mutable } from "../../util/index.js";
+import { copyProperty, getOrCreate, hasSingle, type Mutable } from "../../util/index.js";
 import type {
 	JsonArrayNodeSchema,
 	JsonFieldSchema,
@@ -106,10 +106,7 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 		items,
 	};
 
-	// Only include "description" property if it is present in the input.
-	if (schema.metadata?.description !== undefined) {
-		output.description = schema.metadata.description;
-	}
+	copyProperty(schema.metadata, "description", output);
 
 	return output;
 }
@@ -156,11 +153,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 					anyOf: allowedTypes,
 				};
 
-		// Only include "description" property if it is present in the input.
-		if (fieldSchema.metadata?.description !== undefined) {
-			output.description = fieldSchema.metadata.description;
-		}
-
+		copyProperty(fieldSchema.metadata, "description", output);
 		properties[key] = output;
 
 		if (fieldSchema.kind === FieldKind.Required) {
@@ -176,10 +169,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 		additionalProperties: false,
 	};
 
-	// Only include "description" property if it is present in the input.
-	if (schema.metadata?.description !== undefined) {
-		transformedNode.description = schema.metadata.description;
-	}
+	copyProperty(schema.metadata, "description", transformedNode);
 
 	return transformedNode;
 }
@@ -202,10 +192,7 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 		},
 	};
 
-	// Only include "description" property if it is present in the input.
-	if (schema.metadata?.description !== undefined) {
-		output.description = schema.metadata.description;
-	}
+	copyProperty(schema.metadata, "description", output);
 
 	return output;
 }

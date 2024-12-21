@@ -59,6 +59,10 @@ await MarkdownRenderer.renderApiModel({
 -   `RenderHtmlConfig` -> `RenderHtmlConfiguration`
 -   `ToHtmlConfig` -> `ToHtmlConfiguration`
 
+#### Utility function renames
+
+-   `ApiItemUtilities.getQualifiedApiItemName` -> `ApiItemUtilities.getFileSafeNameForApiItem`
+
 #### Configuration properties made `readonly`
 
 -   `ApiItemTransformations`

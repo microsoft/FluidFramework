@@ -10,10 +10,11 @@ import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-
 import type { Heading } from "../Heading.js";
 import type { Link } from "../Link.js";
 import {
-	getQualifiedApiItemName,
+	getFileSafeNameForApiItem,
 	getReleaseTag,
 	getApiItemKind,
 	type ValidApiItemKind,
+	getFilteredParent,
 } from "../utilities/index.js";
 
 import type {
@@ -279,7 +280,7 @@ function getHeadingIdForApiItem(
 	// Generate ID information for everything back to that point
 	let hierarchyItem = apiItem;
 	while (!doesItemRequireOwnDocument(hierarchyItem, config.documentBoundaries)) {
-		const qualifiedName = getQualifiedApiItemName(hierarchyItem);
+		const qualifiedName = getFileSafeNameForApiItem(hierarchyItem);
 
 		// Since we're walking up the tree, we'll build the string from the end for simplicity
 		baseName = baseName === undefined ? qualifiedName : `${qualifiedName}-${baseName}`;
@@ -294,25 +295,6 @@ function getHeadingIdForApiItem(
 	}
 
 	return `${baseName}-${apiItemKind.toLowerCase()}`;
-}
-
-/**
- * Gets the "filted" parent of the provided API item.
- *
- * @remarks This logic specifically skips items of the following kinds:
- *
- * - EntryPoint: skipped because any given Package item will have exactly 1 EntryPoint child with current version of
- * API-Extractor, making this redundant in the hierarchy. We may need to revisit this in the future if/when
- * API-Extractor adds support for multiple entrypoints.
- *
- * @param apiItem - The API item whose filtered parent will be returned.
- */
-function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
-	const parent = apiItem.parent;
-	if (parent?.kind === ApiItemKind.EntryPoint) {
-		return parent.parent;
-	}
-	return parent;
 }
 
 /**

@@ -116,9 +116,9 @@ declare namespace ApiItemUtilities {
         getDefaultValueBlock,
         getDeprecatedBlock,
         getExampleBlocks,
+        getFileSafeNameForApiItem,
         getModifiers,
         getModifierTags,
-        getQualifiedApiItemName,
         getReleaseTag,
         getReturnsBlock,
         getSeeBlocks,
@@ -396,6 +396,9 @@ function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
+function getFileSafeNameForApiItem(apiItem: ApiItem): string;
+
+// @public
 function getHeadingForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingLevel?: number): Heading;
 
 // @public
@@ -406,9 +409,6 @@ function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiMod
 
 // @public
 function getModifierTags(apiItem: ApiItem): ReadonlySet<string>;
-
-// @public
-function getQualifiedApiItemName(apiItem: ApiItem): string;
 
 // @public
 function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined;

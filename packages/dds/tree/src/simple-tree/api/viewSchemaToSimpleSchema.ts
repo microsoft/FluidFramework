@@ -20,7 +20,7 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 import type { ValueSchema } from "../../core/index.js";
-import { getOrCreate, type Mutable } from "../../util/index.js";
+import { copyProperty, getOrCreate, type Mutable } from "../../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 
@@ -41,11 +41,7 @@ export function toSimpleTreeSchema(schema: ImplicitFieldSchema): SimpleTreeSchem
 		definitions,
 	};
 
-	// Only include "metadata" property if it is present in the input.
-	if (normalizedSchema.metadata !== undefined) {
-		output.metadata = normalizedSchema.metadata;
-	}
-
+	copyProperty(normalizedSchema, "metadata", output);
 	return output;
 }
 
@@ -100,10 +96,7 @@ function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchem
 		allowedTypes,
 	};
 
-	// Only include "metadata" property if it is present in the input.
-	if (schema.metadata !== undefined) {
-		output.metadata = schema.metadata;
-	}
+	copyProperty(schema, "metadata", output);
 
 	return output;
 }
@@ -117,10 +110,7 @@ function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
 		allowedTypes,
 	};
 
-	// Only include "metadata" property if it is present in the input.
-	if (schema.metadata !== undefined) {
-		output.metadata = schema.metadata;
-	}
+	copyProperty(schema, "metadata", output);
 
 	return output;
 }
@@ -136,10 +126,7 @@ function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeS
 		fields,
 	};
 
-	// Only include "metadata" property if it is present in the input.
-	if (schema.metadata !== undefined) {
-		output.metadata = schema.metadata;
-	}
+	copyProperty(schema, "metadata", output);
 
 	return output;
 }
@@ -162,10 +149,7 @@ function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 		allowedTypes,
 	};
 
-	// Don't include "metadata" property at all if it's not present.
-	if (schema.metadata !== undefined) {
-		result.metadata = schema.metadata;
-	}
+	copyProperty(schema, "metadata", result);
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(schema as any)[simpleFieldSchemaCacheSymbol] = result;
