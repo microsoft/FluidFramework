@@ -16,7 +16,7 @@ export interface MapGetSet<K, V> {
 }
 
 /**
- * Make all transitive properties in T readonly
+ * Make all transitive properties in `T` readonly
  */
 export type RecursiveReadonly<T> = {
 	readonly [P in keyof T]: RecursiveReadonly<T[P]>;
