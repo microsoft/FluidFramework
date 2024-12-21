@@ -5,12 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { type ISegmentLeaf } from "../mergeTreeNodes.js";
+import { type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { SegmentGroupCollection } from "../segmentGroupCollection.js";
 import { TextSegment } from "../textSegment.js";
 
 describe("segmentGroupCollection", () => {
-	let segment: ISegmentLeaf;
+	let segment: ISegmentPrivate;
 	let segmentGroups: SegmentGroupCollection;
 	beforeEach(() => {
 		segment = TextSegment.make("abc");

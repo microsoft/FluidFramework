@@ -13,7 +13,7 @@ import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { UnassignedSequenceNumber } from "../constants.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { ISegmentLeaf, SegmentGroup } from "../mergeTreeNodes.js";
+import { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { assertInserted, assertRemoved } from "../segmentInfos.js";
@@ -110,7 +110,7 @@ describe("client.applyMsg", () => {
 		}
 		assert.equal(client.mergeTree.pendingSegments?.length, 0);
 		for (let i = 0; i < client.getText().length; i++) {
-			const segmentInfo = client.getContainingSegment<ISegmentLeaf>(i);
+			const segmentInfo = client.getContainingSegment<ISegmentPrivate>(i);
 
 			assert.notEqual(
 				segmentInfo.segment?.seq,
@@ -127,7 +127,7 @@ describe("client.applyMsg", () => {
 	it("insertTextLocal", () => {
 		const op = client.insertTextLocal(0, "abc");
 
-		const segmentInfo = client.getContainingSegment<ISegmentLeaf>(0);
+		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
 		assert.equal(segmentInfo.segment?.seq, UnassignedSequenceNumber);
 
@@ -137,7 +137,7 @@ describe("client.applyMsg", () => {
 	});
 
 	it("removeRangeLocal", () => {
-		const segmentInfo = client.getContainingSegment<ISegmentLeaf>(0);
+		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
 		const removeOp = client.removeRangeLocal(0, 1);
 
@@ -162,7 +162,7 @@ describe("client.applyMsg", () => {
 	});
 
 	it("annotateSegmentLocal then removeRangeLocal", () => {
-		const segmentInfo = client.getContainingSegment<ISegmentLeaf>(0);
+		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
 		const start = 0;
 		const end = client.getText().length;
@@ -215,7 +215,7 @@ describe("client.applyMsg", () => {
 	});
 
 	it("overlapping deletes", () => {
-		const segmentInfo = client.getContainingSegment<ISegmentLeaf>(0);
+		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
 		const start = 0;
 		const end = 5;
@@ -535,7 +535,7 @@ describe("client.applyMsg", () => {
 
 		// op with no reference sequence should count removed segment
 		const insertMessage2 = clientB.makeOpMessage(insertOp2, ++seq);
-		let seg = clientA.getContainingSegment<ISegmentLeaf>(2, {
+		let seg = clientA.getContainingSegment<ISegmentPrivate>(2, {
 			referenceSequenceNumber: insertMessage2.referenceSequenceNumber,
 			clientId: insertMessage2.clientId,
 		});
@@ -544,7 +544,7 @@ describe("client.applyMsg", () => {
 
 		// op with reference sequence >= remove op sequence should not count removed segment
 		const insertMessage3 = clientB.makeOpMessage(insertOp2, seq, removeSequence);
-		seg = clientA.getContainingSegment<ISegmentLeaf>(2, {
+		seg = clientA.getContainingSegment<ISegmentPrivate>(2, {
 			referenceSequenceNumber: insertMessage3.referenceSequenceNumber,
 			clientId: insertMessage3.clientId,
 		});
@@ -643,7 +643,7 @@ describe("client.applyMsg", () => {
 		};
 
 		// TODO: tracking group
-		const { segment, offset } = clients.C.getContainingSegment<ISegmentLeaf>(5);
+		const { segment, offset } = clients.C.getContainingSegment<ISegmentPrivate>(5);
 		assert(segment !== undefined, "expected segment");
 		const ref = clients.C.createLocalReferencePosition(
 			segment,
@@ -673,7 +673,7 @@ describe("client.applyMsg", () => {
 		ops.push(clients.B.makeOpMessage(clients.B.regeneratePendingOp(bOp.op, bOp.sg), ++seq));
 
 		const trackingGroup = new TrackingGroup();
-		const trackedSegs: ISegmentLeaf[] = [];
+		const trackedSegs: ISegmentPrivate[] = [];
 		walkAllChildSegments(clients.C.mergeTree.root, (seg) => {
 			trackedSegs.push(seg);
 			trackingGroup.link(seg);

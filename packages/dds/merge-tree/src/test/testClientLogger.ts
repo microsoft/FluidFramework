@@ -16,7 +16,7 @@ import {
 	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
-import { Marker, seqLTE, type ISegmentLeaf } from "../mergeTreeNodes.js";
+import { Marker, seqLTE, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 import { PropertySet, matchProperties } from "../properties.js";
 import { toInsertionInfo, toMoveInfo, toRemovalInfo } from "../segmentInfos.js";
@@ -396,7 +396,7 @@ export class TestClientLogger {
 	}
 }
 
-function toMoveOrRemove(segment: ISegmentLeaf): { seq: number } | undefined {
+function toMoveOrRemove(segment: ISegmentPrivate): { seq: number } | undefined {
 	const mi = toMoveInfo(segment);
 	const ri = toRemovalInfo(segment);
 	if (mi !== undefined || ri !== undefined) {

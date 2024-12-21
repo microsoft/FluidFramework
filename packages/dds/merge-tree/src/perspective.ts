@@ -6,14 +6,14 @@
 import { UnassignedSequenceNumber } from "./constants.js";
 import { type MergeTree } from "./mergeTree.js";
 import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNodeWalk.js";
-import { seqLTE, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { seqLTE, type ISegmentPrivate } from "./mergeTreeNodes.js";
 
 /**
  * Provides a view of a MergeTree from the perspective of a specific client at a specific sequence number.
  */
 export interface Perspective {
-	nextSegment(segment: ISegmentLeaf, forward?: boolean): ISegmentLeaf;
-	previousSegment(segment: ISegmentLeaf): ISegmentLeaf;
+	nextSegment(segment: ISegmentPrivate, forward?: boolean): ISegmentPrivate;
+	previousSegment(segment: ISegmentPrivate): ISegmentPrivate;
 }
 
 /**
@@ -47,9 +47,9 @@ export class PerspectiveImpl implements Perspective {
 	 * @param forward - The direction to search.
 	 * @returns the next segment in the specified direction, or the start or end of the tree if there is no next segment.
 	 */
-	public nextSegment(segment: ISegmentLeaf, forward: boolean = true): ISegmentLeaf {
-		let next: ISegmentLeaf | undefined;
-		const action = (seg: ISegmentLeaf): boolean | undefined => {
+	public nextSegment(segment: ISegmentPrivate, forward: boolean = true): ISegmentPrivate {
+		let next: ISegmentPrivate | undefined;
+		const action = (seg: ISegmentPrivate): boolean | undefined => {
 			if (isSegmentPresent(seg, this._seqTime)) {
 				next = seg;
 				return LeafAction.Exit;
@@ -65,7 +65,7 @@ export class PerspectiveImpl implements Perspective {
 	 * @returns the previous segment, or the start of the tree if there is no previous segment.
 	 * @remarks This is a convenient equivalent to calling `nextSegment(segment, false)`.
 	 */
-	public previousSegment(segment: ISegmentLeaf): ISegmentLeaf {
+	public previousSegment(segment: ISegmentPrivate): ISegmentPrivate {
 		return this.nextSegment(segment, false);
 	}
 }
@@ -77,7 +77,10 @@ export class PerspectiveImpl implements Perspective {
  * @param localSeq - The latest local sequence number to consider.
  * @returns true iff this segment was removed in the given perspective.
  */
-export function wasRemovedBefore(seg: ISegmentLeaf, { refSeq, localSeq }: SeqTime): boolean {
+export function wasRemovedBefore(
+	seg: ISegmentPrivate,
+	{ refSeq, localSeq }: SeqTime,
+): boolean {
 	if (
 		seg.removedSeq === UnassignedSequenceNumber &&
 		localSeq !== undefined &&
@@ -95,7 +98,7 @@ export function wasRemovedBefore(seg: ISegmentLeaf, { refSeq, localSeq }: SeqTim
  * @param localSeq - The latest local sequence number to consider.
  * @returns true iff this segment was moved (aka obliterated) in the given perspective.
  */
-export function wasMovedBefore(seg: ISegmentLeaf, { refSeq, localSeq }: SeqTime): boolean {
+export function wasMovedBefore(seg: ISegmentPrivate, { refSeq, localSeq }: SeqTime): boolean {
 	if (
 		seg.movedSeq === UnassignedSequenceNumber &&
 		localSeq !== undefined &&
@@ -109,7 +112,7 @@ export function wasMovedBefore(seg: ISegmentLeaf, { refSeq, localSeq }: SeqTime)
 /**
  * See {@link wasRemovedBefore} and {@link wasMovedBefore}.
  */
-export function wasRemovedOrMovedBefore(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
+export function wasRemovedOrMovedBefore(seg: ISegmentPrivate, seqTime: SeqTime): boolean {
 	return wasRemovedBefore(seg, seqTime) || wasMovedBefore(seg, seqTime);
 }
 
@@ -120,7 +123,7 @@ export function wasRemovedOrMovedBefore(seg: ISegmentLeaf, seqTime: SeqTime): bo
  * @returns true iff this segment was inserted before the given perspective,
  * and it was not removed or moved in the given perspective.
  */
-export function isSegmentPresent(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
+export function isSegmentPresent(seg: ISegmentPrivate, seqTime: SeqTime): boolean {
 	const { refSeq, localSeq } = seqTime;
 	// If seg.seq is undefined, then this segment has existed since minSeq.
 	// It may have been moved or removed since.
