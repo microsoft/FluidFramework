@@ -947,6 +947,11 @@ export interface RunTransaction {
     readonly rollback: typeof rollback;
 }
 
+// @alpha
+export interface RunTransactionParams {
+    readonly preconditions?: readonly TransactionConstraint[];
+}
+
 // @public @sealed
 export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
@@ -1054,8 +1059,35 @@ export interface Tagged<V, T extends string = string> {
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
+// @alpha
+export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = {
+    rollback?: false;
+    value: TSuccessValue;
+} | {
+    rollback: true;
+    value: TFailureValue;
+};
+
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @alpha
+export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
+
+// @alpha
+export type TransactionResultExt<TSuccessValue, TFailureValue> = TransactionResultSuccess<TSuccessValue> | TransactionResultFailed<TFailureValue>;
+
+// @alpha
+export interface TransactionResultFailed<TFailureValue> {
+    success: false;
+    value: TFailureValue;
+}
+
+// @alpha
+export interface TransactionResultSuccess<TSuccessValue> {
+    success: true;
+    value: TSuccessValue;
+}
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
@@ -1308,6 +1340,8 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
+    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
+    runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
 }
 
 // @public @sealed
@@ -1387,6 +1421,9 @@ export interface ViewContent {
     readonly schema: JsonCompatible;
     readonly tree: JsonCompatible<IFluidHandle>;
 }
+
+// @alpha
+export type VoidTransactionCallbackStatus = Omit<TransactionCallbackStatus<unknown, unknown>, "value">;
 
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
