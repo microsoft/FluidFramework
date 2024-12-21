@@ -18,7 +18,6 @@ export {
 	ICodeDetailsLoader,
 	IDetachedBlobStorage,
 	IFluidModuleWithDetails,
-	ILoaderOptions,
 	ILoaderProps,
 	ILoaderServices,
 	Loader,
