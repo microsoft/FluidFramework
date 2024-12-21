@@ -209,8 +209,7 @@ export interface BenchmarkTimingOptions {
 }
 
 /**
- * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type;
- * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
+ * Operations that can be performed on a per-batch basis
  * @public
  */
 export interface OnBatch {
@@ -223,6 +222,16 @@ export interface OnBatch {
 	 * iterations per batch.
 	 */
 	beforeEachBatch?: () => void;
+
+	/**
+	 * Executes Async code before the start of each batch. This has the same semantics as benchmarkjs's `onCycle`:
+	 * https://benchmarkjs.com/docs/#options_onCycle
+	 *
+	 * @remarks
+	 * Beware that batches run `benchmarkFn` more than once: a typical micro-benchmark might involve 10k
+	 * iterations per batch.
+	 */
+	beforeEachBatchAsync?: () => Promise<void>;
 }
 
 /**
