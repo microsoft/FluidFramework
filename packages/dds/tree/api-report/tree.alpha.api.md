@@ -679,9 +679,6 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
 // @alpha
-export type VoidTransactionCallbackStatus = Omit<TransactionCallbackStatus<unknown, unknown>, "value">;
-
-// @alpha
 export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = {
     rollback?: false;
     value: TSuccessValue;
@@ -1040,6 +1037,9 @@ export interface ViewContent {
     readonly schema: JsonCompatible;
     readonly tree: JsonCompatible<IFluidHandle>;
 }
+
+// @alpha
+export type VoidTransactionCallbackStatus = Omit<TransactionCallbackStatus<unknown, unknown>, "value">;
 
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
