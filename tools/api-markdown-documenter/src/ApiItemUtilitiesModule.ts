@@ -8,7 +8,7 @@
  */
 
 export {
-	doesItemRequireOwnDocument,
+	doesItemKindRequireOwnDocument,
 	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
