@@ -32,6 +32,12 @@ In the case of the `description` property, it is mapped directly to the `descrip
 Custom, user-defined properties can also be specified.
 These properties will not be used by the system by default, but can be used to associate common application-specific properties with Node Schema.
 
+#### `SchemaFactoryAlpha` Updates
+
+-   `object` and `objectRecursive`, `arrayRecursive`, and `mapRecursive` now support `metadata` in their `options` parameter.
+-   (new) `arrayAlpha` - Variant of `array` that accepts an options parameter which supports `metadata`
+-   (new) `mapAlpha` - Variant of `map` that accepts an options parameter which supports `metadata`
+
 #### Example
 
 An application is implementing search functionality.
