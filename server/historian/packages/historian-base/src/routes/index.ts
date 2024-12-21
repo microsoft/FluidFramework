@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
-import { ICache, IDenyList, ITenantService } from "../services";
+import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
@@ -52,6 +52,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): IRoutes {
 	const commonRouteParams: CommonRouteParams = [
 		config,
@@ -64,6 +65,7 @@ export function create(
 		revokedTokenChecker,
 		denyList,
 		ephemeralDocumentTTLSec,
+		simplifiedCustomDataRetriever,
 	];
 	return {
 		git: {

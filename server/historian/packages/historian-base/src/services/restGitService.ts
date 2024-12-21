@@ -65,6 +65,7 @@ export class RestGitService {
 		private readonly storageUrl?: string,
 		private readonly isEphemeralContainer?: boolean,
 		private readonly maxCacheableSummarySize?: number,
+		private readonly simplifiedCustomData?: string,
 	) {
 		const defaultHeaders: RawAxiosRequestHeaders =
 			storageName !== undefined
@@ -82,6 +83,9 @@ export class RestGitService {
 				`${storage.credentials.user}:${storage.credentials.password}`,
 			);
 			defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
+		}
+		if (this.simplifiedCustomData) {
+			defaultHeaders[Constants.SimplifiedCustomData] = this.simplifiedCustomData;
 		}
 
 		// We set the flag only for ephemeral containers
