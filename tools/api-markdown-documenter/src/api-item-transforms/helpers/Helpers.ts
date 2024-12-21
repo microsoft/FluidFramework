@@ -50,7 +50,7 @@ import {
 import {
 	type ApiFunctionLike,
 	injectSeparator,
-	getQualifiedApiItemName,
+	getFileSafeNameForApiItem,
 	getSeeBlocks,
 	getThrowsBlocks,
 	getDeprecatedBlock,
@@ -99,7 +99,7 @@ export function createSignatureSection(
 
 			return wrapInSection(contents, {
 				title: "Signature",
-				id: `${getQualifiedApiItemName(apiItem)}-signature`,
+				id: `${getFileSafeNameForApiItem(apiItem)}-signature`,
 			});
 		}
 	}
@@ -136,7 +136,7 @@ export function createSeeAlsoSection(
 
 	return wrapInSection(contents, {
 		title: "See Also",
-		id: `${getQualifiedApiItemName(apiItem)}-see-also`,
+		id: `${getFileSafeNameForApiItem(apiItem)}-see-also`,
 	});
 }
 
@@ -496,7 +496,7 @@ export function createRemarksSection(
 				tsdocNodeTransformOptions,
 			),
 		],
-		{ title: "Remarks", id: `${getQualifiedApiItemName(apiItem)}-remarks` },
+		{ title: "Remarks", id: `${getFileSafeNameForApiItem(apiItem)}-remarks` },
 	);
 }
 
@@ -532,7 +532,7 @@ export function createThrowsSection(
 
 	return wrapInSection(paragraphs, {
 		title: headingText,
-		id: `${getQualifiedApiItemName(apiItem)}-throws`,
+		id: `${getFileSafeNameForApiItem(apiItem)}-throws`,
 	});
 }
 
@@ -616,7 +616,7 @@ export function createExamplesSection(
 
 	return wrapInSection(exampleSections, {
 		title: headingText,
-		id: `${getQualifiedApiItemName(apiItem)}-examples`,
+		id: `${getFileSafeNameForApiItem(apiItem)}-examples`,
 	});
 }
 
@@ -734,7 +734,7 @@ function createExampleSection(
 		exampleParagraph = stripTitleFromParagraph(exampleParagraph, exampleTitle, logger);
 	}
 
-	const headingId = `${getQualifiedApiItemName(example.apiItem)}-example${
+	const headingId = `${getFileSafeNameForApiItem(example.apiItem)}-example${
 		example.exampleNumber ?? ""
 	}`;
 
@@ -892,7 +892,7 @@ export function createParametersSection(
 		[createParametersSummaryTable(apiFunctionLike.parameters, apiFunctionLike, config)],
 		{
 			title: "Parameters",
-			id: `${getQualifiedApiItemName(apiFunctionLike)}-parameters`,
+			id: `${getFileSafeNameForApiItem(apiFunctionLike)}-parameters`,
 		},
 	);
 }
@@ -951,7 +951,7 @@ export function createReturnsSection(
 		? undefined
 		: wrapInSection(children, {
 				title: "Returns",
-				id: `${getQualifiedApiItemName(apiItem)}-returns`,
+				id: `${getFileSafeNameForApiItem(apiItem)}-returns`,
 		  });
 }
 

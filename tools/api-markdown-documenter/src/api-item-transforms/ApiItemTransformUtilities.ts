@@ -12,7 +12,7 @@ import type { Link } from "../Link.js";
 import {
 	getApiItemKind,
 	getFilteredParent,
-	getQualifiedApiItemName,
+	getFileSafeNameForApiItem,
 	getReleaseTag,
 	getValueOrDerived,
 	type ValidApiItemKind,
@@ -246,7 +246,7 @@ function createQualifiedDocumentNameForApiItem(
 	hierarchyConfig: HierarchyConfiguration,
 ): string {
 	const apiItemKind = getApiItemKind(apiItem);
-	let documentName = getQualifiedApiItemName(apiItem);
+	let documentName = getFileSafeNameForApiItem(apiItem);
 	if (apiItemKind !== ApiItemKind.Package) {
 		// If the item is not a package, append its "kind" to the document name to ensure uniqueness.
 		// Packages strictly live at the root of the document hierarchy (beneath the model), and only
@@ -265,7 +265,7 @@ function createQualifiedDocumentNameForApiItem(
 		currentItem.kind !== "Model" &&
 		hierarchyConfig[getApiItemKind(currentItem)].kind !== HierarchyKind.Folder
 	) {
-		documentName = `${getQualifiedApiItemName(currentItem)}-${documentName}`;
+		documentName = `${getFileSafeNameForApiItem(currentItem)}-${documentName}`;
 		currentItem = getFilteredParent(currentItem);
 	}
 
@@ -331,7 +331,7 @@ function getHeadingIdForApiItem(
 	// Generate ID information for everything back to that point
 	let hierarchyItem = apiItem;
 	while (!doesItemRequireOwnDocument(hierarchyItem, config.hierarchy)) {
-		const qualifiedName = getQualifiedApiItemName(hierarchyItem);
+		const qualifiedName = getFileSafeNameForApiItem(hierarchyItem);
 
 		// Since we're walking up the tree, we'll build the string from the end for simplicity
 		baseName = baseName === undefined ? qualifiedName : `${qualifiedName}-${baseName}`;

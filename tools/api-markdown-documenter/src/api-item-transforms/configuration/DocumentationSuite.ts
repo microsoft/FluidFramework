@@ -12,11 +12,11 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import {
+	getApiItemKind,
 	getConciseSignature,
+	getReleaseTag,
 	getSingleLineExcerptText,
 	isDeprecated,
-	getReleaseTag,
-	getApiItemKind,
 } from "../../utilities/index.js";
 
 import {

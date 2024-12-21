@@ -6,7 +6,7 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ValueSchema } from "../../core/index.js";
-import { getOrCreate, hasSingle, type Mutable } from "../../util/index.js";
+import { copyProperty, getOrCreate, hasSingle, type Mutable } from "../../util/index.js";
 import type {
 	JsonArrayNodeSchema,
 	JsonFieldSchema,
@@ -149,11 +149,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 					anyOf: allowedTypes,
 				};
 
-		// Don't include "description" property at all if it's not present in the input.
-		if (value.metadata?.description !== undefined) {
-			output.description = value.metadata.description;
-		}
-
+		copyProperty(value.metadata, "description", output);
 		properties[key] = output;
 
 		if (value.kind === FieldKind.Required) {

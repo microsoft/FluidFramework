@@ -166,9 +166,26 @@ export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
 }
 
 /**
- * Converts bad filename characters to underscores.
+ * Gets a qualified representation of the API item's display name, accounting for function/method overloads
+ * by adding a suffix (such as "myMethod_2") as needed to guarantee uniqueness.
  */
-function getSafeFilenameForName(apiItemName: string): string {
+function getQualifiedDisplayName(apiItem: ApiItem): string {
+	let qualifiedName: string = apiItem.displayName;
+	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
+		// Subtract one for compatibility with earlier releases of API Documenter.
+		// (This will get revamped when we fix GitHub issue #1308)
+		qualifiedName += `_${apiItem.overloadIndex - 1}`;
+	}
+	return qualifiedName;
+}
+
+/**
+ * Gets a filename-safe representation of the provided API item name.
+ *
+ * @remarks
+ * - Handles invalid filename characters.
+ */
+export function getFileSafeNameForApiItemName(apiItemName: string): string {
 	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
 	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
 
@@ -180,30 +197,20 @@ function getSafeFilenameForName(apiItemName: string): string {
 
 /**
  * Gets a filename-safe representation of the API item's display name.
- */
-function getFileSafeNameForApiItem(apiItem: ApiItem): string {
-	return apiItem.kind === ApiItemKind.Package
-		? getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage))
-		: getSafeFilenameForName(apiItem.displayName);
-}
-
-// TODO: rename to be a bit more specific
-/**
- * Adjusts the name of the item as needed.
- * Accounts for method overloads by adding a suffix such as "myMethod_2".
+ *
+ * @remarks
+ * - Handles invalid filename characters.
+ *
+ * - Qualifies the API item's name, accounting for function/method overloads by adding a suffix (such as "myMethod_2")
+ * as needed to guarantee uniqueness.
  *
  * @param apiItem - The API item for which the qualified name is being queried.
  *
  * @public
  */
-export function getQualifiedApiItemName(apiItem: ApiItem): string {
-	let qualifiedName: string = getFileSafeNameForApiItem(apiItem);
-	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
-		// Subtract one for compatibility with earlier releases of API Documenter.
-		// (This will get revamped when we fix GitHub issue #1308)
-		qualifiedName += `_${apiItem.overloadIndex - 1}`;
-	}
-	return qualifiedName;
+export function getFileSafeNameForApiItem(apiItem: ApiItem): string {
+	const qualifiedDisplayName = getQualifiedDisplayName(apiItem);
+	return getFileSafeNameForApiItemName(qualifiedDisplayName);
 }
 
 /**
