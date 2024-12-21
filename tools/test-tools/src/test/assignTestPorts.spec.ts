@@ -9,7 +9,7 @@ import { getPackageInfo } from "../assignTestPorts";
 
 describe("assignTestPorts", () => {
 	it("getPackageInfo", () => {
-		const info = getPackageInfo();
+		const info = getPackageInfo('pnpm');
 		assert.equal(info.length, 1);
 		assert.equal(info[0].name, "@fluidframework/test-tools");
 	});

@@ -12,21 +12,26 @@ export interface PackageInfo {
 	name: string;
 	version: string;
 	private: string;
-	path: string;
+	// If useful, both lerna and pnpm report the path to the package.
+	// Pnpm uses the key "path", while lerna uses "location"
 }
 
 /**
  * Gets and parses a PackageInfo for packages in the workspace.
  */
-export function getPackageInfo(): PackageInfo[] {
+export function getPackageInfo(packageManager: 'pnpm' | 'lerna'): PackageInfo[] {
 	try {
-		const child = spawnSync("pnpm", ["recursive", "list", "--json", "--depth=-1"], {
+		const command = packageManager;
+		const args = packageManager === 'pnpm' ? ["recursive", "list", "--json", "--depth=-1"] : ["list", "--json", "--all"];
+		const child = spawnSync(command, args, {
 			encoding: "utf8",
 			// shell:true is required for Windows without a resolved path to pnpm.
 			shell: true,
 		});
+
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const info: PackageInfo[] = JSON.parse(child.stdout);
+
 		if (!Array.isArray(info)) {
 			// eslint-disable-next-line unicorn/prefer-type-error
 			throw new Error(
@@ -40,8 +45,8 @@ export function getPackageInfo(): PackageInfo[] {
 	}
 }
 
-export function writePortMapFile(initialPort: number): void {
-	const info: PackageInfo[] = getPackageInfo();
+export function writePortMapFile(initialPort: number, packageManager: 'pnpm' | 'lerna'): void {
+	const info: PackageInfo[] = getPackageInfo(packageManager);
 
 	// Assign a unique port to each package
 	const portMap: { [pkgName: string]: number } = {};
