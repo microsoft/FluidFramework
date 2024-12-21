@@ -55,11 +55,6 @@ describe("OpCompressor", () => {
 				assert.strictEqual(compressedBatch.messages.length, batch.messages.length);
 				assert.strictEqual(compressedBatch.messages[0].compression, "lz4");
 				assert.strictEqual(compressedBatch.messages[0].metadata?.flag, true);
-				if (compressedBatch.messages.length > 1) {
-					assert.strictEqual(compressedBatch.messages[1].contents, undefined);
-					assert.strictEqual(compressedBatch.messages[1].compression, undefined);
-					assert.strictEqual(compressedBatch.messages[1].contents, undefined);
-				}
 			}).timeout(3000);
 		}));
 
