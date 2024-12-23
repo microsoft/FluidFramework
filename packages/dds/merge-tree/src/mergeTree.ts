@@ -2343,14 +2343,14 @@ export class MergeTree {
 
 	public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup): void {
 		if (op.type === MergeTreeDeltaType.REMOVE) {
-			const pendingSegmentGroup = this.pendingSegments.pop?.()?.data;
+			const pendingSegmentGroup = this.pendingSegments.pop()?.data;
 			if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
 				throw new Error("Rollback op doesn't match last edit");
 			}
 			// Disabling because a for of loop causes the type of segment to be ISegmentPrivate, which does not have parent information stored
 			// eslint-disable-next-line unicorn/no-array-for-each
 			pendingSegmentGroup.segments.forEach((segment: ISegmentPrivate) => {
-				const segmentSegmentGroup = segment?.segmentGroups?.pop?.();
+				const segmentSegmentGroup = segment?.segmentGroups?.pop();
 				assert(
 					segmentSegmentGroup === pendingSegmentGroup,
 					0x3ee /* Unexpected segmentGroup in segment */,
@@ -2391,7 +2391,7 @@ export class MergeTree {
 			op.type === MergeTreeDeltaType.INSERT ||
 			op.type === MergeTreeDeltaType.ANNOTATE
 		) {
-			const pendingSegmentGroup = this.pendingSegments.pop?.()?.data;
+			const pendingSegmentGroup = this.pendingSegments.pop()?.data;
 			if (
 				pendingSegmentGroup === undefined ||
 				pendingSegmentGroup !== localOpMetadata ||
@@ -2401,7 +2401,7 @@ export class MergeTree {
 			}
 			let i = 0;
 			for (const segment of pendingSegmentGroup.segments) {
-				const segmentSegmentGroup = segment?.segmentGroups?.pop?.();
+				const segmentSegmentGroup = segment?.segmentGroups?.pop();
 				assert(
 					segmentSegmentGroup === pendingSegmentGroup,
 					0x3ef /* Unexpected segmentGroup in segment */,

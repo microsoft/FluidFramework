@@ -30,7 +30,7 @@ export class SegmentGroupCollection {
 		return this.segmentGroups.shift()?.data;
 	}
 
-	public remove?(segmentGroup: SegmentGroup): boolean {
+	public remove(segmentGroup: SegmentGroup): boolean {
 		const found = this.segmentGroups.find((v) => v.data === segmentGroup);
 		if (found === undefined) {
 			return false;
@@ -39,7 +39,7 @@ export class SegmentGroupCollection {
 		return true;
 	}
 
-	public pop?(): SegmentGroup | undefined {
+	public pop(): SegmentGroup | undefined {
 		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
 	}
 
