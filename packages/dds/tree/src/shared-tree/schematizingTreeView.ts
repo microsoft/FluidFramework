@@ -64,6 +64,7 @@ import type {
 	TransactionResult,
 	TransactionResultExt,
 	RunTransactionParams,
+	TransactionConstraint,
 } from "./transactionTypes.js";
 
 /**
@@ -244,28 +245,38 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		this.checkout.transaction.start();
-		const preconditions = params?.preconditions ?? [];
-		for (const constraint of preconditions) {
-			switch (constraint.type) {
-				case "nodeInDocument": {
-					const node = getOrCreateInnerNode(constraint.node);
-					const nodeStatus = getKernel(constraint.node).getStatus();
-					const kernel = getKernel(constraint.node);
-					assert(kernel !== undefined, 0x8c1 /* Node should have a kernel */);
-					if (nodeStatus !== TreeStatus.InDocument) {
-						throw new UsageError(
-							`Attempted to add a "nodeInDocument" constraint, but the node is not currently in the document. Node status: ${nodeStatus}`,
-						);
+		const validateConstraints = (
+			constraints: readonly TransactionConstraint[],
+			constraintsOnRevert: boolean,
+		): void => {
+			for (const constraint of constraints) {
+				switch (constraint.type) {
+					case "nodeInDocument": {
+						const node = getOrCreateInnerNode(constraint.node);
+						const nodeStatus = getKernel(constraint.node).getStatus();
+						if (nodeStatus !== TreeStatus.InDocument) {
+							const revertText = constraintsOnRevert ? " on revert" : "";
+							throw new UsageError(
+								`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+							);
+						}
+						if (constraintsOnRevert) {
+							this.checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
+						} else {
+							this.checkout.editor.addNodeExistsConstraint(node.anchorNode);
+						}
+						break;
 					}
-					this.checkout.editor.addNodeExistsConstraint(node.anchorNode);
-					break;
+					default:
+						unreachableCase(constraint.type);
 				}
-				default:
-					unreachableCase(constraint.type);
 			}
-		}
+		};
 
+		this.checkout.transaction.start();
+
+		// Validate preconditions before running the transaction callback.
+		validateConstraints(params?.preconditions ?? [], false /* constraintsOnRevert */);
 		const transactionCallbackStatus = transaction();
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
@@ -278,6 +289,12 @@ export class SchematizingSimpleTreeView<
 				? { success: false, value: value as TFailureValue }
 				: { success: false };
 		}
+
+		// Validate preconditions on revert after running the transaction callback and was successful.
+		validateConstraints(
+			transactionCallbackStatus?.preconditionsOnRevert ?? [],
+			true /* constraintsOnRevert */,
+		);
 
 		this.checkout.transaction.commit();
 		return value !== undefined
