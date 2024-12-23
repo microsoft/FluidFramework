@@ -1721,27 +1721,7 @@ export class Container
 		if (pendingLocalState?.clientId !== undefined) {
 			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
 		}
-		if (pendingLocalState?.clientId !== undefined) {
-			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
-		}
-		if (pendingLocalState?.clientId !== undefined) {
-			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
-		}
-		if (pendingLocalState?.clientId !== undefined) {
-			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
-		}
-		if (pendingLocalState?.clientId !== undefined) {
-			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
-		}
-		if (pendingLocalState?.clientId !== undefined) {
-			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
-		}
-		if (pendingLocalState?.clientId !== undefined) {
-			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
-		}
-		if (pendingLocalState?.clientId !== undefined) {
-			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
-		}
+
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(

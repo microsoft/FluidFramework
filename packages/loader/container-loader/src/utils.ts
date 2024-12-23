@@ -424,28 +424,3 @@ export async function getDocumentAttributes(
 
 	return attributes;
 }
-
-/**
- * Just for testing the PR.
- */
-export async function getDocumentAttributes1(
-	storage: Pick<IDocumentStorageService, "readBlob">,
-	tree: ISnapshotTree | undefined,
-): Promise<IDocumentAttributes> {
-	if (tree === undefined) {
-		return {
-			minimumSequenceNumber: 0,
-			sequenceNumber: 0,
-		};
-	}
-
-	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
-	const attributesHash =
-		".protocol" in tree.trees
-			? tree.trees[".protocol"].blobs.attributes
-			: tree.blobs[".attributes"];
-
-	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
-
-	return attributes;
-}
