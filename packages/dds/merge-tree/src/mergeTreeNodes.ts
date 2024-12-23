@@ -19,11 +19,7 @@ import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
 import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
-import {
-	ReferencePosition,
-	refGetTileLabels,
-	refTypeIncludesFlag,
-} from "./referencePositions.js";
+import { ReferencePosition } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	isInserted,
@@ -274,14 +270,6 @@ export function segmentIsRemoved(segment: ISegment): boolean {
 }
 
 /**
- * @internal
- */
-export interface IMarkerModifiedAction {
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	(marker: Marker): void;
-}
-
-/**
  * @legacy
  * @alpha
  */
@@ -297,16 +285,10 @@ export interface ISegmentAction<TClientData> {
 		accum: TClientData,
 	): boolean;
 }
-/**
- * @internal
- */
 export interface ISegmentChanges {
-	next?: ISegmentInternal;
-	replaceCurrent?: ISegmentInternal;
+	next?: ISegmentPrivate;
+	replaceCurrent?: ISegmentPrivate;
 }
-/**
- * @internal
- */
 export interface BlockAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
@@ -320,49 +302,16 @@ export interface BlockAction<TClientData> {
 	): boolean;
 }
 
-/**
- * @internal
- */
-export interface NodeAction<TClientData> {
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	(
-		node: IMergeNode,
-		pos: number,
-		refSeq: number,
-		clientId: number,
-		start: number | undefined,
-		end: number | undefined,
-		clientData: TClientData,
-	): boolean;
-}
-
-/**
- * @internal
- */
 export interface InsertContext {
-	candidateSegment?: ISegmentInternal;
+	candidateSegment?: ISegmentPrivate;
 	leaf: (
-		segment: ISegmentInternal | undefined,
+		segment: ISegmentPrivate | undefined,
 		pos: number,
 		ic: InsertContext,
 	) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
 
-/**
- * @internal
- */
-export interface SegmentActions<TClientData> {
-	leaf?: ISegmentAction<TClientData>;
-	shift?: NodeAction<TClientData>;
-	contains?: NodeAction<TClientData>;
-	pre?: BlockAction<TClientData>;
-	post?: BlockAction<TClientData>;
-}
-
-/**
- * @internal
- */
 export interface ObliterateInfo {
 	start: LocalReferencePosition;
 	end: LocalReferencePosition;
@@ -373,11 +322,8 @@ export interface ObliterateInfo {
 	segmentGroup: SegmentGroup | undefined;
 }
 
-/**
- * @internal
- */
-export interface SegmentGroup<S extends ISegmentInternal = ISegmentInternal> {
-	segments: S[];
+export interface SegmentGroup {
+	segments: ISegmentPrivate[];
 	previousProps?: PropertySet[];
 	localSeq?: number;
 	refSeq: number;
@@ -389,12 +335,8 @@ export interface SegmentGroup<S extends ISegmentInternal = ISegmentInternal> {
  * the MergeTree always inserts first, then checks for overflow and splits if the child count equals
  * `MaxNodesInBlock`.  (i.e., `MaxNodesInBlock` contains 1 extra slot for temporary storage to
  * facilitate splits.)
- * @internal
  */
 export const MaxNodesInBlock = 8;
-/**
- * @internal
- */
 export class MergeBlock implements IMergeNodeCommon {
 	public children: IMergeNode[];
 	public needsScour?: boolean;
@@ -873,47 +815,3 @@ export const compareNumbers = (a: number, b: number): number => a - b;
  * Compares two strings.
  */
 export const compareStrings = (a: string, b: string): number => a.localeCompare(b);
-
-/**
- * Get a human-readable string for a given {@link Marker}.
- *
- * @remarks This function is intended for debugging only. The exact format of
- * this string should not be relied upon between versions.
- * @internal
- */
-export function debugMarkerToString(marker: Marker): string {
-	let bbuf = "";
-	if (refTypeIncludesFlag(marker, ReferenceType.Tile)) {
-		bbuf += "Tile";
-	}
-	let lbuf = "";
-	const id = marker.getId();
-	if (id) {
-		bbuf += ` (${id}) `;
-	}
-	const tileLabels = refGetTileLabels(marker);
-	if (tileLabels) {
-		lbuf += "tile -- ";
-		for (let i = 0, len = tileLabels.length; i < len; i++) {
-			const tileLabel = tileLabels[i];
-			if (i > 0) {
-				lbuf += "; ";
-			}
-			lbuf += tileLabel;
-		}
-	}
-
-	let pbuf = "";
-	if (marker.properties) {
-		pbuf += JSON.stringify(marker.properties, (key, value) => {
-			// Avoid circular reference when stringifying makers containing handles.
-			// (Substitute a debug string instead.)
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			const handle = !!value && value.IFluidHandle;
-
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-			return handle ? `#Handle(${handle.routeContext.path}/${handle.path})` : value;
-		});
-	}
-	return `M ${bbuf}: ${lbuf} ${pbuf}`;
-}

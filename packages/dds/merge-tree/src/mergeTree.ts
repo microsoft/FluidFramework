@@ -2400,7 +2400,7 @@ export class MergeTree {
 				throw new Error("Rollback op doesn't match last edit");
 			}
 			let i = 0;
-			for (const segment of pendingSegmentGroup.segments as ISegmentPrivate[]) {
+			for (const segment of pendingSegmentGroup.segments) {
 				const segmentSegmentGroup = segment?.segmentGroups?.pop?.();
 				assert(
 					segmentSegmentGroup === pendingSegmentGroup,
