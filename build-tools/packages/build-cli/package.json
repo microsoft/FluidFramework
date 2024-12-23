@@ -137,6 +137,7 @@
 		"sort-package-json": "1.57.0",
 		"strip-ansi": "^6.0.1",
 		"table": "^6.8.2",
+		"@fluid-tools/test-data": "workspace:~",
 		"ts-morph": "^22.0.0",
 		"type-fest": "^2.19.0",
 		"unist-util-visit": "^5.0.0",
