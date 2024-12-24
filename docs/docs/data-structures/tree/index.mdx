@@ -5,8 +5,6 @@ sidebar_position: 5
 
 import { PackageLink } from "@site/src/components/shortLinks";
 
-## Introduction
-
 The `SharedTree` distributed data structure (DDS), available starting with Fluid Framework 2.0, is used to store most or all of your application's shared data in a hierarchical structure.
 
 A `SharedTree` has the following characteristics:
@@ -19,86 +17,13 @@ A `SharedTree` has the following characteristics:
 -   The various types of internal nodes can be nested (subject to the constraints of the schema).
 
 To get started working with `SharedTree` in your application, read this [quick start guide](../../start/tree-start.mdx).
-The major programming tasks for using `SharedTree`s that are described in this doc are:
-
--   Defining a schema for the `SharedTree`. As you build out from prototype to full production application, you can add to this schema and create additional schemas for additional `ShareTree`s.
--   Initializing the `TreeView` object.
--   Creating code that reads and edits the nodes of the `SharedTree`.
-
-### Usage
-
 Provided below are links to more detailed information about `SharedTree` usage and its available APIs.
 
 - [Node Types](./node-types.mdx): outlines the types that are stored by a `SharedTree`
-	- [Schema Definition](./schema-definition.mdx): how the structure of a `SharedTree` is defined
-	- [Reading and Editing](./reading-and-editing.mdx): how a `SharedTree` is read and edited through the APIs provided on the different node types
+- [Schema Definition](./schema-definition.mdx): how the structure of a `SharedTree` is defined
+- [Reading and Editing](./reading-and-editing.mdx): how a `SharedTree` is read and edited through the APIs provided on the different node types
 
-## Other
 
-### TreeView Object
-
-The `TreeView` object is accessed via the Fluid Framework `IFluidContainer` object (container). The `TreeView` contains a `root` node that provides access to the complete `SharedTree`. The `TreeView` also provides access to tree-level events.
-
-### Events
-
-`SharedTree` supports two node level events: `nodeChanged` and `treeChanged`.
-Your code can create handlers for these events using the utility class `Tree`.
-See [Tree utility APIs](#tree-utility-apis).
-
-Additionally, the `TreeView` object includes 2 events that operate over the whole tree.
-These are `rootChanged` and `commitApplied`.
-
-`rootChanged` fires when the root field (the field that contains the root node) changes.
-That is, if a new root node is assigned or the schema changes.
-This will not fire when the node itself changes.
-
-`changed` fires whenever a change is applied outside of a transaction or when a transaction is committed.
-This is used to get `Revertible` objects to put on the undo or redo stacks.
-See [Undo/Redo support](#undoredo-support) and [Transactions](#transactions).
-
-### Undo/Redo Support
-
-`SharedTree` makes creating an undo and redo stack very simple. By listening for the `commitApplied` event on the `TreeView` object, you can get a `Revertible` object from a `Commit`.
-`Commit` objects come in three flavors:
-
--   Default: a normal commit made in the local client that would go on the undo stack
--   Undo: a commit that is the result of reverting a Default or Redo `Revertible` object that would go on the redo stack
--   Redo: a commit that is the result of reverting an Undo `Revertible` object that would go on the undo stack
-
-To undo a change, call the `revert` method on the `Revertible` object. This will return the properties of the `TreeView` object last changed by the local client to the their previous state. If changes were made to those properties by other clients in the meantime these changes will be overwritten. For example, if the local client moves 3 items into an array, and then a remote client moves one of those items somewhere else, when the local client reverts their change, the item moved by the remote client will be returned to its original position.
-
-There is an example of a working undo/redo stack here: [Shared Tree Demo](https://github.com/microsoft/FluidExamples/tree/main/brainstorm).
-
-## Tree Utility APIs
-
-The `Tree` class provides some static utility APIs for working with data in the `TreeView` object.
-
-### Event Handling
-
-```typescript
-on<K extends keyof TreeChangeEvents>(
-		node: TreeNode,
-		eventName: K,
-		listener: TreeChangeEvents[K],
-	): () => void;
-```
-
-`Tree.on` assigns the specified `listener` function to the specified `eventName` for the specified `node`.
-The `node` can be any node of the tree.
-The `eventName` can be either "treeChanged" or "nodeChanged".
-`nodeChanged` fires whenever one or more properties of the specified node change.
-`treeChanged` fires whenever one or more properties of the specified node or any node in its subtree, change.
-We recommend looking at the documentation of each of the events for more details.
-
-The `Tree.on()` method returns a function that unsubscribes the handler from the event. This method is typically called in clean up code when the node is being removed. For example:
-
-```typescript
-const unsubscribe = Tree.on(myTreeNode, "nodeChanged", () => {...});
-
-// Later at some point when the event subscription is not needed anymore
-unsubscribe();
-
-```
 
 ### Transactions
 
