@@ -454,15 +454,16 @@ export class ConnectionManager implements IConnectionManager {
 			disconnectReasonOrError in DisconnectReason
 		) {
 			text = disconnectReasonOrError;
-			error = errorOrSwitchToReadonly as ICriticalContainerError;
+			error = errorOrSwitchToReadonly as ICriticalContainerError | undefined;
 		} else {
-			error = disconnectReasonOrError as ICriticalContainerError;
-			finalSwitchToReadonly = (errorOrSwitchToReadonly as boolean) ?? true;
+			error = disconnectReasonOrError as ICriticalContainerError | undefined;
+			finalSwitchToReadonly = typeof errorOrSwitchToReadonly === "boolean" ? errorOrSwitchToReadonly : true;
 		}
 
 		const disconnectReason: IConnectionStateChangeReason = {
 			text,
 			error,
+			disconnectReason: typeof disconnectReasonOrError === "string" ? disconnectReasonOrError : DisconnectReason.Unknown
 		};
 
 		const oldReadonlyValue = this.readonly;
