@@ -19,78 +19,13 @@ A `SharedTree` has the following characteristics:
 To get started working with `SharedTree` in your application, read this [quick start guide](../../start/tree-start.mdx).
 Provided below are links to more detailed information about `SharedTree` usage and its available APIs.
 
-- [Node Types](./node-types.mdx): outlines the types that are stored by a `SharedTree`
+- [Tree Nodes](./nodes.mdx): how information is stored on a `SharedTree`
+	- [Node Types](./node-types.mdx): outlines the specific types that are stored by a `SharedTree`
 - [Schema Definition](./schema-definition.mdx): how the structure of a `SharedTree` is defined
 - [Reading and Editing](./reading-and-editing.mdx): how a `SharedTree` is read and edited through the APIs provided on the different node types
-
-
-
-### Transactions
-
-If you want the `SharedTree` to treat a set of changes atomically, wrap these changes in a transaction. Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously (though, note that the Fluid Framework guarantees this already for any sequence of changes that are submitted synchronously). However, the changes may not be applied at all if the transaction is given one or more constraints. If any constraint on a transaction is not met, then the transaction and all its changes will ignored by all clients. Additionally, all changes in a transaction will be reverted together as a single unit by [undo/redo code](#undoredo-support), because changes within a transaction are exposed through a single `Revertible` object. It is also more efficient for SharedTree to process a large number of changes in a row as a transaction rather than as changes submitted separately.
-
-To create a transaction use the `Tree.runTransaction()` method. You can cancel a transaction from within the callback function by returning the special "rollback object", available via `Tree.runTransaction.rollback`. Also, if an error occurs within the callback, the transaction will be canceled automatically before propagating the error.
-
-In this example, myNode can be any node in the SharedTree. It will be optionally passed into the callback function.
-
-```typescript
-Tree.runTransaction(myNode, (node) => {
-    // Make multiple changes to the tree.
-    // This can be changes to the referenced node but is not limited to that scope.
-    if (
-        // Something is wrong here!
-    ) return "rollback";
-})
-```
-
-You can also pass a `TreeView` object to `runTransaction()`.
-
-```typescript
-Tree.runTransaction(myTreeView, (treeView) => {
-	// Make multiple changes to the tree.
-});
-```
-
-There are example transactions here: [Shared Tree Demo](https://github.com/microsoft/FluidExamples/tree/main/brainstorm).
-
-### Node Information
-
-```typescript
-Tree.key(node: SharedTreeNode): number | string
-```
-
-Returns the key of the `node`. This is a string in all cases, except an array node, in which case it returns the index of the node.
-
-```typescript
-Tree.parent(node: SharedTreeNode): SharedTreeNode
-```
-
-Returns the parent node of `node`. The following snippet continues the sticky notes example. Suppose that you have a reference to a note object and you want to delete it if, and only if, it is a member of an array of notes in a group or it is a direct child of the root. You can get the parent node and test what its type is.
-
-```typescript
-const parent = Tree.parent(note);
-
-if (Tree.is(parent, Notes) || Tree.is(parent, Items)) {
-	const index = parent.indexOf(note);
-	parent.removeAt(index);
-}
-```
-
-```typescript
-Tree.status(node: SharedTreeNode): TreeStatus
-```
-
-Returns the current status of `node`. Possible values are:
-
--   **InDocument**: The node is in the tree.
--   **Removed**: The node has been removed from the tree but is still restorable by undo.
--   **Deleted**: The node is deleted and unrestorable.
-
-```typescript
-Tree.schema(node: SharedTreeNode): TreeNodeSchema
-```
-
-Returns the object that defines the schema of the `node` object.
+- [Events]: the various events emitted by a `SharedTree` and what they can be used for
+- [Transactions]: how edits can be grouped into transactions
+- [Undo Redo Support]: how undo redo works on a `SharedTree`
 
 ## API Documentation
 

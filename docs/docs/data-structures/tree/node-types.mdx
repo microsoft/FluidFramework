@@ -3,6 +3,11 @@ title: Node Types
 sidebar_position: 2
 ---
 
+A SharedTree's data is organized into a tree of nodes.
+A leaf node represents an atomic value, while an interior node represent an object or collection.
+
+## Leaf Nodes
+
 The following leaf node types are available:
 
 -   **boolean**: Works identically to a JavaScript boolean.
@@ -26,21 +31,3 @@ The schema for a map node cannot specify particular key names, nor can it specif
 ## Array Nodes
 
 An array node is an indexed sequence of zero or more values like a JavaScript array. In principle, values can be any of the node types, but the schema that your code defines will specify what subset of those types can be the values of any given array item.
-
-## Type Guard
-
-When your code needs to process nodes only of a certain type and it has a reference to an object of an unknown type, you can use the `Tree.is()` method to test for the desired type as in the following examples.
-
-```typescript
-Tree.is(someNode: SharedTreeNode, nodeType: TreeNodeSchema | T): boolean
-```
-
-Returns `true` if `someNode` is of type `nodeType`. Note that `T` is a type that is derived from a call of one of the `SchemaFactory` methods; `object()`, `map()`, or `array()`. Here are examples:
-
-```typescript
-if (Tree.is(myNode, Note)) {
-	// Code here that processes Note nodes.
-}
-```
-
-For another example, see the `Tree.parent()` method.

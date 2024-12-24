@@ -4,8 +4,6 @@ sidebar_position: 4
 ---
 
 `SharedTree` supports two node level events: `nodeChanged` and `treeChanged`.
-Your code can create handlers for these events using the utility class `Tree`.
-See [Tree utility APIs](#tree-utility-apis).
 
 Additionally, the `TreeView` object includes 2 events that operate over the whole tree.
 These are `rootChanged` and `commitApplied`.
@@ -16,7 +14,7 @@ This will not fire when the node itself changes.
 
 `changed` fires whenever a change is applied outside of a transaction or when a transaction is committed.
 This is used to get `Revertible` objects to put on the undo or redo stacks.
-See [undo redo support]() and [Transactions](#transactions).
+See [undo redo support](./undo-redo.mdx) and [Transactions](./transactions.mdx).
 
 ## Event Handling
 

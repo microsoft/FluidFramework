@@ -3,6 +3,8 @@ title: Schema Definition
 sidebar_position: 3
 ---
 
+import { PackageLink } from "@site/src/components/shortLinks";
+
 A `SchemaFactory` object is created by passing a unique string such as a UUID to the constructor.
 The `SchemaFactory` class defines five primitive data types; `boolean`, `string`, `number`, `null`, and `handle` for specifying leaf nodes.
 It also has three methods for specifying internal nodes; `object()`, `array()`, and `map()`.
@@ -52,9 +54,8 @@ class Note extends sf.object("Note", {
 
 For the remainder of this article, we use the inline style.
 
-todo: explain why inline style is better, link to api docs
-
-You can add fields, properties, and methods like any TypeScript class including methods that wrap one or more methods in the `SharedTree` [APIs](#api). For example, the `Note` class can have the following `updateText` method. Since the method writes to shared properties, the changes are reflected on all clients.
+You can add fields, properties, and methods like any TypeScript class including methods that wrap one or more methods in the <PackageLink packageName="tree">SharedTree API docs</PackageLink>.
+For example, the `Note` class can have the following `updateText` method. Since the method writes to shared properties, the changes are reflected on all clients.
 
 ```typescript
 public updateText(text: string) {
