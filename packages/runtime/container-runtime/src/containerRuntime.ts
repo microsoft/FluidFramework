@@ -1217,7 +1217,7 @@ export class ContainerRuntime
 		referenceSequenceNumber?: number,
 	) => number;
 	/**
-	 * Do not call directly - use submitAddressesSignal
+	 * Do not call directly - use {@link ContainerRuntime.submitEnvelopedSignal}
 	 */
 	private readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;

@@ -91,9 +91,12 @@ export class ContainerContext implements IContainerContext {
 		) => number,
 
 		/**
-		 * `unknown` should be removed once `@alpha` tag is removed from IContainerContext
+		 * `unknown` should be removed once `IContainerContext` is `@internal` or `@system`.
 		 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
-		 * Any changes to submitSignalFn `content` should be checked internally by temporarily changing IContainerContext and removing all `unknown`s
+		 *
+		 * @privateRemarks
+		 * Any changes to submitSignalFn `content` should be checked internally by temporarily
+		 * changing `IContainerContext` (replacing/removing all `unknown`s).
 		 */
 		public readonly submitSignalFn: (
 			content: unknown | ISignalEnvelope,
