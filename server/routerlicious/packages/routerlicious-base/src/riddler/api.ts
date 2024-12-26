@@ -67,6 +67,30 @@ export function create(
 	});
 
 	/**
+	 * Signs a tenant token using the given tenant's key.
+	 */
+	router.post("/tenants/:id/accesstoken", (request, response) => {
+		const tenantId = request.params.id;
+		const scopes = request.body.scopes;
+		const documentId = request.body.documentId ?? "";
+		const user = request.body.user;
+		const lifetime = request.body.lifetime;
+		const ver = request.body.ver;
+		const jti = request.body.jti;
+		const accessTokenP = manager.signToken(
+			tenantId,
+			documentId,
+			scopes,
+			user,
+			lifetime,
+			ver,
+			jti,
+			getIncludeDisabledFlag(request),
+		);
+		handleResponse(accessTokenP, response);
+	});
+
+	/**
 	 * Retrieves details for the given tenant
 	 */
 	router.get("/tenants/:id", (request, response) => {
@@ -91,13 +115,7 @@ export function create(
 	router.get("/tenants/:id/keys", (request, response) => {
 		const tenantId = request.params.id;
 		const includeDisabledTenant = getIncludeDisabledFlag(request);
-		const usePrivateKeys = getUsePrivateKeysFlag(request);
-		const tenantP = manager.getTenantKeys(
-			tenantId,
-			includeDisabledTenant,
-			false /* bypassCache */,
-			usePrivateKeys,
-		);
+		const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant);
 		handleResponse(tenantP, response);
 	});
 
@@ -122,10 +140,15 @@ export function create(
 	/**
 	 * Updates the keyless access setting for the given tenant
 	 */
-	router.put("/tenants/:id/privateKeyAccess", (request, response) => {
+	router.put("/tenants/:id/keyAccess", (request, response) => {
 		const tenantId = request.params.id;
 		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess ?? false;
-		const storageP = manager.updatePrivateKeyAccessPolicy(tenantId, enablePrivateKeyAccess);
+		const enableSharedKeyAccess = request.body.enableSharedKeyAccess ?? false;
+		const storageP = manager.updateKeyAccessPolicy(
+			tenantId,
+			enablePrivateKeyAccess,
+			enableSharedKeyAccess,
+		);
 		handleResponse(storageP, response);
 	});
 
@@ -139,7 +162,8 @@ export function create(
 	});
 
 	/**
-	 * Refreshes the key for the given tenant
+	 * Refreshes the key for the given tenant. Private keys are refreshed only if refreshPrivateKey is true.
+	 * Private keys are refreshed only by internal service calls.
 	 */
 	router.put("/tenants/:id/key", (request, response) => {
 		const tenantId = request.params.id;
@@ -160,11 +184,13 @@ export function create(
 			? request.body.customData
 			: {};
 		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess ?? false;
+		const enableSharedKeyAccess = request.body.enableSharedKeyAccess ?? true;
 		const tenantP = manager.createTenant(
 			tenantId,
 			tenantStorage,
 			tenantOrderer,
 			tenantCustomData,
+			enableSharedKeyAccess,
 			enablePrivateKeyAccess,
 		);
 		handleResponse(tenantP, response);
@@ -186,11 +212,6 @@ export function create(
 	function getIncludeDisabledFlag(request): boolean {
 		const includeDisabledRaw = request.query.includeDisabledTenant as string;
 		return includeDisabledRaw?.toLowerCase() === "true";
-	}
-
-	function getUsePrivateKeysFlag(request): boolean {
-		const usePrivateKeys = request.query.usePrivateKeys as string;
-		return usePrivateKeys?.toLowerCase() === "true";
 	}
 
 	return router;
