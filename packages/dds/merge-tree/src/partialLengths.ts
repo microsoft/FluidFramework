@@ -710,11 +710,12 @@ export class PartialSequenceLengths {
 
 			const hasOverlap = moveInfo.movedClientIds.length > 1;
 			moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
-		} else if (segment.wasMovedOnInsert) {
-			// if this segment was obliterated on insert, its length is only
-			// visible to the client that inserted it
-			segmentLen = 0;
-			remoteObliteratedLen = segment.cachedLength;
+			if (moveInfo.wasMovedOnInsert) {
+				// if this segment was obliterated on insert, its length is only
+				// visible to the client that inserted it
+				segmentLen = 0;
+				remoteObliteratedLen = segment.cachedLength;
+			}
 		}
 
 		const partials = isLocal
