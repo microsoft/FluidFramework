@@ -4,13 +4,13 @@
  */
 
 import { DoublyLinkedList, walkList } from "./collections/index.js";
-import { SegmentGroup, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { SegmentGroup, type ISegmentPrivate } from "./mergeTreeNodes.js";
 
 export class SegmentGroupCollection {
-	private readonly segmentGroups: DoublyLinkedList<SegmentGroup<ISegmentLeaf>>;
+	private readonly segmentGroups: DoublyLinkedList<SegmentGroup<ISegmentPrivate>>;
 
-	constructor(private readonly segment: ISegmentLeaf) {
-		this.segmentGroups = new DoublyLinkedList<SegmentGroup<ISegmentLeaf>>();
+	constructor(private readonly segment: ISegmentPrivate) {
+		this.segmentGroups = new DoublyLinkedList<SegmentGroup<ISegmentPrivate>>();
 	}
 
 	public get size(): number {
@@ -21,16 +21,16 @@ export class SegmentGroupCollection {
 		return this.segmentGroups.empty;
 	}
 
-	public enqueue(segmentGroup: SegmentGroup<ISegmentLeaf>): void {
+	public enqueue(segmentGroup: SegmentGroup<ISegmentPrivate>): void {
 		this.segmentGroups.push(segmentGroup);
 		segmentGroup.segments.push(this.segment);
 	}
 
-	public dequeue(): SegmentGroup<ISegmentLeaf> | undefined {
+	public dequeue(): SegmentGroup<ISegmentPrivate> | undefined {
 		return this.segmentGroups.shift()?.data;
 	}
 
-	public remove?(segmentGroup: SegmentGroup<ISegmentLeaf>): boolean {
+	public remove?(segmentGroup: SegmentGroup<ISegmentPrivate>): boolean {
 		const found = this.segmentGroups.find((v) => v.data === segmentGroup);
 		if (found === undefined) {
 			return false;
@@ -39,7 +39,7 @@ export class SegmentGroupCollection {
 		return true;
 	}
 
-	public pop?(): SegmentGroup<ISegmentLeaf> | undefined {
+	public pop?(): SegmentGroup<ISegmentPrivate> | undefined {
 		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
 	}
 
@@ -48,8 +48,8 @@ export class SegmentGroupCollection {
 	}
 
 	private enqueueOnCopy(
-		segmentGroup: SegmentGroup<ISegmentLeaf>,
-		sourceSegment: ISegmentLeaf,
+		segmentGroup: SegmentGroup<ISegmentPrivate>,
+		sourceSegment: ISegmentPrivate,
 	): void {
 		this.enqueue(segmentGroup);
 		if (segmentGroup.previousProps) {

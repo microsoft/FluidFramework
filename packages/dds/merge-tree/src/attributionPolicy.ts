@@ -17,7 +17,7 @@ import {
 	IMergeTreeSegmentDelta,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
-import type { ISegmentLeaf } from "./mergeTreeNodes.js";
+import type { ISegmentPrivate } from "./mergeTreeNodes.js";
 import { MergeTreeDeltaType } from "./ops.js";
 
 // Note: these thinly wrap MergeTreeDeltaCallback and MergeTreeMaintenanceCallback to provide the client.
@@ -98,7 +98,7 @@ const attributeInsertionOnSegments = (
 	key: AttributionKey,
 ): void => {
 	for (const { segment } of deltaSegments) {
-		const seg: ISegmentLeaf = segment;
+		const seg: ISegmentPrivate = segment;
 		if (seg.seq !== undefined) {
 			segment.attribution?.update(
 				undefined,

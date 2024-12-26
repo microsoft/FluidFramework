@@ -29,7 +29,7 @@ import {
 	forwardExcursion,
 	walkAllChildSegments,
 } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentLeaf, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { MergeBlock, ISegmentPrivate, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
@@ -52,7 +52,7 @@ import { TextSegment } from "../textSegment.js";
 import { TestSerializer } from "./testSerializer.js";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 
-export function specToSegment(spec: IJSONSegment): ISegmentLeaf {
+export function specToSegment(spec: IJSONSegment): ISegmentPrivate {
 	const maybeText = TextSegment.fromJSONObject(spec);
 	if (maybeText) {
 		return maybeText;
@@ -105,7 +105,7 @@ export class TestClient extends Client {
 	public static async createFromSnapshot(
 		snapshotTree: ITree,
 		newLongClientId: string,
-		specToSeg: (spec: IJSONSegment) => ISegmentLeaf,
+		specToSeg: (spec: IJSONSegment) => ISegmentPrivate,
 		options?: PropertySet,
 	): Promise<TestClient> {
 		return TestClient.createFromStorage(
@@ -119,7 +119,7 @@ export class TestClient extends Client {
 	public static async createFromSummary(
 		summaryTree: ISummaryTree,
 		newLongClientId: string,
-		specToSeg: (spec: IJSONSegment) => ISegmentLeaf,
+		specToSeg: (spec: IJSONSegment) => ISegmentPrivate,
 		options?: PropertySet,
 	): Promise<TestClient> {
 		return TestClient.createFromStorage(
@@ -133,7 +133,7 @@ export class TestClient extends Client {
 	public static async createFromStorage(
 		storage: MockStorage,
 		newLongClientId: string,
-		specToSeg: (spec: IJSONSegment) => ISegmentLeaf,
+		specToSeg: (spec: IJSONSegment) => ISegmentPrivate,
 		options?: PropertySet,
 	): Promise<TestClient> {
 		const client2 = new TestClient(options, specToSeg);
@@ -175,7 +175,7 @@ export class TestClient extends Client {
 			// assert.notEqual(d.deltaSegments.length, 0);
 			for (const s of d.deltaSegments) {
 				if (d.operation === MergeTreeDeltaType.INSERT) {
-					const seg: ISegmentLeaf = s.segment;
+					const seg: ISegmentPrivate = s.segment;
 					assert.notEqual(seg.parent, undefined);
 				}
 			}
@@ -348,7 +348,7 @@ export class TestClient extends Client {
 	public debugDumpTree(tree: MergeTree): void {
 		// want the segment's content and the state of insert/remove
 		const test: string[] = [];
-		walkAllChildSegments(tree.root, (segment: ISegmentLeaf) => {
+		walkAllChildSegments(tree.root, (segment: ISegmentPrivate) => {
 			const prefixes: (string | undefined | number)[] = [];
 			prefixes.push(
 				segment.seq === UnassignedSequenceNumber ? `L${segment.localSeq}` : segment.seq,
@@ -371,16 +371,16 @@ export class TestClient extends Client {
 	 * slow-path computations in this function without leveraging the merge-tree's structure
 	 */
 	public rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number {
-		let segment: ISegmentLeaf | undefined;
+		let segment: ISegmentPrivate | undefined;
 		let posAccumulated = 0;
 		let offset = pos;
-		const isInsertedInView = (seg: ISegmentLeaf): boolean =>
+		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
 			(seg.seq !== undefined &&
 				seg.seq !== UnassignedSequenceNumber &&
 				seg.seq <= seqNumberFrom) ||
 			(seg.localSeq !== undefined && seg.localSeq <= localSeq);
 
-		const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegmentLeaf): boolean =>
+		const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegmentPrivate): boolean =>
 			(removedSeq !== undefined &&
 				removedSeq !== UnassignedSequenceNumber &&
 				removedSeq <= seqNumberFrom) ||
@@ -413,17 +413,17 @@ export class TestClient extends Client {
 		return this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
 	}
 
-	public findReconnectionPosition(segment: ISegmentLeaf, localSeq: number): number {
+	public findReconnectionPosition(segment: ISegmentPrivate, localSeq: number): number {
 		const fasterComputedPosition = super.findReconnectionPosition(segment, localSeq);
 
 		let segmentPosition = 0;
-		const isInsertedInView = (seg: ISegmentLeaf): boolean =>
+		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
 			seg.localSeq === undefined || seg.localSeq <= localSeq;
-		const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegmentLeaf): boolean =>
+		const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegmentPrivate): boolean =>
 			removedSeq !== undefined &&
 			(removedSeq !== UnassignedSequenceNumber ||
 				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq));
-		const isMovedFromView = ({ movedSeq, localMovedSeq }: ISegmentLeaf): boolean =>
+		const isMovedFromView = ({ movedSeq, localMovedSeq }: ISegmentPrivate): boolean =>
 			movedSeq !== undefined &&
 			(movedSeq !== UnassignedSequenceNumber ||
 				(localMovedSeq !== undefined && localMovedSeq <= localSeq));
@@ -523,9 +523,9 @@ export class TestClient extends Client {
 	): ReferencePosition | undefined {
 		let foundMarker: Marker | undefined;
 
-		const { segment } = this.getContainingSegment<ISegmentLeaf>(startPos);
+		const { segment } = this.getContainingSegment<ISegmentPrivate>(startPos);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const segWithParent: ISegmentLeaf = segment!;
+		const segWithParent: ISegmentPrivate = segment!;
 
 		if (Marker.is(segWithParent)) {
 			if (refHasTileLabel(segWithParent, markerLabel)) {

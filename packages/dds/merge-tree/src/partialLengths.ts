@@ -11,7 +11,7 @@ import { MergeTree } from "./mergeTree.js";
 import {
 	CollaborationWindow,
 	IMergeNode,
-	ISegmentLeaf,
+	ISegmentPrivate,
 	compareNumbers,
 	seqLTE,
 	type MergeBlock,
@@ -506,7 +506,7 @@ export class PartialSequenceLengths {
 	 */
 	static accumulateMoveOverlapForExisting(
 		segmentLen: number,
-		segment: ISegmentLeaf,
+		segment: ISegmentPrivate,
 		firstGte: PartialSequenceLength,
 		clientIds: number[],
 	): void {
@@ -540,7 +540,7 @@ export class PartialSequenceLengths {
 	 * segment
 	 */
 	private static getMoveOverlapForExisting(
-		segment: ISegmentLeaf,
+		segment: ISegmentPrivate,
 		obliterateOverlapLen: number,
 		clientIds: number[],
 	): RedBlackTree<number, IOverlapClient> {
@@ -562,7 +562,7 @@ export class PartialSequenceLengths {
 	}
 
 	private static updatePartialsAfterInsertion(
-		segment: ISegmentLeaf,
+		segment: ISegmentPrivate,
 		segmentLen: number,
 		remoteObliteratedLen: number | undefined,
 		obliterateOverlapLen: number = segmentLen,
@@ -642,7 +642,7 @@ export class PartialSequenceLengths {
 	 */
 	private static insertSegment(
 		combinedPartialLengths: PartialSequenceLengths,
-		segment: ISegmentLeaf,
+		segment: ISegmentPrivate,
 		// eslint-disable-next-line import/no-deprecated
 		removalInfo?: IRemovalInfo,
 		// eslint-disable-next-line import/no-deprecated

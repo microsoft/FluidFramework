@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { ISegmentInternal, ISegmentLeaf } from "./mergeTreeNodes.js";
+import type { ISegmentInternal, ISegmentPrivate } from "./mergeTreeNodes.js";
 import type { ReferencePosition } from "./referencePositions.js";
 
 /**
@@ -253,7 +253,7 @@ export type SegmentInfo = IInsertionInfo | IMoveInfo | IRemovalInfo;
 /**
  * A type representing a segment with additional info.
  */
-export type SegmentWithInfo<T extends SegmentInfo> = ISegmentLeaf & T;
+export type SegmentWithInfo<T extends SegmentInfo> = ISegmentPrivate & T;
 
 /**
  * Overwrites the segment info on a segment-like object.
@@ -263,6 +263,6 @@ export type SegmentWithInfo<T extends SegmentInfo> = ISegmentLeaf & T;
  * @returns The segment-like object with the info set.
  */
 export const overwriteInfo = <T extends SegmentInfo>(
-	segmentLike: ISegmentLeaf,
+	segmentLike: ISegmentPrivate,
 	info: T,
 ): SegmentWithInfo<T> => Object.assign(segmentLike, info);

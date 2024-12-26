@@ -13,9 +13,9 @@ export type {
 	// Consumers should not use this, it exists externally for documentation purposes only.
 	DefaultDocumentationSuiteOptions,
 	DocumentBoundaries,
-	DocumentationSuiteOptions,
+	DocumentationSuiteConfiguration,
 	HierarchyBoundaries,
-} from "./DocumentationSuiteOptions.js";
+} from "./DocumentationSuite.js";
 export type {
 	ApiItemTransformations,
 	TransformApiItemWithChildren,

@@ -24,3 +24,4 @@ export { TestThrottlerHelper } from "./testThrottlerHelper";
 export { TestRedisClientConnectionManager } from "./testRedisClientConnectionManager";
 export { TestReadinessCheck, TestCheck } from "./testReadinessCheck";
 export { TestFluidAccessTokenGenerator } from "./testFluidAccessTokenGenerator";
+export { TestClusterDrainingStatusChecker } from "./testClusterDrainingStatusChecker";
