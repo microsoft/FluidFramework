@@ -136,12 +136,12 @@ export class TenantManager {
 		}
 	}
 
-	private isTenantKeylessAccessEnabled(tenant: ITenantDocument): boolean {
+	private isTenantPrivateKeyAccessEnabled(tenant: ITenantDocument): boolean {
 		return tenant.privateKeys ? true : false;
 	}
 
 	// Currently key and secondary are not optional, but this is to make sure we don't break anything if they are optional in the future
-	private isTenantKeyAccessEnabled(tenant: ITenantDocument): boolean {
+	private isTenantSharedKeyAccessEnabled(tenant: ITenantDocument): boolean {
 		return tenant.key || tenant.secondaryKey ? true : false;
 	}
 
@@ -287,8 +287,8 @@ export class TenantManager {
 			storage: tenant.storage,
 			customData: tenant.customData,
 			scheduledDeletionTime: tenant.scheduledDeletionTime,
-			enableKeylessAccess: this.isTenantKeylessAccessEnabled(tenant),
-			enableKeyAccess: this.isTenantKeyAccessEnabled(tenant),
+			enablePrivateKeyAccess: this.isTenantPrivateKeyAccessEnabled(tenant),
+			enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenant),
 		};
 	}
 
@@ -304,8 +304,8 @@ export class TenantManager {
 			storage: tenant.storage,
 			customData: tenant.customData,
 			scheduledDeletionTime: tenant.scheduledDeletionTime,
-			enableKeylessAccess: this.isTenantKeylessAccessEnabled(tenant),
-			enableKeyAccess: this.isTenantKeyAccessEnabled(tenant),
+			enablePrivateKeyAccess: this.isTenantPrivateKeyAccessEnabled(tenant),
+			enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenant),
 		}));
 	}
 
@@ -370,7 +370,7 @@ export class TenantManager {
 		storage: ITenantStorage,
 		orderer: ITenantOrderer,
 		customData: ITenantCustomData,
-		enableKeylessAccess = false,
+		enablePrivateKeyAccess = false,
 	): Promise<ITenantConfig & { key: string }> {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 		// TODO: Make shared tenant keys optional
@@ -379,7 +379,7 @@ export class TenantManager {
 			latestKeyVersion,
 		)) as IPlainTextAndEncryptedTenantKeys;
 		let privateKeys: ITenantPrivateKeys | undefined;
-		if (enableKeylessAccess) {
+		if (enablePrivateKeyAccess) {
 			privateKeys = (await this.createTenantKeys(
 				tenantId,
 				latestKeyVersion,
@@ -432,9 +432,9 @@ export class TenantManager {
 		return tenantDocument.storage;
 	}
 
-	public async updateKeylessAccessPolicy(
+	public async updatePrivateKeyAccessPolicy(
 		tenantId: string,
-		enableKeylessAccess: boolean,
+		enablePrivateKeyAccess: boolean,
 	): Promise<ITenantConfig> {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 		const tenantDocument = await this.getTenantDocument(tenantId);
@@ -446,7 +446,7 @@ export class TenantManager {
 		}
 
 		let privateKeys: ITenantPrivateKeys | undefined;
-		if (enableKeylessAccess) {
+		if (enablePrivateKeyAccess) {
 			// If the request is to enable keyless access and the tenant is already a keyless tenant, return the tenant config
 			if (tenantDocument.privateKeys) {
 				return {
@@ -455,8 +455,8 @@ export class TenantManager {
 					storage: tenantDocument.storage,
 					customData: tenantDocument.customData,
 					scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
-					enableKeylessAccess: true,
-					enableKeyAccess: this.isTenantKeyAccessEnabled(tenantDocument),
+					enablePrivateKeyAccess: true,
+					enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenantDocument),
 				};
 			}
 			// If the tenant is being converted to a keyless tenant, generate new private keys, otherwise update them to be undefined
@@ -474,8 +474,8 @@ export class TenantManager {
 					storage: tenantDocument.storage,
 					customData: tenantDocument.customData,
 					scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
-					enableKeylessAccess: false,
-					enableKeyAccess: this.isTenantKeyAccessEnabled(tenantDocument),
+					enablePrivateKeyAccess: false,
+					enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenantDocument),
 				};
 			}
 			await this.deleteKeyFromCache(tenantId, true /* deletePrivateKeys */);
@@ -486,7 +486,7 @@ export class TenantManager {
 		);
 		const updatedtenantDocument = await this.getTenantDocument(tenantId);
 		if (updatedtenantDocument === undefined) {
-			Lumberjack.error("Could not find tenantId after updating keyless access policy.", {
+			Lumberjack.error("Could not find tenantId after updating private key access policy.", {
 				[BaseTelemetryProperties.tenantId]: tenantId,
 			});
 			throw new NetworkError(404, `Could not find updated tenant: ${tenantId}`);
@@ -497,8 +497,8 @@ export class TenantManager {
 			storage: updatedtenantDocument.storage,
 			customData: updatedtenantDocument.customData,
 			scheduledDeletionTime: updatedtenantDocument.scheduledDeletionTime,
-			enableKeylessAccess: this.isTenantKeylessAccessEnabled(updatedtenantDocument),
-			enableKeyAccess: this.isTenantKeyAccessEnabled(updatedtenantDocument),
+			enablePrivateKeyAccess: this.isTenantPrivateKeyAccessEnabled(updatedtenantDocument),
+			enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(updatedtenantDocument),
 		};
 	}
 

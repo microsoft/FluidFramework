@@ -17,11 +17,17 @@ export interface ITenantConfig {
 
 	customData: ITenantCustomData;
 
-	// Indicates if keyless access is enabled for this tenant.
-	enableKeylessAccess: boolean;
+	/**
+	 * Indicates if (not-shared secret) key access is enabled for this tenant.
+	 */
+	enablePrivateKeyAccess: boolean;
 
-	// Indicates if key access is enabled for this tenant.
-	enableKeyAccess: boolean;
+	/**
+	 * Indicates if (shared secret) key access is enabled for this tenant.
+	 * @remarks
+	 * This value is never read and cannot be updated via public APIs in Routerlicious.
+	 */
+	enableSharedKeyAccess: boolean;
 
 	// Timestamp of when this tenant will be hard deleted.
 	// The tenant is soft deleted if a deletion timestamp is present.

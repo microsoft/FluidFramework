@@ -75,8 +75,8 @@ export class TestTenantManager implements ITenantManager {
 			orderer: this.tenant.orderer,
 			key: "test-tenant-key",
 			customData: {},
-			enableKeyAccess: true,
-			enableKeylessAccess: false,
+			enableSharedKeyAccess: true,
+			enablePrivateKeyAccess: false,
 		};
 	}
 

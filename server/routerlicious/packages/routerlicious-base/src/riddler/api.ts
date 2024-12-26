@@ -122,12 +122,12 @@ export function create(
 	/**
 	 * Updates the keyless access setting for the given tenant
 	 */
-	router.put("/tenants/:id/keylessAccess", (request, response) => {
+	router.put("/tenants/:id/privateKeyAccess", (request, response) => {
 		const tenantId = request.params.id;
-		const enableKeylessAccess = request.body.enableKeylessAccess
-			? request.body.enableKeylessAccess
+		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess
+			? request.body.enablePrivateKeyAccess
 			: null;
-		const storageP = manager.updateKeylessAccessPolicy(tenantId, enableKeylessAccess);
+		const storageP = manager.updatePrivateKeyAccessPolicy(tenantId, enablePrivateKeyAccess);
 		handleResponse(storageP, response);
 	});
 
@@ -161,15 +161,15 @@ export function create(
 		const tenantCustomData: ITenantCustomData = request.body.customData
 			? request.body.customData
 			: {};
-		const enableKeylessAccess = request.body.enableKeylessAccess
-			? request.body.enableKeylessAccess
+		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess
+			? request.body.enablePrivateKeyAccess
 			: null;
 		const tenantP = manager.createTenant(
 			tenantId,
 			tenantStorage,
 			tenantOrderer,
 			tenantCustomData,
-			enableKeylessAccess,
+			enablePrivateKeyAccess,
 		);
 		handleResponse(tenantP, response);
 	});
