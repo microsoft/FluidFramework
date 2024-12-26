@@ -23,9 +23,12 @@ import { ReferencePosition } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	isInserted,
+	isLeafInfo,
 	isMoved,
 	isRemoved,
+	overwriteInfo,
 	type IInsertionInfo,
+	type ILeafInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
 	// eslint-disable-next-line import/no-deprecated
@@ -68,7 +71,7 @@ export interface IMergeNodeCommon {
 export type ISegmentInternal = Omit<
 	ISegment,
 	// eslint-disable-next-line import/no-deprecated
-	keyof IRemovalInfo | keyof IMoveInfo
+	keyof (IRemovalInfo & IMoveInfo)
 > & {
 	// eslint-disable-next-line import/no-deprecated
 	localRefs?: LocalReferenceCollection;
@@ -86,7 +89,7 @@ export type ISegmentInternal = Omit<
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
 export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
-	Partial<IInsertionInfo & IRemovalInfo & IMoveInfo & IMergeNodeCommon> & {
+	Partial<IInsertionInfo & IRemovalInfo & IMoveInfo & ILeafInfo> & {
 		parent?: MergeBlock;
 		segmentGroups?: SegmentGroupCollection;
 		propertyManager?: PropertiesManager;
@@ -264,10 +267,7 @@ export interface ISegment {
  * @legacy
  * @alpha
  */
-export function segmentIsRemoved(segment: ISegment): boolean {
-	const leaf: ISegmentPrivate = segment;
-	return leaf.removedSeq !== undefined;
-}
+export const segmentIsRemoved = (segment: ISegment): boolean => isRemoved(segment);
 
 /**
  * @legacy
@@ -337,7 +337,7 @@ export interface SegmentGroup {
  * facilitate splits.)
  */
 export const MaxNodesInBlock = 8;
-export class MergeBlock implements IMergeNodeCommon {
+export class MergeBlock {
 	public children: IMergeNode[];
 	public needsScour?: boolean;
 	public parent?: MergeBlock;
@@ -500,20 +500,28 @@ export abstract class BaseSegment implements ISegment {
 	protected cloneInto(b: ISegment): void {
 		const seg: ISegmentPrivate = b;
 		if (isInserted(this)) {
-			seg.clientId = this.clientId;
-			seg.seq = this.seq;
+			overwriteInfo<IInsertionInfo>(seg, {
+				clientId: this.clientId,
+				seq: this.seq,
+			});
 		}
 		// TODO: deep clone properties
 		seg.properties = clone(this.properties);
 		if (isRemoved(this)) {
-			seg.removedSeq = this.removedSeq;
-			seg.removedClientIds = [...this.removedClientIds];
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IRemovalInfo>(seg, {
+				removedSeq: this.removedSeq,
+				removedClientIds: [...this.removedClientIds],
+			});
 		}
 		if (isMoved(this)) {
-			seg.movedSeq = this.movedSeq;
-			seg.movedSeqs = [...this.movedSeqs];
-			seg.wasMovedOnInsert = this.wasMovedOnInsert;
-			seg.movedClientIds = [...this.movedClientIds];
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IMoveInfo>(seg, {
+				movedSeq: this.movedSeq,
+				movedSeqs: [...this.movedSeqs],
+				wasMovedOnInsert: this.wasMovedOnInsert,
+				movedClientIds: [...this.movedClientIds],
+			});
 		}
 		seg.attribution = this.attribution?.clone();
 	}
@@ -543,34 +551,44 @@ export abstract class BaseSegment implements ISegment {
 			return undefined;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
-		const thisAsMergeSegment: ISegmentPrivate = this;
-		leafSegment.parent = thisAsMergeSegment.parent;
-
-		// Give the leaf a temporary yet valid ordinal.
-		// when this segment is put in the tree, it will get its real ordinal,
-		// but this ordinal meets all the necessary invariants for now.
-		// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
-		// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
-		// eslint-disable-next-line unicorn/prefer-code-point
-		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
+		if (isLeafInfo(this)) {
+			overwriteInfo<ILeafInfo>(leafSegment, {
+				index: this.index + 1,
+				// Give the leaf a temporary yet valid ordinal.
+				// when this segment is put in the tree, it will get its real ordinal,
+				// but this ordinal meets all the necessary invariants for now.
+				// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+				// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
+				// eslint-disable-next-line unicorn/prefer-code-point
+				ordinal: this.ordinal + String.fromCharCode(0),
+				parent: this.parent,
+			});
+		}
 
 		if (isInserted(this)) {
-			leafSegment.seq = this.seq;
-			leafSegment.localSeq = this.localSeq;
-			leafSegment.clientId = this.clientId;
+			overwriteInfo<IInsertionInfo>(leafSegment, {
+				seq: this.seq,
+				localSeq: this.localSeq,
+				clientId: this.clientId,
+			});
 		}
 		if (isRemoved(this)) {
-			leafSegment.removedClientIds = [...this.removedClientIds];
-			leafSegment.removedSeq = this.removedSeq;
-			leafSegment.localRemovedSeq = this.localRemovedSeq;
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IRemovalInfo>(leafSegment, {
+				removedClientIds: [...this.removedClientIds],
+				removedSeq: this.removedSeq,
+				localRemovedSeq: this.localRemovedSeq,
+			});
 		}
 		if (isMoved(this)) {
-			leafSegment.movedClientIds = [...this.movedClientIds];
-			leafSegment.movedSeq = this.movedSeq;
-			leafSegment.movedSeqs = [...this.movedSeqs];
-			leafSegment.localMovedSeq = this.localMovedSeq;
-			leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IMoveInfo>(leafSegment, {
+				movedClientIds: [...this.movedClientIds],
+				movedSeq: this.movedSeq,
+				movedSeqs: [...this.movedSeqs],
+				localMovedSeq: this.localMovedSeq,
+				wasMovedOnInsert: this.wasMovedOnInsert,
+			});
 		}
 
 		this.trackingCollection.copyTo(leafSegment);
