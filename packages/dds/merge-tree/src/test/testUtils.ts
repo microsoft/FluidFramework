@@ -236,12 +236,12 @@ function getPartialLengths(
 	let actualLen = 0;
 
 	const isInserted = (segment: ISegmentPrivate): boolean =>
-		segment.seq === undefined ||
-		(segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
-		(localSeq !== undefined &&
-			segment.seq === UnassignedSequenceNumber &&
-			segment.localSeq !== undefined &&
-			segment.localSeq <= localSeq);
+		info.isInserted(segment) &&
+		((segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
+			(localSeq !== undefined &&
+				segment.seq === UnassignedSequenceNumber &&
+				segment.localSeq !== undefined &&
+				segment.localSeq <= localSeq));
 
 	const isRemoved = (segment: ISegmentPrivate): boolean =>
 		info.isRemoved(segment) &&

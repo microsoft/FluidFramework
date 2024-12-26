@@ -16,7 +16,12 @@ import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
-import { assertInserted, assertRemoved, toRemovalInfo } from "../segmentInfos.js";
+import {
+	assertInserted,
+	assertRemoved,
+	toInsertionInfo,
+	toRemovalInfo,
+} from "../segmentInfos.js";
 import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -113,7 +118,7 @@ describe("client.applyMsg", () => {
 			const segmentInfo = client.getContainingSegment<ISegmentPrivate>(i);
 
 			assert.notEqual(
-				segmentInfo.segment?.seq,
+				toInsertionInfo(segmentInfo.segment)?.seq,
 				UnassignedSequenceNumber,
 				"all segments should be acked",
 			);
@@ -129,11 +134,11 @@ describe("client.applyMsg", () => {
 
 		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
-		assert.equal(segmentInfo.segment?.seq, UnassignedSequenceNumber);
+		assert.equal(toInsertionInfo(segmentInfo.segment)?.seq, UnassignedSequenceNumber);
 
 		client.applyMsg(client.makeOpMessage(op, 17));
 
-		assert.equal(segmentInfo.segment?.seq, 17);
+		assert.equal(toInsertionInfo(segmentInfo.segment)?.seq, 17);
 	});
 
 	it("removeRangeLocal", () => {

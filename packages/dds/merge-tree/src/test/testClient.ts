@@ -52,7 +52,7 @@ import {
 import { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
 import { MergeTreeRevertibleDriver } from "../revertibles.js";
-import { isMoved, isRemoved } from "../segmentInfos.js";
+import { assertInserted, isInserted, isMoved, isRemoved } from "../segmentInfos.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -357,6 +357,7 @@ export class TestClient extends Client {
 		const test: string[] = [];
 		walkAllChildSegments(tree.root, (segment: ISegmentPrivate) => {
 			const prefixes: (string | undefined | number)[] = [];
+			assertInserted(segment);
 			prefixes.push(
 				segment.seq === UnassignedSequenceNumber ? `L${segment.localSeq}` : segment.seq,
 			);
@@ -382,10 +383,9 @@ export class TestClient extends Client {
 		let posAccumulated = 0;
 		let offset = pos;
 		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
-			(seg.seq !== undefined &&
-				seg.seq !== UnassignedSequenceNumber &&
-				seg.seq <= seqNumberFrom) ||
-			(seg.localSeq !== undefined && seg.localSeq <= localSeq);
+			isInserted(seg) &&
+			((seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom) ||
+				(seg.localSeq !== undefined && seg.localSeq <= localSeq));
 
 		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
 			isRemoved(s) &&
@@ -393,10 +393,7 @@ export class TestClient extends Client {
 				(s.localRemovedSeq !== undefined && s.localRemovedSeq <= localSeq));
 
 		walkAllChildSegments(this.mergeTree.root, (seg) => {
-			assert(
-				seg.seq !== undefined || seg.localSeq !== undefined,
-				"either seq or localSeq should be defined",
-			);
+			assertInserted(seg);
 			segment = seg;
 
 			if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
@@ -424,7 +421,7 @@ export class TestClient extends Client {
 
 		let segmentPosition = 0;
 		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
-			seg.localSeq === undefined || seg.localSeq <= localSeq;
+			isInserted(seg) && (seg.localSeq === undefined || seg.localSeq <= localSeq);
 		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
 			isRemoved(s) &&
 			(s.removedSeq !== UnassignedSequenceNumber ||
