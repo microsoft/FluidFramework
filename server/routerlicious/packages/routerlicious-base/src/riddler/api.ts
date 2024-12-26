@@ -124,9 +124,7 @@ export function create(
 	 */
 	router.put("/tenants/:id/privateKeyAccess", (request, response) => {
 		const tenantId = request.params.id;
-		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess
-			? request.body.enablePrivateKeyAccess
-			: null;
+		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess ?? false;
 		const storageP = manager.updatePrivateKeyAccessPolicy(tenantId, enablePrivateKeyAccess);
 		handleResponse(storageP, response);
 	});
@@ -161,9 +159,7 @@ export function create(
 		const tenantCustomData: ITenantCustomData = request.body.customData
 			? request.body.customData
 			: {};
-		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess
-			? request.body.enablePrivateKeyAccess
-			: null;
+		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess ?? false;
 		const tenantP = manager.createTenant(
 			tenantId,
 			tenantStorage,
