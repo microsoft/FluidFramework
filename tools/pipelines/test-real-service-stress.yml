@@ -24,7 +24,7 @@ variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
-- name: absolutePathToTelemetryGenerator
+- name: pathToTelemetryGenerator
   value: $(Build.SourcesDirectory)/tools/telemetry-generator
   readonly: true
 - name: testPackage

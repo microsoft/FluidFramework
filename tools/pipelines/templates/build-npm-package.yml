@@ -216,10 +216,8 @@ extends:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
                   value: $(System.PullRequest.TargetBranch)
-              # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
-              # used in a few places in the pipeline to push custom telemetry to Kusto.
-              - name: absolutePathToTelemetryGenerator
-                value: $(Build.SourcesDirectory)/tools/telemetry-generator
+              - name: pathToTelemetryGenerator
+                value: $(Agent.TempDirectory)/telemetry-generator
                 readonly: true
             steps:
               # Setup
@@ -260,7 +258,7 @@ extends:
                       TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
-                      absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
+                      pathToTelemetryGenerator=$(pathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
 
                     Publish Parameters:
@@ -535,13 +533,13 @@ extends:
                         displayName: Write bundle sizes measurements to Aria/Kusto
                         inputs:
                           targetType: inline
-                          workingDirectory: $(absolutePathToTelemetryGenerator)
+                          workingDirectory: $(Build.SourcesDirectory)
                           script: |
                             set -eu -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
-                            ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                            ls -la 'examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                            telemetry-setup --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/bundleSizeHandler.js" --dir 'artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -685,8 +683,8 @@ extends:
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir/timingOutput
                 readonly: true
-              - name: absolutePathToTelemetryGenerator
-                value: $(Build.SourcesDirectory)/tools/telemetry-generator
+              - name: pathToTelemetryGenerator
+                value: $(Agent.TempDirectory)/telemetry-generator
                 readonly: true
               steps:
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
@@ -718,9 +716,9 @@ extends:
                   WORK_FOLDER: $(pipelineTelemetryWorkdir)
                 inputs:
                   targetType: inline
-                  workingDirectory: $(absolutePathToTelemetryGenerator)
+                  workingDirectory: $(pathToTelemetryGenerator)
                   script: |
                     set -eu -o pipefail
                     echo "Listing files in '$WORK_FOLDER'"
                     ls -laR $WORK_FOLDER;
-                    node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";
+                    telemetry-generator --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";

@@ -22,7 +22,7 @@ resources:
 variables:
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
-- name: absolutePathToTelemetryGenerator
+- name: pathToTelemetryGenerator
   value: $(Build.SourcesDirectory)/tools/telemetry-generator
   readonly: true
 # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks

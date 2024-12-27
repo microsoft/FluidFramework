@@ -76,7 +76,7 @@ variables:
   - name: artifactBuildId
     value: $(resources.pipeline.client.runID)
     readonly: true
-  - name: absolutePathToTelemetryGenerator
+  - name: pathToTelemetryGenerator
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
   - group: prague-key-vault
@@ -191,23 +191,23 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto"
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
+            node --require @ff-internal/aria-logger bin/run --handlerModule $(pathToTelemetryGenerator)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
 
       - task: Bash@3
         displayName: Send Execution Time Performance Benchmark Measurments to Azure App Insights
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+            node bin/run appInsights --handlerModule $(pathToTelemetryGenerator)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
         env:
           BUILD_ID: $(Build.BuildId)
           BRANCH_NAME: $(Build.SourceBranchName)
@@ -326,23 +326,23 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+            node --require @ff-internal/aria-logger bin/run --handlerModule $(pathToTelemetryGenerator)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
       - task: Bash@3
         displayName: Send Memory Usage Performance Benchmark Measurments to Azure App Insights
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+            node bin/run appInsights --handlerModule $(pathToTelemetryGenerator)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
         env:
           BUILD_ID: $(Build.BuildId)
           BRANCH_NAME: $(Build.SourceBranchName)
@@ -461,23 +461,23 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+            node --require @ff-internal/aria-logger bin/run --handlerModule $(pathToTelemetryGenerator)/dist/handlers/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
       - task: Bash@3
         displayName: Send Custom Data Performance Benchmark Measurments to Azure App Insights
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsCustomBenchmarkHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+            node bin/run appInsights --handlerModule $(pathToTelemetryGenerator)/dist/handlers/appInsightsCustomBenchmarkHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
         env:
           BUILD_ID: $(Build.BuildId)
           BRANCH_NAME: $(Build.SourceBranchName)
@@ -613,12 +613,12 @@ stages:
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.executionTimeTestOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(pathToTelemetryGenerator)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
@@ -627,12 +627,12 @@ stages:
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(pathToTelemetryGenerator)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
@@ -641,12 +641,12 @@ stages:
           condition: eq('${{ endpointObject.endpointName }}', 'local')
           inputs:
             targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing execution time performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.executionTimeTestOutputFolder }};
-              node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+              node bin/run appInsights --handlerModule $(pathToTelemetryGenerator)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
@@ -657,12 +657,12 @@ stages:
           condition: eq('${{ endpointObject.endpointName }}', 'local')
           inputs:
             targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing memory usage performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.memoryUsageTestOutputFolder }};
-              node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+              node bin/run appInsights --handlerModule $(pathToTelemetryGenerator)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
@@ -687,7 +687,7 @@ stages:
           displayName: Remove Output Folders from local server run ${{ endpointObject.endpointName }}
           inputs:
             targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               ls -laR ${{ variables.executionTimeTestOutputFolder }};

@@ -27,7 +27,7 @@ variables:
 - name: testPackage
   value: "@fluid-private/test-end-to-end-tests"
   readonly: true
-- name: absolutePathToTelemetryGenerator
+- name: pathToTelemetryGenerator
   value: $(Build.SourcesDirectory)/tools/telemetry-generator
   readonly: true
 - name: pipelineIdentifierForTelemetry
