@@ -25,8 +25,6 @@ export interface ITenantConfig {
 
 	/**
 	 * Indicates if (shared secret) key access is enabled for this tenant.
-	 * @remarks
-	 * This value is never read and cannot be updated via public APIs in Routerlicious.
 	 */
 	enableSharedKeyAccess: boolean;
 
