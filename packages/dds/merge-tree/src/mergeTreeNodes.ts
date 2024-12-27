@@ -71,7 +71,7 @@ export interface IMergeNodeCommon {
 export type ISegmentInternal = Omit<
 	ISegment,
 	// eslint-disable-next-line import/no-deprecated
-	keyof (IRemovalInfo & IMoveInfo)
+	keyof IRemovalInfo | keyof IMoveInfo
 > & {
 	// eslint-disable-next-line import/no-deprecated
 	localRefs?: LocalReferenceCollection;
@@ -90,8 +90,6 @@ export type ISegmentInternal = Omit<
  */
 export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
 	Partial<IInsertionInfo & ILeafInfo> & {
-		parent?: MergeBlock;
-		wasMovedOnInsert?: boolean;
 		segmentGroups?: SegmentGroupCollection;
 		propertyManager?: PropertiesManager;
 		/**
