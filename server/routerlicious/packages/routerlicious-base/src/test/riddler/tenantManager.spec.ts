@@ -751,5 +751,61 @@ describe("TenantManager", () => {
 				return true;
 			});
 		});
+
+		it("Should fail validation with when isKeylessAccessToken is false and tenant does not contain shared keys", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutSharedKeys);
+			const tokenKey1 = generateToken(
+				keylessAccessTokenClaims.tenantId,
+				keylessAccessTokenClaims.documentId,
+				tenantWithPrivateKeys.key as string,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+				undefined,
+				false,
+			);
+			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
+			await assert.rejects(validationPKey1, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 403);
+				assert.strictEqual(
+					err.message,
+					"Shared keys are disabled for tenant id cordflasher-dolphin",
+				);
+				return true;
+			});
+		});
+	});
+
+	describe("signToken", () => {
+		it("Should sign a token using private keys when enablePrivateKeyAccess is true", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithPrivateKeys);
+			const tokenKey1 = await tenantManager.signToken(
+				"cordflasher-dolphin",
+				keylessAccessTokenClaims.documentId,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+				undefined,
+			);
+			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
+			await assert.doesNotReject(validationPKey1);
+		});
+
+		it("Should sign a token using shared keys when enablePrivateKeyAccess is false", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutPrivateKeys);
+			const tokenKey1 = await tenantManager.signToken(
+				"cordflasher-dolphin",
+				keylessAccessTokenClaims.documentId,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+			);
+			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
+			await assert.doesNotReject(validationPKey1);
+		});
 	});
 });
