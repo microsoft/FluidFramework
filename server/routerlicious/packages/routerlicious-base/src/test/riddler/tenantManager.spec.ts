@@ -790,7 +790,10 @@ describe("TenantManager", () => {
 				keylessAccessTokenClaims.ver,
 				undefined,
 			);
-			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
+			const validationPKey1 = tenantManager.validateToken(
+				"cordflasher-dolphin",
+				tokenKey1.fluidAccessToken,
+			);
 			await assert.doesNotReject(validationPKey1);
 		});
 
@@ -804,7 +807,10 @@ describe("TenantManager", () => {
 				undefined,
 				keylessAccessTokenClaims.ver,
 			);
-			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
+			const validationPKey1 = tenantManager.validateToken(
+				"cordflasher-dolphin",
+				tokenKey1.fluidAccessToken,
+			);
 			await assert.doesNotReject(validationPKey1);
 		});
 	});

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 
 /**
@@ -179,10 +180,20 @@ export interface ITenantManager {
 	/**
 	 * Retrieves the key for the given tenant. This is a privileged op and should be used with care.
 	 */
-	getKey(
+	getKey(tenantId: string, includeDisabledTenant?: boolean): Promise<string>;
+
+	/**
+	 * Signs an access token for the given tenant. This is a privileged op and should be used with care.
+	 */
+	signToken(
 		tenantId: string,
+		documentId: string,
+		scopes: ScopeType[],
+		user?: IUser,
+		lifetime?: number,
+		ver?: string,
+		jti?: string,
 		includeDisabledTenant?: boolean,
-		usePrivateKeys?: boolean,
 	): Promise<string>;
 }
 

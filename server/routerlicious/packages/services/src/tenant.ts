@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ScopeType } from "@fluidframework/protocol-definitions";
+import { ScopeType, type IUser } from "@fluidframework/protocol-definitions";
 import {
 	GitManager,
 	Historian,
@@ -12,7 +12,6 @@ import {
 	getAuthorizationTokenFromCredentials,
 	IGitManager,
 } from "@fluidframework/server-services-client";
-import { generateToken } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import {
@@ -105,9 +104,14 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			...getLumberBaseProperties(documentId, tenantId),
 			[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
 		};
-		const key = await core.requestWithRetry(
-			async () => this.getKey(tenantId, includeDisabledTenant),
-			"getTenantGitManager_getKey" /* callName */,
+		const accessToken = await core.requestWithRetry(
+			async () =>
+				this.signToken(tenantId, documentId, [
+					ScopeType.DocWrite,
+					ScopeType.DocRead,
+					ScopeType.SummaryWrite,
+				]),
+			"getTenantGitManager_signToken" /* callName */,
 			lumberProperties /* telemetryProperties */,
 		);
 
@@ -116,11 +120,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		};
 		const getDefaultHeaders = () => {
 			const credentials: ICredentials = {
-				password: generateToken(tenantId, documentId, key, [
-					ScopeType.DocWrite,
-					ScopeType.DocRead,
-					ScopeType.SummaryWrite,
-				]),
+				password: accessToken,
 				user: tenantId,
 			};
 			const headers: RawAxiosRequestHeaders = {
@@ -176,11 +176,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		);
 	}
 
-	public async getKey(
-		tenantId: string,
-		includeDisabledTenant = false,
-		usePrivateKeys = false,
-	): Promise<string> {
+	public async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
 		const restWrapper = new BasicRestWrapper(
 			undefined /* baseUrl */,
 			undefined /* defaultQueryString */,
@@ -195,9 +191,46 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		);
 		const result = await restWrapper.get<core.ITenantKeys>(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/keys`,
-			{ includeDisabledTenant, usePrivateKeys },
+			{ includeDisabledTenant },
 		);
 		return result.key1;
+	}
+
+	public async signToken(
+		tenantId: string,
+		documentId: string,
+		scopes: ScopeType[],
+		user?: IUser,
+		lifetime?: number,
+		ver?: string,
+		jti?: string,
+		includeDisabledTenant?: boolean,
+	): Promise<string> {
+		const restWrapper = new BasicRestWrapper(
+			undefined /* baseUrl */,
+			undefined /* defaultQueryString */,
+			undefined /* maxBodyLength */,
+			undefined /* maxContentLength */,
+			undefined /* defaultHeaders */,
+			undefined /* axios */,
+			undefined /* refreshDefaultQureyString */,
+			undefined /* refreshDefaultHeaders */,
+			() => getGlobalTelemetryContext().getProperties().correlationId,
+			() => getGlobalTelemetryContext().getProperties(),
+		);
+		const result = await restWrapper.post<core.IFluidAccessToken>(
+			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/accesstoken`,
+			{
+				documentId,
+				scopes,
+				user,
+				lifetime,
+				ver,
+				jti,
+			},
+			{ includeDisabledTenant: includeDisabledTenant ?? false },
+		);
+		return result.fluidAccessToken;
 	}
 
 	public async getTenantStorageName(

@@ -17,6 +17,7 @@ import {
 	ISecretManager,
 	ICache,
 	type IEncryptedPrivateTenantKeys,
+	type IFluidAccessToken,
 } from "@fluidframework/server-services-core";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -157,7 +158,7 @@ export class TenantManager {
 		ver: string = "1.0",
 		jti: string = uuid(),
 		includeDisabledTenant = false,
-	): Promise<string> {
+	): Promise<IFluidAccessToken> {
 		const tenant = await this.getTenantDocument(tenantId, includeDisabledTenant);
 		if (tenant === undefined) {
 			Lumberjack.error(`No tenant found when signing token for tenant id ${tenantId}`, {
@@ -167,21 +168,19 @@ export class TenantManager {
 		}
 
 		const isTenantPrivateKeyAccessEnabled = this.isTenantPrivateKeyAccessEnabled(tenant);
-		let keys: ITenantKeys;
+
 		// If the tenant is a keyless tenant, always use the private keys to sign the token
-		if (isTenantPrivateKeyAccessEnabled) {
-			// If the tenant is a keyless tenant, privateKeys will always be defined
-			keys = await this.returnPrivateKeysInOrder(
-				tenantId,
-				tenant.privateKeys as ITenantPrivateKeys,
-				{},
-			);
-		} else {
-			keys = {
-				key1: tenant.key as string,
-				key2: tenant.secondaryKey ?? "",
-			};
-		}
+		const keys: ITenantKeys = isTenantPrivateKeyAccessEnabled
+			? // If the tenant is a keyless tenant, privateKeys will always be defined
+			  await this.returnPrivateKeysInOrder(
+					tenantId,
+					tenant.privateKeys as ITenantPrivateKeys,
+					{},
+			  ) // If the tenant is not a keyless tenant, use the shared keys to sign the token
+			: {
+					key1: tenant.key as string,
+					key2: tenant.secondaryKey ?? "",
+			  };
 		const token = generateToken(
 			tenantId,
 			documentId,
@@ -194,7 +193,9 @@ export class TenantManager {
 			isTenantPrivateKeyAccessEnabled,
 		);
 
-		return token;
+		return {
+			fluidAccessToken: token,
+		};
 	}
 
 	/**
