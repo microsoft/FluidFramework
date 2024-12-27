@@ -528,6 +528,7 @@ extends:
                         parameters:
                           devFeedUrl: $(ado-feeds-dev)
                           officeFeedUrl: $(ado-feeds-office)
+                          pathForTelemetryGeneratorInstall: $(Agent.TempDirectory)/telemetry-generator
 
                       - task: Bash@3
                         displayName: Write bundle sizes measurements to Aria/Kusto
