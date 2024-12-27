@@ -19,7 +19,9 @@ function getBaseJestConfig(packageName) {
 	// Only import test-tools if FLUID_POLICY_CHECK is not set.
 	// This allows us to run policy checks on the jest config files without having to build the repo.
 	if (process.env.FLUID_POLICY_CHECK === undefined) {
-		const { getTestPort } = require("@fluid-private/test-tools");
+		// Deliberately reaching directly into dist/ to make things work from a cjs file getting code from a ts file.
+		// When this require() runs, the package should have been built, so the dist/ folder should exist.
+		const { getTestPort } = require("../dist/getTestPort.js");
 		mappedPort = getTestPort(packageName);
 	}
 	process.env.PORT = mappedPort;
@@ -62,4 +64,4 @@ function getBaseJestConfig(packageName) {
 	};
 }
 
-module.exports = getBaseJestConfig;
+exports.getBaseJestConfig = getBaseJestConfig;

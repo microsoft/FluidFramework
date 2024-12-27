@@ -11,8 +11,16 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/getTestPort.js",
-	"types": "dist/getTestPort.d.ts",
+	"exports": {
+		".": {
+			"require": {
+				"types": "./getBaseJestConfig.d.ts",
+				"default": "./src/getBaseJestConfig.cjs"
+			}
+		}
+	},
+	"main": "src/getBaseJestConfig.cjs",
+	"types": "getBaseJestConfig.d.ts",
 	"bin": {
 		"assign-test-ports": "bin/assign-test-ports"
 	},

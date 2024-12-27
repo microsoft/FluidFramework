@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const getBaseJestConfig = require("@fluid-private/test-tools/getBaseJestConfig.cjs");
+const { getBaseJestConfig } = require("@fluid-private/test-tools");
 const { name } = require("./package.json");
 const config = getBaseJestConfig(name);
 module.exports = config;

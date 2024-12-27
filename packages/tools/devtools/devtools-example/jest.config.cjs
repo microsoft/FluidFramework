@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const getBaseJestConfig = require("@fluid-private/test-tools/getBaseJestConfig.cjs");
+const { getBaseJestConfig } = require("@fluid-private/test-tools");
 const { name } = require("./package.json");
 const config = getBaseJestConfig(name);
 // This package is using testRegex instead of testMatch
