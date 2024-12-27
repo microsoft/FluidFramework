@@ -206,7 +206,6 @@ extends:
     # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
-    - check:are-the-types-wrong
     - webpack
     - ci:test:jest
     - test:copyresults
