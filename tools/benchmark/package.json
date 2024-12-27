@@ -51,7 +51,7 @@
 		"@types/benchmark": "^2.1.0",
 		"@types/chai": "^4.3.4",
 		"@types/easy-table": "^0.0.32",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^14.18.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",

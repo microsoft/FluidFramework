@@ -17,6 +17,18 @@ export interface ITenantConfig {
 
 	customData: ITenantCustomData;
 
+	/**
+	 * Indicates if (not-shared secret) key access is enabled for this tenant.
+	 */
+	enablePrivateKeyAccess: boolean;
+
+	/**
+	 * Indicates if (shared secret) key access is enabled for this tenant.
+	 * @remarks
+	 * This value is never read and cannot be updated via public APIs in Routerlicious.
+	 */
+	enableSharedKeyAccess: boolean;
+
 	// Timestamp of when this tenant will be hard deleted.
 	// The tenant is soft deleted if a deletion timestamp is present.
 	scheduledDeletionTime?: string;
@@ -77,6 +89,11 @@ export interface ITenantKeys {
 	key2: string;
 }
 
+export interface IPlainTextAndEncryptedTenantKeys extends ITenantKeys {
+	encryptedTenantKey1: string;
+	encryptedTenantKey2: string;
+}
+
 /**
  * @internal
  */
@@ -115,6 +132,20 @@ export interface ITenant {
 	orderer: ITenantOrderer;
 }
 
+// Key maps to the Enum Key1 and secondaryKey maps to the Enum Key2
+export interface ITenantPrivateKeys {
+	key: string;
+	secondaryKey: string;
+	// Time in seconds when the key will be rotated
+	keyNextRotationTime: number;
+	// Time in seconds when the secondary key will be rotated
+	secondaryKeyNextRotationTime: number;
+}
+
+export interface IEncryptedPrivateTenantKeys extends ITenantPrivateKeys {
+	encryptionKeyVersion?: EncryptionKeyVersion;
+}
+
 /**
  * @internal
  */
@@ -148,7 +179,11 @@ export interface ITenantManager {
 	/**
 	 * Retrieves the key for the given tenant. This is a privileged op and should be used with care.
 	 */
-	getKey(tenantId: string): Promise<string>;
+	getKey(
+		tenantId: string,
+		includeDisabledTenant?: boolean,
+		usePrivateKeys?: boolean,
+	): Promise<string>;
 }
 
 /**

@@ -84,7 +84,7 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"@types/events_pkg": "npm:@types/events@^3.0.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
