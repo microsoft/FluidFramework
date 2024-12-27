@@ -27,7 +27,11 @@ import {
 
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
+import {
+	NonCollabClient,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
@@ -81,7 +85,13 @@ import {
 } from "./ops.js";
 import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
-import { toMoveInfo } from "./segmentInfos.js";
+import {
+	IInsertionInfo,
+	isMoved,
+	isRemoved,
+	overwriteInfo,
+	toMoveInfo,
+} from "./segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
@@ -396,11 +406,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			if (seg.seq === UnassignedSequenceNumber) {
 				localInserts++;
 			}
-			if (seg.removedSeq === UnassignedSequenceNumber) {
+			if (isRemoved(seg) && seg.removedSeq === UnassignedSequenceNumber) {
 				localRemoves++;
 			}
 			// Only serialize segments that have not been removed.
-			if (seg.removedSeq === undefined) {
+			if (!isRemoved(seg)) {
 				handleCollectingSerializer.stringify(seg.clone().toJSONObject(), handle);
 			}
 			return true;
@@ -929,10 +939,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// unless the remove was local, in which case the annotate must have come
 					// before the remove
 					if (
-						(segment.removedSeq === undefined ||
+						(!isRemoved(segment) ||
 							(segment.localRemovedSeq !== undefined &&
 								segment.removedSeq === UnassignedSequenceNumber)) &&
-						(segment.movedSeq === undefined ||
+						(!isMoved(segment) ||
 							(segment.localMovedSeq !== undefined &&
 								segment.movedSeq === UnassignedSequenceNumber))
 					) {
@@ -969,8 +979,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							// we set the seq to the universal seq and remove the local seq,
 							// so its length is not considered for subsequent local changes
 							// this allows us to not send the op as even the local client will ignore the segment
-							segment.seq = UniversalSequenceNumber;
-							segment.localSeq = undefined;
+							overwriteInfo<IInsertionInfo>(segment, {
+								seq: UniversalSequenceNumber,
+								localSeq: undefined,
+								clientId: NonCollabClient,
+							});
 							break;
 						}
 					}
@@ -987,9 +1000,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 				case MergeTreeDeltaType.REMOVE: {
 					if (
+						isRemoved(segment) &&
 						segment.localRemovedSeq !== undefined &&
 						segment.removedSeq === UnassignedSequenceNumber &&
-						(segment.movedSeq === undefined ||
+						(!isMoved(segment) ||
 							(segment.localMovedSeq !== undefined &&
 								segment.movedSeq === UnassignedSequenceNumber))
 					) {
@@ -1003,9 +1017,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				case MergeTreeDeltaType.OBLITERATE: {
 					errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
 					if (
+						isMoved(segment) &&
 						segment.localMovedSeq !== undefined &&
 						segment.movedSeq === UnassignedSequenceNumber &&
-						(segment.removedSeq === undefined ||
+						(!isRemoved(segment) ||
 							(segment.localRemovedSeq !== undefined &&
 								segment.removedSeq === UnassignedSequenceNumber))
 					) {
