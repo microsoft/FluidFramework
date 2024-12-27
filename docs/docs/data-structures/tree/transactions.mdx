@@ -6,7 +6,7 @@ sidebar_position: 6
 TODO:#27374: update this page to describe the new transaction API
 
 If you want the `SharedTree` to treat a set of changes atomically, wrap these changes in a transaction.
-Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously (though, note that the Fluid Framework guarantees this already for any sequence of changes that are submitted synchronously). However, the changes may not be applied at all if the transaction is given one or more constraints.
+Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously and no other changes (either from this client or from a remote client) can be interleaved with those changes. Note that the Fluid Framework guarantees this already for any sequence of changes that are submitted synchronously. However, the changes may not be applied at all if the transaction is given one or more constraints.
 If any constraint on a transaction is not met, then the transaction and all its changes will ignored by all clients.
 Additionally, all changes in a transaction will be reverted together as a single unit by [undo/redo code](./undo-redo.mdx), because changes within a transaction are exposed through a single `Revertible` object.
 It is also more efficient for SharedTree to process a large number of changes in a row as a transaction rather than as changes submitted separately.
