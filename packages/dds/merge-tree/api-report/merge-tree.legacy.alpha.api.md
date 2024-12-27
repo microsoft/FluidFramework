@@ -597,7 +597,7 @@ export const reservedMarkerIdKey = "markerId";
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha
-export function segmentIsRemoved(segment: ISegment): boolean;
+export const segmentIsRemoved: (segment: ISegment) => boolean;
 
 // @alpha (undocumented)
 export interface SequenceOffsets {
