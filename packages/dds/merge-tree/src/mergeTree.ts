@@ -2081,14 +2081,11 @@ export class MergeTree {
 				return true;
 			}
 
-			if (
+			const wasMovedOnInsert =
 				clientId !== segment.clientId &&
 				segment.seq !== undefined &&
 				seq !== UnassignedSequenceNumber &&
-				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber)
-			) {
-				segment.wasMovedOnInsert = true;
-			}
+				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber);
 
 			if (existingMoveInfo === undefined) {
 				// eslint-disable-next-line import/no-deprecated
@@ -2097,7 +2094,7 @@ export class MergeTree {
 					movedSeq: seq,
 					localMovedSeq: localSeq,
 					movedSeqs: [seq],
-					wasMovedOnInsert: segment.wasMovedOnInsert ?? false,
+					wasMovedOnInsert,
 				});
 
 				if (!toRemovalInfo(segment)) {
@@ -2105,22 +2102,25 @@ export class MergeTree {
 				}
 			} else {
 				_overwrite = true;
-				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
+				// never move wasMovedOnInsert from true to false
+				existingMoveInfo.wasMovedOnInsert ||= wasMovedOnInsert;
+				const { movedSeq, movedClientIds, movedSeqs } = existingMoveInfo;
+				if (movedSeq === UnassignedSequenceNumber) {
 					// we moved this locally, but someone else moved it first
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head
 					// for partialLengths bookkeeping purposes
-					existingMoveInfo.movedClientIds.unshift(clientId);
+					movedClientIds.unshift(clientId);
 
 					existingMoveInfo.movedSeq = seq;
-					existingMoveInfo.movedSeqs.unshift(seq);
+					movedSeqs.unshift(seq);
 					if (segment.localRefs?.empty === false) {
 						localOverlapWithRefs.push(segment);
 					}
 				} else {
 					// Do not replace earlier sequence number for move
-					existingMoveInfo.movedClientIds.push(clientId);
-					existingMoveInfo.movedSeqs.push(seq);
+					movedClientIds.push(clientId);
+					movedSeqs.push(seq);
 				}
 			}
 			assertMoved(segment);

@@ -89,7 +89,7 @@ export type ISegmentInternal = Omit<
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
 export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
-	Partial<IInsertionInfo & IRemovalInfo & IMoveInfo & ILeafInfo> & {
+	Partial<IInsertionInfo & ILeafInfo> & {
 		parent?: MergeBlock;
 		wasMovedOnInsert?: boolean;
 		segmentGroups?: SegmentGroupCollection;

@@ -295,8 +295,9 @@ export const toMoveInfo = (segmentLike: unknown): IMoveInfo | undefined =>
 	isObject(segmentLike) &&
 	hasProp(segmentLike, "movedClientIds", "array") &&
 	hasProp(segmentLike, "movedSeq", "number") &&
-	hasProp(segmentLike, "movedSeqs", "array")
-		? (segmentLike as unknown as IMoveInfo)
+	hasProp(segmentLike, "movedSeqs", "array") &&
+	hasProp(segmentLike, "wasMovedOnInsert", "boolean")
+		? segmentLike
 		: undefined;
 
 /**
