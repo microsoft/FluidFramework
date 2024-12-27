@@ -72,7 +72,7 @@ import {
 	ReferenceType,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
-import { PerspectiveImpl, isSegmentPresent, type SeqTime } from "./perspective.js";
+import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
@@ -1209,16 +1209,19 @@ export class MergeTree {
 				!isSegmentPresent(seg, { refSeq, localSeq })
 			) {
 				const forward = refPos.slidingPreference === SlidingPreference.FORWARD;
-				const slideSeq: SeqTime =
-					isMoved(seg) && seg.movedSeq !== UnassignedSequenceNumber
-						? {
-								refSeq: seg.movedSeq,
-								localSeq: seg.localMovedSeq,
-							}
-						: isRemoved(seg) && seg.removedSeq !== UnassignedSequenceNumber
-							? { refSeq: seg.removedSeq, localSeq: seg.localRemovedSeq }
-							: { refSeq };
-				const perspective = new PerspectiveImpl(this, slideSeq);
+				const moveInfo = toMoveInfo(seg);
+				const removeInfo = toRemovalInfo(seg);
+				const slideSeq =
+					moveInfo !== undefined && moveInfo.movedSeq !== UnassignedSequenceNumber
+						? moveInfo.movedSeq
+						: removeInfo !== undefined && removeInfo.removedSeq !== UnassignedSequenceNumber
+							? removeInfo.removedSeq
+							: refSeq;
+				const slideLocalSeq = moveInfo?.localMovedSeq ?? removeInfo?.localRemovedSeq;
+				const perspective = new PerspectiveImpl(this, {
+					refSeq: slideSeq,
+					localSeq: slideLocalSeq,
+				});
 				const slidSegment = perspective.nextSegment(seg, forward);
 				return (
 					this.getPosition(slidSegment, refSeq, clientId, localSeq) +
@@ -2078,11 +2081,14 @@ export class MergeTree {
 				return true;
 			}
 
-			const wasMovedOnInsert =
+			if (
 				clientId !== segment.clientId &&
 				segment.seq !== undefined &&
 				seq !== UnassignedSequenceNumber &&
-				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber);
+				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber)
+			) {
+				segment.wasMovedOnInsert = true;
+			}
 
 			if (existingMoveInfo === undefined) {
 				// eslint-disable-next-line import/no-deprecated
@@ -2091,7 +2097,7 @@ export class MergeTree {
 					movedSeq: seq,
 					localMovedSeq: localSeq,
 					movedSeqs: [seq],
-					wasMovedOnInsert,
+					wasMovedOnInsert: segment.wasMovedOnInsert ?? false,
 				});
 
 				if (!toRemovalInfo(segment)) {
@@ -2099,7 +2105,6 @@ export class MergeTree {
 				}
 			} else {
 				_overwrite = true;
-				existingMoveInfo.wasMovedOnInsert = wasMovedOnInsert;
 				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
 					// we moved this locally, but someone else moved it first
 					// so put them at the head of the list
@@ -2247,7 +2252,8 @@ export class MergeTree {
 			const existingRemovalInfo = toRemovalInfo(segment);
 
 			if (existingRemovalInfo === undefined) {
-				overwriteInfo(segment, {
+				// eslint-disable-next-line import/no-deprecated
+				overwriteInfo<IRemovalInfo>(segment, {
 					removedClientIds: [clientId],
 					removedSeq: seq,
 					localRemovedSeq: localSeq,

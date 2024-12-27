@@ -406,8 +406,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				if (seg.removedSeq === UnassignedSequenceNumber) {
 					localRemoves++;
 				}
-				// Only serialize segments that have not been removed.
-				else handleCollectingSerializer.stringify(seg.clone().toJSONObject(), handle);
+			} // Only serialize segments that have not been removed.
+			else {
+				handleCollectingSerializer.stringify(seg.clone().toJSONObject(), handle);
 			}
 			return true;
 		});
