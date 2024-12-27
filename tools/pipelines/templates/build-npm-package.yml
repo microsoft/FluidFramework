@@ -693,6 +693,7 @@ extends:
                   devFeedUrl: $(ado-feeds-dev)
                   officeFeedUrl: $(ado-feeds-office)
                   isCheckoutNeeded: true
+                  pathForTelemetryGeneratorInstall: $(Agent.TempDirectory)/telemetry-generator
               - task: Bash@3
                 displayName: Get stage timing and result data from ADO
                 env:
