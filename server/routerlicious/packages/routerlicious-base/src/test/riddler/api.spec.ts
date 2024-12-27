@@ -134,9 +134,15 @@ describe("Routerlicious", () => {
 				it("PUT /tenants/:id/customData", async () => {
 					await assertCorrelationId(`/api/tenants/${testTenantId}/customData`, "put");
 				});
-				it("PUT /tenants/:id/privateKeyAccess", async () => {
+				it("PUT /tenants/:id/keyAccess", async () => {
 					await assertCorrelationId(
-						`/api/tenants/${testTenantId}/privateKeyAccess`,
+						`/api/tenants/${testTenantId}/keyAccess`,
+						"put",
+					);
+				});
+				it("PUT /tenants/:id/accesstoken", async () => {
+					await assertCorrelationId(
+						`/api/tenants/${testTenantId}/accesstoken`,
 						"put",
 					);
 				});
