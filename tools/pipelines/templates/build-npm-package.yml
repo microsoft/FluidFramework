@@ -540,7 +540,7 @@ extends:
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
                             ls -la 'examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                            telemetry-setup --onlyLogToConsole true --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/bundleSizeHandler.js" --dir 'artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                            telemetry-generator --onlyLogToConsole true --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/bundleSizeHandler.js" --dir 'artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
