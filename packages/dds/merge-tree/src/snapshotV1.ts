@@ -22,9 +22,10 @@ import { IAttributionCollection } from "./attributionCollection.js";
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import { ISegmentPrivate } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
+import { assertInserted } from "./segmentInfos.js";
 import {
 	IJSONSegmentWithMergeInfo,
 	JsonSegmentSpecs,
@@ -208,7 +209,7 @@ export class SnapshotV1 {
 		};
 
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
-		const pushSeg = (segment?: ISegment): void => {
+		const pushSeg = (segment?: ISegmentPrivate): void => {
 			if (segment) {
 				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
@@ -221,8 +222,9 @@ export class SnapshotV1 {
 			}
 		};
 
-		let prev: ISegment | undefined;
-		const extractSegment = (segment: ISegment): boolean => {
+		let prev: ISegmentPrivate | undefined;
+		const extractSegment = (segment: ISegmentPrivate): boolean => {
+			assertInserted(segment);
 			// Elide segments that do not need to be included in the snapshot.  A segment may be elided if
 			// either condition is true:
 			//   a) The segment has not yet been ACKed.  We do not need to snapshot unACKed segments because
@@ -248,8 +250,7 @@ export class SnapshotV1 {
 			// (seq, client, etc.)  This information is only needed if the segment is above the MSN (and doesn't
 			// have a pending remove.)
 			if (
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				segment.seq! <= minSeq && // Segment is below the MSN, and...
+				segment.seq <= minSeq && // Segment is below the MSN, and...
 				(segment.removedSeq === undefined || // .. Segment has not been removed, or...
 					segment.removedSeq === UnassignedSequenceNumber) && // .. Removal op to be delivered on reconnect
 				(segment.movedSeq === undefined || segment.movedSeq === UnassignedSequenceNumber)
@@ -286,8 +287,7 @@ export class SnapshotV1 {
 					json: segment.toJSONObject() as IJSONSegment,
 				};
 				// If the segment insertion is above the MSN, record the insertion merge info.
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				if (segment.seq! > minSeq) {
+				if (segment.seq > minSeq) {
 					raw.seq = segment.seq;
 					raw.client = this.getLongClientId(segment.clientId);
 				}

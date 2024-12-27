@@ -8,20 +8,17 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { DoublyLinkedList } from "./collections/index.js";
 import { EndOfTreeSegment } from "./endOfTreeSegment.js";
+// eslint-disable-next-line import/no-deprecated
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference.js";
 import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import {
-	ISegment,
-	ISegmentInternal,
-	toRemovalInfo,
-	type ISegmentLeaf,
-} from "./mergeTreeNodes.js";
+import { type ISegmentPrivate } from "./mergeTreeNodes.js";
 import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
 import { DetachedReferencePosition } from "./referencePositions.js";
+import { toRemovalInfo } from "./segmentInfos.js";
 
 /**
  * @legacy
@@ -103,6 +100,7 @@ function findMergeTreeWithRevert(trackable: Trackable): MergeTreeWithRevert {
 		const refCallbacks: MergeTreeWithRevert["__mergeTreeRevertible"]["refCallbacks"] = {
 			afterSlide: (r: LocalReferencePosition) => {
 				if (mergeTree.referencePositionToLocalPosition(r) === DetachedReferencePosition) {
+					// eslint-disable-next-line import/no-deprecated
 					const refs = LocalReferenceCollection.setOrGet(detachedReferences);
 					refs.addAfterTombstones([r]);
 				}
@@ -246,7 +244,7 @@ export function discardMergeTreeDeltaRevertible(
 			t.trackingCollection.unlink(r.trackingGroup);
 			// remove untracked local references
 			if (t.trackingCollection.empty && !t.isLeaf()) {
-				const segment: ISegmentInternal | undefined = t.getSegment();
+				const segment: ISegmentPrivate | undefined = t.getSegment();
 				segment?.localRefs?.removeLocalRef(t);
 			}
 		}
@@ -287,7 +285,7 @@ function revertLocalRemove(
 
 		assert(!tracked.isLeaf(), 0x3f4 /* removes must track local refs */);
 
-		const refSeg: ISegmentInternal | undefined = tracked.getSegment();
+		const refSeg: ISegmentPrivate | undefined = tracked.getSegment();
 		let realPos = mergeTreeWithRevert.referencePositionToLocalPosition(tracked);
 
 		// References which are on EndOfStringSegment don't return detached for pos,
@@ -304,11 +302,12 @@ function revertLocalRemove(
 
 		const props = tracked.properties as RemoveSegmentRefProperties;
 		driver.insertFromSpec(realPos, props.segSpec);
-		const insertSegment: ISegmentLeaf | undefined = mergeTreeWithRevert.getContainingSegment(
-			realPos,
-			mergeTreeWithRevert.collabWindow.currentSeq,
-			mergeTreeWithRevert.collabWindow.clientId,
-		).segment;
+		const insertSegment: ISegmentPrivate | undefined =
+			mergeTreeWithRevert.getContainingSegment(
+				realPos,
+				mergeTreeWithRevert.collabWindow.currentSeq,
+				mergeTreeWithRevert.collabWindow.clientId,
+			).segment;
 		assert(insertSegment !== undefined, 0x3f5 /* insert segment must exist at position */);
 
 		const localSlideFilter = (lref: LocalReferencePosition): boolean =>
@@ -340,7 +339,7 @@ function revertLocalRemove(
 			insertSegment.parent!,
 			insertSegment,
 			undefined,
-			(seg: ISegmentInternal) => {
+			(seg: ISegmentPrivate) => {
 				if (seg.localRefs?.empty === false) {
 					return seg.localRefs.walkReferences(refHandler, undefined, forward);
 				}
@@ -359,6 +358,7 @@ function revertLocalRemove(
 		}
 
 		if (insertRef !== undefined) {
+			// eslint-disable-next-line import/no-deprecated
 			const localRefs = LocalReferenceCollection.setOrGet(insertSegment);
 			if (insertRef.before?.empty === false) {
 				localRefs.addBeforeTombstones(insertRef.before.map((n) => n.data));
@@ -372,7 +372,7 @@ function revertLocalRemove(
 			tg.link(insertSegment);
 			tg.unlink(tracked);
 		}
-		const segment: ISegmentInternal | undefined = tracked.getSegment();
+		const segment: ISegmentPrivate | undefined = tracked.getSegment();
 		segment?.localRefs?.removeLocalRef(tracked);
 	}
 }
@@ -393,7 +393,10 @@ function revertLocalAnnotate(
 	}
 }
 
-function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegment): number {
+function getPosition(
+	mergeTreeWithRevert: MergeTreeWithRevert,
+	segment: ISegmentPrivate,
+): number {
 	return mergeTreeWithRevert.getPosition(
 		segment,
 		mergeTreeWithRevert.collabWindow.currentSeq,

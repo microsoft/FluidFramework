@@ -10,22 +10,21 @@ import type {
 	IEventProvider,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
+} from "@fluidframework/datastore-definitions/legacy";
 import {
 	ConsensusRegisterCollection,
 	IConsensusRegisterCollection,
-} from "@fluidframework/register-collection/internal";
+} from "@fluidframework/register-collection/legacy";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions/internal";
-import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
+} from "@fluidframework/runtime-definitions/legacy";
 
 import type {
 	IAcceptedMigrationDetails,
@@ -36,11 +35,9 @@ import type {
 
 const consensusRegisterCollectionId = "consensus-register-collection";
 const pactMapId = "pact-map";
-const taskManagerId = "task-manager";
 
 const newVersionKey = "newVersion";
-const migrateTaskName = "migrate";
-const newContainerIdKey = "newContainerId";
+const migrationResultKey = "migrationResult";
 
 class MigrationTool implements IMigrationTool {
 	private _disposed = false;
@@ -66,7 +63,7 @@ class MigrationTool implements IMigrationTool {
 	}
 
 	public get migrationState(): MigrationState {
-		if (this.newContainerId !== undefined) {
+		if (this.migrationResult !== undefined) {
 			return "migrated";
 		} else if (this.acceptedMigration !== undefined) {
 			return "migrating";
@@ -78,16 +75,15 @@ class MigrationTool implements IMigrationTool {
 		}
 	}
 
-	public get newContainerId(): string | undefined {
-		return this.consensusRegisterCollection.read(newContainerIdKey);
+	public get migrationResult(): unknown | undefined {
+		return this.consensusRegisterCollection.read(migrationResultKey);
 	}
 
 	public constructor(
-		// TODO:  Does this need a full runtime?  Can we instead specify exactly what the data object requires?
+		// TODO:  Consider just specifying what the data object requires rather than taking a full runtime.
 		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly consensusRegisterCollection: IConsensusRegisterCollection<string>,
+		private readonly consensusRegisterCollection: IConsensusRegisterCollection<unknown>,
 		private readonly pactMap: IPactMap<string>,
-		private readonly taskManager: ITaskManager,
 	) {
 		if (this.runtime.disposed) {
 			this.dispose();
@@ -101,6 +97,10 @@ class MigrationTool implements IMigrationTool {
 			});
 			this.pactMap.on("pending", (key: string) => {
 				if (key === newVersionKey) {
+					// TODO: Consider doing something dramatic here to park the container.  If the host gets the
+					// Migrator it's not really necessary (they have all the info they need to show readonly UI,
+					// stop sending changes, etc.) but this would add some extra protection in case some host isn't
+					// watching their Migrator.
 					this._events.emit("stopping");
 				}
 			});
@@ -112,23 +112,21 @@ class MigrationTool implements IMigrationTool {
 			});
 
 			this.consensusRegisterCollection.on("atomicChanged", (key: string) => {
-				if (key === newContainerIdKey) {
+				if (key === migrationResultKey) {
 					this._events.emit("migrated");
 				}
 			});
 		}
 	}
 
-	public async finalizeMigration(id: string): Promise<void> {
+	public async finalizeMigration(migrationResult: unknown): Promise<void> {
 		// Only permit a single container to be set as a migration destination.
-		if (this.consensusRegisterCollection.read(newContainerIdKey) !== undefined) {
-			throw new Error("New container was already established");
-		}
+		assert(this.migrationResult === undefined, "Migration was already finalized");
 
 		// Using a consensus data structure is important here, because other clients might race us to set the new
 		// value.  All clients must agree on the final value even in these race conditions so everyone ends up in the
 		// same final container.
-		await this.consensusRegisterCollection.write(newContainerIdKey, id);
+		await this.consensusRegisterCollection.write(migrationResultKey, migrationResult);
 	}
 
 	public get proposedVersion(): string | undefined {
@@ -140,11 +138,10 @@ class MigrationTool implements IMigrationTool {
 		if (migrationDetails === undefined) {
 			return undefined;
 		}
-		if (migrationDetails.value === undefined) {
-			throw new Error(
-				"Expect migration version to be specified if migration has been accepted",
-			);
-		}
+		assert(
+			migrationDetails.value !== undefined,
+			"Expect migration version to be specified if migration has been accepted",
+		);
 		return {
 			newVersion: migrationDetails.value,
 			migrationSequenceNumber: migrationDetails.acceptedSequenceNumber,
@@ -152,29 +149,13 @@ class MigrationTool implements IMigrationTool {
 	}
 
 	public readonly proposeVersion = (newVersion: string): void => {
-		// Don't permit changes to the version after a new one has already been accepted.
-		// TODO: Consider whether we should throw on trying to set when a pending proposal exists -- currently
-		// the PactMap will silently drop these on the floor.
-		if (this.acceptedMigration !== undefined) {
-			throw new Error("New version was already accepted");
-		}
+		// Don't permit changes to the version after a new one has already been proposed.
+		assert(this.proposedVersion === undefined, "A proposal was already made");
 
 		// Note that the accepted proposal could come from another client (e.g. two clients try to propose
 		// simultaneously).
 		this.pactMap.set(newVersionKey, newVersion);
 	};
-
-	public async volunteerForMigration(): Promise<boolean> {
-		return this.taskManager.volunteerForTask(migrateTaskName);
-	}
-
-	public haveMigrationTask(): boolean {
-		return this.taskManager.assigned(migrateTaskName);
-	}
-
-	public completeMigrationTask(): void {
-		this.taskManager.complete(migrateTaskName);
-	}
 
 	/**
 	 * Called when the host container closes and disposes itself
@@ -188,12 +169,10 @@ class MigrationTool implements IMigrationTool {
 
 const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
 const pactMapFactory = PactMap.getFactory();
-const taskManagerFactory = TaskManager.getFactory();
 
 const migrationToolSharedObjectRegistry = new Map<string, IChannelFactory>([
 	[consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory],
 	[pactMapFactory.type, pactMapFactory],
-	[taskManagerFactory.type, taskManagerFactory],
 ]);
 
 /**
@@ -218,19 +197,16 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 			context,
 			migrationToolSharedObjectRegistry,
 			existing,
-			// We have to provide a callback here to get an entryPoint, otherwise we would just omit it if we could always get an entryPoint.
 			async () => instance,
 		);
 
 		let consensusRegisterCollection: IConsensusRegisterCollection<string>;
 		let pactMap: IPactMap<string>;
-		let taskManager: ITaskManager;
 		if (existing) {
 			consensusRegisterCollection = (await runtime.getChannel(
 				consensusRegisterCollectionId,
 			)) as IConsensusRegisterCollection<string>;
 			pactMap = (await runtime.getChannel(pactMapId)) as IPactMap<string>;
-			taskManager = (await runtime.getChannel(taskManagerId)) as ITaskManager;
 		} else {
 			consensusRegisterCollection = runtime.createChannel(
 				consensusRegisterCollectionId,
@@ -239,21 +215,11 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 			consensusRegisterCollection.bindToContext();
 			pactMap = runtime.createChannel(pactMapId, pactMapFactory.type) as IPactMap<string>;
 			pactMap.bindToContext();
-			taskManager = runtime.createChannel(
-				taskManagerId,
-				taskManagerFactory.type,
-			) as ITaskManager;
-			taskManager.bindToContext();
 		}
 
 		// By this point, we've performed any async work required to get the dependencies of the MigrationTool,
 		// so just a normal sync constructor will work fine (no followup async initialize()).
-		const instance = new MigrationTool(
-			runtime,
-			consensusRegisterCollection,
-			pactMap,
-			taskManager,
-		);
+		const instance = new MigrationTool(runtime, consensusRegisterCollection, pactMap);
 
 		return runtime;
 	}

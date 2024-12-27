@@ -13,7 +13,7 @@ import type {
 	IMergeTreeDeltaOpArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { SegmentGroup, type ISegmentLeaf } from "../mergeTreeNodes.js";
+import { SegmentGroup, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import {
 	MergeTreeDeltaRevertible,
 	MergeTreeWithRevert,
@@ -172,7 +172,7 @@ describe("MergeTree.Client", () => {
 						revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
 						seq = applyMessages(seq, msgs.splice(0), clients.all, logger);
 
-						walkAllChildSegments(clients.B.mergeTree.root, (seg: ISegmentLeaf) => {
+						walkAllChildSegments(clients.B.mergeTree.root, (seg: ISegmentPrivate) => {
 							if (seg?.trackingCollection.empty === false) {
 								assert.notDeepStrictEqual(
 									seg?.trackingCollection.empty,

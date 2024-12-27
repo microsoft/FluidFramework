@@ -6,10 +6,11 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { LocalClientId } from "./constants.js";
+// eslint-disable-next-line import/no-deprecated
 import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import { IRemovalInfo, ISegment, ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
+import { ISegment, ISegmentPrivate, type MergeBlock } from "./mergeTreeNodes.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,
@@ -71,6 +72,7 @@ abstract class BaseEndpointSegment {
 
 	abstract get ordinal(): string;
 
+	// eslint-disable-next-line import/no-deprecated
 	localRefs?: LocalReferenceCollection;
 
 	/*
@@ -99,7 +101,7 @@ const notSupported = (): never => {
 /**
  * The position immediately prior to the start of the tree
  */
-export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment, IRemovalInfo {
+export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment {
 	type: string = "StartOfTreeSegment";
 	readonly endpointType = "start";
 
@@ -112,7 +114,7 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment,
 		index: number;
 		depth: number;
 	} {
-		let firstSegment: ISegmentLeaf | undefined;
+		let firstSegment: ISegmentPrivate | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
 		depthFirstNodeWalk(
@@ -149,7 +151,7 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment,
 /**
  * The position immediately after the end of the tree
  */
-export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment, IRemovalInfo {
+export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment {
 	type: string = "EndOfTreeSegment";
 	readonly endpointType = "end";
 
@@ -162,7 +164,7 @@ export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment, I
 		index: number;
 		depth: number;
 	} {
-		let lastSegment: ISegmentLeaf | undefined;
+		let lastSegment: ISegmentPrivate | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
 		depthFirstNodeWalk(

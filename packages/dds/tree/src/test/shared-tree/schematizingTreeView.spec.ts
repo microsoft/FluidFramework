@@ -15,9 +15,11 @@ import {
 import {
 	cursorFromInsertable,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
+	type InsertableTypedNode,
 	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -25,10 +27,18 @@ import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
+	getView,
+	TestTreeProviderLite,
 	validateUsageError,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
-import type { TreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
+import {
+	CheckoutFlexTreeView,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TreeCheckout,
+	type TreeStoredContent,
+} from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -144,8 +154,6 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["rootChanged", 6]]);
 	});
 
-	// TODO: AB#8121: When adding support for additional optional fields, we may want a variant of this test which does the analogous flow using
-	// an intermediate state where canView is true but canUpgrade is false.
 	it("Schema becomes un-upgradeable then exact match again", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
@@ -178,6 +186,140 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["schemaChanged", 5]]);
 		assert.equal(view.root, 5);
 		view.dispose();
+	});
+
+	it("Open document whose stored schema has additional optional fields", () => {
+		// This sort of scenario might be reasonably encountered when an "older" version of an application opens
+		// up a document that has been created and/or edited by a "newer" version of an application (which has
+		// expanded the schema to include more information).
+		const factory = new SchemaFactoryAlpha(undefined);
+		class PersonGeneralized extends factory.object("Person", {
+			name: factory.string,
+			age: factory.number,
+			address: factory.optional(factory.string),
+		}) {}
+		class PersonSpecific extends factory.object(
+			"Person",
+			{
+				name: factory.string,
+				age: factory.number,
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		const personConfig = new TreeViewConfiguration({
+			schema: PersonSpecific,
+		});
+		const personConfigGeneralied = new TreeViewConfiguration({
+			schema: PersonGeneralized,
+		});
+		const checkout = checkoutWithInitialTree(
+			personConfigGeneralied,
+			new PersonGeneralized({ name: "Alice", age: 42, address: "123 Main St" }),
+		);
+		const viewSpecific = new SchematizingSimpleTreeView(
+			checkout,
+			personConfig,
+			new MockNodeKeyManager(),
+		);
+
+		assert.deepEqual(viewSpecific.compatibility, {
+			canView: true,
+			canUpgrade: false,
+			isEquivalent: false,
+			canInitialize: false,
+		});
+
+		assert.equal(Object.keys(viewSpecific.root).length, 2);
+		assert.equal(Object.entries(viewSpecific.root).length, 2);
+		assert.equal(viewSpecific.root.name, "Alice");
+		assert.equal(viewSpecific.root.age, 42);
+
+		viewSpecific.dispose();
+		const viewGeneralized = new SchematizingSimpleTreeView(
+			checkout,
+			personConfigGeneralied,
+			new MockNodeKeyManager(),
+		);
+		assert.deepEqual(viewGeneralized.compatibility, {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+			canInitialize: false,
+		});
+		assert.equal(Object.keys(viewGeneralized.root).length, 3);
+		assert.equal(Object.entries(viewGeneralized.root).length, 3);
+		assert.equal(viewGeneralized.root.name, "Alice");
+		assert.equal(viewGeneralized.root.age, 42);
+		assert.equal(viewGeneralized.root.address, "123 Main St");
+	});
+
+	it("Calling moveToEnd on a more specific schema preserves a node's optional fields that were unknown to that schema", () => {
+		const factorySpecific = new SchemaFactoryAlpha(undefined);
+		const factoryGeneral = new SchemaFactoryAlpha(undefined);
+		class PersonGeneralized extends factorySpecific.object("Person", {
+			name: factoryGeneral.string,
+			age: factoryGeneral.number,
+			address: factoryGeneral.optional(factoryGeneral.string),
+		}) {}
+		class PersonSpecific extends factorySpecific.object(
+			"Person",
+			{
+				name: factorySpecific.string,
+				age: factorySpecific.number,
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		const peopleConfig = new TreeViewConfiguration({
+			schema: factorySpecific.array(PersonSpecific),
+		});
+		const peopleGeneralizedConfig = new TreeViewConfiguration({
+			schema: factoryGeneral.array(PersonGeneralized),
+		});
+		const checkout = checkoutWithInitialTree(peopleGeneralizedConfig, [
+			new PersonGeneralized({ name: "Alice", age: 42, address: "123 Main St" }),
+			new PersonGeneralized({ name: "Bob", age: 24 }),
+		]);
+		const viewSpecific = new SchematizingSimpleTreeView(
+			checkout,
+			peopleConfig,
+			new MockNodeKeyManager(),
+		);
+
+		assert.deepEqual(viewSpecific.compatibility, {
+			canView: true,
+			canUpgrade: false,
+			isEquivalent: false,
+			canInitialize: false,
+		});
+
+		viewSpecific.root.moveRangeToEnd(0, 1);
+
+		// To the view that doesn't have "address" in its schema, the node appears as if it doesn't
+		// have an address...
+		assert.equal(Object.keys(viewSpecific.root[1]).length, 2);
+		assert.equal(viewSpecific.root[1].name, "Alice");
+		assert.equal(viewSpecific.root[1].age, 42);
+		viewSpecific.dispose();
+
+		const viewGeneralized = new SchematizingSimpleTreeView(
+			checkout,
+			peopleGeneralizedConfig,
+			new MockNodeKeyManager(),
+		);
+		assert.deepEqual(viewGeneralized.compatibility, {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+			canInitialize: false,
+		});
+
+		// ...however, despite that client making an edit to Alice, the field is preserved via the move APIs.
+		assert.equal(Object.keys(viewGeneralized.root[1]).length, 3);
+		assert.equal(viewGeneralized.root[1].name, "Alice");
+		assert.equal(viewGeneralized.root[1].age, 42);
+		assert.equal(viewGeneralized.root[1].address, "123 Main St");
 	});
 
 	it("Open upgradable document, then upgrade schema", () => {
@@ -329,6 +471,252 @@ describe("SchematizingSimpleTreeView", () => {
 			branch.rebaseOnto(main);
 			assert.deepEqual([...branchRoot], ["a", "a", "b", "c"]);
 			assert.equal(changes, 0);
+		});
+	});
+
+	describe("runTransaction", () => {
+		const schemaFactory = new SchemaFactory(undefined);
+		class ChildObject extends schemaFactory.object("ChildObject", {}) {}
+		class TestObject extends schemaFactory.object("TestObject", {
+			content: schemaFactory.number,
+			child: schemaFactory.optional(ChildObject),
+		}) {}
+
+		function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
+			const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+			view.initialize({
+				content: 42,
+				child,
+			});
+			return view;
+		}
+
+		describe("transaction callback return values", () => {
+			it("implicit success", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+				});
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("explicit success", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: false };
+				});
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("rollback", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: true };
+				});
+				assert.equal(view.root.content, 42, "The transaction did not rollback");
+				const expectedResult: TransactionResult = { success: false };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("success + user defined value", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { value: view.root.content };
+				});
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionResultExt<number, undefined> = {
+					success: true,
+					value: 43,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("rollback + user defined value", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: true, value: view.root.content };
+				});
+				// The transaction is rolled back. So, the content is reverted to the original value.
+				assert.equal(view.root.content, 42, "The transaction did not rollback");
+				const expectedResult: TransactionResultExt<undefined, number> = {
+					success: false,
+					// Note that this is the value that was returned before the transaction was rolled back.
+					value: 43,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+		});
+
+		describe("transactions", () => {
+			it("runs transactions", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+				});
+				assert.equal(view.root.content, 43);
+				const expectedResult: TransactionResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("can be rolled back", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: true };
+				});
+				assert.equal(view.root.content, 42);
+				const expectedResult: TransactionResult = { success: false };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("breaks the view on error", () => {
+				const view = getTestObjectView();
+				assert.throws(
+					() =>
+						view.runTransaction(() => {
+							view.root.content = 43;
+							throw new Error("Oh no");
+						}),
+					(e) => {
+						return e instanceof Error && e.message === "Oh no";
+					},
+				);
+				assert.throws(() => view.root.content, "View should be broken");
+			});
+
+			it("undoes and redoes entire transaction", () => {
+				const view = getTestObjectView();
+				const checkoutView = view.getView();
+				assert(checkoutView instanceof CheckoutFlexTreeView);
+				const { undoStack, redoStack } = createTestUndoRedoStacks(
+					checkoutView.checkout.events,
+				);
+
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					view.root.content = 44;
+				});
+				const expectedResult: TransactionResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+
+				assert.equal(view.root.content, 44);
+				assert.equal(undoStack.length, 1);
+				undoStack[0].revert();
+				assert.equal(view.root.content, 42);
+				assert.equal(redoStack.length, 1);
+				redoStack[0].revert();
+				assert.equal(view.root.content, 44);
+			});
+
+			it("fails if node existence constraint is already violated", () => {
+				const view = getTestObjectView({});
+				const childB = view.root.child;
+				assert(childB !== undefined);
+				// The node given to the constraint is deleted from the document, so the transaction can't possibly succeed even locally/optimistically
+				view.root.child = undefined;
+				assert.throws(
+					() =>
+						view.runTransaction(
+							() => {
+								view.root.content = 43;
+							},
+							{
+								preconditions: [{ type: "nodeInDocument", node: childB }],
+							},
+						),
+					(e) => {
+						return (
+							e instanceof UsageError &&
+							e.message.startsWith(
+								`Attempted to add a "nodeInDocument" constraint, but the node is not currently in the document`,
+							)
+						);
+					},
+				);
+				assert.throws(() => view.root.content, "View should be broken");
+			});
+
+			it("respects a violated node existence constraint after sequencing", () => {
+				// Create two connected trees with child nodes
+				const viewConfig = new TreeViewConfiguration({ schema: TestObject });
+				const provider = new TestTreeProviderLite(2);
+				const [treeA, treeB] = provider.trees;
+				const viewA = treeA.viewWith(viewConfig);
+				const viewB = treeB.viewWith(viewConfig);
+				viewA.initialize({
+					content: 42,
+					child: {},
+				});
+				provider.processMessages();
+
+				// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).
+				viewA.root.child = undefined;
+				// Tree B runs a transaction to change the root content to 43, but it should only succeed if the child node exists.
+				const childB = viewB.root.child;
+				assert(childB !== undefined);
+				const runTransactionResult = viewB.runTransaction(
+					() => {
+						viewB.root.content = 43;
+					},
+					{
+						preconditions: [{ type: "nodeInDocument", node: childB }],
+					},
+				);
+				const expectedResult: TransactionResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+
+				// The transaction does apply optimistically...
+				assert.equal(viewA.root.content, 42);
+				assert.equal(viewB.root.content, 43);
+				// ...but then is rolled back after sequencing because the child node was removed by Tree A.
+				provider.processMessages();
+				assert.equal(viewB.root.content, 42);
+				assert.equal(viewB.root.content, 42);
+			});
 		});
 	});
 });

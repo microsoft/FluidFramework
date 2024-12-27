@@ -27,7 +27,7 @@ export abstract class BaseSegment implements ISegment {
     cachedLength: number;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     clientId: number;
     // (undocumented)
     abstract clone(): ISegment;
@@ -37,33 +37,33 @@ export abstract class BaseSegment implements ISegment {
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
     // (undocumented)
     hasProperty(key: string): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     index: number;
     // (undocumented)
     isLeaf(): this is ISegment;
-    // (undocumented)
+    // @deprecated (undocumented)
     localMovedSeq?: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     localRefs?: LocalReferenceCollection;
-    // (undocumented)
+    // @deprecated (undocumented)
     localRemovedSeq?: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     localSeq?: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     movedClientIds?: number[];
-    // (undocumented)
+    // @deprecated (undocumented)
     movedSeq?: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     movedSeqs?: number[];
-    // (undocumented)
+    // @deprecated (undocumented)
     ordinal: string;
     // (undocumented)
     properties?: PropertySet;
-    // (undocumented)
+    // @deprecated (undocumented)
     removedClientIds?: number[];
-    // (undocumented)
+    // @deprecated (undocumented)
     removedSeq?: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     seq: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
@@ -73,7 +73,7 @@ export abstract class BaseSegment implements ISegment {
     readonly trackingCollection: TrackingGroupCollection;
     // (undocumented)
     abstract readonly type: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     wasMovedOnInsert?: boolean | undefined;
 }
 
@@ -160,7 +160,7 @@ export interface IMarkerDef {
     refType?: ReferenceType;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IMergeNodeCommon {
     index: number;
     // (undocumented)
@@ -320,7 +320,7 @@ export interface IMergeTreeSegmentDelta {
     segment: ISegment;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IMoveInfo {
     localMovedSeq?: number;
     movedClientIds: number[];
@@ -345,7 +345,7 @@ export interface IRelativePosition {
     offset?: number;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IRemovalInfo {
     localRemovedSeq?: number;
     removedClientIds: number[];
@@ -353,21 +353,47 @@ export interface IRemovalInfo {
 }
 
 // @alpha
-export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
+export interface ISegment {
     // (undocumented)
     append(segment: ISegment): void;
     attribution?: IAttributionCollection<AttributionKey>;
     cachedLength: number;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
+    // @deprecated
     clientId: number;
     // (undocumented)
     clone(): ISegment;
+    // @deprecated
     readonly endpointType?: "start" | "end";
+    // @deprecated
+    index: number;
+    // (undocumented)
+    isLeaf(): this is ISegment;
+    // @deprecated
+    localMovedSeq?: number;
+    // @deprecated
     localRefs?: LocalReferenceCollection;
+    // @deprecated
     localRemovedSeq?: number;
+    // @deprecated
     localSeq?: number;
+    // @deprecated
+    movedClientIds?: number[];
+    // @deprecated
+    movedSeq?: number;
+    // @deprecated
+    movedSeqs?: number[];
+    // @deprecated
+    moveDst?: ReferencePosition;
+    // @deprecated
+    ordinal: string;
     properties?: PropertySet;
+    // @deprecated
+    removedClientIds?: number[];
+    // @deprecated
+    removedSeq?: number;
+    // @deprecated
     seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
@@ -377,6 +403,8 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     readonly trackingCollection: TrackingGroupCollection;
     // (undocumented)
     readonly type: string;
+    // @deprecated
+    wasMovedOnInsert?: boolean;
 }
 
 // @alpha (undocumented)
@@ -399,7 +427,7 @@ export interface ITrackingGroup {
     unlink(trackable: Trackable): boolean;
 }
 
-// @alpha @sealed
+// @alpha @sealed @deprecated
 export class LocalReferenceCollection {
     [Symbol.iterator](): {
         next(): IteratorResult<LocalReferencePosition>;
@@ -567,6 +595,9 @@ export const reservedMarkerIdKey = "markerId";
 
 // @alpha
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
+
+// @alpha
+export function segmentIsRemoved(segment: ISegment): boolean;
 
 // @alpha (undocumented)
 export interface SequenceOffsets {

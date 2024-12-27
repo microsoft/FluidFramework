@@ -7,6 +7,7 @@ module.exports = {
 	extends: [
 		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
 		"prettier",
+		"../../.eslintrc.cjs",
 	],
 	rules: {
 		// This is an example/test app; all its dependencies are dev dependencies so as not to pollute the lockfile

@@ -4,22 +4,23 @@
 
 ```ts
 
-// @alpha (undocumented)
+// @alpha
 export class CompositeEntryPoint {
-    // (undocumented)
     readonly addEntryPointPiece: (entryPointPiece: IEntryPointPiece) => void;
-    // (undocumented)
     readonly onCreate: (runtime: IContainerRuntime) => Promise<void>;
-    // (undocumented)
     readonly onLoad: (runtime: IContainerRuntime) => Promise<void>;
-    // (undocumented)
     readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<Record<string, FluidObject>>;
-    // (undocumented)
     get registryEntries(): NamedFluidDataStoreRegistryEntries;
 }
 
 // @alpha
-export type DataTransformationCallback = (exportedData: unknown, modelVersion: string) => Promise<unknown>;
+export type CreateDetachedContainerCallback = (version: string) => Promise<{
+    container: IContainer;
+    attach: () => Promise<string>;
+}>;
+
+// @alpha
+export type ExportDataCallback = (sourceContainer: IContainer) => Promise<unknown>;
 
 // @alpha
 export interface IAcceptedMigrationDetails {
@@ -27,155 +28,60 @@ export interface IAcceptedMigrationDetails {
     newVersion: string;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface IEntryPointPiece {
-    // (undocumented)
     readonly createPiece: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    // (undocumented)
     readonly name: string;
-    // (undocumented)
     readonly onCreate: (runtime: IContainerRuntime) => Promise<void>;
-    // (undocumented)
     readonly onLoad: (runtime: IContainerRuntime) => Promise<void>;
-    // (undocumented)
     readonly registryEntries: NamedFluidDataStoreRegistryEntries;
 }
 
 // @alpha
-export interface IImportExportModel<ImportType, ExportType> {
-    exportData: () => Promise<ExportType>;
-    importData: (initialData: ImportType) => Promise<void>;
-    supportsDataFormat: (initialData: unknown) => initialData is ImportType;
-}
-
-// @alpha
-export interface IMigratableModel extends IVersionedModel, IImportExportModel<unknown, unknown> {
-    dispose(): void;
-}
-
-// @alpha (undocumented)
-export interface IMigrationTool {
+export interface IMigrator {
     readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
-    completeMigrationTask(): void;
-    // (undocumented)
-    readonly connected: boolean;
-    // (undocumented)
-    readonly events: IEventProvider<IMigrationToolEvents>;
-    finalizeMigration(id: string): Promise<void>;
-    haveMigrationTask(): boolean;
+    readonly events: IEventProvider<IMigratorEvents>;
+    readonly migrationResult: unknown | undefined;
     readonly migrationState: MigrationState;
-    readonly newContainerId: string | undefined;
     readonly proposedVersion: string | undefined;
     proposeVersion: (newVersion: string) => void;
-    volunteerForMigration(): Promise<boolean>;
-}
-
-// @alpha (undocumented)
-export interface IMigrationToolEvents extends IEvent {
-    // (undocumented)
-    (event: "stopping" | "migrating" | "migrated", listener: () => void): any;
-    // (undocumented)
-    (event: "connected" | "disconnected", listener: () => void): any;
-    // (undocumented)
-    (event: "disposed", listener: () => void): any;
-}
-
-// @alpha (undocumented)
-export interface IMigrator {
-    readonly currentModel: IMigratableModel;
-    readonly currentModelId: string;
-    // (undocumented)
-    readonly events: IEventProvider<IMigratorEvents>;
-    readonly migrationState: MigrationState;
-}
-
-// @alpha (undocumented)
-export interface IMigratorEvents extends IEvent {
-    // (undocumented)
-    (event: "migrated" | "migrating", listener: () => void): any;
-    // (undocumented)
-    (event: "migrationNotSupported", listener: (version: string) => void): any;
-}
-
-// @alpha (undocumented)
-export interface ISimpleLoader {
-    createDetached(version: string): Promise<{
-        container: IContainer;
-        attach: () => Promise<string>;
-    }>;
-    loadExisting(id: string): Promise<IContainer>;
-    supportsVersion(version: string): Promise<boolean>;
 }
 
 // @alpha
-export interface IVersionedModel {
-    readonly version: string;
+export interface IMigratorEntryPoint {
+    getMigrator: (loadSourceContainerCallback: LoadSourceContainerCallback, migrationCallback: MigrationCallback) => Promise<IMigrator>;
 }
+
+// @alpha
+export interface IMigratorEvents extends IEvent {
+    (event: "stopping" | "migrating" | "migrated", listener: () => void): void;
+}
+
+// @alpha
+export type ImportDataCallback = (destinationContainer: IContainer, exportedData: unknown) => Promise<void>;
 
 // @alpha
 export const loadCompositeRuntime: (context: IContainerContext, existing: boolean, compositeEntryPoint: CompositeEntryPoint, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
 
 // @alpha
-export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
-
-// @alpha (undocumented)
-export const migrationToolEntryPointPiece: IEntryPointPiece;
-
-// @alpha (undocumented)
-export class MigrationToolFactory implements IFluidDataStoreFactory {
-    // (undocumented)
-    get IFluidDataStoreFactory(): IFluidDataStoreFactory;
-    // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
-    // (undocumented)
-    get type(): string;
-}
+export type LoadSourceContainerCallback = () => Promise<IContainer>;
 
 // @alpha
-export class Migrator implements IMigrator {
-    constructor(simpleLoader: ISimpleLoader, initialMigratable: IMigratableModel, initialMigrationTool: IMigrationTool, initialId: string, dataTransformationCallback?: DataTransformationCallback | undefined);
-    // (undocumented)
-    get connected(): boolean;
-    // (undocumented)
-    get currentMigrationTool(): IMigrationTool;
-    // (undocumented)
-    get currentModel(): IMigratableModel;
-    // (undocumented)
-    get currentModelId(): string;
-    // (undocumented)
-    get events(): IEventProvider<IMigratorEvents>;
-    // (undocumented)
-    get migrationState(): MigrationState;
-}
+export const makeCreateDetachedContainerCallback: (loaderProps: ILoaderProps, generateCreateNewRequest: () => IRequest) => CreateDetachedContainerCallback;
 
-// @alpha (undocumented)
-export class SessionStorageSimpleLoader implements ISimpleLoader {
-    constructor(codeLoader: ICodeDetailsLoader, logger?: ITelemetryBaseLogger | undefined);
-    // (undocumented)
-    createDetached(version: string): Promise<{
-        container: IContainer;
-        attach: () => Promise<string>;
-    }>;
-    // (undocumented)
-    loadExisting(id: string): Promise<IContainer>;
-    // (undocumented)
-    supportsVersion(version: string): Promise<boolean>;
-}
+// @alpha
+export const makeMigratorEntryPointPiece: (exportDataCallback: ExportDataCallback) => IEntryPointPiece;
 
-// @alpha (undocumented)
-export class SimpleLoader implements ISimpleLoader {
-    constructor(props: Pick<ILoaderProps, "urlResolver" | "documentServiceFactory" | "codeLoader" | "logger"> & {
-        generateCreateNewRequest: () => IRequest;
-    });
-    // (undocumented)
-    createDetached(version: string): Promise<{
-        container: IContainer;
-        attach: () => Promise<string>;
-    }>;
-    // (undocumented)
-    loadExisting(id: string): Promise<IContainer>;
-    // (undocumented)
-    supportsVersion(version: string): Promise<boolean>;
-}
+// @alpha
+export const makeSeparateContainerMigrationCallback: (createDetachedContainerCallback: CreateDetachedContainerCallback, importDataCallback: ImportDataCallback) => MigrationCallback;
+
+// @alpha
+export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;
+
+// @alpha
+export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
+
+// @alpha
+export type SeparateContainerMigrationResult = string;
 
 ```

@@ -18,7 +18,7 @@ import {
 
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegment, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { type ISegmentPrivate } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
 import {
 	JsonSegmentSpecs,
@@ -55,7 +55,7 @@ export class SnapshotLegacy {
 
 	private header: SnapshotHeader | undefined;
 	private seq: number | undefined;
-	private segments: ISegment[] | undefined;
+	private segments: ISegmentPrivate[] | undefined;
 	private readonly logger: ITelemetryLoggerExt;
 	private readonly chunkSize: number;
 
@@ -71,11 +71,11 @@ export class SnapshotLegacy {
 	}
 
 	private getSeqLengthSegs(
-		allSegments: ISegment[],
+		allSegments: ISegmentPrivate[],
 		approxSequenceLength: number,
 		startIndex = 0,
 	): MergeTreeChunkLegacy {
-		const segs: ISegment[] = [];
+		const segs: ISegmentPrivate[] = [];
 		let sequenceLength = 0;
 		let segCount = 0;
 		let segsWithAttribution = 0;
@@ -191,7 +191,7 @@ export class SnapshotLegacy {
 		return builder.getSummaryTree();
 	}
 
-	extractSync(): ISegment[] {
+	extractSync(): ISegmentPrivate[] {
 		const collabWindow = this.mergeTree.collabWindow;
 		const seq = (this.seq = collabWindow.minSeq);
 		this.header = {
@@ -204,10 +204,10 @@ export class SnapshotLegacy {
 
 		let originalSegments = 0;
 
-		const segs: ISegment[] = [];
-		let prev: ISegmentLeaf | undefined;
+		const segs: ISegmentPrivate[] = [];
+		let prev: ISegmentPrivate | undefined;
 		const extractSegment = (
-			segment: ISegmentLeaf,
+			segment: ISegmentPrivate,
 			pos: number,
 			refSeq: number,
 			clientId: number,

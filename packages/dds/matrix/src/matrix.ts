@@ -21,11 +21,13 @@ import {
 	Client,
 	IJSONSegment,
 	IMergeTreeOp,
+	type ISegmentInternal,
 	type LocalReferencePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
+	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -758,18 +760,12 @@ export class SharedMatrix<T = any>
 		ref: LocalReferencePosition,
 		localSeq: number,
 	): number | undefined {
-		const segment = ref.getSegment();
+		const segment: ISegmentInternal | undefined = ref.getSegment();
 		const offset = ref.getOffset();
 		// If the segment that contains the position is removed, then this setCell op should do nothing.
-		if (segment === undefined || offset === undefined || segment.removedSeq !== undefined) {
+		if (segment === undefined || offset === undefined || segmentIsRemoved(segment)) {
 			return;
 		}
-
-		assert(
-			segment.localRemovedSeq === undefined ||
-				(segment.localRemovedSeq !== undefined && segment.localRemovedSeq > localSeq),
-			0x8b8 /* Attempted to set a cell which was removed locally before the original op applied. */,
-		);
 
 		return client.findReconnectionPosition(segment, localSeq) + offset;
 	}

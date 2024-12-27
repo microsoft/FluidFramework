@@ -11,14 +11,13 @@ import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
 	IMergeNode,
-	ISegment,
+	ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
 	seqLTE,
-	toMoveInfo,
-	toRemovalInfo,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
+import { toRemovalInfo, toMoveInfo } from "./segmentInfos.js";
 
 export const zamboniSegmentsMax = 2;
 function underflow(node: MergeBlock): boolean {
@@ -136,7 +135,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree): void {
 	// The previous segment is tracked while scouring for the purposes of merging adjacent segments
 	// when possible.
-	let prevSegment: ISegment | undefined;
+	let prevSegment: ISegmentPrivate | undefined;
 	for (let k = 0; k < node.childCount; k++) {
 		// TODO Non null asserting, why is this not null?
 		const childNode = node.children[k]!;
