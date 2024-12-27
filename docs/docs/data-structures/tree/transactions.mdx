@@ -3,6 +3,8 @@ title: Transactions
 sidebar_position: 6
 ---
 
+TODO:#27374: update this page to describe the new transaction API
+
 If you want the `SharedTree` to treat a set of changes atomically, wrap these changes in a transaction.
 Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously (though, note that the Fluid Framework guarantees this already for any sequence of changes that are submitted synchronously). However, the changes may not be applied at all if the transaction is given one or more constraints.
 If any constraint on a transaction is not met, then the transaction and all its changes will ignored by all clients.
