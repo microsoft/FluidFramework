@@ -143,7 +143,7 @@ export function create(
 	router.put("/tenants/:id/keyAccess", (request, response) => {
 		const tenantId = request.params.id;
 		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess ?? false;
-		const enableSharedKeyAccess = request.body.enableSharedKeyAccess ?? false;
+		const enableSharedKeyAccess = request.body.enableSharedKeyAccess ?? true;
 		const storageP = manager.updateKeyAccessPolicy(
 			tenantId,
 			enablePrivateKeyAccess,

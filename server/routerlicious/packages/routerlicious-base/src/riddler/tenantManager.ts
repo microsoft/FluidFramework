@@ -501,6 +501,18 @@ export class TenantManager {
 		enablePrivateKeyAccess: boolean,
 		enableSharedKeyAccess: boolean,
 	): Promise<ITenantConfig> {
+		if (!enableSharedKeyAccess && !enablePrivateKeyAccess) {
+			Lumberjack.error(
+				"Cannot update a tenant with both shared and private key access disabled",
+				{
+					[BaseTelemetryProperties.tenantId]: tenantId,
+				},
+			);
+			throw new NetworkError(
+				400,
+				"Cannot update a tenant with both shared and private key access disabled",
+			);
+		}
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 		const tenantDocument = await this.getTenantDocument(tenantId);
 		if (tenantDocument === undefined) {
