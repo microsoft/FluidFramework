@@ -402,12 +402,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			if (isInserted(seg) && seg.seq === UnassignedSequenceNumber) {
 				localInserts++;
 			}
-			if (isRemoved(seg)) {
-				if (seg.removedSeq === UnassignedSequenceNumber) {
-					localRemoves++;
-				}
-			} // Only serialize segments that have not been removed.
-			else {
+			if (isRemoved(seg) && seg.removedSeq === UnassignedSequenceNumber) {
+				localRemoves++;
+			}
+			// Only serialize segments that have not been removed.
+			if (!isRemoved(seg)) {
 				handleCollectingSerializer.stringify(seg.clone().toJSONObject(), handle);
 			}
 			return true;

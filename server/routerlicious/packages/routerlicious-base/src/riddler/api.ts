@@ -91,7 +91,13 @@ export function create(
 	router.get("/tenants/:id/keys", (request, response) => {
 		const tenantId = request.params.id;
 		const includeDisabledTenant = getIncludeDisabledFlag(request);
-		const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant);
+		const usePrivateKeys = getUsePrivateKeysFlag(request);
+		const tenantP = manager.getTenantKeys(
+			tenantId,
+			includeDisabledTenant,
+			false /* bypassCache */,
+			usePrivateKeys,
+		);
 		handleResponse(tenantP, response);
 	});
 
@@ -114,6 +120,16 @@ export function create(
 	});
 
 	/**
+	 * Updates the keyless access setting for the given tenant
+	 */
+	router.put("/tenants/:id/privateKeyAccess", (request, response) => {
+		const tenantId = request.params.id;
+		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess ?? false;
+		const storageP = manager.updatePrivateKeyAccessPolicy(tenantId, enablePrivateKeyAccess);
+		handleResponse(storageP, response);
+	});
+
+	/**
 	 * Updates the customData for the given tenant
 	 */
 	router.put("/tenants/:id/customData", (request, response) => {
@@ -128,7 +144,8 @@ export function create(
 	router.put("/tenants/:id/key", (request, response) => {
 		const tenantId = request.params.id;
 		const keyName = request.body.keyName as string;
-		const refreshKeyP = manager.refreshTenantKey(tenantId, keyName);
+		const refreshPrivateKey = request.body.refreshPrivateKey as boolean;
+		const refreshKeyP = manager.refreshTenantKey(tenantId, keyName, refreshPrivateKey);
 		handleResponse(refreshKeyP, response);
 	});
 
@@ -142,11 +159,13 @@ export function create(
 		const tenantCustomData: ITenantCustomData = request.body.customData
 			? request.body.customData
 			: {};
+		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess ?? false;
 		const tenantP = manager.createTenant(
 			tenantId,
 			tenantStorage,
 			tenantOrderer,
 			tenantCustomData,
+			enablePrivateKeyAccess,
 		);
 		handleResponse(tenantP, response);
 	});
@@ -167,6 +186,11 @@ export function create(
 	function getIncludeDisabledFlag(request): boolean {
 		const includeDisabledRaw = request.query.includeDisabledTenant as string;
 		return includeDisabledRaw?.toLowerCase() === "true";
+	}
+
+	function getUsePrivateKeysFlag(request): boolean {
+		const usePrivateKeys = request.query.usePrivateKeys as string;
+		return usePrivateKeys?.toLowerCase() === "true";
 	}
 
 	return router;

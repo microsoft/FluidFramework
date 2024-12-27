@@ -73,10 +73,7 @@ export interface IInsertionInfo {
  * @returns The insertion info object if the conversion is possible, otherwise undefined.
  */
 export const toInsertionInfo = (segmentLike: unknown): IInsertionInfo | undefined =>
-	segmentLike !== undefined &&
-	isObject(segmentLike) &&
-	hasProp(segmentLike, "clientId", "number") &&
-	hasProp(segmentLike, "seq", "number")
+	hasProp(segmentLike, "clientId", "number") && hasProp(segmentLike, "seq", "number")
 		? segmentLike
 		: undefined;
 
@@ -188,8 +185,6 @@ export interface IRemovalInfo {
  * @returns The removal info object if the conversion is possible, otherwise undefined.
  */
 export const toRemovalInfo = (segmentLike: unknown): IRemovalInfo | undefined =>
-	segmentLike !== undefined &&
-	isObject(segmentLike) &&
 	hasProp(segmentLike, "removedClientIds", "array") &&
 	hasProp(segmentLike, "removedSeq", "number")
 		? segmentLike
@@ -291,8 +286,6 @@ export interface IMoveInfo {
 	wasMovedOnInsert: boolean;
 }
 export const toMoveInfo = (segmentLike: unknown): IMoveInfo | undefined =>
-	segmentLike !== undefined &&
-	isObject(segmentLike) &&
 	hasProp(segmentLike, "movedClientIds", "array") &&
 	hasProp(segmentLike, "movedSeq", "number") &&
 	hasProp(segmentLike, "movedSeqs", "array") &&
