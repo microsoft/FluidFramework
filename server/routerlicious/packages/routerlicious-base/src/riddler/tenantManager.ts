@@ -159,38 +159,56 @@ export class TenantManager {
 		jti: string = uuid(),
 		includeDisabledTenant = false,
 	): Promise<IFluidAccessToken> {
-		const tenant = await this.getTenantDocument(tenantId, includeDisabledTenant);
-		if (tenant === undefined) {
-			Lumberjack.error(`No tenant found when signing token for tenant id ${tenantId}`, {
-				[BaseTelemetryProperties.tenantId]: tenantId,
-			});
+		const lumberProperties = {
+			[BaseTelemetryProperties.tenantId]: tenantId,
+			includeDisabledTenant,
+		};
+		const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
+		if (tenantDocument === undefined) {
+			Lumberjack.error(
+				`No tenant found when signing token for tenant id ${tenantId}`,
+				lumberProperties,
+			);
 			throw new NetworkError(404, "Tenant is disabled or does not exist.");
 		}
 
-		const isTenantPrivateKeyAccessEnabled = this.isTenantPrivateKeyAccessEnabled(tenant);
+		// If the tenant is a keyless tenant, always use the private keys to sign the token
+		const isTenantPrivateKeyAccessEnabled =
+			this.isTenantPrivateKeyAccessEnabled(tenantDocument);
 		console.log(
 			"[DHRUV DEBUG] isTenantPrivateKeyAccessEnabled",
 			isTenantPrivateKeyAccessEnabled,
 		);
 
-		// If the tenant is a keyless tenant, always use the private keys to sign the token
-		// If the tenant is a keyless tenant, privateKeys will always be defined
-		// If the tenant is not a keyless tenant, use the shared keys to sign the token
-		const keys: ITenantKeys = isTenantPrivateKeyAccessEnabled
-			? await this.returnPrivateKeysInOrder(
-					tenantId,
-					tenant.privateKeys as ITenantPrivateKeys,
-					{},
-			  )
-			: {
-					key1: tenant.key as string,
-					key2: tenant.secondaryKey ?? "",
-			  };
+		const keys = this.decryptKeys(
+			tenantDocument,
+			lumberProperties,
+			isTenantPrivateKeyAccessEnabled,
+		);
+
+		// Added this check here again to ensure linting doesn't complain about tenantDocument.privateKeys being possibly undefined
+		const signingKey = tenantDocument.privateKeys
+			? (
+					await this.returnPrivateKeysInOrder(
+						tenantId,
+						{
+							// If isTenantPrivateKeyAccessEnabled is true, then privateKeys is not undefined
+							key: keys.key1,
+							keyNextRotationTime: tenantDocument.privateKeys.keyNextRotationTime,
+							secondaryKey: keys.key2,
+							secondaryKeyNextRotationTime:
+								tenantDocument.privateKeys.secondaryKeyNextRotationTime,
+						},
+						lumberProperties,
+					)
+			  ).key1
+			: keys.key1;
+
 		console.log("[DHRUV DEBUG] keys to be used", keys);
 		const token = generateToken(
 			tenantId,
 			documentId,
-			keys.key1,
+			signingKey,
 			scopes,
 			user,
 			lifetime,
@@ -705,6 +723,61 @@ export class TenantManager {
 		return keys;
 	}
 
+	private decryptKeys(
+		tenantDocument: ITenantDocument,
+		lumberProperties: Record<string, any>,
+		usePrivateKeys = false,
+	): IPlainTextAndEncryptedTenantKeys & {
+		encryptionKeyVersion: EncryptionKeyVersion | undefined;
+	} {
+		const encryptedTenantKey1 =
+			usePrivateKeys && tenantDocument.privateKeys
+				? tenantDocument.privateKeys.key
+				: (tenantDocument.key as string);
+
+		const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
+		const tenantKey1 = this.secretManager.decryptSecret(
+			encryptedTenantKey1,
+			encryptionKeyVersion,
+		);
+
+		if (tenantKey1 == null) {
+			winston.error("Tenant key1 decryption failed.");
+			Lumberjack.error("Tenant key1 decryption failed.", lumberProperties);
+			throw new NetworkError(500, "Tenant key1 decryption failed.");
+		}
+
+		const encryptedTenantKey2 =
+			usePrivateKeys && tenantDocument.privateKeys
+				? tenantDocument.privateKeys.secondaryKey
+				: tenantDocument.secondaryKey ?? "";
+
+		const tenantKey2 = encryptedTenantKey2
+			? this.secretManager.decryptSecret(encryptedTenantKey2, encryptionKeyVersion)
+			: "";
+
+		// Tenant key 2 decryption returns null
+		if (tenantKey2 == null) {
+			winston.error("Tenant key2 decryption failed");
+			Lumberjack.error("Tenant key2 decryption failed.", lumberProperties);
+			throw new NetworkError(500, "Tenant key2 decryption failed.");
+		}
+
+		// If it looks like there is key2, but decrypted key == ""
+		if (!encryptedTenantKey2 || tenantKey2 === "") {
+			winston.info("Tenant key2 doesn't exist.");
+			Lumberjack.info("Tenant key2 doesn't exist.", lumberProperties);
+		}
+
+		return {
+			key1: tenantKey1,
+			key2: tenantKey2,
+			encryptedTenantKey1,
+			encryptedTenantKey2,
+			encryptionKeyVersion,
+		};
+	}
+
 	private async getTenantKeysHelper(
 		tenantId: string,
 		includeDisabledTenant = false,
@@ -788,44 +861,13 @@ export class TenantManager {
 				throw new NetworkError(404, `Private keys are missing for tenant id ${tenantId}`);
 			}
 
-			const encryptedTenantKey1 =
-				usePrivateKeys && tenantDocument.privateKeys
-					? tenantDocument.privateKeys.key
-					: (tenantDocument.key as string);
-
-			const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
-			const tenantKey1 = this.secretManager.decryptSecret(
+			const {
+				key1: tenantKey1,
+				key2: tenantKey2,
 				encryptedTenantKey1,
+				encryptedTenantKey2,
 				encryptionKeyVersion,
-			);
-
-			if (tenantKey1 == null) {
-				winston.error("Tenant key1 decryption failed.");
-				Lumberjack.error("Tenant key1 decryption failed.", lumberProperties);
-				throw new NetworkError(500, "Tenant key1 decryption failed.");
-			}
-
-			const encryptedTenantKey2 =
-				usePrivateKeys && tenantDocument.privateKeys
-					? tenantDocument.privateKeys.secondaryKey
-					: tenantDocument.secondaryKey ?? "";
-
-			const tenantKey2 = encryptedTenantKey2
-				? this.secretManager.decryptSecret(encryptedTenantKey2, encryptionKeyVersion)
-				: "";
-
-			// Tenant key 2 decryption returns null
-			if (tenantKey2 == null) {
-				winston.error("Tenant key2 decryption failed");
-				Lumberjack.error("Tenant key2 decryption failed.", lumberProperties);
-				throw new NetworkError(500, "Tenant key2 decryption failed.");
-			}
-
-			// If it looks like there is key2, but decrypted key == ""
-			if (!encryptedTenantKey2 || tenantKey2 === "") {
-				winston.info("Tenant key2 doesn't exist.");
-				Lumberjack.info("Tenant key2 doesn't exist.", lumberProperties);
-			}
+			} = this.decryptKeys(tenantDocument, lumberProperties, usePrivateKeys);
 
 			if (!bypassCache && this.isCacheEnabled) {
 				const cacheKeys: IEncryptedTenantKeys | IEncryptedPrivateTenantKeys =
