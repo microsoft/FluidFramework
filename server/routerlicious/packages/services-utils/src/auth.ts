@@ -89,27 +89,21 @@ export function validateTokenClaims(
 export async function getCreationToken(
 	tenantManager: ITenantManager,
 	token: string,
-	requestTenantId: string,
 	documentId: string,
 	lifetime = 5 * 60,
 ) {
 	const tokenClaims = decode(token) as ITokenClaims;
 	const { tenantId, user, jti, ver } = tokenClaims;
-	const isKeylessAccessToken = isKeylessTokenClaims(tokenClaims);
-	const key = await tenantManager.getKey(requestTenantId, false, isKeylessAccessToken);
-	// Current time in seconds
-
-	return generateToken(
+	const accessToken = await tenantManager.signToken(
 		tenantId,
 		documentId,
-		key,
 		[],
 		user,
 		lifetime,
 		ver,
 		jti,
-		isKeylessAccessToken,
 	);
+	return accessToken;
 }
 
 /**

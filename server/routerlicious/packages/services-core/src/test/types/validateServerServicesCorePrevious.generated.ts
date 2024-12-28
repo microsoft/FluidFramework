@@ -2440,6 +2440,7 @@ declare function get_old_InterfaceDeclaration_ITenantManager():
 declare function use_current_InterfaceDeclaration_ITenantManager(
     use: TypeOnly<current.ITenantManager>): void;
 use_current_InterfaceDeclaration_ITenantManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITenantManager());
 
 /*

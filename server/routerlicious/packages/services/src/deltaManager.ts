@@ -7,7 +7,6 @@ import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import { IDeltaService } from "@fluidframework/server-services-core";
-import { generateToken } from "@fluidframework/server-services-utils";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
 import { TenantManager } from "./tenant";
 
@@ -60,21 +59,35 @@ export class DeltaManager implements IDeltaService {
 		throw new Error("Method not implemented.");
 	}
 
-	private async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
+	private async signToken(
+		tenantId: string,
+		documentId: string,
+		scopes: ScopeType[],
+		includeDisabledTenant = false,
+	): Promise<string> {
 		const tenantManager = new TenantManager(this.authEndpoint, "");
-		const keyP = await tenantManager.getKey(tenantId, includeDisabledTenant);
+		const keyP = await tenantManager.signToken(
+			tenantId,
+			documentId,
+			scopes,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			includeDisabledTenant,
+		);
 		return keyP;
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string, baseUrl: string) {
-		const key = await this.getKey(tenantId);
+		const accessToken = await this.signToken(tenantId, documentId, [ScopeType.DocRead]);
 
 		const defaultQueryString = {
 			token: fromUtf8ToBase64(`${tenantId}`),
 		};
 
 		const getDefaultHeaders = () => {
-			const token = { jwt: generateToken(tenantId, documentId, key, [ScopeType.DocRead]) };
+			const token = { jwt: accessToken };
 			return {
 				Authorization: `Basic ${token.jwt}`,
 			};

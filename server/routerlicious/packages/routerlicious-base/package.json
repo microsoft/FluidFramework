@@ -146,6 +146,9 @@
 			},
 			"ClassDeclaration_TenantManager": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITenantDocument": {
+				"backCompat": false
 			}
 		}
 	}

@@ -96,6 +96,9 @@
 			},
 			"ClassDeclaration_TestContext": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_TestTenantManager": {
+				"forwardCompat": false
 			}
 		}
 	}

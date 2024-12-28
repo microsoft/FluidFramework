@@ -587,6 +587,7 @@ declare function get_old_ClassDeclaration_TestTenantManager():
 declare function use_current_ClassDeclaration_TestTenantManager(
     use: TypeOnly<current.TestTenantManager>): void;
 use_current_ClassDeclaration_TestTenantManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestTenantManager());
 
 /*

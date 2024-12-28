@@ -103,7 +103,7 @@ async function generateCreateDocumentResponseBody(
 		if (token === undefined) {
 			throw new NetworkError(400, "Authorization header is missing or malformed");
 		}
-		newDocumentAccessToken = await getCreationToken(tenantManager, token, tenantId, documentId);
+		newDocumentAccessToken = await getCreationToken(tenantManager, token, documentId);
 	}
 	let newDocumentSession: ISession | undefined;
 	if (enableDiscovery) {
