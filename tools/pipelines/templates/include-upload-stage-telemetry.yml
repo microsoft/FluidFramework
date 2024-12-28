@@ -49,7 +49,7 @@ stages:
       parameters:
         devFeedUrl: $(ado-feeds-dev)
         officeFeedUrl: $(ado-feeds-office)
-        isCheckoutNeeded: true
+        pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
     - task: Bash@3
       displayName: Get stage timing and result data from ADO

@@ -58,7 +58,7 @@ steps:
   parameters:
     devFeedUrl: ${{ parameters.devFeedUrl }}
     officeFeedUrl: ${{ parameters.officeFeedUrl }}
-    isCheckoutNeeded: true
+    pathForTelemetryGeneratorInstall: $(Agent.TempDirectory)/telemetry-generator
 
 # Download artifact with test files
 - task: DownloadPipelineArtifact@2

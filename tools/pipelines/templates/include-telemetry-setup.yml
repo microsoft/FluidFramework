@@ -30,18 +30,7 @@ parameters:
 - name: officeFeedUrl
   type: string
 
-# If the template should try to checkout the repo. If the job that includes this template already has steps to check out
-# the repo for other purposes, this should be set to false.
-- name: isCheckoutNeeded
-  type: boolean
-  default: false
-
 steps:
-- ${{ if eq(parameters.isCheckoutNeeded, true) }}:
-  # Need to checkout the repo in order to run @fluid-tools/telemetry-generator which we don't publish right now.
-  - checkout: self
-    clean: true
-
 - template: include-use-node-version.yml
 
 - task: Bash@3
