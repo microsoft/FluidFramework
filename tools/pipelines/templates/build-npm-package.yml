@@ -534,13 +534,13 @@ extends:
                         displayName: Write bundle sizes measurements to Aria/Kusto
                         inputs:
                           targetType: inline
-                          workingDirectory: $(Build.SourcesDirectory)
+                          workingDirectory: $(pathToTelemetryGenerator)
                           script: |
                             set -eu -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
-                            ls -la 'examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                            npx telemetry-generator --onlyLogToConsole true --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/bundleSizeHandler.js" --dir 'artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                            ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                            npx telemetry-generator --onlyLogToConsole true --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/bundleSizeHandler.js" --dir '$(Build.SourcesDirectory)/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -692,7 +692,7 @@ extends:
                 parameters:
                   devFeedUrl: $(ado-feeds-dev)
                   officeFeedUrl: $(ado-feeds-office)
-                  pathForTelemetryGeneratorInstall: $(Agent.TempDirectory)/telemetry-generator
+                  pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
               - task: Bash@3
                 displayName: Get stage timing and result data from ADO
                 env:
