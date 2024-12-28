@@ -85,7 +85,7 @@ stages:
           echo "Listing files in '$WORK_FOLDER'"
           ls -laR $WORK_FOLDER;
 
-          telemetry-generator --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";
+          npx telemetry-generator --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";
 
     - ${{ if parameters.uploadTestPassRateTelemetry }}:
       - task: Bash@3
@@ -117,4 +117,4 @@ stages:
             echo "Listing files in '$WORK_FOLDER'"
             ls -laR $WORK_FOLDER;
 
-            telemetry-generator --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/testPassRate.js" --dir "$WORK_FOLDER"
+            npx telemetry-generator --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/testPassRate.js" --dir "$WORK_FOLDER"

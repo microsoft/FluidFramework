@@ -540,7 +540,7 @@ extends:
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
                             ls -la 'examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                            telemetry-generator --onlyLogToConsole true --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/bundleSizeHandler.js" --dir 'artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                            npx telemetry-generator --onlyLogToConsole true --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/bundleSizeHandler.js" --dir 'artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -723,4 +723,4 @@ extends:
                     set -eu -o pipefail
                     echo "Listing files in '$WORK_FOLDER'"
                     ls -laR $WORK_FOLDER;
-                    telemetry-generator --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";
+                    npx telemetry-generator --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";
