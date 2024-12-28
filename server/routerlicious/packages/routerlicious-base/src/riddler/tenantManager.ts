@@ -168,19 +168,25 @@ export class TenantManager {
 		}
 
 		const isTenantPrivateKeyAccessEnabled = this.isTenantPrivateKeyAccessEnabled(tenant);
+		console.log(
+			"[DHRUV DEBUG] isTenantPrivateKeyAccessEnabled",
+			isTenantPrivateKeyAccessEnabled,
+		);
 
 		// If the tenant is a keyless tenant, always use the private keys to sign the token
+		// If the tenant is a keyless tenant, privateKeys will always be defined
+		// If the tenant is not a keyless tenant, use the shared keys to sign the token
 		const keys: ITenantKeys = isTenantPrivateKeyAccessEnabled
-			? // If the tenant is a keyless tenant, privateKeys will always be defined
-			  await this.returnPrivateKeysInOrder(
+			? await this.returnPrivateKeysInOrder(
 					tenantId,
 					tenant.privateKeys as ITenantPrivateKeys,
 					{},
-			  ) // If the tenant is not a keyless tenant, use the shared keys to sign the token
+			  )
 			: {
 					key1: tenant.key as string,
 					key2: tenant.secondaryKey ?? "",
 			  };
+		console.log("[DHRUV DEBUG] keys to be used", keys);
 		const token = generateToken(
 			tenantId,
 			documentId,
