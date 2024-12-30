@@ -246,6 +246,7 @@ stages:
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
+          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.memoryTestPackages }}:
@@ -381,6 +382,7 @@ stages:
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
+          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.customBenchmarkTestPackages }}:
@@ -529,6 +531,7 @@ stages:
             officeFeedUrl: $(ado-feeds-office)
             testFilesPath: $(testFilesPath)
             testWorkspace: $(testWorkspace)
+            pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
         # Download and install package with performance tests
         - template: templates/include-test-perf-benchmarks-install-package.yml
