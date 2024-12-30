@@ -34,6 +34,13 @@ parameters:
 - name: testFilesPath
   type: string
 
+# Path where the telemetry-generator package should be installed.
+# It should be an empty directory so that it doesn't interfere with anything else.
+# The caller of this template will need to know this in order to point to the correct locations for the handlers,
+# which will be under <this path>/node_modules/@ff-internal/telemetry-generator/dist/handlers/.
+- name: pathForTelemetryGeneratorInstall
+  type: string
+
 steps:
 - task: Bash@3
   displayName: Print parameter/variable values for troubleshooting
@@ -58,7 +65,7 @@ steps:
   parameters:
     devFeedUrl: ${{ parameters.devFeedUrl }}
     officeFeedUrl: ${{ parameters.officeFeedUrl }}
-    pathForTelemetryGeneratorInstall: $(Agent.TempDirectory)/telemetry-generator
+    pathForTelemetryGeneratorInstall: ${{ parameters.pathForTelemetryGeneratorInstall }}
 
 # Download artifact with test files
 - task: DownloadPipelineArtifact@2

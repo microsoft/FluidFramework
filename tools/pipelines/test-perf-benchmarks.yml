@@ -77,7 +77,7 @@ variables:
     value: $(resources.pipeline.client.runID)
     readonly: true
   - name: pathToTelemetryGenerator
-    value: $(Build.SourcesDirectory)/tools/telemetry-generator
+    value: $(Agent.TempDirectory)/telemetry-generator)
     readonly: true
   - name: pathToTelemetryGeneratorHandlers
     value: $(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/
@@ -115,6 +115,7 @@ stages:
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
+          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.executionTestPackages }}:
