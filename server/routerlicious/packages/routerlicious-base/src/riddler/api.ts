@@ -71,12 +71,8 @@ export function create(
 	 */
 	router.post("/tenants/:id/accesstoken", (request, response) => {
 		const tenantId = request.params.id;
-		const scopes = request.body.scopes;
+		const { scopes, user, lifetime, ver, jti } = request.body;
 		const documentId = request.body.documentId ?? "";
-		const user = request.body.user;
-		const lifetime = request.body.lifetime;
-		const ver = request.body.ver;
-		const jti = request.body.jti;
 		const accessTokenP = manager.signToken(
 			tenantId,
 			documentId,
