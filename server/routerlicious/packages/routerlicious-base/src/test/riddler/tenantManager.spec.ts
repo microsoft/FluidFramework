@@ -371,18 +371,11 @@ describe("TenantManager", () => {
 			assert.strictEqual(keys.key2, expectedKeys.key2);
 		});
 
-		it("Should throw a 403 when shared keys are disabled and usePrivateKeys is false", async () => {
+		it("Should return empty key values when shared keys are disabled and usePrivateKeys is false", async () => {
 			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutSharedKeys);
-			const keysP = tenantManager.getTenantKeys("cordflasher-dolphin");
-			await assert.rejects(keysP, (err) => {
-				assert(err instanceof NetworkError);
-				assert.strictEqual(err.code, 403);
-				assert.strictEqual(
-					err.message,
-					`Shared keys are disabled for tenant id cordflasher-dolphin`,
-				);
-				return true;
-			});
+			const keys = await tenantManager.getTenantKeys("cordflasher-dolphin");
+			assert.strictEqual(keys.key1, "");
+			assert.strictEqual(keys.key2, "");
 		});
 	});
 
@@ -427,10 +420,6 @@ describe("TenantManager", () => {
 			await assert.rejects(keysP, (err) => {
 				assert(err instanceof NetworkError);
 				assert.strictEqual(err.code, 403);
-				assert.strictEqual(
-					err.message,
-					`Shared keys are disabled for tenant id cordflasher-dolphin`,
-				);
 				return true;
 			});
 		});
@@ -769,10 +758,6 @@ describe("TenantManager", () => {
 			await assert.rejects(validationPKey1, (err) => {
 				assert(err instanceof NetworkError);
 				assert.strictEqual(err.code, 403);
-				assert.strictEqual(
-					err.message,
-					"Shared keys are disabled for tenant id cordflasher-dolphin",
-				);
 				return true;
 			});
 		});

@@ -832,11 +832,18 @@ export class TenantManager {
 				throw new NetworkError(403, `Tenant, ${tenantId}, does not exist.`);
 			}
 
+			// If shared keys are disabled, return empty values for key1 and key2
 			if (!this.isTenantSharedKeyAccessEnabled(tenantDocument) && !usePrivateKeys) {
-				Lumberjack.error(`Shared keys are disabled for tenant id ${tenantId}`, {
-					[BaseTelemetryProperties.tenantId]: tenantId,
-				});
-				throw new NetworkError(403, `Shared keys are disabled for tenant id ${tenantId}`);
+				Lumberjack.error(
+					`Shared keys are disabled for tenant id ${tenantId}, returning empty values for key1 and key2`,
+					{
+						[BaseTelemetryProperties.tenantId]: tenantId,
+					},
+				);
+				return {
+					key1: "",
+					key2: "",
+				};
 			}
 
 			if (usePrivateKeys && !tenantDocument.privateKeys) {
