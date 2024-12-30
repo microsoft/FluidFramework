@@ -99,6 +99,9 @@
 			},
 			"InterfaceDeclaration_ITenantConfig": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITenantManager": {
+				"forwardCompat": false
 			}
 		}
 	}
