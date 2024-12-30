@@ -23,12 +23,12 @@ import { ReferencePosition } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	isInserted,
-	isLeafInfo,
+	isMergeNodeInfo as isMergeNode,
 	isMoved,
 	isRemoved,
 	overwriteInfo,
 	type IInsertionInfo,
-	type ILeafInfo,
+	type IMergeNodeInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
 	// eslint-disable-next-line import/no-deprecated
@@ -89,7 +89,7 @@ export type ISegmentInternal = Omit<
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
 export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
-	Partial<IInsertionInfo & ILeafInfo> & {
+	Partial<IInsertionInfo & IMergeNodeInfo> & {
 		segmentGroups?: SegmentGroupCollection;
 		propertyManager?: PropertiesManager;
 		/**
@@ -336,12 +336,12 @@ export interface SegmentGroup {
  * facilitate splits.)
  */
 export const MaxNodesInBlock = 8;
-export class MergeBlock {
+export class MergeBlock implements Partial<IMergeNodeInfo> {
 	public children: IMergeNode[];
 	public needsScour?: boolean;
 	public parent?: MergeBlock;
-	public index: number = 0;
-	public ordinal: string = "";
+	public index?: number;
+	public ordinal?: string;
 	public cachedLength: number | undefined = 0;
 
 	/**
@@ -390,7 +390,7 @@ export class MergeBlock {
 		child.ordinal = computeHierarchicalOrdinal(
 			MaxNodesInBlock,
 			childCount,
-			this.ordinal,
+			this.ordinal ?? "",
 			index === 0 ? undefined : this.children[index - 1]?.ordinal,
 		);
 	}
@@ -550,8 +550,8 @@ export abstract class BaseSegment implements ISegment {
 			return undefined;
 		}
 
-		if (isLeafInfo(this)) {
-			overwriteInfo<ILeafInfo>(leafSegment, {
+		if (isMergeNode(this)) {
+			overwriteInfo<IMergeNodeInfo>(leafSegment, {
 				index: this.index + 1,
 				// Give the leaf a temporary yet valid ordinal.
 				// when this segment is put in the tree, it will get its real ordinal,

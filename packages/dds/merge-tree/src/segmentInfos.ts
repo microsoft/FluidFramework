@@ -102,7 +102,7 @@ export const assertInserted: <T extends Partial<IInsertionInfo> | undefined>(
 /**
  * Common properties for a node in a merge tree.
  */
-export interface ILeafInfo {
+export interface IMergeNodeInfo {
 	/**
 	 * The parent merge block if the node is parented
 	 */
@@ -112,6 +112,7 @@ export interface ILeafInfo {
 	 * The index of this node in its parent's list of children.
 	 */
 	index: number;
+
 	/**
 	 * A string that can be used for comparing the location of this node to other `MergeNode`s in the same tree.
 	 * `a.ordinal < b.ordinal` if and only if `a` comes before `b` in a pre-order traversal of the tree.
@@ -119,7 +120,7 @@ export interface ILeafInfo {
 	ordinal: string;
 }
 
-export const toLeafInfo = (nodeLike: unknown): ILeafInfo | undefined =>
+export const toMergeNodeInfo = (nodeLike: unknown): IMergeNodeInfo | undefined =>
 	propInstanceOf(nodeLike, "parent", MergeBlock) &&
 	hasProp(nodeLike, "ordinal", "string") &&
 	hasProp(nodeLike, "index", "number")
@@ -127,28 +128,30 @@ export const toLeafInfo = (nodeLike: unknown): ILeafInfo | undefined =>
 		: undefined;
 
 /**
- * A type-guard which determines if the segment has move info, and
+ * A type-guard which determines if the segment has merge node  info, and
  * returns true if it does, along with applying strong typing.
  *
  * @param nodeLike - The segment-like object to check.
  * @returns True if the segment has move info, otherwise false.
  */
-export const isLeafInfo = (nodeLike: unknown): nodeLike is ILeafInfo =>
-	toLeafInfo(nodeLike) !== undefined;
+export const isMergeNodeInfo = (nodeLike: unknown): nodeLike is IMergeNodeInfo =>
+	toMergeNodeInfo(nodeLike) !== undefined;
 
 /**
- * Asserts that the segment has move info. Usage of this function should not produce a user facing error.
+ * Asserts that the segment has merge node info. Usage of this function should not produce a user facing error.
  *
  * @param segmentLike - The segment-like object to check.
  * @throws Will throw an error if the segment does not have move info.
  */
-export const assertLeafInfo: <T extends Partial<ILeafInfo> | undefined>(
-	nodeLike: ISegmentInternal | ISegmentPrivate | Partial<ILeafInfo> | T,
-) => asserts nodeLike is ILeafInfo | Exclude<T, Partial<ILeafInfo>> = (segmentLike) =>
-	assert(segmentLike === undefined || isLeafInfo(segmentLike), "must be LeafInfo");
+export const assertMergeNode: <T extends Partial<IMergeNodeInfo> | undefined>(
+	nodeLike: ISegmentInternal | ISegmentPrivate | Partial<IMergeNodeInfo> | T,
+) => asserts nodeLike is IMergeNodeInfo | Exclude<T, Partial<IMergeNodeInfo>> = (
+	segmentLike,
+) =>
+	assert(segmentLike === undefined || isMergeNodeInfo(segmentLike), "must be MergeNodeInfo");
 
-export const removeLeafInfo = (nodeLike: ILeafInfo): Partial<ILeafInfo> =>
-	Object.assign<ILeafInfo, Partial<ILeafInfo>>(nodeLike, {
+export const removeMergeNodeInfo = (nodeLike: IMergeNodeInfo): Partial<IMergeNodeInfo> =>
+	Object.assign<IMergeNodeInfo, Partial<IMergeNodeInfo>>(nodeLike, {
 		parent: undefined,
 		index: undefined,
 		ordinal: undefined,
@@ -317,7 +320,7 @@ export const assertMoved: <T extends Partial<IMoveInfo> | undefined>(
 /**
  * A union type representing any segment info.
  */
-export type SegmentInfo = ILeafInfo | IInsertionInfo | IMoveInfo | IRemovalInfo;
+export type SegmentInfo = IMergeNodeInfo | IInsertionInfo | IMoveInfo | IRemovalInfo;
 
 /**
  * A type representing a segment with additional info.

@@ -87,7 +87,7 @@ import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import {
 	isInserted,
-	isLeafInfo,
+	isMergeNodeInfo,
 	isMoved,
 	isRemoved,
 	overwriteInfo,
@@ -431,7 +431,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param segment - The segment to get the position of
 	 */
 	public getPosition(segment: ISegment | undefined, localSeq?: number): number {
-		if (!isLeafInfo(segment)) {
+		if (!isMergeNodeInfo(segment)) {
 			return -1;
 		}
 		return this._mergeTree.getPosition(
