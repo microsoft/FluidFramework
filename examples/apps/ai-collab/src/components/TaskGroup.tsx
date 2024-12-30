@@ -145,11 +145,15 @@ export function TaskGroup(props: {
 				if (getRevertible !== undefined) {
 					const revertible = getRevertible(onRevertibleDisposed);
 					if (commit.kind === CommitKind.Undo) {
-						const newRedoStack = trimStackToMaxSize([...redoStack, revertible]);
-						setRedoStack(newRedoStack);
+						setRedoStack((prevRedoStack) => {
+							const newRedoStack = trimStackToMaxSize([...prevRedoStack, revertible]);
+							return newRedoStack;
+						});
 					} else {
-						const newUndoStack = trimStackToMaxSize([...undoStack, revertible]);
-						setUndoStack(newUndoStack);
+						setUndoStack((prevUndoStack) => {
+							const newUndoStack = trimStackToMaxSize([...prevUndoStack, revertible]);
+							return newUndoStack;
+						});
 					}
 				}
 			},
