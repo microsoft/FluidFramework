@@ -201,13 +201,18 @@ extends:
     publishDocs: true
     # We only care about pipeline run telemetry for the CI runs on the internal project, not for PR runs in the public
     # one. And since we don't batch commits for CI pipeline runs, the only reason we see for automated runs is IndividualCI.
-    telemetry: true
+    telemetry: ${{ eq(variables['Build.Reason'], 'IndividualCI') }}
     taskTest:
     # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
+    - check:are-the-types-wrong
     - webpack
+    - ci:test:mocha
     - ci:test:jest
+    - ci:test:realsvc:local
+    - ci:test:realsvc:tinylicious
+    - ci:test:stress:tinylicious
     - test:copyresults
     testResultDirs:
     - nyc/examples

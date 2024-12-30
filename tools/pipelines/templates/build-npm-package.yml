@@ -508,7 +508,7 @@ extends:
                       workingDir: '${{ parameters.buildDirectory }}'
                       customCommand: 'run bundle-analysis:run'
 
-                  - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+                  - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
                       - task: Bash@3
                         displayName: List report.json
                         inputs:
