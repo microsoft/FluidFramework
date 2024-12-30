@@ -21,14 +21,12 @@ resources:
       - lts
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 - name: testPackage
   value: "@fluid-private/test-end-to-end-tests"
-  readonly: true
-- name: pathToTelemetryGenerator
-  value: $(Build.SourcesDirectory)/tools/telemetry-generator
   readonly: true
 - name: pipelineIdentifierForTelemetry
   value: 'EndToEndTests'

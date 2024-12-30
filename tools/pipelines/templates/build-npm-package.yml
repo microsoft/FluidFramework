@@ -216,12 +216,6 @@ extends:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
                   value: $(System.PullRequest.TargetBranch)
-              - name: pathToTelemetryGenerator
-                value: $(Agent.TempDirectory)/telemetry-generator
-                readonly: true
-              - name: pathToTelemetryGeneratorHandlers
-                value: $(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/
-                readonly: true
             steps:
               # Setup
               - checkout: self
@@ -686,12 +680,6 @@ extends:
               - group: ado-feeds
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir/timingOutput
-                readonly: true
-              - name: pathToTelemetryGenerator
-                value: $(Agent.TempDirectory)/telemetry-generator
-                readonly: true
-              - name: pathToTelemetryGeneratorHandlers
-                value: $(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/
                 readonly: true
               steps:
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self

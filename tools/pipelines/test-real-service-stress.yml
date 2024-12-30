@@ -21,12 +21,10 @@ resources:
       - lts
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
-- name: pathToTelemetryGenerator
-  value: $(Build.SourcesDirectory)/tools/telemetry-generator
-  readonly: true
 - name: testPackage
   value: "@fluid-internal/test-service-load"
   readonly: true

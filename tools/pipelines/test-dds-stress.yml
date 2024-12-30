@@ -20,11 +20,9 @@ resources:
       - next
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
-- name: pathToTelemetryGenerator
-  value: $(Build.SourcesDirectory)/tools/telemetry-generator
-  readonly: true
 # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
 - name: DisableCodeQL
   value: true

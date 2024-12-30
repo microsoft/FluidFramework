@@ -58,6 +58,7 @@ parameters:
     timeoutInMinutes: 360
 
 variables:
+  - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
   # basic ANSI color support though, so force that in the pipeline
@@ -75,12 +76,6 @@ variables:
     readonly: true
   - name: artifactBuildId
     value: $(resources.pipeline.client.runID)
-    readonly: true
-  - name: pathToTelemetryGenerator
-    value: $(Agent.TempDirectory)/telemetry-generator)
-    readonly: true
-  - name: pathToTelemetryGeneratorHandlers
-    value: $(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/
     readonly: true
   - group: prague-key-vault
   - group: ado-feeds
