@@ -11,6 +11,9 @@ import appInsights from "@site/src/appInsights";
 import CookieBanner from "@site/src/components/cookieBanner";
 import { Homepage } from "@site/src/components/home";
 
+/**
+ * Initialize Application Insights and set the user ID.
+ */
 if (typeof window !== "undefined" && appInsights) {
 	const userId = localStorage.getItem("userId") ?? uuidv4();
 	localStorage.setItem("userId", userId);
