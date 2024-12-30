@@ -125,9 +125,8 @@ export class DocumentManager implements IDocumentManager {
 			ScopeType.DocRead,
 		]);
 		const getDefaultHeaders = () => {
-			const jwtToken = accessToken;
 			return {
-				Authorization: `Basic ${jwtToken}`,
+				Authorization: `Basic ${accessToken}`,
 			};
 		};
 

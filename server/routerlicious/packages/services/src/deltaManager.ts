@@ -59,14 +59,14 @@ export class DeltaManager implements IDeltaService {
 		throw new Error("Method not implemented.");
 	}
 
-	private async signToken(
+	private async getAccessToken(
 		tenantId: string,
 		documentId: string,
 		scopes: ScopeType[],
 		includeDisabledTenant = false,
 	): Promise<string> {
 		const tenantManager = new TenantManager(this.authEndpoint, "");
-		const keyP = await tenantManager.signToken(
+		const tokenP = await tenantManager.signToken(
 			tenantId,
 			documentId,
 			scopes,
@@ -76,11 +76,11 @@ export class DeltaManager implements IDeltaService {
 			undefined,
 			includeDisabledTenant,
 		);
-		return keyP;
+		return tokenP;
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string, baseUrl: string) {
-		const accessToken = await this.signToken(tenantId, documentId, [ScopeType.DocRead]);
+		const accessToken = await this.getAccessToken(tenantId, documentId, [ScopeType.DocRead]);
 
 		const defaultQueryString = {
 			token: fromUtf8ToBase64(`${tenantId}`),
