@@ -110,7 +110,7 @@
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/chai": "^4.0.0",
 		"@types/lru-cache": "^5.1.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"chai": "^4.2.0",

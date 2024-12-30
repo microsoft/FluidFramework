@@ -1,0 +1,68 @@
+---
+title: Tree Nodes
+sidebar_position: 1
+---
+
+A [SharedTree](./index.mdx)'s data is organized into a tree of nodes.
+See [node types](./node-types.mdx) for details on the types of nodes that can be stored on a `SharedTree`.
+
+## Node Utilities
+
+Below are some utilities provided to make working with nodes easier.
+
+### Node Information
+
+```typescript
+Tree.key(node: SharedTreeNode): number | string
+```
+
+Returns the key of the `node`. This is a string in all cases, except an array node, in which case it returns the index of the node.
+
+```typescript
+Tree.parent(node: SharedTreeNode): SharedTreeNode
+```
+
+Returns the parent node of `node`. The following snippet continues the sticky notes example. Suppose that you have a reference to a note object and you want to delete it if, and only if, it is a member of an array of notes in a group or it is a direct child of the root. You can get the parent node and test what its type is.
+
+```typescript
+const parent = Tree.parent(note);
+
+if (Tree.is(parent, Notes) || Tree.is(parent, Items)) {
+	const index = parent.indexOf(note);
+	parent.removeAt(index);
+}
+```
+
+```typescript
+Tree.status(node: SharedTreeNode): TreeStatus
+```
+
+Returns the current status of `node`. Possible values are:
+
+-   **InDocument**: The node is in the tree.
+-   **Removed**: The node has been removed from the tree but is still restorable by undo.
+-   **Deleted**: The node is deleted and unrestorable.
+
+```typescript
+Tree.schema(node: SharedTreeNode): TreeNodeSchema
+```
+
+Returns the object that defines the schema of the `node` object.
+
+### Type Guard
+
+When your code needs to process nodes only of a certain type and it has a reference to an object of an unknown type, you can use the `Tree.is()` method to test for the desired type as in the following examples.
+
+```typescript
+Tree.is(someNode: SharedTreeNode, nodeType: TreeNodeSchema | T): boolean
+```
+
+Returns `true` if `someNode` is of type `nodeType`. Note that `T` is a type that is derived from a call of one of the `SchemaFactory` methods; `object()`, `map()`, or `array()`. Here are examples:
+
+```typescript
+if (Tree.is(myNode, Note)) {
+	// Code here that processes Note nodes.
+}
+```
+
+For another example, see the `Tree.parent()` method.
