@@ -175,10 +175,6 @@ export class TenantManager {
 		// If the tenant is a keyless tenant, always use the private keys to sign the token
 		const isTenantPrivateKeyAccessEnabled =
 			this.isTenantPrivateKeyAccessEnabled(tenantDocument);
-		console.log(
-			"[DHRUV DEBUG] isTenantPrivateKeyAccessEnabled",
-			isTenantPrivateKeyAccessEnabled,
-		);
 
 		const keys = this.decryptKeys(
 			tenantDocument,
@@ -204,7 +200,6 @@ export class TenantManager {
 			  ).key1
 			: keys.key1;
 
-		console.log("[DHRUV DEBUG] keys to be used", keys);
 		const token = generateToken(
 			tenantId,
 			documentId,
@@ -232,14 +227,12 @@ export class TenantManager {
 		bypassCache = false,
 	): Promise<void> {
 		const isKeylessAccessValidation = isKeylessFluidAccessClaimEnabled(token);
-		console.log("[DHRUV DEBUG] isKeylessAccessValidation", isKeylessAccessValidation);
 		const tenantKeys = await this.getTenantKeys(
 			tenantId,
 			includeDisabledTenant,
 			false,
 			isKeylessAccessValidation,
 		);
-		console.log("[DHRUV DEBUG] tenantKeys", tenantKeys);
 		const lumberProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			includeDisabledTenant,
@@ -322,15 +315,12 @@ export class TenantManager {
 		token: string,
 	): Promise<boolean> {
 		return new Promise<boolean>((resolve, reject) => {
-			console.log("[DHRUV DEBUG] key", key);
 			jwt.verify(token, key, (error) => {
 				// token verified, return
 				if (!error) {
-					console.log("[DHRUV DEBUG] no error!");
 					resolve(true);
 					return;
 				}
-				console.log("[DHRUV DEBUG] error", error);
 				// When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
 
 				if (error instanceof jwt.TokenExpiredError) {
@@ -790,10 +780,6 @@ export class TenantManager {
 			bypassCache,
 			usePrivateKeys,
 		};
-		console.log(
-			`[DHRUV DEBUG] lumberProperties, usePrivateKeys: ${usePrivateKeys}`,
-			lumberProperties,
-		);
 		try {
 			if (!bypassCache && this.isCacheEnabled) {
 				// Read from cache first
@@ -804,7 +790,6 @@ export class TenantManager {
 						// This is an edge case where the used encryption key is not valid.
 						// If both decrypted tenant keys are null, it means it hits this case,
 						// then we should read from database and set new values in cache.
-						console.log(`[DHRUV DEBUG] tenantKeys: `, tenantKeys);
 						if (usePrivateKeys) {
 							tenantKeys = tenantKeys as ITenantPrivateKeys;
 							if (tenantKeys.key || tenantKeys.secondaryKey) {
@@ -903,10 +888,8 @@ export class TenantManager {
 					privateTenantKeys,
 					lumberProperties,
 				);
-				console.log(`[DHRUV DEBUG] privateKeysInOrder:`, privateKeysInOrder);
 				return privateKeysInOrder;
 			}
-			console.log(`[DHRUV DEBUG] plain tenantKeys:`, { key1: tenantKey1, key2: tenantKey2 });
 			return {
 				key1: tenantKey1,
 				key2: tenantKey2,
