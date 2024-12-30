@@ -31,7 +31,7 @@ export function setInCrossFieldMap<T>(
 		rangeMap = new RangeMap();
 		map.set(revision, rangeMap);
 	}
-	rangeMap.setInRange(id, count, value);
+	rangeMap.set(id, count, value);
 }
 
 export function getFirstFromCrossFieldMap<T>(
@@ -41,7 +41,7 @@ export function getFirstFromCrossFieldMap<T>(
 	count: number,
 ): RangeQueryResult<T> {
 	const rangeMap = map.has(revision) ? (map.get(revision) as RangeMap<T>) : new RangeMap<T>();
-	return rangeMap.getFromRange(id, count);
+	return rangeMap.get(id, count);
 }
 
 /**

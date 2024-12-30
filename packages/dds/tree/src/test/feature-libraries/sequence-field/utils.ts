@@ -862,7 +862,7 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			}
 			const rangeMap = getMap(target).get(revision) ?? new RangeMap<T>();
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return rangeMap.getFromRange(id, count);
+			return rangeMap.get(id, count);
 		},
 		set: (
 			target: CrossFieldTarget,
@@ -873,7 +873,7 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			invalidateDependents: boolean,
 		) => {
 			const rangeMap = getMap(target).get(revision) ?? new RangeMap<T>();
-			if (invalidateDependents && rangeMap.getFromRange(id, count) !== undefined) {
+			if (invalidateDependents && rangeMap.get(id, count) !== undefined) {
 				table.isInvalidated = true;
 			}
 			setInCrossFieldMap(getMap(target), revision, id, count, value);

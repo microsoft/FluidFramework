@@ -6,11 +6,8 @@
 import { oob } from "@fluidframework/core-utils/internal";
 
 /**
- * A data structure for efficient range-based operations on integer keys.
- *
- * RangeMap represents a mapping from non-negative integers to values of type T or undefined.
- * It ensures that range entries are sorted by start and non-overlapping.
- * Adjacent equal-valued ranges are merged.
+ * RangeMap represents a mapping from integers to values of type T or undefined.
+ * The values for a range of consecutive keys can be changed or queried in a single operation.
  */
 export class RangeMap<T> {
 	private readonly entries: RangeEntry<T>[];
@@ -21,11 +18,6 @@ export class RangeMap<T> {
 
 	/**
 	 * Retrieves all entries from the rangeMap.
-	 *
-	 * This method returns an array of RangeEntryResult objects, where each object represents a contiguous range of values.
-	 * The returned array is a snapshot of the current state of the rangeMap and does not provide any guarantees about
-	 * the order or grouping of the entries.
-	 *
 	 * @returns An array of RangeEntryResult objects, each containing the start index, length, and value of a contiguous range.
 	 */
 	public getAllEntries(): RangeQueryResult<T>[] {
@@ -33,13 +25,14 @@ export class RangeMap<T> {
 	}
 
 	/**
-	 * Retrieves the value and length of the prefix with the same value for a given range.
+	 * Retrieves the value for some prefix of the query range.
 	 *
-	 * @param start - The start of the query range (inclusive).
+	 * @param start - The first key in the query range.
 	 * @param length - The length of the query range.
-	 * @returns A RangeQueryResult describing the value and length of the matching prefix.
+	 * @returns A RangeQueryResult containing the value associated with `start`,
+	 * and the number of consecutive keys with that same value.
 	 */
-	public getFromRange(start: number, length: number): RangeQueryResult<T> {
+	public get(start: number, length: number): RangeQueryResult<T> {
 		for (const entry of this.entries) {
 			if (entry.start > start) {
 				return { value: undefined, length: Math.min(entry.start - start, length) };
@@ -57,42 +50,13 @@ export class RangeMap<T> {
 	}
 
 	/**
-	 * Finds the first range entry intersecting a given range.
+	 * Sets the value for a specified range.
 	 *
-	 * @param start - The start of the query range (inclusive).
-	 * @param length - The length of the query range.
-	 * @returns The first intersecting RangeEntry or undefined if none exists.
+	 * @param start - The first key in the range being set.
+	 * @param length - The length of the range.
+	 * @param value - The value to associate with the range.
 	 */
-	public getFirstEntryFromRange(
-		start: number,
-		length: number,
-	): RangeQueryResult<T> | undefined {
-		const lastQueryKey = start + length - 1;
-		for (const entry of this.entries) {
-			if (entry.start > lastQueryKey) {
-				// We've passed the end of the query range.
-				break;
-			}
-
-			const lastRangeKey = entry.start + entry.length - 1;
-			if (lastRangeKey >= start) {
-				return entry;
-			}
-		}
-
-		return undefined;
-	}
-
-	/**
-	 * Sets the value for a specified range, merging or splitting existing entries as needed.
-	 *
-	 * If value is undefined, the range is deleted.
-	 *
-	 * @param start - The start of the range to set (inclusive).
-	 * @param length - The length of the range to set.
-	 * @param value - The value to associate with the range or undefined to delete.
-	 */
-	public setInRange(start: number, length: number, value: T): void {
+	public set(start: number, length: number, value: T): void {
 		const end = start + length - 1;
 		const newEntry: RangeEntry<T> = { start, length, value };
 
@@ -109,7 +73,7 @@ export class RangeMap<T> {
 		}
 
 		if (value === undefined) {
-			this.deleteFromRange(start, length);
+			this.delete(start, length);
 			return;
 		}
 
@@ -182,7 +146,7 @@ export class RangeMap<T> {
 	 * @param start - The start of the range to delete (inclusive).
 	 * @param length - The length of the range to delete.
 	 */
-	public deleteFromRange(start: number, length: number): void {
+	public delete(start: number, length: number): void {
 		const end = start + length - 1;
 
 		let iBefore = -1;
@@ -277,10 +241,4 @@ export interface RangeQueryResult<T> {
 	 * a query about the range [5, 10] would give a result with length 3.
 	 */
 	length: number;
-
-	/**
-	 * The starting index of the matching range (optional).
-	 * This field is only populated when the query range matches a contiguous range in the RangeMap.
-	 */
-	start?: number;
 }
