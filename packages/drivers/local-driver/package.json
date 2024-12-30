@@ -145,7 +145,7 @@
 		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.12.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/jsrsasign": "^10.5.12",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",

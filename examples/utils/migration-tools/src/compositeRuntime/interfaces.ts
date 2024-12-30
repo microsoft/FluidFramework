@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
-import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/legacy";
 
 /**
  * The IEntryPointPiece provides the functionality backing a portion of the overall composite entry point.

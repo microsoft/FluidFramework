@@ -9,11 +9,11 @@ import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
 import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
 import {
-	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 	transformApiModel,
 } from "./api-item-transforms/index.js";
 import type { DocumentNode } from "./documentation-domain/index.js";
-import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "./renderers/index.js";
+import { type RenderDocumentAsHtmlConfiguration, renderDocumentAsHtml } from "./renderers/index.js";
 
 /**
  * API Model HTML rendering options.
@@ -21,8 +21,8 @@ import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "./rendere
  * @public
  */
 export interface RenderApiModelAsHtmlOptions
-	extends ApiItemTransformationConfiguration,
-		RenderDocumentAsHtmlConfig,
+	extends ApiItemTransformationOptions,
+		RenderDocumentAsHtmlConfiguration,
 		FileSystemConfiguration {}
 
 /**
@@ -31,13 +31,13 @@ export interface RenderApiModelAsHtmlOptions
  * @remarks
  *
  * Which API members get their own documents and which get written to the contents of their parent is
- * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
+ * determined by {@link DocumentationSuiteConfiguration.documentBoundaries}.
  *
  * The file paths under which the files will be generated is determined by the provided output path and the
  * following configuration properties:
  *
- * - {@link DocumentationSuiteOptions.documentBoundaries}
- * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
+ * - {@link DocumentationSuiteConfiguration.documentBoundaries}
+ * - {@link DocumentationSuiteConfiguration.hierarchyBoundaries}
  *
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
  * @param renderConfig - Configuration for rendering {@link DocumentNode}s as HTML.
@@ -58,7 +58,7 @@ export async function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions)
  * @public
  */
 export interface RenderDocumentsAsHtmlOptions
-	extends RenderDocumentAsHtmlConfig,
+	extends RenderDocumentAsHtmlConfiguration,
 		FileSystemConfiguration {}
 
 /**

@@ -138,7 +138,7 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/benchmark": "^2.1.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"benchmark": "^2.1.4",
 		"c8": "^8.0.1",
