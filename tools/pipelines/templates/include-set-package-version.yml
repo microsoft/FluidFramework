@@ -35,7 +35,7 @@ parameters:
 # Set version
 steps:
 
-- template: include-install-build-tools.yml
+- template: /tools/pipelines/templates/include-install-build-tools.yml@self
   parameters:
     buildDirectory: ${{ parameters.buildDirectory }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}

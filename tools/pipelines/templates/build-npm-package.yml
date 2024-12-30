@@ -648,7 +648,7 @@ extends:
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
-        - template: include-publish-npm-package.yml
+        - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
           parameters:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
