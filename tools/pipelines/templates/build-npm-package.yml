@@ -211,8 +211,6 @@ extends:
             variables:
               - group: ado-feeds
               - group: storage-vars
-              - name: releaseBuildVar
-                value: '$[variables.releaseBuild]'
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
                   value: $(System.PullRequest.TargetBranch)
@@ -241,7 +239,6 @@ extends:
 
                     echo "
                     Pipeline Variables:
-                      releaseBuild=$(releaseBuildVar)
 
                     Override Parameters:
                       packageTypesOverride=${{ parameters.packageTypesOverride }}

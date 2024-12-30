@@ -58,7 +58,6 @@ jobs:
     pool: ${{ parameters.poolBuild }}
     variables:
       testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
-      releaseBuildVar: $[variables.releaseBuild]
     timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
     steps:
     # Setup
@@ -79,7 +78,6 @@ jobs:
 
           echo "
           Pipeline Variables:
-            releaseBuild=$(releaseBuildVar)
 
           Tasks Parameters:
             BuildDir=${{ parameters.buildDirectory }}
