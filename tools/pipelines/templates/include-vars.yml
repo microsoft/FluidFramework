@@ -17,7 +17,8 @@ parameters:
   default: false
 
 - name: buildNumberInPatch
-  type: string
+  type: boolean
+  default: false
 
 variables:
 - group: prague-key-vault

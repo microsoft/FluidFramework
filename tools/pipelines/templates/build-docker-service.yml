@@ -31,7 +31,7 @@ parameters:
     default: /home/node/server
 
   - name: buildNumberInPatch
-    type: string
+    type: boolean
     default: true
 
   - name: setVersion

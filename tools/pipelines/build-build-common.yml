@@ -80,7 +80,6 @@ variables:
     parameters:
       publishOverride: '${{ parameters.publishOverride }}'
       releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-      buildNumberInPatch: ''
 
 extends:
   template: /tools/pipelines/templates/build-npm-package.yml@self

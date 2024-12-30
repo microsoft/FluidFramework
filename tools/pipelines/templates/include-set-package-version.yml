@@ -5,8 +5,8 @@ parameters:
 - name: buildDirectory
   type: string
 - name: buildNumberInPatch
-  type: string
-  default:
+  type: boolean
+  default: false
 - name: tagName
   type: string
 - name: includeInternalVersions
