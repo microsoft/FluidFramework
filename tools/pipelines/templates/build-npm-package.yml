@@ -219,6 +219,9 @@ extends:
               - name: pathToTelemetryGenerator
                 value: $(Agent.TempDirectory)/telemetry-generator
                 readonly: true
+              - name: pathToTelemetryGeneratorHandlers
+                value: $(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/
+                readonly: true
             steps:
               # Setup
               - checkout: self
@@ -520,7 +523,7 @@ extends:
                           script: |
                             set -eu -o pipefail
                             echo "Build Directory is ${{ parameters.buildDirectory }}";
-                            BUNDLE_SIZE_TESTS_DIR="${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests";
+                            BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
                             echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
                             ls -la $BUNDLE_SIZE_TESTS_DIR;
 
@@ -528,7 +531,7 @@ extends:
                         parameters:
                           devFeedUrl: $(ado-feeds-dev)
                           officeFeedUrl: $(ado-feeds-office)
-                          pathForTelemetryGeneratorInstall: $(Agent.TempDirectory)/telemetry-generator
+                          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
                       - task: Bash@3
                         displayName: Write bundle sizes measurements to Aria/Kusto
@@ -540,7 +543,7 @@ extends:
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
                             ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                            npx telemetry-generator --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/bundleSizeHandler.js" --dir '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                            npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -687,6 +690,9 @@ extends:
               - name: pathToTelemetryGenerator
                 value: $(Agent.TempDirectory)/telemetry-generator
                 readonly: true
+              - name: pathToTelemetryGeneratorHandlers
+                value: $(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/
+                readonly: true
               steps:
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                 parameters:
@@ -722,4 +728,4 @@ extends:
                     set -eu -o pipefail
                     echo "Listing files in '$WORK_FOLDER'"
                     ls -laR $WORK_FOLDER;
-                    npx telemetry-generator --handlerModule "$(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";
+                    npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
