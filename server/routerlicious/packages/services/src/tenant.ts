@@ -213,7 +213,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			undefined /* maxContentLength */,
 			undefined /* defaultHeaders */,
 			undefined /* axios */,
-			undefined /* refreshDefaultQureyString */,
+			undefined /* refreshDefaultQueryString */,
 			undefined /* refreshDefaultHeaders */,
 			() => getGlobalTelemetryContext().getProperties().correlationId,
 			() => getGlobalTelemetryContext().getProperties(),
