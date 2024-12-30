@@ -66,8 +66,6 @@ variables:
         eq(variables.shouldPublish, true)
       )
     )}}
-- name: componentDetection
-  value: ${{ variables.publish }}
 - name: pushImage
   value: ${{ variables.publish }}
 - name: releaseImage
