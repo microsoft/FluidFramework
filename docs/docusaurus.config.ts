@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import dotenv from "dotenv";
 import type { VersionOptions } from "@docusaurus/plugin-content-docs";
 import * as Preset from "@docusaurus/preset-classic";
