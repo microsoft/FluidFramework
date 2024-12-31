@@ -221,7 +221,7 @@ stages:
                   scriptType: bash
                   scriptLocation: inlineScript
                   inlineScript: |
-                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v$(majorVersion).tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --auth-mode login --overwrite --verbose
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v$(majorVersion).tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite --verbose
 
 # Runs TriggerBuild@4 to trigger the deploy-website pipeline
 # this stage runs depending on the check_branch_version stage and deployOverride parameter
