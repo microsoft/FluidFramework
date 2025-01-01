@@ -45,7 +45,7 @@ import {
 	CollaborationWindow,
 	ISegment,
 	ISegmentAction,
-	ISegmentLeaf,
+	ISegmentPrivate,
 	Marker,
 	SegmentGroup,
 	compareStrings,
@@ -392,7 +392,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	): void {
 		let localInserts = 0;
 		let localRemoves = 0;
-		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentLeaf) => {
+		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentPrivate) => {
 			if (seg.seq === UnassignedSequenceNumber) {
 				localInserts++;
 			}
@@ -425,7 +425,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param segment - The segment to get the position of
 	 */
 	public getPosition(segment: ISegment | undefined, localSeq?: number): number {
-		const mergeSegment: ISegmentLeaf | undefined = segment;
+		const mergeSegment: ISegmentPrivate | undefined = segment;
 		if (mergeSegment?.parent === undefined) {
 			return -1;
 		}
@@ -876,7 +876,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private resetPendingDeltaToOps(
 		resetOp: IMergeTreeDeltaOp,
 
-		segmentGroup: SegmentGroup<ISegmentLeaf>,
+		segmentGroup: SegmentGroup<ISegmentPrivate>,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
 		const NACKedSegmentGroup = this.pendingRebase?.shift()?.data;

@@ -41,6 +41,7 @@ export {
 	type ToDelta,
 	NodeAttachState,
 	type FieldChangeEncodingContext,
+	type NestedChangesIndices,
 } from "./fieldChangeHandler.js";
 export type {
 	CrossFieldKeyRange,

@@ -50,7 +50,7 @@ import { createChildDetailsSection, createMemberTables } from "../helpers/index.
  *
  * - index-signatures
  *
- * Details (for any types not rendered to their own documents - see {@link DocumentationSuiteOptions.documentBoundaries})
+ * Details (for any types not rendered to their own documents - see {@link DocumentationSuiteConfiguration.documentBoundaries})
  *
  * - constructors
  *

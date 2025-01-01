@@ -59,6 +59,10 @@ await MarkdownRenderer.renderApiModel({
 -   `RenderHtmlConfig` -> `RenderHtmlConfiguration`
 -   `ToHtmlConfig` -> `ToHtmlConfiguration`
 
+#### Utility function renames
+
+-   `ApiItemUtilities.getQualifiedApiItemName` -> `ApiItemUtilities.getFileSafeNameForApiItem`
+
 #### Configuration properties made `readonly`
 
 -   `ApiItemTransformations`
@@ -86,6 +90,7 @@ This version of the library attempts to align its APIs with the following conven
 ##### Affected types
 
 -   `ApiTransformationConfiguration` -> `ApiTransformationOptions` (user input) and `ApiTransformationConfiguration` (derived system configuration).
+-   `DocumentationSuiteOptions` -> `DocumentationSuiteConfiguration` (user input is taken as `Partial<DocumentationSuiteConfiguration>`).
 
 #### Updated structure of `ApiTransformationConfiguration` and `ApiItemTransformations`
 

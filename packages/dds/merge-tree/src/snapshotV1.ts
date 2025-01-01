@@ -22,7 +22,7 @@ import { IAttributionCollection } from "./attributionCollection.js";
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
-import { ISegmentLeaf } from "./mergeTreeNodes.js";
+import { ISegmentPrivate } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
 import { assertInserted } from "./segmentInfos.js";
@@ -209,7 +209,7 @@ export class SnapshotV1 {
 		};
 
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
-		const pushSeg = (segment?: ISegmentLeaf): void => {
+		const pushSeg = (segment?: ISegmentPrivate): void => {
 			if (segment) {
 				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
@@ -222,8 +222,8 @@ export class SnapshotV1 {
 			}
 		};
 
-		let prev: ISegmentLeaf | undefined;
-		const extractSegment = (segment: ISegmentLeaf): boolean => {
+		let prev: ISegmentPrivate | undefined;
+		const extractSegment = (segment: ISegmentPrivate): boolean => {
 			assertInserted(segment);
 			// Elide segments that do not need to be included in the snapshot.  A segment may be elided if
 			// either condition is true:

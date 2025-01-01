@@ -39,7 +39,7 @@ import { createBreadcrumbParagraph, wrapInSection } from "./helpers/index.js";
  *
  * This should only be called for API item kinds that are intended to be rendered to their own document
  * (as opposed to being rendered to the same document as their parent) per the provided `config`
- * (see {@link DocumentationSuiteOptions.documentBoundaries}).
+ * (see {@link DocumentationSuiteConfiguration.documentBoundaries}).
  *
  * Also note that this should not be called for the following item kinds, which must be handled specially:
  *
