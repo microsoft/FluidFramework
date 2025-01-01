@@ -209,7 +209,7 @@ export interface BenchmarkTimingOptions {
  * Synchronous perations that can be performed on a per-batch basis.
  *
  * @remarks
- * If you need to perform asynchronous operations, use {@link bookmarkFnAsync} and {@link OnBatchAsync}.
+ * If you need to perform asynchronous operations, use {@link BenchmarkAsyncFunction} and {@link OnBatchAsync}.
  *
  * @public
  */
@@ -233,14 +233,14 @@ export interface OnBatch {
  * Operations (synchronous or asynchronous) that can be performed on a per-batch basis.
  *
  * @remarks
- * Not compatible with synchronous {@link bookmarkFn}.
+ * Not compatible with synchronous {@link BenchmarkSyncFunction}.
  *
  * @public
  */
 export interface OnBatchAsync
 {
 	/**
-	 * @deprecated use {@link beforeEachBatchAsync} instead
+	 * @deprecated use {@link OnBatchAsync.beforeEachBatchAsync} instead
 	 */
 	beforeEachBatch?: () => void;
 

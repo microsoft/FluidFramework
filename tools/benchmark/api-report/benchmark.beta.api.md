@@ -15,7 +15,7 @@ export function benchmark(args: BenchmarkArguments): Test;
 export type BenchmarkArguments = Titled & BenchmarkRunningOptions;
 
 // @public
-export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions, OnBatch<"async"> {
+export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions, OnBatchAsync {
 }
 
 // @public
@@ -170,8 +170,16 @@ export interface MochaExclusiveOptions {
 }
 
 // @public
-export interface OnBatch<T extends "async" | "sync" = "sync"> {
-    beforeEachBatch?: () => T extends "async" ? Promise<void> : void;
+export interface OnBatch {
+    beforeEachBatch?: () => void;
+    beforeEachBatchAsync?: never;
+}
+
+// @public
+export interface OnBatchAsync {
+    // @deprecated (undocumented)
+    beforeEachBatch?: () => void;
+    beforeEachBatchAsync?: () => Promise<void>;
 }
 
 // @public (undocumented)
@@ -221,7 +229,7 @@ export interface Titled {
 export function validateBenchmarkArguments(args: BenchmarkSyncArguments | BenchmarkAsyncArguments): {
     isAsync: true;
     benchmarkFn: () => Promise<unknown>;
-    beforeEachBatch?: () => Promise<void>;
+    beforeEachBatch?: HookFunction;
 } | {
     isAsync: false;
     benchmarkFn: () => void;
