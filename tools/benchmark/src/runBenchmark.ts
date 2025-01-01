@@ -64,7 +64,7 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 		...defaultTimingOptions,
 		...args,
 	};
-	const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
+	const { isAsync, benchmarkFn: argsBenchmarkFn, beforeEachBatch } = validateBenchmarkArguments(args);
 
 	await options.before?.();
 
@@ -74,9 +74,10 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 		data = await runBenchmarkAsync({
 			...options,
 			benchmarkFnAsync: argsBenchmarkFn,
+			beforeEachBatch,
 		});
 	} else {
-		data = runBenchmarkSync({ ...options, benchmarkFn: argsBenchmarkFn });
+		data = runBenchmarkSync({ ...options, benchmarkFn: argsBenchmarkFn, beforeEachBatch });
 	}
 	await options.after?.();
 	return data;
@@ -224,7 +225,11 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkData {
 	const state = new BenchmarkState(timer, args);
 	while (
-		state.recordBatch(doBatch(state.iterationsPerBatch, args.benchmarkFn, args.beforeEachBatch))
+		state.recordBatch(
+			doBatch( // Synchronous
+				state.iterationsPerBatch,
+				args.benchmarkFn,
+				args.beforeEachBatch))
 	) {
 		// No-op
 	}
@@ -244,7 +249,7 @@ export async function runBenchmarkAsync(
 			await doBatchAsync(
 				state.iterationsPerBatch,
 				args.benchmarkFnAsync,
-				args.beforeEachBatchAsync,
+				args.beforeEachBatch,
 			),
 		)
 	) {
@@ -277,9 +282,9 @@ function doBatch(
 async function doBatchAsync(
 	iterationCount: number,
 	f: () => Promise<unknown>,
-	beforeEachBatchAsync: undefined | (() => Promise<void>),
+	beforeEachBatch: undefined | (() => Promise<void>),
 ): Promise<number> {
-	await beforeEachBatchAsync?.();
+	await beforeEachBatch?.();
 	let i = iterationCount;
 	const before = timer.now();
 	while (i--) {

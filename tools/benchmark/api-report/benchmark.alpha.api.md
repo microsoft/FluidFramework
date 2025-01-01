@@ -12,14 +12,14 @@ import { Test } from 'mocha';
 export function benchmark(args: BenchmarkArguments): Test;
 
 // @public
-export type BenchmarkArguments = Titled & (BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments);
+export type BenchmarkArguments = Titled & BenchmarkRunningOptions;
 
 // @public
-export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions {
+export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions, OnBatch<"async"> {
 }
 
 // @public
-export interface BenchmarkAsyncFunction extends BenchmarkOptions {
+export interface BenchmarkAsyncFunction {
     benchmarkFnAsync: () => Promise<unknown>;
 }
 
@@ -47,7 +47,7 @@ export interface BenchmarkError {
 export function benchmarkMemory(testObject: IMemoryTestObject): Test;
 
 // @public
-export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments, BenchmarkTimingOptions, OnBatch, BenchmarkDescription {
+export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments, BenchmarkTimingOptions, BenchmarkDescription {
 }
 
 // @public
@@ -65,11 +65,11 @@ export type BenchmarkResult = BenchmarkError | BenchmarkData;
 export type BenchmarkRunningOptions = BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments;
 
 // @public
-export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, BenchmarkOptions {
+export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, BenchmarkOptions, OnBatch {
 }
 
 // @public
-export interface BenchmarkSyncFunction extends BenchmarkOptions {
+export interface BenchmarkSyncFunction {
     benchmarkFn: () => void;
 }
 
@@ -170,8 +170,8 @@ export interface MochaExclusiveOptions {
 }
 
 // @public
-export interface OnBatch {
-    beforeEachBatch?: () => void;
+export interface OnBatch<T extends "async" | "sync" = "sync"> {
+    beforeEachBatch?: () => T extends "async" ? Promise<void> : void;
 }
 
 // @public (undocumented)
@@ -221,9 +221,11 @@ export interface Titled {
 export function validateBenchmarkArguments(args: BenchmarkSyncArguments | BenchmarkAsyncArguments): {
     isAsync: true;
     benchmarkFn: () => Promise<unknown>;
+    beforeEachBatch?: () => Promise<void>;
 } | {
     isAsync: false;
     benchmarkFn: () => void;
+    beforeEachBatch?: () => void;
 };
 
 ```
