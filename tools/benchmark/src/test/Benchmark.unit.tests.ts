@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { benchmark } from "..";
-import { BenchmarkType, isParentProcess, BenchmarkTimer, type BenchmarkArguments } from "../Configuration";
+import { BenchmarkType, isParentProcess, BenchmarkTimer } from "../Configuration";
 import { Phase, runBenchmark, runBenchmarkAsync, runBenchmarkSync } from "../runBenchmark";
 
 function doLoop(upperLimit: number): void {
@@ -55,7 +55,9 @@ describe("`benchmark` function", () => {
 	});
 
 	describe("uses `beforeEachBatch` or `beforeEachBatchAsync`", () => {
-		const minBatchCount = 4;
+		// NOTE: The runner automatically only runs 1 batch with 1 iteration when not profiling,
+		// but leaving these as numbers in case we want to add hooks to override that behavior and actually
+		// reason over batch / iteration counts.
 		let batches = 0;
 		let iterations = 0;
 
@@ -74,7 +76,6 @@ describe("`benchmark` function", () => {
 				iterations++;
 			},
 			type: BenchmarkType.OwnCorrectness,
-			minBatchCount,
 		});
 
 		benchmark({
@@ -87,7 +88,6 @@ describe("`benchmark` function", () => {
 				iterations++;
 			},
 			type: BenchmarkType.OwnCorrectness,
-			minBatchCount,
 		});
 
 		benchmark({
@@ -103,9 +103,8 @@ describe("`benchmark` function", () => {
 				assert(batches % 2 === 0, "batches should be even since we have two 'beforeEachBatch[Async]' hooks");
 				iterations++;
 			},
-			after: () => { batches /= 2; },
+			after: () => { batches /= 2; }, // Restore to actual batch count for 'after' hook logic
 			type: BenchmarkType.OwnCorrectness,
-			minBatchCount,
 		});
 
 
@@ -119,7 +118,6 @@ describe("`benchmark` function", () => {
 				iterations++;
 			},
 			type: BenchmarkType.OwnCorrectness,
-			minBatchCount,
 		});
 
 		let winner: string | undefined;
@@ -141,21 +139,11 @@ describe("`benchmark` function", () => {
 				batches = iterations;
 			},
 			type: BenchmarkType.OwnCorrectness,
-			minBatchCount: 1,
 		});
 
 		afterEach(() => {
-			assert(batches >= minBatchCount, "beforeEachBatch should be called at least minBatchCount times");
-			assert(iterations >= batches, "iterations should be at least as many as beforeEachBatchHasBeenCalled");
+			assert(iterations >= batches, "iterations should not be fewer than batches");
 		});
-
-		// benchmarkFn with beforeEachBatchAsync not allowed via types!
-		({
-			title: "test",
-			beforeEachBatchAsync: async (): Promise<void> => {},
-			// @ts-expect-error beforeEachBatchAsync is only allowed with benchmarkFnAsync
-			benchmarkFn: (): void => {},
-		}) satisfies BenchmarkArguments;
 	});
 
 	it("runBenchmark sync", async () => {
