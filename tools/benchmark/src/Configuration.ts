@@ -206,7 +206,7 @@ export interface BenchmarkTimingOptions {
 }
 
 /**
- * Synchronous perations that can be performed on a per-batch basis.
+ * Synchronous operations that can be performed on a per-batch basis.
  *
  * @remarks
  * If you need to perform asynchronous operations, use {@link BenchmarkAsyncFunction} and {@link OnBatchAsync}.
@@ -215,7 +215,9 @@ export interface BenchmarkTimingOptions {
  */
 export interface OnBatch {
 	/**
-	 * Executes before the start of each batch.
+	 * Executes synchronously before the start of each batch.
+	 * This has the same semantics as benchmarkjs's `onCycle`:
+	 * https://benchmarkjs.com/docs/#options_onCycle
 	 *
 	 * @remarks
 	 * Beware that batches run `benchmarkFn` more than once: a typical micro-benchmark might involve 10k
@@ -224,7 +226,7 @@ export interface OnBatch {
 	beforeEachBatch?: () => void;
 
 	/**
-	 * Use {@link OnBatchAsync}.
+	 * Use {@link BenchmarkAsyncFunction} and {@link OnBatchAsync} if you need an async hook.
 	 */
 	beforeEachBatchAsync?: never;
 }
@@ -240,12 +242,16 @@ export interface OnBatch {
 export interface OnBatchAsync
 {
 	/**
+	 * Executes synchronously before the start of each batch.
+	 *
 	 * @deprecated use {@link OnBatchAsync.beforeEachBatchAsync} instead
 	 */
 	beforeEachBatch?: () => void;
 
 	/**
 	 * Executes before the start of each batch.
+	 * This has similar semantics to benchmarkjs's `onCycle`, but is asynchronous:
+	 * https://benchmarkjs.com/docs/#options_onCycle
 	 *
 	 * @remarks
 	 * Beware that batches run `benchmarkFn` more than once: a typical micro-benchmark might involve 10k
@@ -436,7 +442,7 @@ function isAsync(args: BenchmarkSyncArguments | BenchmarkAsyncArguments): args i
 export function validateBenchmarkArguments(
 	args: BenchmarkSyncArguments | BenchmarkAsyncArguments,
 ):
-	| { isAsync: true; benchmarkFn: () => Promise<unknown>, beforeEachBatch?: HookFunction }
+	| { isAsync: true; benchmarkFn: () => Promise<unknown>, beforeEachBatch?: () => Promise<void> }
 	| { isAsync: false; benchmarkFn: () => void, beforeEachBatch?: () => void } {
 
 	if (isAsync(args)) {

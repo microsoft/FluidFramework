@@ -177,7 +177,7 @@ export interface OnBatch {
 
 // @public
 export interface OnBatchAsync {
-    // @deprecated (undocumented)
+    // @deprecated
     beforeEachBatch?: () => void;
     beforeEachBatchAsync?: () => Promise<void>;
 }
@@ -229,7 +229,7 @@ export interface Titled {
 export function validateBenchmarkArguments(args: BenchmarkSyncArguments | BenchmarkAsyncArguments): {
     isAsync: true;
     benchmarkFn: () => Promise<unknown>;
-    beforeEachBatch?: HookFunction;
+    beforeEachBatch?: () => Promise<void>;
 } | {
     isAsync: false;
     benchmarkFn: () => void;

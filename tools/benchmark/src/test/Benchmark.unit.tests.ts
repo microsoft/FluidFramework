@@ -54,7 +54,7 @@ describe("`benchmark` function", () => {
 		});
 	});
 
-	describe("uses `beforeEachBatch` or `beforeEachBatchAsync`", () => {
+	describe("Support for `beforeEachBatch` or `beforeEachBatchAsync`", () => {
 		// NOTE: The runner automatically only runs 1 batch with 1 iteration when not profiling,
 		// but leaving these as numbers in case we want to add hooks to override that behavior and actually
 		// reason over batch / iteration counts.
@@ -121,18 +121,18 @@ describe("`benchmark` function", () => {
 		});
 
 		let winner: string | undefined;
+		let beforeEachBatchAsyncCalled = false;
 		benchmark({
+			only: true, //* ONLY
 			title: "benchmarkFn with beforeEachBatchAsync - not supported (and blocked by types)",
-			beforeEachBatchAsync: async () => delay(1).then(() => {
-				// IMPORTANT: This code won't run in time!
-				winner ??= "beforeEachBatchAsync";
-			}),
+			beforeEachBatchAsync: async () => { beforeEachBatchAsyncCalled = true; },
 			// @ts-expect-error beforeEachBatchAsync is only allowed with benchmarkFnAsync
 			benchmarkFn: (): void => {
 				winner ??= "benchmarkFn"; // NOTE: This will only happen for the first batch, this is all we're testing.
 				iterations++;
 			},
 			after: () => {
+				assert(!beforeEachBatchAsyncCalled, "beforeEachBatchAsync should not be called");
 				assert(winner === "benchmarkFn", "benchmarkFn expected to run before async continuation in beforeEachBatchAsync");
 
 				// fix up other vars to appease afterEach

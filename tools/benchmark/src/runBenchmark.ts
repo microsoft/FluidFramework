@@ -11,7 +11,6 @@ import {
 	BenchmarkTimingOptions,
 	benchmarkArgumentsIsCustom,
 	BenchmarkTimer,
-	type HookFunction,
 } from "./Configuration";
 import type { BenchmarkData } from "./ResultTypes";
 import { getArrayStatistics, prettyNumber } from "./RunnerUtilities";
@@ -65,7 +64,7 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 		...defaultTimingOptions,
 		...args,
 	};
-	const { isAsync, benchmarkFn: argsBenchmarkFn, beforeEachBatch } = validateBenchmarkArguments(args);
+	const { isAsync, benchmarkFn: argsBenchmarkFn, beforeEachBatch: argsBeforeEachBatch } = validateBenchmarkArguments(args);
 
 	await options.before?.();
 
@@ -75,10 +74,16 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 		data = await runBenchmarkAsync({
 			...options,
 			benchmarkFnAsync: argsBenchmarkFn,
-			beforeEachBatch,
+			beforeEachBatchAsync: argsBeforeEachBatch,
+			beforeEachBatch: undefined, // The original callback (if present) will be invoked in the async version thanks to validateBenchmarkArguments
 		});
 	} else {
-		data = runBenchmarkSync({ ...options, benchmarkFn: argsBenchmarkFn, beforeEachBatch, beforeEachBatchAsync: undefined });
+		data = runBenchmarkSync({
+			...options,
+			benchmarkFn: argsBenchmarkFn,
+			beforeEachBatch: argsBeforeEachBatch,
+			beforeEachBatchAsync: undefined,
+		});
 	}
 	await options.after?.();
 	return data;
@@ -242,7 +247,7 @@ export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkDa
  * @public
  */
 export async function runBenchmarkAsync(
-	args: BenchmarkRunningOptionsAsync,
+	args: BenchmarkRunningOptionsAsync & { beforeEachBatch?: never },
 ): Promise<BenchmarkData> {
 	const state = new BenchmarkState(timer, args);
 	while (
@@ -250,7 +255,7 @@ export async function runBenchmarkAsync(
 			await doBatchAsync(
 				state.iterationsPerBatch,
 				args.benchmarkFnAsync,
-				args.beforeEachBatch,
+				args.beforeEachBatchAsync,
 			),
 		)
 	) {
@@ -283,9 +288,9 @@ function doBatch(
 async function doBatchAsync(
 	iterationCount: number,
 	f: () => Promise<unknown>,
-	beforeEachBatch: undefined | HookFunction,
+	beforeEachBatchAsync: undefined | (() => Promise<void>),
 ): Promise<number> {
-	await beforeEachBatch?.();
+	await beforeEachBatchAsync?.();
 	let i = iterationCount;
 	const before = timer.now();
 	while (i--) {
