@@ -127,27 +127,21 @@ describe("`benchmark` function", () => {
 			type: BenchmarkType.OwnCorrectness,
 		});
 
-		let winner: string | undefined;
 		let beforeEachBatchAsyncCalled = false;
 		benchmark({
-			only: true, //* ONLY
 			title: "benchmarkFn with beforeEachBatchAsync - not supported (and blocked by types)",
 			beforeEachBatchAsync: async () => {
+				// IMPORTANT: This is not expected to be called
 				beforeEachBatchAsyncCalled = true;
 			},
 			// @ts-expect-error beforeEachBatchAsync is only allowed with benchmarkFnAsync
 			benchmarkFn: (): void => {
-				winner ??= "benchmarkFn"; // NOTE: This will only happen for the first batch, this is all we're testing.
 				iterations++;
 			},
 			after: () => {
 				assert(!beforeEachBatchAsyncCalled, "beforeEachBatchAsync should not be called");
-				assert(
-					winner === "benchmarkFn",
-					"benchmarkFn expected to run before async continuation in beforeEachBatchAsync",
-				);
 
-				// fix up other vars to appease afterEach
+				// fix up 'batches' var to appease afterEach
 				batches = iterations;
 			},
 			type: BenchmarkType.OwnCorrectness,
