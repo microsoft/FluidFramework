@@ -148,7 +148,10 @@ export interface BenchmarkSyncFunction {
  * Configuration for benchmarking an asynchronous function.
  * @public
  */
-export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions, OnBatchAsync {}
+export interface BenchmarkAsyncArguments
+	extends BenchmarkAsyncFunction,
+		BenchmarkOptions,
+		OnBatchAsync {}
 
 /**
  * An asynchronous function to benchmark.
@@ -239,8 +242,7 @@ export interface OnBatch {
  *
  * @public
  */
-export interface OnBatchAsync
-{
+export interface OnBatchAsync {
 	/**
 	 * Executes synchronously before the start of each batch.
 	 *
@@ -424,7 +426,9 @@ export interface HookArguments {
  * @param args - Either {@link BenchmarkSyncArguments} or {@link BenchmarkAsyncArguments}
  * @returns true if the arguments are for an asynchronous benchmark, false if they are for a synchronous benchmark.
  */
-function isAsync(args: BenchmarkSyncArguments | BenchmarkAsyncArguments): args is BenchmarkAsyncArguments {
+function isAsync(
+	args: BenchmarkSyncArguments | BenchmarkAsyncArguments,
+): args is BenchmarkAsyncArguments {
 	const intersection = args as BenchmarkSyncArguments & BenchmarkAsyncArguments;
 	const isSync = intersection.benchmarkFn !== undefined;
 	const isAsync = intersection.benchmarkFnAsync !== undefined;
@@ -442,9 +446,8 @@ function isAsync(args: BenchmarkSyncArguments | BenchmarkAsyncArguments): args i
 export function validateBenchmarkArguments(
 	args: BenchmarkSyncArguments | BenchmarkAsyncArguments,
 ):
-	| { isAsync: true; benchmarkFn: () => Promise<unknown>, beforeEachBatch?: () => Promise<void> }
-	| { isAsync: false; benchmarkFn: () => void, beforeEachBatch?: () => void } {
-
+	| { isAsync: true; benchmarkFn: () => Promise<unknown>; beforeEachBatch?: () => Promise<void> }
+	| { isAsync: false; benchmarkFn: () => void; beforeEachBatch?: () => void } {
 	if (isAsync(args)) {
 		const beforeEachBatch = async (): Promise<void> => {
 			args.beforeEachBatch?.();

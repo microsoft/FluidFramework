@@ -64,7 +64,11 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 		...defaultTimingOptions,
 		...args,
 	};
-	const { isAsync, benchmarkFn: argsBenchmarkFn, beforeEachBatch: argsBeforeEachBatch } = validateBenchmarkArguments(args);
+	const {
+		isAsync,
+		benchmarkFn: argsBenchmarkFn,
+		beforeEachBatch: argsBeforeEachBatch,
+	} = validateBenchmarkArguments(args);
 
 	await options.before?.();
 
@@ -232,10 +236,13 @@ export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkDa
 	const state = new BenchmarkState(timer, args);
 	while (
 		state.recordBatch(
-			doBatch( // Synchronous
+			doBatch(
+				// Synchronous
 				state.iterationsPerBatch,
 				args.benchmarkFn,
-				args.beforeEachBatch))
+				args.beforeEachBatch,
+			),
+		)
 	) {
 		// No-op
 	}

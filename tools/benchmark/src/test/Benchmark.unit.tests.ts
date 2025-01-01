@@ -68,9 +68,10 @@ describe("`benchmark` function", () => {
 
 		benchmark({
 			title: "benchmarkFnAsync with beforeEachBatchAsync",
-			beforeEachBatchAsync: async () => delay(1).then(() => {
-				batches++;
-			}),
+			beforeEachBatchAsync: async () =>
+				delay(1).then(() => {
+					batches++;
+				}),
 			benchmarkFnAsync: async (): Promise<void> => {
 				assert(batches > 0, "beforeEachBatchAsync should be called before test body");
 				iterations++;
@@ -95,18 +96,24 @@ describe("`benchmark` function", () => {
 			beforeEachBatch: () => {
 				batches++;
 			},
-			beforeEachBatchAsync: async () => delay(1).then(() => {
-				batches++;
-			}),
+			beforeEachBatchAsync: async () =>
+				delay(1).then(() => {
+					batches++;
+				}),
 			benchmarkFnAsync: async (): Promise<void> => {
 				assert(batches > 0, "beforeEachBatchAsync should be called before test body");
-				assert(batches % 2 === 0, "batches should be even since we have two 'beforeEachBatch[Async]' hooks");
+				assert(
+					batches % 2 === 0,
+					"batches should be even since we have two 'beforeEachBatch[Async]' hooks",
+				);
 				iterations++;
 			},
-			after: () => { batches /= 2; }, // Restore to actual batch count for 'after' hook logic
+			after: () => {
+				// Restore to actual batch count for 'after' hook logic
+				batches /= 2;
+			},
 			type: BenchmarkType.OwnCorrectness,
 		});
-
 
 		benchmark({
 			title: "benchmarkFn with beforeEachBatch",
@@ -125,7 +132,9 @@ describe("`benchmark` function", () => {
 		benchmark({
 			only: true, //* ONLY
 			title: "benchmarkFn with beforeEachBatchAsync - not supported (and blocked by types)",
-			beforeEachBatchAsync: async () => { beforeEachBatchAsyncCalled = true; },
+			beforeEachBatchAsync: async () => {
+				beforeEachBatchAsyncCalled = true;
+			},
 			// @ts-expect-error beforeEachBatchAsync is only allowed with benchmarkFnAsync
 			benchmarkFn: (): void => {
 				winner ??= "benchmarkFn"; // NOTE: This will only happen for the first batch, this is all we're testing.
@@ -133,7 +142,10 @@ describe("`benchmark` function", () => {
 			},
 			after: () => {
 				assert(!beforeEachBatchAsyncCalled, "beforeEachBatchAsync should not be called");
-				assert(winner === "benchmarkFn", "benchmarkFn expected to run before async continuation in beforeEachBatchAsync");
+				assert(
+					winner === "benchmarkFn",
+					"benchmarkFn expected to run before async continuation in beforeEachBatchAsync",
+				);
 
 				// fix up other vars to appease afterEach
 				batches = iterations;
