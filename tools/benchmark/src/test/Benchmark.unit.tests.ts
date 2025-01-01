@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { benchmark } from "..";
-import { BenchmarkType, isParentProcess, BenchmarkTimer } from "../Configuration";
+import { BenchmarkType, isParentProcess, BenchmarkTimer, type BenchmarkArguments } from "../Configuration";
 import { Phase, runBenchmark, runBenchmarkAsync, runBenchmarkSync } from "../runBenchmark";
 
 function doLoop(upperLimit: number): void {
@@ -52,6 +52,110 @@ describe("`benchmark` function", () => {
 				);
 			}
 		});
+	});
+
+	describe("uses `beforeEachBatch` or `beforeEachBatchAsync`", () => {
+		const minBatchCount = 4;
+		let batches = 0;
+		let iterations = 0;
+
+		beforeEach("Reset state", () => {
+			batches = 0;
+			iterations = 0;
+		});
+
+		benchmark({
+			title: "benchmarkFnAsync with beforeEachBatchAsync",
+			beforeEachBatchAsync: async () => delay(1).then(() => {
+				batches++;
+			}),
+			benchmarkFnAsync: async (): Promise<void> => {
+				assert(batches > 0, "beforeEachBatchAsync should be called before test body");
+				iterations++;
+			},
+			type: BenchmarkType.OwnCorrectness,
+			minBatchCount,
+		});
+
+		benchmark({
+			title: "benchmarkFnAsync with beforeEachBatch",
+			beforeEachBatch: () => {
+				batches++;
+			},
+			benchmarkFnAsync: async (): Promise<void> => {
+				assert(batches > 0, "beforeEachBatchAsync should be called before test body");
+				iterations++;
+			},
+			type: BenchmarkType.OwnCorrectness,
+			minBatchCount,
+		});
+
+		benchmark({
+			title: "benchmarkFnAsync with beforeEachBatch and beforeEachBatchAsync",
+			beforeEachBatch: () => {
+				batches++;
+			},
+			beforeEachBatchAsync: async () => delay(1).then(() => {
+				batches++;
+			}),
+			benchmarkFnAsync: async (): Promise<void> => {
+				assert(batches > 0, "beforeEachBatchAsync should be called before test body");
+				assert(batches % 2 === 0, "batches should be even since we have two 'beforeEachBatch[Async]' hooks");
+				iterations++;
+			},
+			after: () => { batches /= 2; },
+			type: BenchmarkType.OwnCorrectness,
+			minBatchCount,
+		});
+
+
+		benchmark({
+			title: "benchmarkFn with beforeEachBatch",
+			beforeEachBatch: () => {
+				batches++;
+			},
+			benchmarkFn: (): void => {
+				assert(batches > 0, "beforeEachBatchAsync should be called before test body");
+				iterations++;
+			},
+			type: BenchmarkType.OwnCorrectness,
+			minBatchCount,
+		});
+
+		let winner: string | undefined;
+		benchmark({
+			title: "benchmarkFn with beforeEachBatchAsync - not supported (and blocked by types)",
+			beforeEachBatchAsync: async () => delay(1).then(() => {
+				// IMPORTANT: This code won't run in time!
+				winner ??= "beforeEachBatchAsync";
+			}),
+			// @ts-expect-error beforeEachBatchAsync is only allowed with benchmarkFnAsync
+			benchmarkFn: (): void => {
+				winner ??= "benchmarkFn"; // NOTE: This will only happen for the first batch, this is all we're testing.
+				iterations++;
+			},
+			after: () => {
+				assert(winner === "benchmarkFn", "benchmarkFn expected to run before async continuation in beforeEachBatchAsync");
+
+				// fix up other vars to appease afterEach
+				batches = iterations;
+			},
+			type: BenchmarkType.OwnCorrectness,
+			minBatchCount: 1,
+		});
+
+		afterEach(() => {
+			assert(batches >= minBatchCount, "beforeEachBatch should be called at least minBatchCount times");
+			assert(iterations >= batches, "iterations should be at least as many as beforeEachBatchHasBeenCalled");
+		});
+
+		// benchmarkFn with beforeEachBatchAsync not allowed via types!
+		({
+			title: "test",
+			beforeEachBatchAsync: async (): Promise<void> => {},
+			// @ts-expect-error beforeEachBatchAsync is only allowed with benchmarkFnAsync
+			benchmarkFn: (): void => {},
+		}) satisfies BenchmarkArguments;
 	});
 
 	it("runBenchmark sync", async () => {

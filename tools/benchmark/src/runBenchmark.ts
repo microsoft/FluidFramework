@@ -11,6 +11,7 @@ import {
 	BenchmarkTimingOptions,
 	benchmarkArgumentsIsCustom,
 	BenchmarkTimer,
+	type HookFunction,
 } from "./Configuration";
 import type { BenchmarkData } from "./ResultTypes";
 import { getArrayStatistics, prettyNumber } from "./RunnerUtilities";
@@ -77,7 +78,7 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 			beforeEachBatch,
 		});
 	} else {
-		data = runBenchmarkSync({ ...options, benchmarkFn: argsBenchmarkFn, beforeEachBatch });
+		data = runBenchmarkSync({ ...options, benchmarkFn: argsBenchmarkFn, beforeEachBatch, beforeEachBatchAsync: undefined });
 	}
 	await options.after?.();
 	return data;
@@ -282,7 +283,7 @@ function doBatch(
 async function doBatchAsync(
 	iterationCount: number,
 	f: () => Promise<unknown>,
-	beforeEachBatch: undefined | (() => Promise<void>),
+	beforeEachBatch: undefined | HookFunction,
 ): Promise<number> {
 	await beforeEachBatch?.();
 	let i = iterationCount;

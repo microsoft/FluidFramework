@@ -148,7 +148,7 @@ export interface BenchmarkSyncFunction {
  * Configuration for benchmarking an asynchronous function.
  * @public
  */
-export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions, OnBatch<"async"> {}
+export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions, OnBatchAsync {}
 
 /**
  * An asynchronous function to benchmark.
@@ -206,20 +206,52 @@ export interface BenchmarkTimingOptions {
 }
 
 /**
- * Operations that can be performed on a per-batch basis.
- * The callback may be asynchronous or synchronous, according to this interface's type parameter.
+ * Synchronous perations that can be performed on a per-batch basis.
+ *
+ * @remarks
+ * If you need to perform asynchronous operations, use {@link bookmarkFnAsync} and {@link OnBatchAsync}.
  *
  * @public
  */
-export interface OnBatch<T extends "async" | "sync" = "sync"> {
+export interface OnBatch {
 	/**
-	 * Executes before the start of each batch. "async" type parameter should only be used alongside `benchmarkFnAsync`.
+	 * Executes before the start of each batch.
 	 *
 	 * @remarks
-	 * Beware that batches run `benchmarkFn` (or `benchmarkFnAsync`) more than once: a typical micro-benchmark might involve 10k
+	 * Beware that batches run `benchmarkFn` more than once: a typical micro-benchmark might involve 10k
 	 * iterations per batch.
 	 */
-	beforeEachBatch?: () => T extends "async" ? Promise<void> : void;
+	beforeEachBatch?: () => void;
+
+	/**
+	 * Use {@link OnBatchAsync}.
+	 */
+	beforeEachBatchAsync?: never;
+}
+
+/**
+ * Operations (synchronous or asynchronous) that can be performed on a per-batch basis.
+ *
+ * @remarks
+ * Not compatible with synchronous {@link bookmarkFn}.
+ *
+ * @public
+ */
+export interface OnBatchAsync
+{
+	/**
+	 * @deprecated use {@link beforeEachBatchAsync} instead
+	 */
+	beforeEachBatch?: () => void;
+
+	/**
+	 * Executes before the start of each batch.
+	 *
+	 * @remarks
+	 * Beware that batches run `benchmarkFn` more than once: a typical micro-benchmark might involve 10k
+	 * iterations per batch.
+	 */
+	beforeEachBatchAsync?: () => Promise<void>;
 }
 
 /**
@@ -404,11 +436,15 @@ function isAsync(args: BenchmarkSyncArguments | BenchmarkAsyncArguments): args i
 export function validateBenchmarkArguments(
 	args: BenchmarkSyncArguments | BenchmarkAsyncArguments,
 ):
-	| { isAsync: true; benchmarkFn: () => Promise<unknown>, beforeEachBatch?: () => Promise<void> }
+	| { isAsync: true; benchmarkFn: () => Promise<unknown>, beforeEachBatch?: HookFunction }
 	| { isAsync: false; benchmarkFn: () => void, beforeEachBatch?: () => void } {
 
 	if (isAsync(args)) {
-		return { isAsync: true, benchmarkFn: args.benchmarkFnAsync, beforeEachBatch: args.beforeEachBatch };
+		const beforeEachBatch = async (): Promise<void> => {
+			args.beforeEachBatch?.();
+			await args.beforeEachBatchAsync?.();
+		};
+		return { isAsync: true, benchmarkFn: args.benchmarkFnAsync, beforeEachBatch };
 	}
 
 	return { isAsync: false, benchmarkFn: args.benchmarkFn, beforeEachBatch: args.beforeEachBatch };
