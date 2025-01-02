@@ -711,7 +711,7 @@ export class PartialSequenceLengths {
 			moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
 		} // BUG BUG: something fishy here around how/when move info is passed or not
 		// this condition only hits if it is not passed, so we can't rely on the passed move info
-		// and need to inspect the segment directly
+		// and need to inspect the segment directly. maybe related to AB#15630.
 		else if (toMoveInfo(segment)?.wasMovedOnInsert) {
 			// if this segment was obliterated on insert, its length is only
 			// visible to the client that inserted it
