@@ -25,6 +25,7 @@ import {
 	isInserted,
 	isMoved,
 	isRemoved,
+	overwriteInfo,
 	type IInsertionInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
@@ -86,7 +87,7 @@ export type ISegmentInternal = Omit<
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
 export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
-	Partial<IInsertionInfo & IRemovalInfo & IMoveInfo & IMergeNodeCommon> & {
+	Partial<IInsertionInfo & IMergeNodeCommon> & {
 		parent?: MergeBlock;
 		segmentGroups?: SegmentGroupCollection;
 		propertyManager?: PropertiesManager;
@@ -265,8 +266,7 @@ export interface ISegment {
  * @alpha
  */
 export function segmentIsRemoved(segment: ISegment): boolean {
-	const leaf: ISegmentPrivate = segment;
-	return leaf.removedSeq !== undefined;
+	return isRemoved(segment);
 }
 
 /**
@@ -500,20 +500,28 @@ export abstract class BaseSegment implements ISegment {
 	protected cloneInto(b: ISegment): void {
 		const seg: ISegmentPrivate = b;
 		if (isInserted(this)) {
-			seg.clientId = this.clientId;
-			seg.seq = this.seq;
+			overwriteInfo<IInsertionInfo>(seg, {
+				clientId: this.clientId,
+				seq: this.seq,
+			});
 		}
 		// TODO: deep clone properties
 		seg.properties = clone(this.properties);
 		if (isRemoved(this)) {
-			seg.removedSeq = this.removedSeq;
-			seg.removedClientIds = [...this.removedClientIds];
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IRemovalInfo>(seg, {
+				removedSeq: this.removedSeq,
+				removedClientIds: [...this.removedClientIds],
+			});
 		}
 		if (isMoved(this)) {
-			seg.movedSeq = this.movedSeq;
-			seg.movedSeqs = [...this.movedSeqs];
-			seg.wasMovedOnInsert = this.wasMovedOnInsert;
-			seg.movedClientIds = [...this.movedClientIds];
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IMoveInfo>(seg, {
+				movedSeq: this.movedSeq,
+				movedSeqs: [...this.movedSeqs],
+				wasMovedOnInsert: this.wasMovedOnInsert,
+				movedClientIds: [...this.movedClientIds],
+			});
 		}
 		seg.attribution = this.attribution?.clone();
 	}
@@ -556,21 +564,29 @@ export abstract class BaseSegment implements ISegment {
 		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 
 		if (isInserted(this)) {
-			leafSegment.seq = this.seq;
-			leafSegment.localSeq = this.localSeq;
-			leafSegment.clientId = this.clientId;
+			overwriteInfo<IInsertionInfo>(leafSegment, {
+				seq: this.seq,
+				localSeq: this.localSeq,
+				clientId: this.clientId,
+			});
 		}
 		if (isRemoved(this)) {
-			leafSegment.removedClientIds = [...this.removedClientIds];
-			leafSegment.removedSeq = this.removedSeq;
-			leafSegment.localRemovedSeq = this.localRemovedSeq;
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IRemovalInfo>(leafSegment, {
+				removedClientIds: [...this.removedClientIds],
+				removedSeq: this.removedSeq,
+				localRemovedSeq: this.localRemovedSeq,
+			});
 		}
 		if (isMoved(this)) {
-			leafSegment.movedClientIds = [...this.movedClientIds];
-			leafSegment.movedSeq = this.movedSeq;
-			leafSegment.movedSeqs = [...this.movedSeqs];
-			leafSegment.localMovedSeq = this.localMovedSeq;
-			leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IMoveInfo>(leafSegment, {
+				movedClientIds: [...this.movedClientIds],
+				movedSeq: this.movedSeq,
+				movedSeqs: [...this.movedSeqs],
+				localMovedSeq: this.localMovedSeq,
+				wasMovedOnInsert: this.wasMovedOnInsert,
+			});
 		}
 
 		this.trackingCollection.copyTo(leafSegment);

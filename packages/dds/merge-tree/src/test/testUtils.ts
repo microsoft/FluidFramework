@@ -23,6 +23,7 @@ import {
 	verifyPartialLengths,
 } from "../partialLengths.js";
 import { PropertySet } from "../properties.js";
+import * as info from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 import { loadText } from "./text.js";
@@ -235,15 +236,15 @@ function getPartialLengths(
 	let actualLen = 0;
 
 	const isInserted = (segment: ISegmentPrivate): boolean =>
-		segment.seq === undefined ||
-		(segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
-		(localSeq !== undefined &&
-			segment.seq === UnassignedSequenceNumber &&
-			segment.localSeq !== undefined &&
-			segment.localSeq <= localSeq);
+		info.isInserted(segment) &&
+		((segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
+			(localSeq !== undefined &&
+				segment.seq === UnassignedSequenceNumber &&
+				segment.localSeq !== undefined &&
+				segment.localSeq <= localSeq));
 
 	const isRemoved = (segment: ISegmentPrivate): boolean =>
-		segment.removedSeq !== undefined &&
+		info.isRemoved(segment) &&
 		((localSeq !== undefined &&
 			segment.removedSeq === UnassignedSequenceNumber &&
 			segment.localRemovedSeq !== undefined &&
@@ -251,7 +252,7 @@ function getPartialLengths(
 			(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq <= seq));
 
 	const isMoved = (segment: ISegmentPrivate): boolean =>
-		segment.movedSeq !== undefined &&
+		info.isMoved(segment) &&
 		((localSeq !== undefined &&
 			segment.movedSeq === UnassignedSequenceNumber &&
 			segment.localMovedSeq !== undefined &&
