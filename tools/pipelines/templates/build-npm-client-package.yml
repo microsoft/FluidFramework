@@ -581,6 +581,13 @@ extends:
                   buildDirectory: '${{ parameters.buildDirectory }}'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
+              # We need it in order to run flub where the code coverage comparison logic calls for it
+              - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+                parameters:
+                  buildDirectory: ${{ parameters.buildDirectory }}
+                  buildToolsVersionToInstall: repo
+                  pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
+
               - task: DownloadPipelineArtifact@2
                 inputs:
                   artifact: nested_lib_dist
@@ -615,12 +622,6 @@ extends:
               # Some webpacked file using externals introduce file name with quotes in them
               # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
               # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
-              - template: /tools/pipelines/templates/include-install-build-tools.yml@self
-                parameters:
-                  buildDirectory: ${{ parameters.buildDirectory }}
-                  buildToolsVersionToInstall: repo
-                  pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
-
               - task: Bash@3
                 displayName: Check for nyc/report directory
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
