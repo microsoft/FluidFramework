@@ -78,7 +78,7 @@ function isITenantPrivateKeys(obj: any): obj is ITenantPrivateKeys {
 	);
 }
 
-const tenantWithoutKeyless: ITenantDocument = {
+const tenantWithoutPrivateKeys: ITenantDocument = {
 	_id: "cordflasher-dolphin",
 	orderer: {
 		type: "kafka",
@@ -103,7 +103,7 @@ const tenantWithoutKeyless: ITenantDocument = {
 	secondaryKey: "efgh",
 };
 
-const tenantWithKeyless: ITenantDocument = {
+const tenantWithPrivateKeys: ITenantDocument = {
 	_id: "cordflasher-dolphin",
 	orderer: {
 		type: "kafka",
@@ -126,6 +126,35 @@ const tenantWithKeyless: ITenantDocument = {
 	disabled: false,
 	key: "abcd",
 	secondaryKey: "efgh",
+	privateKeys: {
+		key: "key1",
+		secondaryKey: "key2",
+		keyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
+		secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
+	},
+};
+
+const tenantWithoutSharedKeys: ITenantDocument = {
+	_id: "cordflasher-dolphin",
+	orderer: {
+		type: "kafka",
+		url: "http://localhost:3003",
+	},
+	storage: {
+		historianUrl: "http://localhost:3001",
+		internalHistorianUrl: "http://historian:3000",
+		url: "http://gitrest:3000",
+		owner: "fluid",
+		repository: "fluid",
+		credentials: {
+			user: "user1",
+			password: "password1",
+		},
+	},
+	customData: {
+		encryptionKeyVersion: "2022",
+	},
+	disabled: false,
 	privateKeys: {
 		key: "key1",
 		secondaryKey: "key2",
@@ -291,7 +320,7 @@ describe("TenantManager", () => {
 
 	describe("getTenantKeys", () => {
 		it("Should return the public shared keys when the tenant does not have private keys", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutPrivateKeys);
 			const expectedKeys = { key1: "abcd", key2: "efgh" };
 			const keys = await tenantManager.getTenantKeys("cordflasher-dolphin");
 			assert.strictEqual(keys.key1, expectedKeys.key1);
@@ -299,7 +328,7 @@ describe("TenantManager", () => {
 		});
 
 		it("Should throw a 404 the tenant does not have private keys and private keys are requested", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutPrivateKeys);
 			const keysP = tenantManager.getTenantKeys("cordflasher-dolphin", false, false, true);
 			await assert.rejects(keysP, (err) => {
 				assert(err instanceof NetworkError);
@@ -313,7 +342,7 @@ describe("TenantManager", () => {
 		});
 
 		it("Should return the private keys when the tenant has private keys and usePrivateKeys is true", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithPrivateKeys);
 			const expectedKeys = { key1: "key1", key2: "key2" };
 			const keys = await tenantManager.getTenantKeys(
 				"cordflasher-dolphin",
@@ -335,17 +364,24 @@ describe("TenantManager", () => {
 		});
 
 		it("Should return the shared keys when the tenant has private keys and usePrivateKeys is false", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithPrivateKeys);
 			const expectedKeys = { key1: "abcd", key2: "efgh" };
 			const keys = await tenantManager.getTenantKeys("cordflasher-dolphin");
 			assert.strictEqual(keys.key1, expectedKeys.key1);
 			assert.strictEqual(keys.key2, expectedKeys.key2);
 		});
+
+		it("Should return empty key values when shared keys are disabled and usePrivateKeys is false", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutSharedKeys);
+			const keys = await tenantManager.getTenantKeys("cordflasher-dolphin");
+			assert.strictEqual(keys.key1, "");
+			assert.strictEqual(keys.key2, "");
+		});
 	});
 
 	describe("refreshTenantKey", () => {
 		it("Should throw a 404 the tenant does not have private keys and private keys are requested", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutPrivateKeys);
 			const keysP = tenantManager.refreshTenantKey("cordflasher-dolphin", "key1", true);
 			await assert.rejects(keysP, (err) => {
 				assert(err instanceof NetworkError);
@@ -359,7 +395,7 @@ describe("TenantManager", () => {
 		});
 
 		it("Should refresh private tenant keys but return an empty string", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithPrivateKeys);
 			sandbox.stub(tenantRepository, "update").resolves();
 			const keys = await tenantManager.refreshTenantKey("cordflasher-dolphin", "key1", true);
 			assert.strictEqual(keys.key1, "");
@@ -367,49 +403,83 @@ describe("TenantManager", () => {
 		});
 
 		it("Should refresh shared tenant keys", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithPrivateKeys);
 			sandbox.stub(tenantRepository, "update").resolves();
 			const updatedKey1 = await tenantManager.refreshTenantKey("cordflasher-dolphin", "key1");
-			assert.notStrictEqual(updatedKey1.key1, tenantWithKeyless.key);
-			assert.strictEqual(updatedKey1.key2, tenantWithKeyless.secondaryKey);
+			assert.notStrictEqual(updatedKey1.key1, tenantWithPrivateKeys.key);
+			assert.strictEqual(updatedKey1.key2, tenantWithPrivateKeys.secondaryKey);
 
 			const updatedKey2 = await tenantManager.refreshTenantKey("cordflasher-dolphin", "key2");
-			assert.strictEqual(updatedKey2.key1, tenantWithKeyless.key);
-			assert.notStrictEqual(updatedKey2.key2, tenantWithKeyless.secondaryKey);
+			assert.strictEqual(updatedKey2.key1, tenantWithPrivateKeys.key);
+			assert.notStrictEqual(updatedKey2.key2, tenantWithPrivateKeys.secondaryKey);
+		});
+
+		it("Should throw a 403 when shared keys are disabled and refreshPrivateKey is false", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutSharedKeys);
+			const keysP = tenantManager.refreshTenantKey("cordflasher-dolphin", "key1");
+			await assert.rejects(keysP, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 403);
+				return true;
+			});
 		});
 	});
 
-	describe("updateKeylessAccessPolicy", () => {
+	describe("updateKeyAccessPolicy", () => {
+		it("Should have update the tenant and set enablePrivateKeyAccess and enableSharedKeyAccess to false", async () => {
+			const updatedTenantP = tenantManager.updateKeyAccessPolicy(
+				"cordflasher-dolphin",
+				false,
+				false,
+			);
+
+			await assert.rejects(updatedTenantP, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 400);
+				assert.strictEqual(
+					err.message,
+					"Cannot update a tenant with both shared and private key access disabled",
+				);
+				return true;
+			});
+		});
+
 		it("Should have enablePrivateKeyAccess set to true when policy is already enabled", async () => {
 			const findOneStub = sandbox
 				.stub(tenantRepository, "findOne")
-				.resolves(tenantWithKeyless);
+				.resolves(tenantWithPrivateKeys);
 			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
 
-			const updatedTenant: ITenantConfig = await tenantManager.updatePrivateKeyAccessPolicy(
+			const updatedTenant: ITenantConfig = await tenantManager.updateKeyAccessPolicy(
 				"cordflasher-dolphin",
+				true,
 				true,
 			);
 
 			assert.notStrictEqual(updatedTenant.enablePrivateKeyAccess, undefined);
 			assert.strictEqual(updatedTenant.enablePrivateKeyAccess, true);
+			assert.notStrictEqual(updatedTenant.enableSharedKeyAccess, undefined);
+			assert.strictEqual(updatedTenant.enableSharedKeyAccess, true);
 			sandbox.assert.calledOnce(findOneStub);
 			sandbox.assert.notCalled(updateStub);
 		});
 
 		it("Should have enablePrivateKeyAccess set to true when the request is to enable it and the policy is not enabled", async () => {
 			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne");
-			mongoFindOneStub.onFirstCall().resolves(tenantWithoutKeyless);
-			mongoFindOneStub.onSecondCall().resolves(tenantWithKeyless);
+			mongoFindOneStub.onFirstCall().resolves(tenantWithoutPrivateKeys);
+			mongoFindOneStub.onSecondCall().resolves(tenantWithPrivateKeys);
 			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
 
-			const updatedTenant: ITenantConfig = await tenantManager.updatePrivateKeyAccessPolicy(
+			const updatedTenant: ITenantConfig = await tenantManager.updateKeyAccessPolicy(
 				"cordflasher-dolphin",
+				true,
 				true,
 			);
 
 			assert.notStrictEqual(updatedTenant.enablePrivateKeyAccess, undefined);
 			assert.strictEqual(updatedTenant.enablePrivateKeyAccess, true);
+			assert.notStrictEqual(updatedTenant.enableSharedKeyAccess, undefined);
+			assert.strictEqual(updatedTenant.enableSharedKeyAccess, true);
 			sandbox.assert.calledTwice(mongoFindOneStub);
 			sandbox.assert.calledOnce(updateStub);
 		});
@@ -417,41 +487,106 @@ describe("TenantManager", () => {
 		it("Should have enablePrivateKeyAccess set to false when policy is already disabled", async () => {
 			const mongoFindOneStub = sandbox
 				.stub(tenantRepository, "findOne")
-				.resolves(tenantWithoutKeyless);
+				.resolves(tenantWithoutPrivateKeys);
 			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
 
-			const updatedTenant: ITenantConfig = await tenantManager.updatePrivateKeyAccessPolicy(
+			const updatedTenant: ITenantConfig = await tenantManager.updateKeyAccessPolicy(
 				"cordflasher-dolphin",
 				false,
+				true,
 			);
 
 			assert.notStrictEqual(updatedTenant.enablePrivateKeyAccess, undefined);
 			assert.strictEqual(updatedTenant.enablePrivateKeyAccess, false);
+			assert.notStrictEqual(updatedTenant.enableSharedKeyAccess, undefined);
+			assert.strictEqual(updatedTenant.enableSharedKeyAccess, true);
 			sandbox.assert.calledOnce(mongoFindOneStub);
 			sandbox.assert.notCalled(updateStub);
 		});
 
 		it("Should have enablePrivateKeyAccess set to false when the request is to disable it and the policy is enabled", async () => {
 			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne");
-			mongoFindOneStub.onFirstCall().resolves(tenantWithKeyless);
-			mongoFindOneStub.onSecondCall().resolves(tenantWithoutKeyless);
+			mongoFindOneStub.onFirstCall().resolves(tenantWithPrivateKeys);
+			mongoFindOneStub.onSecondCall().resolves(tenantWithoutPrivateKeys);
 			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
 
-			const updatedTenant: ITenantConfig = await tenantManager.updatePrivateKeyAccessPolicy(
+			const updatedTenant: ITenantConfig = await tenantManager.updateKeyAccessPolicy(
 				"cordflasher-dolphin",
 				false,
+				true,
 			);
 
 			assert.notStrictEqual(updatedTenant.enablePrivateKeyAccess, undefined);
 			assert.strictEqual(updatedTenant.enablePrivateKeyAccess, false);
+			assert.notStrictEqual(updatedTenant.enableSharedKeyAccess, undefined);
+			assert.strictEqual(updatedTenant.enableSharedKeyAccess, true);
+			sandbox.assert.calledTwice(mongoFindOneStub);
+			sandbox.assert.calledOnce(updateStub);
+		});
+
+		it("Should have enableSharedKeyAccess set to false when the request is to disable it and the policy is enabled", async () => {
+			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne");
+			mongoFindOneStub.onFirstCall().resolves(tenantWithPrivateKeys);
+			mongoFindOneStub.onSecondCall().resolves(tenantWithoutSharedKeys);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
+
+			const updatedTenant: ITenantConfig = await tenantManager.updateKeyAccessPolicy(
+				"cordflasher-dolphin",
+				true,
+				false,
+			);
+
+			assert.notStrictEqual(updatedTenant.enablePrivateKeyAccess, undefined);
+			assert.strictEqual(updatedTenant.enablePrivateKeyAccess, true);
+			assert.notStrictEqual(updatedTenant.enableSharedKeyAccess, undefined);
+			assert.strictEqual(updatedTenant.enableSharedKeyAccess, false);
+			sandbox.assert.calledTwice(mongoFindOneStub);
+			sandbox.assert.calledOnce(updateStub);
+		});
+
+		it("Should have enableSharedKeyAccess set to false when the request is to disable it and the policy is already disabled", async () => {
+			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne");
+			mongoFindOneStub.onFirstCall().resolves(tenantWithoutSharedKeys);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
+
+			const updatedTenant: ITenantConfig = await tenantManager.updateKeyAccessPolicy(
+				"cordflasher-dolphin",
+				true,
+				false,
+			);
+
+			assert.notStrictEqual(updatedTenant.enablePrivateKeyAccess, undefined);
+			assert.strictEqual(updatedTenant.enablePrivateKeyAccess, true);
+			assert.notStrictEqual(updatedTenant.enableSharedKeyAccess, undefined);
+			assert.strictEqual(updatedTenant.enableSharedKeyAccess, false);
+			sandbox.assert.calledOnce(mongoFindOneStub);
+			sandbox.assert.notCalled(updateStub);
+		});
+
+		it("Should have enableSharedKeyAccess set to true when the request is to enable it and the policy is disabled", async () => {
+			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne");
+			mongoFindOneStub.onFirstCall().resolves(tenantWithoutSharedKeys);
+			mongoFindOneStub.onSecondCall().resolves(tenantWithPrivateKeys);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
+
+			const updatedTenant: ITenantConfig = await tenantManager.updateKeyAccessPolicy(
+				"cordflasher-dolphin",
+				true,
+				true,
+			);
+
+			assert.notStrictEqual(updatedTenant.enablePrivateKeyAccess, undefined);
+			assert.strictEqual(updatedTenant.enablePrivateKeyAccess, true);
+			assert.notStrictEqual(updatedTenant.enableSharedKeyAccess, undefined);
+			assert.strictEqual(updatedTenant.enableSharedKeyAccess, true);
 			sandbox.assert.calledTwice(mongoFindOneStub);
 			sandbox.assert.calledOnce(updateStub);
 		});
 	});
 
 	describe("getTenant", () => {
-		it("Should have enablePrivateKeyAccess set to true keyless access it enabled", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+		it("Should have enablePrivateKeyAccess set to true keyless access is enabled", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithPrivateKeys);
 			sandbox.stub(tenantRepository, "update").resolves();
 
 			const tenant: ITenantConfig = await tenantManager.getTenant("cordflasher-dolphin");
@@ -461,7 +596,7 @@ describe("TenantManager", () => {
 		});
 
 		it("Should have enablePrivateKeyAccess set to false when policy is disabled", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutPrivateKeys);
 			sandbox.stub(tenantRepository, "update").resolves();
 
 			const tenant: ITenantConfig = await tenantManager.getTenant("cordflasher-dolphin");
@@ -473,11 +608,11 @@ describe("TenantManager", () => {
 
 	describe("validateToken", () => {
 		it("Should validate a token using private keys when isKeylessAccessToken claim is true", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithPrivateKeys);
 			const tokenKey1 = generateToken(
 				keylessAccessTokenClaims.tenantId,
 				keylessAccessTokenClaims.documentId,
-				tenantWithKeyless.privateKeys!.key,
+				tenantWithPrivateKeys.privateKeys!.key,
 				keylessAccessTokenClaims.scopes,
 				keylessAccessTokenClaims.user,
 				undefined,
@@ -491,7 +626,7 @@ describe("TenantManager", () => {
 			const tokenKey2 = generateToken(
 				keylessAccessTokenClaims.tenantId,
 				keylessAccessTokenClaims.documentId,
-				tenantWithKeyless.privateKeys!.secondaryKey,
+				tenantWithPrivateKeys.privateKeys!.secondaryKey,
 				keylessAccessTokenClaims.scopes,
 				keylessAccessTokenClaims.user,
 				undefined,
@@ -504,11 +639,11 @@ describe("TenantManager", () => {
 		});
 
 		it("Should validate a token using shared keys when isKeylessAccessToken claim is missing/false", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithPrivateKeys);
 			const tokenKey1 = generateToken(
 				keylessAccessTokenClaims.tenantId,
 				keylessAccessTokenClaims.documentId,
-				tenantWithKeyless.key,
+				tenantWithPrivateKeys.key as string,
 				keylessAccessTokenClaims.scopes,
 				keylessAccessTokenClaims.user,
 				undefined,
@@ -520,7 +655,7 @@ describe("TenantManager", () => {
 			const tokenKey2 = generateToken(
 				keylessAccessTokenClaims.tenantId,
 				keylessAccessTokenClaims.documentId,
-				tenantWithKeyless.secondaryKey,
+				tenantWithPrivateKeys.secondaryKey as string,
 				keylessAccessTokenClaims.scopes,
 				keylessAccessTokenClaims.user,
 				undefined,
@@ -531,11 +666,11 @@ describe("TenantManager", () => {
 		});
 
 		it("Should fail validation with private keys when validating token signed using shared keys and isKeylessAccessToken is true", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithPrivateKeys);
 			const tokenKey1 = generateToken(
 				keylessAccessTokenClaims.tenantId,
 				keylessAccessTokenClaims.documentId,
-				tenantWithKeyless.key,
+				tenantWithPrivateKeys.key as string,
 				keylessAccessTokenClaims.scopes,
 				keylessAccessTokenClaims.user,
 				undefined,
@@ -553,7 +688,7 @@ describe("TenantManager", () => {
 			const tokenKey2 = generateToken(
 				keylessAccessTokenClaims.tenantId,
 				keylessAccessTokenClaims.documentId,
-				tenantWithKeyless.secondaryKey,
+				tenantWithPrivateKeys.secondaryKey as string,
 				keylessAccessTokenClaims.scopes,
 				keylessAccessTokenClaims.user,
 				undefined,
@@ -570,11 +705,11 @@ describe("TenantManager", () => {
 		});
 
 		it("Should fail validation with shared keys when validating token signed using private keys and isKeylessAccessToken is false/missing", async () => {
-			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithKeyless);
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithPrivateKeys);
 			const tokenKey1 = generateToken(
 				keylessAccessTokenClaims.tenantId,
 				keylessAccessTokenClaims.documentId,
-				tenantWithKeyless.privateKeys!.key,
+				tenantWithPrivateKeys.privateKeys!.key,
 				keylessAccessTokenClaims.scopes,
 				keylessAccessTokenClaims.user,
 				undefined,
@@ -591,7 +726,7 @@ describe("TenantManager", () => {
 			const tokenKey2 = generateToken(
 				keylessAccessTokenClaims.tenantId,
 				keylessAccessTokenClaims.documentId,
-				tenantWithKeyless.privateKeys!.secondaryKey,
+				tenantWithPrivateKeys.privateKeys!.secondaryKey,
 				keylessAccessTokenClaims.scopes,
 				keylessAccessTokenClaims.user,
 				undefined,
@@ -604,6 +739,64 @@ describe("TenantManager", () => {
 				assert.strictEqual(err.code, 403);
 				return true;
 			});
+		});
+
+		it("Should fail validation with when isKeylessAccessToken is false and tenant does not contain shared keys", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutSharedKeys);
+			const tokenKey1 = generateToken(
+				keylessAccessTokenClaims.tenantId,
+				keylessAccessTokenClaims.documentId,
+				tenantWithPrivateKeys.key as string,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+				undefined,
+				false,
+			);
+			const validationPKey1 = tenantManager.validateToken("cordflasher-dolphin", tokenKey1);
+			await assert.rejects(validationPKey1, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 403);
+				return true;
+			});
+		});
+	});
+
+	describe("signToken", () => {
+		it("Should sign a token using private keys when enablePrivateKeyAccess is true", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithPrivateKeys);
+			const tokenKey1 = await tenantManager.signToken(
+				"cordflasher-dolphin",
+				keylessAccessTokenClaims.documentId,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+				undefined,
+			);
+			const validationPKey1 = tenantManager.validateToken(
+				"cordflasher-dolphin",
+				tokenKey1.fluidAccessToken,
+			);
+			await assert.doesNotReject(validationPKey1);
+		});
+
+		it("Should sign a token using shared keys when enablePrivateKeyAccess is false", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutPrivateKeys);
+			const tokenKey1 = await tenantManager.signToken(
+				"cordflasher-dolphin",
+				keylessAccessTokenClaims.documentId,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+			);
+			const validationPKey1 = tenantManager.validateToken(
+				"cordflasher-dolphin",
+				tokenKey1.fluidAccessToken,
+			);
+			await assert.doesNotReject(validationPKey1);
 		});
 	});
 });
