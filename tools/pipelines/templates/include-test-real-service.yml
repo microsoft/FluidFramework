@@ -398,6 +398,7 @@ stages:
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
               node -e "
                 const fetch = require('fetch');
+                require('OSS.TDFTestLibrary');
 
                 const requestBody = {
                     "Resources": [
