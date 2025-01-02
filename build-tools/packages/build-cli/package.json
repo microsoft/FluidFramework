@@ -80,6 +80,7 @@
 	},
 	"dependencies": {
 		"@andrewbranch/untar.js": "^1.0.3",
+		"@fluid-tools/build-infrastructure": "workspace:~",
 		"@fluid-tools/version-tools": "workspace:~",
 		"@fluidframework/build-tools": "workspace:~",
 		"@fluidframework/bundle-size-tools": "workspace:~",
@@ -136,6 +137,7 @@
 		"sort-package-json": "1.57.0",
 		"strip-ansi": "^6.0.1",
 		"table": "^6.8.2",
+		"@fluid-tools/test-data": "workspace:~",
 		"ts-morph": "^22.0.0",
 		"type-fest": "^2.19.0",
 		"unist-util-visit": "^5.0.0",
@@ -246,6 +248,9 @@
 			},
 			"report": {
 				"description": "Report analysis about the codebase, like code coverage and bundle size measurements."
+			},
+			"vnext": {
+				"description": "Vnext commands are new implementations of standard flub commands using new infrastructure."
 			}
 		}
 	}

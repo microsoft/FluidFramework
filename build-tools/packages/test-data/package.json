@@ -1,0 +1,19 @@
+{
+	"name": "@fluid-tools/test-data",
+	"version": "1.0.0",
+	"description": "Fluid build tools test data",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "build-tools/packages/test-data"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"types": "index.d.ts",
+	"private": true,
+	"main": "index.js",
+	"devDependencies": {
+		"@types/node": "^18.19.59"
+	}
+}

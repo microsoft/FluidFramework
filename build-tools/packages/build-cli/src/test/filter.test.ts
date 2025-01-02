@@ -86,6 +86,7 @@ describe("filterPackages", () => {
 		const names = actual.map((p) => p.name);
 		expect(names).to.be.equalTo([
 			"@fluid-tools/build-cli",
+			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
@@ -311,6 +312,7 @@ describe("selectAndFilterPackages", () => {
 
 		expect(names).to.be.equalTo([
 			"@fluid-tools/build-cli",
+			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
