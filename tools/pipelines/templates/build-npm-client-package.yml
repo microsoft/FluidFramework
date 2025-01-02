@@ -706,7 +706,7 @@ extends:
                         sbomEnabled: false
                         publishLocation: pipeline
 
-          # Job - Tests
+          # Parallel jobs for test tasks
           - ${{ each test in parameters.taskTest }}:
             - job: Test_${{ test.jobName }}
               displayName: "Run Task Test ${{ test.jobName }}"
