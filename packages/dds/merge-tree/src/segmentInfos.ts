@@ -120,6 +120,12 @@ export interface IMergeNodeInfo {
 	ordinal: string;
 }
 
+/**
+ * Converts a segment-like object to a merge node info object if possible.
+ *
+ * @param segmentLike - The segment-like object to convert.
+ * @returns The merge node info object if the conversion is possible, otherwise undefined.
+ */
 export const toMergeNodeInfo = (nodeLike: unknown): IMergeNodeInfo | undefined =>
 	propInstanceOf(nodeLike, "parent", MergeBlock) &&
 	hasProp(nodeLike, "ordinal", "string") &&
@@ -128,11 +134,11 @@ export const toMergeNodeInfo = (nodeLike: unknown): IMergeNodeInfo | undefined =
 		: undefined;
 
 /**
- * A type-guard which determines if the segment has merge node  info, and
+ * A type-guard which determines if the segment has merge node info, and
  * returns true if it does, along with applying strong typing.
  *
  * @param nodeLike - The segment-like object to check.
- * @returns True if the segment has move info, otherwise false.
+ * @returns True if the segment has merge node info, otherwise false.
  */
 export const isMergeNodeInfo = (nodeLike: unknown): nodeLike is IMergeNodeInfo =>
 	toMergeNodeInfo(nodeLike) !== undefined;
@@ -141,7 +147,7 @@ export const isMergeNodeInfo = (nodeLike: unknown): nodeLike is IMergeNodeInfo =
  * Asserts that the segment has merge node info. Usage of this function should not produce a user facing error.
  *
  * @param segmentLike - The segment-like object to check.
- * @throws Will throw an error if the segment does not have move info.
+ * @throws Will throw an error if the segment does not have merge node info.
  */
 export const assertMergeNode: <T extends Partial<IMergeNodeInfo> | undefined>(
 	nodeLike: ISegmentInternal | ISegmentPrivate | Partial<IMergeNodeInfo> | T,
@@ -150,8 +156,12 @@ export const assertMergeNode: <T extends Partial<IMergeNodeInfo> | undefined>(
 ) =>
 	assert(segmentLike === undefined || isMergeNodeInfo(segmentLike), "must be MergeNodeInfo");
 
+/**
+ * Removes the merge node info. This is used to remove nodes from the merge-tree.
+ * @param segmentLike - The segment-like object to check.
+ */
 export const removeMergeNodeInfo = (nodeLike: IMergeNodeInfo): Partial<IMergeNodeInfo> =>
-	Object.assign<IMergeNodeInfo, Partial<IMergeNodeInfo>>(nodeLike, {
+	Object.assign<IMergeNodeInfo, Record<keyof IMergeNodeInfo, undefined>>(nodeLike, {
 		parent: undefined,
 		index: undefined,
 		ordinal: undefined,
@@ -214,8 +224,12 @@ export const assertRemoved: <T extends Partial<IRemovalInfo> | undefined>(
 ) => asserts segmentLike is IRemovalInfo | Exclude<T, Partial<IRemovalInfo>> = (segmentLike) =>
 	assert(segmentLike === undefined || isRemoved(segmentLike), "must be removalInfo");
 
+/**
+ * Removes the removal info. This is used in rollback.
+ * @param segmentLike - The segment-like object to check.
+ */
 export const removeRemovalInfo = (nodeLike: IRemovalInfo): Partial<IRemovalInfo> =>
-	Object.assign<IRemovalInfo, Partial<IRemovalInfo>>(nodeLike, {
+	Object.assign<IRemovalInfo, Record<keyof IRemovalInfo, undefined>>(nodeLike, {
 		localRemovedSeq: undefined,
 		removedClientIds: undefined,
 		removedSeq: undefined,
