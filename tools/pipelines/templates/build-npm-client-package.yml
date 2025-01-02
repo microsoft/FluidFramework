@@ -29,13 +29,9 @@ parameters:
 
 - name: taskTest
   type: object
-  default:
-  - { name: "ci:test", jobName: "CiTest" }
 
 - name: coverageTests
   type: object
-  default:
-  - { name: "ci:test", jobName: "CiTest" }
 
 # A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
 # Used to avoid the force merge limit of 100 result files.
@@ -562,10 +558,6 @@ extends:
             displayName: "Coverage tests"
             dependsOn: build
             variables:
-              - group: ado-feeds
-              - group: storage-vars
-              - name: releaseBuildVar
-                value: '$[variables.releaseBuild]'
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
                   value: $(System.PullRequest.TargetBranch)
@@ -712,10 +704,6 @@ extends:
               displayName: "Run Task Test ${{ test.jobName }}"
               dependsOn: build
               variables:
-                - group: ado-feeds
-                - group: storage-vars
-                - name: releaseBuildVar
-                  value: '$[variables.releaseBuild]'
                 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                   - name: targetBranchName
                     value: $(System.PullRequest.TargetBranch)
