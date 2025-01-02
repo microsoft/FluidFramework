@@ -413,13 +413,13 @@ export interface HookArguments {
 	 *
 	 * @remarks This does *not* execute on each iteration or cycle.
 	 */
-	before?: HookFunction;
+	before?: HookFunction | undefined;
 	/**
 	 * Executes once, after the test body it's declared for.
 	 *
 	 * @remarks This does *not* execute on each iteration or cycle.
 	 */
-	after?: HookFunction;
+	after?: HookFunction | undefined;
 }
 
 /**
@@ -477,8 +477,10 @@ export function benchmarkArgumentsIsCustom(
  * @public
  */
 export function qualifiedTitle(args: BenchmarkDescription & Titled): string {
-	const benchmarkTypeTag = BenchmarkType[args.type ?? BenchmarkType.Measurement];
-	const testTypeTag = TestType[TestType.ExecutionTime];
+	const benchmarkTypeTag =
+		BenchmarkType[args.type ?? BenchmarkType.Measurement] ??
+		assert.fail("Invalid BenchmarkType");
+	const testTypeTag = TestType[TestType.ExecutionTime] ?? assert.fail("Invalid TestType");
 	let qualifiedTitle = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${args.title}`;
 
 	if (args.category !== "" && args.category !== undefined) {

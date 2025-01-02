@@ -125,8 +125,8 @@ export function geometricMean(values: number[]): number;
 
 // @public
 export interface HookArguments {
-    after?: HookFunction;
-    before?: HookFunction;
+    after?: HookFunction | undefined;
+    before?: HookFunction | undefined;
 }
 
 // @public

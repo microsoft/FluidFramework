@@ -222,8 +222,8 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		category: testObject.category ?? "",
 	};
 
-	const benchmarkTypeTag = BenchmarkType[options.type];
-	const testTypeTag = TestType[TestType.MemoryUsage];
+	const benchmarkTypeTag = BenchmarkType[options.type] ?? assert.fail("Invalid BenchmarkType");
+	const testTypeTag = TestType[TestType.MemoryUsage] ?? assert.fail("Invalid TestType");
 	options.title = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${options.title}`;
 	if (options.category !== "") {
 		options.title = `${options.title} ${userCategoriesSplitter} @${options.category}`;
@@ -332,6 +332,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		const v8 = await import("node:v8");
 
 		const startTime = timer.now();
+		assert(global.gc !== undefined, "gc not exposed");
 		try {
 			let heapUsedStats: Stats = {
 				marginOfError: Number.NaN,
