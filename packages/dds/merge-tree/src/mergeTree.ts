@@ -85,6 +85,7 @@ import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	assertMoved,
 	assertRemoved,
+	isMergeNodeInfo,
 	isMoved,
 	isRemoved,
 	overwriteInfo,
@@ -548,9 +549,11 @@ class Obliterates {
 	public findOverlapping(seg: ISegmentPrivate): Iterable<ObliterateInfo> {
 		const overlapping: ObliterateInfo[] = [];
 		for (const start of this.startOrdered.items) {
-			if (start.getSegment()!.ordinal <= seg.ordinal) {
+			const startSeg = start.getSegment();
+			if (isMergeNodeInfo(startSeg) && startSeg.ordinal <= seg.ordinal) {
 				const ob = start.properties?.obliterate as ObliterateInfo;
-				if (ob.end.getSegment()!.ordinal >= seg.ordinal) {
+				const endSeg = ob.end.getSegment();
+				if (isMergeNodeInfo(endSeg) && endSeg.ordinal >= seg.ordinal) {
 					overlapping.push(ob);
 				}
 			} else {
@@ -2364,7 +2367,7 @@ export class MergeTree {
 				removeRemovalInfo(segment);
 
 				for (
-					let updateNode = segment.parent;
+					let updateNode: MergeBlock | undefined = segment.parent;
 					updateNode !== undefined;
 					updateNode = updateNode.parent
 				) {

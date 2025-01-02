@@ -398,12 +398,15 @@ export class MergeBlock implements Partial<IMergeNodeInfo> {
 	}
 
 	public assignChild(child: IMergeNode, index: number, updateOrdinal = true): void {
-		child.parent = this;
-		child.index = index;
+		const node = Object.assign<IMergeNode, IMergeNodeInfo>(child, {
+			parent: this,
+			index,
+			ordinal: child.ordinal ?? "",
+		});
 		if (updateOrdinal) {
-			this.setOrdinal(child, index);
+			this.setOrdinal(node, index);
 		}
-		this.children[index] = child;
+		this.children[index] = node;
 	}
 }
 
