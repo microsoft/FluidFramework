@@ -166,7 +166,6 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 				);
 
 				segment.parent = undefined;
-
 				if (Marker.is(segment)) {
 					mergeTree.unlinkMarker(segment);
 				}
@@ -194,8 +193,8 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 						undefined,
 					);
 
-					segment.parent = undefined;
 					for (const tg of segment.trackingCollection.trackingGroups) tg.unlink(segment);
+					segment.parent = undefined;
 				} else {
 					holdNodes.push(segment);
 					prevSegment = segmentHasPositiveLength ? segment : undefined;
