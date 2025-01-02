@@ -266,7 +266,9 @@ export interface ISegment {
  * @legacy
  * @alpha
  */
-export const segmentIsRemoved = (segment: ISegment): boolean => isRemoved(segment);
+export function segmentIsRemoved(segment: ISegment): boolean {
+	return isRemoved(segment);
+}
 
 /**
  * @legacy
@@ -340,8 +342,8 @@ export class MergeBlock implements Partial<IMergeNodeInfo> {
 	public children: IMergeNode[];
 	public needsScour?: boolean;
 	public parent?: MergeBlock;
-	public index?: number;
-	public ordinal?: string;
+	public index: number = 0;
+	public ordinal: string = "";
 	public cachedLength: number | undefined = 0;
 
 	/**

@@ -1575,106 +1575,109 @@ export class MergeTree {
 			return segmentChanges;
 		};
 
+		const insertInfo: IInsertionInfo = {
+			clientId,
+			seq,
+			localSeq,
+		};
 		// TODO: build tree from segs and insert all at once
 		let insertPos = pos;
-		for (const newSegment of newSegments) {
-			if (newSegment.cachedLength > 0) {
-				newSegment.seq = seq;
-				newSegment.localSeq = localSeq;
-				newSegment.clientId = clientId;
-				if (Marker.is(newSegment)) {
-					const markerId = newSegment.getId();
-					if (markerId) {
-						this.idToMarker.set(markerId, newSegment);
-					}
+		for (const newSegment of newSegments
+			.filter((s) => s.cachedLength > 0)
+			.map((s) => overwriteInfo(s, insertInfo))) {
+			if (Marker.is(newSegment)) {
+				const markerId = newSegment.getId();
+				if (markerId) {
+					this.idToMarker.set(markerId, newSegment);
 				}
-
-				const splitNode = this.insertingWalk(this.root, insertPos, refSeq, clientId, seq, {
-					leaf: onLeaf,
-					candidateSegment: newSegment,
-					continuePredicate: continueFrom,
-				});
-
-				if (newSegment.parent === undefined) {
-					// Indicates an attempt to insert past the end of the merge-tree's content.
-					const errorConstructor = localSeq === undefined ? DataProcessingError : UsageError;
-					throw new errorConstructor("MergeTree insert failed", {
-						currentSeq: this.collabWindow.currentSeq,
-						minSeq: this.collabWindow.minSeq,
-						segSeq: newSegment.seq,
-					});
-				}
-
-				this.updateRoot(splitNode);
-
-				insertPos += newSegment.cachedLength;
-
-				if (!this.options?.mergeTreeEnableObliterate || this.obliterates.empty()) {
-					saveIfLocal(newSegment);
-					continue;
-				}
-
-				let oldest: ObliterateInfo | undefined;
-				let normalizedOldestSeq: number = 0;
-				let newest: ObliterateInfo | undefined;
-				let normalizedNewestSeq: number = 0;
-				const movedClientIds: number[] = [];
-				const movedSeqs: number[] = [];
-				for (const ob of this.obliterates.findOverlapping(newSegment)) {
-					// compute a normalized seq that takes into account local seqs
-					// but is still comparable to remote seqs to keep the checks below easy
-					// REMOTE SEQUENCE NUMBERS                                     LOCAL SEQUENCE NUMBERS
-					// [0, 1, 2, 3, ..., 100, ..., 1000, ..., (MAX - MaxLocalSeq), L1, L2, L3, L4, ..., L100, ..., L1000, ...(MAX)]
-					const normalizedObSeq =
-						ob.seq === UnassignedSequenceNumber
-							? Number.MAX_SAFE_INTEGER - this.collabWindow.localSeq + ob.localSeq!
-							: ob.seq;
-					if (normalizedObSeq > refSeq) {
-						if (oldest === undefined || normalizedOldestSeq > normalizedObSeq) {
-							normalizedOldestSeq = normalizedObSeq;
-							oldest = ob;
-							movedClientIds.unshift(ob.clientId);
-							movedSeqs.unshift(ob.seq);
-						} else {
-							movedClientIds.push(ob.clientId);
-							movedSeqs.push(ob.seq);
-						}
-						if (newest === undefined || normalizedNewestSeq < normalizedObSeq) {
-							normalizedNewestSeq = normalizedObSeq;
-							newest = ob;
-						}
-					}
-				}
-
-				if (oldest && newest?.clientId !== clientId) {
-					// eslint-disable-next-line import/no-deprecated
-					const moveInfo: IMoveInfo = {
-						movedClientIds,
-						movedSeq: oldest.seq,
-						movedSeqs,
-						localMovedSeq: oldest.localSeq,
-						wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
-					};
-					overwriteInfo(newSegment, moveInfo);
-
-					if (moveInfo.localMovedSeq !== undefined) {
-						assert(
-							oldest.segmentGroup !== undefined,
-							0x86c /* expected segment group to exist */,
-						);
-
-						this.addToPendingList(newSegment, oldest.segmentGroup);
-					}
-
-					if (newSegment.parent) {
-						this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
-					}
-				} else if (oldest && newest?.clientId === clientId) {
-					newSegment.prevObliterateByInserter = newest;
-				}
-
-				saveIfLocal(newSegment);
 			}
+
+			const splitNode = this.insertingWalk(this.root, insertPos, refSeq, clientId, seq, {
+				leaf: onLeaf,
+				candidateSegment: newSegment,
+				continuePredicate: continueFrom,
+			});
+
+			if (newSegment.parent === undefined) {
+				// Indicates an attempt to insert past the end of the merge-tree's content.
+				const errorConstructor = localSeq === undefined ? DataProcessingError : UsageError;
+				throw new errorConstructor("MergeTree insert failed", {
+					currentSeq: this.collabWindow.currentSeq,
+					minSeq: this.collabWindow.minSeq,
+					segSeq: newSegment.seq,
+				});
+			}
+
+			this.updateRoot(splitNode);
+
+			insertPos += newSegment.cachedLength;
+
+			if (!this.options?.mergeTreeEnableObliterate || this.obliterates.empty()) {
+				saveIfLocal(newSegment);
+				continue;
+			}
+
+			let oldest: ObliterateInfo | undefined;
+			let normalizedOldestSeq: number = 0;
+			let newest: ObliterateInfo | undefined;
+			let normalizedNewestSeq: number = 0;
+			const movedClientIds: number[] = [];
+			const movedSeqs: number[] = [];
+			for (const ob of this.obliterates.findOverlapping(newSegment)) {
+				// compute a normalized seq that takes into account local seqs
+				// but is still comparable to remote seqs to keep the checks below easy
+				// REMOTE SEQUENCE NUMBERS                                     LOCAL SEQUENCE NUMBERS
+				// [0, 1, 2, 3, ..., 100, ..., 1000, ..., (MAX - MaxLocalSeq), L1, L2, L3, L4, ..., L100, ..., L1000, ...(MAX)]
+				const normalizedObSeq =
+					ob.seq === UnassignedSequenceNumber
+						? Number.MAX_SAFE_INTEGER - this.collabWindow.localSeq + ob.localSeq!
+						: ob.seq;
+				if (normalizedObSeq > refSeq) {
+					if (oldest === undefined || normalizedOldestSeq > normalizedObSeq) {
+						normalizedOldestSeq = normalizedObSeq;
+						oldest = ob;
+						movedClientIds.unshift(ob.clientId);
+						movedSeqs.unshift(ob.seq);
+					} else {
+						movedClientIds.push(ob.clientId);
+						movedSeqs.push(ob.seq);
+					}
+					if (newest === undefined || normalizedNewestSeq < normalizedObSeq) {
+						normalizedNewestSeq = normalizedObSeq;
+						newest = ob;
+					}
+				}
+			}
+
+			if (oldest && newest?.clientId !== clientId) {
+				// eslint-disable-next-line import/no-deprecated
+				const moveInfo: IMoveInfo = {
+					movedClientIds,
+					movedSeq: oldest.seq,
+					movedSeqs,
+					localMovedSeq: oldest.localSeq,
+					wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
+				};
+
+				overwriteInfo(newSegment, moveInfo);
+
+				if (moveInfo.localMovedSeq !== undefined) {
+					assert(
+						oldest.segmentGroup !== undefined,
+						0x86c /* expected segment group to exist */,
+					);
+
+					this.addToPendingList(newSegment, oldest.segmentGroup);
+				}
+
+				if (newSegment.parent) {
+					this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
+				}
+			} else if (oldest && newest?.clientId === clientId) {
+				newSegment.prevObliterateByInserter = newest;
+			}
+
+			saveIfLocal(newSegment);
 		}
 	}
 
@@ -2104,23 +2107,22 @@ export class MergeTree {
 				_overwrite = true;
 				// never move wasMovedOnInsert from true to false
 				existingMoveInfo.wasMovedOnInsert ||= wasMovedOnInsert;
-				const { movedSeq, movedClientIds, movedSeqs } = existingMoveInfo;
-				if (movedSeq === UnassignedSequenceNumber) {
+				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
 					// we moved this locally, but someone else moved it first
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head
 					// for partialLengths bookkeeping purposes
-					movedClientIds.unshift(clientId);
+					existingMoveInfo.movedClientIds.unshift(clientId);
 
 					existingMoveInfo.movedSeq = seq;
-					movedSeqs.unshift(seq);
+					existingMoveInfo.movedSeqs.unshift(seq);
 					if (segment.localRefs?.empty === false) {
 						localOverlapWithRefs.push(segment);
 					}
 				} else {
 					// Do not replace earlier sequence number for move
-					movedClientIds.push(clientId);
-					movedSeqs.push(seq);
+					existingMoveInfo.movedClientIds.push(clientId);
+					existingMoveInfo.movedSeqs.push(seq);
 				}
 			}
 			assertMoved(segment);
@@ -2360,6 +2362,7 @@ export class MergeTree {
 					0x39d /* Rollback segment removedClientId does not match local client */,
 				);
 				removeRemovalInfo(segment);
+
 				for (
 					let updateNode = segment.parent;
 					updateNode !== undefined;

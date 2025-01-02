@@ -92,6 +92,7 @@ import {
 	isRemoved,
 	overwriteInfo,
 	toMoveInfo,
+	type IInsertionInfo,
 } from "./segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
@@ -974,12 +975,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							// we set the seq to the universal seq and remove the local seq,
 							// so its length is not considered for subsequent local changes
 							// this allows us to not send the op as even the local client will ignore the segment
-							overwriteInfo(segment, {
-								clientId: NonCollabClient,
+							overwriteInfo<IInsertionInfo>(segment, {
 								seq: UniversalSequenceNumber,
 								localSeq: undefined,
+								clientId: NonCollabClient,
 							});
-
 							break;
 						}
 					}

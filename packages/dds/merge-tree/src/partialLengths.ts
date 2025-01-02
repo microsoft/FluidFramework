@@ -24,7 +24,6 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	IMoveInfo,
 	assertInserted,
-	isInserted,
 	isRemoved,
 } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
@@ -395,7 +394,7 @@ export class PartialSequenceLengths {
 			if (child.isLeaf()) {
 				// Leaf segment
 				const segment = child;
-				if (isInserted(segment) && seqLTE(segment.seq, collabWindow.minSeq)) {
+				if (segment.seq !== undefined && seqLTE(segment.seq, collabWindow.minSeq)) {
 					combinedPartialLengths.minLength += segment.cachedLength;
 				} else {
 					PartialSequenceLengths.insertSegment(combinedPartialLengths, segment);
@@ -710,10 +709,9 @@ export class PartialSequenceLengths {
 
 			const hasOverlap = moveInfo.movedClientIds.length > 1;
 			moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
-		}
-		// BUG BUG: something fishy here around how/when move info is passed or not
+		} // BUG BUG: something fishy here around how/when move info is passed or not
 		// this condition only hits if it is not passed, so we can't rely on the passed move info
-		// and need to inspect the segment directly
+		// and need to inspect the segment directly. maybe related to AB#15630.
 		else if (toMoveInfo(segment)?.wasMovedOnInsert) {
 			// if this segment was obliterated on insert, its length is only
 			// visible to the client that inserted it
@@ -938,7 +936,6 @@ export class PartialSequenceLengths {
 			const child = node.children[i];
 			if (child.isLeaf()) {
 				const segment = child;
-				assertInserted(segment);
 				const removalInfo = toRemovalInfo(segment);
 				const moveInfo = toMoveInfo(segment);
 
@@ -955,7 +952,12 @@ export class PartialSequenceLengths {
 				if (seq === segment.seq) {
 					// if this segment was moved on insert, its length should
 					// only be visible to the inserting client
-					if (moveInfo && moveInfo.wasMovedOnInsert && moveInfo.movedSeq < segment.seq) {
+					if (
+						segment.seq !== undefined &&
+						moveInfo &&
+						moveInfo.movedSeq < segment.seq &&
+						moveInfo.wasMovedOnInsert
+					) {
 						remoteObliteratedLen += segment.cachedLength;
 					} else {
 						seqSeglen += segment.cachedLength;
@@ -977,9 +979,10 @@ export class PartialSequenceLengths {
 					if (removeHappenedFirst) {
 						remoteObliteratedLen -= segment.cachedLength;
 					} else if (
+						moveInfo.wasMovedOnInsert &&
 						segment.seq !== UnassignedSequenceNumber &&
-						moveInfo.movedSeq > segment.seq &&
-						moveInfo.wasMovedOnInsert
+						segment.seq !== undefined &&
+						moveInfo.movedSeq > segment.seq
 					) {
 						remoteObliteratedLen += segment.cachedLength;
 						seqSeglen -= segment.cachedLength;
