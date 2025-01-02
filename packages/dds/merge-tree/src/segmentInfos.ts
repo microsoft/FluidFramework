@@ -3,10 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, isObject } from "@fluidframework/core-utils/internal";
 
-import type { ISegmentInternal, ISegmentLeaf } from "./mergeTreeNodes.js";
+import { ISegmentInternal, ISegmentPrivate } from "./mergeTreeNodes.js";
 import type { ReferencePosition } from "./referencePositions.js";
+
+export interface StringToType {
+	"string": string;
+	"number": number;
+	"object": object;
+	"array": [];
+	"boolean": boolean;
+}
+
+export function propExists<P extends string>(
+	thing: unknown,
+	prop: P,
+): thing is Record<P, unknown> {
+	return isObject(thing) && prop in thing;
+}
+
+export function hasProp<P extends string, T extends keyof StringToType>(
+	thing: unknown,
+	prop: P,
+	type: T,
+): thing is Record<P, StringToType[typeof type]> {
+	return (
+		propExists(thing, prop) &&
+		(type === "array" ? Array.isArray(thing[prop]) : typeof thing[prop] === type)
+	);
+}
+
+export function propInstanceOf<P extends string, T>(
+	thing: unknown,
+	prop: P,
+	type: new (...args: any[]) => T,
+): thing is Record<P, T> {
+	return propExists(thing, prop) && thing[prop] instanceof type;
+}
 
 /**
  * Contains insertion information associated to an {@link ISegment}.
@@ -38,18 +72,10 @@ export interface IInsertionInfo {
  * @param segmentLike - The segment-like object to convert.
  * @returns The insertion info object if the conversion is possible, otherwise undefined.
  */
-export function toInsertionInfo(
-	segmentLike: ISegmentInternal | Partial<IInsertionInfo> | undefined,
-): IInsertionInfo | undefined {
-	const maybe = segmentLike as Partial<IInsertionInfo> | undefined;
-	if (maybe?.clientId !== undefined && maybe?.seq !== undefined) {
-		return segmentLike as IInsertionInfo;
-	}
-	assert(
-		maybe?.clientId === undefined && maybe?.seq === undefined,
-		"both clientId and seq should be set or not set",
-	);
-}
+export const toInsertionInfo = (segmentLike: unknown): IInsertionInfo | undefined =>
+	hasProp(segmentLike, "clientId", "number") && hasProp(segmentLike, "seq", "number")
+		? segmentLike
+		: undefined;
 
 /**
  * A type-guard which determines if the segment has insertion info, and
@@ -58,9 +84,8 @@ export function toInsertionInfo(
  * @param segmentLike - The segment-like object to check.
  * @returns True if the segment has insertion info, otherwise false.
  */
-export const isInserted = (
-	segmentLike: ISegmentInternal | Partial<IInsertionInfo> | undefined,
-): segmentLike is IInsertionInfo => toInsertionInfo(segmentLike) !== undefined;
+export const isInserted = (segmentLike: unknown): segmentLike is IInsertionInfo =>
+	toInsertionInfo(segmentLike) !== undefined;
 
 /**
  * Asserts that the segment has insertion info. Usage of this function should not produce a user facing error.
@@ -104,18 +129,11 @@ export interface IRemovalInfo {
  * @param segmentLike - The segment-like object to convert.
  * @returns The removal info object if the conversion is possible, otherwise undefined.
  */
-export function toRemovalInfo(
-	segmentLike: ISegmentInternal | Partial<IRemovalInfo> | undefined,
-): IRemovalInfo | undefined {
-	const maybe = segmentLike as Partial<IRemovalInfo> | undefined;
-	if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
-		return segmentLike as IRemovalInfo;
-	}
-	assert(
-		maybe?.removedClientIds === undefined && maybe?.removedSeq === undefined,
-		0x2bf /* "both removedClientIds and removedSeq should be set or not set" */,
-	);
-}
+export const toRemovalInfo = (segmentLike: unknown): IRemovalInfo | undefined =>
+	hasProp(segmentLike, "removedClientIds", "array") &&
+	hasProp(segmentLike, "removedSeq", "number")
+		? segmentLike
+		: undefined;
 
 /**
  * A type-guard which determines if the segment has removal info, and
@@ -124,9 +142,8 @@ export function toRemovalInfo(
  * @param segmentLike - The segment-like object to check.
  * @returns True if the segment has removal info, otherwise false.
  */
-export const isRemoved = (
-	segmentLike: ISegmentInternal | Partial<IRemovalInfo> | undefined,
-): segmentLike is IRemovalInfo => toRemovalInfo(segmentLike) !== undefined;
+export const isRemoved = (segmentLike: unknown): segmentLike is IRemovalInfo =>
+	toRemovalInfo(segmentLike) !== undefined;
 
 /**
  * Asserts that the segment has removal info. Usage of this function should not produce a user facing error.
@@ -138,6 +155,13 @@ export const assertRemoved: <T extends Partial<IRemovalInfo> | undefined>(
 	segmentLike: ISegmentInternal | Partial<IRemovalInfo> | T,
 ) => asserts segmentLike is IRemovalInfo | Exclude<T, Partial<IRemovalInfo>> = (segmentLike) =>
 	assert(segmentLike === undefined || isRemoved(segmentLike), "must be removalInfo");
+
+export const removeRemovalInfo = (nodeLike: IRemovalInfo): Partial<IRemovalInfo> =>
+	Object.assign<IRemovalInfo, Partial<IRemovalInfo>>(nodeLike, {
+		localRemovedSeq: undefined,
+		removedClientIds: undefined,
+		removedSeq: undefined,
+	});
 
 /**
  * Tracks information about when and where this segment was moved to.
@@ -206,22 +230,13 @@ export interface IMoveInfo {
 	 */
 	wasMovedOnInsert: boolean;
 }
-
-export function toMoveInfo(
-	segmentLike: ISegmentInternal | Partial<IMoveInfo> | undefined,
-): IMoveInfo | undefined {
-	const maybe = segmentLike as Partial<IMoveInfo> | undefined;
-	if (maybe?.movedClientIds !== undefined && maybe?.movedSeq !== undefined) {
-		return maybe as IMoveInfo;
-	}
-	assert(
-		maybe?.movedClientIds === undefined &&
-			maybe?.movedSeq === undefined &&
-			maybe?.movedSeqs === undefined &&
-			maybe?.wasMovedOnInsert === undefined,
-		0x86d /* movedClientIds, movedSeq, wasMovedOnInsert, and movedSeqs should all be either set or not set */,
-	);
-}
+export const toMoveInfo = (segmentLike: unknown): IMoveInfo | undefined =>
+	hasProp(segmentLike, "movedClientIds", "array") &&
+	hasProp(segmentLike, "movedSeq", "number") &&
+	hasProp(segmentLike, "movedSeqs", "array") &&
+	hasProp(segmentLike, "wasMovedOnInsert", "boolean")
+		? segmentLike
+		: undefined;
 
 /**
  * A type-guard which determines if the segment has move info, and
@@ -230,9 +245,8 @@ export function toMoveInfo(
  * @param segmentLike - The segment-like object to check.
  * @returns True if the segment has move info, otherwise false.
  */
-export const isMoved = (
-	segmentLike: ISegmentInternal | Partial<IMoveInfo> | undefined,
-): segmentLike is IMoveInfo => toMoveInfo(segmentLike) !== undefined;
+export const isMoved = (segmentLike: unknown): segmentLike is IMoveInfo =>
+	toMoveInfo(segmentLike) !== undefined;
 
 /**
  * Asserts that the segment has move info. Usage of this function should not produce a user facing error.
@@ -253,7 +267,10 @@ export type SegmentInfo = IInsertionInfo | IMoveInfo | IRemovalInfo;
 /**
  * A type representing a segment with additional info.
  */
-export type SegmentWithInfo<T extends SegmentInfo> = ISegmentLeaf & T;
+export type SegmentWithInfo<
+	T extends SegmentInfo,
+	S extends ISegmentPrivate = ISegmentPrivate,
+> = S & T;
 
 /**
  * Overwrites the segment info on a segment-like object.
@@ -262,7 +279,10 @@ export type SegmentWithInfo<T extends SegmentInfo> = ISegmentLeaf & T;
  * @param info - The segment info to overwrite.
  * @returns The segment-like object with the info set.
  */
-export const overwriteInfo = <T extends SegmentInfo>(
-	segmentLike: ISegmentLeaf,
+export const overwriteInfo = <
+	T extends SegmentInfo,
+	S extends ISegmentPrivate = ISegmentPrivate,
+>(
+	segmentLike: S,
 	info: T,
-): SegmentWithInfo<T> => Object.assign(segmentLike, info);
+): SegmentWithInfo<T, S> => Object.assign(segmentLike, info);

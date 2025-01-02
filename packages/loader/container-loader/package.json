@@ -197,7 +197,7 @@
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/debug": "^4.1.5",
 		"@types/double-ended-queue": "^2.1.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
 		"@types/ungap__structured-clone": "^1.2.0",

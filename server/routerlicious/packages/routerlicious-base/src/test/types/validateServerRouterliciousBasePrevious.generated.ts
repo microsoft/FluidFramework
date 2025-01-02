@@ -334,6 +334,7 @@ declare function get_current_InterfaceDeclaration_ITenantDocument():
 declare function use_old_InterfaceDeclaration_ITenantDocument(
     use: TypeOnly<old.ITenantDocument>): void;
 use_old_InterfaceDeclaration_ITenantDocument(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITenantDocument());
 
 /*
@@ -614,6 +615,7 @@ declare function get_old_ClassDeclaration_TenantManager():
 declare function use_current_ClassDeclaration_TenantManager(
     use: TypeOnly<current.TenantManager>): void;
 use_current_ClassDeclaration_TenantManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TenantManager());
 
 /*

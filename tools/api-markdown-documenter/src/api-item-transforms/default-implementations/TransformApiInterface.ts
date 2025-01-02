@@ -39,7 +39,7 @@ import { createChildDetailsSection, createMemberTables } from "../helpers/index.
  *
  * - index-signatures
  *
- * Details (for any types not rendered to their own documents - see {@link DocumentationSuiteOptions.documentBoundaries})
+ * Details (for any types not rendered to their own documents - see {@link DocumentationSuiteConfiguration.documentBoundaries})
  *
  * - constructor-signatures
  *
@@ -195,5 +195,5 @@ export function transformApiInterface(
 		}
 	}
 
-	return config.createDefaultLayout(apiInterface, childSections, config);
+	return config.defaultSectionLayout(apiInterface, childSections, config);
 }
