@@ -20,13 +20,22 @@ nconf
 	)
 	.env();
 
+// Slightly stricter variant of Number.parseInt
+function parsePort(value) {
+	const asInt = Number.parseInt(value);
+	if (Number.isNaN(asInt) || `${asInt}` !== value) {
+		throw new Error(`Invalid port number: ${value}`);
+	}
+	return asInt;
+}
+
 // We used to hardcode port 8081 as the initial one
 // but as of 2024-11-25 port 8084 is used by something in the build agent image.
 // If a package that has jest tests ends up assigned that port,
 // jest will fail to start.
 // So try to use a port range where nothing will be listening.
 // Note '_' is used for positional arguments in nconf.
-const initialPort = nconf.get("_")[0] ?? 9000;
+const initialPort = parsePort(nconf.get("_")[0] ?? "9000");
 
 // Note: we support using lerna to resolve package info as the LTS branch still has some lerna usage at the time of writing.
 // Once we no longer need to support any FF branches using lerna, this logic can be removed.
