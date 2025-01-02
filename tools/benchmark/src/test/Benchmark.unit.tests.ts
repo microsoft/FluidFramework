@@ -149,6 +149,18 @@ describe("`benchmark` function", () => {
 		type: BenchmarkType.OwnCorrectness,
 	});
 
+	// Use benchmarkFnCustom and timeBatch
+	benchmark({
+		title: "Custom Benchmark timeBatch",
+		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+			let running: boolean;
+			do {
+				running = state.timeBatch(() => {});
+			} while (running);
+		},
+		type: BenchmarkType.OwnCorrectness,
+	});
+
 	// This pattern allows for cleanup to happen after each iteration that is not included in the reported time.
 	// It incurs per iteration over head by timing each individual iteration.
 	// This can lead to accuracy issues, biasing the results upward due to the overhead.

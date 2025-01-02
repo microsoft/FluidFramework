@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { ApiModel } from "@microsoft/api-extractor-model";
+import type { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
 
 import { defaultConsoleLogger } from "../../Logging.js";
 import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
+import type { SectionNode } from "../../documentation-domain/index.js";
+import { createSectionForApiItem } from "../default-implementations/index.js";
 
 import {
-	type DocumentationSuiteOptions,
-	getDocumentationSuiteOptionsWithDefaults,
-} from "./DocumentationSuiteOptions.js";
+	type DocumentationSuiteConfiguration,
+	getDocumentationSuiteConfigurationWithDefaults,
+} from "./DocumentationSuite.js";
 import {
 	type ApiItemTransformations,
 	getApiItemTransformationsWithDefaults,
@@ -55,9 +57,30 @@ export interface ApiItemTransformationConfigurationBase {
  */
 export interface ApiItemTransformationConfiguration
 	extends ApiItemTransformationConfigurationBase,
-		ApiItemTransformations,
-		Required<DocumentationSuiteOptions>,
-		Required<LoggingConfiguration> {}
+		DocumentationSuiteConfiguration,
+		Required<LoggingConfiguration> {
+	/**
+	 * {@inheritDoc ApiItemTransformations}
+	 */
+	readonly transformations: ApiItemTransformations;
+
+	/**
+	 * Generates the default section layout used by all default {@link ApiItemTransformations}.
+	 *
+	 * @remarks
+	 *
+	 * Can be used to uniformly control the default output layout for all API item kinds.
+	 *
+	 * API item kind-specific details are passed in, and can be displayed as desired.
+	 *
+	 * @returns The list of {@link SectionNode}s that comprise the top-level section body for the API item.
+	 */
+	readonly defaultSectionLayout: (
+		apiItem: ApiItem,
+		childSections: SectionNode[] | undefined,
+		config: ApiItemTransformationConfiguration,
+	) => SectionNode[];
+}
 
 /**
  * Input options for API Item transformation APIs.
@@ -66,9 +89,22 @@ export interface ApiItemTransformationConfiguration
  */
 export interface ApiItemTransformationOptions
 	extends ApiItemTransformationConfigurationBase,
-		Partial<ApiItemTransformations>,
-		DocumentationSuiteOptions,
-		LoggingConfiguration {}
+		Partial<DocumentationSuiteConfiguration>,
+		LoggingConfiguration {
+	/**
+	 * Optional overrides for the default transformations.
+	 */
+	readonly transformations?: Partial<ApiItemTransformations>;
+
+	/**
+	 * {@inheritDoc ApiItemTransformationConfiguration.defaultSectionLayout}
+	 */
+	readonly defaultSectionLayout?: (
+		apiItem: ApiItem,
+		childSections: SectionNode[] | undefined,
+		config: ApiItemTransformationConfiguration,
+	) => SectionNode[];
+}
 
 /**
  * Gets a complete {@link ApiItemTransformationConfiguration} using the provided partial configuration, and filling
@@ -80,13 +116,15 @@ export function getApiItemTransformationConfigurationWithDefaults(
 	options: ApiItemTransformationOptions,
 ): ApiItemTransformationConfiguration {
 	const logger = options.logger ?? defaultConsoleLogger;
-	const documentationSuiteOptions = getDocumentationSuiteOptionsWithDefaults(options);
-	const transformations = getApiItemTransformationsWithDefaults(options);
+	const defaultSectionLayout = options.defaultSectionLayout ?? createSectionForApiItem;
+	const documentationSuiteOptions = getDocumentationSuiteConfigurationWithDefaults(options);
+	const transformations = getApiItemTransformationsWithDefaults(options?.transformations);
 	return {
 		...documentationSuiteOptions,
-		...transformations,
+		transformations,
 		apiModel: options.apiModel,
 		uriRoot: options.uriRoot,
 		logger,
+		defaultSectionLayout,
 	};
 }

@@ -58,7 +58,6 @@ export {
 export {
 	BaseSegment,
 	CollaborationWindow,
-	debugMarkerToString,
 	IJSONMarkerSegment,
 	IMergeNodeCommon,
 	segmentIsRemoved,
@@ -67,8 +66,6 @@ export {
 	Marker,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	SegmentGroup,
-	ObliterateInfo,
 	ISegmentInternal,
 } from "./mergeTreeNodes.js";
 export {
