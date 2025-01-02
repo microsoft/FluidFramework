@@ -187,9 +187,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		this.staleConnectionTimer.clearTimeout();
 
 		// Mark 'Connected' remote attendees connections as stale
-		for (const staleConnecionClient of this.attendees.values()) {
-			if (staleConnecionClient.getConnectionStatus() === SessionClientStatus.Connected) {
-				this.staleConnectionClients.add(staleConnecionClient);
+		for (const staleConnectionClient of this.attendees.values()) {
+			if (staleConnectionClient.getConnectionStatus() === SessionClientStatus.Connected) {
+				this.staleConnectionClients.add(staleConnectionClient);
 			}
 		}
 
