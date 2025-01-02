@@ -207,14 +207,7 @@ export class SnapshotLegacy {
 
 		const segs: ISegmentPrivate[] = [];
 		let prev: ISegmentPrivate | undefined;
-		const extractSegment = (
-			segment: ISegmentPrivate,
-			pos: number,
-			refSeq: number,
-			clientId: number,
-			start: number | undefined,
-			end: number | undefined,
-		): boolean => {
+		const extractSegment = (segment: ISegmentPrivate): boolean => {
 			if (
 				segment.seq !== UnassignedSequenceNumber &&
 				segment.seq! <= seq &&

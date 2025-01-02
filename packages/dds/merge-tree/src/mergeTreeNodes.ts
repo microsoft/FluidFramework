@@ -110,7 +110,15 @@ export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line imp
 		 */
 		readonly endpointType?: "start" | "end";
 	};
-export type IMergeNode = MergeBlock | ISegmentPrivate;
+export type ISegmentLeaf = SegmentWithInfo<IMergeNodeInfo & IInsertionInfo>;
+export const isSegmentLeaf = (segmentLike: unknown): segmentLike is ISegmentLeaf =>
+	isInserted(segmentLike) && isMergeNode(segmentLike);
+export const toSegmentLeaf = (segmentLike: unknown): ISegmentLeaf | undefined =>
+	isSegmentLeaf(segmentLike) ? segmentLike : undefined;
+export const assertSegmentLeaf: (segmentLike: unknown) => asserts segmentLike is ISegmentLeaf =
+	(segmentLike) => assert(isSegmentLeaf(segmentLike), "must be segment leaf");
+export type IMergeNodeBuilder = MergeBlock | SegmentWithInfo<IInsertionInfo>;
+export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
  * A segment representing a portion of the merge tree.
@@ -288,29 +296,13 @@ export interface ISegmentAction<TClientData> {
 	): boolean;
 }
 export interface ISegmentChanges {
-	next?: ISegmentPrivate;
+	next?: SegmentWithInfo<IInsertionInfo>;
 	replaceCurrent?: SegmentWithInfo<IInsertionInfo>;
-}
-export interface BlockAction<TClientData> {
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	(
-		block: MergeBlock,
-		pos: number,
-		refSeq: number,
-		clientId: number,
-		start: number | undefined,
-		end: number | undefined,
-		accum: TClientData,
-	): boolean;
 }
 
 export interface InsertContext {
 	candidateSegment?: SegmentWithInfo<IInsertionInfo>;
-	leaf: (
-		segment: ISegmentPrivate | undefined,
-		pos: number,
-		ic: InsertContext,
-	) => ISegmentChanges;
+	leaf: (segment: ISegmentLeaf | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
 
@@ -325,7 +317,7 @@ export interface ObliterateInfo {
 }
 
 export interface SegmentGroup {
-	segments: ISegmentPrivate[];
+	segments: ISegmentLeaf[];
 	previousProps?: PropertySet[];
 	localSeq?: number;
 	refSeq: number;
@@ -398,13 +390,13 @@ export class MergeBlock implements Partial<IMergeNodeInfo> {
 		);
 	}
 }
-export function assignChild<C extends IMergeNode>(
+export function assignChild<C extends IMergeNodeBuilder>(
 	parent: MergeBlock,
 	child: C,
 	index: number,
 	updateOrdinal = true,
 ): asserts child is C & IMergeNodeInfo {
-	const node = Object.assign<C, IMergeNodeInfo>(child, {
+	const node = Object.assign<IMergeNodeBuilder, IMergeNodeInfo>(child, {
 		parent,
 		index,
 		ordinal: child.ordinal ?? "",

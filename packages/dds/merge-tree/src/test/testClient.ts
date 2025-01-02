@@ -35,6 +35,7 @@ import {
 	Marker,
 	MaxNodesInBlock,
 	type SegmentGroup,
+	assertSegmentLeaf,
 } from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
@@ -536,23 +537,21 @@ export class TestClient extends Client {
 		let foundMarker: Marker | undefined;
 
 		const { segment } = this.getContainingSegment<ISegmentPrivate>(startPos);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const segWithParent: ISegmentPrivate = segment!;
-
-		if (Marker.is(segWithParent)) {
-			if (refHasTileLabel(segWithParent, markerLabel)) {
-				foundMarker = segWithParent;
+		assertSegmentLeaf(segment);
+		if (Marker.is(segment)) {
+			if (refHasTileLabel(segment, markerLabel)) {
+				foundMarker = segment;
 			}
 		} else {
 			if (forwards) {
-				forwardExcursion(segWithParent, (seg) => {
+				forwardExcursion(segment, (seg) => {
 					if (Marker.is(seg) && refHasTileLabel(seg, markerLabel)) {
 						foundMarker = seg;
 						return false;
 					}
 				});
 			} else {
-				backwardExcursion(segWithParent, (seg) => {
+				backwardExcursion(segment, (seg) => {
 					if (Marker.is(seg) && refHasTileLabel(seg, markerLabel)) {
 						foundMarker = seg;
 						return false;
