@@ -19,7 +19,7 @@ export {
 	type ApiItemTransformationOptions,
 	type ApiItemTransformations,
 	type DefaultDocumentationSuiteOptions,
-	type DocumentationSuiteOptions,
+	type DocumentationSuiteConfiguration,
 	type DocumentBoundaries,
 	// TODO: remove this once utility APIs can be called with partial configs.
 	getApiItemTransformationConfigurationWithDefaults,
@@ -74,6 +74,7 @@ export {
 	type ApiModifier,
 	type ApiModuleLike,
 	type ApiSignatureLike,
+	type ValidApiItemKind,
 } from "./utilities/index.js";
 
 // #region Scoped exports

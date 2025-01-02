@@ -27,7 +27,11 @@ import {
 
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
+import {
+	NonCollabClient,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
@@ -45,11 +49,10 @@ import {
 	CollaborationWindow,
 	ISegment,
 	ISegmentAction,
-	ISegmentLeaf,
+	ISegmentPrivate,
 	Marker,
 	SegmentGroup,
 	compareStrings,
-	toMoveInfo,
 } from "./mergeTreeNodes.js";
 import {
 	createAdjustRangeOp,
@@ -82,6 +85,13 @@ import {
 } from "./ops.js";
 import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
+import {
+	IInsertionInfo,
+	isMoved,
+	isRemoved,
+	overwriteInfo,
+	toMoveInfo,
+} from "./segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
@@ -192,12 +202,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
 	 */
 
-	public peekPendingSegmentGroups(): SegmentGroup | undefined;
-
-	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
-	public peekPendingSegmentGroups(
-		count: number = 1,
-	): SegmentGroup | SegmentGroup[] | undefined {
+	public peekPendingSegmentGroups(count: number = 1): unknown {
 		const pending = this._mergeTree.pendingSegments;
 		let node = pending?.last;
 		if (count === 1 || pending === undefined) {
@@ -392,15 +397,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	): void {
 		let localInserts = 0;
 		let localRemoves = 0;
-		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentLeaf) => {
+		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentPrivate) => {
 			if (seg.seq === UnassignedSequenceNumber) {
 				localInserts++;
 			}
-			if (seg.removedSeq === UnassignedSequenceNumber) {
+			if (isRemoved(seg) && seg.removedSeq === UnassignedSequenceNumber) {
 				localRemoves++;
 			}
 			// Only serialize segments that have not been removed.
-			if (seg.removedSeq === undefined) {
+			if (!isRemoved(seg)) {
 				handleCollectingSerializer.stringify(seg.clone().toJSONObject(), handle);
 			}
 			return true;
@@ -425,7 +430,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param segment - The segment to get the position of
 	 */
 	public getPosition(segment: ISegment | undefined, localSeq?: number): number {
-		const mergeSegment: ISegmentLeaf | undefined = segment;
+		const mergeSegment: ISegmentPrivate | undefined = segment;
 		if (mergeSegment?.parent === undefined) {
 			return -1;
 		}
@@ -876,7 +881,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private resetPendingDeltaToOps(
 		resetOp: IMergeTreeDeltaOp,
 
-		segmentGroup: SegmentGroup<ISegmentLeaf>,
+		segmentGroup: SegmentGroup,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
 		const NACKedSegmentGroup = this.pendingRebase?.shift()?.data;
@@ -909,7 +914,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			a.ordinal < b.ordinal ? -1 : 1,
 		)) {
 			assert(
-				segment.segmentGroups?.remove?.(segmentGroup) === true,
+				segment.segmentGroups?.remove(segmentGroup) === true,
 				0x035 /* "Segment group not in segment pending queue" */,
 			);
 			assert(
@@ -929,10 +934,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// unless the remove was local, in which case the annotate must have come
 					// before the remove
 					if (
-						(segment.removedSeq === undefined ||
+						(!isRemoved(segment) ||
 							(segment.localRemovedSeq !== undefined &&
 								segment.removedSeq === UnassignedSequenceNumber)) &&
-						(segment.movedSeq === undefined ||
+						(!isMoved(segment) ||
 							(segment.localMovedSeq !== undefined &&
 								segment.movedSeq === UnassignedSequenceNumber))
 					) {
@@ -969,8 +974,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							// we set the seq to the universal seq and remove the local seq,
 							// so its length is not considered for subsequent local changes
 							// this allows us to not send the op as even the local client will ignore the segment
-							segment.seq = UniversalSequenceNumber;
-							segment.localSeq = undefined;
+							overwriteInfo<IInsertionInfo>(segment, {
+								seq: UniversalSequenceNumber,
+								localSeq: undefined,
+								clientId: NonCollabClient,
+							});
 							break;
 						}
 					}
@@ -987,9 +995,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 				case MergeTreeDeltaType.REMOVE: {
 					if (
+						isRemoved(segment) &&
 						segment.localRemovedSeq !== undefined &&
 						segment.removedSeq === UnassignedSequenceNumber &&
-						(segment.movedSeq === undefined ||
+						(!isMoved(segment) ||
 							(segment.localMovedSeq !== undefined &&
 								segment.movedSeq === UnassignedSequenceNumber))
 					) {
@@ -1003,9 +1012,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				case MergeTreeDeltaType.OBLITERATE: {
 					errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
 					if (
+						isMoved(segment) &&
 						segment.localMovedSeq !== undefined &&
 						segment.movedSeq === UnassignedSequenceNumber &&
-						(segment.removedSeq === undefined ||
+						(!isRemoved(segment) ||
 							(segment.localRemovedSeq !== undefined &&
 								segment.removedSeq === UnassignedSequenceNumber))
 					) {
@@ -1193,11 +1203,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param resetOp - The op to reset
 	 * @param segmentGroup - The segment group associated with the op
 	 */
-	public regeneratePendingOp(
-		resetOp: IMergeTreeOp,
-
-		segmentGroup: SegmentGroup | SegmentGroup[],
-	): IMergeTreeOp {
+	public regeneratePendingOp(resetOp: IMergeTreeOp, localOpMetadata: unknown): IMergeTreeOp {
+		const segmentGroup = localOpMetadata as SegmentGroup | SegmentGroup[];
 		if (this.pendingRebase === undefined || this.pendingRebase.empty) {
 			let firstGroup: SegmentGroup;
 			if (Array.isArray(segmentGroup)) {

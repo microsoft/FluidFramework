@@ -8,8 +8,9 @@
 import { strict as assert } from "node:assert";
 
 import { UnassignedSequenceNumber } from "../constants.js";
-import type { ISegmentLeaf } from "../mergeTreeNodes.js";
+import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder.js";
+import { assertRemoved } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
@@ -88,7 +89,7 @@ describe("MergeTree.markRangeRemoved", () => {
 			"remote",
 		);
 		const segmentExpectedRemovedSeq = seq;
-		const { segment } = client.getContainingSegment<ISegmentLeaf>(0);
+		const { segment } = client.getContainingSegment<ISegmentPrivate>(0);
 		assert(segment !== undefined, "expected to find segment");
 		const localDeleteMessage = client.makeOpMessage(
 			client.removeRangeLocal(0, client.getLength()),
@@ -97,6 +98,7 @@ describe("MergeTree.markRangeRemoved", () => {
 		);
 
 		assert.equal(client.getText(), "");
+		assertRemoved(segment);
 		assert.equal(segment.removedSeq, UnassignedSequenceNumber);
 		assert(segment.localRemovedSeq !== undefined);
 		const expectedLocalRemovedSeq = segment.localRemovedSeq;
