@@ -4,13 +4,13 @@
  */
 
 import { DoublyLinkedList, walkList } from "./collections/index.js";
-import { SegmentGroup, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { SegmentGroup, type ISegmentPrivate } from "./mergeTreeNodes.js";
 
 export class SegmentGroupCollection {
-	private readonly segmentGroups: DoublyLinkedList<SegmentGroup<ISegmentLeaf>>;
+	private readonly segmentGroups: DoublyLinkedList<SegmentGroup>;
 
-	constructor(private readonly segment: ISegmentLeaf) {
-		this.segmentGroups = new DoublyLinkedList<SegmentGroup<ISegmentLeaf>>();
+	constructor(private readonly segment: ISegmentPrivate) {
+		this.segmentGroups = new DoublyLinkedList<SegmentGroup>();
 	}
 
 	public get size(): number {
@@ -21,16 +21,16 @@ export class SegmentGroupCollection {
 		return this.segmentGroups.empty;
 	}
 
-	public enqueue(segmentGroup: SegmentGroup<ISegmentLeaf>): void {
+	public enqueue(segmentGroup: SegmentGroup): void {
 		this.segmentGroups.push(segmentGroup);
 		segmentGroup.segments.push(this.segment);
 	}
 
-	public dequeue(): SegmentGroup<ISegmentLeaf> | undefined {
+	public dequeue(): SegmentGroup | undefined {
 		return this.segmentGroups.shift()?.data;
 	}
 
-	public remove?(segmentGroup: SegmentGroup<ISegmentLeaf>): boolean {
+	public remove(segmentGroup: SegmentGroup): boolean {
 		const found = this.segmentGroups.find((v) => v.data === segmentGroup);
 		if (found === undefined) {
 			return false;
@@ -39,7 +39,7 @@ export class SegmentGroupCollection {
 		return true;
 	}
 
-	public pop?(): SegmentGroup<ISegmentLeaf> | undefined {
+	public pop(): SegmentGroup | undefined {
 		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
 	}
 
@@ -47,10 +47,7 @@ export class SegmentGroupCollection {
 		walkList(this.segmentGroups, (sg) => segmentGroups.enqueueOnCopy(sg.data, this.segment));
 	}
 
-	private enqueueOnCopy(
-		segmentGroup: SegmentGroup<ISegmentLeaf>,
-		sourceSegment: ISegmentLeaf,
-	): void {
+	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegmentPrivate): void {
 		this.enqueue(segmentGroup);
 		if (segmentGroup.previousProps) {
 			// duplicate the previousProps for this segment
