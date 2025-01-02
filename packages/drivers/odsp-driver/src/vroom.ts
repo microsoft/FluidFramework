@@ -21,8 +21,8 @@ import { TokenFetchOptionsEx } from "./odspUtils.js";
 import { runWithRetry } from "./retryUtils.js";
 
 interface IJoinSessionBody {
-	requestSocketToken: boolean;
-	guestDisplayName?: string;
+	requestSocketToken?: boolean;
+	displayName?: string;
 }
 
 /**
@@ -38,8 +38,9 @@ interface IJoinSessionBody {
  * @param options - Options to fetch the token.
  * @param disableJoinSessionRefresh - Whether the caller wants to disable refreshing join session periodically.
  * @param isRefreshingJoinSession - whether call is to refresh the session before expiry.
- * @param guestDisplayName - display name used to identify guest user joining a session.
- * This is optional and used only when collab session is being joined via invite.
+ * @param displayName - display name used to identify client joining a session.
+ * This is optional and used only when collab session is being joined in app-only mode.
+ * If not specified app display name is extracted from the access token that is used to join session.
  */
 export async function fetchJoinSession(
 	urlParts: IOdspUrlParts,
@@ -52,6 +53,7 @@ export async function fetchJoinSession(
 	options: TokenFetchOptionsEx,
 	disableJoinSessionRefresh: boolean | undefined,
 	isRefreshingJoinSession: boolean,
+	displayName: string | undefined
 ): Promise<ISocketStorageDiscovery> {
 	const apiRoot = getApiRoot(new URL(urlParts.siteUrl));
 	const url = `${apiRoot}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?ump=1`;
@@ -89,11 +91,15 @@ export async function fetchJoinSession(
 			}
 			postBody += `_post: 1\r\n`;
 
+			let requestBody: IJoinSessionBody | undefined;
 			if (requestSocketToken) {
-				const body: IJoinSessionBody = {
-					requestSocketToken: true,
-				};
-				postBody += `\r\n${JSON.stringify(body)}\r\n`;
+				requestBody = {	...requestBody, requestSocketToken: true };
+			}
+			if (displayName) {
+				requestBody = {	...requestBody, displayName };
+			}
+			if (requestBody) {
+				postBody += `\r\n${JSON.stringify(requestBody)}\r\n`;
 			}
 			postBody += `\r\n--${formBoundary}--`;
 			const headers: { [index: string]: string } = {
