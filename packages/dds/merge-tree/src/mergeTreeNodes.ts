@@ -265,7 +265,9 @@ export interface ISegment {
  * @legacy
  * @alpha
  */
-export const segmentIsRemoved = (segment: ISegment): boolean => isRemoved(segment);
+export function segmentIsRemoved(segment: ISegment): boolean {
+	return isRemoved(segment);
+}
 
 /**
  * @legacy
