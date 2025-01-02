@@ -29,7 +29,13 @@ import {
 	forwardExcursion,
 	walkAllChildSegments,
 } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentPrivate, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import {
+	MergeBlock,
+	ISegmentPrivate,
+	Marker,
+	MaxNodesInBlock,
+	type SegmentGroup,
+} from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
@@ -477,6 +483,15 @@ export class TestClient extends Client {
 		});
 
 		return seqs;
+	}
+
+	public peekPendingSegmentGroups(): SegmentGroup | undefined;
+	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
+	public peekPendingSegmentGroups(
+		count: number = 1,
+	): SegmentGroup | SegmentGroup[] | undefined {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		return super.peekPendingSegmentGroups(count) as SegmentGroup | SegmentGroup[] | undefined;
 	}
 
 	/**
