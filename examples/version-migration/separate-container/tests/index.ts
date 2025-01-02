@@ -10,23 +10,23 @@ import {
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
 	type SeparateContainerMigrationResult,
-} from "@fluid-example/migration-tools/internal";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+} from "@fluid-example/migration-tools/alpha";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
 	loadExistingContainer,
 	type ILoaderProps,
-} from "@fluidframework/container-loader/internal";
+} from "@fluidframework/container-loader/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
+import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
 	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
 	LocalResolver,
-	LocalSessionStorageDbFactory,
-} from "@fluidframework/local-driver/internal";
+} from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { v4 as uuid } from "uuid";
-
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { v4 as uuid } from "uuid";
 
 import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";
 import { DemoCodeLoader } from "../src/demoCodeLoader.js";

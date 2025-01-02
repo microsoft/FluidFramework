@@ -1,0 +1,32 @@
+---
+title: SharedTree
+sidebar_position: 5
+---
+
+import { PackageLink } from "@site/src/components/shortLinks";
+
+The `SharedTree` distributed data structure (DDS), available starting with Fluid Framework 2.0, is used to store most or all of your application's shared data in a hierarchical structure.
+
+A `SharedTree` has the following characteristics:
+
+-   It is accessed through a `TreeView` object that exposes all the functionality for reading and editing data within a `SharedTree`.
+-   It has a root and can have several types of internal (i.e., non-leaf) nodes and several types of leaf nodes.
+-   Although there are some exceptions, for the most part, each type of node closely mirrors a familiar JavaScript datatype, such as object, map, array, boolean, number, string, and null.
+-   Again, with exceptions, your code accesses nodes with the syntax of JavaScript and TypeScript, such as dot notation, property assignment, and array indexes.
+-   A `TreeView` will conform to a schema that your code creates so it has application-specific strong typing.
+-   The various types of internal nodes can be nested (subject to the constraints of the schema).
+
+To get started working with `SharedTree` in your application, read this [quick start guide](../../start/tree-start.mdx).
+Provided below are links to more detailed information about `SharedTree` usage and its available APIs.
+
+- [Tree Nodes](./nodes.mdx): how information is stored on a `SharedTree`
+	- [Node Types](./node-types.mdx): outlines the specific types that are stored by a `SharedTree`
+- [Schema Definition](./schema-definition.mdx): how the structure of a `SharedTree` is defined
+- [Reading and Editing](./reading-and-editing.mdx): how a `SharedTree` is read and edited through the APIs provided on the different node types
+- [Events]: the various events emitted by a `SharedTree` and what they can be used for
+- [Transactions]: how edits can be grouped into transactions
+- [Undo Redo Support]: how undo redo works on a `SharedTree`
+
+## API Documentation
+
+For a comprehensive view of the `SharedTree` package's API documentation, see <PackageLink packageName="tree">the SharedTree API docs</PackageLink>.

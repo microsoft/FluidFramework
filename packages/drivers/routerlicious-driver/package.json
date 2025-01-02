@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/routerlicious-driver",
-	"version": "2.12.0",
+	"version": "2.13.0",
 	"description": "Socket.IO + Git implementation of Fluid service API",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -138,9 +138,9 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.6.0",
-		"@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@2.11.0",
+		"@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@2.12.0",
 		"@microsoft/api-extractor": "7.47.8",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",

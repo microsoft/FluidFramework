@@ -10,8 +10,7 @@ import { LocalClientId } from "./constants.js";
 import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-// eslint-disable-next-line import/no-deprecated
-import { ISegment, ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
+import { ISegment, ISegmentPrivate, type MergeBlock } from "./mergeTreeNodes.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,
@@ -115,7 +114,7 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment 
 		index: number;
 		depth: number;
 	} {
-		let firstSegment: ISegmentLeaf | undefined;
+		let firstSegment: ISegmentPrivate | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
 		depthFirstNodeWalk(
@@ -165,7 +164,7 @@ export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment {
 		index: number;
 		depth: number;
 	} {
-		let lastSegment: ISegmentLeaf | undefined;
+		let lastSegment: ISegmentPrivate | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
 		depthFirstNodeWalk(

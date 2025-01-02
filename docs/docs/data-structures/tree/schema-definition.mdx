@@ -1,0 +1,182 @@
+---
+title: Schema Definition
+sidebar_position: 3
+---
+
+import { PackageLink } from "@site/src/components/shortLinks";
+
+A schema is defined using a `SchemaFactory` object which is created by passing a unique string such as a UUID to the constructor.
+The `SchemaFactory` class defines five primitive data types; `boolean`, `string`, `number`, `null`, and `handle` for specifying leaf nodes.
+It also has three methods for specifying internal nodes; `object()`, `array()`, and `map()`.
+Use the members of the class to build a schema.
+See [defining a schema](../../start/tree-start.mdx#defining-a-schema) for an example.
+
+## Object Schema
+
+Use the `object()` method to create a schema for a note. Note the following about this code:
+
+-   The `object()`, `array()`, and `map()` methods return an object that defines a schema. Notionally, you can think of this object as datatype. (In the next step, you covert it to an actual TypeScript type.)
+-   The first parameter of `object()` is the name of the type.
+-   The `id`, `text`, `author`, and `lastChanged` properties are leaf nodes.
+-   The `votes` property is an array node, whose members are all strings. It is defined with an inline call of the `array()` method.
+
+```typescript
+const noteSchema = sf.object("Note", {
+	id: sf.string,
+	text: sf.string,
+	author: sf.string,
+	lastChanged: sf.number,
+	votes: sf.array(sf.string),
+});
+```
+
+Create a TypeScript datatype by extending the notional type object.
+
+```typescript
+class Note extends noteSchema {
+	/* members of the class defined here */
+}
+```
+
+You can also make the call of the `object()` method inline as in the following:
+
+```typescript
+class Note extends sf.object("Note", {
+	id: sf.string,
+	text: sf.string,
+	author: sf.string,
+	lastChanged: sf.number,
+	votes: sf.array(sf.string),
+}) {
+	/* members of the class defined here */
+}
+```
+
+For the remainder of this article, we use the inline style.
+
+You can add fields, properties, and methods like any TypeScript class including methods that wrap one or more methods in the <PackageLink packageName="tree">SharedTree API docs</PackageLink>.
+For example, the `Note` class can have the following `updateText` method. Since the method writes to shared properties, the changes are reflected on all clients.
+
+```typescript
+public updateText(text: string) {
+    this.lastChanged = new Date().getTime();
+    this.text = text;
+}
+```
+
+You can also add members that affect only the current client; that is, they are not based on DDSes. For example, the sticky note application can be updated to let each user set their own color to any note without changing the color of the note on any other clients. To facilitate this feature, the following members could be added to the `Note` class. Since the `color` property is not a shared object, the changes made by `setColor` only affect the current client.
+
+```typescript
+private color: string = "yellow";
+
+public setColor(newColor: string) {
+    this.color = newColor;
+}
+```
+
+:::note
+
+Do _not_ override the constructor of types that you derive from objects returned by the `object()`, `array()`, and `map()` methods of `SchemaFactory`. Doing so has unexpected effects and is not supported.
+
+:::
+
+Create the schema for a group of notes. Note that the `array()` method is called inline, which means that the `Group.notes` property has the notional datatype of an array node. We'll change this to a genuine TypeScript type in the [Array schema](#array-schema) section.
+
+```typescript
+class Group extends sf.object('Group', {
+    id: sf.string,
+    name: sf.string,
+    notes: sf.array(Note),
+});
+```
+
+## Array Schema
+
+The app is going to need the type that is returned from `sf.array(Note)` in multiple places, including outside the context of `SchemaFactory`, so we create a TypeScript type for it as follows. Note that we include a method for adding a new note to the array of notes. The implementation is omitted, but it would wrap the constructor for the `Note` class and one or more methods in the [array node APIs](./reading-and-editing.mdx#array-node-apis).
+
+```typescript
+class Notes extends sf.array("Notes", Note) {
+	public newNote(author: string) {
+		// implementation omitted.
+	}
+}
+```
+
+Now revise the declaration of the `Group` class to use the new type.
+
+```typescript
+class Group extends sf.object('Group', {
+    id: sf.string,
+    name: sf.string,
+    notes: Notes,
+});
+```
+
+## Root Schema
+
+As you can see from the screenshot, the top level of the root of the app's data can have two kinds of children: notes in groups and notes that are outside of any group. So, the children are defined as `Items` which is an array with two types of items. This is done by passing an array of schema types to the `array()` method. Methods for adding a new group to the app and a new note that is outside of any group are included.
+
+```typescript
+class Items extends sf.array("Items", [Group, Note]) {
+	public newNote(author: string) {
+		// implementation omitted.
+	}
+
+	public newGroup(name: string): Group {
+		// implementation omitted.
+	}
+}
+```
+
+The root of the schema must itself have a type which is defined as follows:
+
+```typescript
+class App extends sf.object("App", {
+	items: Items,
+}) {}
+```
+
+The final step is to create a configuration object that will be used when a `SharedTree` object is created or loaded. See [creating a tree](../../start/tree-start.mdx#creating-a-tree). The following is an example of doing this.
+
+```typescript
+export const appTreeConfiguration = new TreeViewConfiguration({
+	// root node schema
+	schema: App,
+});
+```
+
+## Map Schema
+
+The sticky notes example doesn't have any map nodes, but creating a map schema is like creating an array schema, except that you use the `map()` method. Consider a silent auction app. Users view various items up for auction and place bids for items they want. One way to represent the bids for an item is with a map from user names to bids. The following snippet shows how to create the schema. Note that `map()` doesn't need a parameter to specify the type of keys because it is always string.
+
+```typescript
+class AuctionItem extends sf.map('AuctionItem', sf.number) { ... }
+```
+
+Like `array()`, `map()` can accept an array of types when the values of the map are not all the same type.
+
+```typescript
+class MyMapSchema extends sf.map('MyMap', [sf.number, sf.string]) { ... }
+```
+
+## Recursive Schema
+
+Additionally, you can create recursive types (nodes that include nodes of the same type in their subtree hierarchy). Because of current limitation in TypeScript, doing this requires specific versions of the node types: `objectRecursive()`, `arrayRecursive()`, and `mapRecursive`.
+
+Due to limitations of TypeScript, recursive schema may not produce type errors when declared incorrectly. Using `ValidateRecursiveSchema` helps ensure that mistakes made in the definition of a recursive schema will introduce a compile error.
+
+```typescript
+type _check = ValidateRecursiveSchema<typeof myRecursiveType>;
+```
+
+## Setting Properties as Optional
+
+To specify that a property is not required, pass it to the `SchemaFactory.optional()` method inline. The following example shows a schema with two optional properties.
+
+```typescript
+class Proposal = sf.object('Proposal', {
+    id: sf.string,
+    text: sf.optional(sf.string),
+    comments: sf.optional(sf.array(Comment)),
+});
+```

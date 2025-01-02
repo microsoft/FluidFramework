@@ -8,7 +8,7 @@ to process the output of our performance tests and write relevant metrics to our
 Install dependencies and build the project:
 
 ```bash
-pnpm i
+npm i
 npm run build
 ```
 
