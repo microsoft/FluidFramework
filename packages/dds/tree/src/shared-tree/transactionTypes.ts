@@ -53,11 +53,10 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = (
 ) & {
 	/**
 	 * An optional list of {@link TransactionConstraint | constraints} that will be checked when the commit corresponding
-	 * to this transaction is reverted.
-	 * If any of the constraints are not met after the transaction callback runs, an error will be thrown. Basically,
-	 * these constraints have to be met after the transaction is applied.
-	 * If any of the constraints are not met when the revert is being applied either locally or on remote clients, the
-	 * revert will be ignored.
+	 * to this transaction is reverted. If any of these constraints are not met when the revert is being applied either
+	 * locally or on remote clients, the revert will be ignored.
+	 * These constraints must also be met at the time they are first introduced. If they are not met after the transaction
+	 * callback returns, then `runTransaction` (which invokes the transaction callback) will throw a `UsageError`.
 	 */
 	preconditionsOnRevert?: readonly TransactionConstraint[];
 };
