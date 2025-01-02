@@ -399,22 +399,25 @@ stages:
               node -e "
                 const fetch = require('fetch');
 
+                const requestBody = {
+                    "Resources": [
+                      {
+                        "name": "tenant1", // A user-assigned identifier for the specific resource
+                        "profileName": "FluidFrameworkTenantPool", // The type of the resource (i.e. pool name)
+                      },
+                    ],
+                    "ModuleName": "FFTestModule", // Metadata used for tracking the source of the request (can be anything)
+                    "Count": 1, // How many copies of the above resources to allocate for the reservation. Should almost always be 1
+                  };
+
                 const bearerToken = await fetch(
                   "https://tdff5prd.office.net/v2.0/reservations/reserve?isSynthetic=false&durationMinutes=75",
                   {
                     method: "POST",
-                    body: JSON.stringify({
-                      "Resources": [
-                        {
-                          "name": "tenant1", // A user-assigned identifier for the specific resource
-                          "profileName": "FluidFrameworkTenantPool", // The type of the resource (i.e. pool name)
-                        },
-                      ],
-                      "ModuleName": "FFTestModule", // Metadata used for tracking the source of the request (can be anything)
-                      "Count": 1, // How many copies of the above resources to allocate for the reservation. Should almost always be 1
-                  }
-                );
+                    body: JSON.stringify(requestBody),
+                  });
                 const stringBearerToken = JSON.stringify(bearerToken);
+
                 // step 2: wait for resource hydration
                 // returns "Ready" or "Not Ready"
                 const status = await fetch(
@@ -423,10 +426,9 @@ stages:
                     method: "GET",
                     headers: {
                       Authorization: `BEARER ${stringBearerToken}`,
-                    },
-                  },
-                );
+                    }});
                 const stringStatus = JSON.stringify(status);
+
                 // step 3: check out hydrated resource
                 const credentials = await fetch(
                   `https://tdff5prd.office.net/v2.0/reservations/current/modules?moduleName=${moduleName}`,
@@ -436,12 +438,10 @@ stages:
                       Authorization: `BEARER ${stringBearerToken}`,
                       // don't think this is right
                       "TDF-ReservationClient": "odspTests",
-                    },
-                  },
-                );
+                    }});
                 const loginTenants = JSON.stringify(credentials);
               "
-              echo "##vso[task.setvariable tenantCreds=loginTenants;issecret=true]Credentials saved"
+              echo "##vso[task.setvariable variable=tenantCreds;issecret=true]loginTenants"
 
         # run the test
         - task: Npm@1
