@@ -179,7 +179,7 @@ export interface BenchmarkTimer<T> {
 	/**
 	 * A helper utility which uses `timer` to time running `callback` `iterationsPerBatch` times and passes the result to recordBatch returning the result.
 	 * @remarks
-	 * This is implemented in teems of the other public APIs, and can be used in simple cases when no extra operations are required.
+	 * This is implemented in terms of the other public APIs, and can be used in simple cases when no extra operations are required.
 	 */
 	timeBatch(callback: () => void): boolean;
 }
