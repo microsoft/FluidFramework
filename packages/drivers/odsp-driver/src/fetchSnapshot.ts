@@ -150,13 +150,8 @@ export async function fetchSnapshotWithRedeem(
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
 				// Execute the redeem fallback
+				await redeemSharingLink(odspResolvedUrl, storageTokenFetcher,	logger);
 
-				await redeemSharingLink(
-					odspResolvedUrl,
-					storageTokenFetcher,
-					logger,
-					forceAccessTokenViaAuthorizationHeader,
-				);
 				const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl = {
 					...odspResolvedUrl,
 					shareLinkInfo: {
@@ -213,7 +208,6 @@ async function redeemSharingLink(
 	odspResolvedUrl: IOdspResolvedUrl,
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	logger: ITelemetryLoggerExt,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<void> {
 	await PerformanceEvent.timedExecAsync(
 		logger,
@@ -233,7 +227,12 @@ async function redeemSharingLink(
 			let redeemUrl: string | undefined;
 			async function callSharesAPI(baseUrl: string): Promise<void> {
 				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-					redeemUrl = `${baseUrl}/_api/v2.0/shares/${encodedShareUrl}`;
+					// IMPORTANT: Note that redeemUrl has '/driveItem' in it. Technically it is not required for executing redeem operation.
+					// However, we have other cases that use '/shares' API and do require to specify '/driveItem' in order to get specific
+					// drive item properties. The reason this matters is when caller of this API must possess logical permissions to call
+					// this API (for instance, this will be the case when call is made with app-only token) then two separate logical
+					// permissions are needed for the '/shares' call with and without '/driveItem'.
+					redeemUrl = `${baseUrl}/_api/v2.0/shares/${encodedShareUrl}/driveItem`;
 					const url = redeemUrl;
 					const method = "GET";
 					const authHeader = await getAuthHeader(
