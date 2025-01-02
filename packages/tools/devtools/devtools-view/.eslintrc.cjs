@@ -18,7 +18,7 @@ module.exports = {
 		// Disabled because they disagrees with React common patterns / best practices.
 		"@typescript-eslint/unbound-method": "off",
 		"unicorn/consistent-function-scoping": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 
 		// Disabled because they conflict with Prettier.
 		"unicorn/no-nested-ternary": "off",

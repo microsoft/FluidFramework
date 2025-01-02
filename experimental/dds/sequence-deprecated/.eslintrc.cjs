@@ -15,6 +15,6 @@ module.exports = {
 		"import/no-deprecated": "off", // This package uses deprecated APIs by design.
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 	},
 };
