@@ -33,6 +33,7 @@ import {
 	type IMoveInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IRemovalInfo,
+	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
 
@@ -288,7 +289,7 @@ export interface ISegmentAction<TClientData> {
 }
 export interface ISegmentChanges {
 	next?: ISegmentPrivate;
-	replaceCurrent?: ISegmentPrivate;
+	replaceCurrent?: SegmentWithInfo<IInsertionInfo>;
 }
 export interface BlockAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
@@ -304,7 +305,7 @@ export interface BlockAction<TClientData> {
 }
 
 export interface InsertContext {
-	candidateSegment?: ISegmentPrivate;
+	candidateSegment?: SegmentWithInfo<IInsertionInfo>;
 	leaf: (
 		segment: ISegmentPrivate | undefined,
 		pos: number,
@@ -396,18 +397,22 @@ export class MergeBlock implements Partial<IMergeNodeInfo> {
 			index === 0 ? undefined : this.children[index - 1]?.ordinal,
 		);
 	}
-
-	public assignChild(child: IMergeNode, index: number, updateOrdinal = true): void {
-		const node = Object.assign<IMergeNode, IMergeNodeInfo>(child, {
-			parent: this,
-			index,
-			ordinal: child.ordinal ?? "",
-		});
-		if (updateOrdinal) {
-			this.setOrdinal(node, index);
-		}
-		this.children[index] = node;
+}
+export function assignChild<C extends IMergeNode>(
+	parent: MergeBlock,
+	child: C,
+	index: number,
+	updateOrdinal = true,
+): asserts child is C & IMergeNodeInfo {
+	const node = Object.assign<C, IMergeNodeInfo>(child, {
+		parent,
+		index,
+		ordinal: child.ordinal ?? "",
+	});
+	if (updateOrdinal) {
+		parent.setOrdinal(node, index);
 	}
+	parent.children[index] = node;
 }
 
 export function seqLTE(seq: number, minOrRefSeq: number): boolean {
