@@ -6,6 +6,7 @@
 import {
 	type FieldUpPath,
 	type Revertible,
+	type RevertibleAlpha,
 	RevertibleStatus,
 	type UpPath,
 	rootFieldKey,
@@ -31,6 +32,7 @@ import {
 	asTreeViewAlpha,
 	SchemaFactory,
 	TreeViewConfiguration,
+	type TreeBranch,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
@@ -673,7 +675,52 @@ describe("Undo and redo", () => {
 			"Error: Unable to revert a revertible that has been disposed.",
 		);
 	});
+
+	it("clone list of revertibles", () => {
+		const view = createInitializedView();
+		const { undoStack } = createTestUndoRedoStacks(view.events);
+
+		assert(view.root.child !== undefined);
+		view.root.child.propertyOne = 256; // 128 -> 256
+		view.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
+
+		const forkedView = view.fork();
+
+		const batchedRevertibles: RevertibleAlpha[] = [];
+		for (const revertible of undoStack) {
+			batchedRevertibles.push(revertible);
+		}
+
+		const clonedRevertibles = cloneRevertiblesInBatch(batchedRevertibles, forkedView);
+
+		assert.equal(clonedRevertibles.length, 2);
+		assert.equal(forkedView.root.child?.propertyOne, 256);
+		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "newItem");
+
+		assert.equal(clonedRevertibles[0]?.status, RevertibleStatus.Valid);
+		assert.equal(clonedRevertibles[1]?.status, RevertibleStatus.Valid);
+
+		clonedRevertibles.pop()?.revert();
+		assert.equal(forkedView.root.child?.propertyOne, 256);
+		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "");
+
+		clonedRevertibles.pop()?.revert();
+		assert.equal(forkedView.root.child?.propertyOne, 128);
+	});
 });
+
+/**
+ * Clones a batch of revertibles for a target branch.
+ * @param revertibles - Array of revertibles to clone
+ * @param targetBranch - The target branch to clone the revertibles for
+ * @returns Array of cloned revertibles, maintaining the same order as the input
+ */
+function cloneRevertiblesInBatch(
+	revertibles: RevertibleAlpha[],
+	targetBranch: TreeBranch,
+): RevertibleAlpha[] {
+	return revertibles.map((revertible) => revertible.clone(targetBranch));
+}
 
 /**
  * Create a checkout belonging to a SharedTree with the given JSON data.
