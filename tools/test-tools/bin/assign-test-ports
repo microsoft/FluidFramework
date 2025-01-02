@@ -1,17 +1,32 @@
 #!/usr/bin/env node
 const mod = require("../dist/assignTestPorts.js");
+const nconf = require("nconf");
 
-const firstArg = process.argv[2];
+nconf
+	.argv(
+		{
+			"package-manager": {
+				type: "string",
+				describe: "Package manager used for the monorepo.",
+				default: "pnpm",
+				choices: ["pnpm", "lerna"],
+			},
+		},
+		"Usage: assign-test-ports [initialPort] [--package-manager <pnpm | lerna>]\n\n" +
+			"Assigns a port to each package in the current monorepo so they can run jest/puppeteer\n" +
+			"tests concurrently without port conflicts, and writes the port mapping to a file.\n\n" +
+			"The initial port is optional and defaults to 9000.\n\n" +
+			"The port mapping file is written to the OS' temporary storage folder (e.g. /tmp/testportmap.json).",
+	)
+	.env();
 
-if (firstArg === "--help" || firstArg === "-h" || (firstArg !== undefined && !Number.isInteger(firstArg)) ) {
-	console.log(
-		"Usage: assign-test-ports [initialPort]\n\n" +
-		"Assigns a port to each package in the current pnpm workspace so they can run jest/puppeteer\n" +
-		"tests concurrently without port conflicts, and writes the port mapping to a file.\n\n" +
-		"The initial port is optional and defaults to 9000.\n\n" +
-		"The port mapping file is written to the OS' temporary storage folder (e.g. /tmp/testportmap.json)."
-	);
-	process.exit(0);
+// Slightly stricter variant of Number.parseInt
+function parsePort(value) {
+	const asInt = Number.parseInt(value);
+	if (Number.isNaN(asInt) || `${asInt}` !== value) {
+		throw new Error(`Invalid port number: ${value}`);
+	}
+	return asInt;
 }
 
 // We used to hardcode port 8081 as the initial one
@@ -19,7 +34,11 @@ if (firstArg === "--help" || firstArg === "-h" || (firstArg !== undefined && !Nu
 // If a package that has jest tests ends up assigned that port,
 // jest will fail to start.
 // So try to use a port range where nothing will be listening.
-const initialPortString = firstArg ?? "9000";
+// Note '_' is used for positional arguments in nconf.
+const initialPort = parsePort(nconf.get("_")[0] ?? "9000");
 
-const initialPort = Number.parseInt(initialPortString, 10);
-mod.writePortMapFile(initialPort);
+// Note: we support using lerna to resolve package info as the LTS branch still has some lerna usage at the time of writing.
+// Once we no longer need to support any FF branches using lerna, this logic can be removed.
+const packageManager = nconf.get("package-manager");
+
+mod.writePortMapFile(initialPort, packageManager);
