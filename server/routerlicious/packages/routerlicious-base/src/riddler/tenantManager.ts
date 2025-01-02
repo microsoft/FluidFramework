@@ -17,6 +17,7 @@ import {
 	ISecretManager,
 	ICache,
 	type IEncryptedPrivateTenantKeys,
+	type IFluidAccessToken,
 } from "@fluidframework/server-services-core";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -25,11 +26,14 @@ import {
 	InMemoryApiCounters,
 	ITenantKeyGenerator,
 	isKeylessFluidAccessClaimEnabled,
+	generateToken,
 } from "@fluidframework/server-services-utils";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
 import { ITenantRepository } from "./mongoTenantRepository";
+import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
+import { v4 as uuid } from "uuid";
 
 /**
  * Tenant details stored to the document database
@@ -41,10 +45,10 @@ export interface ITenantDocument {
 	_id: string;
 
 	// API key for the given tenant
-	key: string;
+	key?: string;
 
 	// second key for the given tenant
-	secondaryKey: string;
+	secondaryKey?: string;
 
 	// Storage provider details
 	storage: ITenantStorage;
@@ -143,6 +147,74 @@ export class TenantManager {
 	// Currently key and secondary are not optional, but this is to make sure we don't break anything if they are optional in the future
 	private isTenantSharedKeyAccessEnabled(tenant: ITenantDocument): boolean {
 		return tenant.key || tenant.secondaryKey ? true : false;
+	}
+
+	public async signToken(
+		tenantId: string,
+		documentId: string,
+		scopes: ScopeType[],
+		user?: IUser,
+		lifetime: number = 60 * 60,
+		ver: string = "1.0",
+		jti: string = uuid(),
+		includeDisabledTenant = false,
+	): Promise<IFluidAccessToken> {
+		const lumberProperties = {
+			[BaseTelemetryProperties.tenantId]: tenantId,
+			includeDisabledTenant,
+		};
+		const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
+		if (tenantDocument === undefined) {
+			Lumberjack.error(
+				`No tenant found when signing token for tenant id ${tenantId}`,
+				lumberProperties,
+			);
+			throw new NetworkError(404, "Tenant is disabled or does not exist.");
+		}
+
+		// If the tenant is a keyless tenant, always use the private keys to sign the token
+		const isTenantPrivateKeyAccessEnabled =
+			this.isTenantPrivateKeyAccessEnabled(tenantDocument);
+
+		const keys = this.decryptKeys(
+			tenantDocument,
+			lumberProperties,
+			isTenantPrivateKeyAccessEnabled,
+		);
+
+		// Added this check here again to ensure linting doesn't complain about tenantDocument.privateKeys being possibly undefined
+		const signingKey = tenantDocument.privateKeys
+			? (
+					await this.returnPrivateKeysInOrder(
+						tenantId,
+						{
+							// If isTenantPrivateKeyAccessEnabled is true, then privateKeys is not undefined
+							key: keys.key1,
+							keyNextRotationTime: tenantDocument.privateKeys.keyNextRotationTime,
+							secondaryKey: keys.key2,
+							secondaryKeyNextRotationTime:
+								tenantDocument.privateKeys.secondaryKeyNextRotationTime,
+						},
+						lumberProperties,
+					)
+			  ).key1
+			: keys.key1;
+
+		const token = generateToken(
+			tenantId,
+			documentId,
+			signingKey,
+			scopes,
+			user,
+			lifetime,
+			ver,
+			jti,
+			isTenantPrivateKeyAccessEnabled,
+		);
+
+		return {
+			fluidAccessToken: token,
+		};
 	}
 
 	/**
@@ -281,15 +353,7 @@ export class TenantManager {
 			tenant.customData.externalStorageData.accessInfo = this.decryptAccessInfo(accessInfo);
 		}
 
-		return {
-			id: tenant._id,
-			orderer: tenant.orderer,
-			storage: tenant.storage,
-			customData: tenant.customData,
-			scheduledDeletionTime: tenant.scheduledDeletionTime,
-			enablePrivateKeyAccess: this.isTenantPrivateKeyAccessEnabled(tenant),
-			enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenant),
-		};
+		return this.buildTenantConfig(tenant);
 	}
 
 	/**
@@ -298,15 +362,7 @@ export class TenantManager {
 	public async getAllTenants(includeDisabledTenant = false): Promise<ITenantConfig[]> {
 		const tenants = await this.getAllTenantDocuments(includeDisabledTenant);
 
-		return tenants.map((tenant) => ({
-			id: tenant._id,
-			orderer: tenant.orderer,
-			storage: tenant.storage,
-			customData: tenant.customData,
-			scheduledDeletionTime: tenant.scheduledDeletionTime,
-			enablePrivateKeyAccess: this.isTenantPrivateKeyAccessEnabled(tenant),
-			enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenant),
-		}));
+		return tenants.map((tenant) => this.buildTenantConfig(tenant));
 	}
 
 	private async createTenantKeys(
@@ -370,14 +426,30 @@ export class TenantManager {
 		storage: ITenantStorage,
 		orderer: ITenantOrderer,
 		customData: ITenantCustomData,
+		enableSharedKeyAccess = true,
 		enablePrivateKeyAccess = false,
-	): Promise<ITenantConfig & { key: string }> {
+	): Promise<ITenantConfig & { key: string | undefined }> {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
-		// TODO: Make shared tenant keys optional
-		const tenantKeys = (await this.createTenantKeys(
-			tenantId,
-			latestKeyVersion,
-		)) as IPlainTextAndEncryptedTenantKeys;
+		if (!enableSharedKeyAccess && !enablePrivateKeyAccess) {
+			Lumberjack.error(
+				"Cannot create a tenant with both shared and private key access disabled",
+				{
+					[BaseTelemetryProperties.tenantId]: tenantId,
+				},
+			);
+			throw new NetworkError(
+				400,
+				"Cannot create a tenant with both shared and private key access disabled",
+			);
+		}
+
+		let tenantKeys: IPlainTextAndEncryptedTenantKeys | undefined;
+		if (enableSharedKeyAccess) {
+			tenantKeys = (await this.createTenantKeys(
+				tenantId,
+				latestKeyVersion,
+			)) as IPlainTextAndEncryptedTenantKeys;
+		}
 		let privateKeys: ITenantPrivateKeys | undefined;
 		if (enablePrivateKeyAccess) {
 			privateKeys = (await this.createTenantKeys(
@@ -395,8 +467,8 @@ export class TenantManager {
 		const id = await this.runWithDatabaseRequestCounter(async () =>
 			this.tenantRepository.insertOne({
 				_id: tenantId,
-				key: tenantKeys.encryptedTenantKey1,
-				secondaryKey: tenantKeys.encryptedTenantKey2,
+				key: tenantKeys?.encryptedTenantKey1,
+				secondaryKey: tenantKeys?.encryptedTenantKey2,
 				orderer,
 				storage,
 				customData,
@@ -407,8 +479,8 @@ export class TenantManager {
 
 		const tenant = await this.getTenant(id);
 		return _.extend(tenant, {
-			key: tenantKeys.key1,
-			secondaryKey: tenantKeys.key2,
+			key: tenantKeys?.key1,
+			secondaryKey: tenantKeys?.key2,
 		});
 	}
 
@@ -432,10 +504,35 @@ export class TenantManager {
 		return tenantDocument.storage;
 	}
 
-	public async updatePrivateKeyAccessPolicy(
+	private buildTenantConfig(tenantDocument: ITenantDocument): ITenantConfig {
+		return {
+			id: tenantDocument._id,
+			orderer: tenantDocument.orderer,
+			storage: tenantDocument.storage,
+			customData: tenantDocument.customData,
+			scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
+			enablePrivateKeyAccess: this.isTenantPrivateKeyAccessEnabled(tenantDocument),
+			enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenantDocument),
+		};
+	}
+
+	public async updateKeyAccessPolicy(
 		tenantId: string,
 		enablePrivateKeyAccess: boolean,
+		enableSharedKeyAccess: boolean,
 	): Promise<ITenantConfig> {
+		if (!enableSharedKeyAccess && !enablePrivateKeyAccess) {
+			Lumberjack.error(
+				"Cannot update a tenant with both shared and private key access disabled",
+				{
+					[BaseTelemetryProperties.tenantId]: tenantId,
+				},
+			);
+			throw new NetworkError(
+				400,
+				"Cannot update a tenant with both shared and private key access disabled",
+			);
+		}
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 		const tenantDocument = await this.getTenantDocument(tenantId);
 		if (tenantDocument === undefined) {
@@ -446,44 +543,54 @@ export class TenantManager {
 		}
 
 		let privateKeys: ITenantPrivateKeys | undefined;
+		let sharedKeys: IPlainTextAndEncryptedTenantKeys | undefined;
+		const updates: Partial<ITenantDocument> = {};
+		const isTenantPrivateKeyAccessEnabled =
+			this.isTenantPrivateKeyAccessEnabled(tenantDocument);
+		const isTenantSharedKeyAccessEnabled = this.isTenantSharedKeyAccessEnabled(tenantDocument);
 		if (enablePrivateKeyAccess) {
-			// If the request is to enable keyless access and the tenant is already a keyless tenant, return the tenant config
-			if (tenantDocument.privateKeys) {
-				return {
-					id: tenantDocument._id,
-					orderer: tenantDocument.orderer,
-					storage: tenantDocument.storage,
-					customData: tenantDocument.customData,
-					scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
-					enablePrivateKeyAccess: true,
-					enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenantDocument),
-				};
-			}
 			// If the tenant is being converted to a keyless tenant, generate new private keys, otherwise update them to be undefined
-			privateKeys = (await this.createTenantKeys(
-				tenantId,
-				latestKeyVersion,
-				true /* createPrivateKeys */,
-			)) as ITenantPrivateKeys;
-		} else {
-			// If the request is to disable keyless access and the tenant is not a keyless tenant, return the tenant config
-			if (!tenantDocument.privateKeys) {
-				return {
-					id: tenantDocument._id,
-					orderer: tenantDocument.orderer,
-					storage: tenantDocument.storage,
-					customData: tenantDocument.customData,
-					scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
-					enablePrivateKeyAccess: false,
-					enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenantDocument),
-				};
+			if (!isTenantPrivateKeyAccessEnabled) {
+				privateKeys = (await this.createTenantKeys(
+					tenantId,
+					latestKeyVersion,
+					true /* createPrivateKeys */,
+				)) as ITenantPrivateKeys;
+				updates.privateKeys = privateKeys;
 			}
-			await this.deleteKeyFromCache(tenantId, true /* deletePrivateKeys */);
+		} else {
+			if (isTenantPrivateKeyAccessEnabled) {
+				updates.privateKeys = undefined;
+				await this.deleteKeyFromCache(tenantId, true /* deletePrivateKeys */);
+			}
 		}
 
-		await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantRepository.update({ _id: tenantId }, { privateKeys }, null),
-		);
+		if (enableSharedKeyAccess) {
+			if (!isTenantSharedKeyAccessEnabled) {
+				sharedKeys = (await this.createTenantKeys(
+					tenantId,
+					latestKeyVersion,
+				)) as IPlainTextAndEncryptedTenantKeys;
+				updates.key = sharedKeys.encryptedTenantKey1;
+				updates.secondaryKey = sharedKeys.encryptedTenantKey2;
+			}
+		} else {
+			if (isTenantSharedKeyAccessEnabled) {
+				updates.key = undefined;
+				updates.secondaryKey = undefined;
+				await this.deleteKeyFromCache(tenantId, false /* deleteSharedKeys */);
+			}
+		}
+
+		// Only update the tenant in the DB if there are changes to be made
+		if (Object.keys(updates).length > 0) {
+			await this.runWithDatabaseRequestCounter(async () =>
+				this.tenantRepository.update({ _id: tenantId }, updates, null),
+			);
+		} else {
+			return this.buildTenantConfig(tenantDocument);
+		}
+
 		const updatedtenantDocument = await this.getTenantDocument(tenantId);
 		if (updatedtenantDocument === undefined) {
 			Lumberjack.error("Could not find tenantId after updating private key access policy.", {
@@ -491,15 +598,7 @@ export class TenantManager {
 			});
 			throw new NetworkError(404, `Could not find updated tenant: ${tenantId}`);
 		}
-		return {
-			id: updatedtenantDocument._id,
-			orderer: updatedtenantDocument.orderer,
-			storage: updatedtenantDocument.storage,
-			customData: updatedtenantDocument.customData,
-			scheduledDeletionTime: updatedtenantDocument.scheduledDeletionTime,
-			enablePrivateKeyAccess: this.isTenantPrivateKeyAccessEnabled(updatedtenantDocument),
-			enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(updatedtenantDocument),
-		};
+		return this.buildTenantConfig(updatedtenantDocument);
 	}
 
 	/**
@@ -614,6 +713,61 @@ export class TenantManager {
 		return keys;
 	}
 
+	private decryptKeys(
+		tenantDocument: ITenantDocument,
+		lumberProperties: Record<string, any>,
+		usePrivateKeys = false,
+	): IPlainTextAndEncryptedTenantKeys & {
+		encryptionKeyVersion: EncryptionKeyVersion | undefined;
+	} {
+		const encryptedTenantKey1 =
+			usePrivateKeys && tenantDocument.privateKeys
+				? tenantDocument.privateKeys.key
+				: (tenantDocument.key as string);
+
+		const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
+		const tenantKey1 = this.secretManager.decryptSecret(
+			encryptedTenantKey1,
+			encryptionKeyVersion,
+		);
+
+		if (tenantKey1 == null) {
+			winston.error("Tenant key1 decryption failed.");
+			Lumberjack.error("Tenant key1 decryption failed.", lumberProperties);
+			throw new NetworkError(500, "Tenant key1 decryption failed.");
+		}
+
+		const encryptedTenantKey2 =
+			usePrivateKeys && tenantDocument.privateKeys
+				? tenantDocument.privateKeys.secondaryKey
+				: tenantDocument.secondaryKey ?? "";
+
+		const tenantKey2 = encryptedTenantKey2
+			? this.secretManager.decryptSecret(encryptedTenantKey2, encryptionKeyVersion)
+			: "";
+
+		// Tenant key 2 decryption returns null
+		if (tenantKey2 == null) {
+			winston.error("Tenant key2 decryption failed");
+			Lumberjack.error("Tenant key2 decryption failed.", lumberProperties);
+			throw new NetworkError(500, "Tenant key2 decryption failed.");
+		}
+
+		// If it looks like there is key2, but decrypted key == ""
+		if (!encryptedTenantKey2 || tenantKey2 === "") {
+			winston.info("Tenant key2 doesn't exist.");
+			Lumberjack.info("Tenant key2 doesn't exist.", lumberProperties);
+		}
+
+		return {
+			key1: tenantKey1,
+			key2: tenantKey2,
+			encryptedTenantKey1,
+			encryptedTenantKey2,
+			encryptionKeyVersion,
+		};
+	}
+
 	private async getTenantKeysHelper(
 		tenantId: string,
 		includeDisabledTenant = false,
@@ -678,6 +832,20 @@ export class TenantManager {
 				throw new NetworkError(403, `Tenant, ${tenantId}, does not exist.`);
 			}
 
+			// If shared keys are disabled, return empty values for key1 and key2
+			if (!this.isTenantSharedKeyAccessEnabled(tenantDocument) && !usePrivateKeys) {
+				Lumberjack.error(
+					`Shared keys are disabled for tenant id ${tenantId}, returning empty values for key1 and key2`,
+					{
+						[BaseTelemetryProperties.tenantId]: tenantId,
+					},
+				);
+				return {
+					key1: "",
+					key2: "",
+				};
+			}
+
 			if (usePrivateKeys && !tenantDocument.privateKeys) {
 				Lumberjack.error(`Private keys are missing for tenant id ${tenantId}`, {
 					[BaseTelemetryProperties.tenantId]: tenantId,
@@ -685,44 +853,13 @@ export class TenantManager {
 				throw new NetworkError(404, `Private keys are missing for tenant id ${tenantId}`);
 			}
 
-			const encryptedTenantKey1 =
-				usePrivateKeys && tenantDocument.privateKeys
-					? tenantDocument.privateKeys.key
-					: tenantDocument.key;
-
-			const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
-			const tenantKey1 = this.secretManager.decryptSecret(
+			const {
+				key1: tenantKey1,
+				key2: tenantKey2,
 				encryptedTenantKey1,
+				encryptedTenantKey2,
 				encryptionKeyVersion,
-			);
-
-			if (tenantKey1 == null) {
-				winston.error("Tenant key1 decryption failed.");
-				Lumberjack.error("Tenant key1 decryption failed.", lumberProperties);
-				throw new NetworkError(500, "Tenant key1 decryption failed.");
-			}
-
-			const encryptedTenantKey2 =
-				usePrivateKeys && tenantDocument.privateKeys
-					? tenantDocument.privateKeys.secondaryKey
-					: tenantDocument.secondaryKey;
-
-			const tenantKey2 = encryptedTenantKey2
-				? this.secretManager.decryptSecret(encryptedTenantKey2, encryptionKeyVersion)
-				: "";
-
-			// Tenant key 2 decryption returns null
-			if (tenantKey2 == null) {
-				winston.error("Tenant key2 decryption failed");
-				Lumberjack.error("Tenant key2 decryption failed.", lumberProperties);
-				throw new NetworkError(500, "Tenant key2 decryption failed.");
-			}
-
-			// If it looks like there is key2, but decrypted key == ""
-			if (!encryptedTenantKey2 || tenantKey2 === "") {
-				winston.info("Tenant key2 doesn't exist.");
-				Lumberjack.info("Tenant key2 doesn't exist.", lumberProperties);
-			}
+			} = this.decryptKeys(tenantDocument, lumberProperties, usePrivateKeys);
 
 			if (!bypassCache && this.isCacheEnabled) {
 				const cacheKeys: IEncryptedTenantKeys | IEncryptedPrivateTenantKeys =
@@ -808,6 +945,13 @@ export class TenantManager {
 			throw new NetworkError(404, `Could not find tenantId: ${tenantId}`);
 		}
 
+		if (!this.isTenantSharedKeyAccessEnabled(tenantDocument) && !refreshPrivateKey) {
+			Lumberjack.error(`Shared keys are disabled for tenant id ${tenantId}`, {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+			});
+			throw new NetworkError(403, `Shared keys are disabled for tenant id ${tenantId}`);
+		}
+
 		const newTenantKey = this.tenantKeyGenerator.generateTenantKey();
 		const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
 		const encryptedNewTenantKey = this.secretManager.encryptSecret(
@@ -875,8 +1019,8 @@ export class TenantManager {
 		}
 
 		const tenantKeys = await this.getUpdatedTenantKeys(
-			tenantDocument.key,
-			tenantDocument.secondaryKey,
+			tenantDocument.key as string,
+			tenantDocument.secondaryKey as string,
 			keyName,
 			newTenantKey,
 			tenantId,
