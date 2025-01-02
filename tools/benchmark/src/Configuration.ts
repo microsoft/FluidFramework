@@ -57,6 +57,9 @@ export enum BenchmarkType {
 	OwnCorrectness,
 }
 
+/**
+ * @public
+ */
 export enum TestType {
 	/**
 	 * Tests that measure execution time

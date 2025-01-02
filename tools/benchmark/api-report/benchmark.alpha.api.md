@@ -153,15 +153,11 @@ export const isInPerformanceTestingMode: boolean;
 export function isResultError(result: BenchmarkResult): result is BenchmarkError;
 
 // @public (undocumented)
-export interface MemoryTestObjectProps extends MochaExclusiveOptions {
-    category?: string;
+export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, BenchmarkDescription {
     maxBenchmarkDurationSeconds?: number;
     maxRelativeMarginOfError?: number;
     minSampleCount?: number;
-    only?: boolean;
     samplePercentageToUse?: number;
-    title: string;
-    type?: BenchmarkType;
 }
 
 // @public
@@ -188,7 +184,9 @@ export enum Phase {
 export function prettyNumber(num: number, numDecimals?: number): string;
 
 // @public
-export function qualifiedTitle(args: BenchmarkDescription & Titled): string;
+export function qualifiedTitle(args: BenchmarkDescription & Titled & {
+    testType?: TestType | undefined;
+}): string;
 
 // @public
 export function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData>;
@@ -202,6 +200,12 @@ export interface Stats {
     readonly standardDeviation: number;
     readonly standardErrorOfMean: number;
     readonly variance: number;
+}
+
+// @public (undocumented)
+export enum TestType {
+    ExecutionTime = 0,
+    MemoryUsage = 1
 }
 
 // @public (undocumented)
