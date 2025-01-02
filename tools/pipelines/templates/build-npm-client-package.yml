@@ -792,9 +792,6 @@ extends:
                           echo "##vso[task.logissue type=warning]Failed to upload tinylicious log file ('$PATH_TO_TINYLICIOUS_LOG' not found).";
                         fi
 
-                  # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
-                  # that is now part of templateContext.outputs below.
-
                 # Process test result, include publishing and logging
                 - template: /tools/pipelines/templates/include-process-test-results.yml@self
                   parameters:
