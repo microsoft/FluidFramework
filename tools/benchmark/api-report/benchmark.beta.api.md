@@ -73,12 +73,13 @@ export interface BenchmarkSyncFunction extends BenchmarkOptions {
     benchmarkFn: () => void;
 }
 
-// @public (undocumented)
+// @public @sealed (undocumented)
 export interface BenchmarkTimer<T> {
     // (undocumented)
     readonly iterationsPerBatch: number;
     // (undocumented)
     recordBatch(duration: number): boolean;
+    timeBatch(callback: () => void): boolean;
     // (undocumented)
     readonly timer: Timer<T>;
 }
@@ -102,7 +103,6 @@ export enum BenchmarkType {
 
 // @public (undocumented)
 export interface CustomBenchmark extends BenchmarkTimingOptions {
-    // (undocumented)
     benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
 }
 

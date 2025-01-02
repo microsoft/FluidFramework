@@ -169,17 +169,54 @@ export interface BenchmarkAsyncFunction extends BenchmarkOptions {
 
 /**
  * @public
+ * @sealed
  */
 export interface BenchmarkTimer<T> {
 	readonly iterationsPerBatch: number;
 	readonly timer: Timer<T>;
 	recordBatch(duration: number): boolean;
+
+	/**
+	 * A helper utility which uses `timer` to time running `callback` `iterationsPerBatch` times and passes the result to recordBatch returning the result.
+	 * @remarks
+	 * This is implemented in terms of the other public APIs, and can be used in simple cases when no extra operations are required.
+	 */
+	timeBatch(callback: () => void): boolean;
 }
 
 /**
  * @public
  */
 export interface CustomBenchmark extends BenchmarkTimingOptions {
+	/**
+	 * Use `state` to measure and report the performance of batches.
+	 * @example
+	 * ```typescript
+	 * benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+	 * 	let duration: number;
+	 * 	do {
+	 * 		let counter = state.iterationsPerBatch;
+	 * 		const before = state.timer.now();
+	 * 		while (counter--) {
+	 * 			// Do the thing
+	 * 		}
+	 * 		const after = state.timer.now();
+	 * 		duration = state.timer.toSeconds(before, after);
+	 * 		// Collect data
+	 * 	} while (state.recordBatch(duration));
+	 * },
+	 * ```
+	 *
+	 * @example
+	 * ```typescript
+	 * benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+	 * 	let running: boolean;
+	 * 	do {
+	 * 		running = state.timeBatch(() => {});
+	 * 	} while (running);
+	 * },
+	 * ```
+	 */
 	benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
 }
 
