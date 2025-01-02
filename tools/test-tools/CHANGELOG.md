@@ -2,6 +2,10 @@
 
 ## vNext
 
+## 2.0.1
+
+- Support using `lerna` as a package manager in `assign-test-ports`.
+
 ## 2.0.0
 
 - Dependency updates.
