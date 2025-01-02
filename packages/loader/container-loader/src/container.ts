@@ -22,6 +22,7 @@ import {
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
+	IDeltaManager,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
@@ -30,10 +31,9 @@ import {
 	IProvideRuntimeFactory,
 	IRuntime,
 	isFluidCodeDetails,
-	IDeltaManager,
 	ReadOnlyInfo,
-	ILoaderOptions,
 	type ILoader,
+	type ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -129,7 +129,8 @@ import {
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
 // eslint-disable-next-line import/no-deprecated
-import { IDetachedBlobStorage, RelativeLoader } from "./loader.js";
+import { IDetachedBlobStorage } from "./loader.js";
+import { RelativeLoader } from "./loader.js";
 import {
 	serializeMemoryDetachedBlobStorage,
 	createMemoryDetachedBlobStorage,
