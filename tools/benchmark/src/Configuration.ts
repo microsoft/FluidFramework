@@ -484,7 +484,8 @@ export function qualifiedTitle(
 		assert.fail("Invalid BenchmarkType");
 	const tags = [performanceTestSuiteTag, `@${benchmarkTypeTag}`];
 	if (args.testType !== undefined) {
-		const testTypeTag = TestType[args.testType] ?? assert.fail(`Invalid TestType: ${args.testType}`);
+		const testTypeTag =
+			TestType[args.testType] ?? assert.fail(`Invalid TestType: ${args.testType}`);
 		tags.push(`@${testTypeTag}`);
 	}
 
