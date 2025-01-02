@@ -689,14 +689,13 @@ extends:
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
               outputs:
-                - ${{ if eq(parameters.testCoverage, true) }}:
-                      - output: pipelineArtifact
-                        displayName: Publish Artifacts - code-coverage
-                        condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                        targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-                        artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
-                        sbomEnabled: false
-                        publishLocation: pipeline
+                - output: pipelineArtifact
+                  displayName: Publish Artifacts - code-coverage
+                  condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                  targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                  artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
+                  sbomEnabled: false
+                  publishLocation: pipeline
 
           # Parallel jobs for test tasks
           - ${{ each test in parameters.taskTest }}:
@@ -739,11 +738,6 @@ extends:
 
                 # Test
 
-                # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
-                - script: |
-                    echo "##vso[task.setvariable variable=startTest]true"
-                  displayName: Start Test
-
                 - ${{ if contains(test.name, 'jest') }}:
                   - task: Npm@1
                     displayName: 'Run build for jest tests'
@@ -751,6 +745,12 @@ extends:
                       command: custom
                       workingDir: '${{ parameters.buildDirectory }}'
                       customCommand: 'run ci:build'
+
+                # Set variable startTest if everything is good so far and we'll start running tests,
+                # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
+                - script: |
+                    echo "##vso[task.setvariable variable=startTest]true"
+                  displayName: Start Test
 
                 - template: /tools/pipelines/templates/include-test-task.yml@self
                   parameters:
