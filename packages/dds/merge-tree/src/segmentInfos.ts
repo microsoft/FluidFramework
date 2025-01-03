@@ -97,7 +97,11 @@ export const assertInserted: <T extends Partial<IInsertionInfo> | undefined>(
 	segmentLike: ISegmentInternal | Partial<IInsertionInfo> | T,
 ) => asserts segmentLike is IInsertionInfo | Exclude<T, Partial<IInsertionInfo>> = (
 	segmentLike,
-) => assert(segmentLike === undefined || isInserted(segmentLike), "must be insertionInfo");
+) =>
+	assert(
+		segmentLike === undefined || isInserted(segmentLike),
+		0xaa0 /* must be insertionInfo */,
+	);
 
 /**
  * Common properties for a node in a merge tree.
@@ -154,7 +158,10 @@ export const assertMergeNode: <T extends Partial<IMergeNodeInfo> | undefined>(
 ) => asserts nodeLike is IMergeNodeInfo | Exclude<T, Partial<IMergeNodeInfo>> = (
 	segmentLike,
 ) =>
-	assert(segmentLike === undefined || isMergeNodeInfo(segmentLike), "must be MergeNodeInfo");
+	assert(
+		segmentLike === undefined || isMergeNodeInfo(segmentLike),
+		0xaa1 /* must be MergeNodeInfo */,
+	);
 
 /**
  * Removes the merge node info. This is used to remove nodes from the merge-tree.
@@ -222,7 +229,7 @@ export const isRemoved = (segmentLike: unknown): segmentLike is IRemovalInfo =>
 export const assertRemoved: <T extends Partial<IRemovalInfo> | undefined>(
 	segmentLike: ISegmentInternal | Partial<IRemovalInfo> | T,
 ) => asserts segmentLike is IRemovalInfo | Exclude<T, Partial<IRemovalInfo>> = (segmentLike) =>
-	assert(segmentLike === undefined || isRemoved(segmentLike), "must be removalInfo");
+	assert(segmentLike === undefined || isRemoved(segmentLike), 0xaa2 /* must be removalInfo */);
 
 /**
  * Removes the removal info. This is used in rollback.
@@ -329,7 +336,7 @@ export const isMoved = (segmentLike: unknown): segmentLike is IMoveInfo =>
 export const assertMoved: <T extends Partial<IMoveInfo> | undefined>(
 	segmentLike: ISegmentInternal | Partial<IMoveInfo> | T,
 ) => asserts segmentLike is IMoveInfo | Exclude<T, Partial<IMoveInfo>> = (segmentLike) =>
-	assert(segmentLike === undefined || isMoved(segmentLike), "must be moveInfo");
+	assert(segmentLike === undefined || isMoved(segmentLike), 0xaa3 /* must be moveInfo */);
 
 /**
  * A union type representing any segment info.
