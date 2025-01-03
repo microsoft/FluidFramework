@@ -138,6 +138,8 @@ export interface IClientEvents {
 	): void;
 }
 
+const UNBOUND_SEGMENT_ERROR = "The provided segment is not bound to this DDS.";
+
 /**
  * This class encapsulates a merge-tree, and provides a local client specific view over it and
  * the capability to modify it as the local client. Additionally it provides
@@ -462,8 +464,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		slidingPreference?: SlidingPreference,
 		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
-		if (!isSegmentLeaf(segment) || typeof segment !== "string") {
-			throw new UsageError("as");
+		if (!isSegmentLeaf(segment) && typeof segment !== "string") {
+			throw new UsageError(UNBOUND_SEGMENT_ERROR);
 		}
 		return this._mergeTree.createLocalReferencePosition(
 			segment,
@@ -880,7 +882,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 		const { currentSeq, clientId } = this.getCollabWindow();
 		if (!isSegmentLeaf(segment)) {
-			throw new UsageError("asd");
+			throw new UsageError(UNBOUND_SEGMENT_ERROR);
 		}
 		return this._mergeTree.getPosition(segment, currentSeq, clientId, localSeq);
 	}

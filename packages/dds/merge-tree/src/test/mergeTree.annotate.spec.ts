@@ -15,6 +15,7 @@ import {
 import { MergeTree } from "../mergeTree.js";
 import { Marker, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { assertMergeNode } from "../segmentInfos.js";
 import type { PropsOrAdjust } from "../segmentPropertiesManager.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -182,6 +183,7 @@ describe("MergeTree", () => {
 					);
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const splitSegment = splitAt(mergeTree, splitPos)!;
+					assertMergeNode(splitSegment);
 					assert.notEqual(segmentInfo.segment?.ordinal, splitSegment.ordinal);
 					assert.equal(splitSegment.properties?.propertySource, "local");
 				});
@@ -578,6 +580,7 @@ describe("MergeTree", () => {
 
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const splitSegment = splitAt(mergeTree, annotateStart + 1)!;
+					assertMergeNode(splitSegment);
 					assert.notEqual(segmentInfo.segment?.ordinal, splitSegment.ordinal);
 					assert.equal(splitSegment.properties?.propertySource, "remote");
 					assert.equal(splitSegment.properties?.remoteProperty, 1);
