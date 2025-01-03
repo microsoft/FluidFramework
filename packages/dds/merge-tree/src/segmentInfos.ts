@@ -166,8 +166,13 @@ export const assertMergeNode: <T extends Partial<IMergeNodeInfo> | undefined>(
 /**
  * Removes the merge node info. This is used to remove nodes from the merge-tree.
  * @param segmentLike - The segment-like object to check.
+ * @returns This function will change the type of the provided node like to never via an assertion. This
+ * ensures no further usage of the removed merge node info is allowed. if continued use is required other
+ * type coercion methods should be used to correctly re-type the variable.
  */
-export const removeMergeNodeInfo = (nodeLike: IMergeNodeInfo): Partial<IMergeNodeInfo> =>
+export const removeMergeNodeInfo: (nodeLike: IMergeNodeInfo) => asserts nodeLike is never = (
+	nodeLike,
+) =>
 	Object.assign<IMergeNodeInfo, Record<keyof IMergeNodeInfo, undefined>>(nodeLike, {
 		parent: undefined,
 		index: undefined,
@@ -234,8 +239,13 @@ export const assertRemoved: <T extends Partial<IRemovalInfo> | undefined>(
 /**
  * Removes the removal info. This is used in rollback.
  * @param segmentLike - The segment-like object to check.
+ * @returns This function will change the type of the provided node like to never via an assertion. This
+ * ensures no further usage of the removed removal info is allowed. if continued use is required other
+ * type coercion methods should be use to correctly re-type the variable.
  */
-export const removeRemovalInfo = (nodeLike: IRemovalInfo): Partial<IRemovalInfo> =>
+export const removeRemovalInfo: (nodeLike: IRemovalInfo) => asserts nodeLike is never = (
+	nodeLike,
+) =>
 	Object.assign<IRemovalInfo, Record<keyof IRemovalInfo, undefined>>(nodeLike, {
 		localRemovedSeq: undefined,
 		removedClientIds: undefined,
