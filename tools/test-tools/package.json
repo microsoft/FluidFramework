@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-tools",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"description": "Fluid test tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
