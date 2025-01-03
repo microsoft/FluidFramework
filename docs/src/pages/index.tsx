@@ -14,7 +14,9 @@ import { Homepage } from "@site/src/components/home";
 export default function Home(): React.ReactElement {
 	return (
 		<Layout>
-			<Homepage />
+			<main>
+				<Homepage />
+			</main>
 		</Layout>
 	);
 }
