@@ -218,7 +218,7 @@ export interface PolicyConfig {
 }
 
 /**
- * Used by {@link TagAssertsCommand}.
+ * Used by `TagAssertsCommand`.
  */
 export interface AssertTaggingConfig {
 	/**

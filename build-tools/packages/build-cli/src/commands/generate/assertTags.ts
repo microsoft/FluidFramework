@@ -112,7 +112,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 	}
 
 	// This should not be used due to processPackages being overridden instead.
-	protected override processPackage<TPkg extends Package>(
+	protected override async processPackage<TPkg extends Package>(
 		pkg: TPkg,
 		kind: PackageKind,
 	): Promise<void> {
@@ -132,6 +132,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 
 		for (const pkg of packages) {
 			// Package configuration:
+			// eslint-disable-next-line no-await-in-loop
 			const tsconfigPath = await this.getTsConfigPath(pkg);
 			const packageConfig = getFlubConfig(pkg.directory).assertTagging;
 			const assertionFunctions: AssertionFunctions =
@@ -154,7 +155,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 			dataMap.set(pkg, { assertionFunctions, newAssetFiles });
 		}
 
-		if (errors.length !== 0) {
+		if (errors.length > 0) {
 			return errors;
 		}
 
@@ -294,7 +295,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 	/**
 	 * Updates source files, adding new asserts to `collected`.
 	 *
-	 * @return array of error strings.
+	 * @returns array of error strings.
 	 */
 	private tagAsserts(collected: CollectedData, packageData: PackageData): string[] {
 		const errors: string[] = [];
