@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { RequestHandler } from "express";
 
