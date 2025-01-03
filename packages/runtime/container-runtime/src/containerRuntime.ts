@@ -1913,7 +1913,6 @@ export class ContainerRuntime
 			() => this.clientId,
 			createChildLogger({ logger: this.logger, namespace: "InboundBatchAggregator" }),
 		);
-		this.inboundBatchAggregator.setupListeners();
 
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
@@ -2225,6 +2224,7 @@ export class ContainerRuntime
 		this._summarizer?.dispose();
 		this.channelCollection.dispose();
 		this.pendingStateManager.dispose();
+		this.inboundBatchAggregator.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
 	}
