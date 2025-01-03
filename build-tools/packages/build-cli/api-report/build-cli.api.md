@@ -8,10 +8,9 @@ import { InterdependencyRange } from '@fluid-tools/version-tools';
 import { run } from '@oclif/core';
 import { VersionBumpType } from '@fluid-tools/version-tools';
 
-// @public (undocumented)
+// @public
 export interface AssertTaggingConfig {
-    // (undocumented)
-    assertionFunctions: {
+    assertionFunctions?: {
         [functionName: string]: number;
     };
     enabledPaths?: RegExp[];

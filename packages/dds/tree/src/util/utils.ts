@@ -48,9 +48,14 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 export const clone = structuredClone;
 
 /**
+ * Throw an error with a constant message.
+ * @remarks
+ * Works like {@link @fluidframework/core-utils/internal#assert}.
  */
-export function fail(message: string): never {
-	throw new Error(message);
+export function fail(message: string | number): never {
+	throw new Error(
+		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message,
+	);
 }
 
 /**

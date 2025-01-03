@@ -196,7 +196,7 @@ function nodeDataToMapTree(
 			result = objectToMapTree(data, schema);
 			break;
 		default:
-			fail(`Unrecognized schema kind: ${schema.kind}.`);
+			fail("Unrecognized schema kind");
 	}
 
 	return result;
