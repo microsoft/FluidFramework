@@ -5,6 +5,7 @@
 
 import { LocalReferencePosition } from "./localReference.js";
 import { ISegmentInternal } from "./mergeTreeNodes.js";
+import { hasProp, toMergeNodeInfo } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 
 /**
@@ -39,15 +40,13 @@ export class SortedSegmentSet<
 			// The particular value for comparison doesn't matter because `findItemPosition` tolerates
 			// elements with duplicate keys (as it must, since local references use the same key as their segment).
 			// All that matters is that it's consistent.
-			return lref.getSegment()?.ordinal ?? "";
+			return toMergeNodeInfo(lref.getSegment())?.ordinal ?? "";
 		}
-		const maybeObject = item as { readonly segment: ISegmentInternal };
-		if (maybeObject?.segment) {
-			return maybeObject.segment.ordinal;
+		if (hasProp(item, "segment", "object")) {
+			return toMergeNodeInfo(item.segment)?.ordinal ?? "";
 		}
 
-		const maybeSegment = item as ISegmentInternal;
-		return maybeSegment.ordinal;
+		return toMergeNodeInfo(item)?.ordinal ?? "";
 	}
 
 	protected findItemPosition(item: T): { exists: boolean; index: number } {
