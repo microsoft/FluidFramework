@@ -161,7 +161,7 @@ export const assertMergeNode: <T extends Partial<IMergeNodeInfo> | undefined>(
  * @param segmentLike - The segment-like object to check.
  * @returns This function will change the type of the provided node like to never via an assertion. This
  * ensures no further usage of the removed merge node info is allowed. if continued use is required other
- * type coercion methods should be use to correctly re-type the variable.
+ * type coercion methods should be used to correctly re-type the variable.
  */
 export const removeMergeNodeInfo: (nodeLike: IMergeNodeInfo) => asserts nodeLike is never = (
 	nodeLike,
