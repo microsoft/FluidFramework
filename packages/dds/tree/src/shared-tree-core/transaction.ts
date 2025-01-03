@@ -259,7 +259,7 @@ export class SquashingTransactionStack<
 			this.setTransactionBranch(transactionBranch);
 			transactionBranch.editor.enterTransaction();
 			return (result) => {
-				assert(this.#transactionBranch !== undefined, "Expected transaction branch");
+				assert(this.#transactionBranch !== undefined, 0xa98 /* Expected transaction branch */);
 				this.#transactionBranch.editor.exitTransaction();
 				switch (result) {
 					case TransactionResult.Abort:

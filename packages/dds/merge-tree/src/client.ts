@@ -27,7 +27,11 @@ import {
 
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
+import {
+	NonCollabClient,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
@@ -42,16 +46,13 @@ import type {
 } from "./mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
 	ISegment,
 	ISegmentAction,
-	ISegmentLeaf,
+	ISegmentPrivate,
 	Marker,
-	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 	compareStrings,
-	toMoveInfo,
 } from "./mergeTreeNodes.js";
 import {
 	createAdjustRangeOp,
@@ -84,11 +85,19 @@ import {
 } from "./ops.js";
 import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
+import {
+	isInserted,
+	isMergeNodeInfo,
+	isMoved,
+	isRemoved,
+	overwriteInfo,
+	toMoveInfo,
+	type IInsertionInfo,
+} from "./segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
-// eslint-disable-next-line import/no-deprecated
 import { IMergeTreeTextHelper } from "./textSegment.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
@@ -194,20 +203,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * It is used to get the segment group(s) for the previous operations.
 	 * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
 	 */
-	// eslint-disable-next-line import/no-deprecated
-	public peekPendingSegmentGroups(): SegmentGroup | undefined;
-	// eslint-disable-next-line import/no-deprecated
-	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
-	public peekPendingSegmentGroups(
-		count: number = 1,
-		// eslint-disable-next-line import/no-deprecated
-	): SegmentGroup | SegmentGroup[] | undefined {
+
+	public peekPendingSegmentGroups(count: number = 1): unknown {
 		const pending = this._mergeTree.pendingSegments;
 		let node = pending?.last;
 		if (count === 1 || pending === undefined) {
 			return node?.data;
 		}
-		// eslint-disable-next-line import/no-deprecated
+
 		const taken: SegmentGroup[] = Array.from({ length: Math.min(count, pending.length) });
 		for (let i = taken.length - 1; i >= 0; i--) {
 			taken[i] = node!.data;
@@ -396,15 +399,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	): void {
 		let localInserts = 0;
 		let localRemoves = 0;
-		walkAllChildSegments(this._mergeTree.root, (seg) => {
-			if (seg.seq === UnassignedSequenceNumber) {
+		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentPrivate) => {
+			if (isInserted(seg) && seg.seq === UnassignedSequenceNumber) {
 				localInserts++;
 			}
-			if (seg.removedSeq === UnassignedSequenceNumber) {
+			if (isRemoved(seg) && seg.removedSeq === UnassignedSequenceNumber) {
 				localRemoves++;
 			}
 			// Only serialize segments that have not been removed.
-			if (seg.removedSeq === undefined) {
+			if (!isRemoved(seg)) {
 				handleCollectingSerializer.stringify(seg.clone().toJSONObject(), handle);
 			}
 			return true;
@@ -419,7 +422,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	public getCollabWindow(): CollaborationWindow {
 		return this._mergeTree.collabWindow;
 	}
@@ -430,12 +432,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param segment - The segment to get the position of
 	 */
 	public getPosition(segment: ISegment | undefined, localSeq?: number): number {
-		const mergeSegment: ISegmentLeaf | undefined = segment;
-		if (mergeSegment?.parent === undefined) {
+		if (!isMergeNodeInfo(segment)) {
 			return -1;
 		}
 		return this._mergeTree.getPosition(
-			mergeSegment,
+			segment,
 			this.getCurrentSeq(),
 			this.getClientId(),
 			localSeq,
@@ -509,7 +510,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * Revert an op
 	 */
 	public rollback?(op: unknown, localOpMetadata: unknown): void {
-		// eslint-disable-next-line import/no-deprecated
 		this._mergeTree.rollback(op as IMergeTreeDeltaOp, localOpMetadata as SegmentGroup);
 	}
 
@@ -881,8 +881,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	private resetPendingDeltaToOps(
 		resetOp: IMergeTreeDeltaOp,
-		// eslint-disable-next-line import/no-deprecated
-		segmentGroup: SegmentGroup<ISegmentLeaf>,
+
+		segmentGroup: SegmentGroup,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
 		const NACKedSegmentGroup = this.pendingRebase?.shift()?.data;
@@ -895,7 +895,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 
 		// if this is an obliterate op, keep all segments in same segment group
-		// eslint-disable-next-line import/no-deprecated
+
 		const obliterateSegmentGroup: SegmentGroup = {
 			segments: [],
 			localSeq: segmentGroup.localSeq,
@@ -915,7 +915,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			a.ordinal < b.ordinal ? -1 : 1,
 		)) {
 			assert(
-				segment.segmentGroups?.remove?.(segmentGroup) === true,
+				segment.segmentGroups?.remove(segmentGroup) === true,
 				0x035 /* "Segment group not in segment pending queue" */,
 			);
 			assert(
@@ -935,10 +935,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// unless the remove was local, in which case the annotate must have come
 					// before the remove
 					if (
-						(segment.removedSeq === undefined ||
+						(!isRemoved(segment) ||
 							(segment.localRemovedSeq !== undefined &&
 								segment.removedSeq === UnassignedSequenceNumber)) &&
-						(segment.movedSeq === undefined ||
+						(!isMoved(segment) ||
 							(segment.localMovedSeq !== undefined &&
 								segment.movedSeq === UnassignedSequenceNumber))
 					) {
@@ -960,7 +960,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 				case MergeTreeDeltaType.INSERT: {
 					assert(
-						segment.seq === UnassignedSequenceNumber,
+						isInserted(segment) && segment.seq === UnassignedSequenceNumber,
 						0x037 /* "Segment already has assigned sequence number" */,
 					);
 					const moveInfo = toMoveInfo(segment);
@@ -975,8 +975,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							// we set the seq to the universal seq and remove the local seq,
 							// so its length is not considered for subsequent local changes
 							// this allows us to not send the op as even the local client will ignore the segment
-							segment.seq = UniversalSequenceNumber;
-							segment.localSeq = undefined;
+							overwriteInfo<IInsertionInfo>(segment, {
+								seq: UniversalSequenceNumber,
+								localSeq: undefined,
+								clientId: NonCollabClient,
+							});
 							break;
 						}
 					}
@@ -993,9 +996,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 				case MergeTreeDeltaType.REMOVE: {
 					if (
+						isRemoved(segment) &&
 						segment.localRemovedSeq !== undefined &&
 						segment.removedSeq === UnassignedSequenceNumber &&
-						(segment.movedSeq === undefined ||
+						(!isMoved(segment) ||
 							(segment.localMovedSeq !== undefined &&
 								segment.movedSeq === UnassignedSequenceNumber))
 					) {
@@ -1009,9 +1013,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				case MergeTreeDeltaType.OBLITERATE: {
 					errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
 					if (
+						isMoved(segment) &&
 						segment.localMovedSeq !== undefined &&
 						segment.movedSeq === UnassignedSequenceNumber &&
-						(segment.removedSeq === undefined ||
+						(!isRemoved(segment) ||
 							(segment.localRemovedSeq !== undefined &&
 								segment.removedSeq === UnassignedSequenceNumber))
 					) {
@@ -1191,7 +1196,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	private lastNormalizationRefSeq = 0;
 
-	// eslint-disable-next-line import/no-deprecated
 	private pendingRebase: DoublyLinkedList<SegmentGroup> | undefined;
 
 	/**
@@ -1200,11 +1204,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param resetOp - The op to reset
 	 * @param segmentGroup - The segment group associated with the op
 	 */
-	public regeneratePendingOp(
-		resetOp: IMergeTreeOp,
-		// eslint-disable-next-line import/no-deprecated
-		segmentGroup: SegmentGroup | SegmentGroup[],
-	): IMergeTreeOp {
+	public regeneratePendingOp(resetOp: IMergeTreeOp, localOpMetadata: unknown): IMergeTreeOp {
+		const segmentGroup = localOpMetadata as SegmentGroup | SegmentGroup[];
 		if (this.pendingRebase === undefined || this.pendingRebase.empty) {
 			let firstGroup: SegmentGroup;
 			if (Array.isArray(segmentGroup)) {
@@ -1269,7 +1270,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return opList.length === 1 ? opList[0] : createGroupOp(...opList);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	public createTextHelper(): IMergeTreeTextHelper {
 		return new MergeTreeTextHelper(this._mergeTree);
 	}

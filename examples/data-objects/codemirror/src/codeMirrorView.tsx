@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+import { getTextAndMarkers, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
 import {
 	Marker,
 	MergeTreeDeltaType,
@@ -10,9 +12,7 @@ import {
 	SequenceDeltaEvent,
 	SharedString,
 	TextSegment,
-	getTextAndMarkers,
-	reservedTileLabelsKey,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/sequence/legacy";
 import CodeMirror from "codemirror";
 import React, { useEffect, useRef } from "react";
 
