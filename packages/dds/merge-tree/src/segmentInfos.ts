@@ -181,9 +181,6 @@ export const removeMergeNodeInfo: (nodeLike: IMergeNodeInfo) => asserts nodeLike
 
 /**
  * Contains removal information associated to an {@link ISegment}.
- * @legacy
- * @alpha
- * @deprecated - This interface will be removed in 2.20 with no replacement.
  */
 export interface IRemovalInfo {
 	/**
@@ -258,9 +255,6 @@ export const removeRemovalInfo: (nodeLike: IRemovalInfo) => asserts nodeLike is 
  * Note that merge-tree does not currently support moving and only supports
  * obliterate. The fields below include "move" in their names to avoid renaming
  * in the future, when moves _are_ supported.
- * @legacy
- * @alpha
- * @deprecated - This interface will be removed in 2.20 with no replacement.
  */
 export interface IMoveInfo {
 	/**
