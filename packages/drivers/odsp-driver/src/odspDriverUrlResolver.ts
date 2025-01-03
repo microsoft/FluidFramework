@@ -108,7 +108,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
 			const searchParams = new URLSearchParams(queryString);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			const fileName: string = request.headers[DriverHeader.createNew].fileName;
+			const fileName: string = request.headers[DriverHeader.createNew]?.fileName;
 			const driveID = searchParams.get("driveId");
 			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");

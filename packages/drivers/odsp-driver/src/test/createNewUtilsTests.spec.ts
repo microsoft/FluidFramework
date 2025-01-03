@@ -7,7 +7,11 @@ import { strict as assert } from "node:assert";
 
 import { bufferToString, fromBase64ToUtf8 } from "@fluid-internal/client-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import { ISnapshot, IDocumentAttributes } from "@fluidframework/driver-definitions/internal";
+import {
+	ISnapshot,
+	IDocumentAttributes,
+	type ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
@@ -139,18 +143,18 @@ describe("Create New Utils Tests", () => {
 		);
 		assert.strictEqual(snapshot.blobContents.size, 2, "2 blobs should be there");
 
-		const appTree = snapshotTree.trees[".app"];
-		const protocolTree = snapshotTree.trees[".protocol"];
+		const appTree: ISnapshotTree | undefined = snapshotTree.trees[".app"];
+		const protocolTree: ISnapshotTree | undefined = snapshotTree.trees[".protocol"];
 		assert(appTree !== undefined, "App tree should be there");
 		assert(protocolTree !== undefined, "Protocol tree should be there");
 
-		const appTreeBlobId = appTree.blobs.attributes;
+		const appTreeBlobId: string | undefined = appTree.blobs.attributes;
 		const appTreeBlobValBuffer = snapshot.blobContents.get(appTreeBlobId);
 		assert(appTreeBlobValBuffer !== undefined, "app blob value should exist");
 		const appTreeBlobVal = bufferToString(appTreeBlobValBuffer, "utf8");
 		assert(appTreeBlobVal === blobContent, "Blob content should match");
 
-		const docAttributesBlobId = protocolTree.blobs.attributes;
+		const docAttributesBlobId: string | undefined = protocolTree.blobs.attributes;
 		const docAttributesBuffer = snapshot.blobContents.get(docAttributesBlobId);
 		assert(docAttributesBuffer !== undefined, "protocol attributes blob value should exist");
 		const docAttributesBlobValue = bufferToString(docAttributesBuffer, "utf8");

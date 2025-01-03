@@ -32,7 +32,7 @@ export class WriteBuffer {
 			let index = 0;
 			const oldData = this.data;
 			while (index < length) {
-				newData[index] = oldData[index];
+				newData[index] = oldData[index]!;
 				index++;
 			}
 			this.data = newData;
@@ -233,8 +233,8 @@ function serializeNodeCore(
 	for (const child of nodeCore.nodes) {
 		if (child instanceof NodeCore) {
 			// For a tree node start and end with set/list start and end marker codes.
-			const startCode = MarkerCodesStart[child.type];
-			const endCode = MarkerCodesEnd[child.type];
+			const startCode: MarkerCodesStart | undefined = MarkerCodesStart[child.type];
+			const endCode: MarkerCodesEnd | undefined = MarkerCodesEnd[child.type];
 			assert(startCode !== undefined, 0x285 /* "Start code should not undefined" */);
 			assert(endCode !== undefined, 0x286 /* "End code should not undefined" */);
 			buffer.write(startCode);

@@ -276,7 +276,7 @@ describe("Garbage Collection Stats", () => {
 			);
 
 			// Add 2 new nodes and make one of them unreferenced.
-			defaultGCData.gcNodes["/"].push(nodes[4]);
+			defaultGCData.gcNodes["/"]?.push(nodes[4]);
 			defaultGCData.gcNodes[nodes[4]] = [];
 			defaultGCData.gcNodes[nodes[5]] = [];
 

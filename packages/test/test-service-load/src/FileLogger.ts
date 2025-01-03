@@ -89,7 +89,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 			event.category = event.testCategoryOverride;
 		} else if (
 			typeof event.message === "string" &&
-			event.message.includes("FaultInjectionNack")
+			event.message?.includes("FaultInjectionNack")
 		) {
 			event.category = "generic";
 		}

@@ -208,7 +208,7 @@ export class MapKernel {
 				return nextVal.done
 					? { value: undefined, done: true }
 					: // Unpack the stored value
-						{ value: [nextVal.value[0], nextVal.value[1].value], done: false };
+						{ value: [nextVal.value[0], nextVal.value[1]?.value], done: false };
 			},
 			[Symbol.iterator](): IterableIterator<[string, unknown]> {
 				return this;

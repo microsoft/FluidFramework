@@ -411,7 +411,7 @@ describe("Summary Utils", () => {
 			const blobContent = "testBlobContent";
 			summaryTreeBuilder.addBlob("testBlob", blobContent);
 			const summaryTree = summaryTreeBuilder.summary;
-			const blob = summaryTree.tree.testBlob;
+			const blob: SummaryObject | undefined = summaryTree.tree.testBlob;
 			assert.strictEqual(blob.type, SummaryType.Blob);
 			assert.strictEqual(blob.content, blobContent);
 		});
@@ -432,7 +432,7 @@ describe("Summary Utils", () => {
 			const handle = "testHandle";
 			summaryTreeBuilder.addHandle("testHandleKey", SummaryType.Tree, handle);
 			const summaryTree = summaryTreeBuilder.summary;
-			const handleObject = summaryTree.tree.testHandleKey;
+			const handleObject: SummaryObject | undefined = summaryTree.tree.testHandleKey;
 			assert.strictEqual(handleObject.type, SummaryType.Handle);
 			assert.strictEqual(handleObject.handleType, SummaryType.Tree);
 			assert.strictEqual(handleObject.handle, handle);
@@ -453,7 +453,7 @@ describe("Summary Utils", () => {
 			const attachmentId = "testAttachmentId";
 			summaryTreeBuilder.addAttachment(attachmentId);
 			const summaryTree = summaryTreeBuilder.summary;
-			const attachment = summaryTree.tree["0"];
+			const attachment: SummaryObject | undefined = summaryTree.tree["0"];
 			assert.strictEqual(attachment.type, SummaryType.Attachment);
 			assert.strictEqual(attachment.id, attachmentId);
 		});
@@ -473,7 +473,7 @@ describe("Summary Utils", () => {
 			};
 			summaryTreeBuilder.addWithStats("testKey", summarizeResult);
 			const summaryTree = summaryTreeBuilder.summary;
-			const subTree = summaryTree.tree.testKey;
+			const subTree: SummaryObject | undefined = summaryTree.tree.testKey;
 			assert.strictEqual(subTree.type, SummaryType.Tree);
 			const stats = summaryTreeBuilder.stats;
 			assert.strictEqual(stats.blobNodeCount, 1);
@@ -491,7 +491,7 @@ describe("Summary Utils", () => {
 			const stats = summaryTreeWithStats.stats;
 			assert.strictEqual(stats.blobNodeCount, 1);
 			assert.strictEqual(stats.totalBlobSize, blobContent.length);
-			assert.strictEqual(summaryTree.tree.testBlob.type, SummaryType.Blob);
+			assert.strictEqual(summaryTree.tree.testBlob?.type, SummaryType.Blob);
 		});
 	});
 });

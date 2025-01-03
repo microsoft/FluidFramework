@@ -72,7 +72,7 @@ function readBlobSection(node: NodeTypes): {
 			const records = getNodeProps(blob);
 			assertBlobCoreInstance(records.data, "data should be of BlobCore type");
 			const id = getStringInstance(records.id, "blob id should be string");
-			blobContents.set(id, records.data.arrayBuffer);
+			blobContents.set(id, records.data?.arrayBuffer);
 		}
 	}
 	return { blobContents, slowBlobStructureCount };
@@ -88,15 +88,15 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	const records = getNodeProps(node);
 	assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
 	assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
-	for (let i = 0; i < records.deltas.length; ++i) {
+	for (let i = 0; i < records.deltas?.length; ++i) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		ops.push(JSON.parse(records.deltas.getString(i)));
+		ops.push(JSON.parse(records.deltas?.getString(i)));
 	}
 	// Due to a bug at service side, in an edge case service was serializing deltas even
 	// when there are no ops. So just make the code resilient to that bug. Service has also
 	// fixed that bug.
 	assert(
-		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
+		ops.length === 0 || records.firstSequenceNumber?.valueOf() === ops[0].sequenceNumber,
 		0x280 /* "Validate first op seq number" */,
 	);
 	return ops;
@@ -244,7 +244,7 @@ function readSnapshotSection(node: NodeTypes): {
 	const { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId } =
 		readTreeSection(records.treeNodes);
 	snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
-	const sequenceNumber = records.sequenceNumber.valueOf();
+	const sequenceNumber = records.sequenceNumber?.valueOf();
 	return {
 		sequenceNumber,
 		snapshotTree,
