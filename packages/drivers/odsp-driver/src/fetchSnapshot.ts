@@ -150,7 +150,7 @@ export async function fetchSnapshotWithRedeem(
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
 				// Execute the redeem fallback
-				await redeemSharingLink(odspResolvedUrl, storageTokenFetcher,	logger);
+				await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
 
 				const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl = {
 					...odspResolvedUrl,
