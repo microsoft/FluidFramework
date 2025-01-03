@@ -115,7 +115,7 @@ export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line imp
  * Segment leafs are segments that have both IMergeNodeInfo and IInsertionInfo. This means they
  * are inserted at a position, and bound via their parent MergeBlock to the merge tree. MergeBlocks'
  * children are either a segment leaf, or another merge block for interior nodes of the tree. When working
- * within the tree it is generally unnecessary  to use type coercions methods common to the infos, and segment
+ * within the tree it is generally unnecessary to use type coercions methods common to the infos, and segment
  * leafs, as the children of MergeBlocks are already well typed. However, when segments come from outside the
  * merge tree, like via client's public methods, it becomes necessary to use the type coercions methods
  * to ensure the passed in segment objects are correctly bound to the merge tree.
