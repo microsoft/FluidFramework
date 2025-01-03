@@ -11,6 +11,6 @@ module.exports = {
 	rules: {
 		// This library is used in the browser, so we don't want dependencies on most node libraries.
 		"import/no-nodejs-modules": ["error", { allow: ["child_process", "fs", "util"] }],
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 	},
 };

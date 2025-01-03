@@ -13,7 +13,7 @@ module.exports = {
 	},
 	rules: {
 		"import/no-nodejs-modules": ["error"],
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 	},
 	overrides: [
 		{

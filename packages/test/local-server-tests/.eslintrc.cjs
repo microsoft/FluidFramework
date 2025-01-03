@@ -11,7 +11,7 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 		"import/no-nodejs-modules": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 		"import/no-extraneous-dependencies": [
 			"error",
 			{

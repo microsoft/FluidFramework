@@ -15,6 +15,6 @@ module.exports = {
 		"@typescript-eslint/no-non-null-assertion": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"no-case-declarations": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 	},
 };

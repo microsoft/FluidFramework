@@ -16,7 +16,7 @@ module.exports = {
 
 		// This library uses and serializes "utf-8".
 		"unicorn/text-encoding-identifier-case": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 	},
 	overrides: [
 		{
