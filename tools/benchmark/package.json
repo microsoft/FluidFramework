@@ -27,7 +27,7 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"perf": "mocha --config ./.mocharc.cjs --v8-expose-gc --timeout 999999 --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
+		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha --config ./.mocharc.cjs --v8-expose-gc --timeout 999999 --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"test": "npm run test:mocha",
