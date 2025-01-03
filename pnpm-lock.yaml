@@ -15345,7 +15345,7 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
-  packages/tools/devtools/devtools-example:
+  packages/tools/devtools/devtools-test-app:
     dependencies:
       '@fluentui/react-components':
         specifier: ^9.47.5
