@@ -210,124 +210,130 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				customData: {},
 			};
 
-			// If not in perfMode, just run the test normally
+			await testObject.before?.();
+
+			// This code is easier to read with the short branch of the if first
+			// eslint-disable-next-line unicorn/no-negated-condition
 			if (!isInPerformanceTestingMode) {
-				await testObject.before?.();
+				// If not in perfMode, just run the test as a correctness test with one iteration and no data collection.
 				await testObject.beforeIteration?.();
 				await testObject.run?.();
 				await testObject.afterIteration?.();
-				await testObject.after?.();
-				return benchmarkStats;
-			}
+			} else {
+				// If in perfMode, collect and report data with many iterations
 
-			await testObject.before?.();
-
-			const sample: MemorySampleData = {
-				before: {
-					memoryUsage: [],
-					heap: [],
-					heapSpace: [],
-				},
-				after: {
-					memoryUsage: [],
-					heap: [],
-					heapSpace: [],
-				},
-			};
-			// Do this import only if isInPerformanceTestingMode so correctness mode can work on a non-v8 runtime like the a browser.
-			const v8 = await import("node:v8");
-			assert(global.gc !== undefined, "gc not exposed");
-
-			const startTime = timer.now();
-			try {
-				let heapUsedStats: Stats = {
-					marginOfError: Number.NaN,
-					marginOfErrorPercent: Number.NaN,
-					standardErrorOfMean: Number.NaN,
-					standardDeviation: Number.NaN,
-					arithmeticMean: Number.NaN,
-					samples: [],
-					variance: Number.NaN,
+				const sample: MemorySampleData = {
+					before: {
+						memoryUsage: [],
+						heap: [],
+						heapSpace: [],
+					},
+					after: {
+						memoryUsage: [],
+						heap: [],
+						heapSpace: [],
+					},
 				};
+				// Do this import only if isInPerformanceTestingMode so correctness mode can work on a non-v8 runtime like the a browser.
+				const v8 = await import("node:v8");
+				assert(global.gc !== undefined, "gc not exposed");
 
-				do {
-					await testObject.beforeIteration?.();
-					global.gc();
-					sample.before.memoryUsage.push(process.memoryUsage());
-					sample.before.heap.push(v8.getHeapStatistics());
-					sample.before.heapSpace.push(v8.getHeapSpaceStatistics());
+				const startTime = timer.now();
+				try {
+					let heapUsedStats: Stats = {
+						marginOfError: Number.NaN,
+						marginOfErrorPercent: Number.NaN,
+						standardErrorOfMean: Number.NaN,
+						standardDeviation: Number.NaN,
+						arithmeticMean: Number.NaN,
+						samples: [],
+						variance: Number.NaN,
+					};
 
-					global.gc();
-					await testObject.run();
+					do {
+						await testObject.beforeIteration?.();
+						global.gc();
+						sample.before.memoryUsage.push(process.memoryUsage());
+						sample.before.heap.push(v8.getHeapStatistics());
+						sample.before.heapSpace.push(v8.getHeapSpaceStatistics());
 
-					await testObject.afterIteration?.();
+						global.gc();
+						await testObject.run();
 
-					global.gc();
+						await testObject.afterIteration?.();
 
-					sample.after.memoryUsage.push(process.memoryUsage());
-					sample.after.heap.push(v8.getHeapStatistics());
+						global.gc();
 
-					sample.after.heapSpace.push(v8.getHeapSpaceStatistics());
+						sample.after.memoryUsage.push(process.memoryUsage());
+						sample.after.heap.push(v8.getHeapStatistics());
 
-					runs++;
+						sample.after.heapSpace.push(v8.getHeapSpaceStatistics());
 
-					const heapUsedArray: number[] = [];
-					for (let i = 0; i < sample.before.memoryUsage.length; i++) {
-						heapUsedArray.push(
-							sample.after.memoryUsage[i].heapUsed -
-								sample.before.memoryUsage[i].heapUsed,
+						runs++;
+
+						const heapUsedArray: number[] = [];
+						for (let i = 0; i < sample.before.memoryUsage.length; i++) {
+							heapUsedArray.push(
+								sample.after.memoryUsage[i].heapUsed -
+									sample.before.memoryUsage[i].heapUsed,
+							);
+						}
+						heapUsedStats = getArrayStatistics(
+							heapUsedArray,
+							args.samplePercentageToUse,
 						);
+
+						// Break if max elapsed time passed, only if we've reached the min sample count
+						if (
+							runs >= args.minSampleCount &&
+							timer.toSeconds(startTime, timer.now()) >
+								args.maxBenchmarkDurationSeconds
+						) {
+							break;
+						}
+					} while (
+						runs < args.minSampleCount ||
+						heapUsedStats.marginOfErrorPercent > args.maxRelativeMarginOfError
+					);
+
+					benchmarkStats.customData["Heap Used Avg"] = {
+						rawValue: heapUsedStats.arithmeticMean,
+						formattedValue: prettyNumber(heapUsedStats.arithmeticMean, 2),
+					};
+
+					benchmarkStats.customData["Heap Used StdDev"] = {
+						rawValue: heapUsedStats.standardDeviation,
+						formattedValue: prettyNumber(heapUsedStats.standardDeviation, 2),
+					};
+
+					benchmarkStats.customData["Margin of Error"] = {
+						rawValue: heapUsedStats.marginOfError,
+						formattedValue: `±${prettyNumber(heapUsedStats.marginOfError, 2)}`,
+					};
+
+					benchmarkStats.customData["Relative Margin of Error"] = {
+						rawValue: heapUsedStats.marginOfErrorPercent,
+						formattedValue: `±${prettyNumber(heapUsedStats.marginOfErrorPercent, 2)}`,
+					};
+
+					benchmarkStats.customData.Iterations = {
+						rawValue: runs,
+						formattedValue: prettyNumber(runs, 0),
+					};
+				} catch (error) {
+					// TODO: This results in the mocha test passing when it should fail. Fix this.
+					benchmarkStats = {
+						error: (error as Error).message,
+					};
+				} finally {
+					// It's not perfect, since we don't compute it *immediately* after we stop running tests but it's good enough.
+					if (!isResultError(benchmarkStats)) {
+						benchmarkStats.elapsedSeconds = timer.toSeconds(startTime, timer.now());
 					}
-					heapUsedStats = getArrayStatistics(heapUsedArray, args.samplePercentageToUse);
-
-					// Break if max elapsed time passed, only if we've reached the min sample count
-					if (
-						runs >= args.minSampleCount &&
-						timer.toSeconds(startTime, timer.now()) > args.maxBenchmarkDurationSeconds
-					) {
-						break;
-					}
-				} while (
-					runs < args.minSampleCount ||
-					heapUsedStats.marginOfErrorPercent > args.maxRelativeMarginOfError
-				);
-
-				benchmarkStats.customData["Heap Used Avg"] = {
-					rawValue: heapUsedStats.arithmeticMean,
-					formattedValue: prettyNumber(heapUsedStats.arithmeticMean, 2),
-				};
-
-				benchmarkStats.customData["Heap Used StdDev"] = {
-					rawValue: heapUsedStats.standardDeviation,
-					formattedValue: prettyNumber(heapUsedStats.standardDeviation, 2),
-				};
-
-				benchmarkStats.customData["Margin of Error"] = {
-					rawValue: heapUsedStats.marginOfError,
-					formattedValue: `±${prettyNumber(heapUsedStats.marginOfError, 2)}`,
-				};
-
-				benchmarkStats.customData["Relative Margin of Error"] = {
-					rawValue: heapUsedStats.marginOfErrorPercent,
-					formattedValue: `±${prettyNumber(heapUsedStats.marginOfErrorPercent, 2)}`,
-				};
-
-				benchmarkStats.customData.Iterations = {
-					rawValue: runs,
-					formattedValue: prettyNumber(runs, 0),
-				};
-			} catch (error) {
-				// TODO: This results in the mocha test passing when it should fail. Fix this.
-				benchmarkStats = {
-					error: (error as Error).message,
-				};
-			} finally {
-				// It's not perfect, since we don't compute it *immediately* after we stop running tests but it's good enough.
-				if (!isResultError(benchmarkStats)) {
-					benchmarkStats.elapsedSeconds = timer.toSeconds(startTime, timer.now());
 				}
 			}
 
+			await testObject.after?.();
 			return benchmarkStats;
 		},
 	});
