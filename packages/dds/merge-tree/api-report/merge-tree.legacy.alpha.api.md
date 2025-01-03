@@ -132,14 +132,6 @@ export interface IMarkerDef {
     refType?: ReferenceType;
 }
 
-// @alpha @deprecated
-export interface IMergeNodeCommon {
-    index: number;
-    // (undocumented)
-    isLeaf(): this is ISegment;
-    ordinal: string;
-}
-
 // @alpha (undocumented)
 export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
     // (undocumented)
@@ -292,16 +284,6 @@ export interface IMergeTreeSegmentDelta {
     segment: ISegment;
 }
 
-// @alpha @deprecated
-export interface IMoveInfo {
-    localMovedSeq?: number;
-    movedClientIds: number[];
-    movedSeq: number;
-    movedSeqs: number[];
-    moveDst?: ReferencePosition;
-    wasMovedOnInsert: boolean;
-}
-
 // @alpha
 export interface InteriorSequencePlace {
     // (undocumented)
@@ -315,13 +297,6 @@ export interface IRelativePosition {
     before?: boolean;
     id?: string;
     offset?: number;
-}
-
-// @alpha @deprecated
-export interface IRemovalInfo {
-    localRemovedSeq?: number;
-    removedClientIds: number[];
-    removedSeq: number;
 }
 
 // @alpha

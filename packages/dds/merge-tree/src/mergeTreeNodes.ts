@@ -25,32 +25,11 @@ import {
 	overwriteInfo,
 	type IInsertionInfo,
 	type IMergeNodeInfo,
-	 
 	type IMoveInfo,
-	 
 	type IRemovalInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
-
-/**
- * Common properties for a node in a merge tree.
- * @legacy
- * @alpha
- * @deprecated - This interface will be removed in 2.20 with no replacement.
- */
-export interface IMergeNodeCommon {
-	/**
-	 * The index of this node in its parent's list of children.
-	 */
-	index: number;
-	/**
-	 * A string that can be used for comparing the location of this node to other `MergeNode`s in the same tree.
-	 * `a.ordinal < b.ordinal` if and only if `a` comes before `b` in a pre-order traversal of the tree.
-	 */
-	ordinal: string;
-	isLeaf(): this is ISegment;
-}
 
 /**
  * This interface exposes internal things to dds that leverage merge tree,
@@ -66,8 +45,17 @@ export interface IMergeNodeCommon {
  * @internal
  */
 export type ISegmentInternal = ISegment & {
-	 
 	localRefs?: LocalReferenceCollection;
+	/**
+	 * Whether or not this segment is a special segment denoting the start or
+	 * end of the tree
+	 *
+	 * Endpoint segments are imaginary segments positioned immediately before or
+	 * after the tree. These segments cannot be referenced by regular operations
+	 * and exist primarily as a bucket for local references to slide onto during
+	 * deletion of regular segments.
+	 */
+	readonly endpointType?: "start" | "end";
 };
 
 /**
@@ -90,16 +78,6 @@ export type ISegmentPrivate = ISegmentInternal & {
 	 * then the segment is not obliterated because it is aware of the latest obliteration.
 	 */
 	prevObliterateByInserter?: ObliterateInfo;
-	/**
-	 * Whether or not this segment is a special segment denoting the start or
-	 * end of the tree
-	 *
-	 * Endpoint segments are imaginary segments positioned immediately before or
-	 * after the tree. These segments cannot be referenced by regular operations
-	 * and exist primarily as a bucket for local references to slide onto during
-	 * deletion of regular segments.
-	 */
-	readonly endpointType?: "start" | "end";
 };
 export type ISegmentLeaf = SegmentWithInfo<IMergeNodeInfo & IInsertionInfo>;
 export const isSegmentLeaf = (segmentLike: unknown): segmentLike is ISegmentLeaf =>
@@ -339,14 +317,12 @@ export abstract class BaseSegment implements ISegment {
 		// TODO: deep clone properties
 		seg.properties = clone(this.properties);
 		if (isRemoved(this)) {
-			 
 			overwriteInfo<IRemovalInfo>(seg, {
 				removedSeq: this.removedSeq,
 				removedClientIds: [...this.removedClientIds],
 			});
 		}
 		if (isMoved(this)) {
-			 
 			overwriteInfo<IMoveInfo>(seg, {
 				movedSeq: this.movedSeq,
 				movedSeqs: [...this.movedSeqs],
@@ -404,7 +380,6 @@ export abstract class BaseSegment implements ISegment {
 			});
 		}
 		if (isRemoved(this)) {
-			 
 			overwriteInfo<IRemovalInfo>(leafSegment, {
 				removedClientIds: [...this.removedClientIds],
 				removedSeq: this.removedSeq,
@@ -412,7 +387,6 @@ export abstract class BaseSegment implements ISegment {
 			});
 		}
 		if (isMoved(this)) {
-			 
 			overwriteInfo<IMoveInfo>(leafSegment, {
 				movedClientIds: [...this.movedClientIds],
 				movedSeq: this.movedSeq,
@@ -435,7 +409,6 @@ export abstract class BaseSegment implements ISegment {
 	public append(other: ISegment): void {
 		// Note: Must call 'appendLocalRefs' before modifying this segment's length as
 		//       'this.cachedLength' is used to adjust the offsets of the local refs.
-		 
 		LocalReferenceCollection.append(this, other);
 		if (this.attribution) {
 			assert(
