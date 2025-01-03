@@ -2378,7 +2378,10 @@ export class Container
 		this.emit("op", message);
 	}
 
-	// unknown should be removed once `@alpha` tag is removed from IContainerContext
+	/**
+	 * `unknown` should be removed once `IContainerContext` is `@internal` or `@system`.
+	 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
+	 */
 	private submitSignal(content: unknown | ISignalEnvelope, targetClientId?: string): void {
 		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
