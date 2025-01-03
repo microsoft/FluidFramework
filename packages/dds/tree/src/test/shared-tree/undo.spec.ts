@@ -15,6 +15,7 @@ import { singleJsonCursor } from "../json/index.js";
 import { SharedTreeFactory, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
+	cloneRevertiblesInBatch,
 	createTestUndoRedoStacks,
 	expectJsonTree,
 	moveWithin,
@@ -32,7 +33,6 @@ import {
 	asTreeViewAlpha,
 	SchemaFactory,
 	TreeViewConfiguration,
-	type TreeBranch,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
@@ -707,20 +707,29 @@ describe("Undo and redo", () => {
 		clonedRevertibles.pop()?.revert();
 		assert.equal(forkedView.root.child?.propertyOne, 128);
 	});
-});
 
-/**
- * Clones a batch of revertibles for a target branch.
- * @param revertibles - Array of revertibles to clone
- * @param targetBranch - The target branch to clone the revertibles for
- * @returns Array of cloned revertibles, maintaining the same order as the input
- */
-function cloneRevertiblesInBatch(
-	revertibles: RevertibleAlpha[],
-	targetBranch: TreeBranch,
-): RevertibleAlpha[] {
-	return revertibles.map((revertible) => revertible.clone(targetBranch));
-}
+	it("cloning list of disposed revertibles throws error", () => {
+		const view = createInitializedView();
+		const { undoStack } = createTestUndoRedoStacks(view.events);
+
+		assert(view.root.child !== undefined);
+		view.root.child.propertyOne = 256; // 128 -> 256
+		view.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
+
+		const forkedView = view.fork();
+
+		const batchedRevertibles: RevertibleAlpha[] = [];
+		for (const revertible of undoStack) {
+			revertible.revert();
+			batchedRevertibles.push(revertible);
+			assert.equal(revertible.status, RevertibleStatus.Disposed);
+		}
+
+		assert.throws(() => cloneRevertiblesInBatch(batchedRevertibles, forkedView), {
+			message: "List of revertible should not contain disposed revertibles.",
+		});
+	});
+});
 
 /**
  * Create a checkout belonging to a SharedTree with the given JSON data.
