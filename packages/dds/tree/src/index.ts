@@ -14,24 +14,33 @@ export {
 	type RevertibleAlpha,
 } from "./core/index.js";
 
-export type {
-	/**
-	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
-	 */
-	Listeners,
-	/**
-	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
-	 */
-	IsListener,
-	/**
-	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
-	 */
-	Listenable,
-	/**
-	 * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
-	 */
-	Off,
+import type {
+	Listeners as EventListeners,
+	IsListener as EventIsListener,
+	Listenable as EventListenable,
+	Off as EventOff,
 } from "@fluidframework/core-interfaces";
+
+/**
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Listeners<T extends object> = EventListeners<T>;
+/**
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type IsListener<T> = EventIsListener<T>;
+/**
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Listenable<T extends object> = EventListenable<T>;
+/**
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Off = EventOff;
 
 export {
 	TreeStatus,

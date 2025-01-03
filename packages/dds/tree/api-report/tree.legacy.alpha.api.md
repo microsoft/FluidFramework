@@ -197,7 +197,8 @@ declare namespace InternalTypes {
 }
 export { InternalTypes }
 
-export { IsListener }
+// @public @deprecated (undocumented)
+export type IsListener<T> = IsListener_2<T>;
 
 // @public @sealed
 export class IterableTreeArrayContent<T> implements Iterable<T> {
@@ -222,9 +223,11 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
-export { Listenable }
+// @public @deprecated (undocumented)
+export type Listenable<T extends object> = Listenable_2<T>;
 
-export { Listeners }
+// @public @deprecated (undocumented)
+export type Listeners<T extends object> = Listeners_2<T>;
 
 // @public @sealed
 export interface MakeNominal {
@@ -271,7 +274,8 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<I
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
-export { Off }
+// @public @deprecated (undocumented)
+export type Off = Off_2;
 
 // @public @sealed
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends ReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {
@@ -552,7 +556,7 @@ export enum TreeStatus {
 // @public @sealed
 export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly compatibility: SchemaCompatibilityStatus;
-    readonly events: Listenable<TreeViewEvents>;
+    readonly events: Listenable_2<TreeViewEvents>;
     initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
