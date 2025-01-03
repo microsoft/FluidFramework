@@ -61,7 +61,7 @@ steps:
         SourceBranch=$(Build.SourceBranch)
       "
 
-- template: include-telemetry-setup.yml
+- template: /tools/pipelines/templates/include-telemetry-setup.yml@self
   parameters:
     devFeedUrl: ${{ parameters.devFeedUrl }}
     officeFeedUrl: ${{ parameters.officeFeedUrl }}

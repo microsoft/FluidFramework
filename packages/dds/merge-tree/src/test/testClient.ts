@@ -29,7 +29,13 @@ import {
 	forwardExcursion,
 	walkAllChildSegments,
 } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentPrivate, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import {
+	MergeBlock,
+	ISegmentPrivate,
+	Marker,
+	MaxNodesInBlock,
+	type SegmentGroup,
+} from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
@@ -46,6 +52,7 @@ import {
 import { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
 import { MergeTreeRevertibleDriver } from "../revertibles.js";
+import { assertInserted, isInserted, isMoved, isRemoved } from "../segmentInfos.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -350,10 +357,11 @@ export class TestClient extends Client {
 		const test: string[] = [];
 		walkAllChildSegments(tree.root, (segment: ISegmentPrivate) => {
 			const prefixes: (string | undefined | number)[] = [];
+			assertInserted(segment);
 			prefixes.push(
 				segment.seq === UnassignedSequenceNumber ? `L${segment.localSeq}` : segment.seq,
 			);
-			if (segment.removedSeq !== undefined) {
+			if (isRemoved(segment)) {
 				prefixes.push(
 					segment.removedSeq === UnassignedSequenceNumber
 						? `L${segment.localRemovedSeq}`
@@ -375,22 +383,17 @@ export class TestClient extends Client {
 		let posAccumulated = 0;
 		let offset = pos;
 		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
-			(seg.seq !== undefined &&
-				seg.seq !== UnassignedSequenceNumber &&
-				seg.seq <= seqNumberFrom) ||
-			(seg.localSeq !== undefined && seg.localSeq <= localSeq);
+			isInserted(seg) &&
+			((seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom) ||
+				(seg.localSeq !== undefined && seg.localSeq <= localSeq));
 
-		const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegmentPrivate): boolean =>
-			(removedSeq !== undefined &&
-				removedSeq !== UnassignedSequenceNumber &&
-				removedSeq <= seqNumberFrom) ||
-			(localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
+		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
+			isRemoved(s) &&
+			((s.removedSeq !== UnassignedSequenceNumber && s.removedSeq <= seqNumberFrom) ||
+				(s.localRemovedSeq !== undefined && s.localRemovedSeq <= localSeq));
 
 		walkAllChildSegments(this.mergeTree.root, (seg) => {
-			assert(
-				seg.seq !== undefined || seg.localSeq !== undefined,
-				"either seq or localSeq should be defined",
-			);
+			assertInserted(seg);
 			segment = seg;
 
 			if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
@@ -418,15 +421,15 @@ export class TestClient extends Client {
 
 		let segmentPosition = 0;
 		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
-			seg.localSeq === undefined || seg.localSeq <= localSeq;
-		const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegmentPrivate): boolean =>
-			removedSeq !== undefined &&
-			(removedSeq !== UnassignedSequenceNumber ||
-				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq));
-		const isMovedFromView = ({ movedSeq, localMovedSeq }: ISegmentPrivate): boolean =>
-			movedSeq !== undefined &&
-			(movedSeq !== UnassignedSequenceNumber ||
-				(localMovedSeq !== undefined && localMovedSeq <= localSeq));
+			isInserted(seg) && (seg.localSeq === undefined || seg.localSeq <= localSeq);
+		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
+			isRemoved(s) &&
+			(s.removedSeq !== UnassignedSequenceNumber ||
+				(s.localRemovedSeq !== undefined && s.localRemovedSeq <= localSeq));
+		const isMovedFromView = (s: ISegmentPrivate): boolean =>
+			isMoved(s) &&
+			(s.movedSeq !== UnassignedSequenceNumber ||
+				(s.localMovedSeq !== undefined && s.localMovedSeq <= localSeq));
 		/*
             Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
@@ -477,6 +480,15 @@ export class TestClient extends Client {
 		});
 
 		return seqs;
+	}
+
+	public peekPendingSegmentGroups(): SegmentGroup | undefined;
+	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
+	public peekPendingSegmentGroups(
+		count: number = 1,
+	): SegmentGroup | SegmentGroup[] | undefined {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		return super.peekPendingSegmentGroups(count) as SegmentGroup | SegmentGroup[] | undefined;
 	}
 
 	/**
@@ -610,7 +622,7 @@ export function getStats(tree: MergeTree): MergeTreeStats {
 			if (child.isLeaf()) {
 				stats.leafCount++;
 				const segment = child;
-				if (segment.removedSeq !== undefined) {
+				if (isRemoved(segment)) {
 					stats.removedLeafCount++;
 				}
 			} else {

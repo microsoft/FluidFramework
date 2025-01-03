@@ -9,6 +9,7 @@ import { LocalReferencePosition } from "../localReference.js";
 import { ISegment, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
+import { toMergeNodeInfo } from "../segmentInfos.js";
 import { SortedSegmentSet, SortedSegmentSetItem } from "../sortedSegmentSet.js";
 
 import { TestClient } from "./testClient.js";
@@ -74,7 +75,7 @@ describe("SortedSegmentSet", () => {
 			}
 		}
 		assert.equal(set.size, client.getLength() * 2);
-		validateSet(client, set, (i) => i.segment.ordinal);
+		validateSet(client, set, (i) => toMergeNodeInfo(i.segment)?.ordinal);
 	});
 
 	it("SortedSegmentSet of segments", () => {
@@ -88,7 +89,7 @@ describe("SortedSegmentSet", () => {
 			}
 		}
 		assert.equal(set.size, segmentCount);
-		validateSet(client, set, (i) => i.ordinal);
+		validateSet(client, set, (i) => toMergeNodeInfo(i)?.ordinal);
 	});
 
 	it("SortedSegmentSet of local references", () => {
@@ -119,7 +120,7 @@ describe("SortedSegmentSet", () => {
 			// on TrackingGroup is SortedSegmentSet<Trackable>.
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			(set as any).trackedSet,
-			(i) => i.getSegment()?.ordinal,
+			(i) => toMergeNodeInfo(i.getSegment())?.ordinal,
 		);
 	});
 });

@@ -68,8 +68,8 @@ parameters:
   default: false
 
 - name: buildNumberInPatch
-  type: string
-  default:
+  type: boolean
+  default: false
 
 - name: publishOverride
   type: string
@@ -211,8 +211,6 @@ extends:
             variables:
               - group: ado-feeds
               - group: storage-vars
-              - name: releaseBuildVar
-                value: '$[variables.releaseBuild]'
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
                   value: $(System.PullRequest.TargetBranch)
@@ -236,7 +234,6 @@ extends:
 
                     echo "
                     Pipeline Variables:
-                      releaseBuild=$(releaseBuildVar)
 
                     Override Parameters:
                       packageTypesOverride=${{ parameters.packageTypesOverride }}
@@ -330,7 +327,7 @@ extends:
                   - template: /tools/pipelines/templates/include-set-package-version.yml@self
                     parameters:
                       buildDirectory: '${{ parameters.buildDirectory }}'
-                      buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
+                      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
                       buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
@@ -647,7 +644,7 @@ extends:
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
-        - template: include-publish-npm-package.yml
+        - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
           parameters:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}

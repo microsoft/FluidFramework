@@ -4,6 +4,7 @@
  */
 
 import { type ISegmentPrivate, type MergeBlock, IMergeNode } from "./mergeTreeNodes.js";
+import { isMergeNodeInfo } from "./segmentInfos.js";
 
 export const LeafAction = {
 	Exit: false,
@@ -124,7 +125,7 @@ export function forwardExcursion(
 	startNode: IMergeNode,
 	leafAction: (seg: ISegmentPrivate) => boolean | undefined,
 ): boolean {
-	if (startNode.parent === undefined) {
+	if (!isMergeNodeInfo(startNode)) {
 		return true;
 	}
 
@@ -147,7 +148,7 @@ export function backwardExcursion(
 	startNode: IMergeNode,
 	leafAction: (seg: ISegmentPrivate) => boolean | undefined,
 ): boolean {
-	if (startNode.parent === undefined) {
+	if (!isMergeNodeInfo(startNode)) {
 		return true;
 	}
 	return depthFirstNodeWalk(
