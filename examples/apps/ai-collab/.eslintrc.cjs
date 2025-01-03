@@ -18,15 +18,23 @@ module.exports = {
 		"import/no-internal-modules": [
 			"error",
 			{
-				allow: importInternalModulesAllowed.concat([
+				allow: [
+					"@fluidframework/*/beta",
+					"@fluidframework/*/alpha",
+
 					// NextJS requires reaching to its internal modules
 					"next/**",
 
 					// Path aliases
 					"@/actions/**",
 					"@/types/**",
+					"@/infra/**",
 					"@/components/**",
-				]),
+					"@/app/**",
+
+					// Experimental package APIs and exports are unknown, so allow any imports from them.
+					"@fluidframework/ai-collab/alpha",
+				],
 			},
 		],
 		// This is an example/test app; all its dependencies are dev dependencies so as not to pollute the lockfile

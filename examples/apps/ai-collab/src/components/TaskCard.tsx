@@ -37,7 +37,6 @@ import { Tree, type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
 import React, { useState, type ReactNode, type SetStateAction } from "react";
 
-// eslint-disable-next-line import/no-internal-modules
 import { getOpenAiClient } from "@/infra/openAiClient";
 import {
 	SharedTreeTask,
