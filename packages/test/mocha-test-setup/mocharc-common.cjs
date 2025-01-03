@@ -55,7 +55,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 			"conditions=allow-ff-test-exports",
 			// Performance tests benefit from having access to GC, and memory tests require it.
 			// Exposing it here avoids all packages which do perf testing from having to expose it.
-			// Node that since "node-option" is explicitly set,
+			// Note that since "node-option" is explicitly set,
 			// these must be provided here and not via mocha's --v8-expose-gc.
 			"expose-gc",
 		],
