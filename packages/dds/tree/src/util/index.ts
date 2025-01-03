@@ -94,6 +94,7 @@ export {
 	hasSome,
 	hasSingle,
 	defineLazyCachedProperty,
+	copyPropertyIfDefined as copyProperty,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 

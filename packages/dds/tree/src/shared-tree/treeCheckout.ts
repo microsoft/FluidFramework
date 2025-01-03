@@ -1022,6 +1022,9 @@ class EditLock {
 			addNodeExistsConstraint(path) {
 				editor.addNodeExistsConstraint(path);
 			},
+			addNodeExistsConstraintOnRevert(path) {
+				editor.addNodeExistsConstraintOnRevert(path);
+			},
 		};
 	}
 

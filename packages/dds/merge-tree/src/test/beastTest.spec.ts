@@ -35,11 +35,10 @@ import { MergeTree } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
 	IJSONMarkerSegment,
-	IMergeNode,
 	compareNumbers,
 	compareStrings,
 	reservedMarkerIdKey,
-	type ISegmentLeaf,
+	type ISegmentPrivate,
 } from "../mergeTreeNodes.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
@@ -284,14 +283,10 @@ export function fileTest1(): void {
 	}
 }
 
-function printTextSegment(textSegment: ISegmentLeaf, pos: number): boolean {
+function printTextSegment(textSegment: ISegmentPrivate, pos: number): boolean {
 	log(textSegment.toString());
 	log(`at [${pos}, ${pos + textSegment.cachedLength})`);
 	return true;
-}
-
-export function makeTextSegment(text: string): IMergeNode {
-	return new TextSegment(text);
 }
 
 function makeCollabTextSegment(text: string): TextSegment {
@@ -387,11 +382,7 @@ export function mergeTreeTest1(): void {
 	// checkRemoveSegTree(segTree, 4, 13);
 	checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
 	mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
-	const segoff = mergeTree.getContainingSegment<ISegmentLeaf>(
-		4,
-		UniversalSequenceNumber,
-		LocalClientId,
-	);
+	const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
 	log(mergeTree.getPosition(segoff.segment!, UniversalSequenceNumber, LocalClientId));
 	log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
 	log(mergeTree.toString());
@@ -1530,7 +1521,7 @@ function findReplacePerf(filename: string): void {
 	let cFetches = 0;
 	let cReplaces = 0;
 	for (let pos = 0; pos < client.getLength(); ) {
-		const curSegOff = client.getContainingSegment<ISegmentLeaf>(pos);
+		const curSegOff = client.getContainingSegment<ISegmentPrivate>(pos);
 		cFetches++;
 
 		const curSeg = curSegOff.segment;
