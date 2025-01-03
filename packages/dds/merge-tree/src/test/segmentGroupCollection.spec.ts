@@ -15,7 +15,7 @@ describe("segmentGroupCollection", () => {
 	let segment: ISegmentPrivate;
 	let segmentGroups: SegmentGroupCollection;
 	beforeEach(() => {
-		parent = new MergeBlock(0);
+		parent = new MergeBlock(1);
 		const newSeg = (segment = overwriteInfo<IInsertionInfo>(TextSegment.make("abc"), {
 			clientId: 0,
 			seq: 1,
@@ -68,7 +68,7 @@ describe("segmentGroupCollection", () => {
 			clientId: 0,
 			seq: 1,
 		});
-		assignChild(parent, segmentCopy, 0);
+		assignChild(parent, segmentCopy, parent.childCount++);
 
 		const segmentGroupCopy = new SegmentGroupCollection(segmentCopy);
 		segmentGroups.copyTo(segmentGroupCopy);

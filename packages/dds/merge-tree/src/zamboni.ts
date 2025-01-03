@@ -164,12 +164,10 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 					},
 					undefined,
 				);
-
-				removeMergeNodeInfo(segment);
-
 				if (Marker.is(segment)) {
 					mergeTree.unlinkMarker(segment);
 				}
+				removeMergeNodeInfo(segment);
 			} else {
 				holdNodes.push(segment);
 			}
@@ -194,8 +192,8 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 						undefined,
 					);
 
-					removeMergeNodeInfo(segment);
 					for (const tg of segment.trackingCollection.trackingGroups) tg.unlink(segment);
+					removeMergeNodeInfo(segment);
 				} else {
 					holdNodes.push(segment);
 					prevSegment = segmentHasPositiveLength ? segment : undefined;

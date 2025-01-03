@@ -2348,13 +2348,10 @@ export class MergeTree {
 					isRemoved(segment) && segment.removedClientIds[0] === this.collabWindow.clientId,
 					0x39d /* Rollback segment removedClientId does not match local client */,
 				);
+				let updateNode: MergeBlock | undefined = segment.parent;
 				removeRemovalInfo(segment);
 
-				for (
-					let updateNode: MergeBlock | undefined = segment.parent;
-					updateNode !== undefined;
-					updateNode = updateNode.parent
-				) {
+				for (updateNode; updateNode !== undefined; updateNode = updateNode.parent) {
 					this.blockUpdateLength(
 						updateNode,
 						UnassignedSequenceNumber,

@@ -385,7 +385,7 @@ export class MergeBlock implements Partial<IMergeNodeInfo> {
 		child.ordinal = computeHierarchicalOrdinal(
 			MaxNodesInBlock,
 			childCount,
-			this.ordinal ?? "",
+			this.ordinal,
 			index === 0 ? undefined : this.children[index - 1]?.ordinal,
 		);
 	}
