@@ -50,14 +50,14 @@ describe("Presence", () => {
 
 		it("sends join when connected during initialization", () => {
 			// Setup, Act (call to createPresenceManager), & Verify (post createPresenceManager call)
-			prepareConnectedPresence(runtime, "seassionId-2", "client2", clock, logger);
+			prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 		});
 
 		describe("responds to ClientJoin", () => {
 			let presence: ReturnType<typeof createPresenceManager>;
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(runtime, "seassionId-2", "client2", clock, logger);
+				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -83,7 +83,7 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": "seassionId-2",
+										"value": "sessionId-2",
 									},
 								},
 							},
@@ -153,7 +153,7 @@ describe("Presence", () => {
 									"client2": {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": "seassionId-2",
+										"value": "sessionId-2",
 									},
 								},
 							},
