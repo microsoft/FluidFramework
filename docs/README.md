@@ -329,7 +329,3 @@ The following npm scripts are supported in this directory:
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
-
-```
-
-```

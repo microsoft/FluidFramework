@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      js-cookie:
-        specifier: ^3.0.5
-        version: 3.0.5
     devDependencies:
       '@azure/static-web-apps-cli':
         specifier: ^2.0.1
@@ -111,6 +107,9 @@ importers:
       fs-extra:
         specifier: ^11.2.0
         version: 11.2.0
+      js-cookie:
+        specifier: ^3.0.5
+        version: 3.0.5
       linkcheck-bin:
         specifier: 3.0.0-1
         version: 3.0.0-1
@@ -11006,7 +11005,7 @@ packages:
   /js-cookie@3.0.5:
     resolution: {integrity: sha512-cEiJEAEoIbWfCZYKWhVwFuvPX1gETRYPw6LlaTKoxD3s2AkXzkCjnp6h0V77ozyqj0jakteJ4YqDJT830+lVGw==}
     engines: {node: '>=14'}
-    dev: false
+    dev: true
 
   /js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}

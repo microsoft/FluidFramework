@@ -17,7 +17,7 @@ if (siteConfig?.customFields?.INSTRUMENTATION_KEY === undefined) {
 
 // Only initialize Application Insights if not in local development.
 // Remove the condition if you want to run Application Insights locally.
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
 	appInsights = new ApplicationInsights({
 		config: {
 			connectionString: `InstrumentationKey=${siteConfig?.customFields?.INSTRUMENTATION_KEY}`,
