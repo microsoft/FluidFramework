@@ -434,7 +434,7 @@ export function assignChild<C extends IMergeNodeBuilder>(
 	index: number,
 	updateOrdinal = true,
 ): asserts child is C & IMergeNodeInfo {
-	const node = Object.assign<IMergeNodeBuilder, IMergeNodeInfo>(child, {
+	const node = Object.assign<C, IMergeNodeInfo>(child, {
 		parent,
 		index,
 		ordinal: child.ordinal ?? "",
