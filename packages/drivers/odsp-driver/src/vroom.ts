@@ -53,7 +53,7 @@ export async function fetchJoinSession(
 	options: TokenFetchOptionsEx,
 	disableJoinSessionRefresh: boolean | undefined,
 	isRefreshingJoinSession: boolean,
-	displayName: string | undefined
+	displayName: string | undefined,
 ): Promise<ISocketStorageDiscovery> {
 	const apiRoot = getApiRoot(new URL(urlParts.siteUrl));
 	const url = `${apiRoot}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?ump=1`;
@@ -93,10 +93,10 @@ export async function fetchJoinSession(
 
 			let requestBody: IJoinSessionBody | undefined;
 			if (requestSocketToken) {
-				requestBody = {	...requestBody, requestSocketToken: true };
+				requestBody = { ...requestBody, requestSocketToken: true };
 			}
 			if (displayName) {
-				requestBody = {	...requestBody, displayName };
+				requestBody = { ...requestBody, displayName };
 			}
 			if (requestBody) {
 				postBody += `\r\n${JSON.stringify(requestBody)}\r\n`;

@@ -319,7 +319,7 @@ export class OdspDelayLoadedDeltaStream {
 		options: TokenFetchOptionsEx,
 		isRefreshingJoinSession: boolean,
 		clientId: string | undefined,
-		displayName: string | undefined
+		displayName: string | undefined,
 	): Promise<ISocketStorageDiscovery> {
 		// If this call is to refresh the join session for the current connection but we are already disconnected in
 		// the meantime or disconnected and then reconnected then do not make the call. However, we should not have
