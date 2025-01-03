@@ -5,7 +5,12 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	benchmark,
+	isInPerformanceTestingMode,
+	type BenchmarkTimer,
+} from "@fluid-tools/benchmark";
 import {
 	type DeepTreeNode,
 	generateDeepSimpleTree,
@@ -117,18 +122,26 @@ describe("SimpleTree benchmarks", () => {
 						assert.equal(readNumber, expectedValue);
 					},
 				});
-				let flexTree: RootNode | undefined;
+
 				benchmark({
 					type: BenchmarkType.Measurement,
 					title: `${title} (flex node)`,
-					before: () => {
-						flexTree = flexNodeInitFunction();
-					},
-					benchmarkFn: () => {
-						readNumber = treeReadingFunction(flexTree ?? fail("Expected flexTree to be set"));
-					},
-					after: () => {
-						assert.equal(readNumber, expectedValue);
+					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+						const flexTree = flexNodeInitFunction();
+
+						let duration: number;
+						do {
+							let counter = state.iterationsPerBatch;
+							const before = state.timer.now();
+							while (counter--) {
+								readNumber = treeReadingFunction(flexTree);
+							}
+							const after = state.timer.now();
+
+							assert.equal(readNumber, expectedValue);
+
+							duration = state.timer.toSeconds(before, after);
+						} while (state.recordBatch(duration));
 					},
 				});
 			}
