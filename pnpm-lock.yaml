@@ -4708,6 +4708,55 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
+  examples/utils/import-testing:
+    dependencies:
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../../packages/dds/tree
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../../packages/test/mocha-test-setup
+      '@fluidframework/build-tools':
+        specifier: ^0.51.0
+        version: 0.51.0(@types/node@18.19.67)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.67
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      mocha:
+        specifier: ^10.2.0
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   examples/utils/migration-tools:
     dependencies:
       '@fluid-experimental/pact-map':
