@@ -23,14 +23,17 @@ import { ReferencePosition } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	isInserted,
+	isMergeNodeInfo as isMergeNode,
 	isMoved,
 	isRemoved,
 	overwriteInfo,
 	type IInsertionInfo,
+	type IMergeNodeInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IRemovalInfo,
+	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
 
@@ -87,8 +90,7 @@ export type ISegmentInternal = Omit<
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
 export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
-	Partial<IInsertionInfo & IMergeNodeCommon> & {
-		parent?: MergeBlock;
+	Partial<IInsertionInfo & IMergeNodeInfo> & {
 		segmentGroups?: SegmentGroupCollection;
 		propertyManager?: PropertiesManager;
 		/**
@@ -287,7 +289,7 @@ export interface ISegmentAction<TClientData> {
 }
 export interface ISegmentChanges {
 	next?: ISegmentPrivate;
-	replaceCurrent?: ISegmentPrivate;
+	replaceCurrent?: SegmentWithInfo<IInsertionInfo>;
 }
 export interface BlockAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
@@ -303,7 +305,7 @@ export interface BlockAction<TClientData> {
 }
 
 export interface InsertContext {
-	candidateSegment?: ISegmentPrivate;
+	candidateSegment?: SegmentWithInfo<IInsertionInfo>;
 	leaf: (
 		segment: ISegmentPrivate | undefined,
 		pos: number,
@@ -337,7 +339,7 @@ export interface SegmentGroup {
  * facilitate splits.)
  */
 export const MaxNodesInBlock = 8;
-export class MergeBlock implements IMergeNodeCommon {
+export class MergeBlock implements Partial<IMergeNodeInfo> {
 	public children: IMergeNode[];
 	public needsScour?: boolean;
 	public parent?: MergeBlock;
@@ -395,15 +397,22 @@ export class MergeBlock implements IMergeNodeCommon {
 			index === 0 ? undefined : this.children[index - 1]?.ordinal,
 		);
 	}
-
-	public assignChild(child: IMergeNode, index: number, updateOrdinal = true): void {
-		child.parent = this;
-		child.index = index;
-		if (updateOrdinal) {
-			this.setOrdinal(child, index);
-		}
-		this.children[index] = child;
+}
+export function assignChild<C extends IMergeNode>(
+	parent: MergeBlock,
+	child: C,
+	index: number,
+	updateOrdinal = true,
+): asserts child is C & IMergeNodeInfo {
+	const node = Object.assign<C, IMergeNodeInfo>(child, {
+		parent,
+		index,
+		ordinal: child.ordinal ?? "",
+	});
+	if (updateOrdinal) {
+		parent.setOrdinal(node, index);
 	}
+	parent.children[index] = node;
 }
 
 export function seqLTE(seq: number, minOrRefSeq: number): boolean {
@@ -551,17 +560,19 @@ export abstract class BaseSegment implements ISegment {
 			return undefined;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
-		const thisAsMergeSegment: ISegmentPrivate = this;
-		leafSegment.parent = thisAsMergeSegment.parent;
-
-		// Give the leaf a temporary yet valid ordinal.
-		// when this segment is put in the tree, it will get its real ordinal,
-		// but this ordinal meets all the necessary invariants for now.
-		// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
-		// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
-		// eslint-disable-next-line unicorn/prefer-code-point
-		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
+		if (isMergeNode(this)) {
+			overwriteInfo<IMergeNodeInfo>(leafSegment, {
+				index: this.index + 1,
+				// Give the leaf a temporary yet valid ordinal.
+				// when this segment is put in the tree, it will get its real ordinal,
+				// but this ordinal meets all the necessary invariants for now.
+				// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+				// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
+				// eslint-disable-next-line unicorn/prefer-code-point
+				ordinal: this.ordinal + String.fromCharCode(0),
+				parent: this.parent,
+			});
+		}
 
 		if (isInserted(this)) {
 			overwriteInfo<IInsertionInfo>(leafSegment, {

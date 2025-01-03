@@ -54,6 +54,7 @@ import {
 	MaxNodesInBlock,
 	MergeBlock,
 	SegmentGroup,
+	assignChild,
 	reservedMarkerIdKey,
 	seqLTE,
 	type ISegmentInternal,
@@ -85,6 +86,7 @@ import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	assertMoved,
 	assertRemoved,
+	isMergeNodeInfo,
 	isMoved,
 	isRemoved,
 	overwriteInfo,
@@ -548,9 +550,11 @@ class Obliterates {
 	public findOverlapping(seg: ISegmentPrivate): Iterable<ObliterateInfo> {
 		const overlapping: ObliterateInfo[] = [];
 		for (const start of this.startOrdered.items) {
-			if (start.getSegment()!.ordinal <= seg.ordinal) {
+			const startSeg = start.getSegment();
+			if (isMergeNodeInfo(startSeg) && startSeg.ordinal <= seg.ordinal) {
 				const ob = start.properties?.obliterate as ObliterateInfo;
-				if (ob.end.getSegment()!.ordinal >= seg.ordinal) {
+				const endSeg = ob.end.getSegment();
+				if (isMergeNodeInfo(endSeg) && endSeg.ordinal >= seg.ordinal) {
 					overlapping.push(ob);
 				}
 			} else {
@@ -700,7 +704,7 @@ export class MergeTree {
 
 	private addNode(block: MergeBlock, node: IMergeNode): number {
 		const index = block.childCount++;
-		block.assignChild(node, index, false);
+		assignChild(block, node, index, false);
 		return index;
 	}
 
@@ -1292,8 +1296,8 @@ export class MergeTree {
 	private updateRoot(splitNode: MergeBlock | undefined): void {
 		if (splitNode !== undefined) {
 			const newRoot = this.makeBlock(2);
-			newRoot.assignChild(this.root, 0, false);
-			newRoot.assignChild(splitNode, 1, false);
+			assignChild(newRoot, this.root, 0, false);
+			assignChild(newRoot, splitNode, 1, false);
 			this.root = newRoot;
 			this.nodeUpdateOrdinals(this.root);
 			this.nodeUpdateLengthNewStructure(this.root);
@@ -1793,7 +1797,7 @@ export class MergeTree {
 					const segment = child;
 					const segmentChanges = context.leaf(segment, _pos, context);
 					if (segmentChanges.replaceCurrent) {
-						block.assignChild(segmentChanges.replaceCurrent, childIndex, false);
+						assignChild(block, segmentChanges.replaceCurrent, childIndex, false);
 						segmentChanges.replaceCurrent.ordinal = child.ordinal;
 					}
 					if (segmentChanges.next) {
@@ -1846,7 +1850,7 @@ export class MergeTree {
 				block.children[i] = block.children[i - 1];
 				block.children[i].index = i;
 			}
-			block.assignChild(newNode, childIndex, false);
+			assignChild(block, newNode, childIndex, false);
 			block.childCount++;
 			block.setOrdinal(newNode, childIndex);
 			if (block.childCount < MaxNodesInBlock) {
@@ -1881,7 +1885,7 @@ export class MergeTree {
 		// Update ordinals to reflect lowered child count
 		this.nodeUpdateOrdinals(node);
 		for (let i = 0; i < halfCount; i++) {
-			newNode.assignChild(node.children[halfCount + i], i, false);
+			assignChild(newNode, node.children[halfCount + i], i, false);
 			node.children[halfCount + i] = undefined!;
 		}
 		this.nodeUpdateLengthNewStructure(node);
@@ -2364,7 +2368,7 @@ export class MergeTree {
 				removeRemovalInfo(segment);
 
 				for (
-					let updateNode = segment.parent;
+					let updateNode: MergeBlock | undefined = segment.parent;
 					updateNode !== undefined;
 					updateNode = updateNode.parent
 				) {
@@ -2599,7 +2603,7 @@ export class MergeTree {
 		for (let i = 0; i < newOrder.length; i++) {
 			const seg = newOrder[i];
 			const { parent, index, ordinal } = currentOrder[i];
-			parent?.assignChild(seg, index, false);
+			assignChild(parent!, seg, index, false);
 			seg.ordinal = ordinal;
 		}
 
