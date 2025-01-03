@@ -20,11 +20,10 @@ export class ResponseSizeMiddleware {
 						typeof body === "string" ? body : JSON.stringify(body),
 					);
 				} catch (error) {
-					Lumberjack.error("Invalid JSON string in response body");
-					return res.status(500).json({
-						error: "Invalid JSON",
-						message: "Response body is not a valid JSON string",
-					});
+					Lumberjack.error("Invalid JSON string in response body", undefined, error);
+					// In case of JSON parsing errors, we log internally and send the
+					// original response to the client to prevent breaking the client's experience.
+					return originalSend.call(res, body);
 				}
 
 				if (responseSize > this.maxResponseSizeInMegaBytes * 1024 * 1024) {
