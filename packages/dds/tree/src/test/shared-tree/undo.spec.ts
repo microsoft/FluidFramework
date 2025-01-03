@@ -6,6 +6,7 @@
 import {
 	type FieldUpPath,
 	type Revertible,
+	type RevertibleAlpha,
 	RevertibleStatus,
 	type UpPath,
 	rootFieldKey,
@@ -14,6 +15,7 @@ import { singleJsonCursor } from "../json/index.js";
 import { SharedTreeFactory, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
+	cloneRevertiblesInBatch,
 	createTestUndoRedoStacks,
 	expectJsonTree,
 	moveWithin,
@@ -672,6 +674,60 @@ describe("Undo and redo", () => {
 			() => clonedUndoOriginalPropertyOne?.revert(),
 			"Error: Unable to revert a revertible that has been disposed.",
 		);
+	});
+
+	it("clone list of revertibles", () => {
+		const view = createInitializedView();
+		const { undoStack } = createTestUndoRedoStacks(view.events);
+
+		assert(view.root.child !== undefined);
+		view.root.child.propertyOne = 256; // 128 -> 256
+		view.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
+
+		const forkedView = view.fork();
+
+		const batchedRevertibles: RevertibleAlpha[] = [];
+		for (const revertible of undoStack) {
+			batchedRevertibles.push(revertible);
+		}
+
+		const clonedRevertibles = cloneRevertiblesInBatch(batchedRevertibles, forkedView);
+
+		assert.equal(clonedRevertibles.length, 2);
+		assert.equal(forkedView.root.child?.propertyOne, 256);
+		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "newItem");
+
+		assert.equal(clonedRevertibles[0]?.status, RevertibleStatus.Valid);
+		assert.equal(clonedRevertibles[1]?.status, RevertibleStatus.Valid);
+
+		clonedRevertibles.pop()?.revert();
+		assert.equal(forkedView.root.child?.propertyOne, 256);
+		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "");
+
+		clonedRevertibles.pop()?.revert();
+		assert.equal(forkedView.root.child?.propertyOne, 128);
+	});
+
+	it("cloning list of disposed revertibles throws error", () => {
+		const view = createInitializedView();
+		const { undoStack } = createTestUndoRedoStacks(view.events);
+
+		assert(view.root.child !== undefined);
+		view.root.child.propertyOne = 256; // 128 -> 256
+		view.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
+
+		const forkedView = view.fork();
+
+		const batchedRevertibles: RevertibleAlpha[] = [];
+		for (const revertible of undoStack) {
+			revertible.revert();
+			batchedRevertibles.push(revertible);
+			assert.equal(revertible.status, RevertibleStatus.Disposed);
+		}
+
+		assert.throws(() => cloneRevertiblesInBatch(batchedRevertibles, forkedView), {
+			message: "List of revertible should not contain disposed revertibles.",
+		});
 	});
 });
 
