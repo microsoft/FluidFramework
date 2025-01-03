@@ -23,8 +23,8 @@ describe("Throttler Middleware", () => {
 	};
 	beforeEach(() => {
 		app = express();
-		responseSizeMiddler = new ResponseSizeMiddleware(responseMaxSizeInMb);
-		app.use(responseSizeMiddler.validateResponseSize());
+		responseSizeMiddleware = new ResponseSizeMiddleware(responseMaxSizeInMb);
+		app.use(responseSizeMiddleware.validateResponseSize());
 	});
 
 	describe("validateResponseSize", () => {
