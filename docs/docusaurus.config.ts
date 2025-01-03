@@ -167,18 +167,8 @@ const config: Config = {
 			},
 		],
 	],
-	headTags: [
-		{
-			tagName: "script",
-			attributes: {
-				src: "https://wcpstatic.microsoft.com/mscc/lib/v2/wcp-consent.js",
-				async: "true",
-			},
-		},
-	],
 	customFields: {
 		INSTRUMENTATION_KEY: process.env.INSTRUMENTATION_KEY,
-		APPLICATION_ID: process.env.APPLICATION_ID,
 	},
 };
 

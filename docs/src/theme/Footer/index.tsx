@@ -85,9 +85,7 @@ function FooterSocialLinks(): JSX.Element {
 function FooterPrivacyLinks(): JSX.Element {
 	return (
 		<div className="ffcom-footer-privacy">
-			<LinkItem targetUrl="https://privacy.microsoft.com/privacystatement">
-				Privacy and cookies
-			</LinkItem>
+			<LinkItem targetUrl="https://privacy.microsoft.com/privacystatement">Privacy</LinkItem>
 			<LinkItem targetUrl="https://go.microsoft.com/fwlink/?linkid=2259814">
 				Consumer Health Privacy
 			</LinkItem>

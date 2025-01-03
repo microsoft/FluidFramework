@@ -7,10 +7,10 @@ settings:
 importers:
 
   .:
-    optionalDependencies:
-      '@wcp/wcp-consent':
-        specifier: 1.1.0
-        version: 1.1.0
+    dependencies:
+      js-cookie:
+        specifier: ^3.0.5
+        version: 3.0.5
     devDependencies:
       '@azure/static-web-apps-cli':
         specifier: ^2.0.1
@@ -5724,12 +5724,6 @@ packages:
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
     dev: true
 
-  /@wcp/wcp-consent@1.1.0:
-    resolution: {integrity: sha1-PmkIvQrJbgv/05MLg66C1R9hfew=}
-    requiresBuild: true
-    dev: false
-    optional: true
-
   /@webassemblyjs/ast@1.14.1:
     resolution: {integrity: sha512-nuBEDgQfm1ccRp/8bCQrx1frohyufl4JlbMMZ4P1wpeOfDhF6FQkxZJ1b/e+PLwr6X1Nhw6OLme5usuBWYBvuQ==}
     dependencies:
@@ -11008,6 +11002,11 @@ packages:
       '@sideway/formula': 3.0.1
       '@sideway/pinpoint': 2.0.0
     dev: true
+
+  /js-cookie@3.0.5:
+    resolution: {integrity: sha512-cEiJEAEoIbWfCZYKWhVwFuvPX1gETRYPw6LlaTKoxD3s2AkXzkCjnp6h0V77ozyqj0jakteJ4YqDJT830+lVGw==}
+    engines: {node: '>=14'}
+    dev: false
 
   /js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
