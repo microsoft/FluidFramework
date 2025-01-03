@@ -1,4 +1,4 @@
-# @fluid-example/devtools-example
+# @fluid-private/devtools-test-app
 
 ## 2.12.0
 

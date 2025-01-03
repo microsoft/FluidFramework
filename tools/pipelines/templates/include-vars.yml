@@ -17,7 +17,8 @@ parameters:
   default: false
 
 - name: buildNumberInPatch
-  type: string
+  type: boolean
+  default: false
 
 variables:
 - group: prague-key-vault
@@ -66,8 +67,6 @@ variables:
         eq(variables.shouldPublish, true)
       )
     )}}
-- name: componentDetection
-  value: ${{ variables.publish }}
 - name: pushImage
   value: ${{ variables.publish }}
 - name: releaseImage

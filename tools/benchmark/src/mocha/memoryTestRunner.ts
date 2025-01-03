@@ -11,12 +11,13 @@ import { Test } from "mocha";
 import {
 	isParentProcess,
 	isInPerformanceTestingMode,
-	performanceTestSuiteTag,
 	MochaExclusiveOptions,
 	HookFunction,
 	BenchmarkType,
-	userCategoriesSplitter,
 	TestType,
+	qualifiedTitle,
+	type Titled,
+	type BenchmarkDescription,
 } from "../Configuration";
 import { isResultError, type BenchmarkResult, type Stats } from "../ResultTypes";
 import { getArrayStatistics, prettyNumber } from "../RunnerUtilities";
@@ -80,13 +81,7 @@ export interface IMemoryTestObject extends MemoryTestObjectProps {
 /**
  * @public
  */
-export interface MemoryTestObjectProps extends MochaExclusiveOptions {
-	/**
-	 * If true, this benchmark will create a Mocha test function with 'it.only()'
-	 * instead of just 'it()'.
-	 */
-	only?: boolean;
-
+export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, BenchmarkDescription {
 	/**
 	 * The max time in seconds to run the benchmark.
 	 * This is not a guaranteed immediate stop time.
@@ -115,29 +110,11 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
 	maxRelativeMarginOfError?: number;
 
 	/**
-	 * The kind of benchmark.
-	 */
-	type?: BenchmarkType;
-
-	/**
-	 * The title of the benchmark.
-	 * This will show up in the output file, as well as the mocha reporter.
-	 */
-	title: string;
-
-	/**
 	 * Percentage of samples (0.1 - 1) to use for calculating the statistics.
 	 * Defaults to 0.95.
 	 * Use a lower number to drop the highest/lowest measurements.
 	 */
 	samplePercentageToUse?: number;
-
-	/**
-	 * A free-form field to add a category to the test.
-	 * This gets added to an internal version of the test name with an '\@' prepended to it, so it can be leveraged
-	 * in combination with mocha's --grep/--fgrep options to only execute specific tests.
-	 */
-	category?: string;
 }
 
 /**
@@ -222,209 +199,212 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		category: testObject.category ?? "",
 	};
 
-	const benchmarkTypeTag = BenchmarkType[options.type];
-	const testTypeTag = TestType[TestType.MemoryUsage];
-	options.title = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${options.title}`;
-	if (options.category !== "") {
-		options.title = `${options.title} ${userCategoriesSplitter} @${options.category}`;
-	}
-
 	const itFunction = options.only ? it.only : it;
-	const test = itFunction(options.title, async () => {
-		if (isParentProcess) {
-			// Instead of running the benchmark in this process, create a new process.
-			// See {@link isParentProcess} for why.
-			// Launch new process, with:
-			// - mocha filter to run only this test.
-			// - --parentProcess flag removed.
-			// - --childProcess flag added (so data will be returned via stdout as json)
+	const test = itFunction(
+		qualifiedTitle({ ...testObject, testType: TestType.MemoryUsage }),
+		async () => {
+			if (isParentProcess) {
+				// Instead of running the benchmark in this process, create a new process.
+				// See {@link isParentProcess} for why.
+				// Launch new process, with:
+				// - mocha filter to run only this test.
+				// - --parentProcess flag removed.
+				// - --childProcess flag added (so data will be returned via stdout as json)
 
-			// Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
-			const command = process.argv0 ?? assert.fail("there must be a command");
+				// Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
+				const command = process.argv0 ?? assert.fail("there must be a command");
 
-			const childArgs = [...process.execArgv, ...process.argv.slice(1)];
+				const childArgs = [...process.execArgv, ...process.argv.slice(1)];
 
-			const processFlagIndex = childArgs.indexOf("--parentProcess");
-			childArgs[processFlagIndex] = "--childProcess";
+				const processFlagIndex = childArgs.indexOf("--parentProcess");
+				childArgs[processFlagIndex] = "--childProcess";
 
-			// Replace any existing arguments for test filters so the child process only runs the current
-			// test. Note that even if using a mocha config file, when mocha spawns a node process all flags
-			// and settings from the file are passed explicitly to that command invocation and thus appear here.
-			// This also means there's no issue if the config file uses the grep argument (which would be
-			// mutually exclusive with the fgrep we add here), because it is removed.
-			for (const flag of ["--grep", "--fgrep"]) {
-				const flagIndex = childArgs.indexOf(flag);
-				if (flagIndex > 0) {
-					// Remove the flag, and the argument after it (all these flags take one argument)
-					childArgs.splice(flagIndex, 2);
+				// Replace any existing arguments for test filters so the child process only runs the current
+				// test. Note that even if using a mocha config file, when mocha spawns a node process all flags
+				// and settings from the file are passed explicitly to that command invocation and thus appear here.
+				// This also means there's no issue if the config file uses the grep argument (which would be
+				// mutually exclusive with the fgrep we add here), because it is removed.
+				for (const flag of ["--grep", "--fgrep"]) {
+					const flagIndex = childArgs.indexOf(flag);
+					if (flagIndex > 0) {
+						// Remove the flag, and the argument after it (all these flags take one argument)
+						childArgs.splice(flagIndex, 2);
+					}
 				}
-			}
-			childArgs.push("--fgrep", test.fullTitle());
+				childArgs.push("--fgrep", test.fullTitle());
 
-			// Remove arguments for debugging if they're present; in order to debug child processes we need
-			// to specify a new debugger port for each.
-			let inspectArgIndex: number = -1;
-			while (
-				(inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >=
-				0
-			) {
-				childArgs.splice(inspectArgIndex, 1);
-			}
-
-			// Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
-			const childProcess = await import("node:child_process");
-			const result = childProcess.spawnSync(command, childArgs, {
-				encoding: "utf8",
-				maxBuffer:
-					1024 * 1024 /* 1024 * 1024 is the default value, here for ease of adjustment */,
-			});
-
-			if (result.error) {
-				const failureMessage = result.error.message.includes("ENOBUFS")
-					? "Child process tried to write too much data to stdout (too many iterations?). " +
-					  "The maxBuffer option might need to be tweaked."
-					: `Child process reported an error: ${result.error.message}`;
-				assert.fail(failureMessage);
-			}
-
-			if (result.stderr !== "") {
-				assert.fail(`Child process logged errors: ${result.stderr}`);
-			}
-
-			// Find the json blob in the child's output.
-			const output =
-				result.stdout.split("\n").find((s) => s.startsWith("{")) ??
-				assert.fail(`child process must output a json blob. Got:\n${result.stdout}`);
-
-			test.emit("benchmark end", JSON.parse(output));
-			return;
-		}
-
-		// If not in perfMode, just run the test normally
-		if (!isInPerformanceTestingMode) {
-			await testObject.before?.();
-			await testObject.beforeIteration?.();
-			await testObject.run?.();
-			await testObject.afterIteration?.();
-			await testObject.after?.();
-			return;
-		}
-
-		await testObject.before?.();
-		let runs = 0;
-		let benchmarkStats: BenchmarkResult = {
-			elapsedSeconds: 0,
-			customData: {},
-		};
-		const sample: MemorySampleData = {
-			before: {
-				memoryUsage: [],
-				heap: [],
-				heapSpace: [],
-			},
-			after: {
-				memoryUsage: [],
-				heap: [],
-				heapSpace: [],
-			},
-		};
-		// Do this import only if isInPerformanceTestingMode so correctness mode can work on a non-v8 runtime like the a browser.
-		const v8 = await import("node:v8");
-
-		const startTime = timer.now();
-		try {
-			let heapUsedStats: Stats = {
-				marginOfError: Number.NaN,
-				marginOfErrorPercent: Number.NaN,
-				standardErrorOfMean: Number.NaN,
-				standardDeviation: Number.NaN,
-				arithmeticMean: Number.NaN,
-				samples: [],
-				variance: Number.NaN,
-			};
-
-			do {
-				await testObject.beforeIteration?.();
-				global.gc();
-				sample.before.memoryUsage.push(process.memoryUsage());
-				sample.before.heap.push(v8.getHeapStatistics());
-				sample.before.heapSpace.push(v8.getHeapSpaceStatistics());
-
-				global.gc();
-				await testObject.run();
-
-				await testObject.afterIteration?.();
-
-				global.gc();
-
-				sample.after.memoryUsage.push(process.memoryUsage());
-				sample.after.heap.push(v8.getHeapStatistics());
-
-				sample.after.heapSpace.push(v8.getHeapSpaceStatistics());
-
-				runs++;
-
-				const heapUsedArray: number[] = [];
-				for (let i = 0; i < sample.before.memoryUsage.length; i++) {
-					heapUsedArray.push(
-						sample.after.memoryUsage[i].heapUsed -
-							sample.before.memoryUsage[i].heapUsed,
-					);
-				}
-				heapUsedStats = getArrayStatistics(heapUsedArray, options.samplePercentageToUse);
-
-				// Break if max elapsed time passed, only if we've reached the min sample count
-				if (
-					runs >= options.minSampleCount &&
-					timer.toSeconds(startTime, timer.now()) > options.maxBenchmarkDurationSeconds
+				// Remove arguments for debugging if they're present; in order to debug child processes we need
+				// to specify a new debugger port for each.
+				let inspectArgIndex: number = -1;
+				while (
+					(inspectArgIndex = childArgs.findIndex((x) =>
+						x.match(/^(--inspect|--debug).*/),
+					)) >= 0
 				) {
-					break;
+					childArgs.splice(inspectArgIndex, 1);
 				}
-			} while (
-				runs < options.minSampleCount ||
-				heapUsedStats.marginOfErrorPercent > options.maxRelativeMarginOfError
-			);
 
-			benchmarkStats.customData["Heap Used Avg"] = {
-				rawValue: heapUsedStats.arithmeticMean,
-				formattedValue: prettyNumber(heapUsedStats.arithmeticMean, 2),
-			};
+				// Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
+				const childProcess = await import("node:child_process");
+				const result = childProcess.spawnSync(command, childArgs, {
+					encoding: "utf8",
+					maxBuffer:
+						1024 *
+						1024 /* 1024 * 1024 is the default value, here for ease of adjustment */,
+				});
 
-			benchmarkStats.customData["Heap Used StdDev"] = {
-				rawValue: heapUsedStats.standardDeviation,
-				formattedValue: prettyNumber(heapUsedStats.standardDeviation, 2),
-			};
+				if (result.error) {
+					const failureMessage = result.error.message.includes("ENOBUFS")
+						? "Child process tried to write too much data to stdout (too many iterations?). " +
+						  "The maxBuffer option might need to be tweaked."
+						: `Child process reported an error: ${result.error.message}`;
+					assert.fail(failureMessage);
+				}
 
-			benchmarkStats.customData["Margin of Error"] = {
-				rawValue: heapUsedStats.marginOfError,
-				formattedValue: `±${prettyNumber(heapUsedStats.marginOfError, 2)}`,
-			};
+				if (result.stderr !== "") {
+					assert.fail(`Child process logged errors: ${result.stderr}`);
+				}
 
-			benchmarkStats.customData["Relative Margin of Error"] = {
-				rawValue: heapUsedStats.marginOfErrorPercent,
-				formattedValue: `±${prettyNumber(heapUsedStats.marginOfErrorPercent, 2)}`,
-			};
+				// Find the json blob in the child's output.
+				const output =
+					result.stdout.split("\n").find((s) => s.startsWith("{")) ??
+					assert.fail(`child process must output a json blob. Got:\n${result.stdout}`);
 
-			benchmarkStats.customData.Iterations = {
-				rawValue: runs,
-				formattedValue: prettyNumber(runs, 0),
-			};
-		} catch (error) {
-			// TODO: This results in the mocha test passing when it should fail. Fix this.
-			benchmarkStats = {
-				error: (error as Error).message,
-			};
-		} finally {
-			// It's not perfect, since we don't compute it *immediately* after we stop running tests but it's good enough.
-			if (!isResultError(benchmarkStats)) {
-				benchmarkStats.elapsedSeconds = timer.toSeconds(startTime, timer.now());
+				test.emit("benchmark end", JSON.parse(output));
+				return;
 			}
-		}
 
-		test.emit("benchmark end", benchmarkStats);
-		await testObject.after?.();
+			// If not in perfMode, just run the test normally
+			if (!isInPerformanceTestingMode) {
+				await testObject.before?.();
+				await testObject.beforeIteration?.();
+				await testObject.run?.();
+				await testObject.afterIteration?.();
+				await testObject.after?.();
+				return;
+			}
 
-		return;
-	});
+			await testObject.before?.();
+			let runs = 0;
+			let benchmarkStats: BenchmarkResult = {
+				elapsedSeconds: 0,
+				customData: {},
+			};
+			const sample: MemorySampleData = {
+				before: {
+					memoryUsage: [],
+					heap: [],
+					heapSpace: [],
+				},
+				after: {
+					memoryUsage: [],
+					heap: [],
+					heapSpace: [],
+				},
+			};
+			// Do this import only if isInPerformanceTestingMode so correctness mode can work on a non-v8 runtime like the a browser.
+			const v8 = await import("node:v8");
+
+			const startTime = timer.now();
+			assert(global.gc !== undefined, "gc not exposed");
+			try {
+				let heapUsedStats: Stats = {
+					marginOfError: Number.NaN,
+					marginOfErrorPercent: Number.NaN,
+					standardErrorOfMean: Number.NaN,
+					standardDeviation: Number.NaN,
+					arithmeticMean: Number.NaN,
+					samples: [],
+					variance: Number.NaN,
+				};
+
+				do {
+					await testObject.beforeIteration?.();
+					global.gc();
+					sample.before.memoryUsage.push(process.memoryUsage());
+					sample.before.heap.push(v8.getHeapStatistics());
+					sample.before.heapSpace.push(v8.getHeapSpaceStatistics());
+
+					global.gc();
+					await testObject.run();
+
+					await testObject.afterIteration?.();
+
+					global.gc();
+
+					sample.after.memoryUsage.push(process.memoryUsage());
+					sample.after.heap.push(v8.getHeapStatistics());
+
+					sample.after.heapSpace.push(v8.getHeapSpaceStatistics());
+
+					runs++;
+
+					const heapUsedArray: number[] = [];
+					for (let i = 0; i < sample.before.memoryUsage.length; i++) {
+						heapUsedArray.push(
+							sample.after.memoryUsage[i].heapUsed -
+								sample.before.memoryUsage[i].heapUsed,
+						);
+					}
+					heapUsedStats = getArrayStatistics(
+						heapUsedArray,
+						options.samplePercentageToUse,
+					);
+
+					// Break if max elapsed time passed, only if we've reached the min sample count
+					if (
+						runs >= options.minSampleCount &&
+						timer.toSeconds(startTime, timer.now()) >
+							options.maxBenchmarkDurationSeconds
+					) {
+						break;
+					}
+				} while (
+					runs < options.minSampleCount ||
+					heapUsedStats.marginOfErrorPercent > options.maxRelativeMarginOfError
+				);
+
+				benchmarkStats.customData["Heap Used Avg"] = {
+					rawValue: heapUsedStats.arithmeticMean,
+					formattedValue: prettyNumber(heapUsedStats.arithmeticMean, 2),
+				};
+
+				benchmarkStats.customData["Heap Used StdDev"] = {
+					rawValue: heapUsedStats.standardDeviation,
+					formattedValue: prettyNumber(heapUsedStats.standardDeviation, 2),
+				};
+
+				benchmarkStats.customData["Margin of Error"] = {
+					rawValue: heapUsedStats.marginOfError,
+					formattedValue: `±${prettyNumber(heapUsedStats.marginOfError, 2)}`,
+				};
+
+				benchmarkStats.customData["Relative Margin of Error"] = {
+					rawValue: heapUsedStats.marginOfErrorPercent,
+					formattedValue: `±${prettyNumber(heapUsedStats.marginOfErrorPercent, 2)}`,
+				};
+
+				benchmarkStats.customData.Iterations = {
+					rawValue: runs,
+					formattedValue: prettyNumber(runs, 0),
+				};
+			} catch (error) {
+				// TODO: This results in the mocha test passing when it should fail. Fix this.
+				benchmarkStats = {
+					error: (error as Error).message,
+				};
+			} finally {
+				// It's not perfect, since we don't compute it *immediately* after we stop running tests but it's good enough.
+				if (!isResultError(benchmarkStats)) {
+					benchmarkStats.elapsedSeconds = timer.toSeconds(startTime, timer.now());
+				}
+			}
+
+			test.emit("benchmark end", benchmarkStats);
+			await testObject.after?.();
+
+			return;
+		},
+	);
 	return test;
 }
