@@ -20,7 +20,7 @@ import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { type ISegmentPrivate } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
-import { isRemoved } from "./segmentInfos.js";
+import { isInserted, isRemoved } from "./segmentInfos.js";
 import {
 	JsonSegmentSpecs,
 	MergeTreeChunkLegacy,
@@ -209,8 +209,9 @@ export class SnapshotLegacy {
 		let prev: ISegmentPrivate | undefined;
 		const extractSegment = (segment: ISegmentPrivate): boolean => {
 			if (
+				isInserted(segment) &&
 				segment.seq !== UnassignedSequenceNumber &&
-				segment.seq! <= seq &&
+				segment.seq <= seq &&
 				(!isRemoved(segment) ||
 					segment.removedSeq === UnassignedSequenceNumber ||
 					segment.removedSeq > seq)
