@@ -86,6 +86,19 @@ To include repo-local API documentation when building the site locally, you will
 So long as the `LOCAL_API_DOCS` environment variable is set to `true`, local API documentation will be included when building the site.
 To remove the local API docs, simply remove the above variable or set it to `false`, `npm run clean` and rebuild as needed.
 
+## User Telemetry
+
+The Fluid Framework website collects basic user telemetry to help improve the experience for our users. The telemetry data includes
+anonymous information such as:
+
+-   Daily / Monthly users
+-   Pages visited
+-   User flow
+
+This data is collected in compliance with relevant privacy standards. For more information, please refer to our
+[privacy policy.](https://www.microsoft.com/privacy/privacystatement). If you have any concerns about telemetry, please reach out
+to our team via [GitHub Issues](https://github.com/microsoft/FluidFramework/issues).
+
 ## Writing site documentation
 
 For details about authoring documentation content in Docusaurus, see [here](https://docusaurus.io/docs/create-doc).
