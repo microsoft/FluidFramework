@@ -394,8 +394,8 @@ stages:
             scriptLocation: 'inlineScript'
             inlineScript: |
               // define variables
-              var moduleName = "FFTestModule";
-              var stringBearerToken = "";
+              moduleName="FFTestModule";
+              stringBearerToken="";
 
               set -eu -o pipefail
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
