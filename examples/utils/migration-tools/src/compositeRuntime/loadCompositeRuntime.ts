@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/legacy";
 import {
-	ContainerRuntime,
 	IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+	loadContainerRuntime,
+} from "@fluidframework/container-runtime/legacy";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import type {
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry2,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/runtime-definitions/legacy";
 
 import type { IEntryPointPiece } from "./interfaces.js";
 
@@ -89,7 +89,7 @@ export const loadCompositeRuntime = async (
 	compositeEntryPoint: CompositeEntryPoint,
 	runtimeOptions?: IContainerRuntimeOptions,
 ): Promise<IContainerRuntime & IRuntime> => {
-	const runtime = await ContainerRuntime.loadRuntime({
+	const runtime = await loadContainerRuntime({
 		context,
 		registryEntries: compositeEntryPoint.registryEntries,
 		provideEntryPoint: compositeEntryPoint.provideEntryPoint,

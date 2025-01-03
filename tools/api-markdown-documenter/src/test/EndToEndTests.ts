@@ -14,7 +14,7 @@ import type { Suite } from "mocha";
 import { loadModel } from "../LoadModel.js";
 import {
 	transformApiModel,
-	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 } from "../api-item-transforms/index.js";
 import type { DocumentNode } from "../documentation-domain/index.js";
 
@@ -93,7 +93,7 @@ export interface EndToEndTestConfig<TRenderConfig> {
 	/**
 	 * The transformation configuration to use.
 	 */
-	readonly transformConfig: Omit<ApiItemTransformationConfiguration, "apiModel">;
+	readonly transformConfig: Omit<ApiItemTransformationOptions, "apiModel">;
 
 	/**
 	 * Render configuration.
@@ -142,7 +142,7 @@ export function endToEndTests<TRenderConfig>(
 					);
 
 					describe(testName, () => {
-						let apiItemTransformConfig: ApiItemTransformationConfiguration;
+						let apiItemTransformConfig: ApiItemTransformationOptions;
 						before(async () => {
 							apiItemTransformConfig = {
 								...partialTransformConfig,

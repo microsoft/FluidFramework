@@ -863,6 +863,10 @@ export async function loadContainerRuntime(
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
+ *
+ * @deprecated To be removed from the Legacy-Alpha API in version 2.20.0.
+ * Use the loadContainerRuntime function and interfaces IContainerRuntime / IRuntime instead.
+ *
  * @legacy
  * @alpha
  */
@@ -1571,7 +1575,6 @@ export class ContainerRuntime
 			enableGroupedBatching: true,
 			...runtimeOptions,
 		};
-
 		this.logger = createChildLogger({ logger: this.baseLogger });
 		this.mc = createChildMonitoringContext({
 			logger: this.logger,

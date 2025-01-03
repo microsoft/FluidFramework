@@ -69,6 +69,13 @@ export {
 	type ViewContent,
 	TreeAlpha,
 	independentView,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
 } from "./shared-tree/index.js";
 
 export {
@@ -85,6 +92,8 @@ export {
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SchemaFactoryObjectOptions,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeChangeEvents,
@@ -196,6 +205,8 @@ export {
 	type TreeBranch,
 	type TreeBranchEvents,
 	asTreeViewAlpha,
+	type NodeSchemaOptions,
+	type NodeSchemaMetadata,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
