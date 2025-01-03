@@ -1551,7 +1551,7 @@ export function getSummaryForDatastores(
 	}
 
 	if (rootHasIsolatedChannels(metadata)) {
-		const datastoresSnapshot = snapshot.trees[channelsTreeName];
+		const datastoresSnapshot: ISnapshotTree | undefined = snapshot.trees[channelsTreeName];
 		assert(!!datastoresSnapshot, 0x168 /* Expected tree in snapshot not found */);
 		return datastoresSnapshot;
 	} else {
