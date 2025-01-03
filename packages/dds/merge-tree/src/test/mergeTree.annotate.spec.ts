@@ -87,7 +87,7 @@ describe("MergeTree", () => {
 					undefined as never,
 				);
 
-				const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+				const segmentInfo = mergeTree.getContainingSegment(
 					annotateStart,
 					currentSequenceNumber,
 					localClientId,
@@ -109,7 +109,7 @@ describe("MergeTree", () => {
 					undefined as never,
 				);
 
-				const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+				const segmentInfo = mergeTree.getContainingSegment(
 					annotateStart,
 					currentSequenceNumber,
 					localClientId,
@@ -143,7 +143,7 @@ describe("MergeTree", () => {
 				});
 
 				it("unsequenced local", () => {
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -165,7 +165,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -175,7 +175,7 @@ describe("MergeTree", () => {
 				});
 
 				it("unsequenced local split", () => {
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -218,14 +218,14 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
 					);
 					const segment = segmentInfo.segment as ISegmentPrivate;
 
-					const splitSegmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const splitSegmentInfo = mergeTree.getContainingSegment(
 						splitPos,
 						currentSequenceNumber,
 						localClientId,
@@ -322,7 +322,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -347,7 +347,7 @@ describe("MergeTree", () => {
 						} as unknown as ISequencedDocumentMessage,
 					});
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -382,7 +382,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -395,7 +395,7 @@ describe("MergeTree", () => {
 				});
 
 				it("three local changes", () => {
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -525,7 +525,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -551,7 +551,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -559,7 +559,7 @@ describe("MergeTree", () => {
 					assert(segmentInfo.segment?.segmentGroups?.size !== 0);
 				});
 				it("remote only", () => {
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -570,7 +570,7 @@ describe("MergeTree", () => {
 				});
 
 				it("split remote", () => {
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -596,7 +596,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -611,7 +611,7 @@ describe("MergeTree", () => {
 						props: { propertySource: "local" },
 					};
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -676,7 +676,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -699,7 +699,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -736,7 +736,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,
@@ -785,7 +785,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					const segmentInfo = mergeTree.getContainingSegment<ISegmentPrivate>(
+					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						currentSequenceNumber,
 						localClientId,

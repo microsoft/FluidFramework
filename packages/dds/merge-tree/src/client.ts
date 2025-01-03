@@ -86,11 +86,13 @@ import {
 import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import {
-	IInsertionInfo,
+	isInserted,
+	isMergeNodeInfo,
 	isMoved,
 	isRemoved,
 	overwriteInfo,
 	toMoveInfo,
+	type IInsertionInfo,
 } from "./segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
@@ -398,7 +400,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		let localInserts = 0;
 		let localRemoves = 0;
 		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentPrivate) => {
-			if (seg.seq === UnassignedSequenceNumber) {
+			if (isInserted(seg) && seg.seq === UnassignedSequenceNumber) {
 				localInserts++;
 			}
 			if (isRemoved(seg) && seg.removedSeq === UnassignedSequenceNumber) {
@@ -430,12 +432,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param segment - The segment to get the position of
 	 */
 	public getPosition(segment: ISegment | undefined, localSeq?: number): number {
-		const mergeSegment: ISegmentPrivate | undefined = segment;
-		if (mergeSegment?.parent === undefined) {
+		if (!isMergeNodeInfo(segment)) {
 			return -1;
 		}
 		return this._mergeTree.getPosition(
-			mergeSegment,
+			segment,
 			this.getCurrentSeq(),
 			this.getClientId(),
 			localSeq,
@@ -959,7 +960,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 				case MergeTreeDeltaType.INSERT: {
 					assert(
-						segment.seq === UnassignedSequenceNumber,
+						isInserted(segment) && segment.seq === UnassignedSequenceNumber,
 						0x037 /* "Segment already has assigned sequence number" */,
 					);
 					const moveInfo = toMoveInfo(segment);
