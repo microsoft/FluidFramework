@@ -1,111 +1,111 @@
 {
-	"name": "@fluid-example/app-integration-external-controller",
-	"version": "1.2.0",
-	"private": true,
-	"description": "Minimal Fluid Container & Data Object sample to implement a collaborative dice roller as a standalone app.",
-	"homepage": "https://fluidframework.com",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/hosts/app-integration/external-controller"
-	},
-	"license": "MIT",
-	"author": "Microsoft and contributors",
-	"main": "dist/index.js",
-	"module": "lib/index.js",
-	"types": "dist/index.d.ts",
-	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "concurrently npm:tsc npm:build:esnext",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prepack": "npm run webpack",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-		"start": "npm run start:tinylicious",
-		"start:azure": "webpack serve --define process.env.FLUID_CLIENT='\"azure\"'",
-		"start:client": "webpack serve",
-		"start:client:test": "webpack serve --config webpack.test.js",
-		"start:tinylicious": "start-server-and-test tinylicious 7070 start:client",
-		"start:tinylicious:test": "start-server-and-test tinylicious 7070 start:client:test",
-		"test": "npm run test:jest",
-		"test:jest": "jest --detectOpenHandles",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
-		"tinylicious": "tinylicious",
-		"tsc": "tsc",
-		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development"
-	},
-	"dependencies": {
-		"@fluidframework/azure-client": "^1.2.0",
-		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/routerlicious-driver": "^1.4.0",
-		"assert": "^2.0.0",
-		"axios": "^0.28.0",
-		"events": "^3.1.0",
-		"fluid-framework": "^1.4.0"
-	},
-	"devDependencies": {
-		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/container-definitions": "^1.4.0",
-		"@fluidframework/container-loader": "^1.4.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/fluid-static": "^1.4.0",
-		"@fluidframework/local-driver": "^1.4.0",
-		"@fluidframework/server-local-server": "^0.1036.5002",
-		"@fluidframework/test-client-utils": "1.4.0",
-		"@fluidframework/test-tools": "^0.2.3074",
-		"@types/expect-puppeteer": "2.2.1",
-		"@types/jest": "22.2.3",
-		"@types/jest-environment-puppeteer": "2.2.0",
-		"@types/node": "^18.15.3",
-		"@types/puppeteer": "1.3.0",
-		"clean-webpack-plugin": "^4.0.0",
-		"concurrently": "^7.6.0",
-		"cross-env": "^7.0.3",
-		"eslint": "~8.6.0",
-		"html-webpack-plugin": "^5.5.0",
-		"jest": "^26.6.3",
-		"jest-environment-puppeteer": "^4.3.0",
-		"jest-junit": "^10.0.0",
-		"jest-puppeteer": "^4.3.0",
-		"prettier": "~2.6.2",
-		"process": "^0.11.10",
-		"puppeteer": "^1.20.0",
-		"rimraf": "^2.6.2",
-		"start-server-and-test": "^1.11.7",
-		"tinylicious": "0.6.0",
-		"ts-jest": "^26.4.4",
-		"ts-loader": "^9.3.0",
-		"typescript": "~4.5.5",
-		"webpack": "^5.76.2",
-		"webpack-cli": "^4.9.2",
-		"webpack-dev-server": "~4.6.0",
-		"webpack-merge": "^5.8.0"
-	},
-	"fluid": {
-		"browser": {
-			"umd": {
-				"files": [
-					"main.bundle.js"
-				],
-				"library": "main"
-			}
-		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
-	},
-	"typeValidation": {
-		"disabled": true,
-		"broken": {}
-	}
+  "name": "@fluid-example/app-integration-external-controller",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Minimal Fluid Container & Data Object sample to implement a collaborative dice roller as a standalone app.",
+  "homepage": "https://fluidframework.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "examples/hosts/app-integration/external-controller"
+  },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:lint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "concurrently npm:build npm:webpack",
+    "build:full:compile": "concurrently npm:build:compile npm:webpack",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --format stylish src",
+    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "format": "npm run prettier:fix",
+    "lint": "npm run prettier && npm run eslint",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
+    "prepack": "npm run webpack",
+    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+    "start": "npm run start:tinylicious",
+    "start:azure": "webpack serve --define process.env.FLUID_CLIENT='\"azure\"'",
+    "start:client": "webpack serve",
+    "start:client:test": "webpack serve --config webpack.test.js",
+    "start:tinylicious": "start-server-and-test tinylicious 7070 start:client",
+    "start:tinylicious:test": "start-server-and-test tinylicious 7070 start:client:test",
+    "test": "npm run test:jest",
+    "test:jest": "jest --detectOpenHandles",
+    "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
+    "tinylicious": "tinylicious",
+    "tsc": "tsc",
+    "webpack": "webpack --env production",
+    "webpack:dev": "webpack --env development"
+  },
+  "dependencies": {
+    "@fluidframework/azure-client": "^1.2.0",
+    "@fluidframework/common-definitions": "^0.20.1",
+    "@fluidframework/routerlicious-driver": "^1.4.0",
+    "assert": "^2.0.0",
+    "axios": "^0.28.0",
+    "events": "^3.1.0",
+    "fluid-framework": "^1.4.0"
+  },
+  "devDependencies": {
+    "@fluidframework/build-common": "^1.2.0",
+    "@fluidframework/container-definitions": "^1.4.0",
+    "@fluidframework/container-loader": "^1.4.0",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
+    "@fluidframework/fluid-static": "^1.4.0",
+    "@fluidframework/local-driver": "^1.4.0",
+    "@fluidframework/server-local-server": "^0.1036.5002",
+    "@fluidframework/test-client-utils": "1.4.0",
+    "@fluidframework/test-tools": "^2.0.1",
+    "@types/expect-puppeteer": "2.2.1",
+    "@types/jest": "22.2.3",
+    "@types/jest-environment-puppeteer": "2.2.0",
+    "@types/node": "^18.15.3",
+    "@types/puppeteer": "1.3.0",
+    "clean-webpack-plugin": "^4.0.0",
+    "concurrently": "^7.6.0",
+    "cross-env": "^7.0.3",
+    "eslint": "~8.6.0",
+    "html-webpack-plugin": "^5.5.0",
+    "jest": "^26.6.3",
+    "jest-environment-puppeteer": "^4.3.0",
+    "jest-junit": "^10.0.0",
+    "jest-puppeteer": "^4.3.0",
+    "prettier": "~2.6.2",
+    "process": "^0.11.10",
+    "puppeteer": "^1.20.0",
+    "rimraf": "^2.6.2",
+    "start-server-and-test": "^1.11.7",
+    "tinylicious": "0.6.0",
+    "ts-jest": "^26.4.4",
+    "ts-loader": "^9.3.0",
+    "typescript": "~4.5.5",
+    "webpack": "^5.76.2",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "~4.6.0",
+    "webpack-merge": "^5.8.0"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
+  "jest-junit": {
+    "outputDirectory": "nyc",
+    "outputName": "jest-junit-report.xml"
+  },
+  "typeValidation": {
+    "disabled": true,
+    "broken": {}
+  }
 }

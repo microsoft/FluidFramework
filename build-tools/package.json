@@ -48,9 +48,9 @@
     "test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
     "test:coverage": "c8 npm run test:report",
-    "test:jest": "assign-test-ports && lerna run test:jest --concurrency 4 --stream --no-bail --no-sort -- -- --color",
-    "test:jest:bail": "assign-test-ports && lerna run test:jest --concurrency 4 --stream",
-    "test:jest:report": "assign-test-ports && lerna run test:jest --concurrency 4 --stream --no-bail --no-sort -- -- --ci --reporters=default --reporters=jest-junit",
+    "test:jest": "assign-test-ports --package-manager lerna && lerna run test:jest --concurrency 4 --stream --no-bail --no-sort -- -- --color",
+    "test:jest:bail": "assign-test-ports --package-manager lerna && lerna run test:jest --concurrency 4 --stream",
+    "test:jest:report": "assign-test-ports --package-manager lerna && lerna run test:jest --concurrency 4 --stream --no-bail --no-sort -- -- --ci --reporters=default --reporters=jest-junit",
     "test:mocha": "lerna run test:mocha --stream --no-bail --no-sort -- -- --color",
     "test:mocha:bail": "lerna run test:mocha --stream",
     "test:mocha:report": "lerna run test:mocha --stream --no-bail --no-sort -- -- --timeout 4s --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
@@ -85,7 +85,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/test-tools": "^0.2.3074",
+    "@fluidframework/test-tools": "^2.0.1",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
     "c8": "^7.7.1",
