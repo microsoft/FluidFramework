@@ -62,3 +62,4 @@ export {
 	IRedisClientConnectionManager,
 } from "./redisClientConnectionManager";
 export { ITenantKeyGenerator, TenantKeyGenerator } from "./tenantKeyGenerator";
+export { ResponseSizeMiddleware } from "./responseSizeMiddleware";
