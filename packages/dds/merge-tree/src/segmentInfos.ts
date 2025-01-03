@@ -5,7 +5,7 @@
 
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 
-import { ISegmentInternal, ISegmentPrivate } from "./mergeTreeNodes.js";
+import { ISegmentInternal, ISegmentPrivate, MergeBlock } from "./mergeTreeNodes.js";
 import type { ReferencePosition } from "./referencePositions.js";
 
 export interface StringToType {
@@ -100,6 +100,74 @@ export const assertInserted: <T extends Partial<IInsertionInfo> | undefined>(
 ) => assert(segmentLike === undefined || isInserted(segmentLike), "must be insertionInfo");
 
 /**
+ * Common properties for a node in a merge tree.
+ */
+export interface IMergeNodeInfo {
+	/**
+	 * The parent merge block if the node is parented
+	 */
+	parent: MergeBlock;
+
+	/**
+	 * The index of this node in its parent's list of children.
+	 */
+	index: number;
+
+	/**
+	 * A string that can be used for comparing the location of this node to other `MergeNode`s in the same tree.
+	 * `a.ordinal < b.ordinal` if and only if `a` comes before `b` in a pre-order traversal of the tree.
+	 */
+	ordinal: string;
+}
+
+/**
+ * Converts a segment-like object to a merge node info object if possible.
+ *
+ * @param segmentLike - The segment-like object to convert.
+ * @returns The merge node info object if the conversion is possible, otherwise undefined.
+ */
+export const toMergeNodeInfo = (nodeLike: unknown): IMergeNodeInfo | undefined =>
+	propInstanceOf(nodeLike, "parent", MergeBlock) &&
+	hasProp(nodeLike, "ordinal", "string") &&
+	hasProp(nodeLike, "index", "number")
+		? nodeLike
+		: undefined;
+
+/**
+ * A type-guard which determines if the segment has merge node info, and
+ * returns true if it does, along with applying strong typing.
+ *
+ * @param nodeLike - The segment-like object to check.
+ * @returns True if the segment has merge node info, otherwise false.
+ */
+export const isMergeNodeInfo = (nodeLike: unknown): nodeLike is IMergeNodeInfo =>
+	toMergeNodeInfo(nodeLike) !== undefined;
+
+/**
+ * Asserts that the segment has merge node info. Usage of this function should not produce a user facing error.
+ *
+ * @param segmentLike - The segment-like object to check.
+ * @throws Will throw an error if the segment does not have merge node info.
+ */
+export const assertMergeNode: <T extends Partial<IMergeNodeInfo> | undefined>(
+	nodeLike: ISegmentInternal | ISegmentPrivate | Partial<IMergeNodeInfo> | T,
+) => asserts nodeLike is IMergeNodeInfo | Exclude<T, Partial<IMergeNodeInfo>> = (
+	segmentLike,
+) =>
+	assert(segmentLike === undefined || isMergeNodeInfo(segmentLike), "must be MergeNodeInfo");
+
+/**
+ * Removes the merge node info. This is used to remove nodes from the merge-tree.
+ * @param segmentLike - The segment-like object to check.
+ */
+export const removeMergeNodeInfo = (nodeLike: IMergeNodeInfo): Partial<IMergeNodeInfo> =>
+	Object.assign<IMergeNodeInfo, Record<keyof IMergeNodeInfo, undefined>>(nodeLike, {
+		parent: undefined,
+		index: undefined,
+		ordinal: undefined,
+	});
+
+/**
  * Contains removal information associated to an {@link ISegment}.
  * @legacy
  * @alpha
@@ -156,8 +224,12 @@ export const assertRemoved: <T extends Partial<IRemovalInfo> | undefined>(
 ) => asserts segmentLike is IRemovalInfo | Exclude<T, Partial<IRemovalInfo>> = (segmentLike) =>
 	assert(segmentLike === undefined || isRemoved(segmentLike), "must be removalInfo");
 
+/**
+ * Removes the removal info. This is used in rollback.
+ * @param segmentLike - The segment-like object to check.
+ */
 export const removeRemovalInfo = (nodeLike: IRemovalInfo): Partial<IRemovalInfo> =>
-	Object.assign<IRemovalInfo, Partial<IRemovalInfo>>(nodeLike, {
+	Object.assign<IRemovalInfo, Record<keyof IRemovalInfo, undefined>>(nodeLike, {
 		localRemovedSeq: undefined,
 		removedClientIds: undefined,
 		removedSeq: undefined,
@@ -262,7 +334,7 @@ export const assertMoved: <T extends Partial<IMoveInfo> | undefined>(
 /**
  * A union type representing any segment info.
  */
-export type SegmentInfo = IInsertionInfo | IMoveInfo | IRemovalInfo;
+export type SegmentInfo = IMergeNodeInfo | IInsertionInfo | IMoveInfo | IRemovalInfo;
 
 /**
  * A type representing a segment with additional info.
