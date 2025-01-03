@@ -152,6 +152,7 @@ export const assertSegmentLeaf: (segmentLike: unknown) => asserts segmentLike is
  * segment leafs.
  */
 export type IMergeNodeBuilder = MergeBlock | SegmentWithInfo<IInsertionInfo>;
+
 /**
  * This type is used by MergeBlocks to define their children, which are either segments or other
  * MergeBlocks.
