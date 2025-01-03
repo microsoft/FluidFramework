@@ -607,7 +607,7 @@ extends:
               - ${{ each test in parameters.coverageTests }}:
                 - template: /tools/pipelines/templates/include-test-task.yml@self
                   parameters:
-                    taskTestStep: '${{ test.name }}:coverage'
+                    taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
 
               - task: Npm@1
