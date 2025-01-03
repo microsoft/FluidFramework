@@ -11,7 +11,7 @@ import { ResponseSizeMiddleware } from "../responseSizeMiddleware";
 describe("Throttler Middleware", () => {
 	const endpoint = "/test";
 	const route = `${endpoint}/:id?`;
-	let responseSizeMiddler: ResponseSizeMiddleware;
+	let responseSizeMiddleware: ResponseSizeMiddleware;
 	const responseMaxSizeInMb = 1; // 1MB
 	let app: express.Application;
 	let supertest: request.SuperTest<request.Test>;
