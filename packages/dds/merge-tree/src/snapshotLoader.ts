@@ -132,7 +132,7 @@ export class SnapshotLoader {
 			if (spec.movedSeq !== undefined) {
 				assert(
 					spec.movedClientIds !== undefined && spec.movedSeqs !== undefined,
-					"must have movedIds ids",
+					0xaa5 /* must have movedIds ids */,
 				);
 				overwriteInfo<IMoveInfo>(seg, {
 					movedSeq: spec.movedSeq,

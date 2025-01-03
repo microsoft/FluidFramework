@@ -44,7 +44,7 @@ import { PropertiesManager } from "./segmentPropertiesManager.js";
  *
  * @internal
  */
-export type ISegmentInternal = ISegment & {
+export interface ISegmentInternal extends ISegment {
 	localRefs?: LocalReferenceCollection;
 	/**
 	 * Whether or not this segment is a special segment denoting the start or
@@ -56,7 +56,7 @@ export type ISegmentInternal = ISegment & {
 	 * deletion of regular segments.
 	 */
 	readonly endpointType?: "start" | "end";
-};
+}
 
 /**
  * We use tiered interface to control visibility of segment properties.
@@ -69,7 +69,7 @@ export type ISegmentInternal = ISegment & {
  * someday we may split tree leaves from segments, but for now they are the same
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
-export type ISegmentPrivate = ISegmentInternal & {
+export interface ISegmentPrivate extends ISegmentInternal {
 	segmentGroups?: SegmentGroupCollection;
 	propertyManager?: PropertiesManager;
 	/**
@@ -78,15 +78,53 @@ export type ISegmentPrivate = ISegmentInternal & {
 	 * then the segment is not obliterated because it is aware of the latest obliteration.
 	 */
 	prevObliterateByInserter?: ObliterateInfo;
-};
+}
+/**
+ * Segment leafs are segments that have both IMergeNodeInfo and IInsertionInfo. This means they
+ * are inserted at a position, and bound via their parent MergeBlock to the merge tree. MergeBlocks'
+ * children are either a segment leaf, or another merge block for interior nodes of the tree. When working
+ * within the tree it is generally unnecessary to use type coercions methods common to the infos, and segment
+ * leafs, as the children of MergeBlocks are already well typed. However, when segments come from outside the
+ * merge tree, like via client's public methods, it becomes necessary to use the type coercions methods
+ * to ensure the passed in segment objects are correctly bound to the merge tree.
+ */
 export type ISegmentLeaf = SegmentWithInfo<IMergeNodeInfo & IInsertionInfo>;
+/**
+ * A type-guard which determines if the segment has segment leaf, and
+ * returns true if it does, along with applying strong typing.
+ * @param nodeLike - The segment-like object to check.
+ * @returns True if the segment is a segment leaf, otherwise false.
+ */
 export const isSegmentLeaf = (segmentLike: unknown): segmentLike is ISegmentLeaf =>
 	isInserted(segmentLike) && isMergeNode(segmentLike);
+
+/**
+ * Converts a segment-like object to a segment leaf object if possible.
+ *
+ * @param segmentLike - The segment-like object to convert.
+ * @returns The segment leaf if the conversion is possible, otherwise undefined.
+ */
 export const toSegmentLeaf = (segmentLike: unknown): ISegmentLeaf | undefined =>
 	isSegmentLeaf(segmentLike) ? segmentLike : undefined;
+/**
+ * Asserts that the segment is a segment leaf. Usage of this function should not produce a user facing error.
+ *
+ * @param segmentLike - The segment-like object to check.
+ * @throws Will throw an error if the segment is not a segment leaf.
+ */
 export const assertSegmentLeaf: (segmentLike: unknown) => asserts segmentLike is ISegmentLeaf =
 	(segmentLike) => assert(isSegmentLeaf(segmentLike), "must be segment leaf");
+/**
+ * This type is used for building MergeBlocks from segments and other MergeBlocks. We need this
+ * type as segments may not yet be bound to the tree, so lack merge node info which is required for
+ * segment leafs.
+ */
 export type IMergeNodeBuilder = MergeBlock | SegmentWithInfo<IInsertionInfo>;
+
+/**
+ * This type is used by MergeBlocks to define their children, which are either segments or other
+ * MergeBlocks.
+ */
 export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
@@ -262,7 +300,7 @@ export function assignChild<C extends IMergeNodeBuilder>(
 	index: number,
 	updateOrdinal = true,
 ): asserts child is C & IMergeNodeInfo {
-	const node = Object.assign<IMergeNodeBuilder, IMergeNodeInfo>(child, {
+	const node = Object.assign<C, IMergeNodeInfo>(child, {
 		parent,
 		index,
 		ordinal: hasProp(child, "ordinal", "string") ? child.ordinal : "",
