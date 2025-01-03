@@ -393,9 +393,13 @@ stages:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
-              set -eu -o pipefail
+              // define variables
+              var moduleName = "FFTestModule";
+              var stringBearerToken = "";
 
+              set -eu -o pipefail
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+
               node -e "
                 const fetch = require('fetch');
                 require('OSS.TDFTestLibrary');
@@ -407,7 +411,7 @@ stages:
                         "profileName": "FluidFrameworkTenantPool", // The type of the resource (i.e. pool name)
                       },
                     ],
-                    "ModuleName": "FFTestModule", // Metadata used for tracking the source of the request (can be anything)
+                    "ModuleName": ${moduleName}, // Metadata used for tracking the source of the request (can be anything)
                     "Count": 1, // How many copies of the above resources to allocate for the reservation. Should almost always be 1
                   };
 
@@ -419,7 +423,7 @@ stages:
                     body: JSON.stringify(requestBody),
                   })
                   .then((response) => response.json());
-                const stringBearerToken = JSON.stringify(bearerToken);
+                stringBearerToken = JSON.stringify(bearerToken);
 
                 // step 2: wait for resource hydration
                 // returns "Ready" or "Not Ready"
@@ -435,7 +439,7 @@ stages:
 
                 // step 3: check out hydrated resource
                 const credentials = fetch(
-                  `https://tdff5prd.office.net/v2.0/reservations/current/modules?moduleName=${moduleName}`,
+                  "https://tdff5prd.office.net/v2.0/reservations/current/modules?moduleName=${moduleName}",
                   {
                     method: "GET",
                     headers: {
