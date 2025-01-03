@@ -145,7 +145,7 @@ export const toSegmentLeaf = (segmentLike: unknown): ISegmentLeaf | undefined =>
  * @throws Will throw an error if the segment is not a segment leaf.
  */
 export const assertSegmentLeaf: (segmentLike: unknown) => asserts segmentLike is ISegmentLeaf =
-	(segmentLike) => assert(isSegmentLeaf(segmentLike), "must be segment leaf");
+	(segmentLike) => assert(isSegmentLeaf(segmentLike), 0xaab /* must be segment leaf */);
 /**
  * This type is used for building MergeBlocks from segments and other MergeBlocks. We need this
  * type as segments may not yet be bound to the tree, so lack merge node info which is required for
