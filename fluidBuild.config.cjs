@@ -213,6 +213,7 @@ module.exports = {
 				"{azure,examples,experimental,packages}/*/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
 				"tools/markdown-magic/package.json",
+				"tools/test-tools/package.json",
 			],
 			outputGlobs: [
 				"package.json",
@@ -224,6 +225,7 @@ module.exports = {
 				"{azure,examples,experimental,packages}/*/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
 				"tools/markdown-magic/package.json",
+				"tools/test-tools/package.json",
 			],
 			gitignore: ["input", "output"],
 		},
@@ -239,6 +241,7 @@ module.exports = {
 				"{azure,examples,experimental,packages}/*/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
 				"tools/markdown-magic/package.json",
+				"tools/test-tools/package.json",
 			],
 			outputGlobs: [
 				"package.json",
@@ -250,6 +253,7 @@ module.exports = {
 				"{azure,examples,experimental,packages}/*/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
 				"tools/markdown-magic/package.json",
+				"tools/test-tools/package.json",
 			],
 			gitignore: ["input", "output"],
 		},
@@ -282,12 +286,7 @@ module.exports = {
 		"protocol-def": "common/lib/protocol-definitions",
 
 		// Tools
-		"tools": [
-			"tools/api-markdown-documenter",
-			"tools/benchmark",
-			"tools/getkeys",
-			"tools/test-tools",
-		],
+		"tools": ["tools/api-markdown-documenter", "tools/benchmark", "tools/getkeys"],
 	},
 
 	// `flub check policy` config. It applies to the whole repo.
@@ -556,7 +555,6 @@ module.exports = {
 			"@fluidframework/eslint-config-fluid",
 			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
-			"@fluidframework/test-tools",
 			"fluidframework-docs",
 		],
 		fluidBuildTasks: {

@@ -1,6 +1,7 @@
 {
-	"name": "@fluidframework/test-tools",
-	"version": "3.0.0",
+	"name": "@fluid-private/test-tools",
+	"version": "2.13.0",
+	"private": true,
 	"description": "Fluid test tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -10,8 +11,16 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/getTestPort.js",
-	"types": "dist/getTestPort.d.ts",
+	"exports": {
+		".": {
+			"require": {
+				"types": "./getBaseJestConfig.d.ts",
+				"default": "./src/getBaseJestConfig.cjs"
+			}
+		}
+	},
+	"main": "src/getBaseJestConfig.cjs",
+	"types": "getBaseJestConfig.d.ts",
 	"bin": {
 		"assign-test-ports": "bin/assign-test-ports"
 	},
@@ -38,10 +47,10 @@
 		"@types/node": "^18.19.0",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
-		"mocha": "^10.8.2",
+		"mocha": "^10.2.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
-		"rimraf": "^5.0.0",
+		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
 	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392"
