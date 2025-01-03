@@ -24,11 +24,11 @@ export class ResponseSizeMiddleware {
 
 				if (responseSize > this.maxResponseSizeInMegaBytes * 1024 * 1024) {
 					Lumberjack.error(
-						`Response size of ${responseSize} bytes, exceeds the maximum allowed size of ${this.maxResponseSizeInMegaBytes} bytes`,
+						`Response size of ${responseSize} bytes, exceeds the maximum allowed size of ${this.maxResponseSizeInMegaBytes} megabytes`,
 					);
 					return res.status(413).json({
 						error: "Response too large",
-						message: `Response size exceeds the maximum allowed size of ${this.maxResponseSizeInMegaBytes} bytes`,
+						message: `Response size exceeds the maximum allowed size of ${this.maxResponseSizeInMegaBytes} megabytes`,
 					});
 				}
 				return originalSend.call(res, body);
