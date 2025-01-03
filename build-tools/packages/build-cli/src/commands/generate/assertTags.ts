@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
 import { PackageCommand } from "../../BasePackageCommand.js";
-import { PackageKind } from "../../filter.js";
+import { PackageKind, type PackageWithKind } from "../../filter.js";
 
 import { Flags } from "@oclif/core";
 import {
@@ -20,13 +19,35 @@ import {
 	StringLiteral,
 	SyntaxKind,
 } from "ts-morph";
+import { getFlubConfig } from "../../config.js";
 
-const shortCodes = new Map<number, Node>();
-const newAssetFiles = new Set<SourceFile>();
-const codeToMsgMap = new Map<string, string>();
-let maxShortCode = -1;
+/**
+ * Key is the name of the assert function.
+ * Value is the index of the augment to tag.
+ * @remarks
+ * The function names are not handled in a scoped/qualified way, so any function imported or declared with that name will have tagging applied.
+ * See also {@link AssertTaggingConfig.assertionFunctions}.
+ */
+type AssertionFunctions = ReadonlyMap<string, number>;
 
-const defaultAssertionFunctions: ReadonlyMap<string, number> = new Map([["assert", 1]]);
+const defaultAssertionFunctions: AssertionFunctions = new Map([["assert", 1]]);
+
+/**
+ * Data aggregated about a collection of packages.
+ */
+interface CollectedData {
+	readonly shortCodes: Map<number, Node>;
+	readonly codeToMsgMap: Map<string, string>;
+	maxShortCode: number;
+}
+
+/**
+ * Data about a specific package.
+ */
+interface PackageData {
+	readonly newAssetFiles: ReadonlySet<SourceFile>;
+	readonly assertionFunctions: AssertionFunctions;
+}
 
 export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> {
 	static readonly summary =
@@ -47,9 +68,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 
 	protected defaultSelection = undefined;
 
-	private assertionFunctions: ReadonlyMap<string, number> | undefined;
-	private readonly errors: string[] = [];
-
+	// TODO: just use per package config and default (inherited) filtering logic.
 	protected async selectAndFilterPackages(): Promise<void> {
 		await super.selectAndFilterPackages();
 
@@ -58,11 +77,6 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		const assertTaggingEnabledPaths = this.flags.disableConfig
 			? undefined
 			: assertTagging?.enabledPaths;
-
-		this.assertionFunctions =
-			assertTagging?.assertionFunctions === undefined
-				? defaultAssertionFunctions
-				: new Map<string, number>(Object.entries(assertTagging.assertionFunctions));
 
 		// Further filter packages based on the path regex
 		const before = this.filteredPackages?.length ?? 0;
@@ -97,71 +111,105 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		}
 	}
 
-	protected async processPackage<TPkg extends Package>(
+	// This should not be used due to processPackages being overridden instead.
+	protected override processPackage<TPkg extends Package>(
 		pkg: TPkg,
 		kind: PackageKind,
 	): Promise<void> {
-		const tsconfigPath = await this.getTsConfigPath(pkg);
-		this.collectAssertData(tsconfigPath);
+		throw new Error("Method not implemented.");
 	}
 
-	public async run(): Promise<void> {
-		// Calls processPackage on all packages to collect assert data.
-		await super.run();
+	protected override async processPackages(packages: PackageWithKind[]): Promise<string[]> {
+		const errors: string[] = [];
 
-		// Tag asserts based on earlier collected data.
-		this.tagAsserts(true);
-	}
+		const collected: CollectedData = {
+			shortCodes: new Map<number, Node>(),
+			codeToMsgMap: new Map<string, string>(),
+			maxShortCode: -1,
+		};
 
-	private collectAssertData(tsconfigPath: string): void {
-		// TODO: this can probably be removed now
-		if (tsconfigPath.includes("test")) {
-			return;
+		const dataMap = new Map<PackageWithKind, PackageData>();
+
+		for (const pkg of packages) {
+			// Package configuration:
+			const tsconfigPath = await this.getTsConfigPath(pkg);
+			const packageConfig = getFlubConfig(pkg.directory).assertTagging;
+			const assertionFunctions: AssertionFunctions =
+				packageConfig?.assertionFunctions === undefined
+					? defaultAssertionFunctions
+					: new Map<string, number>(Object.entries(packageConfig.assertionFunctions));
+
+			// load the project based on the tsconfig
+			const project = new Project({
+				skipFileDependencyResolution: true,
+				tsConfigFilePath: tsconfigPath,
+			});
+
+			const newAssetFiles = this.collectAssertData(
+				project,
+				assertionFunctions,
+				collected,
+				errors,
+			);
+			dataMap.set(pkg, { assertionFunctions, newAssetFiles });
 		}
 
-		// load the project based on the tsconfig
-		const project = new Project({
-			skipFileDependencyResolution: true,
-			tsConfigFilePath: tsconfigPath,
-		});
+		if (errors.length !== 0) {
+			return errors;
+		}
 
+		for (const [pkg, data] of dataMap) {
+			errors.push(...this.tagAsserts(collected, data));
+		}
+
+		writeShortCodeMappingFile(collected.codeToMsgMap);
+
+		return errors;
+	}
+
+	private collectAssertData(
+		project: Project,
+		assertionFunctions: AssertionFunctions,
+		collected: CollectedData,
+		errors: string[],
+	): Set<SourceFile> {
 		const templateErrors: Node[] = [];
 		const otherErrors: Node[] = [];
+		const newAssetFiles = new Set<SourceFile>();
 
 		// walk all the files in the project
 		for (const sourceFile of project.getSourceFiles()) {
 			// walk the assert message params in the file
-			assert(this.assertionFunctions !== undefined, "No assert functions are defined!");
-			for (const msg of getAssertMessageParams(sourceFile, this.assertionFunctions)) {
+			for (const msg of getAssertMessageParams(sourceFile, assertionFunctions)) {
 				const nodeKind = msg.getKind();
 				switch (nodeKind) {
 					// If it's a number, validate it's a shortcode
 					case SyntaxKind.NumericLiteral: {
 						const numLit = msg as NumericLiteral;
 						if (!numLit.getText().startsWith("0x")) {
-							this.errors.push(
+							errors.push(
 								`Shortcodes must be provided by automation and be in hex format: ${numLit.getText()}\n\t${getCallsiteString(
 									numLit,
 								)}`,
 							);
-							return;
+							return newAssetFiles;
 						}
 						const numLitValue = numLit.getLiteralValue();
-						if (shortCodes.has(numLitValue)) {
+						if (collected.shortCodes.has(numLitValue)) {
 							// if we find two usages of the same short code then fail
-							this.errors.push(
+							errors.push(
 								`Duplicate shortcode 0x${numLitValue.toString(
 									16,
 								)} detected\n\t${getCallsiteString(
 									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									shortCodes.get(numLitValue)!,
+									collected.shortCodes.get(numLitValue)!,
 								)}\n\t${getCallsiteString(numLit)}`,
 							);
-							return;
+							return newAssetFiles;
 						}
-						shortCodes.set(numLitValue, numLit);
+						collected.shortCodes.set(numLitValue, numLit);
 						// calculate the maximun short code to ensure we don't duplicate
-						maxShortCode = Math.max(numLitValue, maxShortCode);
+						collected.maxShortCode = Math.max(numLitValue, collected.maxShortCode);
 
 						// If comment already exists, extract it for the mapping file
 						const comments = msg.getTrailingCommentRanges();
@@ -191,7 +239,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 									originalErrorText.length - 1,
 								);
 							}
-							codeToMsgMap.set(numLit.getText(), originalErrorText);
+							collected.codeToMsgMap.set(numLit.getText(), originalErrorText);
 						}
 						break;
 					}
@@ -239,10 +287,16 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		if (errorMessages.length > 0) {
 			this.error(errorMessages.join("\n\n"), { exit: 1 });
 		}
+
+		return newAssetFiles;
 	}
 
-	// TODO: the resolve = true may be safe to remove since we always want to resolve when running this command
-	private tagAsserts(resolve: true): void {
+	/**
+	 * Updates source files, adding new asserts to `collected`.
+	 *
+	 * @return array of error strings.
+	 */
+	private tagAsserts(collected: CollectedData, packageData: PackageData): string[] {
 		const errors: string[] = [];
 
 		// eslint-disable-next-line unicorn/consistent-function-scoping
@@ -256,44 +310,28 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		}
 
 		// go through all the newly collected asserts and add short codes
-		for (const s of newAssetFiles) {
+		for (const s of packageData.newAssetFiles) {
 			// another policy may have changed the file, so reload it
 			s.refreshFromFileSystemSync();
-			assert(this.assertionFunctions !== undefined, "No assert functions are defined!");
-			for (const msg of getAssertMessageParams(s, this.assertionFunctions)) {
+			for (const msg of getAssertMessageParams(s, packageData.assertionFunctions)) {
 				// here we only want to look at those messages that are strings,
 				// as we validated existing short codes above
 				if (isStringLiteral(msg)) {
-					// resolve === fix
-					if (resolve) {
-						// for now we don't care about filling gaps, but possible
-						const shortCode = ++maxShortCode;
-						shortCodes.set(shortCode, msg);
-						const text = msg.getLiteralText();
-						const shortCodeStr = `0x${shortCode.toString(16).padStart(3, "0")}`;
-						// replace the message with shortcode, and put the message in a comment
-						msg.replaceWithText(`${shortCodeStr} /* ${text} */`);
-						codeToMsgMap.set(shortCodeStr, text);
-					} else {
-						// TODO: if we are not in resolve mode we
-						// allow  messages that are not short code. this seems like the right
-						// behavior for main. we may want to enforce shortcodes in release branches in the future
-						// errors.push(`no assert shortcode: ${getCallsiteString(msg)}`);
-						break;
-					}
+					// for now we don't care about filling gaps, but possible
+					const shortCode = ++collected.maxShortCode;
+					collected.shortCodes.set(shortCode, msg);
+					const text = msg.getLiteralText();
+					const shortCodeStr = `0x${shortCode.toString(16).padStart(3, "0")}`;
+					// replace the message with shortcode, and put the message in a comment
+					msg.replaceWithText(`${shortCodeStr} /* ${text} */`);
+					collected.codeToMsgMap.set(shortCodeStr, text);
 				}
 			}
-			if (resolve) {
-				s.saveSync();
-			}
+
+			s.saveSync();
 		}
 
-		if (resolve) {
-			writeShortCodeMappingFile();
-		}
-		if (errors.length > 0) {
-			this.error(errors.join("\n"), { exit: 1 });
-		}
+		return errors;
 	}
 
 	private async getTsConfigPath(pkg: Package): Promise<string> {
@@ -343,7 +381,7 @@ function getAssertMessageParams(
 	return messageArgs;
 }
 
-function writeShortCodeMappingFile(): void {
+function writeShortCodeMappingFile(codeToMsgMap: Map<string, string>): void {
 	// eslint-disable-next-line unicorn/prefer-spread, @typescript-eslint/no-unsafe-assignment
 	const mapContents = Array.from(codeToMsgMap.entries())
 		.sort()
@@ -355,6 +393,7 @@ function writeShortCodeMappingFile(): void {
 			return accum;
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		}, {} as any);
+	// TODO: this should come from config.
 	const targetFolder = "packages/runtime/test-runtime-utils/src";
 
 	if (!fs.existsSync(targetFolder)) {
