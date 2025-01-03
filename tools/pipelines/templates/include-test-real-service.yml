@@ -411,27 +411,30 @@ stages:
                     "Count": 1, // How many copies of the above resources to allocate for the reservation. Should almost always be 1
                   };
 
-                const bearerToken = await fetch(
+
+                const bearerToken = fetch(
                   "https://tdff5prd.office.net/v2.0/reservations/reserve?isSynthetic=false&durationMinutes=75",
                   {
                     method: "POST",
                     body: JSON.stringify(requestBody),
-                  });
+                  })
+                  .then((response) => response.json());
                 const stringBearerToken = JSON.stringify(bearerToken);
 
                 // step 2: wait for resource hydration
                 // returns "Ready" or "Not Ready"
-                const status = await fetch(
+                const status = fetch(
                   "https://tdff5prd.office.net/v2.0/reservations/current?isSynthetic=false&durationMinutes=75",
                   {
                     method: "GET",
                     headers: {
                       Authorization: `BEARER ${stringBearerToken}`,
-                    }});
+                    }})
+                    .then((response) => response.json());
                 const stringStatus = JSON.stringify(status);
 
                 // step 3: check out hydrated resource
-                const credentials = await fetch(
+                const credentials = fetch(
                   `https://tdff5prd.office.net/v2.0/reservations/current/modules?moduleName=${moduleName}`,
                   {
                     method: "GET",
@@ -439,7 +442,8 @@ stages:
                       Authorization: `BEARER ${stringBearerToken}`,
                       // don't think this is right
                       "TDF-ReservationClient": "odspTests",
-                    }});
+                    }})
+                    .then((response) => response.json());
                 const loginTenants = JSON.stringify(credentials);
               "
               echo "##vso[task.setvariable variable=tenantCreds;issecret=true]loginTenants"
