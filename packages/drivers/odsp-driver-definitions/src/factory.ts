@@ -83,6 +83,11 @@ export interface ICollabSessionOptions {
 	 * @deprecated Due to security reasons we will be passing the token via Authorization header only.
 	 */
 	forceAccessTokenViaAuthorizationHeader?: boolean;
+	/**
+	 * Value indicating the client display name for current session.
+	 * This name will be used in attribution associated with edits made during session.
+	 */
+	displayName?: string;
 }
 
 /**
