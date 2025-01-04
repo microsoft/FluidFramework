@@ -7,7 +7,7 @@ import { strict } from "assert";
 import fs from "fs";
 
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ILoaderOptions, Loader } from "@fluidframework/container-loader/internal";
+import { ILoaderOptions, Loader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
