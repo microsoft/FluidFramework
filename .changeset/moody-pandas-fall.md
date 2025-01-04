@@ -1,11 +1,12 @@
 ---
 "@fluidframework/tree": minor
+"fluid-framework": minor
 ---
 ---
 "section": tree
 ---
 
-Schema evolution now supports adding optional fields to object node types without staged rollout using alpha APIs.
+There are now `@alpha` APIs for schema evolution which support adding optional fields to object node types without a staged rollout.
 
 SharedTree has many safety checks in place to ensure applications understand the format of documents they must support.
 One of these checks verifies that the view schema (defined in application's code) aligns with the document schema (determined by the document data at rest).
