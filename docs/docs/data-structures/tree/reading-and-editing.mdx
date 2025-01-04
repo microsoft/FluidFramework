@@ -3,7 +3,7 @@ title: Reading and Editing
 sidebar_position: 4
 ---
 
-The `TreeView` object and its children provide methods that enable your code to add nodes to the tree, remove nodes, and move nodes within the tree. You can also set and read the values of leaf nodes. The APIs have been designed to match as much as possible the syntax of TypeScript primitives, objects, maps, and arrays; although some editing APIs are different for the sake of making the merge semantics clearer.
+The `TreeView` object and its children expose properties and methods that allows applications read and edit the tree. The APIs have been designed to match as much as possible the syntax of TypeScript primitives, objects, maps, and arrays; although some editing APIs are different for the sake of making the merge semantics clearer.
 
 ## Leaf Node APIs
 
@@ -23,14 +23,14 @@ const pointsForDetroitTigers: number = seasonTree.tigersTeam.game1.points;
 
 ### Reading Object Properties
 
-Your code reads object nodes and their properties exactly as it would read a JavaScript object. The following are some examples.
+Your code reads object nodes and their properties exactly as it would from a JavaScript object. The following are some examples.
 
 ```typescript
 const pointsForDetroitTigers: number = seasonTree.tigersTeam.game1.points;
 
 const counterHandle: FluidHandle = myTree.myObjectNode.myHandle;
 
-const myItems: Array = stickyNotesTree.items;
+const myItems: Items = stickyNotesTree.items;
 ```
 
 ### Creating Objects
@@ -52,6 +52,10 @@ We show how to add this note to an array of notes in the tree in [Array node API
 ### Editing Object Properties
 
 To update the property on an object node, you assign a new node or value to it with the assignment operator (`=`).
+See [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/object-merge-semantics.md) for details on the merge semantics of these edits.
+
+Note that if the new value is a node (as opposed to a primitive), then its [status](./nodes.mdx#Tree_status) must be `TreeStatus.New`,
+In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
 
 ```typescript
 rectangle.topLeft = new Point({ x: 0, y: 0 });
@@ -77,41 +81,46 @@ The read APIs for map nodes have the same names and syntax as the corresponding 
 has(key): boolean
 ```
 
-Returns `true`` if the key is present in the map.
+Returns `true` if the key is present in the map.
 
 ```typescript
 get(key): T | undefined
 ```
 
-Returns the value of the property with the specified key.
+Returns the value associated with the specified key if any, and returns `undefined` if no value is associated with that key.
 
 ```typescript
 keys(): IterableIterator<string>
 ```
 
-Returns an Iterator that contains the keys in the map node. The keys are iterated in the order that they were added.
+Returns an Iterator that contains the keys in the map node.
+We do not make guarantees about the ordering of the keys.
 
 ```typescript
 values(): IterableIterator<T>
 ```
 
-Returns an Iterator that contains the values in the map node. The values are iterated in the order that they were added.
+Returns an Iterator that contains the values in the map node.
+We do not make guarantees about the ordering of the values.
 
 ```typescript
 entries(): IterableIterator<[string, T]>
 ```
 
-Returns an Iterator that contains the key/value pairs in the map node. The pairs are iterated in the order that they were added.
+Returns an Iterator that contains the key/value pairs in the map node.
+We do not make guarantees about the ordering of the entries.
 
 ```typescript
 map(callback: ()=>[]): IterableIterator<[string, T]>
 ```
 
 Returns an array, _not a map node or array node_, that is the result of applying the callback parameter to each member of the original map node. It is just like [Array.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map).
+We do not make guarantees about the ordering of the entries.
 
 ### Map Node Write APIs
 
-The write methods for map nodes are also the same as the corresponding methods for JavaScript `Map` objects.
+The write methods for map nodes are similar to the corresponding methods for JavaScript `Map` objects.
+See [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/map-merge-semantics.md) for details on the merge semantics of these edits.
 
 ```typescript
 set(key: string, value: T)
@@ -120,6 +129,8 @@ set(key: string, value: T)
 The `set()` method sets/changes the value of the item with the specified key. If the key is not present, the item is added to the map. Note the following:
 
 -   The `T` can be any type that conforms to the map node's schema. For example, if the schema was defined with `class MyMap extends sf.map([sf.number, sf.string]);`, then `T` could be `number` or `string`.
+-   If the `value` argument is a node (as opposed to a primitive), then its [status](./nodes.mdx#Tree_status) must be `TreeStatus.New`,
+    In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
 -   If multiple clients set the same key simultaneously, the key gets the value set by the last edit to apply. For the meaning of "simultaneously", see [Types of distributed data structures](../overview.mdx).
 
 ```typescript
@@ -145,10 +156,16 @@ Array nodes have all the same non-mutating read methods as the JavaScript [Array
 ### Array Node Write APIs
 
 The write APIs for array nodes are quite different from JavaScript arrays. They are more suitable for data items that are being worked on collaboratively by multiple people. There are three categories of write APIs: Insert, Remove, and Move.
+See [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/array-merge-semantics.md) for details on the merge semantics of these edits.
 
 #### Insert Methods
 
-Array nodes have three methods that insert new items into the node. Note that in all of the following, the `T` can be any type that conforms to the array node's schema. For example, if the schema was defined with `class MyArray extends sf.array([sf.number, sf.string]);`, then `T` could be `number` or `string`.
+Array nodes have three methods that insert items into the array.
+Note the following:
+
+-   In all of the following, the `T` can be any type that conforms to the array node's schema. For example, if the schema was defined with `class MyArray extends sf.array([sf.number, sf.string]);`, then `T` could be `number` or `string`.
+-   Inserted values that are nodes (as opposed to a primitive), must have a [status](./nodes.mdx#Tree_status) equal `TreeStatus.New`.
+    In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
 
 ```typescript
 insertAt(index: number, value: Iterable<T>)
@@ -194,27 +211,31 @@ Removes the items indicated by the `start` index (inclusive) and `end` index (ex
 
 Array nodes have three methods that move items within an array or from one array node to another. When moving from one array node to another, these methods must be called from the destination array node. Note that in all of the following, the `T` can be any type that is derived from an object that is returned by a call of `SchemaFactory.array()`, such as the `Notes` and `Items` classes in the sticky notes example.
 
+Note the following about these methods:
+
+-   If multiple clients simultaneously move an item, then that item will be moved to the destination indicated by the move of the client whose edit is ordered last.
+-   A moved item may be removed as a result of a simultaneous remove operation from another client. For example, if one client moves items 3-5, and another client simultaneously removes items 4 and 5, then, if the remove operation is ordered last, items 4 and 5 are removed from their destination by the remove operation. If the move operation is ordered last, then all three items will be moved to the destination.
+-   We also expose variations of these methods for moving a single item.
+
+For the meaning of "simultaneously", see [Types of distributed data structures](../overview.mdx).
+
 ```typescript
-moveToStart(sourceStartIndex: number, sourceEndIndex: number, source?: T)
+moveRangeToStart(sourceStartIndex: number, sourceEndIndex: number, source?: T)
 ```
 
 Moves the specified items to the start of the array. Specify a `source` array if it is different from the destination array.
 
 ```typescript
-moveToEnd(sourceStartIndex: number, sourceEndIndex: number, source?: T)
+moveRangeToEnd(sourceStartIndex: number, sourceEndIndex: number, source?: T)
 ```
 
 Moves the specified items to the end of the array. Specify a `source` array if it is different from the destination array.
 
 ```typescript
-moveToIndex(index: number, sourceStartIndex: number, sourceEndIndex: number, source?: T)
+moveRangeToIndex(destinationGap: number, sourceStartIndex: number, sourceEndIndex: number, source?: T)
 ```
 
-Moves the items to the specified `index` in the destination array. The item that is at `index` before the method is called will be at the first index position that follows the moved items after the move. Specify a `source` array if it is different from the destination array. If the items are being moved within the same array, the `index` position is calculated including the items being moved (as if a new copy of the moved items were being inserted, without removing the originals).
-
-Note the following about these methods:
-
--   If multiple clients simultaneously move an item, then that item will be moved to the destination indicated by the move of the client whose edit is ordered last.
--   A moved item may be removed as a result of a simultaneous remove operation from another client. For example, if one client moves items 3-5, and another client simultaneously removes items 4 and 5, then, if the remove operation is ordered last, items 4 and 5 are removed from their destination by the remove operation. If the move operation is ordered last, then all three items will be moved to the destination.
-
-For the meaning of "simultaneously", see [Types of distributed data structures](../overview.mdx).
+Moves the items to the specified `destinationGap` in the destination array.
+Specify a `source` array if it is different from the destination array.
+If the items are being moved within the same array, the `destinationGap` position is interpreted including the items being moved (as if a new copy of the moved items were being inserted, without removing the originals).
+See [the doc comments](https://fluidframework.com/docs/api/tree/treearraynode-interface#moverangetoindex-methodsignature) for details.
