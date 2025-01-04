@@ -54,7 +54,7 @@ We show how to add this note to an array of notes in the tree in [Array node API
 To update the property on an object node, you assign a new node or value to it with the assignment operator (`=`).
 See [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/object-merge-semantics.md) for details on the merge semantics of these edits.
 
-Note that if the new value is a node (as opposed to a primitive), then its [status](./nodes.mdx#Treestatus) must be `TreeStatus.New`,
+Note that if the new value is a node (as opposed to a primitive), then its [status](./nodes.mdx#treestatus) must be `TreeStatus.New`,
 In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
 
 ```typescript
@@ -129,7 +129,7 @@ set(key: string, value: T)
 The `set()` method sets/changes the value of the item with the specified key. If the key is not present, the item is added to the map. Note the following:
 
 -   The `T` can be any type that conforms to the map node's schema. For example, if the schema was defined with `class MyMap extends sf.map([sf.number, sf.string]);`, then `T` could be `number` or `string`.
--   If the `value` argument is a node (as opposed to a primitive), then its [status](./nodes.mdx#Tree_status) must be `TreeStatus.New`,
+-   If the `value` argument is a node (as opposed to a primitive), then its [status](./nodes.mdx#treestatus) must be `TreeStatus.New`,
     In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
 -   If multiple clients set the same key simultaneously, the key gets the value set by the last edit to apply. For the meaning of "simultaneously", see [Types of distributed data structures](../overview.mdx).
 
@@ -164,7 +164,7 @@ Array nodes have three methods that insert items into the array.
 Note the following:
 
 -   In all of the following, the `T` can be any type that conforms to the array node's schema. For example, if the schema was defined with `class MyArray extends sf.array([sf.number, sf.string]);`, then `T` could be `number` or `string`.
--   Inserted values that are nodes (as opposed to a primitive), must have a [status](./nodes.mdx#Tree_status) equal `TreeStatus.New`.
+-   Inserted values that are nodes (as opposed to a primitive), must have a [status](./nodes.mdx#treestatus) equal `TreeStatus.New`.
     In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
 
 ```typescript
