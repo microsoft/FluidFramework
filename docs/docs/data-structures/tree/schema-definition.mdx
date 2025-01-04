@@ -171,12 +171,11 @@ type _check = ValidateRecursiveSchema<typeof myRecursiveType>;
 
 ## Setting Properties as Optional
 
-To specify that a property is not required, pass it to the `SchemaFactory.optional()` method inline. The following example shows a schema with two optional properties.
+To specify that a property is not required, pass it to the `SchemaFactory.optional()` method inline. The following example shows a schema with an optional property.
 
 ```typescript
 class Proposal = sf.object('Proposal', {
     id: sf.string,
     text: sf.optional(sf.string),
-    comments: sf.optional(sf.array(Comment)),
 });
 ```
