@@ -182,3 +182,26 @@ export interface TokenLimits {
 	 */
 	readonly outputTokens?: number;
 }
+
+/**
+ * The GenerateTreeEditsResponse interface defines the structure of the response object
+ *
+ * @alpha
+ */
+export interface GenerateTreeEditsResponse {
+	status: "success" | "failure" | "partial-failure";
+	errorMessage?: string;
+	tokensUsed: TokenUsage;
+	diffs?: Diff[];
+}
+
+/**
+ * The Diff interface defines the structure of the response object
+ *
+ * @alpha
+ */
+export interface Diff {
+	id: string;
+	type: "error" | "edit";
+	description: string;
+}

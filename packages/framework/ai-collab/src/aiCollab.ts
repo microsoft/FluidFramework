@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	AiCollabErrorResponse,
-	AiCollabOptions,
-	AiCollabSuccessResponse,
-} from "./aiCollabApi.js";
+import type { AiCollabOptions, GenerateTreeEditsResponse } from "./aiCollabApi.js";
 import { generateTreeEdits } from "./explicit-strategy/index.js";
 
 /**
@@ -68,9 +64,7 @@ import { generateTreeEdits } from "./explicit-strategy/index.js";
  *
  * @alpha
  */
-export async function aiCollab(
-	options: AiCollabOptions,
-): Promise<AiCollabSuccessResponse | AiCollabErrorResponse> {
+export async function aiCollab(options: AiCollabOptions): Promise<GenerateTreeEditsResponse> {
 	const response = await generateTreeEdits({
 		treeNode: options.treeNode,
 		validator: options.validator,
