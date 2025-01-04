@@ -132,14 +132,14 @@ describe("Runtime batching", () => {
 	 * processing the messages in the queue.
 	 */
 	function processBatch(batch: ISequencedDocumentMessage[], cr: ContainerRuntime) {
-		// Push the messages in the inbound queue. This is done because ScheduleManager listens to the "push" event
+		// Push the messages in the inbound queue. This is done because InboundBatchAggregator listens to the "push" event
 		// emitted by the inbound queue to do batch validations.
 		for (const batchMessage of batch) {
 			mockDeltaManager.inbound.push(batchMessage);
 		}
 
 		// Process the messages in the inbound queue.
-		// Process is called on the delta manager because ScheduleManager listens to the "op" event on delta manager
+		// Process is called on the delta manager because InboundBatchAggregator listens to the "op" event on delta manager
 		// as well to do validation.
 		// Process is called on the container runtime because it is the one that actually processes the messages and
 		// has its own set of validations.
@@ -278,19 +278,19 @@ describe("Runtime batching", () => {
 		let schedulerBatchBeginStub: sinon.SinonStub;
 		let schedulerBatchEndStub: sinon.SinonStub;
 
-		type ContainerRuntimeWithScheduler = Omit<ContainerRuntime, "scheduleManager"> & {
-			scheduleManager: { deltaScheduler: DeltaScheduler };
+		type ContainerRuntimeWithScheduler = Omit<ContainerRuntime, "deltaScheduler"> & {
+			deltaScheduler: DeltaScheduler;
 		};
 
 		beforeEach(async () => {
 			const containerRuntimeWithDeltaScheduler =
 				containerRuntime as unknown as ContainerRuntimeWithScheduler;
 			schedulerBatchBeginStub = sandbox.stub(
-				containerRuntimeWithDeltaScheduler.scheduleManager.deltaScheduler,
+				containerRuntimeWithDeltaScheduler.deltaScheduler,
 				"batchBegin",
 			);
 			schedulerBatchEndStub = sandbox.stub(
-				containerRuntimeWithDeltaScheduler.scheduleManager.deltaScheduler,
+				containerRuntimeWithDeltaScheduler.deltaScheduler,
 				"batchEnd",
 			);
 			containerRuntimeStub = patchContainerRuntime(containerRuntime);
