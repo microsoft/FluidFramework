@@ -54,7 +54,7 @@ We show how to add this note to an array of notes in the tree in [Array node API
 To update the property on an object node, you assign a new node or value to it with the assignment operator (`=`).
 See [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/object-merge-semantics.md) for details on the merge semantics of these edits.
 
-Note that if the new value is a node (as opposed to a primitive), then its [status](./nodes.mdx#Tree_status) must be `TreeStatus.New`,
+Note that if the new value is a node (as opposed to a primitive), then its [status](./nodes.mdx#Treestatus) must be `TreeStatus.New`,
 In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
 
 ```typescript
