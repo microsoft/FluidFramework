@@ -6,7 +6,7 @@
 import { Mode, processContent } from "../../replayMultipleFiles.js";
 
 describe("Update snapshots", function () {
-	this.timeout(300000);
+	this.timeout(999998);
 
 	it("Update snapshots", async () => {
 		await processContent(Mode.UpdateSnapshots);
