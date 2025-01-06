@@ -445,18 +445,17 @@ export class ConnectionManager implements IConnectionManager {
 		this._outbound.clear();
 
 		let text = "Closing DeltaManager";
-		let error: ICriticalContainerError | undefined;
+		let error: ICriticalContainerError;
 		let finalSwitchToReadonly = switchToReadonly;
 
 		// Handle overloads
 		if (
-			typeof disconnectReasonOrError === "string" &&
-			disconnectReasonOrError in DisconnectReason
+			typeof disconnectReasonOrError === "string"
 		) {
 			text = disconnectReasonOrError;
-			error = errorOrSwitchToReadonly as ICriticalContainerError | undefined;
+			error = errorOrSwitchToReadonly as ICriticalContainerError;
 		} else {
-			error = disconnectReasonOrError as ICriticalContainerError | undefined;
+			error = disconnectReasonOrError as ICriticalContainerError;
 			finalSwitchToReadonly = typeof errorOrSwitchToReadonly === "boolean" ? errorOrSwitchToReadonly : true;
 		}
 
