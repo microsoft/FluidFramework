@@ -92,7 +92,6 @@ import {
 	CursorLocationType,
 	type RevertibleAlpha,
 	type RevertibleAlphaFactory,
-	RevertibleStatus,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -142,7 +141,6 @@ import {
 	toStoredSchema,
 	type TreeView,
 	type TreeBranchEvents,
-	type TreeBranch,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -1301,24 +1299,4 @@ export function moveWithin(
 	destIndex: number,
 ) {
 	editor.move(field, sourceIndex, count, field, destIndex);
-}
-
-/**
- * Clones a batch of revertibles for a target branch.
- * @param revertibles - Array of revertibles to clone
- * @param targetBranch - The target branch to clone the revertibles for
- * @returns Array of cloned revertibles, maintaining the same order as the input
- */
-export function cloneRevertiblesInBatch(
-	revertibles: RevertibleAlpha[],
-	targetBranch: TreeBranch,
-): RevertibleAlpha[] {
-	const disposedRevertible = revertibles.find(
-		(revertible) => revertible.status === RevertibleStatus.Disposed,
-	);
-	if (disposedRevertible !== undefined) {
-		throw new Error("List of revertible should not contain disposed revertibles.");
-	}
-
-	return revertibles.map((revertible) => revertible.clone(targetBranch));
 }

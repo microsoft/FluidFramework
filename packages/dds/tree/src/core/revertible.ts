@@ -47,6 +47,8 @@ export interface RevertibleAlpha extends Revertible {
 	/**
 	 * Clones the {@link Revertible} to a target branch.
 	 *
+	 * @remarks To clone `RevertibleAlpha` in batch, use {@link cloneRevertibles}.
+	 *
 	 * @param branch - A target branch to apply the revertible to.
 	 * The target branch must contain the same commit that this revertible is meant to revert, otherwise will throw an error.
 	 * @returns A cloned revertible is independent of the original, meaning disposing of one will not affect the other,
@@ -96,3 +98,29 @@ export type RevertibleFactory = (
 export type RevertibleAlphaFactory = (
 	onRevertibleDisposed?: (revertible: RevertibleAlpha) => void,
 ) => RevertibleAlpha;
+
+/**
+ * Clones a batch of revertibles for a target branch.
+ * @throws Error if any revertible is disposed
+ * @param revertibles - Array of revertibles to clone
+ * @param targetBranch - The target branch to clone the revertibles for
+ * @returns Array of cloned revertibles, maintaining the same order as the input
+ *
+ * @alpha
+ */
+export function cloneRevertibles(
+	revertibles: RevertibleAlpha[],
+	targetBranch: TreeBranch,
+): RevertibleAlpha[] {
+	const clonedRevertibles: RevertibleAlpha[] = [];
+
+	for (const revertible of revertibles) {
+		if (revertible.status === RevertibleStatus.Disposed) {
+			throw new Error("List of revertible should not contain disposed revertibles.");
+		}
+
+		clonedRevertibles.push(revertible.clone(targetBranch));
+	}
+
+	return clonedRevertibles;
+}

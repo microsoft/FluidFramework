@@ -606,9 +606,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 			},
 			clone: (forkedBranch: TreeBranch) => {
-				/**
-				 * To clone `RevertibleAlpha` in batch, use {@link cloneRevertiblesInBatch}.
-				 */
 				if (forkedBranch === undefined) {
 					return this.createRevertible(revision, kind, checkout, onRevertibleDisposed);
 				}

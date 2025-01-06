@@ -7,6 +7,7 @@ import {
 	type FieldUpPath,
 	type Revertible,
 	type RevertibleAlpha,
+	cloneRevertibles,
 	RevertibleStatus,
 	type UpPath,
 	rootFieldKey,
@@ -15,7 +16,6 @@ import { singleJsonCursor } from "../json/index.js";
 import { SharedTreeFactory, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
-	cloneRevertiblesInBatch,
 	createTestUndoRedoStacks,
 	expectJsonTree,
 	moveWithin,
@@ -691,7 +691,7 @@ describe("Undo and redo", () => {
 			batchedRevertibles.push(revertible);
 		}
 
-		const clonedRevertibles = cloneRevertiblesInBatch(batchedRevertibles, forkedView);
+		const clonedRevertibles = cloneRevertibles(batchedRevertibles, forkedView);
 
 		assert.equal(clonedRevertibles.length, 2);
 		assert.equal(forkedView.root.child?.propertyOne, 256);
@@ -725,7 +725,7 @@ describe("Undo and redo", () => {
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 		}
 
-		assert.throws(() => cloneRevertiblesInBatch(batchedRevertibles, forkedView), {
+		assert.throws(() => cloneRevertibles(batchedRevertibles, forkedView), {
 			message: "List of revertible should not contain disposed revertibles.",
 		});
 	});
