@@ -23,7 +23,7 @@ export class ZookeeperClient implements IZookeeperClient {
 		const path = `/brokers/topics/${topic}/partitions/${partition}/state`;
 		return this.client.get(path, false).then((data) => {
 			// `data` is typed incorrectly. Instead of string | Buffer, it is an array like [object, Buffer].
-			const state = (data[1] as string | Buffer).toString("utf8");
+			const state = data[1].toString("utf8");
 			return JSON.parse(state).leader_epoch as number;
 		});
 	}
