@@ -53,6 +53,7 @@ import {
 	Marker,
 	SegmentGroup,
 	compareStrings,
+	isSegmentLeaf,
 } from "./mergeTreeNodes.js";
 import {
 	createAdjustRangeOp,
@@ -87,7 +88,6 @@ import { PropertySet, type MapLike } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import {
 	isInserted,
-	isMergeNodeInfo,
 	isMoved,
 	isRemoved,
 	overwriteInfo,
@@ -137,6 +137,8 @@ export interface IClientEvents {
 		) => void,
 	): void;
 }
+
+const UNBOUND_SEGMENT_ERROR = "The provided segment is not bound to this DDS.";
 
 /**
  * This class encapsulates a merge-tree, and provides a local client specific view over it and
@@ -432,7 +434,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param segment - The segment to get the position of
 	 */
 	public getPosition(segment: ISegment | undefined, localSeq?: number): number {
-		if (!isMergeNodeInfo(segment)) {
+		if (!isSegmentLeaf(segment)) {
 			return -1;
 		}
 		return this._mergeTree.getPosition(
@@ -462,6 +464,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		slidingPreference?: SlidingPreference,
 		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
+		if (!isSegmentLeaf(segment) && typeof segment !== "string") {
+			throw new UsageError(UNBOUND_SEGMENT_ERROR);
+		}
 		return this._mergeTree.createLocalReferencePosition(
 			segment,
 			offset ?? 0,
@@ -876,6 +881,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			0x032 /* "localSeq greater than collab window" */,
 		);
 		const { currentSeq, clientId } = this.getCollabWindow();
+		if (!isSegmentLeaf(segment)) {
+			throw new UsageError(UNBOUND_SEGMENT_ERROR);
+		}
 		return this._mergeTree.getPosition(segment, currentSeq, clientId, localSeq);
 	}
 
@@ -1376,12 +1384,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	} {
 		const { referenceSequenceNumber, clientId } =
 			this.getClientSequenceArgsForMessage(sequenceArgs);
-		return this._mergeTree.getContainingSegment<T>(
+		return this._mergeTree.getContainingSegment(
 			pos,
 			referenceSequenceNumber,
 			clientId,
 			localSeq,
-		);
+		) as {
+			segment: T | undefined;
+			offset: number | undefined;
+		};
 	}
 
 	getPropertiesAtPosition(pos: number): PropertySet | undefined {

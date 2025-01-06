@@ -123,7 +123,7 @@ export class SnapshotLoader {
 				if (specAsBuggyFormat.removedClient !== undefined) {
 					spec.removedClientIds ??= [specAsBuggyFormat.removedClient];
 				}
-				assert(spec.removedClientIds !== undefined, "must have removedClient ids");
+				assert(spec.removedClientIds !== undefined, 0xaa4 /* must have removedClient ids */);
 				// eslint-disable-next-line import/no-deprecated
 				overwriteInfo<IRemovalInfo>(seg, {
 					removedSeq: spec.removedSeq,
@@ -135,7 +135,7 @@ export class SnapshotLoader {
 			if (spec.movedSeq !== undefined) {
 				assert(
 					spec.movedClientIds !== undefined && spec.movedSeqs !== undefined,
-					"must have movedIds ids",
+					0xaa5 /* must have movedIds ids */,
 				);
 				// eslint-disable-next-line import/no-deprecated
 				overwriteInfo<IMoveInfo>(seg, {
