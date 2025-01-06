@@ -11,12 +11,11 @@ import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 
-import { defaultFolderHierarchyConfig } from "../api-item-transforms/index.js";
 import {
 	FolderDocumentPlacement,
 	HierarchyKind,
 	type HierarchyOptions,
-	type FolderHierarchyConfiguration,
+	type FolderHierarchyOptions,
 } from "../index.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
@@ -39,23 +38,21 @@ export const snapshotsDirectoryPath = Path.resolve(dirname, "..", "..", "src", "
 export const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
 
 /**
- * Test hierarchy configs
+ * Test hierarchy configurations
  *
  * @privateRemarks TODO: Formalize and export some of these as pre-canned solutions?
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
-export namespace HierarchyConfigs {
-	const outsideFolderConfig: FolderHierarchyConfiguration = {
+export namespace HierarchyConfigurations {
+	const outsideFolderConfig: FolderHierarchyOptions = {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Outside,
-		folderName: defaultFolderHierarchyConfig.folderName,
 	};
 
-	const insideFolderConfig: FolderHierarchyConfiguration = {
+	const insideFolderOptions: FolderHierarchyOptions = {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Inside,
 		documentName: "index",
-		folderName: defaultFolderHierarchyConfig.folderName,
 	};
 
 	/**
@@ -114,12 +111,12 @@ export namespace HierarchyConfigs {
 	 */
 	export const deep: HierarchyOptions = {
 		// Items that introduce folder hierarchy:
-		[ApiItemKind.Namespace]: insideFolderConfig,
-		[ApiItemKind.Package]: insideFolderConfig,
-		[ApiItemKind.Class]: insideFolderConfig,
-		[ApiItemKind.Enum]: insideFolderConfig,
-		[ApiItemKind.Interface]: insideFolderConfig,
-		[ApiItemKind.TypeAlias]: insideFolderConfig,
+		[ApiItemKind.Namespace]: insideFolderOptions,
+		[ApiItemKind.Package]: insideFolderOptions,
+		[ApiItemKind.Class]: insideFolderOptions,
+		[ApiItemKind.Enum]: insideFolderOptions,
+		[ApiItemKind.Interface]: insideFolderOptions,
+		[ApiItemKind.TypeAlias]: insideFolderOptions,
 
 		// Items that get their own document, but do not introduce folder hierarchy:
 		[ApiItemKind.CallSignature]: HierarchyKind.Document,

@@ -224,24 +224,23 @@ function getDocumentNameForItem(
 	item: ApiItemWithHierarchy<DocumentHierarchyConfiguration | FolderHierarchyConfiguration>,
 	hierarchyConfig: HierarchyConfiguration,
 ): string {
-	return (
-		getValueOrDerived(item.hierarchy.documentName, item.apiItem) ??
-		createQualifiedDocumentNameForApiItem(item.apiItem, hierarchyConfig)
-	);
+	return getValueOrDerived(item.hierarchy.documentName, item.apiItem, hierarchyConfig);
 }
 
 function getFolderNameForItem(
 	item: ApiItemWithHierarchy<FolderHierarchyConfiguration>,
 	hierarchyConfig: HierarchyConfiguration,
 ): string {
-	return (
-		getValueOrDerived(item.hierarchy.folderName, item.apiItem) ??
-		// If no folder name is configured, use the system-default document name
-		createQualifiedDocumentNameForApiItem(item.apiItem, hierarchyConfig)
-	);
+	return getValueOrDerived(item.hierarchy.folderName, item.apiItem, hierarchyConfig);
 }
 
-function createQualifiedDocumentNameForApiItem(
+/**
+ * Generates a qualified document name for the specified API item aimed at preventing name collisions, accounting for folder hierarchy.
+ *
+ * @param apiItem - The API item for which we are generating a qualified name
+ * @param hierarchyConfig - See {@link HierarchyConfiguration}.
+ */
+export function createQualifiedDocumentNameForApiItem(
 	apiItem: ApiItem,
 	hierarchyConfig: HierarchyConfiguration,
 ): string {

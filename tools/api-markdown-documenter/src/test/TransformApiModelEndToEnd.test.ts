@@ -10,7 +10,7 @@ import { ReleaseTag, type ApiModel } from "@microsoft/api-extractor-model";
 import { checkForDuplicateDocumentPaths } from "../api-item-transforms/index.js";
 import { loadModel, transformApiModel, type ApiItemTransformationOptions } from "../index.js";
 
-import { HierarchyConfigs, testDataDirectoryPath } from "./EndToEndTestUtilities.js";
+import { HierarchyConfigurations, testDataDirectoryPath } from "./EndToEndTestUtilities.js";
 
 const apiModels: string[] = ["simple-suite-test"];
 
@@ -29,7 +29,7 @@ const testConfigs = new Map<string, Omit<ApiItemTransformationOptions, "apiModel
 			uriRoot: "docs",
 			includeBreadcrumb: true,
 			includeTopLevelDocumentHeading: false,
-			hierarchy: HierarchyConfigs.sparse,
+			hierarchy: HierarchyConfigurations.sparse,
 			minimumReleaseLevel: ReleaseTag.Beta, // Only include `@public` and `beta` items in the docs suite
 		},
 	],
@@ -41,7 +41,7 @@ const testConfigs = new Map<string, Omit<ApiItemTransformationOptions, "apiModel
 			uriRoot: "docs",
 			includeBreadcrumb: false,
 			includeTopLevelDocumentHeading: true,
-			hierarchy: HierarchyConfigs.sparse,
+			hierarchy: HierarchyConfigurations.sparse,
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
 			skipPackage: (apiPackage) => apiPackage.name === "test-suite-b", // Skip test-suite-b package
 		},

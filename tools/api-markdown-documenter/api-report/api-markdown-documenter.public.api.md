@@ -219,13 +219,16 @@ export namespace DefaultDocumentationSuiteConfiguration {
     export function defaultSkipPackage(): boolean;
 }
 
-// @public
+// @public @sealed
 export type DocumentationHierarchyConfiguration = SectionHierarchyConfiguration | DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
 
 // @public
 export interface DocumentationHierarchyConfigurationBase<THierarchyKind extends HierarchyKind> {
     readonly kind: THierarchyKind;
 }
+
+// @public @sealed
+export type DocumentationHierarchyOptions = SectionHierarchyOptions | DocumentHierarchyOptions | FolderHierarchyOptions;
 
 // @public
 export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TValue>, DocumentationNode {
@@ -328,12 +331,14 @@ export type DocumentationSuiteOptions = Omit<Partial<DocumentationSuiteConfigura
 };
 
 // @public
-export interface DocumentHierarchyConfiguration extends DocumentationHierarchyConfigurationBase<HierarchyKind.Document>, DocumentHierarchyProperties {
-}
+export type DocumentHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Document> & DocumentHierarchyProperties;
+
+// @public
+export type DocumentHierarchyOptions = DocumentationHierarchyConfigurationBase<HierarchyKind.Document> & Partial<DocumentHierarchyProperties>;
 
 // @public
 export interface DocumentHierarchyProperties {
-    readonly documentName?: string | undefined | ((apiItem: ApiItem) => string | undefined);
+    readonly documentName: string | ((apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration) => string);
 }
 
 // @public
@@ -400,14 +405,16 @@ export enum FolderDocumentPlacement {
     Outside = "outside"
 }
 
-// @public
-export interface FolderHierarchyConfiguration extends DocumentationHierarchyConfigurationBase<HierarchyKind.Folder>, FolderHierarchyProperties {
-}
+// @public @sealed
+export type FolderHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Folder> & FolderHierarchyProperties;
 
-// @public
+// @public @sealed
+export type FolderHierarchyOptions = DocumentationHierarchyConfigurationBase<HierarchyKind.Folder> & Partial<FolderHierarchyProperties>;
+
+// @public @sealed
 export interface FolderHierarchyProperties extends DocumentHierarchyProperties {
-    readonly documentPlacement: FolderDocumentPlacement | ((apiItem: ApiItem) => FolderDocumentPlacement);
-    readonly folderName: string | undefined | ((apiItem: ApiItem) => string | undefined);
+    readonly documentPlacement: FolderDocumentPlacement;
+    readonly folderName: string | ((apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration) => string);
 }
 
 // @public
@@ -496,11 +503,11 @@ export enum HierarchyKind {
 
 // @public
 export type HierarchyOptions = {
-    [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]?: HierarchyKind | DocumentationHierarchyConfiguration;
+    [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]?: HierarchyKind | DocumentationHierarchyOptions;
 } & {
-    [ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
-    [ApiItemKind.Package]?: HierarchyKind.Document | HierarchyKind.Folder | DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
-    [ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+    [ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyOptions;
+    [ApiItemKind.Package]?: HierarchyKind.Document | HierarchyKind.Folder | DocumentHierarchyOptions | FolderHierarchyOptions;
+    [ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyOptions;
 };
 
 // @public
@@ -717,6 +724,9 @@ function renderNodes(children: DocumentationNode[], writer: DocumentWriter, chil
 
 // @public
 export type SectionHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Section>;
+
+// @public
+export type SectionHierarchyOptions = DocumentationHierarchyConfigurationBase<HierarchyKind.Section>;
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {

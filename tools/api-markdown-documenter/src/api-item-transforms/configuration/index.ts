@@ -18,18 +18,19 @@ export {
 export {
 	type DocumentationHierarchyConfiguration,
 	type DocumentationHierarchyConfigurationBase,
+	type DocumentationHierarchyOptions,
 	type DocumentHierarchyConfiguration,
+	type DocumentHierarchyOptions,
 	type DocumentHierarchyProperties,
 	FolderDocumentPlacement,
 	type FolderHierarchyConfiguration,
+	type FolderHierarchyOptions,
 	type FolderHierarchyProperties,
-	defaultDocumentHierarchyConfig,
-	defaultFolderHierarchyConfig,
-	defaultSectionHierarchyConfig,
 	type HierarchyConfiguration,
 	type HierarchyOptions,
 	HierarchyKind,
 	type SectionHierarchyConfiguration,
+	type SectionHierarchyOptions,
 } from "./Hierarchy.js";
 export {
 	type ApiItemTransformations,

@@ -11,7 +11,7 @@ import { HtmlRenderer, loadModel } from "../index.js";
 
 import {
 	compareDocumentationSuiteSnapshot,
-	HierarchyConfigs,
+	HierarchyConfigurations,
 	snapshotsDirectoryPath as snapshotsDirectoryPathBase,
 	testDataDirectoryPath,
 	testTemporaryDirectoryPath as testTemporaryDirectoryPathBase,
@@ -48,7 +48,7 @@ const testConfigs = new Map<
 			uriRoot: "docs",
 			includeBreadcrumb: true,
 			includeTopLevelDocumentHeading: false,
-			hierarchy: HierarchyConfigs.flat,
+			hierarchy: HierarchyConfigurations.flat,
 			minimumReleaseLevel: ReleaseTag.Beta, // Only include `@public` and `beta` items in the docs suite
 		},
 	],
@@ -60,7 +60,7 @@ const testConfigs = new Map<
 			uriRoot: "docs",
 			includeBreadcrumb: false,
 			includeTopLevelDocumentHeading: true,
-			hierarchy: HierarchyConfigs.sparse,
+			hierarchy: HierarchyConfigurations.sparse,
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
 			skipPackage: (apiPackage) => apiPackage.name === "test-suite-b", // Skip test-suite-b package
 			startingHeadingLevel: 2,
@@ -74,7 +74,7 @@ const testConfigs = new Map<
 		"deep-config",
 		{
 			uriRoot: ".",
-			hierarchy: HierarchyConfigs.deep,
+			hierarchy: HierarchyConfigurations.deep,
 		},
 	],
 ]);
