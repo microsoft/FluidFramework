@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-pairwise-generator",
-	"version": "2.13.0",
+	"version": "2.14.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
