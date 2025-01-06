@@ -23,14 +23,17 @@ import { ReferencePosition } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	isInserted,
+	isMergeNodeInfo as isMergeNode,
 	isMoved,
 	isRemoved,
 	overwriteInfo,
 	type IInsertionInfo,
+	type IMergeNodeInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IRemovalInfo,
+	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
 
@@ -87,8 +90,7 @@ export type ISegmentInternal = Omit<
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
 export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
-	Partial<IInsertionInfo & IMergeNodeCommon> & {
-		parent?: MergeBlock;
+	Partial<IInsertionInfo & IMergeNodeInfo> & {
 		segmentGroups?: SegmentGroupCollection;
 		propertyManager?: PropertiesManager;
 		/**
@@ -108,7 +110,54 @@ export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line imp
 		 */
 		readonly endpointType?: "start" | "end";
 	};
-export type IMergeNode = MergeBlock | ISegmentPrivate;
+
+/**
+ * Segment leafs are segments that have both IMergeNodeInfo and IInsertionInfo. This means they
+ * are inserted at a position, and bound via their parent MergeBlock to the merge tree. MergeBlocks'
+ * children are either a segment leaf, or another merge block for interior nodes of the tree. When working
+ * within the tree it is generally unnecessary to use type coercions methods common to the infos, and segment
+ * leafs, as the children of MergeBlocks are already well typed. However, when segments come from outside the
+ * merge tree, like via client's public methods, it becomes necessary to use the type coercions methods
+ * to ensure the passed in segment objects are correctly bound to the merge tree.
+ */
+export type ISegmentLeaf = SegmentWithInfo<IMergeNodeInfo & IInsertionInfo>;
+/**
+ * A type-guard which determines if the segment has segment leaf, and
+ * returns true if it does, along with applying strong typing.
+ * @param nodeLike - The segment-like object to check.
+ * @returns True if the segment is a segment leaf, otherwise false.
+ */
+export const isSegmentLeaf = (segmentLike: unknown): segmentLike is ISegmentLeaf =>
+	isInserted(segmentLike) && isMergeNode(segmentLike);
+
+/**
+ * Converts a segment-like object to a segment leaf object if possible.
+ *
+ * @param segmentLike - The segment-like object to convert.
+ * @returns The segment leaf if the conversion is possible, otherwise undefined.
+ */
+export const toSegmentLeaf = (segmentLike: unknown): ISegmentLeaf | undefined =>
+	isSegmentLeaf(segmentLike) ? segmentLike : undefined;
+/**
+ * Asserts that the segment is a segment leaf. Usage of this function should not produce a user facing error.
+ *
+ * @param segmentLike - The segment-like object to check.
+ * @throws Will throw an error if the segment is not a segment leaf.
+ */
+export const assertSegmentLeaf: (segmentLike: unknown) => asserts segmentLike is ISegmentLeaf =
+	(segmentLike) => assert(isSegmentLeaf(segmentLike), 0xaab /* must be segment leaf */);
+/**
+ * This type is used for building MergeBlocks from segments and other MergeBlocks. We need this
+ * type as segments may not yet be bound to the tree, so lack merge node info which is required for
+ * segment leafs.
+ */
+export type IMergeNodeBuilder = MergeBlock | SegmentWithInfo<IInsertionInfo>;
+
+/**
+ * This type is used by MergeBlocks to define their children, which are either segments or other
+ * MergeBlocks.
+ */
+export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
  * A segment representing a portion of the merge tree.
@@ -286,29 +335,13 @@ export interface ISegmentAction<TClientData> {
 	): boolean;
 }
 export interface ISegmentChanges {
-	next?: ISegmentPrivate;
-	replaceCurrent?: ISegmentPrivate;
-}
-export interface BlockAction<TClientData> {
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	(
-		block: MergeBlock,
-		pos: number,
-		refSeq: number,
-		clientId: number,
-		start: number | undefined,
-		end: number | undefined,
-		accum: TClientData,
-	): boolean;
+	next?: SegmentWithInfo<IInsertionInfo>;
+	replaceCurrent?: SegmentWithInfo<IInsertionInfo>;
 }
 
 export interface InsertContext {
-	candidateSegment?: ISegmentPrivate;
-	leaf: (
-		segment: ISegmentPrivate | undefined,
-		pos: number,
-		ic: InsertContext,
-	) => ISegmentChanges;
+	candidateSegment?: SegmentWithInfo<IInsertionInfo>;
+	leaf: (segment: ISegmentLeaf | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
 
@@ -323,7 +356,7 @@ export interface ObliterateInfo {
 }
 
 export interface SegmentGroup {
-	segments: ISegmentPrivate[];
+	segments: ISegmentLeaf[];
 	previousProps?: PropertySet[];
 	localSeq?: number;
 	refSeq: number;
@@ -337,7 +370,7 @@ export interface SegmentGroup {
  * facilitate splits.)
  */
 export const MaxNodesInBlock = 8;
-export class MergeBlock implements IMergeNodeCommon {
+export class MergeBlock implements Partial<IMergeNodeInfo> {
 	public children: IMergeNode[];
 	public needsScour?: boolean;
 	public parent?: MergeBlock;
@@ -395,15 +428,22 @@ export class MergeBlock implements IMergeNodeCommon {
 			index === 0 ? undefined : this.children[index - 1]?.ordinal,
 		);
 	}
-
-	public assignChild(child: IMergeNode, index: number, updateOrdinal = true): void {
-		child.parent = this;
-		child.index = index;
-		if (updateOrdinal) {
-			this.setOrdinal(child, index);
-		}
-		this.children[index] = child;
+}
+export function assignChild<C extends IMergeNodeBuilder>(
+	parent: MergeBlock,
+	child: C,
+	index: number,
+	updateOrdinal = true,
+): asserts child is C & IMergeNodeInfo {
+	const node = Object.assign<C, IMergeNodeInfo>(child, {
+		parent,
+		index,
+		ordinal: child.ordinal ?? "",
+	});
+	if (updateOrdinal) {
+		parent.setOrdinal(node, index);
 	}
+	parent.children[index] = node;
 }
 
 export function seqLTE(seq: number, minOrRefSeq: number): boolean {
@@ -551,17 +591,19 @@ export abstract class BaseSegment implements ISegment {
 			return undefined;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
-		const thisAsMergeSegment: ISegmentPrivate = this;
-		leafSegment.parent = thisAsMergeSegment.parent;
-
-		// Give the leaf a temporary yet valid ordinal.
-		// when this segment is put in the tree, it will get its real ordinal,
-		// but this ordinal meets all the necessary invariants for now.
-		// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
-		// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
-		// eslint-disable-next-line unicorn/prefer-code-point
-		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
+		if (isMergeNode(this)) {
+			overwriteInfo<IMergeNodeInfo>(leafSegment, {
+				index: this.index + 1,
+				// Give the leaf a temporary yet valid ordinal.
+				// when this segment is put in the tree, it will get its real ordinal,
+				// but this ordinal meets all the necessary invariants for now.
+				// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+				// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
+				// eslint-disable-next-line unicorn/prefer-code-point
+				ordinal: this.ordinal + String.fromCharCode(0),
+				parent: this.parent,
+			});
+		}
 
 		if (isInserted(this)) {
 			overwriteInfo<IInsertionInfo>(leafSegment, {

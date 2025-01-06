@@ -1085,12 +1085,14 @@ export interface Tagged<V, T extends string = string> {
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 // @alpha
-export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = {
+export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
     rollback?: false;
     value: TSuccessValue;
 } | {
     rollback: true;
     value: TFailureValue;
+}) & {
+    preconditionsOnRevert?: readonly TransactionConstraint[];
 };
 
 // @public
