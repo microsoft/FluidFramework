@@ -10,6 +10,7 @@ export enum Constants {
 	StorageRoutingIdHeader = "Storage-Routing-Id",
 	StorageNameHeader = "Storage-Name",
 	IsEphemeralContainer = "Is-Ephemeral-Container",
+	SimplifiedCustomDataHeader = "Simplified-Custom-Data",
 }
 
 export interface IStorageDirectoryConfig {
@@ -90,6 +91,7 @@ export interface IFileSystemManager {
 export interface IFileSystemManagerParams {
 	storageName?: string;
 	rootDir?: string;
+	simplifiedCustomData?: string;
 }
 
 export interface IFileSystemManagerFactory {
@@ -105,6 +107,17 @@ export interface IFileSystemManagerFactories {
 export interface IStorageRoutingId {
 	tenantId: string;
 	documentId: string;
+}
+
+export function isIStorageRoutingId(routingId: unknown): routingId is IStorageRoutingId {
+	return (
+		typeof routingId === "object" &&
+		routingId !== null &&
+		"tenantId" in routingId &&
+		typeof routingId.tenantId === "string" &&
+		"documentId" in routingId &&
+		typeof routingId.documentId === "string"
+	);
 }
 
 export interface IRepoManagerParams {

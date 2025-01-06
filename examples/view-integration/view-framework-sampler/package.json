@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/view-framework-sampler",
-	"version": "2.11.0",
+	"version": "2.13.0",
 	"private": true,
 	"description": "Example of integrating a Fluid data object with a variety of view frameworks.",
 	"homepage": "https://fluidframework.com",

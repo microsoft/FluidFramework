@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable unicorn/prefer-code-point */
-/* eslint-disable unicorn/prefer-module */
 
 import fs from "node:fs";
 import http from "node:http";

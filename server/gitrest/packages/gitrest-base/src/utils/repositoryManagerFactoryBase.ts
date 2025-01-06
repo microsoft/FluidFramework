@@ -48,13 +48,14 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		fileSystemManager: IFileSystemManager,
 		repoOwner: string,
 		repoName: string,
-		repo: TRepo,
+		repo: TRepo | undefined,
 		gitdir: string,
 		externalStorageManager: IExternalStorageManager,
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean,
 		apiMetricsSamplingPeriod?: number,
 		isEphemeralContainer?: boolean,
+		maxBlobSizeBytes?: number,
 	): IRepositoryManager;
 
 	constructor(
@@ -65,6 +66,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		private readonly enableRepositoryManagerMetrics: boolean = false,
 		private readonly enforceSynchronous: boolean = true,
 		private readonly apiMetricsSamplingPeriod?: number,
+		private readonly maxBlobSizeBytes?: number,
 	) {
 		this.internalHandler = repoPerDocEnabled
 			? this.repoPerDocInternalHandler.bind(this)
@@ -234,12 +236,14 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				// case there is an ongoing "create repo" operation, in order for the "open repo" to succeed.
 				// The conditional below makes sure we only proceed with the "open repo" operation if there
 				// is no ongoing "create repo".
+				const mutex = this.mutexes.get(repoName);
 				if (
 					this.enforceSynchronous &&
 					repoOperationType === "open" &&
-					this.mutexes.get(repoName)?.isLocked()
+					mutex !== undefined &&
+					mutex.isLocked()
 				) {
-					await this.mutexes.get(repoName).waitForUnlock();
+					await mutex.waitForUnlock();
 				}
 				if (!this.repositoryCache.has(repoPath)) {
 					const repoExists = await helpers.exists(fileSystemManager, directoryPath);
@@ -269,6 +273,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				this.enableRepositoryManagerMetrics,
 				this.apiMetricsSamplingPeriod,
 				params.isEphemeralContainer,
+				this.maxBlobSizeBytes,
 			);
 		};
 
@@ -281,12 +286,13 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		// asynchronously. Therefore, we use a mutex per repository to control concurrent "create repo" requests
 		// and make sure only one of them happens atomically.
 		if (this.enforceSynchronous && repoOperationType === "create") {
+			const mutex = this.mutexes.get(repoName) ?? withTimeout(new Mutex(), 100000);
 			if (!this.mutexes.has(repoName)) {
-				this.mutexes.set(repoName, withTimeout(new Mutex(), 100000));
+				this.mutexes.set(repoName, mutex);
 			}
 			try {
 				// eslint-disable-next-line @typescript-eslint/return-await
-				return this.mutexes.get(repoName).runExclusive(async () => {
+				return mutex.runExclusive(async () => {
 					return action();
 				});
 			} catch (e: any) {

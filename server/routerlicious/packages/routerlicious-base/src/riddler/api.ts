@@ -67,6 +67,26 @@ export function create(
 	});
 
 	/**
+	 * Signs a tenant token using the given tenant's key.
+	 */
+	router.post("/tenants/:id/accesstoken", (request, response) => {
+		const tenantId = request.params.id;
+		const { scopes, user, lifetime, ver, jti } = request.body;
+		const documentId = request.body.documentId ?? "";
+		const accessTokenP = manager.signToken(
+			tenantId,
+			documentId,
+			scopes,
+			user,
+			lifetime,
+			ver,
+			jti,
+			getIncludeDisabledFlag(request),
+		);
+		handleResponse(accessTokenP, response);
+	});
+
+	/**
 	 * Retrieves details for the given tenant
 	 */
 	router.get("/tenants/:id", (request, response) => {
@@ -114,6 +134,21 @@ export function create(
 	});
 
 	/**
+	 * Updates the keyless access setting for the given tenant
+	 */
+	router.put("/tenants/:id/keyAccess", (request, response) => {
+		const tenantId = request.params.id;
+		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess ?? false;
+		const enableSharedKeyAccess = request.body.enableSharedKeyAccess ?? true;
+		const storageP = manager.updateKeyAccessPolicy(
+			tenantId,
+			enablePrivateKeyAccess,
+			enableSharedKeyAccess,
+		);
+		handleResponse(storageP, response);
+	});
+
+	/**
 	 * Updates the customData for the given tenant
 	 */
 	router.put("/tenants/:id/customData", (request, response) => {
@@ -123,12 +158,14 @@ export function create(
 	});
 
 	/**
-	 * Refreshes the key for the given tenant
+	 * Refreshes the key for the given tenant. Private keys are refreshed only if refreshPrivateKey is true.
+	 * Private keys are refreshed only by internal service calls.
 	 */
 	router.put("/tenants/:id/key", (request, response) => {
 		const tenantId = request.params.id;
 		const keyName = request.body.keyName as string;
-		const refreshKeyP = manager.refreshTenantKey(tenantId, keyName);
+		const refreshPrivateKey = request.body.refreshPrivateKey as boolean;
+		const refreshKeyP = manager.refreshTenantKey(tenantId, keyName, refreshPrivateKey);
 		handleResponse(refreshKeyP, response);
 	});
 
@@ -142,11 +179,15 @@ export function create(
 		const tenantCustomData: ITenantCustomData = request.body.customData
 			? request.body.customData
 			: {};
+		const enablePrivateKeyAccess = request.body.enablePrivateKeyAccess ?? false;
+		const enableSharedKeyAccess = request.body.enableSharedKeyAccess ?? true;
 		const tenantP = manager.createTenant(
 			tenantId,
 			tenantStorage,
 			tenantOrderer,
 			tenantCustomData,
+			enableSharedKeyAccess,
+			enablePrivateKeyAccess,
 		);
 		handleResponse(tenantP, response);
 	});

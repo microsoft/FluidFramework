@@ -4,10 +4,10 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter/internal";
-import { TaskManager } from "@fluidframework/task-manager/internal";
+import { SharedCounter } from "@fluidframework/counter/legacy";
+import { TaskManager } from "@fluidframework/task-manager/legacy";
 import React from "react";
 
 import { ClickerAgent } from "./agent.js";

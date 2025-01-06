@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-telemetry",
-	"version": "2.11.0",
+	"version": "2.13.0",
 	"description": "Customer facing Fluid telemetry types and classes for both producing and consuming said telemetry",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -102,7 +102,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.16.4",
+		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
@@ -113,7 +113,7 @@
 		"@fluidframework/tree": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/chai": "^4.0.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/sinon": "^17.0.3",
 		"@types/uuid": "^9.0.2",
 		"chai": "^4.2.0",

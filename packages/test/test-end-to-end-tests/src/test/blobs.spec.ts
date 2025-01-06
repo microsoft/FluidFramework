@@ -18,6 +18,7 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -99,7 +100,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
-		// Currently FRS does not support blob API.
+		// Currently, AFR does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -244,16 +245,18 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 				this.skip();
 			}
 
+			const runtimeOptions: IContainerRuntimeOptionsInternal = {
+				...testContainerConfig.runtimeOptions,
+				compressionOptions: {
+					minimumBatchSizeInBytes: 1,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				enableGroupedBatching,
+			};
+
 			const container = await provider.makeTestContainer({
 				...testContainerConfig,
-				runtimeOptions: {
-					...testContainerConfig.runtimeOptions,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 1,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					enableGroupedBatching,
-				},
+				runtimeOptions,
 			});
 
 			const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
@@ -295,7 +298,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	beforeEach("getTestObjectProvider", async function () {
 		testPersistedCache = new TestPersistedCache();
 		provider = getTestObjectProvider({ persistedCache: testPersistedCache });
-		// Currently FRS does not support blob API.
+		// Currently AFR does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}

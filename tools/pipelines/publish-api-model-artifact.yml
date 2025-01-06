@@ -44,6 +44,7 @@ parameters:
 variables:
   - group: doc-versions
   - group: storage-vars
+  - group: ado-feeds
   - name: repoToTrigger
     value: microsoft/FluidFramework
   - name: latestPipeline
@@ -61,8 +62,6 @@ variables:
     value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
   - name: Packaging.EnableSBOMSigning
     value: true
-  - name: isMain
-    value: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
   - name: shouldRetainGuardianAssets
     value: ${{ or(
       eq(parameters.guardianAssetRetentionOverride, 'force'),
@@ -82,7 +81,7 @@ variables:
 trigger:
   branches:
     include:
-    - release/**
+    - release/client/*
 pr: none
 
 stages:
@@ -132,18 +131,97 @@ stages:
       environment: 'fluid-docs-env'
       pool: Large-eastus2
       variables:
-        uploadAsLatestRelease: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'] ]
+        isLatestMinorOfMajorTrain: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'] ]
         majorVersion: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion'] ]
       strategy:
         runOnce:
           deploy:
             steps:
-            - template: templates/upload-json-steps.yml
-              parameters:
-                STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-                uploadAsLatest: ${{ variables.isMain }}
-                uploadAsLatestRelease: $(uploadAsLatestRelease)
-                majorVersion: $(majorVersion)
+              - checkout: none
+                clean: true
+
+              - task: Bash@3
+                displayName: 'Print computed variables'
+                inputs:
+                  targetType: 'inline'
+                  script: |
+                    echo "isLatestMinorOfMajorTrain: $(isLatestMinorOfMajorTrain)"
+                    echo "majorVersion: $(majorVersion)"
+
+              # Download the api-extractor outputs
+              # Setting allowPartiallySucceededBuilds to true so that builds which complete with
+              # warnings will be included as well. This is especially needed for archived builds
+              # with warnings such as driver-definitions and core-interfaces.
+              - task: DownloadPipelineArtifact@2
+                inputs:
+                  buildType: specific
+                  project: internal
+                  pipeline: 'Build - client packages'
+                  buildVersionToDownload: latestFromBranch
+                  branchName: ${{ variables['Build.SourceBranch'] }}
+                  artifact: _api-extractor-temp
+                  allowPartiallySucceededBuilds: true
+
+              # Copy and merge the api-extractor outputs to a central location
+              - task: CopyFiles@2
+                displayName: 'Copy all api-extractor output JSON files into a single folder'
+                inputs:
+                  SourceFolder: $(Pipeline.Workspace)
+                  Contents: '**/*.api.json'
+                  TargetFolder: '$(Build.SourcesDirectory)/_api-extractor-temp'
+                  OverWrite: false
+                  flattenFolders: true
+                  CleanTargetFolder: true
+
+              - task: PublishPipelineArtifact@1
+                displayName: 'Publish api-extractor JSON'
+                inputs:
+                  targetPath: '$(Build.SourcesDirectory)/_api-extractor-temp'
+                  artifactName: 'api-extractor-combined'
+                  publishLocation: 'pipeline'
+
+              - task: ArchiveFiles@2
+                inputs:
+                  rootFolderOrFile: '$(Build.SourcesDirectory)/_api-extractor-temp'
+                  includeRootFolder: false
+                  archiveType: 'tar' # Options: zip, 7z, tar, wim
+                  tarCompression: 'gz'  # Optional. Options: gz, bz2, xz, none
+                  archiveFile: '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz'
+                  replaceExistingArchive: true
+                  verbose: true # Optional
+                  #quiet: # Optional
+
+              - task: AzureCLI@2
+                displayName: 'Upload JSON'
+                continueOnError: true
+                inputs:
+                  azureSubscription: 'fluid-docs'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n $(Build.SourceVersion).tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --verbose
+
+              - task: AzureCLI@2
+                displayName: 'Upload JSON as latest.tar.gz'
+                continueOnError: true
+                condition: eq(variables['Build.SourceBranchName'], 'main')
+                inputs:
+                  azureSubscription: 'fluid-docs'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite --verbose
+
+              - task: AzureCLI@2
+                displayName: 'Upload JSON as latest-v*.tar.gz'
+                continueOnError: true
+                condition: eq(variables.isLatestMinorOfMajorTrain, true)
+                inputs:
+                  azureSubscription: 'fluid-docs'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v$(majorVersion).tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite --verbose
 
 # Runs TriggerBuild@4 to trigger the deploy-website pipeline
 # this stage runs depending on the check_branch_version stage and deployOverride parameter
