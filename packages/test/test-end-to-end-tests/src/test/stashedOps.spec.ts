@@ -251,7 +251,7 @@ const waitForSummary = async (
 		testConfig,
 	);
 	const { summaryVersion } = await summarizeNow(summarizer);
-	summarizingContainer.close();
+	summarizingContainer.close(DisconnectReason.Expected);
 	return summaryVersion;
 };
 // Introduced in 0.37
