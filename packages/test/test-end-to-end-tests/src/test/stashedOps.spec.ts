@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
@@ -2137,7 +2137,7 @@ describeCompat(
 			},
 		};
 
-		let provider: ITestObjectProvider;
+		let provider: ITestObjectProvider | undefined;
 		let loader: IHostLoader;
 		let container1: IContainer;
 		let url: string;
@@ -2175,6 +2175,9 @@ describeCompat(
 				},
 			],
 			async function () {
+				if (!provider) {
+					fail("Provider not defined");
+				}
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
 					testContainerConfig_noSummarizer,
@@ -2204,7 +2207,7 @@ describeCompat(
 			},
 		);
 
-		itExpects.skip(
+		(provider?.driver.type === "local" ? itExpects : itExpects.skip)(
 			`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
 				// All containers close: contianer1, container2, container3
@@ -2225,6 +2228,9 @@ describeCompat(
 				},
 			],
 			async function () {
+				if (!provider) {
+					fail("Provider not defined");
+				}
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
 					testContainerConfig_noSummarizer,
@@ -2351,6 +2357,9 @@ describeCompat(
 				},
 			],
 			async function () {
+				if (!provider) {
+					fail("Provider not defined");
+				}
 				const incrementValue = 3;
 				const pendingLocalState = await getPendingOps(
 					testContainerConfig_noSummarizer,
