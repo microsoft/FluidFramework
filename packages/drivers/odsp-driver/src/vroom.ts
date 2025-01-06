@@ -39,8 +39,8 @@ interface IJoinSessionBody {
  * @param disableJoinSessionRefresh - Whether the caller wants to disable refreshing join session periodically.
  * @param isRefreshingJoinSession - whether call is to refresh the session before expiry.
  * @param displayName - display name used to identify client joining a session.
- * This is optional and used only when collab session is being joined in app-only mode.
- * If not specified app display name is extracted from the access token that is used to join session.
+ * This is optional and used only when collab session is being joined by client acting in app-only mode (i.e. without user context).
+ * If not specified client display name is extracted from the access token that is used to join session.
  */
 export async function fetchJoinSession(
 	urlParts: IOdspUrlParts,
