@@ -1,5 +1,6 @@
 ---
 "@fluidframework/tree": minor
+"fluid-framework": minor
 ---
 ---
 section: tree

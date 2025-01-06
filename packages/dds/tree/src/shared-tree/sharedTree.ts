@@ -460,7 +460,7 @@ export class SharedTree
 	): void {
 		assert(
 			!this.checkout.transaction.isInProgress(),
-			"Cannot submit a commit while a transaction is in progress",
+			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
 		);
 		if (isResubmit) {
 			return super.submitCommit(commit, schemaAndPolicy, isResubmit);

@@ -69,6 +69,26 @@ export function jsonMorganLoggerMiddleware(
 	enableLatencyMetric: boolean = false,
 ): express.RequestHandler {
 	return (request, response, next): void => {
+		response.locals.clientDisconnected = false;
+		response.locals.serverTimeout = false;
+		// We observed 499 errors are sometime due to client side closed quickly before server can respond. Sometimes are due to
+		// server side timeout which got terminated by the idle timeout we set in createAndConfigureHttpServer call.
+		// We need to differentiate them
+		// 1. If client side closed quickly before server idle timeout, socket would only emit close event, and we mark clientDisconnected if server have not write headers.
+		// 2. If server side timeout, socket would emit timeout event, and we mark serverTimeout. Beside we manually close the socket suggested by node below, which further emit close event.
+		// Therefore, we can use the difference of close and timeout event to differentiate client side close and server side timeout using statusCode logics.
+		request.socket.on("close", () => {
+			if (!response.headersSent) {
+				response.locals.clientDisconnected = true;
+			}
+		});
+		request.socket.on("timeout", () => {
+			response.locals.serverTimeout = true;
+			// According to node doc: https://nodejs.org/api/net.html#socketsettimeouttimeout-callback
+			// When an idle timeout is triggered the socket will receive a 'timeout' event but the connection will not be severed.
+			// The user must manually call socket.end() or socket.destroy() to end the connection.
+			request.socket.destroy();
+		});
 		const responseLatencyP = enableLatencyMetric
 			? new Promise<IResponseLatency>((resolve, reject) => {
 					let complete = false;
@@ -106,13 +126,23 @@ export function jsonMorganLoggerMiddleware(
 			if (computeAdditionalProperties) {
 				additionalProperties = computeAdditionalProperties(tokens, req, res);
 			}
+			let statusCode = tokens.status(req, res);
+			if (!statusCode) {
+				if (res.locals.serverTimeout) {
+					statusCode = "Server Timeout";
+				} else if (res.locals.clientDisconnected) {
+					statusCode = "499";
+				} else {
+					statusCode = "STATUS_UNAVAILABLE";
+				}
+			}
 			const properties = {
 				[HttpProperties.method]: tokens.method(req, res) ?? "METHOD_UNAVAILABLE",
 				[HttpProperties.pathCategory]: `${req.baseUrl}${
 					req.route?.path ?? "PATH_UNAVAILABLE"
 				}`,
 				[HttpProperties.url]: tokens.url(req, res),
-				[HttpProperties.status]: tokens.status(req, res) ?? "STATUS_UNAVAILABLE",
+				[HttpProperties.status]: statusCode,
 				[HttpProperties.requestContentLength]: tokens.req(req, res, "content-length"),
 				[HttpProperties.responseContentLength]: tokens.res(req, res, "content-length"),
 				[HttpProperties.responseTime]: tokens["response-time"](req, res),

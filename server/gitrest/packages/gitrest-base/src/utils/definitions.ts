@@ -10,6 +10,7 @@ export enum Constants {
 	StorageRoutingIdHeader = "Storage-Routing-Id",
 	StorageNameHeader = "Storage-Name",
 	IsEphemeralContainer = "Is-Ephemeral-Container",
+	SimplifiedCustomDataHeader = "Simplified-Custom-Data",
 }
 
 export interface IStorageDirectoryConfig {
@@ -90,6 +91,7 @@ export interface IFileSystemManager {
 export interface IFileSystemManagerParams {
 	storageName?: string;
 	rootDir?: string;
+	simplifiedCustomData?: string;
 }
 
 export interface IFileSystemManagerFactory {
