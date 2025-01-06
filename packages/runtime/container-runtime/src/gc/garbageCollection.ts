@@ -821,7 +821,7 @@ export class GarbageCollector implements IGarbageCollector {
 				if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
 					gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
 				} else {
-					gcDataSuperSet.gcNodes[sourceNodeId]?.push(...outboundRoutes);
+					gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
 				}
 				newOutboundRoutesSinceLastRun.push(...outboundRoutes);
 			},
