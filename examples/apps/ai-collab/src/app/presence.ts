@@ -8,7 +8,6 @@ import {
 	Latest,
 	type ISessionClient,
 	type PresenceStates,
-	type PresenceStatesEntries,
 	type PresenceStatesSchema,
 } from "@fluidframework/presence/alpha";
 
@@ -81,11 +80,6 @@ export class PresenceManager {
 
 		this.userInfoMap.set(this.presence.getMyself(), this.usersState.props.onlineUsers.local);
 		this.userInfoCallback(this.userInfoMap);
-	}
-
-	// Returns the presence state of the app selection workspace
-	getStates(): PresenceStatesEntries<typeof statesSchema> {
-		return this.usersState.props;
 	}
 
 	// Returns the presence object
