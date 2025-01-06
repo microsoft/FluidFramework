@@ -13,17 +13,14 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
+			"default": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
 			}
 		}
 	},
 	"main": "lib/index.js",
+	"types": "./lib/index.d.ts",
 	"bin": {
 		"buildProject": "./bin/run.mjs"
 	},
