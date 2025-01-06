@@ -195,7 +195,7 @@ export class FluidDataStoreRuntime
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	public readonly id: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public readonly options: Record<string | number, any>;
 	public readonly deltaManagerInternal: IDeltaManager<
 		ISequencedDocumentMessage,

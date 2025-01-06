@@ -197,7 +197,7 @@ describe("Branches", () => {
 		// Create a parent and child branch, and count the change events emitted by the parent
 		let changeEventCount = 0;
 		const parent = create(({ type }) => {
-			if (type === "replace") {
+			if (type === "rebase") {
 				changeEventCount += 1;
 			}
 		});
@@ -215,7 +215,7 @@ describe("Branches", () => {
 		// Create a parent and child branch, and count the change events emitted by the parent
 		let changeEventCount = 0;
 		const parent = create(({ type }) => {
-			if (type === "replace") {
+			if (type === "rebase") {
 				changeEventCount += 1;
 			}
 		});
@@ -322,54 +322,6 @@ describe("Branches", () => {
 		assert.equal(removeEventCount, 0);
 		branch.removeAfter(originalHead);
 		assert.equal(removeEventCount, 2);
-	});
-
-	it("can squash commits", () => {
-		const branch = create();
-		const originalHead = branch.getHead();
-		const tag1 = change(branch);
-		const tag2 = change(branch);
-		assertHistory(branch, tag1, tag2);
-		branch.squashAfter(originalHead);
-		assert.equal(branch.getHead().parent?.revision, originalHead.revision);
-	});
-
-	it("emit correct change events during and after squashing", () => {
-		let replaceEventCount = 0;
-		const branch = create(({ type }) => {
-			if (type === "replace") {
-				replaceEventCount += 1;
-			}
-		});
-		const originalHead = branch.getHead();
-		change(branch);
-		change(branch);
-		assert.equal(replaceEventCount, 0);
-		branch.squashAfter(originalHead);
-		assert.equal(replaceEventCount, 2);
-	});
-
-	it("do not emit a change event after squashing no commits", () => {
-		let changeEventCount = 0;
-		const branch = create(() => {
-			changeEventCount += 1;
-		});
-		branch.squashAfter(branch.getHead());
-		assert.equal(changeEventCount, 0);
-	});
-
-	it("emit a change event after squashing only a single commit", () => {
-		// TODO#25379: It might be nice to _not_ emit an event in this case (and not actually replace the head)
-		// as an optimization, but code affecting op submission and transactions relies on the current behavior for now.
-		let changeEventCount = 0;
-		const branch = create(() => {
-			changeEventCount += 1;
-		});
-		const originalHead = branch.getHead();
-		change(branch);
-		changeEventCount = 0;
-		branch.squashAfter(originalHead);
-		assert.equal(changeEventCount, 2);
 	});
 
 	describe("transitive fork event", () => {

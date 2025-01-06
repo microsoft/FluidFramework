@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.12.0",
+	"version": "2.13.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -146,7 +146,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.16.4",
+		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
@@ -156,11 +156,11 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.6.0",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.11.0",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.12.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
