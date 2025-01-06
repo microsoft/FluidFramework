@@ -411,7 +411,7 @@ stages:
                       "profileName": "FluidFrameworkTenantPool", // The type of the resource (i.e. pool name)
                     }
                   ],
-                  "ModuleName": ${moduleName}, // Metadata used for tracking the source of the request (can be anything)
+                  "ModuleName": `${moduleName}`, // Metadata used for tracking the source of the request (can be anything)
                   "Count": 1, // How many copies of the above resources to allocate for the reservation. Should almost always be 1
                 };
 
