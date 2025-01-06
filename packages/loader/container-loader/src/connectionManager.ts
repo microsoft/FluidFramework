@@ -449,20 +449,22 @@ export class ConnectionManager implements IConnectionManager {
 		let finalSwitchToReadonly = switchToReadonly;
 
 		// Handle overloads
-		if (
-			typeof disconnectReasonOrError === "string"
-		) {
+		if (typeof disconnectReasonOrError === "string") {
 			text = disconnectReasonOrError;
 			error = errorOrSwitchToReadonly as ICriticalContainerError;
 		} else {
 			error = disconnectReasonOrError as ICriticalContainerError;
-			finalSwitchToReadonly = typeof errorOrSwitchToReadonly === "boolean" ? errorOrSwitchToReadonly : true;
+			finalSwitchToReadonly =
+				typeof errorOrSwitchToReadonly === "boolean" ? errorOrSwitchToReadonly : true;
 		}
 
 		const disconnectReason: IConnectionStateChangeReason = {
 			text,
 			error,
-			disconnectReason: typeof disconnectReasonOrError === "string" ? disconnectReasonOrError : DisconnectReason.Unknown
+			disconnectReason:
+				typeof disconnectReasonOrError === "string"
+					? disconnectReasonOrError
+					: DisconnectReason.Unknown,
 		};
 
 		const oldReadonlyValue = this.readonly;
