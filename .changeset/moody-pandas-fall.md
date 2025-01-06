@@ -6,6 +6,8 @@
 "section": tree
 ---
 
+New alpha APIs for schema evolution
+
 There are now `@alpha` APIs for schema evolution which support adding optional fields to object node types without a staged rollout.
 
 SharedTree has many safety checks in place to ensure applications understand the format of documents they must support.
