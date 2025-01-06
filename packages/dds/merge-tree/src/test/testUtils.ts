@@ -15,7 +15,7 @@ import {
 	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentLeaf, Marker } from "../mergeTreeNodes.js";
+import { MergeBlock, ISegmentPrivate, Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import {
 	PartialSequenceLengths,
@@ -23,6 +23,7 @@ import {
 	verifyPartialLengths,
 } from "../partialLengths.js";
 import { PropertySet } from "../properties.js";
+import * as info from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 import { loadText } from "./text.js";
@@ -110,7 +111,7 @@ export function insertText({
 interface InsertSegmentsArgs {
 	mergeTree: MergeTree;
 	pos: number;
-	segments: ISegmentLeaf[];
+	segments: ISegmentPrivate[];
 	refSeq: number;
 	clientId: number;
 	seq: number;
@@ -234,24 +235,24 @@ function getPartialLengths(
 
 	let actualLen = 0;
 
-	const isInserted = (segment: ISegmentLeaf): boolean =>
-		segment.seq === undefined ||
-		(segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
-		(localSeq !== undefined &&
-			segment.seq === UnassignedSequenceNumber &&
-			segment.localSeq !== undefined &&
-			segment.localSeq <= localSeq);
+	const isInserted = (segment: ISegmentPrivate): boolean =>
+		info.isInserted(segment) &&
+		((segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
+			(localSeq !== undefined &&
+				segment.seq === UnassignedSequenceNumber &&
+				segment.localSeq !== undefined &&
+				segment.localSeq <= localSeq));
 
-	const isRemoved = (segment: ISegmentLeaf): boolean =>
-		segment.removedSeq !== undefined &&
+	const isRemoved = (segment: ISegmentPrivate): boolean =>
+		info.isRemoved(segment) &&
 		((localSeq !== undefined &&
 			segment.removedSeq === UnassignedSequenceNumber &&
 			segment.localRemovedSeq !== undefined &&
 			segment.localRemovedSeq <= localSeq) ||
 			(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq <= seq));
 
-	const isMoved = (segment: ISegmentLeaf): boolean =>
-		segment.movedSeq !== undefined &&
+	const isMoved = (segment: ISegmentPrivate): boolean =>
+		info.isMoved(segment) &&
 		((localSeq !== undefined &&
 			segment.movedSeq === UnassignedSequenceNumber &&
 			segment.localMovedSeq !== undefined &&

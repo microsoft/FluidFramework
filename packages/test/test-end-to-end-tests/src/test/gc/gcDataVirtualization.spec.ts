@@ -13,7 +13,11 @@ import {
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISnapshot,
+	ISnapshotTree,
+	SummaryObject,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	createSummarizer,
 	ITestContainerConfig,
@@ -83,10 +87,10 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 	};
 
 	function getDataStoreInSummaryTree(summaryTree: ISummaryTree, dataStoreId: string) {
-		const channelsTree = summaryTree.tree[".channels"];
+		const channelsTree: SummaryObject | undefined = summaryTree.tree[".channels"];
 		assert(channelsTree !== undefined, "Expected a .channels tree");
 		assert(channelsTree.type === SummaryType.Tree, "Expected a tree");
-		return channelsTree.tree[dataStoreId];
+		return channelsTree.tree?.[dataStoreId];
 	}
 
 	async function isDataStoreInSummaryTree(summaryTree: ISummaryTree, dataStoreId: string) {
@@ -164,7 +168,7 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		assert(callCount === 0, "Expected no snapshot call");
 		const gcState = getGCStateFromSummary(summaryTree);
 		assert(gcState !== undefined, "Expected GC state to be generated");
-		const gcNodeA = gcState.gcNodes[handleA.absolutePath];
+		const gcNodeA = gcState.gcNodes?.[handleA.absolutePath];
 		assert(gcNodeA !== undefined, "Data Store should exist on gc graph");
 		const unreferencedTimestampMs = gcNodeA.unreferencedTimestampMs;
 		assert(unreferencedTimestampMs !== undefined, "Data Store should be unreferenced");
@@ -197,8 +201,8 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		assert(snapshotCaptured !== undefined, "Expected snapshot to be captured");
 
 		// Validate that we loaded the snapshot without datastoreA on the snapshot
-		const tree = (snapshotCaptured as ISnapshot).snapshotTree.trees[".channels"].trees;
-		const datastoreATree = tree[dataStoreId];
+		const tree = (snapshotCaptured as ISnapshot).snapshotTree.trees[".channels"]?.trees;
+		const datastoreATree: ISnapshotTree | undefined = tree[dataStoreId];
 		assert(datastoreATree !== undefined, "DataStoreA should be in the snapshot");
 
 		// Summarize and verify datastoreA is still unreferenced
@@ -210,7 +214,7 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		assert(callCount === 0, "Expected no snapshot call");
 		const gcState2 = getGCStateFromSummary(summaryTree2);
 		assert(gcState2 !== undefined, "Expected GC state to be generated");
-		const gcNodeA2 = gcState2.gcNodes[handleA.absolutePath];
+		const gcNodeA2 = gcState2.gcNodes?.[handleA.absolutePath];
 		assert(gcNodeA2 !== undefined, "DataStoreA should exist on gc graph");
 		assert(
 			gcNodeA2.unreferencedTimestampMs === unreferencedTimestampMs,

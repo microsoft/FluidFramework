@@ -131,6 +131,28 @@ function scrubAndStringify(
 	return JSON.stringify(scrubbed);
 }
 
+/**
+ * @returns The index where the strings diverge, and the character at that index in each string (or undefined if not applicable)
+ */
+export function findFirstCharacterMismatched(
+	a: string,
+	b: string,
+): [index: number, charA?: string, charB?: string] {
+	const minLength = Math.min(a.length, b.length);
+	for (let i = 0; i < minLength; i++) {
+		if (a[i] !== b[i]) {
+			return [i, a[i], b[i]];
+		}
+	}
+
+	// Since we didn't return in the loop, the shorter string must be a prefix of the other.
+	// If they're the same length, return -1 to indicate they're identical.
+	// Otherwise, the next character of the longer one is where they differ. No need to return that next character.
+	return a.length === b.length
+		? [-1, undefined, undefined]
+		: [minLength, a[minLength], b[minLength]];
+}
+
 function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 	return {
 		...message,
@@ -459,7 +481,17 @@ export class PendingStateManager implements IDisposable {
 			const messageContent = buildPendingMessageContent(message);
 
 			// Stringified content should match
+			// If it doesn't, collect as much info about the difference as possible (privacy-wise) and log it
 			if (pendingMessage.content !== messageContent) {
+				const [pendingLength, incomingLength] = [
+					pendingMessage.content.length,
+					messageContent.length,
+				];
+				const [mismatchStartIndex, pendingChar, incomingChar] = findFirstCharacterMismatched(
+					pendingMessage.content,
+					messageContent,
+				);
+
 				const pendingContentObj = JSON.parse(
 					pendingMessage.content,
 				) as LocalContainerRuntimeMessage;
@@ -467,6 +499,7 @@ export class PendingStateManager implements IDisposable {
 					messageContent,
 				) as InboundContainerRuntimeMessage;
 
+				// Compare inner contents object, since that both should be { type, contents }
 				const contentsMatch =
 					pendingContentObj.contents === incomingContentObj.contents ||
 					(pendingContentObj.contents !== undefined &&
@@ -480,6 +513,11 @@ export class PendingStateManager implements IDisposable {
 						pendingContentScrubbed: scrubAndStringify(pendingContentObj),
 						incomingContentScrubbed: scrubAndStringify(incomingContentObj),
 						contentsMatch,
+						pendingLength,
+						incomingLength,
+						mismatchStartIndex,
+						pendingChar,
+						incomingChar,
 					},
 				});
 

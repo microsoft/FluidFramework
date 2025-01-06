@@ -9,7 +9,7 @@ import {
 	SequenceDeltaEvent,
 	SharedString,
 	TextSegment,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/sequence/legacy";
 import * as monaco from "monaco-editor";
 import React, { useEffect, useRef } from "react";
 

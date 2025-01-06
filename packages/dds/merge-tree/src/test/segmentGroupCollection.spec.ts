@@ -5,16 +5,24 @@
 
 import { strict as assert } from "node:assert";
 
-import { type ISegmentLeaf } from "../mergeTreeNodes.js";
+import { assignChild, MergeBlock, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { SegmentGroupCollection } from "../segmentGroupCollection.js";
+import { IInsertionInfo, overwriteInfo } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 describe("segmentGroupCollection", () => {
-	let segment: ISegmentLeaf;
+	let parent: MergeBlock;
+	let segment: ISegmentPrivate;
 	let segmentGroups: SegmentGroupCollection;
 	beforeEach(() => {
-		segment = TextSegment.make("abc");
-		segmentGroups = segment.segmentGroups = new SegmentGroupCollection(segment);
+		parent = new MergeBlock(1);
+		const newSeg = (segment = overwriteInfo<IInsertionInfo>(TextSegment.make("abc"), {
+			clientId: 0,
+			seq: 1,
+		}));
+		assignChild(parent, newSeg, 0);
+
+		segmentGroups = segment.segmentGroups = new SegmentGroupCollection(newSeg);
 	});
 	it(".empty", () => {
 		assert(segmentGroups.empty);
@@ -56,7 +64,12 @@ describe("segmentGroupCollection", () => {
 			segmentGroups.enqueue({ segments: [], localSeq: 1, refSeq: 0 });
 		}
 
-		const segmentCopy = TextSegment.make("");
+		const segmentCopy = overwriteInfo<IInsertionInfo>(TextSegment.make(""), {
+			clientId: 0,
+			seq: 1,
+		});
+		assignChild(parent, segmentCopy, parent.childCount++);
+
 		const segmentGroupCopy = new SegmentGroupCollection(segmentCopy);
 		segmentGroups.copyTo(segmentGroupCopy);
 

@@ -4,13 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type {
-	HasListeners,
-	IEmitter,
-	IFluidHandle,
-	Listenable,
-} from "@fluidframework/core-interfaces/internal";
-import { createEmitter } from "@fluid-internal/client-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type {
 	IChannelAttributes,
 	IChannelFactory,
@@ -23,6 +17,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	type GraphCommit,
 	type IEditableForest,
 	type ITreeCursor,
 	type JsonableTree,
@@ -56,6 +51,7 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 import {
+	type ClonableSchemaAndPolicy,
 	DefaultResubmitMachine,
 	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
@@ -85,12 +81,7 @@ import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js"
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import {
-	type CheckoutEvents,
-	type TreeCheckout,
-	type BranchableTree,
-	createTreeCheckout,
-} from "./treeCheckout.js";
+import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
 import { breakingClass, fail, throwIfBroken } from "../util/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -229,9 +220,6 @@ export class SharedTree
 	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
 	implements ISharedTree
 {
-	private readonly _events: Listenable<CheckoutEvents> &
-		IEmitter<CheckoutEvents> &
-		HasListeners<CheckoutEvents>;
 	public readonly checkout: TreeCheckout;
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.checkout.storedSchema;
@@ -241,7 +229,7 @@ export class SharedTree
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
-		optionsParam: SharedTreeOptions,
+		optionsParam: SharedTreeOptionsInternal,
 		telemetryContextPrefix: string = "fluid_sharedTree_",
 	) {
 		if (runtime.idCompressor === undefined) {
@@ -330,7 +318,6 @@ export class SharedTree
 			),
 			changeEnricher,
 		);
-		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
 		this.checkout = createTreeCheckout(
 			runtime.idCompressor,
@@ -342,11 +329,11 @@ export class SharedTree
 				schema,
 				forest,
 				fieldBatchCodec,
-				events: this._events,
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
 				logger: this.logger,
 				breaker: this.breaker,
+				disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 			},
 		);
 
@@ -368,10 +355,10 @@ export class SharedTree
 				this.commitEnricher.commitTransaction();
 			}
 		});
-		this.checkout.events.on("beforeBatch", (newCommits) => {
-			if (this.isAttached()) {
+		this.checkout.events.on("beforeBatch", (event) => {
+			if (event.type === "append" && this.isAttached()) {
 				if (this.checkout.transaction.isInProgress()) {
-					this.commitEnricher.addTransactionCommits(newCommits);
+					this.commitEnricher.addTransactionCommits(event.newCommits);
 				}
 			}
 		});
@@ -440,8 +427,7 @@ export class SharedTree
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
-		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
-		this._events.emit("afterBatch", []);
+		this.checkout.load();
 	}
 
 	protected override didAttach(): void {
@@ -465,6 +451,27 @@ export class SharedTree
 			0x674 /* Unexpected transaction is open while applying stashed ops */,
 		);
 		super.applyStashedOp(...args);
+	}
+
+	protected override submitCommit(
+		commit: GraphCommit<SharedTreeChange>,
+		schemaAndPolicy: ClonableSchemaAndPolicy,
+		isResubmit: boolean,
+	): void {
+		assert(
+			!this.checkout.transaction.isInProgress(),
+			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
+		);
+		if (isResubmit) {
+			return super.submitCommit(commit, schemaAndPolicy, isResubmit);
+		}
+
+		// Refrain from submitting new commits until they are validated by the checkout.
+		// This is not a strict requirement for correctness in our system, but in the event that there is a bug when applying commits to the checkout
+		// that causes a crash (e.g. in the forest), this will at least prevent this client from sending the problematic commit to any other clients.
+		this.checkout.onCommitValid(commit, () =>
+			super.submitCommit(commit, schemaAndPolicy, isResubmit),
+		);
 	}
 }
 
@@ -549,6 +556,9 @@ export type SharedTreeOptions = Partial<ICodecOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
+export interface SharedTreeOptionsInternal extends SharedTreeOptions {
+	disposeForksAfterTransaction?: boolean;
+}
 /**
  * Configuration options for SharedTree's internal tree storage.
  * @alpha
@@ -603,11 +613,12 @@ export enum ForestType {
 	Expensive = 2,
 }
 
-export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
+export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
+	disposeForksAfterTransaction: true,
 };
 
 /**
@@ -622,7 +633,7 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		packageVersion: "0.0.0",
 	};
 
-	public constructor(private readonly options: SharedTreeOptions = {}) {}
+	public constructor(private readonly options: SharedTreeOptionsInternal = {}) {}
 
 	public async load(
 		runtime: IFluidDataStoreRuntime,
