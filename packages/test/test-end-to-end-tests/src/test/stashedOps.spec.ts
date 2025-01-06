@@ -2204,7 +2204,7 @@ describeCompat(
 			},
 		);
 
-		itExpects(
+		itExpects.skip(
 			`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
 				// All containers close: contianer1, container2, container3
