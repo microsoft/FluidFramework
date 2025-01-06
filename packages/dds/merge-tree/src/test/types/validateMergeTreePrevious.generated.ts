@@ -250,6 +250,15 @@ declare type current_as_old_for_Function_refHasTileLabel = requireAssignableTo<T
 declare type current_as_old_for_Function_revertMergeTreeDeltaRevertibles = requireAssignableTo<TypeOnly<typeof current.revertMergeTreeDeltaRevertibles>, TypeOnly<typeof old.revertMergeTreeDeltaRevertibles>>
 
 /*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_segmentIsRemoved": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_segmentIsRemoved = requireAssignableTo<TypeOnly<typeof current.segmentIsRemoved>, TypeOnly<typeof old.segmentIsRemoved>>
+
+/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under

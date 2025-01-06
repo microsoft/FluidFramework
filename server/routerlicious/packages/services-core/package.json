@@ -96,6 +96,12 @@
 			},
 			"InterfaceDeclaration_IBoxcarMessage": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ITenantConfig": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITenantManager": {
+				"forwardCompat": false
 			}
 		}
 	}

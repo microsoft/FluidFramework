@@ -1,0 +1,220 @@
+---
+title: Reading and Editing
+sidebar_position: 4
+---
+
+The `TreeView` object and its children provide methods that enable your code to add nodes to the tree, remove nodes, and move nodes within the tree. You can also set and read the values of leaf nodes. The APIs have been designed to match as much as possible the syntax of TypeScript primitives, objects, maps, and arrays; although some editing APIs are different for the sake of making the merge semantics clearer.
+
+## Leaf Node APIs
+
+Leaf nodes are read and written exactly the way JavaScript primitive types are by using dot notation and the assignment operator (`=`). The following example shows how to write to a leaf node:
+
+```typescript
+myNewsPaperTree.articles[1].headline = "Man bites dog";
+```
+
+The following examples show how to read from a leaf node. _Note that the datatype of `pointsForDetroitTigers` is `number`, not `sf.number`._ This is a general principle: the value returned from a leaf node, other than a `FluidHandle` node, is the underlying JavaScript primitive type.
+
+```typescript
+const pointsForDetroitTigers: number = seasonTree.tigersTeam.game1.points;
+```
+
+## Object Node APIs
+
+### Reading Object Properties
+
+Your code reads object nodes and their properties exactly as it would read a JavaScript object. The following are some examples.
+
+```typescript
+const pointsForDetroitTigers: number = seasonTree.tigersTeam.game1.points;
+
+const counterHandle: FluidHandle = myTree.myObjectNode.myHandle;
+
+const myItems: Array = stickyNotesTree.items;
+```
+
+### Creating Objects
+
+You must create the object using the constructor of the class that you derived from the object returned by `SchemaFactory.object()` method. The following shows how to create a note object from the sticky notes example.
+
+```typescript
+const babyShowerNote = new Note({
+    id: Guid.create().toString(),
+    text: "Baby shower is at 3 PM today.",
+    author: "Bob",
+    lastChanged: 19697 // Days since January 1, 1970, the Unix epoch.
+    votes: ["0"]
+});
+```
+
+We show how to add this note to an array of notes in the tree in [Array node APIs](#array-node-apis).
+
+### Editing Object Properties
+
+To update the property on an object node, you assign a new node or value to it with the assignment operator (`=`).
+
+```typescript
+rectangle.topLeft = new Point({ x: 0, y: 0 });
+```
+
+```typescript
+babyShowerNote.author = "The Joneses";
+```
+
+Optional properties can be cleared by assigning `undefined` to them.
+
+```typescript
+proposal.text = undefined;
+```
+
+## Map Node APIs
+
+### Map Node Read APIs
+
+The read APIs for map nodes have the same names and syntax as the corresponding APIs for JavaScript Map objects.
+
+```typescript
+has(key): boolean
+```
+
+Returns `true`` if the key is present in the map.
+
+```typescript
+get(key): T | undefined
+```
+
+Returns the value of the property with the specified key.
+
+```typescript
+keys(): IterableIterator<string>
+```
+
+Returns an Iterator that contains the keys in the map node. The keys are iterated in the order that they were added.
+
+```typescript
+values(): IterableIterator<T>
+```
+
+Returns an Iterator that contains the values in the map node. The values are iterated in the order that they were added.
+
+```typescript
+entries(): IterableIterator<[string, T]>
+```
+
+Returns an Iterator that contains the key/value pairs in the map node. The pairs are iterated in the order that they were added.
+
+```typescript
+map(callback: ()=>[]): IterableIterator<[string, T]>
+```
+
+Returns an array, _not a map node or array node_, that is the result of applying the callback parameter to each member of the original map node. It is just like [Array.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map).
+
+### Map Node Write APIs
+
+The write methods for map nodes are also the same as the corresponding methods for JavaScript `Map` objects.
+
+```typescript
+set(key: string, value: T)
+```
+
+The `set()` method sets/changes the value of the item with the specified key. If the key is not present, the item is added to the map. Note the following:
+
+-   The `T` can be any type that conforms to the map node's schema. For example, if the schema was defined with `class MyMap extends sf.map([sf.number, sf.string]);`, then `T` could be `number` or `string`.
+-   If multiple clients set the same key simultaneously, the key gets the value set by the last edit to apply. For the meaning of "simultaneously", see [Types of distributed data structures](../overview.mdx).
+
+```typescript
+delete(key: string): void
+```
+
+The `delete()` method removes the item with the specified key. If one client sets a key and another deletes it simultaneously, the key is deleted only if the deletion op is the last one applied. For the meaning of "simultaneously", see [Types of distributed data structures](../overview.mdx).
+
+### Map Node Properties
+
+```typescript
+size: number;
+```
+
+The total number of entries in the map node.
+
+## Array Node APIs
+
+### Array Node Read APIs
+
+Array nodes have all the same non-mutating read methods as the JavaScript [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) type. (For information about the differences between mutating and non-mutating methods, see [Copying methods and mutating methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array#copying_methods_and_mutating_methods)). Note that methods which return an array, like `Array.map()`, when called on an array node, return a JavaScript array, not an object of the type of the array node. For example, if the type is `Notes` from the sticky notes example, an array is returned, not a `Notes` object.
+
+### Array Node Write APIs
+
+The write APIs for array nodes are quite different from JavaScript arrays. They are more suitable for data items that are being worked on collaboratively by multiple people. There are three categories of write APIs: Insert, Remove, and Move.
+
+#### Insert Methods
+
+Array nodes have three methods that insert new items into the node. Note that in all of the following, the `T` can be any type that conforms to the array node's schema. For example, if the schema was defined with `class MyArray extends sf.array([sf.number, sf.string]);`, then `T` could be `number` or `string`.
+
+```typescript
+insertAt(index: number, value: Iterable<T>)
+```
+
+Inserts the provided value(s) at the specified `index`. If the `index` is greater than the length of the array, the items are inserted at the end of the array.
+
+```typescript
+insertAtStart(value: Iterable<T>)
+```
+
+Inserts the provided value(s) at the start of the array. This is sugar for `insertAt(0, …)`.
+
+```typescript
+insertAtEnd(value: Iterable<T>)
+```
+
+Inserts the provided value(s) at the end of the array. This is syntactic sugar for `insertAt(Infinity, …)`.
+
+#### Remove Methods
+
+Array nodes have two methods that remove items from the node. Note the following about these methods:
+
+-   Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
+-   A removed item may be restored as a result of a simultaneous move operation from another client. For example, if one client removes items 3-5, and another client simultaneously moves items 4 and 5, then, if the move operation is ordered last, only item 3 is removed (items 4 and 5 are restored and moved to their destination by the move operation). If the remove operation is ordered last, then all three items will be removed, no matter where they reside.
+-   Removal of items never overrides inserting (or moving in) items. For example, if one client removes items 10-15, and another client simultaneously inserts an item at index 12, the original items 10-15 are removed, but new item is inserted between item 9 and the item that used to be at index 16. This is true regardless of the order of the remove and insert operations.
+
+For the meaning of "simultaneously", see [Types of distributed data structures](../overview.mdx).
+
+```typescript
+removeAt(index: number)
+```
+
+Removes the item at the given `index`.
+
+```typescript
+removeRange(start?: number, end?: number)
+```
+
+Removes the items indicated by the `start` index (inclusive) and `end` index (exclusive). If the end index is omitted, every item from the start index to the end of the array is removed. If the start index is omitted, it defaults to 0. So, calling `removeRange()` removes all the items in the array.
+
+#### Move Methods
+
+Array nodes have three methods that move items within an array or from one array node to another. When moving from one array node to another, these methods must be called from the destination array node. Note that in all of the following, the `T` can be any type that is derived from an object that is returned by a call of `SchemaFactory.array()`, such as the `Notes` and `Items` classes in the sticky notes example.
+
+```typescript
+moveToStart(sourceStartIndex: number, sourceEndIndex: number, source?: T)
+```
+
+Moves the specified items to the start of the array. Specify a `source` array if it is different from the destination array.
+
+```typescript
+moveToEnd(sourceStartIndex: number, sourceEndIndex: number, source?: T)
+```
+
+Moves the specified items to the end of the array. Specify a `source` array if it is different from the destination array.
+
+```typescript
+moveToIndex(index: number, sourceStartIndex: number, sourceEndIndex: number, source?: T)
+```
+
+Moves the items to the specified `index` in the destination array. The item that is at `index` before the method is called will be at the first index position that follows the moved items after the move. Specify a `source` array if it is different from the destination array. If the items are being moved within the same array, the `index` position is calculated including the items being moved (as if a new copy of the moved items were being inserted, without removing the originals).
+
+Note the following about these methods:
+
+-   If multiple clients simultaneously move an item, then that item will be moved to the destination indicated by the move of the client whose edit is ordered last.
+-   A moved item may be removed as a result of a simultaneous remove operation from another client. For example, if one client moves items 3-5, and another client simultaneously removes items 4 and 5, then, if the remove operation is ordered last, items 4 and 5 are removed from their destination by the remove operation. If the move operation is ordered last, then all three items will be moved to the destination.
+
+For the meaning of "simultaneously", see [Types of distributed data structures](../overview.mdx).

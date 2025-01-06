@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrator } from "@fluid-example/migration-tools/internal";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { ISequencedClient } from "@fluidframework/driver-definitions/internal";
+import type { IMigrator } from "@fluid-example/migration-tools/alpha";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type { ISequencedClient } from "@fluidframework/driver-definitions/legacy";
 
 import { globals } from "../jest.config.cjs";
 
