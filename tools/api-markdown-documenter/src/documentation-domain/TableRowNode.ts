@@ -5,7 +5,7 @@
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { type TableCellNode, type TableHeaderCellNode } from "./TableCellNode.js";
+import type { TableCellNode, TableHeaderCellNode } from "./TableCellNode.js";
 
 /**
  * Kind of Table Row.

@@ -12,18 +12,18 @@ import {
 	ApiModel,
 	type IResolveDeclarationReferenceResult,
 } from "@microsoft/api-extractor-model";
-import { type DocComment, type DocInheritDocTag } from "@microsoft/tsdoc";
+import type { DocComment, DocInheritDocTag } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
 
 import { defaultConsoleLogger, type Logger } from "./Logging.js";
-import type { ConfigurationBase } from "./ConfigurationBase.js";
+import type { LoggingConfiguration } from "./LoggingConfiguration.js";
 
 /**
  * {@link loadModel} options.
  *
  * @public
  */
-export interface LoadModelOptions extends ConfigurationBase {
+export interface LoadModelOptions extends LoggingConfiguration {
 	/**
 	 * Path to the API model directory.
 	 * I.e., the directory containing the set of `.api.json` files that comprise the API model.

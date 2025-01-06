@@ -3,9 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import type { LatestMapItemValueClientData } from "../index.js";
-import { LatestMap } from "../index.js";
-import type { IPresence } from "../presence.js";
+import { addControlsTests } from "./broadcastControlsTests.js";
+
+import type {
+	BroadcastControlSettings,
+	IPresence,
+	LatestMapItemValueClientData,
+} from "@fluidframework/presence/alpha";
+import { LatestMap } from "@fluidframework/presence/alpha";
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function createLatestMapManager(
+	presence: IPresence,
+	valueControlSettings?: BroadcastControlSettings,
+) {
+	const states = presence.getStates("name:testWorkspaceA", {
+		fixedMap: LatestMap(
+			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
+			valueControlSettings,
+		),
+	});
+	return states.props.fixedMap;
+}
 
 describe("Presence", () => {
 	describe("LatestMapValueManager", () => {
@@ -13,6 +32,8 @@ describe("Presence", () => {
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
+
+		addControlsTests(createLatestMapManager);
 	});
 });
 

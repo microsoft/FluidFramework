@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { TextSegment } from "@fluidframework/sequence/internal";
+import { TextSegment } from "@fluidframework/sequence/legacy";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,

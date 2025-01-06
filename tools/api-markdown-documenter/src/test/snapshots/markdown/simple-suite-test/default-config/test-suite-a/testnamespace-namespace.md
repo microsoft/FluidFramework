@@ -38,13 +38,13 @@ const foo = {
 
 | Interface | Alerts | Description |
 | --- | --- | --- |
-| [TestInterface](./test-suite-a/testnamespace/testinterface-interface) | `Alpha` | Test interface |
+| [TestInterface](./test-suite-a/testnamespace-namespace/testinterface-interface) | `Alpha` | Test interface |
 
 ## Classes
 
 | Class | Description |
 | --- | --- |
-| [TestClass](./test-suite-a/testnamespace/testclass-class) | Test class |
+| [TestClass](./test-suite-a/testnamespace-namespace/testclass-class) | Test class |
 
 ## Enumerations
 
@@ -74,7 +74,7 @@ const foo = {
 
 | Namespace | Description |
 | --- | --- |
-| [TestSubNamespace](./test-suite-a/testnamespace/testsubnamespace-namespace) | Test sub-namespace |
+| [TestSubNamespace](./test-suite-a/testnamespace-namespace/testsubnamespace-namespace) | Test sub-namespace |
 
 ## Enumeration Details
 

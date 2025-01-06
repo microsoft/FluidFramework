@@ -5,7 +5,7 @@
 
 import type { ValueSchema } from "../../core/index.js";
 import type { NodeKind } from "../core/index.js";
-import type { FieldKind, FieldSchemaMetadata } from "../schemaTypes.js";
+import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "../schemaTypes.js";
 
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.
@@ -20,6 +20,11 @@ export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
 	 * @remarks can be used to type-switch between implementations.
 	 */
 	readonly kind: TNodeKind;
+
+	/**
+	 * {@inheritDoc NodeSchemaMetadata}
+	 */
+	readonly metadata?: NodeSchemaMetadata | undefined;
 }
 
 /**
@@ -30,7 +35,9 @@ export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
  */
 export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Object> {
 	/**
-	 * Schemas for each of the object's fields, keyed off of schema's property keys.
+	 * Schemas for each of the object's fields, keyed off of schema's keys.
+	 * @remarks
+	 * Depending on how this schema was exported, the string keys may be either the property keys or the stored keys.
 	 */
 	readonly fields: Record<string, SimpleFieldSchema>;
 }

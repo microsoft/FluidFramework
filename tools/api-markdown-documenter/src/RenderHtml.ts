@@ -7,14 +7,23 @@ import * as Path from "node:path";
 
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
+import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
 import {
-	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 	transformApiModel,
 } from "./api-item-transforms/index.js";
-import { type DocumentNode } from "./documentation-domain/index.js";
-import { type Logger } from "./Logging.js";
-import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "./renderers/index.js";
-import { type FileSystemConfiguration } from "./FileSystemConfiguration.js";
+import type { DocumentNode } from "./documentation-domain/index.js";
+import { type RenderDocumentAsHtmlConfiguration, renderDocumentAsHtml } from "./renderers/index.js";
+
+/**
+ * API Model HTML rendering options.
+ *
+ * @public
+ */
+export interface RenderApiModelAsHtmlOptions
+	extends ApiItemTransformationOptions,
+		RenderDocumentAsHtmlConfiguration,
+		FileSystemConfiguration {}
 
 /**
  * Renders the provided model and its contents, and writes each document to a file on disk.
@@ -22,13 +31,13 @@ import { type FileSystemConfiguration } from "./FileSystemConfiguration.js";
  * @remarks
  *
  * Which API members get their own documents and which get written to the contents of their parent is
- * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
+ * determined by {@link DocumentationSuiteConfiguration.documentBoundaries}.
  *
  * The file paths under which the files will be generated is determined by the provided output path and the
  * following configuration properties:
  *
- * - {@link DocumentationSuiteOptions.documentBoundaries}
- * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
+ * - {@link DocumentationSuiteConfiguration.documentBoundaries}
+ * - {@link DocumentationSuiteConfiguration.hierarchyBoundaries}
  *
  * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
  * @param renderConfig - Configuration for rendering {@link DocumentNode}s as HTML.
@@ -37,19 +46,20 @@ import { type FileSystemConfiguration } from "./FileSystemConfiguration.js";
  *
  * @alpha
  */
-export async function renderApiModelAsHtml(
-	transformConfig: Omit<ApiItemTransformationConfiguration, "logger">,
-	renderConfig: Omit<RenderDocumentAsHtmlConfig, "logger">,
-	fileSystemConfig: FileSystemConfiguration,
-	logger?: Logger,
-): Promise<void> {
-	const documents = transformApiModel({
-		...transformConfig,
-		logger,
-	});
+export async function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions): Promise<void> {
+	const documents = transformApiModel(options);
 
-	return renderDocumentsAsHtml(documents, renderConfig, fileSystemConfig, logger);
+	return renderDocumentsAsHtml(documents, options);
 }
+
+/**
+ * Options for rendering {@link DocumentNode}s as HTML.
+ *
+ * @public
+ */
+export interface RenderDocumentsAsHtmlOptions
+	extends RenderDocumentAsHtmlConfiguration,
+		FileSystemConfiguration {}
 
 /**
  * Renders the provided documents using HTML syntax, and writes each document to a file on disk.
@@ -64,11 +74,9 @@ export async function renderApiModelAsHtml(
  */
 export async function renderDocumentsAsHtml(
 	documents: DocumentNode[],
-	renderConfig: Omit<RenderDocumentAsHtmlConfig, "logger">,
-	fileSystemConfig: FileSystemConfiguration,
-	logger?: Logger,
+	options: RenderDocumentsAsHtmlOptions,
 ): Promise<void> {
-	const { outputDirectoryPath, newlineKind } = fileSystemConfig;
+	const { logger, newlineKind, outputDirectoryPath } = options;
 
 	logger?.verbose("Rendering documents as HTML and writing to disk...");
 
@@ -76,10 +84,7 @@ export async function renderDocumentsAsHtml(
 
 	await Promise.all(
 		documents.map(async (document) => {
-			const renderedDocument = renderDocumentAsHtml(document, {
-				...renderConfig,
-				logger,
-			});
+			const renderedDocument = renderDocumentAsHtml(document, options);
 
 			const filePath = Path.join(outputDirectoryPath, `${document.documentPath}.html`);
 			await FileSystem.writeFileAsync(filePath, renderedDocument, {

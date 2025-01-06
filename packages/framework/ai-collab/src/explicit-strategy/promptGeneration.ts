@@ -22,7 +22,7 @@ import { createZodJsonValidator } from "typechat/zod";
 
 import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";
 import type { IdGenerator } from "./idGenerator.js";
-import { generateGenericEditTypes } from "./typeGeneration.js";
+import { doesNodeContainArraySchema, generateGenericEditTypes } from "./typeGeneration.js";
 import { fail } from "./utils.js";
 
 /**
@@ -52,7 +52,7 @@ export function toDecoratedJson(
 				idGenerator.getId(value) ?? fail("ID of new node should have been assigned.");
 			assert(
 				!Object.prototype.hasOwnProperty.call(value, objectIdKey),
-				`Collision of object id property.`,
+				0xa7b /* Collision of object id property. */,
 			);
 			return {
 				[objectIdKey]: objId,
@@ -82,6 +82,8 @@ export function getPlanningSystemPrompt(
 			The other agent follows this guidance: ${systemRoleContext}`
 	}`;
 
+	const editOptions = `modifying ${doesNodeContainArraySchema(treeNode) ? "as well as inserting, removing, or moving" : ""} elements in the tree`;
+
 	const systemPrompt = `
 	${role}
 	The application state tree is a JSON object with the following schema: ${promptFriendlySchema}
@@ -89,7 +91,7 @@ export function getPlanningSystemPrompt(
 	The user requested that I accomplish the following goal:
 	"${userPrompt}"
 	I've made a plan to accomplish this goal by doing a sequence of edits to the tree.
-	Edits can include setting the root, inserting, modifying, removing, or moving elements in the tree.
+	Edits can include ${editOptions}.
 	Here is my plan:`;
 
 	return systemPrompt;
@@ -130,20 +132,21 @@ export function getEditingSystemPrompt(
 	const role = `You are a collaborative agent who interacts with a JSON tree by performing edits to achieve a user-specified goal.${
 		appGuidance === undefined
 			? ""
-			: `
-			The application that owns the JSON tree has the following guidance about your role: ${appGuidance}`
+			: `\nThe application that owns the JSON tree has the following guidance about your role: "${appGuidance}".`
 	}`;
 
 	const treeSchemaString = createZodJsonValidator(
 		...generateGenericEditTypes(getSimpleSchema(schema), false),
 	).getSchemaText();
 
+	const topLevelEditWrapperDescription = doesNodeContainArraySchema(treeNode)
+		? `contains one of the following interfaces: "Modify", null or an array node only edit: "Insert", "Remove", "Move"`
+		: `contains the interface "Modify" or null`;
+
 	// TODO: security: user prompt in system prompt
 	const systemPrompt = `
-	${role}
-	Edits are JSON objects that conform to the following schema.
-	The top level object you produce is an "EditWrapper" object which contains one of "Insert", "Modify", "Remove", "Move", or null.
-	${treeSchemaString}
+	${role}\nEdits are JSON objects that conform to the schema described below. The top-level object you produce for a given edit is an "EditWrapper" object which ${topLevelEditWrapperDescription}.
+	\nHere are the schema definitions for an edit:\n${treeSchemaString}\n
 	The tree is a JSON object with the following schema: ${promptFriendlySchema}
 	${plan === undefined ? "" : `You have made a plan to accomplish the user's goal. The plan is: "${plan}". You will perform one or more edits that correspond to that plan to accomplish the goal.`}
 	${
@@ -277,7 +280,7 @@ function getDef(defs: Record<string, JsonNodeSchema>, ref: string): JsonNodeSche
 	// strip the "#/$defs/" prefix
 	const strippedRef = ref.slice(8);
 	const nextDef = defs[strippedRef];
-	assert(nextDef !== undefined, "Ref not found.");
+	assert(nextDef !== undefined, 0xa7c /* Ref not found. */);
 	return nextDef;
 }
 

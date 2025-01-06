@@ -84,6 +84,7 @@ export {
 export {
 	aliasBlobName,
 	chunksBlobName,
+	recentBatchInfoBlobName,
 	dataStoreAttributesBlobName,
 	electedSummarizerBlobName,
 	extractSummaryMetadataMessage,

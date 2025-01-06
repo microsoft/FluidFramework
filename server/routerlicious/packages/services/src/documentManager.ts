@@ -12,7 +12,6 @@ import {
 	IDocumentStaticProperties,
 	ICache,
 } from "@fluidframework/server-services-core";
-import { generateToken } from "@fluidframework/server-services-utils";
 import {
 	Lumberjack,
 	getLumberBaseProperties,
@@ -36,14 +35,15 @@ export class DocumentManager implements IDocumentManager {
 		}
 	}
 
-	public async readDocument(tenantId: string, documentId: string): Promise<IDocument> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	public async readDocument(tenantId: string, documentId: string): Promise<IDocument | null> {
 		// Retrieve the document
 		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId);
 		const document: IDocument = await restWrapper.get<IDocument>(
 			`/documents/${tenantId}/${documentId}`,
 		);
 		if (!document) {
-			return undefined;
+			return null;
 		}
 
 		if (this.documentStaticDataCache) {
@@ -68,13 +68,14 @@ export class DocumentManager implements IDocumentManager {
 				"Falling back to database after attempting to read cached static document data, because the DocumentManager cache is undefined.",
 				getLumberBaseProperties(documentId, tenantId),
 			);
-			const document: IDocument = await this.readDocument(tenantId, documentId);
+			const document = (await this.readDocument(tenantId, documentId)) ?? undefined;
 			return document as IDocumentStaticProperties | undefined;
 		}
 
 		// Retrieve cached static document props
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
-		const staticPropsStr: string = await this.documentStaticDataCache.get(staticPropsKey);
+		const staticPropsStr: string | undefined =
+			(await this.documentStaticDataCache.get(staticPropsKey)) ?? undefined;
 
 		// If there are no cached static document props, fetch the document from the database
 		if (!staticPropsStr) {
@@ -82,7 +83,14 @@ export class DocumentManager implements IDocumentManager {
 				"Falling back to database after attempting to read cached static document data.",
 				getLumberBaseProperties(documentId, tenantId),
 			);
-			const document: IDocument = await this.readDocument(tenantId, documentId);
+			const document = await this.readDocument(tenantId, documentId);
+			if (!document) {
+				Lumberjack.warning(
+					"Fallback to database failed, document not found.",
+					getLumberBaseProperties(documentId, tenantId),
+				);
+				return undefined;
+			}
 			return DocumentManager.getStaticPropsFromDoc(document);
 		}
 
@@ -101,17 +109,24 @@ export class DocumentManager implements IDocumentManager {
 			);
 			return;
 		}
+		if (this.documentStaticDataCache.delete === undefined) {
+			Lumberjack.error(
+				"Cannot purge document static properties cache, because the cache does not have a delete function.",
+			);
+			return;
+		}
 
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
 		await this.documentStaticDataCache.delete(staticPropsKey);
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {
-		const key = await this.tenantManager.getKey(tenantId);
+		const accessToken = await this.tenantManager.signToken(tenantId, documentId, [
+			ScopeType.DocRead,
+		]);
 		const getDefaultHeaders = () => {
-			const jwtToken = generateToken(tenantId, documentId, key, [ScopeType.DocRead]);
 			return {
-				Authorization: `Basic ${jwtToken}`,
+				Authorization: `Basic ${accessToken}`,
 			};
 		};
 

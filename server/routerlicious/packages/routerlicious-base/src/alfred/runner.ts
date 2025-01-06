@@ -20,6 +20,7 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	IFluidAccessTokenGenerator,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -27,7 +28,6 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
 
@@ -35,8 +35,8 @@ import { IDocumentDeleteService } from "./services";
  * @internal
  */
 export class AlfredRunner implements IRunner {
-	private server: IWebServer;
-	private runningDeferred: Deferred<void>;
+	private server?: IWebServer;
+	private runningDeferred?: Deferred<void>;
 	private stopped: boolean = false;
 	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.AlfredRunner);
 
@@ -106,7 +106,7 @@ export class AlfredRunner implements IRunner {
 			}
 		} else {
 			// Create an HTTP server with a blank request listener
-			this.server = this.serverFactory.create(null);
+			this.server = this.serverFactory.create(undefined);
 		}
 
 		const httpServer = this.server.httpServer;
@@ -182,8 +182,8 @@ export class AlfredRunner implements IRunner {
 	 * Event listener for HTTP server "listening" event.
 	 */
 	private onListening() {
-		const addr = this.server.httpServer.address();
-		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+		const addr = this.server?.httpServer?.address();
+		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
 		winston.info(`Listening on ${bind}`);
 		Lumberjack.info(`Listening on ${bind}`);
 	}

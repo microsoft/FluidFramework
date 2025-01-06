@@ -24,13 +24,13 @@ import {
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
-import { ICache, IDenyList, ITenantService } from "./services";
+import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	storageNameRetriever: IStorageNameRetriever,
+	storageNameRetriever: IStorageNameRetriever | undefined,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
@@ -40,6 +40,7 @@ export function create(
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
 	readinessCheck?: IReadinessCheck,
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -67,6 +68,7 @@ export function create(
 				"historian",
 				(tokens, req, res) => {
 					const tenantId = getTenantIdFromRequest(req.params);
+					const authHeader = req.get("Authorization");
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
@@ -76,7 +78,7 @@ export function create(
 						[BaseTelemetryProperties.tenantId]: tenantId,
 						[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
 							tenantId,
-							req.get("Authorization"),
+							authHeader,
 						),
 					};
 					if (req.get(Constants.IsEphemeralContainer) !== undefined) {

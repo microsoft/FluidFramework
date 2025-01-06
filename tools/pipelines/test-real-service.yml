@@ -21,14 +21,12 @@ resources:
       - lts
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 - name: testPackage
   value: "@fluid-private/test-end-to-end-tests"
-  readonly: true
-- name: absolutePathToTelemetryGenerator
-  value: $(Build.SourcesDirectory)/tools/telemetry-generator
   readonly: true
 - name: pipelineIdentifierForTelemetry
   value: 'EndToEndTests'
@@ -44,7 +42,7 @@ stages:
     parameters:
       stageId: e2e_local_server
       stageDisplayName: e2e - local server
-      poolBuild: NewLarge-linux-1ES # Need Large pool for full-compat matrix
+      poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -61,7 +59,7 @@ stages:
     parameters:
       stageId: e2e_tinylicious
       stageDisplayName: e2e - tinylicious
-      poolBuild: Large # Need Large pool for full-compat matrix
+      poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -83,7 +81,7 @@ stages:
     parameters:
       stageId: e2e_routerlicious
       stageDisplayName: e2e - routerlicious
-      poolBuild: Small
+      poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -109,12 +107,12 @@ stages:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
-  # end-to-end tests frs
+  # end-to-end tests AFR
   - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_frs
-      stageDisplayName: e2e - frs
-      poolBuild: Small
+      stageDisplayName: e2e - AFR
+      poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -146,7 +144,7 @@ stages:
     parameters:
       stageId: e2e_odsp
       stageDisplayName: e2e - odsp
-      poolBuild: Small
+      poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
