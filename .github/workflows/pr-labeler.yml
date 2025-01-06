@@ -14,10 +14,3 @@ jobs:
       - uses: srvaroa/labeler@36ad6b8842ea13d9ce2e4d22993bbf6fc0d20b5e # pin@v0.9
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-  external_label:
-    runs-on: ubuntu-latest
-    name: Label external PRs
-    steps:
-      - uses: tylerbutler/labelmaker-action@4d05a42cd2272689037a1cd82b7ad0e36aaddb23 # pin@main
-        with:
-          token: "${{ secrets.ORG_TOKEN }}"
