@@ -6,9 +6,9 @@
 export { DocumentWriter } from "./DocumentWriter.js";
 export {
 	renderDocument as renderDocumentAsHtml,
-	type RenderDocumentConfig as RenderDocumentAsHtmlConfig,
+	type RenderDocumentConfiguration as RenderDocumentAsHtmlConfiguration,
 	renderHtml,
-	type RenderHtmlConfig,
+	type RenderHtmlConfiguration,
 } from "./html-renderer/index.js";
 export {
 	type RenderConfiguration as MarkdownRenderConfiguration,

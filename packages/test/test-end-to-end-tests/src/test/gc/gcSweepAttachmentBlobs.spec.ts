@@ -22,12 +22,12 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {
-	ISummarizeEventProps,
 	ISummarizer,
 	RetriableSummaryError,
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
+import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
@@ -80,7 +80,7 @@ function validateBlobStateInSummary(
 
 	if (expectGCStateHandle) {
 		assert.equal(
-			summaryTree.tree[gcTreeKey].type,
+			summaryTree.tree[gcTreeKey]?.type,
 			SummaryType.Handle,
 			"Expecting the GC tree to be handle",
 		);
