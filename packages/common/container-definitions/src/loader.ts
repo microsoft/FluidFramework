@@ -628,6 +628,19 @@ export type ILoaderOptions = {
 };
 
 /**
+ * Policies to have various behaviors during container create and load.
+ * @legacy
+ * @alpha
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type IContainerPolicies = {
+	/**
+	 * Max time (in ms) container will wait for a leave message of a disconnected client.
+	 */
+	maxClientLeaveWaitTime?: number;
+};
+
+/**
  * Accepted header keys for requests coming to the Loader
  * @legacy
  * @alpha

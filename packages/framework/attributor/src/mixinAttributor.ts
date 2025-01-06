@@ -4,6 +4,7 @@
  */
 
 import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -52,7 +53,9 @@ export async function getRuntimeAttributor(
  * @internal
  */
 export const mixinAttributor = (
+	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	Base: typeof ContainerRuntime = ContainerRuntime,
+	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 ): typeof ContainerRuntime =>
 	class ContainerRuntimeWithAttributor extends Base {
 		public static async loadRuntime(params: {
@@ -61,12 +64,14 @@ export const mixinAttributor = (
 			existing: boolean;
 			runtimeOptions?: IContainerRuntimeOptions;
 			containerScope?: FluidObject;
+			// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 			containerRuntimeCtor?: typeof ContainerRuntime;
 			/**
 			 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 			 */
 			requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 			provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+			// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 		}): Promise<ContainerRuntime> {
 			const {
 				context,
@@ -76,6 +81,7 @@ export const mixinAttributor = (
 				provideEntryPoint,
 				runtimeOptions,
 				containerScope,
+				// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 				containerRuntimeCtor = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime,
 			} = params;
 
@@ -123,4 +129,5 @@ export const mixinAttributor = (
 
 			return runtime;
 		}
+		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	} as unknown as typeof ContainerRuntime;

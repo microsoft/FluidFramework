@@ -26,7 +26,7 @@ import {
 } from "../../../core/index.js";
 import type { ITreeCheckout, SharedTree, TreeCheckout } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
-import { expectEqualPaths } from "../../utils.js";
+import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
 import type {
 	NodeBuilderData,
 	// eslint-disable-next-line import/no-internal-modules
@@ -38,6 +38,10 @@ import {
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+
+// eslint-disable-next-line import/no-internal-modules
+import type { SharedTreeOptionsInternal } from "../../../shared-tree/sharedTree.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode" as string, {
@@ -144,7 +148,25 @@ export function nodeSchemaFromTreeSchema(treeSchema: typeof fuzzFieldSchema) {
 	return nodeSchema;
 }
 
-export const onCreate = (tree: SharedTree) => {
+export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
+	/**
+	 * @param onCreate - Called once for each created tree (not called for trees loaded from summaries).
+	 * @param onLoad - Called once for each tree that is loaded from a summary.
+	 */
+	public constructor(
+		protected override readonly onCreate: (tree: SharedTree) => void,
+		protected override readonly onLoad?: (tree: SharedTree) => void,
+		options: SharedTreeOptionsInternal = {},
+	) {
+		super(onCreate, onLoad, {
+			...options,
+			jsonValidator: typeboxValidator,
+			disposeForksAfterTransaction: false,
+		});
+	}
+}
+
+export const FuzzTestOnCreate = (tree: SharedTree) => {
 	const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
 	view.initialize(populatedInitialState);
 	view.dispose();

@@ -2,6 +2,10 @@
 
 Driver for the `tinylicious` Fluid service.
 
+## Additional Test Exports
+
+Some additional test utilities are provided via `@fluidframework/tinylicious-driver/test-utils`. These are not meant for production use and may change in any minor update.
+
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
@@ -22,15 +26,6 @@ To get started, install the package by running the following command:
 ```bash
 npm i @fluidframework/tinylicious-driver
 ```
-
-## Importing from this package
-
-This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
-For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
-
-To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/tinylicious-driver` like normal.
-
-To access the `legacy` APIs, import via `@fluidframework/tinylicious-driver/legacy`.
 
 ## API Documentation
 

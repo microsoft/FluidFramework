@@ -23,15 +23,6 @@ export type Flags<T extends typeof Command> = Interfaces.InferredFlags<
 export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
 
 /**
- * A CLI flag to parse the root directory of the Fluid repo.
- */
-const rootPathFlag = Flags.custom({
-	description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
-	env: "_FLUID_ROOT_",
-	hidden: true,
-});
-
-/**
  * A base command that sets up common flags that all commands should have. Most commands should have this class in their
  * inheritance chain.
  *
@@ -191,17 +182,18 @@ export abstract class BaseCommand<T extends typeof Command>
 	/**
 	 * Logs a warning.
 	 */
-	public warning(message: string | Error | undefined): void {
+	public warning(message: string | Error): string | Error {
 		if (!this.suppressLogging) {
 			this.log(chalk.yellow(`WARNING: ${message}`));
 		}
+		return message;
 	}
 
 	/**
 	 * Logs a warning with a stack trace in debug mode.
 	 */
 	public warningWithDebugTrace(message: string | Error): string | Error {
-		return this.suppressLogging ? "" : super.warn(message);
+		return this.suppressLogging ? "" : this.warning(message);
 	}
 
 	// eslint-disable-next-line jsdoc/require-description
@@ -209,7 +201,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	 * @deprecated Use {@link BaseCommand.warning} or {@link BaseCommand.warningWithDebugTrace} instead.
 	 */
 	public warn(input: string | Error): string | Error {
-		return this.suppressLogging ? "" : super.warn(input);
+		return this.suppressLogging ? "" : this.warning(input);
 	}
 
 	/**
@@ -276,11 +268,12 @@ export abstract class BaseCommand<T extends typeof Command>
 	/**
 	 * Logs a verbose log statement.
 	 */
-	public verbose(message: string | Error | undefined): void {
+	public verbose(message: string | Error): string | Error {
 		if (this.flags.verbose === true) {
 			const color = typeof message === "string" ? chalk.gray : chalk.red;
 			this.log(color(`VERBOSE: ${message}`));
 		}
+		return message;
 	}
 }
 

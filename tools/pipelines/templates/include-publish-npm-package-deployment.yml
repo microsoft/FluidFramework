@@ -61,7 +61,7 @@ jobs:
           - download: current
             artifact: pack
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
-          - template: include-install-build-tools.yml
+          - template: /tools/pipelines/templates/include-install-build-tools.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
