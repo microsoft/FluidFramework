@@ -19,21 +19,21 @@ import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
 import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
-import {
-	ReferencePosition,
-	refGetTileLabels,
-	refTypeIncludesFlag,
-} from "./referencePositions.js";
+import { ReferencePosition } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	isInserted,
+	isMergeNodeInfo as isMergeNode,
 	isMoved,
 	isRemoved,
+	overwriteInfo,
 	type IInsertionInfo,
+	type IMergeNodeInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
 	// eslint-disable-next-line import/no-deprecated
 	type IRemovalInfo,
+	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import { PropertiesManager } from "./segmentPropertiesManager.js";
 
@@ -61,8 +61,11 @@ export interface IMergeNodeCommon {
  * like sequence and matrix.
  *
  * We use tiered interface to control visibility of segment properties.
- * This sits between ISegment and ISegmentLeaf. It should only expose
+ * This sits between ISegment and ISegmentPrivate. It should only expose
  * things tagged internal.
+ *
+ * Everything added here beyond ISegment should be optional to keep the ability
+ * to implicitly convert between the tiered interfaces.
  *
  * @internal
  */
@@ -80,12 +83,14 @@ export type ISegmentInternal = Omit<
  * This is the lowest interface and is not exported, it site below ISegment and ISegmentInternal.
  * It should only expose unexported things.
  *
+ * Everything added here beyond ISegmentInternal should be optional to keep the ability
+ * to implicitly convert between the tiered interfaces.
+ *
  * someday we may split tree leaves from segments, but for now they are the same
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
-export type ISegmentLeaf = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
-	Partial<IInsertionInfo & IRemovalInfo & IMoveInfo & IMergeNodeCommon> & {
-		parent?: MergeBlock;
+export type ISegmentPrivate = ISegmentInternal & // eslint-disable-next-line import/no-deprecated
+	Partial<IInsertionInfo & IMergeNodeInfo> & {
 		segmentGroups?: SegmentGroupCollection;
 		propertyManager?: PropertiesManager;
 		/**
@@ -105,6 +110,53 @@ export type ISegmentLeaf = ISegmentInternal & // eslint-disable-next-line import
 		 */
 		readonly endpointType?: "start" | "end";
 	};
+
+/**
+ * Segment leafs are segments that have both IMergeNodeInfo and IInsertionInfo. This means they
+ * are inserted at a position, and bound via their parent MergeBlock to the merge tree. MergeBlocks'
+ * children are either a segment leaf, or another merge block for interior nodes of the tree. When working
+ * within the tree it is generally unnecessary to use type coercions methods common to the infos, and segment
+ * leafs, as the children of MergeBlocks are already well typed. However, when segments come from outside the
+ * merge tree, like via client's public methods, it becomes necessary to use the type coercions methods
+ * to ensure the passed in segment objects are correctly bound to the merge tree.
+ */
+export type ISegmentLeaf = SegmentWithInfo<IMergeNodeInfo & IInsertionInfo>;
+/**
+ * A type-guard which determines if the segment has segment leaf, and
+ * returns true if it does, along with applying strong typing.
+ * @param nodeLike - The segment-like object to check.
+ * @returns True if the segment is a segment leaf, otherwise false.
+ */
+export const isSegmentLeaf = (segmentLike: unknown): segmentLike is ISegmentLeaf =>
+	isInserted(segmentLike) && isMergeNode(segmentLike);
+
+/**
+ * Converts a segment-like object to a segment leaf object if possible.
+ *
+ * @param segmentLike - The segment-like object to convert.
+ * @returns The segment leaf if the conversion is possible, otherwise undefined.
+ */
+export const toSegmentLeaf = (segmentLike: unknown): ISegmentLeaf | undefined =>
+	isSegmentLeaf(segmentLike) ? segmentLike : undefined;
+/**
+ * Asserts that the segment is a segment leaf. Usage of this function should not produce a user facing error.
+ *
+ * @param segmentLike - The segment-like object to check.
+ * @throws Will throw an error if the segment is not a segment leaf.
+ */
+export const assertSegmentLeaf: (segmentLike: unknown) => asserts segmentLike is ISegmentLeaf =
+	(segmentLike) => assert(isSegmentLeaf(segmentLike), 0xaab /* must be segment leaf */);
+/**
+ * This type is used for building MergeBlocks from segments and other MergeBlocks. We need this
+ * type as segments may not yet be bound to the tree, so lack merge node info which is required for
+ * segment leafs.
+ */
+export type IMergeNodeBuilder = MergeBlock | SegmentWithInfo<IInsertionInfo>;
+
+/**
+ * This type is used by MergeBlocks to define their children, which are either segments or other
+ * MergeBlocks.
+ */
 export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
@@ -263,16 +315,7 @@ export interface ISegment {
  * @alpha
  */
 export function segmentIsRemoved(segment: ISegment): boolean {
-	const leaf: ISegmentLeaf = segment;
-	return leaf.removedSeq !== undefined;
-}
-
-/**
- * @internal
- */
-export interface IMarkerModifiedAction {
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	(marker: Marker): void;
+	return isRemoved(segment);
 }
 
 /**
@@ -291,72 +334,17 @@ export interface ISegmentAction<TClientData> {
 		accum: TClientData,
 	): boolean;
 }
-/**
- * @internal
- */
 export interface ISegmentChanges {
-	next?: ISegmentInternal;
-	replaceCurrent?: ISegmentInternal;
-}
-/**
- * @internal
- */
-export interface BlockAction<TClientData> {
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	(
-		block: MergeBlock,
-		pos: number,
-		refSeq: number,
-		clientId: number,
-		start: number | undefined,
-		end: number | undefined,
-		accum: TClientData,
-	): boolean;
+	next?: SegmentWithInfo<IInsertionInfo>;
+	replaceCurrent?: SegmentWithInfo<IInsertionInfo>;
 }
 
-/**
- * @internal
- */
-export interface NodeAction<TClientData> {
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	(
-		node: IMergeNode,
-		pos: number,
-		refSeq: number,
-		clientId: number,
-		start: number | undefined,
-		end: number | undefined,
-		clientData: TClientData,
-	): boolean;
-}
-
-/**
- * @internal
- */
 export interface InsertContext {
-	candidateSegment?: ISegmentInternal;
-	leaf: (
-		segment: ISegmentInternal | undefined,
-		pos: number,
-		ic: InsertContext,
-	) => ISegmentChanges;
+	candidateSegment?: SegmentWithInfo<IInsertionInfo>;
+	leaf: (segment: ISegmentLeaf | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
 
-/**
- * @internal
- */
-export interface SegmentActions<TClientData> {
-	leaf?: ISegmentAction<TClientData>;
-	shift?: NodeAction<TClientData>;
-	contains?: NodeAction<TClientData>;
-	pre?: BlockAction<TClientData>;
-	post?: BlockAction<TClientData>;
-}
-
-/**
- * @internal
- */
 export interface ObliterateInfo {
 	start: LocalReferencePosition;
 	end: LocalReferencePosition;
@@ -367,11 +355,8 @@ export interface ObliterateInfo {
 	segmentGroup: SegmentGroup | undefined;
 }
 
-/**
- * @internal
- */
-export interface SegmentGroup<S extends ISegmentInternal = ISegmentInternal> {
-	segments: S[];
+export interface SegmentGroup {
+	segments: ISegmentLeaf[];
 	previousProps?: PropertySet[];
 	localSeq?: number;
 	refSeq: number;
@@ -383,13 +368,9 @@ export interface SegmentGroup<S extends ISegmentInternal = ISegmentInternal> {
  * the MergeTree always inserts first, then checks for overflow and splits if the child count equals
  * `MaxNodesInBlock`.  (i.e., `MaxNodesInBlock` contains 1 extra slot for temporary storage to
  * facilitate splits.)
- * @internal
  */
 export const MaxNodesInBlock = 8;
-/**
- * @internal
- */
-export class MergeBlock implements IMergeNodeCommon {
+export class MergeBlock implements Partial<IMergeNodeInfo> {
 	public children: IMergeNode[];
 	public needsScour?: boolean;
 	public parent?: MergeBlock;
@@ -447,15 +428,22 @@ export class MergeBlock implements IMergeNodeCommon {
 			index === 0 ? undefined : this.children[index - 1]?.ordinal,
 		);
 	}
-
-	public assignChild(child: IMergeNode, index: number, updateOrdinal = true): void {
-		child.parent = this;
-		child.index = index;
-		if (updateOrdinal) {
-			this.setOrdinal(child, index);
-		}
-		this.children[index] = child;
+}
+export function assignChild<C extends IMergeNodeBuilder>(
+	parent: MergeBlock,
+	child: C,
+	index: number,
+	updateOrdinal = true,
+): asserts child is C & IMergeNodeInfo {
+	const node = Object.assign<C, IMergeNodeInfo>(child, {
+		parent,
+		index,
+		ordinal: child.ordinal ?? "",
+	});
+	if (updateOrdinal) {
+		parent.setOrdinal(node, index);
 	}
+	parent.children[index] = node;
 }
 
 export function seqLTE(seq: number, minOrRefSeq: number): boolean {
@@ -550,22 +538,30 @@ export abstract class BaseSegment implements ISegment {
 	}
 
 	protected cloneInto(b: ISegment): void {
-		const seg: ISegmentLeaf = b;
+		const seg: ISegmentPrivate = b;
 		if (isInserted(this)) {
-			seg.clientId = this.clientId;
-			seg.seq = this.seq;
+			overwriteInfo<IInsertionInfo>(seg, {
+				clientId: this.clientId,
+				seq: this.seq,
+			});
 		}
 		// TODO: deep clone properties
 		seg.properties = clone(this.properties);
 		if (isRemoved(this)) {
-			seg.removedSeq = this.removedSeq;
-			seg.removedClientIds = [...this.removedClientIds];
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IRemovalInfo>(seg, {
+				removedSeq: this.removedSeq,
+				removedClientIds: [...this.removedClientIds],
+			});
 		}
 		if (isMoved(this)) {
-			seg.movedSeq = this.movedSeq;
-			seg.movedSeqs = [...this.movedSeqs];
-			seg.wasMovedOnInsert = this.wasMovedOnInsert;
-			seg.movedClientIds = [...this.movedClientIds];
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IMoveInfo>(seg, {
+				movedSeq: this.movedSeq,
+				movedSeqs: [...this.movedSeqs],
+				wasMovedOnInsert: this.wasMovedOnInsert,
+				movedClientIds: [...this.movedClientIds],
+			});
 		}
 		seg.attribution = this.attribution?.clone();
 	}
@@ -589,40 +585,50 @@ export abstract class BaseSegment implements ISegment {
 			return undefined;
 		}
 
-		const leafSegment: ISegmentLeaf | undefined = this.createSplitSegmentAt(pos);
+		const leafSegment: ISegmentPrivate | undefined = this.createSplitSegmentAt(pos);
 
 		if (!leafSegment) {
 			return undefined;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
-		const thisAsMergeSegment: ISegmentLeaf = this;
-		leafSegment.parent = thisAsMergeSegment.parent;
-
-		// Give the leaf a temporary yet valid ordinal.
-		// when this segment is put in the tree, it will get its real ordinal,
-		// but this ordinal meets all the necessary invariants for now.
-		// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
-		// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
-		// eslint-disable-next-line unicorn/prefer-code-point
-		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
+		if (isMergeNode(this)) {
+			overwriteInfo<IMergeNodeInfo>(leafSegment, {
+				index: this.index + 1,
+				// Give the leaf a temporary yet valid ordinal.
+				// when this segment is put in the tree, it will get its real ordinal,
+				// but this ordinal meets all the necessary invariants for now.
+				// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+				// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
+				// eslint-disable-next-line unicorn/prefer-code-point
+				ordinal: this.ordinal + String.fromCharCode(0),
+				parent: this.parent,
+			});
+		}
 
 		if (isInserted(this)) {
-			leafSegment.seq = this.seq;
-			leafSegment.localSeq = this.localSeq;
-			leafSegment.clientId = this.clientId;
+			overwriteInfo<IInsertionInfo>(leafSegment, {
+				seq: this.seq,
+				localSeq: this.localSeq,
+				clientId: this.clientId,
+			});
 		}
 		if (isRemoved(this)) {
-			leafSegment.removedClientIds = [...this.removedClientIds];
-			leafSegment.removedSeq = this.removedSeq;
-			leafSegment.localRemovedSeq = this.localRemovedSeq;
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IRemovalInfo>(leafSegment, {
+				removedClientIds: [...this.removedClientIds],
+				removedSeq: this.removedSeq,
+				localRemovedSeq: this.localRemovedSeq,
+			});
 		}
 		if (isMoved(this)) {
-			leafSegment.movedClientIds = [...this.movedClientIds];
-			leafSegment.movedSeq = this.movedSeq;
-			leafSegment.movedSeqs = [...this.movedSeqs];
-			leafSegment.localMovedSeq = this.localMovedSeq;
-			leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
+			// eslint-disable-next-line import/no-deprecated
+			overwriteInfo<IMoveInfo>(leafSegment, {
+				movedClientIds: [...this.movedClientIds],
+				movedSeq: this.movedSeq,
+				movedSeqs: [...this.movedSeqs],
+				localMovedSeq: this.localMovedSeq,
+				wasMovedOnInsert: this.wasMovedOnInsert,
+			});
 		}
 
 		this.trackingCollection.copyTo(leafSegment);
@@ -867,47 +873,3 @@ export const compareNumbers = (a: number, b: number): number => a - b;
  * Compares two strings.
  */
 export const compareStrings = (a: string, b: string): number => a.localeCompare(b);
-
-/**
- * Get a human-readable string for a given {@link Marker}.
- *
- * @remarks This function is intended for debugging only. The exact format of
- * this string should not be relied upon between versions.
- * @internal
- */
-export function debugMarkerToString(marker: Marker): string {
-	let bbuf = "";
-	if (refTypeIncludesFlag(marker, ReferenceType.Tile)) {
-		bbuf += "Tile";
-	}
-	let lbuf = "";
-	const id = marker.getId();
-	if (id) {
-		bbuf += ` (${id}) `;
-	}
-	const tileLabels = refGetTileLabels(marker);
-	if (tileLabels) {
-		lbuf += "tile -- ";
-		for (let i = 0, len = tileLabels.length; i < len; i++) {
-			const tileLabel = tileLabels[i];
-			if (i > 0) {
-				lbuf += "; ";
-			}
-			lbuf += tileLabel;
-		}
-	}
-
-	let pbuf = "";
-	if (marker.properties) {
-		pbuf += JSON.stringify(marker.properties, (key, value) => {
-			// Avoid circular reference when stringifying makers containing handles.
-			// (Substitute a debug string instead.)
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			const handle = !!value && value.IFluidHandle;
-
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-			return handle ? `#Handle(${handle.routeContext.path}/${handle.path})` : value;
-		});
-	}
-	return `M ${bbuf}: ${lbuf} ${pbuf}`;
-}

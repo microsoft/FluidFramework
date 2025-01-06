@@ -692,10 +692,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 				() => runtimeDispose++,
 			);
 
-			container.dispose(
-				DisconnectReason.Expected,
-				new DataCorruptionError("dispose error", {}),
-			);
+			container.dispose(new DataCorruptionError("expected", {}));
 			assert.strictEqual(
 				containerDisposed,
 				1,
@@ -720,11 +717,6 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 				runtimeDispose,
 				1,
 				"IContainerRuntime should send dispose event on container dispose",
-			);
-			assert.strictEqual(
-				container.closedWithError?.message,
-				"dispose error",
-				"Expected the error that disposed the container",
 			);
 		},
 	);
@@ -753,62 +745,13 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 				() => runtimeDispose++,
 			);
 
-			container.close(DisconnectReason.Expected, new DataCorruptionError("close error", {}));
-			container.dispose(
-				DisconnectReason.Expected,
-				new DataCorruptionError("dispose error", {}),
-			);
+			container.close(new DataCorruptionError("expected", {}));
+			container.dispose(new DataCorruptionError("expected", {}));
 			assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
 			assert.strictEqual(containerClosed, 1, "Container should send closed event");
 			assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
 			assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
 			assert.strictEqual(runtimeDispose, 1, "IContainerRuntime should send dispose event");
-			assert.strictEqual(
-				container.closedWithError?.message,
-				"close error",
-				"Expected the error that closed the container (not the dispose one)",
-			);
-		},
-	);
-
-	itExpects(
-		"Closing (no error) then disposing (with error) container leaves closedWithError unset",
-		[
-			{ eventName: "fluid:telemetry:Container:ContainerClose", category: "generic" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "error" },
-		],
-		async () => {
-			const container = await createConnectedContainer();
-			container.close(DisconnectReason.Expected);
-			container.dispose(
-				DisconnectReason.Expected,
-				new DataCorruptionError("dispose error", {}),
-			);
-
-			assert.strictEqual(
-				container.closedWithError,
-				undefined,
-				"Expected undefined since the container was closed without error",
-			);
-		},
-	);
-
-	itExpects(
-		"Closing (with error) then disposing (no error) container should set closedWithError properly",
-		[
-			{ eventName: "fluid:telemetry:Container:ContainerClose", category: "error" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "generic" },
-		],
-		async () => {
-			const container = await createConnectedContainer();
-			container.close(DisconnectReason.Expected, new DataCorruptionError("close error", {}));
-			container.dispose(DisconnectReason.Expected);
-
-			assert.strictEqual(
-				container.closedWithError?.message,
-				"close error",
-				"Expected the error that closed the container",
-			);
 		},
 	);
 

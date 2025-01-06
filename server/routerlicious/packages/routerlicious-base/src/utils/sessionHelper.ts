@@ -388,24 +388,6 @@ export async function getSession(
 	}
 	connectionTrace?.stampStage("SessionLivenessChecked");
 
-	// Reject get session request on existing, inactive sessions if cluster is in draining process.
-	if (clusterDrainingChecker) {
-		try {
-			const isClusterDraining = await clusterDrainingChecker.isClusterDraining();
-			if (isClusterDraining) {
-				Lumberjack.info("Cluster is in draining process. Reject get session request.");
-				connectionTrace?.stampStage("ClusterIsDraining");
-				throw new NetworkError(
-					503,
-					"Server is unavailable. Please retry session discovery later.",
-				);
-			}
-		} catch (error) {
-			Lumberjack.error("Failed to get cluster draining status", lumberjackProperties, error);
-		}
-	}
-	connectionTrace?.stampStage("ClusterDrainingChecked");
-
 	// Session is not alive/discovered, so update and persist changes to DB.
 	const ignoreSessionStickiness = existingSession.ignoreSessionStickiness ?? false;
 

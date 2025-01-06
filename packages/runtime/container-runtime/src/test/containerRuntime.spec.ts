@@ -31,6 +31,7 @@ import {
 	type FetchSource,
 	type IDocumentAttributes,
 	SummaryType,
+	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	ISummaryTreeWithStats,
@@ -2093,7 +2094,7 @@ describe("Runtime", () => {
 					false,
 				);
 				const { summary } = await containerRuntime.summarize({ fullTree: true });
-				const blob = summary.tree[recentBatchInfoBlobName];
+				const blob: SummaryObject | undefined = summary.tree[recentBatchInfoBlobName];
 				assert(blob.type === SummaryType.Blob, "Expected blob");
 				assert.equal(blob.content, '[[123,"batchId1"]]', "Expected single batchId mapping");
 
@@ -2423,7 +2424,7 @@ describe("Runtime", () => {
 					["missingDataStore"],
 				);
 				assert.deepStrictEqual(
-					snapshotTree.trees[".channels"].trees.missingDataStore,
+					snapshotTree.trees[".channels"]?.trees.missingDataStore,
 					snapshot.snapshotTree,
 					"snapshot should be equal",
 				);

@@ -142,7 +142,7 @@ describeCompat(
 			SparseMatrix,
 		} = apis.dds;
 		function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
-			const subTree = tree.trees[key];
+			const subTree: ISnapshotTree | undefined = tree.trees[key];
 			assert(subTree, msg ?? `${key} subtree not present`);
 			return subTree;
 		}
@@ -166,9 +166,9 @@ describeCompat(
 			blobs: ISerializableBlobContents,
 			key: string,
 		): T {
-			const id = subtree.blobs[key];
+			const id: string | undefined = subtree.blobs[key];
 			assert(id, `blob id for ${key} missing`);
-			const contents = blobs[id];
+			const contents: string | undefined = blobs[id];
 
 			assert(contents, `blob contents for ${key} missing`);
 			return JSON.parse(contents) as T;
@@ -322,7 +322,7 @@ describeCompat(
 				);
 
 				// Check blobs contents for protocolAttributes
-				const protocolAttributesBlobId = baseSnapshot.trees[".protocol"].blobs.attributes;
+				const protocolAttributesBlobId = baseSnapshot.trees[".protocol"]?.blobs.attributes;
 				assert(
 					snapshotBlobs[protocolAttributesBlobId] !== undefined,
 					"Blobs should contain attributes blob",

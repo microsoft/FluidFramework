@@ -28,6 +28,7 @@ import {
 	RestGitService,
 	ITenantCustomDataExternal,
 	IDenyList,
+	ISimplifiedCustomDataRetriever,
 } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
@@ -44,6 +45,7 @@ export type CommonRouteParams = [
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ];
 
 export interface ICreateGitServiceArgs {
@@ -60,6 +62,7 @@ export interface ICreateGitServiceArgs {
 	isEphemeralContainer?: boolean;
 	ephemeralDocumentTTLSec?: number; // 24 hours
 	denyList?: IDenyList;
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 }
 
 const defaultCreateGitServiceArgs: Required<
@@ -273,6 +276,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		isEphemeralContainer,
 		ephemeralDocumentTTLSec,
 		denyList,
+		simplifiedCustomDataRetriever,
 	} = { ...defaultCreateGitServiceArgs, ...createArgs };
 	if (!authorization) {
 		throw new NetworkError(403, "Authorization header is missing.");
@@ -292,6 +296,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	}
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant);
 	const customData: ITenantCustomDataExternal = details.customData;
+	const simplifiedCustomData = simplifiedCustomDataRetriever?.get(customData);
 	const writeToExternalStorage = !!customData?.externalStorageData;
 	const storageUrl = config.get("storageUrl") as string | undefined;
 	const ignoreEphemeralFlag: boolean = config.get("ignoreEphemeralFlag");
@@ -326,6 +331,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		storageUrl,
 		isEphemeral,
 		maxCacheableSummarySize,
+		simplifiedCustomData,
 	);
 	return service;
 }

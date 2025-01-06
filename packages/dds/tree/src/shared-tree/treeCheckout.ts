@@ -1022,6 +1022,9 @@ class EditLock {
 			addNodeExistsConstraint(path) {
 				editor.addNodeExistsConstraint(path);
 			},
+			addNodeExistsConstraintOnRevert(path) {
+				editor.addNodeExistsConstraintOnRevert(path);
+			},
 		};
 	}
 
@@ -1033,7 +1036,7 @@ class EditLock {
 		if (this.locked) {
 			debugger;
 		}
-		assert(!this.locked, "Checkout has already been locked");
+		assert(!this.locked, 0xaa7 /* Checkout has already been locked */);
 		this.locked = true;
 	}
 
@@ -1058,7 +1061,7 @@ class EditLock {
 	 * @remarks May only be called when the lock is currently locked.
 	 */
 	public unlock(): void {
-		assert(this.locked, "Checkout has not been locked");
+		assert(this.locked, 0xaa8 /* Checkout has not been locked */);
 		this.locked = false;
 	}
 }
@@ -1079,7 +1082,7 @@ function trackForksForDisposal(checkout: TreeCheckout): () => void {
 	});
 	let disposed = false;
 	return () => {
-		assert(!disposed, "Forks may only be disposed once");
+		assert(!disposed, 0xaa9 /* Forks may only be disposed once */);
 		forks.forEach((fork) => fork.dispose());
 		onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
 		onForkUnSubscribe();
