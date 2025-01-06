@@ -212,17 +212,17 @@ interface RangeEntry<T> {
 	/**
 	 * The starting index of the range (inclusive).
 	 */
-	start: number;
+	readonly start: number;
 
 	/**
 	 * The length of the range.
 	 */
-	length: number;
+	readonly length: number;
 
 	/**
 	 * The value associated with this range.
 	 */
-	value: T;
+	readonly value: T;
 }
 
 /**
