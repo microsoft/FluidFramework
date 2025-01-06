@@ -729,6 +729,29 @@ describe("Undo and redo", () => {
 			message: "List of revertible should not contain disposed revertibles.",
 		});
 	});
+
+	it("cloning list of revertibles between views with different changes throws error", () => {
+		const viewA = createInitializedView();
+		const viewB = createInitializedView();
+		const { undoStack } = createTestUndoRedoStacks(viewA.events);
+
+		assert(viewA.root.child !== undefined);
+		viewA.root.child.propertyOne = 256; // 128 -> 256
+		viewA.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
+
+		// Make different changes to viewB
+		assert(viewB.root.child !== undefined);
+		viewB.root.child.propertyOne = 512; // 128 -> 512
+
+		const batchedRevertibles: RevertibleAlpha[] = [];
+		for (const revertible of undoStack) {
+			batchedRevertibles.push(revertible);
+		}
+
+		assert.throws(() => cloneRevertibles(batchedRevertibles, viewB), {
+			message: "Error: 0x576",
+		});
+	});
 });
 
 /**

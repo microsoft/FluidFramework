@@ -102,6 +102,8 @@ export type RevertibleAlphaFactory = (
 /**
  * Clones a batch of revertibles for a target branch.
  * @throws Error if any revertible is disposed
+ * @throws Error if the target branch does not contain the changes that the revertibles are meant to revert
+ *
  * @param revertibles - Array of revertibles to clone
  * @param targetBranch - The target branch to clone the revertibles for
  * @returns Array of cloned revertibles, maintaining the same order as the input
@@ -112,15 +114,12 @@ export function cloneRevertibles(
 	revertibles: RevertibleAlpha[],
 	targetBranch: TreeBranch,
 ): RevertibleAlpha[] {
-	const clonedRevertibles: RevertibleAlpha[] = [];
-
-	for (const revertible of revertibles) {
-		if (revertible.status === RevertibleStatus.Disposed) {
-			throw new Error("List of revertible should not contain disposed revertibles.");
-		}
-
-		clonedRevertibles.push(revertible.clone(targetBranch));
+	const disposedRevertible = revertibles.find(
+		(revertible) => revertible.status === RevertibleStatus.Disposed,
+	);
+	if (disposedRevertible !== undefined) {
+		throw new Error("List of revertible should not contain disposed revertibles.");
 	}
 
-	return clonedRevertibles;
+	return revertibles.map((revertible) => revertible.clone(targetBranch));
 }
