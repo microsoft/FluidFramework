@@ -872,8 +872,8 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			value: T,
 			invalidateDependents: boolean,
 		) => {
-			const rangeMap = getMap(target).get(revision) ?? new RangeMap<T>();
-			if (invalidateDependents && rangeMap.get(id, count) !== undefined) {
+			const queries = getQueries(target).get(revision);
+			if (invalidateDependents && queries?.get(id, count).value !== undefined) {
 				table.isInvalidated = true;
 			}
 			setInCrossFieldMap(getMap(target), revision, id, count, value);
