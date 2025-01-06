@@ -38,7 +38,6 @@ export class PresenceManager {
 	private userInfoCallback: (userInfoMap: Map<ISessionClient, User>) => void = () => {};
 
 	constructor(private readonly presence: IPresence) {
-
 		// Address for the presence state, this is used to organize the presence states and avoid conflicts
 		const appSelectionWorkspaceAddress = "aiCollab:workspace";
 
