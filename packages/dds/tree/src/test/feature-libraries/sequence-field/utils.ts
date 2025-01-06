@@ -861,7 +861,6 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 				addCrossFieldQuery(getQueries(target), revision, id, count);
 			}
 			const rangeMap = getMap(target).get(revision) ?? new RangeMap<T>();
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return rangeMap.get(id, count);
 		},
 		set: (

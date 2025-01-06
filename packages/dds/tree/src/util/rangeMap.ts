@@ -56,7 +56,12 @@ export class RangeMap<T> {
 	 * @param length - The length of the range.
 	 * @param value - The value to associate with the range.
 	 */
-	public set(start: number, length: number, value: T): void {
+	public set(start: number, length: number, value: T | undefined): void {
+		if (value === undefined) {
+			this.delete(start, length);
+			return;
+		}
+
 		const end = start + length - 1;
 		const newEntry: RangeEntry<T> = { start, length, value };
 
@@ -70,11 +75,6 @@ export class RangeMap<T> {
 				iAfter = i;
 				break;
 			}
-		}
-
-		if (value === undefined) {
-			this.delete(start, length);
-			return;
 		}
 
 		const numOverlappingEntries = iAfter - iBefore - 1;
@@ -132,7 +132,7 @@ export class RangeMap<T> {
 	 * 1. If an entry is completely included in the deletion range, the whole entry will be deleted
 	 * e.g.: map = [[1, 2], [4, 6]], delete range: [3, 6]
 	 * map becomes [[1, 2]] after deletion
-	 * (Note: the notation [a, b] represents start = a, end = b for simpler visiualization, instead of `b`
+	 * (Note: the notation [a, b] represents start = a, end = b for simpler visualization, instead of `b`
 	 * representing the length)
 	 *
 	 * 2. If an entry is partially overlapped with the deletion range, the start or end point will be shifted
@@ -233,12 +233,12 @@ export interface RangeQueryResult<T> {
 	 * The value of the first key in the query range.
 	 * If no matching range is found, this will be undefined.
 	 */
-	value: T | undefined;
+	readonly value: T | undefined;
 
 	/**
 	 * The length of the prefix of the query range which has the same value.
 	 * For example, if a RangeMap has the same value for keys 5, 6, and 7,
 	 * a query about the range [5, 10] would give a result with length 3.
 	 */
-	length: number;
+	readonly length: number;
 }
