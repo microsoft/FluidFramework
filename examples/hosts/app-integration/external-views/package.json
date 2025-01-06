@@ -47,7 +47,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/test-tools": "^0.2.3074",
+    "@fluidframework/test-tools": "^2.0.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
