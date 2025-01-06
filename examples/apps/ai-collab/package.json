@@ -43,6 +43,7 @@
 		"@fluidframework/devtools": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@fluidframework/odsp-client": "workspace:~",
+		"@fluidframework/presence": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"@iconify/react": "^5.0.2",
