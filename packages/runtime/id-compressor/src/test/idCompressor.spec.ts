@@ -1113,10 +1113,9 @@ describe("IdCompressor", () => {
 			const compressor2 = network.getCompressor(client2);
 			const ids = new Set<OpSpaceCompressedId>();
 			const uuids = new Set<StableId>();
-			for (let i = 0; i < log1.length; i++) {
-				const data1 = log1[i];
+			for (const [i, data1] of log1.entries()) {
 				const id1 = compressor1.normalizeToOpSpace(data1.id);
-				const id2 = compressor2.normalizeToOpSpace(log2[i].id);
+				const id2 = compressor2.normalizeToOpSpace(log2[i]?.id);
 				assert(isFinalId(id1));
 				ids.add(id1);
 				assert.equal(id1, id2);
