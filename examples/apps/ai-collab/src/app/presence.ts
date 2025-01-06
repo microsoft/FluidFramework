@@ -35,7 +35,7 @@ export class PresenceManager {
 	private readonly usersState: UserPresence;
 	// A map of SessionClient to UserInfo, where users can share their info with other users
 	private readonly userInfoMap: Map<ISessionClient, User> = new Map();
-	// A callback methid to get updates when remote UserInfo changes
+	// A callback method to get updates when remote UserInfo changes
 	private userInfoCallback: (userInfoMap: Map<ISessionClient, User>) => void = () => {};
 
 	constructor(private readonly presence: IPresence) {
