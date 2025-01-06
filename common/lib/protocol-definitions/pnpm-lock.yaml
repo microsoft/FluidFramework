@@ -3870,8 +3870,8 @@ packages:
       typescript: 5.4.5
     dev: true
 
-  /cross-spawn@7.0.6:
-    resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
+  /cross-spawn@7.0.3:
+    resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
     engines: {node: '>= 8'}
     dependencies:
       path-key: 3.1.1
@@ -3936,7 +3936,7 @@ packages:
       lodash.mapvalues: 4.6.0
       lodash.memoize: 4.1.2
       memfs-or-file-map-to-github-branch: 1.2.1
-      micromatch: 4.0.8
+      micromatch: 4.0.5
       node-cleanup: 2.1.2
       node-fetch: 2.6.10
       override-require: 1.1.1
@@ -4640,7 +4640,7 @@ packages:
       '@ungap/structured-clone': 1.2.0
       ajv: 6.12.6
       chalk: 4.1.2
-      cross-spawn: 7.0.6
+      cross-spawn: 7.0.3
       debug: 4.3.4
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
@@ -4729,7 +4729,7 @@ packages:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
     dependencies:
-      cross-spawn: 7.0.6
+      cross-spawn: 7.0.3
       get-stream: 6.0.1
       human-signals: 2.1.0
       is-stream: 2.0.1
@@ -4779,7 +4779,7 @@ packages:
       '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
-      micromatch: 4.0.8
+      micromatch: 4.0.5
     dev: true
 
   /fast-json-patch@3.1.1:
@@ -4894,7 +4894,7 @@ packages:
   /find-yarn-workspace-root@2.0.0:
     resolution: {integrity: sha512-1IMnbjt4KzsQfnhnzNd8wUEgXZ44IzZaZmnLYx7D5FZlaHt2gW20Cri8Q+E/t5tIj4+epTBub+2Zxu/vNILzqQ==}
     dependencies:
-      micromatch: 4.0.8
+      micromatch: 4.0.5
     dev: true
 
   /flat-cache@3.0.4:
@@ -4919,7 +4919,7 @@ packages:
     resolution: {integrity: sha512-TMKDUnIte6bfb5nWv7V/caI169OHgvwjb7V4WkeUvbQQdjr5rWKqHFiKWb/fcOwB+CzBT+qbWjvj+DVwRskpIg==}
     engines: {node: '>=14'}
     dependencies:
-      cross-spawn: 7.0.6
+      cross-spawn: 7.0.3
       signal-exit: 4.1.0
     dev: true
 
@@ -6906,8 +6906,8 @@ packages:
       - supports-color
     dev: true
 
-  /micromatch@4.0.8:
-    resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
+  /micromatch@4.0.5:
+    resolution: {integrity: sha512-DMy+ERcEW2q8Z2Po+WNXuw3c5YaUSFjAO5GsJqfEl7UjvtIuFKO6ZrKvcItdy98dwFI2N1tg3zNIdKaQT+aNdA==}
     engines: {node: '>=8.6'}
     dependencies:
       braces: 3.0.3
@@ -8742,7 +8742,7 @@ packages:
     resolution: {integrity: sha512-KM8coezO6ISQ89c1BzyWNtcn2V2kAVtwIXd3cN/V5a0xPYc1F/vydrRc01wsKFEQ/p+V1a4sw4z2yMITIXrgGw==}
     engines: {node: '>=14'}
     dependencies:
-      cross-spawn: 7.0.6
+      cross-spawn: 7.0.3
     dev: true
 
   /spdx-correct@3.2.0:
