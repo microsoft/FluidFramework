@@ -9,6 +9,4 @@ const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mochar
 
 const packageDir = __dirname;
 const config = getFluidTestMochaConfig(packageDir);
-config.spec = "lib/test";
-
 module.exports = config;

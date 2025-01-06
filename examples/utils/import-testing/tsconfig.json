@@ -5,8 +5,14 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"exactOptionalPropertyTypes": false,
+		// Allows writing type checking expression without having to use the results.
 		"noUnusedLocals": false,
-		"types": ["node"],
+		// Allow testing that declarations work properly
+		"declaration": true,
+		// Check that the Fluid Framework packages pass type checking.
+		"skipLibCheck": false,
+		// Due to several of our own packages' exports failing to build with "exactOptionalPropertyTypes",
+		// disable it to prevent that from erroring when combined with "skipLibCheck".
+		"exactOptionalPropertyTypes": false,
 	},
 }
