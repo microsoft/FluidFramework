@@ -20,7 +20,7 @@ export class RangeMap<T> {
 	 * Retrieves all entries from the rangeMap.
 	 * @returns An array of RangeEntryResult objects, each containing the start index, length, and value of a contiguous range.
 	 */
-	public getAllEntries(): RangeQueryResult<T>[] {
+	public getAllEntries(): readonly RangeQueryResult<T>[] {
 		return this.entries;
 	}
 
