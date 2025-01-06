@@ -4,12 +4,12 @@
  */
 
 import { DoublyLinkedList, walkList } from "./collections/index.js";
-import { SegmentGroup, type ISegmentPrivate } from "./mergeTreeNodes.js";
+import { SegmentGroup, type ISegmentLeaf } from "./mergeTreeNodes.js";
 
 export class SegmentGroupCollection {
 	private readonly segmentGroups: DoublyLinkedList<SegmentGroup>;
 
-	constructor(private readonly segment: ISegmentPrivate) {
+	constructor(private readonly segment: ISegmentLeaf) {
 		this.segmentGroups = new DoublyLinkedList<SegmentGroup>();
 	}
 
@@ -47,7 +47,7 @@ export class SegmentGroupCollection {
 		walkList(this.segmentGroups, (sg) => segmentGroups.enqueueOnCopy(sg.data, this.segment));
 	}
 
-	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegmentPrivate): void {
+	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegmentLeaf): void {
 		this.enqueue(segmentGroup);
 		if (segmentGroup.previousProps) {
 			// duplicate the previousProps for this segment
