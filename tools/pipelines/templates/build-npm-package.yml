@@ -361,7 +361,11 @@ extends:
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
-                          testCoverage: '${{ parameters.testCoverage }}'
+                          testCoverage: ${{
+                            and(
+                              parameters.testCoverage,
+                              ne(variables['Build.Reason'], 'PullRequest')
+                            )}}
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                     - task: Bash@3
