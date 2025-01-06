@@ -394,7 +394,6 @@ stages:
             scriptLocation: 'inlineScript'
             inlineScript: |
               // define variables
-              moduleName="FFTestModule";
               stringBearerToken="";
 
               set -eu -o pipefail
@@ -411,13 +410,13 @@ stages:
                       "profileName": "FluidFrameworkTenantPool", // The type of the resource (i.e. pool name)
                     }
                   ],
-                  "ModuleName": `${moduleName}`, // Metadata used for tracking the source of the request (can be anything)
+                  "ModuleName": "FFTestModule", // Metadata used for tracking the source of the request (can be anything)
                   "Count": 1, // How many copies of the above resources to allocate for the reservation. Should almost always be 1
                 };
 
 
                 const bearerToken = fetch(
-                  "https://tdff5prd.office.net/v2.0/reservations/reserve?isSynthetic=false&durationMinutes=75",
+                  "https://tdff5prd.office.net/v2.0/reservations/current?isSynthetic=false&durationMinutes=75",
                   {
                     method: "POST",
                     body: JSON.stringify(requestBody),
@@ -428,7 +427,7 @@ stages:
                 // step 2: wait for resource hydration
                 // returns "Ready" or "Not Ready"
                 const status = fetch(
-                  "https://tdff5prd.office.net/v2.0/reservations/current?isSynthetic=false&durationMinutes=75",
+                  "https://tdff5prd.office.net/v2.0/reservations/current/status",
                   {
                     method: "GET",
                     headers: {
@@ -439,7 +438,7 @@ stages:
 
                 // step 3: check out hydrated resource
                 const credentials = fetch(
-                  "https://tdff5prd.office.net/v2.0/reservations/current/modules?moduleName=${moduleName}",
+                  "https://tdff5prd.office.net/v2.0/reservations/current/modules?moduleName=FFTestModule",
                   {
                     method: "GET",
                     headers: {
@@ -451,6 +450,7 @@ stages:
                 const loginTenants = JSON.stringify(credentials);
               "
               echo "##vso[task.setvariable variable=tenantCreds;issecret=true]loginTenants"
+              echo "##vso[task.setvariable variable=stringBearerToken;]stringBearerToken"
 
         # run the test
         - task: Npm@1
@@ -507,6 +507,34 @@ stages:
               publishLocation: 'pipeline'
             condition: always()
             continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+
+        # Release the tenant back to the TRIPS tenant pool
+        - task: AzureCLI@2
+          displayName: 'Cleanup resources'
+          inputs:
+            azureSubscription: 'Fluid Framework Tests'
+            addSpnToEnvironment: true
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              // define variables
+              moduleName="FFTestModule";
+
+              set -eu -o pipefail
+              az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+
+              node -e "
+                const fetch = require('fetch');
+
+                fetch("https://tdff5prd.office.net/v2.0/reservations/current/modules?moduleName=${moduleName}", {
+                  method: "DELETE",
+                  headers: {
+                    // not sure if this access is correct
+                    Authorization: `BEARER $(stringBearerToken)`,
+                    // don't think this is right
+                    "TDF-ReservationClient": "odspTests",
+                  }).then((response) => response.json());
+              "
 
         # Log Test Failures
         # - template: include-process-test-results.yml
