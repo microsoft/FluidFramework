@@ -1,5 +1,7 @@
 # @fluidframework/local-driver
 
+## 2.14.0
+
 ## 2.12.0
 
 Dependency updates only.

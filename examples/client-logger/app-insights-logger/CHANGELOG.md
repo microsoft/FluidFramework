@@ -1,5 +1,7 @@
 # @fluid-example/app-insights-logger
 
+## 2.14.0
+
 ## 2.12.0
 
 Dependency updates only.

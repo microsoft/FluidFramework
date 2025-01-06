@@ -1,5 +1,7 @@
 # @fluid-internal/client-utils
 
+## 2.14.0
+
 ## 2.12.0
 
 Dependency updates only.

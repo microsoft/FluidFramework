@@ -1,5 +1,7 @@
 # @fluid-private/test-end-to-end-tests
 
+## 2.14.0
+
 ## 2.12.0
 
 Dependency updates only.
