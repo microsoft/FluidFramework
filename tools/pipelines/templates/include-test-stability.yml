@@ -117,6 +117,7 @@ jobs:
           parameters:
             taskTestStep: ${{ taskTestStep }}
             buildDirectory: ${{ parameters.buildDirectory }}
+            testCoverage: '${{ parameters.testCoverage }}'
 
         # Verify if the tinylicious log exists
         - task: Bash@3

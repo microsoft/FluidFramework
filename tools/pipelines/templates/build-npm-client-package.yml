@@ -609,6 +609,7 @@ extends:
                   parameters:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
+                    testCoverage: '${{ parameters.testCoverage }}'
 
               - task: Npm@1
                 displayName: 'npm run test:copyresults'
@@ -757,6 +758,7 @@ extends:
                   parameters:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
+                    testCoverage: 'false'
 
                 - task: Npm@1
                   displayName: 'npm run test:copyresults'
