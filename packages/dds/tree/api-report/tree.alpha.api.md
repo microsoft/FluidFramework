@@ -704,12 +704,14 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
 // @alpha
-export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = {
+export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
     rollback?: false;
     value: TSuccessValue;
 } | {
     rollback: true;
     value: TFailureValue;
+}) & {
+    preconditionsOnRevert?: readonly TransactionConstraint[];
 };
 
 // @public

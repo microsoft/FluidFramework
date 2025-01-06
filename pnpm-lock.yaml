@@ -219,142 +219,6 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
-  azure/packages/test/scenario-runner:
-    dependencies:
-      '@fluid-internal/client-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/common/client-utils
-      '@fluid-internal/test-driver-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/test/test-driver-definitions
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../../packages/framework/aqueduct
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../../../packages/service-clients/azure-client
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/common/container-definitions
-      '@fluidframework/container-loader':
-        specifier: workspace:~
-        version: link:../../../../packages/loader/container-loader
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../../packages/common/core-interfaces
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/common/core-utils
-      '@fluidframework/counter':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/counter
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../../../../packages/framework/fluid-static
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/map
-      '@fluidframework/matrix':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/matrix
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../../packages/drivers/routerlicious-driver
-      '@fluidframework/sequence':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/sequence
-      '@fluidframework/telemetry-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/utils/telemetry-utils
-      '@fluidframework/test-runtime-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/runtime/test-runtime-utils
-      '@fluidframework/test-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/test/test-utils
-      axios:
-        specifier: ^1.7.7
-        version: 1.7.9(debug@4.4.0)
-      commander:
-        specifier: ^5.1.0
-        version: 5.1.0
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      js-yaml:
-        specifier: ^4.1.0
-        version: 4.1.0
-      mocha:
-        specifier: ^10.2.0
-        version: 10.8.2
-      sinon:
-        specifier: ^18.0.1
-        version: 18.0.1
-      start-server-and-test:
-        specifier: ^2.0.3
-        version: 2.0.8
-      tinylicious:
-        specifier: ^5.0.0
-        version: 5.0.0
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.9.3
-        version: 1.9.4
-      '@fluid-tools/build-cli':
-        specifier: ^0.51.0
-        version: 0.51.0(@types/node@18.19.67)(typescript@5.4.5)(webpack-cli@5.1.4)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.51.0
-        version: 0.51.0(@types/node@18.19.67)
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.6.0
-        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
-      '@types/js-yaml':
-        specifier: ^4.0.5
-        version: 4.0.9
-      '@types/mocha':
-        specifier: ^10.0.10
-        version: 10.0.10
-      '@types/nock':
-        specifier: ^9.3.0
-        version: 9.3.1
-      '@types/node':
-        specifier: ^18.19.0
-        version: 18.19.67
-      '@types/sinon':
-        specifier: ^17.0.3
-        version: 17.0.3
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
-      c8:
-        specifier: ^8.0.1
-        version: 8.0.1
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      nock:
-        specifier: ^13.3.3
-        version: 13.5.6
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-
   examples/apps/ai-collab:
     devDependencies:
       '@azure/identity':
@@ -396,6 +260,9 @@ importers:
       '@fluidframework/odsp-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/odsp-client
+      '@fluidframework/presence':
+        specifier: workspace:~
+        version: link:../../../packages/framework/presence
       '@fluidframework/tinylicious-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/tinylicious-client
@@ -24584,10 +24451,6 @@ packages:
     dependencies:
       expect: 29.7.0
       pretty-format: 29.7.0
-    dev: true
-
-  /@types/js-yaml@4.0.9:
-    resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
     dev: true
 
   /@types/jsdom-global@3.0.7:

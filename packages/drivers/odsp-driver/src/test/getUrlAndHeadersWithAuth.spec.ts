@@ -24,7 +24,7 @@ describe("getHeadersWithAuth", () => {
 		result: { [index: string]: string },
 	): void => {
 		assert.strictEqual(
-			result.Authorization.endsWith(token),
+			result.Authorization?.endsWith(token),
 			true,
 			"Returned header must contain token",
 		);

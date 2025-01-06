@@ -7,6 +7,7 @@ import {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
 	LogLevel,
+	type Tagged,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
@@ -15,6 +16,7 @@ import type {
 	ITelemetryEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPropertiesExt,
+	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";
 
 /**
@@ -334,7 +336,10 @@ function matchObjects(
 	expected: ITelemetryPropertiesExt,
 ): boolean {
 	for (const [expectedKey, expectedValue] of Object.entries(expected)) {
-		const actualValue = actual[expectedKey];
+		const actualValue:
+			| TelemetryEventPropertyTypeExt
+			| Tagged<TelemetryEventPropertyTypeExt>
+			| undefined = actual[expectedKey];
 		if (
 			!Array.isArray(expectedValue) &&
 			expectedValue !== null &&
