@@ -259,7 +259,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		assert(
 			this.editManager.localBranch.getHead() === this.editManager.getTrunkHead(),
-			"All local changes should be applied to the trunk before loading from summary",
+			0xaaa /* All local changes should be applied to the trunk before loading from summary */,
 		);
 		const [editManagerSummarizer, ...summarizables] = this.summarizables;
 		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services);

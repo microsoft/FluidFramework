@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { LocalClientId, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentPrivate, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { MergeBlock, MaxNodesInBlock } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 import { insertText } from "./testUtils.js";
@@ -58,9 +58,9 @@ describe("MergeTree walks", () => {
 		it("visits only descendants", () => {
 			for (const block of getAllDescendantBlocks(mergeTree.root)) {
 				let walkedAnySegments = false;
-				walkAllChildSegments(block, (seg: ISegmentPrivate) => {
+				walkAllChildSegments(block, (seg) => {
 					walkedAnySegments = true;
-					let current = seg.parent;
+					let current: MergeBlock | undefined = seg.parent;
 					while (current !== block && current !== undefined) {
 						current = current.parent;
 					}

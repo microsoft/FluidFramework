@@ -25,7 +25,7 @@ import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import { ISegmentPrivate } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
-import { assertInserted } from "./segmentInfos.js";
+import { assertInserted, isMoved, isRemoved } from "./segmentInfos.js";
 import {
 	IJSONSegmentWithMergeInfo,
 	JsonSegmentSpecs,
@@ -233,10 +233,8 @@ export class SnapshotV1 {
 			//      segment, and therefore we can discard it.
 			if (
 				segment.seq === UnassignedSequenceNumber ||
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				segment.removedSeq! <= minSeq ||
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				segment.movedSeq! <= minSeq
+				(isRemoved(segment) && segment.removedSeq <= minSeq) ||
+				(isMoved(segment) && segment.movedSeq <= minSeq)
 			) {
 				if (segment.seq !== UnassignedSequenceNumber) {
 					originalSegments += 1;
@@ -251,9 +249,9 @@ export class SnapshotV1 {
 			// have a pending remove.)
 			if (
 				segment.seq <= minSeq && // Segment is below the MSN, and...
-				(segment.removedSeq === undefined || // .. Segment has not been removed, or...
+				(!isRemoved(segment) || // .. Segment has not been removed, or...
 					segment.removedSeq === UnassignedSequenceNumber) && // .. Removal op to be delivered on reconnect
-				(segment.movedSeq === undefined || segment.movedSeq === UnassignedSequenceNumber)
+				(!isMoved(segment) || segment.movedSeq === UnassignedSequenceNumber)
 			) {
 				// This segment is below the MSN, which means that future ops will not reference it.  Attempt to
 				// coalesce the new segment with the previous (if any).
@@ -293,7 +291,7 @@ export class SnapshotV1 {
 				}
 				// We have already dispensed with removed segments below the MSN and removed segments with unassigned
 				// sequence numbers.  Any remaining removal info should be preserved.
-				if (segment.removedSeq !== undefined) {
+				if (isRemoved(segment)) {
 					assert(
 						segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq,
 						0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */,
@@ -311,7 +309,7 @@ export class SnapshotV1 {
 					);
 				}
 
-				if (segment.movedSeq !== undefined) {
+				if (isMoved(segment)) {
 					assert(
 						segment.movedSeq !== UnassignedSequenceNumber && segment.movedSeq > minSeq,
 						0x873 /* On move info preservation, segment has invalid moved sequence number! */,

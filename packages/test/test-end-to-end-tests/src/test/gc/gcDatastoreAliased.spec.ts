@@ -70,7 +70,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		const gcStatePreAlias = getGCStateFromSummary(summaryWithStats.summary);
 		assert(gcStatePreAlias !== undefined, "Should get gc pre state from summary!");
 		assert(
-			gcStatePreAlias.gcNodes[toFluidHandleInternal(dataObject2.handle).absolutePath]
+			gcStatePreAlias.gcNodes?.[toFluidHandleInternal(dataObject2.handle).absolutePath]
 				.unreferencedTimestampMs !== undefined,
 			"dataStore2 should be unreferenced as it is not aliased and not root!",
 		);
@@ -95,7 +95,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		const gcStatePostAlias = getGCStateFromSummary(summaryWithStats.summary);
 		assert(gcStatePostAlias !== undefined, "Should get gc post state from summary!");
 		assert(
-			gcStatePostAlias.gcNodes[toFluidHandleInternal(dataObject2.handle).absolutePath]
+			gcStatePostAlias.gcNodes?.[toFluidHandleInternal(dataObject2.handle).absolutePath]
 				.unreferencedTimestampMs === undefined,
 			"dataStore2 should be referenced as it is aliased and thus a root datastore!",
 		);

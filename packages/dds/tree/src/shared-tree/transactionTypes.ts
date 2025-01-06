@@ -37,7 +37,7 @@ export interface NodeInDocumentConstraint {
  * The status of the transaction callback in the {@link RunTransaction | RunTransaction} API.
  * @alpha
  */
-export type TransactionCallbackStatus<TSuccessValue, TFailureValue> =
+export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = (
 	| {
 			/** Indicates that the transaction callback ran successfully. */
 			rollback?: false;
@@ -49,7 +49,17 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> =
 			rollback: true;
 			/** The user defined value when the transaction failed. */
 			value: TFailureValue;
-	  };
+	  }
+) & {
+	/**
+	 * An optional list of {@link TransactionConstraint | constraints} that will be checked when the commit corresponding
+	 * to this transaction is reverted. If any of these constraints are not met when the revert is being applied either
+	 * locally or on remote clients, the revert will be ignored.
+	 * These constraints must also be met at the time they are first introduced. If they are not met after the transaction
+	 * callback returns, then `runTransaction` (which invokes the transaction callback) will throw a `UsageError`.
+	 */
+	preconditionsOnRevert?: readonly TransactionConstraint[];
+};
 
 /**
  * The status of a the transaction callback in the {@link RunTransaction | RunTransaction} API where the transaction doesn't
@@ -107,7 +117,7 @@ export type TransactionResult =
 export interface RunTransactionParams {
 	/**
 	 * An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
-	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
+	 * If any of the constraints are not met when `runTransaction` is called, an error will be thrown.
 	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on
 	 * this client and ignored by all other clients.
 	 */

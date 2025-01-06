@@ -12,7 +12,11 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import {
+	ISummaryTree,
+	SummaryType,
+	type SummaryObject,
+} from "@fluidframework/driver-definitions";
 import {
 	IContainerRuntimeBase,
 	channelsTreeName,
@@ -37,7 +41,7 @@ function validateDataStoreStateInSummary(
 	expectHandle: boolean,
 ) {
 	const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
-	const dataStoreSummaryObject = channelsTree[dataStoreId];
+	const dataStoreSummaryObject: SummaryObject | undefined = channelsTree[dataStoreId];
 
 	if (!expectHandle) {
 		assert.strictEqual(
@@ -75,7 +79,7 @@ function validateDDSStateInSummary(
 	expectHandle: boolean,
 ) {
 	const dataStoreChannelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
-	const dataStoreSummaryTree = dataStoreChannelsTree[dataStoreId];
+	const dataStoreSummaryTree: SummaryObject | undefined = dataStoreChannelsTree[dataStoreId];
 	assert.strictEqual(
 		dataStoreSummaryTree.type,
 		SummaryType.Tree,
@@ -83,7 +87,7 @@ function validateDDSStateInSummary(
 	);
 
 	const ddsChannelsTree = (dataStoreSummaryTree.tree[channelsTreeName] as ISummaryTree).tree;
-	const ddsSummaryObject = ddsChannelsTree[ddsId];
+	const ddsSummaryObject: SummaryObject | undefined = ddsChannelsTree[ddsId];
 
 	if (!expectHandle) {
 		assert.strictEqual(
