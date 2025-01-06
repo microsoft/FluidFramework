@@ -345,7 +345,7 @@ export class Outbox {
 				this.params.config.compressionOptions.minimumBatchSizeInBytes
 					? shouldGroup
 						? this.compressAndChunkBatch(this.params.groupingManager.groupBatch(rawBatch))
-						: this.compressAndChunkBatch(rawBatch)
+						: this.compressAndChunkBatch(rawBatch as IBatch<[BatchMessage]>)
 					: rawBatch;
 
 			clientSequenceNumber = this.sendBatch(processedBatch);

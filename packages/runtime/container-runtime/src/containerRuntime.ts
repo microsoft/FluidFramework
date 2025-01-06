@@ -1672,9 +1672,6 @@ export class ContainerRuntime
 		const opGroupingManager = new OpGroupingManager(
 			{
 				groupedBatchingEnabled: this.groupedBatchingEnabled,
-				reentrantBatchGroupingEnabled:
-					this.mc.config.getBoolean("Fluid.ContainerRuntime.GroupedBatchingReentrancy") ??
-					true,
 			},
 			this.mc.logger,
 		);
