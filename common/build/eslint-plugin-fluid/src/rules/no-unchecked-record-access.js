@@ -327,19 +327,49 @@ function isDefined(node) {
 	if (node.optional === true || node.parent.type === "TSNonNullExpression") return true;
 
 	let current = node;
-	while (current) {
+	while (current && current.parent) {
+		// Handle if statements that check property existence
+		if (current.parent.type === "IfStatement" && current.parent.test) {
+			const base = getBaseObject(node);
+			if (base && current.parent.test.type === "MemberExpression") {
+				const testBase = getBaseObject(current.parent.test);
+				if (base === testBase) {
+					return true;
+				}
+			}
+		}
+
+		// Handle for...of with Object.entries/keys
+		if (current.parent.type === "ForOfStatement") {
+			const right = current.parent.right;
+			if (
+				right.type === "CallExpression" &&
+				right.callee.type === "MemberExpression" &&
+				right.callee.object.name === "Object" &&
+				(right.callee.property.name === "entries" || right.callee.property.name === "keys")
+			) {
+				const base = getBaseObject(node);
+				if (right.arguments[0].type === "Identifier" && right.arguments[0].name === base) {
+					return true;
+				}
+			}
+		}
+
+		// Handle "in" operator checks
 		if (
-			current.parent?.type === "ConditionalExpression" &&
-			current === current.parent.consequent &&
+			(current.parent.type === "ConditionalExpression" ||
+				current.parent.type === "IfStatement") &&
 			current.parent.test?.type === "BinaryExpression" &&
 			current.parent.test.operator === "in"
 		) {
 			const test = current.parent.test;
 			const base = getBaseObject(node);
 			const testBase = getBaseObject(test.right);
-
-			return base === testBase;
+			if (base === testBase) {
+				return true;
+			}
 		}
+
 		current = current.parent;
 	}
 
