@@ -55,7 +55,6 @@ import { ITokenProvider } from "./tokens.js";
  */
 export class DocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
-	// eslint-disable-next-line import/namespace
 	implements IDocumentService
 {
 	private storageManager: GitManager | undefined;
@@ -303,9 +302,9 @@ export class DocumentService
 		}
 		const fluidResolvedUrl = response.resolvedUrl;
 		this._resolvedUrl = fluidResolvedUrl;
-		this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
-		this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
-		this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+		this.storageUrl = fluidResolvedUrl.endpoints?.storageUrl;
+		this.ordererUrl = fluidResolvedUrl.endpoints?.ordererUrl;
+		this.deltaStorageUrl = fluidResolvedUrl.endpoints?.deltaStorageUrl;
 		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl ?? this.ordererUrl;
 		return true;
 	}

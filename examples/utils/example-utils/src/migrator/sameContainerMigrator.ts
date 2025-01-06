@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
 
 import type {
 	DataTransformationCallback,

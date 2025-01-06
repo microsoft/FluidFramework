@@ -3,13 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { type Difference, SharedTreeBranchManager } from "@fluidframework/ai-collab/alpha";
 import {
-	type BranchableTree,
-	type TreeBranchFork,
+	aiCollab,
+	type AiCollabErrorResponse,
+	type AiCollabSuccessResponse,
+	type Difference,
+	SharedTreeBranchManager,
+} from "@fluidframework/ai-collab/alpha";
+import {
+	CommitKind,
+	RevertibleStatus,
+	TreeAlpha,
+	type CommitMetadata,
+	type Revertible,
+	type RevertibleFactory,
+	type TreeBranch,
 	type TreeViewAlpha,
 } from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
+import { RedoRounded, UndoRounded } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
 import {
 	Box,
@@ -17,23 +29,25 @@ import {
 	Card,
 	Dialog,
 	Divider,
+	IconButton,
 	Popover,
 	Stack,
 	TextField,
+	Tooltip,
 	Typography,
 } from "@mui/material";
 import { type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { TaskCard } from "./TaskCard";
 
-import { editTaskGroup } from "@/actions/task";
+// eslint-disable-next-line import/no-internal-modules
+import { getOpenAiClient } from "@/infra/openAiClient";
 import {
+	aiCollabLlmTreeNodeValidator,
+	SharedTreeAppState,
 	SharedTreeTaskGroup,
-	sharedTreeTaskGroupToJson,
-	TREE_CONFIGURATION,
-	type SharedTreeAppState,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
@@ -52,13 +66,215 @@ export function TaskGroup(props: {
 	const [isAiTaskRunning, setIsAiTaskRunning] = useState<boolean>(false);
 	const [llmBranchData, setLlmBranchData] = useState<{
 		differences: Difference[];
-		originalBranch: BranchableTree;
-		forkBranch: TreeBranchFork;
-		forkView: TreeView<typeof SharedTreeAppState>;
+		originalBranch: TreeViewAlpha<typeof SharedTreeAppState>;
+		aiCollabBranch: TreeViewAlpha<typeof SharedTreeAppState>;
 		newBranchTargetNode: SharedTreeTaskGroup;
 	}>();
 
+	const [undoStack, setUndoStack] = useState<Revertible[]>([]);
+	const [redoStack, setRedoStack] = useState<Revertible[]>([]);
+
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTaskGroup, logId: "TaskGroup" });
+
+	/**
+	 * Create undo and redo stacks of {@link Revertible}.
+	 */
+	useEffect(() => {
+		function onRevertibleDisposed(disposed: Revertible): void {
+			const redoIndex = redoStack.indexOf(disposed);
+			if (redoIndex === -1) {
+				const undoIndex = undoStack.indexOf(disposed);
+				if (undoIndex !== -1) {
+					setUndoStack((currUndoStack) => {
+						const newUndoStack = currUndoStack.toSpliced(undoIndex, 1);
+						return newUndoStack;
+					});
+				}
+			} else {
+				setRedoStack((currRedostack) => {
+					const newRedoStack = currRedostack.toSpliced(redoIndex, 1);
+					return newRedoStack;
+				});
+			}
+		}
+
+		/**
+		 * Instead of application developer manually managing the life cycle of the {@link Revertible} instances,
+		 * example app stores up to `MAX_STACK_SIZE` number of {@link Revertible} instances in each of the undo and redo stacks.
+		 * When the stack size exceeds `MAX_STACK_SIZE`, the oldest {@link Revertible} instance is disposed.
+		 * @param stack - The stack that the {@link Revertible} instance is being added to.
+		 */
+		function trimStackToMaxSize(stack: Revertible[]): Revertible[] {
+			const MAX_STACK_SIZE = 50;
+
+			if (stack.length <= MAX_STACK_SIZE) {
+				return stack;
+			}
+
+			const itemsToRemove = stack.length - MAX_STACK_SIZE;
+			const itemsToDispose = stack.slice(0, itemsToRemove);
+
+			for (const revertible of itemsToDispose) {
+				if (revertible?.status !== RevertibleStatus.Disposed) {
+					revertible?.dispose();
+				}
+			}
+
+			return stack.slice(itemsToRemove);
+		}
+
+		/**
+		 * Event handler that manages the undo/redo functionality for tree view commits.
+		 *
+		 * @param commit - Metadata about the commit being applied
+		 * @param getRevertible - Optional factory function that creates a Revertible object
+		 *
+		 * This handler:
+		 * 1. Creates a Revertible object when a commit is applied
+		 * 2. Adds the Revertible to either the undo or redo stack based on the commit type
+		 * 3. Maintains a maximum stack size (defined in `maintainStackSize` function)
+		 *
+		 * The Revertible objects allow operations to be undone/redone, with automatic cleanup
+		 * handled by the onRevertibleDisposed callback.
+		 *
+		 * @returns An event listener cleanup function
+		 */
+		const unsubscribeFromCommitAppliedEvent = props.treeView.events.on(
+			"commitApplied",
+			(commit: CommitMetadata, getRevertible?: RevertibleFactory) => {
+				if (getRevertible !== undefined) {
+					const revertible = getRevertible(onRevertibleDisposed);
+					if (commit.kind === CommitKind.Undo) {
+						setRedoStack((prevRedoStack) => {
+							const newRedoStack = trimStackToMaxSize([...prevRedoStack, revertible]);
+							return newRedoStack;
+						});
+					} else {
+						setUndoStack((prevUndoStack) => {
+							const newUndoStack = trimStackToMaxSize([...prevUndoStack, revertible]);
+							return newUndoStack;
+						});
+					}
+				}
+			},
+		);
+
+		return () => {
+			unsubscribeFromCommitAppliedEvent();
+		};
+	}, [props.treeView.events, undoStack, redoStack]);
+
+	/**
+	 * Helper function for ai collaboration which creates a new branch from the current {@link SharedTreeAppState}
+	 * as well as find the matching {@link SharedTreeTaskGroup} intended to be worked on within the new branch.
+	 */
+	const getNewSharedTreeBranchAndTaskGroup = (
+		sharedTreeAppState: SharedTreeAppState,
+		taskGroup: SharedTreeTaskGroup,
+	): {
+		currentBranch: TreeBranch & TreeViewAlpha<typeof SharedTreeAppState>;
+		newBranchTree: TreeBranch & TreeViewAlpha<typeof SharedTreeAppState>;
+		newBranchTaskGroup: SharedTreeTaskGroup;
+	} => {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const currentBranch = TreeAlpha.branch(sharedTreeAppState)!;
+		const newBranchTree = currentBranch.fork();
+
+		if (
+			!currentBranch.hasRootSchema(SharedTreeAppState) ||
+			!newBranchTree.hasRootSchema(SharedTreeAppState)
+		) {
+			throw new Error(
+				"Cannot branch from a tree that does not have the SharedTreeAppState schema.",
+			);
+		}
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const newBranchTaskGroup = newBranchTree.root.taskGroups.find(
+			(_taskGroup) => _taskGroup.id === taskGroup.id,
+		)!;
+
+		return { currentBranch, newBranchTree, newBranchTaskGroup };
+	};
+
+	/**
+	 * Executes Ai Collaboration for this task group based on the users request.
+	 */
+	const handleAiCollab = async (userRequest: string): Promise<void> => {
+		setIsAiTaskRunning(true);
+		enqueueSnackbar(`Copilot: I'm working on your request - "${userRequest}"`, {
+			variant: "info",
+			autoHideDuration: 5000,
+		});
+
+		try {
+			// 1. Get the current branch, the new branch and associated task group to be used for ai collaboration
+			const { currentBranch, newBranchTree, newBranchTaskGroup } =
+				getNewSharedTreeBranchAndTaskGroup(props.treeView.root, props.sharedTreeTaskGroup);
+			console.log("ai-collab Branch Task Group BEFORE:", { ...newBranchTaskGroup });
+
+			// 2. execute the ai collaboration
+			const response: AiCollabSuccessResponse | AiCollabErrorResponse = await aiCollab({
+				openAI: {
+					client: getOpenAiClient(),
+					modelName: "gpt-4o",
+				},
+				treeNode: newBranchTaskGroup,
+				prompt: {
+					systemRoleContext:
+						"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+					userAsk: userRequest,
+				},
+				limiters: {
+					maxModelCalls: 30,
+				},
+				planningStep: true,
+				finalReviewStep: false,
+				dumpDebugLog: true,
+				validator: aiCollabLlmTreeNodeValidator,
+			});
+
+			// 3. Handle the response from the ai collaboration
+			if (response.status !== "success") {
+				throw new Error(response.errorMessage);
+			}
+
+			const branchManager = new SharedTreeBranchManager({
+				nodeIdAttributeName: "id",
+			});
+
+			const taskGroupDifferences = branchManager.compare(
+				props.sharedTreeTaskGroup as unknown as Record<string, unknown>,
+				newBranchTaskGroup as unknown as Record<string, unknown>,
+			);
+
+			console.log("ai-collab Branch Task Group AFTER:", { ...newBranchTaskGroup });
+			console.log("ai-collab Branch Task Group differences:", taskGroupDifferences);
+
+			setLlmBranchData({
+				differences: taskGroupDifferences,
+				originalBranch: currentBranch,
+				aiCollabBranch: newBranchTree,
+				newBranchTargetNode: newBranchTaskGroup,
+			});
+			setIsDiffModalOpen(true);
+			enqueueSnackbar(`Copilot: I've completed your request - "${userRequest}"`, {
+				variant: "success",
+				autoHideDuration: 5000,
+			});
+		} catch (error) {
+			enqueueSnackbar(
+				`Copilot: Something went wrong processing your request - ${error instanceof Error ? error.message : "unknown error"}`,
+				{
+					variant: "error",
+					autoHideDuration: 5000,
+				},
+			);
+		} finally {
+			setIsAiTaskRunning(false);
+			setPopoverAnchor(undefined);
+		}
+	};
 
 	return (
 		<Card
@@ -116,7 +332,7 @@ export function TaskGroup(props: {
 							setPopoverAnchor(undefined);
 						}}
 						onAccept={() => {
-							llmBranchData.originalBranch.merge(llmBranchData.forkBranch);
+							llmBranchData.originalBranch.merge(llmBranchData.aiCollabBranch);
 							setIsDiffModalOpen(false);
 							setLlmBranchData(undefined);
 							setPopoverAnchor(undefined);
@@ -126,18 +342,50 @@ export function TaskGroup(props: {
 							setLlmBranchData(undefined);
 							setPopoverAnchor(undefined);
 						}}
-						treeView={llmBranchData.forkView}
+						treeView={llmBranchData.aiCollabBranch}
 						differences={llmBranchData.differences}
 						newBranchTargetNode={llmBranchData.newBranchTargetNode}
-					></TaskGroupDiffModal>
+					/>
+				)}
+
+				{undoStack.length > 0 && (
+					<Tooltip title="Undo">
+						<IconButton
+							color="error"
+							onClick={() => {
+								// Getting the revertible before removing it from the undo stack allows the the item to remains in the stack if `revert()` fails.
+								const revertible = undoStack[undoStack.length - 1];
+								revertible?.revert();
+								undoStack.pop();
+							}}
+						>
+							<UndoRounded />
+						</IconButton>
+					</Tooltip>
+				)}
+
+				{redoStack.length > 0 && (
+					<Tooltip title="Redo">
+						<IconButton
+							color="info"
+							onClick={() => {
+								// Getting the revertible before removing it from the redo stack allows the the item to remains in the stack if `revert()` fails.
+								const revertible = redoStack[redoStack.length - 1];
+								revertible?.revert();
+								redoStack.pop();
+							}}
+						>
+							<RedoRounded />
+						</IconButton>
+					</Tooltip>
 				)}
 
 				<Button
 					variant="contained"
 					color="success"
 					onClick={() => {
-						props.sharedTreeTaskGroup.tasks.insertAtStart({
-							title: "New Task",
+						props.sharedTreeTaskGroup.tasks.insertAtEnd({
+							title: `New Task #${props.sharedTreeTaskGroup.tasks.length + 1}`,
 							description: "This is the new task. ",
 							priority: "low",
 							complexity: 1,
@@ -171,64 +419,8 @@ export function TaskGroup(props: {
 								e.preventDefault();
 								const formData = new FormData(e.currentTarget);
 								const query = formData.get("searchQuery") as string;
-								setIsAiTaskRunning(true);
-								enqueueSnackbar(`Copilot: I'm working on your request - "${query}"`, {
-									variant: "info",
-									autoHideDuration: 5000,
-								});
 
-								// TODO: is this redundant? We already have props.sharedTreeTaskGroup
-								const indexOfTaskGroup = props.treeView.root.taskGroups.indexOf(
-									props.sharedTreeTaskGroup,
-								);
-
-								const resp = await editTaskGroup(
-									sharedTreeTaskGroupToJson(props.sharedTreeTaskGroup),
-									query,
-								);
-								if (resp.success) {
-									console.log("initiating checkoutNewMergedBranch");
-									const branchManager = new SharedTreeBranchManager({
-										nodeIdAttributeName: "id",
-									});
-
-									const differences = branchManager.compare(
-										props.sharedTreeTaskGroup as unknown as Record<string, unknown>,
-										resp.data as unknown as Record<string, unknown>,
-									);
-									const { originalBranch, forkBranch, forkView, newBranchTargetNode } =
-										branchManager.checkoutNewMergedBranchV2(
-											// TODO: Remove cast when TreeViewAlpha becomes public
-											props.treeView as TreeViewAlpha<typeof SharedTreeAppState>,
-											TREE_CONFIGURATION,
-											["taskGroups", indexOfTaskGroup],
-										);
-
-									branchManager.mergeDiffs(differences, newBranchTargetNode);
-
-									console.log("forkBranch:", forkBranch);
-									console.log("newBranchTargetNode:", { ...newBranchTargetNode });
-									console.log("differences:", { ...differences });
-									setLlmBranchData({
-										differences,
-										originalBranch,
-										forkBranch,
-										forkView,
-										newBranchTargetNode: newBranchTargetNode as unknown as SharedTreeTaskGroup,
-									});
-									setIsDiffModalOpen(true);
-									enqueueSnackbar(`Copilot: I've completed your request - "${query}"`, {
-										variant: "success",
-										autoHideDuration: 5000,
-									});
-								} else {
-									enqueueSnackbar(
-										`Copilot: Something went wrong processing your request - "${query}"`,
-										{ variant: "error", autoHideDuration: 5000 },
-									);
-								}
-
-								setIsAiTaskRunning(false);
+								await handleAiCollab(query);
 							}}
 						>
 							<TextField
@@ -319,6 +511,7 @@ export function TaskGroup(props: {
 							key={task.id}
 							sharedTreeTaskGroup={props.sharedTreeTaskGroup}
 							sharedTreeTask={task}
+							sharedTreeBranch={props.treeView}
 							branchDifferences={taskDiffs}
 						/>
 					);

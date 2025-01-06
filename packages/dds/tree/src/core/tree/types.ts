@@ -33,7 +33,6 @@ export type TreeType = TreeNodeSchemaIdentifier;
  * This has to be a FieldKey since different nodes will have different TreeFieldStoredSchema for it.
  * This makes it prone to collisions and suggests
  * that this intention may be better conveyed by metadata on the ITreeSchema.
- * @internal
  */
 export const EmptyKey: FieldKey = brand("");
 
@@ -116,7 +115,6 @@ export interface FieldKind {
 
 /**
  * Value that may be stored on a leaf node.
- * @internal
  */
 export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 	{
@@ -131,7 +129,6 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 
 /**
  * Value stored on a node.
- * @internal
  */
 export type Value = undefined | TreeValue;
 
@@ -141,8 +138,6 @@ export type Value = undefined | TreeValue;
  * @privateRemarks A forked version of this type is used in `persistedTreeTextFormat.ts`.
  * Changes to this type might necessitate changes to `EncodedNodeData` or codecs.
  * See persistedTreeTextFormat's module documentation for more details.
- *
- * @internal
  */
 export interface NodeData {
 	/**

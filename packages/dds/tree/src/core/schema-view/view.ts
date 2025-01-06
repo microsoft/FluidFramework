@@ -10,17 +10,6 @@ import type { TreeNodeSchemaIdentifier, TreeStoredSchema } from "../schema-store
  */
 
 /**
- * How compatible a particular view schema is for some operation on some specific document.
- */
-export enum Compatibility {
-	Incompatible,
-	// For write compatibility this can include compatible schema updates to stored schema.
-	// TODO: separate schema updates from adapters.
-	// RequiresAdapters,
-	Compatible,
-}
-
-/**
  * What kinds of updates to stored schema to permit.
  *
  * Bit flags enum.
