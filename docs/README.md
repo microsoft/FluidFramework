@@ -88,16 +88,24 @@ To remove the local API docs, simply remove the above variable or set it to `fal
 
 ## User Telemetry
 
-The Fluid Framework website collects basic user telemetry to help improve the experience for our users. The telemetry data includes
-anonymous information such as:
+The Fluid Framework website collects basic user telemetry to help improve the experience for our users.
+The telemetry data includes anonymous information such as:
 
 -   Daily / Monthly users
 -   Pages visited
 -   User flow
 
-This data is collected in compliance with relevant privacy standards. For more information, please refer to our
-[privacy policy.](https://www.microsoft.com/privacy/privacystatement). If you have any concerns about telemetry, please reach out
-to our team via [GitHub Issues](https://github.com/microsoft/FluidFramework/issues).
+This data is collected in compliance with relevant privacy standards.
+For more information, please refer to our [privacy policy.](https://www.microsoft.com/privacy/privacystatement).
+If you have any concerns about telemetry, please reach out to our team via [GitHub Issues](https://github.com/microsoft/FluidFramework/issues).
+
+To test this telemetry locally add the following key to the .env file.
+This key is used to instantiate Application Insights so that usage events can be tracked.
+The key can be requested from internal Microsoft Fluid Framework engineers.
+
+```
+INSTRUMENTATION_KEY=<key>
+```
 
 ## Writing site documentation
 

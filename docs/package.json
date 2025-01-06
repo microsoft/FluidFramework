@@ -92,7 +92,6 @@
 		"eslint-mdx": "^3.1.5",
 		"eslint-plugin-mdx": "^3.1.5",
 		"fs-extra": "^11.2.0",
-		"js-cookie": "^3.0.5",
 		"linkcheck-bin": "3.0.0-1",
 		"lunr": "^2.3.9",
 		"playwright": "^1.49.0",
