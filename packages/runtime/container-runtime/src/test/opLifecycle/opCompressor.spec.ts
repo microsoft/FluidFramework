@@ -51,7 +51,7 @@ describe("OpCompressor", () => {
 			it(`Batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
 			)} MB`, () => {
-				const compressedBatch = compressor.compressBatch(batch);
+				const compressedBatch = compressor.compressBatch(batch as IBatch<[BatchMessage]>);
 				assert.strictEqual(compressedBatch.messages.length, batch.messages.length);
 				assert.strictEqual(compressedBatch.messages[0].compression, "lz4");
 				assert.strictEqual(compressedBatch.messages[0].metadata?.flag, true);
@@ -68,7 +68,7 @@ describe("OpCompressor", () => {
 			it(`Not compressing batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
 			)} MB`, () => {
-				assert.throws(() => compressor.compressBatch(batch));
+				assert.throws(() => compressor.compressBatch(batch as IBatch<[BatchMessage]>));
 				mockLogger.assertMatch([
 					{
 						eventName: "OpCompressor:BatchTooLarge",

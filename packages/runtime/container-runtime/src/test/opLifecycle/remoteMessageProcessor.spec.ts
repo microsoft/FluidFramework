@@ -38,8 +38,6 @@ describe("RemoteMessageProcessor", () => {
 			new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
-					opCountThreshold: Infinity,
-					reentrantBatchGroupingEnabled: false,
 				},
 				logger,
 			),
@@ -129,8 +127,6 @@ describe("RemoteMessageProcessor", () => {
 				const groupingManager = new OpGroupingManager(
 					{
 						groupedBatchingEnabled: true,
-						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				);
@@ -141,7 +137,7 @@ describe("RemoteMessageProcessor", () => {
 			const outboundMessages: IBatchMessage[] = [];
 			if (option.compressionAndChunking.compression) {
 				const compressor = new OpCompressor(mockLogger);
-				batch = compressor.compressBatch(batch);
+				batch = compressor.compressBatch(batch as IBatch<[BatchMessage]>);
 
 				if (option.compressionAndChunking.chunking) {
 					const splitter = new OpSplitter(
