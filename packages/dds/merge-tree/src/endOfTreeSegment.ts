@@ -10,7 +10,7 @@ import { LocalClientId } from "./constants.js";
 import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import { ISegment, ISegmentPrivate, type MergeBlock } from "./mergeTreeNodes.js";
+import { ISegment, type ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
 import { type IMergeNodeInfo } from "./segmentInfos.js";
 
 /**
@@ -115,7 +115,7 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment 
 		index: number;
 		depth: number;
 	} {
-		let firstSegment: ISegmentPrivate | undefined;
+		let firstSegment: ISegmentLeaf | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
 		depthFirstNodeWalk(
@@ -165,7 +165,7 @@ export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment {
 		index: number;
 		depth: number;
 	} {
-		let lastSegment: ISegmentPrivate | undefined;
+		let lastSegment: ISegmentLeaf | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
 		depthFirstNodeWalk(

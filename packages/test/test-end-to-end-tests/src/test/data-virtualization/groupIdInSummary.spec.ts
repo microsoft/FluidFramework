@@ -15,7 +15,11 @@ import type {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISnapshot,
+	ISnapshotTree,
+	SummaryObject,
+} from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -263,10 +267,10 @@ describeCompat(
 			);
 			await provider.ensureSynchronized();
 			const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
-			const channelsTree = summaryTree.tree[".channels"];
+			const channelsTree: SummaryObject | undefined = summaryTree.tree[".channels"];
 			assert(channelsTree.type === SummaryType.Tree, "channels should be a tree");
-			const dataObjectTreeA = channelsTree.tree[dataObjectA.id];
-			const dataObjectTreeB = channelsTree.tree[dataObjectB.id];
+			const dataObjectTreeA: SummaryObject | undefined = channelsTree.tree[dataObjectA.id];
+			const dataObjectTreeB: SummaryObject | undefined = channelsTree.tree[dataObjectB.id];
 			assert(dataObjectTreeA !== undefined, "dataObjectTree should exist");
 			assert(dataObjectTreeA.type === SummaryType.Tree, "dataObjectTree should be a tree");
 			assert(
@@ -345,10 +349,10 @@ describeCompat(
 			);
 			await provider.ensureSynchronized();
 			const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
-			const channelsTree = summaryTree.tree[".channels"];
+			const channelsTree: SummaryObject | undefined = summaryTree.tree[".channels"];
 			assert(channelsTree.type === SummaryType.Tree, "channels should be a tree");
-			const dataObjectTreeA = channelsTree.tree[dataObjectA.id];
-			const dataObjectTreeB = channelsTree.tree[dataObjectB.id];
+			const dataObjectTreeA: SummaryObject | undefined = channelsTree.tree[dataObjectA.id];
+			const dataObjectTreeB: SummaryObject | undefined = channelsTree.tree[dataObjectB.id];
 			assert(dataObjectTreeA !== undefined, "dataObjectTree should exist");
 			assert(dataObjectTreeA.type === SummaryType.Tree, "dataObjectTree should be a tree");
 			assert(
@@ -514,12 +518,13 @@ describeCompat(
 
 				const blobContents = loadingSnapshot.blobContents;
 				// Snapshot validation (a snapshot call with NO loadingGroupIds)
-				const channelsTree = loadingSnapshot.snapshotTree.trees[".channels"];
-				const mainObjectTree = channelsTree.trees[mainObject.id];
-				const dataObjectATree = channelsTree.trees[dataObjectA.id];
-				const dataObjectBTree = channelsTree.trees[dataObjectB.id];
-				const dataObjectCTree = channelsTree.trees[dataObjectC.id];
-				const dataObjectDTree = channelsTree.trees[dataObjectD.id];
+				const channelsTree: ISnapshotTree | undefined =
+					loadingSnapshot.snapshotTree.trees[".channels"];
+				const mainObjectTree: ISnapshotTree | undefined = channelsTree.trees[mainObject.id];
+				const dataObjectATree: ISnapshotTree | undefined = channelsTree.trees[dataObjectA.id];
+				const dataObjectBTree: ISnapshotTree | undefined = channelsTree.trees[dataObjectB.id];
+				const dataObjectCTree: ISnapshotTree | undefined = channelsTree.trees[dataObjectC.id];
+				const dataObjectDTree: ISnapshotTree | undefined = channelsTree.trees[dataObjectD.id];
 
 				assertPopulatedTree(mainObjectTree, noId, blobContents, "mainObject tree not right");
 				assertOmittedBlobContents(
@@ -641,12 +646,17 @@ describeCompat(
 				);
 
 				// Snapshot validation (a snapshot call for loadingGroupIds = [loadingGroupId])
-				const channelsTree2 = groupSnapshot.snapshotTree.trees[".channels"];
-				const mainObjectTree2 = channelsTree2.trees[mainObject.id];
-				const dataObjectATree2 = channelsTree2.trees[dataObjectA.id];
-				const dataObjectBTree2 = channelsTree2.trees[dataObjectB.id];
-				const dataObjectCTree2 = channelsTree2.trees[dataObjectC.id];
-				const dataObjectDTree2 = channelsTree2.trees[dataObjectD.id];
+				const channelsTree2: ISnapshotTree | undefined =
+					groupSnapshot.snapshotTree.trees[".channels"];
+				const mainObjectTree2: ISnapshotTree | undefined = channelsTree2.trees[mainObject.id];
+				const dataObjectATree2: ISnapshotTree | undefined =
+					channelsTree2.trees[dataObjectA.id];
+				const dataObjectBTree2: ISnapshotTree | undefined =
+					channelsTree2.trees[dataObjectB.id];
+				const dataObjectCTree2: ISnapshotTree | undefined =
+					channelsTree2.trees[dataObjectC.id];
+				const dataObjectDTree2: ISnapshotTree | undefined =
+					channelsTree2.trees[dataObjectD.id];
 
 				assertOmittedTree(mainObjectTree2, noId, blobContents, "mainObject tree incorrect");
 				assertPopulatedTree(
@@ -690,12 +700,18 @@ describeCompat(
 				assert(group2Snapshot !== undefined, "should have captured group2 snapshot!");
 				const blobContents = group2Snapshot.blobContents;
 				assert.deepEqual(group2Snapshot.sequenceNumber, summaryRefSeq, "Unexpected snapshot");
-				const channels2Tree2 = group2Snapshot.snapshotTree.trees[".channels"];
-				const mainObject2Tree2 = channels2Tree2.trees[mainObject.id];
-				const dataObjectA2Tree2 = channels2Tree2.trees[dataObjectA.id];
-				const dataObjectB2Tree2 = channels2Tree2.trees[dataObjectB.id];
-				const dataObjectC2Tree2 = channels2Tree2.trees[dataObjectC.id];
-				const dataObjectD2Tree2 = channels2Tree2.trees[dataObjectD.id];
+				const channels2Tree2: ISnapshotTree | undefined =
+					group2Snapshot.snapshotTree.trees[".channels"];
+				const mainObject2Tree2: ISnapshotTree | undefined =
+					channels2Tree2.trees[mainObject.id];
+				const dataObjectA2Tree2: ISnapshotTree | undefined =
+					channels2Tree2.trees[dataObjectA.id];
+				const dataObjectB2Tree2: ISnapshotTree | undefined =
+					channels2Tree2.trees[dataObjectB.id];
+				const dataObjectC2Tree2: ISnapshotTree | undefined =
+					channels2Tree2.trees[dataObjectC.id];
+				const dataObjectD2Tree2: ISnapshotTree | undefined =
+					channels2Tree2.trees[dataObjectD.id];
 
 				assertOmittedTree(
 					mainObject2Tree2,

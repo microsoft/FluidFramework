@@ -104,12 +104,12 @@ function serialize(directory1: ISharedDirectory): string {
 	assert.strictEqual(summaryObjectKeys.length, 1, "summary tree should only have one blob");
 	assert.strictEqual(summaryObjectKeys[0], "header", "summary should have a header blob");
 	assert.strictEqual(
-		summaryTree.tree.header.type,
+		summaryTree.tree.header?.type,
 		SummaryType.Blob,
 		"header is not of SummaryType.Blob",
 	);
 
-	const content = summaryTree.tree.header.content as string;
+	const content = summaryTree.tree.header?.content as string;
 	return JSON.stringify((JSON.parse(content) as IDirectoryNewStorageFormat).content);
 }
 
@@ -1725,15 +1725,15 @@ describe("Directory", () => {
 				const fooSubDirIterator = fooSubDir.entries();
 				const fooSubDirResult1 = fooSubDirIterator.next();
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.equal(fooSubDirResult1.value[0], "testKey");
+				assert.equal(fooSubDirResult1.value?.[0], "testKey");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.equal(fooSubDirResult1.value[1], "testValue");
+				assert.equal(fooSubDirResult1.value?.[1], "testValue");
 				assert.equal(fooSubDirResult1.done, false);
 				const fooSubDirResult2 = fooSubDirIterator.next();
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.equal(fooSubDirResult2.value[0], "testKey2");
+				assert.equal(fooSubDirResult2.value?.[0], "testKey2");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.equal(fooSubDirResult2.value[1], "testValue2");
+				assert.equal(fooSubDirResult2.value?.[1], "testValue2");
 				assert.equal(fooSubDirResult2.done, false);
 				const fooSubDirResult3 = fooSubDirIterator.next();
 				assert.equal(fooSubDirResult3.value, undefined);
@@ -1755,15 +1755,15 @@ describe("Directory", () => {
 				const fooSubDir2Iterator = fooSubDir2.entries();
 				const fooSubDir2Result1 = fooSubDir2Iterator.next();
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.equal(fooSubDir2Result1.value[0], "testKey");
+				assert.equal(fooSubDir2Result1.value?.[0], "testKey");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.equal(fooSubDir2Result1.value[1], "testValue");
+				assert.equal(fooSubDir2Result1.value?.[1], "testValue");
 				assert.equal(fooSubDir2Result1.done, false);
 				const fooSubDir2Result2 = fooSubDir2Iterator.next();
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.equal(fooSubDir2Result2.value[0], "testKey2");
+				assert.equal(fooSubDir2Result2.value?.[0], "testKey2");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.equal(fooSubDir2Result2.value[1], "testValue2");
+				assert.equal(fooSubDir2Result2.value?.[1], "testValue2");
 				assert.equal(fooSubDir2Result2.done, false);
 				const fooSubDir2Result3 = fooSubDir2Iterator.next();
 				assert.equal(fooSubDir2Result3.value, undefined);
