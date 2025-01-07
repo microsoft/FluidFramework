@@ -218,6 +218,7 @@ export namespace DefaultDocumentationSuiteConfiguration {
 				return getFileSafeNameForApiItemName(getUnscopedPackageName(apiItem as ApiPackage));
 			}
 			default: {
+				// Let the system generate a unique name that accounts for folder hierarchy.
 				return createQualifiedDocumentNameForApiItem(apiItem, config);
 			}
 		}
@@ -375,14 +376,14 @@ export function getDocumentationSuiteConfigurationWithDefaults(
 		minimumReleaseLevel: options?.minimumReleaseLevel ?? ReleaseTag.Internal,
 	};
 
-	const defaultDocumentName =
+	const documentName =
 		options?.documentName ??
 		((apiItem) =>
 			DefaultDocumentationSuiteConfiguration.getDocumentName(
 				apiItem,
 				config as DocumentationSuiteConfiguration,
 			));
-	const defaultFolderName =
+	const folderName =
 		options?.folderName ??
 		((apiItem) =>
 			DefaultDocumentationSuiteConfiguration.getFolderName(
@@ -392,8 +393,8 @@ export function getDocumentationSuiteConfigurationWithDefaults(
 
 	const hierarchy: HierarchyConfiguration = getHierarchyConfigurationWithDefaults(
 		options?.hierarchy,
-		defaultDocumentName,
-		defaultFolderName,
+		documentName,
+		folderName,
 	);
 
 	(config as Mutable<DocumentationSuiteConfiguration>).hierarchy = hierarchy;
