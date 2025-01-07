@@ -8,7 +8,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { DoublyLinkedList } from "./collections/index.js";
 import { EndOfTreeSegment } from "./endOfTreeSegment.js";
-// eslint-disable-next-line import/no-deprecated
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference.js";
 import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
@@ -106,7 +105,6 @@ function findMergeTreeWithRevert(trackable: Trackable): MergeTreeWithRevert {
 		const refCallbacks: MergeTreeWithRevert["__mergeTreeRevertible"]["refCallbacks"] = {
 			afterSlide: (r: LocalReferencePosition) => {
 				if (mergeTree.referencePositionToLocalPosition(r) === DetachedReferencePosition) {
-					// eslint-disable-next-line import/no-deprecated
 					const refs = LocalReferenceCollection.setOrGet(detachedReferences);
 					refs.addAfterTombstones([r]);
 				}
@@ -362,7 +360,6 @@ function revertLocalRemove(
 		}
 
 		if (insertRef !== undefined) {
-			// eslint-disable-next-line import/no-deprecated
 			const localRefs = LocalReferenceCollection.setOrGet(insertSegment);
 			if (insertRef.before?.empty === false) {
 				localRefs.addBeforeTombstones(insertRef.before.map((n) => n.data));
