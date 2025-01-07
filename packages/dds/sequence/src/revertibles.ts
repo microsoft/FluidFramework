@@ -14,7 +14,6 @@ import {
 	PropertySet,
 	ReferenceType,
 	SlidingPreference, // eslint-disable-next-line import/no-deprecated
-	SortedSet,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
 	getSlideToSegoff,
@@ -25,6 +24,8 @@ import {
 	Side,
 	type ISegmentInternal,
 	segmentIsRemoved,
+	SortedSegmentSet,
+	type ISegment,
 } from "@fluidframework/merge-tree/internal";
 
 import { IntervalOpType, SequenceInterval, SequenceIntervalClass } from "./intervals/index.js";
@@ -579,14 +580,11 @@ function newEndpointPosition(
 interface RangeInfo {
 	ranges: readonly Readonly<ISequenceDeltaRange<MergeTreeDeltaOperationType>>[];
 	length: number;
+	segment: ISegment;
 }
 
 // eslint-disable-next-line import/no-deprecated
-class SortedRangeSet extends SortedSet<RangeInfo, string> {
-	protected getKey(item: RangeInfo): string {
-		return item.ranges[0].segment.ordinal;
-	}
-}
+class SortedRangeSet extends SortedSegmentSet<RangeInfo> {}
 
 function revertLocalSequenceRemove(
 	sharedString: ISharedString,
@@ -599,7 +597,11 @@ function revertLocalSequenceRemove(
 			event.ranges.forEach((range) => {
 				length += range.segment.cachedLength;
 			});
-			restoredRanges.addOrUpdate({ ranges: event.ranges, length });
+			restoredRanges.addOrUpdate({
+				ranges: event.ranges,
+				length,
+				segment: event.ranges[0].segment,
+			});
 		}
 	};
 	sharedString.on("sequenceDelta", saveSegments);
